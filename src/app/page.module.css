@@ -1,0 +1,156 @@
+.page {
+  --background: #ffffff;
+  --foreground: #171717;
+  --primary: #0070f3;
+  --secondary: #666666;
+  --accent: #fafafa;
+  --border: #eaeaea;
+
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: var(--foreground);
+  background-color: var(--background);
+}
+
+.header {
+  padding: 1rem 2rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: center;
+}
+
+.navList {
+  list-style: none;
+  display: flex;
+  gap: 2rem;
+  margin: 0;
+  padding: 0;
+}
+
+.navList a {
+  text-decoration: none;
+  color: var(--secondary);
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.navList a:hover {
+  color: var(--primary);
+}
+
+.main {
+  flex: 1;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 4rem 2rem;
+  width: 100%;
+}
+
+.hero {
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.title {
+  font-size: 3.5rem;
+  margin-bottom: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.05rem;
+}
+
+.description {
+  font-size: 1.25rem;
+  color: var(--secondary);
+  max-width: 600px;
+  margin: 0 auto 2.5rem;
+  line-height: 1.6;
+}
+
+.ctas {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.ctas a {
+  padding: 0.8rem 2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.primary {
+  background-color: var(--primary);
+  color: white;
+}
+
+.secondary {
+  border: 1px solid var(--border);
+  color: var(--foreground);
+}
+
+.ctas a:hover {
+  opacity: 0.9;
+}
+
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.card {
+  padding: 2rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: border-color 0.2s;
+}
+
+.card:hover {
+  border-color: var(--primary);
+}
+
+.card h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.card p {
+  margin: 0;
+  color: var(--secondary);
+  line-height: 1.5;
+}
+
+.footer {
+  padding: 2rem;
+  border-top: 1px solid var(--border);
+  text-align: center;
+  color: var(--secondary);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  .title {
+    font-size: 2.5rem;
+  }
+  
+  .ctas {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .page {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+    --secondary: #a0a0a0;
+    --border: #333333;
+    --accent: #111111;
+  }
+}
