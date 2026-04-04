@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   BarChart,
   Bar,
@@ -20,13 +20,34 @@ interface CpiChartProps {
 }
 
 export default function CpiChart({ data }: CpiChartProps) {
-  // 1990年以降のデータに限定
-  const filteredData = data.filter((item) => {
-    const yearMatch = item.年月.match(/^(\d{4})年/);
-    if (!yearMatch) return false;
-    const year = parseInt(yearMatch[1], 10);
-    return year >= 1990;
-  });
+  // 全ての年を抽出
+  const allYears = useMemo(() => {
+    const years = new Set<number>();
+    data.forEach((item) => {
+      const yearMatch = item.年月.match(/^(\d{4})年/);
+      if (yearMatch) {
+        years.add(parseInt(yearMatch[1], 10));
+      }
+    });
+    return Array.from(years).sort((a, b) => a - b);
+  }, [data]);
+
+  // 表示範囲のステート（初期値は1990年以降、またはデータ全体の範囲）
+  const initialStartYear = allYears.find((y) => y >= 1990) || allYears[0] || 0;
+  const initialEndYear = allYears[allYears.length - 1] || 0;
+
+  const [startYear, setStartYear] = useState(initialStartYear);
+  const [endYear, setEndYear] = useState(initialEndYear);
+
+  // ステートに基づいてデータをフィルタリング
+  const filteredData = useMemo(() => {
+    return data.filter((item) => {
+      const yearMatch = item.年月.match(/^(\d{4})年/);
+      if (!yearMatch) return false;
+      const year = parseInt(yearMatch[1], 10);
+      return year >= startYear && year <= endYear;
+    });
+  }, [data, startYear, endYear]);
 
   // 表示・非表示を管理するステート（初期値は全て表示）
   const [hiddenKeys, setHiddenKeys] = useState<string[]>([]);
@@ -51,6 +72,38 @@ export default function CpiChart({ data }: CpiChartProps) {
 
   return (
     <div className={styles.chartContainer}>
+      <div className={styles.filterContainer}>
+        <div className={styles.filterItem}>
+          <label htmlFor="startYear">開始年:</label>
+          <select
+            id="startYear"
+            value={startYear}
+            onChange={(e) => setStartYear(parseInt(e.target.value, 10))}
+            className={styles.select}
+          >
+            {allYears.map((year) => (
+              <option key={year} value={year} disabled={year > endYear}>
+                {year}年
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className={styles.filterItem}>
+          <label htmlFor="endYear">終了年:</label>
+          <select
+            id="endYear"
+            value={endYear}
+            onChange={(e) => setEndYear(parseInt(e.target.value, 10))}
+            className={styles.select}
+          >
+            {allYears.map((year) => (
+              <option key={year} value={year} disabled={year < startYear}>
+                {year}年
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
       <div className={styles.chartWrapper}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
