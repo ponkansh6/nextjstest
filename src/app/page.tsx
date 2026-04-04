@@ -1,53 +1,61 @@
+import fs from "fs";
+import path from "path";
+import Papa from "papaparse";
+import CpiChart from "./components/CpiChart";
 import styles from "./page.module.css";
 
-export default function Home() {
+export interface CpiData {
+  年月: string;
+  総合: number;
+  生鮮食品を除く総合: number;
+  持家の帰属家賃を除く総合: number;
+  [key: string]: string | number;
+}
+
+export default async function Page() {
+  const filePath = path.join(process.cwd(), "public/cpi_data.csv");
+  let cleanData: CpiData[] = [];
+
+  try {
+    if (fs.existsSync(filePath)) {
+      const fileContent = fs.readFileSync(filePath, "utf8");
+
+      const { data } = Papa.parse<CpiData>(fileContent, {
+        header: true,
+        skipEmptyLines: true,
+        dynamicTyping: true,
+      });
+
+      // 必要に応じてデータのクリーニング（例：年月が空のものを除外）
+      cleanData = data.filter((row: Record<string, unknown>) => row["年月"]);
+    } else {
+      console.error("Data file not found at:", filePath);
+    }
+  } catch (error) {
+    console.error("Error reading or parsing CSV:", error);
+  }
+
   return (
-    <div className={styles.page}>
-      <header className={styles.header}>
-        <nav>
-          <ul className={styles.navList}>
-            <li><a href="#">ホーム</a></li>
-            <li><a href="#">サービス</a></li>
-            <li><a href="#">お問い合わせ</a></li>
-          </ul>
-        </nav>
-      </header>
-      
-      <main className={styles.main}>
-        <div className={styles.hero}>
-          <h1 className={styles.title}>Next.js サンプルホームページ</h1>
-          <p className={styles.description}>
-            これはNext.jsを使用して作成されたシンプルなホームページのサンプルです。
-            App Router、TypeScript、そしてVanilla CSSを使用しています。
+    <div className={`container ${styles.pageWrapper}`}>
+      <div className={styles.header}>
+        <h1 className={styles.title}>消費者物価指数 (CPI) グラフ可視化</h1>
+        <p className={styles.description}>
+          日本の消費者物価指数の推移を表示します。
+        </p>
+      </div>
+
+      {cleanData.length > 0 ? (
+        <CpiChart data={cleanData} />
+      ) : (
+        <div className={styles.errorContainer}>
+          <p className={styles.errorMessage}>
+            データの読み込みに失敗したか、データが空です。
           </p>
-          <div className={styles.ctas}>
-            <a href="https://nextjs.org/docs" className={styles.primary}>
-              ドキュメントを読む
-            </a>
-            <a href="#" className={styles.secondary}>
-              詳細を見る
-            </a>
-          </div>
+          <p className={styles.errorSubMessage}>
+            public/cpi_data.csv ファイルを確認してください。
+          </p>
         </div>
-
-        <section className={styles.features}>
-          <div className={styles.card}>
-            <h3>高速なパフォーマンス</h3>
-            <p>Next.jsの最適化機能により、高速読み込みを実現。</p>
-          </div>
-          <div className={styles.card}>
-            <h3>レスポンシブデザイン</h3>
-            <p>モバイルからデスクトップまで、あらゆるデバイスに対応。</p>
-          </div>
-          <div className={styles.card}>
-            <h3>簡単な開発</h3>
-            <p>直感的なルーティングと強力な開発ツールを提供。</p>
-          </div>
-        </section>
-      </main>
-
-      <footer className={styles.footer}>
-      </footer>
+      )}
     </div>
   );
 }

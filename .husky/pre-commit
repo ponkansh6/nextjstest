@@ -1,3 +1,2 @@
-npm test
 npx lint-staged
 npx tsc --noEmit

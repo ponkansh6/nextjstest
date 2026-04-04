@@ -1,0 +1,32 @@
+.chartContainer {
+  width: 100%;
+  background-color: white;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--gray-100);
+}
+
+.chartWrapper {
+  height: 500px;
+  width: 100%;
+}
+
+.infoContainer {
+  margin-top: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--gray-400);
+  background-color: var(--gray-50);
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-radius: 0.5rem;
+}
+
+.infoIcon {
+  height: 1rem;
+  width: 1rem;
+}
