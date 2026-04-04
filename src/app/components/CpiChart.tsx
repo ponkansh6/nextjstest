@@ -2,8 +2,8 @@
 
 import React, { useState } from "react";
 import {
-  LineChart,
-  Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -20,6 +20,14 @@ interface CpiChartProps {
 }
 
 export default function CpiChart({ data }: CpiChartProps) {
+  // 1990年以降のデータに限定
+  const filteredData = data.filter((item) => {
+    const yearMatch = item.年月.match(/^(\d{4})年/);
+    if (!yearMatch) return false;
+    const year = parseInt(yearMatch[1], 10);
+    return year >= 1990;
+  });
+
   // 表示・非表示を管理するステート（初期値は全て表示）
   const [hiddenKeys, setHiddenKeys] = useState<string[]>([]);
 
@@ -41,8 +49,8 @@ export default function CpiChart({ data }: CpiChartProps) {
     <div className={styles.chartContainer}>
       <div className={styles.chartWrapper}>
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart
-            data={data}
+          <BarChart
+            data={filteredData}
             margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
           >
             <CartesianGrid
@@ -90,19 +98,15 @@ export default function CpiChart({ data }: CpiChartProps) {
             />
 
             {targetKeys.map((key, index) => (
-              <Line
+              <Bar
                 key={key}
-                type="monotone"
                 dataKey={key}
-                stroke={colors[index]}
+                fill={colors[index]}
                 hide={hiddenKeys.includes(key)}
-                strokeWidth={3}
-                dot={{ r: 4, strokeWidth: 2, fill: "#fff" }}
-                activeDot={{ r: 7, strokeWidth: 0 }}
                 animationDuration={1000}
               />
             ))}
-          </LineChart>
+          </BarChart>
         </ResponsiveContainer>
       </div>
       <div className={styles.infoContainer}>
