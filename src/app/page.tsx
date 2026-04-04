@@ -13,23 +13,62 @@ export interface CpiData {
 }
 
 export default async function Page() {
-  const filePath = path.join(process.cwd(), "public/cpi_data.csv");
+  const cpiFilePath = path.join(process.cwd(), "public/cpi_data.csv");
+  const contributionFilePath = path.join(
+    process.cwd(),
+    "public/contribution.csv",
+  );
   let cleanData: CpiData[] = [];
 
   try {
-    if (fs.existsSync(filePath)) {
-      const fileContent = fs.readFileSync(filePath, "utf8");
+    if (fs.existsSync(cpiFilePath) && fs.existsSync(contributionFilePath)) {
+      const cpiContent = fs.readFileSync(cpiFilePath, "utf8");
+      const contributionContent = fs.readFileSync(contributionFilePath, "utf8");
 
-      const { data } = Papa.parse<CpiData>(fileContent, {
+      // ウエイト情報の取得
+      const contributionLines = contributionContent.split("\n");
+      const categoryLine = contributionLines.find((line) =>
+        line.startsWith("類・品目"),
+      );
+      const weightLine = contributionLines.find((line) =>
+        line.startsWith("ウエイト"),
+      );
+
+      const weights: Record<string, number> = {};
+      if (categoryLine && weightLine) {
+        const categories = categoryLine.split(",");
+        const weightValues = weightLine.split(",");
+        categories.forEach((cat, i) => {
+          const trimmedCat = cat.trim();
+          const weight = parseFloat(weightValues[i]);
+          if (trimmedCat && !isNaN(weight)) {
+            weights[trimmedCat] = weight;
+          }
+        });
+      }
+
+      const { data } = Papa.parse<CpiData>(cpiContent, {
         header: true,
         skipEmptyLines: true,
         dynamicTyping: true,
       });
 
-      // 必要に応じてデータのクリーニング（例：年月が空のものを除外）
-      cleanData = data.filter((row: Record<string, unknown>) => row["年月"]);
+      // データのクリーニングとウエイトの掛け合わせ
+      cleanData = (data as CpiData[])
+        .filter((row) => row["年月"])
+        .map((row) => {
+          const newRow: CpiData = { ...row };
+          Object.keys(weights).forEach((key) => {
+            const value = row[key];
+            if (typeof value === "number") {
+              // 寄与度 = (指数 * ウエイト) / 10000
+              newRow[key] = (value * weights[key]) / 10000;
+            }
+          });
+          return newRow;
+        });
     } else {
-      console.error("Data file not found at:", filePath);
+      console.error("Data files not found");
     }
   } catch (error) {
     console.error("Error reading or parsing CSV:", error);

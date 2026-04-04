@@ -42,7 +42,11 @@ export default function CpiChart({ data }: CpiChartProps) {
   };
 
   // 表示したい項目リスト
-  const targetKeys = ["総合", "生鮮食品を除く総合", "持家の帰属家賃を除く総合"];
+  const targetKeys = [
+    "総合",
+    "生鮮食品を除く総合",
+    "生鮮食品及びエネルギーを除く総合",
+  ];
   const colors = ["#8884d8", "#82ca9d", "#ffc658"];
 
   return (
