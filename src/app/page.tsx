@@ -33,15 +33,15 @@ export default function Home() {
         <section className={styles.features}>
           <div className={styles.card}>
             <h3>高速なパフォーマンス</h3>
-            <p>Next.jsの最適化機能により、高速な読み込みを実現します。</p>
+            <p>Next.jsの最適化機能により、高速読み込みを実現。</p>
           </div>
           <div className={styles.card}>
             <h3>レスポンシブデザイン</h3>
-            <p>モバイルからデスクトップまで、あらゆるデバイスに対応します。</p>
+            <p>モバイルからデスクトップまで、あらゆるデバイスに対応。</p>
           </div>
           <div className={styles.card}>
             <h3>簡単な開発</h3>
-            <p>直感的なルーティングと強力な開発ツールを提供します。</p>
+            <p>直感的なルーティングと強力な開発ツールを提供。</p>
           </div>
         </section>
       </main>
