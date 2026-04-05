@@ -53,9 +53,14 @@ export default async function Page() {
         dynamicTyping: true,
       });
 
-      // データのクリーニングとウエイトの掛け合わせ
+      // データのクリーニングとウエイトの掛け合わせ（2005年以降のみ）
       cleanData = (data as CpiData[])
-        .filter((row) => row["年月"])
+        .filter((row) => {
+          if (!row["年月"]) return false;
+          const yearMatch = (row["年月"] as string).match(/^(\d{4})年/);
+          const year = yearMatch ? parseInt(yearMatch[1], 10) : 0;
+          return year >= 2005;
+        })
         .map((row) => {
           const newRow: CpiData = { ...row };
           Object.keys(weights).forEach((key) => {

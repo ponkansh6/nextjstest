@@ -32,8 +32,8 @@ export default function CpiChart({ data }: CpiChartProps) {
     return Array.from(years).sort((a, b) => a - b);
   }, [data]);
 
-  // 表示範囲のステート（初期値は1990年以降、またはデータ全体の範囲）
-  const initialStartYear = allYears.find((y) => y >= 1990) || allYears[0] || 0;
+  // 表示範囲のステート（初期値は2005年以降、またはデータ全体の範囲）
+  const initialStartYear = allYears.find((y) => y >= 2005) || allYears[0] || 0;
   const initialEndYear = allYears[allYears.length - 1] || 0;
 
   const [startYear, setStartYear] = useState(initialStartYear);
