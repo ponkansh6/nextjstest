@@ -217,7 +217,7 @@ export default function CpiChart({ data }: CpiChartProps) {
                 dy={10}
               />
               <YAxis
-                domain={["auto", "auto"]}
+                domain={[0, "auto"]}
                 axisLine={false}
                 tickLine={false}
                 tick={{ fill: chartColors.axisText, fontSize: 12 }}
