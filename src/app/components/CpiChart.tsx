@@ -203,7 +203,7 @@ export default function CpiChart({ data }: CpiChartProps) {
                   dataKey={key}
                   fill={colors[index]}
                   hide={hiddenKeys.includes(key)}
-                  animationDuration={1000}
+                  isAnimationActive={false}
                 />
               ))}
             </BarChart>
@@ -212,7 +212,7 @@ export default function CpiChart({ data }: CpiChartProps) {
       </div>
 
       <div className={styles.chartSection}>
-        <h2 className={styles.chartTitle}>CPI 10大費目の寄与度 (積み上げ)</h2>
+        <h2 className={styles.chartTitle}>CPI費目別積み上げ</h2>
         <div className={styles.chartWrapper}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
@@ -269,7 +269,7 @@ export default function CpiChart({ data }: CpiChartProps) {
                   stackId="a"
                   fill={stackedColors[index]}
                   hide={stackedHiddenKeys.includes(key)}
-                  animationDuration={1000}
+                  isAnimationActive={false}
                 />
               ))}
             </BarChart>
