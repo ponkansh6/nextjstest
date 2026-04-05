@@ -39,14 +39,23 @@ export default function CpiChart({ data }: CpiChartProps) {
   const [startYear, setStartYear] = useState(initialStartYear);
   const [endYear, setEndYear] = useState(initialEndYear);
 
-  // ステートに基づいてデータをフィルタリング
+  // ステートに基づいてデータをフィルタリングし、派生データを計算
   const filteredData = useMemo(() => {
-    return data.filter((item) => {
-      const yearMatch = item.年月.match(/^(\d{4})年/);
-      if (!yearMatch) return false;
-      const year = parseInt(yearMatch[1], 10);
-      return year >= startYear && year <= endYear;
-    });
+    return data
+      .filter((item) => {
+        const yearMatch = item.年月.match(/^(\d{4})年/);
+        if (!yearMatch) return false;
+        const year = parseInt(yearMatch[1], 10);
+        return year >= startYear && year <= endYear;
+      })
+      .map((item) => {
+        const newItem = { ...item };
+        // 外食以外食料 = 食料 - 外食
+        const foodTotal = typeof item.食料 === "number" ? item.食料 : 0;
+        const dinedOut = typeof item.外食 === "number" ? item.外食 : 0;
+        newItem["外食以外食料"] = foodTotal - dinedOut;
+        return newItem;
+      });
   }, [data, startYear, endYear]);
 
   // 表示・非表示を管理するステート（初期値は全て表示）
@@ -78,29 +87,35 @@ export default function CpiChart({ data }: CpiChartProps) {
   ];
   const colors = ["#8884d8", "#82ca9d", "#ffc658"];
 
-  // 10大費目のリストとカラー
+  // 10大費目のリストとカラー（細分化版）
   const stackedKeys = [
-    "食料",
+    "外食以外食料",
+    "外食",
     "住居",
     "光熱・水道",
     "家具・家事用品",
     "被服及び履物",
     "保健医療",
-    "交通・通信",
+    "交通",
+    "通信",
     "教育",
-    "教養娯楽",
+    "教養娯楽用品",
+    "教養娯楽サービス",
     "諸雑費",
   ];
   const stackedColors = [
-    "#ef4444", // 食料
+    "#ef4444", // 外食以外食料
+    "#dc2626", // 外食
     "#3b82f6", // 住居
     "#f59e0b", // 光熱・水道
     "#10b981", // 家具・家事用品
     "#6366f1", // 被服及び履物
     "#ec4899", // 保健医療
-    "#06b6d4", // 交通・通信
+    "#06b6d4", // 交通
+    "#0891b2", // 通信
     "#8b5cf6", // 教育
-    "#f97316", // 教養娯楽
+    "#f97316", // 教養娯楽用品
+    "#fb923c", // 教養娯楽サービス
     "#64748b", // 諸雑費
   ];
 
