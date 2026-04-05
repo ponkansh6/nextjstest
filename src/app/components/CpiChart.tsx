@@ -86,6 +86,7 @@ export default function CpiChart({ data }: CpiChartProps) {
     "被服及び履物",
     "保健医療",
     "交通",
+    "自動車等関係費",
     "通信",
     "教育",
     "教養娯楽用品",
@@ -101,6 +102,7 @@ export default function CpiChart({ data }: CpiChartProps) {
     "#6366f1", // 被服及び履物
     "#ec4899", // 保健医療
     "#06b6d4", // 交通
+    "#d946ef", // 自動車等関係費
     "#0891b2", // 通信
     "#8b5cf6", // 教育
     "#f97316", // 教養娯楽用品
