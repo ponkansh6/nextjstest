@@ -39,23 +39,14 @@ export default function CpiChart({ data }: CpiChartProps) {
   const [startYear, setStartYear] = useState(initialStartYear);
   const [endYear, setEndYear] = useState(initialEndYear);
 
-  // ステートに基づいてデータをフィルタリングし、派生データを計算
+  // ステートに基づいてデータをフィルタリング（派生データはサーバー側で計算済み）
   const filteredData = useMemo(() => {
-    return data
-      .filter((item) => {
-        const yearMatch = item.年月.match(/^(\d{4})年/);
-        if (!yearMatch) return false;
-        const year = parseInt(yearMatch[1], 10);
-        return year >= startYear && year <= endYear;
-      })
-      .map((item) => {
-        const newItem = { ...item };
-        // 外食以外食料 = 食料 - 外食
-        const foodTotal = typeof item.食料 === "number" ? item.食料 : 0;
-        const dinedOut = typeof item.外食 === "number" ? item.外食 : 0;
-        newItem["外食以外食料"] = foodTotal - dinedOut;
-        return newItem;
-      });
+    return data.filter((item) => {
+      const yearMatch = item.年月.match(/^(\d{4})年/);
+      if (!yearMatch) return false;
+      const year = parseInt(yearMatch[1], 10);
+      return year >= startYear && year <= endYear;
+    });
   }, [data, startYear, endYear]);
 
   // 表示・非表示を管理するステート（初期値は全て表示）
