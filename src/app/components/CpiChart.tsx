@@ -245,7 +245,6 @@ export default function CpiChart({ data }: CpiChartProps) {
                   fill={colors[index]}
                   hide={hiddenKeys.includes(key)}
                   isAnimationActive={false}
-                  barSize="80%"
                 />
               ))}
             </BarChart>
