@@ -8,7 +8,7 @@
 
 .header {
   margin-bottom: 2rem;
-  border-bottom: 1px solid var(--gray-100);
+  border-bottom: 1px solid var(--card-border);
   padding-bottom: 1rem;
 }
 
@@ -16,11 +16,11 @@
   font-size: 1.875rem;
   line-height: 2.25rem;
   font-weight: 700;
-  color: var(--gray-800);
+  color: var(--card-text);
 }
 
 .description {
-  color: var(--gray-600);
+  color: var(--gray-500);
   margin-top: 0.5rem;
 }
 
@@ -29,7 +29,7 @@
   text-align: center;
   background-color: var(--gray-50);
   border-radius: 0.5rem;
-  border: 1px dashed var(--gray-300);
+  border: 1px dashed var(--card-border);
 }
 
 .errorMessage {

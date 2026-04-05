@@ -18,6 +18,33 @@ interface CpiChartProps {
 }
 
 export default function CpiChart({ data }: CpiChartProps) {
+  // Detect dark mode
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  React.useEffect(() => {
+    // Check initial theme
+    const darkMode = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    setIsDarkMode(darkMode);
+
+    // Listen for theme changes
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleChange = (e: MediaQueryListEvent) => {
+      setIsDarkMode(e.matches);
+    };
+
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
+
+  // Chart theme colors
+  const chartColors = {
+    gridStroke: isDarkMode ? "#2a2a2a" : "#f0f0f0",
+    axisText: isDarkMode ? "#a3a3a3" : "#6b7280",
+    tooltipBg: isDarkMode
+      ? "rgba(26, 26, 26, 0.95)"
+      : "rgba(255, 255, 255, 0.95)",
+    tooltipText: isDarkMode ? "#e5e5e5" : "#000000",
+  };
   // 全ての年を抽出
   const allYears = useMemo(() => {
     const years = new Set<number>();
@@ -180,30 +207,35 @@ export default function CpiChart({ data }: CpiChartProps) {
               <CartesianGrid
                 strokeDasharray="3 3"
                 vertical={false}
-                stroke="#f0f0f0"
+                stroke={chartColors.gridStroke}
               />
               <XAxis
                 dataKey="年月"
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: "#6b7280", fontSize: 12 }}
+                tick={{ fill: chartColors.axisText, fontSize: 12 }}
                 dy={10}
               />
               <YAxis
                 domain={["auto", "auto"]}
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: "#6b7280", fontSize: 12 }}
+                tick={{ fill: chartColors.axisText, fontSize: 12 }}
                 dx={-10}
               />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: "rgba(255, 255, 255, 0.95)",
+                  backgroundColor: chartColors.tooltipBg,
                   borderRadius: "8px",
                   border: "none",
                   boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                  color: chartColors.tooltipText,
                 }}
-                labelStyle={{ fontWeight: "bold", marginBottom: "4px" }}
+                labelStyle={{
+                  fontWeight: "bold",
+                  marginBottom: "4px",
+                  color: chartColors.tooltipText,
+                }}
               />
 
               {targetKeys.map((key, index) => (
@@ -254,29 +286,34 @@ export default function CpiChart({ data }: CpiChartProps) {
               <CartesianGrid
                 strokeDasharray="3 3"
                 vertical={false}
-                stroke="#f0f0f0"
+                stroke={chartColors.gridStroke}
               />
               <XAxis
                 dataKey="年月"
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: "#6b7280", fontSize: 12 }}
+                tick={{ fill: chartColors.axisText, fontSize: 12 }}
                 dy={10}
               />
               <YAxis
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: "#6b7280", fontSize: 12 }}
+                tick={{ fill: chartColors.axisText, fontSize: 12 }}
                 dx={-10}
               />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: "rgba(255, 255, 255, 0.95)",
+                  backgroundColor: chartColors.tooltipBg,
                   borderRadius: "8px",
                   border: "none",
                   boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                  color: chartColors.tooltipText,
                 }}
-                labelStyle={{ fontWeight: "bold", marginBottom: "4px" }}
+                labelStyle={{
+                  fontWeight: "bold",
+                  marginBottom: "4px",
+                  color: chartColors.tooltipText,
+                }}
               />
 
               {stackedKeys.map((key, index) => (

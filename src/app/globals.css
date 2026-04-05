@@ -9,8 +9,20 @@
   --gray-400: #9ca3af;
   --gray-500: #6b7280;
   --gray-600: #4b5563;
+  --gray-700: #374151;
   --gray-800: #1f2937;
+  --gray-900: #111827;
   --red-500: #ef4444;
+  --blue-50: #eff6ff;
+  --blue-500: #3b82f6;
+
+  /* Component colors */
+  --card-bg: #ffffff;
+  --card-border: #f3f4f6;
+  --card-text: #1f2937;
+  --chart-text: #6b7280;
+  --chart-grid: #f0f0f0;
+  --tooltip-bg: rgba(255, 255, 255, 0.95);
 
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 }
@@ -19,6 +31,25 @@
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+
+    /* Dark mode color palette */
+    --gray-50: #1a1a1a;
+    --gray-100: #262626;
+    --gray-300: #525252;
+    --gray-400: #737373;
+    --gray-500: #a3a3a3;
+    --gray-600: #d4d4d4;
+    --gray-700: #e5e5e5;
+    --gray-800: #f5f5f5;
+    --gray-900: #ffffff;
+
+    /* Component colors for dark mode */
+    --card-bg: #1a1a1a;
+    --card-border: #262626;
+    --card-text: #e5e5e5;
+    --chart-text: #a3a3a3;
+    --chart-grid: #2a2a2a;
+    --tooltip-bg: rgba(26, 26, 26, 0.95);
   }
 }
 
