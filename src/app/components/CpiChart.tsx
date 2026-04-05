@@ -8,9 +8,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
-  type LegendPayload,
 } from "recharts";
 import { type CpiData } from "../page";
 import styles from "./CpiChart.module.css";
@@ -145,6 +143,30 @@ export default function CpiChart({ data }: CpiChartProps) {
         </div>
       </div>
 
+      <div className={styles.legendContainer}>
+        <div className={styles.legendSection}>
+          <h3 className={styles.legendTitle}>主要指数</h3>
+          <div className={styles.legendItems}>
+            {targetKeys.map((key, index) => (
+              <button
+                key={key}
+                onClick={() => handleLegendClick(key)}
+                className={`${styles.legendItem} ${
+                  hiddenKeys.includes(key) ? styles.hidden : ""
+                }`}
+                aria-pressed={!hiddenKeys.includes(key)}
+              >
+                <span
+                  className={styles.legendIcon}
+                  style={{ backgroundColor: colors[index] }}
+                />
+                <span className={styles.legendLabel}>{key}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
       <div className={styles.chartSection}>
         <h2 className={styles.chartTitle}>消費者物価指数 (主要指数)</h2>
         <div className={styles.chartWrapper}>
@@ -181,21 +203,6 @@ export default function CpiChart({ data }: CpiChartProps) {
                 }}
                 labelStyle={{ fontWeight: "bold", marginBottom: "4px" }}
               />
-              <Legend
-                onClick={(entry: LegendPayload) => {
-                  if (entry && typeof entry.dataKey === "string") {
-                    handleLegendClick(entry.dataKey);
-                  }
-                }}
-                wrapperStyle={{
-                  cursor: "pointer",
-                  paddingTop: "20px",
-                  fontSize: "14px",
-                }}
-                align="center"
-                verticalAlign="bottom"
-                iconType="circle"
-              />
 
               {targetKeys.map((key, index) => (
                 <Bar
@@ -213,6 +220,29 @@ export default function CpiChart({ data }: CpiChartProps) {
 
       <div className={styles.chartSection}>
         <h2 className={styles.chartTitle}>CPI費目別積み上げ</h2>
+        <div className={styles.legendContainer}>
+          <div className={styles.legendSection}>
+            <h3 className={styles.legendTitle}>費目</h3>
+            <div className={styles.stackedLegendItems}>
+              {stackedKeys.map((key, index) => (
+                <button
+                  key={key}
+                  onClick={() => handleStackedLegendClick(key)}
+                  className={`${styles.legendItem} ${
+                    stackedHiddenKeys.includes(key) ? styles.hidden : ""
+                  }`}
+                  aria-pressed={!stackedHiddenKeys.includes(key)}
+                >
+                  <span
+                    className={styles.legendIcon}
+                    style={{ backgroundColor: stackedColors[index] }}
+                  />
+                  <span className={styles.legendLabel}>{key}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
         <div className={styles.chartWrapper}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
@@ -246,21 +276,6 @@ export default function CpiChart({ data }: CpiChartProps) {
                 }}
                 labelStyle={{ fontWeight: "bold", marginBottom: "4px" }}
               />
-              <Legend
-                onClick={(entry: LegendPayload) => {
-                  if (entry && typeof entry.dataKey === "string") {
-                    handleStackedLegendClick(entry.dataKey);
-                  }
-                }}
-                wrapperStyle={{
-                  cursor: "pointer",
-                  paddingTop: "20px",
-                  fontSize: "14px",
-                }}
-                align="center"
-                verticalAlign="bottom"
-                iconType="circle"
-              />
 
               {stackedKeys.map((key, index) => (
                 <Bar
@@ -292,7 +307,7 @@ export default function CpiChart({ data }: CpiChartProps) {
             d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
           />
         </svg>
-        <p>凡例の項目名をクリックすると、個別に表示/非表示を切り替えられます</p>
+        <p>凡例の項目をクリックすると、個別に表示/非表示を切り替えられます</p>
       </div>
     </div>
   );
