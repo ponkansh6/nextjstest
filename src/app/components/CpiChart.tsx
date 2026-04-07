@@ -17,9 +17,75 @@ interface CpiChartProps {
   data: CpiData[];
 }
 
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: Array<{ name: string; value: number }>;
+  label?: string;
+  isMobile: boolean;
+  tooltipBg: string;
+  tooltipText: string;
+}
+
+const CustomTooltip: React.FC<CustomTooltipProps> = ({
+  active,
+  payload,
+  label,
+  isMobile,
+  tooltipBg,
+  tooltipText,
+}) => {
+  if (!active || !payload) return null;
+
+  const fontSize = isMobile ? "12px" : "14px";
+  const labelFontSize = isMobile ? "11px" : "13px";
+  const padding = isMobile ? "8px" : "12px";
+
+  return (
+    <div
+      style={{
+        backgroundColor: tooltipBg,
+        borderRadius: "8px",
+        border: "none",
+        boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+        color: tooltipText,
+        padding: padding,
+      }}
+    >
+      <p
+        style={{
+          fontWeight: "bold",
+          marginBottom: "4px",
+          margin: 0,
+          fontSize: labelFontSize,
+          color: tooltipText,
+        }}
+      >
+        {label}
+      </p>
+      {payload.map((entry, index) => (
+        <p
+          key={`item-${index}`}
+          style={{
+            margin: "2px 0",
+            fontSize: fontSize,
+            color: tooltipText,
+          }}
+        >
+          {entry.name}:{" "}
+          {typeof entry.value === "number"
+            ? entry.value.toFixed(2)
+            : entry.value}
+        </p>
+      ))}
+    </div>
+  );
+};
+
 export default function CpiChart({ data }: CpiChartProps) {
   // Detect dark mode
   const [isDarkMode, setIsDarkMode] = useState(false);
+  // Detect mobile
+  const [isMobile, setIsMobile] = useState(false);
 
   React.useEffect(() => {
     // Check initial theme
@@ -30,6 +96,21 @@ export default function CpiChart({ data }: CpiChartProps) {
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     const handleChange = (e: MediaQueryListEvent) => {
       setIsDarkMode(e.matches);
+    };
+
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
+
+  React.useEffect(() => {
+    // Check initial mobile viewport
+    const mobile = window.matchMedia("(max-width: 768px)").matches;
+    setIsMobile(mobile);
+
+    // Listen for viewport changes
+    const mediaQuery = window.matchMedia("(max-width: 768px)");
+    const handleChange = (e: MediaQueryListEvent) => {
+      setIsMobile(e.matches);
     };
 
     mediaQuery.addEventListener("change", handleChange);
@@ -226,18 +307,13 @@ export default function CpiChart({ data }: CpiChartProps) {
                 dx={-10}
               />
               <Tooltip
-                contentStyle={{
-                  backgroundColor: chartColors.tooltipBg,
-                  borderRadius: "8px",
-                  border: "none",
-                  boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-                  color: chartColors.tooltipText,
-                }}
-                labelStyle={{
-                  fontWeight: "bold",
-                  marginBottom: "4px",
-                  color: chartColors.tooltipText,
-                }}
+                content={
+                  <CustomTooltip
+                    isMobile={isMobile}
+                    tooltipBg={chartColors.tooltipBg}
+                    tooltipText={chartColors.tooltipText}
+                  />
+                }
               />
 
               {targetKeys.map((key, index) => (
@@ -322,18 +398,13 @@ export default function CpiChart({ data }: CpiChartProps) {
                 dx={-10}
               />
               <Tooltip
-                contentStyle={{
-                  backgroundColor: chartColors.tooltipBg,
-                  borderRadius: "8px",
-                  border: "none",
-                  boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-                  color: chartColors.tooltipText,
-                }}
-                labelStyle={{
-                  fontWeight: "bold",
-                  marginBottom: "4px",
-                  color: chartColors.tooltipText,
-                }}
+                content={
+                  <CustomTooltip
+                    isMobile={isMobile}
+                    tooltipBg={chartColors.tooltipBg}
+                    tooltipText={chartColors.tooltipText}
+                  />
+                }
               />
 
               {stackedKeys.map((key, index) => (
