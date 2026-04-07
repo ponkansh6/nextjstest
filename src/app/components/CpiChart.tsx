@@ -259,7 +259,24 @@ export default function CpiChart({ data }: CpiChartProps) {
         <h2 className={styles.chartTitle}>CPI費目別積み上げ</h2>
         <div className={styles.legendContainer}>
           <div className={styles.legendSection}>
-            <h3 className={styles.legendTitle}>費目</h3>
+            <div className={styles.legendHeader}>
+              <h3 className={styles.legendTitle}>費目</h3>
+              <div className={styles.legendActions}>
+                <button
+                  onClick={() =>
+                    setStackedHiddenKeys((prev) =>
+                      prev.length === stackedKeys.length
+                        ? []
+                        : [...stackedKeys],
+                    )
+                  }
+                  className={styles.actionButton}
+                  aria-label="全選択解除"
+                >
+                  全選択解除
+                </button>
+              </div>
+            </div>
             <div className={styles.stackedLegendItems}>
               {stackedKeys.map((key, index) => (
                 <button
