@@ -218,6 +218,54 @@ export default function CpiChart({ data }: CpiChartProps) {
     "#64748b", // 諸雑費
   ];
 
+  // CAGR計算用のステート
+  const [cagrStartYear, setCagrStartYear] = useState<number>(initialStartYear);
+  const [cagrEndYear, setCagrEndYear] = useState<number>(initialEndYear);
+  const [cagrMonth, setCagrMonth] = useState<number>(1);
+  const [cagrResult, setCagrResult] = useState<number | null>(null);
+
+  // 選択中のカテゴリで特定の年月データの合計を計算
+  const calculateCategorySum = (year: number, month: number): number => {
+    const monthStr = String(month).padStart(2, "0");
+    const targetYearMonth = `${year}年${monthStr}月`;
+
+    const dataPoint = filteredData.find(
+      (item) => item.年月 === targetYearMonth,
+    );
+    if (!dataPoint) return 0;
+
+    let sum = 0;
+    stackedKeys.forEach((key) => {
+      if (!stackedHiddenKeys.includes(key)) {
+        const value = dataPoint[key];
+        if (typeof value === "number") {
+          sum += value;
+        }
+      }
+    });
+    return sum;
+  };
+
+  // CAGR計算関数
+  const calculateCAGR = (): void => {
+    if (cagrStartYear === cagrEndYear) {
+      alert("開始年と終了年が異なる必要があります");
+      return;
+    }
+
+    const startValue = calculateCategorySum(cagrStartYear, cagrMonth);
+    const endValue = calculateCategorySum(cagrEndYear, cagrMonth);
+
+    if (startValue === 0 || endValue === 0) {
+      alert("指定された年月のデータが見つかりません");
+      return;
+    }
+
+    const years = cagrEndYear - cagrStartYear;
+    const cagr = Math.pow(endValue / startValue, 1 / years) - 1;
+    setCagrResult(cagr);
+  };
+
   return (
     <div className={styles.chartContainer}>
       <div className={styles.filterContainer}>
@@ -420,6 +468,89 @@ export default function CpiChart({ data }: CpiChartProps) {
             </BarChart>
           </ResponsiveContainer>
         </div>
+      </div>
+
+      <div className={styles.cagrSection}>
+        <h2 className={styles.chartTitle}>年率上昇率（CAGR）計算</h2>
+        <div className={styles.cagrContainer}>
+          <div className={styles.cagrControls}>
+            <div className={styles.cagrItem}>
+              <label htmlFor="cagrStartYear">開始年:</label>
+              <select
+                id="cagrStartYear"
+                value={cagrStartYear}
+                onChange={(e) => setCagrStartYear(parseInt(e.target.value, 10))}
+                className={styles.select}
+              >
+                {allYears.map((year) => (
+                  <option key={year} value={year} disabled={year > cagrEndYear}>
+                    {year}年
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className={styles.cagrItem}>
+              <label htmlFor="cagrEndYear">終了年:</label>
+              <select
+                id="cagrEndYear"
+                value={cagrEndYear}
+                onChange={(e) => setCagrEndYear(parseInt(e.target.value, 10))}
+                className={styles.select}
+              >
+                {allYears.map((year) => (
+                  <option
+                    key={year}
+                    value={year}
+                    disabled={year < cagrStartYear}
+                  >
+                    {year}年
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className={styles.cagrItem}>
+              <label htmlFor="cagrMonth">評価月:</label>
+              <select
+                id="cagrMonth"
+                value={cagrMonth}
+                onChange={(e) => setCagrMonth(parseInt(e.target.value, 10))}
+                className={styles.select}
+              >
+                {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
+                  <option key={month} value={month}>
+                    {String(month).padStart(2, "0")}月
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <button
+              onClick={calculateCAGR}
+              className={styles.calculateButton}
+              disabled={cagrStartYear === cagrEndYear}
+            >
+              Calculate
+            </button>
+          </div>
+
+          {cagrResult !== null && (
+            <div className={styles.cagrResult}>
+              <p className={styles.cagrResultLabel}>年率上昇率（CAGR）:</p>
+              <p className={styles.cagrResultValue}>
+                {(cagrResult * 100).toFixed(2)}%
+              </p>
+              <p className={styles.cagrResultDetail}>
+                {cagrStartYear}年{String(cagrMonth).padStart(2, "0")}月 →{" "}
+                {cagrEndYear}年{String(cagrMonth).padStart(2, "0")}月
+              </p>
+            </div>
+          )}
+        </div>
+        <p className={styles.cagrNote}>
+          ※ 積み上げ棒グラフの凡例で選択された費目の合計を基準に計算します
+        </p>
       </div>
 
       <div className={styles.infoContainer}>
