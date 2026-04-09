@@ -225,13 +225,12 @@ export default function CpiChart({ data }: CpiChartProps) {
   const [cagrResult, setCagrResult] = useState<number | null>(null);
 
   // 選択中のカテゴリで特定の年月データの合計を計算
+  // 注: CAGR計算では年月がフィルタリング範囲外の場合もあるため、元のdataを使用
   const calculateCategorySum = (year: number, month: number): number => {
     const monthStr = String(month).padStart(2, "0");
     const targetYearMonth = `${year}年${monthStr}月`;
 
-    const dataPoint = filteredData.find(
-      (item) => item.年月 === targetYearMonth,
-    );
+    const dataPoint = data.find((item) => item.年月 === targetYearMonth);
     if (!dataPoint) return 0;
 
     let sum = 0;
@@ -256,8 +255,19 @@ export default function CpiChart({ data }: CpiChartProps) {
     const startValue = calculateCategorySum(cagrStartYear, cagrMonth);
     const endValue = calculateCategorySum(cagrEndYear, cagrMonth);
 
-    if (startValue === 0 || endValue === 0) {
-      alert("指定された年月のデータが見つかりません");
+    if (startValue === 0) {
+      const monthStr = String(cagrMonth).padStart(2, "0");
+      alert(
+        `あるはずの年月でデータが見つかりません: ${cagrStartYear}年${monthStr}月`,
+      );
+      return;
+    }
+
+    if (endValue === 0) {
+      const monthStr = String(cagrMonth).padStart(2, "0");
+      alert(
+        `あるはずの年月でデータが見つかりません: ${cagrEndYear}年${monthStr}月`,
+      );
       return;
     }
 
