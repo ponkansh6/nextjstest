@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "npx playwright test"
+    "security-check": "npm audit --audit-level=high && secretlint \"**/*\""
   },
   "dependencies": {
     "next": "16.2.1",
@@ -28,6 +28,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
     "prettier": "^3.8.1",
+    "secretlint": "^11.6.0",
     "typescript": "^5"
   },
   "lint-staged": {

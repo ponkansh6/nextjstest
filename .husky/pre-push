@@ -1,3 +1,4 @@
+npm run security-check
 npx lint-staged
 npx tsc --noEmit
 npm run build
