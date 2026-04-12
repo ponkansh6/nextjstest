@@ -183,7 +183,8 @@ export default function CpiChart({ data }: CpiChartProps) {
     "生鮮食品及びエネルギーを除く総合",
     "食料（酒類を除く）及びエネルギーを除く総合",
   ];
-  const colors = ["#8884d8", "#82ca9d", "#ffc658", "#a78bfa"];
+  // 色をより識別しやすいパレットに更新（コントラストと色相の差を重視）
+  const colors = ["#2b8cbe", "#e66101", "#4daf4a", "#984ea3"];
 
   // 10大費目のリストとカラー（細分化版）
   const stackedKeys = [
