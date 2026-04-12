@@ -181,8 +181,9 @@ export default function CpiChart({ data }: CpiChartProps) {
     "総合",
     "生鮮食品を除く総合",
     "生鮮食品及びエネルギーを除く総合",
+    "食料（酒類を除く）及びエネルギーを除く総合",
   ];
-  const colors = ["#8884d8", "#82ca9d", "#ffc658"];
+  const colors = ["#8884d8", "#82ca9d", "#ffc658", "#a78bfa"];
 
   // 10大費目のリストとカラー（細分化版）
   const stackedKeys = [
@@ -252,7 +253,7 @@ export default function CpiChart({ data }: CpiChartProps) {
   // CAGR計算関数
   const calculateCAGR = (): void => {
     if (cagrStartYear === cagrEndYear) {
-      alert("開始年と終了年が異なる必要があります");
+      alert("開始年と終了年は異なる年を選択してください（同じ年は指定できません）。");
       return;
     }
 
@@ -262,7 +263,7 @@ export default function CpiChart({ data }: CpiChartProps) {
     if (startValue === 0) {
       const monthStr = String(cagrMonth).padStart(2, "0");
       alert(
-        `あるはずの年月でデータが見つかりません: ${cagrStartYear}年${monthStr}月`,
+        `開始年月のデータが見つかりません: ${cagrStartYear}年${monthStr}月。積み上げの凡例で必要な費目が選択されているか確認してください。`,
       );
       return;
     }
@@ -270,7 +271,7 @@ export default function CpiChart({ data }: CpiChartProps) {
     if (endValue === 0) {
       const monthStr = String(cagrMonth).padStart(2, "0");
       alert(
-        `あるはずの年月でデータが見つかりません: ${cagrEndYear}年${monthStr}月`,
+        `終了年月のデータが見つかりません: ${cagrEndYear}年${monthStr}月。積み上げの凡例で必要な費目が選択されているか確認してください。`,
       );
       return;
     }
