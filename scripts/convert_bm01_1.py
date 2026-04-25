@@ -240,6 +240,58 @@ def main():
                         out.at[i, tc] = s.iloc[i]
             else:
                 continue
+
+        # --- New: append rows that exist in source but not in the target (追加行対応) ---
+        try:
+            src_yms = [str(x) for x in src_indexed.index.astype(str).tolist()]
+        except Exception:
+            src_yms = []
+        target_yms = [str(x) for x in out['年月'].astype(str).tolist()]
+        new_yms = [y for y in src_yms if y not in target_yms]
+        if new_yms:
+            new_rows = []
+            for ym in new_yms:
+                # start with empty row matching out's columns
+                row = {c: pd.NA for c in out.columns}
+                row['年月'] = ym
+                for tc in target_cols:
+                    sc = mapped.get(tc)
+                    # positional Unnamed mapping (same logic as above)
+                    if sc is None:
+                        m = re.match(r'^Unnamed:\s*(\d+)$', str(tc))
+                        if m:
+                            idx = int(m.group(1))
+                            try:
+                                index_pos = list(src.columns).index('年月')
+                                col_pos = idx if idx < index_pos else idx - 1
+                                if 0 <= col_pos < src.shape[1]:
+                                    val = src_indexed.iloc[:, col_pos].get(ym, pd.NA)
+                                    if pd.notna(val):
+                                        row[tc] = str(val)
+                                    continue
+                            except Exception:
+                                pass
+                        # fallback: leave as NA
+                        continue
+                    # normal mapping
+                    if sc in src_indexed.columns:
+                        try:
+                            val = src_indexed.at[ym, sc]
+                        except Exception:
+                            val = pd.NA
+                        if pd.notna(val):
+                            row[tc] = str(val)
+                    elif sc in src.columns:
+                        try:
+                            sr = src.set_index('年月')[sc]
+                            val = sr.get(ym, pd.NA)
+                            if pd.notna(val):
+                                row[tc] = str(val)
+                        except Exception:
+                            pass
+                new_rows.append(row)
+            if new_rows:
+                out = pd.concat([out, pd.DataFrame(new_rows)], ignore_index=True, sort=False)
     else:
         # default behavior: preserve target column order and copy columns from source by mapped names
         out = pd.DataFrame()
