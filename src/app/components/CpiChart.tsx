@@ -2,8 +2,6 @@
 
 import React, { useState, useMemo } from "react";
 import {
-  BarChart,
-  Bar,
   AreaChart,
   Area,
   XAxis,
@@ -334,11 +332,9 @@ export default function CpiChart({ data }: CpiChartProps) {
         <h2 className={styles.chartTitle}>消費者物価指数 (主要指数)</h2>
         <div className={styles.chartWrapper}>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart
+            <AreaChart
               data={filteredData}
               margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
-              barGap={0}
-              barCategoryGap={0}
             >
               <CartesianGrid
                 strokeDasharray="3 3"
@@ -370,16 +366,18 @@ export default function CpiChart({ data }: CpiChartProps) {
               />
 
               {targetKeys.map((key, index) => (
-                <Bar
+                <Area
                   key={key}
                   dataKey={key}
+                  type="monotone"
+                  stroke={colors[index]}
                   fill={colors[index]}
-                  fillOpacity={0.9}
+                  fillOpacity={0.4}
                   hide={hiddenKeys.includes(key)}
                   isAnimationActive={false}
                 />
               ))}
-            </BarChart>
+            </AreaChart>
           </ResponsiveContainer>
         </div>
       </div>
