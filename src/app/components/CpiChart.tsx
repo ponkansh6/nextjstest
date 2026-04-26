@@ -337,8 +337,8 @@ export default function CpiChart({ data }: CpiChartProps) {
             <BarChart
               data={filteredData}
               margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
-              barGap="-100%"
-              barCategoryGap="20%"
+              barGap={0}
+              barCategoryGap={0}
             >
               <CartesianGrid
                 strokeDasharray="3 3"
