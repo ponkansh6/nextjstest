@@ -466,7 +466,7 @@ export default function CpiChart({ data }: CpiChartProps) {
                   dataKey={key}
                   stackId="a"
                   type="monotone"
-                  stroke={stackedColors[index]}
+                  stroke="none"
                   fill={stackedColors[index]}
                   hide={stackedHiddenKeys.includes(key)}
                   isAnimationActive={false}
