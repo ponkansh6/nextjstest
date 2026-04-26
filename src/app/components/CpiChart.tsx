@@ -4,6 +4,8 @@ import React, { useState, useMemo } from "react";
 import {
   BarChart,
   Bar,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -83,39 +85,26 @@ const CustomTooltip: React.FC<CustomTooltipProps> = ({
 
 export default function CpiChart({ data }: CpiChartProps) {
   // Detect dark mode
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const isDarkMode = React.useSyncExternalStore(
+    React.useCallback((callback: () => void) => {
+      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+      mediaQuery.addEventListener("change", callback);
+      return () => mediaQuery.removeEventListener("change", callback);
+    }, []),
+    () => window.matchMedia("(prefers-color-scheme: dark)").matches,
+    () => false
+  );
+
   // Detect mobile
-  const [isMobile, setIsMobile] = useState(false);
-
-  React.useEffect(() => {
-    // Check initial theme
-    const darkMode = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    setIsDarkMode(darkMode);
-
-    // Listen for theme changes
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    const handleChange = (e: MediaQueryListEvent) => {
-      setIsDarkMode(e.matches);
-    };
-
-    mediaQuery.addEventListener("change", handleChange);
-    return () => mediaQuery.removeEventListener("change", handleChange);
-  }, []);
-
-  React.useEffect(() => {
-    // Check initial mobile viewport
-    const mobile = window.matchMedia("(max-width: 768px)").matches;
-    setIsMobile(mobile);
-
-    // Listen for viewport changes
-    const mediaQuery = window.matchMedia("(max-width: 768px)");
-    const handleChange = (e: MediaQueryListEvent) => {
-      setIsMobile(e.matches);
-    };
-
-    mediaQuery.addEventListener("change", handleChange);
-    return () => mediaQuery.removeEventListener("change", handleChange);
-  }, []);
+  const isMobile = React.useSyncExternalStore(
+    React.useCallback((callback: () => void) => {
+      const mediaQuery = window.matchMedia("(max-width: 768px)");
+      mediaQuery.addEventListener("change", callback);
+      return () => mediaQuery.removeEventListener("change", callback);
+    }, []),
+    () => window.matchMedia("(max-width: 768px)").matches,
+    () => false
+  );
 
   // Chart theme colors
   const chartColors = {
@@ -439,7 +428,7 @@ export default function CpiChart({ data }: CpiChartProps) {
         </div>
         <div className={styles.chartWrapper}>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart
+            <AreaChart
               data={filteredData}
               margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
             >
@@ -472,16 +461,18 @@ export default function CpiChart({ data }: CpiChartProps) {
               />
 
               {stackedKeys.map((key, index) => (
-                <Bar
+                <Area
                   key={key}
                   dataKey={key}
                   stackId="a"
+                  type="monotone"
+                  stroke={stackedColors[index]}
                   fill={stackedColors[index]}
                   hide={stackedHiddenKeys.includes(key)}
                   isAnimationActive={false}
                 />
               ))}
-            </BarChart>
+            </AreaChart>
           </ResponsiveContainer>
         </div>
       </div>
