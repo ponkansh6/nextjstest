@@ -372,7 +372,7 @@ export default function CpiChart({ data }: CpiChartProps) {
                   type="monotone"
                   stroke="none"
                   fill={colors[index]}
-                  fillOpacity={0}
+                  fillOpacity={1}
                   hide={hiddenKeys.includes(key)}
                   isAnimationActive={false}
                 />
