@@ -1,34 +1,70 @@
 .pageWrapper {
-  padding-top: 2.5rem;
-  padding-bottom: 2.5rem;
-  max-width: 72rem;
+  padding-top: 4rem;
+  padding-bottom: 6rem;
+  max-width: 80rem;
   margin-left: auto;
   margin-right: auto;
+  min-height: 100vh;
+  background: radial-gradient(circle at top right, rgba(59, 130, 246, 0.03), transparent 40%),
+              radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.03), transparent 40%);
 }
 
 .header {
-  margin-bottom: 2rem;
-  border-bottom: 1px solid var(--card-border);
-  padding-bottom: 1rem;
+  margin-bottom: 4rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: fadeIn 0.8s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background-color: var(--blue-50);
+  color: var(--blue-500);
+  margin-bottom: 1rem;
+  border: 1px solid rgba(59, 130, 246, 0.1);
 }
 
 .title {
-  font-size: 1.875rem;
-  line-height: 2.25rem;
-  font-weight: 700;
+  font-size: 3rem;
+  line-height: 1.1;
+  font-weight: 800;
   color: var(--card-text);
+  letter-spacing: -0.02em;
+  margin-bottom: 1rem;
 }
 
 .description {
+  font-size: 1.125rem;
   color: var(--gray-500);
-  margin-top: 0.5rem;
+  max-width: 42rem;
+  line-height: 1.6;
 }
 
 .errorContainer {
-  padding: 2.5rem;
+  padding: 3rem;
   text-align: center;
   background-color: var(--gray-50);
-  border-radius: 0.5rem;
+  border-radius: 1rem;
   border: 1px dashed var(--card-border);
 }
 

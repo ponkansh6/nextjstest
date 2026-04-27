@@ -15,12 +15,14 @@ export default async function Page() {
 
   return (
     <div className={`container ${styles.pageWrapper}`}>
-      <div className={styles.header}>
-        <h1 className={styles.title}>CPI推移</h1>
+      <header className={styles.header}>
+        <div className={styles.badge}>経済指標ダッシュボード</div>
+        <h1 className={styles.title}>CPI推移分析</h1>
         <p className={styles.description}>
-          2020年平均を100とした日本のCPI推移。項目積み上げは2020ウェイト基準のラスパイレス指数となります。
+          2020年平均を100とした日本の消費者物価指数（CPI）の推移を可視化。
+          2020年基準ウェイトを用いたラスパイレス指数に基づき、各項目の寄与度を詳細に分析します。
         </p>
-      </div>
+      </header>
 
       {cleanData.length > 0 ? (
         <CpiChart data={cleanData} />
