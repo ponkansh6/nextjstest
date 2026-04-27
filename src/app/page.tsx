@@ -16,9 +16,9 @@ export default async function Page() {
   return (
     <div className={`container ${styles.pageWrapper}`}>
       <div className={styles.header}>
-        <h1 className={styles.title}>消費者物価指数 (CPI) グラフ可視化</h1>
+        <h1 className={styles.title}>CPI推移</h1>
         <p className={styles.description}>
-          日本の消費者物価指数の推移を表示します。
+          2020年平均を100とした日本のCPI推移。項目積み上げは2020ウェイト基準のラスパイレス指数となります。
         </p>
       </div>
 
