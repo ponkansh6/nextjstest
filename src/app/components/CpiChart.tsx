@@ -91,7 +91,7 @@ export default function CpiChart({ data }: CpiChartProps) {
       return () => mediaQuery.removeEventListener("change", callback);
     }, []),
     () => window.matchMedia("(prefers-color-scheme: dark)").matches,
-    () => false
+    () => false,
   );
 
   // Detect mobile
@@ -102,7 +102,7 @@ export default function CpiChart({ data }: CpiChartProps) {
       return () => mediaQuery.removeEventListener("change", callback);
     }, []),
     () => window.matchMedia("(max-width: 768px)").matches,
-    () => false
+    () => false,
   );
 
   // Chart theme colors
@@ -227,7 +227,9 @@ export default function CpiChart({ data }: CpiChartProps) {
 
   const handleNominalLegendClick = (dataKey: string) => {
     setNominalHiddenKeys((prev) =>
-      prev.includes(dataKey) ? prev.filter((k) => k !== dataKey) : [...prev, dataKey],
+      prev.includes(dataKey)
+        ? prev.filter((k) => k !== dataKey)
+        : [...prev, dataKey],
     );
   };
 
@@ -247,7 +249,7 @@ export default function CpiChart({ data }: CpiChartProps) {
           .map((row) => {
             const newRow: CpiData = { ...row };
             // CTI CSV のヘッダは「月」なので「年月」に合わせる
-            if ((row as any).月) newRow.年月 = (row as any).月 as string;
+            if (row["月"]) newRow.年月 = row["月"] as string;
             return newRow;
           })
           .filter((row) => {
@@ -309,7 +311,9 @@ export default function CpiChart({ data }: CpiChartProps) {
   // CAGR計算関数
   const calculateCAGR = (): void => {
     if (cagrStartYear === cagrEndYear) {
-      alert("開始年と終了年は異なる年を選択してください（同じ年は指定できません）。");
+      alert(
+        "開始年と終了年は異なる年を選択してください（同じ年は指定できません）。",
+      );
       return;
     }
 
@@ -399,7 +403,7 @@ export default function CpiChart({ data }: CpiChartProps) {
       <div className={styles.chartSection}>
         <h2 className={styles.chartTitle}>消費者物価指数 (主要指数)</h2>
         <div className={styles.chartWrapper}>
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height={isMobile ? 240 : 360}>
             <AreaChart
               data={filteredData}
               margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
@@ -493,10 +497,10 @@ export default function CpiChart({ data }: CpiChartProps) {
           </div>
         </div>
         <div className={styles.chartWrapper}>
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height={isMobile ? 240 : 360}>
             <AreaChart
               data={filteredData}
-              margin={{ top: 1": 10, right: 30, left: 0, bottom: 20 }}
+              margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
             >
               <CartesianGrid
                 strokeDasharray="3 3"
@@ -636,7 +640,9 @@ export default function CpiChart({ data }: CpiChartProps) {
                 <button
                   onClick={() =>
                     setNominalHiddenKeys((prev) =>
-                      prev.length === nominalKeys.length ? [] : [...nominalKeys],
+                      prev.length === nominalKeys.length
+                        ? []
+                        : [...nominalKeys],
                     )
                   }
                   className={styles.actionButton}
@@ -667,12 +673,38 @@ export default function CpiChart({ data }: CpiChartProps) {
           </div>
         </div>
         <div className={styles.chartWrapper}>
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={filteredNominalData} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.gridStroke} />
-              <XAxis dataKey="年月" axisLine={false} tickLine={false} tick={{ fill: chartColors.axisText, fontSize: 12 }} dy={10} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fill: chartColors.axisText, fontSize: 12 }} dx={-10} />
-              <Tooltip content={<CustomTooltip isMobile={isMobile} tooltipBg={chartColors.tooltipBg} tooltipText={chartColors.tooltipText} />} />
+          <ResponsiveContainer width="100%" height={isMobile ? 240 : 360}>
+            <AreaChart
+              data={filteredNominalData}
+              margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
+            >
+              <CartesianGrid
+                strokeDasharray="3 3"
+                vertical={false}
+                stroke={chartColors.gridStroke}
+              />
+              <XAxis
+                dataKey="年月"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: chartColors.axisText, fontSize: 12 }}
+                dy={10}
+              />
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: chartColors.axisText, fontSize: 12 }}
+                dx={-10}
+              />
+              <Tooltip
+                content={
+                  <CustomTooltip
+                    isMobile={isMobile}
+                    tooltipBg={chartColors.tooltipBg}
+                    tooltipText={chartColors.tooltipText}
+                  />
+                }
+              />
 
               {nominalKeys.map((key, index) => (
                 <Area
@@ -690,7 +722,6 @@ export default function CpiChart({ data }: CpiChartProps) {
           </ResponsiveContainer>
         </div>
       </div>
-
 
       <div className={styles.infoContainer}>
         <svg
