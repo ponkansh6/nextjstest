@@ -10,6 +10,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import Papa from "papaparse";
 import { type CpiData } from "../page";
 import styles from "./CpiChart.module.css";
 
@@ -206,6 +207,73 @@ export default function CpiChart({ data }: CpiChartProps) {
     "#fb923c", // 教養娯楽サービス
     "#64748b", // 諸雑費
   ];
+
+  // 名目の消費支出（10分類） — public/cti_data.csv をクライアントで読み込む
+  const nominalKeys = [
+    "食料（名目）",
+    "住居（名目）",
+    "光熱・水道（名目）",
+    "家具・家事用品（名目）",
+    "被服及び履物（名目）",
+    "保健医療（名目）",
+    "交通・通信（名目）",
+    "教育（名目）",
+    "教養娯楽（名目）",
+    "その他の消費支出（名目）",
+  ];
+  const nominalColors = stackedColors.slice(0, 10);
+  const [nominalData, setNominalData] = useState<CpiData[]>([]);
+  const [nominalHiddenKeys, setNominalHiddenKeys] = useState<string[]>([]);
+
+  const handleNominalLegendClick = (dataKey: string) => {
+    setNominalHiddenKeys((prev) =>
+      prev.includes(dataKey) ? prev.filter((k) => k !== dataKey) : [...prev, dataKey],
+    );
+  };
+
+  // CTI CSV をクライアントで読み込み（public/cti_data.csv）
+  React.useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await fetch("/cti_data.csv");
+        const text = await res.text();
+        const result = Papa.parse(text, {
+          header: true,
+          skipEmptyLines: true,
+          dynamicTyping: true,
+        });
+        const rows = (result.data as CpiData[])
+          .map((row) => {
+            const newRow: CpiData = { ...row };
+            // CTI CSV のヘッダは「月」なので「年月」に合わせる
+            if ((row as any).月) newRow.年月 = (row as any).月 as string;
+            return newRow;
+          })
+          .filter((row) => {
+            if (!row.年月) return false;
+            const m = (row.年月 as string).match(/^(\d{4})年/);
+            return m ? parseInt(m[1], 10) >= 2005 : false;
+          });
+        if (mounted) setNominalData(rows);
+      } catch (e) {
+        console.error("Failed to load cti_data.csv", e);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // フィルタ済みの名目データ（開始年・終了年に基づく）
+  const filteredNominalData = useMemo(() => {
+    return nominalData.filter((item) => {
+      const yearMatch = (item.年月 as string).match(/^(\d{4})年/);
+      if (!yearMatch) return false;
+      const year = parseInt(yearMatch[1], 10);
+      return year >= startYear && year <= endYear;
+    });
+  }, [nominalData, startYear, endYear]);
 
   // CAGR計算用のステート
   const [cagrStartYear, setCagrStartYear] = useState<number>(initialStartYear);
@@ -428,7 +496,7 @@ export default function CpiChart({ data }: CpiChartProps) {
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
               data={filteredData}
-              margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
+              margin={{ top: 1": 10, right: 30, left: 0, bottom: 20 }}
             >
               <CartesianGrid
                 strokeDasharray="3 3"
@@ -557,6 +625,72 @@ export default function CpiChart({ data }: CpiChartProps) {
           ※ 積み上げ棒グラフの凡例で選択された費目の合計を基準に計算します
         </p>
       </div>
+
+      <div className={styles.chartSection}>
+        <h2 className={styles.chartTitle}>名目の消費支出（10分類）積み上げ</h2>
+        <div className={styles.legendContainer}>
+          <div className={styles.legendSection}>
+            <div className={styles.legendHeader}>
+              <h3 className={styles.legendTitle}>費目（名目）</h3>
+              <div className={styles.legendActions}>
+                <button
+                  onClick={() =>
+                    setNominalHiddenKeys((prev) =>
+                      prev.length === nominalKeys.length ? [] : [...nominalKeys],
+                    )
+                  }
+                  className={styles.actionButton}
+                  aria-label="全選択解除（名目）"
+                >
+                  全選択解除
+                </button>
+              </div>
+            </div>
+            <div className={styles.stackedLegendItems}>
+              {nominalKeys.map((key, index) => (
+                <button
+                  key={key}
+                  onClick={() => handleNominalLegendClick(key)}
+                  className={`${styles.legendItem} ${
+                    nominalHiddenKeys.includes(key) ? styles.hidden : ""
+                  }`}
+                  aria-pressed={!nominalHiddenKeys.includes(key)}
+                >
+                  <span
+                    className={styles.legendIcon}
+                    style={{ backgroundColor: nominalColors[index] }}
+                  />
+                  <span className={styles.legendLabel}>{key}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className={styles.chartWrapper}>
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={filteredNominalData} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.gridStroke} />
+              <XAxis dataKey="年月" axisLine={false} tickLine={false} tick={{ fill: chartColors.axisText, fontSize: 12 }} dy={10} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fill: chartColors.axisText, fontSize: 12 }} dx={-10} />
+              <Tooltip content={<CustomTooltip isMobile={isMobile} tooltipBg={chartColors.tooltipBg} tooltipText={chartColors.tooltipText} />} />
+
+              {nominalKeys.map((key, index) => (
+                <Area
+                  key={key}
+                  dataKey={key}
+                  stackId="b"
+                  type="monotone"
+                  stroke="none"
+                  fill={nominalColors[index]}
+                  hide={nominalHiddenKeys.includes(key)}
+                  isAnimationActive={false}
+                />
+              ))}
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
 
       <div className={styles.infoContainer}>
         <svg
