@@ -240,24 +240,64 @@ export default function CpiChart({ data }: CpiChartProps) {
       try {
         const res = await fetch("/cti_data.csv");
         const text = await res.text();
-        const result = Papa.parse(text, {
-          header: true,
-          skipEmptyLines: true,
-          dynamicTyping: true,
+        const parsed = Papa.parse(text, {
+          header: false,
+          skipEmptyLines: false,
+          dynamicTyping: false,
         });
-        const rows = (result.data as CpiData[])
-          .map((row) => {
-            const newRow: CpiData = { ...row };
-            // CTI CSV のヘッダは「月」なので「年月」に合わせる
-            if (row["月"]) newRow.年月 = row["月"] as string;
-            return newRow;
-          })
-          .filter((row) => {
-            if (!row.年月) return false;
-            const m = (row.年月 as string).match(/^(\d{4})年/);
-            return m ? parseInt(m[1], 10) >= 2005 : false;
+        const rows = parsed.data;
+        // find header row that contains '月' or a known nominal column
+        const headerIndex = rows.findIndex(
+          (r) =>
+            Array.isArray(r) &&
+            r.some(
+              (c) =>
+                typeof c === "string" &&
+                (c.trim() === "月" || c.trim().includes("消費支出（名目）")),
+            ),
+        );
+        let mapped = [];
+        if (headerIndex === -1) {
+          // fallback to header:true parse
+          const withHeader = Papa.parse(text, {
+            header: true,
+            skipEmptyLines: true,
+            dynamicTyping: true,
           });
-        if (mounted) setNominalData(rows);
+          mapped = withHeader.data
+            .map((row) => {
+              const newRow = { ...row };
+              if (row["月"]) newRow.年月 = row["月"];
+              return newRow;
+            })
+            .filter((row) => {
+              if (!row.年月) return false;
+              const m = row.年月.match(/^(\d{4})年/);
+              return m ? parseInt(m[1], 10) >= 2005 : false;
+            });
+        } else {
+          const header = rows[headerIndex].map((c) =>
+            typeof c === "string" ? c.trim() : String(c),
+          );
+          const dataRows = rows.slice(headerIndex + 1);
+          mapped = dataRows
+            .map((row) => {
+              const obj = {};
+              header.forEach((h, i) => {
+                obj[h] = row[i];
+              });
+              const newRow = { ...obj };
+              if (newRow["月"] && !newRow.年月)
+                newRow.年月 = String(newRow["月"]);
+              return newRow;
+            })
+            .filter((row) => {
+              if (!row.年月) return false;
+              const m = row.年月.match(/^(\d{4})年/);
+              return m ? parseInt(m[1], 10) >= 2005 : false;
+            });
+        }
+        if (mounted) setNominalData(mapped);
       } catch (e) {
         console.error("Failed to load cti_data.csv", e);
       }
@@ -403,7 +443,7 @@ export default function CpiChart({ data }: CpiChartProps) {
       <div className={styles.chartSection}>
         <h2 className={styles.chartTitle}>消費者物価指数 (主要指数)</h2>
         <div className={styles.chartWrapper}>
-          <ResponsiveContainer width="100%" height={isMobile ? 240 : 360}>
+          <ResponsiveContainer width="100%" height="100%">
             <AreaChart
               data={filteredData}
               margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
@@ -497,7 +537,7 @@ export default function CpiChart({ data }: CpiChartProps) {
           </div>
         </div>
         <div className={styles.chartWrapper}>
-          <ResponsiveContainer width="100%" height={isMobile ? 240 : 360}>
+          <ResponsiveContainer width="100%" height="100%">
             <AreaChart
               data={filteredData}
               margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
@@ -673,7 +713,7 @@ export default function CpiChart({ data }: CpiChartProps) {
           </div>
         </div>
         <div className={styles.chartWrapper}>
-          <ResponsiveContainer width="100%" height={isMobile ? 240 : 360}>
+          <ResponsiveContainer width="100%" height="100%">
             <AreaChart
               data={filteredNominalData}
               margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
