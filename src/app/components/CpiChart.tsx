@@ -240,63 +240,48 @@ export default function CpiChart({ data }: CpiChartProps) {
       try {
         const res = await fetch("/cti_data.csv");
         const text = await res.text();
-        const parsed = Papa.parse(text, {
-          header: false,
-          skipEmptyLines: false,
-          dynamicTyping: false,
-        });
-        const rows = parsed.data;
-        // find header row that contains '月' or a known nominal column
-        const headerIndex = rows.findIndex(
-          (r) =>
-            Array.isArray(r) &&
-            r.some(
-              (c) =>
-                typeof c === "string" &&
-                (c.trim() === "月" || c.trim().includes("消費支出（名目）")),
-            ),
+        // Try parsing without header to detect the actual header row (CSV has leading rows)
+        const parsedAny: any = Papa.parse(text, { header: false, skipEmptyLines: false, dynamicTyping: false });
+        const rows: any[] = parsedAny.data || [];
+        const headerIndex = rows.findIndex((r: any) =>
+          Array.isArray(r) &&
+          r.some((c: any) => typeof c === "string" && (c.trim() === "月" || c.trim().includes("消費支出（名目）"))),
         );
-        let mapped = [];
+
+        let mapped: CpiData[] = [];
         if (headerIndex === -1) {
-          // fallback to header:true parse
-          const withHeader = Papa.parse(text, {
-            header: true,
-            skipEmptyLines: true,
-            dynamicTyping: true,
-          });
-          mapped = withHeader.data
-            .map((row) => {
-              const newRow = { ...row };
-              if (row["月"]) newRow.年月 = row["月"];
-              return newRow;
+          // Fallback: parse with header:true
+          const withHeader: any = Papa.parse(text, { header: true, skipEmptyLines: true, dynamicTyping: true });
+          mapped = (withHeader.data || [])
+            .map((row: any) => {
+              const newRow: any = { ...row };
+              if (row && row["月"]) newRow.年月 = row["月"];
+              return newRow as CpiData;
             })
-            .filter((row) => {
+            .filter((row: any) => {
               if (!row.年月) return false;
-              const m = row.年月.match(/^(\d{4})年/);
+              const m = String(row.年月).match(/^(\d{4})年/);
               return m ? parseInt(m[1], 10) >= 2005 : false;
             });
         } else {
-          const header = rows[headerIndex].map((c) =>
-            typeof c === "string" ? c.trim() : String(c),
-          );
+          const header = (rows[headerIndex] as any[]).map((c: any) => (typeof c === "string" ? c.trim() : String(c)));
           const dataRows = rows.slice(headerIndex + 1);
-          mapped = dataRows
-            .map((row) => {
-              const obj = {};
-              header.forEach((h, i) => {
+          mapped = (dataRows as any[])
+            .map((row: any[]) => {
+              const obj: any = {};
+              header.forEach((h: string, i: number) => {
                 obj[h] = row[i];
               });
-              const newRow = { ...obj };
-              if (newRow["月"] && !newRow.年月)
-                newRow.年月 = String(newRow["月"]);
-              return newRow;
+              if (obj["月"] && !obj.年月) obj.年月 = String(obj["月"]);
+              return obj as CpiData;
             })
-            .filter((row) => {
+            .filter((row: any) => {
               if (!row.年月) return false;
-              const m = row.年月.match(/^(\d{4})年/);
+              const m = String(row.年月).match(/^(\d{4})年/);
               return m ? parseInt(m[1], 10) >= 2005 : false;
             });
         }
+
         if (mounted) setNominalData(mapped);
       } catch (e) {
         console.error("Failed to load cti_data.csv", e);
