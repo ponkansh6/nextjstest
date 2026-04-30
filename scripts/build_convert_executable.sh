@@ -10,8 +10,8 @@ if [ ! -d ".venv-convert" ]; then
 fi
 . .venv-convert/bin/activate
 
-# Install build tools
-pip install --upgrade pip pyinstaller
+# Install build tools and dependencies
+pip install --upgrade pip pyinstaller pandas openpyxl
 
 # Find entrypoint
 if [ -f "scripts/convert.py" ]; then

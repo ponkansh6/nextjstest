@@ -24,7 +24,8 @@
   --chart-grid: #f0f0f0;
   --tooltip-bg: rgba(255, 255, 255, 0.95);
 
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-lg:
+    0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 }
 
 @media (prefers-color-scheme: dark) {

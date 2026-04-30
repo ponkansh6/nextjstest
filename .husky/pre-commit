@@ -1,1 +1,2 @@
-npm run security-check
+npx lint-staged
+npm run type-check

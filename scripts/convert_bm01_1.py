@@ -24,7 +24,26 @@ except Exception as e:
     print("This script requires pandas. Install with: pip install pandas openpyxl")
     raise
 
-ROOT = Path(__file__).resolve().parents[1]
+def get_root():
+    if getattr(sys, 'frozen', False):
+        # Starting point is the executable
+        start_dir = Path(sys.executable).resolve().parent
+    else:
+        # Starting point is the script
+        start_dir = Path(__file__).resolve().parent
+    
+    # Search upwards for the project root (containing 'public' and 'package.json')
+    for parent in [start_dir] + list(start_dir.parents):
+        if (parent / "public").is_dir() and (parent / "package.json").exists():
+            return parent
+            
+    # Fallback to the original logic if not found
+    if getattr(sys, 'frozen', False):
+        return start_dir.parents[1] # Assumes executable is in scripts/dist/
+    return start_dir.parent
+
+ROOT = get_root()
+
 SRC_XLSX = ROOT / "public" / "cpi_source" / "bm01-1.xlsx"
 TARGET_CSV = ROOT / "public" / "cpi_data.csv"
 TRIAL_CSV = ROOT / "public" / "cpi_data_converted_trial.csv"
