@@ -209,18 +209,21 @@ export default function CpiChart({ data }: CpiChartProps) {
   ];
 
   // 名目の消費支出（10分類） — public/cti_data.csv をクライアントで読み込む
-  const nominalKeys = [
-    "食料（名目）",
-    "住居（名目）",
-    "光熱・水道（名目）",
-    "家具・家事用品（名目）",
-    "被服及び履物（名目）",
-    "保健医療（名目）",
-    "交通・通信（名目）",
-    "教育（名目）",
-    "教養娯楽（名目）",
-    "その他の消費支出（名目）",
-  ];
+  const nominalKeys = useMemo(
+    () => [
+      "食料（名目）",
+      "住居（名目）",
+      "光熱・水道（名目）",
+      "家具・家事用品（名目）",
+      "被服及び履物（名目）",
+      "保健医療（名目）",
+      "交通・通信（名目）",
+      "教育（名目）",
+      "教養娯楽（名目）",
+      "その他の消費支出（名目）",
+    ],
+    [],
+  );
 
   const getColorForNominalKey = (key: string): string => {
     const mapping: Record<string, string> = {
@@ -323,22 +326,28 @@ export default function CpiChart({ data }: CpiChartProps) {
     };
   }, []);
 
-  // フィルタ済みの名目データ（開始年・終了年に基づく。ただし開始は2020年以降）
+  // フィルタ済みの名目データ（開始年・終了年に基づく。データがない月は0で補完）
   const filteredNominalData = useMemo(() => {
-    return nominalData.filter((item) => {
-      const yearMonth = item.年月 as string;
-      const match = yearMonth.match(/^(\d{4})年\s*0?(\d{1,2})月/);
-      if (!match) return false;
-      const year = parseInt(match[1], 10);
-      const month = parseInt(match[2], 10);
+    const allMonths: string[] = [];
+    for (let y = startYear; y <= endYear; y++) {
+      for (let m = 1; m <= 12; m++) {
+        // 2020年1月未満は除外
+        if (y < 2020 || (y === 2020 && m < 1)) continue;
+        allMonths.push(`${y}年${String(m).padStart(2, "0")}月`);
+      }
+    }
 
-      // 2020年1月未満は除外
-      if (year < 2020 || (year === 2020 && month < 1)) return false;
+    return allMonths.map((yearMonth) => {
+      const existingData = nominalData.find((item) => item.年月 === yearMonth);
+      if (existingData) return existingData;
 
-      // 現在選択中の開始年・終了年でフィルタリング
-      return year >= startYear && year <= endYear;
+      const emptyItem: CpiData = { 年月: yearMonth } as CpiData;
+      nominalKeys.forEach((key) => {
+        emptyItem[key] = 0;
+      });
+      return emptyItem;
     });
-  }, [nominalData, startYear, endYear]);
+  }, [nominalData, startYear, endYear, nominalKeys]);
 
   // CAGR計算用のステート
   const [cagrStartYear, setCagrStartYear] = useState<number>(initialStartYear);
@@ -578,6 +587,7 @@ export default function CpiChart({ data }: CpiChartProps) {
                 dy={10}
               />
               <YAxis
+                domain={[0, "auto"]}
                 axisLine={false}
                 tickLine={false}
                 tick={{ fill: chartColors.axisText, fontSize: 12 }}
@@ -754,6 +764,7 @@ export default function CpiChart({ data }: CpiChartProps) {
                 dy={10}
               />
               <YAxis
+                domain={[0, "auto"]}
                 axisLine={false}
                 tickLine={false}
                 tick={{ fill: chartColors.axisText, fontSize: 12 }}
