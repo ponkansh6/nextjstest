@@ -303,7 +303,17 @@ export default function CpiChart({ data }: CpiChartProps) {
             .map((row) => {
               const obj: Record<string, unknown> = {};
               header.forEach((h, i) => {
-                obj[h] = row[i];
+                let val = row[i];
+                if (typeof val === "string") {
+                  const trimmedVal = val.trim();
+                  if (h !== "月" && h !== "年月") {
+                    const num = parseFloat(trimmedVal.replace(/,/g, ""));
+                    val = isNaN(num) ? 0 : num;
+                  } else {
+                    val = trimmedVal;
+                  }
+                }
+                obj[h] = val;
               });
               if (typeof obj["月"] === "string" && !obj.年月)
                 obj.年月 = obj["月"];
@@ -333,7 +343,7 @@ export default function CpiChart({ data }: CpiChartProps) {
       for (let m = 1; m <= 12; m++) {
         // 2020年1月未満は除外
         if (y < 2020 || (y === 2020 && m < 1)) continue;
-        allMonths.push(`${y}年${String(m).padStart(2, "0")}月`);
+        allMonths.push(`${y}年${m}月`);
       }
     }
 
