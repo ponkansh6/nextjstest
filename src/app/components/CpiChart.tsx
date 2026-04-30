@@ -221,7 +221,26 @@ export default function CpiChart({ data }: CpiChartProps) {
     "教養娯楽（名目）",
     "その他の消費支出（名目）",
   ];
-  const nominalColors = stackedColors.slice(0, 10);
+
+  const getColorForNominalKey = (key: string): string => {
+    const mapping: Record<string, string> = {
+      "食料（名目）": "外食以外食料",
+      "住居（名目）": "住居",
+      "光熱・水道（名目）": "光熱・水道",
+      "家具・家事用品（名目）": "家具・家事用品",
+      "被服及び履物（名目）": "被服及び履物",
+      "保健医療（名目）": "保健医療",
+      "交通・通信（名目）": "自動車等関係費",
+      "教育（名目）": "教育",
+      "教養娯楽（名目）": "教養娯楽サービス",
+      "その他の消費支出（名目）": "諸雑費",
+    };
+    const targetStackedKey = mapping[key];
+    const index = stackedKeys.indexOf(targetStackedKey);
+    return index !== -1 ? stackedColors[index] : "#64748b";
+  };
+
+  const nominalColors = nominalKeys.map(getColorForNominalKey);
   const [nominalData, setNominalData] = useState<CpiData[]>([]);
   const [nominalHiddenKeys, setNominalHiddenKeys] = useState<string[]>([]);
 
@@ -240,42 +259,54 @@ export default function CpiChart({ data }: CpiChartProps) {
       try {
         const res = await fetch("/cti_data.csv");
         const text = await res.text();
-        // Try parsing without header to detect the actual header row (CSV has leading rows)
-        const parsedAny: any = Papa.parse(text, { header: false, skipEmptyLines: false, dynamicTyping: false });
-        const rows: any[] = parsedAny.data || [];
-        const headerIndex = rows.findIndex((r: any) =>
-          Array.isArray(r) &&
-          r.some((c: any) => typeof c === "string" && (c.trim() === "月" || c.trim().includes("消費支出（名目）"))),
+        const parsed = Papa.parse<Record<string, unknown>>(text, {
+          header: false,
+          skipEmptyLines: false,
+          dynamicTyping: false,
+        });
+        const rows = (parsed.data || []) as unknown as unknown[][];
+        const headerIndex = rows.findIndex(
+          (r) =>
+            Array.isArray(r) &&
+            r.some(
+              (c) =>
+                typeof c === "string" &&
+                (c.trim() === "月" || c.trim().includes("消費支出（名目）")),
+            ),
         );
 
         let mapped: CpiData[] = [];
         if (headerIndex === -1) {
-          // Fallback: parse with header:true
-          const withHeader: any = Papa.parse(text, { header: true, skipEmptyLines: true, dynamicTyping: true });
+          const withHeader = Papa.parse<Record<string, unknown>>(text, {
+            header: true,
+            skipEmptyLines: true,
+            dynamicTyping: true,
+          });
           mapped = (withHeader.data || [])
-            .map((row: any) => {
-              const newRow: any = { ...row };
-              if (row && row["月"]) newRow.年月 = row["月"];
-              return newRow as CpiData;
+            .map((row) => {
+              const newRow = { ...row } as CpiData;
+              if (row && typeof row["月"] === "string") newRow.年月 = row["月"];
+              return newRow;
             })
-            .filter((row: any) => {
+            .filter((row) => {
               if (!row.年月) return false;
               const m = String(row.年月).match(/^(\d{4})年/);
               return m ? parseInt(m[1], 10) >= 2005 : false;
             });
         } else {
-          const header = (rows[headerIndex] as any[]).map((c: any) => (typeof c === "string" ? c.trim() : String(c)));
+          const header = (rows[headerIndex] as string[]).map((c) => c.trim());
           const dataRows = rows.slice(headerIndex + 1);
-          mapped = (dataRows as any[])
-            .map((row: any[]) => {
-              const obj: any = {};
-              header.forEach((h: string, i: number) => {
+          mapped = (dataRows as unknown[][])
+            .map((row) => {
+              const obj: Record<string, unknown> = {};
+              header.forEach((h, i) => {
                 obj[h] = row[i];
               });
-              if (obj["月"] && !obj.年月) obj.年月 = String(obj["月"]);
+              if (typeof obj["月"] === "string" && !obj.年月)
+                obj.年月 = obj["月"];
               return obj as CpiData;
             })
-            .filter((row: any) => {
+            .filter((row) => {
               if (!row.年月) return false;
               const m = String(row.年月).match(/^(\d{4})年/);
               return m ? parseInt(m[1], 10) >= 2005 : false;
@@ -292,12 +323,19 @@ export default function CpiChart({ data }: CpiChartProps) {
     };
   }, []);
 
-  // フィルタ済みの名目データ（開始年・終了年に基づく）
+  // フィルタ済みの名目データ（開始年・終了年に基づく。ただし開始は2020年以降）
   const filteredNominalData = useMemo(() => {
     return nominalData.filter((item) => {
-      const yearMatch = (item.年月 as string).match(/^(\d{4})年/);
-      if (!yearMatch) return false;
-      const year = parseInt(yearMatch[1], 10);
+      const yearMonth = item.年月 as string;
+      const match = yearMonth.match(/^(\d{4})年\s*0?(\d{1,2})月/);
+      if (!match) return false;
+      const year = parseInt(match[1], 10);
+      const month = parseInt(match[2], 10);
+
+      // 2020年1月未満は除外
+      if (year < 2020 || (year === 2020 && month < 1)) return false;
+
+      // 現在選択中の開始年・終了年でフィルタリング
       return year >= startYear && year <= endYear;
     });
   }, [nominalData, startYear, endYear]);
