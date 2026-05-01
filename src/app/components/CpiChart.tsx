@@ -266,12 +266,21 @@ export default function CpiChart({ data }: CpiChartProps) {
   const nominalColors = nominalKeys.map(getColorForNominalKey);
   const [nominalData, setNominalData] = useState<CpiData[]>([]);
   const [nominalHiddenKeys, setNominalHiddenKeys] = useState<string[]>([]);
+  const [hiddenQuarters, setHiddenQuarters] = useState<number[]>([]);
 
   const handleNominalLegendClick = (dataKey: string) => {
     setNominalHiddenKeys((prev) =>
       prev.includes(dataKey)
         ? prev.filter((k) => k !== dataKey)
         : [...prev, dataKey],
+    );
+  };
+
+  const handleQuarterLegendClick = (quarter: number) => {
+    setHiddenQuarters((prev) =>
+      prev.includes(quarter)
+        ? prev.filter((q) => q !== quarter)
+        : [...prev, quarter],
     );
   };
 
@@ -435,7 +444,9 @@ export default function CpiChart({ data }: CpiChartProps) {
         }
 
         // 軸のレンジを他と合わせるため、データが空でも必ず追加する
-        rows.push(item);
+        if (!hiddenQuarters.includes(q)) {
+          rows.push(item);
+        }
       }
     }
     return rows;
@@ -446,6 +457,7 @@ export default function CpiChart({ data }: CpiChartProps) {
     startYear,
     endYear,
     maxCpiDate,
+    hiddenQuarters,
   ]);
 
   // CAGR計算用のステート
@@ -805,6 +817,26 @@ export default function CpiChart({ data }: CpiChartProps) {
       <div className={styles.chartSection}>
         <h2 className={styles.chartTitle}>名目の消費支出（10分類）積み上げ</h2>
         <div className={styles.legendContainer}>
+          <div
+            className={styles.legendSection}
+            style={{ marginBottom: "1.5rem" }}
+          >
+            <h3 className={styles.legendTitle}>四半期</h3>
+            <div className={styles.legendItems}>
+              {[1, 2, 3, 4].map((q) => (
+                <button
+                  key={q}
+                  onClick={() => handleQuarterLegendClick(q)}
+                  className={`${styles.legendItem} ${
+                    hiddenQuarters.includes(q) ? styles.hidden : ""
+                  }`}
+                  aria-pressed={!hiddenQuarters.includes(q)}
+                >
+                  <span className={styles.legendLabel}>Q{q}</span>
+                </button>
+              ))}
+            </div>
+          </div>
           <div className={styles.legendSection}>
             <div className={styles.legendHeader}>
               <h3 className={styles.legendTitle}>費目（名目）</h3>
