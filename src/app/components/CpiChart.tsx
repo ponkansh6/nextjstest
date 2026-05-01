@@ -4,6 +4,8 @@ import React, { useState, useMemo } from "react";
 import {
   AreaChart,
   Area,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -358,6 +360,48 @@ export default function CpiChart({ data }: CpiChartProps) {
       return emptyItem;
     });
   }, [nominalData, startYear, endYear, nominalKeys]);
+
+  // Quarterly aggregated nominal data: sum months into four quarters per year
+  const quarterlyNominalData = useMemo(() => {
+    const rows: {
+      年: number;
+      quarter: number;
+      label: string;
+      [key: string]: number | string;
+    }[] = [];
+    for (let y = startYear; y <= endYear; y++) {
+      for (let q = 1; q <= 4; q++) {
+        const months =
+          q === 1
+            ? [1, 2, 3]
+            : q === 2
+              ? [4, 5, 6]
+              : q === 3
+                ? [7, 8, 9]
+                : [10, 11, 12];
+        const label = `${y}年Q${q}`;
+        const item: {
+          年: number;
+          quarter: number;
+          label: string;
+          [key: string]: number | string;
+        } = { 年: y, quarter: q, label };
+        nominalKeys.forEach((k) => (item[k] = 0));
+        months.forEach((m) => {
+          const monthStr = `${y}年${m}月`;
+          const row = filteredNominalData.find((r) => r.年月 === monthStr);
+          if (row) {
+            nominalKeys.forEach((k) => {
+              const v = row[k];
+              if (typeof v === "number") (item[k] as number) += v;
+            });
+          }
+        });
+        rows.push(item);
+      }
+    }
+    return rows;
+  }, [filteredNominalData, nominalKeys, startYear, endYear]);
 
   // CAGR計算用のステート
   const [cagrStartYear, setCagrStartYear] = useState<number>(initialStartYear);
@@ -757,8 +801,8 @@ export default function CpiChart({ data }: CpiChartProps) {
         </div>
         <div className={styles.chartWrapper}>
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart
-              data={filteredNominalData}
+            <BarChart
+              data={quarterlyNominalData}
               margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
             >
               <CartesianGrid
@@ -767,7 +811,7 @@ export default function CpiChart({ data }: CpiChartProps) {
                 stroke={chartColors.gridStroke}
               />
               <XAxis
-                dataKey="年月"
+                dataKey="label"
                 axisLine={false}
                 tickLine={false}
                 tick={{ fill: chartColors.axisText, fontSize: 12 }}
@@ -791,18 +835,16 @@ export default function CpiChart({ data }: CpiChartProps) {
               />
 
               {nominalKeys.map((key, index) => (
-                <Area
+                <Bar
                   key={key}
                   dataKey={key}
                   stackId="b"
-                  type="monotone"
-                  stroke="none"
                   fill={nominalColors[index]}
                   hide={nominalHiddenKeys.includes(key)}
                   isAnimationActive={false}
                 />
               ))}
-            </AreaChart>
+            </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
