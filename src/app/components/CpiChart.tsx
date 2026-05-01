@@ -135,6 +135,24 @@ export default function CpiChart({ data }: CpiChartProps) {
   const [startYear, setStartYear] = useState(initialStartYear);
   const [endYear, setEndYear] = useState(initialEndYear);
 
+  // データに含まれる最新の年月を特定
+  const maxCpiDate = useMemo(() => {
+    let maxYear = 0;
+    let maxMonth = 0;
+    data.forEach((item) => {
+      const m = item.年月.match(/^(\d{4})年(\d{1,2})月/);
+      if (m) {
+        const y = parseInt(m[1], 10);
+        const mo = parseInt(m[2], 10);
+        if (y > maxYear || (y === maxYear && mo > maxMonth)) {
+          maxYear = y;
+          maxMonth = mo;
+        }
+      }
+    });
+    return { year: maxYear, month: maxMonth };
+  }, [data]);
+
   // ステートに基づいてデータをフィルタリング（派生データはサーバー側で計算済み）
   const filteredData = useMemo(() => {
     return data.filter((item) => {
@@ -343,8 +361,6 @@ export default function CpiChart({ data }: CpiChartProps) {
     const allMonths: string[] = [];
     for (let y = startYear; y <= endYear; y++) {
       for (let m = 1; m <= 12; m++) {
-        // 2020年1月未満は除外
-        if (y < 2020 || (y === 2020 && m < 1)) continue;
         allMonths.push(`${y}年${m}月`);
       }
     }
@@ -369,8 +385,16 @@ export default function CpiChart({ data }: CpiChartProps) {
       label: string;
       [key: string]: number | string;
     }[] = [];
-    for (let y = startYear; y <= endYear; y++) {
-      for (let q = 1; q <= 4; q++) {
+    const nominalMonthsSet = new Set(nominalData.map((d) => d.年月));
+
+    // 表示終了年は、ユーザー選択の終了年と実際のデータ末尾の早い方
+    const effectiveEndYear = Math.min(endYear, maxCpiDate.year);
+
+    for (let y = startYear; y <= effectiveEndYear; y++) {
+      // 最新の年については、データの存在する月が含まれる四半期まで表示
+      const maxQ = y === maxCpiDate.year ? Math.ceil(maxCpiDate.month / 3) : 4;
+
+      for (let q = 1; q <= maxQ; q++) {
         const months =
           q === 1
             ? [1, 2, 3]
@@ -387,21 +411,42 @@ export default function CpiChart({ data }: CpiChartProps) {
           [key: string]: number | string;
         } = { 年: y, quarter: q, label };
         nominalKeys.forEach((k) => (item[k] = 0));
+
+        let validMonthsCount = 0;
         months.forEach((m) => {
           const monthStr = `${y}年${m}月`;
           const row = filteredNominalData.find((r) => r.年月 === monthStr);
           if (row) {
+            // 現在のデータ範囲（2020年1月以降）かつCSVにデータがある月のみをカウント
+            const isWithinCurrentRange = y >= 2020;
+            if (nominalMonthsSet.has(monthStr) && isWithinCurrentRange) {
+              validMonthsCount++;
+            }
             nominalKeys.forEach((k) => {
               const v = row[k];
               if (typeof v === "number") (item[k] as number) += v;
             });
           }
         });
+
+        // 3か月分のデータが揃っていない、または現在の表示範囲外の場合は値を0にする
+        if (validMonthsCount !== 3) {
+          nominalKeys.forEach((k) => (item[k] = 0));
+        }
+
+        // 軸のレンジを他と合わせるため、データが空でも必ず追加する
         rows.push(item);
       }
     }
     return rows;
-  }, [filteredNominalData, nominalKeys, startYear, endYear]);
+  }, [
+    filteredNominalData,
+    nominalData,
+    nominalKeys,
+    startYear,
+    endYear,
+    maxCpiDate,
+  ]);
 
   // CAGR計算用のステート
   const [cagrStartYear, setCagrStartYear] = useState<number>(initialStartYear);
