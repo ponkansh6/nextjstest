@@ -210,6 +210,8 @@ export default function CpiChart({ data }: CpiChartProps) {
     "外食以外食料",
     "外食",
     "諸雑費",
+  ];
+
   const stackedColors = [
     "#5e4fa2", // 住居: バイオレットブルーのviridis風
     "#4e68b3", // 家具・家事用品: 青紫のviridis風
