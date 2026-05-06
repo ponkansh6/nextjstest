@@ -265,9 +265,20 @@ export default function CpiChart({ data }: CpiChartProps) {
   };
 
   const nominalColors = nominalKeys.map(getColorForNominalKey);
+  const realKeys = nominalKeys.map((k) => k.replace("名目", "実質"));
+  const realColors = nominalColors;
   const [nominalData, setNominalData] = useState<CpiData[]>([]);
   const [nominalHiddenKeys, setNominalHiddenKeys] = useState<string[]>([]);
+  const [realHiddenKeys, setRealHiddenKeys] = useState<string[]>([]);
   const [hiddenQuarters, setHiddenQuarters] = useState<number[]>([]);
+
+  const handleRealLegendClick = (dataKey: string) => {
+    setRealHiddenKeys((prev) =>
+      prev.includes(dataKey)
+        ? prev.filter((k) => k !== dataKey)
+        : [...prev, dataKey],
+    );
+  };
 
   const handleNominalLegendClick = (dataKey: string) => {
     setNominalHiddenKeys((prev) =>
@@ -356,6 +367,27 @@ export default function CpiChart({ data }: CpiChartProps) {
             });
         }
 
+        // Compute その他の消費支出（実質） if missing: 消費支出（実質） - sum(他の実質費目)
+        mapped.forEach((row) => {
+          try {
+            const total = (row["消費支出（実質）"] as number) || 0;
+            // sum known real item columns (excluding total and existing その他)
+            const sumKnown = realKeys
+              .filter(
+                (k) =>
+                  k !== "消費支出（実質）" && k !== "その他の消費支出（実質）",
+              )
+              .reduce((acc, k) => acc + ((row[k] as number) || 0), 0);
+            const other = total - sumKnown;
+            // assign to row; if key already exists and is number, keep it
+            if (typeof row["その他の消費支出（実質）"] !== "number") {
+              (row as Record<string, unknown>)["その他の消費支出（実質）"] =
+                other;
+            }
+          } catch {
+            // ignore
+          }
+        });
         if (mounted) setNominalData(mapped);
       } catch (e) {
         console.error("Failed to load cti_data.csv", e);
@@ -364,7 +396,7 @@ export default function CpiChart({ data }: CpiChartProps) {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [realKeys]);
 
   // フィルタ済みの名目データ（開始年・終了年に基づく。データがない月は0で補完）
   const filteredNominalData = useMemo(() => {
@@ -383,9 +415,12 @@ export default function CpiChart({ data }: CpiChartProps) {
       nominalKeys.forEach((key) => {
         emptyItem[key] = 0;
       });
+      realKeys.forEach((key) => {
+        emptyItem[key] = 0;
+      });
       return emptyItem;
     });
-  }, [nominalData, startYear, endYear, nominalKeys]);
+  }, [nominalData, startYear, endYear, nominalKeys, realKeys]);
 
   // Quarterly aggregated nominal data: sum months into four quarters per year
   const quarterlyNominalData = useMemo(() => {
@@ -455,6 +490,75 @@ export default function CpiChart({ data }: CpiChartProps) {
     filteredNominalData,
     nominalData,
     nominalKeys,
+    startYear,
+    endYear,
+    maxCpiDate,
+    hiddenQuarters,
+  ]);
+
+  // Quarterly aggregated real data (実質) — computed その他項目を含む
+  const quarterlyRealData = useMemo(() => {
+    const rows: {
+      年: number;
+      quarter: number;
+      label: string;
+      [key: string]: number | string;
+    }[] = [];
+    const nominalMonthsSet = new Set(nominalData.map((d) => d.年月));
+
+    const effectiveEndYear = Math.min(endYear, maxCpiDate.year);
+
+    for (let y = startYear; y <= effectiveEndYear; y++) {
+      const maxQ = y === maxCpiDate.year ? Math.ceil(maxCpiDate.month / 3) : 4;
+
+      for (let q = 1; q <= maxQ; q++) {
+        const months =
+          q === 1
+            ? [1, 2, 3]
+            : q === 2
+              ? [4, 5, 6]
+              : q === 3
+                ? [7, 8, 9]
+                : [10, 11, 12];
+        const label = `${y}年Q${q}`;
+        const item: {
+          年: number;
+          quarter: number;
+          label: string;
+          [key: string]: number | string;
+        } = { 年: y, quarter: q, label };
+        realKeys.forEach((k) => (item[k] = 0));
+
+        let validMonthsCount = 0;
+        months.forEach((m) => {
+          const monthStr = `${y}年${m}月`;
+          const row = filteredNominalData.find((r) => r.年月 === monthStr);
+          if (row) {
+            const isWithinCurrentRange = y >= 2020;
+            if (nominalMonthsSet.has(monthStr) && isWithinCurrentRange) {
+              validMonthsCount++;
+            }
+            realKeys.forEach((k) => {
+              const v = row[k];
+              if (typeof v === "number") (item[k] as number) += v;
+            });
+          }
+        });
+
+        if (validMonthsCount !== 3) {
+          realKeys.forEach((k) => (item[k] = 0));
+        }
+
+        if (!hiddenQuarters.includes(q)) {
+          rows.push(item);
+        }
+      }
+    }
+    return rows;
+  }, [
+    filteredNominalData,
+    nominalData,
+    realKeys,
     startYear,
     endYear,
     maxCpiDate,
@@ -922,6 +1026,118 @@ export default function CpiChart({ data }: CpiChartProps) {
                   stackId="b"
                   fill={nominalColors[index]}
                   hide={nominalHiddenKeys.includes(key)}
+                  isAnimationActive={false}
+                />
+              ))}
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      <div className={styles.chartSection}>
+        <h2 className={styles.chartTitle}>実質の消費支出（10分類）積み上げ</h2>
+        <div className={styles.legendContainer}>
+          <div
+            className={styles.legendSection}
+            style={{ marginBottom: "1.5rem" }}
+          >
+            <h3 className={styles.legendTitle}>四半期</h3>
+            <div className={styles.legendItems}>
+              {[1, 2, 3, 4].map((q) => (
+                <button
+                  key={q}
+                  onClick={() => handleQuarterLegendClick(q)}
+                  className={`${styles.legendItem} ${
+                    hiddenQuarters.includes(q) ? styles.hidden : ""
+                  }`}
+                  aria-pressed={!hiddenQuarters.includes(q)}
+                >
+                  <span className={styles.legendLabel}>Q{q}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className={styles.legendSection}>
+            <div className={styles.legendHeader}>
+              <h3 className={styles.legendTitle}>費目（実質）</h3>
+              <div className={styles.legendActions}>
+                <button
+                  onClick={() =>
+                    setRealHiddenKeys((prev) =>
+                      prev.length === realKeys.length ? [] : [...realKeys],
+                    )
+                  }
+                  className={styles.actionButton}
+                  aria-label="全選択解除（実質）"
+                >
+                  全選択解除
+                </button>
+              </div>
+            </div>
+            <div className={styles.stackedLegendItems}>
+              {realKeys.map((key, index) => (
+                <button
+                  key={key}
+                  onClick={() => handleRealLegendClick(key)}
+                  className={`${styles.legendItem} ${
+                    realHiddenKeys.includes(key) ? styles.hidden : ""
+                  }`}
+                  aria-pressed={!realHiddenKeys.includes(key)}
+                >
+                  <span
+                    className={styles.legendIcon}
+                    style={{ backgroundColor: realColors[index] }}
+                  />
+                  <span className={styles.legendLabel}>{key}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className={styles.chartWrapper}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={quarterlyRealData}
+              margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
+            >
+              <CartesianGrid
+                strokeDasharray="3 3"
+                vertical={false}
+                stroke={chartColors.gridStroke}
+              />
+              <XAxis
+                dataKey="label"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: chartColors.axisText, fontSize: 12 }}
+                dy={10}
+              />
+              <YAxis
+                domain={[0, "auto"]}
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: chartColors.axisText, fontSize: 12 }}
+                dx={-10}
+              />
+              <Tooltip
+                content={
+                  <CustomTooltip
+                    isMobile={isMobile}
+                    tooltipBg={chartColors.tooltipBg}
+                    tooltipText={chartColors.tooltipText}
+                  />
+                }
+              />
+
+              {realKeys.map((key, index) => (
+                <Bar
+                  key={key}
+                  dataKey={key}
+                  stackId="c"
+                  fill={realColors[index]}
+                  hide={realHiddenKeys.includes(key)}
                   isAnimationActive={false}
                 />
               ))}
