@@ -64,6 +64,21 @@ export async function loadCpiData(): Promise<CpiData[]> {
           const foodTotal = typeof newRow.食料 === "number" ? newRow.食料 : 0;
           const dinedOut = typeof newRow.外食 === "number" ? newRow.外食 : 0;
           newRow["外食以外食料"] = foodTotal - dinedOut;
+
+          // 交通・自動車等関係費 = 交通 + 自動車等関係費 をサーバー側で計算
+          const transport = typeof newRow.交通 === "number" ? newRow.交通 : 0;
+          const autoRelated =
+            typeof newRow["自動車等関係費"] === "number"
+              ? newRow["自動車等関係費"]
+              : 0;
+          newRow["交通・自動車等関係費"] = transport + autoRelated;
+
+          // 不要な費目を除去
+          delete newRow["教養娯楽サービス"];
+          delete newRow["教養娯楽用品"];
+          delete newRow["交通"];
+          delete newRow["自動車等関係費"];
+
           return newRow;
         });
 
