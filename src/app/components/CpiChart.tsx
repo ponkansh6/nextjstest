@@ -360,9 +360,8 @@ export default function CpiChart({ data, ctiData }: CpiChartProps) {
           const monthStr = `${y}年${m}月`;
           const row = filteredNominalData.find((r) => r.年月 === monthStr);
           if (row) {
-            // 現在のデータ範囲（2020年1月以降）かつCSVにデータがある月のみをカウント
-            const isWithinCurrentRange = y >= 2020;
-            if (nominalMonthsSet.has(monthStr) && isWithinCurrentRange) {
+            // CSVにデータがある月のみをカウント
+            if (nominalMonthsSet.has(monthStr)) {
               validMonthsCount++;
             }
             nominalKeys.forEach((k) => {
@@ -372,7 +371,7 @@ export default function CpiChart({ data, ctiData }: CpiChartProps) {
           }
         });
 
-        // 3か月分のデータが揃っていない、または現在の表示範囲外の場合は値を0にする
+        // 3か月分のデータが揃っていない場合は値を0にする（欠損四半期を除外）
         if (validMonthsCount !== 3) {
           nominalKeys.forEach((k) => (item[k] = 0));
         }
@@ -432,8 +431,7 @@ export default function CpiChart({ data, ctiData }: CpiChartProps) {
           const monthStr = `${y}年${m}月`;
           const row = filteredNominalData.find((r) => r.年月 === monthStr);
           if (row) {
-            const isWithinCurrentRange = y >= 2020;
-            if (nominalMonthsSet.has(monthStr) && isWithinCurrentRange) {
+            if (nominalMonthsSet.has(monthStr)) {
               validMonthsCount++;
             }
             realKeys.forEach((k) => {
