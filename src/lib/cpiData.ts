@@ -3,6 +3,132 @@ import path from "path";
 import Papa from "papaparse";
 import { CpiData } from "../app/page";
 
+export async function loadCtiData(): Promise<CpiData[]> {
+  const ctiFilePath = path.join(process.cwd(), "public/cti_data.csv");
+  if (!fs.existsSync(ctiFilePath)) {
+    console.error("CTI data file not found");
+    return [];
+  }
+
+  try {
+    const ctiContent = fs.readFileSync(ctiFilePath, "utf8");
+    const parsed = Papa.parse<string[]>(ctiContent, {
+      header: false,
+      skipEmptyLines: false,
+    });
+
+    const rows = (parsed.data || []) as string[][];
+    const headerIndex = rows.findIndex(
+      (r) =>
+        Array.isArray(r) &&
+        r.some(
+          (c) =>
+            typeof c === "string" &&
+            (c.trim() === "月" || c.trim().includes("消費支出（名目）")),
+        ),
+    );
+
+    if (headerIndex === -1) {
+      console.error("CTI header not found");
+      return [];
+    }
+
+    const header = rows[headerIndex].map((c) => c.trim());
+    const dataRows = rows.slice(headerIndex + 1);
+
+    const mapped = dataRows
+      .map((row) => {
+        const obj: Record<string, string | number> = {};
+        header.forEach((h, i) => {
+          let val: string | number = row[i];
+          if (typeof val === "string") {
+            const trimmedVal = val.trim();
+            if (h !== "月" && h !== "年月") {
+              const numValue = trimmedVal.replace(/,/g, "");
+              if (numValue === "-") {
+                val = 0;
+              } else {
+                const num = parseFloat(numValue);
+                val = isNaN(num) ? 0 : num;
+              }
+            } else {
+              val = trimmedVal;
+            }
+          }
+          obj[h] = val;
+        });
+        if (typeof obj["月"] === "string" && !obj.年月) obj.年月 = obj["月"];
+        return obj as unknown as CpiData;
+      })
+      .filter((row) => {
+        if (!row.年月) return false;
+        const m = String(row.年月).match(/^(\d{4})年/);
+        return m ? parseInt(m[1], 10) >= 2005 : false;
+      });
+
+    // 名目・実質それぞれの残差計算
+    const nominalKeys = [
+      "食料（名目）",
+      "住居（名目）",
+      "光熱・水道（名目）",
+      "家具・家事用品（名目）",
+      "被服及び履物（名目）",
+      "保健医療 （名目）", // CSV上の空白あり
+      "保健医療（名目）", // 念のため
+      "交通・通信（名目）",
+      "教育（名目）",
+      "教養娯楽（名目）",
+    ];
+
+    mapped.forEach((row) => {
+      // 名目の残差計算
+      const nominalTotal = (row["消費支出（名目）"] as number) || 0;
+      let nominalSum = 0;
+      nominalKeys.forEach((k) => {
+        if (k !== "その他の消費支出（名目）") {
+          nominalSum += (row[k] as number) || 0;
+        }
+      });
+      if (
+        !row["その他の消費支出（名目）"] ||
+        row["その他の消費支出（名目）"] === 0
+      ) {
+        row["その他の消費支出（名目）"] = Math.max(
+          0,
+          nominalTotal - nominalSum,
+        );
+      }
+
+      // 実質の残差計算
+      const realTotal = (row["消費支出（実質）"] as number) || 0;
+      const realKeys = nominalKeys.map((k) => k.replace("名目", "実質"));
+      let realSum = 0;
+      realKeys.forEach((k) => {
+        if (k !== "その他の消費支出（実質）") {
+          realSum += (row[k] as number) || 0;
+        }
+      });
+      if (
+        !row["その他の消費支出（実質）"] ||
+        row["その他の消費支出（実質）"] === 0
+      ) {
+        row["その他の消費支出（実質）"] = Math.max(0, realTotal - realSum);
+      }
+
+      // キー名の変更: その他の消費支出（名目） -> 諸雑費・CPI外支出等
+      row["諸雑費・CPI外支出等"] = row["その他の消費支出（名目）"];
+      row["諸雑費・CPI外支出等（実質）"] = row["その他の消費支出（実質）"];
+      delete row["その他の消費支出（名目）"];
+      delete row["その他の消費支出（実質）"];
+    });
+
+    return mapped;
+  } catch (error) {
+    console.error("Error loading CTI data:", error);
+    return [];
+  }
+}
+
 export async function loadCpiData(): Promise<CpiData[]> {
   const cpiFilePath = path.join(process.cwd(), "public/cpi_data.csv");
   const contributionFilePath = path.join(

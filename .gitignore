@@ -57,3 +57,13 @@ node_modules/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+# project specific
+/scripts/dist/
+/scripts/build/
+*.bak.*
+*.csv.bak.*
+*.csv.converted*
+.eslintcache
+
+

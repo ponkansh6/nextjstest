@@ -1,4 +1,4 @@
-import { loadCpiData } from "../lib/cpiData";
+import { loadCpiData, loadCtiData } from "../lib/cpiData";
 import CpiChart from "./components/CpiChart";
 import styles from "./page.module.css";
 
@@ -11,7 +11,10 @@ export interface CpiData {
 }
 
 export default async function Page() {
-  const cleanData = await loadCpiData();
+  const [cleanData, ctiData] = await Promise.all([
+    loadCpiData(),
+    loadCtiData(),
+  ]);
 
   return (
     <div className={`container ${styles.pageWrapper}`}>
@@ -25,7 +28,7 @@ export default async function Page() {
       </header>
 
       {cleanData.length > 0 ? (
-        <CpiChart data={cleanData} />
+        <CpiChart data={cleanData} ctiData={ctiData} />
       ) : (
         <div className={styles.errorContainer}>
           <p className={styles.errorMessage}>

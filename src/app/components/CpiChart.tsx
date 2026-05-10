@@ -12,12 +12,12 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import Papa from "papaparse";
 import { type CpiData } from "../page";
 import styles from "./CpiChart.module.css";
 
 interface CpiChartProps {
   data: CpiData[];
+  ctiData: CpiData[];
 }
 
 interface CustomTooltipProps {
@@ -84,7 +84,7 @@ const CustomTooltip: React.FC<CustomTooltipProps> = ({
   );
 };
 
-export default function CpiChart({ data }: CpiChartProps) {
+export default function CpiChart({ data, ctiData }: CpiChartProps) {
   // Detect dark mode
   const isDarkMode = React.useSyncExternalStore(
     React.useCallback((callback: () => void) => {
@@ -225,7 +225,7 @@ export default function CpiChart({ data }: CpiChartProps) {
     "#550500", // 諸雑費
   ];
 
-  // 名目の消費支出（10分類） — public/cti_data.csv をクライアントで読み込む
+  // 名目の消費支出（10分類）
   const nominalKeys = useMemo(
     () => [
       "住居（名目）",
@@ -237,7 +237,7 @@ export default function CpiChart({ data }: CpiChartProps) {
       "光熱・水道（名目）",
       "教養娯楽（名目）",
       "食料（名目）",
-      "その他の消費支出（名目）",
+      "諸雑費・CPI外支出等",
     ],
     [],
   );
@@ -253,7 +253,7 @@ export default function CpiChart({ data }: CpiChartProps) {
       "交通・通信（名目）": "交通・自動車等関係費",
       "教育（名目）": "教育",
       "教養娯楽（名目）": "教養娯楽",
-      "その他の消費支出（名目）": "諸雑費",
+      "諸雑費・CPI外支出等": "諸雑費",
     };
     const targetStackedKey = mapping[key];
     const index = stackedKeys.indexOf(targetStackedKey);
@@ -261,9 +261,13 @@ export default function CpiChart({ data }: CpiChartProps) {
   };
 
   const nominalColors = nominalKeys.map(getColorForNominalKey);
-  const realKeys = nominalKeys.map((k) => k.replace("名目", "実質"));
+  const realKeys = nominalKeys.map((k) =>
+    k === "諸雑費・CPI外支出等"
+      ? "諸雑費・CPI外支出等（実質）"
+      : k.replace("名目", "実質"),
+  );
   const realColors = nominalColors;
-  const [nominalData, setNominalData] = useState<CpiData[]>([]);
+  const nominalData = ctiData;
   const [nominalHiddenKeys, setNominalHiddenKeys] = useState<string[]>([]);
   const [realHiddenKeys, setRealHiddenKeys] = useState<string[]>([]);
   const [hiddenQuarters, setHiddenQuarters] = useState<number[]>([]);
@@ -291,108 +295,6 @@ export default function CpiChart({ data }: CpiChartProps) {
         : [...prev, quarter],
     );
   };
-
-  // CTI CSV をクライアントで読み込み（public/cti_data.csv）
-  React.useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const res = await fetch("/cti_data.csv");
-        const text = await res.text();
-        const parsed = Papa.parse<Record<string, unknown>>(text, {
-          header: false,
-          skipEmptyLines: false,
-          dynamicTyping: false,
-        });
-        const rows = (parsed.data || []) as unknown as unknown[][];
-        const headerIndex = rows.findIndex(
-          (r) =>
-            Array.isArray(r) &&
-            r.some(
-              (c) =>
-                typeof c === "string" &&
-                (c.trim() === "月" || c.trim().includes("消費支出（名目）")),
-            ),
-        );
-
-        let mapped: CpiData[] = [];
-        if (headerIndex === -1) {
-          const withHeader = Papa.parse<Record<string, unknown>>(text, {
-            header: true,
-            skipEmptyLines: true,
-            dynamicTyping: true,
-          });
-          mapped = (withHeader.data || [])
-            .map((row) => {
-              const newRow = { ...row } as CpiData;
-              if (row && typeof row["月"] === "string") newRow.年月 = row["月"];
-              return newRow;
-            })
-            .filter((row) => {
-              if (!row.年月) return false;
-              const m = String(row.年月).match(/^(\d{4})年/);
-              return m ? parseInt(m[1], 10) >= 2005 : false;
-            });
-        } else {
-          const header = (rows[headerIndex] as string[]).map((c) => c.trim());
-          const dataRows = rows.slice(headerIndex + 1);
-          mapped = (dataRows as unknown[][])
-            .map((row) => {
-              const obj: Record<string, unknown> = {};
-              header.forEach((h, i) => {
-                let val = row[i];
-                if (typeof val === "string") {
-                  const trimmedVal = val.trim();
-                  if (h !== "月" && h !== "年月") {
-                    const num = parseFloat(trimmedVal.replace(/,/g, ""));
-                    val = isNaN(num) ? 0 : num;
-                  } else {
-                    val = trimmedVal;
-                  }
-                }
-                obj[h] = val;
-              });
-              if (typeof obj["月"] === "string" && !obj.年月)
-                obj.年月 = obj["月"];
-              return obj as CpiData;
-            })
-            .filter((row) => {
-              if (!row.年月) return false;
-              const m = String(row.年月).match(/^(\d{4})年/);
-              return m ? parseInt(m[1], 10) >= 2005 : false;
-            });
-        }
-
-        // Compute その他の消費支出（実質） if missing: 消費支出（実質） - sum(他の実質費目)
-        mapped.forEach((row) => {
-          try {
-            const total = (row["消費支出（実質）"] as number) || 0;
-            // sum known real item columns (excluding total and existing その他)
-            const sumKnown = realKeys
-              .filter(
-                (k) =>
-                  k !== "消費支出（実質）" && k !== "その他の消費支出（実質）",
-              )
-              .reduce((acc, k) => acc + ((row[k] as number) || 0), 0);
-            const other = total - sumKnown;
-            // assign to row; if key already exists and is number, keep it
-            if (typeof row["その他の消費支出（実質）"] !== "number") {
-              (row as Record<string, unknown>)["その他の消費支出（実質）"] =
-                other;
-            }
-          } catch {
-            // ignore
-          }
-        });
-        if (mounted) setNominalData(mapped);
-      } catch (e) {
-        console.error("Failed to load cti_data.csv", e);
-      }
-    })();
-    return () => {
-      mounted = false;
-    };
-  }, [realKeys]);
 
   // フィルタ済みの名目データ（開始年・終了年に基づく。データがない月は0で補完）
   const filteredNominalData = useMemo(() => {
