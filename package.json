@@ -11,26 +11,26 @@
     "security-check": "npm audit --audit-level=high && secretlint \"**/*\""
   },
   "dependencies": {
-    "next": "^16.2.4",
+    "next": "^16.2.6",
     "papaparse": "^5.5.3",
-    "react": "^19.2.5",
-    "react-dom": "^19.2.5",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
     "recharts": "^3.8.1"
   },
   "devDependencies": {
-    "@playwright/test": "^1.59.1",
+    "@playwright/test": "^1.60.0",
     "@types/node": "^20",
     "@types/papaparse": "^5.5.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
-    "eslint": "^9",
-    "eslint-config-next": "^16.2.4",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "^16.2.6",
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
     "prettier": "^3.8.1",
     "secretlint": "^11.6.0",
-    "typescript": "^5"
+    "typescript": "^6.0.3"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
