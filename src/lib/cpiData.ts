@@ -3,6 +3,53 @@ import path from "path";
 import Papa from "papaparse";
 import { CpiData } from "../app/page";
 
+export async function loadTotalEarningData(): Promise<CpiData[]> {
+  const filePath = path.join(process.cwd(), "public/total_earning.csv");
+  if (!fs.existsSync(filePath)) {
+    console.error("Total earning data file not found");
+    return [];
+  }
+
+  try {
+    const content = fs.readFileSync(filePath, "utf8");
+    const parsed = Papa.parse<string[]>(content, {
+      header: false,
+      skipEmptyLines: true,
+    });
+
+    const rows = parsed.data;
+    const dataRows = rows.filter(
+      (row) => row[0] && /^\d{4}$/.test(row[0].trim()),
+    );
+
+    const result: CpiData[] = [];
+    dataRows.forEach((row) => {
+      const year = row[0].trim();
+      const yearNum = parseInt(year, 10);
+      if (yearNum < 2005) return;
+
+      for (let m = 1; m <= 12; m++) {
+        const val = row[m + 7]; // Jan is index 8 (1+7), Dec is index 19 (12+7)
+        if (val && val !== "-" && val.trim() !== "") {
+          const numValue = val.trim().replace(/,/g, "");
+          const num = parseFloat(numValue);
+          if (!isNaN(num)) {
+            result.push({
+              年月: `${year}年${m}月`,
+              現金給与総額賃金指数: num,
+            } as unknown as CpiData);
+          }
+        }
+      }
+    });
+
+    return result;
+  } catch (error) {
+    console.error("Error loading Total Earning data:", error);
+    return [];
+  }
+}
+
 export async function loadCtiData(): Promise<CpiData[]> {
   const ctiFilePath = path.join(process.cwd(), "public/cti_data.csv");
   if (!fs.existsSync(ctiFilePath)) {

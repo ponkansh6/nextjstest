@@ -1,4 +1,4 @@
-import { loadCpiData, loadCtiData } from "../lib/cpiData";
+import { loadCpiData, loadCtiData, loadTotalEarningData } from "../lib/cpiData";
 import CpiChart from "./components/CpiChart";
 import styles from "./page.module.css";
 
@@ -11,9 +11,10 @@ export interface CpiData {
 }
 
 export default async function Page() {
-  const [cleanData, ctiData] = await Promise.all([
+  const [cleanData, ctiData, totalEarningData] = await Promise.all([
     loadCpiData(),
     loadCtiData(),
+    loadTotalEarningData(),
   ]);
 
   return (
@@ -28,7 +29,11 @@ export default async function Page() {
       </header>
 
       {cleanData.length > 0 ? (
-        <CpiChart data={cleanData} ctiData={ctiData} />
+        <CpiChart
+          data={cleanData}
+          ctiData={ctiData}
+          totalEarningData={totalEarningData}
+        />
       ) : (
         <div className={styles.errorContainer}>
           <p className={styles.errorMessage}>

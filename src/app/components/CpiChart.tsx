@@ -18,6 +18,7 @@ import styles from "./CpiChart.module.css";
 interface CpiChartProps {
   data: CpiData[];
   ctiData: CpiData[];
+  totalEarningData: CpiData[];
 }
 
 interface CustomTooltipProps {
@@ -84,7 +85,11 @@ const CustomTooltip: React.FC<CustomTooltipProps> = ({
   );
 };
 
-export default function CpiChart({ data, ctiData }: CpiChartProps) {
+export default function CpiChart({
+  data,
+  ctiData,
+  totalEarningData,
+}: CpiChartProps) {
   // Detect dark mode
   const isDarkMode = React.useSyncExternalStore(
     React.useCallback((callback: () => void) => {
@@ -162,6 +167,15 @@ export default function CpiChart({ data, ctiData }: CpiChartProps) {
       return year >= startYear && year <= endYear;
     });
   }, [data, startYear, endYear]);
+
+  const filteredTotalEarningData = useMemo(() => {
+    return totalEarningData.filter((item) => {
+      const yearMatch = item.年月.match(/^(\d{4})年/);
+      if (!yearMatch) return false;
+      const year = parseInt(yearMatch[1], 10);
+      return year >= startYear && year <= endYear;
+    });
+  }, [totalEarningData, startYear, endYear]);
 
   // 表示・非表示を管理するステート（初期値は全て表示）
   const [hiddenKeys, setHiddenKeys] = useState<string[]>([]);
@@ -1038,6 +1052,57 @@ export default function CpiChart({ data, ctiData }: CpiChartProps) {
                 />
               ))}
             </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      <div className={styles.chartSection}>
+        <h2 className={styles.chartTitle}>
+          現金給与総額賃金指数（2020年平均＝100）
+        </h2>
+        <div className={styles.chartWrapper}>
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart
+              data={filteredTotalEarningData}
+              margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
+            >
+              <CartesianGrid
+                strokeDasharray="3 3"
+                vertical={false}
+                stroke={chartColors.gridStroke}
+              />
+              <XAxis
+                dataKey="年月"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: chartColors.axisText, fontSize: 12 }}
+                dy={10}
+              />
+              <YAxis
+                domain={["auto", "auto"]}
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: chartColors.axisText, fontSize: 12 }}
+                dx={-10}
+              />
+              <Tooltip
+                content={
+                  <CustomTooltip
+                    isMobile={isMobile}
+                    tooltipBg={chartColors.tooltipBg}
+                    tooltipText={chartColors.tooltipText}
+                  />
+                }
+              />
+              <Area
+                type="monotone"
+                dataKey="現金給与総額賃金指数"
+                stroke="#6366f1"
+                fill="#6366f1"
+                fillOpacity={0.6}
+                isAnimationActive={false}
+              />
+            </AreaChart>
           </ResponsiveContainer>
         </div>
       </div>
