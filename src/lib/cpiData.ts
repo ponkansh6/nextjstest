@@ -22,11 +22,13 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
 
     // 指数(Indices)セクションを探す
     const startIndex = rows.findIndex(
-      (row) => row[0]?.trim() === "年" && row[8]?.trim() === "１月",
+      (row) =>
+        (row[0]?.trim() === "年" || row[0]?.trim() === "year") &&
+        row[8]?.trim() === "１月",
     );
     if (startIndex === -1) return [];
 
-    for (let i = startIndex + 1; i < rows.length; i++) {
+    for (let i = startIndex + 2; i < rows.length; i++) {
       const row = rows[i];
       const year = row[0]?.trim();
 
