@@ -1060,6 +1060,19 @@ export default function CpiChart({
         <h2 className={styles.chartTitle}>
           現金給与総額賃金指数（2020年平均＝100）
         </h2>
+        <div className={styles.legendContainer}>
+          <div className={styles.legendSection}>
+            <div className={styles.legendItems}>
+              <div className={styles.legendItem}>
+                <span
+                  className={styles.legendIcon}
+                  style={{ backgroundColor: "#6366f1" }}
+                />
+                <span className={styles.legendLabel}>現金給与総額賃金指数</span>
+              </div>
+            </div>
+          </div>
+        </div>
         <div className={styles.chartWrapper}>
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart

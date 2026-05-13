@@ -14,22 +14,34 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
     const content = fs.readFileSync(filePath, "utf8");
     const parsed = Papa.parse<string[]>(content, {
       header: false,
-      skipEmptyLines: true,
+      skipEmptyLines: false,
     });
 
     const rows = parsed.data;
-    const dataRows = rows.filter(
-      (row) => row[0] && /^\d{4}$/.test(row[0].trim()),
-    );
-
     const result: CpiData[] = [];
-    dataRows.forEach((row) => {
-      const year = row[0].trim();
+
+    // 指数(Indices)セクションを探す
+    const startIndex = rows.findIndex(
+      (row) => row[0]?.trim() === "年" && row[8]?.trim() === "１月",
+    );
+    if (startIndex === -1) return [];
+
+    for (let i = startIndex + 1; i < rows.length; i++) {
+      const row = rows[i];
+      const year = row[0]?.trim();
+
+      // 次のセクションの見出しが見えたら終了
+      if (year && year.includes("毎月勤労統計調査")) {
+        break;
+      }
+
+      if (!year || !/^\d{4}$/.test(year)) continue;
+
       const yearNum = parseInt(year, 10);
-      if (yearNum < 2005) return;
+      if (yearNum < 2005) continue;
 
       for (let m = 1; m <= 12; m++) {
-        const val = row[m + 7]; // Jan is index 8 (1+7), Dec is index 19 (12+7)
+        const val = row[m + 7]; // １月はインデックス8 (1+7), 12月はインデックス19 (12+7)
         if (val && val !== "-" && val.trim() !== "") {
           const numValue = val.trim().replace(/,/g, "");
           const num = parseFloat(numValue);
@@ -41,7 +53,7 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
           }
         }
       }
-    });
+    }
 
     return result;
   } catch (error) {
