@@ -1057,9 +1057,7 @@ export default function CpiChart({
       </div>
 
       <div className={styles.chartSection}>
-        <h2 className={styles.chartTitle}>
-          きまって支給する給与 と 所定内給与（補正済）
-        </h2>
+        <h2 className={styles.chartTitle}>きまって支給する給与 と 所定内給与</h2>
         <div className={styles.legendContainer}>
           <div className={styles.legendSection}>
             <div className={styles.legendItems}>
@@ -1085,9 +1083,7 @@ export default function CpiChart({
                   className={styles.legendIcon}
                   style={{ backgroundColor: "#f97316" }}
                 />
-                <span className={styles.legendLabel}>
-                  所定内給与（2025年1月比率で補正）
-                </span>
+                <span className={styles.legendLabel}>所定内給与</span>
               </div>
             </div>
           </div>
@@ -1111,7 +1107,7 @@ export default function CpiChart({
                 dy={10}
               />
               <YAxis
-                domain={["auto", "auto"]}
+                domain={[0, "auto"]}
                 axisLine={false}
                 tickLine={false}
                 tick={{ fill: chartColors.axisText, fontSize: 12 }}
