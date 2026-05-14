@@ -4,62 +4,126 @@ import Papa from "papaparse";
 import { CpiData } from "../app/page";
 
 export async function loadTotalEarningData(): Promise<CpiData[]> {
-  const filePath = path.join(process.cwd(), "public/total_earning.csv");
-  if (!fs.existsSync(filePath)) {
-    console.error("Total earning data file not found");
+  // 既存の "total_earning.csv" ではなく、きまって支給する給与と所定内給与のCSVを読み込む
+  const contractualPath = path.join(
+    process.cwd(),
+    "public/contractual_earnings.csv",
+  );
+  const scheduledPath = path.join(
+    process.cwd(),
+    "public/scheduled_earnings.csv",
+  );
+  const wageExchangePath = path.join(process.cwd(), "public/wage_exchange.csv");
+
+  if (!fs.existsSync(contractualPath) || !fs.existsSync(scheduledPath)) {
+    console.error("Contractual or scheduled earnings data file not found");
     return [];
   }
 
-  try {
-    const content = fs.readFileSync(filePath, "utf8");
+  const parseIndexSection = (content: string) => {
     const parsed = Papa.parse<string[]>(content, {
       header: false,
       skipEmptyLines: false,
     });
-
     const rows = parsed.data;
-    const result: CpiData[] = [];
-
-    // 指数(Indices)セクションを探す
     const startIndex = rows.findIndex(
       (row) =>
         (row[0]?.trim() === "年" || row[0]?.trim() === "year") &&
         row[8]?.trim() === "１月",
     );
-    if (startIndex === -1) return [];
+    if (startIndex === -1) return new Map<string, number>();
 
+    const map = new Map<string, number>();
     for (let i = startIndex + 2; i < rows.length; i++) {
       const row = rows[i];
       const year = row[0]?.trim();
-
-      // 次のセクションの見出しが見えたら終了
-      if (year && year.includes("毎月勤労統計調査")) {
-        break;
-      }
-
+      if (year && year.includes("毎月勤労統計調査")) break;
       if (!year || !/^\d{4}$/.test(year)) continue;
-
       const yearNum = parseInt(year, 10);
       if (yearNum < 2005) continue;
 
       for (let m = 1; m <= 12; m++) {
-        const val = row[m + 7]; // １月はインデックス8 (1+7), 12月はインデックス19 (12+7)
+        const val = row[m + 7];
         if (val && val !== "-" && val.trim() !== "") {
           const numValue = val.trim().replace(/,/g, "");
           const num = parseFloat(numValue);
           if (!isNaN(num)) {
-            result.push({
-              年月: `${year}年${m}月`,
-              現金給与総額賃金指数: num,
-            } as unknown as CpiData);
+            map.set(`${year}年${m}月`, num);
           }
         }
       }
     }
+    return map;
+  };
+
+  try {
+    const contractualContent = fs.readFileSync(contractualPath, "utf8");
+    const scheduledContent = fs.readFileSync(scheduledPath, "utf8");
+
+    const contractualMap = parseIndexSection(contractualContent);
+    const scheduledMap = parseIndexSection(scheduledContent);
+
+    // wage_exchange.csvから2025年1月の実額を取得
+    let actualRatio = 1;
+    if (fs.existsSync(wageExchangePath)) {
+      const wageExchangeContent = fs.readFileSync(wageExchangePath, "utf8");
+      const wageParsed = Papa.parse<string[]>(wageExchangeContent, {
+        header: false,
+        skipEmptyLines: true,
+      });
+      const jan2025 = wageParsed.data.find(
+        (row) => row[0] === "2025" && row[1] === "1",
+      );
+      if (jan2025) {
+        const actualContractual = parseFloat(jan2025[2]);
+        const actualScheduled = parseFloat(jan2025[3]);
+        if (actualContractual !== 0) {
+          actualRatio = actualScheduled / actualContractual;
+        }
+      }
+    }
+
+    // 2025年1月の指数比率を考慮して補正係数を計算
+    const janKey = "2025年1月";
+    const contractualJanIdx = contractualMap.get(janKey);
+    const scheduledJanIdx = scheduledMap.get(janKey);
+    let correctionFactor = 1;
+    if (contractualJanIdx && scheduledJanIdx && scheduledJanIdx !== 0) {
+      // 指数比率(Ic/Is)に実額比率(As/Ac)を掛けることで、表示上の比率を実額に合わせる
+      correctionFactor = actualRatio * (contractualJanIdx / scheduledJanIdx);
+    }
+
+    // マージして配列化（所定内給与は補正係数を掛ける）
+    const keys = new Set<string>([
+      ...Array.from(contractualMap.keys()),
+      ...Array.from(scheduledMap.keys()),
+    ]);
+
+    const result: CpiData[] = Array.from(keys)
+      .map((ym) => {
+        const contractualVal = contractualMap.get(ym) ?? 0;
+        const scheduledVal = scheduledMap.get(ym) ?? 0;
+        return {
+          年月: ym,
+          きまって支給する給与: contractualVal,
+          // 所定内給与を実額比率に合うように補正
+          所定内給与: scheduledVal * correctionFactor,
+        } as unknown as CpiData;
+      })
+      .sort((a, b) => {
+        const ma = a.年月.match(/^(\d{4})年(\d{1,2})月/);
+        const mb = b.年月.match(/^(\d{4})年(\d{1,2})月/);
+        if (!ma || !mb) return 0;
+        const ay = parseInt(ma[1], 10);
+        const am = parseInt(ma[2], 10);
+        const by = parseInt(mb[1], 10);
+        const bm = parseInt(mb[2], 10);
+        return ay !== by ? ay - by : am - bm;
+      });
 
     return result;
   } catch (error) {
-    console.error("Error loading Total Earning data:", error);
+    console.error("Error loading earnings components:", error);
     return [];
   }
 }

@@ -1058,17 +1058,36 @@ export default function CpiChart({
 
       <div className={styles.chartSection}>
         <h2 className={styles.chartTitle}>
-          現金給与総額賃金指数（2020年平均＝100）
+          きまって支給する給与 と 所定内給与（補正済）
         </h2>
         <div className={styles.legendContainer}>
           <div className={styles.legendSection}>
             <div className={styles.legendItems}>
-              <div className={styles.legendItem}>
+              <div
+                className={styles.legendItem}
+                onClick={() => handleLegendClick("きまって支給する給与")}
+                role="button"
+                tabIndex={0}
+              >
                 <span
                   className={styles.legendIcon}
                   style={{ backgroundColor: "#6366f1" }}
                 />
-                <span className={styles.legendLabel}>現金給与総額賃金指数</span>
+                <span className={styles.legendLabel}>きまって支給する給与</span>
+              </div>
+              <div
+                className={styles.legendItem}
+                onClick={() => handleLegendClick("所定内給与")}
+                role="button"
+                tabIndex={0}
+              >
+                <span
+                  className={styles.legendIcon}
+                  style={{ backgroundColor: "#f97316" }}
+                />
+                <span className={styles.legendLabel}>
+                  所定内給与（2025年1月比率で補正）
+                </span>
               </div>
             </div>
           </div>
@@ -1107,12 +1126,24 @@ export default function CpiChart({
                   />
                 }
               />
+              {/* きまって支給する給与 */}
               <Area
                 type="monotone"
-                dataKey="現金給与総額賃金指数"
+                dataKey="きまって支給する給与"
                 stroke="#6366f1"
                 fill="#6366f1"
                 fillOpacity={0.6}
+                hide={hiddenKeys.includes("きまって支給する給与")}
+                isAnimationActive={false}
+              />
+              {/* 所定内給与（補正済） */}
+              <Area
+                type="monotone"
+                dataKey="所定内給与"
+                stroke="#f97316"
+                fill="#f97316"
+                fillOpacity={0.45}
+                hide={hiddenKeys.includes("所定内給与")}
                 isAnimationActive={false}
               />
             </AreaChart>
