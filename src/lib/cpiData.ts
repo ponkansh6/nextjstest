@@ -148,6 +148,21 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
         return ay !== by ? ay - by : am - bm;
       });
 
+    // 12か月移動平均を計算して調整済み特別給与を追加
+    result.forEach((item, index) => {
+      let sum = 0;
+      let count = 0;
+
+      // その月を含む直前12か月を集計
+      for (let i = Math.max(0, index - 11); i <= index; i++) {
+        sum += (result[i].特別給与 as number) || 0;
+        count++;
+      }
+
+      item["調整済み特別給与"] =
+        count > 0 ? sum / count : (item.特別給与 as number);
+    });
+
     return result;
   } catch (error) {
     console.error("Error loading earnings components:", error);

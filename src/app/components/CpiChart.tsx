@@ -1091,7 +1091,7 @@ export default function CpiChart({
               </div>
               <div
                 className={styles.legendItem}
-                onClick={() => handleLegendClick("特別給与")}
+                onClick={() => handleLegendClick("調整済み特別給与")}
                 role="button"
                 tabIndex={0}
               >
@@ -1099,7 +1099,9 @@ export default function CpiChart({
                   className={styles.legendIcon}
                   style={{ backgroundColor: "#10b981" }}
                 />
-                <span className={styles.legendLabel}>特別給与 (賞与等)</span>
+                <span className={styles.legendLabel}>
+                  調整済み特別給与 (12か月移動平均)
+                </span>
               </div>
             </div>
           </div>
@@ -1160,15 +1162,15 @@ export default function CpiChart({
                 hide={hiddenKeys.includes("所定外給与")}
                 isAnimationActive={false}
               />
-              {/* 特別給与 */}
+              {/* 調整済み特別給与 */}
               <Area
                 type="monotone"
-                dataKey="特別給与"
+                dataKey="調整済み特別給与"
                 stackId="earning"
                 stroke="#10b981"
                 fill="#10b981"
                 fillOpacity={0.6}
-                hide={hiddenKeys.includes("特別給与")}
+                hide={hiddenKeys.includes("調整済み特別給与")}
                 isAnimationActive={false}
               />
             </AreaChart>
