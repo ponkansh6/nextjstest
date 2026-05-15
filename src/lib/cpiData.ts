@@ -13,7 +13,6 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
     process.cwd(),
     "public/scheduled_earnings.csv",
   );
-  const wageExchangePath = path.join(process.cwd(), "public/wage_exchange.csv");
 
   if (!fs.existsSync(contractualPath) || !fs.existsSync(scheduledPath)) {
     console.error("Contractual or scheduled earnings data file not found");
@@ -75,16 +74,19 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
     const honMksPath = path.join(process.cwd(), "public/hon-mks202601.csv");
     if (fs.existsSync(honMksPath)) {
       const content = fs.readFileSync(honMksPath, "utf8");
-      const lines = content.split("\n");
-      const tRow = lines.find((line) => line.startsWith("T,T,T"));
+      const parsed = Papa.parse<string[]>(content, {
+        header: false,
+        skipEmptyLines: false,
+      });
+      // T,T,T で始まる行を探す
+      const tRow = parsed.data.find(
+        (row) => row[0] === "T" && row[1] === "T" && row[2] === "T",
+      );
       if (tRow) {
-        const values = tRow
-          .split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/)
-          .map((v) => v.replace(/"/g, "").trim());
-        // [11]:総数, [12]:きまって支給する給与, [13]:所定内給与
-        const total = parseFloat(values[11].replace(/,/g, ""));
-        const contractual = parseFloat(values[12].replace(/,/g, ""));
-        const scheduled = parseFloat(values[13].replace(/,/g, ""));
+        // [12]:総額, [13]:きまって支給する給与, [14]:所定内給与
+        const total = parseFloat(tRow[12].replace(/,/g, ""));
+        const contractual = parseFloat(tRow[13].replace(/,/g, ""));
+        const scheduled = parseFloat(tRow[14].replace(/,/g, ""));
 
         if (contractual !== 0) {
           ratioScheduled = scheduled / contractual;
