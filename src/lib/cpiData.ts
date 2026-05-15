@@ -69,7 +69,7 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
 
     // hon-mks202601.csv から令和8年1月（2026年1月）のT行実額を取得
     let factorScheduled = 1;
-    let factorTotal = 1;
+    let factorContractual = 1;
     const honMksPath = path.join(process.cwd(), "public/hon-mks202601.csv");
     if (fs.existsSync(honMksPath)) {
       const content = fs.readFileSync(honMksPath, "utf8");
@@ -94,21 +94,21 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
         const scheduledIdx = scheduledMap.get(ym202601) || 0;
 
         if (
-          contractualReal !== 0 &&
+          totalReal !== 0 &&
           totalIdx !== 0 &&
           contractualIdx !== 0 &&
           scheduledIdx !== 0
         ) {
-          // 指数1ポイントあたりの実額を計算し、きまって支給する給与の指数スケールに合わせる
-          // 補正後所定内 = 所定内指数 * (所定内実額 / 所定内指数) / (きまって実額 / きまって指数)
-          // 補正後総額 = 総額指数 * (総額実額 / 総額指数) / (きまって実額 / きまって指数)
-          const baseUnit = contractualReal / contractualIdx;
+          // 指数1ポイントあたりの実額を計算し、現金給与総額の指数スケールに合わせる
+          // 補正後所定内 = 所定内指数 * (所定内実額 / 所定内指数) / (総額実額 / 総額指数)
+          // 補正後きまって = きまって指数 * (きまって実額 / きまって指数) / (総額実額 / 総額指数)
+          const baseUnit = totalReal / totalIdx;
           factorScheduled = scheduledReal / scheduledIdx / baseUnit;
-          factorTotal = totalReal / totalIdx / baseUnit;
-        } else if (contractualReal !== 0) {
-          // 指数が取得できない場合のフォールバック（以前の単純な比率）
-          factorScheduled = scheduledReal / contractualReal;
-          factorTotal = totalReal / contractualReal;
+          factorContractual = contractualReal / contractualIdx / baseUnit;
+        } else if (totalReal !== 0) {
+          // 指数が取得できない場合のフォールバック
+          factorScheduled = scheduledReal / totalReal;
+          factorContractual = contractualReal / totalReal;
         }
       }
     }
@@ -126,15 +126,15 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
         const scheduledVal = scheduledMap.get(ym) ?? 0;
         const totalVal = totalMap.get(ym) ?? 0;
 
-        const correctedScheduled = scheduledVal * factorScheduled;
-        const correctedTotal = totalVal * factorTotal;
+        const finalTotal = totalVal;
+        const finalContractual = contractualVal * factorContractual;
+        const finalScheduled = scheduledVal * factorScheduled;
 
         return {
           年月: ym,
-          きまって支給する給与: contractualVal,
-          所定内給与: correctedScheduled,
-          所定外給与: Math.max(0, contractualVal - correctedScheduled),
-          特別給与: Math.max(0, correctedTotal - contractualVal),
+          所定内給与: finalScheduled,
+          所定外給与: Math.max(0, finalContractual - finalScheduled),
+          特別給与: Math.max(0, finalTotal - finalContractual),
         } as unknown as CpiData;
       })
       .sort((a, b) => {
