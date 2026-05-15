@@ -95,16 +95,10 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
       }
     }
 
-    // 2026年1月の指数比率を考慮して補正係数を計算
-    const janKey = "2026年1月";
-    const contractualJanIdx = contractualMap.get(janKey) || 1;
-    const scheduledJanIdx = scheduledMap.get(janKey) || 1;
-    const totalJanIdx = totalMap.get(janKey) || 1;
-
-    // 指数ベースをきまって支給する給与のスケールに合わせるための補正係数
-    const factorScheduled =
-      ratioScheduled * (contractualJanIdx / scheduledJanIdx);
-    const factorTotal = ratioTotal * (contractualJanIdx / totalJanIdx);
+    // 補正係数は実額データの比率のみを使用
+    // 指数ベースの差異補正は除外（指数値の不一致による誤った大きな係数を防止）
+    const factorScheduled = ratioScheduled;
+    const factorTotal = ratioTotal;
 
     // マージして配列化
     const keys = new Set<string>([

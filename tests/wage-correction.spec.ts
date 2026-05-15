@@ -59,9 +59,8 @@ test("calculate and log wage correction factors", async () => {
   console.log("Scheduled Index:", scheduledIdx);
   console.log("Total Index:", totalIdx);
 
-  const factorScheduled =
-    ratioScheduled * ((contractualIdx || 1) / (scheduledIdx || 1));
-  const factorTotal = ratioTotal * ((contractualIdx || 1) / (totalIdx || 1));
+  const factorScheduled = ratioScheduled;
+  const factorTotal = ratioTotal;
 
   console.log("--- Final Correction Factors ---");
   console.log("Factor Scheduled:", factorScheduled);
