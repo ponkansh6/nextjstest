@@ -1058,23 +1058,11 @@ export default function CpiChart({
 
       <div className={styles.chartSection}>
         <h2 className={styles.chartTitle}>
-          きまって支給する給与 と 所定内給与
+          現金給与総額の内訳（所定内・所定外・特別給与）
         </h2>
         <div className={styles.legendContainer}>
           <div className={styles.legendSection}>
             <div className={styles.legendItems}>
-              <div
-                className={styles.legendItem}
-                onClick={() => handleLegendClick("きまって支給する給与")}
-                role="button"
-                tabIndex={0}
-              >
-                <span
-                  className={styles.legendIcon}
-                  style={{ backgroundColor: "#6366f1" }}
-                />
-                <span className={styles.legendLabel}>きまって支給する給与</span>
-              </div>
               <div
                 className={styles.legendItem}
                 onClick={() => handleLegendClick("所定内給与")}
@@ -1089,6 +1077,20 @@ export default function CpiChart({
               </div>
               <div
                 className={styles.legendItem}
+                onClick={() => handleLegendClick("所定外給与")}
+                role="button"
+                tabIndex={0}
+              >
+                <span
+                  className={styles.legendIcon}
+                  style={{ backgroundColor: "#6366f1" }}
+                />
+                <span className={styles.legendLabel}>
+                  所定外給与 (超過労働給与)
+                </span>
+              </div>
+              <div
+                className={styles.legendItem}
                 onClick={() => handleLegendClick("特別給与")}
                 role="button"
                 tabIndex={0}
@@ -1097,7 +1099,7 @@ export default function CpiChart({
                   className={styles.legendIcon}
                   style={{ backgroundColor: "#10b981" }}
                 />
-                <span className={styles.legendLabel}>特別給与</span>
+                <span className={styles.legendLabel}>特別給与 (賞与等)</span>
               </div>
             </div>
           </div>
@@ -1136,33 +1138,36 @@ export default function CpiChart({
                   />
                 }
               />
-              {/* きまって支給する給与 */}
-              <Area
-                type="monotone"
-                dataKey="きまって支給する給与"
-                stroke="#6366f1"
-                fill="#6366f1"
-                fillOpacity={0.6}
-                hide={hiddenKeys.includes("きまって支給する給与")}
-                isAnimationActive={false}
-              />
               {/* 所定内給与 */}
               <Area
                 type="monotone"
                 dataKey="所定内給与"
+                stackId="earning"
                 stroke="#f97316"
                 fill="#f97316"
-                fillOpacity={0.45}
+                fillOpacity={0.6}
                 hide={hiddenKeys.includes("所定内給与")}
+                isAnimationActive={false}
+              />
+              {/* 所定外給与 */}
+              <Area
+                type="monotone"
+                dataKey="所定外給与"
+                stackId="earning"
+                stroke="#6366f1"
+                fill="#6366f1"
+                fillOpacity={0.6}
+                hide={hiddenKeys.includes("所定外給与")}
                 isAnimationActive={false}
               />
               {/* 特別給与 */}
               <Area
                 type="monotone"
                 dataKey="特別給与"
+                stackId="earning"
                 stroke="#10b981"
                 fill="#10b981"
-                fillOpacity={0.3}
+                fillOpacity={0.6}
                 hide={hiddenKeys.includes("特別給与")}
                 isAnimationActive={false}
               />

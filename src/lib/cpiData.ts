@@ -61,16 +61,15 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
 
     const contractualMap = parseIndexSection(contractualContent);
     const scheduledMap = parseIndexSection(scheduledContent);
-    const totalMap = parseIndexSection(
-      fs.readFileSync(
-        path.join(process.cwd(), "public/total_earning.csv"),
-        "utf8",
-      ),
+    const totalContent = fs.readFileSync(
+      path.join(process.cwd(), "public/total_earning.csv"),
+      "utf8",
     );
+    const totalMap = parseIndexSection(totalContent);
 
     // hon-mks202601.csv から令和8年1月（2026年1月）のT行実額を取得
-    let ratioScheduled = 1;
-    let ratioTotal = 1;
+    let factorScheduled = 1;
+    let factorTotal = 1;
     const honMksPath = path.join(process.cwd(), "public/hon-mks202601.csv");
     if (fs.existsSync(honMksPath)) {
       const content = fs.readFileSync(honMksPath, "utf8");
@@ -84,21 +83,35 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
       );
       if (tRow) {
         // [12]:総額, [13]:きまって支給する給与, [14]:所定内給与
-        const total = parseFloat(tRow[12].replace(/,/g, ""));
-        const contractual = parseFloat(tRow[13].replace(/,/g, ""));
-        const scheduled = parseFloat(tRow[14].replace(/,/g, ""));
+        const totalReal = parseFloat(tRow[12].replace(/,/g, ""));
+        const contractualReal = parseFloat(tRow[13].replace(/,/g, ""));
+        const scheduledReal = parseFloat(tRow[14].replace(/,/g, ""));
 
-        if (contractual !== 0) {
-          ratioScheduled = scheduled / contractual;
-          ratioTotal = total / contractual;
+        // 2026年1月の各指数を取得
+        const ym202601 = "2026年1月";
+        const totalIdx = totalMap.get(ym202601) || 0;
+        const contractualIdx = contractualMap.get(ym202601) || 0;
+        const scheduledIdx = scheduledMap.get(ym202601) || 0;
+
+        if (
+          contractualReal !== 0 &&
+          totalIdx !== 0 &&
+          contractualIdx !== 0 &&
+          scheduledIdx !== 0
+        ) {
+          // 指数1ポイントあたりの実額を計算し、きまって支給する給与の指数スケールに合わせる
+          // 補正後所定内 = 所定内指数 * (所定内実額 / 所定内指数) / (きまって実額 / きまって指数)
+          // 補正後総額 = 総額指数 * (総額実額 / 総額指数) / (きまって実額 / きまって指数)
+          const baseUnit = contractualReal / contractualIdx;
+          factorScheduled = scheduledReal / scheduledIdx / baseUnit;
+          factorTotal = totalReal / totalIdx / baseUnit;
+        } else if (contractualReal !== 0) {
+          // 指数が取得できない場合のフォールバック（以前の単純な比率）
+          factorScheduled = scheduledReal / contractualReal;
+          factorTotal = totalReal / contractualReal;
         }
       }
     }
-
-    // 補正係数は実額データの比率のみを使用
-    // 指数ベースの差異補正は除外（指数値の不一致による誤った大きな係数を防止）
-    const factorScheduled = ratioScheduled;
-    const factorTotal = ratioTotal;
 
     // マージして配列化
     const keys = new Set<string>([
@@ -120,6 +133,7 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
           年月: ym,
           きまって支給する給与: contractualVal,
           所定内給与: correctedScheduled,
+          所定外給与: Math.max(0, contractualVal - correctedScheduled),
           特別給与: Math.max(0, correctedTotal - contractualVal),
         } as unknown as CpiData;
       })
