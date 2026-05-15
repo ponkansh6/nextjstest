@@ -81,10 +81,10 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
         const values = tRow
           .split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/)
           .map((v) => v.replace(/"/g, "").trim());
-        // [10]:総数, [11]:きまって支給する給与, [12]:所定内給与
-        const total = parseFloat(values[10].replace(/,/g, ""));
-        const contractual = parseFloat(values[11].replace(/,/g, ""));
-        const scheduled = parseFloat(values[12].replace(/,/g, ""));
+        // [11]:総数, [12]:きまって支給する給与, [13]:所定内給与
+        const total = parseFloat(values[11].replace(/,/g, ""));
+        const contractual = parseFloat(values[12].replace(/,/g, ""));
+        const scheduled = parseFloat(values[13].replace(/,/g, ""));
 
         if (contractual !== 0) {
           ratioScheduled = scheduled / contractual;
