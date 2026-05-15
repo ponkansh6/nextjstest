@@ -39,7 +39,7 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
       if (year && year.includes("毎月勤労統計調査")) break;
       if (!year || !/^\d{4}$/.test(year)) continue;
       const yearNum = parseInt(year, 10);
-      if (yearNum < 2005) continue;
+      if (yearNum < 2004) continue;
 
       for (let m = 1; m <= 12; m++) {
         const val = row[m + 7];
