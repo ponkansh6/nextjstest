@@ -62,54 +62,69 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
 
     const contractualMap = parseIndexSection(contractualContent);
     const scheduledMap = parseIndexSection(scheduledContent);
+    const totalMap = parseIndexSection(
+      fs.readFileSync(
+        path.join(process.cwd(), "public/total_earning.csv"),
+        "utf8",
+      ),
+    );
 
     // hon-mks202601.csv から令和8年1月（2026年1月）のT行実額を取得
-    let actualRatio = 1;
+    let ratioScheduled = 1;
+    let ratioTotal = 1;
     const honMksPath = path.join(process.cwd(), "public/hon-mks202601.csv");
     if (fs.existsSync(honMksPath)) {
       const content = fs.readFileSync(honMksPath, "utf8");
       const lines = content.split("\n");
-      // T,T,T で始まる行を探す
       const tRow = lines.find((line) => line.startsWith("T,T,T"));
       if (tRow) {
-        // カンマ区切りでパース（クォーテーションを考慮）
         const values = tRow
           .split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/)
           .map((v) => v.replace(/"/g, "").trim());
-        // 「きまって支給する給与」は11番目、「所定内給与」は12番目 (0-index)
-        const actualContractual = parseFloat(values[11].replace(/,/g, ""));
-        const actualScheduled = parseFloat(values[12].replace(/,/g, ""));
-        if (actualContractual !== 0) {
-          actualRatio = actualScheduled / actualContractual;
+        // [10]:総数, [11]:きまって支給する給与, [12]:所定内給与
+        const total = parseFloat(values[10].replace(/,/g, ""));
+        const contractual = parseFloat(values[11].replace(/,/g, ""));
+        const scheduled = parseFloat(values[12].replace(/,/g, ""));
+
+        if (contractual !== 0) {
+          ratioScheduled = scheduled / contractual;
+          ratioTotal = total / contractual;
         }
       }
     }
 
     // 2026年1月の指数比率を考慮して補正係数を計算
     const janKey = "2026年1月";
-    const contractualJanIdx = contractualMap.get(janKey);
-    const scheduledJanIdx = scheduledMap.get(janKey);
-    let correctionFactor = 1;
-    if (contractualJanIdx && scheduledJanIdx && scheduledJanIdx !== 0) {
-      // 指数比率(Ic/Is)に実額比率(As/Ac)を掛けることで、表示上の比率を実額に合わせる
-      correctionFactor = actualRatio * (contractualJanIdx / scheduledJanIdx);
-    }
+    const contractualJanIdx = contractualMap.get(janKey) || 1;
+    const scheduledJanIdx = scheduledMap.get(janKey) || 1;
+    const totalJanIdx = totalMap.get(janKey) || 1;
 
-    // マージして配列化（所定内給与は補正係数を掛ける）
+    // 指数ベースをきまって支給する給与のスケールに合わせるための補正係数
+    const factorScheduled =
+      ratioScheduled * (contractualJanIdx / scheduledJanIdx);
+    const factorTotal = ratioTotal * (contractualJanIdx / totalJanIdx);
+
+    // マージして配列化
     const keys = new Set<string>([
       ...Array.from(contractualMap.keys()),
       ...Array.from(scheduledMap.keys()),
+      ...Array.from(totalMap.keys()),
     ]);
 
     const result: CpiData[] = Array.from(keys)
       .map((ym) => {
         const contractualVal = contractualMap.get(ym) ?? 0;
         const scheduledVal = scheduledMap.get(ym) ?? 0;
+        const totalVal = totalMap.get(ym) ?? 0;
+
+        const correctedScheduled = scheduledVal * factorScheduled;
+        const correctedTotal = totalVal * factorTotal;
+
         return {
           年月: ym,
           きまって支給する給与: contractualVal,
-          // 所定内給与を実額比率に合うように補正
-          所定内給与: scheduledVal * correctionFactor,
+          所定内給与: correctedScheduled,
+          特別給与: Math.max(0, correctedTotal - contractualVal),
         } as unknown as CpiData;
       })
       .sort((a, b) => {
