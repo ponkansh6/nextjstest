@@ -63,28 +63,30 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
     const contractualMap = parseIndexSection(contractualContent);
     const scheduledMap = parseIndexSection(scheduledContent);
 
-    // wage_exchange.csvから2025年1月の実額を取得
+    // hon-mks202601.csv から令和8年1月（2026年1月）のT行実額を取得
     let actualRatio = 1;
-    if (fs.existsSync(wageExchangePath)) {
-      const wageExchangeContent = fs.readFileSync(wageExchangePath, "utf8");
-      const wageParsed = Papa.parse<string[]>(wageExchangeContent, {
-        header: false,
-        skipEmptyLines: true,
-      });
-      const jan2025 = wageParsed.data.find(
-        (row) => row[0] === "2025" && row[1] === "1",
-      );
-      if (jan2025) {
-        const actualContractual = parseFloat(jan2025[2]);
-        const actualScheduled = parseFloat(jan2025[3]);
+    const honMksPath = path.join(process.cwd(), "public/hon-mks202601.csv");
+    if (fs.existsSync(honMksPath)) {
+      const content = fs.readFileSync(honMksPath, "utf8");
+      const lines = content.split("\n");
+      // T,T,T で始まる行を探す
+      const tRow = lines.find((line) => line.startsWith("T,T,T"));
+      if (tRow) {
+        // カンマ区切りでパース（クォーテーションを考慮）
+        const values = tRow
+          .split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/)
+          .map((v) => v.replace(/"/g, "").trim());
+        // 「きまって支給する給与」は11番目、「所定内給与」は12番目 (0-index)
+        const actualContractual = parseFloat(values[11].replace(/,/g, ""));
+        const actualScheduled = parseFloat(values[12].replace(/,/g, ""));
         if (actualContractual !== 0) {
           actualRatio = actualScheduled / actualContractual;
         }
       }
     }
 
-    // 2025年1月の指数比率を考慮して補正係数を計算
-    const janKey = "2025年1月";
+    // 2026年1月の指数比率を考慮して補正係数を計算
+    const janKey = "2026年1月";
     const contractualJanIdx = contractualMap.get(janKey);
     const scheduledJanIdx = scheduledMap.get(janKey);
     let correctionFactor = 1;
