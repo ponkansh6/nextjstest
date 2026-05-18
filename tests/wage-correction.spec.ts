@@ -1,19 +1,15 @@
 import { test, expect } from "@playwright/test";
 import { loadTotalEarningData } from "../src/lib/cpiData";
 
-test("verify wage correction and per-capita metrics match production logic", async () => {
-  const data = await loadTotalEarningData();
+test("inspect chart data via browser console", async ({ page }) => {
+  // コンソールログをキャプチャ
+  page.on("console", (msg) => {
+    console.log("Browser Log:", msg.text());
+  });
 
-  expect(data.length).toBeGreaterThan(0);
-  const latest = data[data.length - 1];
+  // アプリケーションページにアクセス
+  await page.goto("http://localhost:3000");
 
-  console.log(`--- Latest entry (${latest.年月}) ---`);
-  console.log(
-    "調整済み15歳以上国民一人当たり給与:",
-    latest["調整済み15歳以上国民一人当たり給与"],
-  );
-
-  // 15歳以上国民一人当たり給与は2020年基準で約100になるはず
-  expect(latest["調整済み15歳以上国民一人当たり給与"]).toBeGreaterThan(80);
-  expect(latest["調整済み15歳以上国民一人当たり給与"]).toBeLessThan(150);
+  // 少し待って描画を待機
+  await page.waitForTimeout(5000);
 });

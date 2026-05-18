@@ -90,20 +90,66 @@ export async function loadPopulationData(): Promise<
 
     const rows = parsed.data as string[][];
 
-    // Find the header row containing "年　月"
-    const headerIndex = rows.findIndex((row) => row[0]?.trim() === "年　月");
+    // Find the header row containing year/month information
+    let headerIndex = rows.findIndex((row) =>
+      row.some((cell) =>
+        typeof cell === "string" &&
+        (/^\s*年\s*月\s*$/.test(cell.trim()) || /Year\s*and\s*month/i.test(cell)),
+      ),
+    );
 
     if (headerIndex === -1) {
-      return map;
+      // Try a looser match: find a row that contains both "年" and "月" anywhere
+      const fallbackIndex = rows.findIndex((row) =>
+        row.some((cell) => typeof cell === "string" && /年/.test(cell) && /月/.test(cell)),
+      );
+      if (fallbackIndex === -1) return map;
+      // Use the fallback index found
+      headerIndex = fallbackIndex;
     }
 
-    // Extract data from 2004 onwards (column 4 contains "総数" - total population aged 15+)
+    // Determine which columns contain year/month and total population
+    const headerRow = rows[headerIndex];
+    // If header contains a single cell like "年　月", find its column index
+    let yearCol = headerRow.findIndex(
+      (c) => typeof c === "string" && /年\s*月/.test(c),
+    );
+    let separateYearCol = -1;
+    let monthCol = -1;
+    if (yearCol === -1) {
+      // Look for separate "年" and "月" columns
+      separateYearCol = headerRow.findIndex(
+        (c) => typeof c === "string" && /年$/.test(c.trim()),
+      );
+      if (separateYearCol !== -1) {
+        // assume month is the next column
+        monthCol = separateYearCol + 1;
+      } else {
+        // fallback: try to find any column that looks like "年" or "Year"
+        separateYearCol = headerRow.findIndex(
+          (c) => typeof c === "string" && /年|Year/i.test(c),
+        );
+        if (separateYearCol !== -1) monthCol = separateYearCol + 1;
+      }
+    }
+
+    // Find total population column by header labels ("総数" or "Total")
+    let totalCol = headerRow.findIndex(
+      (c) => typeof c === "string" && /(総数|Total)/.test(c),
+    );
+    // Fallback to conventional positions if not found
+    if (totalCol === -1) totalCol = 4;
+
+    // Extract data from rows after the header. Start a couple of lines after header to skip subheaders
     let currentYear = 0;
     for (let i = headerIndex + 2; i < rows.length; i++) {
       const row = rows[i];
-      const yearStr = row[0]?.trim();
+      if (!row || row.length === 0) continue;
 
-      // Update current year if present
+      // Determine year value from either single-column or era format
+      const yearCell = row[yearCol] || row[separateYearCol] || row[0];
+      const yearStr = typeof yearCell === "string" ? yearCell.trim() : "";
+
       if (yearStr) {
         const yearMatch = yearStr.match(/(\d{4})|(\d+)年/);
         if (yearMatch) {
@@ -113,18 +159,22 @@ export async function loadPopulationData(): Promise<
             if (yearStr.includes("令和")) currentYear = 2018 + eraYear;
             else if (yearStr.includes("平成")) currentYear = 1988 + eraYear;
             else if (yearStr.includes("昭和")) currentYear = 1925 + eraYear;
+            else currentYear = eraYear; // best effort
           }
         }
       }
+
       if (currentYear < 2004) continue;
 
-      // Month is in column 1 (e.g., "1月")
-      const monthStr = row[1]?.trim();
-      if (!monthStr || !monthStr.match(/^\d+月/)) continue;
-      const month = parseInt(monthStr.match(/(\d+)月/)![1], 10);
+      // Month: prefer the dedicated month column if present, otherwise fallback to column 1
+      const monthCell = row[monthCol] ?? row[1];
+      const monthStr = typeof monthCell === "string" ? monthCell.trim() : "";
+      const monthMatch = monthStr.match(/(\d+)月/);
+      if (!monthMatch) continue;
+      const month = parseInt(monthMatch[1], 10);
 
-      // Column 4 or 5 contains total population (15+ years)
-      const popStr = (row[4] || row[5])?.trim().replace(/,/g, "");
+      const popCell = row[totalCol] ?? row[4] ?? row[5];
+      const popStr = typeof popCell === "string" ? popCell.trim().replace(/,/g, "") : "";
 
       if (!popStr || popStr === "-" || popStr === "…") continue;
 
@@ -335,26 +385,36 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
         return acc + val;
       }, 0) / (year2020.length || 1);
 
+    // Helper to tolerate different month zero-padding between datasets
+    const findPopulationTotal = (ym: string): number | undefined => {
+      const exact = populationDataMap.get(ym)?.total;
+      if (exact) return exact;
+      // try zero-padded month (e.g., 2020年01月)
+      const m = ym.match(/^(\d{4})年0?(\d{1,2})月$/);
+      if (!m) return undefined;
+      const padded = `${m[1]}年${String(m[2]).padStart(2, "0")}月`;
+      const unpadded = `${m[1]}年${parseInt(m[2], 10)}月`;
+      return (
+        populationDataMap.get(padded)?.total ?? populationDataMap.get(unpadded)?.total
+      );
+    };
+
     // 15歳以上国民一人当たり給与の計算用に2020年の「給与/人口」のベース比率を算出
     const perCapitaBase2020 = (() => {
-      const year2020Keys = Array.from(keys).filter((ym) =>
-        ym.startsWith("2020年"),
-      );
+      const year2020Keys = Array.from(keys).filter((ym) => ym.startsWith("2020年"));
       if (year2020Keys.length === 0) {
         console.warn("Warning: 2020年データが給与データに見つかりません");
       }
+
       const ratios = year2020Keys
         .map((ym) => {
           const t = totalMap.get(ym) ?? 0;
-          const p = populationDataMap.get(ym)?.total ?? 0;
+          const p = findPopulationTotal(ym) ?? 0;
           return p > 0 ? t / p : 0;
         })
         .filter((r) => r > 0);
 
-      const avgRatio =
-        ratios.length > 0
-          ? ratios.reduce((a, b) => a + b, 0) / ratios.length
-          : 0;
+      const avgRatio = ratios.length > 0 ? ratios.reduce((a, b) => a + b, 0) / ratios.length : 0;
 
       console.log(
         `Calculation Stats: 2020Keys=${year2020Keys.length}, validRatios=${ratios.length}, avgRatio=${avgRatio}`,
@@ -373,7 +433,15 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
         const totalVal = totalMap.get(ym) ?? 0;
         const hoursVal = hoursMap.get(ym) ?? 0;
         const empVal = employmentMap.get(ym) ?? 0;
-        const popData = populationDataMap.get(ym);
+        // Try to find population data with tolerant key matching (padded/unpadded months)
+        const popData = (() => {
+          const exact = populationDataMap.get(ym);
+          if (exact) return exact;
+          const m = ym.match(/^(\d{4})年0?(\d{1,2})月$/);
+          if (!m) return undefined;
+          const padded = `${m[1]}年${String(m[2]).padStart(2, "0")}月`;
+          return populationDataMap.get(padded) ?? undefined;
+        })();
 
         const finalTotal = totalVal;
         const finalContractual = contractualVal * factorContractual;

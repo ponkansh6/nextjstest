@@ -170,12 +170,14 @@ export default function CpiChart({
   }, [data, startYear, endYear]);
 
   const filteredTotalEarningData = useMemo(() => {
-    return totalEarningData.filter((item) => {
+    const filtered = totalEarningData.filter((item) => {
       const yearMatch = item.年月.match(/^(\d{4})年/);
       if (!yearMatch) return false;
       const year = parseInt(yearMatch[1], 10);
       return year >= startYear && year <= endYear;
     });
+    console.log("Filtered Total Earning Data (latest 5):", filtered.slice(-5));
+    return filtered;
   }, [totalEarningData, startYear, endYear]);
 
   // 表示・非表示を管理するステート（初期値は全て表示）

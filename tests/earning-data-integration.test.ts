@@ -34,7 +34,9 @@ describe("loadTotalEarningData integration test", () => {
 
   it("should calculate 15+ population wage index relative to 2020 base", async () => {
     const data = await loadTotalEarningData();
-    // 2020年のデータポイントを探す（複数ある場合は平均などを確認）
+    console.log("Latest 3 entries:", data.slice(-3));
+
+    // 2020年のデータポイントを探す
     const year2020Items = data.filter((item) => item.年月.startsWith("2020年"));
     if (year2020Items.length > 0) {
       const avg2020 =
@@ -43,6 +45,8 @@ describe("loadTotalEarningData integration test", () => {
             acc + (item["調整済み15歳以上国民一人当たり給与"] as number),
           0,
         ) / year2020Items.length;
+      console.log("2020 base average index:", avg2020);
+      
       // 2020年平均がほぼ100であることを確認
       expect(avg2020).toBeGreaterThan(95);
       expect(avg2020).toBeLessThan(105);
