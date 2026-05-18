@@ -11,6 +11,8 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Line,
+  LineChart,
 } from "recharts";
 import { type CpiData } from "../page";
 import styles from "./CpiChart.module.css";
@@ -729,9 +731,10 @@ export default function CpiChart({
                 }
               />
 
-              {stackedKeys.map((key, index) => (
-                <Area
-                  key={key}
+              {stackedKeys.map((key, index) =>
+                !stackedHiddenKeys.includes(key) ? (
+                  <Area
+                    key={key}
                   dataKey={key}
                   stackId="a"
                   type="monotone"
@@ -740,10 +743,12 @@ export default function CpiChart({
                   strokeOpacity={0.2}
                   fill={stackedColors[index]}
                   fillOpacity={1}
-                  hide={stackedHiddenKeys.includes(key)}
+                  
                   isAnimationActive={false}
-                />
-              ))}
+                
+                  />
+                ) : null
+              )}
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -929,16 +934,19 @@ export default function CpiChart({
                 }
               />
 
-              {nominalKeys.map((key, index) => (
-                <Bar
-                  key={key}
+              {nominalKeys.map((key, index) =>
+                !nominalHiddenKeys.includes(key) ? (
+                  <Bar
+                    key={key}
                   dataKey={key}
                   stackId="b"
                   fill={nominalColors[index]}
-                  hide={nominalHiddenKeys.includes(key)}
+                  
                   isAnimationActive={false}
-                />
-              ))}
+                
+                  />
+                ) : null
+              )}
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -1041,16 +1049,19 @@ export default function CpiChart({
                 }
               />
 
-              {realKeys.map((key, index) => (
-                <Bar
-                  key={key}
+              {realKeys.map((key, index) =>
+                !realHiddenKeys.includes(key) ? (
+                  <Bar
+                    key={key}
                   dataKey={key}
                   stackId="c"
                   fill={realColors[index]}
-                  hide={realHiddenKeys.includes(key)}
+                  
                   isAnimationActive={false}
-                />
-              ))}
+                
+                  />
+                ) : null
+              )}
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -1178,56 +1189,61 @@ export default function CpiChart({
                 }
               />
               {/* 所定内給与 */}
-              <Area
-                type="monotone"
-                dataKey="所定内給与"
-                stackId="earning"
-                stroke="#f97316"
-                fill="#f97316"
-                fillOpacity={0.6}
-                hide={hiddenKeys.includes("所定内給与")}
-                isAnimationActive={false}
-              />
+              {!hiddenKeys.includes("所定内給与") && (
+                <Area
+                  type="monotone"
+                  dataKey="所定内給与"
+                  stackId="earning"
+                  stroke="#f97316"
+                  fill="#f97316"
+                  fillOpacity={0.6}
+                  isAnimationActive={false}
+                />
+              )}
               {/* 所定外給与 */}
-              <Area
-                type="monotone"
-                dataKey="所定外給与"
-                stackId="earning"
-                stroke="#6366f1"
-                fill="#6366f1"
-                fillOpacity={0.6}
-                hide={hiddenKeys.includes("所定外給与")}
-                isAnimationActive={false}
-              />
+              {!hiddenKeys.includes("所定外給与") && (
+                <Area
+                  type="monotone"
+                  dataKey="所定外給与"
+                  stackId="earning"
+                  stroke="#6366f1"
+                  fill="#6366f1"
+                  fillOpacity={0.6}
+                  isAnimationActive={false}
+                />
+              )}
               {/* 調整済み特別給与 */}
-              <Area
-                type="monotone"
-                dataKey="調整済み特別給与"
-                stackId="earning"
-                stroke="#10b981"
-                fill="#10b981"
-                fillOpacity={0.6}
-                hide={hiddenKeys.includes("調整済み特別給与")}
-                isAnimationActive={false}
-              />
+              {!hiddenKeys.includes("調整済み特別給与") && (
+                <Area
+                  type="monotone"
+                  dataKey="調整済み特別給与"
+                  stackId="earning"
+                  stroke="#10b981"
+                  fill="#10b981"
+                  fillOpacity={0.6}
+                  isAnimationActive={false}
+                />
+              )}
               {/* 調整済み時間当たり給与 */}
-              <Area
-                type="monotone"
-                dataKey="調整済み時間当たり給与"
-                stroke="#ef4444"
-                fill="none"
-                hide={hiddenKeys.includes("調整済み時間当たり給与")}
-                isAnimationActive={false}
-              />
+              {!hiddenKeys.includes("調整済み時間当たり給与") && (
+                <Line
+                  type="monotone"
+                  dataKey="調整済み時間当たり給与"
+                  stroke="#ef4444"
+                  dot={false}
+                  isAnimationActive={false}
+                />
+              )}
               {/* 調整済み一人当たり給与 */}
-              <Area
-                type="monotone"
-                dataKey="調整済み一人当たり給与"
-                stroke="#a855f7"
-                fill="none"
-                hide={hiddenKeys.includes("調整済み一人当たり給与")}
-                isAnimationActive={false}
-              />
+              {!hiddenKeys.includes("調整済み一人当たり給与") && (
+                <Line
+                  type="monotone"
+                  dataKey="調整済み一人当たり給与"
+                  stroke="#a855f7"
+                  dot={false}
+                  isAnimationActive={false}
+                />
+              )}
             </AreaChart>
           </ResponsiveContainer>
         </div>
