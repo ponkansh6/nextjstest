@@ -92,16 +92,21 @@ export async function loadPopulationData(): Promise<
 
     // Find the header row containing year/month information
     let headerIndex = rows.findIndex((row) =>
-      row.some((cell) =>
-        typeof cell === "string" &&
-        (/^\s*年\s*月\s*$/.test(cell.trim()) || /Year\s*and\s*month/i.test(cell)),
+      row.some(
+        (cell) =>
+          typeof cell === "string" &&
+          (/^\s*年\s*月\s*$/.test(cell.trim()) ||
+            /Year\s*and\s*month/i.test(cell)),
       ),
     );
 
     if (headerIndex === -1) {
       // Try a looser match: find a row that contains both "年" and "月" anywhere
       const fallbackIndex = rows.findIndex((row) =>
-        row.some((cell) => typeof cell === "string" && /年/.test(cell) && /月/.test(cell)),
+        row.some(
+          (cell) =>
+            typeof cell === "string" && /年/.test(cell) && /月/.test(cell),
+        ),
       );
       if (fallbackIndex === -1) return map;
       // Use the fallback index found
@@ -111,7 +116,7 @@ export async function loadPopulationData(): Promise<
     // Determine which columns contain year/month and total population
     const headerRow = rows[headerIndex];
     // If header contains a single cell like "年　月", find its column index
-    let yearCol = headerRow.findIndex(
+    const yearCol = headerRow.findIndex(
       (c) => typeof c === "string" && /年\s*月/.test(c),
     );
     let separateYearCol = -1;
@@ -174,7 +179,8 @@ export async function loadPopulationData(): Promise<
       const month = parseInt(monthMatch[1], 10);
 
       const popCell = row[totalCol] ?? row[4] ?? row[5];
-      const popStr = typeof popCell === "string" ? popCell.trim().replace(/,/g, "") : "";
+      const popStr =
+        typeof popCell === "string" ? popCell.trim().replace(/,/g, "") : "";
 
       if (!popStr || popStr === "-" || popStr === "…") continue;
 
@@ -395,13 +401,16 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
       const padded = `${m[1]}年${String(m[2]).padStart(2, "0")}月`;
       const unpadded = `${m[1]}年${parseInt(m[2], 10)}月`;
       return (
-        populationDataMap.get(padded)?.total ?? populationDataMap.get(unpadded)?.total
+        populationDataMap.get(padded)?.total ??
+        populationDataMap.get(unpadded)?.total
       );
     };
 
     // 15歳以上国民一人当たり給与の計算用に2020年の「給与/人口」のベース比率を算出
     const perCapitaBase2020 = (() => {
-      const year2020Keys = Array.from(keys).filter((ym) => ym.startsWith("2020年"));
+      const year2020Keys = Array.from(keys).filter((ym) =>
+        ym.startsWith("2020年"),
+      );
       if (year2020Keys.length === 0) {
         console.warn("Warning: 2020年データが給与データに見つかりません");
       }
@@ -414,7 +423,10 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
         })
         .filter((r) => r > 0);
 
-      const avgRatio = ratios.length > 0 ? ratios.reduce((a, b) => a + b, 0) / ratios.length : 0;
+      const avgRatio =
+        ratios.length > 0
+          ? ratios.reduce((a, b) => a + b, 0) / ratios.length
+          : 0;
 
       console.log(
         `Calculation Stats: 2020Keys=${year2020Keys.length}, validRatios=${ratios.length}, avgRatio=${avgRatio}`,

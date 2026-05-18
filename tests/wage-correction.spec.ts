@@ -1,5 +1,4 @@
-import { test, expect } from "@playwright/test";
-import { loadTotalEarningData } from "../src/lib/cpiData";
+import { test } from "@playwright/test";
 
 test("inspect chart data via browser console", async ({ page }) => {
   // コンソールログをキャプチャ

@@ -20,36 +20,74 @@ describe("Wage Calculation Logic", () => {
 });
 
 describe("loadTotalEarningData integration test", () => {
-  it("should return data with populated metrics", async () => {
+  it("should have valid metrics for all rows (no join failures)", async () => {
     const data = await loadTotalEarningData();
     expect(data.length).toBeGreaterThan(0);
 
-    // Check the latest entry
-    const latest = data[data.length - 1];
-    console.log("Latest entry:", latest);
+    const metrics = [
+      "調整済み時間当たり給与",
+      "調整済み雇用者一人当たり給与",
+      "調整済み15歳以上国民一人当たり給与",
+    ];
 
-    expect(latest).toHaveProperty("調整済み15歳以上国民一人当たり給与");
-    expect(latest["調整済み15歳以上国民一人当たり給与"]).toBeGreaterThan(0);
+    data.forEach((row) => {
+      metrics.forEach((metric) => {
+        const val = row[metric as keyof typeof row];
+        expect(
+          typeof val === "number" && !isNaN(val) && val > 0,
+          `Invalid metric "${metric}" at ${row.年月}: expected positive number, got ${val}`,
+        ).toBe(true);
+      });
+    });
   });
 
-  it("should calculate 15+ population wage index relative to 2020 base", async () => {
+  it("should have no gaps in month continuity", async () => {
     const data = await loadTotalEarningData();
-    console.log("Latest 3 entries:", data.slice(-3));
+    if (data.length < 2) return;
 
-    // 2020年のデータポイントを探す
+    const ymToMonths = (ym: string) => {
+      const m = ym.match(/^(\d{4})年(\d{1,2})月/);
+      if (!m) return 0;
+      return parseInt(m[1], 10) * 12 + parseInt(m[2], 10);
+    };
+
+    for (let i = 1; i < data.length; i++) {
+      const prev = ymToMonths(data[i - 1].年月);
+      const curr = ymToMonths(data[i].年月);
+      expect(
+        curr,
+        `Data gap found between ${data[i - 1].年月} and ${data[i].年月}`,
+      ).toBe(prev + 1);
+    }
+  });
+
+  it("should maintain 2020 average near 100 for all adjusted metrics", async () => {
+    const data = await loadTotalEarningData();
     const year2020Items = data.filter((item) => item.年月.startsWith("2020年"));
-    if (year2020Items.length > 0) {
+
+    expect(
+      year2020Items.length,
+      "Expected 12 months of data for 2020",
+    ).toBeGreaterThanOrEqual(12);
+
+    const metrics = [
+      "調整済み時間当たり給与",
+      "調整済み雇用者一人当たり給与",
+      "調整済み15歳以上国民一人当たり給与",
+    ];
+
+    metrics.forEach((metric) => {
       const avg2020 =
         year2020Items.reduce(
-          (acc, item) =>
-            acc + (item["調整済み15歳以上国民一人当たり給与"] as number),
+          (acc, item) => acc + (item[metric as keyof typeof item] as number),
           0,
         ) / year2020Items.length;
-      console.log("2020 base average index:", avg2020);
-      
-      // 2020年平均がほぼ100であることを確認
-      expect(avg2020).toBeGreaterThan(95);
-      expect(avg2020).toBeLessThan(105);
-    }
+
+      console.log(`2020 base average for ${metric}:`, avg2020);
+
+      // Verify that 2020 average is nearly 100
+      expect(avg2020).toBeGreaterThan(99);
+      expect(avg2020).toBeLessThan(101);
+    });
   });
 });
