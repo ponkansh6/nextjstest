@@ -135,7 +135,6 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
 
     // データチェックログは result 生成後に出力するためここではスキップ（参照前のエラー回避）
 
-
     // 2020年の平均を100とするためのベース計算
     const year2020 = Array.from(keys).filter((ym) => ym.startsWith("2020年"));
     const hourly2020 =
@@ -195,15 +194,26 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
 
     // 12か月移動平均を計算して調整済み指標を追加
     result.forEach((item, index) => {
-      const getMovingAverage = (key: keyof CpiData) => {
+      const getMovingAverage = (
+        key: keyof CpiData | "hours" | "emp",
+        isDataKey: boolean = true,
+      ) => {
         let sum = 0;
         let count = 0;
         for (let i = Math.max(0, index - 11); i <= index; i++) {
-          const val = (result[i][key] as number) || 0;
+          let val = 0;
+          if (isDataKey) {
+            val = (result[i][key as keyof CpiData] as number) || 0;
+          } else {
+            val =
+              (key === "hours"
+                ? hoursMap.get(result[i].年月)
+                : employmentMap.get(result[i].年月)) || 0;
+          }
           sum += val;
           count++;
         }
-        return count > 0 ? sum / count : (item[key] as number);
+        return count > 0 ? sum / count : 0;
       };
 
       // まず、給与総額の移動平均を計算
@@ -215,13 +225,13 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
       item["調整済み特別給与"] = getMovingAverage("特別給与");
 
       // 移動平均済みの給与を用いて計算
-      const hoursVal = hoursMap.get(item.年月) ?? 0;
-      const empVal = employmentMap.get(item.年月) ?? 0;
+      const smoothedHours = getMovingAverage("hours", false);
+      const smoothedEmp = getMovingAverage("emp", false);
 
       item["調整済み時間当たり給与"] =
-        hoursVal > 0 ? (smoothedTotal / hoursVal) * hourlyFactor : 0;
+        smoothedHours > 0 ? (smoothedTotal / smoothedHours) * hourlyFactor : 0;
       item["調整済み一人当たり給与"] =
-        empVal > 0 ? (smoothedTotal / empVal) * empFactor : 0;
+        smoothedEmp > 0 ? (smoothedTotal / smoothedEmp) * empFactor : 0;
     });
 
     console.log(
