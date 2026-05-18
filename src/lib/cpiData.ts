@@ -133,6 +133,24 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
       ...Array.from(employmentMap.keys()),
     ]);
 
+    // 追加: データチェックログ
+    const resultForCheck = Array.from(keys);
+    resultForCheck.forEach((ym) => {
+      if (
+        ym.includes("6月") ||
+        ym.includes("12月") ||
+        ym.includes("7月") ||
+        ym.includes("1月")
+      ) {
+        const r = result.find((item) => item.年月 === ym);
+        if (r) {
+          console.log(
+            `[DEBUG METRICS] ${ym}: hourly=${r["調整済み時間当たり給与"]}, perEmp=${r["調整済み一人当たり給与"]}`,
+          );
+        }
+      }
+    });
+
     // 2020年の平均を100とするためのベース計算
     const year2020 = Array.from(keys).filter((ym) => ym.startsWith("2020年"));
     const hourly2020 =
@@ -196,18 +214,38 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
         let sum = 0;
         let count = 0;
         for (let i = Math.max(0, index - 11); i <= index; i++) {
-          sum += (result[i][key] as number) || 0;
+          const val = (result[i][key] as number) || 0;
+          sum += val;
           count++;
         }
         return count > 0 ? sum / count : (item[key] as number);
       };
 
+      // まず、給与総額の移動平均を計算
+      const smoothedTotal =
+        getMovingAverage("特別給与") +
+        (item["所定内給与"] as number) +
+        (item["所定外給与"] as number);
+
       item["調整済み特別給与"] = getMovingAverage("特別給与");
+
+      // 移動平均済みの給与を用いて計算
+      const hoursVal = hoursMap.get(item.年月) ?? 0;
+      const empVal = employmentMap.get(item.年月) ?? 0;
+
       item["調整済み時間当たり給与"] =
-        getMovingAverage("調整済み時間当たり給与");
+        hoursVal > 0 ? (smoothedTotal / hoursVal) * hourlyFactor : 0;
       item["調整済み一人当たり給与"] =
-        getMovingAverage("調整済み一人当たり給与");
+        empVal > 0 ? (smoothedTotal / empVal) * empFactor : 0;
     });
+
+    console.log(
+      "Check for gaps or anomalies:",
+      result.slice(-24).map((r) => ({
+        ym: r.年月,
+        ma: r["調整済み時間当たり給与"],
+      })),
+    );
 
     return result;
   } catch (error) {
