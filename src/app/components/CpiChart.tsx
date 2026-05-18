@@ -1129,24 +1129,49 @@ export default function CpiChart({
               </button>
               <button
                 className={`${styles.legendItem} ${
-                  hiddenKeys.includes("調整済み一人当たり給与")
+                  hiddenKeys.includes("調整済み雇用者一人当たり給与")
                     ? styles.hidden
                     : ""
                 }`}
-                onClick={() => handleLegendClick("調整済み一人当たり給与")}
-                aria-pressed={!hiddenKeys.includes("調整済み一人当たり給与")}
+                onClick={() =>
+                  handleLegendClick("調整済み雇用者一人当たり給与")
+                }
+                aria-pressed={
+                  !hiddenKeys.includes("調整済み雇用者一人当たり給与")
+                }
               >
                 <span
                   className={styles.legendIcon}
                   style={{ backgroundColor: "#a855f7" }}
                 />
                 <span className={styles.legendLabel}>
-                  調整済み一人当たり給与
+                  調整済み雇用者一人当たり給与
+                </span>
+              </button>
+              <button
+                className={`${styles.legendItem} ${
+                  hiddenKeys.includes("調整済み15歳以上国民一人当たり給与")
+                    ? styles.hidden
+                    : ""
+                }`}
+                onClick={() =>
+                  handleLegendClick("調整済み15歳以上国民一人当たり給与")
+                }
+                aria-pressed={
+                  !hiddenKeys.includes("調整済み15歳以上国民一人当たり給与")
+                }
+              >
+                <span
+                  className={styles.legendIcon}
+                  style={{ backgroundColor: "#ec4899" }}
+                />
+                <span className={styles.legendLabel}>
+                  調整済み15歳以上国民一人当たり給与
                 </span>
               </button>
             </div>
           </div>
-        </div>
+        </div>{" "}
         <div className={styles.chartWrapper}>
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
@@ -1227,17 +1252,27 @@ export default function CpiChart({
                   isAnimationActive={false}
                 />
               )}
-              {/* 調整済み一人当たり給与 */}
-              {!hiddenKeys.includes("調整済み一人当たり給与") && (
+              {/* 調整済み雇用者一人当たり給与 */}
+              {!hiddenKeys.includes("調整済み雇用者一人当たり給与") && (
                 <Line
                   type="monotone"
-                  dataKey="調整済み一人当たり給与"
+                  dataKey="調整済み雇用者一人当たり給与"
                   stroke="#a855f7"
                   dot={false}
                   isAnimationActive={false}
                 />
               )}
-            </AreaChart>
+              {/* 調整済み15歳以上国民一人当たり給与 */}
+              {!hiddenKeys.includes("調整済み15歳以上国民一人当たり給与") && (
+                <Line
+                  type="monotone"
+                  dataKey="調整済み15歳以上国民一人当たり給与"
+                  stroke="#ec4899"
+                  dot={false}
+                  isAnimationActive={false}
+                />
+              )}
+            </AreaChart>{" "}
           </ResponsiveContainer>
         </div>
       </div>

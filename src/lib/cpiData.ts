@@ -78,39 +78,49 @@ export async function loadPopulationData(): Promise<
 
     const rows = parsed.data as string[][];
 
-    // Find the header row containing "年" and month columns
-    const headerIndex = rows.findIndex(
-      (row) =>
-        (row[0]?.trim() === "年" || row[0]?.trim() === "year") &&
-        row[2]?.trim() === "Month",
-    );
+    // Find the header row containing "年　月"
+    const headerIndex = rows.findIndex((row) => row[0]?.trim() === "年　月");
 
     if (headerIndex === -1) {
       return map;
     }
 
     // Extract data from 2004 onwards (column 4 contains "総数" - total population aged 15+)
-    for (let i = headerIndex + 1; i < rows.length; i++) {
+    let currentYear = 0;
+    for (let i = headerIndex + 2; i < rows.length; i++) {
       const row = rows[i];
       const yearStr = row[0]?.trim();
 
-      // Check if year is numeric and >= 2004
-      if (!yearStr || !/^\d{4}$/.test(yearStr)) continue;
-      const year = parseInt(yearStr, 10);
-      if (year < 2004) continue;
+      // Update current year if present
+      if (yearStr) {
+        const yearMatch = yearStr.match(/(\d{4})|(\d+)年/);
+        if (yearMatch) {
+          if (yearMatch[1]) currentYear = parseInt(yearMatch[1], 10);
+          else if (yearMatch[2]) {
+            const eraYear = parseInt(yearMatch[2], 10);
+            if (yearStr.includes("令和")) currentYear = 2018 + eraYear;
+            else if (yearStr.includes("平成")) currentYear = 1988 + eraYear;
+            else if (yearStr.includes("昭和")) currentYear = 1925 + eraYear;
+          }
+        }
+      }
+      if (currentYear < 2004) continue;
 
-      const monthStr = row[2]?.trim();
-      if (!monthStr) continue;
+      // Month is in column 1 (e.g., "1月")
+      const monthStr = row[1]?.trim();
+      if (!monthStr || !monthStr.match(/^\d+月/)) continue;
+      const month = parseInt(monthStr.match(/(\d+)月/)![1], 10);
 
-      // Column 4 contains total population (15+ years)
-      const popStr = row[4]?.trim().replace(/,/g, "");
+      // Column 4 or 5 contains total population (15+ years)
+      const popStr = (row[4] || row[5])?.trim().replace(/,/g, "");
+
       if (!popStr || popStr === "-" || popStr === "…") continue;
 
       const pop = parseFloat(popStr);
       if (isNaN(pop)) continue;
 
-      const ym = `${year}年${monthStr}月`;
-      map.set(ym, { total: pop, index: 0, ma: 0 });
+      const ym = `${currentYear}年${month}月`;
+      map.set(ym, { total: pop * 10000, index: 0, ma: 0 }); // Data is in ten-thousands
     }
 
     // Calculate 2020 average as base (= 100)
@@ -327,7 +337,9 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
       pop2020.length > 0
         ? pop2020.reduce((a, b) => a + b, 0) / pop2020.length
         : 0;
-    const popFactor = popAvg2020 > 0 ? 100 / popAvg2020 : 1;
+    // Pop is in persons, need to scale to match index (100 = 2020 base)
+    // total values are indices around 100-120, so we need popFactor to bring per-capita to similar scale
+    const popFactor = popAvg2020 > 0 ? (100 * 10000) / popAvg2020 : 1;
 
     const hourlyFactor = hourly2020 > 0 ? 100 / hourly2020 : 1;
     const empFactor = emp2020 > 0 ? 100 / emp2020 : 1;
@@ -361,7 +373,7 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
           所定外給与: Math.max(0, finalContractual - finalScheduled),
           特別給与: Math.max(0, finalTotal - finalContractual),
           調整済み時間当たり給与: hourly,
-          調整済み労働者一人当たり給与: perWorker,
+          調整済み雇用者一人当たり給与: perWorker,
           調整済み15歳以上国民一人当たり給与: perCapita15Plus,
         } as unknown as CpiData;
       })
@@ -412,10 +424,25 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
       const smoothedHours = getMovingAverage("hours", false);
       const smoothedEmp = getMovingAverage("emp", false);
 
+      // 12か月移動平均の人口データを取得
+      let smoothedPop = 0;
+      let popCount = 0;
+      for (let i = Math.max(0, index - 11); i <= index; i++) {
+        const popData = populationDataMap.get(result[i].年月);
+        if (popData && popData.total > 0) {
+          smoothedPop += popData.total;
+          popCount++;
+        }
+      }
+
       item["調整済み時間当たり給与"] =
         smoothedHours > 0 ? (smoothedTotal / smoothedHours) * hourlyFactor : 0;
-      item["調整済み一人当たり給与"] =
+      item["調整済み雇用者一人当たり給与"] =
         smoothedEmp > 0 ? (smoothedTotal / smoothedEmp) * empFactor : 0;
+      item["調整済み15歳以上国民一人当たり給与"] =
+        popCount > 0
+          ? (smoothedTotal / (smoothedPop / popCount)) * popFactor
+          : 0;
     });
 
     console.log(
