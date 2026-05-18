@@ -190,19 +190,23 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
         return ay !== by ? ay - by : am - bm;
       });
 
-    // 12か月移動平均を計算して調整済み特別給与を追加
+    // 12か月移動平均を計算して調整済み指標を追加
     result.forEach((item, index) => {
-      let sum = 0;
-      let count = 0;
+      const getMovingAverage = (key: keyof CpiData) => {
+        let sum = 0;
+        let count = 0;
+        for (let i = Math.max(0, index - 11); i <= index; i++) {
+          sum += (result[i][key] as number) || 0;
+          count++;
+        }
+        return count > 0 ? sum / count : (item[key] as number);
+      };
 
-      // その月を含む直前12か月を集計
-      for (let i = Math.max(0, index - 11); i <= index; i++) {
-        sum += (result[i].特別給与 as number) || 0;
-        count++;
-      }
-
-      item["調整済み特別給与"] =
-        count > 0 ? sum / count : (item.特別給与 as number);
+      item["調整済み特別給与"] = getMovingAverage("特別給与");
+      item["調整済み時間当たり給与"] =
+        getMovingAverage("調整済み時間当たり給与");
+      item["調整済み一人当たり給与"] =
+        getMovingAverage("調整済み一人当たり給与");
     });
 
     return result;
