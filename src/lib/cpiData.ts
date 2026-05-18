@@ -3,6 +3,163 @@ import path from "path";
 import Papa from "papaparse";
 import { CpiData } from "../app/page";
 
+export const calculateCategorySum = (
+  data: CpiData[],
+  year: number,
+  month: number,
+  hiddenKeys: string[] = [],
+  stackedKeys: string[] = [
+    "外食以外食料",
+    "外食",
+    "住居",
+    "光熱・水道",
+    "家具・家事用品",
+    "被服及び履物",
+    "保健医療",
+    "交通",
+    "自動車等関係費",
+    "通信",
+    "教育",
+    "教養娯楽用品",
+    "教養娯楽サービス",
+    "諸雑費",
+  ],
+): number => {
+  const monthStr = String(month).padStart(2, "0");
+
+  const dataPoint = data.find((item) => {
+    if (!item.年月 || typeof item.年月 !== "string") return false;
+    const m = item.年月.match(/^\s*(\d{4})年\s*0?(\d{1,2})月/);
+    if (!m) return false;
+    const y = parseInt(m[1], 10);
+    const mo = parseInt(m[2], 10);
+    return y === year && mo === month;
+  });
+
+  if (!dataPoint) {
+    throw new Error(
+      `指定された年月のデータが見つかりません: ${year}年${monthStr}月`,
+    );
+  }
+
+  let sum = 0;
+  stackedKeys.forEach((key) => {
+    if (!hiddenKeys.includes(key)) {
+      const value = dataPoint[key as keyof CpiData];
+      if (typeof value === "number") {
+        sum += value;
+      }
+    }
+  });
+  return sum;
+};
+
+export async function loadPopulationData(): Promise<
+  Map<string, { total: number; index: number; ma: number }>
+> {
+  const populationPath = path.join(
+    process.cwd(),
+    "public/population_statistics.csv",
+  );
+
+  const map = new Map<string, { total: number; index: number; ma: number }>();
+
+  if (!fs.existsSync(populationPath)) {
+    console.error("Population statistics file not found");
+    return map;
+  }
+
+  try {
+    const content = fs.readFileSync(populationPath, "utf8");
+    const parsed = Papa.parse<string[]>(content, {
+      header: false,
+      skipEmptyLines: false,
+    });
+
+    const rows = parsed.data as string[][];
+
+    // Find the header row containing "年" and month columns
+    const headerIndex = rows.findIndex(
+      (row) =>
+        (row[0]?.trim() === "年" || row[0]?.trim() === "year") &&
+        row[2]?.trim() === "Month",
+    );
+
+    if (headerIndex === -1) {
+      return map;
+    }
+
+    // Extract data from 2004 onwards (column 4 contains "総数" - total population aged 15+)
+    for (let i = headerIndex + 1; i < rows.length; i++) {
+      const row = rows[i];
+      const yearStr = row[0]?.trim();
+
+      // Check if year is numeric and >= 2004
+      if (!yearStr || !/^\d{4}$/.test(yearStr)) continue;
+      const year = parseInt(yearStr, 10);
+      if (year < 2004) continue;
+
+      const monthStr = row[2]?.trim();
+      if (!monthStr) continue;
+
+      // Column 4 contains total population (15+ years)
+      const popStr = row[4]?.trim().replace(/,/g, "");
+      if (!popStr || popStr === "-" || popStr === "…") continue;
+
+      const pop = parseFloat(popStr);
+      if (isNaN(pop)) continue;
+
+      const ym = `${year}年${monthStr}月`;
+      map.set(ym, { total: pop, index: 0, ma: 0 });
+    }
+
+    // Calculate 2020 average as base (= 100)
+    const year2020 = Array.from(map.entries())
+      .filter(([ym]) => ym.startsWith("2020年"))
+      .map(([ym, data]) => data.total);
+
+    if (year2020.length === 0) {
+      return map;
+    }
+
+    const avg2020 = year2020.reduce((a, b) => a + b, 0) / year2020.length;
+    const indexFactor = avg2020 > 0 ? 100 / avg2020 : 1;
+
+    // Apply indexing (2020 avg = 100) and calculate 12-month moving average
+    const entries = Array.from(map.entries()).sort((a, b) => {
+      const ma = a[0].match(/^(\d{4})年(\d{1,2})月/);
+      const mb = b[0].match(/^(\d{4})年(\d{1,2})月/);
+      if (!ma || !mb) return 0;
+      const ay = parseInt(ma[1], 10);
+      const am = parseInt(ma[2], 10);
+      const by = parseInt(mb[1], 10);
+      const bm = parseInt(mb[2], 10);
+      return ay !== by ? ay - by : am - bm;
+    });
+
+    // Apply index to all entries
+    entries.forEach(([_, data]) => {
+      data.index = data.total * indexFactor;
+    });
+
+    // Calculate 12-month moving average
+    entries.forEach((entry, index) => {
+      let sum = 0;
+      let count = 0;
+      for (let i = Math.max(0, index - 11); i <= index; i++) {
+        sum += entries[i][1].index;
+        count++;
+      }
+      entry[1].ma = count > 0 ? sum / count : 0;
+    });
+
+    return map;
+  } catch (error) {
+    console.error("Error loading population data:", error);
+    return map;
+  }
+}
+
 export async function loadTotalEarningData(): Promise<CpiData[]> {
   // 既存の "total_earning.csv" ではなく、きまって支給する給与と所定内給与のCSVを読み込む
   const contractualPath = path.join(
@@ -133,6 +290,9 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
       ...Array.from(employmentMap.keys()),
     ]);
 
+    // 人口データを読み込み
+    const populationDataMap = await loadPopulationData();
+
     // データチェックログは result 生成後に出力するためここではスキップ（参照前のエラー回避）
 
     // 2020年の平均を100とするためのベース計算
@@ -153,6 +313,22 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
         return acc + val;
       }, 0) / (year2020.length || 1);
 
+    // 15歳以上国民一人当たり給与の計算用に2020年の平均人口を取得
+    const pop2020 = Array.from(populationDataMap.values())
+      .filter((data) => {
+        const ym = Array.from(populationDataMap.entries()).find(
+          ([key, v]) => v === data,
+        )?.[0];
+        return ym?.startsWith("2020年");
+      })
+      .map((data) => data.total);
+
+    const popAvg2020 =
+      pop2020.length > 0
+        ? pop2020.reduce((a, b) => a + b, 0) / pop2020.length
+        : 0;
+    const popFactor = popAvg2020 > 0 ? 100 / popAvg2020 : 1;
+
     const hourlyFactor = hourly2020 > 0 ? 100 / hourly2020 : 1;
     const empFactor = emp2020 > 0 ? 100 / emp2020 : 1;
 
@@ -163,14 +339,21 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
         const totalVal = totalMap.get(ym) ?? 0;
         const hoursVal = hoursMap.get(ym) ?? 0;
         const empVal = employmentMap.get(ym) ?? 0;
+        const popData = populationDataMap.get(ym);
 
         const finalTotal = totalVal;
         const finalContractual = contractualVal * factorContractual;
         const finalScheduled = scheduledVal * factorScheduled;
 
-        // 時間当たり、一人当たり給与の計算（2020年平均を100としてスケーリング）
+        // 時間当たり、労働者一人当たり給与の計算（2020年平均を100としてスケーリング）
         const hourly = hoursVal > 0 ? (totalVal / hoursVal) * hourlyFactor : 0;
-        const perEmployee = empVal > 0 ? (totalVal / empVal) * empFactor : 0;
+        const perWorker = empVal > 0 ? (totalVal / empVal) * empFactor : 0;
+
+        // 15歳以上国民一人当たり給与の計算
+        const perCapita15Plus =
+          popData && popData.total > 0
+            ? (totalVal / popData.total) * popFactor
+            : 0;
 
         return {
           年月: ym,
@@ -178,7 +361,8 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
           所定外給与: Math.max(0, finalContractual - finalScheduled),
           特別給与: Math.max(0, finalTotal - finalContractual),
           調整済み時間当たり給与: hourly,
-          調整済み一人当たり給与: perEmployee,
+          調整済み労働者一人当たり給与: perWorker,
+          調整済み15歳以上国民一人当たり給与: perCapita15Plus,
         } as unknown as CpiData;
       })
       .sort((a, b) => {
