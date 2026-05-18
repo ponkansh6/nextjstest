@@ -337,9 +337,19 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
       pop2020.length > 0
         ? pop2020.reduce((a, b) => a + b, 0) / pop2020.length
         : 0;
-    // Pop is in persons, need to scale to match index (100 = 2020 base)
-    // total values are indices around 100-120, so we need popFactor to bring per-capita to similar scale
-    const popFactor = popAvg2020 > 0 ? popAvg2020 : 1;
+    // Pop is in persons. We need per-capita index where 2020 average = 100.
+    // Index = (TotalEarnings / Population) * ScaleFactor
+    // To make 2020 average = 100, ScaleFactor = 100 / (2020_Avg_TotalEarnings / 2020_Avg_Population)
+    const earnings2020 = Array.from(keys)
+      .filter((ym) => ym.startsWith("2020年"))
+      .map((ym) => totalMap.get(ym) ?? 0);
+    const earningsAvg2020 =
+      earnings2020.reduce((a, b) => a + b, 0) / (earnings2020.length || 1);
+
+    const popFactor =
+      popAvg2020 > 0 && earningsAvg2020 > 0
+        ? (100 * popAvg2020) / earningsAvg2020
+        : 1;
 
     const hourlyFactor = hourly2020 > 0 ? 100 / hourly2020 : 1;
     const empFactor = emp2020 > 0 ? 100 / emp2020 : 1;
