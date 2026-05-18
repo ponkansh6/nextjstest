@@ -67,6 +67,19 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
     );
     const totalMap = parseIndexSection(totalContent);
 
+    const hoursPath = path.join(process.cwd(), "public/total_worked_hours.csv");
+    const hoursMap = fs.existsSync(hoursPath)
+      ? parseIndexSection(fs.readFileSync(hoursPath, "utf8"))
+      : new Map<string, number>();
+
+    const employmentPath = path.join(
+      process.cwd(),
+      "public/employment_indices.csv",
+    );
+    const employmentMap = fs.existsSync(employmentPath)
+      ? parseIndexSection(fs.readFileSync(employmentPath, "utf8"))
+      : new Map<string, number>();
+
     // hon-mks202601.csv から令和8年1月（2026年1月）のT行実額を取得
     let factorScheduled = 1;
     let factorContractual = 1;
@@ -100,8 +113,6 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
           scheduledIdx !== 0
         ) {
           // 指数1ポイントあたりの実額を計算し、現金給与総額の指数スケールに合わせる
-          // 補正後所定内 = 所定内指数 * (所定内実額 / 所定内指数) / (総額実額 / 総額指数)
-          // 補正後きまって = きまって指数 * (きまって実額 / きまって指数) / (総額実額 / 総額指数)
           const baseUnit = totalReal / totalIdx;
           factorScheduled = scheduledReal / scheduledIdx / baseUnit;
           factorContractual = contractualReal / contractualIdx / baseUnit;
@@ -118,23 +129,54 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
       ...Array.from(contractualMap.keys()),
       ...Array.from(scheduledMap.keys()),
       ...Array.from(totalMap.keys()),
+      ...Array.from(hoursMap.keys()),
+      ...Array.from(employmentMap.keys()),
     ]);
+
+    // 2020年の平均を100とするためのベース計算
+    const year2020 = Array.from(keys).filter((ym) => ym.startsWith("2020年"));
+    const hourly2020 =
+      year2020.reduce((acc, ym) => {
+        const h = hoursMap.get(ym) ?? 0;
+        const t = totalMap.get(ym) ?? 0;
+        const val = h > 0 ? t / h : 0;
+        return acc + val;
+      }, 0) / (year2020.length || 1);
+
+    const emp2020 =
+      year2020.reduce((acc, ym) => {
+        const e = employmentMap.get(ym) ?? 0;
+        const t = totalMap.get(ym) ?? 0;
+        const val = e > 0 ? t / e : 0;
+        return acc + val;
+      }, 0) / (year2020.length || 1);
+
+    const hourlyFactor = hourly2020 > 0 ? 100 / hourly2020 : 1;
+    const empFactor = emp2020 > 0 ? 100 / emp2020 : 1;
 
     const result: CpiData[] = Array.from(keys)
       .map((ym) => {
         const contractualVal = contractualMap.get(ym) ?? 0;
         const scheduledVal = scheduledMap.get(ym) ?? 0;
         const totalVal = totalMap.get(ym) ?? 0;
+        const hoursVal = hoursMap.get(ym) ?? 0;
+        const empVal = employmentMap.get(ym) ?? 0;
 
         const finalTotal = totalVal;
         const finalContractual = contractualVal * factorContractual;
         const finalScheduled = scheduledVal * factorScheduled;
+
+        // 時間当たり、一人当たり給与の計算（2020年平均を100としてスケーリング）
+        const hourly = hoursVal > 0 ? (totalVal / hoursVal) * hourlyFactor : 0;
+        const perEmployee = empVal > 0 ? (totalVal / empVal) * empFactor : 0;
 
         return {
           年月: ym,
           所定内給与: finalScheduled,
           所定外給与: Math.max(0, finalContractual - finalScheduled),
           特別給与: Math.max(0, finalTotal - finalContractual),
+          調整済み時間当たり給与: hourly,
+          調整済み一人当たり給与: perEmployee,
         } as unknown as CpiData;
       })
       .sort((a, b) => {

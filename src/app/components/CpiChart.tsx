@@ -1063,23 +1063,25 @@ export default function CpiChart({
         <div className={styles.legendContainer}>
           <div className={styles.legendSection}>
             <div className={styles.legendItems}>
-              <div
-                className={styles.legendItem}
+              <button
+                className={`${styles.legendItem} ${
+                  hiddenKeys.includes("所定内給与") ? styles.hidden : ""
+                }`}
                 onClick={() => handleLegendClick("所定内給与")}
-                role="button"
-                tabIndex={0}
+                aria-pressed={!hiddenKeys.includes("所定内給与")}
               >
                 <span
                   className={styles.legendIcon}
                   style={{ backgroundColor: "#f97316" }}
                 />
                 <span className={styles.legendLabel}>所定内給与</span>
-              </div>
-              <div
-                className={styles.legendItem}
+              </button>
+              <button
+                className={`${styles.legendItem} ${
+                  hiddenKeys.includes("所定外給与") ? styles.hidden : ""
+                }`}
                 onClick={() => handleLegendClick("所定外給与")}
-                role="button"
-                tabIndex={0}
+                aria-pressed={!hiddenKeys.includes("所定外給与")}
               >
                 <span
                   className={styles.legendIcon}
@@ -1088,12 +1090,13 @@ export default function CpiChart({
                 <span className={styles.legendLabel}>
                   所定外給与 (超過労働給与)
                 </span>
-              </div>
-              <div
-                className={styles.legendItem}
+              </button>
+              <button
+                className={`${styles.legendItem} ${
+                  hiddenKeys.includes("調整済み特別給与") ? styles.hidden : ""
+                }`}
                 onClick={() => handleLegendClick("調整済み特別給与")}
-                role="button"
-                tabIndex={0}
+                aria-pressed={!hiddenKeys.includes("調整済み特別給与")}
               >
                 <span
                   className={styles.legendIcon}
@@ -1102,7 +1105,41 @@ export default function CpiChart({
                 <span className={styles.legendLabel}>
                   調整済み特別給与 (12か月移動平均)
                 </span>
-              </div>
+              </button>
+              <button
+                className={`${styles.legendItem} ${
+                  hiddenKeys.includes("調整済み時間当たり給与")
+                    ? styles.hidden
+                    : ""
+                }`}
+                onClick={() => handleLegendClick("調整済み時間当たり給与")}
+                aria-pressed={!hiddenKeys.includes("調整済み時間当たり給与")}
+              >
+                <span
+                  className={styles.legendIcon}
+                  style={{ backgroundColor: "#ef4444" }}
+                />
+                <span className={styles.legendLabel}>
+                  調整済み時間当たり給与
+                </span>
+              </button>
+              <button
+                className={`${styles.legendItem} ${
+                  hiddenKeys.includes("調整済み一人当たり給与")
+                    ? styles.hidden
+                    : ""
+                }`}
+                onClick={() => handleLegendClick("調整済み一人当たり給与")}
+                aria-pressed={!hiddenKeys.includes("調整済み一人当たり給与")}
+              >
+                <span
+                  className={styles.legendIcon}
+                  style={{ backgroundColor: "#a855f7" }}
+                />
+                <span className={styles.legendLabel}>
+                  調整済み一人当たり給与
+                </span>
+              </button>
             </div>
           </div>
         </div>
@@ -1171,6 +1208,24 @@ export default function CpiChart({
                 fill="#10b981"
                 fillOpacity={0.6}
                 hide={hiddenKeys.includes("調整済み特別給与")}
+                isAnimationActive={false}
+              />
+              {/* 調整済み時間当たり給与 */}
+              <Area
+                type="monotone"
+                dataKey="調整済み時間当たり給与"
+                stroke="#ef4444"
+                fill="none"
+                hide={hiddenKeys.includes("調整済み時間当たり給与")}
+                isAnimationActive={false}
+              />
+              {/* 調整済み一人当たり給与 */}
+              <Area
+                type="monotone"
+                dataKey="調整済み一人当たり給与"
+                stroke="#a855f7"
+                fill="none"
+                hide={hiddenKeys.includes("調整済み一人当たり給与")}
                 isAnimationActive={false}
               />
             </AreaChart>
