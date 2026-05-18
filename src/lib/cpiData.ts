@@ -133,23 +133,8 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
       ...Array.from(employmentMap.keys()),
     ]);
 
-    // 追加: データチェックログ
-    const resultForCheck = Array.from(keys);
-    resultForCheck.forEach((ym) => {
-      if (
-        ym.includes("6月") ||
-        ym.includes("12月") ||
-        ym.includes("7月") ||
-        ym.includes("1月")
-      ) {
-        const r = result.find((item) => item.年月 === ym);
-        if (r) {
-          console.log(
-            `[DEBUG METRICS] ${ym}: hourly=${r["調整済み時間当たり給与"]}, perEmp=${r["調整済み一人当たり給与"]}`,
-          );
-        }
-      }
-    });
+    // データチェックログは result 生成後に出力するためここではスキップ（参照前のエラー回避）
+
 
     // 2020年の平均を100とするためのベース計算
     const year2020 = Array.from(keys).filter((ym) => ym.startsWith("2020年"));
