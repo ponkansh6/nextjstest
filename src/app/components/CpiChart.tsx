@@ -12,7 +12,6 @@ import {
   Tooltip,
   ResponsiveContainer,
   Line,
-  LineChart,
 } from "recharts";
 import { type CpiData } from "../page";
 import styles from "./CpiChart.module.css";
@@ -735,19 +734,17 @@ export default function CpiChart({
                 !stackedHiddenKeys.includes(key) ? (
                   <Area
                     key={key}
-                  dataKey={key}
-                  stackId="a"
-                  type="monotone"
-                  stroke="#ffffff"
-                  strokeWidth={0.5}
-                  strokeOpacity={0.2}
-                  fill={stackedColors[index]}
-                  fillOpacity={1}
-                  
-                  isAnimationActive={false}
-                
+                    dataKey={key}
+                    stackId="a"
+                    type="monotone"
+                    stroke="#ffffff"
+                    strokeWidth={0.5}
+                    strokeOpacity={0.2}
+                    fill={stackedColors[index]}
+                    fillOpacity={1}
+                    isAnimationActive={false}
                   />
-                ) : null
+                ) : null,
               )}
             </AreaChart>
           </ResponsiveContainer>
@@ -938,14 +935,12 @@ export default function CpiChart({
                 !nominalHiddenKeys.includes(key) ? (
                   <Bar
                     key={key}
-                  dataKey={key}
-                  stackId="b"
-                  fill={nominalColors[index]}
-                  
-                  isAnimationActive={false}
-                
+                    dataKey={key}
+                    stackId="b"
+                    fill={nominalColors[index]}
+                    isAnimationActive={false}
                   />
-                ) : null
+                ) : null,
               )}
             </BarChart>
           </ResponsiveContainer>
@@ -1053,14 +1048,12 @@ export default function CpiChart({
                 !realHiddenKeys.includes(key) ? (
                   <Bar
                     key={key}
-                  dataKey={key}
-                  stackId="c"
-                  fill={realColors[index]}
-                  
-                  isAnimationActive={false}
-                
+                    dataKey={key}
+                    stackId="c"
+                    fill={realColors[index]}
+                    isAnimationActive={false}
                   />
-                ) : null
+                ) : null,
               )}
             </BarChart>
           </ResponsiveContainer>
