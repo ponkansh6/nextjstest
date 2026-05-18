@@ -3,6 +3,18 @@ import path from "path";
 import Papa from "papaparse";
 import { CpiData } from "../app/page";
 
+/**
+ * 給与指標を特定の分母（労働者数や人口など）で割り、基準年（2020年）を100としてスケーリングします。
+ */
+export function calculateAdjustedMetric(
+  totalEarnings: number,
+  denominator: number,
+  scalingFactor: number,
+): number {
+  if (denominator <= 0) return 0;
+  return (totalEarnings / denominator) * scalingFactor;
+}
+
 export const calculateCategorySum = (
   data: CpiData[],
   year: number,
@@ -323,36 +335,36 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
         return acc + val;
       }, 0) / (year2020.length || 1);
 
-    // 15歳以上国民一人当たり給与の計算用に2020年の平均人口を取得
-    const pop2020 = Array.from(populationDataMap.values())
-      .filter((data) => {
-        const ym = Array.from(populationDataMap.entries()).find(
-          ([key, v]) => v === data,
-        )?.[0];
-        return ym?.startsWith("2020年");
-      })
-      .map((data) => data.total);
+    // 15歳以上国民一人当たり給与の計算用に2020年の「給与/人口」のベース比率を算出
+    const perCapitaBase2020 = (() => {
+      const year2020Keys = Array.from(keys).filter((ym) =>
+        ym.startsWith("2020年"),
+      );
+      if (year2020Keys.length === 0) {
+        console.warn("Warning: 2020年データが給与データに見つかりません");
+      }
+      const ratios = year2020Keys
+        .map((ym) => {
+          const t = totalMap.get(ym) ?? 0;
+          const p = populationDataMap.get(ym)?.total ?? 0;
+          return p > 0 ? t / p : 0;
+        })
+        .filter((r) => r > 0);
 
-    const popAvg2020 =
-      pop2020.length > 0
-        ? pop2020.reduce((a, b) => a + b, 0) / pop2020.length
-        : 0;
-    // Pop is in persons. We need per-capita index where 2020 average = 100.
-    // Index = (TotalEarnings / Population) * ScaleFactor
-    // To make 2020 average = 100, ScaleFactor = 100 / (2020_Avg_TotalEarnings / 2020_Avg_Population)
-    const earnings2020 = Array.from(keys)
-      .filter((ym) => ym.startsWith("2020年"))
-      .map((ym) => totalMap.get(ym) ?? 0);
-    const earningsAvg2020 =
-      earnings2020.reduce((a, b) => a + b, 0) / (earnings2020.length || 1);
+      const avgRatio =
+        ratios.length > 0
+          ? ratios.reduce((a, b) => a + b, 0) / ratios.length
+          : 0;
 
-    const popFactor =
-      popAvg2020 > 0 && earningsAvg2020 > 0
-        ? (100 * popAvg2020) / earningsAvg2020
-        : 1;
+      console.log(
+        `Calculation Stats: 2020Keys=${year2020Keys.length}, validRatios=${ratios.length}, avgRatio=${avgRatio}`,
+      );
+      return avgRatio;
+    })();
 
     const hourlyFactor = hourly2020 > 0 ? 100 / hourly2020 : 1;
     const empFactor = emp2020 > 0 ? 100 / emp2020 : 1;
+    const popFactor = perCapitaBase2020 > 0 ? 100 / perCapitaBase2020 : 1;
 
     const result: CpiData[] = Array.from(keys)
       .map((ym) => {
@@ -367,15 +379,18 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
         const finalContractual = contractualVal * factorContractual;
         const finalScheduled = scheduledVal * factorScheduled;
 
-        // 時間当たり、労働者一人当たり給与の計算（2020年平均を100としてスケーリング）
-        const hourly = hoursVal > 0 ? (totalVal / hoursVal) * hourlyFactor : 0;
-        const perWorker = empVal > 0 ? (totalVal / empVal) * empFactor : 0;
-
-        // 15歳以上国民一人当たり給与の計算
-        const perCapita15Plus =
-          popData && popData.total > 0
-            ? (totalVal / popData.total) * popFactor
-            : 0;
+        // 2020年平均を100としてスケーリング
+        const hourly = calculateAdjustedMetric(
+          totalVal,
+          hoursVal,
+          hourlyFactor,
+        );
+        const perWorker = calculateAdjustedMetric(totalVal, empVal, empFactor);
+        const perCapita15Plus = calculateAdjustedMetric(
+          totalVal,
+          popData?.total ?? 0,
+          popFactor,
+        );
 
         return {
           年月: ym,
@@ -401,7 +416,7 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
     // 12か月移動平均を計算して調整済み指標を追加
     result.forEach((item, index) => {
       const getMovingAverage = (
-        key: keyof CpiData | "hours" | "emp",
+        key: keyof CpiData | "hours" | "emp" | "pop",
         isDataKey: boolean = true,
       ) => {
         let sum = 0;
@@ -411,10 +426,11 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
           if (isDataKey) {
             val = (result[i][key as keyof CpiData] as number) || 0;
           } else {
-            val =
-              (key === "hours"
-                ? hoursMap.get(result[i].年月)
-                : employmentMap.get(result[i].年月)) || 0;
+            if (key === "hours") val = hoursMap.get(result[i].年月) || 0;
+            else if (key === "emp")
+              val = employmentMap.get(result[i].年月) || 0;
+            else if (key === "pop")
+              val = populationDataMap.get(result[i].年月)?.total || 0;
           }
           sum += val;
           count++;
@@ -422,44 +438,42 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
         return count > 0 ? sum / count : 0;
       };
 
-      // まず、給与総額の移動平均を計算
+      // 給与総額の移動平均
       const smoothedTotal =
         getMovingAverage("特別給与") +
-        (item["所定内給与"] as number) +
-        (item["所定外給与"] as number);
+        getMovingAverage("所定内給与") +
+        getMovingAverage("所定外給与");
 
       item["調整済み特別給与"] = getMovingAverage("特別給与");
 
-      // 移動平均済みの給与を用いて計算
+      // 移動平均済みの分母
       const smoothedHours = getMovingAverage("hours", false);
       const smoothedEmp = getMovingAverage("emp", false);
+      const smoothedPop = getMovingAverage("pop", false);
 
-      // 12か月移動平均の人口データを取得
-      let smoothedPop = 0;
-      let popCount = 0;
-      for (let i = Math.max(0, index - 11); i <= index; i++) {
-        const popData = populationDataMap.get(result[i].年月);
-        if (popData && popData.total > 0) {
-          smoothedPop += popData.total;
-          popCount++;
-        }
-      }
-
-      item["調整済み時間当たり給与"] =
-        smoothedHours > 0 ? (smoothedTotal / smoothedHours) * hourlyFactor : 0;
-      item["調整済み雇用者一人当たり給与"] =
-        smoothedEmp > 0 ? (smoothedTotal / smoothedEmp) * empFactor : 0;
-      item["調整済み15歳以上国民一人当たり給与"] =
-        popCount > 0
-          ? (smoothedTotal / (smoothedPop / popCount)) * popFactor
-          : 0;
+      item["調整済み時間当たり給与"] = calculateAdjustedMetric(
+        smoothedTotal,
+        smoothedHours,
+        hourlyFactor,
+      );
+      item["調整済み雇用者一人当たり給与"] = calculateAdjustedMetric(
+        smoothedTotal,
+        smoothedEmp,
+        empFactor,
+      );
+      item["調整済み15歳以上国民一人当たり給与"] = calculateAdjustedMetric(
+        smoothedTotal,
+        smoothedPop,
+        popFactor,
+      );
     });
 
     console.log(
       "Check for gaps or anomalies:",
-      result.slice(-24).map((r) => ({
+      result.slice(-5).map((r) => ({
         ym: r.年月,
         ma: r["調整済み時間当たり給与"],
+        perCapita: r["調整済み15歳以上国民一人当たり給与"],
       })),
     );
 

@@ -1,5 +1,23 @@
 import { describe, it, expect } from "vitest";
-import { loadTotalEarningData } from "../src/lib/cpiData";
+import {
+  loadTotalEarningData,
+  calculateAdjustedMetric,
+} from "../src/lib/cpiData";
+
+describe("Wage Calculation Logic", () => {
+  it("calculateAdjustedMetric should scale correctly", () => {
+    // 基準年（2020年）を想定したテスト
+    // (給与100 / 分母10) * (スケーリング係数 1) = 10
+    expect(calculateAdjustedMetric(100, 10, 1)).toBe(10);
+
+    // スケーリング係数を使って100にする
+    // (給与100 / 分母10) * (スケーリング係数 10) = 100
+    expect(calculateAdjustedMetric(100, 10, 10)).toBe(100);
+
+    // 分母が0の場合は0を返す
+    expect(calculateAdjustedMetric(100, 0, 10)).toBe(0);
+  });
+});
 
 describe("loadTotalEarningData integration test", () => {
   it("should return data with populated metrics", async () => {
