@@ -339,7 +339,7 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
         : 0;
     // Pop is in persons, need to scale to match index (100 = 2020 base)
     // total values are indices around 100-120, so we need popFactor to bring per-capita to similar scale
-    const popFactor = popAvg2020 > 0 ? (100 * 10000) / popAvg2020 : 1;
+    const popFactor = popAvg2020 > 0 ? popAvg2020 : 1;
 
     const hourlyFactor = hourly2020 > 0 ? 100 / hourly2020 : 1;
     const empFactor = emp2020 > 0 ? 100 / emp2020 : 1;
