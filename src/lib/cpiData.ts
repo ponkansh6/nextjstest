@@ -193,8 +193,8 @@ export async function loadPopulationData(): Promise<
 
     // Calculate 2020 average as base (= 100)
     const year2020 = Array.from(map.entries())
-      .filter(([ym]) => ym.startsWith("2020年"))
-      .map(([ym, data]) => data.total);
+      .filter(([_]) => _.startsWith("2020年"))
+      .map(([, data]) => data.total);
 
     if (year2020.length === 0) {
       return map;
@@ -216,19 +216,19 @@ export async function loadPopulationData(): Promise<
     });
 
     // Apply index to all entries
-    entries.forEach(([_, data]) => {
+    entries.forEach(([, data]) => {
       data.index = data.total * indexFactor;
     });
 
     // Calculate 12-month moving average
-    entries.forEach((entry, index) => {
+    entries.forEach((_entry, index) => {
       let sum = 0;
       let count = 0;
       for (let i = Math.max(0, index - 11); i <= index; i++) {
         sum += entries[i][1].index;
         count++;
       }
-      entry[1].ma = count > 0 ? sum / count : 0;
+      _entry[1].ma = count > 0 ? sum / count : 0;
     });
 
     return map;

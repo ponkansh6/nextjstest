@@ -6,6 +6,9 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
+    "test": "vitest run --exclude '**/*.test.tsx'",
+    "test:ui": "vitest run --include '**/*.test.tsx'",
+    "test:all": "vitest run",
     "lint": "eslint --cache",
     "type-check": "tsc --noEmit",
     "security-check": "npm audit --audit-level=high && secretlint \"**/*\""

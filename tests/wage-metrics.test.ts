@@ -1,8 +1,16 @@
-import { test, expect } from "@playwright/test";
+import { describe, it, expect } from "vitest";
 import { loadTotalEarningData } from "../src/lib/cpiData";
+import path from "path";
+import process from "process";
 
-test.describe("Wage Metrics Calculation", () => {
-  test("should calculate hourly and per-employee wages correctly", async () => {
+describe("Wage Metrics Calculation", () => {
+  it("should calculate hourly and per-employee wages correctly", async () => {
+    console.log("Current working directory:", process.cwd());
+    console.log(
+      "Resolved path:",
+      path.join(process.cwd(), "public/total_earning.csv"),
+    );
+
     // Note: Since loadTotalEarningData relies on file system,
     // this test depends on the existence of the CSV files in the 'public' directory.
     const data = await loadTotalEarningData();
@@ -18,13 +26,6 @@ test.describe("Wage Metrics Calculation", () => {
     // Verify calculation for a specific entry if possible, or at least that they are numbers
     if (data.length > 0) {
       const entry = data[data.length - 1]; // Check latest data
-      console.log(`Latest entry (${entry.年月}):`, {
-        調整済み時間当たり給与: entry["調整済み時間当たり給与"],
-        調整済み15歳以上国民一人当たり給与:
-          entry["調整済み15歳以上国民一人当たり給与"],
-        特別給与: entry["特別給与"],
-        調整済み特別給与: entry["調整済み特別給与"],
-      });
       expect(typeof entry["調整済み時間当たり給与"]).toBe("number");
       expect(typeof entry["調整済み15歳以上国民一人当たり給与"]).toBe("number");
       expect(entry["調整済み時間当たり給与"]).toBeGreaterThan(0);

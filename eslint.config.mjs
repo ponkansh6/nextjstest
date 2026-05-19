@@ -7,14 +7,30 @@ const eslintConfig = defineConfig([
   ...nextTs,
   // Override default ignores of eslint-config-next.
   globalIgnores([
-    // Default ignores of eslint-config-next:
+    // Build and cache directories
     ".next/**",
     "out/**",
     "build/**",
     "dist/**",
     "node_modules/**",
-    "public/backup/**",
+    ".venv/**",
+    ".venv-convert/**",
+    ".vitest/**",
+    "test-results/**",
+    "playwright-report/**",
+
+    // Project assets and data
+    "public/**",
+    "scripts/**",
+    "tests/**",
+
+    // Config and data files
+    "*.json",
+    "*.csv",
     "next-env.d.ts",
+    "eslint.config.mjs",
+    "vitest.config.ts",
+    "playwright.config.ts",
   ]),
 ]);
 
