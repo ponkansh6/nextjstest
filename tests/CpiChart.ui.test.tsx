@@ -7,6 +7,17 @@ import React from "react";
 import CpiChart from "../src/app/components/CpiChart";
 import { CpiData } from "../src/app/page";
 
+// ResponsiveContainerをモック化
+vi.mock("recharts", async () => {
+  const original = await vi.importActual("recharts");
+  return {
+    ...original,
+    ResponsiveContainer: ({ children }: { children: React.ReactNode }) => (
+      <div>{children}</div>
+    ),
+  };
+});
+
 // RechartsのResizeObserverエラーを防ぐモック
 vi.stubGlobal(
   "ResizeObserver",

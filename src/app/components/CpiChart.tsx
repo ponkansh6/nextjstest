@@ -1,26 +1,30 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import {
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Line,
-} from "recharts";
 import { CpiData } from "../page";
 import { filterDataByYear, mergeChartData } from "../../lib/chartUtils";
 import styles from "./CpiChart.module.css";
 import { ChartFilters } from "./ChartFilters";
 import { useChartTheme } from "../../hooks/useChartTheme";
-import { ChartLegend } from "./ChartLegend";
-import { CpiAreaChart } from "./CpiAreaChart";
-import { CpiBarChart } from "./CpiBarChart";
+import { useCpiChartData } from "../../hooks/useCpiChartData";
+import { SpendingBarChart } from "./SpendingBarChart";
+import { StackedAreaChart } from "./StackedAreaChart";
+import { EarningsBreakdownChart } from "./EarningsBreakdownChart";
+import { MajorIndicesChart } from "./MajorIndicesChart";
+import {
+  targetKeys,
+  colors,
+  stackedKeys,
+  stackedColors,
+  nominalKeys,
+  nominalColorMap,
+} from "../../lib/chartConstants";
+
+const getColorForNominalKey = (key: string): string => {
+  const targetStackedKey = nominalColorMap[key];
+  const index = stackedKeys.indexOf(targetStackedKey || "");
+  return index !== -1 ? stackedColors[index] : "#64748b";
+};
 
 interface CpiChartProps {
   data: CpiData[];
@@ -175,82 +179,6 @@ export default function CpiChart({
     );
   };
 
-  // 表示したい項目リスト
-  const targetKeys = [
-    "総合",
-    "生鮮食品を除く総合",
-    "生鮮食品及びエネルギーを除く総合",
-    "食料（酒類を除く）及びエネルギーを除く総合",
-  ];
-  // 主要指数の色を青ベースの色味で統一
-  const colors = ["#1d4ed8", "#3b82f6", "#60a5fa", "#93c5fd"];
-
-  // 10大費目のリストとカラー（指定の順序と色味）
-  const stackedKeys = [
-    "住居",
-    "家具・家事用品",
-    "被服及び履物",
-    "保健医療",
-    "教育",
-    "交通・自動車等関係費",
-    "通信",
-    "光熱・水道",
-    "教養娯楽",
-    "外食以外食料",
-    "外食",
-    "諸雑費",
-  ];
-
-  const stackedColors = [
-    "#2a2080", // 住居
-    "#4647ea", // 家具・家事用品
-    "#3481fe", // 被服及び履物
-    "#18b3ec", // 保健医療
-    "#00d0a5", // 教育
-    "#22c55e", // 交通・自動車等関係費
-    "#85e022", // 通信
-    "#fbe020", // 光熱・水道
-    "#fb923c", // 教養娯楽
-    "#c21a00", // 外食以外食料
-    "#b01500", // 外食
-    "#550500", // 諸雑費
-  ];
-
-  // 名目の消費支出（10分類）
-  const nominalKeys = useMemo(
-    () => [
-      "住居（名目）",
-      "家具・家事用品（名目）",
-      "被服及び履物（名目）",
-      "保健医療（名目）",
-      "教育（名目）",
-      "交通・通信（名目）",
-      "光熱・水道（名目）",
-      "教養娯楽（名目）",
-      "食料（名目）",
-      "諸雑費・CPI外支出等",
-    ],
-    [],
-  );
-
-  const getColorForNominalKey = (key: string): string => {
-    const mapping: Record<string, string> = {
-      "食料（名目）": "外食以外食料",
-      "住居（名目）": "住居",
-      "光熱・水道（名目）": "光熱・水道",
-      "家具・家事用品（名目）": "家具・家事用品",
-      "被服及び履物（名目）": "被服及び履物",
-      "保健医療（名目）": "保健医療",
-      "交通・通信（名目）": "交通・自動車等関係費",
-      "教育（名目）": "教育",
-      "教養娯楽（名目）": "教養娯楽",
-      "諸雑費・CPI外支出等": "諸雑費",
-    };
-    const targetStackedKey = mapping[key];
-    const index = stackedKeys.indexOf(targetStackedKey);
-    return index !== -1 ? stackedColors[index] : "#64748b";
-  };
-
   const nominalColors = nominalKeys.map(getColorForNominalKey);
   const realKeys = nominalKeys.map((k) =>
     k === "諸雑費・CPI外支出等"
@@ -259,9 +187,29 @@ export default function CpiChart({
   );
   const realColors = nominalColors;
   const nominalData = ctiData;
+
+  // 四半期データの集計をカスタムフックに委譲
+  const {
+    quarterlyNominalData,
+    quarterlyRealData,
+    hiddenQuarters,
+    toggleQuarter,
+  } = useCpiChartData({
+    data,
+    nominalData,
+    startYear,
+    endYear,
+    nominalKeys,
+    realKeys,
+    maxCpiDate,
+  });
+
+  const handleQuarterLegendClick = (quarter: number) => {
+    toggleQuarter(quarter);
+  };
+
   const [nominalHiddenKeys, setNominalHiddenKeys] = useState<string[]>([]);
   const [realHiddenKeys, setRealHiddenKeys] = useState<string[]>([]);
-  const [hiddenQuarters, setHiddenQuarters] = useState<number[]>([]);
 
   const handleRealLegendClick = (dataKey: string) => {
     setRealHiddenKeys((prev) =>
@@ -278,179 +226,6 @@ export default function CpiChart({
         : [...prev, dataKey],
     );
   };
-
-  const handleQuarterLegendClick = (quarter: number) => {
-    setHiddenQuarters((prev) =>
-      prev.includes(quarter)
-        ? prev.filter((q) => q !== quarter)
-        : [...prev, quarter],
-    );
-  };
-
-  // フィルタ済みの名目データ（開始年・終了年に基づく。データがない月は0で補完）
-  const filteredNominalData = useMemo(() => {
-    const allMonths: string[] = [];
-    for (let y = startYear; y <= endYear; y++) {
-      for (let m = 1; m <= 12; m++) {
-        allMonths.push(`${y}年${m}月`);
-      }
-    }
-
-    return allMonths.map((yearMonth) => {
-      const existingData = nominalData.find((item) => item.年月 === yearMonth);
-      if (existingData) return existingData;
-
-      const emptyItem: CpiData = { 年月: yearMonth } as CpiData;
-      nominalKeys.forEach((key) => {
-        emptyItem[key] = 0;
-      });
-      realKeys.forEach((key) => {
-        emptyItem[key] = 0;
-      });
-      return emptyItem;
-    });
-  }, [nominalData, startYear, endYear, nominalKeys, realKeys]);
-
-  // Quarterly aggregated nominal data: sum months into four quarters per year
-  const quarterlyNominalData = useMemo(() => {
-    const rows: {
-      年: number;
-      quarter: number;
-      label: string;
-      [key: string]: number | string;
-    }[] = [];
-    const nominalMonthsSet = new Set(nominalData.map((d) => d.年月));
-
-    // 表示終了年は、ユーザー選択の終了年と実際のデータ末尾の早い方
-    const effectiveEndYear = Math.min(endYear, maxCpiDate.year);
-
-    for (let y = startYear; y <= effectiveEndYear; y++) {
-      // 最新の年については、データの存在する月が含まれる四半期まで表示
-      const maxQ = y === maxCpiDate.year ? Math.ceil(maxCpiDate.month / 3) : 4;
-
-      for (let q = 1; q <= maxQ; q++) {
-        const months =
-          q === 1
-            ? [1, 2, 3]
-            : q === 2
-              ? [4, 5, 6]
-              : q === 3
-                ? [7, 8, 9]
-                : [10, 11, 12];
-        const label = `${y}年Q${q}`;
-        const item: {
-          年: number;
-          quarter: number;
-          label: string;
-          [key: string]: number | string;
-        } = { 年: y, quarter: q, label };
-        nominalKeys.forEach((k) => (item[k] = 0));
-
-        let validMonthsCount = 0;
-        months.forEach((m) => {
-          const monthStr = `${y}年${m}月`;
-          const row = filteredNominalData.find((r) => r.年月 === monthStr);
-          if (row) {
-            // CSVにデータがある月のみをカウント
-            if (nominalMonthsSet.has(monthStr)) {
-              validMonthsCount++;
-            }
-            nominalKeys.forEach((k) => {
-              const v = row[k];
-              if (typeof v === "number") (item[k] as number) += v;
-            });
-          }
-        });
-
-        // 3か月分のデータが揃っていない場合は値を0にする（欠損四半期を除外）
-        if (validMonthsCount !== 3) {
-          nominalKeys.forEach((k) => (item[k] = 0));
-        }
-
-        // 軸のレンジを他と合わせるため、データが空でも必ず追加する
-        if (!hiddenQuarters.includes(q)) {
-          rows.push(item);
-        }
-      }
-    }
-    return rows;
-  }, [
-    filteredNominalData,
-    nominalData,
-    nominalKeys,
-    startYear,
-    endYear,
-    maxCpiDate,
-    hiddenQuarters,
-  ]);
-
-  // Quarterly aggregated real data (実質) — computed その他項目を含む
-  const quarterlyRealData = useMemo(() => {
-    const rows: {
-      年: number;
-      quarter: number;
-      label: string;
-      [key: string]: number | string;
-    }[] = [];
-    const nominalMonthsSet = new Set(nominalData.map((d) => d.年月));
-
-    const effectiveEndYear = Math.min(endYear, maxCpiDate.year);
-
-    for (let y = startYear; y <= effectiveEndYear; y++) {
-      const maxQ = y === maxCpiDate.year ? Math.ceil(maxCpiDate.month / 3) : 4;
-
-      for (let q = 1; q <= maxQ; q++) {
-        const months =
-          q === 1
-            ? [1, 2, 3]
-            : q === 2
-              ? [4, 5, 6]
-              : q === 3
-                ? [7, 8, 9]
-                : [10, 11, 12];
-        const label = `${y}年Q${q}`;
-        const item: {
-          年: number;
-          quarter: number;
-          label: string;
-          [key: string]: number | string;
-        } = { 年: y, quarter: q, label };
-        realKeys.forEach((k) => (item[k] = 0));
-
-        let validMonthsCount = 0;
-        months.forEach((m) => {
-          const monthStr = `${y}年${m}月`;
-          const row = filteredNominalData.find((r) => r.年月 === monthStr);
-          if (row) {
-            if (nominalMonthsSet.has(monthStr)) {
-              validMonthsCount++;
-            }
-            realKeys.forEach((k) => {
-              const v = row[k];
-              if (typeof v === "number") (item[k] as number) += v;
-            });
-          }
-        });
-
-        if (validMonthsCount !== 3) {
-          realKeys.forEach((k) => (item[k] = 0));
-        }
-
-        if (!hiddenQuarters.includes(q)) {
-          rows.push(item);
-        }
-      }
-    }
-    return rows;
-  }, [
-    filteredNominalData,
-    nominalData,
-    realKeys,
-    startYear,
-    endYear,
-    maxCpiDate,
-    hiddenQuarters,
-  ]);
 
   // CAGR計算用のステート
   const [cagrStartYear, setCagrStartYear] = useState<number>(initialStartYear);
@@ -527,122 +302,44 @@ export default function CpiChart({
       />
 
       {/* CPI 主要指数 */}
-      <ChartLegend
-        title="主要指数"
-        keys={targetKeys}
-        colors={colors}
-        hiddenKeys={hiddenKeys}
-        onToggle={handleLegendClick}
-      />
-      <CpiAreaChart
-        title="消費者物価指数 (主要指数)"
+      <div className={styles.chartSection}>
+        <h2 className={styles.chartTitle}>消費者物価指数 (主要指数)</h2>
+        <MajorIndicesChart
+          data={filteredData}
+          keys={targetKeys}
+          colors={colors}
+          hiddenKeys={hiddenKeys}
+          onToggle={handleLegendClick}
+          chartColors={chartColors}
+          isMobile={isMobile}
+          CustomTooltip={(props: {
+            active?: boolean;
+            payload?: Array<{ name: string; value: number }>;
+            label?: string;
+            isMobile: boolean;
+            tooltipBg: string;
+            tooltipText: string;
+          }) => <CustomTooltip {...props} />}
+        />
+      </div>
+
+      {/* CPI 費目別積み上げ */}
+      <StackedAreaChart
+        title="CPI費目別積み上げ"
         data={filteredData}
-        keys={targetKeys}
-        colors={colors}
-        hiddenKeys={hiddenKeys}
+        keys={stackedKeys}
+        colors={stackedColors}
+        hiddenKeys={stackedHiddenKeys}
+        onToggle={handleStackedLegendClick}
         chartColors={chartColors}
         isMobile={isMobile}
         CustomTooltip={CustomTooltip}
+        onReset={() =>
+          setStackedHiddenKeys((prev) =>
+            prev.length === stackedKeys.length ? [] : [...stackedKeys],
+          )
+        }
       />
-
-      {/* CPI 費目別積み上げ */}
-      <div className={styles.chartSection}>
-        <h2 className={styles.chartTitle}>CPI費目別積み上げ</h2>
-        <div className={styles.legendContainer}>
-          <div className={styles.legendSection}>
-            <div className={styles.legendHeader}>
-              <h3 className={styles.legendTitle}>費目</h3>
-              <div className={styles.legendActions}>
-                <button
-                  onClick={() =>
-                    setStackedHiddenKeys((prev) =>
-                      prev.length === stackedKeys.length
-                        ? []
-                        : [...stackedKeys],
-                    )
-                  }
-                  className={styles.actionButton}
-                  aria-label="全選択解除"
-                >
-                  全選択解除
-                </button>
-              </div>
-            </div>
-            <div className={styles.stackedLegendItems}>
-              {stackedKeys.map((key, index) => (
-                <button
-                  key={key}
-                  onClick={() => handleStackedLegendClick(key)}
-                  className={`${styles.legendItem} ${
-                    stackedHiddenKeys.includes(key) ? styles.hidden : ""
-                  }`}
-                  aria-pressed={!stackedHiddenKeys.includes(key)}
-                >
-                  <span
-                    className={styles.legendIcon}
-                    style={{ backgroundColor: stackedColors[index] }}
-                  />
-                  <span className={styles.legendLabel}>{key}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-        <div className={styles.chartWrapper}>
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart
-              data={filteredData}
-              margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
-            >
-              <CartesianGrid
-                strokeDasharray="3 3"
-                vertical={false}
-                stroke={chartColors.gridStroke}
-              />
-              <XAxis
-                dataKey="年月"
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: chartColors.axisText, fontSize: 12 }}
-                dy={10}
-              />
-              <YAxis
-                domain={[0, "auto"]}
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: chartColors.axisText, fontSize: 12 }}
-                dx={-10}
-              />
-              <Tooltip
-                content={
-                  <CustomTooltip
-                    isMobile={isMobile}
-                    tooltipBg={chartColors.tooltipBg}
-                    tooltipText={chartColors.tooltipText}
-                  />
-                }
-              />
-
-              {stackedKeys.map((key, index) =>
-                !stackedHiddenKeys.includes(key) ? (
-                  <Area
-                    key={key}
-                    dataKey={key}
-                    stackId="a"
-                    type="monotone"
-                    stroke="#ffffff"
-                    strokeWidth={0.5}
-                    strokeOpacity={0.2}
-                    fill={stackedColors[index]}
-                    fillOpacity={1}
-                    isAnimationActive={false}
-                  />
-                ) : null,
-              )}
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
 
       <div className={styles.cagrSection}>
         <h2 className={styles.chartTitle}>年率上昇率（CAGR）計算</h2>
@@ -727,443 +424,59 @@ export default function CpiChart({
         </p>
       </div>
 
-      <div className={styles.chartSection}>
-        <h2 className={styles.chartTitle}>名目の消費支出（10分類）積み上げ</h2>
-        <div className={styles.legendContainer}>
-          <div
-            className={styles.legendSection}
-            style={{ marginBottom: "1.5rem" }}
-          >
-            <h3 className={styles.legendTitle}>四半期</h3>
-            <div className={styles.legendItems}>
-              {[1, 2, 3, 4].map((q) => (
-                <button
-                  key={q}
-                  onClick={() => handleQuarterLegendClick(q)}
-                  className={`${styles.legendItem} ${
-                    hiddenQuarters.includes(q) ? styles.hidden : ""
-                  }`}
-                  aria-pressed={!hiddenQuarters.includes(q)}
-                >
-                  <span className={styles.legendLabel}>Q{q}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className={styles.legendSection}>
-            <div className={styles.legendHeader}>
-              <h3 className={styles.legendTitle}>費目（名目）</h3>
-              <div className={styles.legendActions}>
-                <button
-                  onClick={() =>
-                    setNominalHiddenKeys((prev) =>
-                      prev.length === nominalKeys.length
-                        ? []
-                        : [...nominalKeys],
-                    )
-                  }
-                  className={styles.actionButton}
-                  aria-label="全選択解除（名目）"
-                >
-                  全選択解除
-                </button>
-              </div>
-            </div>
-            <div className={styles.stackedLegendItems}>
-              {nominalKeys.map((key, index) => (
-                <button
-                  key={key}
-                  onClick={() => handleNominalLegendClick(key)}
-                  className={`${styles.legendItem} ${
-                    nominalHiddenKeys.includes(key) ? styles.hidden : ""
-                  }`}
-                  aria-pressed={!nominalHiddenKeys.includes(key)}
-                >
-                  <span
-                    className={styles.legendIcon}
-                    style={{ backgroundColor: nominalColors[index] }}
-                  />
-                  <span className={styles.legendLabel}>{key}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-        <div className={styles.chartWrapper}>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={quarterlyNominalData}
-              margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
-            >
-              <CartesianGrid
-                strokeDasharray="3 3"
-                vertical={false}
-                stroke={chartColors.gridStroke}
-              />
-              <XAxis
-                dataKey="label"
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: chartColors.axisText, fontSize: 12 }}
-                dy={10}
-              />
-              <YAxis
-                domain={[0, "auto"]}
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: chartColors.axisText, fontSize: 12 }}
-                dx={-10}
-              />
-              <Tooltip
-                content={
-                  <CustomTooltip
-                    isMobile={isMobile}
-                    tooltipBg={chartColors.tooltipBg}
-                    tooltipText={chartColors.tooltipText}
-                  />
-                }
-              />
+      <SpendingBarChart
+        title="名目の消費支出（10分類）積み上げ"
+        data={quarterlyNominalData}
+        keys={nominalKeys}
+        colors={nominalColors}
+        hiddenKeys={nominalHiddenKeys}
+        onToggle={handleNominalLegendClick}
+        chartColors={chartColors}
+        isMobile={isMobile}
+        CustomTooltip={CustomTooltip}
+        hiddenQuarters={hiddenQuarters}
+        onToggleQuarter={handleQuarterLegendClick}
+        onReset={() =>
+          setNominalHiddenKeys((prev) =>
+            prev.length === nominalKeys.length ? [] : [...nominalKeys],
+          )
+        }
+      />
 
-              {nominalKeys.map((key, index) =>
-                !nominalHiddenKeys.includes(key) ? (
-                  <Bar
-                    key={key}
-                    dataKey={key}
-                    stackId="b"
-                    fill={nominalColors[index]}
-                    isAnimationActive={false}
-                  />
-                ) : null,
-              )}
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
+      <SpendingBarChart
+        title="実質の消費支出（10分類）積み上げ"
+        data={quarterlyRealData}
+        keys={realKeys}
+        colors={realColors}
+        hiddenKeys={realHiddenKeys}
+        onToggle={handleRealLegendClick}
+        chartColors={chartColors}
+        isMobile={isMobile}
+        CustomTooltip={CustomTooltip}
+        hiddenQuarters={hiddenQuarters}
+        onToggleQuarter={handleQuarterLegendClick}
+        onReset={() =>
+          setRealHiddenKeys((prev) =>
+            prev.length === realKeys.length ? [] : [...realKeys],
+          )
+        }
+      />
 
-      <div className={styles.chartSection}>
-        <h2 className={styles.chartTitle}>実質の消費支出（10分類）積み上げ</h2>
-        <div className={styles.legendContainer}>
-          <div
-            className={styles.legendSection}
-            style={{ marginBottom: "1.5rem" }}
-          >
-            <h3 className={styles.legendTitle}>四半期</h3>
-            <div className={styles.legendItems}>
-              {[1, 2, 3, 4].map((q) => (
-                <button
-                  key={q}
-                  onClick={() => handleQuarterLegendClick(q)}
-                  className={`${styles.legendItem} ${
-                    hiddenQuarters.includes(q) ? styles.hidden : ""
-                  }`}
-                  aria-pressed={!hiddenQuarters.includes(q)}
-                >
-                  <span className={styles.legendLabel}>Q{q}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className={styles.legendSection}>
-            <div className={styles.legendHeader}>
-              <h3 className={styles.legendTitle}>費目（実質）</h3>
-              <div className={styles.legendActions}>
-                <button
-                  onClick={() =>
-                    setRealHiddenKeys((prev) =>
-                      prev.length === realKeys.length ? [] : [...realKeys],
-                    )
-                  }
-                  className={styles.actionButton}
-                  aria-label="全選択解除（実質）"
-                >
-                  全選択解除
-                </button>
-              </div>
-            </div>
-            <div className={styles.stackedLegendItems}>
-              {realKeys.map((key, index) => (
-                <button
-                  key={key}
-                  onClick={() => handleRealLegendClick(key)}
-                  className={`${styles.legendItem} ${
-                    realHiddenKeys.includes(key) ? styles.hidden : ""
-                  }`}
-                  aria-pressed={!realHiddenKeys.includes(key)}
-                >
-                  <span
-                    className={styles.legendIcon}
-                    style={{ backgroundColor: realColors[index] }}
-                  />
-                  <span className={styles.legendLabel}>{key}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className={styles.chartWrapper}>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={quarterlyRealData}
-              margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
-            >
-              <CartesianGrid
-                strokeDasharray="3 3"
-                vertical={false}
-                stroke={chartColors.gridStroke}
-              />
-              <XAxis
-                dataKey="label"
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: chartColors.axisText, fontSize: 12 }}
-                dy={10}
-              />
-              <YAxis
-                domain={[0, "auto"]}
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: chartColors.axisText, fontSize: 12 }}
-                dx={-10}
-              />
-              <Tooltip
-                content={
-                  <CustomTooltip
-                    isMobile={isMobile}
-                    tooltipBg={chartColors.tooltipBg}
-                    tooltipText={chartColors.tooltipText}
-                  />
-                }
-              />
-
-              {realKeys.map((key, index) =>
-                !realHiddenKeys.includes(key) ? (
-                  <Bar
-                    key={key}
-                    dataKey={key}
-                    stackId="c"
-                    fill={realColors[index]}
-                    isAnimationActive={false}
-                  />
-                ) : null,
-              )}
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      <div className={styles.chartSection}>
-        <h2 className={styles.chartTitle}>
-          現金給与総額の内訳（所定内・所定外・特別給与）
-        </h2>
-        <div className={styles.legendContainer}>
-          <div className={styles.legendSection}>
-            <div className={styles.legendItems}>
-              <button
-                className={`${styles.legendItem} ${
-                  hiddenKeys.includes("所定内給与") ? styles.hidden : ""
-                }`}
-                onClick={() => handleLegendClick("所定内給与")}
-                aria-pressed={!hiddenKeys.includes("所定内給与")}
-              >
-                <span
-                  className={styles.legendIcon}
-                  style={{ backgroundColor: "#1e40af" }}
-                />
-                <span className={styles.legendLabel}>所定内給与</span>
-              </button>
-              <button
-                className={`${styles.legendItem} ${
-                  hiddenKeys.includes("所定外給与") ? styles.hidden : ""
-                }`}
-                onClick={() => handleLegendClick("所定外給与")}
-                aria-pressed={!hiddenKeys.includes("所定外給与")}
-              >
-                <span
-                  className={styles.legendIcon}
-                  style={{ backgroundColor: "#3b82f6" }}
-                />
-                <span className={styles.legendLabel}>
-                  所定外給与 (超過労働給与)
-                </span>
-              </button>
-              <button
-                className={`${styles.legendItem} ${
-                  hiddenKeys.includes("調整済み特別給与") ? styles.hidden : ""
-                }`}
-                onClick={() => handleLegendClick("調整済み特別給与")}
-                aria-pressed={!hiddenKeys.includes("調整済み特別給与")}
-              >
-                <span
-                  className={styles.legendIcon}
-                  style={{ backgroundColor: "#60a5fa" }}
-                />
-                <span className={styles.legendLabel}>
-                  調整済み特別給与 (12か月移動平均)
-                </span>
-              </button>
-              <button
-                className={`${styles.legendItem} ${
-                  hiddenKeys.includes("調整済み時間当たり給与")
-                    ? styles.hidden
-                    : ""
-                }`}
-                onClick={() => handleLegendClick("調整済み時間当たり給与")}
-                aria-pressed={!hiddenKeys.includes("調整済み時間当たり給与")}
-              >
-                <span
-                  className={styles.legendIcon}
-                  style={{ backgroundColor: "#16a34a" }}
-                />
-                <span className={styles.legendLabel}>
-                  調整済み時間当たり給与
-                </span>
-              </button>
-              <button
-                className={`${styles.legendItem} ${
-                  hiddenKeys.includes("調整済み15歳以上国民一人当たり給与")
-                    ? styles.hidden
-                    : ""
-                }`}
-                onClick={() =>
-                  handleLegendClick("調整済み15歳以上国民一人当たり給与")
-                }
-                aria-pressed={
-                  !hiddenKeys.includes("調整済み15歳以上国民一人当たり給与")
-                }
-              >
-                <span
-                  className={styles.legendIcon}
-                  style={{ backgroundColor: "#a3e635" }}
-                />
-                <span className={styles.legendLabel}>
-                  調整済み15歳以上国民一人当たり給与
-                </span>
-              </button>
-              <button
-                className={`${styles.legendItem} ${
-                  hiddenKeys.includes("総合") ? styles.hidden : ""
-                }`}
-                onClick={() => handleLegendClick("総合")}
-                aria-pressed={!hiddenKeys.includes("総合")}
-              >
-                <span
-                  className={styles.legendIcon}
-                  style={{ backgroundColor: "#facc15" }}
-                />
-                <span className={styles.legendLabel}>CPI 総合</span>
-              </button>
-            </div>
-          </div>
-        </div>{" "}
-        <div className={styles.chartWrapper}>
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart
-              data={mergedData}
-              margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
-            >
-              <CartesianGrid
-                strokeDasharray="3 3"
-                vertical={false}
-                stroke={chartColors.gridStroke}
-              />
-              <XAxis
-                dataKey="年月"
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: chartColors.axisText, fontSize: 12 }}
-                dy={10}
-              />
-              <YAxis
-                domain={[0, "auto"]}
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: chartColors.axisText, fontSize: 12 }}
-                dx={-10}
-              />
-              <Tooltip
-                content={
-                  <CustomTooltip
-                    isMobile={isMobile}
-                    tooltipBg={chartColors.tooltipBg}
-                    tooltipText={chartColors.tooltipText}
-                  />
-                }
-              />
-              {/* 所定内給与 */}
-              {!hiddenKeys.includes("所定内給与") && (
-                <Area
-                  type="monotone"
-                  dataKey="所定内給与"
-                  stackId="earning"
-                  stroke="#1e40af"
-                  fill="#1e40af"
-                  fillOpacity={0.6}
-                  isAnimationActive={false}
-                />
-              )}
-              {/* 所定外給与 */}
-              {!hiddenKeys.includes("所定外給与") && (
-                <Area
-                  type="monotone"
-                  dataKey="所定外給与"
-                  stackId="earning"
-                  stroke="#3b82f6"
-                  fill="#3b82f6"
-                  fillOpacity={0.6}
-                  isAnimationActive={false}
-                />
-              )}
-              {/* 調整済み特別給与 */}
-              {!hiddenKeys.includes("調整済み特別給与") && (
-                <Area
-                  type="monotone"
-                  dataKey="調整済み特別給与"
-                  stackId="earning"
-                  stroke="#60a5fa"
-                  fill="#60a5fa"
-                  fillOpacity={0.6}
-                  isAnimationActive={false}
-                />
-              )}
-              {/* 調整済み時間当たり給与 */}
-              {!hiddenKeys.includes("調整済み時間当たり給与") && (
-                <Line
-                  type="monotone"
-                  dataKey="調整済み時間当たり給与"
-                  stroke="#16a34a"
-                  strokeWidth={2}
-                  dot={false}
-                  isAnimationActive={false}
-                />
-              )}
-              {/* 調整済み15歳以上国民一人当たり給与 */}
-              {!hiddenKeys.includes("調整済み15歳以上国民一人当たり給与") && (
-                <Line
-                  type="monotone"
-                  dataKey="調整済み15歳以上国民一人当たり給与"
-                  stroke="#a3e635"
-                  strokeWidth={2}
-                  dot={false}
-                  isAnimationActive={false}
-                />
-              )}
-              {/* CPI 総合 */}
-              {!hiddenKeys.includes("総合") && (
-                <Line
-                  type="monotone"
-                  dataKey="総合"
-                  stroke="#facc15"
-                  strokeWidth={2}
-                  dot={false}
-                  isAnimationActive={false}
-                />
-              )}
-            </AreaChart>{" "}
-          </ResponsiveContainer>
-        </div>
-      </div>
+      <EarningsBreakdownChart
+        data={mergedData}
+        hiddenKeys={hiddenKeys}
+        onToggle={handleLegendClick}
+        chartColors={chartColors}
+        isMobile={isMobile}
+        CustomTooltip={(props: {
+          active?: boolean;
+          payload?: Array<{ name: string; value: number }>;
+          label?: string;
+          isMobile: boolean;
+          tooltipBg: string;
+          tooltipText: string;
+        }) => <CustomTooltip {...props} />}
+      />
 
       <div className={styles.infoContainer}>
         <svg

@@ -21,12 +21,24 @@ if (typeof window !== "undefined") {
   });
 
   // Mock ResizeObserver
-  class ResizeObserver {
+  global.ResizeObserver = class {
     observe = vi.fn();
     unobserve = vi.fn();
     disconnect = vi.fn();
-  }
-  window.ResizeObserver = ResizeObserver as any;
+  };
+
+  // Mock getBoundingClientRect for layout-dependent components like ResponsiveContainer
+  Element.prototype.getBoundingClientRect = vi.fn(() => ({
+    width: 1000,
+    height: 500,
+    top: 0,
+    left: 0,
+    bottom: 0,
+    right: 0,
+    x: 0,
+    y: 0,
+    toJSON: vi.fn(),
+  }));
 }
 
 afterEach(() => {
