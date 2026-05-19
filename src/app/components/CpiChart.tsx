@@ -1150,6 +1150,19 @@ export default function CpiChart({
                   調整済み15歳以上国民一人当たり給与
                 </span>
               </button>
+              <button
+                className={`${styles.legendItem} ${
+                  hiddenKeys.includes("総合") ? styles.hidden : ""
+                }`}
+                onClick={() => handleLegendClick("総合")}
+                aria-pressed={!hiddenKeys.includes("総合")}
+              >
+                <span
+                  className={styles.legendIcon}
+                  style={{ backgroundColor: "#3b82f6" }}
+                />
+                <span className={styles.legendLabel}>CPI 総合</span>
+              </button>
             </div>
           </div>
         </div>{" "}
@@ -1239,6 +1252,17 @@ export default function CpiChart({
                   type="monotone"
                   dataKey="調整済み15歳以上国民一人当たり給与"
                   stroke="#ec4899"
+                  dot={false}
+                  isAnimationActive={false}
+                />
+              )}
+              {/* CPI 総合 */}
+              {!hiddenKeys.includes("総合") && (
+                <Line
+                  type="monotone"
+                  dataKey="総合"
+                  stroke="#3b82f6"
+                  strokeDasharray="5 5"
                   dot={false}
                   isAnimationActive={false}
                 />
