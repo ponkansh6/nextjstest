@@ -27,9 +27,11 @@ describe("CpiChart Data Integration", () => {
 
     const mergedData = Array.from(map.values());
 
-    // 少なくとも1件以上のデータがCPI系列を持っていることを確認
+    // 少なくとも1件以上のデータがCPI系列（総合）を持っていることを確認
     const hasCpiData = mergedData.some((d) => typeof d.総合 === "number");
-    expect(hasCpiData).toBe(true);
+    expect(hasCpiData, "Merged data should contain CPI '総合' property").toBe(
+      true,
+    );
 
     // 整合性チェック: 2025年以降のデータでCPI総合が存在することを確認
     const recentData = mergedData.find((d) => d.年月.startsWith("2025年"));
