@@ -26,7 +26,6 @@ describe("loadTotalEarningData integration test", () => {
 
     const metrics = [
       "調整済み時間当たり給与",
-      "調整済み雇用者一人当たり給与",
       "調整済み15歳以上国民一人当たり給与",
     ];
 
@@ -72,7 +71,6 @@ describe("loadTotalEarningData integration test", () => {
 
     const metrics = [
       "調整済み時間当たり給与",
-      "調整済み雇用者一人当たり給与",
       "調整済み15歳以上国民一人当たり給与",
     ];
 

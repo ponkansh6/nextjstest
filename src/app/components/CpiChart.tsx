@@ -1131,27 +1131,6 @@ export default function CpiChart({
               </button>
               <button
                 className={`${styles.legendItem} ${
-                  hiddenKeys.includes("調整済み雇用者一人当たり給与")
-                    ? styles.hidden
-                    : ""
-                }`}
-                onClick={() =>
-                  handleLegendClick("調整済み雇用者一人当たり給与")
-                }
-                aria-pressed={
-                  !hiddenKeys.includes("調整済み雇用者一人当たり給与")
-                }
-              >
-                <span
-                  className={styles.legendIcon}
-                  style={{ backgroundColor: "#a855f7" }}
-                />
-                <span className={styles.legendLabel}>
-                  調整済み雇用者一人当たり給与
-                </span>
-              </button>
-              <button
-                className={`${styles.legendItem} ${
                   hiddenKeys.includes("調整済み15歳以上国民一人当たり給与")
                     ? styles.hidden
                     : ""
@@ -1250,16 +1229,6 @@ export default function CpiChart({
                   type="monotone"
                   dataKey="調整済み時間当たり給与"
                   stroke="#ef4444"
-                  dot={false}
-                  isAnimationActive={false}
-                />
-              )}
-              {/* 調整済み雇用者一人当たり給与 */}
-              {!hiddenKeys.includes("調整済み雇用者一人当たり給与") && (
-                <Line
-                  type="monotone"
-                  dataKey="調整済み雇用者一人当たり給与"
-                  stroke="#a855f7"
                   dot={false}
                   isAnimationActive={false}
                 />

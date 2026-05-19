@@ -383,14 +383,6 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
         return acc + val;
       }, 0) / (year2020.length || 1);
 
-    const emp2020 =
-      year2020.reduce((acc, ym) => {
-        const e = employmentMap.get(ym) ?? 0;
-        const t = totalMap.get(ym) ?? 0;
-        const val = e > 0 ? t / e : 0;
-        return acc + val;
-      }, 0) / (year2020.length || 1);
-
     // Helper to tolerate different month zero-padding between datasets
     const findPopulationTotal = (ym: string): number | undefined => {
       const exact = populationDataMap.get(ym)?.total;
@@ -406,7 +398,7 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
       );
     };
 
-    // 15歳以上国民一人当たり給与の計算用に2020年の「給与/人口」のベース比率を算出
+    // 15歳以上国民一人当たり給与の計算用に2020年の「(給与×雇用)/人口」のベース比率を算出
     const perCapitaBase2020 = (() => {
       const year2020Keys = Array.from(keys).filter((ym) =>
         ym.startsWith("2020年"),
@@ -418,8 +410,9 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
       const ratios = year2020Keys
         .map((ym) => {
           const t = totalMap.get(ym) ?? 0;
+          const e = employmentMap.get(ym) ?? 0;
           const p = findPopulationTotal(ym) ?? 0;
-          return p > 0 ? t / p : 0;
+          return p > 0 ? (t * e) / p : 0;
         })
         .filter((r) => r > 0);
 
@@ -435,7 +428,6 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
     })();
 
     const hourlyFactor = hourly2020 > 0 ? 100 / hourly2020 : 1;
-    const empFactor = emp2020 > 0 ? 100 / emp2020 : 1;
     const popFactor = perCapitaBase2020 > 0 ? 100 / perCapitaBase2020 : 1;
 
     const result: CpiData[] = Array.from(keys)
@@ -465,9 +457,8 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
           hoursVal,
           hourlyFactor,
         );
-        const perWorker = calculateAdjustedMetric(totalVal, empVal, empFactor);
         const perCapita15Plus = calculateAdjustedMetric(
-          totalVal,
+          totalVal * empVal,
           popData?.total ?? 0,
           popFactor,
         );
@@ -478,7 +469,6 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
           所定外給与: Math.max(0, finalContractual - finalScheduled),
           特別給与: Math.max(0, finalTotal - finalContractual),
           調整済み時間当たり給与: hourly,
-          調整済み雇用者一人当たり給与: perWorker,
           調整済み15歳以上国民一人当たり給与: perCapita15Plus,
         } as unknown as CpiData;
       })
@@ -536,13 +526,8 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
         smoothedHours,
         hourlyFactor,
       );
-      item["調整済み雇用者一人当たり給与"] = calculateAdjustedMetric(
-        smoothedTotal,
-        smoothedEmp,
-        empFactor,
-      );
       item["調整済み15歳以上国民一人当たり給与"] = calculateAdjustedMetric(
-        smoothedTotal,
+        smoothedTotal * smoothedEmp,
         smoothedPop,
         popFactor,
       );
