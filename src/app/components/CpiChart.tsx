@@ -18,6 +18,7 @@ import { filterDataByYear, mergeChartData } from "../../lib/chartUtils";
 import styles from "./CpiChart.module.css";
 import { ChartFilters } from "./ChartFilters";
 import { useChartTheme } from "../../hooks/useChartTheme";
+import { ChartLegend } from "./ChartLegend";
 import { CpiAreaChart } from "./CpiAreaChart";
 import { CpiBarChart } from "./CpiBarChart";
 
@@ -526,6 +527,13 @@ export default function CpiChart({
       />
 
       {/* CPI 主要指数 */}
+      <ChartLegend
+        title="主要指数"
+        keys={targetKeys}
+        colors={colors}
+        hiddenKeys={hiddenKeys}
+        onToggle={handleLegendClick}
+      />
       <CpiAreaChart
         title="消費者物価指数 (主要指数)"
         data={filteredData}
@@ -961,7 +969,7 @@ export default function CpiChart({
               >
                 <span
                   className={styles.legendIcon}
-                  style={{ backgroundColor: "#f97316" }}
+                  style={{ backgroundColor: "#1e40af" }}
                 />
                 <span className={styles.legendLabel}>所定内給与</span>
               </button>
@@ -974,7 +982,7 @@ export default function CpiChart({
               >
                 <span
                   className={styles.legendIcon}
-                  style={{ backgroundColor: "#6366f1" }}
+                  style={{ backgroundColor: "#3b82f6" }}
                 />
                 <span className={styles.legendLabel}>
                   所定外給与 (超過労働給与)
@@ -989,7 +997,7 @@ export default function CpiChart({
               >
                 <span
                   className={styles.legendIcon}
-                  style={{ backgroundColor: "#10b981" }}
+                  style={{ backgroundColor: "#60a5fa" }}
                 />
                 <span className={styles.legendLabel}>
                   調整済み特別給与 (12か月移動平均)
@@ -1006,7 +1014,7 @@ export default function CpiChart({
               >
                 <span
                   className={styles.legendIcon}
-                  style={{ backgroundColor: "#ef4444" }}
+                  style={{ backgroundColor: "#16a34a" }}
                 />
                 <span className={styles.legendLabel}>
                   調整済み時間当たり給与
@@ -1027,7 +1035,7 @@ export default function CpiChart({
               >
                 <span
                   className={styles.legendIcon}
-                  style={{ backgroundColor: "#ec4899" }}
+                  style={{ backgroundColor: "#a3e635" }}
                 />
                 <span className={styles.legendLabel}>
                   調整済み15歳以上国民一人当たり給与
@@ -1042,7 +1050,7 @@ export default function CpiChart({
               >
                 <span
                   className={styles.legendIcon}
-                  style={{ backgroundColor: "#f97316" }}
+                  style={{ backgroundColor: "#facc15" }}
                 />
                 <span className={styles.legendLabel}>CPI 総合</span>
               </button>
@@ -1089,8 +1097,8 @@ export default function CpiChart({
                   type="monotone"
                   dataKey="所定内給与"
                   stackId="earning"
-                  stroke="#f97316"
-                  fill="#f97316"
+                  stroke="#1e40af"
+                  fill="#1e40af"
                   fillOpacity={0.6}
                   isAnimationActive={false}
                 />
@@ -1101,8 +1109,8 @@ export default function CpiChart({
                   type="monotone"
                   dataKey="所定外給与"
                   stackId="earning"
-                  stroke="#6366f1"
-                  fill="#6366f1"
+                  stroke="#3b82f6"
+                  fill="#3b82f6"
                   fillOpacity={0.6}
                   isAnimationActive={false}
                 />
@@ -1113,8 +1121,8 @@ export default function CpiChart({
                   type="monotone"
                   dataKey="調整済み特別給与"
                   stackId="earning"
-                  stroke="#10b981"
-                  fill="#10b981"
+                  stroke="#60a5fa"
+                  fill="#60a5fa"
                   fillOpacity={0.6}
                   isAnimationActive={false}
                 />
@@ -1124,7 +1132,8 @@ export default function CpiChart({
                 <Line
                   type="monotone"
                   dataKey="調整済み時間当たり給与"
-                  stroke="#ef4444"
+                  stroke="#16a34a"
+                  strokeWidth={2}
                   dot={false}
                   isAnimationActive={false}
                 />
@@ -1134,7 +1143,8 @@ export default function CpiChart({
                 <Line
                   type="monotone"
                   dataKey="調整済み15歳以上国民一人当たり給与"
-                  stroke="#ec4899"
+                  stroke="#a3e635"
+                  strokeWidth={2}
                   dot={false}
                   isAnimationActive={false}
                 />
@@ -1144,7 +1154,7 @@ export default function CpiChart({
                 <Line
                   type="monotone"
                   dataKey="総合"
-                  stroke="#f97316"
+                  stroke="#facc15"
                   strokeWidth={2}
                   dot={false}
                   isAnimationActive={false}
