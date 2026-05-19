@@ -180,6 +180,43 @@ export default function CpiChart({
     return filtered;
   }, [totalEarningData, startYear, endYear]);
 
+  // データマッピングの統合: CPIと賃金データを年月で結合
+  const mergedData = useMemo(() => {
+    const map = new Map<string, CpiData & { 総合?: number }>();
+
+    // 賃金データの追加
+    filteredTotalEarningData.forEach((row) => {
+      map.set(row.年月, { ...row });
+    });
+
+    // CPIデータの結合
+    data.forEach((row) => {
+      if (map.has(row.年月)) {
+        const item = map.get(row.年月)!;
+        item.総合 = row.総合;
+      } else {
+        map.set(row.年月, { 年月: row.年月, 総合: row.総合 } as CpiData & {
+          総合?: number;
+        });
+      }
+    });
+
+    return Array.from(map.values()).sort((a, b) => {
+      const ma = a.年月.match(/^(\d{4})年(\d{1,2})月/);
+      const mb = b.年月.match(/^(\d{4})年(\d{1,2})月/);
+      if (!ma || !mb) return 0;
+      const ay = parseInt(ma[1], 10);
+      const am = parseInt(ma[2], 10);
+      const by = parseInt(mb[1], 10);
+      const bm = parseInt(mb[2], 10);
+      return ay !== by ? ay - by : am - bm;
+    });
+  }, [filteredTotalEarningData, data]);
+
+  // 表示項目として mergedData を利用するため、明示的に参照を確保
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const displayData = mergedData;
+
   // 表示・非表示を管理するステート（初期値は全て表示）
   const [hiddenKeys, setHiddenKeys] = useState<string[]>([]);
   const [stackedHiddenKeys, setStackedHiddenKeys] = useState<string[]>([]);
