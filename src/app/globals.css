@@ -23,6 +23,7 @@
   --chart-text: #6b7280;
   --chart-grid: #f0f0f0;
   --tooltip-bg: rgba(255, 255, 255, 0.95);
+  --tooltip-text: #000000;
 
   --shadow-lg:
     0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
@@ -51,6 +52,7 @@
     --chart-text: #a3a3a3;
     --chart-grid: #2a2a2a;
     --tooltip-bg: rgba(26, 26, 26, 0.95);
+    --tooltip-text: #e5e5e5;
   }
 }
 

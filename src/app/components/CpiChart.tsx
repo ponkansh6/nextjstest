@@ -16,6 +16,10 @@ import {
 import { CpiData } from "../page";
 import { filterDataByYear, mergeChartData } from "../../lib/chartUtils";
 import styles from "./CpiChart.module.css";
+import { ChartFilters } from "./ChartFilters";
+import { useChartTheme } from "../../hooks/useChartTheme";
+import { CpiAreaChart } from "./CpiAreaChart";
+import { CpiBarChart } from "./CpiBarChart";
 
 interface CpiChartProps {
   data: CpiData[];
@@ -92,37 +96,8 @@ export default function CpiChart({
   ctiData,
   totalEarningData,
 }: CpiChartProps) {
-  // Detect dark mode
-  const isDarkMode = React.useSyncExternalStore(
-    React.useCallback((callback: () => void) => {
-      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-      mediaQuery.addEventListener("change", callback);
-      return () => mediaQuery.removeEventListener("change", callback);
-    }, []),
-    () => window.matchMedia("(prefers-color-scheme: dark)").matches,
-    () => false,
-  );
+  const { isMobile, chartColors } = useChartTheme();
 
-  // Detect mobile
-  const isMobile = React.useSyncExternalStore(
-    React.useCallback((callback: () => void) => {
-      const mediaQuery = window.matchMedia("(max-width: 768px)");
-      mediaQuery.addEventListener("change", callback);
-      return () => mediaQuery.removeEventListener("change", callback);
-    }, []),
-    () => window.matchMedia("(max-width: 768px)").matches,
-    () => false,
-  );
-
-  // Chart theme colors
-  const chartColors = {
-    gridStroke: isDarkMode ? "#2a2a2a" : "#f0f0f0",
-    axisText: isDarkMode ? "#a3a3a3" : "#6b7280",
-    tooltipBg: isDarkMode
-      ? "rgba(26, 26, 26, 0.95)"
-      : "rgba(255, 255, 255, 0.95)",
-    tooltipText: isDarkMode ? "#e5e5e5" : "#000000",
-  };
   // 全ての年を抽出
   const allYears = useMemo(() => {
     const years = new Set<number>();
@@ -135,7 +110,7 @@ export default function CpiChart({
     return Array.from(years).sort((a, b) => a - b);
   }, [data]);
 
-  // 表示範囲のステート（初期値は2005年以降、またはデータ全体の範囲）
+  // 表示範囲のステート
   const initialStartYear = allYears.find((y) => y >= 2005) || allYears[0] || 0;
   const initialEndYear = allYears[allYears.length - 1] || 0;
 
@@ -542,117 +517,27 @@ export default function CpiChart({
 
   return (
     <div className={styles.chartContainer}>
-      <div className={styles.filterContainer}>
-        <div className={styles.filterItem}>
-          <label htmlFor="startYear">開始年:</label>
-          <select
-            id="startYear"
-            value={startYear}
-            onChange={(e) => setStartYear(parseInt(e.target.value, 10))}
-            className={styles.select}
-          >
-            {allYears.map((year) => (
-              <option key={year} value={year} disabled={year > endYear}>
-                {year}年
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className={styles.filterItem}>
-          <label htmlFor="endYear">終了年:</label>
-          <select
-            id="endYear"
-            value={endYear}
-            onChange={(e) => setEndYear(parseInt(e.target.value, 10))}
-            className={styles.select}
-          >
-            {allYears.map((year) => (
-              <option key={year} value={year} disabled={year < startYear}>
-                {year}年
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
+      <ChartFilters
+        allYears={allYears}
+        startYear={startYear}
+        endYear={endYear}
+        setStartYear={setStartYear}
+        setEndYear={setEndYear}
+      />
 
-      <div className={styles.legendContainer}>
-        <div className={styles.legendSection}>
-          <h3 className={styles.legendTitle}>主要指数</h3>
-          <div className={styles.legendItems}>
-            {targetKeys.map((key, index) => (
-              <button
-                key={key}
-                onClick={() => handleLegendClick(key)}
-                className={`${styles.legendItem} ${
-                  hiddenKeys.includes(key) ? styles.hidden : ""
-                }`}
-                aria-pressed={!hiddenKeys.includes(key)}
-              >
-                <span
-                  className={styles.legendIcon}
-                  style={{ backgroundColor: colors[index] }}
-                />
-                <span className={styles.legendLabel}>{key}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
+      {/* CPI 主要指数 */}
+      <CpiAreaChart
+        title="消費者物価指数 (主要指数)"
+        data={filteredData}
+        keys={targetKeys}
+        colors={colors}
+        hiddenKeys={hiddenKeys}
+        chartColors={chartColors}
+        isMobile={isMobile}
+        CustomTooltip={CustomTooltip}
+      />
 
-      <div className={styles.chartSection}>
-        <h2 className={styles.chartTitle}>消費者物価指数 (主要指数)</h2>
-        <div className={styles.chartWrapper}>
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart
-              data={filteredData}
-              margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
-            >
-              <CartesianGrid
-                strokeDasharray="3 3"
-                vertical={false}
-                stroke={chartColors.gridStroke}
-              />
-              <XAxis
-                dataKey="年月"
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: chartColors.axisText, fontSize: 12 }}
-                dy={10}
-              />
-              <YAxis
-                domain={[0, "auto"]}
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: chartColors.axisText, fontSize: 12 }}
-                dx={-10}
-              />
-              <Tooltip
-                content={
-                  <CustomTooltip
-                    isMobile={isMobile}
-                    tooltipBg={chartColors.tooltipBg}
-                    tooltipText={chartColors.tooltipText}
-                  />
-                }
-              />
-
-              {targetKeys.map((key, index) => (
-                <Area
-                  key={key}
-                  dataKey={key}
-                  type="monotone"
-                  stroke="none"
-                  fill={colors[index]}
-                  fillOpacity={1}
-                  hide={hiddenKeys.includes(key)}
-                  isAnimationActive={false}
-                />
-              ))}
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
+      {/* CPI 費目別積み上げ */}
       <div className={styles.chartSection}>
         <h2 className={styles.chartTitle}>CPI費目別積み上げ</h2>
         <div className={styles.legendContainer}>

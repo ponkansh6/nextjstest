@@ -21,11 +21,12 @@ if (typeof window !== "undefined") {
   });
 
   // Mock ResizeObserver
-  window.ResizeObserver = vi.fn().mockImplementation(() => ({
-    observe: vi.fn(),
-    unobserve: vi.fn(),
-    disconnect: vi.fn(),
-  }));
+  class ResizeObserver {
+    observe = vi.fn();
+    unobserve = vi.fn();
+    disconnect = vi.fn();
+  }
+  window.ResizeObserver = ResizeObserver as any;
 }
 
 afterEach(() => {

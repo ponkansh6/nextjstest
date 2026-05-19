@@ -4,10 +4,9 @@ export default defineConfig({
   test: {
     root: "./",
     globals: false,
-    environment: "node",
+    environment: "jsdom",
+    setupFiles: ["./tests/setup.ts"],
     include: ["tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
     pool: "forks",
-    // @ts-ignore
-    environmentMatchGlobs: [["tests/**/*.test.tsx", "jsdom"]],
   },
 });
