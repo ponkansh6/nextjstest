@@ -13,7 +13,8 @@ import {
   ResponsiveContainer,
   Line,
 } from "recharts";
-import { type CpiData } from "../page";
+import { CpiData } from "../page";
+import { filterDataByYear, mergeChartData } from "../../lib/chartUtils";
 import styles from "./CpiChart.module.css";
 
 interface CpiChartProps {
@@ -159,59 +160,19 @@ export default function CpiChart({
     return { year: maxYear, month: maxMonth };
   }, [data]);
 
-  // ステートに基づいてデータをフィルタリング（派生データはサーバー側で計算済み）
+  // ステートに基づいてデータをフィルタリング
   const filteredData = useMemo(() => {
-    return data.filter((item) => {
-      const yearMatch = item.年月.match(/^(\d{4})年/);
-      if (!yearMatch) return false;
-      const year = parseInt(yearMatch[1], 10);
-      return year >= startYear && year <= endYear;
-    });
+    return filterDataByYear(data, startYear, endYear);
   }, [data, startYear, endYear]);
 
   const filteredTotalEarningData = useMemo(() => {
-    const filtered = totalEarningData.filter((item) => {
-      const yearMatch = item.年月.match(/^(\d{4})年/);
-      if (!yearMatch) return false;
-      const year = parseInt(yearMatch[1], 10);
-      return year >= startYear && year <= endYear;
-    });
-    console.log("Filtered Total Earning Data (latest 5):", filtered.slice(-5));
-    return filtered;
+    return filterDataByYear(totalEarningData, startYear, endYear);
   }, [totalEarningData, startYear, endYear]);
 
   // データマッピングの統合: CPIと賃金データを年月で結合
   const mergedData = useMemo(() => {
-    const map = new Map<string, CpiData & { 総合?: number }>();
-
-    // 賃金データの追加
-    filteredTotalEarningData.forEach((row) => {
-      map.set(row.年月, { ...row });
-    });
-
-    // CPIデータの結合
-    data.forEach((row) => {
-      if (map.has(row.年月)) {
-        const item = map.get(row.年月)!;
-        item.総合 = row.総合;
-      } else {
-        map.set(row.年月, { 年月: row.年月, 総合: row.総合 } as CpiData & {
-          総合?: number;
-        });
-      }
-    });
-
-    return Array.from(map.values()).sort((a, b) => {
-      const ma = a.年月.match(/^(\d{4})年(\d{1,2})月/);
-      const mb = b.年月.match(/^(\d{4})年(\d{1,2})月/);
-      if (!ma || !mb) return 0;
-      const ay = parseInt(ma[1], 10);
-      const am = parseInt(ma[2], 10);
-      const by = parseInt(mb[1], 10);
-      const bm = parseInt(mb[2], 10);
-      return ay !== by ? ay - by : am - bm;
-    });
-  }, [filteredTotalEarningData, data]);
+    return mergeChartData(filteredTotalEarningData, data, startYear, endYear);
+  }, [filteredTotalEarningData, data, startYear, endYear]);
 
   // 表示項目として mergedData を利用するため、明示的に参照を確保
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -1196,7 +1157,7 @@ export default function CpiChart({
               >
                 <span
                   className={styles.legendIcon}
-                  style={{ backgroundColor: "#3b82f6" }}
+                  style={{ backgroundColor: "#f97316" }}
                 />
                 <span className={styles.legendLabel}>CPI 総合</span>
               </button>
@@ -1298,8 +1259,8 @@ export default function CpiChart({
                 <Line
                   type="monotone"
                   dataKey="総合"
-                  stroke="#3b82f6"
-                  strokeDasharray="5 5"
+                  stroke="#f97316"
+                  strokeWidth={2}
                   dot={false}
                   isAnimationActive={false}
                 />
