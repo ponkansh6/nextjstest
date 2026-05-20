@@ -371,7 +371,14 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
     // 人口データを読み込み
     const populationDataMap = await loadPopulationData();
 
-    // データチェックログは result 生成後に出力するためここではスキップ（参照前のエラー回避）
+    // CPIデータを読み込み（残差計算用）
+    const cpiData = await loadCpiData();
+    const cpiMap = new Map<string, number>();
+    cpiData.forEach((d) => {
+      if (typeof d.総合 === "number") {
+        cpiMap.set(d.年月, d.総合);
+      }
+    });
 
     // 2020年の平均を100とするためのベース計算
     const year2020 = Array.from(keys).filter((ym) => ym.startsWith("2020年"));
@@ -451,26 +458,12 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
         const finalContractual = contractualVal * factorContractual;
         const finalScheduled = scheduledVal * factorScheduled;
 
-        // 2020年平均を100としてスケーリング
-        const hourly = calculateAdjustedMetric(
-          totalVal,
-          hoursVal,
-          hourlyFactor,
-        );
-        const perCapita15Plus = calculateAdjustedMetric(
-          totalVal * empVal,
-          popData?.total ?? 0,
-          popFactor,
-        );
-
         return {
           年月: ym,
           所定内給与: finalScheduled,
           所定外給与: Math.max(0, finalContractual - finalScheduled),
           特別給与: Math.max(0, finalTotal - finalContractual),
-          時間当たり給与: hourly,
-          "15歳以上国民一人当たり給与": perCapita15Plus,
-          総合: totalVal,
+          総合: 0,
         } as unknown as CpiData;
       })
       .sort((a, b) => {
@@ -485,9 +478,12 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
       });
 
     // 12か月移動平均を計算して指標を追加
+    // 移動平均の計算には生データを使用するため、計算用に元の結果を保持
+    const rawResults = result.map((r) => ({ ...r }));
+
     result.forEach((item, index) => {
       const getMovingAverage = (
-        key: keyof CpiData | "hours" | "emp" | "pop",
+        key: keyof CpiData | "hours" | "emp" | "pop" | "cpi",
         isDataKey: boolean = true,
       ) => {
         let sum = 0;
@@ -495,13 +491,13 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
         for (let i = Math.max(0, index - 11); i <= index; i++) {
           let val = 0;
           if (isDataKey) {
-            val = (result[i][key as keyof CpiData] as number) || 0;
+            val = (rawResults[i][key as keyof CpiData] as number) || 0;
           } else {
-            if (key === "hours") val = hoursMap.get(result[i].年月) || 0;
-            else if (key === "emp")
-              val = employmentMap.get(result[i].年月) || 0;
-            else if (key === "pop")
-              val = populationDataMap.get(result[i].年月)?.total || 0;
+            const ym = rawResults[i].年月;
+            if (key === "hours") val = hoursMap.get(ym) || 0;
+            else if (key === "emp") val = employmentMap.get(ym) || 0;
+            else if (key === "pop") val = populationDataMap.get(ym)?.total || 0;
+            else if (key === "cpi") val = cpiMap.get(ym) || 0;
           }
           sum += val;
           count++;
@@ -539,8 +535,12 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
       );
 
       // 平滑化されたCPI総合から残差を計算
-      const smoothedCpi = getMovingAverage("総合");
-      item["残差"] = smoothedTotal - smoothedCpi;
+      const smoothedCpi = getMovingAverage("cpi", false);
+      if (smoothedCpi > 0) {
+        item["残差"] = smoothedTotal - smoothedCpi;
+      } else {
+        item["残差"] = 0;
+      }
     });
 
     console.log(
