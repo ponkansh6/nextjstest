@@ -1,14 +1,15 @@
 import { describe, it, expect } from "vitest";
 import { computeChartData } from "../src/lib/chartLogic";
 import { CpiData } from "../src/app/page";
+import { createCpiDataList } from "./factories/cpiDataFactory";
 
 describe("useCpiChartData logic (computeChartData)", () => {
   const mockData: CpiData[] = [];
-  const mockNominalData: CpiData[] = [
+  const mockNominalData: CpiData[] = createCpiDataList([
     { 年月: "2020年1月", 総合: 100, 項目A: 50 },
     { 年月: "2020年2月", 総合: 101, 項目A: 51 },
     { 年月: "2020年3月", 総合: 102, 項目A: 52 },
-  ] as unknown as CpiData[];
+  ]);
   const props = {
     data: mockData,
     nominalData: mockNominalData,
@@ -33,9 +34,9 @@ describe("useCpiChartData logic (computeChartData)", () => {
 
   it("should set values to 0 if data for a quarter is incomplete (missing months)", () => {
     // 2月と3月がないデータ
-    const incompleteData: CpiData[] = [
+    const incompleteData: CpiData[] = createCpiDataList([
       { 年月: "2020年1月", 総合: 100, 項目A: 50 },
-    ] as unknown as CpiData[];
+    ]);
 
     const propsIncomplete = { ...props, nominalData: incompleteData };
     const result = computeChartData(propsIncomplete, []);

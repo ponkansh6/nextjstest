@@ -50,14 +50,6 @@ dist/
 build/
 *.spec
 
-# Playwright
-node_modules/
-/test-results/
-/playwright-report/
-/blob-report/
-/playwright/.cache/
-/playwright/.auth/
-
 # project specific
 /scripts/dist/
 /scripts/build/

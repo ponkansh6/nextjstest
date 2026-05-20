@@ -1,0 +1,21 @@
+import { CpiData } from "../../src/app/page";
+
+/**
+ * テスト用のCpiDataオブジェクトを生成するファクトリ関数
+ */
+export function createCpiData(overrides: Partial<CpiData> = {}): CpiData {
+  return {
+    年月: "2020年01月",
+    総合: 100,
+    生鮮食品を除く総合: 100,
+    持家の帰属家賃を除く総合: 100,
+    ...overrides,
+  };
+}
+
+/**
+ * 複数のCpiDataオブジェクトを生成する
+ */
+export function createCpiDataList(items: Partial<CpiData>[]): CpiData[] {
+  return items.map(createCpiData);
+}

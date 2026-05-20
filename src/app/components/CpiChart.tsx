@@ -10,6 +10,7 @@ import { useCpiChartData } from "../../hooks/useCpiChartData";
 import { SpendingBarChart } from "./SpendingBarChart";
 import { StackedAreaChart } from "./StackedAreaChart";
 import { EarningsBreakdownChart } from "./EarningsBreakdownChart";
+import { ResidualBarChart } from "./ResidualBarChart";
 import { MajorIndicesChart } from "./MajorIndicesChart";
 import {
   targetKeys,
@@ -466,6 +467,20 @@ export default function CpiChart({
         data={mergedData}
         hiddenKeys={hiddenKeys}
         onToggle={handleLegendClick}
+        chartColors={chartColors}
+        isMobile={isMobile}
+        CustomTooltip={(props: {
+          active?: boolean;
+          payload?: Array<{ name: string; value: number }>;
+          label?: string;
+          isMobile: boolean;
+          tooltipBg: string;
+          tooltipText: string;
+        }) => <CustomTooltip {...props} />}
+      />
+
+      <ResidualBarChart
+        data={mergedData}
         chartColors={chartColors}
         isMobile={isMobile}
         CustomTooltip={(props: {

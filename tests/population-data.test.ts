@@ -1,4 +1,5 @@
-import { describe, it, expect, vi } from "vitest";
+/** @vitest-environment node */
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { loadPopulationData } from "../src/lib/cpiData";
 import fs from "fs";
 
@@ -6,15 +7,17 @@ import fs from "fs";
 vi.mock("fs");
 
 describe("loadPopulationData", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("should process population csv correctly for 15+ population", async () => {
-    // The parser skips index 0 (header) and index 1, then starts at headerIndex + 2
-    // mockCsv needs rows such that rows[2] is our data row
     const mockCsv = `年　月,dummy,dummy,dummy,総数
 ,,,,,
 2020年,1月,,,100000`;
 
-    vi.mocked(fs.existsSync).mockReturnValue(true);
-    vi.mocked(fs.readFileSync).mockReturnValue(mockCsv);
+    vi.mocked(fs.existsSync).mockReturnValue(true as any);
+    vi.mocked(fs.readFileSync).mockReturnValue(mockCsv as any);
 
     const result = await loadPopulationData();
     console.log("Keys in result:", Array.from(result.keys()));

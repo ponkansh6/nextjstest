@@ -2,8 +2,9 @@ import { describe, it, expect } from "vitest";
 import mockCpiData from "../tests/fixtures/cpi-data.json";
 import { calculateCategorySum } from "../src/lib/cpiData";
 import { CpiData } from "../src/app/page";
+import { createCpiDataList } from "./factories/cpiDataFactory";
 
-const cpiData = mockCpiData as unknown as CpiData[];
+const cpiData = createCpiDataList(mockCpiData as Partial<CpiData>[]);
 
 describe("CAGR計算", () => {
   it("データが見つかる場合、正常に合計を計算する", () => {

@@ -38,21 +38,24 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
   const configs = [
     { key: "所定内給与", color: "#1e40af", type: "area" },
     { key: "所定外給与", color: "#3b82f6", type: "area" },
-    { key: "調整済み特別給与", color: "#60a5fa", type: "area" },
-    { key: "調整済み時間当たり給与", color: "#16a34a", type: "line" },
+    { key: "特別給与", color: "#60a5fa", type: "area" },
+    { key: "時間当たり給与", color: "#16a34a", type: "line" },
     {
-      key: "調整済み15歳以上国民一人当たり給与",
+      key: "15歳以上国民一人当たり給与",
       color: "#a3e635",
       type: "line",
     },
-    { key: "総合", color: "#facc15", type: "line" },
+    { key: "CPI総合(参考)", color: "#facc15", type: "line" },
   ] as const;
 
   return (
     <div className={styles.chartSection}>
       <h2 className={styles.chartTitle}>
-        現金給与総額の内訳（所定内・所定外・特別給与）
+        現金給与総額の動向（所定内・所定外・特別給与・各種指標）
       </h2>
+      <p className={styles.chartNote}>
+        ※給与関連指標は12か月移動平均を用いています。
+      </p>
       <div className={styles.legendContainer}>
         <div className={styles.legendSection}>
           <div className={styles.legendItems}>
