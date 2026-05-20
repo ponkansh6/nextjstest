@@ -442,17 +442,6 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
         const contractualVal = contractualMap.get(ym) ?? 0;
         const scheduledVal = scheduledMap.get(ym) ?? 0;
         const totalVal = totalMap.get(ym) ?? 0;
-        const hoursVal = hoursMap.get(ym) ?? 0;
-        const empVal = employmentMap.get(ym) ?? 0;
-        // Try to find population data with tolerant key matching (padded/unpadded months)
-        const popData = (() => {
-          const exact = populationDataMap.get(ym);
-          if (exact) return exact;
-          const m = ym.match(/^(\d{4})年0?(\d{1,2})月$/);
-          if (!m) return undefined;
-          const padded = `${m[1]}年${String(m[2]).padStart(2, "0")}月`;
-          return populationDataMap.get(padded) ?? undefined;
-        })();
 
         const finalTotal = totalVal;
         const finalContractual = contractualVal * factorContractual;
