@@ -38,7 +38,7 @@ export const mergeChartData = (
     map.set(row.年月, { ...row });
   });
 
-  // CPIデータの結合
+  // CPIデータの結合（給与データに存在する年月のみ）
   cpiData.forEach((row) => {
     const year = extractYear(row.年月);
     if (year < startYear || year > endYear) return;
@@ -46,11 +46,8 @@ export const mergeChartData = (
     if (map.has(row.年月)) {
       const item = map.get(row.年月)!;
       item.総合 = row.総合;
-    } else {
-      map.set(row.年月, { 年月: row.年月, 総合: row.総合 } as CpiData & {
-        総合?: number;
-      });
     }
+    // Note: CPIのみの日付は追加しない（給与データが不足するため）
   });
 
   return Array.from(map.values()).sort((a, b) => {

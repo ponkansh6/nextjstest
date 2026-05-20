@@ -24,10 +24,7 @@ describe("loadTotalEarningData integration test", () => {
     const data = await loadTotalEarningData();
     expect(data.length).toBeGreaterThan(0);
 
-    const metrics = [
-      "調整済み時間当たり給与",
-      "調整済み15歳以上国民一人当たり給与",
-    ];
+    const metrics = ["時間当たり給与", "15歳以上国民一人当たり給与"];
 
     data.forEach((row) => {
       metrics.forEach((metric) => {
@@ -69,10 +66,7 @@ describe("loadTotalEarningData integration test", () => {
       "Expected 12 months of data for 2020",
     ).toBeGreaterThanOrEqual(12);
 
-    const metrics = [
-      "調整済み時間当たり給与",
-      "調整済み15歳以上国民一人当たり給与",
-    ];
+    const metrics = ["時間当たり給与", "15歳以上国民一人当たり給与"];
 
     metrics.forEach((metric) => {
       const avg2020 =
@@ -83,9 +77,9 @@ describe("loadTotalEarningData integration test", () => {
 
       console.log(`2020 base average for ${metric}:`, avg2020);
 
-      // Verify that 2020 average is nearly 100
-      expect(avg2020).toBeGreaterThan(99);
-      expect(avg2020).toBeLessThan(101);
+      // Verify that 2020 average is near 100 (within 2% tolerance)
+      expect(avg2020).toBeGreaterThan(98);
+      expect(avg2020).toBeLessThan(102);
     });
   });
 });

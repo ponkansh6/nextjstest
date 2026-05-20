@@ -470,7 +470,7 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
           特別給与: Math.max(0, finalTotal - finalContractual),
           時間当たり給与: hourly,
           "15歳以上国民一人当たり給与": perCapita15Plus,
-          残差: finalTotal - (totalMap.get(ym) || 0), // Calculate residual here
+          総合: totalVal,
         } as unknown as CpiData;
       })
       .sort((a, b) => {
@@ -509,13 +509,18 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
         return count > 0 ? sum / count : 0;
       };
 
+      // 移動平均を計算して指標を上書き
+      const smoothedScheduled = getMovingAverage("所定内給与");
+      const smoothedContractual = getMovingAverage("所定外給与");
+      const smoothedSpecial = getMovingAverage("特別給与");
+
+      item["所定内給与"] = smoothedScheduled;
+      item["所定外給与"] = smoothedContractual;
+      item["特別給与"] = smoothedSpecial;
+
       // 給与総額の移動平均
       const smoothedTotal =
-        getMovingAverage("特別給与") +
-        getMovingAverage("所定内給与") +
-        getMovingAverage("所定外給与");
-
-      item["特別給与"] = getMovingAverage("特別給与");
+        smoothedScheduled + smoothedContractual + smoothedSpecial;
 
       // 移動平均済みの分母
       const smoothedHours = getMovingAverage("hours", false);
@@ -532,15 +537,18 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
         smoothedPop,
         popFactor,
       );
-      item["残差"] = getMovingAverage("残差");
+
+      // 平滑化されたCPI総合から残差を計算
+      const smoothedCpi = getMovingAverage("総合");
+      item["残差"] = smoothedTotal - smoothedCpi;
     });
 
     console.log(
       "Check for gaps or anomalies:",
       result.slice(-5).map((r) => ({
         ym: r.年月,
-        ma: r["調整済み時間当たり給与"],
-        perCapita: r["調整済み15歳以上国民一人当たり給与"],
+        ma: r["時間当たり給与"],
+        perCapita: r["15歳以上国民一人当たり給与"],
       })),
     );
 

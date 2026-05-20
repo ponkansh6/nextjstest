@@ -35,7 +35,12 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
   isMobile,
   CustomTooltip,
 }) => {
-  const configs = [
+  const configs: Array<{
+    key: string;
+    color: string;
+    type: "area" | "line";
+    displayName?: string;
+  }> = [
     { key: "所定内給与", color: "#1e40af", type: "area" },
     { key: "所定外給与", color: "#3b82f6", type: "area" },
     { key: "特別給与", color: "#60a5fa", type: "area" },
@@ -45,8 +50,13 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
       color: "#a3e635",
       type: "line",
     },
-    { key: "CPI総合(参考)", color: "#facc15", type: "line" },
-  ] as const;
+    {
+      key: "総合",
+      displayName: "CPI総合(参考)",
+      color: "#facc15",
+      type: "line",
+    },
+  ];
 
   return (
     <div className={styles.chartSection}>
@@ -59,7 +69,7 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
       <div className={styles.legendContainer}>
         <div className={styles.legendSection}>
           <div className={styles.legendItems}>
-            {configs.map(({ key, color }) => (
+            {configs.map(({ key, displayName, color }) => (
               <button
                 key={key}
                 className={`${styles.legendItem} ${
@@ -72,7 +82,7 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
                   className={styles.legendIcon}
                   style={{ backgroundColor: color }}
                 />
-                <span className={styles.legendLabel}>{key}</span>
+                <span className={styles.legendLabel}>{displayName || key}</span>
               </button>
             ))}
           </div>
