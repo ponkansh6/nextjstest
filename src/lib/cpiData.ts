@@ -720,7 +720,7 @@ export async function loadCpiData(): Promise<CpiData[]> {
       });
 
       // データのクリーニング、ウエイトの掛け合わせ、派生データの計算
-      const cleanData = (data as CpiData[])
+      const rawCleanedData = (data as CpiData[])
         .filter((row) => {
           if (!row["年月"]) return false;
           const yearMatch = (row["年月"] as string).match(/^(\d{4})年/);
@@ -757,6 +757,24 @@ export async function loadCpiData(): Promise<CpiData[]> {
 
           return newRow;
         });
+
+      // 総合の12か月移動平均を追加
+      const cleanData = rawCleanedData.map((row, index) => {
+        let sum = 0;
+        let count = 0;
+        for (let i = Math.max(0, index - 11); i <= index; i++) {
+          const val =
+            typeof rawCleanedData[i]["総合"] === "number"
+              ? (rawCleanedData[i]["総合"] as number)
+              : 0;
+          if (val > 0) {
+            sum += val;
+            count++;
+          }
+        }
+        row["総合(MA)"] = count > 0 ? sum / count : 0;
+        return row;
+      });
 
       return cleanData;
     } else {

@@ -1,5 +1,9 @@
 import { CpiData } from "../app/page";
 
+type MergedData = CpiData & {
+  "総合(MA)"?: number;
+};
+
 /**
  * 年月文字列（例: "2020年1月"）から年を抽出するヘルパー
  */
@@ -30,12 +34,12 @@ export const mergeChartData = (
   cpiData: CpiData[],
   startYear: number,
   endYear: number,
-): (CpiData & { 総合?: number })[] => {
-  const map = new Map<string, CpiData & { 総合?: number }>();
+): MergedData[] => {
+  const map = new Map<string, MergedData>();
 
   // 賃金データの追加（範囲フィルタ済み）
   wageData.forEach((row) => {
-    map.set(row.年月, { ...row });
+    map.set(row.年月, { ...row, "総合(MA)": 0 });
   });
 
   // CPIデータの結合（給与データに存在する年月のみ）
@@ -46,6 +50,7 @@ export const mergeChartData = (
     if (map.has(row.年月)) {
       const item = map.get(row.年月)!;
       item.総合 = row.総合;
+      item["総合(MA)"] = row["総合(MA)"] as number;
     }
     // Note: CPIのみの日付は追加しない（給与データが不足するため）
   });
