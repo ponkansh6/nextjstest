@@ -491,7 +491,12 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
           sum += val;
           count++;
         }
-        return count > 0 ? sum / count : 0;
+        // 指標(scheduled, contractual, special, cpi)については、
+        // 常に12か月で割ることで「12か月平均」の概念を維持する。
+        // 分母(hours, emp, pop)については、データがある期間のみで平均を取る。
+        const isMetric = isDataKey || key === "cpi";
+        const divisor = isMetric ? 12 : count;
+        return divisor > 0 ? sum / divisor : 0;
       };
 
       // 移動平均を計算して指標を上書き
@@ -720,7 +725,7 @@ export async function loadCpiData(): Promise<CpiData[]> {
           if (!row["年月"]) return false;
           const yearMatch = (row["年月"] as string).match(/^(\d{4})年/);
           const year = yearMatch ? parseInt(yearMatch[1], 10) : 0;
-          return year >= 2005;
+          return year >= 2004;
         })
         .map((row) => {
           const newRow: CpiData = { ...row };
