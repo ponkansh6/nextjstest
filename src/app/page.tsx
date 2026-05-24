@@ -29,19 +29,11 @@ export default async function Page() {
       </header>
 
       {cleanData.length > 0 ? (
-        <CpiChart
-          data={cleanData}
-          ctiData={ctiData}
-          totalEarningData={totalEarningData}
-        />
+        <CpiChart data={cleanData} ctiData={ctiData} totalEarningData={totalEarningData} />
       ) : (
         <div className={styles.errorContainer}>
-          <p className={styles.errorMessage}>
-            データの読み込みに失敗したか、データが空です。
-          </p>
-          <p className={styles.errorSubMessage}>
-            public/cpi_data.csv ファイルを確認してください。
-          </p>
+          <p className={styles.errorMessage}>データの読み込みに失敗したか、データが空です。</p>
+          <p className={styles.errorSubMessage}>public/cpi_data.csv ファイルを確認してください。</p>
         </div>
       )}
     </div>

@@ -1,4 +1,4 @@
-import { CpiData } from "../app/page";
+import type { CpiData } from "../app/page";
 
 export interface UseCpiChartDataProps {
   data: CpiData[];
@@ -11,12 +11,8 @@ export interface UseCpiChartDataProps {
 }
 
 // フックからロジックを抽出した関数
-export const computeChartData = (
-  props: UseCpiChartDataProps,
-  hiddenQuarters: number[],
-) => {
-  const { nominalData, startYear, endYear, nominalKeys, realKeys, maxCpiDate } =
-    props;
+export const computeChartData = (props: UseCpiChartDataProps, hiddenQuarters: number[]) => {
+  const { nominalData, startYear, endYear, nominalKeys, realKeys, maxCpiDate } = props;
 
   const filteredNominalData = (() => {
     const allMonths: string[] = [];
@@ -27,10 +23,10 @@ export const computeChartData = (
     }
 
     return allMonths.map((yearMonth) => {
-      const existingData = nominalData.find(
-        (item: CpiData) => item.年月 === yearMonth,
-      );
-      if (existingData) return existingData;
+      const existingData = nominalData.find((item: CpiData) => item.年月 === yearMonth);
+      if (existingData) {
+        return existingData;
+      }
 
       const emptyItem: CpiData = { 年月: yearMonth } as CpiData;
       nominalKeys.forEach((key: string) => {
@@ -57,39 +53,39 @@ export const computeChartData = (
       const maxQ = y === maxCpiDate.year ? Math.ceil(maxCpiDate.month / 3) : 4;
       for (let q = 1; q <= maxQ; q++) {
         const months =
-          q === 1
-            ? [1, 2, 3]
-            : q === 2
-              ? [4, 5, 6]
-              : q === 3
-                ? [7, 8, 9]
-                : [10, 11, 12];
+          q === 1 ? [1, 2, 3] : q === 2 ? [4, 5, 6] : q === 3 ? [7, 8, 9] : [10, 11, 12];
         const label = `${y}年Q${q}`;
         const item: {
           年: number;
           quarter: number;
           label: string;
           [key: string]: number | string;
-        } = { 年: y, quarter: q, label };
+        } = { label, quarter: q, 年: y };
         keys.forEach((k: string) => (item[k] = 0));
 
         let validMonthsCount = 0;
         months.forEach((m) => {
           const monthStr = `${y}年${m}月`;
-          const row = filteredNominalData.find(
-            (r: CpiData) => r.年月 === monthStr,
-          );
+          const row = filteredNominalData.find((r: CpiData) => r.年月 === monthStr);
           if (row) {
-            if (nominalMonthsSet.has(monthStr)) validMonthsCount++;
+            if (nominalMonthsSet.has(monthStr)) {
+              validMonthsCount++;
+            }
             keys.forEach((k: string) => {
               const v = row[k as keyof CpiData];
-              if (typeof v === "number") item[k] = (item[k] as number) + v;
+              if (typeof v === "number") {
+                item[k] = (item[k] as number) + v;
+              }
             });
           }
         });
 
-        if (validMonthsCount !== 3) keys.forEach((k: string) => (item[k] = 0));
-        if (!hiddenQuarters.includes(q)) rows.push(item);
+        if (validMonthsCount !== 3) {
+          keys.forEach((k: string) => (item[k] = 0));
+        }
+        if (!hiddenQuarters.includes(q)) {
+          rows.push(item);
+        }
       }
     }
     return rows;

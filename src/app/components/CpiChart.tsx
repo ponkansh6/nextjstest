@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { CpiData } from "../page";
+import React, { useMemo, useState } from "react";
+import type { CpiData } from "../page";
 import { filterDataByYear, mergeChartData } from "../../lib/chartUtils";
 import styles from "./CpiChart.module.css";
 import { ChartFilters } from "./ChartFilters";
@@ -13,12 +13,12 @@ import { EarningsBreakdownChart } from "./EarningsBreakdownChart";
 import { ResidualBarChart } from "./ResidualBarChart";
 import { MajorIndicesChart } from "./MajorIndicesChart";
 import {
-  targetKeys,
   colors,
-  stackedKeys,
-  stackedColors,
-  nominalKeys,
   nominalColorMap,
+  nominalKeys,
+  stackedColors,
+  stackedKeys,
+  targetKeys,
 } from "../../lib/chartConstants";
 
 const getColorForNominalKey = (key: string): string => {
@@ -35,7 +35,7 @@ interface CpiChartProps {
 
 interface CustomTooltipProps {
   active?: boolean;
-  payload?: Array<{ name: string; value: number }>;
+  payload?: { name: string; value: number }[];
   label?: string;
   isMobile: boolean;
   tooltipBg: string;
@@ -50,7 +50,9 @@ const CustomTooltip: React.FC<CustomTooltipProps> = ({
   tooltipBg,
   tooltipText,
 }) => {
-  if (!active || !payload) return null;
+  if (!active || !payload) {
+    return null;
+  }
 
   const fontSize = isMobile ? "12px" : "14px";
   const labelFontSize = isMobile ? "11px" : "13px";
@@ -60,8 +62,8 @@ const CustomTooltip: React.FC<CustomTooltipProps> = ({
     <div
       style={{
         backgroundColor: tooltipBg,
-        borderRadius: "8px",
         border: "none",
+        borderRadius: "8px",
         boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
         color: tooltipText,
         padding: padding,
@@ -69,11 +71,11 @@ const CustomTooltip: React.FC<CustomTooltipProps> = ({
     >
       <p
         style={{
-          fontWeight: "bold",
-          marginBottom: "4px",
-          margin: 0,
-          fontSize: labelFontSize,
           color: tooltipText,
+          fontSize: labelFontSize,
+          fontWeight: "bold",
+          margin: 0,
+          marginBottom: "4px",
         }}
       >
         {label}
@@ -82,26 +84,19 @@ const CustomTooltip: React.FC<CustomTooltipProps> = ({
         <p
           key={`item-${index}`}
           style={{
-            margin: "2px 0",
-            fontSize: fontSize,
             color: tooltipText,
+            fontSize: fontSize,
+            margin: "2px 0",
           }}
         >
-          {entry.name}:{" "}
-          {typeof entry.value === "number"
-            ? entry.value.toFixed(2)
-            : entry.value}
+          {entry.name}: {typeof entry.value === "number" ? entry.value.toFixed(2) : entry.value}
         </p>
       ))}
     </div>
   );
 };
 
-export default function CpiChart({
-  data,
-  ctiData,
-  totalEarningData,
-}: CpiChartProps) {
+export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartProps) {
   const { isMobile, chartColors } = useChartTheme();
 
   // 全ての年を抽出
@@ -113,7 +108,7 @@ export default function CpiChart({
         years.add(parseInt(yearMatch[1], 10));
       }
     });
-    return Array.from(years).sort((a, b) => a - b);
+    return [...years].toSorted((a, b) => a - b);
   }, [data]);
 
   // 表示範囲のステート
@@ -138,22 +133,25 @@ export default function CpiChart({
         }
       }
     });
-    return { year: maxYear, month: maxMonth };
+    return { month: maxMonth, year: maxYear };
   }, [data]);
 
   // ステートに基づいてデータをフィルタリング
-  const filteredData = useMemo(() => {
-    return filterDataByYear(data, startYear, endYear);
-  }, [data, startYear, endYear]);
+  const filteredData = useMemo(
+    () => filterDataByYear(data, startYear, endYear),
+    [data, startYear, endYear],
+  );
 
-  const filteredTotalEarningData = useMemo(() => {
-    return filterDataByYear(totalEarningData, startYear, endYear);
-  }, [totalEarningData, startYear, endYear]);
+  const filteredTotalEarningData = useMemo(
+    () => filterDataByYear(totalEarningData, startYear, endYear),
+    [totalEarningData, startYear, endYear],
+  );
 
   // データマッピングの統合: CPIと賃金データを年月で結合
-  const mergedData = useMemo(() => {
-    return mergeChartData(filteredTotalEarningData, data, startYear, endYear);
-  }, [filteredTotalEarningData, data, startYear, endYear]);
+  const mergedData = useMemo(
+    () => mergeChartData(filteredTotalEarningData, data, startYear, endYear),
+    [filteredTotalEarningData, data, startYear, endYear],
+  );
 
   // 表示項目として mergedData を利用するため、明示的に参照を確保
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -166,44 +164,34 @@ export default function CpiChart({
   // 凡例をクリックした時の処理
   const handleLegendClick = (dataKey: string) => {
     setHiddenKeys((prev) =>
-      prev.includes(dataKey)
-        ? prev.filter((k) => k !== dataKey)
-        : [...prev, dataKey],
+      prev.includes(dataKey) ? prev.filter((k) => k !== dataKey) : [...prev, dataKey],
     );
   };
 
   const handleStackedLegendClick = (dataKey: string) => {
     setStackedHiddenKeys((prev) =>
-      prev.includes(dataKey)
-        ? prev.filter((k) => k !== dataKey)
-        : [...prev, dataKey],
+      prev.includes(dataKey) ? prev.filter((k) => k !== dataKey) : [...prev, dataKey],
     );
   };
 
   const nominalColors = nominalKeys.map(getColorForNominalKey);
   const realKeys = nominalKeys.map((k) =>
-    k === "諸雑費・CPI外支出等"
-      ? "諸雑費・CPI外支出等（実質）"
-      : k.replace("名目", "実質"),
+    k === "諸雑費・CPI外支出等" ? "諸雑費・CPI外支出等（実質）" : k.replace("名目", "実質"),
   );
   const realColors = nominalColors;
   const nominalData = ctiData;
 
   // 四半期データの集計をカスタムフックに委譲
-  const {
-    quarterlyNominalData,
-    quarterlyRealData,
-    hiddenQuarters,
-    toggleQuarter,
-  } = useCpiChartData({
-    data,
-    nominalData,
-    startYear,
-    endYear,
-    nominalKeys,
-    realKeys,
-    maxCpiDate,
-  });
+  const { quarterlyNominalData, quarterlyRealData, hiddenQuarters, toggleQuarter } =
+    useCpiChartData({
+      data,
+      endYear,
+      maxCpiDate,
+      nominalData,
+      nominalKeys,
+      realKeys,
+      startYear,
+    });
 
   const handleQuarterLegendClick = (quarter: number) => {
     toggleQuarter(quarter);
@@ -214,17 +202,13 @@ export default function CpiChart({
 
   const handleRealLegendClick = (dataKey: string) => {
     setRealHiddenKeys((prev) =>
-      prev.includes(dataKey)
-        ? prev.filter((k) => k !== dataKey)
-        : [...prev, dataKey],
+      prev.includes(dataKey) ? prev.filter((k) => k !== dataKey) : [...prev, dataKey],
     );
   };
 
   const handleNominalLegendClick = (dataKey: string) => {
     setNominalHiddenKeys((prev) =>
-      prev.includes(dataKey)
-        ? prev.filter((k) => k !== dataKey)
-        : [...prev, dataKey],
+      prev.includes(dataKey) ? prev.filter((k) => k !== dataKey) : [...prev, dataKey],
     );
   };
 
@@ -238,14 +222,20 @@ export default function CpiChart({
   // 注: CAGR計算では年月がフィルタリング範囲外の場合もあるため、元のdataを使用
   const calculateCategorySum = (year: number, month: number): number => {
     const dataPoint = data.find((item) => {
-      if (!item.年月 || typeof item.年月 !== "string") return false;
+      if (!item.年月 || typeof item.年月 !== "string") {
+        return false;
+      }
       const m = item.年月.match(/^\s*(\d{4})年\s*0?(\d{1,2})月/);
-      if (!m) return false;
+      if (!m) {
+        return false;
+      }
       const y = parseInt(m[1], 10);
       const mo = parseInt(m[2], 10);
       return y === year && mo === month;
     });
-    if (!dataPoint) return 0;
+    if (!dataPoint) {
+      return 0;
+    }
 
     let sum = 0;
     stackedKeys.forEach((key) => {
@@ -262,9 +252,7 @@ export default function CpiChart({
   // CAGR計算関数
   const calculateCAGR = (): void => {
     if (cagrStartYear === cagrEndYear) {
-      alert(
-        "開始年と終了年は異なる年を選択してください（同じ年は指定できません）。",
-      );
+      alert("開始年と終了年は異なる年を選択してください（同じ年は指定できません）。");
       return;
     }
 
@@ -288,7 +276,7 @@ export default function CpiChart({
     }
 
     const years = cagrEndYear - cagrStartYear;
-    const cagr = Math.pow(endValue / startValue, 1 / years) - 1;
+    const cagr = (endValue / startValue) ** (1 / years) - 1;
     setCagrResult(cagr);
   };
 
@@ -315,7 +303,7 @@ export default function CpiChart({
           isMobile={isMobile}
           CustomTooltip={(props: {
             active?: boolean;
-            payload?: Array<{ name: string; value: number }>;
+            payload?: { name: string; value: number }[];
             label?: string;
             isMobile: boolean;
             tooltipBg: string;
@@ -371,11 +359,7 @@ export default function CpiChart({
                 className={styles.select}
               >
                 {allYears.map((year) => (
-                  <option
-                    key={year}
-                    value={year}
-                    disabled={year < cagrStartYear}
-                  >
+                  <option key={year} value={year} disabled={year < cagrStartYear}>
                     {year}年
                   </option>
                 ))}
@@ -410,12 +394,10 @@ export default function CpiChart({
           {cagrResult !== null && (
             <div className={styles.cagrResult}>
               <p className={styles.cagrResultLabel}>年率上昇率（CAGR）:</p>
-              <p className={styles.cagrResultValue}>
-                {(cagrResult * 100).toFixed(2)}%
-              </p>
+              <p className={styles.cagrResultValue}>{(cagrResult * 100).toFixed(2)}%</p>
               <p className={styles.cagrResultDetail}>
-                {cagrStartYear}年{String(cagrMonth).padStart(2, "0")}月 →{" "}
-                {cagrEndYear}年{String(cagrMonth).padStart(2, "0")}月
+                {cagrStartYear}年{String(cagrMonth).padStart(2, "0")}月 → {cagrEndYear}年
+                {String(cagrMonth).padStart(2, "0")}月
               </p>
             </div>
           )}
@@ -457,9 +439,7 @@ export default function CpiChart({
         hiddenQuarters={hiddenQuarters}
         onToggleQuarter={handleQuarterLegendClick}
         onReset={() =>
-          setRealHiddenKeys((prev) =>
-            prev.length === realKeys.length ? [] : [...realKeys],
-          )
+          setRealHiddenKeys((prev) => (prev.length === realKeys.length ? [] : [...realKeys]))
         }
       />
 
@@ -471,7 +451,7 @@ export default function CpiChart({
         isMobile={isMobile}
         CustomTooltip={(props: {
           active?: boolean;
-          payload?: Array<{ name: string; value: number }>;
+          payload?: { name: string; value: number }[];
           label?: string;
           isMobile: boolean;
           tooltipBg: string;
@@ -485,7 +465,7 @@ export default function CpiChart({
         isMobile={isMobile}
         CustomTooltip={(props: {
           active?: boolean;
-          payload?: Array<{ name: string; value: number }>;
+          payload?: { name: string; value: number }[];
           label?: string;
           isMobile: boolean;
           tooltipBg: string;

@@ -1,12 +1,11 @@
-import { describe, it, expect } from "vitest";
 import mockCpiData from "../tests/fixtures/cpi-data.json";
 import { calculateCategorySum } from "../src/lib/cpiData";
-import { CpiData } from "../src/app/page";
+import type { CpiData } from "../src/app/page";
 import { createCpiDataList } from "./factories/cpiDataFactory";
 
 const cpiData = createCpiDataList(mockCpiData as Partial<CpiData>[]);
 
-describe("CAGR計算", () => {
+describe("cAGR計算", () => {
   it("データが見つかる場合、正常に合計を計算する", () => {
     const sum = calculateCategorySum(cpiData, 2020, 1);
     expect(sum).toBeGreaterThan(0);
@@ -43,12 +42,12 @@ describe("CAGR計算", () => {
     expect(sumWithHidden).toBeLessThan(sumAll);
   });
 
-  it("CAGR計算が正しく機能する（データが存在する場合）", () => {
+  it("cAGR計算が正しく機能する（データが存在する場合）", () => {
     const startValue = calculateCategorySum(cpiData, 2020, 1);
     const endValue = calculateCategorySum(cpiData, 2025, 1);
     const years = 2025 - 2020;
 
-    const cagr = Math.pow(endValue / startValue, 1 / years) - 1;
+    const cagr = (endValue / startValue) ** (1 / years) - 1;
 
     expect(cagr).toBeGreaterThan(0);
     expect(cagr).toBeLessThan(0.1);

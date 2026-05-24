@@ -1,4 +1,3 @@
-import { describe, it, expect } from "vitest";
 import { filterDataByYear, mergeChartData } from "../src/lib/chartUtils";
 import { CpiData } from "../src/app/page";
 import { createCpiDataList } from "./factories/cpiDataFactory";
@@ -11,7 +10,7 @@ describe("chartUtils", () => {
       { 年月: "2026年1月" },
     ]);
     const filtered = filterDataByYear(data, 2025, 2026);
-    expect(filtered.length).toBe(2);
+    expect(filtered).toHaveLength(2);
     expect(filtered[0].年月).toBe("2025年1月");
     expect(filtered[1].年月).toBe("2026年1月");
   });
@@ -32,7 +31,7 @@ describe("chartUtils", () => {
 
     const merged = mergeChartData(wageData, cpiData, 2025, 2025);
 
-    expect(merged.length).toBe(1);
+    expect(merged).toHaveLength(1);
     expect(merged[0].所定内給与).toBe(100);
     expect(merged[0].総合).toBe(105);
   });

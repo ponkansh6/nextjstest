@@ -1,4 +1,4 @@
-import { CpiData } from "../../src/app/page";
+import type { CpiData } from "../../src/app/page";
 
 /**
  * テスト用のCpiDataオブジェクトを生成するファクトリ関数
@@ -6,9 +6,9 @@ import { CpiData } from "../../src/app/page";
 export function createCpiData(overrides: Partial<CpiData> = {}): CpiData {
   return {
     年月: "2020年01月",
-    総合: 100,
-    生鮮食品を除く総合: 100,
     持家の帰属家賃を除く総合: 100,
+    生鮮食品を除く総合: 100,
+    総合: 100,
     ...overrides,
   };
 }

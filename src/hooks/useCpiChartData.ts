@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { computeChartData, UseCpiChartDataProps } from "../lib/chartLogic";
+import type { UseCpiChartDataProps } from "../lib/chartLogic";
+import { computeChartData } from "../lib/chartLogic";
 
 export type { UseCpiChartDataProps };
 
@@ -18,9 +19,9 @@ export const useCpiChartData = (props: UseCpiChartDataProps) => {
   };
 
   return {
+    hiddenQuarters,
     quarterlyNominalData,
     quarterlyRealData,
-    hiddenQuarters,
     toggleQuarter,
   };
 };

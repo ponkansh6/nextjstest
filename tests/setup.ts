@@ -1,4 +1,3 @@
-import { expect, afterEach, vi } from "vitest";
 import { cleanup } from "@testing-library/react";
 import * as matchers from "@testing-library/jest-dom/matchers";
 
@@ -7,7 +6,6 @@ expect.extend(matchers);
 if (typeof window !== "undefined") {
   // Mock matchMedia for JSDOM
   Object.defineProperty(window, "matchMedia", {
-    writable: true,
     value: vi.fn().mockImplementation((query) => ({
       matches: false,
       media: query,
@@ -18,6 +16,7 @@ if (typeof window !== "undefined") {
       removeEventListener: vi.fn(),
       dispatchEvent: vi.fn(),
     })),
+    writable: true,
   });
 
   // Mock ResizeObserver
@@ -29,15 +28,15 @@ if (typeof window !== "undefined") {
 
   // Mock getBoundingClientRect for layout-dependent components like ResponsiveContainer
   Element.prototype.getBoundingClientRect = vi.fn(() => ({
-    width: 1000,
-    height: 500,
-    top: 0,
-    left: 0,
     bottom: 0,
+    height: 500,
+    left: 0,
     right: 0,
+    toJSON: vi.fn(),
+    top: 0,
+    width: 1000,
     x: 0,
     y: 0,
-    toJSON: vi.fn(),
   }));
 }
 

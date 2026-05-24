@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import Papa from "papaparse";
-import { CpiData } from "../app/page";
+import type { CpiData } from "../app/page";
 
 /**
  * 給与指標を特定の分母（労働者数や人口など）で割り、基準年（2020年）を100としてスケーリングします。
@@ -11,7 +11,9 @@ export function calculateAdjustedMetric(
   denominator: number,
   scalingFactor: number,
 ): number {
-  if (denominator <= 0) return 0;
+  if (denominator <= 0) {
+    return 0;
+  }
   return (totalEarnings / denominator) * scalingFactor;
 }
 
@@ -40,18 +42,20 @@ export const calculateCategorySum = (
   const monthStr = String(month).padStart(2, "0");
 
   const dataPoint = data.find((item) => {
-    if (!item.年月 || typeof item.年月 !== "string") return false;
+    if (!item.年月 || typeof item.年月 !== "string") {
+      return false;
+    }
     const m = item.年月.match(/^\s*(\d{4})年\s*0?(\d{1,2})月/);
-    if (!m) return false;
+    if (!m) {
+      return false;
+    }
     const y = parseInt(m[1], 10);
     const mo = parseInt(m[2], 10);
     return y === year && mo === month;
   });
 
   if (!dataPoint) {
-    throw new Error(
-      `指定された年月のデータが見つかりません: ${year}年${monthStr}月`,
-    );
+    throw new Error(`指定された年月のデータが見つかりません: ${year}年${monthStr}月`);
   }
 
   let sum = 0;
@@ -69,10 +73,7 @@ export const calculateCategorySum = (
 export async function loadPopulationData(): Promise<
   Map<string, { total: number; index: number; ma: number }>
 > {
-  const populationPath = path.join(
-    process.cwd(),
-    "public/population_statistics.csv",
-  );
+  const populationPath = path.join(process.cwd(), "public/population_statistics.csv");
 
   const map = new Map<string, { total: number; index: number; ma: number }>();
 
@@ -95,20 +96,18 @@ export async function loadPopulationData(): Promise<
       row.some(
         (cell) =>
           typeof cell === "string" &&
-          (/^\s*年\s*月\s*$/.test(cell.trim()) ||
-            /Year\s*and\s*month/i.test(cell)),
+          (/^\s*年\s*月\s*$/.test(cell.trim()) || /Year\s*and\s*month/i.test(cell)),
       ),
     );
 
     if (headerIndex === -1) {
       // Try a looser match: find a row that contains both "年" and "月" anywhere
       const fallbackIndex = rows.findIndex((row) =>
-        row.some(
-          (cell) =>
-            typeof cell === "string" && /年/.test(cell) && /月/.test(cell),
-        ),
+        row.some((cell) => typeof cell === "string" && /年/.test(cell) && /月/.test(cell)),
       );
-      if (fallbackIndex === -1) return map;
+      if (fallbackIndex === -1) {
+        return map;
+      }
       // Use the fallback index found
       headerIndex = fallbackIndex;
     }
@@ -116,40 +115,40 @@ export async function loadPopulationData(): Promise<
     // Determine which columns contain year/month and total population
     const headerRow = rows[headerIndex];
     // If header contains a single cell like "年　月", find its column index
-    const yearCol = headerRow.findIndex(
-      (c) => typeof c === "string" && /年\s*月/.test(c),
-    );
+    const yearCol = headerRow.findIndex((c) => typeof c === "string" && /年\s*月/.test(c));
     let separateYearCol = -1;
     let monthCol = -1;
     if (yearCol === -1) {
       // Look for separate "年" and "月" columns
       separateYearCol = headerRow.findIndex(
-        (c) => typeof c === "string" && /年$/.test(c.trim()),
+        (c) => typeof c === "string" && c.trim().endsWith("年"),
       );
       if (separateYearCol !== -1) {
-        // assume month is the next column
+        // Assume month is the next column
         monthCol = separateYearCol + 1;
       } else {
-        // fallback: try to find any column that looks like "年" or "Year"
-        separateYearCol = headerRow.findIndex(
-          (c) => typeof c === "string" && /年|Year/i.test(c),
-        );
-        if (separateYearCol !== -1) monthCol = separateYearCol + 1;
+        // Fallback: try to find any column that looks like "年" or "Year"
+        separateYearCol = headerRow.findIndex((c) => typeof c === "string" && /年|Year/i.test(c));
+        if (separateYearCol !== -1) {
+          monthCol = separateYearCol + 1;
+        }
       }
     }
 
     // Find total population column by header labels ("総数" or "Total")
-    let totalCol = headerRow.findIndex(
-      (c) => typeof c === "string" && /(総数|Total)/.test(c),
-    );
+    let totalCol = headerRow.findIndex((c) => typeof c === "string" && /(総数|Total)/.test(c));
     // Fallback to conventional positions if not found
-    if (totalCol === -1) totalCol = 4;
+    if (totalCol === -1) {
+      totalCol = 4;
+    }
 
     // Extract data from rows after the header. Start a couple of lines after header to skip subheaders
     let currentYear = 0;
     for (let i = headerIndex + 2; i < rows.length; i++) {
       const row = rows[i];
-      if (!row || row.length === 0) continue;
+      if (!row || row.length === 0) {
+        continue;
+      }
 
       // Determine year value from either single-column or era format
       const yearCell = row[yearCol] || row[separateYearCol] || row[0];
@@ -158,41 +157,54 @@ export async function loadPopulationData(): Promise<
       if (yearStr) {
         const yearMatch = yearStr.match(/(\d{4})|(\d+)年/);
         if (yearMatch) {
-          if (yearMatch[1]) currentYear = parseInt(yearMatch[1], 10);
-          else if (yearMatch[2]) {
+          if (yearMatch[1]) {
+            currentYear = parseInt(yearMatch[1], 10);
+          } else if (yearMatch[2]) {
             const eraYear = parseInt(yearMatch[2], 10);
-            if (yearStr.includes("令和")) currentYear = 2018 + eraYear;
-            else if (yearStr.includes("平成")) currentYear = 1988 + eraYear;
-            else if (yearStr.includes("昭和")) currentYear = 1925 + eraYear;
-            else currentYear = eraYear; // best effort
+            if (yearStr.includes("令和")) {
+              currentYear = 2018 + eraYear;
+            } else if (yearStr.includes("平成")) {
+              currentYear = 1988 + eraYear;
+            } else if (yearStr.includes("昭和")) {
+              currentYear = 1925 + eraYear;
+            } else {
+              currentYear = eraYear;
+            } // Best effort
           }
         }
       }
 
-      if (currentYear < 2004) continue;
+      if (currentYear < 2004) {
+        continue;
+      }
 
       // Month: prefer the dedicated month column if present, otherwise fallback to column 1
       const monthCell = row[monthCol] ?? row[1];
       const monthStr = typeof monthCell === "string" ? monthCell.trim() : "";
       const monthMatch = monthStr.match(/(\d+)月/);
-      if (!monthMatch) continue;
+      if (!monthMatch) {
+        continue;
+      }
       const month = parseInt(monthMatch[1], 10);
 
       const popCell = row[totalCol] ?? row[4] ?? row[5];
-      const popStr =
-        typeof popCell === "string" ? popCell.trim().replace(/,/g, "") : "";
+      const popStr = typeof popCell === "string" ? popCell.trim().replace(/,/g, "") : "";
 
-      if (!popStr || popStr === "-" || popStr === "…") continue;
+      if (!popStr || popStr === "-" || popStr === "…") {
+        continue;
+      }
 
       const pop = parseFloat(popStr);
-      if (isNaN(pop)) continue;
+      if (isNaN(pop)) {
+        continue;
+      }
 
       const ym = `${currentYear}年${month}月`;
-      map.set(ym, { total: pop * 10000, index: 0, ma: 0 }); // Data is in ten-thousands
+      map.set(ym, { index: 0, ma: 0, total: pop * 10000 }); // Data is in ten-thousands
     }
 
     // Calculate 2020 average as base (= 100)
-    const year2020 = Array.from(map.entries())
+    const year2020 = [...map.entries()]
       .filter(([_]) => _.startsWith("2020年"))
       .map(([, data]) => data.total);
 
@@ -204,10 +216,12 @@ export async function loadPopulationData(): Promise<
     const indexFactor = avg2020 > 0 ? 100 / avg2020 : 1;
 
     // Apply indexing (2020 avg = 100) and calculate 12-month moving average
-    const entries = Array.from(map.entries()).sort((a, b) => {
+    const entries = [...map.entries()].toSorted((a, b) => {
       const ma = a[0].match(/^(\d{4})年(\d{1,2})月/);
       const mb = b[0].match(/^(\d{4})年(\d{1,2})月/);
-      if (!ma || !mb) return 0;
+      if (!ma || !mb) {
+        return 0;
+      }
       const ay = parseInt(ma[1], 10);
       const am = parseInt(ma[2], 10);
       const by = parseInt(mb[1], 10);
@@ -240,14 +254,8 @@ export async function loadPopulationData(): Promise<
 
 export async function loadTotalEarningData(): Promise<CpiData[]> {
   // 既存の "total_earning.csv" ではなく、きまって支給する給与と所定内給与のCSVを読み込む
-  const contractualPath = path.join(
-    process.cwd(),
-    "public/contractual_earnings.csv",
-  );
-  const scheduledPath = path.join(
-    process.cwd(),
-    "public/scheduled_earnings.csv",
-  );
+  const contractualPath = path.join(process.cwd(), "public/contractual_earnings.csv");
+  const scheduledPath = path.join(process.cwd(), "public/scheduled_earnings.csv");
 
   if (!fs.existsSync(contractualPath) || !fs.existsSync(scheduledPath)) {
     console.error("Contractual or scheduled earnings data file not found");
@@ -261,20 +269,26 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
     });
     const rows = parsed.data;
     const startIndex = rows.findIndex(
-      (row) =>
-        (row[0]?.trim() === "年" || row[0]?.trim() === "year") &&
-        row[8]?.trim() === "１月",
+      (row) => (row[0]?.trim() === "年" || row[0]?.trim() === "year") && row[8]?.trim() === "１月",
     );
-    if (startIndex === -1) return new Map<string, number>();
+    if (startIndex === -1) {
+      return new Map<string, number>();
+    }
 
     const map = new Map<string, number>();
     for (let i = startIndex + 2; i < rows.length; i++) {
       const row = rows[i];
       const year = row[0]?.trim();
-      if (year && year.includes("毎月勤労統計調査")) break;
-      if (!year || !/^\d{4}$/.test(year)) continue;
+      if (year && year.includes("毎月勤労統計調査")) {
+        break;
+      }
+      if (!year || !/^\d{4}$/.test(year)) {
+        continue;
+      }
       const yearNum = parseInt(year, 10);
-      if (yearNum < 2004) continue;
+      if (yearNum < 2004) {
+        continue;
+      }
 
       for (let m = 1; m <= 12; m++) {
         const val = row[m + 7];
@@ -307,15 +321,12 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
       ? parseIndexSection(fs.readFileSync(hoursPath, "utf8"))
       : new Map<string, number>();
 
-    const employmentPath = path.join(
-      process.cwd(),
-      "public/employment_indices.csv",
-    );
+    const employmentPath = path.join(process.cwd(), "public/employment_indices.csv");
     const employmentMap = fs.existsSync(employmentPath)
       ? parseIndexSection(fs.readFileSync(employmentPath, "utf8"))
       : new Map<string, number>();
 
-    // hon-mks202601.csv から令和8年1月（2026年1月）のT行実額を取得
+    // Hon-mks202601.csv から令和8年1月（2026年1月）のT行実額を取得
     let factorScheduled = 1;
     let factorContractual = 1;
     const honMksPath = path.join(process.cwd(), "public/hon-mks202601.csv");
@@ -326,9 +337,7 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
         skipEmptyLines: false,
       });
       // T,T,T で始まる行を探す
-      const tRow = parsed.data.find(
-        (row) => row[0] === "T" && row[1] === "T" && row[2] === "T",
-      );
+      const tRow = parsed.data.find((row) => row[0] === "T" && row[1] === "T" && row[2] === "T");
       if (tRow) {
         // [12]:総額, [13]:きまって支給する給与, [14]:所定内給与
         const totalReal = parseFloat(tRow[12].replace(/,/g, ""));
@@ -341,12 +350,7 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
         const contractualIdx = contractualMap.get(ym202601) || 0;
         const scheduledIdx = scheduledMap.get(ym202601) || 0;
 
-        if (
-          totalReal !== 0 &&
-          totalIdx !== 0 &&
-          contractualIdx !== 0 &&
-          scheduledIdx !== 0
-        ) {
+        if (totalReal !== 0 && totalIdx !== 0 && contractualIdx !== 0 && scheduledIdx !== 0) {
           // 指数1ポイントあたりの実額を計算し、現金給与総額の指数スケールに合わせる
           const baseUnit = totalReal / totalIdx;
           factorScheduled = scheduledReal / scheduledIdx / baseUnit;
@@ -361,11 +365,11 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
 
     // マージして配列化
     const keys = new Set<string>([
-      ...Array.from(contractualMap.keys()),
-      ...Array.from(scheduledMap.keys()),
-      ...Array.from(totalMap.keys()),
-      ...Array.from(hoursMap.keys()),
-      ...Array.from(employmentMap.keys()),
+      ...[...contractualMap.keys()],
+      ...[...scheduledMap.keys()],
+      ...[...totalMap.keys()],
+      ...[...hoursMap.keys()],
+      ...[...employmentMap.keys()],
     ]);
 
     // 人口データを読み込み
@@ -381,7 +385,7 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
     });
 
     // 2020年の平均を100とするためのベース計算
-    const year2020 = Array.from(keys).filter((ym) => ym.startsWith("2020年"));
+    const year2020 = [...keys].filter((ym) => ym.startsWith("2020年"));
     const hourly2020 =
       year2020.reduce((acc, ym) => {
         const h = hoursMap.get(ym) ?? 0;
@@ -393,23 +397,22 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
     // Helper to tolerate different month zero-padding between datasets
     const findPopulationTotal = (ym: string): number | undefined => {
       const exact = populationDataMap.get(ym)?.total;
-      if (exact) return exact;
-      // try zero-padded month (e.g., 2020年01月)
+      if (exact) {
+        return exact;
+      }
+      // Try zero-padded month (e.g., 2020年01月)
       const m = ym.match(/^(\d{4})年0?(\d{1,2})月$/);
-      if (!m) return undefined;
+      if (!m) {
+        return undefined;
+      }
       const padded = `${m[1]}年${String(m[2]).padStart(2, "0")}月`;
       const unpadded = `${m[1]}年${parseInt(m[2], 10)}月`;
-      return (
-        populationDataMap.get(padded)?.total ??
-        populationDataMap.get(unpadded)?.total
-      );
+      return populationDataMap.get(padded)?.total ?? populationDataMap.get(unpadded)?.total;
     };
 
     // 15歳以上国民一人当たり給与の計算用に2020年の「(給与×雇用)/人口」のベース比率を算出
     const perCapitaBase2020 = (() => {
-      const year2020Keys = Array.from(keys).filter((ym) =>
-        ym.startsWith("2020年"),
-      );
+      const year2020Keys = [...keys].filter((ym) => ym.startsWith("2020年"));
       if (year2020Keys.length === 0) {
         console.warn("Warning: 2020年データが給与データに見つかりません");
       }
@@ -423,10 +426,7 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
         })
         .filter((r) => r > 0);
 
-      const avgRatio =
-        ratios.length > 0
-          ? ratios.reduce((a, b) => a + b, 0) / ratios.length
-          : 0;
+      const avgRatio = ratios.length > 0 ? ratios.reduce((a, b) => a + b, 0) / ratios.length : 0;
 
       console.log(
         `Calculation Stats: 2020Keys=${year2020Keys.length}, validRatios=${ratios.length}, avgRatio=${avgRatio}`,
@@ -437,7 +437,7 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
     const hourlyFactor = hourly2020 > 0 ? 100 / hourly2020 : 1;
     const popFactor = perCapitaBase2020 > 0 ? 100 / perCapitaBase2020 : 1;
 
-    const result: CpiData[] = Array.from(keys)
+    const result: CpiData[] = [...keys]
       .map((ym) => {
         const contractualVal = contractualMap.get(ym) ?? 0;
         const scheduledVal = scheduledMap.get(ym) ?? 0;
@@ -455,10 +455,12 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
           総合: 0,
         } as unknown as CpiData;
       })
-      .sort((a, b) => {
+      .toSorted((a, b) => {
         const ma = a.年月.match(/^(\d{4})年(\d{1,2})月/);
         const mb = b.年月.match(/^(\d{4})年(\d{1,2})月/);
-        if (!ma || !mb) return 0;
+        if (!ma || !mb) {
+          return 0;
+        }
         const ay = parseInt(ma[1], 10);
         const am = parseInt(ma[2], 10);
         const by = parseInt(mb[1], 10);
@@ -483,10 +485,15 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
             val = (rawResults[i][key as keyof CpiData] as number) || 0;
           } else {
             const ym = rawResults[i].年月;
-            if (key === "hours") val = hoursMap.get(ym) || 0;
-            else if (key === "emp") val = employmentMap.get(ym) || 0;
-            else if (key === "pop") val = populationDataMap.get(ym)?.total || 0;
-            else if (key === "cpi") val = cpiMap.get(ym) || 0;
+            if (key === "hours") {
+              val = hoursMap.get(ym) || 0;
+            } else if (key === "emp") {
+              val = employmentMap.get(ym) || 0;
+            } else if (key === "pop") {
+              val = populationDataMap.get(ym)?.total || 0;
+            } else if (key === "cpi") {
+              val = cpiMap.get(ym) || 0;
+            }
           }
           sum += val;
           count++;
@@ -509,29 +516,24 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
       item["特別給与"] = smoothedSpecial;
 
       // 給与総額の移動平均
-      const smoothedTotal =
-        smoothedScheduled + smoothedContractual + smoothedSpecial;
+      const smoothedTotal = smoothedScheduled + smoothedContractual + smoothedSpecial;
 
       // 移動平均済みの分母
       const smoothedHours = getMovingAverage("hours", false);
       const smoothedEmp = getMovingAverage("emp", false);
       const smoothedPop = getMovingAverage("pop", false);
 
-      item["時間当たり給与"] = calculateAdjustedMetric(
-        smoothedTotal,
-        smoothedHours,
-        hourlyFactor,
-      );
+      item["時間当たり給与"] = calculateAdjustedMetric(smoothedTotal, smoothedHours, hourlyFactor);
       item["15歳以上国民一人当たり給与"] = calculateAdjustedMetric(
         smoothedTotal * smoothedEmp,
         smoothedPop,
         popFactor,
       );
 
-      // 平滑化されたCPI総合から残差を計算
-      const smoothedCpi = getMovingAverage("cpi", false);
-      if (smoothedCpi > 0) {
-        item["残差"] = smoothedTotal - smoothedCpi;
+      // 生のCPI総合から残差を計算
+      const rawCpi = cpiMap.get(item.年月) || 0;
+      if (rawCpi > 0) {
+        item["残差"] = smoothedTotal - rawCpi;
       } else {
         item["残差"] = 0;
       }
@@ -540,9 +542,9 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
     console.log(
       "Check for gaps or anomalies:",
       result.slice(-5).map((r) => ({
-        ym: r.年月,
         ma: r["時間当たり給与"],
         perCapita: r["15歳以上国民一人当たり給与"],
+        ym: r.年月,
       })),
     );
 
@@ -573,8 +575,7 @@ export async function loadCtiData(): Promise<CpiData[]> {
         Array.isArray(r) &&
         r.some(
           (c) =>
-            typeof c === "string" &&
-            (c.trim() === "月" || c.trim().includes("消費支出（名目）")),
+            typeof c === "string" && (c.trim() === "月" || c.trim().includes("消費支出（名目）")),
         ),
     );
 
@@ -607,11 +608,15 @@ export async function loadCtiData(): Promise<CpiData[]> {
           }
           obj[h] = val;
         });
-        if (typeof obj["月"] === "string" && !obj.年月) obj.年月 = obj["月"];
+        if (typeof obj["月"] === "string" && !obj.年月) {
+          obj.年月 = obj["月"];
+        }
         return obj as unknown as CpiData;
       })
       .filter((row) => {
-        if (!row.年月) return false;
+        if (!row.年月) {
+          return false;
+        }
         const m = String(row.年月).match(/^(\d{4})年/);
         return m ? parseInt(m[1], 10) >= 2005 : false;
       });
@@ -639,14 +644,8 @@ export async function loadCtiData(): Promise<CpiData[]> {
           nominalSum += (row[k] as number) || 0;
         }
       });
-      if (
-        !row["その他の消費支出（名目）"] ||
-        row["その他の消費支出（名目）"] === 0
-      ) {
-        row["その他の消費支出（名目）"] = Math.max(
-          0,
-          nominalTotal - nominalSum,
-        );
+      if (!row["その他の消費支出（名目）"] || row["その他の消費支出（名目）"] === 0) {
+        row["その他の消費支出（名目）"] = Math.max(0, nominalTotal - nominalSum);
       }
 
       // 実質の残差計算
@@ -658,10 +657,7 @@ export async function loadCtiData(): Promise<CpiData[]> {
           realSum += (row[k] as number) || 0;
         }
       });
-      if (
-        !row["その他の消費支出（実質）"] ||
-        row["その他の消費支出（実質）"] === 0
-      ) {
+      if (!row["その他の消費支出（実質）"] || row["その他の消費支出（実質）"] === 0) {
         row["その他の消費支出（実質）"] = Math.max(0, realTotal - realSum);
       }
 
@@ -681,10 +677,7 @@ export async function loadCtiData(): Promise<CpiData[]> {
 
 export async function loadCpiData(): Promise<CpiData[]> {
   const cpiFilePath = path.join(process.cwd(), "public/cpi_data.csv");
-  const contributionFilePath = path.join(
-    process.cwd(),
-    "public/contribution.csv",
-  );
+  const contributionFilePath = path.join(process.cwd(), "public/contribution.csv");
 
   try {
     if (fs.existsSync(cpiFilePath) && fs.existsSync(contributionFilePath)) {
@@ -693,12 +686,8 @@ export async function loadCpiData(): Promise<CpiData[]> {
 
       // ウエイト情報の取得
       const contributionLines = contributionContent.split("\n");
-      const categoryLine = contributionLines.find((line) =>
-        line.startsWith("類・品目"),
-      );
-      const weightLine = contributionLines.find((line) =>
-        line.startsWith("ウエイト"),
-      );
+      const categoryLine = contributionLines.find((line) => line.startsWith("類・品目"));
+      const weightLine = contributionLines.find((line) => line.startsWith("ウエイト"));
 
       const weights: Record<string, number> = {};
       if (categoryLine && weightLine) {
@@ -714,15 +703,17 @@ export async function loadCpiData(): Promise<CpiData[]> {
       }
 
       const { data } = Papa.parse<CpiData>(cpiContent, {
+        dynamicTyping: true,
         header: true,
         skipEmptyLines: true,
-        dynamicTyping: true,
       });
 
       // データのクリーニング、ウエイトの掛け合わせ、派生データの計算
       const rawCleanedData = (data as CpiData[])
         .filter((row) => {
-          if (!row["年月"]) return false;
+          if (!row["年月"]) {
+            return false;
+          }
           const yearMatch = (row["年月"] as string).match(/^(\d{4})年/);
           const year = yearMatch ? parseInt(yearMatch[1], 10) : 0;
           return year >= 2004;
@@ -733,7 +724,7 @@ export async function loadCpiData(): Promise<CpiData[]> {
             const value = row[key];
             if (typeof value === "number") {
               // 寄与度 = (指数 * ウエイト) / 10000
-              newRow[key] = (value * weights[key]) / 10000;
+              newRow[key] = (value * weights[key]) / 10_000;
             }
           });
           // 外食以外食料 = 食料 - 外食 をサーバー側で計算
@@ -744,9 +735,7 @@ export async function loadCpiData(): Promise<CpiData[]> {
           // 交通・自動車等関係費 = 交通 + 自動車等関係費 をサーバー側で計算
           const transport = typeof newRow.交通 === "number" ? newRow.交通 : 0;
           const autoRelated =
-            typeof newRow["自動車等関係費"] === "number"
-              ? newRow["自動車等関係費"]
-              : 0;
+            typeof newRow["自動車等関係費"] === "number" ? newRow["自動車等関係費"] : 0;
           newRow["交通・自動車等関係費"] = transport + autoRelated;
 
           // 不要な費目を除去
@@ -758,25 +747,7 @@ export async function loadCpiData(): Promise<CpiData[]> {
           return newRow;
         });
 
-      // 総合の12か月移動平均を追加
-      const cleanData = rawCleanedData.map((row, index) => {
-        let sum = 0;
-        let count = 0;
-        for (let i = Math.max(0, index - 11); i <= index; i++) {
-          const val =
-            typeof rawCleanedData[i]["総合"] === "number"
-              ? (rawCleanedData[i]["総合"] as number)
-              : 0;
-          if (val > 0) {
-            sum += val;
-            count++;
-          }
-        }
-        row["総合(MA)"] = count > 0 ? sum / count : 0;
-        return row;
-      });
-
-      return cleanData;
+      return rawCleanedData;
     } else {
       console.error("Data files not found");
       return [];

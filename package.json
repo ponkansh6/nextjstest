@@ -10,7 +10,10 @@
     "test:ui": "vitest run --include '**/*.test.tsx'",
     "test:all": "vitest run",
     "lint": "eslint --cache",
+    "lint:fast": "oxlint --ignore-pattern 'tests/**' --nextjs-plugin --react-plugin --react-perf-plugin",
+    "format:fast": "oxfmt --write .",
     "type-check": "tsc --noEmit",
+    "type-check:fast": "npx tsgo --noEmit",
     "security-check": "npm audit --audit-level=high && secretlint \"**/*\""
   },
   "dependencies": {
@@ -27,21 +30,18 @@
     "@types/papaparse": "^5.5.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@typescript/native-preview": "^7.0.0-dev.20260523.1",
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9.39.4",
     "eslint-config-next": "^16.2.6",
     "husky": "^9.1.7",
     "jsdom": "^29.1.1",
     "lint-staged": "^16.4.0",
+    "oxfmt": "^0.51.0",
+    "oxlint": "^1.66.0",
     "prettier": "^3.8.1",
     "secretlint": "^11.6.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.6"
-  },
-  "lint-staged": {
-    "*.{ts,tsx,js,jsx}": [
-      "eslint --fix --cache",
-      "prettier --write"
-    ]
   }
 }

@@ -1,2 +1,13 @@
-npx lint-staged
-npm run type-check
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "Running pre-commit checks (excluding tests)..."
+
+# 1. Fast Linting (oxlint)
+npm run lint:fast
+
+# 2. Fast Formatting (oxfmt) - Exclude tests
+npx oxfmt --write . "!tests/**"
+
+# 3. Fast Type Checking (tsgo) - Excludes tests via tsconfig.json
+npm run type-check:fast

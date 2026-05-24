@@ -1,6 +1,5 @@
-import { describe, it, expect } from "vitest";
 import { computeChartData } from "../src/lib/chartLogic";
-import { CpiData } from "../src/app/page";
+import type { CpiData } from "../src/app/page";
 import { createCpiDataList } from "./factories/cpiDataFactory";
 
 describe("useCpiChartData logic (computeChartData)", () => {
@@ -12,12 +11,12 @@ describe("useCpiChartData logic (computeChartData)", () => {
   ]);
   const props = {
     data: mockData,
-    nominalData: mockNominalData,
-    startYear: 2020,
     endYear: 2020,
+    maxCpiDate: { month: 3, year: 2020 },
+    nominalData: mockNominalData,
     nominalKeys: ["総合", "項目A"],
     realKeys: [],
-    maxCpiDate: { year: 2020, month: 3 },
+    startYear: 2020,
   };
 
   it("should aggregate data into quarters correctly", () => {
@@ -25,8 +24,8 @@ describe("useCpiChartData logic (computeChartData)", () => {
 
     expect(result.quarterlyNominalData).toHaveLength(1);
     expect(result.quarterlyNominalData[0]).toMatchObject({
-      年: 2020,
       quarter: 1,
+      年: 2020,
       総合: 303,
       項目A: 153,
     });
@@ -42,8 +41,8 @@ describe("useCpiChartData logic (computeChartData)", () => {
     const result = computeChartData(propsIncomplete, []);
 
     expect(result.quarterlyNominalData[0]).toMatchObject({
-      年: 2020,
       quarter: 1,
+      年: 2020,
       総合: 0,
       項目A: 0,
     });
@@ -53,7 +52,7 @@ describe("useCpiChartData logic (computeChartData)", () => {
     const propsBeyondMax = {
       ...props,
       endYear: 2021,
-      maxCpiDate: { year: 2020, month: 3 }, // 2020年Q1までしかデータがない
+      maxCpiDate: { month: 3, year: 2020 }, // 2020年Q1までしかデータがない
     };
 
     const result = computeChartData(propsBeyondMax, []);

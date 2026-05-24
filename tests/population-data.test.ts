@@ -1,12 +1,12 @@
 /** @vitest-environment node */
-import { describe, it, expect, vi, beforeEach } from "vitest";
+
 import { loadPopulationData } from "../src/lib/cpiData";
 import fs from "fs";
 
 // Mock fs to control csv data
-vi.mock("fs");
+vi.mock(import("fs"));
 
-describe("loadPopulationData", () => {
+describe(loadPopulationData, () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -20,10 +20,10 @@ describe("loadPopulationData", () => {
     vi.mocked(fs.readFileSync).mockReturnValue(mockCsv as any);
 
     const result = await loadPopulationData();
-    console.log("Keys in result:", Array.from(result.keys()));
+    console.log("Keys in result:", [...result.keys()]);
 
     expect(result.size).toBeGreaterThan(0);
-    expect(result.get("2020年1月")?.total).toBe(1000000000);
+    expect(result.get("2020年1月")?.total).toBe(1_000_000_000);
   });
 
   it("should be robust against different header formats and era names", async () => {
@@ -41,10 +41,10 @@ Year and month ,,,,,,Total aged 15+,,,
     vi.mocked(fs.readFileSync).mockReturnValue(robustCsv);
 
     const result = await loadPopulationData();
-    expect(result.has("2020年1月")).toBe(true);
-    expect(result.get("2020年1月")?.total).toBe(111090000);
-    expect(result.has("2020年2月")).toBe(true);
-    expect(result.get("2020年2月")?.total).toBe(111060000);
+    expect(result.has("2020年1月")).toBeTruthy();
+    expect(result.get("2020年1月")?.total).toBe(111_090_000);
+    expect(result.has("2020年2月")).toBeTruthy();
+    expect(result.get("2020年2月")?.total).toBe(111_060_000);
   });
 
   it("should calculate index and moving average within reasonable range, with 2020 index near 100", async () => {

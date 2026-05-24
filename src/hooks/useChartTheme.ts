@@ -1,4 +1,4 @@
-import { useSyncExternalStore, useCallback } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 
 export const useChartTheme = () => {
   const isMobile = useSyncExternalStore(
@@ -12,11 +12,11 @@ export const useChartTheme = () => {
   );
 
   const chartColors = {
-    gridStroke: "var(--chart-grid)",
     axisText: "var(--chart-text)",
+    gridStroke: "var(--chart-grid)",
     tooltipBg: "var(--tooltip-bg)",
     tooltipText: "var(--tooltip-text)",
   };
 
-  return { isMobile, chartColors };
+  return { chartColors, isMobile };
 };

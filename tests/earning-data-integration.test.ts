@@ -1,10 +1,6 @@
-import { describe, it, expect } from "vitest";
-import {
-  loadTotalEarningData,
-  calculateAdjustedMetric,
-} from "../src/lib/cpiData";
+import { calculateAdjustedMetric, loadTotalEarningData } from "../src/lib/cpiData";
 
-describe("Wage Calculation Logic", () => {
+describe("wage Calculation Logic", () => {
   it("calculateAdjustedMetric should scale correctly", () => {
     // 基準年（2020年）を想定したテスト
     // (給与100 / 分母10) * (スケーリング係数 1) = 10
@@ -32,28 +28,29 @@ describe("loadTotalEarningData integration test", () => {
         expect(
           typeof val === "number" && !isNaN(val) && val > 0,
           `Invalid metric "${metric}" at ${row.年月}: expected positive number, got ${val}`,
-        ).toBe(true);
+        ).toBeTruthy();
       });
     });
   });
 
   it("should have no gaps in month continuity", async () => {
     const data = await loadTotalEarningData();
-    if (data.length < 2) return;
+    if (data.length < 2) {
+      return;
+    }
 
     const ymToMonths = (ym: string) => {
       const m = ym.match(/^(\d{4})年(\d{1,2})月/);
-      if (!m) return 0;
+      if (!m) {
+        return 0;
+      }
       return parseInt(m[1], 10) * 12 + parseInt(m[2], 10);
     };
 
     for (let i = 1; i < data.length; i++) {
       const prev = ymToMonths(data[i - 1].年月);
       const curr = ymToMonths(data[i].年月);
-      expect(
-        curr,
-        `Data gap found between ${data[i - 1].年月} and ${data[i].年月}`,
-      ).toBe(prev + 1);
+      expect(curr, `Data gap found between ${data[i - 1].年月} and ${data[i].年月}`).toBe(prev + 1);
     }
   });
 
@@ -61,10 +58,7 @@ describe("loadTotalEarningData integration test", () => {
     const data = await loadTotalEarningData();
     const year2020Items = data.filter((item) => item.年月.startsWith("2020年"));
 
-    expect(
-      year2020Items.length,
-      "Expected 12 months of data for 2020",
-    ).toBeGreaterThanOrEqual(12);
+    expect(year2020Items.length, "Expected 12 months of data for 2020").toBeGreaterThanOrEqual(12);
 
     const metrics = ["時間当たり給与", "15歳以上国民一人当たり給与"];
 

@@ -1,11 +1,11 @@
 /** @vitest-environment node */
-import { describe, it, expect, vi, beforeEach } from "vitest";
+
 import { loadPopulationData } from "../src/lib/cpiData";
 import fs from "fs";
 import path from "path";
 
-vi.mock("fs");
-vi.mock("path");
+vi.mock(import("fs"));
+vi.mock(import("path"));
 
 describe("loadPopulationData robust tests", () => {
   beforeEach(() => {
@@ -25,9 +25,9 @@ describe("loadPopulationData robust tests", () => {
     vi.mocked(path.join).mockReturnValue("mocked/path" as any);
 
     const result = await loadPopulationData();
-    expect(result.has("2026年1月")).toBe(true);
+    expect(result.has("2026年1月")).toBeTruthy();
     // Real code should multiply by 10000, so check 109530000.
     // If it is 10953, it means the multiplication is missing!
-    expect(result.get("2026年1月")?.total).toBe(109530000);
+    expect(result.get("2026年1月")?.total).toBe(109_530_000);
   });
 });

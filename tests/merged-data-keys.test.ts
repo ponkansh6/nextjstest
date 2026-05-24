@@ -1,8 +1,7 @@
-import { describe, it, expect, beforeAll } from "vitest";
-import { loadTotalEarningData, loadCpiData } from "../src/lib/cpiData";
+import { loadCpiData, loadTotalEarningData } from "../src/lib/cpiData";
 import { mergeChartData } from "../src/lib/chartUtils";
 
-describe("Chart Data Regression Tests", () => {
+describe("chart Data Regression Tests", () => {
   let totalEarningData: any[] = [];
   let cpiData: any[] = [];
   let mergedData: any[] = [];
@@ -43,18 +42,16 @@ describe("Chart Data Regression Tests", () => {
 
     const firstRowKeys = getNumericKeys(mergedData[0]);
     const lastRowKeys = getNumericKeys(mergedData[mergedData.length - 1]);
-    const middleRowKeys = getNumericKeys(
-      mergedData[Math.floor(mergedData.length / 2)],
-    );
+    const middleRowKeys = getNumericKeys(mergedData[Math.floor(mergedData.length / 2)]);
 
-    expect(firstRowKeys).toEqual(lastRowKeys);
-    expect(middleRowKeys).toEqual(lastRowKeys);
+    expect(firstRowKeys).toStrictEqual(lastRowKeys);
+    expect(middleRowKeys).toStrictEqual(lastRowKeys);
   });
 
   it("should have CPI data (総合) in all rows with wage data", () => {
     mergedData.forEach((row) => {
       expect(row.総合).toBeDefined();
-      expect(typeof row.総合).toBe("number");
+      expectTypeOf(row.総合).toBeNumber();
     });
   });
 
@@ -73,7 +70,7 @@ describe("Chart Data Regression Tests", () => {
 
     // マージされたデータに給与データの最後の日付が含まれていることを確認
     const hasLastWageDate = mergedData.some((r) => r.年月 === lastWageDate);
-    expect(hasLastWageDate).toBe(true);
+    expect(hasLastWageDate).toBeTruthy();
 
     // マージされたデータが給与データの範囲を超えないことを確認
     const mergedMaxDate = mergedData[mergedData.length - 1].年月;
