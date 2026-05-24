@@ -62,6 +62,33 @@ describe("useCpiChartData logic (computeChartData)", () => {
     expect(result.quarterlyNominalData[0].年).toBe(2020);
   });
 
+  it("should calculate correct data range (first and last quarters)", () => {
+    const props = {
+      data: [],
+      endYear: 2021,
+      maxCpiDate: { month: 12, year: 2021 },
+      nominalData: createCpiDataList([
+        { 年月: "2020年1月", 総合: 100 },
+        { 年月: "2021年12月", 総合: 100 },
+      ]),
+      nominalKeys: ["総合"],
+      realKeys: [],
+      startYear: 2020,
+    };
+
+    const result = computeChartData(props, []);
+
+    // 最古四半期 (2020年Q1) と 最新四半期 (2021年Q4) が存在することを確認
+    const data = result.quarterlyNominalData;
+    expect(data.length).toBeGreaterThan(0);
+    
+    const oldest = data[0];
+    const latest = data[data.length - 1];
+
+    expect(oldest.label).toBe("2020年Q1");
+    expect(latest.label).toBe("2021年Q4");
+  });
+
   it("should toggle quarters correctly", () => {
     const hiddenQuarters = [1];
     const result = computeChartData(props, hiddenQuarters);

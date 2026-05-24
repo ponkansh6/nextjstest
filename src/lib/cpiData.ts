@@ -520,7 +520,10 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
     // ここで、総合（現金給与総額）の2020年平均が100になるようスケーリングする。
     const totals2020 = result
       .filter((r) => r.年月.startsWith("2020年"))
-      .map((r) => Number(r["所定内給与"] || 0) + Number(r["所定外給与"] || 0) + Number(r["特別給与"] || 0));
+      .map(
+        (r) =>
+          Number(r["所定内給与"] || 0) + Number(r["所定外給与"] || 0) + Number(r["特別給与"] || 0),
+      );
 
     const avg2020 =
       totals2020.length > 0 ? totals2020.reduce((a, b) => a + b, 0) / totals2020.length : 0;
