@@ -329,7 +329,7 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
     // Hon-mks202601.csv から令和8年1月（2026年1月）のT行実額を取得
     let factorScheduled = 1;
     let factorContractual = 1;
-    const honMksPath = path.join(process.cwd(), "public/hon-mks202601.csv");
+    const honMksPath = path.join(process.cwd(), "public/hon-mks202512.csv");
     if (fs.existsSync(honMksPath)) {
       const content = fs.readFileSync(honMksPath, "utf8");
       const parsed = Papa.parse<string[]>(content, {
@@ -344,11 +344,11 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
         const contractualReal = parseFloat(tRow[13].replace(/,/g, ""));
         const scheduledReal = parseFloat(tRow[14].replace(/,/g, ""));
 
-        // 2026年1月の各指数を取得
-        const ym202601 = "2026年1月";
-        const totalIdx = totalMap.get(ym202601) || 0;
-        const contractualIdx = contractualMap.get(ym202601) || 0;
-        const scheduledIdx = scheduledMap.get(ym202601) || 0;
+        // 2025年12月の各指数を取得
+        const ym202512 = "2025年12月";
+        const totalIdx = totalMap.get(ym202512) || 0;
+        const contractualIdx = contractualMap.get(ym202512) || 0;
+        const scheduledIdx = scheduledMap.get(ym202512) || 0;
 
         if (totalReal !== 0 && totalIdx !== 0 && contractualIdx !== 0 && scheduledIdx !== 0) {
           // 指数1ポイントあたりの実額を計算し、現金給与総額の指数スケールに合わせる

@@ -18,17 +18,7 @@ import datetime
 import pandas as pd
 
 def get_root():
-    if getattr(sys, 'frozen', False):
-        # Starting point is the executable
-        start_dir = Path(sys.executable).resolve().parent
-    else:
-        # Starting point is the script
-        start_dir = Path(__file__).resolve().parent
-    
-    # Search upwards for the project root (containing 'public' and 'package.json')
-    for parent in [start_dir] + list(start_dir.parents):
-        if (parent / "public").is_dir() and (parent / "package.json").exists():
-            return parent
+    return Path('/mnt/c/Users/menon/Desktop/claude-test/nextjs-app')
             
     # Fallback if not found
     if getattr(sys, 'frozen', False):
