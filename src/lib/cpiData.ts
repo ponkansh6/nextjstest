@@ -472,6 +472,7 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
     // 移動平均の計算には生データを使用するため、計算用に元の結果を保持
     const rawResults = result.map((r) => ({ ...r }));
 
+    // Compute 12-month smoothed series for the three earning components first.
     result.forEach((item, index) => {
       const getMovingAverage = (
         key: keyof CpiData | "hours" | "emp" | "pop" | "cpi",
@@ -506,7 +507,7 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
         return divisor > 0 ? sum / divisor : 0;
       };
 
-      // 移動平均を計算して指標を上書き
+      // 移動平均を計算して指標を上書き（ここでは各構成要素のみ）
       const smoothedScheduled = getMovingAverage("所定内給与");
       const smoothedContractual = getMovingAverage("所定外給与");
       const smoothedSpecial = getMovingAverage("特別給与");
@@ -514,14 +515,43 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
       item["所定内給与"] = smoothedScheduled;
       item["所定外給与"] = smoothedContractual;
       item["特別給与"] = smoothedSpecial;
+    });
 
-      // 給与総額の移動平均
-      const smoothedTotal = smoothedScheduled + smoothedContractual + smoothedSpecial;
+    // ここで、総合（現金給与総額）の2020年平均が100になるようスケーリングする。
+    const totals2020 = result
+      .filter((r) => r.年月.startsWith("2020年"))
+      .map((r) => Number(r["所定内給与"] || 0) + Number(r["所定外給与"] || 0) + Number(r["特別給与"] || 0));
 
-      // 移動平均済みの分母
-      const smoothedHours = getMovingAverage("hours", false);
-      const smoothedEmp = getMovingAverage("emp", false);
-      const smoothedPop = getMovingAverage("pop", false);
+    const avg2020 =
+      totals2020.length > 0 ? totals2020.reduce((a, b) => a + b, 0) / totals2020.length : 0;
+    const totalIndexFactor = avg2020 > 0 ? 100 / avg2020 : 1;
+
+    // スケーリングを適用し、派生指標を計算
+    result.forEach((item, index) => {
+      item["所定内給与"] = Number(item["所定内給与"] || 0) * totalIndexFactor;
+      item["所定外給与"] = Number(item["所定外給与"] || 0) * totalIndexFactor;
+      item["特別給与"] = Number(item["特別給与"] || 0) * totalIndexFactor;
+
+      const smoothedTotal =
+        (item["所定内給与"] || 0) + (item["所定外給与"] || 0) + (item["特別給与"] || 0);
+      item["総合"] = smoothedTotal;
+
+      // 12か月移動平均の分母を再計算
+      let sumHours = 0;
+      let sumEmp = 0;
+      let sumPop = 0;
+      let count = 0;
+      for (let i = Math.max(0, index - 11); i <= index; i++) {
+        const ym = result[i].年月;
+        sumHours += hoursMap.get(ym) || 0;
+        sumEmp += employmentMap.get(ym) || 0;
+        sumPop += findPopulationTotal(ym) || 0;
+        count++;
+      }
+      const denom = count > 0 ? count : 1;
+      const smoothedHours = sumHours / denom;
+      const smoothedEmp = sumEmp / denom;
+      const smoothedPop = sumPop / denom;
 
       item["時間当たり給与"] = calculateAdjustedMetric(smoothedTotal, smoothedHours, hourlyFactor);
       item["15歳以上国民一人当たり給与"] = calculateAdjustedMetric(
@@ -530,13 +560,8 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
         popFactor,
       );
 
-      // 生のCPI総合から残差を計算
       const rawCpi = cpiMap.get(item.年月) || 0;
-      if (rawCpi > 0) {
-        item["残差"] = smoothedTotal - rawCpi;
-      } else {
-        item["残差"] = 0;
-      }
+      item["残差"] = rawCpi > 0 ? smoothedTotal - rawCpi : 0;
     });
 
     console.log(
