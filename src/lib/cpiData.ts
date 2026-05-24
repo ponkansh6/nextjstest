@@ -500,10 +500,9 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
           count++;
         }
         // 指標(scheduled, contractual, special, cpi)については、
-        // 常に12か月で割ることで「12か月平均」の概念を維持する。
-        // 分母(hours, emp, pop)については、データがある期間のみで平均を取る。
-        const isMetric = isDataKey || key === "cpi";
-        const divisor = isMetric ? 12 : count;
+        // 可能な月数で割ることで、窓内の実際の平均を得る（初期のデータ不足時に過度に小さくならないようにする）。
+        // 分母(hours, emp, pop)についても同様にデータがある期間のみで平均を取る。
+        const divisor = count; // use actual count of months in the window (<=12)
         return divisor > 0 ? sum / divisor : 0;
       };
 
