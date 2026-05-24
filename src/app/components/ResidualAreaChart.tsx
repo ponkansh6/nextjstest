@@ -1,8 +1,16 @@
 import React from "react";
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import styles from "./CpiChart.module.css";
 
-interface ResidualBarChartProps {
+interface ResidualAreaChartProps {
   data: Record<string, unknown>[];
   chartColors: Record<string, string>;
   isMobile: boolean;
@@ -16,7 +24,7 @@ interface ResidualBarChartProps {
   }>;
 }
 
-export const ResidualBarChart: React.FC<ResidualBarChartProps> = ({
+export const ResidualAreaChart: React.FC<ResidualAreaChartProps> = ({
   data,
   chartColors,
   isMobile,
@@ -26,7 +34,7 @@ export const ResidualBarChart: React.FC<ResidualBarChartProps> = ({
     <h2 className={styles.chartTitle}>残差（現金給与総額 - CPI総合）</h2>
     <div className={styles.chartWrapper}>
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>
+        <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.gridStroke} />
           <XAxis
             dataKey="年月"
@@ -51,8 +59,15 @@ export const ResidualBarChart: React.FC<ResidualBarChartProps> = ({
               />
             }
           />
-          <Bar dataKey="残差" fill={chartColors.barFill || "#94a3b8"} isAnimationActive={false} />
-        </BarChart>
+          <Area
+            type="monotone"
+            dataKey="残差"
+            stroke={chartColors.barFill || "#94a3b8"}
+            fill={chartColors.barFill || "#94a3b8"}
+            fillOpacity={0.4}
+            isAnimationActive={false}
+          />
+        </AreaChart>
       </ResponsiveContainer>
     </div>
   </div>

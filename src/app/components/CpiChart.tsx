@@ -10,7 +10,7 @@ import { useCpiChartData } from "../../hooks/useCpiChartData";
 import { SpendingBarChart } from "./SpendingBarChart";
 import { StackedAreaChart } from "./StackedAreaChart";
 import { EarningsBreakdownChart } from "./EarningsBreakdownChart";
-import { ResidualBarChart } from "./ResidualBarChart";
+import { ResidualAreaChart } from "./ResidualAreaChart";
 import { MajorIndicesChart } from "./MajorIndicesChart";
 import {
   colors,
@@ -459,7 +459,7 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
         }) => <CustomTooltip {...props} />}
       />
 
-      <ResidualBarChart
+      <ResidualAreaChart
         data={mergedData}
         chartColors={chartColors}
         isMobile={isMobile}
