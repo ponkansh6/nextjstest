@@ -449,7 +449,10 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
 
         return {
           年月: ym,
+          // finalScheduled は所定内の実額に相当する値（尺度を後で調整）
           所定内給与: finalScheduled,
+          // 一時的に契約上の給与実額を保持しておき、移動平均は契約給与に対して行ってから差分で所定外を算出する
+          _契約給与: finalContractual,
           所定外給与: Math.max(0, finalContractual - finalScheduled),
           特別給与: Math.max(0, finalTotal - finalContractual),
           総合: 0,
@@ -508,11 +511,12 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
 
       // 移動平均を計算して指標を上書き（ここでは各構成要素のみ）
       const smoothedScheduled = getMovingAverage("所定内給与");
-      const smoothedContractual = getMovingAverage("所定外給与");
+      // 移動平均は契約給与（_契約給与）に対して計算し、その差分で所定外給与を再計算する
+      const smoothedContractualTotal = getMovingAverage("_契約給与");
       const smoothedSpecial = getMovingAverage("特別給与");
 
       item["所定内給与"] = smoothedScheduled;
-      item["所定外給与"] = smoothedContractual;
+      item["所定外給与"] = Math.max(0, smoothedContractualTotal - smoothedScheduled);
       item["特別給与"] = smoothedSpecial;
     });
 
