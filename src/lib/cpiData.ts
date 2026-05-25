@@ -570,10 +570,13 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
 
     // 残差に2か月移動平均を適用
     result.forEach((item, index) => {
+      const currentResidual = item["残差"] as number;
       if (index > 0) {
         const prevResidual = result[index - 1]["残差"] as number;
-        const currentResidual = item["残差"] as number;
         item["残差"] = (prevResidual + currentResidual) / 2;
+      } else {
+        // 最初の月は自身の値のまま（あるいは必要に応じて初期化）
+        item["残差"] = currentResidual;
       }
     });
 
