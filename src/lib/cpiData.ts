@@ -568,6 +568,15 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
       item["残差"] = rawCpi > 0 ? smoothedTotal - rawCpi : 0;
     });
 
+    // 残差に2か月移動平均を適用
+    result.forEach((item, index) => {
+      if (index > 0) {
+        const prevResidual = result[index - 1]["残差"] as number;
+        const currentResidual = item["残差"] as number;
+        item["残差"] = (prevResidual + currentResidual) / 2;
+      }
+    });
+
     console.log(
       "Check for gaps or anomalies:",
       result.slice(-5).map((r) => ({
