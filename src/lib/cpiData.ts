@@ -558,7 +558,7 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
       const smoothedPop = sumPop / denom;
 
       item["時間当たり給与"] = calculateAdjustedMetric(smoothedTotal, smoothedHours, hourlyFactor);
-      item["15歳以上国民一人当たり給与"] = calculateAdjustedMetric(
+      item["15歳以上国民当たり給与"] = calculateAdjustedMetric(
         smoothedTotal * smoothedEmp,
         smoothedPop,
         popFactor,
@@ -574,7 +574,7 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
       if (item.年月 === "2005年1月" || item.年月.startsWith("2004年")) {
         return;
       }
-      
+
       if (index > 0) {
         const prevResidual = result[index - 1]["残差"] as number;
         const currentResidual = item["残差"] as number;
@@ -586,7 +586,7 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
       "Check for gaps or anomalies:",
       result.slice(-5).map((r) => ({
         ma: r["時間当たり給与"],
-        perCapita: r["15歳以上国民一人当たり給与"],
+        perCapita: r["15歳以上国民当たり給与"],
         ym: r.年月,
       })),
     );

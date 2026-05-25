@@ -47,7 +47,7 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
     { color: "#16a34a", key: "時間当たり給与", type: "line" },
     {
       color: "#a3e635",
-      key: "15歳以上国民一人当たり給与",
+      key: "15歳以上国民当たり給与",
       type: "line",
     },
     {
@@ -59,7 +59,14 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
   ];
 
   const yAxisMax = React.useMemo(() => {
-    const keys = ["所定内給与", "所定外給与", "特別給与", "時間当たり給与", "15歳以上国民一人当たり給与", "総合"];
+    const keys = [
+      "所定内給与",
+      "所定外給与",
+      "特別給与",
+      "時間当たり給与",
+      "15歳以上国民当たり給与",
+      "総合",
+    ];
     let maxVal = 0;
     data.forEach((d) => {
       keys.forEach((k) => {
