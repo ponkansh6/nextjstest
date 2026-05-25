@@ -757,7 +757,7 @@ export async function loadCpiData(): Promise<CpiData[]> {
           }
           const yearMatch = (row["年月"] as string).match(/^(\d{4})年/);
           const year = yearMatch ? parseInt(yearMatch[1], 10) : 0;
-          return year >= 2005;
+          return year >= 2004;
         })
         .map((row) => {
           const newRow: CpiData = { ...row };
