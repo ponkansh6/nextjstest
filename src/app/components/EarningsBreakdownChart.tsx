@@ -58,6 +58,20 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
     },
   ];
 
+  const yAxisMax = React.useMemo(() => {
+    const keys = ["所定内給与", "所定外給与", "特別給与", "時間当たり給与", "15歳以上国民一人当たり給与", "総合"];
+    let maxVal = 0;
+    data.forEach((d) => {
+      keys.forEach((k) => {
+        const val = d[k] as number;
+        if (typeof val === "number" && val > maxVal) {
+          maxVal = val;
+        }
+      });
+    });
+    return Math.ceil(maxVal + 5);
+  }, [data]);
+
   return (
     <div className={styles.chartSection}>
       <h2 className={styles.chartTitle}>
@@ -93,7 +107,7 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
               dy={10}
             />
             <YAxis
-              domain={[0, "auto"]}
+              domain={[0, yAxisMax]}
               axisLine={false}
               tickLine={false}
               tick={{ fill: chartColors.axisText, fontSize: 12 }}
