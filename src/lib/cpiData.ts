@@ -475,7 +475,7 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
     // 移動平均の計算には生データを使用するため、計算用に元の結果を保持
     const rawResults = result.map((r) => ({ ...r }));
 
-    // Compute 12-month smoothed series for the three earning components first.
+    // Compute 12-month smoothed series for components where smoothing is desired.
     result.forEach((item, index) => {
       const getMovingAverage = (
         key: keyof CpiData | "hours" | "emp" | "pop" | "cpi",
@@ -502,21 +502,19 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
           sum += val;
           count++;
         }
-        // 指標(scheduled, contractual, special, cpi)については、
-        // 可能な月数で割ることで、窓内の実際の平均を得る（初期のデータ不足時に過度に小さくならないようにする）。
-        // 分母(hours, emp, pop)についても同様にデータがある期間のみで平均を取る。
+        // 指標については、窓内の実際の月数で平均を取る（初期のデータ不足時に過度に小さくならないようにする）。
         const divisor = count; // use actual count of months in the window (<=12)
         return divisor > 0 ? sum / divisor : 0;
       };
 
-      // 移動平均を計算して指標を上書き（ここでは各構成要素のみ）
-      const smoothedScheduled = getMovingAverage("所定内給与");
-      // 移動平均は契約給与（_契約給与）に対して計算し、その差分で所定外給与を再計算する
-      const smoothedContractualTotal = getMovingAverage("_契約給与");
+      // 移動平均は「特別給与」のみを適用し、所定内給与・所定外給与は生データを利用する
       const smoothedSpecial = getMovingAverage("特別給与");
+      const rawScheduled = (rawResults[index]["所定内給与"] as number) || 0;
+      const rawContractualTotal = (rawResults[index]["_契約給与"] as number) || 0;
 
-      item["所定内給与"] = smoothedScheduled;
-      item["所定外給与"] = Math.max(0, smoothedContractualTotal - smoothedScheduled);
+      // 所定内・所定外は生データ（契約給与との差）を使う
+      item["所定内給与"] = rawScheduled;
+      item["所定外給与"] = Math.max(0, rawContractualTotal - rawScheduled);
       item["特別給与"] = smoothedSpecial;
     });
 
