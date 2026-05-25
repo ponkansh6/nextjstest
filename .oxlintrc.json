@@ -2,15 +2,11 @@
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": [
     "typescript",
-    "oxc",
-    "react",
-    "react-hooks"
+    "unicorn",
+    "oxc"
   ],
   "categories": {
-    "correctness": "error",
-    "suspicious": "off",
-    "perf": "off",
-    "style": "off"
+    "correctness": "error"
   },
   "rules": {},
   "env": {
