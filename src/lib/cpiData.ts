@@ -286,8 +286,7 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
         continue;
       }
       const yearNum = parseInt(year, 10);
-      if (yearNum < 2004) {
-        continue;
+      if (yearNum < 2004) {        continue;
       }
 
       for (let m = 1; m <= 12; m++) {
@@ -745,8 +744,7 @@ export async function loadCpiData(): Promise<CpiData[]> {
           }
           const yearMatch = (row["年月"] as string).match(/^(\d{4})年/);
           const year = yearMatch ? parseInt(yearMatch[1], 10) : 0;
-          return year >= 2004;
-        })
+          return year >= 2005;        })
         .map((row) => {
           const newRow: CpiData = { ...row };
           Object.keys(weights).forEach((key) => {
