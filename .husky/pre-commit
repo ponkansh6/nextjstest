@@ -11,3 +11,7 @@ npx oxfmt --write . "!tests/**"
 
 # 3. Fast Type Checking (tsgo) - Excludes tests via tsconfig.json
 npm run type-check:fast
+
+# 4. Logic Tests
+echo "Running logic tests..."
+npm run test -- --changed

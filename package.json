@@ -7,7 +7,7 @@
     "build": "next build --turbopack",
     "start": "next start",
     "test": "vitest run",
-    "test:ui": "vitest run --include '**/*.test.tsx'",
+    "test:ui": "vitest run -c vitest.ui.config.ts",
     "test:all": "vitest run",
     "lint": "eslint --cache",
     "lint:fast": "oxlint --ignore-pattern 'tests/**' --nextjs-plugin --react-plugin --react-perf-plugin",
@@ -28,11 +28,12 @@
     "@testing-library/react": "^16.3.2",
     "@types/node": "^20.19.41",
     "@types/papaparse": "^5.5.2",
-    "@types/react": "^19",
+    "@types/react": "^19.2.15",
     "@types/react-dom": "^19",
     "@typescript/native-preview": "^7.0.0-dev.20260523.1",
+    "@vitest/ui": "^4.1.7",
     "babel-plugin-react-compiler": "1.0.0",
-    "eslint": "^9.39.4",
+    "eslint": "^10.4.0",
     "eslint-config-next": "^16.2.6",
     "happy-dom": "^20.9.0",
     "husky": "^9.1.7",
@@ -41,8 +42,8 @@
     "oxfmt": "^0.51.0",
     "oxlint": "^1.66.0",
     "prettier": "^3.8.1",
-    "secretlint": "^11.6.0",
+    "secretlint": "^13.0.2",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.6"
+    "vitest": "^4.1.7"
   }
 }
