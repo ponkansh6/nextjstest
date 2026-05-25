@@ -17,15 +17,15 @@ describe("wage Metrics Calculation", () => {
     // Check if the keys exist in the first data point (after filtering/sorting)
     const firstMonth = data[0];
     expect(firstMonth).toHaveProperty("時間当たり給与");
-    expect(firstMonth).toHaveProperty("15歳以上国民一人当たり給与");
+    expect(firstMonth).toHaveProperty("15歳以上国民当たり給与");
 
     // Verify calculation for a specific entry if possible, or at least that they are numbers
     if (data.length > 0) {
       const entry = data[data.length - 1]; // Check latest data
       expectTypeOf(entry["時間当たり給与"]).toBeNumber();
-      expectTypeOf(entry["15歳以上国民一人当たり給与"]).toBeNumber();
+      expectTypeOf(entry["15歳以上国民当たり給与"]).toBeNumber();
       expect(entry["時間当たり給与"]).toBeGreaterThan(0);
-      expect(entry["15歳以上国民一人当たり給与"]).toBeGreaterThan(0);
+      expect(entry["15歳以上国民当たり給与"]).toBeGreaterThan(0);
     }
   });
 });

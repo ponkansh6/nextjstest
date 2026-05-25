@@ -20,7 +20,7 @@ describe("loadTotalEarningData integration test", () => {
     const data = await loadTotalEarningData();
     expect(data.length).toBeGreaterThan(0);
 
-    const metrics = ["時間当たり給与", "15歳以上国民一人当たり給与"];
+    const metrics = ["時間当たり給与", "15歳以上国民当たり給与"];
 
     data.forEach((row) => {
       metrics.forEach((metric) => {
@@ -85,14 +85,14 @@ describe("loadTotalEarningData integration test", () => {
     expect(earliestMonthItem.年月.startsWith("2005年")).toBeTruthy();
 
     // 妥当な値を持っているか
-    const metrics = ["所定内給与", "所定外給与", "特別給与", "時間当たり給与", "15歳以上国民一人当たり給与"];
+    const metrics = ["所定内給与", "所定外給与", "特別給与", "時間当たり給与", "15歳以上国民当たり給与"];
     // 各指標ごとに妥当な範囲を定義
     const metricRanges: Record<string, { min: number; max: number }> = {
       所定内給与: { min: 50, max: 150 },
       所定外給与: { min: 0, max: 50 },
       特別給与: { min: 0, max: 100 },
       時間当たり給与: { min: 50, max: 150 },
-      "15歳以上国民一人当たり給与": { min: 50, max: 150 },
+      "15歳以上国民当たり給与": { min: 50, max: 150 },
     };
     
     [earliestMonthItem, latestMonthItem].forEach((item) => {
@@ -114,7 +114,7 @@ describe("loadTotalEarningData integration test", () => {
 
     expect(year2020Items.length, "Expected 12 months of data for 2020").toBeGreaterThanOrEqual(12);
 
-    const metrics = ["時間当たり給与", "15歳以上国民一人当たり給与"];
+    const metrics = ["時間当たり給与", "15歳以上国民当たり給与"];
 
     metrics.forEach((metric) => {
       const avg2020 =
