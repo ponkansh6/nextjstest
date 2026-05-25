@@ -568,15 +568,17 @@ export async function loadTotalEarningData(): Promise<CpiData[]> {
       item["残差"] = rawCpi > 0 ? smoothedTotal - rawCpi : 0;
     });
 
-    // 残差に2か月移動平均を適用
+    // 残差に2か月移動平均を適用 (2005年2月から開始)
     result.forEach((item, index) => {
-      const currentResidual = item["残差"] as number;
+      // 2005年1月以前（2004年12月含む）は平滑化しない
+      if (item.年月 === "2005年1月" || item.年月.startsWith("2004年")) {
+        return;
+      }
+      
       if (index > 0) {
         const prevResidual = result[index - 1]["残差"] as number;
+        const currentResidual = item["残差"] as number;
         item["残差"] = (prevResidual + currentResidual) / 2;
-      } else {
-        // 最初の月は自身の値のまま（あるいは必要に応じて初期化）
-        item["残差"] = currentResidual;
       }
     });
 
