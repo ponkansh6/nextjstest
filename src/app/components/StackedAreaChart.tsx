@@ -72,7 +72,7 @@ export const StackedAreaChart: React.FC<StackedAreaChartProps> = ({
     <div className={styles.chartWrapper}>
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.gridStroke} />
+          <CartesianGrid strokeDasharray="3 3" vertical={true} stroke={chartColors.gridStroke} />
           <XAxis
             dataKey="年月"
             axisLine={false}

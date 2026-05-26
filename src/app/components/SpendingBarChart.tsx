@@ -83,7 +83,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = ({
     <div className={styles.chartWrapper}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.gridStroke} />
+          <CartesianGrid strokeDasharray="3 3" vertical={true} stroke={chartColors.gridStroke} />
           <XAxis
             dataKey="label"
             axisLine={false}
