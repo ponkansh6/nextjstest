@@ -79,6 +79,7 @@ export const StackedAreaChart: React.FC<StackedAreaChartProps> = ({
             tickLine={false}
             tick={{ fill: chartColors.axisText, fontSize: 12 }}
             dy={10}
+            ticks={data.filter((d: any) => d.年月.endsWith("1月")).map((d: any) => d.年月)}
           />
           <YAxis
             domain={[0, "auto"]}
