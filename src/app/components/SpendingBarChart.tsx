@@ -114,7 +114,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = ({
                 dataKey={key}
                 stackId="a"
                 fill={colors[index]}
-                fillOpacity={0.3}
+                fillOpacity={0.5}
                 isAnimationActive={false}
               />
             ) : null,
