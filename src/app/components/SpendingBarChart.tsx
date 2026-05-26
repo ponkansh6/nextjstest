@@ -105,6 +105,9 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = ({
                 x={d.label}
                 stroke={chartColors.gridStroke}
                 strokeDasharray="3 3"
+                strokeWidth={1}
+                strokeOpacity={0.6}
+                style={{ pointerEvents: "none" }}
               />
             ))}
           <XAxis
@@ -113,13 +116,6 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = ({
             tickLine={false}
             tick={{ fill: chartColors.axisText, fontSize: 12 }}
             dy={10}
-            ticks={data
-              .filter(
-                (d: any) =>
-                  d.label.endsWith("Q1") &&
-                  [2010, 2015, 2020, 2025].includes(parseInt(d.label.split("年")[0])),
-              )
-              .map((d: any) => d.label)}
           />
           <YAxis
             domain={[0, "auto"]}

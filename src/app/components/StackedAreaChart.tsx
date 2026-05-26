@@ -86,6 +86,9 @@ export const StackedAreaChart: React.FC<StackedAreaChartProps> = ({
                 x={d.年月}
                 stroke={chartColors.gridStroke}
                 strokeDasharray="3 3"
+                strokeWidth={1}
+                strokeOpacity={0.6}
+                style={{ pointerEvents: "none" }}
               />
             ))}
           <XAxis
@@ -94,13 +97,6 @@ export const StackedAreaChart: React.FC<StackedAreaChartProps> = ({
             tickLine={false}
             tick={{ fill: chartColors.axisText, fontSize: 12 }}
             dy={10}
-            ticks={data
-              .filter(
-                (d: any) =>
-                  d.年月.endsWith("年1月") &&
-                  [2010, 2015, 2020, 2025].includes(parseInt(d.年月.split("年")[0])),
-              )
-              .map((d: any) => d.年月)}
           />
           <YAxis
             domain={[0, "auto"]}
