@@ -31,6 +31,7 @@ interface SpendingBarChartProps {
   hiddenQuarters: number[];
   onToggleQuarter: (q: number) => void;
   onReset: () => void;
+  hideLegend?: boolean;
 }
 
 export const SpendingBarChart: React.FC<SpendingBarChartProps> = ({
@@ -46,49 +47,52 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = ({
   hiddenQuarters,
   onToggleQuarter,
   onReset,
+  hideLegend = false,
 }) => (
   <div className={styles.chartSection}>
     <h2 className={styles.chartTitle}>{title}</h2>
-    <div className={styles.legendContainer}>
-      <div className={styles.legendSection} style={{ marginBottom: "1.5rem" }}>
-        <h3 className={styles.legendTitle}>四半期</h3>
-        <div className={styles.legendItems}>
-          {[1, 2, 3, 4].map((q) => (
-            <button
-              key={q}
-              onClick={() => onToggleQuarter(q)}
-              className={`${styles.legendItem} ${hiddenQuarters.includes(q) ? styles.hidden : ""}`}
-              aria-pressed={!hiddenQuarters.includes(q)}
-            >
-              <span className={styles.legendLabel}>Q{q}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-      <div className={styles.legendSection}>
-        <div className={styles.legendHeader}>
-          <h3 className={styles.legendTitle}>費目</h3>
-          <div className={styles.legendActions}>
-            <button onClick={onReset} className={styles.actionButton}>
-              全選択解除
-            </button>
+    {!hideLegend && (
+      <div className={styles.legendContainer}>
+        <div className={styles.legendSection} style={{ marginBottom: "1.5rem" }}>
+          <h3 className={styles.legendTitle}>四半期</h3>
+          <div className={styles.legendItems}>
+            {[1, 2, 3, 4].map((q) => (
+              <button
+                key={q}
+                onClick={() => onToggleQuarter(q)}
+                className={`${styles.legendItem} ${hiddenQuarters.includes(q) ? styles.hidden : ""}`}
+                aria-pressed={!hiddenQuarters.includes(q)}
+              >
+                <span className={styles.legendLabel}>Q{q}</span>
+              </button>
+            ))}
           </div>
         </div>
-        <div className={styles.stackedLegendItems}>
-          {keys.map((key, index) => (
-            <button
-              key={key}
-              onClick={() => onToggle(key)}
-              className={`${styles.legendItem} ${hiddenKeys.includes(key) ? styles.hidden : ""}`}
-              aria-pressed={!hiddenKeys.includes(key)}
-            >
-              <span className={styles.legendIcon} style={{ backgroundColor: colors[index] }} />
-              <span className={styles.legendLabel}>{key}</span>
-            </button>
-          ))}
+        <div className={styles.legendSection}>
+          <div className={styles.legendHeader}>
+            <h3 className={styles.legendTitle}>費目</h3>
+            <div className={styles.legendActions}>
+              <button onClick={onReset} className={styles.actionButton}>
+                全選択解除
+              </button>
+            </div>
+          </div>
+          <div className={styles.stackedLegendItems}>
+            {keys.map((key, index) => (
+              <button
+                key={key}
+                onClick={() => onToggle(key)}
+                className={`${styles.legendItem} ${hiddenKeys.includes(key) ? styles.hidden : ""}`}
+                aria-pressed={!hiddenKeys.includes(key)}
+              >
+                <span className={styles.legendIcon} style={{ backgroundColor: colors[index] }} />
+                <span className={styles.legendLabel}>{key}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
-    </div>
+    )}
     <div className={styles.chartWrapper}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>

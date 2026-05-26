@@ -335,11 +335,13 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
                 onChange={(e) => setCagrStartYear(parseInt(e.target.value, 10))}
                 className={styles.select}
               >
-                {allYears.filter(year => year >= 2005).map((year) => (
-                  <option key={year} value={year} disabled={year > cagrEndYear}>
-                    {year}年
-                  </option>
-                ))}
+                {allYears
+                  .filter((year) => year >= 2005)
+                  .map((year) => (
+                    <option key={year} value={year} disabled={year > cagrEndYear}>
+                      {year}年
+                    </option>
+                  ))}
               </select>
             </div>
 
@@ -351,11 +353,13 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
                 onChange={(e) => setCagrEndYear(parseInt(e.target.value, 10))}
                 className={styles.select}
               >
-                {allYears.filter(year => year >= 2005).map((year) => (
-                  <option key={year} value={year} disabled={year < cagrStartYear}>
-                    {year}年
-                  </option>
-                ))}
+                {allYears
+                  .filter((year) => year >= 2005)
+                  .map((year) => (
+                    <option key={year} value={year} disabled={year < cagrStartYear}>
+                      {year}年
+                    </option>
+                  ))}
               </select>
             </div>
 
