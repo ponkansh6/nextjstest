@@ -1,5 +1,5 @@
 import React from "react";
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import styles from "./CpiChart.module.css";
 
 interface SpendingBarChartProps {
@@ -83,7 +83,21 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = ({
     <div className={styles.chartWrapper}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>
-          <CartesianGrid strokeDasharray="3 3" vertical={true} stroke={chartColors.gridStroke} />
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.gridStroke} />
+          {data
+            .filter(
+              (d: any) =>
+                d.label.endsWith("Q1") &&
+                [2010, 2015, 2020, 2025].includes(parseInt(d.label.split("年")[0])),
+            )
+            .map((d: any) => (
+              <ReferenceLine
+                key={d.label}
+                x={d.label}
+                stroke={chartColors.gridStroke}
+                strokeDasharray="3 3"
+              />
+            ))}
           <XAxis
             dataKey="label"
             axisLine={false}
