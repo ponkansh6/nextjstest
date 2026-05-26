@@ -198,13 +198,6 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
   };
 
   const [nominalHiddenKeys, setNominalHiddenKeys] = useState<string[]>([]);
-  const [realHiddenKeys, setRealHiddenKeys] = useState<string[]>([]);
-
-  const handleRealLegendClick = (dataKey: string) => {
-    setRealHiddenKeys((prev) =>
-      prev.includes(dataKey) ? prev.filter((k) => k !== dataKey) : [...prev, dataKey],
-    );
-  };
 
   const handleNominalLegendClick = (dataKey: string) => {
     setNominalHiddenKeys((prev) =>
@@ -431,16 +424,19 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
         data={quarterlyRealData}
         keys={realKeys}
         colors={realColors}
-        hiddenKeys={realHiddenKeys}
-        onToggle={handleRealLegendClick}
+        hiddenKeys={nominalHiddenKeys}
+        onToggle={handleNominalLegendClick}
         chartColors={chartColors}
         isMobile={isMobile}
         CustomTooltip={CustomTooltip}
         hiddenQuarters={hiddenQuarters}
         onToggleQuarter={handleQuarterLegendClick}
         onReset={() =>
-          setRealHiddenKeys((prev) => (prev.length === realKeys.length ? [] : [...realKeys]))
+          setNominalHiddenKeys((prev) =>
+            prev.length === nominalKeys.length ? [] : [...nominalKeys],
+          )
         }
+        hideLegend
       />
 
       <EarningsBreakdownChart
