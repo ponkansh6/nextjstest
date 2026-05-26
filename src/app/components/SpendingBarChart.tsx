@@ -90,7 +90,13 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = ({
             tickLine={false}
             tick={{ fill: chartColors.axisText, fontSize: 12 }}
             dy={10}
-            ticks={data.filter((d: any) => d.label.endsWith("Q1") && parseInt(d.label.split("年")[0]) % 5 === 0).map((d: any) => d.label)}
+            ticks={data
+              .filter(
+                (d: any) =>
+                  d.label.endsWith("Q1") &&
+                  [2010, 2015, 2020, 2025].includes(parseInt(d.label.split("年")[0])),
+              )
+              .map((d: any) => d.label)}
           />
           <YAxis
             domain={[0, "auto"]}
