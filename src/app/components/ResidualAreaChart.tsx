@@ -51,6 +51,7 @@ export const ResidualAreaChart: React.FC<ResidualAreaChartProps> = ({
             dx={-10}
           />
           <Tooltip
+            cursor={{ stroke: chartColors.gridStroke, strokeWidth: 1, strokeOpacity: 0.6 }}
             content={
               <CustomTooltip
                 isMobile={isMobile}
