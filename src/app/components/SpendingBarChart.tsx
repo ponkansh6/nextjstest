@@ -106,7 +106,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = ({
                 stroke={chartColors.gridStroke}
                 strokeDasharray="3 3"
                 strokeWidth={1}
-                strokeOpacity={0.9}
+                strokeOpacity={0.3}
                 style={{ pointerEvents: "none" }}
               />
             ))}
