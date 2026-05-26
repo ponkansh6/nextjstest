@@ -126,7 +126,7 @@ export const StackedAreaChart: React.FC<StackedAreaChartProps> = ({
                 strokeWidth={0.5}
                 strokeOpacity={0.2}
                 fill={colors[index]}
-                fillOpacity={0.5}
+                fillOpacity={0.8}
                 isAnimationActive={false}
               />
             ) : null,
