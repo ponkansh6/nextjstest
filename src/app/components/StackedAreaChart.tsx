@@ -77,7 +77,7 @@ export const StackedAreaChart: React.FC<StackedAreaChartProps> = ({
           {data
             .filter(
               (d: any) =>
-                d.年月.includes("1月") &&
+                d.年月.endsWith("年1月") &&
                 [2010, 2015, 2020, 2025].includes(parseInt(d.年月.split("年")[0])),
             )
             .map((d: any) => (
@@ -97,7 +97,7 @@ export const StackedAreaChart: React.FC<StackedAreaChartProps> = ({
             ticks={data
               .filter(
                 (d: any) =>
-                  d.年月.endsWith("1月") &&
+                  d.年月.endsWith("年1月") &&
                   [2010, 2015, 2020, 2025].includes(parseInt(d.年月.split("年")[0])),
               )
               .map((d: any) => d.年月)}
