@@ -3,6 +3,7 @@ import {
   Area,
   AreaChart,
   CartesianGrid,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -36,6 +37,23 @@ export const ResidualAreaChart: React.FC<ResidualAreaChartProps> = ({
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.gridStroke} />
+          {data
+            .filter(
+              (d: any) =>
+                d.年月.endsWith("年1月") &&
+                [2010, 2015, 2020, 2025].includes(parseInt(d.年月.split("年")[0])),
+            )
+            .map((d: any) => (
+              <ReferenceLine
+                key={d.年月}
+                x={d.年月}
+                stroke={chartColors.gridStroke}
+                strokeDasharray="3 3"
+                strokeWidth={1}
+                strokeOpacity={0.2}
+                style={{ pointerEvents: "none" }}
+              />
+            ))}
           <XAxis
             dataKey="年月"
             axisLine={false}
@@ -65,7 +83,7 @@ export const ResidualAreaChart: React.FC<ResidualAreaChartProps> = ({
             dataKey="残差"
             stroke={chartColors.barFill || "#94a3b8"}
             fill={chartColors.barFill || "#94a3b8"}
-            fillOpacity={0.4}
+            fillOpacity={0.8}
             isAnimationActive={false}
           />
         </AreaChart>
