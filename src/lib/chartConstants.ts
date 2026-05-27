@@ -74,7 +74,7 @@ export const CANONICAL_NOMINAL_KEY = "その他の消費支出（名目）";
 
 // 表示ラベルのオーバーライド（内部キー -> 凡例ラベル）
 export const DISPLAY_LABEL_OVERRIDES: Record<string, string> = {
-  [CANONICAL_NOMINAL_KEY]: "諸雑費・CPI外支出",
+  [CANONICAL_NOMINAL_KEY]: "諸雑費",
 };
 
 export const getLegendLabel = (key: string) => {
@@ -87,7 +87,6 @@ export const keyPairs = nominalKeys.slice(0, realKeys.length).map((key, index) =
   real: realKeys[index],
   label: getDisplayLabel(key),
 }));
-
 export const nominalColorMap: Record<string, string> = {
   "交通・通信（名目）": "交通・自動車等関係費",
   "住居（名目）": "住居",
@@ -97,6 +96,7 @@ export const nominalColorMap: Record<string, string> = {
   "教育（名目）": "教育",
   "教養娯楽（名目）": "教養娯楽",
   "被服及び履物（名目）": "被服及び履物",
+  "諸雑費": "諸雑費・CPI外支出",
   "その他の消費支出（名目）": "諸雑費・CPI外支出",
   "食料（名目）": "外食以外食料",
   "通信（名目）": "通信",

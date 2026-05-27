@@ -769,6 +769,9 @@ export async function loadCpiData(): Promise<CpiData[]> {
           const dinedOut = typeof newRow.外食 === "number" ? newRow.外食 : 0;
           newRow["外食以外食料"] = foodTotal - dinedOut;
 
+          // 諸雑費（名目）はそのまま使用
+          newRow["諸雑費"] = typeof newRow["諸雑費"] === "number" ? newRow["諸雑費"] : 0;
+
           // 交通・自動車等関係費 = 交通 + 自動車等関係費 をサーバー側で計算
           const transport = typeof newRow.交通 === "number" ? newRow.交通 : 0;
           const autoRelated =
