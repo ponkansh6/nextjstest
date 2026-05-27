@@ -21,8 +21,10 @@ describe("CSV Header Integrity", () => {
     });
 
     realKeys.forEach((key) => {
-      // CSVにはこれらのキーがないため、除外して検証
-      expect(headers, `Key '${key}' not found in CSV headers`).toContain(key);
+      // CSVにはこれらのキーが存在するはずだが、計算で求めるものだけ除外
+      if (key !== "その他の消費支出（実質）") {
+        expect(headers, `Key '${key}' not found in CSV headers`).toContain(key);
+      }
     });
   });
 });

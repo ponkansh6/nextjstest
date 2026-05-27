@@ -177,7 +177,7 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
 
   const nominalColors = nominalKeys.map(getColorForNominalKey);
   const realKeys = nominalKeys.map((k) =>
-    k === "諸雑費・CPI外支出等" ? "諸雑費・CPI外支出等（実質）" : k.replace("名目", "実質"),
+    k === "その他の消費支出（名目）" ? "その他の消費支出（実質）" : k.replace("名目", "実質"),
   );
   const realColors = nominalColors;
   const nominalData = ctiData;
