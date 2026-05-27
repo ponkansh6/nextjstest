@@ -432,11 +432,10 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
         CustomTooltip={CustomTooltip}
         hiddenQuarters={hiddenQuarters}
         onToggleQuarter={handleQuarterLegendClick}
-        onReset={() =>
-          setNominalHiddenKeys((prev) =>
-            prev.length === nominalKeys.length ? [] : [...nominalKeys],
-          )
-        }
+        onReset={() => {
+          const allKeys = [...nominalKeys, ...realKeys];
+          setNominalHiddenKeys((prev) => (prev.length === allKeys.length ? [] : allKeys));
+        }}
       />
 
       <SpendingBarChart
@@ -451,11 +450,10 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
         CustomTooltip={CustomTooltip}
         hiddenQuarters={hiddenQuarters}
         onToggleQuarter={handleQuarterLegendClick}
-        onReset={() =>
-          setNominalHiddenKeys((prev) =>
-            prev.length === nominalKeys.length ? [] : [...nominalKeys],
-          )
-        }
+        onReset={() => {
+          const allKeys = [...nominalKeys, ...realKeys];
+          setNominalHiddenKeys((prev) => (prev.length === allKeys.length ? [] : allKeys));
+        }}
         hideLegend
       />
 
