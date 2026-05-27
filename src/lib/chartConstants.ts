@@ -60,19 +60,19 @@ export const realKeys = [
   "交通・通信（実質）",
   "教育（実質）",
   "教養娯楽（実質）",
+  "諸雑費・CPI外支出等（実質）",
 ];
 
 // 凡例表示用のクリーンなラベル
 export const getDisplayLabel = (key: string) => {
-  const baseLabel = key.replace("（名目）", "").replace("（実質）", "");
-  if (baseLabel === "その他の消費支出") {
-    return "諸雑費・CPI外支出等";
-  }
-  return baseLabel;
+  return key
+    .replace("（名目）", "")
+    .replace("（実質）", "")
+    .replace("その他の消費支出", "諸雑費・CPI外支出等");
 };
 
 // 名目キーと実質キーのインデックスベースのペアリング
-export const keyPairs = nominalKeys.slice(0, realKeys.length).map((key, index) => ({
+export const keyPairs = nominalKeys.map((key, index) => ({
   nominal: key,
   real: realKeys[index],
   label: getDisplayLabel(key),
