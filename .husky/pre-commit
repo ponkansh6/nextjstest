@@ -2,6 +2,12 @@
 
 echo "Running pre-commit checks (excluding tests)..."
 
+# Check for unstaged changes
+if [ -n "$(git diff --name-only)" ]; then
+  echo "Error: You have unstaged changes. Please stage them using 'git add' before committing."
+  exit 1
+fi
+
 # 1. Fast Linting (oxlint)
 npm run lint:fast
 
