@@ -703,12 +703,6 @@ export async function loadCtiData(): Promise<CpiData[]> {
       if (!row["その他の消費支出（実質）"] || row["その他の消費支出（実質）"] === 0) {
         row["その他の消費支出（実質）"] = Math.max(0, realTotal - realSum);
       }
-
-      // キー名の変更: その他の消費支出（名目） -> 諸雑費・CPI外支出等
-      row["諸雑費・CPI外支出等"] = row["その他の消費支出（名目）"];
-      row["諸雑費・CPI外支出等（実質）"] = row["その他の消費支出（実質）"];
-      delete row["その他の消費支出（名目）"];
-      delete row["その他の消費支出（実質）"];
     });
 
     return mapped;
