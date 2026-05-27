@@ -1,4 +1,4 @@
-import { CPI_CATEGORIES } from "./cpiData";
+import { CPI_CATEGORIES } from "./constants";
 
 export const targetKeys = [
   "総合",
