@@ -198,10 +198,25 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
   };
 
   const [nominalHiddenKeys, setNominalHiddenKeys] = useState<string[]>([]);
+  const [realHiddenKeys, setRealHiddenKeys] = useState<string[]>([]);
 
   const handleNominalLegendClick = (dataKey: string) => {
     setNominalHiddenKeys((prev) =>
       prev.includes(dataKey) ? prev.filter((k) => k !== dataKey) : [...prev, dataKey],
+    );
+  };
+
+  const handleRealLegendClick = (dataKey: string) => {
+    const originalKey = dataKey.replace("実質", "名目");
+    const targetKey = originalKey === "諸雑費・CPI外支出等（実質）" ? "諸雑費・CPI外支出等" : originalKey;
+    
+    setRealHiddenKeys((prev) =>
+      prev.includes(dataKey) ? prev.filter((k) => k !== dataKey) : [...prev, dataKey],
+    );
+    
+    // 名目側も同期させる
+    setNominalHiddenKeys((prev) =>
+      prev.includes(targetKey) ? prev.filter((k) => k !== targetKey) : [...prev, targetKey],
     );
   };
 
@@ -428,16 +443,16 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
         data={quarterlyRealData}
         keys={realKeys}
         colors={realColors}
-        hiddenKeys={nominalHiddenKeys}
-        onToggle={handleNominalLegendClick}
+        hiddenKeys={realHiddenKeys}
+        onToggle={handleRealLegendClick}
         chartColors={chartColors}
         isMobile={isMobile}
         CustomTooltip={CustomTooltip}
         hiddenQuarters={hiddenQuarters}
         onToggleQuarter={handleQuarterLegendClick}
         onReset={() =>
-          setNominalHiddenKeys((prev) =>
-            prev.length === nominalKeys.length ? [] : [...nominalKeys],
+          setRealHiddenKeys((prev) =>
+            prev.length === realKeys.length ? [] : [...realKeys],
           )
         }
         hideLegend
