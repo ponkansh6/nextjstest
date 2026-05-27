@@ -68,19 +68,8 @@ export const getDisplayLabel = (key: string) => {
 };
 
 // --- CPI読み込みキー、内部の名目キー、凡例表示名を分離するための定義 ---
-// CPIソース（CSV等）で使われるキー名（読み込み元）
-export const CPI_NOMINAL_SOURCE_KEY = "諸雑費・CPI外支出等（名目）";
 // 内部で集計に使用する（中間）名目キー（canonical）
 export const CANONICAL_NOMINAL_KEY = "その他の消費支出（名目）";
-
-// CPIの読み込みキーを内部の名目キーにマップする
-export const CPI_TO_CANONICAL_NOMINAL: Record<string, string> = {
-  [CPI_NOMINAL_SOURCE_KEY]: CANONICAL_NOMINAL_KEY,
-};
-
-export const mapCpiKeyToCanonicalNominal = (key: string) => {
-  return CPI_TO_CANONICAL_NOMINAL[key] || key;
-};
 
 // 表示ラベルのオーバーライド（内部キー -> 凡例ラベル）
 export const DISPLAY_LABEL_OVERRIDES: Record<string, string> = {

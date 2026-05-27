@@ -1,5 +1,4 @@
 import type { CpiData } from "../app/page";
-import { CPI_TO_CANONICAL_NOMINAL } from "./chartConstants";
 
 export interface UseCpiChartDataProps {
   data: CpiData[];
@@ -15,19 +14,7 @@ export interface UseCpiChartDataProps {
 export const computeChartData = (props: UseCpiChartDataProps, hiddenQuarters: number[]) => {
   const { nominalData, startYear, endYear, nominalKeys, realKeys, maxCpiDate } = props;
 
-  // CPI読み込みキーはソース側で名前が変わっていることがあるため、
-  // 明確に「CPIソースキー -> 内部の名目キー（canonical）」へマッピングする。
-  const normalizedNominalData: CpiData[] = nominalData.map((row) => {
-    const copy: CpiData = { ...row } as CpiData;
-    Object.keys(CPI_TO_CANONICAL_NOMINAL).forEach((srcKey) => {
-      if ((copy as any)[srcKey] !== undefined) {
-        const canonical = CPI_TO_CANONICAL_NOMINAL[srcKey];
-        copy[canonical as keyof CpiData] = (copy as any)[srcKey] as unknown as number;
-        delete (copy as any)[srcKey];
-      }
-    });
-    return copy;
-  });
+  const normalizedNominalData: CpiData[] = nominalData;
 
   const filteredNominalData = (() => {
     const allMonths: string[] = [];
