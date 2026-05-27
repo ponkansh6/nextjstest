@@ -292,7 +292,7 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
   return (
     <div className={styles.chartContainer}>
       <ChartFilters
-        allYears={allYears}
+        allYears={allYears.filter((y) => y >= 2005)}
         startYear={startYear}
         endYear={endYear}
         setStartYear={setStartYear}
