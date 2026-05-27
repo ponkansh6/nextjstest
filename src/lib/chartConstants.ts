@@ -67,6 +67,30 @@ export const getDisplayLabel = (key: string) => {
   return key.replace("（名目）", "").replace("（実質）", "");
 };
 
+// --- CPI読み込みキー、内部の名目キー、凡例表示名を分離するための定義 ---
+// CPIソース（CSV等）で使われるキー名（読み込み元）
+export const CPI_NOMINAL_SOURCE_KEY = "諸雑費・CPI外支出等（名目）";
+// 内部で集計に使用する（中間）名目キー（canonical）
+export const CANONICAL_NOMINAL_KEY = "その他の消費支出（名目）";
+
+// CPIの読み込みキーを内部の名目キーにマップする
+export const CPI_TO_CANONICAL_NOMINAL: Record<string, string> = {
+  [CPI_NOMINAL_SOURCE_KEY]: CANONICAL_NOMINAL_KEY,
+};
+
+export const mapCpiKeyToCanonicalNominal = (key: string) => {
+  return CPI_TO_CANONICAL_NOMINAL[key] || key;
+};
+
+// 表示ラベルのオーバーライド（内部キー -> 凡例ラベル）
+export const DISPLAY_LABEL_OVERRIDES: Record<string, string> = {
+  [CANONICAL_NOMINAL_KEY]: "諸雑費・CPI外支出",
+};
+
+export const getLegendLabel = (key: string) => {
+  return DISPLAY_LABEL_OVERRIDES[key] || getDisplayLabel(key);
+};
+
 // 名目キーと実質キーのインデックスベースのペアリング
 export const keyPairs = nominalKeys.slice(0, realKeys.length).map((key, index) => ({
   nominal: key,

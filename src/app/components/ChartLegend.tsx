@@ -1,5 +1,6 @@
 import React from "react";
 import styles from "./CpiChart.module.css";
+import { getLegendLabel } from "../../lib/chartConstants";
 
 interface LegendProps {
   title: string;
@@ -22,7 +23,7 @@ export const ChartLegend = ({ title, keys, colors, hiddenKeys, onToggle }: Legen
             aria-pressed={!hiddenKeys.includes(key)}
           >
             <span className={styles.legendIcon} style={{ backgroundColor: colors[index] }} />
-            <span className={styles.legendLabel}>{key}</span>
+            <span className={styles.legendLabel}>{getLegendLabel(key)}</span>
           </button>
         ))}
       </div>

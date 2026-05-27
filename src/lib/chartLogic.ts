@@ -1,4 +1,5 @@
 import type { CpiData } from "../app/page";
+import { CPI_TO_CANONICAL_NOMINAL } from "./chartConstants";
 
 export interface UseCpiChartDataProps {
   data: CpiData[];
@@ -14,21 +15,17 @@ export interface UseCpiChartDataProps {
 export const computeChartData = (props: UseCpiChartDataProps, hiddenQuarters: number[]) => {
   const { nominalData, startYear, endYear, nominalKeys, realKeys, maxCpiDate } = props;
 
-  // Normalize legacy key names so that rendering logic is robust against CSV/schema changes.
-  const legacyOld = "その他の消費支出（名目）";
-  const legacyNew = "諸雑費・CPI外支出等（名目）";
-  const targetKey = nominalKeys.includes(legacyNew) ? legacyNew : legacyOld;
+  // CPI読み込みキーはソース側で名前が変わっていることがあるため、
+  // 明確に「CPIソースキー -> 内部の名目キー（canonical）」へマッピングする。
   const normalizedNominalData: CpiData[] = nominalData.map((row) => {
     const copy: CpiData = { ...row } as CpiData;
-    // If row contains the other name but targetKey is different, map it
-    if (copy[legacyOld as keyof CpiData] !== undefined && targetKey !== legacyOld) {
-      copy[targetKey as keyof CpiData] = copy[legacyOld as keyof CpiData] as unknown as number;
-      delete (copy as any)[legacyOld];
-    }
-    if (copy[legacyNew as keyof CpiData] !== undefined && targetKey !== legacyNew) {
-      copy[targetKey as keyof CpiData] = copy[legacyNew as keyof CpiData] as unknown as number;
-      delete (copy as any)[legacyNew];
-    }
+    Object.keys(CPI_TO_CANONICAL_NOMINAL).forEach((srcKey) => {
+      if ((copy as any)[srcKey] !== undefined) {
+        const canonical = CPI_TO_CANONICAL_NOMINAL[srcKey];
+        copy[canonical as keyof CpiData] = (copy as any)[srcKey] as unknown as number;
+        delete (copy as any)[srcKey];
+      }
+    });
     return copy;
   });
 

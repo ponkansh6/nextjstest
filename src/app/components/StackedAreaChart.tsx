@@ -9,6 +9,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { getLegendLabel } from "../../lib/chartConstants";
 import styles from "./CpiChart.module.css";
 
 interface StackedAreaChartProps {
@@ -64,7 +65,7 @@ export const StackedAreaChart: React.FC<StackedAreaChartProps> = ({
               aria-pressed={!hiddenKeys.includes(key)}
             >
               <span className={styles.legendIcon} style={{ backgroundColor: colors[index] }} />
-              <span className={styles.legendLabel}>{key}</span>
+              <span className={styles.legendLabel}>{getLegendLabel(key)}</span>
             </button>
           ))}
         </div>
