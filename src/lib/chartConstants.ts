@@ -60,19 +60,17 @@ export const realKeys = [
   "交通・通信（実質）",
   "教育（実質）",
   "教養娯楽（実質）",
-  "諸雑費・CPI外支出等（実質）",
 ];
 
 // 凡例表示用のクリーンなラベル
 export const getDisplayLabel = (key: string) => {
   return key
     .replace("（名目）", "")
-    .replace("（実質）", "")
-    .replace("その他の消費支出", "諸雑費・CPI外支出等");
+    .replace("（実質）", "");
 };
 
 // 名目キーと実質キーのインデックスベースのペアリング
-export const keyPairs = nominalKeys.map((key, index) => ({
+export const keyPairs = nominalKeys.slice(0, realKeys.length).map((key, index) => ({
   nominal: key,
   real: realKeys[index],
   label: getDisplayLabel(key),
@@ -87,6 +85,6 @@ export const nominalColorMap: Record<string, string> = {
   "教育（名目）": "教育",
   "教養娯楽（名目）": "教養娯楽",
   "被服及び履物（名目）": "被服及び履物",
-  "その他の消費支出（名目）": "諸雑費",
+  "諸雑費・CPI外支出等（名目）": "諸雑費",
   "食料（名目）": "外食以外食料",
 };

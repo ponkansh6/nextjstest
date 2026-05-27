@@ -16,9 +16,7 @@ describe("CSV Header Integrity", () => {
 
     realKeys.forEach((key) => {
       // CSVにはこれらのキーがないため、除外して検証
-      if (key !== "諸雑費・CPI外支出等（実質）") {
-        expect(headers, `Key '${key}' not found in CSV headers`).toContain(key);
-      }
+      expect(headers, `Key '${key}' not found in CSV headers`).toContain(key);
     });
   });
 });
