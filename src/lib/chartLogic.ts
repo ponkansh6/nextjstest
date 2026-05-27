@@ -14,6 +14,24 @@ export interface UseCpiChartDataProps {
 export const computeChartData = (props: UseCpiChartDataProps, hiddenQuarters: number[]) => {
   const { nominalData, startYear, endYear, nominalKeys, realKeys, maxCpiDate } = props;
 
+  // Normalize legacy key names so that rendering logic is robust against CSV/schema changes.
+  const legacyOld = "その他の消費支出（名目）";
+  const legacyNew = "諸雑費・CPI外支出等（名目）";
+  const targetKey = nominalKeys.includes(legacyNew) ? legacyNew : legacyOld;
+  const normalizedNominalData: CpiData[] = nominalData.map((row) => {
+    const copy: CpiData = { ...row } as CpiData;
+    // If row contains the other name but targetKey is different, map it
+    if (copy[legacyOld as keyof CpiData] !== undefined && targetKey !== legacyOld) {
+      copy[targetKey as keyof CpiData] = copy[legacyOld as keyof CpiData] as unknown as number;
+      delete (copy as any)[legacyOld];
+    }
+    if (copy[legacyNew as keyof CpiData] !== undefined && targetKey !== legacyNew) {
+      copy[targetKey as keyof CpiData] = copy[legacyNew as keyof CpiData] as unknown as number;
+      delete (copy as any)[legacyNew];
+    }
+    return copy;
+  });
+
   const filteredNominalData = (() => {
     const allMonths: string[] = [];
     for (let y = startYear; y <= endYear; y++) {
@@ -23,7 +41,7 @@ export const computeChartData = (props: UseCpiChartDataProps, hiddenQuarters: nu
     }
 
     return allMonths.map((yearMonth) => {
-      const existingData = nominalData.find((item: CpiData) => item.年月 === yearMonth);
+      const existingData = normalizedNominalData.find((item: CpiData) => item.年月 === yearMonth);
       if (existingData) {
         return existingData;
       }
@@ -39,7 +57,7 @@ export const computeChartData = (props: UseCpiChartDataProps, hiddenQuarters: nu
     });
   })();
 
-  const nominalMonthsSet = new Set(nominalData.map((d: CpiData) => d.年月));
+  const nominalMonthsSet = new Set(normalizedNominalData.map((d: CpiData) => d.年月));
   const effectiveEndYear = Math.min(endYear, maxCpiDate.year);
 
   const getQuarterlyData = (keys: string[]) => {
