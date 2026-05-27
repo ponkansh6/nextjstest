@@ -19,9 +19,7 @@ describe("CpiChart data integrity logic", () => {
 
   it("should have keys ending with '（名目）' to match CSV data structure", () => {
     nominalKeys.forEach((key) => {
-      if (key !== "諸雑費・CPI外支出等") {
-        expect(key).toMatch(/（名目）$/);
-      }
+      expect(key).toMatch(/（名目）$/);
     });
   });
 

@@ -8,17 +8,17 @@ export const targetKeys = [
 export const colors = ["#1d4ed8", "#3b82f6", "#60a5fa", "#93c5fd"];
 
 export const stackedKeys = [
+  "外食以外食料",
+  "外食",
   "住居",
+  "光熱・水道",
   "家具・家事用品",
   "被服及び履物",
   "保健医療",
-  "教育",
   "交通・自動車等関係費",
   "通信",
-  "光熱・水道",
+  "教育",
   "教養娯楽",
-  "外食以外食料",
-  "外食",
   "諸雑費",
 ];
 
@@ -47,7 +47,7 @@ export const nominalKeys = [
   "交通・通信（名目）",
   "教育（名目）",
   "教養娯楽（名目）",
-  "その他の消費支出（名目）",
+  "諸雑費・CPI外支出等（名目）",
 ];
 
 export const realKeys = [
@@ -64,9 +64,7 @@ export const realKeys = [
 
 // 凡例表示用のクリーンなラベル
 export const getDisplayLabel = (key: string) => {
-  return key
-    .replace("（名目）", "")
-    .replace("（実質）", "");
+  return key.replace("（名目）", "").replace("（実質）", "");
 };
 
 // 名目キーと実質キーのインデックスベースのペアリング

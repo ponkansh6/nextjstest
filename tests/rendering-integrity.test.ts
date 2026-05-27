@@ -4,7 +4,7 @@ import { describe, it, expect } from "vitest";
 
 describe("Rendering Data Verification", () => {
   it("should have non-zero or defined values for all keys in quarterly nominal/real data", () => {
-    const mockData = [{ 年月: "2020年1月", "住居（名目）": 10, "食料（名目）": 20, "その他の消費支出（名目）": 5 }];
+    const mockData = [{ 年月: "2020年1月", "住居（名目）": 10, "食料（名目）": 20, "諸雑費・CPI外支出等（名目）": 5 }];
     const props = {
       data: [],
       nominalData: mockData,
