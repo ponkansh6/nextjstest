@@ -14,6 +14,7 @@ import { ResidualAreaChart } from "./ResidualAreaChart";
 import { MajorIndicesChart } from "./MajorIndicesChart";
 import {
   colors,
+  keyPairs,
   nominalColorMap,
   nominalKeys,
   stackedColors,
@@ -198,26 +199,26 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
   };
 
   const [nominalHiddenKeys, setNominalHiddenKeys] = useState<string[]>([]);
-  const [realHiddenKeys, setRealHiddenKeys] = useState<string[]>([]);
 
   const handleNominalLegendClick = (dataKey: string) => {
-    setNominalHiddenKeys((prev) =>
-      prev.includes(dataKey) ? prev.filter((k) => k !== dataKey) : [...prev, dataKey],
-    );
-  };
+    // どちらのペアに属しているか検索
+    const pair = keyPairs.find((p) => p.nominal === dataKey || p.real === dataKey);
+    if (!pair) return;
 
-  const handleRealLegendClick = (dataKey: string) => {
-    const originalKey = dataKey.replace("実質", "名目");
-    const targetKey = originalKey === "諸雑費・CPI外支出等（実質）" ? "諸雑費・CPI外支出等" : originalKey;
-    
-    setRealHiddenKeys((prev) =>
-      prev.includes(dataKey) ? prev.filter((k) => k !== dataKey) : [...prev, dataKey],
-    );
-    
-    // 名目側も同期させる
-    setNominalHiddenKeys((prev) =>
-      prev.includes(targetKey) ? prev.filter((k) => k !== targetKey) : [...prev, targetKey],
-    );
+    // 名目と実質のキーを取得
+    const keysToToggle = [pair.nominal, pair.real];
+
+    setNominalHiddenKeys((prev) => {
+      const next = new Set(prev);
+      keysToToggle.forEach((k) => {
+        if (next.has(k)) {
+          next.delete(k);
+        } else {
+          next.add(k);
+        }
+      });
+      return Array.from(next);
+    });
   };
 
   // CAGR計算用のステート
@@ -443,16 +444,16 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
         data={quarterlyRealData}
         keys={realKeys}
         colors={realColors}
-        hiddenKeys={realHiddenKeys}
-        onToggle={handleRealLegendClick}
+        hiddenKeys={nominalHiddenKeys}
+        onToggle={handleNominalLegendClick}
         chartColors={chartColors}
         isMobile={isMobile}
         CustomTooltip={CustomTooltip}
         hiddenQuarters={hiddenQuarters}
         onToggleQuarter={handleQuarterLegendClick}
         onReset={() =>
-          setRealHiddenKeys((prev) =>
-            prev.length === realKeys.length ? [] : [...realKeys],
+          setNominalHiddenKeys((prev) =>
+            prev.length === nominalKeys.length ? [] : [...nominalKeys],
           )
         }
         hideLegend

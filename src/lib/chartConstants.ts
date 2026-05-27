@@ -50,6 +50,25 @@ export const nominalKeys = [
   "諸雑費・CPI外支出等",
 ];
 
+export const realKeys = [
+  "住居（実質）",
+  "家具・家事用品（実質）",
+  "被服及び履物（実質）",
+  "保健医療（実質）",
+  "教育（実質）",
+  "交通・通信（実質）",
+  "光熱・水道（実質）",
+  "教養娯楽（実質）",
+  "食料（実質）",
+  "諸雑費・CPI外支出等（実質）",
+];
+
+// 名目キーと実質キーのインデックスベースのペアリング
+export const keyPairs = nominalKeys.map((key, index) => ({
+  nominal: key,
+  real: realKeys[index],
+}));
+
 export const nominalColorMap: Record<string, string> = {
   "交通・通信": "交通・自動車等関係費",
   住居: "住居",
