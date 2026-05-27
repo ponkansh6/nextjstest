@@ -1,3 +1,5 @@
+import { CPI_CATEGORIES } from "./cpiData";
+
 export const targetKeys = [
   "総合",
   "生鮮食品を除く総合",
@@ -7,20 +9,7 @@ export const targetKeys = [
 
 export const colors = ["#1d4ed8", "#3b82f6", "#60a5fa", "#93c5fd"];
 
-export const stackedKeys = [
-  "住居",
-  "家具・家事用品",
-  "被服及び履物",
-  "保健医療",
-  "教育",
-  "交通・自動車等関係費",
-  "通信",
-  "光熱・水道",
-  "教養娯楽",
-  "外食以外食料",
-  "外食",
-  "その他の消費支出（名目）",
-];
+export const stackedKeys = CPI_CATEGORIES;
 
 export const stackedColors = [
   "#2a2080",
@@ -96,7 +85,7 @@ export const nominalColorMap: Record<string, string> = {
   "教育（名目）": "教育",
   "教養娯楽（名目）": "教養娯楽",
   "被服及び履物（名目）": "被服及び履物",
-  "諸雑費": "諸雑費・CPI外支出",
+  諸雑費: "諸雑費・CPI外支出",
   "その他の消費支出（名目）": "諸雑費・CPI外支出",
   "食料（名目）": "外食以外食料",
   "通信（名目）": "通信",

@@ -17,27 +17,27 @@ export function calculateAdjustedMetric(
   return (totalEarnings / denominator) * scalingFactor;
 }
 
+export const CPI_CATEGORIES = [
+  "住居",
+  "家具・家事用品",
+  "被服及び履物",
+  "保健医療",
+  "教育",
+  "交通・自動車等関係費",
+  "通信",
+  "光熱・水道",
+  "教養娯楽",
+  "外食以外食料",
+  "外食",
+  "諸雑費",
+];
+
 export const calculateCategorySum = (
   data: CpiData[],
   year: number,
   month: number,
   hiddenKeys: string[] = [],
-  stackedKeys: string[] = [
-    "外食以外食料",
-    "外食",
-    "住居",
-    "光熱・水道",
-    "家具・家事用品",
-    "被服及び履物",
-    "保健医療",
-    "交通",
-    "自動車等関係費",
-    "通信",
-    "教育",
-    "教養娯楽用品",
-    "教養娯楽サービス",
-    "諸雑費",
-  ],
+  stackedKeys: string[] = CPI_CATEGORIES,
 ): number => {
   const monthStr = String(month).padStart(2, "0");
 
