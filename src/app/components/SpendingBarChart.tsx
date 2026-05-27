@@ -10,6 +10,7 @@ import {
   YAxis,
 } from "recharts";
 import styles from "./CpiChart.module.css";
+import { getDisplayLabel } from "../../lib/chartConstants";
 
 interface SpendingBarChartProps {
   title: string;
@@ -86,7 +87,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = ({
                 aria-pressed={!hiddenKeys.includes(key)}
               >
                 <span className={styles.legendIcon} style={{ backgroundColor: colors[index] }} />
-                <span className={styles.legendLabel}>{key}</span>
+                <span className={styles.legendLabel}>{getDisplayLabel(key)}</span>
               </button>
             ))}
           </div>

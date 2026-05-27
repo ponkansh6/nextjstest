@@ -17,6 +17,14 @@ describe("CpiChart data integrity logic", () => {
     startYear: 2020,
   };
 
+  it("should have keys ending with '（名目）' to match CSV data structure", () => {
+    nominalKeys.forEach((key) => {
+      if (key !== "諸雑費・CPI外支出等") {
+        expect(key).toMatch(/（名目）$/);
+      }
+    });
+  });
+
   it("quarterlyNominalData should contain all keys from nominalKeys", () => {
     const result = computeChartData(props, []);
     expect(result.quarterlyNominalData).toHaveLength(1);
