@@ -10,17 +10,19 @@
     "test:ui": "vitest run -c vitest.ui.config.ts",
     "test:all": "vitest run",
     "lint": "eslint --cache",
-    "lint:fast": "oxlint --ignore-pattern 'tests/**' --nextjs-plugin --react-plugin --react-perf-plugin",
+    "lint:fast": "oxlint --ignore-pattern 'tests/**' --nextjs-plugin --react-plugin --react-perf-plugin && depcheck --ignores='@types/react-is,eslint-plugin-react,eslint-plugin-react-hooks,husky,lint-staged,prettier'",
     "format:fast": "oxfmt --write .",
     "type-check": "tsc --noEmit",
     "type-check:fast": "npx tsgo --noEmit",
     "security-check": "npm audit --audit-level=high && secretlint \"**/*\""
   },
   "dependencies": {
+    "@types/react-is": "^19.2.0",
     "next": "^16.2.6",
     "papaparse": "^5.5.3",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
+    "react-is": "^19.2.6",
     "recharts": "^3.8.1"
   },
   "devDependencies": {
@@ -34,6 +36,7 @@
     "@vitest/coverage-v8": "^4.1.7",
     "@vitest/ui": "^4.1.7",
     "babel-plugin-react-compiler": "1.0.0",
+    "depcheck": "^1.4.7",
     "eslint": "^10.4.0",
     "eslint-config-next": "^16.2.6",
     "eslint-plugin-react": "^7.37.5",

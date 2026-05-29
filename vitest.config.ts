@@ -10,10 +10,10 @@ export default defineConfig({
     environment: "node",
     setupFiles: ["./tests/utils/logic-setup.ts"],
     coverage: {
-      provider: 'v8',
-      include: ['src/**/*.ts', 'src/**/*.tsx'],
-      exclude: ['src/**/*.d.ts'],
-      reporter: ['text', 'json', 'html'],
+      provider: "v8",
+      include: ["src/**/*.ts", "src/**/*.tsx"],
+      exclude: ["src/**/*.d.ts"],
+      reporter: ["text", "json", "html"],
     },
   },
 });
