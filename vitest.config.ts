@@ -6,7 +6,7 @@ export default defineConfig({
   },
   test: {
     globals: true,
-    include: ["tests/**/*.{test.ts,test.tsx}", "!tests/debug/**/*"],
+    include: ["tests/**/*.{test.ts,test.tsx}"],
     root: "./",
     environment: "happy-dom",
     setupFiles: ["./tests/utils/logic-setup.ts"],
