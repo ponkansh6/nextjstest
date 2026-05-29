@@ -14,7 +14,7 @@ export interface UseCpiChartDataProps {
 export const computeChartData = (props: UseCpiChartDataProps, hiddenQuarters: number[]) => {
   const { nominalData, startYear, endYear, nominalKeys, realKeys, maxCpiDate } = props;
 
-    // Normalize 年月 formatting to a canonical form (e.g., "2020年1月") to tolerate zero-padded months like "2020年01月".
+  // Normalize 年月 formatting to a canonical form (e.g., "2020年1月") to tolerate zero-padded months like "2020年01月".
   const normalizeYm = (ym?: string | number) => {
     if (!ym || typeof ym !== "string") return String(ym || "").trim();
     const m = ym.trim().match(/^(\d{4})年0?(\d{1,2})月/);

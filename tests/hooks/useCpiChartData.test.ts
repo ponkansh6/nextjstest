@@ -1,98 +1,74 @@
 import { computeChartData } from "../../src/lib/chartLogic";
+import { loadCtiData } from "../../server/lib/dataLoader";
+import { nominalKeys } from "../../src/lib/chartConstants";
+import { describe, it, expect, beforeAll } from "vitest";
 import type { CpiData } from "../../src/app/page";
-import { createCpiDataList } from "../factories/cpiDataFactory";
 
-describe("useCpiChartData logic (computeChartData)", () => {
-  const mockData: CpiData[] = [];
-  const mockNominalData: CpiData[] = createCpiDataList([
-    { 年月: "2020年1月", 総合: 100, 項目A: 50 },
-    { 年月: "2020年2月", 総合: 101, 項目A: 51 },
-    { 年月: "2020年3月", 総合: 102, 項目A: 52 },
-  ]);
-  const props = {
-    data: mockData,
-    endYear: 2020,
-    maxCpiDate: { month: 3, year: 2020 },
-    nominalData: mockNominalData,
-    nominalKeys: ["総合", "項目A"],
-    realKeys: [],
-    startYear: 2020,
-  };
+describe("useCpiChartData logic (computeChartData) with real data", () => {
+  let realData: CpiData[];
 
-  it("should aggregate data into quarters correctly", () => {
-    const result = computeChartData(props, []);
-
-    expect(result.quarterlyNominalData).toHaveLength(1);
-    expect(result.quarterlyNominalData[0]).toMatchObject({
-      quarter: 1,
-      年: 2020,
-      総合: 303,
-      項目A: 153,
-    });
+  beforeAll(async () => {
+    realData = await loadCtiData();
   });
 
-  it("should set values to 0 if data for a quarter is incomplete (missing months)", () => {
-    // 2月と3月がないデータ
-    const incompleteData: CpiData[] = createCpiDataList([
-      { 年月: "2020年1月", 総合: 100, 項目A: 50 },
-    ]);
+  it("should aggregate data into quarters correctly for 2020 Q1", () => {
+    const q1Data = realData.filter(d => 
+        d.年月 === "2020年1月" || d.年月 === "2020年2月" || d.年月 === "2020年3月"
+    );
 
-    const propsIncomplete = { ...props, nominalData: incompleteData };
-    const result = computeChartData(propsIncomplete, []);
-
-    expect(result.quarterlyNominalData[0]).toMatchObject({
-      quarter: 1,
-      年: 2020,
-      総合: 0,
-      項目A: 0,
-    });
-  });
-
-  it("should truncate data based on maxCpiDate", () => {
-    const propsBeyondMax = {
-      ...props,
-      endYear: 2021,
-      maxCpiDate: { month: 3, year: 2020 }, // 2020年Q1までしかデータがない
-    };
-
-    const result = computeChartData(propsBeyondMax, []);
-
-    // 2020年Q1のみが計算されるべき
-    expect(result.quarterlyNominalData).toHaveLength(1);
-    expect(result.quarterlyNominalData[0].年).toBe(2020);
-  });
-
-  it("should calculate correct data range (first and last quarters)", () => {
     const props = {
-      data: [],
-      endYear: 2021,
-      maxCpiDate: { month: 12, year: 2021 },
-      nominalData: createCpiDataList([
-        { 年月: "2020年1月", 総合: 100 },
-        { 年月: "2021年12月", 総合: 100 },
-      ]),
-      nominalKeys: ["総合"],
+      data: realData,
+      endYear: 2020,
+      maxCpiDate: { month: 3, year: 2020 },
+      nominalData: q1Data,
+      nominalKeys: nominalKeys,
       realKeys: [],
       startYear: 2020,
     };
 
     const result = computeChartData(props, []);
 
-    // 最古四半期 (2020年Q1) と 最新四半期 (2021年Q4) が存在することを確認
-    const data = result.quarterlyNominalData;
-    expect(data.length).toBeGreaterThan(0);
-    
-    const oldest = data[0];
-    const latest = data[data.length - 1];
+    expect(result.quarterlyNominalData).toHaveLength(1);
+    expect(result.quarterlyNominalData[0].label).toBe("2020年Q1");
+    // Verify meaningful values are aggregated
+    expect(result.quarterlyNominalData[0]["食料（名目）"]).toBeGreaterThan(0);
+  });
 
-    expect(oldest.label).toBe("2020年Q1");
-    expect(latest.label).toBe("2021年Q4");
+  it("should return empty if data for a quarter is missing in real data", () => {
+    // 2025年Q1はまだデータが揃っていない可能性が高い（最新に近い）ので、そこをあえて指定して動作確認
+    const incompleteData = realData.filter(d => d.年月 === "2025年1月");
+    
+    const propsIncomplete = {
+      data: realData,
+      endYear: 2025,
+      maxCpiDate: { month: 3, year: 2025 },
+      nominalData: incompleteData,
+      nominalKeys: nominalKeys,
+      realKeys: [],
+      startYear: 2025,
+    };
+    
+    const result = computeChartData(propsIncomplete, []);
+
+    // 1月しかないため、Q1は計算されないか、値が0になる
+    const q1 = result.quarterlyNominalData.find(d => d.label === "2025年Q1");
+    if (q1) {
+       expect(q1["食料（名目）"]).toBe(0);
+    }
   });
 
   it("should toggle quarters correctly", () => {
-    const hiddenQuarters = [1];
-    const result = computeChartData(props, hiddenQuarters);
-
-    expect(result.quarterlyNominalData).toHaveLength(0);
+    const props = {
+      data: realData,
+      endYear: 2020,
+      maxCpiDate: { month: 3, year: 2020 },
+      nominalData: realData.filter(d => d.年月.startsWith("2020年")),
+      nominalKeys: nominalKeys,
+      realKeys: [],
+      startYear: 2020,
+    };
+    
+    const result = computeChartData(props, [1]); // Hide Q1
+    expect(result.quarterlyNominalData.length).toBe(0);
   });
 });

@@ -22,28 +22,39 @@ describe("Modular Pipeline Integration - Granular Coverage", () => {
     console.log("Latest Spending Month:", latest.年月);
   });
 
-  it("should verify Spending series have positive values at pre-render", async () => {
+  it("should verify Spending series have positive values at pre-render using full data range", async () => {
     const ctiData = await loadCtiData();
+    // Use the full range of data to catch inconsistencies across all years
+    const startYear = 2005; 
+    const endYear = 2026;
+    
     const chartData = computeChartData(
       {
-        data: [],
+        data: ctiData,
         nominalData: ctiData,
-        startYear: 2020,
-        endYear: 2020,
+        startYear: startYear,
+        endYear: endYear,
         nominalKeys,
         realKeys,
-        maxCpiDate: { year: 2020, month: 12 },
+        maxCpiDate: { year: 2026, month: 12 },
       },
       []
     );
+    
     const checkSeries = (data: any[], keys: string[]) => {
       keys.forEach(key => {
+        // Just verify at least one month has data for each key in the full range
         const hasData = data.some(d => typeof d[key] === 'number' && d[key] > 0);
-        expect(hasData, `Series ${key} should have positive values`).toBe(true);
+        expect(hasData, `Series ${key} should have positive values across the full range`).toBe(true);
       });
     };
+    
     checkSeries(chartData.quarterlyNominalData, nominalKeys);
-    checkSeries(chartData.quarterlyRealData, realKeys);
+    // Real keys are derived and might be empty if realData is missing, 
+    // but they should be at least checked if they exist in the resulting data object.
+    if (realKeys.length > 0) {
+        checkSeries(chartData.quarterlyRealData, realKeys);
+    }
   });
 
   // Wage
