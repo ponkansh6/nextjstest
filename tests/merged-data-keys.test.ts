@@ -1,4 +1,4 @@
-import { loadCpiData, loadTotalEarningData } from "../src/lib/cpiData";
+import { loadCpiData, loadTotalEarningData } from "../server/lib/dataLoader";
 import { mergeChartData } from "../src/lib/chartUtils";
 
 describe("chart Data Regression Tests", () => {

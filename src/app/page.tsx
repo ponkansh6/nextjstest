@@ -1,4 +1,4 @@
-import { loadCpiData, loadCtiData, loadTotalEarningData } from "../lib/cpiData";
+import { loadCpiData, loadCtiData, loadTotalEarningData } from "../../server/lib/dataLoader";
 import CpiChart from "./components/CpiChart";
 import styles from "./page.module.css";
 

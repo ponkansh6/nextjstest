@@ -12,9 +12,16 @@ import {
 import styles from "./CpiChart.module.css";
 import { getLegendLabel } from "../../lib/chartConstants";
 
+interface QuarterlyDataPoint {
+  label: string;
+  年: number;
+  quarter: number;
+  [key: string]: string | number;
+}
+
 interface SpendingBarChartProps {
   title: string;
-  data: Record<string, unknown>[];
+  data: QuarterlyDataPoint[];
   keys: string[];
   colors: string[];
   hiddenKeys: string[];
@@ -100,11 +107,11 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = ({
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.gridStroke} />
           {data
             .filter(
-              (d: any) =>
+              (d) =>
                 d.label.endsWith("Q1") &&
                 [2010, 2015, 2020, 2025].includes(parseInt(d.label.split("年")[0])),
             )
-            .map((d: any) => (
+            .map((d) => (
               <ReferenceLine
                 key={d.label}
                 x={d.label}

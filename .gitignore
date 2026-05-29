@@ -1,61 +1,28 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# Node
+node_modules/
+package-lock.json
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
-
-# testing
-/coverage
-
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
-.DS_Store
-*.pem
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# env files (can opt-in for committing if needed)
-.env*
-
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
-
-# python
-.venv/
-.venv-convert/
-__pycache__/
-*.py[cod]
-*$py.class
+# Next/Vite/TS
+.next/
+.vitest/
+coverage/
 dist/
 build/
-*.spec
+*.tsbuildinfo
 
-# project specific
-/scripts/dist/
-/scripts/build/
-*.bak.*
-*.csv.bak.*
-*.csv.converted*
-.eslintcache
+# Python virtualenv
+.venv/
+.venv-convert/
 
+# Editor
+.vscode/
+.idea/
 
+# OS
+.DS_Store
+Thumbs.db
+
+# Large data/backups
+public/backup/
+public/cpi_source/*.xls
+public/cpi_source/*.xlsx

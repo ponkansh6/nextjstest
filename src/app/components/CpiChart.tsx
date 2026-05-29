@@ -182,8 +182,16 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
   const realColors = nominalColors;
   const nominalData = ctiData;
 
+  const [nominalHiddenKeys, setNominalHiddenKeys] = useState<string[]>([]);
+
+  // CAGR計算用のステート
+  const [cagrStartYear, setCagrStartYear] = useState<number>(initialStartYear);
+  const [cagrEndYear, setCagrEndYear] = useState<number>(initialEndYear);
+  const [cagrMonth, setCagrMonth] = useState<number>(1);
+  const [cagrResult, setCagrResult] = useState<number | null>(null);
+
   // 四半期データの集計をカスタムフックに委譲
-  const { quarterlyNominalData, quarterlyRealData, hiddenQuarters, toggleQuarter } =
+  const { quarterlyNominalData, quarterlyRealData, hiddenQuarters, toggleQuarter, loading, error } =
     useCpiChartData({
       data,
       endYear,
@@ -194,11 +202,12 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
       startYear,
     });
 
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
+
   const handleQuarterLegendClick = (quarter: number) => {
     toggleQuarter(quarter);
   };
-
-  const [nominalHiddenKeys, setNominalHiddenKeys] = useState<string[]>([]);
 
   const handleNominalLegendClick = (dataKey: string) => {
     // どちらのペアに属しているか検索
@@ -220,12 +229,6 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
       return Array.from(next);
     });
   };
-
-  // CAGR計算用のステート
-  const [cagrStartYear, setCagrStartYear] = useState<number>(initialStartYear);
-  const [cagrEndYear, setCagrEndYear] = useState<number>(initialEndYear);
-  const [cagrMonth, setCagrMonth] = useState<number>(1);
-  const [cagrResult, setCagrResult] = useState<number | null>(null);
 
   // 選択中のカテゴリで特定の年月データの合計を計算
   // 注: CAGR計算では年月がフィルタリング範囲外の場合もあるため、元のdataを使用

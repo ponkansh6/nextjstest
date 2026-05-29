@@ -1,4 +1,4 @@
-import { loadCpiData } from "../src/lib/cpiData";
+import { loadCpiData } from "../server/lib/dataLoader";
 import { computeChartData } from "../src/lib/chartLogic";
 import { nominalKeys } from "../src/lib/chartConstants";
 

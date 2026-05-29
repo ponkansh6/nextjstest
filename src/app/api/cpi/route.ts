@@ -1,4 +1,4 @@
-import { loadCpiData } from "../../../lib/cpiData";
+import { loadCpiData } from "../../../../server/lib/dataLoader";
 
 export async function GET() {
   try {

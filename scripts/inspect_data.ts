@@ -1,4 +1,4 @@
-import { loadCpiData } from "../src/lib/cpiData";
+import { loadCpiData } from "../server/lib/dataLoader";
 
 async function inspect() {
   const data = await loadCpiData();

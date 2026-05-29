@@ -1,4 +1,4 @@
-import { loadTotalEarningData, loadCpiData } from "../src/lib/cpiData";
+import { loadTotalEarningData, loadCpiData } from "../server/lib/dataLoader";
 
 async function dump() {
   const earnings = await loadTotalEarningData();

@@ -33,4 +33,29 @@ describe("CpiChart data integrity logic", () => {
       expect(typeof sampleData[key]).toBe("number");
     });
   });
+
+  it("should calculate and aggregate values correctly for a full quarter", () => {
+    const mockData = [
+      { 年月: "2020年1月", "住居（名目）": 10, "食料（名目）": 20, "その他の消費支出（名目）": 5 },
+      { 年月: "2020年2月", "住居（名目）": 10, "食料（名目）": 20, "その他の消費支出（名目）": 5 },
+      { 年月: "2020年3月", "住居（名目）": 10, "食料（名目）": 20, "その他の消費支出（名目）": 5 },
+    ];
+    const testProps = {
+      ...props,
+      nominalData: mockData,
+    };
+
+    const result = computeChartData(testProps, []);
+    const row = result.quarterlyNominalData[0];
+
+    nominalKeys.forEach((key) => {
+      expect(row, `Key ${key} missing or undefined in render data`).toHaveProperty(key);
+      expect(typeof row[key]).toBe("number");
+    });
+
+    const total = nominalKeys.reduce((acc, k) => acc + (row[k] as number || 0), 0);
+    expect(total).toBeGreaterThan(0);
+    // Provided per-month sum = 10 + 20 + 5 = 35. For a full quarter, expected 35 * 3 = 105
+    expect(total).toBe(105);
+  });
 });

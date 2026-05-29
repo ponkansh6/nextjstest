@@ -24,8 +24,9 @@ export const computeChartData = (props: UseCpiChartDataProps, hiddenQuarters: nu
       }
     }
 
+    const nominalMap = new Map(normalizedNominalData.map((d) => [d.年月, d]));
     return allMonths.map((yearMonth) => {
-      const existingData = normalizedNominalData.find((item: CpiData) => item.年月 === yearMonth);
+      const existingData = nominalMap.get(yearMonth);
       if (existingData) {
         return existingData;
       }
@@ -43,6 +44,7 @@ export const computeChartData = (props: UseCpiChartDataProps, hiddenQuarters: nu
 
   const nominalMonthsSet = new Set(normalizedNominalData.map((d: CpiData) => d.年月));
   const effectiveEndYear = Math.min(endYear, maxCpiDate.year);
+  const filteredNominalMap = new Map(filteredNominalData.map((d) => [d.年月, d]));
 
   const getQuarterlyData = (keys: string[]) => {
     const rows: {
@@ -68,7 +70,7 @@ export const computeChartData = (props: UseCpiChartDataProps, hiddenQuarters: nu
         let validMonthsCount = 0;
         months.forEach((m) => {
           const monthStr = `${y}年${m}月`;
-          const row = filteredNominalData.find((r: CpiData) => r.年月 === monthStr);
+          const row = filteredNominalMap.get(monthStr);
           if (row) {
             if (nominalMonthsSet.has(monthStr)) {
               validMonthsCount++;

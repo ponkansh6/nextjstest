@@ -11,10 +11,11 @@ import {
 } from "recharts";
 import { getLegendLabel } from "../../lib/chartConstants";
 import styles from "./CpiChart.module.css";
+import type { CpiData } from "../page";
 
 interface StackedAreaChartProps {
   title: string;
-  data: Record<string, unknown>[];
+  data: CpiData[];
   keys: string[];
   colors: string[];
   hiddenKeys: string[];
@@ -77,11 +78,11 @@ export const StackedAreaChart: React.FC<StackedAreaChartProps> = ({
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.gridStroke} />
           {data
             .filter(
-              (d: any) =>
+              (d) =>
                 d.年月.endsWith("年1月") &&
                 [2010, 2015, 2020, 2025].includes(parseInt(d.年月.split("年")[0])),
             )
-            .map((d: any) => (
+            .map((d) => (
               <ReferenceLine
                 key={d.年月}
                 x={d.年月}

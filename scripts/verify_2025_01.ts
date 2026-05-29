@@ -1,4 +1,4 @@
-import { loadTotalEarningData } from "../src/lib/cpiData";
+import { loadTotalEarningData } from "../server/lib/dataLoader";
 import * as fs from "fs";
 import * as path from "path";
 import Papa from "papaparse";

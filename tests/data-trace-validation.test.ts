@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { loadCtiData, loadCpiData } from "../src/lib/cpiData";
+import { loadCtiData, loadCpiData } from "../server/lib/dataLoader";
 import { computeChartData } from "../src/lib/chartLogic";
 import { nominalKeys } from "../src/lib/chartConstants";
 
