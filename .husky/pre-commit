@@ -1,25 +1,21 @@
 #!/bin/sh
 
-echo "Running pre-commit checks (excluding tests)..."
+echo "Running pre-commit checks..."
 
-# Check for unstaged changes
+# 1. 未ステージの変更チェック
 if [ -n "$(git diff --name-only)" ]; then
-  echo "Error: You have unstaged changes. Please stage them using 'git add' before committing."
+  echo "Error: Unstaged changes detected. Please stage them before committing."
   exit 1
 fi
 
-# 1. Fast Linting (oxlint)
+# 2. 静的解析・整合性チェック
 npm run lint:fast
-
-# 2. Dependency Check (depcheck)
 npm run check:deps
 
-# 3. Fast Formatting (oxfmt) - Exclude tests
+# 3. コードフォーマット・型チェック
 npx oxfmt --write . "!tests/**"
-
-# 3. Fast Type Checking (tsgo) - Excludes tests via tsconfig.json
 npm run type-check:fast
 
-# 4. Logic Tests
-echo "Running logic tests..."
+# 4. 関連テストの実行
+echo "Running relevant logic tests..."
 npm run test -- --changed
