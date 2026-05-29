@@ -1,0 +1,7 @@
+ignores:
+  - "@types/react-is"
+  - "eslint-plugin-react"
+  - "eslint-plugin-react-hooks"
+  - "husky"
+  - "lint-staged"
+  - "prettier"

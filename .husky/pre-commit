@@ -11,7 +11,10 @@ fi
 # 1. Fast Linting (oxlint)
 npm run lint:fast
 
-# 2. Fast Formatting (oxfmt) - Exclude tests
+# 2. Dependency Check (depcheck)
+npm run check:deps
+
+# 3. Fast Formatting (oxfmt) - Exclude tests
 npx oxfmt --write . "!tests/**"
 
 # 3. Fast Type Checking (tsgo) - Excludes tests via tsconfig.json
