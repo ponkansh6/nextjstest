@@ -1,8 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
-import { GET } from "../../../../src/app/api/cpi/route";
-import * as dataLoader from "../../../../server/lib/dataLoader";
+import { GET } from "../../../src/app/api/cpi/route";
+import * as dataLoader from "../../../server/lib/dataLoader";
 
-vi.mock("../../../../server/lib/dataLoader");
+vi.mock("../../../server/lib/dataLoader");
 
 describe("API /api/cpi", () => {
   it("should return data on success", async () => {

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import fs from "fs";
-import { loadCpiData, loadTotalEarningData, loadPopulationData, loadCtiData } from "../../../../../server/lib/dataLoader";
+import { loadCpiData, loadTotalEarningData, loadPopulationData, loadCtiData } from "../../../../server/lib/dataLoader";
 
 vi.mock("fs");
 
