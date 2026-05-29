@@ -1,6 +1,6 @@
-(async () => {
-  const { loadTotalEarningData } = await import("./src/lib/cpiData.js");
+import { loadTotalEarningData } from "./server/lib/dataLoader";
 
+(async () => {
   try {
     const data = await loadTotalEarningData();
     if (data.length > 0) {
