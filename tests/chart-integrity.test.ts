@@ -1,5 +1,5 @@
 import { computeChartData } from "../src/lib/chartLogic";
-import type { CpiData } from "../src/app/page";
+import type { CpiData } from "../src/types";
 import { createCpiDataList } from "./factories/cpiDataFactory";
 import { nominalKeys } from "../src/lib/chartConstants";
 

@@ -1,4 +1,4 @@
-import type { CpiData } from "../app/page";
+import type { CpiData } from "@/types";
 
 /**
  * 給与指標を特定の分母（労働者数や人口など）で割り、基準年（2020年）を100としてスケーリングします。

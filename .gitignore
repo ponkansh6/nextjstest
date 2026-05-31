@@ -26,3 +26,4 @@ Thumbs.db
 public/backup/
 public/cpi_source/*.xls
 public/cpi_source/*.xlsx
+.eslintcache

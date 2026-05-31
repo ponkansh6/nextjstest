@@ -7,8 +7,8 @@ async function verify() {
   const data = await loadTotalEarningData();
 
   // 2024年12月と2025年1月を探す
-  const d202412 = data.find((d) => d.年月 === "2024年12月");
-  const d202501 = data.find((d) => d.年月 === "2025年1月");
+  const d202412 = data.find((d: any) => d.年月 === "2024年12月");
+  const d202501 = data.find((d: any) => d.年月 === "2025年1月");
 
   console.log(
     "2024年12月:",

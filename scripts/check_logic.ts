@@ -2,7 +2,7 @@ import { loadTotalEarningData } from "../server/lib/dataLoader";
 
 async function check() {
   const data = await loadTotalEarningData();
-  const idx200501 = data.findIndex((d) => d.年月 === "2005年1月");
+  const idx200501 = data.findIndex((d: any) => d.年月 === "2005年1月");
 
   // 移動平均後の値ではなく、計算直後の「残差」を確認する
   // 修正前のコードを見る必要があるため、今度は一時的なデバッグログを追加して実行する

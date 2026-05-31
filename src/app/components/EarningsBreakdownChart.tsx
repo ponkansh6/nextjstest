@@ -11,7 +11,7 @@ import {
   YAxis,
 } from "recharts";
 import styles from "./CpiChart.module.css";
-import type { CpiData } from "../page";
+import type { CpiData } from "@/types";
 
 interface EarningsBreakdownChartProps {
   data: CpiData[];

@@ -1,6 +1,6 @@
 import mockCpiData from "../fixtures/cpi-data.json";
-import { calculateCategorySum } from "../../src/lib/cpiData";
-import type { CpiData } from "../../src/app/page";
+import { calculateCategorySum } from "../../src/lib/client_calculations";
+import type { CpiData } from "../../src/types";
 import { createCpiDataList } from "../factories/cpiDataFactory";
 
 const cpiData = createCpiDataList(mockCpiData as Partial<CpiData>[]);

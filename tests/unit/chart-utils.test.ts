@@ -1,5 +1,5 @@
 import { filterDataByYear, mergeChartData } from "../../src/lib/chartUtils";
-import { CpiData } from "../../src/app/page";
+import { CpiData } from "../../src/types";
 import { createCpiDataList } from "../factories/cpiDataFactory";
 
 describe("chartUtils", () => {

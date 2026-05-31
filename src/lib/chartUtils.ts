@@ -1,4 +1,4 @@
-import type { CpiData } from "../app/page";
+import type { CpiData } from "@/types";
 
 type MergedData = CpiData;
 

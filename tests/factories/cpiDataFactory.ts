@@ -1,4 +1,4 @@
-import type { CpiData } from "../../src/app/page";
+import type { CpiData } from "../../src/types";
 
 /**
  * テスト用のCpiDataオブジェクトを生成するファクトリ関数

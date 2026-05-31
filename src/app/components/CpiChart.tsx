@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import type { CpiData } from "../page";
+import type { CpiData } from "@/types";
 import { filterDataByYear, mergeChartData } from "../../lib/chartUtils";
 import styles from "./CpiChart.module.css";
 import { ChartFilters } from "./ChartFilters";

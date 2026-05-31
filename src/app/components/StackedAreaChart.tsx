@@ -11,7 +11,7 @@ import {
 } from "recharts";
 import { getLegendLabel } from "../../lib/chartConstants";
 import styles from "./CpiChart.module.css";
-import type { CpiData } from "../page";
+import type { CpiData } from "@/types";
 
 interface StackedAreaChartProps {
   title: string;
