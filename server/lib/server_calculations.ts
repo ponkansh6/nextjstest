@@ -1,6 +1,20 @@
 import type { CpiData } from "@/types";
 
 /**
+ * 給与指標を特定の分母（労働者数や人口など）で割り、基準年（2020年）を100としてスケーリングします。
+ */
+export function calculateAdjustedMetric(
+  totalEarnings: number,
+  denominator: number,
+  scalingFactor: number,
+): number {
+  if (denominator <= 0) {
+    return 0;
+  }
+  return (totalEarnings / denominator) * scalingFactor;
+}
+
+/**
  * Calculates the smoothed total of earnings.
  * Note: In the current implementation, '特別給与' is already smoothed via a 12-month moving average.
  */

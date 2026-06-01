@@ -3,12 +3,13 @@ import path from "path";
 import Papa from "papaparse";
 import { unstable_cache } from "next/cache";
 import type { CpiData } from "@/types";
-import { calculateAdjustedMetric } from "../../src/lib/client_calculations";
+
 import {
   calculateSmoothedTotal,
   calculateRawResidual,
   applyResidualMovingAverage,
   applyMovingAverage,
+  calculateAdjustedMetric,
 } from "./server_calculations";
 
 async function _loadPopulationData(): Promise<

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import type { UseCpiChartDataProps } from "../lib/chartLogic";
-import { computeChartData } from "../lib/chartLogic";
+import type { UseCpiChartDataProps } from "../lib/clientCalculations";
+import { computeChartData } from "../lib/clientCalculations";
 
 export type { UseCpiChartDataProps };
 

@@ -10,7 +10,7 @@ import { MajorIndicesChart } from '../../src/app/components/MajorIndicesChart';
 import { EarningsBreakdownChart } from '../../src/app/components/EarningsBreakdownChart';
 import { loadCtiData, loadCpiData, loadTotalEarningData } from '../../server/lib/dataLoader';
 import { nominalKeys, getLegendLabel, targetKeys } from '../../src/lib/chartConstants';
-import { computeChartData } from '../../src/lib/chartLogic';
+import { computeChartData } from '../../src/lib/clientCalculations';
 import { filterDataByYear, mergeChartData } from '../../src/lib/chartUtils';
 import { setupUiMocks } from '../utils/ui-mocks';
 

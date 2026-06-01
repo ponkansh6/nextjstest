@@ -12,6 +12,7 @@ import { StackedAreaChart } from "./StackedAreaChart";
 import { EarningsBreakdownChart } from "./EarningsBreakdownChart";
 import { ResidualAreaChart } from "./ResidualAreaChart";
 import { MajorIndicesChart } from "./MajorIndicesChart";
+import { calculateCategorySum } from "../../lib/clientCalculations";
 import {
   colors,
   keyPairs,
@@ -230,37 +231,6 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
     });
   };
 
-  // 選択中のカテゴリで特定の年月データの合計を計算
-  // 注: CAGR計算では年月がフィルタリング範囲外の場合もあるため、元のdataを使用
-  const calculateCategorySum = (year: number, month: number): number => {
-    const dataPoint = data.find((item) => {
-      if (!item.年月 || typeof item.年月 !== "string") {
-        return false;
-      }
-      const m = item.年月.match(/^\s*(\d{4})年\s*0?(\d{1,2})月/);
-      if (!m) {
-        return false;
-      }
-      const y = parseInt(m[1], 10);
-      const mo = parseInt(m[2], 10);
-      return y === year && mo === month;
-    });
-    if (!dataPoint) {
-      return 0;
-    }
-
-    let sum = 0;
-    stackedKeys.forEach((key) => {
-      if (!stackedHiddenKeys.includes(key)) {
-        const value = dataPoint[key];
-        if (typeof value === "number") {
-          sum += value;
-        }
-      }
-    });
-    return sum;
-  };
-
   // CAGR計算関数
   const calculateCAGR = (): void => {
     if (cagrStartYear === cagrEndYear) {
@@ -268,8 +238,9 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
       return;
     }
 
-    const startValue = calculateCategorySum(cagrStartYear, cagrMonth);
-    const endValue = calculateCategorySum(cagrEndYear, cagrMonth);
+    // クライアントライブラリの calculateCategorySum を使用
+    const startValue = calculateCategorySum(data, cagrStartYear, cagrMonth, [], stackedKeys);
+    const endValue = calculateCategorySum(data, cagrEndYear, cagrMonth, [], stackedKeys);
 
     if (startValue === 0) {
       const monthStr = String(cagrMonth).padStart(2, "0");
