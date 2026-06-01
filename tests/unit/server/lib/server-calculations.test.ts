@@ -4,7 +4,7 @@ import {
   calculateRawResidual,
   applyResidualMovingAverage,
   applyMovingAverage,
-} from '../../../../server/lib/server_calculations';
+} from '../../../../server/lib/serverCalculations';
 import type { CpiData } from '../../../../src/types';
 
 describe('calculations.ts', () => {

@@ -10,7 +10,7 @@ import {
   applyResidualMovingAverage,
   applyMovingAverage,
   calculateAdjustedMetric,
-} from "./server_calculations";
+} from "./serverCalculations";
 
 async function _loadPopulationData(): Promise<
   Map<string, { total: number; index: number; ma: number }>
