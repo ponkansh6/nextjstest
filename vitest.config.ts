@@ -8,7 +8,7 @@ export default defineConfig({
     globals: true,
     include: ["tests/**/*.{test.ts,test.tsx}"],
     root: "./",
-    environment: "happy-dom",
+    environment: "node",
     setupFiles: ["./tests/utils/logic-setup.ts"],
     coverage: {
       provider: "v8",

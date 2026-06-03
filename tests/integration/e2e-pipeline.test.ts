@@ -1,3 +1,7 @@
+/**
+ * @vitest-environment happy-dom
+ */
+
 import { expect, it, describe, beforeAll } from "vitest";
 import { renderHook } from "@testing-library/react";
 import { loadCtiData, loadCpiData, loadTotalEarningData } from "../../server/lib/dataLoader";
