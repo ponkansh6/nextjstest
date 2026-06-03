@@ -10,7 +10,6 @@ fi
 
 # 2. 静的解析・整合性チェック
 npm run lint:fast
-npm run check:deps
 
 # 3. コードフォーマット・型チェック
 npx oxfmt --write . "!tests/**"

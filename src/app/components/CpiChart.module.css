@@ -1,6 +1,5 @@
 .chartContainer {
   width: 100%;
-  max-width: 1000px;
   margin: 0 auto;
   background-color: var(--card-bg);
   padding: 1.5rem;
@@ -189,6 +188,12 @@
 .chartWrapper {
   height: 500px;
   width: 100%;
+}
+
+@media (min-width: 641px) {
+  .chartWrapper {
+    height: 700px;
+  }
 }
 
 .chartSection {
