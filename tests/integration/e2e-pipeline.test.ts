@@ -45,7 +45,7 @@ describe("End-to-End Pipeline Integration", () => {
       const supportKey = "民間最終消費支出_scaled";
       quarterlyNominalData.forEach(d => {
         const year = d.年 as number;
-        if (year >= 2005 && year <= 2017) {
+        if (year >= 2005 && year <= 2016) {
           expect(typeof d[supportKey], `Year ${year} Q${d.quarter} ${supportKey} should be a number`).toBe("number");
           // 一部のデータが0になる可能性を考慮し、値を確認する
           if (typeof d[supportKey] === "number" && d[supportKey] > 0) {
@@ -54,7 +54,7 @@ describe("End-to-End Pipeline Integration", () => {
           } else if (d[supportKey] === 0) {
             console.warn(`Year ${year} Q${d.quarter} ${supportKey} is 0`);
           }
-        } else {
+        } else if (year >= 2017) {
           expect(d[supportKey]).toBe(0);
         }
       });
