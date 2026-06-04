@@ -338,10 +338,56 @@ export const loadTotalEarningData = maybeCache(_loadTotalEarningData, "earnings-
 
 async function _loadCtiData(): Promise<CpiData[]> {
   const ctiFilePath = path.join(process.cwd(), "public/cti_data.csv");
+  const ctiSupportPath = path.join(process.cwd(), "public/cti_support.csv");
   if (!fs.existsSync(ctiFilePath)) {
     console.error("CTI data file not found");
     return [];
   }
+  // attempt to load cti_support if present
+  const supportMap = new Map<string, number>();
+  try {
+    if (fs.existsSync(ctiSupportPath)) {
+      const supportContent = fs.readFileSync(ctiSupportPath, "utf8");
+      const parsedSupp = Papa.parse<string[]>(supportContent, {
+        header: false,
+        skipEmptyLines: false,
+      });
+      const suppRows = (parsedSupp.data || []) as string[][];
+      const suppHeaderIndex = suppRows.findIndex(
+        (r) =>
+          Array.isArray(r) && r.some((c) => typeof c === "string" && /民間最終消費支出/.test(c)),
+      );
+      if (suppHeaderIndex !== -1) {
+        const suppHeader = suppRows[suppHeaderIndex].map((c) =>
+          typeof c === "string" ? c.trim() : c,
+        );
+        const suppDataRows = suppRows.slice(suppHeaderIndex + 1);
+        const ymIndex = suppHeader.indexOf("時間軸（四半期）");
+        const valueIndex = suppHeader.findIndex((h) => h === "民間最終消費支出");
+        console.log(`ymIndex: ${ymIndex}, valueIndex: ${valueIndex}`);
+
+        suppDataRows.forEach((row) => {
+          const ym = row[ymIndex];
+          const valStr =
+            typeof row[valueIndex] === "string"
+              ? row[valueIndex].trim().replace(/,/g, "")
+              : String(row[valueIndex]);
+          const num = parseFloat(valStr);
+          if (ym && !isNaN(num)) {
+            supportMap.set(ym, num);
+          }
+        });
+        console.log("Support map size:", supportMap.size);
+        console.log("Example:", Array.from(supportMap.entries()).slice(0, 5));
+
+        console.log("Support Map Size:", supportMap.size);
+        console.log("Support Map Example:", Array.from(supportMap.entries()).slice(0, 5));
+      }
+    }
+  } catch (err) {
+    console.error("Error loading CTI support file:", err);
+  }
+
   try {
     const ctiContent = fs.readFileSync(ctiFilePath, "utf8");
     const parsed = Papa.parse<string[]>(ctiContent, { header: false, skipEmptyLines: false });
@@ -354,6 +400,10 @@ async function _loadCtiData(): Promise<CpiData[]> {
             typeof c === "string" && (c.trim() === "月" || c.trim().includes("消費支出（名目）")),
         ),
     );
+    // DEBUG:
+    console.log(`Header Index: ${headerIndex}`);
+    if (headerIndex !== -1) console.log(`Header content: ${rows[headerIndex]}`);
+
     if (headerIndex === -1) {
       console.error("CTI header not found");
       return [];
@@ -381,12 +431,28 @@ async function _loadCtiData(): Promise<CpiData[]> {
           obj[h] = val;
         });
         if (typeof obj["月"] === "string" && !obj.年月) obj.年月 = obj["月"];
+        // merge support value if available
+        const ymStr = typeof obj.年月 === "string" ? obj.年月.trim() : String(obj.年月);
+        // Map "2020年1月" to quarter string "2020年1～3月期" to match supportMap keys
+        const m = ymStr.match(/^(\d{4})年0?(\d{1,2})月/);
+        if (m) {
+          const year = m[1];
+          const month = parseInt(m[2], 10);
+          const q = Math.ceil(month / 3);
+          const qStart = (q - 1) * 3 + 1;
+          const qEnd = q * 3;
+          const normYm = `${year}年${qStart}～${qEnd}月期`;
+          if (supportMap.has(normYm)) {
+            obj["民間最終消費支出"] = supportMap.get(normYm) as number;
+          }
+        }
         return obj as unknown as CpiData;
       })
       .filter((row) => {
         if (!row.年月) return false;
+        // console.log(`Checking row: ${row.年月}`);
         const m = String(row.年月).match(/^(\d{4})年/);
-        return m ? parseInt(m[1], 10) >= 2005 : false;
+        return m ? parseInt(m[1], 10) >= 1994 : false;
       });
     const nominalKeys = [
       "食料（名目）",

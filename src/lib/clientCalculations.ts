@@ -1,5 +1,7 @@
 import type { CpiData } from "@/types";
 
+export const SUPPORT_KEY = "民間最終消費支出";
+
 export const CPI_CATEGORIES = [
   "住居",
   "家具・家事用品",
@@ -75,10 +77,12 @@ export const computeChartData = (props: UseCpiChartDataProps, hiddenQuarters: nu
     return `${m[1]}年${parseInt(m[2], 10)}月`;
   };
 
-  const normalizedNominalData: CpiData[] = nominalData.map((d) => ({
-    ...d,
-    年月: normalizeYm(String(d.年月)),
-  }));
+  const normalizedNominalData: CpiData[] = nominalData.map((d) => {
+    return {
+      ...d,
+      年月: normalizeYm(String(d.年月)),
+    };
+  });
 
   const filteredNominalData = (() => {
     const allMonths: string[] = [];
@@ -102,6 +106,8 @@ export const computeChartData = (props: UseCpiChartDataProps, hiddenQuarters: nu
       realKeys.forEach((key: string) => {
         emptyItem[key as keyof CpiData] = 0;
       });
+      // ensure support field exists
+      emptyItem[SUPPORT_KEY] = 0;
       return emptyItem;
     });
   })();
@@ -120,6 +126,7 @@ export const computeChartData = (props: UseCpiChartDataProps, hiddenQuarters: nu
     for (let y = startYear; y <= effectiveEndYear; y++) {
       const maxQ = y === maxCpiDate.year ? Math.ceil(maxCpiDate.month / 3) : 4;
       for (let q = 1; q <= maxQ; q++) {
+        // 1994年1～3月期 => [1, 2, 3] (q=1)
         const months =
           q === 1 ? [1, 2, 3] : q === 2 ? [4, 5, 6] : q === 3 ? [7, 8, 9] : [10, 11, 12];
         const label = `${y}年Q${q}`;
@@ -130,6 +137,8 @@ export const computeChartData = (props: UseCpiChartDataProps, hiddenQuarters: nu
           [key: string]: number | string;
         } = { label, quarter: q, 年: y };
         keys.forEach((k: string) => (item[k] = 0));
+        // add support field
+        item[SUPPORT_KEY] = 0;
 
         let validMonthsCount = 0;
         months.forEach((m) => {
@@ -145,11 +154,16 @@ export const computeChartData = (props: UseCpiChartDataProps, hiddenQuarters: nu
                 item[k] = (item[k] as number) + v;
               }
             });
+            const supp = row[SUPPORT_KEY] as unknown as number;
+            if (typeof supp === "number" && !isNaN(supp)) {
+              item[SUPPORT_KEY] = (item[SUPPORT_KEY] as number) + supp;
+            }
           }
         });
 
         if (validMonthsCount !== 3) {
           keys.forEach((k: string) => (item[k] = 0));
+          item[SUPPORT_KEY] = 0;
         }
         if (!hiddenQuarters.includes(q)) {
           rows.push(item);
@@ -159,8 +173,53 @@ export const computeChartData = (props: UseCpiChartDataProps, hiddenQuarters: nu
     return rows;
   };
 
+  // compute quarterly nominal/real rows
+  const nominalRows = getQuarterlyData(nominalKeys);
+  const realRows = getQuarterlyData(realKeys);
+
+  // extract support series (quarters 2005-2017 only) and scale so 2020 average == 300
+  const supportKey = SUPPORT_KEY;
+  // build full quarterly series (including years beyond 2017 to compute scaling if needed)
+  const allQuarters: { 年: number; quarter: number; label: string; value: number }[] = [];
+  for (let y = startYear; y <= effectiveEndYear; y++) {
+    const maxQ = y === maxCpiDate.year ? Math.ceil(maxCpiDate.month / 3) : 4;
+    for (let q = 1; q <= maxQ; q++) {
+      const months = q === 1 ? [1, 2, 3] : q === 2 ? [4, 5, 6] : q === 3 ? [7, 8, 9] : [10, 11, 12];
+      let sum = 0;
+      let valid = 0;
+      months.forEach((m) => {
+        const monthStr = `${y}年${m}月`;
+        const row = filteredNominalMap.get(monthStr);
+        if (row && typeof row[supportKey as keyof CpiData] === "number") {
+          sum += (row[supportKey as keyof CpiData] as unknown as number) || 0;
+          if (nominalMonthsSet.has(monthStr)) valid++;
+        }
+      });
+      allQuarters.push({ 年: y, quarter: q, label: `${y}年Q${q}`, value: valid === 3 ? sum : 0 });
+    }
+  }
+
+  // compute 2020 average across quarters (quarters in 2020 from allQuarters)
+  const quarters2020 = allQuarters.filter((q) => q.年 === 2020 && q.value > 0).map((q) => q.value);
+  const avg2020 =
+    quarters2020.length > 0 ? quarters2020.reduce((a, b) => a + b, 0) / quarters2020.length : 0;
+  const scale = avg2020 > 0 ? 300 / avg2020 : 1;
+
+  // attach scaled support series to nominalRows (only for 2005-2017 per request)
+  nominalRows.forEach((r) => {
+    const year = r.年 as number;
+    const q = r.quarter as number;
+    const quarterObj = allQuarters.find((aq) => aq.年 === year && aq.quarter === q);
+    const rawVal = quarterObj ? quarterObj.value : 0;
+    if (year >= 2005 && year <= 2017) {
+      r[`${supportKey}_scaled`] = rawVal * scale;
+    } else {
+      r[`${supportKey}_scaled`] = 0;
+    }
+  });
+
   return {
-    quarterlyNominalData: getQuarterlyData(nominalKeys),
-    quarterlyRealData: getQuarterlyData(realKeys),
+    quarterlyNominalData: nominalRows,
+    quarterlyRealData: realRows,
   };
 };

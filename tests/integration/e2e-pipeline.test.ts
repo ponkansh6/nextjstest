@@ -41,6 +41,24 @@ describe("End-to-End Pipeline Integration", () => {
         expect(hasData, `Series '${key}' should have positive values in nominal data`).toBe(true);
       });
 
+      // 新規追加: CTIサポートデータの検証
+      const supportKey = "民間最終消費支出_scaled";
+      quarterlyNominalData.forEach(d => {
+        const year = d.年 as number;
+        if (year >= 2005 && year <= 2017) {
+          expect(typeof d[supportKey], `Year ${year} Q${d.quarter} ${supportKey} should be a number`).toBe("number");
+          // 一部のデータが0になる可能性を考慮し、値を確認する
+          if (typeof d[supportKey] === "number" && d[supportKey] > 0) {
+             expect(d[supportKey]).toBeGreaterThanOrEqual(200);
+             expect(d[supportKey]).toBeLessThanOrEqual(400);
+          } else if (d[supportKey] === 0) {
+            console.warn(`Year ${year} Q${d.quarter} ${supportKey} is 0`);
+          }
+        } else {
+          expect(d[supportKey]).toBe(0);
+        }
+      });
+
       if (realKeys.length > 0) {
         expect(quarterlyRealData.length).toBeGreaterThan(0);
         realKeys.forEach(key => {

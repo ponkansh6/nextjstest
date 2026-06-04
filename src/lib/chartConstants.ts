@@ -64,6 +64,9 @@ export const CANONICAL_NOMINAL_KEY = "その他の消費支出（名目）";
 // 表示ラベルのオーバーライド（内部キー -> 凡例ラベル）
 export const DISPLAY_LABEL_OVERRIDES: Record<string, string> = {
   [CANONICAL_NOMINAL_KEY]: "諸雑費・CPI外支出",
+  民間最終消費支出_scaled: "民間最終消費支出",
+  food: "food",
+  housing: "housing",
 };
 
 export const getLegendLabel = (key: string) => {

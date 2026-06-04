@@ -9,6 +9,7 @@ export function createCpiData(overrides: Partial<CpiData> = {}): CpiData {
     持家の帰属家賃を除く総合: 100,
     生鮮食品を除く総合: 100,
     総合: 100,
+    "民間最終消費支出": 0,
     ...overrides,
   };
 }

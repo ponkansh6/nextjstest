@@ -397,8 +397,8 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
       <SpendingBarChart
         title="名目の消費支出（10分類）積み上げ"
         data={quarterlyNominalData}
-        keys={nominalKeys}
-        colors={nominalColors}
+        keys={[...nominalKeys, "民間最終消費支出_scaled"]}
+        colors={[...nominalColors, "#94a3b8"]}
         hiddenKeys={nominalHiddenKeys}
         onToggle={handleNominalLegendClick}
         chartColors={chartColors}
@@ -407,7 +407,7 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
         hiddenQuarters={hiddenQuarters}
         onToggleQuarter={handleQuarterLegendClick}
         onReset={() => {
-          const allKeys = [...nominalKeys, ...realKeys];
+          const allKeys = [...nominalKeys, ...realKeys, "民間最終消費支出_scaled"];
           setNominalHiddenKeys((prev) => (prev.length === allKeys.length ? [] : allKeys));
         }}
       />

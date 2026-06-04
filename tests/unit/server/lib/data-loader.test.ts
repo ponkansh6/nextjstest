@@ -125,5 +125,31 @@ Year and month ,,,,,,Total aged 15+,,,
       const data = await loadCtiData();
       expect(data).toEqual([]);
     });
+
+    it("should merge support data from cti_support.csv", async () => {
+      const mockCtiCsv = `月,消費支出（名目）
+2005年1月,1000
+2005年2月,1000
+2005年3月,1000`;
+      const mockSupportCsv = `
+時間軸（四半期）,民間最終消費支出
+2005年1～3月期,100`;
+
+      vi.spyOn(fs, "existsSync").mockImplementation((path) => {
+        if (typeof path === "string" && path.includes("cti_data.csv")) return true;
+        if (typeof path === "string" && path.includes("cti_support.csv")) return true;
+        return false;
+      });
+
+      vi.spyOn(fs, "readFileSync").mockImplementation((path) => {
+        if (typeof path === "string" && path.includes("cti_data.csv")) return mockCtiCsv;
+        if (typeof path === "string" && path.includes("cti_support.csv")) return mockSupportCsv;
+        return "";
+      });
+
+      const data = await loadCtiData();
+      expect(data.length).toBe(3);
+      expect(data[0].民間最終消費支出).toBe(100);
+    });
   });
 });

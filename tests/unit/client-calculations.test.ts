@@ -1,8 +1,9 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { calculateCategorySum, computeChartData } from "../../src/lib/clientCalculations";
 import { loadCtiData } from "../../server/lib/dataLoader";
 import { nominalKeys } from "../../src/lib/chartConstants";
 import type { CpiData } from "../../src/types";
+import { createCpiData } from "../factories/cpiDataFactory";
 
 describe("src/lib/clientCalculations", () => {
   describe("calculateCategorySum", () => {
@@ -21,7 +22,6 @@ describe("src/lib/clientCalculations", () => {
   });
 
   describe("computeChartData", () => {
-    // データ整合性テストから移動
     const baseProps = {
       data: [],
       endYear: 2020,
@@ -53,14 +53,11 @@ describe("src/lib/clientCalculations", () => {
 
       const total = nominalKeys.reduce((acc, k) => acc + ((row[k] as number) || 0), 0);
       expect(total).toBeGreaterThan(0);
-      // Provided per-month sum = 10 + 20 + 5 = 35. For a full quarter, expected 35 * 3 = 105
       expect(total).toBe(105);
     });
 
     it("should compute quarterly nominal data correctly using real data", async () => {
       const realData = await loadCtiData();
-
-      // Select a subset of real data (e.g., 2020 Q1)
       const q1Data = realData.filter(
         (d) => d.年月 === "2020年1月" || d.年月 === "2020年2月" || d.年月 === "2020年3月"
       );
@@ -79,10 +76,39 @@ describe("src/lib/clientCalculations", () => {
 
       expect(quarterlyNominalData.length).toBe(1);
       expect(quarterlyNominalData[0].label).toBe("2020年Q1");
-
-      // Verify that data was actually processed
       expect(typeof quarterlyNominalData[0]["食料（名目）"]).toBe("number");
       expect(quarterlyNominalData[0]["食料（名目）"]).toBeGreaterThan(0);
+    });
+    
+    it("should compute scaled support series correctly for 2005-2017", async () => {
+      const mockNominalData = [
+        createCpiData({ 年月: "2005年1月", 民間最終消費支出: 100 }),
+        createCpiData({ 年月: "2005年2月", 民間最終消費支出: 100 }),
+        createCpiData({ 年月: "2005年3月", 民間最終消費支出: 100 }),
+        createCpiData({ 年月: "2020年1月", 民間最終消費支出: 300 }),
+        createCpiData({ 年月: "2020年2月", 民間最終消費支出: 300 }),
+        createCpiData({ 年月: "2020年3月", 民間最終消費支出: 300 }),
+      ];
+
+      const props = {
+        data: [], 
+        nominalData: mockNominalData,
+        startYear: 2005,
+        endYear: 2020,
+        nominalKeys: nominalKeys,
+        realKeys: [],
+        maxCpiDate: { year: 2020, month: 3 },
+      };
+
+      const { quarterlyNominalData } = computeChartData(props as any, []);
+
+      const q12005 = quarterlyNominalData.find((r) => r.label === "2005年Q1");
+      expect(q12005).toBeDefined();
+      expect(q12005!["民間最終消費支出_scaled"]).toBeCloseTo(100);
+
+      const q12020 = quarterlyNominalData.find((r) => r.label === "2020年Q1");
+      expect(q12020).toBeDefined();
+      expect(q12020!["民間最終消費支出_scaled"]).toBe(0);
     });
   });
 });
