@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 import React from 'react';
 
 // Components
@@ -20,6 +20,7 @@ import { StackedAreaChart } from '../../src/app/components/StackedAreaChart';
 import type { CpiData } from '../../../src/types';
 import { createCpiDataList } from '../factories/cpiDataFactory';
 import { setupUiMocks } from '../utils/ui-mocks';
+import { nominalKeys, getLegendLabel } from '../../src/lib/chartConstants';
 
 // Initialize mocks
 setupUiMocks();
@@ -84,28 +85,57 @@ describe('Deep UI Component Tests', () => {
     });
 
     
-    it('renders the legend items', () => {
-      render(
-        <SpendingBarChart
-          title="消費支出"
-          data={mockData}
-          keys={mockKeys}
-          colors={mockColors}
-          hiddenKeys={[]}
-          onToggle={() => {}}
-          chartColors={chartColors}
-          isMobile={false}
-          CustomTooltip={MockTooltip}
-          hiddenQuarters={[]}
-          onToggleQuarter={() => {}}
-          onReset={() => {}}
-        />
-      );
-      // Use a regex to be safer with potential translations or labels
-      // expect(screen.getByText(/food/i)).toBeDefined();
-      // expect(screen.getByText(/housing/i)).toBeDefined();
-      // expect(screen.getByText(/民間最終消費支出_scaled/i)).toBeDefined();
+    it('should hide the series when its legend button is clicked', async () => {
+      // 1. レンダリングするコンポーネントのラッパーを作成
+      const TestWrapper = () => {
+        const [hiddenKeys, setHiddenKeys] = React.useState<string[]>([]);
+        const handleToggle = (key: string) => {
+          setHiddenKeys(prev => 
+            prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+          );
+        };
+        
+        return (
+          <SpendingBarChart
+            title="Toggle Test"
+            data={[{ label: '2023年Q1', 年: 2023, quarter: 1, '食料（名目）': 100, '住居（名目）': 200 }]}
+            keys={['食料（名目）', '住居（名目）']}
+            colors={['#ff0000', '#00ff00']}
+            hiddenKeys={hiddenKeys}
+            onToggle={handleToggle}
+            chartColors={chartColors}
+            isMobile={false}
+            CustomTooltip={MockTooltip}
+            hiddenQuarters={[]}
+            onToggleQuarter={vi.fn()}
+            onReset={vi.fn()}
+          />
+        );
+      };
+
+      render(<TestWrapper />);
+
+      // 例として「食料（名目）」をトグル対象にする
+      const targetKey = '食料（名目）';
+      const label = getLegendLabel(targetKey);
+
+      // 2. 初期状態: 全てのBarが存在することを確認
+      expect(screen.getAllByTestId('bar-mock').length).toBe(2);
+
+      // 3. クリックして非表示に切り替える
+      const button = screen.getByText(label);
+      await act(async () => {
+        button.click();
+      });
+
+      // 4. 再レンダリング（Wrapper内でステートが更新される）を待ち、Barが減ったことを確認
+      const bars = screen.getAllByTestId('bar-mock');
+      const hiddenBar = bars.find((bar) => bar.getAttribute('datakey') === targetKey);
+      
+      expect(hiddenBar).toBeUndefined();
+      expect(bars.length).toBe(1);
     });
+
 
 
     it('renders with補完データ (2005年Q1) で正しい数値が渡されていること', () => {

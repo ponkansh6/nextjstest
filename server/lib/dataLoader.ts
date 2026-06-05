@@ -449,20 +449,40 @@ async function _loadCtiData(): Promise<CpiData[]> {
       } else {
         obj["民間最終消費支出"] = 0;
       }
-      
+
       // 差分計算: 「その他の消費支出」を計算する
       const nominalTotal = (obj["消費支出（名目）"] as number) || 0;
       const realTotal = (obj["消費支出（実質）"] as number) || 0;
-      
-      const nominalKeysList = ["食料（名目）", "住居（名目）", "光熱・水道（名目）", "家具・家事用品（名目）", "被服及び履物（名目）", "保健医療（名目）", "交通・通信（名目）", "教育（名目）", "教養娯楽（名目）"];
-      const realKeysList = ["食料（実質）", "住居（実質）", "光熱・水道（実質）", "家具・家事用品（実質）", "被服及び履物（実質）", "保健医療（実質）", "交通・通信（実質）", "教育（実質）", "教養娯楽（実質）"];
-      
+
+      const nominalKeysList = [
+        "食料（名目）",
+        "住居（名目）",
+        "光熱・水道（名目）",
+        "家具・家事用品（名目）",
+        "被服及び履物（名目）",
+        "保健医療（名目）",
+        "交通・通信（名目）",
+        "教育（名目）",
+        "教養娯楽（名目）",
+      ];
+      const realKeysList = [
+        "食料（実質）",
+        "住居（実質）",
+        "光熱・水道（実質）",
+        "家具・家事用品（実質）",
+        "被服及び履物（実質）",
+        "保健医療（実質）",
+        "交通・通信（実質）",
+        "教育（実質）",
+        "教養娯楽（実質）",
+      ];
+
       let nominalSum = 0;
-      nominalKeysList.forEach(k => nominalSum += (obj[k] as number) || 0);
+      nominalKeysList.forEach((k) => (nominalSum += (obj[k] as number) || 0));
       obj["その他の消費支出（名目）"] = Math.max(0, nominalTotal - nominalSum);
 
       let realSum = 0;
-      realKeysList.forEach(k => realSum += (obj[k] as number) || 0);
+      realKeysList.forEach((k) => (realSum += (obj[k] as number) || 0));
       obj["その他の消費支出（実質）"] = Math.max(0, realTotal - realSum);
 
       return obj as unknown as CpiData;
@@ -495,15 +515,37 @@ async function _loadCtiData(): Promise<CpiData[]> {
           const nominalTotal = (dummyRow["消費支出（名目）"] as number) || 0;
           const realTotal = (dummyRow["消費支出（実質）"] as number) || 0;
 
-          const nominalKeysList = ["食料（名目）", "住居（名目）", "光熱・水道（名目）", "家具・家事用品（名目）", "被服及び履物（名目）", "保健医療（名目）", "交通・通信（名目）", "教育（名目）", "教養娯楽（名目）"];
-          const realKeysList = ["食料（実質）", "住居（実質）", "光熱・水道（実質）", "家具・家事用品（実質）", "被服及び履物（実質）", "保健医療（実質）", "交通・通信（実質）", "教育（実質）", "教養娯楽（実質）"];
+          const nominalKeysList = [
+            "食料（名目）",
+            "住居（名目）",
+            "光熱・水道（名目）",
+            "家具・家事用品（名目）",
+            "被服及び履物（名目）",
+            "保健医療（名目）",
+            "交通・通信（名目）",
+            "教育（名目）",
+            "教養娯楽（名目）",
+          ];
+          const realKeysList = [
+            "食料（実質）",
+            "住居（実質）",
+            "光熱・水道（実質）",
+            "家具・家事用品（実質）",
+            "被服及び履物（実質）",
+            "保健医療（実質）",
+            "交通・通信（実質）",
+            "教育（実質）",
+            "教養娯楽（実質）",
+          ];
 
           let nominalSum = 0;
-          nominalKeysList.forEach(k => nominalSum += (dummyRow[k as keyof CpiData] as number) || 0);
+          nominalKeysList.forEach(
+            (k) => (nominalSum += (dummyRow[k as keyof CpiData] as number) || 0),
+          );
           dummyRow["その他の消費支出（名目）"] = Math.max(0, nominalTotal - nominalSum);
 
           let realSum = 0;
-          realKeysList.forEach(k => realSum += (dummyRow[k as keyof CpiData] as number) || 0);
+          realKeysList.forEach((k) => (realSum += (dummyRow[k as keyof CpiData] as number) || 0));
           dummyRow["その他の消費支出（実質）"] = Math.max(0, realTotal - realSum);
 
           mapped.push(dummyRow);
