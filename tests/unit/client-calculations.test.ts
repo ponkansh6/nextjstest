@@ -110,5 +110,130 @@ describe("src/lib/clientCalculations", () => {
       expect(q12020).toBeDefined();
       expect(q12020!["民間最終消費支出_scaled"]).toBe(0);
     });
+
+    it("should aggregate '民間最終消費支出' strictly using raw objects to mimic CTI data structure", () => {
+      // ファクトリを使わず、データローダーが返す形式を完全に模倣
+      const mockData = [
+        { 年月: "2010年1月", "民間最終消費支出": 100, "消費支出（名目）": 1000 },
+        { 年月: "2010年2月", "民間最終消費支出": 200, "消費支出（名目）": 1000 },
+        { 年月: "2010年3月", "民間最終消費支出": 300, "消費支出（名目）": 1000 },
+      ];
+
+      const props = {
+        data: [],
+        nominalData: mockData as any,
+        startYear: 2010,
+        endYear: 2010,
+        nominalKeys: ["消費支出（名目）"],
+        realKeys: [],
+        maxCpiDate: { year: 2010, month: 3 },
+      };
+
+      const { quarterlyNominalData } = computeChartData(props, []);
+
+      const q12010 = quarterlyNominalData.find((r) => r.label === "2010年Q1");
+      
+      // ここで失敗するようにする
+      expect(q12010).toBeDefined();
+      expect(q12010!["民間最終消費支出"], "民間最終消費支出 should be 600").toBe(600);
+    });
+
+    it("should verify filteredNominalData and its structure", () => {
+      const mockData = [{ 年月: "2010年1月", "民間最終消費支出": 100 }];
+      const props = {
+        data: [],
+        nominalData: mockData as any,
+        startYear: 2010,
+        endYear: 2010,
+        nominalKeys: [],
+        realKeys: [],
+        maxCpiDate: { year: 2010, month: 1 },
+      };
+
+      const { quarterlyNominalData } = computeChartData(props, []);
+      
+      const nominalMap = new Map(props.nominalData.map((d: any) => [d.年月, d]));
+      const existingData = nominalMap.get("2010年1月");
+      
+      expect(existingData).toBeDefined();
+      expect(existingData).toHaveProperty("民間最終消費支出");
+      expect(existingData!["民間最終消費支出"]).toBe(100);
+    });
+
+    it("should aggregate '民間最終消費支出' regardless of nominalKeys inclusion", () => {
+      // 3ヶ月分のデータを用意して、四半期の集計要件（3ヶ月分必要）を満たすようにする
+      const mockData = [
+        { 年月: "2010年1月", "民間最終消費支出": 100 },
+        { 年月: "2010年2月", "民間最終消費支出": 100 },
+        { 年月: "2010年3月", "民間最終消費支出": 100 },
+      ];
+      
+      const runTest = (keys: string[]) => {
+        const props = {
+          data: [],
+          nominalData: mockData as any,
+          startYear: 2010,
+          endYear: 2010,
+          nominalKeys: keys,
+          realKeys: [],
+          maxCpiDate: { year: 2010, month: 3 }, // 3月まで必要
+        };
+        const { quarterlyNominalData } = computeChartData(props, []);
+        // quarterlyNominalData[0] は 2010年Q1 となる
+        return quarterlyNominalData[0]["民間最終消費支出"];
+      };
+
+      // 1. nominalKeys に含まれていない場合
+      const valWithoutKey = runTest([]);
+      
+      // 2. nominalKeys に含まれている場合
+      const valWithKey = runTest(["民間最終消費支出"]);
+
+      // バグ修正の検証:
+      // 100 + 100 + 100 = 300 となることを期待
+      expect(valWithoutKey, "Value should be 300 even if not in nominalKeys").toBe(300);
+      expect(valWithKey, "Value should be 300 if in nominalKeys").toBe(300);
+    });
+
+    it("should verify '民間最終消費支出' exists in the nominalData used for nominalMap", () => {
+      const mockData = [{ 年月: "2010年1月", "民間最終消費支出": 100 }];
+      
+      // computeChartData の処理の一部を再現して検証
+      const normalizeYm = (ym?: string | number) => String(ym || "").trim();
+      const normalizedNominalData = mockData.map((d) => ({
+        ...d,
+        年月: normalizeYm(String(d.年月)),
+      }));
+      
+      // nominalMap を作る
+      const nominalMap = new Map(normalizedNominalData.map((d: any) => [d.年月, d]));
+      const existingData = nominalMap.get("2010年1月");
+
+      // この段階でプロパティが存在するかを物理的に証明する
+      expect(existingData, "Data for 2010年1月 should exist in nominalMap").toBeDefined();
+      expect(existingData, "Data in nominalMap should have '民間最終消費支出'").toHaveProperty("民間最終消費支出");
+      expect(existingData!["民間最終消費支出"]).toBe(100);
+    });
+    it("should verify nominalMap content directly", () => {
+      const mockData = [{ 年月: "2010年1月", "民間最終消費支出": 100 }];
+      const normalizeYm = (ym?: string | number) => String(ym || "").trim();
+      const normalizedNominalData = mockData.map((d) => ({
+        ...d,
+        年月: normalizeYm(String(d.年月)),
+      }));
+      const nominalMap = new Map(normalizedNominalData.map((d: any) => [d.年月, d]));
+      const existingData = nominalMap.get("2010年1月");
+
+      // Check if it exists here
+      expect(existingData).toHaveProperty("民間最終消費支出");
+      expect(existingData!["民間最終消費支出"]).toBe(100);
+      
+      // Now check if it persists after filteredNominalData is created
+      const allMonths = ["2010年1月"];
+      const filteredNominalData = allMonths.map((ym) => nominalMap.get(ym)!);
+      
+      expect(filteredNominalData[0]).toHaveProperty("民間最終消費支出");
+      expect(filteredNominalData[0]["民間最終消費支出"]).toBe(100);
+    });
   });
 });

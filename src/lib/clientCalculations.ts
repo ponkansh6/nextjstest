@@ -96,18 +96,18 @@ export const computeChartData = (props: UseCpiChartDataProps, hiddenQuarters: nu
     return allMonths.map((yearMonth) => {
       const existingData = nominalMap.get(yearMonth);
       if (existingData) {
+        // 既存データがあっても、SUPPORT_KEY がない場合は初期化する
+        if (!(SUPPORT_KEY in existingData)) {
+          (existingData as any)[SUPPORT_KEY] = 0;
+        }
         return existingData;
       }
 
       const emptyItem: CpiData = { 年月: yearMonth } as CpiData;
-      nominalKeys.forEach((key: string) => {
+      // すべてのキーを初期化（SUPPORT_KEYも含む）
+      [...nominalKeys, ...realKeys, SUPPORT_KEY].forEach((key: string) => {
         emptyItem[key as keyof CpiData] = 0;
       });
-      realKeys.forEach((key: string) => {
-        emptyItem[key as keyof CpiData] = 0;
-      });
-      // ensure support field exists
-      emptyItem[SUPPORT_KEY] = 0;
       return emptyItem;
     });
   })();
@@ -137,7 +137,7 @@ export const computeChartData = (props: UseCpiChartDataProps, hiddenQuarters: nu
           [key: string]: number | string;
         } = { label, quarter: q, 年: y };
         keys.forEach((k: string) => (item[k] = 0));
-        // add support field
+        // add support field explicitly, always initialized to 0
         item[SUPPORT_KEY] = 0;
 
         let validMonthsCount = 0;
@@ -148,7 +148,9 @@ export const computeChartData = (props: UseCpiChartDataProps, hiddenQuarters: nu
             if (nominalMonthsSet.has(monthStr)) {
               validMonthsCount++;
             }
+            // 加算処理を修正：SUPPORT_KEY は明示的に個別処理し、keysのループからは除外する
             keys.forEach((k: string) => {
+              if (k === SUPPORT_KEY) return; // 二重加算を防ぐ
               const v = row[k as keyof CpiData];
               if (typeof v === "number") {
                 item[k] = (item[k] as number) + v;
@@ -163,6 +165,7 @@ export const computeChartData = (props: UseCpiChartDataProps, hiddenQuarters: nu
 
         if (validMonthsCount !== 3) {
           keys.forEach((k: string) => (item[k] = 0));
+          // Reset support field if months are invalid
           item[SUPPORT_KEY] = 0;
         }
         if (!hiddenQuarters.includes(q)) {

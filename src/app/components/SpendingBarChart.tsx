@@ -97,9 +97,14 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
                   className={`${styles.legendItem} ${hiddenKeys.includes(key) ? styles.hidden : ""}`}
                   aria-pressed={!hiddenKeys.includes(key)}
                 >
-                  <span 
-                    className={styles.legendIcon} 
-                    style={{ backgroundColor: key === "民間最終消費支出_scaled" ? (chartColors.barFill || "#94a3b8") : colors[index] }} 
+                  <span
+                    className={styles.legendIcon}
+                    style={{
+                      backgroundColor:
+                        key === "民間最終消費支出_scaled"
+                          ? chartColors.barFill || "#94a3b8"
+                          : colors[index],
+                    }}
                   />
                   <span className={styles.legendLabel}>{getLegendLabel(key)}</span>
                 </button>
@@ -159,7 +164,11 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
                   key={key}
                   dataKey={key}
                   stackId="a"
-                  fill={key === "民間最終消費支出_scaled" ? (chartColors.barFill || "#94a3b8") : colors[index]}
+                  fill={
+                    key === "民間最終消費支出_scaled"
+                      ? chartColors.barFill || "#94a3b8"
+                      : colors[index]
+                  }
                   fillOpacity={key === "民間最終消費支出_scaled" ? 0.9 : 0.8}
                   isAnimationActive={false}
                 />

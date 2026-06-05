@@ -410,79 +410,91 @@ async function _loadCtiData(): Promise<CpiData[]> {
     }
     const header = rows[headerIndex].map((c) => c.trim());
     const dataRows = rows.slice(headerIndex + 1);
-    const mapped = dataRows
-      .map((row) => {
-        const obj: Record<string, string | number> = {};
-        header.forEach((h, i) => {
-          let val: string | number = row[i];
-          if (typeof val === "string") {
-            const trimmedVal = val.trim();
-            if (h !== "月" && h !== "年月") {
-              const numValue = trimmedVal.replace(/,/g, "");
-              if (numValue === "-") val = 0;
-              else {
-                const num = parseFloat(numValue);
-                val = isNaN(num) ? 0 : num;
-              }
-            } else {
-              val = trimmedVal;
+    const mapped = dataRows.map((row) => {
+      const obj: Record<string, string | number> = {};
+      header.forEach((h, i) => {
+        let val: string | number = row[i];
+        if (typeof val === "string") {
+          const trimmedVal = val.trim();
+          if (h !== "月" && h !== "年月") {
+            const numValue = trimmedVal.replace(/,/g, "");
+            if (numValue === "-") val = 0;
+            else {
+              const num = parseFloat(numValue);
+              val = isNaN(num) ? 0 : num;
             }
-          }
-          obj[h] = val;
-        });
-        if (typeof obj["月"] === "string" && !obj.年月) obj.年月 = obj["月"];
-        // merge support value if available
-        const ymStr = typeof obj.年月 === "string" ? obj.年月.trim() : String(obj.年月);
-        // Map "2020年1月" to quarter string "2020年1～3月期" to match supportMap keys
-        const m = ymStr.match(/^(\d{4})年0?(\d{1,2})月/);
-        if (m) {
-          const year = m[1];
-          const month = parseInt(m[2], 10);
-          const q = Math.ceil(month / 3);
-          const qStart = (q - 1) * 3 + 1;
-          const qEnd = q * 3;
-          const normYm = `${year}年${qStart}～${qEnd}月期`;
-          if (supportMap.has(normYm)) {
-            obj["民間最終消費支出"] = supportMap.get(normYm) as number;
+          } else {
+            val = trimmedVal;
           }
         }
-        return obj as unknown as CpiData;
-      })
-      .filter((row) => {
-        if (!row.年月) return false;
-        // console.log(`Checking row: ${row.年月}`);
-        const m = String(row.年月).match(/^(\d{4})年/);
-        return m ? parseInt(m[1], 10) >= 1994 : false;
+        obj[h] = val;
       });
-    const nominalKeys = [
-      "食料（名目）",
-      "住居（名目）",
-      "光熱・水道（名目）",
-      "家具・家事用品（名目）",
-      "被服及び履物（名目）",
-      "保健医療 （名目）",
-      "保健医療（名目）",
-      "交通・通信（名目）",
-      "教育（名目）",
-      "教養娯楽（名目）",
-    ];
-    mapped.forEach((row) => {
-      const nominalTotal = (row["消費支出（名目）"] as number) || 0;
-      let nominalSum = 0;
-      nominalKeys.forEach((k) => {
-        if (k !== "その他の消費支出（名目）") nominalSum += (row[k] as number) || 0;
-      });
-      if (!row["その他の消費支出（名目）"] || row["その他の消費支出（名目）"] === 0)
-        row["その他の消費支出（名目）"] = Math.max(0, nominalTotal - nominalSum);
-      const realTotal = (row["消費支出（実質）"] as number) || 0;
-      const realKeys = nominalKeys.map((k) => k.replace("名目", "実質"));
-      let realSum = 0;
-      realKeys.forEach((k) => {
-        if (k !== "その他の消費支出（実質）") realSum += (row[k] as number) || 0;
-      });
-      if (!row["その他の消費支出（実質）"] || row["その他の消費支出（実質）"] === 0)
-        row["その他の消費支出（実質）"] = Math.max(0, realTotal - realSum);
+      if (typeof obj["月"] === "string" && !obj.年月) obj.年月 = obj["月"];
+      // merge support value if available
+      const ymStr = typeof obj.年月 === "string" ? obj.年月.trim() : String(obj.年月);
+      // Map "2020年1月" to quarter string "2020年1～3月期" to match supportMap keys
+      const m = ymStr.match(/^(\d{4})年0?(\d{1,2})月/);
+      if (m) {
+        const year = m[1];
+        const month = parseInt(m[2], 10);
+        const q = Math.ceil(month / 3);
+        const qStart = (q - 1) * 3 + 1;
+        const qEnd = q * 3;
+        const normYm = `${year}年${qStart}～${qEnd}月期`;
+        if (supportMap.has(normYm)) {
+          obj["民間最終消費支出"] = supportMap.get(normYm) as number;
+        } else {
+          obj["民間最終消費支出"] = 0;
+        }
+      } else {
+        obj["民間最終消費支出"] = 0;
+      }
+      return obj as unknown as CpiData;
     });
+
+    // 2005年～2016年の不足データを補完する
+    const existingMonths = new Set(mapped.map((r) => r.年月));
+    for (let y = 2005; y <= 2016; y++) {
+      for (let m = 1; m <= 12; m++) {
+        const ym = `${y}年${m}月`;
+        if (!existingMonths.has(ym)) {
+          const q = Math.ceil(m / 3);
+          const qStart = (q - 1) * 3 + 1;
+          const qEnd = q * 3;
+          const normYm = `${y}年${qStart}～${qEnd}月期`;
+
+          const dummyRow: CpiData = { 年月: ym } as CpiData;
+          // すべてのキーを0で初期化（headerを利用）
+          header.forEach((h) => {
+            if (h !== "年月" && h !== "月") dummyRow[h as keyof CpiData] = 0;
+          });
+
+          if (supportMap.has(normYm)) {
+            dummyRow["民間最終消費支出"] = supportMap.get(normYm) as number;
+          } else {
+            dummyRow["民間最終消費支出"] = 0;
+          }
+          mapped.push(dummyRow);
+        }
+      }
+    }
+
+    // データを年月順にソート
+    mapped.sort((a, b) => {
+      const ma = String(a.年月).match(/^(\d{4})年(\d{1,2})月/);
+      const mb = String(b.年月).match(/^(\d{4})年(\d{1,2})月/);
+      // Ensure 民間最終消費支出 exists
+      if (a["民間最終消費支出"] === undefined) a["民間最終消費支出"] = 0;
+      if (b["民間最終消費支出"] === undefined) b["民間最終消費支出"] = 0;
+      
+      if (!ma || !mb) return 0;
+      const ay = parseInt(ma[1], 10);
+      const am = parseInt(ma[2], 10);
+      const by = parseInt(mb[1], 10);
+      const bm = parseInt(mb[2], 10);
+      return ay !== by ? ay - by : am - bm;
+    });
+
     return mapped;
   } catch (error) {
     console.error("Error loading CTI data:", error);
