@@ -147,6 +147,32 @@ describe("End-to-End Pipeline Integration", () => {
       expect(lastCtiRow[expenditureKey]).toBeGreaterThan(0);
     });
 
+    it("should verify 2017 Q1 all consumption categories (except 民間最終消費支出) have positive values", () => {
+      // 2017年1月～3月のデータを抽出
+      const q1_2017_data = ctiData.filter(d => 
+        typeof d.年月 === 'string' && 
+        (d.年月 === '2017年1月' || d.年月 === '2017年2月' || d.年月 === '2017年3月')
+      );
+      
+      expect(q1_2017_data.length).toBeGreaterThan(0);
+
+      // 全消費支出キーを取得し「民間最終消費支出」および空のキーを除外
+      const allKeys = Object.keys(ctiData[0]);
+      const targetKeys = allKeys.filter(key => 
+        key !== "民間最終消費支出" && 
+        key !== "年月" && 
+        key !== "月" &&
+        key !== ""
+      );
+
+      q1_2017_data.forEach(row => {
+        targetKeys.forEach(key => {
+          // 値が数値でかつ0より大きいことを確認
+          expect(Number(row[key]), `${key} in ${row.年月} should be > 0`).toBeGreaterThan(0);
+        });
+      });
+    });
+
     it("should verify mathematical integrity of residuals and smoothing", () => {
       // 1. 残差の計算検証: 残差 = (所定内 + 所定外 + 特別) - CPI の 2ヶ月移動平均
       // データセットの後半部分で検証
