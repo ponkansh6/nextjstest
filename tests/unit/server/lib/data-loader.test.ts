@@ -137,13 +137,13 @@ Year and month ,,,,,,Total aged 15+,,,
 
       vi.spyOn(fs, "existsSync").mockImplementation((path) => {
         if (typeof path === "string" && path.includes("cti_data.csv")) return true;
-        if (typeof path === "string" && path.includes("cti_support.csv")) return true;
+        if (typeof path === "string" && path.includes("cti_support_nominal.csv")) return true;
         return false;
       });
 
       vi.spyOn(fs, "readFileSync").mockImplementation((path) => {
         if (typeof path === "string" && path.includes("cti_data.csv")) return mockCtiCsv;
-        if (typeof path === "string" && path.includes("cti_support.csv")) return mockSupportCsv;
+        if (typeof path === "string" && path.includes("cti_support_nominal.csv")) return mockSupportCsv;
         return "";
       });
 

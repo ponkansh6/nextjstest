@@ -338,7 +338,7 @@ export const loadTotalEarningData = maybeCache(_loadTotalEarningData, "earnings-
 
 async function _loadCtiData(): Promise<CpiData[]> {
   const ctiFilePath = path.join(process.cwd(), "public/cti_data.csv");
-  const ctiSupportPath = path.join(process.cwd(), "public/cti_support.csv");
+  const ctiSupportPath = path.join(process.cwd(), "public/cti_support_nominal.csv");
   if (!fs.existsSync(ctiFilePath)) {
     console.error("CTI data file not found");
     return [];
