@@ -220,7 +220,6 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
       return;
     }
 
-
     // どちらのペアに属しているか検索
     const pair = keyPairs.find((p) => p.nominal === dataKey || p.real === dataKey);
     if (!pair) return;
@@ -421,7 +420,6 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
           setNominalHiddenKeys((prev) => (prev.length === allKeys.length ? [] : allKeys));
         }}
       />
-
 
       <SpendingBarChart
         title="実質の消費支出（10分類）積み上げ"

@@ -170,7 +170,6 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
                 />
               ) : null,
             )}
-
           </BarChart>
         </ResponsiveContainer>
       </div>
