@@ -12,7 +12,7 @@ import { StackedAreaChart } from "./StackedAreaChart";
 import { EarningsBreakdownChart } from "./EarningsBreakdownChart";
 import { ResidualAreaChart } from "./ResidualAreaChart";
 import { MajorIndicesChart } from "./MajorIndicesChart";
-import { calculateCategorySum } from "../../lib/clientCalculations";
+import { calculateCategorySum, calculateCAGRValue } from "../../lib/clientCalculations";
 import {
   colors,
   keyPairs,
@@ -254,8 +254,8 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
     }
 
     // クライアントライブラリの calculateCategorySum を使用
-    const startValue = calculateCategorySum(data, cagrStartYear, cagrMonth, [], stackedKeys);
-    const endValue = calculateCategorySum(data, cagrEndYear, cagrMonth, [], stackedKeys);
+    const startValue = calculateCategorySum(data, cagrStartYear, cagrMonth, stackedHiddenKeys, stackedKeys);
+    const endValue = calculateCategorySum(data, cagrEndYear, cagrMonth, stackedHiddenKeys, stackedKeys);
 
     if (startValue === 0) {
       const monthStr = String(cagrMonth).padStart(2, "0");
@@ -274,7 +274,7 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
     }
 
     const years = cagrEndYear - cagrStartYear;
-    const cagr = (endValue / startValue) ** (1 / years) - 1;
+    const cagr = calculateCAGRValue(startValue, endValue, years);
     setCagrResult(cagr);
   };
 

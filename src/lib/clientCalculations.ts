@@ -55,6 +55,22 @@ export const calculateCategorySum = (
   return sum;
 };
 
+/**
+ * CAGR (年平均成長率) を計算する
+ * @param startValue 開始時点の値
+ * @param endValue 終了時点の値
+ * @param years 経過年数
+ * @returns CAGR (10%なら0.1)
+ */
+export const calculateCAGRValue = (
+  startValue: number,
+  endValue: number,
+  years: number
+): number => {
+  if (startValue <= 0 || years <= 0) return 0;
+  return (endValue / startValue) ** (1 / years) - 1;
+};
+
 export interface UseCpiChartDataProps {
   data: CpiData[];
   nominalData: CpiData[];

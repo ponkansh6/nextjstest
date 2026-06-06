@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { calculateCategorySum, computeChartData } from "../../src/lib/clientCalculations";
+import { calculateCategorySum, computeChartData, calculateCAGRValue } from "../../src/lib/clientCalculations";
 import { loadCtiData } from "../../server/lib/dataLoader";
 import { nominalKeys } from "../../src/lib/chartConstants";
 import type { CpiData } from "../../src/types";
@@ -18,6 +18,22 @@ describe("src/lib/clientCalculations", () => {
       expect(() => {
         calculateCategorySum(mockCpiData as any, 2021, 1);
       }).toThrow();
+    });
+  });
+
+  describe("calculateCAGRValue", () => {
+    it("正しい成長率を算出すること", () => {
+      // 100 -> 121 (2年で10%複利: 100 * 1.1 * 1.1 = 121)
+      const result = calculateCAGRValue(100, 121, 2);
+      expect(result).toBeCloseTo(0.1, 5); // 0.1 (10%)
+    });
+
+    it("開始値が0の場合は0を返すこと", () => {
+      expect(calculateCAGRValue(0, 100, 2)).toBe(0);
+    });
+
+    it("経過年数が0の場合は0を返すこと", () => {
+      expect(calculateCAGRValue(100, 121, 0)).toBe(0);
     });
   });
 

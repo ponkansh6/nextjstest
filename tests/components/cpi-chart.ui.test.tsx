@@ -59,7 +59,7 @@ describe('CpiChart UI Integration', () => {
     const hasHidden = button.closest('button')?.className.includes('_hidden_');
     
     expect(hasHidden).toBe(true);
-
+    
 
     // クリックして再表示する
     fireEvent.click(button);
@@ -97,5 +97,56 @@ describe('CpiChart UI Integration', () => {
     expect(buttonNominal.className).toContain('_hidden_');
     const buttonReal = targetButtons[1];
     expect(buttonReal.className).toContain('_hidden_');
+  });
+
+  it('should update CAGR calculation when legend items are toggled', async () => {
+    // 2020: 住居=100, 外食以外食料=100 (Total 200)
+    // 2022: 住居=110, 外食以外食料=132 (Total 242)
+    // All: (242/200)^0.5 - 1 = 10%
+    // Only 住居: (110/100)^0.5 - 1 = 4.88%
+    const mockData = [
+      { 年月: '2020年1月', '住居': 100, '外食以外食料': 100 },
+      { 年月: '2022年1月', '住居': 110, '外食以外食料': 132 },
+    ];
+
+    render(
+      <CpiChart 
+        data={mockData as any} 
+        ctiData={[]} 
+        totalEarningData={[]} 
+      />
+    );
+
+    // 1. Calculate with all
+    const calcButton = screen.getByText('Calculate');
+    fireEvent.click(calcButton);
+    
+    // UIをデバッグ出力してDOM構造を確認
+    screen.debug();
+
+    // クラス名から要素を探し、そのテキストを取得して検証
+    const resultElements = screen.getAllByText(/%/);
+    const resultElement = resultElements.find(el => el.className.includes('_cagrResultValue_'));
+    expect(resultElement).toBeDefined();
+    expect(resultElement?.textContent).toBe('10.00%');
+
+
+    // 2. Toggle '食料' off
+    // CPI_CATEGORIES に基づいてレンダリングされる。
+    // 「外食以外食料」というラベルを探す。
+    const foodButton = screen.getByText('外食以外食料');
+    fireEvent.click(foodButton);
+
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    });
+
+    // 3. Calculate with '食料' hidden
+    // Total 2020: 100 (住居のみ)
+    // Total 2022: 110 (住居のみ)
+    // CAGR: (110/100)^0.5 - 1 = 0.048808... => 4.88%
+    fireEvent.click(calcButton);
+    const resultElement2 = screen.getByText(/4\.88%/);
+    expect(resultElement2.className).toContain('_cagrResultValue_');
   });
 });
