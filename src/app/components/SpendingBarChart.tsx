@@ -164,7 +164,9 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
                   key={key}
                   dataKey={key}
                   stackId="a"
-                  fill={key === SUPPORT_SERIES_KEY ? chartColors.barFill || "#94a3b8" : colors[index]}
+                  fill={
+                    key === SUPPORT_SERIES_KEY ? chartColors.barFill || "#94a3b8" : colors[index]
+                  }
                   fillOpacity={0.8}
                   isAnimationActive={false}
                 />

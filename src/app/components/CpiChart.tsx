@@ -240,6 +240,7 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
     });
   };
 
+
   // CAGR計算関数
   const calculateCAGR = (): void => {
     if (cagrStartYear === cagrEndYear) {
