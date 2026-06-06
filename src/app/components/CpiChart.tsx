@@ -254,8 +254,20 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
     }
 
     // クライアントライブラリの calculateCategorySum を使用
-    const startValue = calculateCategorySum(data, cagrStartYear, cagrMonth, stackedHiddenKeys, stackedKeys);
-    const endValue = calculateCategorySum(data, cagrEndYear, cagrMonth, stackedHiddenKeys, stackedKeys);
+    const startValue = calculateCategorySum(
+      data,
+      cagrStartYear,
+      cagrMonth,
+      stackedHiddenKeys,
+      stackedKeys,
+    );
+    const endValue = calculateCategorySum(
+      data,
+      cagrEndYear,
+      cagrMonth,
+      stackedHiddenKeys,
+      stackedKeys,
+    );
 
     if (startValue === 0) {
       const monthStr = String(cagrMonth).padStart(2, "0");
