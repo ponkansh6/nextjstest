@@ -36,53 +36,30 @@ describe("End-to-End Pipeline Integration", () => {
 
       expect(quarterlyNominalData.length).toBeGreaterThan(0);
       
-      // 既存データチェック: 2017年以降のデータが存在することを確認
-      const hasDataAfter2016 = (data: any[], keys: string[]) => {
-        const recentData = data.filter(d => (d.年 as number) >= 2017);
+      // 汎用的なデータ検証関数
+      const hasDataInRange = (data: any[], keys: string[], startYear: number, endYear: number, checkOnlySupport = false) => {
+        const rangeData = data.filter(d => (d.年 as number) >= startYear && (d.年 as number) <= endYear);
         return keys.every(key => {
-          // 'その他の消費支出' 関連は補完等で0になる可能性があるため除外してチェック
+          // 2005-2016は民間最終消費支出のみ検証
+          if (checkOnlySupport && !key.includes('民間最終消費支出')) return true;
+          // 'その他の消費支出' 関連は0になる可能性があるため除外
           if (key.includes('その他の消費支出')) return true; 
-          return recentData.some(d => typeof d[key] === 'number' && d[key] > 0);
+          return rangeData.some(d => typeof d[key] === 'number' && d[key] > 0);
         });
       };
 
+      // 名目系列の検証
       nominalKeys.forEach(key => {
-        expect(hasDataAfter2016(quarterlyNominalData, [key]), `Series '${key}' should have positive values in nominal data (post-2016)`).toBe(true);
+        expect(hasDataInRange(quarterlyNominalData, [key], 2005, 2016, true), `Nominal Series '${key}' should have positive values in 2005-2016`).toBe(true);
+        expect(hasDataInRange(quarterlyNominalData, [key], 2017, 2026, false), `Nominal Series '${key}' should have positive values in 2017-2026`).toBe(true);
       });
 
-      // 新規追加: CTIサポートデータの検証
-      const supportKey = "民間最終消費支出";
-      const values: string[] = [];
-      quarterlyNominalData.forEach(d => {
-        const year = d.年 as number;
-        if (year >= 2005 && year <= 2016) {
-          values.push(`${year} Q${d.quarter}: ${d[supportKey]}`);
-          // ... 既存のアサーション ...
-        }
-      });
-      // 2005年と2016年の値を確認するためログ出力
-      const result2005 = values.filter(v => v.startsWith('2005'));
-      const result2016 = values.filter(v => v.startsWith('2016'));
-      console.log('Values 2005:', result2005);
-      console.log('Values 2016:', result2016);
-      // expect(values).toEqual([]); 
-      // ログ出力の代わりに、失敗させて表示を確認するための一時的なコード
-      console.log('Values captured:', values.slice(0, 10)); // 最初の10件だけでも
-
+      // 実質系列の検証
       if (realKeys.length > 0) {
         expect(quarterlyRealData.length).toBeGreaterThan(0);
-        
-        // 既存データチェック: 2017年以降のデータが存在することを確認
-        const hasDataAfter2016 = (data: any[], keys: string[]) => {
-          const recentData = data.filter(d => (d.年 as number) >= 2017);
-          return keys.every(key => recentData.some(d => typeof d[key] === 'number' && d[key] > 0));
-        };
-        
         realKeys.forEach(key => {
-          // 'その他の消費支出' 関連は0になる可能性があるためチェック対象外とする
-          if (key.includes('その他の消費支出')) return;
-          const hasData = quarterlyRealData.some(d => typeof d[key] === 'number' && d[key] > 0);
-          expect(hasData, `Series '${key}' should have positive values in real data`).toBe(true);
+          expect(hasDataInRange(quarterlyRealData, [key], 2005, 2016, true), `Real Series '${key}' should have positive values in 2005-2016`).toBe(true);
+          expect(hasDataInRange(quarterlyRealData, [key], 2017, 2026, false), `Real Series '${key}' should have positive values in 2017-2026`).toBe(true);
         });
       }
     });

@@ -128,7 +128,6 @@ async function _loadPopulationData(): Promise<
 }
 
 function maybeCache(fn: any, key: string, opts?: any) {
-  // Disable caching in test environments to avoid Next runtime dependencies causing errors
   if (process.env.VITEST || process.env.JEST_WORKER_ID || process.env.NODE_ENV === "test")
     return fn;
   try {
@@ -338,55 +337,48 @@ export const loadTotalEarningData = maybeCache(_loadTotalEarningData, "earnings-
 
 async function _loadCtiData(): Promise<CpiData[]> {
   const ctiFilePath = path.join(process.cwd(), "public/cti_data.csv");
-  const ctiSupportPath = path.join(process.cwd(), "public/cti_support_nominal.csv");
+  const ctiSupportNominalPath = path.join(process.cwd(), "public/cti_support_nominal.csv");
+  const ctiSupportRealPath = path.join(process.cwd(), "public/cti_support_real.csv");
   if (!fs.existsSync(ctiFilePath)) {
     console.error("CTI data file not found");
     return [];
   }
-  // attempt to load cti_support if present
   const supportMap = new Map<string, number>();
-  try {
-    if (fs.existsSync(ctiSupportPath)) {
-      const supportContent = fs.readFileSync(ctiSupportPath, "utf8");
-      const parsedSupp = Papa.parse<string[]>(supportContent, {
-        header: false,
-        skipEmptyLines: false,
-      });
-      const suppRows = (parsedSupp.data || []) as string[][];
-      const suppHeaderIndex = suppRows.findIndex(
-        (r) =>
-          Array.isArray(r) && r.some((c) => typeof c === "string" && /民間最終消費支出/.test(c)),
-      );
-      if (suppHeaderIndex !== -1) {
-        const suppHeader = suppRows[suppHeaderIndex].map((c) =>
-          typeof c === "string" ? c.trim() : c,
+  const supportMapReal = new Map<string, number>();
+
+  const loadSupportMap = (filePath: string, targetMap: Map<string, number>) => {
+    if (fs.existsSync(filePath)) {
+      try {
+        const content = fs.readFileSync(filePath, "utf8");
+        const parsed = Papa.parse<string[]>(content, { header: false, skipEmptyLines: false });
+        const rows = (parsed.data || []) as string[][];
+        const headerIndex = rows.findIndex(
+          (r) =>
+            Array.isArray(r) && r.some((c) => typeof c === "string" && /民間最終消費支出/.test(c)),
         );
-        const suppDataRows = suppRows.slice(suppHeaderIndex + 1);
-        const ymIndex = suppHeader.indexOf("時間軸（四半期）");
-        const valueIndex = suppHeader.findIndex((h) => h === "民間最終消費支出");
-        console.log(`ymIndex: ${ymIndex}, valueIndex: ${valueIndex}`);
-
-        suppDataRows.forEach((row) => {
-          const ym = row[ymIndex];
-          const valStr =
-            typeof row[valueIndex] === "string"
-              ? row[valueIndex].trim().replace(/,/g, "")
-              : String(row[valueIndex]);
-          const num = parseFloat(valStr);
-          if (ym && !isNaN(num)) {
-            supportMap.set(ym, num);
-          }
-        });
-        console.log("Support map size:", supportMap.size);
-        console.log("Example:", Array.from(supportMap.entries()).slice(0, 5));
-
-        console.log("Support Map Size:", supportMap.size);
-        console.log("Support Map Example:", Array.from(supportMap.entries()).slice(0, 5));
+        if (headerIndex !== -1) {
+          const header = rows[headerIndex].map((c) => (typeof c === "string" ? c.trim() : c));
+          const ymIndex = header.indexOf("時間軸（四半期）");
+          // CSVのヘッダー名は「民間最終消費支出」のままであると想定
+          const valueIndex = header.findIndex((h) => h === "民間最終消費支出");
+          rows.slice(headerIndex + 1).forEach((row) => {
+            const ym = row[ymIndex];
+            const valStr =
+              typeof row[valueIndex] === "string"
+                ? row[valueIndex].trim().replace(/,/g, "")
+                : String(row[valueIndex]);
+            const num = parseFloat(valStr);
+            if (ym && !isNaN(num)) targetMap.set(ym, num);
+          });
+        }
+      } catch (err) {
+        console.error(`Error loading support file ${filePath}:`, err);
       }
     }
-  } catch (err) {
-    console.error("Error loading CTI support file:", err);
-  }
+  };
+
+  loadSupportMap(ctiSupportNominalPath, supportMap);
+  loadSupportMap(ctiSupportRealPath, supportMapReal);
 
   try {
     const ctiContent = fs.readFileSync(ctiFilePath, "utf8");
@@ -400,10 +392,6 @@ async function _loadCtiData(): Promise<CpiData[]> {
             typeof c === "string" && (c.trim() === "月" || c.trim().includes("消費支出（名目）")),
         ),
     );
-    // DEBUG:
-    console.log(`Header Index: ${headerIndex}`);
-    if (headerIndex !== -1) console.log(`Header content: ${rows[headerIndex]}`);
-
     if (headerIndex === -1) {
       console.error("CTI header not found");
       return [];
@@ -432,7 +420,6 @@ async function _loadCtiData(): Promise<CpiData[]> {
       if (typeof obj["月"] === "string" && !obj.年月) obj.年月 = obj["月"];
       // merge support value if available
       const ymStr = typeof obj.年月 === "string" ? obj.年月.trim() : String(obj.年月);
-      // Map "2020年1月" to quarter string "2020年1～3月期" to match supportMap keys
       const m = ymStr.match(/^(\d{4})年0?(\d{1,2})月/);
       if (m) {
         const year = m[1];
@@ -442,12 +429,18 @@ async function _loadCtiData(): Promise<CpiData[]> {
         const qEnd = q * 3;
         const normYm = `${year}年${qStart}～${qEnd}月期`;
         if (supportMap.has(normYm)) {
-          obj["民間最終消費支出"] = supportMap.get(normYm) as number;
+          obj["民間最終消費支出（名目）"] = supportMap.get(normYm) as number;
         } else {
-          obj["民間最終消費支出"] = 0;
+          obj["民間最終消費支出（名目）"] = 0;
+        }
+        if (supportMapReal.has(normYm)) {
+          obj["民間最終消費支出（実質）"] = supportMapReal.get(normYm) as number;
+        } else {
+          obj["民間最終消費支出（実質）"] = 0;
         }
       } else {
-        obj["民間最終消費支出"] = 0;
+        obj["民間最終消費支出（名目）"] = 0;
+        obj["民間最終消費支出（実質）"] = 0;
       }
 
       // 差分計算: 「その他の消費支出」を計算する
@@ -500,15 +493,19 @@ async function _loadCtiData(): Promise<CpiData[]> {
           const normYm = `${y}年${qStart}～${qEnd}月期`;
 
           const dummyRow: CpiData = { 年月: ym } as CpiData;
-          // すべてのキーを0で初期化（headerを利用）
           header.forEach((h) => {
             if (h !== "年月" && h !== "月") dummyRow[h as keyof CpiData] = 0;
           });
 
           if (supportMap.has(normYm)) {
-            dummyRow["民間最終消費支出"] = supportMap.get(normYm) as number;
+            dummyRow["民間最終消費支出（名目）"] = supportMap.get(normYm) as number;
           } else {
-            dummyRow["民間最終消費支出"] = 0;
+            dummyRow["民間最終消費支出（名目）"] = 0;
+          }
+          if (supportMapReal.has(normYm)) {
+            dummyRow["民間最終消費支出（実質）"] = supportMapReal.get(normYm) as number;
+          } else {
+            dummyRow["民間最終消費支出（実質）"] = 0;
           }
 
           // 差分計算: 「その他の消費支出」を計算する（補完行用）
@@ -557,10 +554,8 @@ async function _loadCtiData(): Promise<CpiData[]> {
     mapped.sort((a, b) => {
       const ma = String(a.年月).match(/^(\d{4})年(\d{1,2})月/);
       const mb = String(b.年月).match(/^(\d{4})年(\d{1,2})月/);
-      // Ensure 民間最終消費支出 exists
-      if (a["民間最終消費支出"] === undefined) a["民間最終消費支出"] = 0;
-      if (b["民間最終消費支出"] === undefined) b["民間最終消費支出"] = 0;
-
+      if (a["民間最終消費支出（名目）"] === undefined) a["民間最終消費支出（名目）"] = 0;
+      if (b["民間最終消費支出（名目）"] === undefined) b["民間最終消費支出（名目）"] = 0;
       if (!ma || !mb) return 0;
       const ay = parseInt(ma[1], 10);
       const am = parseInt(ma[2], 10);

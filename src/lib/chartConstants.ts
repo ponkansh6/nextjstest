@@ -27,6 +27,7 @@ export const stackedColors = [
 ];
 
 export const nominalKeys = [
+  "民間最終消費支出（名目）",
   "住居（名目）",
   "家具・家事用品（名目）",
   "被服及び履物（名目）",
@@ -50,6 +51,7 @@ export const realKeys = [
   "教養娯楽（実質）",
   "食料（実質）",
   "その他の消費支出（実質）",
+  "民間最終消費支出（実質）",
 ];
 
 // 凡例表示用のクリーンなラベル
@@ -61,12 +63,14 @@ export const getDisplayLabel = (key: string) => {
 // 内部で集計に使用する（中間）名目キー（canonical）
 export const CANONICAL_NOMINAL_KEY = "その他の消費支出（名目）";
 
-export const SUPPORT_SERIES_KEY = "民間最終消費支出";
+export const SUPPORT_SERIES_KEY = "民間最終消費支出（名目）";
+export const SUPPORT_SERIES_KEY_REAL = "民間最終消費支出（実質）";
 
 // 表示ラベルのオーバーライド（内部キー -> 凡例ラベル）
 export const DISPLAY_LABEL_OVERRIDES: Record<string, string> = {
   [CANONICAL_NOMINAL_KEY]: "諸雑費・CPI外支出",
   [SUPPORT_SERIES_KEY]: "民間最終消費支出",
+  [SUPPORT_SERIES_KEY_REAL]: "民間最終消費支出",
   food: "food",
   housing: "housing",
 };

@@ -21,6 +21,7 @@ import {
   stackedColors,
   stackedKeys,
   SUPPORT_SERIES_KEY,
+  SUPPORT_SERIES_KEY_REAL,
   targetKeys,
 } from "../../lib/chartConstants";
 
@@ -213,10 +214,15 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
 
   const handleNominalLegendClick = (dataKey: string) => {
     // 民間最終消費支出の場合
-    if (dataKey === SUPPORT_SERIES_KEY) {
-      setNominalHiddenKeys((prev) =>
-        prev.includes(dataKey) ? prev.filter((k) => k !== dataKey) : [...prev, dataKey],
-      );
+    if (dataKey === SUPPORT_SERIES_KEY || dataKey === SUPPORT_SERIES_KEY_REAL) {
+      setNominalHiddenKeys((prev) => {
+        const next = new Set(prev);
+        [SUPPORT_SERIES_KEY, SUPPORT_SERIES_KEY_REAL].forEach((k) => {
+          if (next.has(k)) next.delete(k);
+          else next.add(k);
+        });
+        return Array.from(next);
+      });
       return;
     }
 

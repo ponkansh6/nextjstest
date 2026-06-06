@@ -159,10 +159,51 @@ Year and month ,,,,,,Total aged 15+,,,
             // 4月以降のデータは 0 であると想定されるため、テストを修正。
             const month = parseInt(String(row.年月).match(/(\d+)月/)?.[1] || "0", 10);
             if (month <= 3) {
-              expect(row["民間最終消費支出"], `Row ${row.年月} should have populated expenditure`).toBeGreaterThan(0);
+              expect(row["民間最終消費支出（名目）"], `Row ${row.年月} should have populated expenditure`).toBeGreaterThan(0);
             } else {
-              expect(row["民間最終消費支出"]).toBe(0);
+              expect(row["民間最終消費支出（名目）"]).toBe(0);
             }
+        }
+      });
+    });
+
+    it("should ensure 民間最終消費支出（実質） is populated when real support data exists for the quarter", async () => {
+      const mockCtiCsv = `月,消費支出（名目）,消費支出（実質）
+2005年1月,1000,1000
+2005年2月,1000,1000
+2005年3月,1000,1000`;
+      const mockSupportNominalCsv = `時間軸（四半期）,民間最終消費支出
+2005年1～3月期,100`;
+      const mockSupportRealCsv = `時間軸（四半期）,民間最終消費支出
+2005年1～3月期,200`;
+
+      vi.spyOn(fs, "existsSync").mockImplementation((path) => {
+        if (typeof path === "string" && path.includes("cti_data.csv")) return true;
+        if (typeof path === "string" && path.includes("cti_support_nominal.csv")) return true;
+        if (typeof path === "string" && path.includes("cti_support_real.csv")) return true;
+        return false;
+      });
+
+      vi.spyOn(fs, "readFileSync").mockImplementation((path) => {
+        if (typeof path === "string" && path.includes("cti_data.csv")) return mockCtiCsv;
+        if (typeof path === "string" && path.includes("cti_support_nominal.csv")) return mockSupportNominalCsv;
+        if (typeof path === "string" && path.includes("cti_support_real.csv")) return mockSupportRealCsv;
+        return "";
+      });
+
+      const data = await loadCtiData();
+      
+      data.forEach(row => {
+        if (String(row.年月).startsWith("2005年")) {
+            const month = parseInt(String(row.年月).match(/(\d+)月/)?.[1] || "0", 10);
+            if (month <= 3) {
+              expect(row["民間最終消費支出（名目）"], `Row ${row.年月} should have populated nominal expenditure`).toBe(100);
+              expect(row["民間最終消費支出（実質）"], `Row ${row.年月} should have populated real expenditure`).toBe(200);
+            } else {
+              expect(row["民間最終消費支出（名目）"]).toBe(0);
+              expect(row["民間最終消費支出（実質）"]).toBe(0);
+            }
+
         }
       });
     });

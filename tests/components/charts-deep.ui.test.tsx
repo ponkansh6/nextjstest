@@ -56,7 +56,7 @@ describe('Deep UI Component Tests', () => {
     ];
 
     it('should hide each series when its legend button is clicked, including 民間最終消費支出', async () => {
-      const keys = [...nominalKeys, SUPPORT_SERIES_KEY];
+      const keys = Array.from(new Set([...nominalKeys, SUPPORT_SERIES_KEY]));
       
       const TestWrapper = () => {
         const [hiddenKeys, setHiddenKeys] = React.useState<string[]>([]);
