@@ -212,6 +212,15 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
   };
 
   const handleNominalLegendClick = (dataKey: string) => {
+    // 民間最終消費支出の場合
+    if (dataKey === SUPPORT_SERIES_KEY) {
+      setNominalHiddenKeys((prev) =>
+        prev.includes(dataKey) ? prev.filter((k) => k !== dataKey) : [...prev, dataKey],
+      );
+      return;
+    }
+
+
     // どちらのペアに属しているか検索
     const pair = keyPairs.find((p) => p.nominal === dataKey || p.real === dataKey);
     if (!pair) return;
