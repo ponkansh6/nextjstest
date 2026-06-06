@@ -104,11 +104,11 @@ describe("src/lib/clientCalculations", () => {
 
       const q12005 = quarterlyNominalData.find((r) => r.label === "2005年Q1");
       expect(q12005).toBeDefined();
-      expect(q12005!["民間最終消費支出_scaled"]).toBeCloseTo(100);
+      expect(q12005!["民間最終消費支出"]).toBeCloseTo(100);
 
       const q12020 = quarterlyNominalData.find((r) => r.label === "2020年Q1");
       expect(q12020).toBeDefined();
-      expect(q12020!["民間最終消費支出_scaled"]).toBe(0);
+      expect(q12020!["民間最終消費支出"]).toBe(0);
     });
 
     it("should aggregate '民間最終消費支出' strictly using raw objects to mimic CTI data structure", () => {

@@ -10,7 +10,7 @@ import {
   YAxis,
 } from "recharts";
 import styles from "./CpiChart.module.css";
-import { getLegendLabel } from "../../lib/chartConstants";
+import { getLegendLabel, SUPPORT_SERIES_KEY } from "../../lib/chartConstants";
 
 interface QuarterlyDataPoint {
   label: string;
@@ -101,7 +101,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
                     className={styles.legendIcon}
                     style={{
                       backgroundColor:
-                        key === "民間最終消費支出_scaled"
+                        key === SUPPORT_SERIES_KEY
                           ? chartColors.barFill || "#94a3b8"
                           : colors[index],
                     }}
@@ -164,16 +164,13 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
                   key={key}
                   dataKey={key}
                   stackId="a"
-                  fill={
-                    key === "民間最終消費支出_scaled"
-                      ? chartColors.barFill || "#94a3b8"
-                      : colors[index]
-                  }
-                  fillOpacity={key === "民間最終消費支出_scaled" ? 0.9 : 0.8}
+                  fill={colors[index]}
+                  fillOpacity={0.8}
                   isAnimationActive={false}
                 />
               ) : null,
             )}
+
           </BarChart>
         </ResponsiveContainer>
       </div>

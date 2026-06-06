@@ -51,7 +51,7 @@ describe("End-to-End Pipeline Integration", () => {
       });
 
       // 新規追加: CTIサポートデータの検証
-      const supportKey = "民間最終消費支出_scaled";
+      const supportKey = "民間最終消費支出";
       const values: string[] = [];
       quarterlyNominalData.forEach(d => {
         const year = d.年 as number;

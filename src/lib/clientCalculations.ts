@@ -215,9 +215,9 @@ export const computeChartData = (props: UseCpiChartDataProps, hiddenQuarters: nu
     const quarterObj = allQuarters.find((aq) => aq.年 === year && aq.quarter === q);
     const rawVal = quarterObj ? quarterObj.value : 0;
     if (year >= 2005 && year <= 2016) {
-      r[`${supportKey}_scaled`] = rawVal * scale;
+      r[supportKey] = rawVal * scale;
     } else {
-      r[`${supportKey}_scaled`] = 0;
+      r[supportKey] = 0;
     }
   });
 
