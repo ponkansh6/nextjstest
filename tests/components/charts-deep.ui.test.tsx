@@ -20,7 +20,7 @@ import { StackedAreaChart } from '../../src/app/components/StackedAreaChart';
 import type { CpiData } from '../../../src/types';
 import { createCpiDataList } from '../factories/cpiDataFactory';
 import { setupUiMocks } from '../utils/ui-mocks';
-import { nominalKeys, getLegendLabel, SUPPORT_SERIES_KEY } from '../../src/lib/chartConstants';
+import { nominalKeys, getLegendLabel, SUPPORT_SERIES_KEY_NOMINAL } from '../../src/lib/chartConstants';
 
 // Initialize mocks
 setupUiMocks();
@@ -50,13 +50,14 @@ const chartColors = {
 describe('Deep UI Component Tests', () => {
   
   describe('SpendingBarChart', () => {
-    const mockData = [
-      { label: '2023年Q1', 年: 2023, quarter: 1, food: 100, housing: 200, [SUPPORT_SERIES_KEY]: 300 },
-      { label: '2023年Q2', 年: 2023, quarter: 2, food: 110, housing: 210, [SUPPORT_SERIES_KEY]: 310 },
-    ];
+     const mockData = [
+       { label: '2023年Q1', 年: 2023, quarter: 1, food: 100, housing: 200, [SUPPORT_SERIES_KEY_NOMINAL]: 300 },
+       { label: '2023年Q2', 年: 2023, quarter: 2, food: 110, housing: 210, [SUPPORT_SERIES_KEY_NOMINAL]: 310 },
+     ];
+
 
     it('should hide each series when its legend button is clicked, including 民間最終消費支出', async () => {
-      const keys = Array.from(new Set([...nominalKeys, SUPPORT_SERIES_KEY]));
+      const keys = Array.from(new Set([...nominalKeys, SUPPORT_SERIES_KEY_NOMINAL]));
       
       const TestWrapper = () => {
         const [hiddenKeys, setHiddenKeys] = React.useState<string[]>([]);

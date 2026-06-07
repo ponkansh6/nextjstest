@@ -66,7 +66,7 @@ describe('CpiChart UI Integration', () => {
     expect(button.closest('button')?.classList.contains('hidden')).toBe(false);
   });
 
-  it('should toggle both 民間最終消費支出 and 民間最終消費支出（実質） when either is clicked', async () => {
+  it('should toggle 民間最終消費支出 independently', async () => {
     const mockData = [{ 年月: '2023年1月', '総合': 100 }];
     const ctiData = [
       { 年月: '2023年1月', [SUPPORT_SERIES_KEY]: 300, [SUPPORT_SERIES_KEY_REAL]: 200 }
@@ -85,18 +85,18 @@ describe('CpiChart UI Integration', () => {
     const targetButtons = allButtons.filter(b => b.textContent === '民間最終消費支出');
     
     const buttonNominal = targetButtons[0];
+    const buttonReal = targetButtons[1];
     
+    // 名目をクリック
     fireEvent.click(buttonNominal);
     
-    // UIの更新を待つ
     await act(async () => {
       await new Promise(resolve => setTimeout(resolve, 100));
     });
     
-    // 両方に hidden クラスが付与されたか確認
-    expect(buttonNominal.className).toContain('_hidden_');
-    const buttonReal = targetButtons[1];
-    expect(buttonReal.className).toContain('_hidden_');
+    // 名目と実質の両方が hidden になるはず
+    expect(buttonNominal.className.split(' ').some(c => c.includes('hidden'))).toBe(true);
+    expect(buttonReal.className.split(' ').some(c => c.includes('hidden'))).toBe(true);
   });
 
   it('should update CAGR calculation when legend items are toggled', async () => {

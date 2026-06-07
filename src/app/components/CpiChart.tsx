@@ -20,7 +20,7 @@ import {
   nominalKeys,
   stackedColors,
   stackedKeys,
-  SUPPORT_SERIES_KEY,
+  SUPPORT_SERIES_KEY_NOMINAL,
   SUPPORT_SERIES_KEY_REAL,
   targetKeys,
 } from "../../lib/chartConstants";
@@ -182,10 +182,14 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
   const realKeys = nominalKeys.map((k) =>
     k === "その他の消費支出（名目）" ? "その他の消費支出（実質）" : k.replace("名目", "実質"),
   );
+  const nominalKeysWithSupport = [...nominalKeys, SUPPORT_SERIES_KEY_NOMINAL];
+  const realKeysWithSupport = [...realKeys, SUPPORT_SERIES_KEY_REAL];
+  const nominalColorsWithSupport = [...nominalColors, "#94a3b8"];
   const realColors = nominalColors;
   const nominalData = ctiData;
 
   const [nominalHiddenKeys, setNominalHiddenKeys] = useState<string[]>([]);
+  const [realHiddenKeys, setRealHiddenKeys] = useState<string[]>([]);
 
   // CAGR計算用のステート
   const [cagrStartYear, setCagrStartYear] = useState<number>(initialStartYear);
@@ -212,36 +216,38 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
     toggleQuarter(quarter);
   };
 
-  const handleNominalLegendClick = (dataKey: string) => {
-    // 民間最終消費支出の場合
-    if (dataKey === SUPPORT_SERIES_KEY || dataKey === SUPPORT_SERIES_KEY_REAL) {
-      setNominalHiddenKeys((prev) => {
-        const next = new Set(prev);
-        [SUPPORT_SERIES_KEY, SUPPORT_SERIES_KEY_REAL].forEach((k) => {
-          if (next.has(k)) next.delete(k);
-          else next.add(k);
-        });
-        return Array.from(next);
-      });
-      return;
-    }
+  const handleLegendToggle = (dataKey: string) => {
+    // ペアを探す
+    const supportPair = {
+      nominal: SUPPORT_SERIES_KEY_NOMINAL,
+      real: SUPPORT_SERIES_KEY_REAL,
+      label: "民間最終消費支出",
+    };
+    const allPairs = [...keyPairs, supportPair];
 
-    // どちらのペアに属しているか検索
-    const pair = keyPairs.find((p) => p.nominal === dataKey || p.real === dataKey);
+    const pair = allPairs.find((p) => p.nominal === dataKey || p.real === dataKey);
     if (!pair) return;
 
-    // 名目と実質のキーを取得
-    const keysToToggle = [pair.nominal, pair.real];
+    const nominalKey = pair.nominal;
+    const realKey = pair.real;
 
     setNominalHiddenKeys((prev) => {
       const next = new Set(prev);
-      keysToToggle.forEach((k) => {
-        if (next.has(k)) {
-          next.delete(k);
-        } else {
-          next.add(k);
-        }
-      });
+      if (next.has(nominalKey)) {
+        next.delete(nominalKey);
+      } else {
+        next.add(nominalKey);
+      }
+      return Array.from(next);
+    });
+
+    setRealHiddenKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(realKey)) {
+        next.delete(realKey);
+      } else {
+        next.add(realKey);
+      }
       return Array.from(next);
     });
   };
@@ -424,36 +430,38 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
       <SpendingBarChart
         title="名目の消費支出（10分類）積み上げ"
         data={quarterlyNominalData}
-        keys={[...nominalKeys, SUPPORT_SERIES_KEY]}
-        colors={[...nominalColors, "#94a3b8"]}
+        keys={nominalKeysWithSupport}
+        colors={nominalColorsWithSupport}
         hiddenKeys={nominalHiddenKeys}
-        onToggle={handleNominalLegendClick}
+        onToggle={handleLegendToggle}
         chartColors={chartColors}
         isMobile={isMobile}
         CustomTooltip={CustomTooltip}
         hiddenQuarters={hiddenQuarters}
         onToggleQuarter={handleQuarterLegendClick}
         onReset={() => {
-          const allKeys = [...nominalKeys, ...realKeys, SUPPORT_SERIES_KEY];
-          setNominalHiddenKeys((prev) => (prev.length === allKeys.length ? [] : allKeys));
+          setNominalHiddenKeys((prev) =>
+            prev.length === nominalKeysWithSupport.length ? [] : nominalKeysWithSupport,
+          );
         }}
       />
 
       <SpendingBarChart
         title="実質の消費支出（10分類）積み上げ"
         data={quarterlyRealData}
-        keys={realKeys}
-        colors={realColors}
-        hiddenKeys={nominalHiddenKeys}
-        onToggle={handleNominalLegendClick}
+        keys={realKeysWithSupport}
+        colors={[...realColors, "#94a3b8"]}
+        hiddenKeys={realHiddenKeys}
+        onToggle={handleLegendToggle}
         chartColors={chartColors}
         isMobile={isMobile}
         CustomTooltip={CustomTooltip}
         hiddenQuarters={hiddenQuarters}
         onToggleQuarter={handleQuarterLegendClick}
         onReset={() => {
-          const allKeys = [...nominalKeys, ...realKeys];
-          setNominalHiddenKeys((prev) => (prev.length === allKeys.length ? [] : allKeys));
+          setRealHiddenKeys((prev) =>
+            prev.length === realKeysWithSupport.length ? [] : realKeysWithSupport,
+          );
         }}
         hideLegend
       />

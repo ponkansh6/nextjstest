@@ -6,7 +6,7 @@ import { expect, it, describe, beforeAll } from "vitest";
 import { renderHook } from "@testing-library/react";
 import { loadCtiData, loadCpiData, loadTotalEarningData } from "../../server/lib/dataLoader";
 import { useCpiChartData } from "../../src/hooks/useCpiChartData";
-import { nominalKeys, realKeys, SUPPORT_SERIES_KEY, SUPPORT_SERIES_KEY_REAL } from "../../src/lib/chartConstants";
+import { nominalKeys, realKeys, SUPPORT_SERIES_KEY_NOMINAL, SUPPORT_SERIES_KEY_REAL } from "../../src/lib/chartConstants";
 
 describe("End-to-End Pipeline Integration", () => {
   let ctiData: any[];
@@ -17,17 +17,6 @@ describe("End-to-End Pipeline Integration", () => {
     ctiData = await loadCtiData();
     cpiData = await loadCpiData();
     earningData = await loadTotalEarningData();
-
-    // 民間最終消費支出のみ、テスト用の期待値に書き換え (パッチを当てる)
-    ctiData = ctiData.map(row => {
-      const year = row.年月 ? parseInt(String(row.年月).substring(0, 4), 10) : 0;
-      const val = year > 0 && year <= 2016 ? 300 : 0;
-      return {
-        ...row,
-        [SUPPORT_SERIES_KEY]: val,
-        [SUPPORT_SERIES_KEY_REAL]: val,
-      };
-    });
   });
 
   describe("CPI & Spending (CTI) Pipeline", () => {
@@ -59,12 +48,13 @@ describe("End-to-End Pipeline Integration", () => {
         });
       };
 
-      // 名目系列の検証
-      nominalKeys.forEach(key => {
-        if (key === SUPPORT_SERIES_KEY) return; // 民間最終消費支出は個別に検証
-        expect(hasDataInRange(quarterlyNominalData, [key], 2005, 2016, true), `Nominal Series '${key}' should have positive values in 2005-2016`).toBe(true);
-        expect(hasDataInRange(quarterlyNominalData, [key], 2017, 2026, false), `Nominal Series '${key}' should have positive values in 2017-2026`).toBe(true);
-      });
+       // 名目系列の検証
+       nominalKeys.forEach(key => {
+         if (key === SUPPORT_SERIES_KEY_NOMINAL) return; // 民間最終消費支出は個別に検証
+         expect(hasDataInRange(quarterlyNominalData, [key], 2005, 2016, true), `Nominal Series '${key}' should have positive values in 2005-2016`).toBe(true);
+         expect(hasDataInRange(quarterlyNominalData, [key], 2017, 2026, false), `Nominal Series '${key}' should have positive values in 2017-2026`).toBe(true);
+       });
+
 
       // 実質系列の検証
       if (realKeys.length > 0) {
@@ -76,14 +66,27 @@ describe("End-to-End Pipeline Integration", () => {
         });
       }
 
-      // 民間最終消費支出 (SUPPORT_KEY) の検証: 2017年以降は0であるべき
-      [SUPPORT_SERIES_KEY, SUPPORT_SERIES_KEY_REAL].forEach(supportKey => {
-        const targetData = supportKey === SUPPORT_SERIES_KEY ? quarterlyNominalData : quarterlyRealData;
-        const supportData = targetData.filter(d => d.年 >= 2017);
-        supportData.forEach(d => {
-          expect(d[supportKey], `${d.label} support value should be 0`).toBe(0);
-        });
-      });
+       // 民間最終消費支出 (SUPPORT_KEY) の検証
+       [SUPPORT_SERIES_KEY_NOMINAL, SUPPORT_SERIES_KEY_REAL].forEach(supportKey => {
+         const targetData = supportKey === SUPPORT_SERIES_KEY_NOMINAL ? quarterlyNominalData : quarterlyRealData;
+         
+         // 2005-2016: 200-400の範囲であること
+         const pre2017Data = targetData.filter(d => d.年 <= 2016);
+         pre2017Data.forEach(d => {
+           const val = d[supportKey] as number;
+           // 値の範囲を確認するためのログ出力
+           console.log(`${d.label} - ${supportKey}: ${val}`);
+           expect(val, `${d.label} support value should be 200-400`).toBeGreaterThanOrEqual(200);
+           expect(val, `${d.label} support value should be 200-400`).toBeLessThanOrEqual(400);
+         });
+
+         // 2017年以降: 0であること
+         const post2016Data = targetData.filter(d => d.年 >= 2017);
+         post2016Data.forEach(d => {
+           expect(d[supportKey], `${d.label} support value should be 0`).toBe(0);
+         });
+       });
+
     });
 
     it("should verify that handleNominalLegendClick toggles keys correctly", () => {
@@ -183,14 +186,15 @@ describe("End-to-End Pipeline Integration", () => {
 
       // 全消費支出キーを取得し「民間最終消費支出」および空のキーを除外
       const allKeys = Object.keys(ctiData[0]);
-      const targetKeys = allKeys.filter(key => 
-        key !== "民間最終消費支出" && 
-        key !== SUPPORT_SERIES_KEY &&
-        key !== SUPPORT_SERIES_KEY_REAL &&
-        key !== "年月" && 
-        key !== "月" &&
-        key !== ""
-      );
+       const targetKeys = allKeys.filter(key => 
+         key !== "民間最終消費支出" && 
+         key !== SUPPORT_SERIES_KEY_NOMINAL &&
+         key !== SUPPORT_SERIES_KEY_REAL &&
+         key !== "年月" && 
+         key !== "月" &&
+         key !== ""
+       );
+
 
       q1_2017_data.forEach(row => {
         targetKeys.forEach(key => {
