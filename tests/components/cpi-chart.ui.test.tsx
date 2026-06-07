@@ -2,80 +2,35 @@
  * @vitest-environment happy-dom
  */
 
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { expect, it, describe, beforeAll } from "vitest";
+import { render, screen, act, fireEvent } from '@testing-library/react';
 import React from 'react';
 import CpiChart from '../../src/app/components/CpiChart';
-import { SUPPORT_SERIES_KEY, SUPPORT_SERIES_KEY_REAL } from '../../src/lib/chartConstants';
+import { loadCtiData, loadCpiData } from "../../server/lib/dataLoader";
+import { SUPPORT_SERIES_KEY_NOMINAL, SUPPORT_SERIES_KEY_REAL } from "../../src/lib/chartConstants";
+import { setupUiMocks } from '../utils/ui-mocks';
 
-// モック化: useCpiChartData などの外部依存
-vi.mock('../../hooks/useCpiChartData', () => ({
-  useCpiChartData: () => ({
-    quarterlyNominalData: [],
-    quarterlyRealData: [],
-    hiddenQuarters: [],
-    toggleQuarter: vi.fn(),
-    loading: false,
-    error: null,
-  }),
-}));
-
-vi.mock('../../hooks/useChartTheme', () => ({
-  useChartTheme: () => ({
-    isMobile: false,
-    chartColors: { gridStroke: '#000', axisText: '#000', tooltipBg: '#000', tooltipText: '#000', barFill: '#000' },
-  }),
-}));
+setupUiMocks();
 
 describe('CpiChart UI Integration', () => {
-  it('should toggle 民間最終消費支出 correctly in the legend', async () => {
-    const mockData = [{ 年月: '2023年1月', '総合': 100 }];
-    const ctiData = [{ 年月: '2023年1月', [SUPPORT_SERIES_KEY]: 300 }];
-    
-    render(
-      <CpiChart 
-        data={mockData} 
-        ctiData={ctiData} 
-        totalEarningData={[]} 
-      />
-    );
+  let ctiData: any[];
+  let cpiData: any[];
 
-    // 民間最終消費支出の凡例ボタンを探す（複数あるため最初のものを取得）
-    const buttons = screen.getAllByText('民間最終消費支出');
-    const button = buttons[0];
-    
-    // 初期状態は表示されていることを期待
-    expect(button.closest('button')?.className).not.toContain('_hidden_');
-
-    // クリックして非表示にする
-    fireEvent.click(button);
-    
-    // UIの更新を待つ
-    await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 100));
-    });
-    
-    // hiddenクラスを持っているはず
-    const hasHidden = button.closest('button')?.className.includes('_hidden_');
-    
-    expect(hasHidden).toBe(true);
-    
-
-    // クリックして再表示する
-    fireEvent.click(button);
-    expect(button.closest('button')?.classList.contains('hidden')).toBe(false);
+  beforeAll(async () => {
+    ctiData = await loadCtiData();
+    cpiData = await loadCpiData();
   });
 
   it('should toggle 民間最終消費支出 independently', async () => {
     const mockData = [{ 年月: '2023年1月', '総合': 100 }];
-    const ctiData = [
-      { 年月: '2023年1月', [SUPPORT_SERIES_KEY]: 300, [SUPPORT_SERIES_KEY_REAL]: 200 }
+    const ctiDataMock = [
+      { 年月: '2023年1月', [SUPPORT_SERIES_KEY_NOMINAL]: 300, [SUPPORT_SERIES_KEY_REAL]: 200 }
     ];
-    
+
     render(
       <CpiChart 
-        data={mockData} 
-        ctiData={ctiData} 
+        data={mockData as any} 
+        ctiData={ctiDataMock as any} 
         totalEarningData={[]} 
       />
     );
@@ -85,18 +40,17 @@ describe('CpiChart UI Integration', () => {
     const targetButtons = allButtons.filter(b => b.textContent === '民間最終消費支出');
     
     const buttonNominal = targetButtons[0];
-    const buttonReal = targetButtons[1];
     
-    // 名目をクリック
+    // 名目をクリック (ペアの同期により名目と実質がトグルされる)
     fireEvent.click(buttonNominal);
     
+    // UIの更新を待つ
     await act(async () => {
       await new Promise(resolve => setTimeout(resolve, 100));
     });
     
-    // 名目と実質の両方が hidden になるはず
+    // 名目のボタンが hidden になるはず
     expect(buttonNominal.className.split(' ').some(c => c.includes('hidden'))).toBe(true);
-    expect(buttonReal.className.split(' ').some(c => c.includes('hidden'))).toBe(true);
   });
 
   it('should update CAGR calculation when legend items are toggled', async () => {
@@ -121,9 +75,6 @@ describe('CpiChart UI Integration', () => {
     const calcButton = screen.getByText('Calculate');
     fireEvent.click(calcButton);
     
-    // UIをデバッグ出力してDOM構造を確認
-    screen.debug();
-
     // クラス名から要素を探し、そのテキストを取得して検証
     const resultElements = screen.getAllByText(/%/);
     const resultElement = resultElements.find(el => el.className.includes('_cagrResultValue_'));

@@ -100,12 +100,12 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
                   <span
                     className={styles.legendIcon}
                     style={{
-                                   backgroundColor:
-                                     key === SUPPORT_SERIES_KEY_NOMINAL
-                                       ? chartColors.barFill || "#94a3b8"
-                                       : colors[index],
-                                   }}
-                                 />
+                      backgroundColor:
+                        key === SUPPORT_SERIES_KEY_NOMINAL
+                          ? chartColors.barFill || "#94a3b8"
+                          : colors[index],
+                    }}
+                  />
 
                   <span className={styles.legendLabel}>{getLegendLabel(key)}</span>
                 </button>
@@ -165,12 +165,11 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
                   key={key}
                   dataKey={key}
                   stackId="a"
-                   fill={
-                     key === SUPPORT_SERIES_KEY_NOMINAL
-                       ? chartColors.barFill || "#94a3b8"
-                       : colors[index]
-                   }
-
+                  fill={
+                    key === SUPPORT_SERIES_KEY_NOMINAL
+                      ? chartColors.barFill || "#94a3b8"
+                      : colors[index]
+                  }
                   fillOpacity={0.8}
                   isAnimationActive={false}
                 />
