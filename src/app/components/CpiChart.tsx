@@ -440,9 +440,8 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
         hiddenQuarters={hiddenQuarters}
         onToggleQuarter={handleQuarterLegendClick}
         onReset={() => {
-          setNominalHiddenKeys((prev) =>
-            prev.length === nominalKeysWithSupport.length ? [] : nominalKeysWithSupport,
-          );
+          setNominalHiddenKeys((prev) => (prev.length > 0 ? [] : nominalKeysWithSupport));
+          setRealHiddenKeys((prev) => (prev.length > 0 ? [] : realKeysWithSupport));
         }}
       />
 
