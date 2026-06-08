@@ -16,6 +16,20 @@ export const CPI_CATEGORIES = [
   "諸雑費",
 ];
 
+// 行データとキーリストから合計を算出する共通ロジック
+export const sumCategoryValues = (row: any, keys: string[], hiddenKeys: string[] = []): number => {
+  let sum = 0;
+  keys.forEach((key) => {
+    if (!hiddenKeys.includes(key)) {
+      const value = row[key];
+      if (typeof value === "number") {
+        sum += value;
+      }
+    }
+  });
+  return sum;
+};
+
 export const calculateCategorySum = (
   data: CpiData[],
   year: number,
@@ -42,16 +56,7 @@ export const calculateCategorySum = (
     throw new Error(`指定された年月のデータが見つかりません: ${year}年${monthStr}月`);
   }
 
-  let sum = 0;
-  stackedKeys.forEach((key) => {
-    if (!hiddenKeys.includes(key)) {
-      const value = dataPoint[key as keyof CpiData];
-      if (typeof value === "number") {
-        sum += value;
-      }
-    }
-  });
-  return sum;
+  return sumCategoryValues(dataPoint, stackedKeys, hiddenKeys);
 };
 
 /**

@@ -7,6 +7,7 @@ import { renderHook } from "@testing-library/react";
 import { loadCtiData, loadCpiData, loadTotalEarningData } from "../../server/lib/dataLoader";
 import { useCpiChartData } from "../../src/hooks/useCpiChartData";
 import { nominalKeys, realKeys, SUPPORT_SERIES_KEY_NOMINAL, SUPPORT_SERIES_KEY_REAL } from "../../src/lib/chartConstants";
+import { sumCategoryValues } from "../../src/lib/clientCalculations";
 
 describe("End-to-End Pipeline Integration", () => {
   let ctiData: any[];
@@ -66,26 +67,64 @@ describe("End-to-End Pipeline Integration", () => {
         });
       }
 
-       // 民間最終消費支出 (SUPPORT_KEY) の検証
-       [SUPPORT_SERIES_KEY_NOMINAL, SUPPORT_SERIES_KEY_REAL].forEach(supportKey => {
-         const targetData = supportKey === SUPPORT_SERIES_KEY_NOMINAL ? quarterlyNominalData : quarterlyRealData;
-         
-         // 2005-2016: 200-400の範囲であること
-         const pre2017Data = targetData.filter(d => d.年 <= 2016);
-         pre2017Data.forEach(d => {
-           const val = d[supportKey] as number;
-           // 値の範囲を確認するためのログ出力
-           console.log(`${d.label} - ${supportKey}: ${val}`);
-           expect(val, `${d.label} support value should be 200-400`).toBeGreaterThanOrEqual(200);
-           expect(val, `${d.label} support value should be 200-400`).toBeLessThanOrEqual(400);
-         });
+        // 民間最終消費支出 (SUPPORT_KEY) の検証
+        [SUPPORT_SERIES_KEY_NOMINAL, SUPPORT_SERIES_KEY_REAL].forEach(supportKey => {
+          const isNominal = supportKey === SUPPORT_SERIES_KEY_NOMINAL;
+          const targetData = isNominal ? quarterlyNominalData : quarterlyRealData;
+          const keys = isNominal ? nominalKeys : realKeys;
+          const supportKeyNominal = SUPPORT_SERIES_KEY_NOMINAL;
+          const supportKeyReal = SUPPORT_SERIES_KEY_REAL;
+          
+          // 2005-2016: 200-400の範囲であること
+          const pre2017Data = targetData.filter(d => d.年 <= 2016);
+          pre2017Data.forEach(d => {
+            const val = d[supportKey] as number;
+            // 値の範囲を確認するためのログ出力
+            console.log(`${d.label} - ${supportKey}: ${val}`);
+            expect(val, `${d.label} support value should be 200-400`).toBeGreaterThanOrEqual(200);
+            expect(val, `${d.label} support value should be 200-400`).toBeLessThanOrEqual(400);
+          });
 
-         // 2017年以降: 0であること
-         const post2016Data = targetData.filter(d => d.年 >= 2017);
-         post2016Data.forEach(d => {
-           expect(d[supportKey], `${d.label} support value should be 0`).toBe(0);
-         });
-       });
+          // 2017年以降: 0であること
+          const post2016Data = targetData.filter(d => d.年 >= 2017);
+          post2016Data.forEach(d => {
+            expect(d[supportKey], `${d.label} support value should be 0`).toBe(0);
+          });
+
+          // 2017年以降: フック出力の内訳費目合計が正規化済み（200-400範囲）であること
+          // ※ 現状 computeChartData はサポート系列のみ正規化し、内訳費目は生値のまま出力するため、
+          //    このテストは失敗し、正規化漏れのバグを検出する
+          const expenditureKeys = keys.filter(k => 
+            k !== supportKeyNominal && 
+            k !== supportKeyReal && 
+            !k.includes("その他の消費支出")
+          );
+
+          // デバッグ: 2017年以降の最初の行のキーと値を確認
+          const firstPost2016 = post2016Data[0];
+          if (firstPost2016) {
+            console.log(`DEBUG ${isNominal ? 'nominal' : 'real'} post2016 first row label:`, firstPost2016.label);
+            expenditureKeys.forEach(key => {
+              const val = firstPost2016[key];
+              if (val !== undefined && val !== 0) {
+                console.log(`DEBUG: ${key} = ${val}`);
+              }
+            });
+          }
+
+          // 実データがある四半期のみ検証（内訳合計 > 0 のもの）
+          const validQuarters = post2016Data.filter(q => 
+            expenditureKeys.some(key => (Number(q[key]) || 0) > 0)
+          );
+          
+          expect(validQuarters.length, `${isNominal ? 'nominal' : 'real'} 検証対象の四半期データが存在すること`).toBeGreaterThan(0);
+
+          validQuarters.forEach(quarterRow => {
+            const sum = sumCategoryValues(quarterRow, expenditureKeys);
+            expect(sum, `${quarterRow.label} expenditure sum should be normalized to 200-400`).toBeGreaterThanOrEqual(200);
+            expect(sum, `${quarterRow.label} expenditure sum should be normalized to 200-400`).toBeLessThanOrEqual(400);
+          });
+        });
 
     });
 
@@ -165,41 +204,32 @@ describe("End-to-End Pipeline Integration", () => {
       });
     });
 
-    it("should verify data trace (non-zero values through pipeline)", () => {
-      // Quick trace of a key from CTI to computation
-      const expenditureKey = "その他の消費支出（名目）";
-      // 2017年以降のデータで検証
-      const recentCtiRows = ctiData.filter(d => d.年月 && typeof d.年月 === 'string' && parseInt(d.年月.substring(0, 4), 10) >= 2017);
-      const lastCtiRow = recentCtiRows[recentCtiRows.length - 1];
-      expect(lastCtiRow).toBeDefined();
-      expect(lastCtiRow[expenditureKey]).toBeGreaterThan(0);
-    });
-
-    it("should verify 2017 Q1 all consumption categories (except 民間最終消費支出) have positive values", () => {
-      // 2017年1月～3月のデータを抽出
-      const q1_2017_data = ctiData.filter(d => 
-        typeof d.年月 === 'string' && 
-        (d.年月 === '2017年1月' || d.年月 === '2017年2月' || d.年月 === '2017年3月')
+    it("should verify all consumption categories (except support) have positive values for 2017 onwards", () => {
+      // 2017年以降のデータを抽出
+      const recentCtiRows = ctiData.filter(d => 
+        d.年月 && typeof d.年月 === 'string' && parseInt(d.年月.substring(0, 4), 10) >= 2017
       );
       
-      expect(q1_2017_data.length).toBeGreaterThan(0);
+      expect(recentCtiRows.length).toBeGreaterThan(0);
 
-      // 全消費支出キーを取得し「民間最終消費支出」および空のキーを除外
+      // 全消費支出キーを取得し、「民間最終消費支出」「サポート系列」「メタキー」を除外
       const allKeys = Object.keys(ctiData[0]);
-       const targetKeys = allKeys.filter(key => 
-         key !== "民間最終消費支出" && 
-         key !== SUPPORT_SERIES_KEY_NOMINAL &&
-         key !== SUPPORT_SERIES_KEY_REAL &&
-         key !== "年月" && 
-         key !== "月" &&
-         key !== ""
-       );
+      const targetKeys = allKeys.filter(key => 
+        key !== "民間最終消費支出" && 
+        key !== SUPPORT_SERIES_KEY_NOMINAL &&
+        key !== SUPPORT_SERIES_KEY_REAL &&
+        key !== "年月" && 
+        key !== "月" &&
+        key !== ""
+      );
 
+      expect(targetKeys.length).toBeGreaterThan(0);
 
-      q1_2017_data.forEach(row => {
+      // 2017年以降の全行・全対象キーで正値を検証
+      recentCtiRows.forEach(row => {
         targetKeys.forEach(key => {
-          // 値が数値でかつ0より大きいことを確認
-          expect(Number(row[key]), `${key} in ${row.年月} should be > 0`).toBeGreaterThan(0);
+          const val = Number(row[key]);
+          expect(val, `${key} in ${row.年月} should be > 0 (2017 onwards)`).toBeGreaterThan(0);
         });
       });
     });
