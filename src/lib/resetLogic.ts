@@ -1,4 +1,5 @@
 export interface ResetConfig {
+  hiddenKeys: string[];
   allKeys: string[];
   setHiddenKeys: (value: string[] | ((prev: string[]) => string[])) => void;
 }
@@ -10,9 +11,7 @@ export interface ResetConfig {
 export const createResetHandler = (config: ResetConfig): (() => void) => {
   return () => {
     const { allKeys, setHiddenKeys } = config;
-    setHiddenKeys((prev: string[]) =>
-      prev.length > 0 ? [] : allKeys
-    );
+    setHiddenKeys((prev: string[]) => (prev.length > 0 ? [] : allKeys));
   };
 };
 
@@ -21,14 +20,10 @@ export const createResetHandler = (config: ResetConfig): (() => void) => {
  */
 export const createDualResetHandler = (
   nominalConfig: ResetConfig,
-  realConfig: ResetConfig
+  realConfig: ResetConfig,
 ): (() => void) => {
   return () => {
-    nominalConfig.setHiddenKeys((prev: string[]) =>
-      prev.length > 0 ? [] : nominalConfig.allKeys
-    );
-    realConfig.setHiddenKeys((prev: string[]) =>
-      prev.length > 0 ? [] : realConfig.allKeys
-    );
+    nominalConfig.setHiddenKeys((prev: string[]) => (prev.length > 0 ? [] : nominalConfig.allKeys));
+    realConfig.setHiddenKeys((prev: string[]) => (prev.length > 0 ? [] : realConfig.allKeys));
   };
 };

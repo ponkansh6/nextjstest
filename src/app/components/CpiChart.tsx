@@ -13,6 +13,7 @@ import { EarningsBreakdownChart } from "./EarningsBreakdownChart";
 import { ResidualAreaChart } from "./ResidualAreaChart";
 import { MajorIndicesChart } from "./MajorIndicesChart";
 import { calculateCategorySum, calculateCAGRValue } from "../../lib/clientCalculations";
+import { createDualResetHandler } from "../../lib/resetLogic";
 import {
   colors,
   keyPairs,
@@ -439,10 +440,18 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
         CustomTooltip={CustomTooltip}
         hiddenQuarters={hiddenQuarters}
         onToggleQuarter={handleQuarterLegendClick}
-        onReset={() => {
-          setNominalHiddenKeys((prev) => (prev.length > 0 ? [] : nominalKeysWithSupport));
-          setRealHiddenKeys((prev) => (prev.length > 0 ? [] : realKeysWithSupport));
-        }}
+        onReset={createDualResetHandler(
+          {
+            hiddenKeys: nominalHiddenKeys,
+            allKeys: nominalKeysWithSupport,
+            setHiddenKeys: setNominalHiddenKeys,
+          },
+          {
+            hiddenKeys: realHiddenKeys,
+            allKeys: realKeysWithSupport,
+            setHiddenKeys: setRealHiddenKeys,
+          },
+        )}
       />
 
       <SpendingBarChart
@@ -457,11 +466,18 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
         CustomTooltip={CustomTooltip}
         hiddenQuarters={hiddenQuarters}
         onToggleQuarter={handleQuarterLegendClick}
-        onReset={() => {
-          setRealHiddenKeys((prev) =>
-            prev.length === realKeysWithSupport.length ? [] : realKeysWithSupport,
-          );
-        }}
+        onReset={createDualResetHandler(
+          {
+            hiddenKeys: nominalHiddenKeys,
+            allKeys: nominalKeysWithSupport,
+            setHiddenKeys: setNominalHiddenKeys,
+          },
+          {
+            hiddenKeys: realHiddenKeys,
+            allKeys: realKeysWithSupport,
+            setHiddenKeys: setRealHiddenKeys,
+          },
+        )}
         hideLegend
       />
 
