@@ -8,9 +8,7 @@ import React from 'react';
 import CpiChart from '../../src/app/components/CpiChart';
 import { loadCtiData, loadCpiData } from "../../server/lib/dataLoader";
 import { SUPPORT_SERIES_KEY_NOMINAL, SUPPORT_SERIES_KEY_REAL, nominalKeys, realKeys } from "../../src/lib/chartConstants";
-import { setupUiMocks } from '../utils/ui-mocks';
-
-setupUiMocks();
+// UI test setup is now centralized in utils/ui-test-setup
 
 describe('CpiChart UI Integration', () => {
   let ctiData: any[];

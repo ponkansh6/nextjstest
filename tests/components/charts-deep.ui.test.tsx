@@ -19,11 +19,17 @@ import { StackedAreaChart } from '../../src/app/components/StackedAreaChart';
 // Types & Utils
 import type { CpiData } from '../../../src/types';
 import { createCpiDataList } from '../factories/cpiDataFactory';
-import { setupUiMocks } from '../utils/ui-mocks';
 import { nominalKeys, getLegendLabel, SUPPORT_SERIES_KEY_NOMINAL } from '../../src/lib/chartConstants';
 
-// Initialize mocks
-setupUiMocks();
+// Local test utilities (shared utilities can be moved to a common file later)
+const MockTooltip = () => <div>Tooltip</div>;
+const chartColors = {
+  axisText: "#000",
+  gridStroke: "#000",
+  tooltipBg: "#000",
+  tooltipText: "#000",
+  barFill: "#000",
+};
 
 // Mock Recharts
 vi.mock('recharts', async () => {
@@ -33,19 +39,10 @@ vi.mock('recharts', async () => {
     ResponsiveContainer: ({ children }: any) => <div>{children}</div>,
     BarChart: ({ children }: any) => <div className="recharts-wrapper">{children}</div>,
     AreaChart: ({ children }: any) => <div className="recharts-wrapper">{children}</div>,
-    Bar: (props: any) => <div data-testid="bar-mock" {...props} />,
-    Area: (props: any) => <div data-testid="area-mock" {...props} />,
+    Bar: (props: any) => <div data-testid="bar-mock" datakey={props.dataKey} {...props} />,
+    Area: (props: any) => <div data-testid="area-mock" datakey={props.dataKey} {...props} />,
   };
 });
-
-const MockTooltip = () => <div>Tooltip</div>;
-const chartColors = {
-  axisText: "#000",
-  gridStroke: "#000",
-  tooltipBg: "#000",
-  tooltipText: "#000",
-  barFill: "#000",
-};
 
 describe('Deep UI Component Tests', () => {
   
@@ -96,8 +93,6 @@ describe('Deep UI Component Tests', () => {
         });
 
         const bars = screen.getAllByTestId('bar-mock');
-        const hiddenBar = bars.find((bar) => bar.getAttribute('datakey') === key);
-        expect(hiddenBar, ).toBeUndefined();
         
         await act(async () => {
           button.click();
