@@ -127,9 +127,27 @@ async function _loadPopulationData(): Promise<
   }
 }
 
+// Simple in-memory cache for test environment
+const testCache = new Map<string, any>();
+
+export function clearTestCache() {
+  testCache.clear();
+}
+
 function maybeCache(fn: any, key: string, opts?: any) {
-  if (process.env.VITEST || process.env.JEST_WORKER_ID || process.env.NODE_ENV === "test")
-    return fn;
+  if (process.env.VITEST || process.env.JEST_WORKER_ID || process.env.NODE_ENV === "test") {
+    // Use in-memory cache in test environment
+    return async (...args: any[]) => {
+      // Include args in cache key to handle different parameters
+      const cacheKey = key + JSON.stringify(args);
+      if (testCache.has(cacheKey)) {
+        return testCache.get(cacheKey);
+      }
+      const result = await fn(...args);
+      testCache.set(cacheKey, result);
+      return result;
+    };
+  }
   try {
     if (typeof unstable_cache === "function") {
       return unstable_cache(fn, [key], opts);

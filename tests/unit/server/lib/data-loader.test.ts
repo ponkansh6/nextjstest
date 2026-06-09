@@ -1,13 +1,14 @@
 /** @vitest-environment node */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import fs from "fs";
-import { loadCpiData, loadTotalEarningData, loadPopulationData, loadCtiData } from "../../../../server/lib/dataLoader";
+import { loadCpiData, loadTotalEarningData, loadPopulationData, loadCtiData, clearTestCache } from "../../../../server/lib/dataLoader";
 
 vi.mock("fs");
 
 describe("server/lib/dataLoader", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    clearTestCache();
   });
 
   describe("loadCpiData", () => {

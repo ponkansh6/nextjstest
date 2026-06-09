@@ -79,8 +79,6 @@ describe("End-to-End Pipeline Integration", () => {
           const pre2017Data = targetData.filter(d => d.年 <= 2016);
           pre2017Data.forEach(d => {
             const val = d[supportKey] as number;
-            // 値の範囲を確認するためのログ出力
-            console.log(`${d.label} - ${supportKey}: ${val}`);
             expect(val, `${d.label} support value should be 200-400`).toBeGreaterThanOrEqual(200);
             expect(val, `${d.label} support value should be 200-400`).toBeLessThanOrEqual(400);
           });
@@ -100,17 +98,7 @@ describe("End-to-End Pipeline Integration", () => {
             !k.includes("その他の消費支出")
           );
 
-          // デバッグ: 2017年以降の最初の行のキーと値を確認
-          const firstPost2016 = post2016Data[0];
-          if (firstPost2016) {
-            console.log(`DEBUG ${isNominal ? 'nominal' : 'real'} post2016 first row label:`, firstPost2016.label);
-            expenditureKeys.forEach(key => {
-              const val = firstPost2016[key];
-              if (val !== undefined && val !== 0) {
-                console.log(`DEBUG: ${key} = ${val}`);
-              }
-            });
-          }
+
 
           // 実データがある四半期のみ検証（内訳合計 > 0 のもの）
           const validQuarters = post2016Data.filter(q => 
