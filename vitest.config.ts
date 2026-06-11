@@ -1,15 +1,23 @@
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
+  cacheDir: "./node_modules/.cache/vitest",
   resolve: {
     tsconfigPaths: true,
   },
   test: {
     globals: true,
     include: ["tests/**/*.{test.ts,test.tsx}"],
+    exclude: ["tests/**/*.ui.test.ts", "tests/**/*.ui.test.tsx"],
     root: "./",
     environment: "node",
     setupFiles: ["./tests/utils/logic-setup.ts"],
+    pool: "threads",
+    server: {
+      deps: {
+        inline: ["@reduxjs/toolkit"],
+      },
+    },
     coverage: {
       provider: "v8",
       include: ["src/**/*.ts", "src/**/*.tsx"],

@@ -1,0 +1,21 @@
+{
+  "todos": [
+    { "content": "Create shared types file (src/types/data.ts)", "status": "completed", "priority": "high" },
+    { "content": "Create data-io.ts for file I/O and CSV parsing", "status": "completed", "priority": "high" },
+    { "content": "Create data-processor.ts for data transformation logic", "status": "completed", "priority": "high" },
+    { "content": "Refactor data-loader.ts to use new modules", "status": "completed", "priority": "high" },
+    { "content": "Update tests to use new module imports", "status": "completed", "priority": "high" },
+    { "content": "Run tests to verify everything works", "status": "completed", "priority": "high" }
+  ],
+  "currentTask": "",
+  "completedTasks": [
+    "Created src/types/data.ts with shared type definitions",
+    "Updated src/types/index.ts to re-export from data.ts",
+    "Created server/lib/data-io.ts with file I/O and CSV parsing utilities",
+    "Added requestOptions timeout to opencode.json",
+    "Created data-processor.ts for data transformation logic",
+    "Refactored data-loader.ts to use new modules",
+    "Updated tests and verified with full test suite"
+  ],
+  "notes": "Completed splitting server/lib/dataLoader.ts into three modules and updated/verified all tests."
+}
