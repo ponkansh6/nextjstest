@@ -18,6 +18,9 @@ export default defineConfig({
         inline: ["@reduxjs/toolkit"],
       },
     },
+    onConsoleLog(log) {
+      if (log.includes("Loader error") || log.includes("Data files not found")) return false;
+    },
     coverage: {
       provider: "v8",
       include: ["src/**/*.ts", "src/**/*.tsx"],
