@@ -1,7 +1,7 @@
 import fs from "fs";
 import Papa from "papaparse";
 import type { CpiData } from "@/types";
-import { buildCpiFilePaths, buildCtiFilePaths } from "../data-io";
+import { buildCpiFilePaths, buildCtiFilePaths } from "../dataIo";
 
 export async function loadCpiDataInternal(): Promise<CpiData[]> {
   const paths = buildCpiFilePaths();

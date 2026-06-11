@@ -1,5 +1,5 @@
-import { parseCsvFile, buildPopulationFilePath } from "../data-io";
-import { processPopulationData } from "../data-processor";
+import { parseCsvFile, buildPopulationFilePath } from "../dataIo";
+import { processPopulationData } from "../dataProcessor";
 
 export async function loadPopulationDataInternal(): Promise<
   Map<string, { total: number; index: number; ma: number }>

@@ -1,7 +1,7 @@
 import fs from "fs";
 import Papa from "papaparse";
 import type { CpiData } from "@/types";
-import { buildEarningsFilePaths, parseIndexSection } from "../data-io";
+import { buildEarningsFilePaths, parseIndexSection } from "../dataIo";
 import {
   calculateSmoothedTotal,
   applyMovingAverage,
