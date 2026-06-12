@@ -70,7 +70,7 @@ describe("src/lib/clientCalculations", () => {
 
       const total = nominalKeys.reduce((acc, k) => acc + ((row[k] as number) || 0), 0);
       expect(total).toBeGreaterThan(0);
-      expect(total).toBe(105);
+      expect(total).toBeCloseTo(35, 5);
     });
 
     it("should compute quarterly nominal data correctly using real data", async () => {
@@ -102,9 +102,9 @@ describe("src/lib/clientCalculations", () => {
          createCpiData({ 年月: "2005年1月", [SUPPORT_SERIES_KEY_NOMINAL]: 100 }),
          createCpiData({ 年月: "2005年2月", [SUPPORT_SERIES_KEY_NOMINAL]: 100 }),
          createCpiData({ 年月: "2005年3月", [SUPPORT_SERIES_KEY_NOMINAL]: 100 }),
-         createCpiData({ 年月: "2020年1月", [SUPPORT_SERIES_KEY_NOMINAL]: 300 }),
-         createCpiData({ 年月: "2020年2月", [SUPPORT_SERIES_KEY_NOMINAL]: 300 }),
-         createCpiData({ 年月: "2020年3月", [SUPPORT_SERIES_KEY_NOMINAL]: 300 }),
+         createCpiData({ 年月: "2020年1月", [SUPPORT_SERIES_KEY_NOMINAL]: 100 }),
+         createCpiData({ 年月: "2020年2月", [SUPPORT_SERIES_KEY_NOMINAL]: 100 }),
+         createCpiData({ 年月: "2020年3月", [SUPPORT_SERIES_KEY_NOMINAL]: 100 }),
        ];
 
        const props = {

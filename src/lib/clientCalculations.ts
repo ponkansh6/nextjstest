@@ -207,6 +207,12 @@ export const computeChartData = (props: UseCpiChartDataProps, hiddenQuarters: nu
           });
         }
         if (!hiddenQuarters.includes(q)) {
+          // 四半期データの各カテゴリーを3で割る（月次指数合計(≒300) → 四半期平均(≒100)）
+          keys.forEach((k: string) => {
+            if (k !== SUPPORT_SERIES_KEY_NOMINAL && k !== SUPPORT_SERIES_KEY_REAL) {
+              item[k] = (item[k] as number) / 3;
+            }
+          });
           rows.push(item);
         }
       }
@@ -224,7 +230,7 @@ export const computeChartData = (props: UseCpiChartDataProps, hiddenQuarters: nu
       .map((r) => r[supportKey] as number);
     const avg2020 =
       quarters2020.length > 0 ? quarters2020.reduce((a, b) => a + b, 0) / quarters2020.length : 0;
-    const scale = avg2020 > 0 ? 300 / avg2020 : 1;
+    const scale = avg2020 > 0 ? 100 / avg2020 : 1;
 
     rows.forEach((r) => {
       const year = r.年 as number;
