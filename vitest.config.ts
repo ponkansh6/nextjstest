@@ -11,7 +11,7 @@ export default defineConfig({
     exclude: ["tests/**/*.ui.test.ts", "tests/**/*.ui.test.tsx"],
     root: "./",
     environment: "node",
-    setupFiles: ["./tests/utils/logic-setup.ts"],
+    setupFiles: ["./tests/utils/logic-setup.tsx", "./tests/utils/recharts-mock.tsx"],
     pool: "threads",
     server: {
       deps: {
