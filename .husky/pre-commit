@@ -1,5 +1,10 @@
 #!/bin/sh
 
+# nvm の読み込み（フック実行環境では .bashrc 等が読まれないため必須）
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+nvm use 22
+
 echo "Running pre-commit checks..."
 
 # 1. 未ステージの変更チェック
@@ -9,12 +14,12 @@ if [ -n "$(git diff --name-only)" ]; then
 fi
 
 # 2. 静的解析・整合性チェック
-npm run lint:fast
+pnpm run lint:fast
 
 # 3. コードフォーマット・型チェック
-npx oxfmt --write . "!tests/**"
-npm run type-check:fast
+pnpm oxfmt --write . "!tests/**"
+pnpm run type-check:fast
 
 # 4. 関連テストの実行
 echo "Running relevant logic tests..."
-npm run test -- --changed
+pnpm run test -- --changed

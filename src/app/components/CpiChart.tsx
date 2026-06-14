@@ -116,9 +116,12 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
     return [...years].toSorted((a, b) => a - b);
   }, [data]);
 
+  console.log("DEBUG allYears:", allYears);
+
   // 表示範囲のステート
-  const initialStartYear = allYears.find((y) => y >= 2005) || allYears[0] || 0;
-  const initialEndYear = allYears[allYears.length - 1] || 0;
+  // 初期値がNaNやundefinedにならないよう、確実に数値(0含む)を返すように修正
+  const initialStartYear = allYears.find((y) => y >= 2005) ?? allYears[0] ?? 2025;
+  const initialEndYear = (allYears.length > 0 ? allYears[allYears.length - 1] : 2025) ?? 2025;
 
   const [startYear, setStartYear] = useState(initialStartYear);
   const [endYear, setEndYear] = useState(initialEndYear);
@@ -193,8 +196,8 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
   const [realHiddenKeys, setRealHiddenKeys] = useState<string[]>([]);
 
   // CAGR計算用のステート
-  const [cagrStartYear, setCagrStartYear] = useState<number>(initialStartYear);
-  const [cagrEndYear, setCagrEndYear] = useState<number>(initialEndYear);
+  const [cagrStartYear, setCagrStartYear] = useState<number>(() => initialStartYear ?? 2025);
+  const [cagrEndYear, setCagrEndYear] = useState<number>(() => initialEndYear ?? 2025);
   const [cagrMonth, setCagrMonth] = useState<number>(1);
   const [cagrResult, setCagrResult] = useState<number | null>(null);
 
@@ -255,44 +258,39 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
 
   // CAGR計算関数
   const calculateCAGR = (): void => {
-    if (cagrStartYear === cagrEndYear) {
-      alert("開始年と終了年は異なる年を選択してください（同じ年は指定できません）。");
+    // 状態が NaN の場合は初期値を適用する
+    const startYear = isNaN(cagrStartYear) ? initialStartYear : cagrStartYear;
+    const endYear = isNaN(cagrEndYear) ? initialEndYear : cagrEndYear;
+
+    if (startYear === endYear) {
+      alert("異なる年を選択してください（同じ年は指定できません）。");
       return;
     }
 
     // クライアントライブラリの calculateCategorySum を使用
-    const startValue = calculateCategorySum(
-      data,
-      cagrStartYear,
-      cagrMonth,
-      stackedHiddenKeys,
-      stackedKeys,
-    );
-    const endValue = calculateCategorySum(
-      data,
-      cagrEndYear,
-      cagrMonth,
-      stackedHiddenKeys,
-      stackedKeys,
-    );
-
-    if (startValue === 0) {
+    let startValue = 0;
+    try {
+      startValue = calculateCategorySum(data, startYear, cagrMonth, stackedHiddenKeys, stackedKeys);
+    } catch {
       const monthStr = String(cagrMonth).padStart(2, "0");
       alert(
-        `開始年月のデータが見つかりません: ${cagrStartYear}年${monthStr}月。積み上げの凡例で必要な費目が選択されているか確認してください。`,
+        `開始年月のデータが見つかりません: ${startYear}年${monthStr}月。積み上げの凡例で必要な費目が選択されているか確認してください。`,
       );
       return;
     }
 
-    if (endValue === 0) {
+    let endValue = 0;
+    try {
+      endValue = calculateCategorySum(data, endYear, cagrMonth, stackedHiddenKeys, stackedKeys);
+    } catch {
       const monthStr = String(cagrMonth).padStart(2, "0");
       alert(
-        `終了年月のデータが見つかりません: ${cagrEndYear}年${monthStr}月。積み上げの凡例で必要な費目が選択されているか確認してください。`,
+        `終了年月のデータが見つかりません: ${endYear}年${monthStr}月。積み上げの凡例で必要な費目が選択されているか確認してください。`,
       );
       return;
     }
 
-    const years = cagrEndYear - cagrStartYear;
+    const years = endYear - startYear;
     const cagr = calculateCAGRValue(startValue, endValue, years);
     setCagrResult(cagr);
   };

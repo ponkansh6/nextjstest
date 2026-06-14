@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "tsgo": "tsgo",
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
@@ -15,7 +16,7 @@
     "format:fast": "oxfmt --write .",
     "type-check": "tsc --noEmit",
     "type-check:fast": "npx tsgo --noEmit",
-    "security-check": "npm audit --audit-level=high && secretlint \"**/*\""
+    "security-check": "pnpm audit --audit-level=high && secretlint \"**/*\""
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.12.0",
