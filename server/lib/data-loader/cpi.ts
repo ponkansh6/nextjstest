@@ -1,4 +1,4 @@
-import fs from "fs";
+import * as fs from "node:fs";
 import Papa from "papaparse";
 import type { CpiData } from "@/types";
 import { buildCpiFilePaths, buildCtiFilePaths } from "../dataIo";

@@ -1,0 +1,2 @@
+console.error = () => {};
+console.warn = () => {};

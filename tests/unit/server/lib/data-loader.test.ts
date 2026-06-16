@@ -1,28 +1,30 @@
-/** @vitest-environment node */
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import fs from "fs";
+import { describe, it, expect, vi, beforeEach } from "bun:test";
+import * as fs from "node:fs";
 import { loadCpiData, loadTotalEarningData, loadPopulationData, loadCtiData, clearTestCache } from "../../../../server/lib/dataLoader";
 
-vi.mock("fs");
+vi.mock("node:fs", () => ({
+  existsSync: vi.fn(),
+  readFileSync: vi.fn(),
+}));
 
 describe("server/lib/dataLoader", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.restoreAllMocks();
     clearTestCache();
   });
 
   describe("loadCpiData", () => {
     it("should return empty array if files do not exist", async () => {
-      vi.spyOn(fs, "existsSync").mockReturnValue(false);
+      (fs.existsSync as any).mockReturnValue(false);
       const data = await loadCpiData();
       expect(data).toEqual([]);
     });
 
     it("should parse valid CSV data", async () => {
-      vi.spyOn(fs, "existsSync").mockReturnValue(true);
+      (fs.existsSync as any).mockReturnValue(true);
       const mockCpiCsv = "年月,総合\n2020年01月,100";
       const mockContributionCsv = "類・品目,ウエイト\n総合,10000";
-      vi.spyOn(fs, "readFileSync").mockImplementation((path) => {
+      (fs.readFileSync as any).mockImplementation((path: any) => {
         if (typeof path === "string" && path.includes("cpi_data.csv")) return mockCpiCsv;
         if (typeof path === "string" && path.includes("contribution.csv")) return mockContributionCsv;
         return "";
@@ -36,7 +38,7 @@ describe("server/lib/dataLoader", () => {
 
   describe("loadTotalEarningData", () => {
     it("should return empty array if files do not exist", async () => {
-      vi.spyOn(fs, "existsSync").mockReturnValue(false);
+      (fs.existsSync as any).mockReturnValue(false);
       const data = await loadTotalEarningData();
       expect(data).toEqual([]);
     });
@@ -44,7 +46,7 @@ describe("server/lib/dataLoader", () => {
 
   describe("loadPopulationData", () => {
     it("should return empty map if file does not exist", async () => {
-      vi.spyOn(fs, "existsSync").mockReturnValue(false);
+      (fs.existsSync as any).mockReturnValue(false);
       const data = await loadPopulationData();
       expect(data).toBeInstanceOf(Map);
       expect(data.size).toBe(0);
@@ -52,11 +54,11 @@ describe("server/lib/dataLoader", () => {
 
     it("should process population csv correctly for 15+ population", async () => {
       const mockCsv = `年　月,dummy,dummy,dummy,総数
-,,,,,
+,,,,
 2020年,1月,,,100000`;
 
-      vi.spyOn(fs, "existsSync").mockReturnValue(true);
-      vi.spyOn(fs, "readFileSync").mockReturnValue(mockCsv);
+      (fs.existsSync as any).mockReturnValue(true);
+      (fs.readFileSync as any).mockReturnValue(mockCsv as any);
 
       const result = await loadPopulationData();
 
@@ -73,8 +75,8 @@ Year and month ,,,,,,Total aged 15+,,,
 令和 2年,1月,Jan.,,,,11109,,,,
 ,2月,Feb.,,,,11106,,,,
 `;
-      vi.spyOn(fs, "existsSync").mockReturnValue(true);
-      vi.spyOn(fs, "readFileSync").mockReturnValue(robustCsv);
+      (fs.existsSync as any).mockReturnValue(true);
+      (fs.readFileSync as any).mockReturnValue(robustCsv as any);
 
       const result = await loadPopulationData();
       expect(result.has("2020年1月")).toBeTruthy();
@@ -89,8 +91,8 @@ Year and month ,,,,,,Total aged 15+,,,
 2020,,06,,100000
 2021,,01,,110000`;
 
-      vi.spyOn(fs, "existsSync").mockReturnValue(true);
-      vi.spyOn(fs, "readFileSync").mockReturnValue(mockCsv);
+      (fs.existsSync as any).mockReturnValue(true);
+      (fs.readFileSync as any).mockReturnValue(mockCsv as any);
 
       const result = await loadPopulationData();
 
@@ -111,8 +113,8 @@ Year and month ,,,,,,Total aged 15+,,,
 ,,Empty
 2026,1月,Jan.,,10953
 `;
-      vi.spyOn(fs, "existsSync").mockReturnValue(true);
-      vi.spyOn(fs, "readFileSync").mockReturnValue(csvContent);
+      (fs.existsSync as any).mockReturnValue(true);
+      (fs.readFileSync as any).mockReturnValue(csvContent as any);
 
       const result = await loadPopulationData();
       expect(result.has("2026年1月")).toBeTruthy();
@@ -122,12 +124,12 @@ Year and month ,,,,,,Total aged 15+,,,
 
   describe("loadCtiData", () => {
     it("should return empty array if file does not exist", async () => {
-      vi.spyOn(fs, "existsSync").mockReturnValue(false);
+      (fs.existsSync as any).mockReturnValue(false);
       const data = await loadCtiData();
       expect(data).toEqual([]);
     });
 
-    it("should ensure民间最终消费支出 is populated when support data exists for the quarter", async () => {
+    it("should ensure民間最終消費支出 is populated when support data exists for the quarter", async () => {
       const mockCtiCsv = `月,消費支出（名目）
 2005年1月,1000
 2005年2月,1000
@@ -136,13 +138,13 @@ Year and month ,,,,,,Total aged 15+,,,
 時間軸（四半期）,民間最終消費支出
 2005年1～3月期,100`;
 
-      vi.spyOn(fs, "existsSync").mockImplementation((path) => {
+      (fs.existsSync as any).mockImplementation((path: any) => {
         if (typeof path === "string" && path.includes("cti_data.csv")) return true;
         if (typeof path === "string" && path.includes("cti_support_nominal.csv")) return true;
         return false;
       });
 
-      vi.spyOn(fs, "readFileSync").mockImplementation((path) => {
+      (fs.readFileSync as any).mockImplementation((path: any) => {
         if (typeof path === "string" && path.includes("cti_data.csv")) return mockCtiCsv;
         if (typeof path === "string" && path.includes("cti_support_nominal.csv")) return mockSupportCsv;
         return "";
@@ -150,14 +152,8 @@ Year and month ,,,,,,Total aged 15+,,,
 
       const data = await loadCtiData();
       
-      // バグ検知の核心: 
-      // サポートデータが存在する四半期に対応する月次データにおいて、
-      // 読み込まれた値が0であってはならないことを明示的に検証する。
       data.forEach(row => {
         if (String(row.年月).startsWith("2005年")) {
-            // テストデータでは 1-3月期のみサポートデータがあるため、
-            // それ以外の月は 0 になるのが期待値である。
-            // 4月以降のデータは 0 であると想定されるため、テストを修正。
             const month = parseInt(String(row.年月).match(/(\d+)月/)?.[1] || "0", 10);
             if (month <= 3) {
               expect(row["民間最終消費支出（名目）"], `Row ${row.年月} should have populated expenditure`).toBeGreaterThan(0);
@@ -178,14 +174,14 @@ Year and month ,,,,,,Total aged 15+,,,
       const mockSupportRealCsv = `時間軸（四半期）,民間最終消費支出
 2005年1～3月期,200`;
 
-      vi.spyOn(fs, "existsSync").mockImplementation((path) => {
+      (fs.existsSync as any).mockImplementation((path: any) => {
         if (typeof path === "string" && path.includes("cti_data.csv")) return true;
         if (typeof path === "string" && path.includes("cti_support_nominal.csv")) return true;
         if (typeof path === "string" && path.includes("cti_support_real.csv")) return true;
         return false;
       });
 
-      vi.spyOn(fs, "readFileSync").mockImplementation((path) => {
+      (fs.readFileSync as any).mockImplementation((path: any) => {
         if (typeof path === "string" && path.includes("cti_data.csv")) return mockCtiCsv;
         if (typeof path === "string" && path.includes("cti_support_nominal.csv")) return mockSupportNominalCsv;
         if (typeof path === "string" && path.includes("cti_support_real.csv")) return mockSupportRealCsv;
@@ -204,7 +200,6 @@ Year and month ,,,,,,Total aged 15+,,,
               expect(row["民間最終消費支出（名目）"]).toBe(0);
               expect(row["民間最終消費支出（実質）"]).toBe(0);
             }
-
         }
       });
     });

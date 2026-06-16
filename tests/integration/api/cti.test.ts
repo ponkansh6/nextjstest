@@ -1,8 +1,7 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi } from "bun:test";
+import '../../utils/api-setup';
 import { GET } from "../../../src/app/api/cti/route";
 import * as dataLoader from "../../../server/lib/dataLoader";
-
-vi.mock("../../../server/lib/dataLoader");
 
 describe("API /api/cti", () => {
   it("should return data on success", async () => {

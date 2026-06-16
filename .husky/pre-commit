@@ -7,6 +7,12 @@ nvm use 22 > /dev/null
 
 echo "Running pre-commit checks..."
 
+# 0. npxの使用チェック
+if grep -q "npx" package.json; then
+  echo "Error: npx usage detected in package.json. Please use pnpm dlx or install as devDependency."
+  exit 1
+fi
+
 # 1. 未ステージの変更チェック
 if [ -n "$(git diff --name-only)" ]; then
   echo "Error: Unstaged changes detected."

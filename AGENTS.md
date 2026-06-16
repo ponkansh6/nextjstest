@@ -1,15 +1,27 @@
 <!-- BEGIN:nextjs-agent-rules -->
 
-# This is NOT the Next.js you know
+# これは一般的なNext.jsではありません
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
+このバージョンには破壊的変更が含まれています。API、規約、ファイル構造がトレーニングデータと異なる場合があります。コードを書く前に `node_modules/next/dist/docs/` にある関連ガイドを読んでください。非推奨通知には注意してください。
 
 <!-- END:nextjs-agent-rules -->
 
-## Safety Rules (custom)
+## 安全に関するルール (カスタム)
 
-- If your reasoning becomes repetitive or you detect a loop, immediately stop the current reasoning and resend the same user request from the beginning.
-- If output becomes excessively long or appears stuck, restart the task by reprocessing the original user request.
-- Never output chain-of-thought or internal reasoning.
-- If uncertain or stuck, restart the task instead of continuing with partial or repetitive output.
-- Avoid generating placeholder text such as "thinking...", "processing...", or repeated filler.
+- 推論が反復的になったり、ループを検出したりした場合は、直ちに現在の推論を停止し、同じユーザーのリクエストを最初から送り直してください。
+- 出力が過度に長くなる、またはスタックしているように見える場合は、元のユーザーリクエストを再処理してタスクを再起動してください。
+- 思考の過程や内部推論を決して出力しないでください。
+- 不確実またはスタックしている場合は、部分的な、または反復的な出力を続けるのではなく、タスクを再起動してください。
+- 「思考中...」、「処理中...」などのプレースホルダーテキスト、または繰り返し記述されるフィラーの生成は避けてください。
+
+## ツール使用に関するガイドライン
+
+- パッケージを一時的に実行する場合（`npx` の代わり）は、`pnpm dlx` を使用してください。
+
+## 実行モードに関する指示
+
+- ToDoタスクを実行する際は、各ステップごとにユーザーに「続けますか？」などの確認を求めず、最後まで一括して自律的に実行してください。
+- 軽微な修正や次のステップへの移行は、ユーザーの明示的な承認を待たずに連続してツール（ファイル編集、コマンド実行など）を呼び出してください。
+- すべてのプロセスが完了するか、重大な競合・エラーが発生して進行できない場合のみ、最終結果とともに確認を求めてください。
+- ToDoの実行という指示は、全ステップの自動実行に対する事前承認を意味します。
+

@@ -1,15 +1,24 @@
 import { defineConfig } from "vitest/config";
-import baseConfig from "./vitest.config";
 
 export default defineConfig({
-  ...baseConfig,
+  plugins: [],
+  cacheDir: "./node_modules/.cache/vitest-ui",
+  resolve: {
+    tsconfigPaths: true,
+  },
   test: {
-    ...baseConfig.test,
+    globals: true,
+    include: ["tests/components/**/*.test.tsx"],
     environment: "happy-dom",
-    include: ["tests/**/*.ui.test.tsx", "tests/**/*.ui.test.ts"],
-    exclude: [],
     setupFiles: ["./tests/utils/setup.ts"],
-    isolate: false,
-    pool: "threads",
+    coverage: {
+      provider: "v8" as const,
+      include: ["src/**/*.ts", "src/**/*.tsx"],
+      exclude: ["src/**/*.d.ts"],
+      reporter: ["text", "json", "html"],
+    },
+    typecheck: {
+      enabled: false,
+    },
   },
 });

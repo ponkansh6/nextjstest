@@ -3,19 +3,21 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "preinstall": "pnpm dlx only-allow pnpm",
     "tsgo": "tsgo",
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "test": "vitest run",
+    "test": "pnpm dlx bun test",
+    "test:watch": "pnpm dlx bun test --watch",
     "test:ui": "vitest run -c vitest.ui.config.ts",
-    "test:all": "vitest run",
+    "test:all": "pnpm dlx bun test && vitest run -c vitest.ui.config.ts",
     "lint": "eslint --cache",
     "lint:fast": "oxlint --ignore-pattern 'tests/**' --nextjs-plugin --react-plugin --react-perf-plugin",
     "check:deps": "depcheck",
     "format:fast": "oxfmt --write .",
     "type-check": "tsc --noEmit",
-    "type-check:fast": "npx tsgo --noEmit",
+    "type-check:fast": "tsgo --noEmit",
     "security-check": "pnpm audit --audit-level=high && secretlint \"**/*\""
   },
   "dependencies": {
@@ -36,7 +38,6 @@
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19",
     "@typescript/native-preview": "^7.0.0-dev.20260607.1",
-    "@vitest/coverage-v8": "^4.1.8",
     "@vitest/ui": "^4.1.8",
     "babel-plugin-react-compiler": "1.0.0",
     "depcheck": "^1.4.7",
@@ -51,7 +52,9 @@
     "oxfmt": "^0.51.0",
     "oxlint": "^1.68.0",
     "prettier": "^3.8.1",
+    "rollup-plugin-visualizer": "^7.0.1",
     "secretlint": "12.0.0",
+    "tsx": "^4.22.4",
     "typescript": "^6.0.3",
     "vitest": "^4.1.8"
   }

@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect } from "bun:test";
 import { calculateCategorySum, computeChartData, calculateCAGRValue } from "../../src/lib/clientCalculations";
 import { nominalKeys, SUPPORT_SERIES_KEY_NOMINAL, SUPPORT_SERIES_KEY_REAL } from "../../src/lib/chartConstants";
 import { loadCtiData } from "../../server/lib/dataLoader";

@@ -161,18 +161,24 @@ export const computeChartData = (props: UseCpiChartDataProps, hiddenQuarters: nu
         keys.forEach((k: string) => (item[k] = 0));
 
         let validMonthsCount = 0;
-        months.forEach((m) => {
-          const monthStr = `${y}年${m}月`;
-          const row = filteredNominalMap.get(monthStr);
-          if (row) {
-            if (nominalMonthsSet.has(monthStr)) {
-              validMonthsCount++;
-            }
+          months.forEach((m) => {
+            const monthStr = `${y}年${m}月`;
+            const row = filteredNominalMap.get(monthStr);
+            if (row) {
+              if (nominalMonthsSet.has(monthStr)) {
+                validMonthsCount++;
+              }
+              // キーごとの値チェック
+              keys.forEach(k => {
+                  if (typeof row[k as keyof CpiData] === 'number' && (row[k as keyof CpiData] as number) > 0) {
+                      // ログは重いので省略
+                  }
+              });
 
-            // keys だけではなく、サポートキーも含めて集計する
-            const allKeys = [
-              ...new Set([...keys, SUPPORT_SERIES_KEY_NOMINAL, SUPPORT_SERIES_KEY_REAL]),
-            ];
+              // keys だけではなく、サポートキーも含めて集計する
+              const allKeys = [
+                ...new Set([...keys, SUPPORT_SERIES_KEY_NOMINAL, SUPPORT_SERIES_KEY_REAL]),
+              ];
 
             allKeys.forEach((k: string) => {
               if (k === SUPPORT_SERIES_KEY_NOMINAL || k === SUPPORT_SERIES_KEY_REAL) {

@@ -1,4 +1,4 @@
-import { expect, it, describe, beforeAll } from "vitest";
+import { expect, it, describe, beforeAll } from "bun:test";
 import { loadCtiData } from "../../server/lib/dataLoader";
 import { nominalKeys, realKeys, SUPPORT_SERIES_KEY_NOMINAL, SUPPORT_SERIES_KEY_REAL } from "../../src/lib/chartConstants";
 import type { CpiData } from "../../src/types";

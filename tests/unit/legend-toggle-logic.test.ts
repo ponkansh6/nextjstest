@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'bun:test';
 
 describe('handleNominalLegendClick logic', () => {
   const keyPairs = [{ nominal: "食料（名目）", real: "食料（実質）" }];

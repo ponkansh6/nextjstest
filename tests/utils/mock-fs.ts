@@ -1,4 +1,4 @@
-import { vi } from 'vitest';
+import { vi } from 'bun:test';
 import * as fs from 'fs';
 
 /**

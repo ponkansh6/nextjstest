@@ -1,4 +1,4 @@
-import { expect, it, describe, beforeAll } from "vitest";
+import { expect, it, describe, beforeAll } from "bun:test";
 import { loadTotalEarningData, loadCpiData } from "../../server/lib/dataLoader";
 import type { CpiData } from "../../src/types";
 

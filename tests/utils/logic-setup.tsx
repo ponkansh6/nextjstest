@@ -1,4 +1,4 @@
-import { expect, vi } from "vitest";
+import { expect, vi } from "bun:test";
 import React from "react";
 
 // Minimal setup for logic tests (no JSDOM/React)

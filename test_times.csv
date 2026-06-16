@@ -1,0 +1,4 @@
+File,Duration(ms)
+tests/computation-contract/calculation-logic.test.ts,40996
+tests/computation-contract/client-chart-output.test.ts,31955
+tests/data-mapping/chart-mapping-integrity.test.ts,32562

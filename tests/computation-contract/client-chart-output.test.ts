@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect } from "bun:test";
 import { computeChartData } from "../../src/lib/clientCalculations";
 import { createCpiDataList } from "../factories/cpiDataFactory";
 import { nominalKeys } from "../../src/lib/chartConstants";
