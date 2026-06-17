@@ -24,7 +24,7 @@ pnpm oxfmt --write . "!tests/**" || { echo "Format failed"; exit 1; }
 
 # 4. 関連テストの実行
 echo "Running relevant logic tests..."
-pnpm run test -- --changed
+pnpm run test
 TEST_EXIT_CODE=$?
 
 if [ $TEST_EXIT_CODE -ne 0 ]; then

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "bun:test";
+import { describe, it, expect, vi } from "vitest";
 import '../../utils/api-setup';
 import { GET } from "../../../src/app/api/cpi/route";
 import * as dataLoader from "../../../server/lib/dataLoader";

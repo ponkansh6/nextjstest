@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from 'bun:test';
+import { describe, it, expect, beforeAll } from 'vitest';
 import { computeChartData } from '../../src/lib/clientCalculations';
 import { filterDataByYear, mergeChartData } from '../../src/lib/chartUtils';
 import { loadCtiData, loadCpiData, loadTotalEarningData } from '../../server/lib/dataLoader';

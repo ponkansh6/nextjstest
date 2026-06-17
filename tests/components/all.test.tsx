@@ -8,6 +8,7 @@ import { EarningsBreakdownChart } from '../../src/app/components/EarningsBreakdo
 import { ResidualAreaChart } from '../../src/app/components/ResidualAreaChart';
 import { MajorIndicesChart } from '../../src/app/components/MajorIndicesChart';
 import { useCpiChartData } from '../../src/hooks/useCpiChartData';
+import { CpiData } from '../../src/types/data';
 import { nominalKeys, realKeys, SUPPORT_SERIES_KEY_NOMINAL, SUPPORT_SERIES_KEY_REAL, targetKeys, stackedKeys, stackedColors } from '../../src/lib/chartConstants';
 import { setupUiMocks } from '../utils/ui-mocks';
 import '../utils/recharts-mock';
@@ -33,13 +34,13 @@ const mockCtiData = [
 ];
 
 const mockQuarterlyData = [{ label: '2023年Q1', 年: 2023, quarter: 1, '総合（名目）': 100, '総合（実質）': 100 }];
-const mockCpiData = [
-  { 年月: '2023年1月', '総合': 100, '住居': 100 },
-  { 年月: '2025年1月', '総合': 105, '住居': 105 }
+const mockCpiData: CpiData[] = [
+  { 年月: '2023年1月', '総合': 100, '住居': 100, '生鮮食品を除く総合': 100, '持家の帰属家賃を除く総合': 100 },
+  { 年月: '2025年1月', '総合': 105, '住居': 105, '生鮮食品を除く総合': 105, '持家の帰属家賃を除く総合': 105 }
 ];
-const mockMergedData = [
-  { label: '2023年Q1', 年: 2023, 年月: '2023年1月', quarter: 1, '所定内給与': 100, '所定外給与': 100, '特別給与': 100, '時間当たり給与': 100, '15歳以上国民当たり給与': 100, '総合': 100 },
-  { label: '2025年Q1', 年: 2025, 年月: '2025年1月', quarter: 1, '所定内給与': 105, '所定外給与': 105, '特別給与': 105, '時間当たり給与': 105, '15歳以上国民当たり給与': 105, '総合': 105 }
+const mockMergedData: CpiData[] = [
+  { label: '2023年Q1', 年: 2023, 年月: '2023年1月', quarter: 1, '所定内給与': 100, '所定外給与': 100, '特別給与': 100, '時間当たり給与': 100, '15歳以上国民当たり給与': 100, '総合': 100, '生鮮食品を除く総合': 100, '持家の帰属家賃を除く総合': 100 } as any,
+  { label: '2025年Q1', 年: 2025, 年月: '2025年1月', quarter: 1, '所定内給与': 105, '所定外給与': 105, '特別給与': 105, '時間当たり給与': 105, '15歳以上国民当たり給与': 105, '総合': 105, '生鮮食品を除く総合': 105, '持家の帰属家賃を除く総合': 105 } as any
 ];
 
 const chartColors = {

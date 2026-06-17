@@ -1,7 +1,7 @@
 import { performance } from "perf_hooks";
 
 const start = performance.now();
-import { computeChartData } from "./src/lib/clientCalculations.ts";
+import { computeChartData } from "./src/lib/clientCalculations";
 const end = performance.now();
 
 console.log(`Import time: ${end - start}ms`);

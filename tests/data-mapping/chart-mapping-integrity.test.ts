@@ -1,4 +1,4 @@
-import { describe, it, expect } from "bun:test";
+import { describe, it, expect } from "vitest";
 import { stackedKeys, nominalColorMap } from "../../src/lib/chartConstants";
 
 describe("Chart Constants Integrity", () => {

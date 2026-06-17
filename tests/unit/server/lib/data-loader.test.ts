@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "bun:test";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import * as fs from "node:fs";
 import { loadCpiData, loadTotalEarningData, loadPopulationData, loadCtiData, clearTestCache } from "../../../../server/lib/dataLoader";
 

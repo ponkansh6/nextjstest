@@ -1,4 +1,4 @@
-import { expect, it, describe, beforeAll } from "bun:test";
+import { expect, it, describe, beforeAll } from "vitest";
 import { loadPopulationData } from "../../server/lib/dataLoader";
 
 describe("Population Data Integrity", () => {
