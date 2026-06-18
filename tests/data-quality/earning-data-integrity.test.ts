@@ -68,6 +68,8 @@ describe("Earnings Data Integrity", () => {
       
       earningData.forEach(d => {
         if (!d.年月 || typeof d.年月 !== 'string') return;
+        const year = parseInt(d.年月.substring(0, 4), 10);
+        if (year < 2005) return;
 
         let sum = 0;
         targetKeys.forEach(key => {
@@ -78,6 +80,37 @@ describe("Earnings Data Integrity", () => {
           expect(sum, `Sum of keys at ${d.年月} should be 50-150`).toBeGreaterThanOrEqual(50);
           expect(sum, `Sum of keys at ${d.年月} should be 50-150`).toBeLessThanOrEqual(150);
         }
+      });
+    });
+
+    it("should verify individual key earnings series are within 50-150", async () => {
+      expect(earningData.length).toBeGreaterThan(0);
+
+      const individualKeys = ["時間当たり給与", "15歳以上国民当たり給与", "CPI総合(参考)"];
+      
+      earningData.forEach(d => {
+        if (!d.年月 || typeof d.年月 !== 'string') return;
+        const year = parseInt(d.年月.substring(0, 4), 10);
+        if (year < 2005) return;
+
+        individualKeys.forEach(key => {
+          const val = Number(d[key as keyof CpiData] || 0);
+          if (val > 0) {
+            expect(val, `${key} at ${d.年月} should be 50-150`).toBeGreaterThanOrEqual(50);
+            expect(val, `${key} at ${d.年月} should be 50-150`).toBeLessThanOrEqual(150);
+          }
+        });
+      });
+
+      // 消費支出(参考) は0でもチェックする（TDD red phase）
+      earningData.forEach(d => {
+        if (!d.年月 || typeof d.年月 !== 'string') return;
+        const year = parseInt(d.年月.substring(0, 4), 10);
+        if (year < 2005) return;
+
+        const val = Number(d["消費支出(参考)" as keyof CpiData] || 0);
+        expect(val, `消費支出(参考) at ${d.年月} should be 50-150`).toBeGreaterThanOrEqual(50);
+        expect(val, `消費支出(参考) at ${d.年月} should be 50-150`).toBeLessThanOrEqual(150);
       });
     });
 

@@ -10,7 +10,7 @@
     "start": "next start",
     "test": "pnpm dlx bun test",
     "test:watch": "pnpm dlx bun test --watch",
-    "test:ui": "vitest run -c vitest.ui.config.ts",
+    "test:ui": "vitest run -c vitest.ui.config.ts --reporter=verbose",
     "test:all": "pnpm dlx bun test && vitest run -c vitest.ui.config.ts",
     "lint": "eslint --cache",
     "lint:fast": "oxlint --ignore-pattern 'tests/**' --nextjs-plugin --react-plugin --react-perf-plugin",

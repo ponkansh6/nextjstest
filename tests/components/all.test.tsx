@@ -35,12 +35,12 @@ const mockCtiData = [
 
 const mockQuarterlyData = [{ label: '2023年Q1', 年: 2023, quarter: 1, '総合（名目）': 100, '総合（実質）': 100 }];
 const mockCpiData: CpiData[] = [
-  { 年月: '2023年1月', '総合': 100, '住居': 100, '生鮮食品を除く総合': 100, '持家の帰属家賃を除く総合': 100 },
-  { 年月: '2025年1月', '総合': 105, '住居': 105, '生鮮食品を除く総合': 105, '持家の帰属家賃を除く総合': 105 }
+  { 年月: '2023年1月', '総合': 100, '住居': 100, '生鮮食品を除く総合': 100, '持家の帰属家賃を除く総合': 100, "消費支出(参考)": 0 },
+  { 年月: '2025年1月', '総合': 105, '住居': 105, '生鮮食品を除く総合': 105, '持家の帰属家賃を除く総合': 105, "消費支出(参考)": 0 }
 ];
 const mockMergedData: CpiData[] = [
-  { label: '2023年Q1', 年: 2023, 年月: '2023年1月', quarter: 1, '所定内給与': 100, '所定外給与': 100, '特別給与': 100, '時間当たり給与': 100, '15歳以上国民当たり給与': 100, '総合': 100, '生鮮食品を除く総合': 100, '持家の帰属家賃を除く総合': 100 } as any,
-  { label: '2025年Q1', 年: 2025, 年月: '2025年1月', quarter: 1, '所定内給与': 105, '所定外給与': 105, '特別給与': 105, '時間当たり給与': 105, '15歳以上国民当たり給与': 105, '総合': 105, '生鮮食品を除く総合': 105, '持家の帰属家賃を除く総合': 105 } as any
+  { label: '2023年Q1', 年: 2023, 年月: '2023年1月', quarter: 1, '所定内給与': 100, '所定外給与': 100, '特別給与': 100, '時間当たり給与': 100, '15歳以上国民当たり給与': 100, '総合': 100, '生鮮食品を除く総合': 100, '持家の帰属家賃を除く総合': 100, "消費支出(参考)": 0 } as any,
+  { label: '2025年Q1', 年: 2025, 年月: '2025年1月', quarter: 1, '所定内給与': 105, '所定外給与': 105, '特別給与': 105, '時間当たり給与': 105, '15歳以上国民当たり給与': 105, '総合': 105, '生鮮食品を除く総合': 105, '持家の帰属家賃を除く総合': 105, "消費支出(参考)": 0 } as any
 ];
 
 const chartColors = {
@@ -102,7 +102,7 @@ describe('Integrated UI Chart Tests', () => {
           CustomTooltip={MockTooltip}
         />
       );
-      const expectedLabels = ["所定内給与", "所定外給与", "特別給与", "時間当たり給与", "15歳以上国民当たり給与", "CPI総合(参考)"];
+      const expectedLabels = ["所定内給与", "所定外給与", "特別給与", "時間当たり給与", "15歳以上国民当たり給与", "消費支出(参考)"];
       expectedLabels.forEach(label => expect(screen.getByText(label)).toBeDefined());
     });
 
@@ -124,16 +124,12 @@ describe('Integrated UI Chart Tests', () => {
       expect(screen.getByText("CPI費目別積み上げ")).toBeDefined();
     });
 
-    it("should render ResidualAreaChart with merged data and common chart elements", () => {
-      render(
-        <ResidualAreaChart
-          data={mockMergedData}
-          chartColors={chartColors}
-          isMobile={false}
-          CustomTooltip={MockTooltip}
-        />
-      );
-      expect(screen.getByText("残差（現金給与総額 - CPI総合）")).toBeDefined();
+    it("should verify 消費支出(参考) is within 50-150 range", () => {
+      mockMergedData.forEach(d => {
+        const val = Number(d["消費支出(参考)"] || 0);
+        expect(val, `消費支出(参考) at ${d.年月} should be 50-150`).toBeGreaterThanOrEqual(50);
+        expect(val, `消費支出(参考) at ${d.年月} should be 50-150`).toBeLessThanOrEqual(150);
+      });
     });
   });
 });

@@ -24,7 +24,7 @@ describe("CPI Data Integrity", () => {
       const targetData = cpiData.filter(d => {
         if (!d.年月 || typeof d.年月 !== 'string') return false;
         const m = d.年月.match(/^(\d{4})年/);
-        return m ? parseInt(m[1], 10) >= 2025 : false;
+        return m ? parseInt(m[1], 10) >= 2005 : false;
       });
 
       expect(targetData.length).toBeGreaterThan(0);
