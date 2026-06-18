@@ -224,7 +224,7 @@ describe('SpendingBarChart', () => {
 describe('StackedAreaChart', () => {
   const mockProps = {
     title: 'Test Stacked Chart',
-    data: [{ 年月: '2023年1月', 'キー1': 100, 'キー2': 50 }],
+    data: [{ 年月: '2023年1月', 'キー1': 100, 'キー2': 50, 総合: 150, 生鮮食品を除く総合: 150, 持家の帰属家賃を除く総合: 150, "消費支出(参考)": 150 } as unknown as CpiData],
     keys: ['キー1', 'キー2'],
     colors: ['#000', '#fff'],
     hiddenKeys: [],

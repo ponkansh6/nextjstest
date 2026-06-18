@@ -20,7 +20,7 @@ pnpm run lint:fast || { echo "Lint failed"; exit 1; }
 
 # 3. コードフォーマット・型チェック
 pnpm oxfmt --write . "!tests/**" || { echo "Format failed"; exit 1; }
-# pnpm run type-check:fast || { echo "Type check failed"; exit 1; }
+pnpm run type-check:fast || { echo "Type check failed"; exit 1; }
 
 # 4. 関連テストの実行
 echo "Running relevant logic tests..."

@@ -17,7 +17,7 @@ export function mockCsvFiles(files: Record<string, string>) {
     return Object.keys(files).some(key => String(path).includes(key));
   });
 
-  readFileSyncSpy.mockImplementation((path: fs.PathLike) => {
+  readFileSyncSpy.mockImplementation((path: any, options?: any) => {
     for (const [key, content] of Object.entries(files)) {
       if (String(path).includes(key)) return content;
     }

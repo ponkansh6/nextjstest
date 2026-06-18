@@ -75,8 +75,8 @@ describe("src/lib/clientCalculations", () => {
 
     it("should compute quarterly nominal data correctly using real data", async () => {
       const realData = await loadCtiData();
-      const q1Data = realData.filter(
-        (d) => d.年月 === "2020年1月" || d.年月 === "2020年2月" || d.年月 === "2020年3月"
+      const q1Data: CpiData[] = realData.filter(
+        (d: CpiData) => d.年月 === "2020年1月" || d.年月 === "2020年2月" || d.年月 === "2020年3月"
       );
 
       const props = {
@@ -158,7 +158,7 @@ describe("src/lib/clientCalculations", () => {
 
 
     it("should verify filteredNominalData and its structure", () => {
-      const mockData = [{ 年月: "2010年1月", "民間最終消費支出": 100 }];
+      const mockData: Record<string, any>[] = [{ 年月: "2010年1月", "民間最終消費支出": 100 }];
       const props = {
         data: [],
         nominalData: mockData as any,
@@ -176,7 +176,7 @@ describe("src/lib/clientCalculations", () => {
       
       expect(existingData).toBeDefined();
       expect(existingData).toHaveProperty("民間最終消費支出");
-      expect(existingData!["民間最終消費支出"]).toBe(100);
+      expect((existingData as any)["民間最終消費支出"]).toBe(100);
     });
 
      it("should aggregate '民間最終消費支出' regardless of nominalKeys inclusion", () => {

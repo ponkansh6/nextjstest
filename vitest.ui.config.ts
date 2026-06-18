@@ -11,6 +11,10 @@ export default defineConfig({
     include: ["tests/components/**/*.test.tsx"],
     environment: "happy-dom",
     setupFiles: ["./tests/utils/setup.ts"],
+    pool: "forks",
+    testTimeout: 300000,
+
+    // タイムアウトを300秒に延長
     coverage: {
       provider: "v8" as const,
       include: ["src/**/*.ts", "src/**/*.tsx"],

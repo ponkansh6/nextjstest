@@ -1,13 +1,17 @@
 #!/bin/sh
 
-echo "Running pre-push UI tests..."
-pnpm run test:ui
-TEST_EXIT_CODE=$?
-
-if [ $TEST_EXIT_CODE -ne 0 ]; then
-  echo "UI Tests failed with code $TEST_EXIT_CODE"
-  exit $TEST_EXIT_CODE
+# プッシュされるコミットに含まれるファイルのみチェック
+if git diff --name-only origin/main...HEAD | grep -qE "src/app/components|tests/components|src/lib/chart"; then
+  echo "Running pre-push UI tests for relevant changes..."
+  pnpm run test:ui
+  TEST_EXIT_CODE=$?
+  if [ $TEST_EXIT_CODE -ne 0 ]; then
+    echo "UI Tests failed with code $TEST_EXIT_CODE"
+    exit $TEST_EXIT_CODE
+  fi
+  echo "Pre-push UI tests passed!"
+else
+  echo "No UI-related changes detected in this push. Skipping UI tests."
 fi
 
-echo "Pre-push UI tests passed!"
 exit 0

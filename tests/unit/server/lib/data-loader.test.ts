@@ -96,7 +96,7 @@ Year and month ,,,,,,Total aged 15+,,,
 
       const result = await loadPopulationData();
 
-      result.forEach((data, ym) => {
+      result.forEach((data: any, ym: string) => {
         expect(data.index).toBeGreaterThanOrEqual(0);
         expect(data.ma).toBeGreaterThanOrEqual(0);
         expect(data.ma).toBeLessThan(200);
@@ -152,7 +152,7 @@ Year and month ,,,,,,Total aged 15+,,,
 
       const data = await loadCtiData();
       
-      data.forEach(row => {
+      data.forEach((row: any) => {
         if (String(row.年月).startsWith("2005年")) {
             const month = parseInt(String(row.年月).match(/(\d+)月/)?.[1] || "0", 10);
             if (month <= 3) {
@@ -190,7 +190,7 @@ Year and month ,,,,,,Total aged 15+,,,
 
       const data = await loadCtiData();
       
-      data.forEach(row => {
+      data.forEach((row: any) => {
         if (String(row.年月).startsWith("2005年")) {
             const month = parseInt(String(row.年月).match(/(\d+)月/)?.[1] || "0", 10);
             if (month <= 3) {
