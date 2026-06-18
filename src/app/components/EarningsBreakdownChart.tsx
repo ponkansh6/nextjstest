@@ -52,24 +52,24 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
       key: "15歳以上国民当たり給与",
       type: "line",
     },
-      {
-        color: "#f97316",
-        displayName: "消費支出(参考)",
-        key: "消費支出(参考)",
-        type: "line",
-      },
-    ];
+    {
+      color: "#f97316",
+      displayName: "消費支出(参考)",
+      key: "消費支出(参考)",
+      type: "line",
+    },
+  ];
 
-    const yAxisMax = React.useMemo(() => {
-      const keys = [
-        "所定内給与",
-        "所定外給与",
-        "特別給与",
-        "時間当たり給与",
-        "15歳以上国民当たり給与",
-        "総合",
-        "消費支出(参考)",
-      ];
+  const yAxisMax = React.useMemo(() => {
+    const keys = [
+      "所定内給与",
+      "所定外給与",
+      "特別給与",
+      "時間当たり給与",
+      "15歳以上国民当たり給与",
+      "総合",
+      "消費支出(参考)",
+    ];
     let maxVal = 0;
     data.forEach((d) => {
       keys.forEach((k) => {

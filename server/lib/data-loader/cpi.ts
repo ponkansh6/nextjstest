@@ -118,118 +118,117 @@ export async function loadCtiDataInternal(): Promise<CpiData[]> {
         obj[h] = val;
       });
       if (typeof obj["月"] === "string" && !obj.年月) obj.年月 = obj["月"];
-       const ymStr = String(obj.年月 || "").trim();
-       const m = ymStr.match(/^(\d{4})年0?(\d{1,2})月/);
-       if (m) {
-         const year = m[1];
-         const month = parseInt(m[2], 10);
-         const q = Math.ceil(month / 3);
-         const normYm = `${year}年${(q - 1) * 3 + 1}～${q * 3}月期`;
-         obj["民間最終消費支出（名目）"] = supportMap.get(normYm) ?? 0;
-         obj["民間最終消費支出（実質）"] = supportMapReal.get(normYm) ?? 0;
-       } else {
-         obj["民間最終消費支出（名目）"] = 0;
-         obj["民間最終消費支出（実質）"] = 0;
-       }
-       const nominalTotal = (obj["消費支出（名目）"] as number) || 0;
-       const realTotal = (obj["消費支出（実質）"] as number) || 0;
-       const nominalKeysList = [
-         "食料（名目）",
-         "住居（名目）",
-         "光熱・水道（名目）",
-         "家具・家事用品（名目）",
-         "被服及び履物（名目）",
-         "保健医療（名目）",
-         "交通・通信（名目）",
-         "教育（名目）",
-         "教養娯楽（名目）",
-       ];
-       const realKeysList = [
-         "食料（実質）",
-         "住居（実質）",
-         "光熱・水道（実質）",
-         "家具・家事用品（実質）",
-         "被服及び履物（実質）",
-         "保健医療（実質）",
-         "交通・通信（実質）",
-         "教育（実質）",
-         "教養娯楽（実質）",
-       ];
-       let nominalSum = 0;
-       nominalKeysList.forEach((k) => (nominalSum += (obj[k] as number) || 0));
-       obj["その他の消費支出（名目）"] = Math.max(0, nominalTotal - nominalSum);
-       let realSum = 0;
-       realKeysList.forEach((k) => (realSum += (obj[k] as number) || 0));
-       obj["その他の消費支出（実質）"] = Math.max(0, realTotal - realSum);
-       return obj as unknown as CpiData;
-     })
-     .filter((row) => {
-       if (!row.年月) return false;
-       const m = String(row.年月).match(/^(\d{4})年/);
-       return m ? parseInt(m[1], 10) >= 2005 : false;
-     });
+      const ymStr = String(obj.年月 || "").trim();
+      const m = ymStr.match(/^(\d{4})年0?(\d{1,2})月/);
+      if (m) {
+        const year = m[1];
+        const month = parseInt(m[2], 10);
+        const q = Math.ceil(month / 3);
+        const normYm = `${year}年${(q - 1) * 3 + 1}～${q * 3}月期`;
+        obj["民間最終消費支出（名目）"] = supportMap.get(normYm) ?? 0;
+        obj["民間最終消費支出（実質）"] = supportMapReal.get(normYm) ?? 0;
+      } else {
+        obj["民間最終消費支出（名目）"] = 0;
+        obj["民間最終消費支出（実質）"] = 0;
+      }
+      const nominalTotal = (obj["消費支出（名目）"] as number) || 0;
+      const realTotal = (obj["消費支出（実質）"] as number) || 0;
+      const nominalKeysList = [
+        "食料（名目）",
+        "住居（名目）",
+        "光熱・水道（名目）",
+        "家具・家事用品（名目）",
+        "被服及び履物（名目）",
+        "保健医療（名目）",
+        "交通・通信（名目）",
+        "教育（名目）",
+        "教養娯楽（名目）",
+      ];
+      const realKeysList = [
+        "食料（実質）",
+        "住居（実質）",
+        "光熱・水道（実質）",
+        "家具・家事用品（実質）",
+        "被服及び履物（実質）",
+        "保健医療（実質）",
+        "交通・通信（実質）",
+        "教育（実質）",
+        "教養娯楽（実質）",
+      ];
+      let nominalSum = 0;
+      nominalKeysList.forEach((k) => (nominalSum += (obj[k] as number) || 0));
+      obj["その他の消費支出（名目）"] = Math.max(0, nominalTotal - nominalSum);
+      let realSum = 0;
+      realKeysList.forEach((k) => (realSum += (obj[k] as number) || 0));
+      obj["その他の消費支出（実質）"] = Math.max(0, realTotal - realSum);
+      return obj as unknown as CpiData;
+    })
+    .filter((row) => {
+      if (!row.年月) return false;
+      const m = String(row.年月).match(/^(\d{4})年/);
+      return m ? parseInt(m[1], 10) >= 2005 : false;
+    });
 
-   const existingMonths = new Set(mapped.map((r) => r.年月));
-   for (let y = 2005; y <= 2016; y++) {
-     for (let m = 1; m <= 12; m++) {
-       const ym = `${y}年${m}月`;
-       if (!existingMonths.has(ym)) {
-         const q = Math.ceil(m / 3);
-         const normYm = `${y}年${(q - 1) * 3 + 1}～${q * 3}月期`;
-         const dummyRow: any = { 年月: ym };
-         header.forEach((h: any) => {
-           if (h !== "年月" && h !== "月") dummyRow[h] = 0;
-         });
-         const nominalSupport = supportMap.get(normYm) ?? 0;
-         const realSupport = supportMapReal.get(normYm) ?? 0;
-         dummyRow["民間最終消費支出（名目）"] = nominalSupport;
-         dummyRow["民間最終消費支出（実質）"] = realSupport;
-         dummyRow["消費支出（名目）"] = nominalSupport;
-         dummyRow["消費支出（実質）"] = realSupport;
-         const nominalTotal = dummyRow["消費支出（名目）"] || 0;
-         const realTotal = dummyRow["消費支出（実質）"] || 0;
-         const nominalKeysList = [
-           "食料（名目）",
-           "住居（名目）",
-           "光熱・水道（名目）",
-           "家具・家事用品（名目）",
-           "被服及び履物（名目）",
-           "保健医療（名目）",
-           "交通・通信（名目）",
-           "教育（名目）",
-           "教養娯楽（名目）",
-         ];
-         const realKeysList = [
-           "食料（実質）",
-           "住居（実質）",
-           "光熱・水道（実質）",
-           "家具・家事用品（実質）",
-           "被服及び履物（実質）",
-           "保健医療（実質）",
-           "交通・通信（実質）",
-           "教育（実質）",
-           "教養娯楽（実質）",
-         ];
-         let nominalSum = 0;
-         nominalKeysList.forEach((k) => (nominalSum += dummyRow[k] || 0));
-         dummyRow["その他の消費支出（名目）"] = Math.max(0, nominalTotal - nominalSum);
-         let realSum = 0;
-         realKeysList.forEach((k) => (realSum += dummyRow[k] || 0));
-         dummyRow["その他の消費支出（実質）"] = Math.max(0, realTotal - realSum);
-         mapped.push(dummyRow as any);
-       }
-     }
-   }
-   mapped.sort((a, b) => {
-     const ma = String(a.年月).match(/^(\d{4})年(\d{1,2})月/);
-     const mb = String(b.年月).match(/^(\d{4})年(\d{1,2})月/);
-     if (!ma || !mb) return 0;
-     const ay = parseInt(ma[1], 10);
-     const am = parseInt(ma[2], 10);
-     const by = parseInt(mb[1], 10);
-     const bm = parseInt(mb[2], 10);
-     return ay !== by ? ay - by : am - bm;
-   });
-   return mapped;
+  const existingMonths = new Set(mapped.map((r) => r.年月));
+  for (let y = 2005; y <= 2016; y++) {
+    for (let m = 1; m <= 12; m++) {
+      const ym = `${y}年${m}月`;
+      if (!existingMonths.has(ym)) {
+        const q = Math.ceil(m / 3);
+        const normYm = `${y}年${(q - 1) * 3 + 1}～${q * 3}月期`;
+        const dummyRow: any = { 年月: ym };
+        header.forEach((h: any) => {
+          if (h !== "年月" && h !== "月") dummyRow[h] = 0;
+        });
+        const nominalSupport = supportMap.get(normYm) ?? 0;
+        const realSupport = supportMapReal.get(normYm) ?? 0;
+        dummyRow["民間最終消費支出（名目）"] = nominalSupport;
+        dummyRow["民間最終消費支出（実質）"] = realSupport;
+        dummyRow["消費支出（名目）"] = nominalSupport;
+        dummyRow["消費支出（実質）"] = realSupport;
+        const nominalTotal = dummyRow["消費支出（名目）"] || 0;
+        const realTotal = dummyRow["消費支出（実質）"] || 0;
+        const nominalKeysList = [
+          "食料（名目）",
+          "住居（名目）",
+          "光熱・水道（名目）",
+          "家具・家事用品（名目）",
+          "被服及び履物（名目）",
+          "保健医療（名目）",
+          "交通・通信（名目）",
+          "教育（名目）",
+          "教養娯楽（名目）",
+        ];
+        const realKeysList = [
+          "食料（実質）",
+          "住居（実質）",
+          "光熱・水道（実質）",
+          "家具・家事用品（実質）",
+          "被服及び履物（実質）",
+          "保健医療（実質）",
+          "交通・通信（実質）",
+          "教育（実質）",
+          "教養娯楽（実質）",
+        ];
+        let nominalSum = 0;
+        nominalKeysList.forEach((k) => (nominalSum += dummyRow[k] || 0));
+        dummyRow["その他の消費支出（名目）"] = Math.max(0, nominalTotal - nominalSum);
+        let realSum = 0;
+        realKeysList.forEach((k) => (realSum += dummyRow[k] || 0));
+        dummyRow["その他の消費支出（実質）"] = Math.max(0, realTotal - realSum);
+        mapped.push(dummyRow as any);
+      }
+    }
+  }
+  mapped.sort((a, b) => {
+    const ma = String(a.年月).match(/^(\d{4})年(\d{1,2})月/);
+    const mb = String(b.年月).match(/^(\d{4})年(\d{1,2})月/);
+    if (!ma || !mb) return 0;
+    const ay = parseInt(ma[1], 10);
+    const am = parseInt(ma[2], 10);
+    const by = parseInt(mb[1], 10);
+    const bm = parseInt(mb[2], 10);
+    return ay !== by ? ay - by : am - bm;
+  });
+  return mapped;
 }
-

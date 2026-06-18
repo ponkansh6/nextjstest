@@ -12,8 +12,7 @@ export const calculateSupportScale = (data: CpiData[], key: string): number => {
     .map((d) => (d[key] as number) ?? 0)
     .filter((v) => v > 0);
 
-  const avg2020 =
-    year2020.length > 0 ? year2020.reduce((a, b) => a + b, 0) / year2020.length : 0;
+  const avg2020 = year2020.length > 0 ? year2020.reduce((a, b) => a + b, 0) / year2020.length : 0;
 
   return avg2020 > 0 ? 100 / avg2020 : 1;
 };
