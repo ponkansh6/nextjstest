@@ -3,7 +3,7 @@ import { vi } from "vitest";
 // テスト環境で頻繁に使われるユーティリティ・モック関数
 export const setupUiMocks = () => {
   // Mock matchMedia
-  Object.defineProperty(window, "matchMedia", {
+  Object.defineProperty(global.window, "matchMedia", {
     value: vi.fn().mockImplementation((query) => ({
       matches: false,
       media: query,

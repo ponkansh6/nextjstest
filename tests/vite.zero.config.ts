@@ -1,10 +1,10 @@
-import { defineConfig } from "vite";
+import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   plugins: [],
   build: {
     lib: {
-      entry: "tests/minimal-speed.test.ts",
+      entry: "minimal-speed.test.ts",
       formats: ["es"],
     },
     minify: false,

@@ -1,4 +1,4 @@
-import { loadTotalEarningData } from "./server/lib/dataLoader";
+import { loadTotalEarningData } from "@server/lib/dataLoader";
 
 (async () => {
   try {

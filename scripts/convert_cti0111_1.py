@@ -18,7 +18,7 @@ import datetime
 import pandas as pd
 
 def get_root():
-    return Path('/mnt/c/Users/menon/Desktop/claude-test/nextjs-app')
+    return Path('.').resolve()
             
     # Fallback if not found
     if getattr(sys, 'frozen', False):

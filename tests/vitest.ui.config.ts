@@ -8,10 +8,11 @@ export default defineConfig({
   },
   test: {
     globals: true,
+    isolate: false,
     include: ["tests/components/**/*.test.tsx"],
     environment: "happy-dom",
     setupFiles: ["./tests/utils/setup.ts"],
-    pool: "forks",
+    pool: "vmThreads",
     testTimeout: 300000,
 
     // タイムアウトを300秒に延長

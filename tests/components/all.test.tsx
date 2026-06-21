@@ -12,8 +12,11 @@ import { CpiData } from '../../src/types/data';
 import { nominalKeys, realKeys, SUPPORT_SERIES_KEY_NOMINAL, SUPPORT_SERIES_KEY_REAL, targetKeys, stackedKeys, stackedColors } from '../../src/lib/chartConstants';
 import { setupUiMocks } from '../utils/ui-mocks';
 import '../utils/recharts-mock';
+import { beforeAll, describe, it, expect, vi } from 'vitest';
 
-setupUiMocks();
+beforeAll(() => {
+  setupUiMocks();
+});
 
 // --- Mock Data ---
 const createMockDataPoint = (year: number, month: number) => {

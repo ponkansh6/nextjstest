@@ -2,7 +2,7 @@
 
 
 a = Analysis(
-    ['convert_cpi.py'],
+    ['scripts/convert_cpi.py'],
     pathex=[],
     binaries=[],
     datas=[],

@@ -1,4 +1,4 @@
-import { loadCtiData } from "./server/lib/dataLoader";
+import { loadCtiData } from "@server/lib/dataLoader";
 
 async function check() {
   const ctiData = await loadCtiData();

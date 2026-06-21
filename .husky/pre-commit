@@ -22,9 +22,9 @@ pnpm run lint:fast || { echo "Lint failed"; exit 1; }
 pnpm oxfmt --write . "!tests/**" || { echo "Format failed"; exit 1; }
 pnpm run type-check:fast || { echo "Type check failed"; exit 1; }
 
-# 4. 関連テストの実行
-echo "Running relevant logic tests..."
-pnpm run test
+# 4. 関連テストの実行（ロジックテストのみ）
+echo "Running logic tests..."
+pnpm dlx bun test tests/computation-contract tests/data-mapping tests/data-quality tests/integration tests/unit
 TEST_EXIT_CODE=$?
 
 if [ $TEST_EXIT_CODE -ne 0 ]; then
