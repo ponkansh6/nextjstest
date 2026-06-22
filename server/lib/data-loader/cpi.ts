@@ -166,11 +166,11 @@ export async function loadCtiDataInternal(): Promise<CpiData[]> {
     .filter((row) => {
       if (!row.年月) return false;
       const m = String(row.年月).match(/^(\d{4})年/);
-      return m ? parseInt(m[1], 10) >= 2005 : false;
+      return m ? parseInt(m[1], 10) >= 1994 : false;
     });
 
   const existingMonths = new Set(mapped.map((r) => r.年月));
-  for (let y = 2005; y <= 2016; y++) {
+  for (let y = 1994; y <= 2016; y++) {
     for (let m = 1; m <= 12; m++) {
       const ym = `${y}年${m}月`;
       if (!existingMonths.has(ym)) {
@@ -188,7 +188,7 @@ export async function loadCtiDataInternal(): Promise<CpiData[]> {
         dummyRow["消費支出（実質）"] = realSupport;
         // ダミー行は個別カテゴリの内訳データがないため、
         // 「その他の消費支出」を残余（＝総額）として設定しない。
-        // これにより2005-2016年のチャートで巨大な値がY軸スケールを独占するのを防ぐ。
+        // これにより1994-2016年のチャートで巨大な値がY軸スケールを独占するのを防ぐ。
         // この期間の総消費支出はサポート系列（民間最終消費支出）で表現される。
         dummyRow["その他の消費支出（名目）"] = 0;
         dummyRow["その他の消費支出（実質）"] = 0;

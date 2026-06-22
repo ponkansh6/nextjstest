@@ -124,13 +124,34 @@ export async function loadTotalEarningDataInternal(): Promise<CpiData[]> {
   const hourlyFactor = hourly2020 > 0 ? 100 / hourly2020 : 1;
   const popFactor = perCapitaBase2020 > 0 ? 100 / perCapitaBase2020 : 1;
 
-  // 消費支出(参考)の基準値計算（2020年平均を基準100とする）
-  const consumption2020 = year2020.map((ym) => consumptionMap.get(ym) ?? 0).filter((v) => v > 0);
-  const avgConsumption2020 =
-    consumption2020.length > 0
-      ? consumption2020.reduce((a, b) => a + b, 0) / consumption2020.length
-      : 0;
-  const consumptionFactor = avgConsumption2020 > 0 ? 100 / avgConsumption2020 : 1;
+  // 消費支出の12か月移動平均を計算し、2020年平均を基準100とする
+  const sortedConsumption = [...consumptionMap.entries()]
+    .filter(([_, v]) => v > 0)
+    .sort(([a], [b]) => {
+      const ma = a.match(/^(\d{4})年(\d{1,2})月/);
+      const mb = b.match(/^(\d{4})年(\d{1,2})月/);
+      if (!ma || !mb) return 0;
+      const ay = parseInt(ma[1], 10), am = parseInt(ma[2], 10);
+      const by = parseInt(mb[1], 10), bm = parseInt(mb[2], 10);
+      return ay !== by ? ay - by : am - bm;
+    });
+  const consumptionMAMap = new Map<string, number>();
+  for (let i = 0; i < sortedConsumption.length; i++) {
+    let sum = 0;
+    let count = 0;
+    for (let j = Math.max(0, i - 11); j <= i; j++) {
+      sum += sortedConsumption[j][1];
+      count++;
+    }
+    consumptionMAMap.set(sortedConsumption[i][0], count > 0 ? sum / count : 0);
+  }
+  const ma2020Values = [...consumptionMAMap.entries()]
+    .filter(([ym]) => ym.startsWith("2020年"))
+    .map(([_, v]) => v);
+  const avgMA2020 = ma2020Values.length > 0
+    ? ma2020Values.reduce((a, b) => a + b, 0) / ma2020Values.length
+    : 0;
+  const maConsumptionFactor = avgMA2020 > 0 ? 100 / avgMA2020 : 1;
 
   const result: CpiData[] = [...keys].map((ym) => {
     const contractualVal = contractualMap.get(ym) ?? 0;
@@ -198,9 +219,9 @@ export async function loadTotalEarningDataInternal(): Promise<CpiData[]> {
     const rawCpi = cpiMap.get(item.年月) || 0;
     item["残差"] = calculateRawResidual(smoothedTotal, rawCpi);
     item["CPI総合(参考)"] = rawCpi;
-    // 消費支出(参考)の計算
-    const consumption = consumptionMap.get(item.年月) ?? 0;
-    item["消費支出(参考)"] = consumption > 0 ? consumption * consumptionFactor : 0;
+    // 消費支出(参考)の計算（12か月移動平均）
+    const maConsumption = consumptionMAMap.get(item.年月) ?? 0;
+    item["消費支出(参考)"] = maConsumption > 0 ? maConsumption * maConsumptionFactor : 0;
   });
   applyResidualMovingAverage(result);
   return result;
