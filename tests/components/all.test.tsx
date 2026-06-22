@@ -8,8 +8,9 @@ import { EarningsBreakdownChart } from '../../src/app/components/EarningsBreakdo
 import { ResidualAreaChart } from '../../src/app/components/ResidualAreaChart';
 import { MajorIndicesChart } from '../../src/app/components/MajorIndicesChart';
 import { useCpiChartData } from '../../src/hooks/useCpiChartData';
+import { computeChartData } from '../../src/lib/clientCalculations';
 import { CpiData } from '../../src/types/data';
-import { nominalKeys, realKeys, SUPPORT_SERIES_KEY_NOMINAL, SUPPORT_SERIES_KEY_REAL, targetKeys, stackedKeys, stackedColors } from '../../src/lib/chartConstants';
+import { CONSUMPTION_NOMINAL_KEYS, CONSUMPTION_REAL_KEYS, SUPPORT_SERIES_KEY_NOMINAL, SUPPORT_SERIES_KEY_REAL, targetKeys, stackedKeys, stackedColors } from '../../src/lib/chartConstants';
 import { setupUiMocks } from '../utils/ui-mocks';
 import '../utils/recharts-mock';
 import { beforeAll, describe, it, expect, vi } from 'vitest';
@@ -21,7 +22,7 @@ beforeAll(() => {
 // --- Mock Data ---
 const createMockDataPoint = (year: number, month: number) => {
   const data = { 年月: `${year}年${month}月`, "年": year } as any;
-  [...nominalKeys, ...realKeys, SUPPORT_SERIES_KEY_NOMINAL, SUPPORT_SERIES_KEY_REAL].forEach(k => {
+  [...CONSUMPTION_NOMINAL_KEYS, ...CONSUMPTION_REAL_KEYS, SUPPORT_SERIES_KEY_NOMINAL, SUPPORT_SERIES_KEY_REAL].forEach(k => {
     data[k] = 100;
   });
   return data;
@@ -64,8 +65,8 @@ describe('Integrated UI Chart Tests', () => {
         <SpendingBarChart
           title="Test Chart Nominal"
           data={mockQuarterlyData}
-          keys={nominalKeys}
-          colors={nominalKeys.map(() => "#000")}
+          keys={CONSUMPTION_NOMINAL_KEYS}
+          colors={CONSUMPTION_NOMINAL_KEYS.map(() => "#000")}
           hiddenKeys={[]}
           onToggle={() => {}}
           chartColors={chartColors}
@@ -125,6 +126,49 @@ describe('Integrated UI Chart Tests', () => {
         />
       );
       expect(screen.getByText("CPI費目別積み上げ")).toBeDefined();
+    });
+
+    it("should render StackedAreaChart with computed data and verify legend label", () => {
+      const mockData = [
+        { 年月: '2023年1月', 'その他の消費支出（名目）': 100, 総合: 100, 生鮮食品を除く総合: 100, 持家の帰属家賃を除く総合: 100 },
+        { 年月: '2023年2月', 'その他の消費支出（名目）': 100, 総合: 100, 生鮮食品を除く総合: 100, 持家の帰属家賃を除く総合: 100 },
+        { 年月: '2023年3月', 'その他の消費支出（名目）': 100, 総合: 100, 生鮮食品を除く総合: 100, 持家の帰属家賃を除く総合: 100 },
+      ];
+      
+      const props = {
+        data: [],
+        nominalData: mockData as any,
+        startYear: 2023,
+        endYear: 2023,
+        nominalKeys: ['その他の消費支出（名目）'],
+        realKeys: [],
+        maxCpiDate: { year: 2023, month: 3 },
+      };
+      
+      const { quarterlyNominalData } = computeChartData(props, []);
+      
+      // 四半期データを StackedAreaChart が期待する形式（年月プロパティを持つ）に変換
+      const chartData = quarterlyNominalData.map(d => ({
+        ...d,
+        年月: d.label, // label を 年月 として扱う
+      }));
+
+      render(
+        <StackedAreaChart
+          title="CPI費目別積み上げ"
+          data={chartData as any}
+          keys={['その他の消費支出（名目）']}
+          colors={['#000']}
+          hiddenKeys={[]}
+          onToggle={() => {}}
+          chartColors={chartColors}
+          isMobile={false}
+          CustomTooltip={MockTooltip}
+          onReset={() => {}}
+        />
+      );
+      // 凡例ラベルは getLegendLabel で変換されるため、変換後のラベルを確認する
+      expect(screen.getByText("諸雑費・CPI外支出")).toBeDefined();
     });
 
     it("should verify 消費支出(参考) is within 50-150 range", () => {
@@ -189,6 +233,21 @@ describe('ChartLegend', () => {
     fireEvent.click(button);
     expect(mockProps.onToggle).toHaveBeenCalledWith('Key2');
   });
+
+  it('calls onToggle when "その他の消費支出（名目）" legend item is clicked', () => {
+    const props = {
+      title: 'Test Legend',
+      keys: ['その他の消費支出（名目）', 'Key2'],
+      colors: ['#000', '#fff'],
+      hiddenKeys: [],
+      onToggle: vi.fn(),
+    };
+    render(<ChartLegend {...props} />);
+    // 凡例ラベルは getLegendLabel で変換されるため、変換後のラベルを確認する
+    const button = screen.getByText('諸雑費・CPI外支出');
+    fireEvent.click(button);
+    expect(props.onToggle).toHaveBeenCalledWith('その他の消費支出（名目）');
+  });
 });
 
 describe('SpendingBarChart', () => {
@@ -227,7 +286,7 @@ describe('SpendingBarChart', () => {
 describe('StackedAreaChart', () => {
   const mockProps = {
     title: 'Test Stacked Chart',
-    data: [{ 年月: '2023年1月', 'キー1': 100, 'キー2': 50, 総合: 150, 生鮮食品を除く総合: 150, 持家の帰属家賃を除く総合: 150, "消費支出(参考)": 150 } as unknown as CpiData],
+    data: [{ 年月: '2023年1月', 'キー1': 100, 'キー2': 50, 総合: 150, 生鮮食品を除く総合: 150, 持家の帰属家賃を除く総合: 150 } as unknown as CpiData],
     keys: ['キー1', 'キー2'],
     colors: ['#000', '#fff'],
     hiddenKeys: [],
@@ -267,8 +326,8 @@ describe('useCpiChartData', () => {
       endYear: 2026,
       maxCpiDate: { month: 12, year: 2026 },
       nominalData: mockCtiData,
-      nominalKeys: nominalKeys,
-      realKeys: realKeys,
+      nominalKeys: CONSUMPTION_NOMINAL_KEYS,
+      realKeys: CONSUMPTION_REAL_KEYS,
       startYear: 2005,
     };
 
@@ -286,15 +345,15 @@ describe('useCpiChartData', () => {
       });
     };
 
-    nominalKeys.forEach(key => {
+    CONSUMPTION_NOMINAL_KEYS.forEach(key => {
       if (key === SUPPORT_SERIES_KEY_NOMINAL) return;
       expect(hasDataInRange(quarterlyNominalData, [key], 2005, 2016, true), `Nominal Series '${key}' should have positive values in 2005-2016`).toBe(true);
       expect(hasDataInRange(quarterlyNominalData, [key], 2017, 2026, false), `Nominal Series '${key}' should have positive values in 2017-2026`).toBe(true);
     });
 
-    if (realKeys.length > 0) {
+    if (CONSUMPTION_REAL_KEYS.length > 0) {
       expect(quarterlyRealData.length).toBeGreaterThan(0);
-      realKeys.forEach(key => {
+      CONSUMPTION_REAL_KEYS.forEach(key => {
         if (key === SUPPORT_SERIES_KEY_REAL) return;
         expect(hasDataInRange(quarterlyRealData, [key], 2005, 2016, true), `Real Series '${key}' should have positive values in 2005-2016`).toBe(true);
         expect(hasDataInRange(quarterlyRealData, [key], 2017, 2026, false), `Real Series '${key}' should have positive values in 2017-2026`).toBe(true);

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { computeChartData } from '../../src/lib/clientCalculations';
 import { filterDataByYear, mergeChartData } from '../../src/lib/chartUtils';
 import { loadCtiData, loadCpiData, loadTotalEarningData } from '../../server/lib/dataLoader';
-import { nominalKeys, realKeys } from '../../src/lib/chartConstants';
+import { CONSUMPTION_NOMINAL_KEYS, CONSUMPTION_REAL_KEYS } from '../../src/lib/chartConstants';
 
 describe('Calculation Logic Tests', () => {
   let rawCtiData: any[];
@@ -19,15 +19,15 @@ describe('Calculation Logic Tests', () => {
     const startYear = 2020;
     const endYear = 2025;
     const maxCpiDate = { year: 2025, month: 3 };
-    const realKeys_ = nominalKeys.map(k => k.replace("名目", "実質"));
+    const realKeys_ = CONSUMPTION_REAL_KEYS;
 
     const processed = computeChartData({
         data: rawCpiData,
         nominalData: rawCtiData,
         startYear,
         endYear,
-        nominalKeys,
-        realKeys: realKeys_,
+        nominalKeys: CONSUMPTION_NOMINAL_KEYS,
+        realKeys: CONSUMPTION_REAL_KEYS,
         maxCpiDate
       }, []);
       

@@ -1,6 +1,6 @@
 import { expect, it, describe, beforeAll } from "vitest";
 import { loadCtiData } from "../../server/lib/dataLoader";
-import { nominalKeys, realKeys, SUPPORT_SERIES_KEY_NOMINAL, SUPPORT_SERIES_KEY_REAL } from "../../src/lib/chartConstants";
+import { CONSUMPTION_NOMINAL_KEYS, CONSUMPTION_REAL_KEYS, SUPPORT_SERIES_KEY_NOMINAL, SUPPORT_SERIES_KEY_REAL, CPI_CATEGORIES } from "../../src/lib/chartConstants";
 import type { CpiData } from "../../src/types";
 import { computeChartData } from "../../src/lib/clientCalculations";
 
@@ -15,10 +15,18 @@ describe("CTI Data Integrity", () => {
     it("should have loaded data", () => {
       expect(ctiData.length).toBeGreaterThan(0);
     });
-    it.each([...nominalKeys, ...realKeys])("series '%s' should have non-zero values", (key) => {
-      if (key.includes('その他の消費支出')) return;
+    it.each([...CONSUMPTION_NOMINAL_KEYS, ...CONSUMPTION_REAL_KEYS])("series '%s' should have non-zero values", (key) => {
       const nonZeroCount = ctiData.filter((d) => (d[key] as number) > 0).length;
       expect(nonZeroCount, `Series '${key}' should have non-zero values in the dataset`).toBeGreaterThan(0);
+    });
+
+    it("should verify that consumption keys exist in the data (Mismatch Verification)", () => {
+      const firstRow = ctiData[0];
+      const dataKeys = Object.keys(firstRow);
+      
+      [...CONSUMPTION_NOMINAL_KEYS, ...CONSUMPTION_REAL_KEYS].forEach(key => {
+        expect(dataKeys, `Key '${key}' should exist in data`).toContain(key);
+      });
     });
   });
 
@@ -32,9 +40,6 @@ describe("CTI Data Integrity", () => {
 
       const allKeys = Object.keys(ctiData[0]);
       const targetKeys = allKeys.filter(key => 
-        key !== "民間最終消費支出" && 
-        key !== SUPPORT_SERIES_KEY_NOMINAL &&
-        key !== SUPPORT_SERIES_KEY_REAL &&
         key !== "年月" && 
         key !== "月" &&
         key !== ""
@@ -56,8 +61,8 @@ describe("CTI Data Integrity", () => {
         endYear: 2026,
         maxCpiDate: { month: 12, year: 2026 },
         nominalData: ctiData,
-        nominalKeys: nominalKeys,
-        realKeys: realKeys,
+        nominalKeys: CONSUMPTION_NOMINAL_KEYS,
+        realKeys: CONSUMPTION_REAL_KEYS,
         startYear: 2005,
       };
 

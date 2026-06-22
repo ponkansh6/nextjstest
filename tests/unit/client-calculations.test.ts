@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { calculateCategorySum, computeChartData, calculateCAGRValue } from "../../src/lib/clientCalculations";
-import { nominalKeys, SUPPORT_SERIES_KEY_NOMINAL, SUPPORT_SERIES_KEY_REAL } from "../../src/lib/chartConstants";
+import { CONSUMPTION_NOMINAL_KEYS, CONSUMPTION_REAL_KEYS, SUPPORT_SERIES_KEY_NOMINAL, SUPPORT_SERIES_KEY_REAL } from "../../src/lib/chartConstants";
 import { loadCtiData } from "../../server/lib/dataLoader";
 
 import type { CpiData } from "../../src/types";
@@ -44,8 +44,8 @@ describe("src/lib/clientCalculations", () => {
       endYear: 2020,
       maxCpiDate: { month: 1, year: 2020 },
       nominalData: [] as CpiData[],
-      nominalKeys: nominalKeys,
-      realKeys: nominalKeys.map((k) => k + "（実質）"),
+      CONSUMPTION_NOMINAL_KEYS: CONSUMPTION_NOMINAL_KEYS,
+      realKeys: CONSUMPTION_REAL_KEYS,
       startYear: 2020,
     };
 
@@ -63,12 +63,12 @@ describe("src/lib/clientCalculations", () => {
       const result = computeChartData(testProps, []);
       const row = result.quarterlyNominalData[0];
 
-      nominalKeys.forEach((key) => {
+      CONSUMPTION_NOMINAL_KEYS.forEach((key) => {
         expect(row, `Key ${key} missing or undefined in render data`).toHaveProperty(key);
         expect(typeof row[key]).toBe("number");
       });
 
-      const total = nominalKeys.reduce((acc, k) => acc + ((row[k] as number) || 0), 0);
+      const total = CONSUMPTION_NOMINAL_KEYS.reduce((acc, k) => acc + ((row[k] as number) || 0), 0);
       expect(total).toBeGreaterThan(0);
       expect(total).toBeCloseTo(35, 5);
     });
@@ -84,7 +84,7 @@ describe("src/lib/clientCalculations", () => {
         nominalData: q1Data,
         startYear: 2020,
         endYear: 2020,
-        nominalKeys: nominalKeys,
+        CONSUMPTION_NOMINAL_KEYS: CONSUMPTION_NOMINAL_KEYS,
         realKeys: [],
         maxCpiDate: { year: 2020, month: 3 },
       };
@@ -112,7 +112,7 @@ describe("src/lib/clientCalculations", () => {
          nominalData: mockNominalData,
          startYear: 2005,
          endYear: 2020,
-         nominalKeys: nominalKeys,
+         CONSUMPTION_NOMINAL_KEYS: CONSUMPTION_NOMINAL_KEYS,
          realKeys: [],
          maxCpiDate: { year: 2020, month: 3 },
        };
@@ -143,7 +143,7 @@ describe("src/lib/clientCalculations", () => {
           nominalData: mockData as any,
           startYear: 2010,
           endYear: 2010,
-          nominalKeys: ["消費支出（名目）", SUPPORT_SERIES_KEY_NOMINAL],
+          CONSUMPTION_NOMINAL_KEYS: ["消費支出（名目）", SUPPORT_SERIES_KEY_NOMINAL],
           realKeys: [],
           maxCpiDate: { year: 2010, month: 3 },
         };
@@ -164,7 +164,7 @@ describe("src/lib/clientCalculations", () => {
         nominalData: mockData as any,
         startYear: 2010,
         endYear: 2010,
-        nominalKeys: [],
+        CONSUMPTION_NOMINAL_KEYS: [],
         realKeys: [],
         maxCpiDate: { year: 2010, month: 1 },
       };
@@ -179,7 +179,7 @@ describe("src/lib/clientCalculations", () => {
       expect((existingData as any)["民間最終消費支出"]).toBe(100);
     });
 
-     it("should aggregate '民間最終消費支出' regardless of nominalKeys inclusion", () => {
+     it("should aggregate '民間最終消費支出' regardless of CONSUMPTION_NOMINAL_KEYS inclusion", () => {
        // 3ヶ月分のデータを用意して、四半期の集計要件（3ヶ月分必要）を満たすようにする
        const mockData = [
          { 年月: "2010年1月", [SUPPORT_SERIES_KEY_NOMINAL]: 100 },
@@ -193,7 +193,7 @@ describe("src/lib/clientCalculations", () => {
            nominalData: mockData as any,
            startYear: 2010,
            endYear: 2010,
-           nominalKeys: keys,
+           CONSUMPTION_NOMINAL_KEYS: keys,
            realKeys: [],
            maxCpiDate: { year: 2010, month: 3 }, // 3月まで必要
          };
@@ -202,16 +202,16 @@ describe("src/lib/clientCalculations", () => {
          return quarterlyNominalData[0][SUPPORT_SERIES_KEY_NOMINAL];
        };
        
-       // 1. nominalKeys に含まれていない場合
+       // 1. CONSUMPTION_NOMINAL_KEYS に含まれていない場合
        const valWithoutKey = runTest([]);
        
-       // 2. nominalKeys に含まれている場合
+       // 2. CONSUMPTION_NOMINAL_KEYS に含まれている場合
        const valWithKey = runTest([SUPPORT_SERIES_KEY_NOMINAL]);
        
         // バグ修正の検証:
         // 四半期データなので合計せず、100（または存在する値）となることを期待
-        expect(valWithoutKey, "Value should be 100 even if not in nominalKeys").toBe(100);
-        expect(valWithKey, "Value should be 100 if in nominalKeys").toBe(100);
+        expect(valWithoutKey, "Value should be 100 even if not in CONSUMPTION_NOMINAL_KEYS").toBe(100);
+        expect(valWithKey, "Value should be 100 if in CONSUMPTION_NOMINAL_KEYS").toBe(100);
       });
 
 

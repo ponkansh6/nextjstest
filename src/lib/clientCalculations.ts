@@ -1,20 +1,11 @@
 import type { CpiData } from "@/types";
-import { SUPPORT_SERIES_KEY_NOMINAL, SUPPORT_SERIES_KEY_REAL } from "./chartConstants";
-
-export const CPI_CATEGORIES = [
-  "住居",
-  "家具・家事用品",
-  "被服及び履物",
-  "保健医療",
-  "教育",
-  "交通・自動車等関係費",
-  "通信",
-  "光熱・水道",
-  "教養娯楽",
-  "外食以外食料",
-  "外食",
-  "諸雑費",
-];
+import {
+  SUPPORT_SERIES_KEY_NOMINAL,
+  SUPPORT_SERIES_KEY_REAL,
+  CPI_CATEGORIES,
+  CONSUMPTION_NOMINAL_KEYS,
+  CONSUMPTION_REAL_KEYS,
+} from "./chartConstants";
 
 // 行データとキーリストから合計を算出する共通ロジック
 export const sumCategoryValues = (row: any, keys: string[], hiddenKeys: string[] = []): number => {
@@ -76,14 +67,16 @@ export interface UseCpiChartDataProps {
   nominalData: CpiData[];
   startYear: number;
   endYear: number;
-  nominalKeys: string[];
-  realKeys: string[];
+  nominalKeys?: string[];
+  realKeys?: string[];
   maxCpiDate: { year: number; month: number };
 }
 
 // フックからロジックを抽出した関数
 export const computeChartData = (props: UseCpiChartDataProps, hiddenQuarters: number[]) => {
-  const { nominalData, startYear, endYear, nominalKeys, realKeys, maxCpiDate } = props;
+  const { nominalData, startYear, endYear, maxCpiDate } = props;
+  const nominalKeys = props.nominalKeys || CONSUMPTION_NOMINAL_KEYS;
+  const realKeys = props.realKeys || CONSUMPTION_REAL_KEYS;
 
   // Normalize 年月 formatting to a canonical form (e.g., "2020年1月") to tolerate zero-padded months like "2020年01月".
   const normalizeYm = (ym?: string | number) => {
@@ -260,3 +253,4 @@ export const computeChartData = (props: UseCpiChartDataProps, hiddenQuarters: nu
     quarterlyRealData: realRows,
   };
 };
+export { CPI_CATEGORIES };

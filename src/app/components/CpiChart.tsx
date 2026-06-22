@@ -18,7 +18,8 @@ import {
   colors,
   keyPairs,
   nominalColorMap,
-  nominalKeys,
+  CONSUMPTION_NOMINAL_KEYS,
+  CONSUMPTION_REAL_KEYS,
   stackedColors,
   stackedKeys,
   SUPPORT_SERIES_KEY_NOMINAL,
@@ -182,10 +183,10 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
     );
   };
 
+  const nominalKeys = CONSUMPTION_NOMINAL_KEYS;
+  const realKeys = CONSUMPTION_REAL_KEYS;
+
   const nominalColors = nominalKeys.map(getColorForNominalKey);
-  const realKeys = nominalKeys.map((k) =>
-    k === "その他の消費支出（名目）" ? "その他の消費支出（実質）" : k.replace("名目", "実質"),
-  );
   const nominalKeysWithSupport = [...nominalKeys, SUPPORT_SERIES_KEY_NOMINAL];
   const realKeysWithSupport = [...realKeys, SUPPORT_SERIES_KEY_REAL];
   const nominalColorsWithSupport = [...nominalColors, "#94a3b8"];
