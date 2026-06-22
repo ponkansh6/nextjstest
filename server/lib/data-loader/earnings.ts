@@ -197,6 +197,7 @@ export async function loadTotalEarningDataInternal(): Promise<CpiData[]> {
     );
     const rawCpi = cpiMap.get(item.年月) || 0;
     item["残差"] = calculateRawResidual(smoothedTotal, rawCpi);
+    item["CPI総合(参考)"] = rawCpi;
     // 消費支出(参考)の計算
     const consumption = consumptionMap.get(item.年月) ?? 0;
     item["消費支出(参考)"] = consumption > 0 ? consumption * consumptionFactor : 0;

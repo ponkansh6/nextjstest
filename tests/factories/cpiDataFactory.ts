@@ -10,6 +10,7 @@ export function createCpiData(overrides: Partial<CpiData> = {}): CpiData {
     生鮮食品を除く総合: 100,
     総合: 100,
     "消費支出(参考)": 100,
+    "CPI総合(参考)": 100,
     "民間最終消費支出": 0,
     ...overrides,
   };
