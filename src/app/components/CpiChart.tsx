@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import type { CpiData } from "@/types";
-import { filterDataByYear, mergeChartData, replaceWithAnnualAverage } from "../../lib/chartUtils";
+import { filterDataByYear, mergeChartData } from "../../lib/chartUtils";
 import styles from "./CpiChart.module.css";
 import { ChartFilters } from "./ChartFilters";
 import { useChartTheme } from "../../hooks/useChartTheme";
@@ -166,11 +166,8 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const displayData = mergedData;
 
-  // 消費支出(参考)は各月の属する年の平均値で表示する
-  const earningsData = useMemo(
-    () => replaceWithAnnualAverage(mergedData, "消費支出(参考)"),
-    [mergedData],
-  );
+  // 消費支出(参考)はサーバー側で12か月移動平均済みのため、そのまま表示する
+  const earningsData = mergedData;
 
   // 表示・非表示を管理するステート（初期値は全て表示）
   const [hiddenKeys, setHiddenKeys] = useState<string[]>([]);
