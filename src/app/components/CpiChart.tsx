@@ -20,8 +20,6 @@ import {
   nominalColorMap,
   CONSUMPTION_NOMINAL_KEYS,
   CONSUMPTION_REAL_KEYS,
-  NOMINAL_CONSUMPTION_CATEGORIES,
-  REAL_CONSUMPTION_CATEGORIES,
   stackedColors,
   stackedKeys,
   SUPPORT_SERIES_KEY_NOMINAL,
@@ -31,7 +29,7 @@ import {
 
 const getColorForNominalKey = (key: string): string => {
   const targetStackedKey = nominalColorMap[key];
-  const index = NOMINAL_CONSUMPTION_CATEGORIES.indexOf(targetStackedKey || "");
+  const index = stackedKeys.indexOf(targetStackedKey || "");
   return index !== -1 ? stackedColors[index] : "#64748b";
 };
 
@@ -192,9 +190,10 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
   const nominalKeysWithSupport = [...nominalKeys, SUPPORT_SERIES_KEY_NOMINAL];
   const realKeysWithSupport = [...realKeys, SUPPORT_SERIES_KEY_REAL];
   const nominalColorsWithSupport = [...nominalColors, "#94a3b8"];
-  const realColors = nominalKeys.map((key) => {
-    const targetStackedKey = nominalColorMap[key.replace("（名目）", "（実質）")];
-    const index = REAL_CONSUMPTION_CATEGORIES.indexOf(targetStackedKey || "");
+  const realColors = realKeys.map((key) => {
+    const nominalKey = key.replace("（実質）", "（名目）");
+    const targetStackedKey = nominalColorMap[nominalKey];
+    const index = stackedKeys.indexOf(targetStackedKey || "");
     return index !== -1 ? stackedColors[index] : "#64748b";
   });
   const nominalData = ctiData;

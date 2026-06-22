@@ -186,36 +186,12 @@ export async function loadCtiDataInternal(): Promise<CpiData[]> {
         dummyRow["民間最終消費支出（実質）"] = realSupport;
         dummyRow["消費支出（名目）"] = nominalSupport;
         dummyRow["消費支出（実質）"] = realSupport;
-        const nominalTotal = dummyRow["消費支出（名目）"] || 0;
-        const realTotal = dummyRow["消費支出（実質）"] || 0;
-        const nominalKeysList = [
-          "食料（名目）",
-          "住居（名目）",
-          "光熱・水道（名目）",
-          "家具・家事用品（名目）",
-          "被服及び履物（名目）",
-          "保健医療（名目）",
-          "交通・通信（名目）",
-          "教育（名目）",
-          "教養娯楽（名目）",
-        ];
-        const realKeysList = [
-          "食料（実質）",
-          "住居（実質）",
-          "光熱・水道（実質）",
-          "家具・家事用品（実質）",
-          "被服及び履物（実質）",
-          "保健医療（実質）",
-          "交通・通信（実質）",
-          "教育（実質）",
-          "教養娯楽（実質）",
-        ];
-        let nominalSum = 0;
-        nominalKeysList.forEach((k) => (nominalSum += dummyRow[k] || 0));
-        dummyRow["その他の消費支出（名目）"] = Math.max(0, nominalTotal - nominalSum);
-        let realSum = 0;
-        realKeysList.forEach((k) => (realSum += dummyRow[k] || 0));
-        dummyRow["その他の消費支出（実質）"] = Math.max(0, realTotal - realSum);
+        // ダミー行は個別カテゴリの内訳データがないため、
+        // 「その他の消費支出」を残余（＝総額）として設定しない。
+        // これにより2005-2016年のチャートで巨大な値がY軸スケールを独占するのを防ぐ。
+        // この期間の総消費支出はサポート系列（民間最終消費支出）で表現される。
+        dummyRow["その他の消費支出（名目）"] = 0;
+        dummyRow["その他の消費支出（実質）"] = 0;
         mapped.push(dummyRow as any);
       }
     }

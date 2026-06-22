@@ -35,7 +35,7 @@ const REAL_MAPPING: Record<string, string> = Object.fromEntries(
   Object.entries(NOMINAL_MAPPING).map(([key, value]) => [
     key.replace("（名目）", "（実質）"),
     value,
-  ])
+  ]),
 );
 
 // 3. 外部公開用の定数 (マッピングから派生)
@@ -45,7 +45,19 @@ export const CONSUMPTION_REAL_KEYS = Object.keys(REAL_MAPPING);
 export const NOMINAL_CONSUMPTION_CATEGORIES = Array.from(new Set(Object.values(NOMINAL_MAPPING)));
 export const REAL_CONSUMPTION_CATEGORIES = Array.from(new Set(Object.values(REAL_MAPPING)));
 
-export const nominalColorMap = NOMINAL_MAPPING;
+export const nominalColorMap: Record<string, string> = {
+  "交通・通信（名目）": "交通・自動車等関係費",
+  "住居（名目）": "住居",
+  "保健医療（名目）": "保健医療",
+  "光熱・水道（名目）": "光熱・水道",
+  "家具・家事用品（名目）": "家具・家事用品",
+  "教育（名目）": "教育",
+  "教養娯楽（名目）": "教養娯楽",
+  "被服及び履物（名目）": "被服及び履物",
+  "その他の消費支出（名目）": "諸雑費",
+  "食料（名目）": "外食以外食料",
+  "通信（名目）": "通信",
+};
 
 // --- 以下、既存の定数とユーティリティ ---
 

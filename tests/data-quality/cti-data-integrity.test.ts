@@ -1,6 +1,6 @@
 import { expect, it, describe, beforeAll } from "vitest";
 import { loadCtiData } from "../../server/lib/dataLoader";
-import { CONSUMPTION_NOMINAL_KEYS, CONSUMPTION_REAL_KEYS, SUPPORT_SERIES_KEY_NOMINAL, SUPPORT_SERIES_KEY_REAL, CPI_CATEGORIES } from "../../src/lib/chartConstants";
+import { CONSUMPTION_NOMINAL_KEYS, CONSUMPTION_REAL_KEYS, SUPPORT_SERIES_KEY_NOMINAL, SUPPORT_SERIES_KEY_REAL } from "../../src/lib/chartConstants";
 import type { CpiData } from "../../src/types";
 import { computeChartData } from "../../src/lib/clientCalculations";
 
@@ -81,5 +81,7 @@ describe("CTI Data Integrity", () => {
         });
       });
     });
+
+
   });
 });

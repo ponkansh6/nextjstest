@@ -133,4 +133,66 @@ describe("Client Data Structure Integrity", () => {
       });
     });
   });
+
+  it("should have zero consumption categories for pre-2017 quarters (no category breakdown data)", async () => {
+    // 2005-2016年は個別費目内訳が存在しないため、10分類の消費カテゴリは全て0
+    // 総額はサポート系列（民間最終消費支出）のみで表現される
+    const realData = await loadCtiData();
+    const props = {
+      data: realData,
+      endYear: 2026,
+      maxCpiDate: calculateMaxCpiDate(realData),
+      nominalData: realData,
+      CONSUMPTION_NOMINAL_KEYS: CONSUMPTION_NOMINAL_KEYS,
+      realKeys: CONSUMPTION_REAL_KEYS,
+      startYear: 2005,
+    };
+    const result = computeChartData(props, []);
+
+    const pre2017Nominal = result.quarterlyNominalData.filter(d => d.年 <= 2016);
+    const pre2017Real = result.quarterlyRealData.filter(d => d.年 <= 2016);
+
+    expect(pre2017Nominal.length).toBeGreaterThan(0);
+    expect(pre2017Real.length).toBeGreaterThan(0);
+
+    pre2017Nominal.forEach(d => {
+      CONSUMPTION_NOMINAL_KEYS.forEach(key => {
+        expect(d[key], `${d.label} ${key} should be 0 (pre-2017)`).toBe(0);
+      });
+    });
+    pre2017Real.forEach(d => {
+      CONSUMPTION_REAL_KEYS.forEach(key => {
+        expect(d[key], `${d.label} ${key} should be 0 (pre-2017)`).toBe(0);
+      });
+    });
+  });
+
+  it("should have zero support series for 2017+ quarters (only CTI categories are used for stacking)", async () => {
+    // 2017年以降はCTIデータに個別費目内訳が存在するため、
+    // サポート系列（民間最終消費支出）は積み上げに使用されない
+    const realData = await loadCtiData();
+    const props = {
+      data: realData,
+      endYear: 2026,
+      maxCpiDate: calculateMaxCpiDate(realData),
+      nominalData: realData,
+      CONSUMPTION_NOMINAL_KEYS: CONSUMPTION_NOMINAL_KEYS,
+      realKeys: CONSUMPTION_REAL_KEYS,
+      startYear: 2005,
+    };
+    const result = computeChartData(props, []);
+
+    const post2016Nominal = result.quarterlyNominalData.filter(d => d.年 >= 2017);
+    const post2016Real = result.quarterlyRealData.filter(d => d.年 >= 2017);
+
+    expect(post2016Nominal.length).toBeGreaterThan(0);
+    expect(post2016Real.length).toBeGreaterThan(0);
+
+    post2016Nominal.forEach(d => {
+      expect(d[SUPPORT_SERIES_KEY_NOMINAL], `${d.label} should have zero nominal support (2017+)`).toBe(0);
+    });
+    post2016Real.forEach(d => {
+      expect(d[SUPPORT_SERIES_KEY_REAL], `${d.label} should have zero real support (2017+)`).toBe(0);
+    });
+  });
 });
