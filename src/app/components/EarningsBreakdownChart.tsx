@@ -58,6 +58,12 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
       key: "消費支出(参考)",
       type: "line",
     },
+    {
+      color: "#eab308",
+      displayName: "CPI総合(参考)",
+      key: "CPI総合(参考)",
+      type: "line",
+    },
   ];
 
   const yAxisMax = React.useMemo(() => {
@@ -69,6 +75,7 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
       "15歳以上国民当たり給与",
       "総合",
       "消費支出(参考)",
+      "CPI総合(参考)",
     ];
     let maxVal = 0;
     data.forEach((d) => {

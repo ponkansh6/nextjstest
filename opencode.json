@@ -2,11 +2,13 @@
   "$schema": "https://opencode.ai/config.json",
   "provider": {
     "google": {
+      "options": {
+        "timeout": 60000
+      },
       "models": {
         "gemma-4-26b": {
           "options": {
-            "temperature": 0.7,
-            "reasoningEffort": "low"
+            "temperature": 0.7
           }
         }
       }
