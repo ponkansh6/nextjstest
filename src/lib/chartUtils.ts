@@ -68,7 +68,7 @@ export const mergeChartData = (
     // Note: CPIのみの日付は追加しない（給与データが不足するため）
   });
 
-  return [...map.values()].toSorted((a, b) => {
+  const result = [...map.values()].toSorted((a, b) => {
     const ma = a.年月.match(/^(\d{4})年(\d{1,2})月/);
     const mb = b.年月.match(/^(\d{4})年(\d{1,2})月/);
     if (!ma || !mb) {
@@ -80,4 +80,44 @@ export const mergeChartData = (
     const bm = parseInt(mb[2], 10);
     return ay !== by ? ay - by : am - bm;
   });
+
+  return result;
 };
+
+/**
+ * 指定したキーの月次データを、各月が属する年の平均値で置き換える。
+ * 12ヶ月全てのデータが揃っている年のみ平均を計算し、不足する年はnull（非表示）にする。
+ */
+export function replaceWithAnnualAverage<T extends Record<string, unknown>>(
+  data: T[],
+  key: string,
+): T[] {
+  // 年ごとに正の値を収集
+  const byYear = new Map<number, number[]>();
+  data.forEach((d) => {
+    const year = extractYear(String(d.年月 ?? ""));
+    const val = Number(d[key]) || 0;
+    if (val > 0) {
+      if (!byYear.has(year)) byYear.set(year, []);
+      byYear.get(year)!.push(val);
+    }
+  });
+
+  // 12ヶ月揃っている年のみ平均を計算
+  const annualAvg = new Map<number, number>();
+  byYear.forEach((vals, year) => {
+    if (vals.length === 12) {
+      annualAvg.set(year, vals.reduce((a, b) => a + b, 0) / vals.length);
+    }
+  });
+
+  // 各月の値を年平均で置き換え（年平均が取れない年はnull）
+  return data.map((d) => {
+    const year = extractYear(String(d.年月 ?? ""));
+    const avg = annualAvg.get(year);
+    if (avg !== undefined) {
+      return { ...d, [key]: avg };
+    }
+    return { ...d, [key]: null };
+  }) as T[];
+}
