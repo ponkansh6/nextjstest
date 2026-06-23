@@ -35,6 +35,7 @@
 - ToDoの実行という指示は、全ステップの自動実行に対する事前承認を意味します。
 
 ## サブエージェント設定
+
 - サブエージェントの設定ファイル: `/home/menon/.config/opencode/oh-my-opencode-slim.json`
 
 <internal_reminder>!IMPORTANT! Scheduler workflow: plan lanes/dependencies → dispatch background specialists → track task IDs → wait for hook-driven completion → reconcile terminal results → verify. Do not poll running jobs, consume running-job output, or advance dependent work. !END!</internal_reminder>

@@ -13,7 +13,7 @@
     "test:ui": "vitest run -c tests/vitest.ui.config.ts --reporter=verbose",
     "test:all": "pnpm dlx bun test && vitest run -c tests/vitest.ui.config.ts",
     "lint": "eslint --cache",
-    "lint:fast": "oxlint --ignore-pattern 'tests/**' --nextjs-plugin --react-plugin --react-perf-plugin",
+    "lint:fast": "oxlint --ignore-pattern 'tests/**' --ignore-pattern 'scripts/ts_converters/**' --nextjs-plugin --react-plugin --react-perf-plugin",
     "check:deps": "depcheck",
     "format:fast": "oxfmt --write .",
     "type-check": "tsc --noEmit",

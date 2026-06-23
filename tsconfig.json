@@ -43,6 +43,13 @@
   ],
   "exclude": [
     "node_modules",
-    ".next"
+    ".next",
+    "test_arquero*.ts",
+    "compare.ts",
+    "scripts/ts_converters",
+    "scripts/convert_contractual.ts",
+    "scripts/convert_scheduled.ts",
+    "scripts/convert_total.ts",
+    "scripts/convert_worked.ts"
   ]
 }
