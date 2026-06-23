@@ -9,7 +9,7 @@ import pandas as pd
 import datetime
 
 def get_root():
-    return Path('/mnt/c/Users/menon/Desktop/claude-test/nextjs-app')
+    return Path('.').resolve()
 
 ROOT = get_root()
 SRC_XLS = ROOT / "public" / "cpi_source" / "hon-t01.xls"

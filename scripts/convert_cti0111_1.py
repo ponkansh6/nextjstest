@@ -103,8 +103,15 @@ def main():
         header_lines = [f.readline() for _ in range(3)]
     
     target_df = pd.read_csv(TARGET_CSV, header=2, dtype=str)
-    # The '月' column is our key
-    target_df['月'] = target_df['月'].fillna('').str.strip()
+    
+    # Check if '月' column exists
+    if '月' in target_df.columns:
+        # The '月' column is our key
+        target_df['月'] = target_df['月'].fillna('').str.strip()
+    else:
+        # If '月' column doesn't exist, create it with empty values
+        target_df['月'] = ''
+    
     src['年月'] = src['年月'].fillna('').str.strip()
     
     # Identify data columns (those present in both)
@@ -151,7 +158,11 @@ def main():
         new_rows = []
         for ym in new_yms:
             # Use columns 0-6 from the last row as template
-            last_row_template = target_df.iloc[-1].copy()
+            if len(target_df) > 0:
+                last_row_template = target_df.iloc[-1].copy()
+            else:
+                # If target_df is empty, create a template with empty values
+                last_row_template = pd.Series({col: '' for col in target_cols})
             # Clear data columns
             for col in target_cols[7:]:
                 last_row_template[col] = ''

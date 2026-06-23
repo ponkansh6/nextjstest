@@ -18,7 +18,7 @@ import datetime
 import pandas as pd
 
 def get_root():
-    return Path('/mnt/c/Users/menon/Desktop/claude-test/nextjs-app')
+    return Path('.').resolve()
             
     # Fallback if not found
     if getattr(sys, 'frozen', False):
@@ -103,8 +103,14 @@ def main():
         header_lines = [f.readline() for _ in range(3)]
     
     target_df = pd.read_csv(TARGET_CSV, header=2, dtype=str)
-    # The '月' column is our key
-    target_df['月'] = target_df['月'].fillna('').str.strip()
+    # The '月' column is our key - check if it exists
+    if '月' in target_df.columns:
+        target_df['月'] = target_df['月'].fillna('').str.strip()
+    else:
+        # If '月' column doesn't exist, create it from the source data
+        print(f"Warning: '月' column not found in target CSV. Creating from source data.")
+        target_df['月'] = src['年月'].fillna('').str.strip()
+    
     src['年月'] = src['年月'].fillna('').str.strip()
     
     # Identify data columns (those present in both)

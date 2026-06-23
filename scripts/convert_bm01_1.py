@@ -15,6 +15,7 @@ Dependencies: pandas, openpyxl
 
 import argparse
 import sys
+import os
 from pathlib import Path
 import datetime
 
@@ -25,7 +26,7 @@ except Exception as e:
     raise
 
 def get_root():
-    return Path('/mnt/c/Users/menon/Desktop/claude-test/nextjs-app')
+    return Path(os.getcwd())
             
     # Fallback to the original logic if not found
     if getattr(sys, 'frozen', False):

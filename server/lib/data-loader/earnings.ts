@@ -131,8 +131,10 @@ export async function loadTotalEarningDataInternal(): Promise<CpiData[]> {
       const ma = a.match(/^(\d{4})年(\d{1,2})月/);
       const mb = b.match(/^(\d{4})年(\d{1,2})月/);
       if (!ma || !mb) return 0;
-      const ay = parseInt(ma[1], 10), am = parseInt(ma[2], 10);
-      const by = parseInt(mb[1], 10), bm = parseInt(mb[2], 10);
+      const ay = parseInt(ma[1], 10),
+        am = parseInt(ma[2], 10);
+      const by = parseInt(mb[1], 10),
+        bm = parseInt(mb[2], 10);
       return ay !== by ? ay - by : am - bm;
     });
   const consumptionMAMap = new Map<string, number>();
@@ -148,9 +150,8 @@ export async function loadTotalEarningDataInternal(): Promise<CpiData[]> {
   const ma2020Values = [...consumptionMAMap.entries()]
     .filter(([ym]) => ym.startsWith("2020年"))
     .map(([_, v]) => v);
-  const avgMA2020 = ma2020Values.length > 0
-    ? ma2020Values.reduce((a, b) => a + b, 0) / ma2020Values.length
-    : 0;
+  const avgMA2020 =
+    ma2020Values.length > 0 ? ma2020Values.reduce((a, b) => a + b, 0) / ma2020Values.length : 0;
   const maConsumptionFactor = avgMA2020 > 0 ? 100 / avgMA2020 : 1;
 
   const result: CpiData[] = [...keys].map((ym) => {

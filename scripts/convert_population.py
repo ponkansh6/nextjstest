@@ -8,7 +8,7 @@ from pathlib import Path
 import pandas as pd
 
 def get_root():
-    return Path('/mnt/c/Users/menon/Desktop/claude-test/nextjs-app')
+    return Path('.').resolve()
 
 ROOT = get_root()
 SRC_XLSX = ROOT / "public" / "cpi_source" / "lt01-b10.xlsx"
