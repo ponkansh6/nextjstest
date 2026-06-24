@@ -45,6 +45,7 @@
     "node_modules",
     ".next",
     "test_arquero*.ts",
+    "tests/test_arquero*.ts",
     "compare.ts",
     "scripts/ts_converters",
     "scripts/convert_contractual.ts",

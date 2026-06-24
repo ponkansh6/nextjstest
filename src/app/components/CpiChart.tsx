@@ -12,6 +12,7 @@ import { StackedAreaChart } from "./StackedAreaChart";
 import { EarningsBreakdownChart } from "./EarningsBreakdownChart";
 import { ResidualAreaChart } from "./ResidualAreaChart";
 import { MajorIndicesChart } from "./MajorIndicesChart";
+import { NewGraph } from "./NewGraph";
 import { calculateCategorySum, calculateCAGRValue } from "../../lib/clientCalculations";
 import { createDualResetHandler } from "../../lib/resetLogic";
 import {
@@ -172,6 +173,7 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
   // 表示・非表示を管理するステート（初期値は全て表示）
   const [hiddenKeys, setHiddenKeys] = useState<string[]>([]);
   const [stackedHiddenKeys, setStackedHiddenKeys] = useState<string[]>([]);
+  const [maHiddenKeys, setMaHiddenKeys] = useState<string[]>([]);
 
   // 凡例をクリックした時の処理
   const handleLegendClick = (dataKey: string) => {
@@ -182,6 +184,12 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
 
   const handleStackedLegendClick = (dataKey: string) => {
     setStackedHiddenKeys((prev) =>
+      prev.includes(dataKey) ? prev.filter((k) => k !== dataKey) : [...prev, dataKey],
+    );
+  };
+
+  const handleMaLegendClick = (dataKey: string) => {
+    setMaHiddenKeys((prev) =>
       prev.includes(dataKey) ? prev.filter((k) => k !== dataKey) : [...prev, dataKey],
     );
   };
@@ -506,6 +514,22 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
 
       <ResidualAreaChart
         data={mergedData}
+        chartColors={chartColors}
+        isMobile={isMobile}
+        CustomTooltip={(props: {
+          active?: boolean;
+          payload?: { name: string; value: number }[];
+          label?: string;
+          isMobile: boolean;
+          tooltipBg: string;
+          tooltipText: string;
+        }) => <CustomTooltip {...props} />}
+      />
+
+      <NewGraph
+        data={mergedData}
+        hiddenKeys={maHiddenKeys}
+        onToggle={handleMaLegendClick}
         chartColors={chartColors}
         isMobile={isMobile}
         CustomTooltip={(props: {

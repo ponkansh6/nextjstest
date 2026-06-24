@@ -13,6 +13,42 @@ import { loadPopulationDataInternal } from "./population";
 import { loadCpiDataInternal, loadCtiDataInternal } from "./cpi";
 import { calculateSupportScale } from "@/lib/chartUtils";
 
+/** 年月文字列（例: "2020年1月"）から {year, month} を抽出 */
+function parseYearMonth(ym: string): { year: number; month: number } | null {
+  const m = ym.match(/^(\d{4})年(\d{1,2})月/);
+  return m ? { year: parseInt(m[1], 10), month: parseInt(m[2], 10) } : null;
+}
+
+/** 年月文字列の昇順ソート用比較関数 */
+function compareByYearMonth(a: string, b: string): number {
+  const pa = parseYearMonth(a);
+  const pb = parseYearMonth(b);
+  if (!pa || !pb) return 0;
+  return pa.year !== pb.year ? pa.year - pb.year : pa.month - pb.month;
+}
+
+/** エントリー配列の12か月移動平均マップを計算（値>0のみ対象） */
+function computeTrailingMA12(entries: [string, number][]): Map<string, number> {
+  const sorted = entries.filter(([_, v]) => v > 0).sort(([a], [b]) => compareByYearMonth(a, b));
+  const maMap = new Map<string, number>();
+  for (let i = 0; i < sorted.length; i++) {
+    let sum = 0;
+    let count = 0;
+    for (let j = Math.max(0, i - 11); j <= i; j++) {
+      sum += sorted[j][1];
+      count++;
+    }
+    maMap.set(sorted[i][0], count > 0 ? sum / count : 0);
+  }
+  return maMap;
+}
+
+/** 特定の年を含むエントリーの平均値を計算する */
+function averageForYear(map: Map<string, number>, yearPrefix: string): number {
+  const values = [...map.entries()].filter(([ym]) => ym.startsWith(yearPrefix)).map(([_, v]) => v);
+  return values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+}
+
 export async function loadTotalEarningDataInternal(): Promise<CpiData[]> {
   const paths = buildEarningsFilePaths();
   const contractualContent = fs.readFileSync(paths.contractual, "utf8");
@@ -125,34 +161,12 @@ export async function loadTotalEarningDataInternal(): Promise<CpiData[]> {
   const popFactor = perCapitaBase2020 > 0 ? 100 / perCapitaBase2020 : 1;
 
   // 消費支出の12か月移動平均を計算し、2020年平均を基準100とする
-  const sortedConsumption = [...consumptionMap.entries()]
-    .filter(([_, v]) => v > 0)
-    .sort(([a], [b]) => {
-      const ma = a.match(/^(\d{4})年(\d{1,2})月/);
-      const mb = b.match(/^(\d{4})年(\d{1,2})月/);
-      if (!ma || !mb) return 0;
-      const ay = parseInt(ma[1], 10),
-        am = parseInt(ma[2], 10);
-      const by = parseInt(mb[1], 10),
-        bm = parseInt(mb[2], 10);
-      return ay !== by ? ay - by : am - bm;
-    });
-  const consumptionMAMap = new Map<string, number>();
-  for (let i = 0; i < sortedConsumption.length; i++) {
-    let sum = 0;
-    let count = 0;
-    for (let j = Math.max(0, i - 11); j <= i; j++) {
-      sum += sortedConsumption[j][1];
-      count++;
-    }
-    consumptionMAMap.set(sortedConsumption[i][0], count > 0 ? sum / count : 0);
-  }
-  const ma2020Values = [...consumptionMAMap.entries()]
-    .filter(([ym]) => ym.startsWith("2020年"))
-    .map(([_, v]) => v);
-  const avgMA2020 =
-    ma2020Values.length > 0 ? ma2020Values.reduce((a, b) => a + b, 0) / ma2020Values.length : 0;
+  const consumptionMAMap = computeTrailingMA12([...consumptionMap.entries()]);
+  const avgMA2020 = averageForYear(consumptionMAMap, "2020年");
   const maConsumptionFactor = avgMA2020 > 0 ? 100 / avgMA2020 : 1;
+
+  // CPI総合の12か月移動平均を計算（CPIデータは既に2020年基準）
+  const cpiMAMap = computeTrailingMA12([...cpiMap.entries()]);
 
   const result: CpiData[] = [...keys].map((ym) => {
     const contractualVal = contractualMap.get(ym) ?? 0;
@@ -171,18 +185,11 @@ export async function loadTotalEarningDataInternal(): Promise<CpiData[]> {
     } as unknown as CpiData;
   });
 
-  result.sort((a, b) => {
-    const ma = a.年月.match(/^(\d{4})年(\d{1,2})月/);
-    const mb = b.年月.match(/^(\d{4})年(\d{1,2})月/);
-    if (!ma || !mb) return 0;
-    const ay = parseInt(ma[1], 10);
-    const am = parseInt(ma[2], 10);
-    const by = parseInt(mb[1], 10);
-    const bm = parseInt(mb[2], 10);
-    return ay !== by ? ay - by : am - bm;
-  });
+  result.sort((a, b) => compareByYearMonth(a.年月, b.年月));
 
-  applyMovingAverage(result, "特別給与", 12);
+  for (const field of ["特別給与", "所定内給与", "所定外給与"] as const) {
+    applyMovingAverage(result, field, 12);
+  }
   const totals2020 = result
     .filter((r) => r.年月.startsWith("2020年"))
     .map((r) => calculateSmoothedTotal(r));
@@ -220,6 +227,7 @@ export async function loadTotalEarningDataInternal(): Promise<CpiData[]> {
     const rawCpi = cpiMap.get(item.年月) || 0;
     item["残差"] = calculateRawResidual(smoothedTotal, rawCpi);
     item["CPI総合(参考)"] = rawCpi;
+    item["CPI総合(12MA)"] = cpiMAMap.get(item.年月) ?? 0;
     // 消費支出(参考)の計算（12か月移動平均）
     const maConsumption = consumptionMAMap.get(item.年月) ?? 0;
     item["消費支出(参考)"] = maConsumption > 0 ? maConsumption * maConsumptionFactor : 0;

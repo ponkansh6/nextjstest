@@ -134,5 +134,42 @@ describe("Earnings Data Integrity", () => {
       const meanDiff = diffs.reduce((a, b) => a + b, 0) / diffs.length;
       expect(meanDiff).toBeLessThan(500);
     });
+
+    it("should verify CPI総合(12MA) has reasonable values", () => {
+      expect(earningData.length).toBeGreaterThan(0);
+      earningData.forEach(d => {
+        if (!d.年月 || typeof d.年月 !== 'string') return;
+        const year = parseInt(d.年月.substring(0, 4), 10);
+        if (year < 2005) return;
+
+        const val = Number(d["CPI総合(12MA)" as keyof CpiData] || 0);
+        if (val > 0) {
+          expect(val, `CPI総合(12MA) at ${d.年月} should be 50-150`).toBeGreaterThanOrEqual(50);
+          expect(val, `CPI総合(12MA) at ${d.年月} should be 50-150`).toBeLessThanOrEqual(150);
+        }
+      });
+    });
+
+    it("should have positive CPI総合(12MA) values for most months", () => {
+      const years = [...new Set(earningData.filter(d => d.年月).map(d => parseInt(d.年月.substring(0, 4), 10)))].filter(y => y >= 2005);
+      years.forEach(year => {
+        const yearData = earningData.filter(d => d.年月.startsWith(`${year}年`));
+        const cpiMaValues = yearData.map(d => Number(d["CPI総合(12MA)" as keyof CpiData] || 0));
+        const positiveCount = cpiMaValues.filter(v => v > 0).length;
+        // Skip incomplete years (current year may have partial data)
+        if (yearData.length < 12) return;
+        // At least 10 months of the year should have positive CPI総合(12MA) (first 11 months may have partial MA)
+        expect(positiveCount, `CPI総合(12MA) in ${year}: ${positiveCount}/12 months positive`).toBeGreaterThanOrEqual(10);
+      });
+    });
+
+    it("should confirm NewGraph series fields exist in merged data", async () => {
+      // Verify all three fields used by NewGraph are present
+      const newGraphKeys = ["総合", "消費支出(参考)", "CPI総合(12MA)"];
+      newGraphKeys.forEach(key => {
+        const hasData = earningData.some(d => { const v = d[key as keyof CpiData]; return typeof v === 'number' && v > 0; });
+        expect(hasData, `NewGraph series '${key}' should have positive values in earnings data`).toBe(true);
+      });
+    });
   });
 });

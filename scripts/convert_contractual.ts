@@ -35,8 +35,7 @@ function main() {
   }
 
   // Use headerRow order instead of Object.keys
-  const jsonKeys =
-    jsonData.length > 0 ? (Object.keys(jsonData[0] as object) as string[]) : [];
+  const jsonKeys = jsonData.length > 0 ? (Object.keys(jsonData[0] as object) as string[]) : [];
   const orderedHeaders = headerRow.filter((h) => jsonKeys.includes(h));
   // Make sure all headers from jsonData are included (fallback if headerRow is empty)
   const headers = orderedHeaders.length > 0 ? orderedHeaders : jsonKeys;

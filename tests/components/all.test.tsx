@@ -7,6 +7,7 @@ import { StackedAreaChart } from '../../src/app/components/StackedAreaChart';
 import { EarningsBreakdownChart } from '../../src/app/components/EarningsBreakdownChart';
 import { ResidualAreaChart } from '../../src/app/components/ResidualAreaChart';
 import { MajorIndicesChart } from '../../src/app/components/MajorIndicesChart';
+import { NewGraph } from '../../src/app/components/NewGraph';
 import { useCpiChartData } from '../../src/hooks/useCpiChartData';
 import { computeChartData } from '../../src/lib/clientCalculations';
 import { CpiData } from '../../src/types/data';
@@ -43,8 +44,8 @@ const mockCpiData: CpiData[] = [
   { 年月: '2025年1月', '総合': 105, '住居': 105, '生鮮食品を除く総合': 105, '持家の帰属家賃を除く総合': 105, "消費支出(参考)": 0, "CPI総合(参考)": 0 }
 ];
 const mockMergedData: CpiData[] = [
-  { label: '2023年Q1', 年: 2023, 年月: '2023年1月', quarter: 1, '所定内給与': 100, '所定外給与': 100, '特別給与': 100, '時間当たり給与': 100, '15歳以上国民当たり給与': 100, '総合': 100, '生鮮食品を除く総合': 100, '持家の帰属家賃を除く総合': 100, "消費支出(参考)": 100 } as any,
-  { label: '2025年Q1', 年: 2025, 年月: '2025年1月', quarter: 1, '所定内給与': 105, '所定外給与': 105, '特別給与': 105, '時間当たり給与': 105, '15歳以上国民当たり給与': 105, '総合': 105, '生鮮食品を除く総合': 105, '持家の帰属家賃を除く総合': 105, "消費支出(参考)": 105 } as any
+  { label: '2023年Q1', 年: 2023, 年月: '2023年1月', quarter: 1, '所定内給与': 100, '所定外給与': 100, '特別給与': 100, '時間当たり給与': 100, '15歳以上国民当たり給与': 100, '総合': 100, '生鮮食品を除く総合': 100, '持家の帰属家賃を除く総合': 100, "消費支出(参考)": 100, "CPI総合(12MA)": 100 } as any,
+  { label: '2025年Q1', 年: 2025, 年月: '2025年1月', quarter: 1, '所定内給与': 105, '所定外給与': 105, '特別給与': 105, '時間当たり給与': 105, '15歳以上国民当たり給与': 105, '総合': 105, '生鮮食品を除く総合': 105, '持家の帰属家賃を除く総合': 105, "消費支出(参考)": 105, "CPI総合(12MA)": 105 } as any
 ];
 
 const chartColors = {
@@ -359,5 +360,100 @@ describe('useCpiChartData', () => {
         expect(hasDataInRange(quarterlyRealData, [key], 2017, 2026, false), `Real Series '${key}' should have positive values in 2017-2026`).toBe(true);
       });
     }
+  });
+});
+
+describe('NewGraph', () => {
+  const mockNewGraphData: CpiData[] = [
+    { 年月: '2023年1月', '総合': 100, '消費支出(参考)': 100, 'CPI総合(12MA)': 100 } as any,
+    { 年月: '2023年2月', '総合': 101, '消費支出(参考)': 101, 'CPI総合(12MA)': 101 } as any,
+    { 年月: '2023年3月', '総合': 102, '消費支出(参考)': 102, 'CPI総合(12MA)': 102 } as any,
+  ];
+
+  const mockNewGraphColors = {
+    axisText: "#000",
+    gridStroke: "#000",
+    tooltipBg: "#000",
+    tooltipText: "#000",
+  };
+
+  const mockOnToggle = vi.fn();
+
+  it('renders the chart title and note', () => {
+    render(
+      <NewGraph
+        data={mockNewGraphData}
+        hiddenKeys={[]}
+        onToggle={mockOnToggle}
+        chartColors={mockNewGraphColors}
+        isMobile={false}
+        CustomTooltip={() => <div>Tooltip</div>}
+      />
+    );
+    expect(screen.getByText('主要指標の12か月移動平均比較')).toBeDefined();
+  });
+
+  it('renders legend items with display names', () => {
+    render(
+      <NewGraph
+        data={mockNewGraphData}
+        hiddenKeys={[]}
+        onToggle={mockOnToggle}
+        chartColors={mockNewGraphColors}
+        isMobile={false}
+        CustomTooltip={() => <div>Tooltip</div>}
+      />
+    );
+    expect(screen.getByText('給与(総合)')).toBeDefined();
+    expect(screen.getByText('消費支出(総合)')).toBeDefined();
+    expect(screen.getByText('CPI総合(12MA)')).toBeDefined();
+  });
+
+  it('calls onToggle when a legend item is clicked', () => {
+    render(
+      <NewGraph
+        data={mockNewGraphData}
+        hiddenKeys={[]}
+        onToggle={mockOnToggle}
+        chartColors={mockNewGraphColors}
+        isMobile={false}
+        CustomTooltip={() => <div>Tooltip</div>}
+      />
+    );
+    const button = screen.getByText('給与(総合)');
+    fireEvent.click(button);
+    expect(mockOnToggle).toHaveBeenCalledWith('総合');
+  });
+
+  it('applies hidden style when key is in hiddenKeys', () => {
+    render(
+      <NewGraph
+        data={mockNewGraphData}
+        hiddenKeys={['消費支出(参考)']}
+        onToggle={mockOnToggle}
+        chartColors={mockNewGraphColors}
+        isMobile={false}
+        CustomTooltip={() => <div>Tooltip</div>}
+      />
+    );
+    // The hidden legend item should still be rendered
+    expect(screen.getByText('消費支出(総合)')).toBeDefined();
+    // The visible ones should be there too
+    expect(screen.getByText('給与(総合)')).toBeDefined();
+    expect(screen.getByText('CPI総合(12MA)')).toBeDefined();
+  });
+
+  it('handles empty data gracefully', () => {
+    render(
+      <NewGraph
+        data={[]}
+        hiddenKeys={[]}
+        onToggle={mockOnToggle}
+        chartColors={mockNewGraphColors}
+        isMobile={false}
+        CustomTooltip={() => <div>Tooltip</div>}
+      />
+    );
+    expect(screen.getByText('主要指標の12か月移動平均比較')).toBeDefined();
   });
 });
