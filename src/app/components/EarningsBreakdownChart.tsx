@@ -84,9 +84,7 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
 
   return (
     <div className={styles.chartSection}>
-      <h2 className={styles.chartTitle}>
-        現金給与総額の内訳と関連指標
-      </h2>
+      <h2 className={styles.chartTitle}>現金給与総額の内訳と関連指標</h2>
       <p className={styles.chartNote}>※特別給与は12か月移動平均、所定内・所定外給与は実値を表示</p>
       <div className={styles.legendContainer}>
         <div className={styles.legendSection}>

@@ -438,9 +438,7 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
             </div>
           )}
         </div>
-        <p className={styles.cagrNote}>
-          ※凡例で選択した費目の合計を基準にCAGRを算出
-        </p>
+        <p className={styles.cagrNote}>※凡例で選択した費目の合計を基準にCAGRを算出</p>
       </div>
 
       <SpendingBarChart
@@ -541,8 +539,6 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
           tooltipText: string;
         }) => <CustomTooltip {...props} />}
       />
-
-
     </div>
   );
 }
