@@ -49,9 +49,9 @@ export const NewGraph: React.FC<NewGraphProps> = ({
   CustomTooltip,
 }) => (
   <div className={styles.chartSection}>
-    <h2 className={styles.chartTitle}>主要指標の12か月移動平均比較</h2>
+    <h2 className={styles.chartTitle}>給与・消費支出・CPIの12か月移動平均比較</h2>
     <p className={styles.chartNote}>
-      ※給与(総合)=所定内給与･所定外給与･特別給与の12か月移動平均の合計。消費支出･CPIも12か月移動平均
+      ※給与（総合）＝所定内＋所定外＋特別給与の12か月移動平均。消費支出・CPIも12か月移動平均
     </p>
     <div className={styles.legendContainer}>
       <div className={styles.legendSection}>

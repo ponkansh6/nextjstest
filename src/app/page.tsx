@@ -12,10 +12,9 @@ export default async function Page() {
     <div className={`container ${styles.pageWrapper}`}>
       <header className={styles.header}>
         <div className={styles.badge}>経済指標ダッシュボード</div>
-        <h1 className={styles.title}>CPI推移分析</h1>
+        <h1 className={styles.title}>経済指標ダッシュボード：CPI・賃金・消費支出の長期推移</h1>
         <p className={styles.description}>
-          2020年平均を100とした日本の消費者物価指数（CPI）の推移を可視化。
-          2020年基準ウェイトを用いたラスパイレス指数に基づき、各項目の寄与度を詳細に分析します。
+          2020年基準でスケール統一した主要指標を一覧。各グラフは凡例クリックで系列の表示/非表示を切替可能。
         </p>
       </header>
 

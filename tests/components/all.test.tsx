@@ -107,7 +107,7 @@ describe('Integrated UI Chart Tests', () => {
           CustomTooltip={MockTooltip}
         />
       );
-      const expectedLabels = ["所定内給与", "所定外給与", "特別給与", "時間当たり給与", "15歳以上国民当たり給与", "消費支出(参考)"];
+      const expectedLabels = ["所定内給与", "所定外給与", "特別給与", "時間当たり給与", "15歳以上国民当たり給与"];
       expectedLabels.forEach(label => expect(screen.getByText(label)).toBeDefined());
     });
 
@@ -390,7 +390,7 @@ describe('NewGraph', () => {
         CustomTooltip={() => <div>Tooltip</div>}
       />
     );
-    expect(screen.getByText('主要指標の12か月移動平均比較')).toBeDefined();
+    expect(screen.getByText('給与・消費支出・CPIの12か月移動平均比較')).toBeDefined();
   });
 
   it('renders legend items with display names', () => {
@@ -454,6 +454,6 @@ describe('NewGraph', () => {
         CustomTooltip={() => <div>Tooltip</div>}
       />
     );
-    expect(screen.getByText('主要指標の12か月移動平均比較')).toBeDefined();
+    expect(screen.getByText('給与・消費支出・CPIの12か月移動平均比較')).toBeDefined();
   });
 });

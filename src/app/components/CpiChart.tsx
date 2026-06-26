@@ -324,7 +324,7 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
 
       {/* CPI 主要指数 */}
       <div className={styles.chartSection}>
-        <h2 className={styles.chartTitle}>消費者物価指数 (主要指数)</h2>
+        <h2 className={styles.chartTitle}>消費者物価指数（主要指数）</h2>
         <MajorIndicesChart
           data={filteredData}
           keys={targetKeys}
@@ -346,7 +346,7 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
 
       {/* CPI 費目別積み上げ */}
       <StackedAreaChart
-        title="CPI費目別積み上げ"
+        title="CPI 費目別寄与度"
         data={filteredData}
         keys={stackedKeys}
         colors={stackedColors}
@@ -363,7 +363,7 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
       />
 
       <div className={styles.cagrSection}>
-        <h2 className={styles.chartTitle}>年率上昇率（CAGR）計算</h2>
+        <h2 className={styles.chartTitle}>年率上昇率（CAGR）</h2>
         <div className={styles.cagrContainer}>
           <div className={styles.cagrControls}>
             <div className={styles.cagrItem}>
@@ -439,12 +439,12 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
           )}
         </div>
         <p className={styles.cagrNote}>
-          ※ 積み上げ棒グラフの凡例で選択された費目の合計を基準に計算します
+          ※凡例で選択した費目の合計を基準にCAGRを算出
         </p>
       </div>
 
       <SpendingBarChart
-        title="名目の消費支出（10分類）積み上げ"
+        title="消費支出（名目・10分類）"
         data={quarterlyNominalData}
         keys={nominalKeysWithSupport}
         colors={nominalColorsWithSupport}
@@ -470,7 +470,7 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
       />
 
       <SpendingBarChart
-        title="実質の消費支出（10分類）積み上げ"
+        title="消費支出（実質・10分類）"
         data={quarterlyRealData}
         keys={realKeysWithSupport}
         colors={[...realColors, "#94a3b8"]}
@@ -542,23 +542,7 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
         }) => <CustomTooltip {...props} />}
       />
 
-      <div className={styles.infoContainer}>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className={styles.infoIcon}
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
-        <p>凡例の項目をクリックすると、個別に表示/非表示を切り替えられます</p>
-      </div>
+
     </div>
   );
 }
