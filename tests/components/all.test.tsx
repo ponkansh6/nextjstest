@@ -406,7 +406,7 @@ describe('NewGraph', () => {
     );
     expect(screen.getByText('給与(総合)')).toBeDefined();
     expect(screen.getByText('消費支出(総合)')).toBeDefined();
-    expect(screen.getByText('物価指数総合(12MA)')).toBeDefined();
+    expect(screen.getByText('物価指数(総合)')).toBeDefined();
   });
 
   it('calls onToggle when a legend item is clicked', () => {
@@ -440,7 +440,7 @@ describe('NewGraph', () => {
     expect(screen.getByText('消費支出(総合)')).toBeDefined();
     // The visible ones should be there too
     expect(screen.getByText('給与(総合)')).toBeDefined();
-    expect(screen.getByText('物価指数総合(12MA)')).toBeDefined();
+    expect(screen.getByText('物価指数(総合)')).toBeDefined();
   });
   
   it('handles empty data gracefully', () => {
