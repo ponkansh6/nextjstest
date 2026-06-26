@@ -37,7 +37,7 @@ interface LineConfig {
 const LINE_CONFIGS: LineConfig[] = [
   { key: "総合(12MA)", color: "#e11d48", displayName: "給与(総合)" },
   { key: "消費支出(参考)", color: "#0891b2", displayName: "消費支出(総合)" },
-  { key: "CPI総合(12MA)", color: "#65a30d", displayName: "CPI総合(12MA)" },
+  { key: "CPI総合(12MA)", color: "#65a30d", displayName: "物価指数総合(12MA)" },
 ];
 
 export const NewGraph: React.FC<NewGraphProps> = ({
@@ -49,9 +49,9 @@ export const NewGraph: React.FC<NewGraphProps> = ({
   CustomTooltip,
 }) => (
   <div className={styles.chartSection}>
-    <h2 className={styles.chartTitle}>給与・消費支出・CPIの12か月移動平均比較</h2>
+    <h2 className={styles.chartTitle}>給与・消費支出・物価指数の12か月移動平均比較</h2>
     <p className={styles.chartNote}>
-      ※給与（総合）＝所定内＋所定外＋特別給与の12か月移動平均。消費支出・CPIも12か月移動平均
+      ※給与（総合）＝所定内＋所定外＋特別給与の12か月移動平均。消費支出・物価指数も12か月移動平均
     </p>
     <div className={styles.legendContainer}>
       <div className={styles.legendSection}>

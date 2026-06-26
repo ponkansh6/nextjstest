@@ -114,7 +114,7 @@ describe('Integrated UI Chart Tests', () => {
     it("should render StackedAreaChart with real data and common chart elements", () => {
       render(
         <StackedAreaChart
-          title="CPI費目別積み上げ"
+          title="物価指数費目別積み上げ"
           data={mockCpiData}
           keys={stackedKeys}
           colors={stackedColors}
@@ -126,7 +126,7 @@ describe('Integrated UI Chart Tests', () => {
           onReset={() => {}}
         />
       );
-      expect(screen.getByText("CPI費目別積み上げ")).toBeDefined();
+      expect(screen.getByText("物価指数費目別積み上げ")).toBeDefined();
     });
 
     it("should render StackedAreaChart with computed data and verify legend label", () => {
@@ -156,7 +156,7 @@ describe('Integrated UI Chart Tests', () => {
 
       render(
         <StackedAreaChart
-          title="CPI費目別積み上げ"
+          title="物価指数費目別積み上げ"
           data={chartData as any}
           keys={['その他の消費支出（名目）']}
           colors={['#000']}
@@ -390,9 +390,9 @@ describe('NewGraph', () => {
         CustomTooltip={() => <div>Tooltip</div>}
       />
     );
-    expect(screen.getByText('給与・消費支出・CPIの12か月移動平均比較')).toBeDefined();
+    expect(screen.getByText('給与・消費支出・物価指数の12か月移動平均比較')).toBeDefined();
   });
-
+  
   it('renders legend items with display names', () => {
     render(
       <NewGraph
@@ -406,7 +406,7 @@ describe('NewGraph', () => {
     );
     expect(screen.getByText('給与(総合)')).toBeDefined();
     expect(screen.getByText('消費支出(総合)')).toBeDefined();
-    expect(screen.getByText('CPI総合(12MA)')).toBeDefined();
+    expect(screen.getByText('物価指数総合(12MA)')).toBeDefined();
   });
 
   it('calls onToggle when a legend item is clicked', () => {
@@ -440,9 +440,9 @@ describe('NewGraph', () => {
     expect(screen.getByText('消費支出(総合)')).toBeDefined();
     // The visible ones should be there too
     expect(screen.getByText('給与(総合)')).toBeDefined();
-    expect(screen.getByText('CPI総合(12MA)')).toBeDefined();
+    expect(screen.getByText('物価指数総合(12MA)')).toBeDefined();
   });
-
+  
   it('handles empty data gracefully', () => {
     render(
       <NewGraph
@@ -454,6 +454,6 @@ describe('NewGraph', () => {
         CustomTooltip={() => <div>Tooltip</div>}
       />
     );
-    expect(screen.getByText('給与・消費支出・CPIの12か月移動平均比較')).toBeDefined();
+    expect(screen.getByText('給与・消費支出・物価指数の12か月移動平均比較')).toBeDefined();
   });
 });

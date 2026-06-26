@@ -346,7 +346,7 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
 
       {/* CPI 費目別積み上げ */}
       <StackedAreaChart
-        title="CPI 費目別寄与度"
+        title="物価指数 費目別寄与度"
         data={filteredData}
         keys={stackedKeys}
         colors={stackedColors}

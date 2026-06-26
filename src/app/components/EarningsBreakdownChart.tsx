@@ -54,7 +54,7 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
     },
     {
       color: "#eab308",
-      displayName: "CPI総合(参考)",
+      displayName: "物価指数総合(参考)",
       key: "CPI総合(参考)",
       type: "line",
     },

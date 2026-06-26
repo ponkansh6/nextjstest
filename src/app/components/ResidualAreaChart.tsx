@@ -33,7 +33,7 @@ export const ResidualAreaChart: React.FC<ResidualAreaChartProps> = ({
   CustomTooltip,
 }) => (
   <div className={styles.chartSection}>
-    <h2 className={styles.chartTitle}>給与とCPIの差（給与 - CPI、2020年平均=0）</h2>
+    <h2 className={styles.chartTitle}>給与と物価指数の差（給与 - 物価指数、2020年平均=0）</h2>
     <div className={styles.chartWrapper}>
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>
