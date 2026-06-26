@@ -4,7 +4,6 @@ import type { CpiData } from "@/types";
 import { buildEarningsFilePaths, parseIndexSection } from "../dataIo";
 import {
   calculateSmoothedTotal,
-  applyMovingAverage,
   calculateAdjustedMetric,
   calculateRawResidual,
   applyResidualMovingAverage,
@@ -47,6 +46,28 @@ function computeTrailingMA12(entries: [string, number][]): Map<string, number> {
 function averageForYear(map: Map<string, number>, yearPrefix: string): number {
   const values = [...map.entries()].filter(([ym]) => ym.startsWith(yearPrefix)).map(([_, v]) => v);
   return values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+}
+
+/** 指定フィールドの移動平均を計算し、新しいフィールドに書き込む */
+function computeMovingAverageToField(
+  data: CpiData[],
+  sourceKey: string,
+  targetKey: string,
+  windowSize: number,
+): void {
+  const originalValues = data.map((d) => d[sourceKey] as number | undefined);
+  data.forEach((item, index) => {
+    let sum = 0;
+    let count = 0;
+    for (let i = Math.max(0, index - (windowSize - 1)); i <= index; i++) {
+      const val = originalValues[i];
+      if (typeof val === "number" && val > 0) {
+        sum += val;
+        count++;
+      }
+    }
+    (item as Record<string, unknown>)[targetKey] = count > 0 ? sum / count : 0;
+  });
 }
 
 export async function loadTotalEarningDataInternal(): Promise<CpiData[]> {
@@ -187,8 +208,13 @@ export async function loadTotalEarningDataInternal(): Promise<CpiData[]> {
 
   result.sort((a, b) => compareByYearMonth(a.年月, b.年月));
 
+  // 各フィールドの12か月移動平均を別フィールドに計算（生値は保持）
   for (const field of ["特別給与", "所定内給与", "所定外給与"] as const) {
-    applyMovingAverage(result, field, 12);
+    computeMovingAverageToField(result, field, `${field}(12MA)`, 12);
+  }
+  // 特別給与の生値を12か月移動平均で置き換え（所定内・所定外は生値のまま）
+  for (const item of result) {
+    item["特別給与"] = (item["特別給与(12MA)"] as number) ?? 0;
   }
   const totals2020 = result
     .filter((r) => r.年月.startsWith("2020年"))
@@ -198,11 +224,23 @@ export async function loadTotalEarningDataInternal(): Promise<CpiData[]> {
   const totalIndexFactor = avg2020 > 0 ? 100 / avg2020 : 1;
 
   result.forEach((item, index) => {
+    // (12MA)フィールドのスケーリング
+    item["所定内給与(12MA)"] = Number(item["所定内給与(12MA)"] || 0) * totalIndexFactor;
+    item["所定外給与(12MA)"] = Number(item["所定外給与(12MA)"] || 0) * totalIndexFactor;
+    item["特別給与(12MA)"] = Number(item["特別給与(12MA)"] || 0) * totalIndexFactor;
+    // 生値フィールドのスケーリング（所定内・所定外は生値、特別給与はMA値）
     item["所定内給与"] = Number(item["所定内給与"] || 0) * totalIndexFactor;
     item["所定外給与"] = Number(item["所定外給与"] || 0) * totalIndexFactor;
     item["特別給与"] = Number(item["特別給与"] || 0) * totalIndexFactor;
+    // 総合 = 生値所定内 + 生値所定外 + MA特別給与
     const smoothedTotal = calculateSmoothedTotal(item);
     item["総合"] = smoothedTotal;
+    // 総合(12MA) = 全3系列の(12MA)合計（NewGraph用）
+    const maTotal =
+      ((item["所定内給与(12MA)"] as number) ?? 0) +
+      ((item["所定外給与(12MA)"] as number) ?? 0) +
+      ((item["特別給与(12MA)"] as number) ?? 0);
+    item["総合(12MA)"] = maTotal;
     let sumHours = 0,
       sumEmp = 0,
       sumPop = 0,

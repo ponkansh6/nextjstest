@@ -61,24 +61,24 @@ describe("Earnings Data Integrity", () => {
   });
 
   describe("Validation", () => {
-    it("should verify monthly stacked totals of key earnings series are within 50-150", async () => {
+    it("should verify 総合 = 所定内給与 + 所定外給与 + 特別給与 (main fields)", async () => {
       expect(earningData.length).toBeGreaterThan(0);
 
-      const targetKeys = ["所定内給与", "所定外給与", "特別給与"];
-      
       earningData.forEach(d => {
         if (!d.年月 || typeof d.年月 !== 'string') return;
         const year = parseInt(d.年月.substring(0, 4), 10);
         if (year < 2005) return;
 
-        let sum = 0;
-        targetKeys.forEach(key => {
-          sum += Number(d[key as keyof CpiData] || 0);
-        });
+        const scheduled = Number(d["所定内給与"] || 0);
+        const unscheduled = Number(d["所定外給与"] || 0);
+        const special = Number(d["特別給与"] || 0);
+        const sum = scheduled + unscheduled + special;
+        const total = Number(d["総合"] || 0);
 
         if (sum > 0) {
-          expect(sum, `Sum of keys at ${d.年月} should be 50-150`).toBeGreaterThanOrEqual(50);
-          expect(sum, `Sum of keys at ${d.年月} should be 50-150`).toBeLessThanOrEqual(150);
+          expect(total).toBeCloseTo(sum, 1);
+          expect(total, `総合 at ${d.年月} should be 50-150`).toBeGreaterThanOrEqual(50);
+          expect(total, `総合 at ${d.年月} should be 50-150`).toBeLessThanOrEqual(150);
         }
       });
     });
@@ -165,7 +165,7 @@ describe("Earnings Data Integrity", () => {
 
     it("should confirm NewGraph series fields exist in merged data", async () => {
       // Verify all three fields used by NewGraph are present
-      const newGraphKeys = ["総合", "消費支出(参考)", "CPI総合(12MA)"];
+      const newGraphKeys = ["総合(12MA)", "消費支出(参考)", "CPI総合(12MA)"];
       newGraphKeys.forEach(key => {
         const hasData = earningData.some(d => { const v = d[key as keyof CpiData]; return typeof v === 'number' && v > 0; });
         expect(hasData, `NewGraph series '${key}' should have positive values in earnings data`).toBe(true);

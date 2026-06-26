@@ -422,7 +422,7 @@ describe('NewGraph', () => {
     );
     const button = screen.getByText('給与(総合)');
     fireEvent.click(button);
-    expect(mockOnToggle).toHaveBeenCalledWith('総合');
+    expect(mockOnToggle).toHaveBeenCalledWith('総合(12MA)');
   });
 
   it('applies hidden style when key is in hiddenKeys', () => {
