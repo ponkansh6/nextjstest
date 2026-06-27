@@ -12,6 +12,13 @@ import { StackedAreaChart } from "./StackedAreaChart";
 import { EarningsBreakdownChart } from "./EarningsBreakdownChart";
 import { ResidualAreaChart } from "./ResidualAreaChart";
 import { MajorIndicesChart } from "./MajorIndicesChart";
+import ChartInfoButton, {
+  ChartInfoSectionHeading,
+  ChartInfoList,
+  ChartInfoListItem,
+  ChartInfoSource,
+  ChartInfoUrl,
+} from "./ChartInfoButton";
 import { NewGraph } from "./NewGraph";
 import { calculateCategorySum, calculateCAGRValue } from "../../lib/clientCalculations";
 import { createDualResetHandler } from "../../lib/resetLogic";
@@ -324,7 +331,31 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
 
       {/* CPI 主要指数 */}
       <div className={styles.chartSection}>
-        <h2 className={styles.chartTitle}>消費者物価指数（主要指数）</h2>
+        <h2 className={styles.chartTitle}>
+          消費者物価指数（主要指数）
+          <ChartInfoButton ariaLabel="消費者物価指数のデータソースを表示">
+            <ChartInfoSectionHeading>データソース</ChartInfoSectionHeading>
+            <ChartInfoSource>
+              e-Stat「消費者物価指数 長期時系列データ（2020年基準）」
+            </ChartInfoSource>
+            <ChartInfoUrl href="https://www.e-stat.go.jp/">
+              データ詳細へ
+            </ChartInfoUrl>
+            <ChartInfoSectionHeading>表示している指数</ChartInfoSectionHeading>
+            <ChartInfoList>
+              <ChartInfoListItem>総合：全品目を対象とした総合指数（ヘッドラインCPI）</ChartInfoListItem>
+              <ChartInfoListItem>生鮮食品を除く総合：生鮮食品を除いたコア指数</ChartInfoListItem>
+              <ChartInfoListItem>生鮮食品及びエネルギーを除く総合：生鮮食品とエネルギーを除いたコアコア指数</ChartInfoListItem>
+              <ChartInfoListItem>食料（酒類を除く）及びエネルギーを除く総合</ChartInfoListItem>
+            </ChartInfoList>
+            <ChartInfoSectionHeading>データ加工</ChartInfoSectionHeading>
+            <ChartInfoList>
+              <ChartInfoListItem>e-Stat 提供のCSVに格納された値をそのまま使用（加重平均等の追加加工なし）</ChartInfoListItem>
+              <ChartInfoListItem>表示期間：2004年〜最新月</ChartInfoListItem>
+              <ChartInfoListItem>基準年：2020年（2020年平均 = 100）</ChartInfoListItem>
+            </ChartInfoList>
+          </ChartInfoButton>
+        </h2>
         <MajorIndicesChart
           data={filteredData}
           keys={targetKeys}

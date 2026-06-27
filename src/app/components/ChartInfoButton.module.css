@@ -1,0 +1,197 @@
+.wrapper {
+  display: inline-flex;
+  position: relative;
+  vertical-align: middle;
+  margin-left: 0.5rem;
+  line-height: 1;
+}
+
+/* ── Trigger button ── */
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  color: var(--chart-text);
+  transition: color 0.2s ease, background-color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.trigger:hover,
+.trigger:focus-visible {
+  color: var(--blue-500);
+  background-color: var(--blue-50);
+  outline: none;
+}
+
+.trigger:focus-visible {
+  box-shadow: 0 0 0 2px var(--blue-500);
+}
+
+/* ── Popup panel (desktop) ── */
+.popup {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 320px;
+  max-width: calc(100vw - 2rem);
+  background-color: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow:
+    0 4px 6px -1px rgb(0 0 0 / 0.1),
+    0 10px 24px -4px rgb(0 0 0 / 0.12);
+  z-index: 100;
+  color: var(--card-text);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  text-align: left;
+
+  /* Animation */
+  animation: popupIn 150ms ease-out forwards;
+  transform-origin: top right;
+}
+
+@keyframes popupIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* ── Close button ── */
+.closeButton {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  color: var(--chart-text);
+  font-size: 1rem;
+  line-height: 1;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.closeButton:hover {
+  color: var(--card-text);
+  background-color: var(--card-border);
+}
+
+.closeButton:focus-visible {
+  outline: 2px solid var(--blue-500);
+  outline-offset: 1px;
+}
+
+/* ── Content slots ── */
+.heading {
+  font-weight: 600;
+  margin-top: 12px;
+  margin-bottom: 6px;
+  font-size: 0.9rem;
+}
+
+.heading:first-child {
+  margin-top: 0;
+}
+
+.list {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.listItem {
+  margin-bottom: 4px;
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.source {
+  font-size: 0.75rem;
+  opacity: 0.7;
+  margin-bottom: 4px;
+}
+
+.url {
+  display: inline-block;
+  font-size: 0.75rem;
+  color: var(--blue-500);
+  text-decoration: underline;
+  word-break: break-all;
+  margin-bottom: 8px;
+}
+
+.url:hover {
+  opacity: 0.8;
+}
+
+/* ── Mobile overlay (below 640px) ── */
+@media (max-width: 640px) {
+  .wrapper {
+    position: static;
+  }
+
+  .popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    right: auto;
+    width: calc(100% - 2rem);
+    max-width: 360px;
+    max-height: calc(100vh - 4rem);
+    overflow-y: auto;
+    animation: popupInMobile 150ms ease-out forwards;
+    transform-origin: center center;
+  }
+}
+
+@keyframes popupInMobile {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* ── Mobile backdrop ── */
+.backdrop {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.3);
+    z-index: 99;
+    animation: backdropFadeIn 150ms ease-out forwards;
+  }
+}
+
+@keyframes backdropFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
