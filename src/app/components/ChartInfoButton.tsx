@@ -70,10 +70,9 @@ export default function ChartInfoButton({
     const popup = popupRef.current;
     if (!popup) return;
 
-    const focusable =
-      popup.querySelectorAll<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      );
+    const focusable = popup.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+    );
 
     const first = focusable[0];
     const last = focusable[focusable.length - 1];
@@ -115,10 +114,7 @@ export default function ChartInfoButton({
   };
 
   return (
-    <span
-      ref={wrapperRef}
-      className={`${styles.wrapper}${className ? ` ${className}` : ""}`}
-    >
+    <span ref={wrapperRef} className={`${styles.wrapper}${className ? ` ${className}` : ""}`}>
       {/* ── Trigger button ── */}
       <button
         ref={triggerRef}
@@ -153,13 +149,7 @@ export default function ChartInfoButton({
       </button>
 
       {/* ── Mobile backdrop ── */}
-      {open && (
-        <div
-          className={styles.backdrop}
-          aria-hidden="true"
-          onClick={handleClose}
-        />
-      )}
+      {open && <div className={styles.backdrop} aria-hidden="true" onClick={handleClose} />}
 
       {/* ── Popup panel ── */}
       {open && (
@@ -244,12 +234,7 @@ interface UrlProps {
 
 export function ChartInfoUrl({ href, children }: UrlProps) {
   return (
-    <a
-      className={styles.url}
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-    >
+    <a className={styles.url} href={href} target="_blank" rel="noopener noreferrer">
       {children}
     </a>
   );

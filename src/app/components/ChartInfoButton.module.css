@@ -19,7 +19,9 @@
   background: transparent;
   cursor: pointer;
   color: var(--chart-text);
-  transition: color 0.2s ease, background-color 0.2s ease;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease;
   flex-shrink: 0;
 }
 
@@ -88,7 +90,9 @@
   color: var(--chart-text);
   font-size: 1rem;
   line-height: 1;
-  transition: color 0.15s ease, background-color 0.15s ease;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
 }
 
 .closeButton:hover {
@@ -192,6 +196,10 @@
 }
 
 @keyframes backdropFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }

@@ -11,7 +11,7 @@ export interface ChartInfoContent {
 
 export const CHART_INFO: Record<string, ChartInfoContent> = {
   "cpi-major": {
-    source: 'e-Stat「消費者物価指数 長期時系列データ（2020年基準）」',
+    source: "e-Stat「消費者物価指数 長期時系列データ（2020年基準）」",
     url: "https://www.e-stat.go.jp/",
     sections: [
       {
