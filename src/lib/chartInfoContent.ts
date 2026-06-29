@@ -31,13 +31,7 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
       {
         heading: "データ加工",
         items: [
-          {
-            text: "e-Stat 提供のCSVデータに対し、以下の加工を実施：",
-            subItems: [
-              "「食料」から「外食」を差し引いて「外食以外食料」を算出",
-              "「交通」と「自動車等関係費」を合算して「交通・自動車等関係費」を算出",
-            ],
-          },
+          { text: "e-Stat 提供のCSVデータを読み込んで表示" },
           { text: "表示期間：2005年〜最新月" },
           { text: "基準年：2020年（2020年平均 = 100）" },
         ],
@@ -66,12 +60,7 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
           },
           {
             text: "中分類（4品目）",
-            subItems: [
-              "通信",
-              "交通・自動車等関係費",
-              "外食",
-              "外食以外食料",
-            ],
+            subItems: ["通信", "交通・自動車等関係費", "外食", "外食以外食料"],
           },
         ],
       },
