@@ -33,13 +33,8 @@ export default function ChartInfoContentRenderer({
             {section.items.map((item, j) => {
               const hasSubItems = item.subItems && item.subItems.length > 0;
               return (
-                <li
-                  key={j}
-                  className={hasSubItems ? styles.leadItem : styles.listItem}
-                >
-                  <span className={hasSubItems ? styles.leadText : undefined}>
-                    {item.text}
-                  </span>
+                <li key={j} className={hasSubItems ? styles.leadItem : styles.listItem}>
+                  <span className={hasSubItems ? styles.leadText : undefined}>{item.text}</span>
                   {hasSubItems && item.subItems && (
                     <ul className={styles.subList}>
                       {item.subItems.map((sub, k) => (
