@@ -29,9 +29,7 @@ export default function ChartInfoContentRenderer({
     <ChartInfoButton ariaLabel={ariaLabel} className={className}>
       <ChartInfoSectionHeading>データソース</ChartInfoSectionHeading>
       <ChartInfoSource>{content.source}</ChartInfoSource>
-      {content.url && (
-        <ChartInfoUrl href={content.url}>データ詳細へ</ChartInfoUrl>
-      )}
+      {content.url && <ChartInfoUrl href={content.url}>データ詳細へ</ChartInfoUrl>}
       {content.sections.map((section, i) => (
         <React.Fragment key={i}>
           <ChartInfoSectionHeading>{section.heading}</ChartInfoSectionHeading>
