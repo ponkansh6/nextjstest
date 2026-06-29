@@ -53,12 +53,11 @@ export const StackedAreaChart: React.FC<StackedAreaChartProps> = ({
   onReset,
 }) => (
   <div className={styles.chartSection}>
-    <h2 className={styles.chartTitle}>{title}
+    <h2 className={styles.chartTitle}>
+      {title}
       <ChartInfoButton ariaLabel="費目別寄与度のデータソースを表示">
         <ChartInfoSectionHeading>データソース</ChartInfoSectionHeading>
-        <ChartInfoSource>
-          e-Stat「消費者物価指数 長期時系列データ（2020年基準）」
-        </ChartInfoSource>
+        <ChartInfoSource>e-Stat「消費者物価指数 長期時系列データ（2020年基準）」</ChartInfoSource>
         <ChartInfoUrl href="https://www.e-stat.go.jp/">データ詳細へ</ChartInfoUrl>
         <ChartInfoSectionHeading>費目別寄与度の解釈</ChartInfoSectionHeading>
         <ChartInfoList>
