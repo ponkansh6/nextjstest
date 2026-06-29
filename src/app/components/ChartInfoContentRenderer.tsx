@@ -2,18 +2,14 @@ import React from "react";
 import { CHART_INFO } from "@/lib/chartInfoContent";
 import ChartInfoButton, {
   ChartInfoSectionHeading,
-  ChartInfoList,
-  ChartInfoListItem,
   ChartInfoSource,
   ChartInfoUrl,
 } from "./ChartInfoButton";
+import styles from "./ChartInfoButton.module.css";
 
 interface ChartInfoContentRendererProps {
-  /** Key into CHART_INFO record */
   chartKey: keyof typeof CHART_INFO;
-  /** Label for the trigger button's aria-label */
   ariaLabel?: string;
-  /** Optional className for the wrapper */
   className?: string;
 }
 
@@ -33,11 +29,30 @@ export default function ChartInfoContentRenderer({
       {content.sections.map((section, i) => (
         <React.Fragment key={i}>
           <ChartInfoSectionHeading>{section.heading}</ChartInfoSectionHeading>
-          <ChartInfoList>
-            {section.items.map((item, j) => (
-              <ChartInfoListItem key={j}>{item}</ChartInfoListItem>
-            ))}
-          </ChartInfoList>
+          <ul className={styles.list}>
+            {section.items.map((item, j) => {
+              const hasSubItems = item.subItems && item.subItems.length > 0;
+              return (
+                <li
+                  key={j}
+                  className={hasSubItems ? styles.leadItem : styles.listItem}
+                >
+                  <span className={hasSubItems ? styles.leadText : undefined}>
+                    {item.text}
+                  </span>
+                  {hasSubItems && item.subItems && (
+                    <ul className={styles.subList}>
+                      {item.subItems.map((sub, k) => (
+                        <li key={k} className={styles.subListItem}>
+                          {sub}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
         </React.Fragment>
       ))}
     </ChartInfoButton>

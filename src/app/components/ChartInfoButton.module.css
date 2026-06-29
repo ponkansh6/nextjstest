@@ -119,13 +119,53 @@
 
 .list {
   margin: 0;
-  padding-left: 1.25rem;
+  padding-left: 0;
+  list-style: none;
 }
 
 .listItem {
   margin-bottom: 4px;
+  padding-left: 1.25rem;
+  position: relative;
   font-size: 0.85rem;
   line-height: 1.6;
+}
+
+.listItem::before {
+  content: "・";
+  position: absolute;
+  left: 0;
+}
+
+.leadItem {
+  margin-bottom: 4px;
+  list-style: none;
+}
+
+.leadText {
+  display: block;
+  margin-bottom: 2px;
+}
+
+.subList {
+  margin: 2px 0 4px;
+  padding-left: 1.25rem;
+  list-style: none;
+}
+
+.subListItem {
+  margin-bottom: 2px;
+  padding-left: 1rem;
+  position: relative;
+  font-size: 0.8rem;
+  line-height: 1.6;
+  opacity: 0.85;
+}
+
+.subListItem::before {
+  content: "・";
+  position: absolute;
+  left: 0;
 }
 
 .source {
