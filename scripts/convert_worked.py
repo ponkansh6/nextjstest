@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Convert public/cpi_source/hon-t29.xls into public/total_worked_hours.csv
+Convert public/economics_source/hon-t29.xls into public/total_worked_hours.csv
 """
 
 import sys
@@ -11,7 +11,7 @@ def get_root():
     return Path('/home/menon/claude-test/nextjs-app')
 
 ROOT = get_root()
-SRC_XLS = ROOT / "public" / "cpi_source" / "hon-t29.xls"
+SRC_XLS = ROOT / "public" / "economics_source" / "hon-t29.xls"
 TARGET_CSV = ROOT / "public" / "total_worked_hours.csv"
 
 def main():

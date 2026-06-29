@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Convert CPI source files (latest N files in public/cpi_source) to normalized CSVs suitable for wage graphs.
+Convert CPI source files (latest N files in public/economics_source) to normalized CSVs suitable for wage graphs.
 Outputs per-file CSVs to data/converted_cpi/ by default.
 
 Usage:
-  python scripts/convert_cpi.py --source-dir public/cpi_source --n 5 --out-dir data/converted_cpi
+  python scripts/convert_cpi.py --source-dir public/economics_source --n 5 --out-dir data/converted_cpi
 
 Produces CSVs with columns: 年月 (YYYY年MM月), <numeric columns...>
 """
@@ -362,7 +362,7 @@ def process_file(path: Path, out_dir: Path):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--source-dir", default="public/cpi_source")
+    ap.add_argument("--source-dir", default="public/economics_source")
     ap.add_argument("--n", type=int, default=5)
     ap.add_argument("--out-dir", default="data/converted_cpi")
     args = ap.parse_args()

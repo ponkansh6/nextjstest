@@ -10,7 +10,7 @@ const SRC_FILE = "cti0111_1.xlsx";
 const TARGET_FILE = "cti_data.csv";
 const TRIAL_FILE = "cti_data_converted_trial.csv";
 
-const SRC_PATH = path.join(process.cwd(), "public", "cpi_source", SRC_FILE);
+const SRC_PATH = path.join(process.cwd(), "public", "economics_source", SRC_FILE);
 const TARGET_PATH = path.join(process.cwd(), "public", TARGET_FILE);
 const TRIAL_PATH = path.join(process.cwd(), "public", TRIAL_FILE);
 

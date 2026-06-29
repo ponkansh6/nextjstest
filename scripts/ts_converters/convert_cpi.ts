@@ -7,7 +7,7 @@ import { writeCSVWithBackup } from "./lib/csv-writer";
 import { ensureYM } from "./lib/date-utils";
 import { extractTable } from "./lib/table-extractor";
 
-const SRC_DIR = path.join(process.cwd(), "public", "cpi_source");
+const SRC_DIR = path.join(process.cwd(), "public", "economics_source");
 const OUT_DIR = path.join(process.cwd(), "public", "cpi_data");
 
 function main(n = 5) {

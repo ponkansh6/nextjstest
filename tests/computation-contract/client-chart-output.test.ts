@@ -117,7 +117,12 @@ describe("Client Data Structure Integrity", () => {
     
     expect(recentData.length).toBeGreaterThan(0);
     
-    recentData.forEach(row => {
+    // 最新の年に属する最後の四半期は3ヶ月未満の可能性があるため除外
+    const maxYear = Math.max(...recentData.map(d => d.年 as number));
+    const lastQuarter = Math.max(...recentData.filter(d => d.年 === maxYear).map(d => d.quarter as number));
+    const completeData = recentData.filter(d => !(d.年 === maxYear && d.quarter === lastQuarter));
+    
+    completeData.forEach(row => {
       // 民間消費以外のキーを特定
       const keysToCheck = Object.keys(row).filter(k => 
         k !== "年" && 

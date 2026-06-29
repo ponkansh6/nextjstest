@@ -24,8 +24,8 @@ Thumbs.db
 
 # Large data/backups
 public/backup/
-public/cpi_source/*.xls
-public/cpi_source/*.xlsx
+public/economics_source/*.xls
+public/economics_source/*.xlsx
 *.bak.*
 .eslintcache
 

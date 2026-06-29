@@ -22,7 +22,7 @@ const SRC_FILE = 'SRC_FILE_NAME';
 const TARGET_FILE = 'TARGET_FILE_NAME';
 const HEADER_SKIP = SKIP_ROWS;
 
-const SRC_PATH = path.join(process.cwd(), 'public', 'cpi_source', SRC_FILE);
+const SRC_PATH = path.join(process.cwd(), 'public', 'economics_source', SRC_FILE);
 const TARGET_PATH = path.join(process.cwd(), 'public', TARGET_FILE);
 
 function main() {

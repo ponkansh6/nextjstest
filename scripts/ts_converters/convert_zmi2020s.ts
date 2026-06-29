@@ -22,7 +22,7 @@ const SRC_FILE = "zmi2020s.csv";
 const TARGET_FILE = "cpi_data.csv";
 const TRIAL_FILE = "cpi_data_converted_trial.csv";
 
-const SRC_PATH = path.join(process.cwd(), "public", SRC_FILE);
+const SRC_PATH = path.join(process.cwd(), "public", "economics_source", SRC_FILE);
 const TARGET_PATH = path.join(process.cwd(), "public", TARGET_FILE);
 const TRIAL_PATH = path.join(process.cwd(), "public", TRIAL_FILE);
 

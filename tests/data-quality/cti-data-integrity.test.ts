@@ -39,10 +39,13 @@ describe("CTI Data Integrity", () => {
       expect(recentCtiRows.length).toBeGreaterThan(0);
 
       const allKeys = Object.keys(ctiData[0]);
+      // サポート系列（民間最終消費支出）は四半期GDPデータ由来で最新四半期が未更新の場合0になるため除外
       const targetKeys = allKeys.filter(key => 
         key !== "年月" && 
         key !== "月" &&
-        key !== ""
+        key !== "" &&
+        key !== SUPPORT_SERIES_KEY_NOMINAL &&
+        key !== SUPPORT_SERIES_KEY_REAL
       );
 
       expect(targetKeys.length).toBeGreaterThan(0);

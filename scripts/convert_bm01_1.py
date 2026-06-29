@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Convert public/cpi_source/bm01-1.xlsx into the same format as public/cpi_data.csv
+Convert public/economics_source/bm01-1.xlsx into the same format as public/cpi_data.csv
 - Overwrites original cpi_data.csv by default (no option needed)
 - Creates a timestamped backup of the original cpi_data.csv before overwriting
 - Use --trial to write a trial output instead of overwriting
@@ -35,7 +35,7 @@ def get_root():
 
 ROOT = get_root()
 
-SRC_XLSX = ROOT / "public" / "cpi_source" / "bm01-1.xlsx"
+SRC_XLSX = ROOT / "public" / "economics_source" / "bm01-1.xlsx"
 TARGET_CSV = ROOT / "public" / "cpi_data.csv"
 TRIAL_CSV = ROOT / "public" / "cpi_data_converted_trial.csv"
 

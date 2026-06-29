@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Convert public/cpi_source/lt01-b10.xlsx into public/population_statistics.csv
+Convert public/economics_source/lt01-b10.xlsx into public/population_statistics.csv
 """
 
 import sys
@@ -11,7 +11,7 @@ def get_root():
     return Path('.').resolve()
 
 ROOT = get_root()
-SRC_XLSX = ROOT / "public" / "cpi_source" / "lt01-b10.xlsx"
+SRC_XLSX = ROOT / "public" / "economics_source" / "lt01-b10.xlsx"
 TARGET_CSV = ROOT / "public" / "population_statistics.csv"
 
 def main():

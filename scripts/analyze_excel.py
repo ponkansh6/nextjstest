@@ -2,7 +2,7 @@ import pandas as pd
 from pathlib import Path
 
 ROOT = Path('.').resolve()
-SRC_XLSX = ROOT / 'public' / 'cpi_source' / 'lt01-b10.xlsx'
+SRC_XLSX = ROOT / 'public' / 'economics_source' / 'lt01-b10.xlsx'
 
 # Read the Excel file
 print("Reading Excel file...")

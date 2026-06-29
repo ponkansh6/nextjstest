@@ -7,7 +7,7 @@ const SRC_FILE = "hon-t13.xls";
 const TARGET_FILE = "contractual_earnings.csv";
 const HEADER_SKIP = 6;
 
-const SRC_PATH = path.join(process.cwd(), "public", "cpi_source", SRC_FILE);
+const SRC_PATH = path.join(process.cwd(), "public", "economics_source", SRC_FILE);
 const TARGET_PATH = path.join(process.cwd(), "public", TARGET_FILE);
 
 function main() {

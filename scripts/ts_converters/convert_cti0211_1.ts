@@ -8,7 +8,7 @@ const TARGET_FILE = "cti_data.csv";
 const HEADER_ROW = 8; // Row index 8 (0-indexed) has "時間軸コード", "月", "消費支出（名目）", etc.
 // Row index 9+ is data
 
-const SRC_PATH = path.join(process.cwd(), "public", "cpi_source", SRC_FILE);
+const SRC_PATH = path.join(process.cwd(), "public", "economics_source", SRC_FILE);
 const TARGET_PATH = path.join(process.cwd(), "public", TARGET_FILE);
 
 function main() {

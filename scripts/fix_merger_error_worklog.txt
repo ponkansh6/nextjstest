@@ -1,0 +1,31 @@
+Root Cause of TypeError:
+The TypeError occurred in `scripts/ts_converters/lib/merger.ts` at line 45:
+`const targetYMs = new Set(Array.from((targetTable as any).column('年月')).map(String));`
+
+The error was: `TypeError: undefined is not iterable (cannot read property Symbol(Symbol.iterator))`
+
+This happened because `(targetTable as any).column('年月')` was returning `undefined`. This occurred when the `targetTable` did not contain a column named `'年月'`. This typically happened when:
+1. The target file didn't exist
+2. The target file existed but didn't have the expected format (less than 4 lines)
+3. The target table was empty (created with `aq.from([])`)
+
+In these cases, the `column()` method returns `undefined` instead of an array, causing `Array.from()` to fail when trying to iterate over `undefined`.
+
+Changes Made to merger.ts:
+- Modified line 45 in `scripts/ts_converters/lib/merger.ts` from:
+  `const targetYMs = new Set(Array.from((targetTable as any).column('年月')).map(String));`
+  to:
+  `const targetYMs = new Set(Array.from(((targetTable as any).column('年月') || [])).map(String));`
+
+This change adds a null check using the logical OR operator (`||`). If `(targetTable as any).column('年月')` returns `undefined`, the expression will use an empty array `[]` instead, which can be safely iterated over by `Array.from()`.
+
+Result of Verification:
+- The script `scripts/ts_converters/convert_cti0111_1.ts` now runs successfully without the TypeError
+- The script completed all processing steps:
+  - Loaded the source Excel file
+  - Processed the data and created the source table
+  - Checked for existing target file and handled both cases (file exists or doesn't exist)
+  - Merged the tables using the `mergeByNengetsu` function
+  - Saved the merged data to the output CSV file
+- The fix does not break the merging logic for other columns or other scripts
+- The fix gracefully handles cases where the '年月' column is missing or empty by treating it as an empty set of years

@@ -1,0 +1,55 @@
+# Fix for cti0111_1.py IndexError
+
+## Root Cause
+The `IndexError: single positional indexer is out-of-bounds` at line 161 (`last_row_template = target_df.iloc[-1].copy()`) occurred when the `target_df` (loaded from `public/cti_data.csv`) was empty or did not contain any rows.
+
+This happened because:
+1. The script reads the target CSV file with `pd.read_csv(TARGET_CSV, header=2, dtype=str)`
+2. When the CSV file only contains header lines (no data rows), `target_df` becomes an empty DataFrame
+3. When the script tries to access `target_df.iloc[-1]` to get the last row as a template for new rows, it fails because there are no rows in the DataFrame
+
+## Changes Made
+Modified `scripts/convert_cti0111_1.py` to handle the case where `target_df` is empty:
+
+**Location:** Lines 157-180 in the `if new_yms:` block
+
+**Change:** Added a check to see if `target_df` has any rows before trying to access the last row:
+
+```python
+if len(target_df) > 0:
+    last_row_template = target_df.iloc[-1].copy()
+else:
+    # If target_df is empty, create a template with empty values
+    last_row_template = pd.Series({col: '' for col in target_cols})
+```
+
+This ensures that:
+1. When `target_df` has data, it uses the last row as a template (original behavior)
+2. When `target_df` is empty, it creates a new template with empty values for all columns
+
+## Verification
+
+### Test 1: With original data (restored from backup)
+- Ran script without `--trial` flag
+- Result: Success
+- Output: 452 rows written to `public/cti_data.csv`
+- Backup created: `public/cti_data.csv.bak.20260623090319`
+
+### Test 2: With empty CSV (simulated error condition)
+- Corrupted `public/cti_data.csv` to only contain header lines
+- Ran script with `--trial` flag
+- Result: Success (no IndexError)
+- Output: 110 rows written to `public/cti_data_converted_trial.csv`
+
+### Test 3: With restored original data
+- Restored original `public/cti_data.csv` from backup
+- Ran script without `--trial` flag
+- Result: Success
+- Output: 452 rows written to `public/cti_data.csv`
+
+## Summary
+The fix successfully resolves the IndexError while preserving the script's intended functionality:
+- The script can now handle both cases: when the target CSV has data and when it's empty
+- The conversion logic remains unchanged for normal operation
+- New rows are correctly added when needed, using appropriate templates
+- The parity verification process works correctly in all scenarios

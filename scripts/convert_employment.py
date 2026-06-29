@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Convert public/cpi_source/hon-t01.xls into public/employment_indices.csv
+Convert public/economics_source/hon-t01.xls into public/employment_indices.csv
 """
 
 import sys
@@ -12,7 +12,7 @@ def get_root():
     return Path('.').resolve()
 
 ROOT = get_root()
-SRC_XLS = ROOT / "public" / "cpi_source" / "hon-t01.xls"
+SRC_XLS = ROOT / "public" / "economics_source" / "hon-t01.xls"
 TARGET_CSV = ROOT / "public" / "employment_indices.csv"
 
 def main():
