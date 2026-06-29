@@ -12,13 +12,7 @@ import {
 import { getLegendLabel } from "../../lib/chartConstants";
 import styles from "./CpiChart.module.css";
 import type { CpiData } from "@/types";
-import ChartInfoButton, {
-  ChartInfoSectionHeading,
-  ChartInfoList,
-  ChartInfoListItem,
-  ChartInfoSource,
-  ChartInfoUrl,
-} from "./ChartInfoButton";
+import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
 
 interface StackedAreaChartProps {
   title: string;
@@ -55,31 +49,10 @@ export const StackedAreaChart: React.FC<StackedAreaChartProps> = ({
   <div className={styles.chartSection}>
     <h2 className={styles.chartTitle}>
       {title}
-      <ChartInfoButton ariaLabel="費目別寄与度のデータソースを表示">
-        <ChartInfoSectionHeading>データソース</ChartInfoSectionHeading>
-        <ChartInfoSource>e-Stat「消費者物価指数 長期時系列データ（2020年基準）」</ChartInfoSource>
-        <ChartInfoUrl href="https://www.e-stat.go.jp/">データ詳細へ</ChartInfoUrl>
-        <ChartInfoSectionHeading>費目別寄与度の解釈</ChartInfoSectionHeading>
-        <ChartInfoList>
-          <ChartInfoListItem>
-            各費目が全体の物価上昇にどれだけ寄与しているかを示します
-          </ChartInfoListItem>
-          <ChartInfoListItem>
-            積み上げ棒グラフは、各カテゴリーの寄与度を合計し、全体像を把握できます
-          </ChartInfoListItem>
-          <ChartInfoListItem>
-            凡例の項目をクリックして、特定の費目の表示/非表示を切り替えることができます
-          </ChartInfoListItem>
-        </ChartInfoList>
-        <ChartInfoSectionHeading>データ加工</ChartInfoSectionHeading>
-        <ChartInfoList>
-          <ChartInfoListItem>
-            e-Stat 提供のCSVに格納された値をそのまま使用（加重平均等の追加加工なし）
-          </ChartInfoListItem>
-          <ChartInfoListItem>表示期間：2004年〜最新月</ChartInfoListItem>
-          <ChartInfoListItem>基準年：2020年（2020年平均 = 100）</ChartInfoListItem>
-        </ChartInfoList>
-      </ChartInfoButton>
+      <ChartInfoContentRenderer
+        chartKey="stacked-area"
+        ariaLabel="費目別寄与度のデータソースを表示"
+      />
     </h2>
     <div className={styles.legendContainer}>
       <div className={styles.legendSection}>
