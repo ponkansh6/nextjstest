@@ -11,6 +11,8 @@ import {
 } from "recharts";
 import styles from "./CpiChart.module.css";
 import { getLegendLabel, SUPPORT_SERIES_KEY_NOMINAL } from "../../lib/chartConstants";
+import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
+import { CHART_INFO } from "../../lib/chartInfoContent";
 
 interface QuarterlyDataPoint {
   label: string;
@@ -21,6 +23,7 @@ interface QuarterlyDataPoint {
 
 interface SpendingBarChartProps {
   title: string;
+  infoKey?: keyof typeof CHART_INFO;
   data: QuarterlyDataPoint[];
   keys: string[];
   colors: string[];
@@ -45,6 +48,7 @@ interface SpendingBarChartProps {
 export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
   const {
     title,
+    infoKey,
     data,
     keys,
     colors,
@@ -61,7 +65,15 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
 
   return (
     <div className={styles.chartSection}>
-      <h2 className={styles.chartTitle}>{title}</h2>
+      <h2 className={styles.chartTitle}>
+        {title}
+        {infoKey && (
+          <ChartInfoContentRenderer
+            chartKey={infoKey}
+            ariaLabel={`${title}のデータソースを表示`}
+          />
+        )}
+      </h2>
 
       {!hideLegend && (
         <div className={styles.legendContainer}>
