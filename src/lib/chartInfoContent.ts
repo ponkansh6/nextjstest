@@ -89,7 +89,7 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
         heading: "データの内訳",
         items: [
           {
-            text: "2005年〜2016年：四半期別GDP速報（QE）の「民間最終消費支出」を使用",
+            text: "2005年〜2016年：四半期別GDP統計の「民間最終消費支出」を使用",
           },
           {
             text: "2017年〜最新：分布調整済み原数値CTIミクロを使用",
