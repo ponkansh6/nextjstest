@@ -118,7 +118,7 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
       },
     ],
   },
-  "earnings": {
+  earnings: {
     source: "厚生労働省「毎月勤労統計調査」",
     url: "https://www.mhlw.go.jp/toukei/list/30-1.html",
     sections: [
