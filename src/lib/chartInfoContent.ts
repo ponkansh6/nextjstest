@@ -94,6 +94,9 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
           {
             text: "2017年〜最新：分布調整済み原数値CTIミクロを使用",
           },
+          {
+            text: "内訳はCPI10大費目と諸雑費・CPI外支出に分類して表示",
+          },
         ],
       },
       {
@@ -107,7 +110,6 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
             text: "2020年基準で指数化（2020年平均 = 100）",
           },
           { text: "表示期間：2005年第1四半期〜最新四半期" },
-          { text: "基準年：2020年（2020年平均 = 100）" },
           {
             text: "「諸雑費・CPI外支出」は、総消費支出から各費目（住居、食料等）の合計を差し引いた差分として別途算出",
           },
