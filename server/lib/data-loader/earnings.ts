@@ -75,10 +75,7 @@ function computeMovingAverageToField(
  * 2016年以前はサポート系列（民間最終消費支出）をスケーリングして使用。
  * 2017年以降は消費支出（名目）の実値をそのまま使用。
  */
-function buildConsumptionMap(
-  ctiData: CpiData[],
-  supportScale: number,
-): Map<string, number> {
+function buildConsumptionMap(ctiData: CpiData[], supportScale: number): Map<string, number> {
   const consumptionMap = new Map<string, number>();
   ctiData.forEach((d) => {
     const ym = d.年月 as string | undefined;

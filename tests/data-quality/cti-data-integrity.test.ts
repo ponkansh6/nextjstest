@@ -111,12 +111,21 @@ describe("CTI Data Integrity", () => {
         const nominalTotal = Number(row["消費支出（名目）"] ?? 0);
 
         // 残余は非負
-        expect(nominalOther, `その他の消費支出（名目） at ${row.年月} should be >= 0`).toBeGreaterThanOrEqual(0);
-        expect(realOther, `その他の消費支出（実質） at ${row.年月} should be >= 0`).toBeGreaterThanOrEqual(0);
+        expect(
+          nominalOther,
+          `その他の消費支出（名目） at ${row.年月} should be >= 0`,
+        ).toBeGreaterThanOrEqual(0);
+        expect(
+          realOther,
+          `その他の消費支出（実質） at ${row.年月} should be >= 0`,
+        ).toBeGreaterThanOrEqual(0);
 
         // 残余は総額より小さい（総額を超える残余は計算誤差）
         if (nominalTotal > 0) {
-          expect(nominalOther, `その他の消費支出（名目） at ${row.年月} should be < 消費支出（名目）`).toBeLessThan(nominalTotal);
+          expect(
+            nominalOther,
+            `その他の消費支出（名目） at ${row.年月} should be < 消費支出（名目）`,
+          ).toBeLessThan(nominalTotal);
         }
       });
     });
