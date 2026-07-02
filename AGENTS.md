@@ -5,6 +5,9 @@
 - 不確実またはスタックしている場合は、部分的な、または反復的な出力を続けるのではなく、タスクを再起動
 - 「思考中...」、「処理中...」などのプレースホルダーテキスト、または繰り返し記述されるフィラーの生成の場合はタスクを再起動
 - **`git --no-verify` / `git commit -n` の使用禁止**: この環境では pre-commit/pre-push hooks を常に強制実行するため、`--no-verify` フラグおよび commit における `-n` 短縮形の使用は禁止する。技術的にも `~/.local/bin/git` ラッパーによりブロックされている。
+- **`HUSKY=0` の使用禁止**: husky hook runner を無効化する環境変数。`~/.local/bin/git` によりブロックされている。
+- **`git -c core.hooksPath=...` の使用禁止**: hooks のパスを差し替えて bypass する手法。`~/.local/bin/git` によりブロックされている。
+- **`GIT_CONFIG_PARAMETERS` / `GIT_CONFIG_KEY_N` 経由の hooksPath 注入禁止**: git 内部設定の環境変数経由の bypass。`~/.local/bin/git` によりブロックされている。
 
 ## リソース制約
 
