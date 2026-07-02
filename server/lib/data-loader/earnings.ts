@@ -75,10 +75,7 @@ function computeMovingAverageToField(
  * 2016年以前はサポート系列（民間最終消費支出）をスケーリングして使用。
  * 2017年以降は消費支出（名目）の実値をそのまま使用。
  */
-function buildConsumptionMap(
-  ctiData: CpiData[],
-  supportScale: number,
-): Map<string, number> {
+function buildConsumptionMap(ctiData: CpiData[], supportScale: number): Map<string, number> {
   const consumptionMap = new Map<string, number>();
   ctiData.forEach((d) => {
     const ym = d.年月 as string | undefined;
@@ -261,16 +258,16 @@ export async function loadTotalEarningDataInternal(): Promise<CpiData[]> {
       sumPop += populationDataMap.get(ym)?.total || 0;
       count++;
     }
-    const denom = count > 0 ? count : 1;
-    const smoothedHours = sumHours / denom;
-    const smoothedEmp = sumEmp / denom;
-    const smoothedPop = sumPop / denom;
-    item["時間当たり給与"] = calculateAdjustedMetric(smoothedTotal, smoothedHours, hourlyFactor);
-    item["15歳以上国民当たり給与"] = calculateAdjustedMetric(
-      smoothedTotal * smoothedEmp,
-      smoothedPop,
-      popFactor,
-    );
+    const ym = item.年月;
+    const contractualVal = contractualMap.get(ym) ?? 0;
+    // 特別給与のみ12MA、他は実値を使用
+    const rawTotal = contractualVal + (item["特別給与(12MA)"] as number);
+    const rawHours = hoursMap.get(ym) || 0;
+    const rawEmp = employmentMap.get(ym) || 0;
+    const rawPop = findPopulationTotal(ym) || 0;
+
+    item["時間当たり給与"] = calculateAdjustedMetric(rawTotal, rawHours, hourlyFactor);
+    item["15歳以上国民当たり給与"] = calculateAdjustedMetric(rawTotal * rawEmp, rawPop, popFactor);
     const rawCpi = cpiMap.get(item.年月) || 0;
     item["残差"] = calculateRawResidual(smoothedTotal, rawCpi);
     item["CPI総合(参考)"] = rawCpi;

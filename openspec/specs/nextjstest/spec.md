@@ -10,22 +10,22 @@ A dashboard application to visualize and track Japanese economic indicators — 
 
 The shared data type with an index signature `[key: string]: string | number` for extensibility. Below are the explicitly defined fields; additional fields are added at runtime by each data loader.
 
-| Field                                | Type                | Description                                                  |
-| ------------------------------------ | ------------------- | ------------------------------------------------------------ |
-| 年月                                 | string              | Year-month (e.g. "2020年1月")                                |
-| 総合                                 | number              | CPI / earnings total index (2020=100)                        |
-| 生鮮食品を除く総合                   | number              | CPI excluding Fresh Food                                     |
-| 持家の帰属家賃を除く総合             | number              | CPI excluding Imputed Rent                                   |
-| 消費支出（参考）                     | number              | Consumption expenditure (12MA, indexed, 2020=100)            |
-| CPI総合(参考)                        | number              | CPI All Items (reference)                                    |
+| Field                    | Type   | Description                                       |
+| ------------------------ | ------ | ------------------------------------------------- |
+| 年月                     | string | Year-month (e.g. "2020年1月")                     |
+| 総合                     | number | CPI / earnings total index (2020=100)             |
+| 生鮮食品を除く総合       | number | CPI excluding Fresh Food                          |
+| 持家の帰属家賃を除く総合 | number | CPI excluding Imputed Rent                        |
+| 消費支出（参考）         | number | Consumption expenditure (12MA, indexed, 2020=100) |
+| CPI総合(参考)            | number | CPI All Items (reference)                         |
 
 **Major runtime-added fields per data loader:**
 
-| Loader                  | Example fields                                                                          |
-| ----------------------- | --------------------------------------------------------------------------------------- |
-| CPI (`loadCpiData`)     | 生鮮食品及びエネルギーを除く総合, 食料（酒類を除く）及びエネルギーを除く総合, 外食以外食料, 交通・自動車等関係費, 寄与度カテゴリ (住居, 家具・家事用品, 教育, …) |
-| CTI (`loadCtiData`)     | 消費支出（名目/実質）, 食料/住居/光熱・水道/…（名目/実質）, その他の消費支出（名目/実質）, 民間最終消費支出（名目/実質） |
-| 賃金 (`loadTotalEarningData`) | 所定内給与, 所定外給与, 特別給与, 時間当たり給与, 15歳以上国民当たり給与, 残差, *(12MA) 系列 |
+| Loader                        | Example fields                                                                                                                                                   |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CPI (`loadCpiData`)           | 生鮮食品及びエネルギーを除く総合, 食料（酒類を除く）及びエネルギーを除く総合, 外食以外食料, 交通・自動車等関係費, 寄与度カテゴリ (住居, 家具・家事用品, 教育, …) |
+| CTI (`loadCtiData`)           | 消費支出（名目/実質）, 食料/住居/光熱・水道/…（名目/実質）, その他の消費支出（名目/実質）, 民間最終消費支出（名目/実質）                                         |
+| 賃金 (`loadTotalEarningData`) | 所定内給与, 所定外給与, 特別給与, 時間当たり給与, 15歳以上国民当たり給与, 残差, \*(12MA) 系列 (特別給与およびNewGraph用)                                         |
 
 ### PopulationData (src/types/index.ts)
 
