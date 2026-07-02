@@ -4,6 +4,7 @@
 - 出力が過度に長くなる、またはスタックしているように見える場合は、元のユーザーリクエストを再処理してタスクを再起動
 - 不確実またはスタックしている場合は、部分的な、または反復的な出力を続けるのではなく、タスクを再起動
 - 「思考中...」、「処理中...」などのプレースホルダーテキスト、または繰り返し記述されるフィラーの生成の場合はタスクを再起動
+- **`git --no-verify` / `git commit -n` の使用禁止**: この環境では pre-commit/pre-push hooks を常に強制実行するため、`--no-verify` フラグおよび commit における `-n` 短縮形の使用は禁止する。技術的にも `~/.local/bin/git` ラッパーによりブロックされている。
 
 ## リソース制約
 
@@ -36,6 +37,13 @@
 
 ## サブエージェント設定
 
-- サブエージェントの設定ファイル: `/home/menon/.config/opencode/oh-my-opencode-slim.json`
+- サブエージェントの設定ファイル: `/home/shunki/.config/opencode/oh-my-opencode-slim.json`
+
+## プロジェクト知識
+
+- 移行進捗: opencode-mem に登録済み (tag: `migration_progress`)
+- 仕様書: `openspec/specs/nextjstest/spec.md` (openspec driven)
+- コンバーター仕様: `scripts/*.spec`
+- スケジューラーワークフロー: システムプロンプトの `<internal_reminder>` (計画、依存関係の管理、バックグラウンドスペシャリストのディスパッチ、タスクIDの追跡、フック駆動の完了待ち、結果の照合、検証)
 
 <internal_reminder>!IMPORTANT! Scheduler workflow: plan lanes/dependencies → dispatch background specialists → track task IDs → wait for hook-driven completion → reconcile terminal results → verify. Do not poll running jobs, consume running-job output, or advance dependent work. !END!</internal_reminder>
