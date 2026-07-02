@@ -82,8 +82,8 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
     ],
   },
   "consumption-expenditure": {
-    source: "総務省統計局「家計調査（二人以上の世帯）」",
-    url: "https://www.stat.go.jp/data/kakei/",
+    source: "e-Stat「消費動向調査」",
+    url: "https://www.e-stat.go.jp/",
     sections: [
       {
         heading: "データの内訳",
@@ -95,17 +95,22 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
             text: "2017年〜最新：分布調整済み原数値CTIミクロを使用",
           },
           {
-            text: "内訳はCPI10大費目と諸雑費・CPI外支出に分類して表示",
+            text: "内訳は9大費目と諸雑費・CPI外支出に分類して表示",
+          },
+        ],
+      },
+      {
+        heading: "元データ",
+        items: [
+          {
+            text: "月次原データ（名目・実質）から四半期平均を算出",
+            subItems: ["月次原系列データを四半期ごと（1-3月、4-6月、7-9月、10-12月）に平均化"],
           },
         ],
       },
       {
         heading: "データ加工",
         items: [
-          {
-            text: "月次原データ（名目・実質）から四半期平均を算出",
-            subItems: ["月次原系列データを四半期ごと（1-3月、4-6月、7-9月、10-12月）に平均化"],
-          },
           {
             text: "2020年基準で指数化（2020年平均 = 100）",
           },

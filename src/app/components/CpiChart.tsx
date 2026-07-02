@@ -449,7 +449,7 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
       </div>
 
       <SpendingBarChart
-        title="消費支出（名目・10分類）"
+        title="消費支出（名目）"
         infoKey="consumption-expenditure"
         data={quarterlyNominalData}
         keys={nominalKeysWithSupport}
@@ -476,7 +476,7 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
       />
 
       <SpendingBarChart
-        title="消費支出（実質・10分類）"
+        title="消費支出（実質）"
         infoKey="consumption-expenditure"
         data={quarterlyRealData}
         keys={realKeysWithSupport}
