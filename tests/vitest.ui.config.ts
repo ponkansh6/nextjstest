@@ -11,8 +11,12 @@ export default defineConfig({
     isolate: false,
     include: ["tests/components/**/*.test.tsx"],
     environment: "happy-dom",
-    setupFiles: ["./tests/utils/setup.ts"],
-    pool: "vmThreads",
+    pool: "threads",
+    server: {
+      deps: {
+        inline: ["@reduxjs/toolkit"],
+      },
+    },
     testTimeout: 300000,
 
     // タイムアウトを300秒に延長

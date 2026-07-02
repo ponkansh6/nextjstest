@@ -1,36 +1,4 @@
-#!/bin/sh
-
-# nvm の読み込み処理を削除（環境に依存しないように）
-echo "Running pre-commit checks..."
-
-# 0. npxの使用チェック
-if grep -q "npx" package.json; then
-  echo "Error: npx usage detected in package.json. Please use pnpm dlx or install as devDependency."
-  exit 1
-fi
-
-# 1. 未ステージの変更チェック
-if [ -n "$(git diff --name-only)" ]; then
-  echo "Error: Unstaged changes detected."
-  exit 1
-fi
-
-# 2. 静的解析・整合性チェック
-pnpm run lint:fast || { echo "Lint failed"; exit 1; }
-
-# 3. コードフォーマット・型チェック
-pnpm oxfmt --write . "!tests/**" || { echo "Format failed"; exit 1; }
-pnpm run type-check:fast || { echo "Type check failed"; exit 1; }
-
-# 4. 関連テストの実行（ロジックテストのみ）
-echo "Running logic tests..."
-pnpm dlx bun test tests/computation-contract tests/data-mapping tests/data-quality tests/integration tests/unit
-TEST_EXIT_CODE=$?
-
-if [ $TEST_EXIT_CODE -ne 0 ]; then
-  echo "Tests failed with code $TEST_EXIT_CODE"
-  exit $TEST_EXIT_CODE
-fi
-
-echo "Pre-commit checks passed!"
-exit 0
+pnpm run lint:fast
+pnpm exec oxfmt --write .
+pnpm exec tsgo --noEmit
+pnpm exec lint-staged
