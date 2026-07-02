@@ -70,6 +70,35 @@ function computeMovingAverageToField(
   });
 }
 
+/**
+ * CTIデータから消費支出Mapを構築する。
+ * 2016年以前はサポート系列（民間最終消費支出）をスケーリングして使用。
+ * 2017年以降は消費支出（名目）の実値をそのまま使用。
+ */
+function buildConsumptionMap(
+  ctiData: CpiData[],
+  supportScale: number,
+): Map<string, number> {
+  const consumptionMap = new Map<string, number>();
+  ctiData.forEach((d) => {
+    const ym = d.年月 as string | undefined;
+    if (!ym) return;
+    const match = ym.match(/^(\d{4})年(\d+)月$/);
+    if (!match) return;
+    const year = parseInt(match[1], 10);
+    let val = 0;
+    if (year < 2017) {
+      // 2016年12月までは名目民間最終消費支出の値をスケール
+      val = ((d["民間最終消費支出（名目）"] as number) || 0) * supportScale;
+    } else {
+      // 2017年1月以降は全ての名目消費支出内訳費目を足し合わせた値（消費支出（名目））
+      val = (d["消費支出（名目）"] as number) || 0;
+    }
+    consumptionMap.set(ym, val);
+  });
+  return consumptionMap;
+}
+
 export async function loadTotalEarningDataInternal(): Promise<CpiData[]> {
   const paths = buildEarningsFilePaths();
   const contractualContent = fs.readFileSync(paths.contractual, "utf8");
@@ -121,33 +150,13 @@ export async function loadTotalEarningDataInternal(): Promise<CpiData[]> {
   const cpiData = await loadCpiDataInternal();
   const ctiData = await loadCtiDataInternal();
   const cpiMap = new Map<string, number>();
-  const consumptionMap = new Map<string, number>();
   cpiData.forEach((d) => {
     if (typeof d.総合 === "number") cpiMap.set(d.年月, d.総合);
   });
   // 2020年基準のスケーリング係数を算出
   const supportScale = calculateSupportScale(ctiData, "民間最終消費支出（名目）");
-
-  // CTIデータから消費支出データを取得
-  ctiData.forEach((d) => {
-    const ym = d.年月 as string | undefined;
-    if (!ym) return;
-
-    const match = ym.match(/^(\d{4})年(\d+)月$/);
-    if (!match) return;
-
-    const year = parseInt(match[1], 10);
-
-    let val = 0;
-    if (year < 2017) {
-      // 2016年12月までは名目民間最終消費支出の値をスケール
-      val = ((d["民間最終消費支出（名目）"] as number) || 0) * supportScale;
-    } else {
-      // 2017年1月以降は全ての名目消費支出内訳費目を足し合わせた値 (消費支出（名目）)
-      val = (d["消費支出（名目）"] as number) || 0;
-    }
-    consumptionMap.set(ym, val);
-  });
+  // CTIデータから消費支出Mapを構築
+  const consumptionMap = buildConsumptionMap(ctiData, supportScale);
 
   const year2020 = [...keys].filter((ym) => ym.startsWith("2020年"));
   const hourly2020 =
@@ -266,9 +275,9 @@ export async function loadTotalEarningDataInternal(): Promise<CpiData[]> {
     item["残差"] = calculateRawResidual(smoothedTotal, rawCpi);
     item["CPI総合(参考)"] = rawCpi;
     item["CPI総合(12MA)"] = cpiMAMap.get(item.年月) ?? 0;
-    // 消費支出(参考)の計算（12か月移動平均）
+    // 消費支出（参考）の計算（12か月移動平均）
     const maConsumption = consumptionMAMap.get(item.年月) ?? 0;
-    item["消費支出(参考)"] = maConsumption > 0 ? maConsumption * maConsumptionFactor : 0;
+    item["消費支出（参考）"] = maConsumption > 0 ? maConsumption * maConsumptionFactor : 0;
   });
   applyResidualMovingAverage(result);
   return result;

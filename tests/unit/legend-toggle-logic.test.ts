@@ -1,13 +1,13 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from "vitest";
 
-describe('handleNominalLegendClick logic', () => {
+describe("handleNominalLegendClick logic", () => {
   const keyPairs = [{ nominal: "食料（名目）", real: "食料（実質）" }];
   const supportKey = "民間最終消費支出";
-  
+
   const handleToggle = (dataKey: string, prevHiddenKeys: string[]) => {
     if (dataKey === supportKey) {
-      return prevHiddenKeys.includes(dataKey) 
-        ? prevHiddenKeys.filter(k => k !== dataKey) 
+      return prevHiddenKeys.includes(dataKey)
+        ? prevHiddenKeys.filter((k) => k !== dataKey)
         : [...prevHiddenKeys, dataKey];
     }
 
@@ -17,7 +17,11 @@ describe('handleNominalLegendClick logic', () => {
     const keysToToggle = [pair.nominal, pair.real];
     const next = new Set(prevHiddenKeys);
     keysToToggle.forEach((k) => {
-      if (next.has(k)) { next.delete(k); } else { next.add(k); }
+      if (next.has(k)) {
+        next.delete(k);
+      } else {
+        next.add(k);
+      }
     });
     return Array.from(next);
   };

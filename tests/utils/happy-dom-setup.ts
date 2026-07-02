@@ -1,7 +1,7 @@
-import { GlobalWindow } from 'happy-dom';
-import { setupUiMocks } from './ui-mocks';
+import { GlobalWindow } from "happy-dom";
+import { setupUiMocks } from "./ui-mocks";
 
-const window = new GlobalWindow({ url: 'http://localhost' });
+const window = new GlobalWindow({ url: "http://localhost" });
 
 // @ts-ignore
 global.window = window;

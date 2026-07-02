@@ -82,7 +82,7 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
     ],
   },
   "consumption-expenditure": {
-    source: "e-Stat「消費動向調査」",
+    source: "e-Stat「四半期別GDP統計」／「分布調整済み原数値CTI」",
     url: "https://www.e-stat.go.jp/",
     sections: [
       {
@@ -95,16 +95,7 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
             text: "2017年〜最新：分布調整済み原数値CTIミクロを使用",
           },
           {
-            text: "内訳は9大費目と諸雑費・CPI外支出に分類して表示",
-          },
-        ],
-      },
-      {
-        heading: "元データ",
-        items: [
-          {
-            text: "月次原データ（名目・実質）から四半期平均を算出",
-            subItems: ["月次原系列データを四半期ごと（1-3月、4-6月、7-9月、10-12月）に平均化"],
+            text: "内訳は9大費目（食料、住居、光熱・水道、家具・家事用品、被服及び履物、保健医療、交通・通信、教育、教養娯楽）と諸雑費・CPI外支出に分類して表示",
           },
         ],
       },
@@ -112,7 +103,14 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
         heading: "データ加工",
         items: [
           {
+            text: "月次原データ（名目・実質）から四半期平均を算出",
+            subItems: ["月次原系列データを四半期ごと（1-3月、4-6月、7-9月、10-12月）に平均化"],
+          },
+          {
             text: "2020年基準で指数化（2020年平均 = 100）",
+          },
+          {
+            text: "2017年以前はサポート系列（民間最終消費支出）をCTIの2020年水準にスケーリングして結合",
           },
           { text: "表示期間：2005年第1四半期〜最新四半期" },
           {

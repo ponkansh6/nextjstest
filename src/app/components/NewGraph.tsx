@@ -36,7 +36,7 @@ interface LineConfig {
 
 const LINE_CONFIGS: LineConfig[] = [
   { key: "総合(12MA)", color: "#e11d48", displayName: "給与(総合)" },
-  { key: "消費支出(参考)", color: "#0891b2", displayName: "消費支出(総合)" },
+  { key: "消費支出（参考）", color: "#0891b2", displayName: "消費支出(総合)" },
   { key: "CPI総合(12MA)", color: "#65a30d", displayName: "物価指数(総合)" },
 ];
 

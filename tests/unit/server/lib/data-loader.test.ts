@@ -1,6 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import * as fs from "node:fs";
-import { loadCpiData, loadTotalEarningData, loadPopulationData, loadCtiData, clearTestCache } from "../../../../server/lib/dataLoader";
+import {
+  loadCpiData,
+  loadTotalEarningData,
+  loadPopulationData,
+  loadCtiData,
+  clearTestCache,
+} from "../../../../server/lib/dataLoader";
 
 vi.mock("node:fs", () => ({
   existsSync: vi.fn(),
@@ -26,7 +32,8 @@ describe("server/lib/dataLoader", () => {
       const mockContributionCsv = "類・品目,ウエイト\n総合,10000";
       (fs.readFileSync as any).mockImplementation((path: any) => {
         if (typeof path === "string" && path.includes("cpi_data.csv")) return mockCpiCsv;
-        if (typeof path === "string" && path.includes("contribution.csv")) return mockContributionCsv;
+        if (typeof path === "string" && path.includes("contribution.csv"))
+          return mockContributionCsv;
         return "";
       });
       const data = await loadCpiData();
@@ -146,20 +153,24 @@ Year and month ,,,,,,Total aged 15+,,,
 
       (fs.readFileSync as any).mockImplementation((path: any) => {
         if (typeof path === "string" && path.includes("cti_data.csv")) return mockCtiCsv;
-        if (typeof path === "string" && path.includes("cti_support_nominal.csv")) return mockSupportCsv;
+        if (typeof path === "string" && path.includes("cti_support_nominal.csv"))
+          return mockSupportCsv;
         return "";
       });
 
       const data = await loadCtiData();
-      
+
       data.forEach((row: any) => {
         if (String(row.年月).startsWith("2005年")) {
-            const month = parseInt(String(row.年月).match(/(\d+)月/)?.[1] || "0", 10);
-            if (month <= 3) {
-              expect(row["民間最終消費支出（名目）"], `Row ${row.年月} should have populated expenditure`).toBeGreaterThan(0);
-            } else {
-              expect(row["民間最終消費支出（名目）"]).toBe(0);
-            }
+          const month = parseInt(String(row.年月).match(/(\d+)月/)?.[1] || "0", 10);
+          if (month <= 3) {
+            expect(
+              row["民間最終消費支出（名目）"],
+              `Row ${row.年月} should have populated expenditure`,
+            ).toBeGreaterThan(0);
+          } else {
+            expect(row["民間最終消費支出（名目）"]).toBe(0);
+          }
         }
       });
     });
@@ -183,23 +194,31 @@ Year and month ,,,,,,Total aged 15+,,,
 
       (fs.readFileSync as any).mockImplementation((path: any) => {
         if (typeof path === "string" && path.includes("cti_data.csv")) return mockCtiCsv;
-        if (typeof path === "string" && path.includes("cti_support_nominal.csv")) return mockSupportNominalCsv;
-        if (typeof path === "string" && path.includes("cti_support_real.csv")) return mockSupportRealCsv;
+        if (typeof path === "string" && path.includes("cti_support_nominal.csv"))
+          return mockSupportNominalCsv;
+        if (typeof path === "string" && path.includes("cti_support_real.csv"))
+          return mockSupportRealCsv;
         return "";
       });
 
       const data = await loadCtiData();
-      
+
       data.forEach((row: any) => {
         if (String(row.年月).startsWith("2005年")) {
-            const month = parseInt(String(row.年月).match(/(\d+)月/)?.[1] || "0", 10);
-            if (month <= 3) {
-              expect(row["民間最終消費支出（名目）"], `Row ${row.年月} should have populated nominal expenditure`).toBe(100);
-              expect(row["民間最終消費支出（実質）"], `Row ${row.年月} should have populated real expenditure`).toBe(200);
-            } else {
-              expect(row["民間最終消費支出（名目）"]).toBe(0);
-              expect(row["民間最終消費支出（実質）"]).toBe(0);
-            }
+          const month = parseInt(String(row.年月).match(/(\d+)月/)?.[1] || "0", 10);
+          if (month <= 3) {
+            expect(
+              row["民間最終消費支出（名目）"],
+              `Row ${row.年月} should have populated nominal expenditure`,
+            ).toBe(100);
+            expect(
+              row["民間最終消費支出（実質）"],
+              `Row ${row.年月} should have populated real expenditure`,
+            ).toBe(200);
+          } else {
+            expect(row["民間最終消費支出（名目）"]).toBe(0);
+            expect(row["民間最終消費支出（実質）"]).toBe(0);
+          }
         }
       });
     });

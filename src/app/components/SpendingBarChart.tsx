@@ -68,10 +68,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
       <h2 className={styles.chartTitle}>
         {title}
         {infoKey && (
-          <ChartInfoContentRenderer
-            chartKey={infoKey}
-            ariaLabel={`${title}のデータソースを表示`}
-          />
+          <ChartInfoContentRenderer chartKey={infoKey} ariaLabel={`${title}のデータソースを表示`} />
         )}
       </h2>
 

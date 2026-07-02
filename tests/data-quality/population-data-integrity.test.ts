@@ -10,7 +10,7 @@ describe("Population Data Integrity", () => {
 
   it("should have non-zero population totals", async () => {
     expect(populationData.size).toBeGreaterThan(0);
-    const positiveTotals = Array.from(populationData.values()).filter(v => v.total > 0).length;
+    const positiveTotals = Array.from(populationData.values()).filter((v) => v.total > 0).length;
     expect(positiveTotals, "Population data should have positive total values").toBeGreaterThan(0);
   });
 });

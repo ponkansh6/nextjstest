@@ -21,21 +21,23 @@ describe("CPI Data Integrity", () => {
 
   describe("Validation", () => {
     it("should verify monthly stacked totals of CPI categories (2025 onwards) are within 50-150", async () => {
-      const targetData = cpiData.filter(d => {
-        if (!d.年月 || typeof d.年月 !== 'string') return false;
+      const targetData = cpiData.filter((d) => {
+        if (!d.年月 || typeof d.年月 !== "string") return false;
         const m = d.年月.match(/^(\d{4})年/);
         return m ? parseInt(m[1], 10) >= 2005 : false;
       });
 
       expect(targetData.length).toBeGreaterThan(0);
 
-      targetData.forEach(d => {
+      targetData.forEach((d) => {
         let sum = 0;
-        CPI_CATEGORIES.forEach(key => {
+        CPI_CATEGORIES.forEach((key) => {
           sum += Number(d[key as keyof CpiData] || 0);
         });
 
-        expect(sum, `Sum of CPI categories at ${d.年月} should be 50-150`).toBeGreaterThanOrEqual(50);
+        expect(sum, `Sum of CPI categories at ${d.年月} should be 50-150`).toBeGreaterThanOrEqual(
+          50,
+        );
         expect(sum, `Sum of CPI categories at ${d.年月} should be 50-150`).toBeLessThanOrEqual(150);
       });
     });

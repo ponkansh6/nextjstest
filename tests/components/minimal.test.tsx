@@ -1,9 +1,9 @@
-import { render, screen } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
+import { render, screen } from "@testing-library/react";
+import { describe, it, expect } from "vitest";
 
-describe('Minimal Happy DOM test', () => {
-  it('renders a simple div', () => {
+describe("Minimal Happy DOM test", () => {
+  it("renders a simple div", () => {
     render(<div>Hello World</div>);
-    expect(screen.getByText('Hello World')).toBeDefined();
+    expect(screen.getByText("Hello World")).toBeDefined();
   });
 });

@@ -168,7 +168,7 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const displayData = mergedData;
 
-  // 消費支出(参考)はサーバー側で12か月移動平均済みのため、そのまま表示する
+  // 消費支出（参考）はサーバー側で12か月移動平均済みのため、そのまま表示する
   const earningsData = mergedData;
 
   // 表示・非表示を管理するステート（初期値は全て表示）
