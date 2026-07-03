@@ -10,7 +10,6 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import ChartInfoButton from "./ChartInfoButton";
 import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
 import styles from "./CpiChart.module.css";
 import type { CpiData } from "@/types";
@@ -86,10 +85,13 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
 
   return (
     <div className={styles.chartSection}>
-      <h2 className={styles.chartTitle}>給与指標と関連指標</h2>
-      <ChartInfoButton>
-        <ChartInfoContentRenderer chartKey="earnings" />
-      </ChartInfoButton>
+      <h2 className={styles.chartTitle}>
+        給与指標と関連指標
+        <ChartInfoContentRenderer
+          chartKey="earnings"
+          ariaLabel="給与指標のデータソースを表示"
+        />
+      </h2>
       <div className={styles.legendContainer}>
         <div className={styles.legendSection}>
           <div className={styles.legendItems}>

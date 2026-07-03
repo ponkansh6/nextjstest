@@ -7,11 +7,39 @@ import ChartInfoButton, {
   ChartInfoSource,
   ChartInfoUrl,
 } from "../../src/app/components/ChartInfoButton";
+import ChartInfoContentRenderer from "../../src/app/components/ChartInfoContentRenderer";
+import { EarningsBreakdownChart } from "../../src/app/components/EarningsBreakdownChart";
 import { setupUiMocks } from "../utils/ui-mocks";
 
 beforeAll(() => {
   setupUiMocks();
 });
+
+// ── Helper: mock data for EarningsBreakdownChart ──
+const mockEarningsData = [
+  {
+    年月: "2023年1月",
+    総合: 150,
+    生鮮食品を除く総合: 140,
+    持家の帰属家賃を除く総合: 145,
+    "消費支出（参考）": 160,
+    "CPI総合(参考)": 120,
+    所定内給与: 100,
+    所定外給与: 50,
+    特別給与: 30,
+    時間当たり給与: 10,
+    "15歳以上国民当たり給与": 200,
+  },
+];
+
+const mockChartColors = {
+  gridStroke: "#e5e7eb",
+  axisText: "#374151",
+  tooltipBg: "#ffffff",
+  tooltipText: "#374151",
+};
+
+const MockTooltip = () => null;
 
 // ── Helper: content shared across tests ──
 
@@ -248,5 +276,49 @@ describe("ChartInfoButton", () => {
     fireEvent.click(btnB);
     expect(screen.queryByText("内容A")).toBeNull();
     expect(screen.queryByText("内容B")).toBeNull();
+  });
+
+  // ── EarningsBreakdownChart integration test ──
+  it("should render EarningsBreakdownChart with ChartInfoButton for earnings info", () => {
+    render(
+      <EarningsBreakdownChart
+        data={mockEarningsData}
+        hiddenKeys={[]}
+        onToggle={() => {}}
+        chartColors={mockChartColors}
+        isMobile={false}
+        CustomTooltip={MockTooltip}
+      />,
+    );
+    // Verify the chart title is rendered
+    expect(screen.getByText("給与指標と関連指標")).toBeDefined();
+    // Verify the ChartInfoButton is rendered (via ChartInfoContentRenderer)
+    // The ChartInfoContentRenderer renders a ChartInfoButton internally
+    // We can check for the presence of the info icon or the dialog trigger
+    const infoButton = screen.getByRole("button", { name: "給与指標のデータソースを表示" });
+    expect(infoButton).toBeDefined();
+    expect(infoButton.getAttribute("aria-haspopup")).toBe("dialog");
+    // Initially the popup should be closed
+    expect(screen.queryByRole("dialog")).toBeNull();
+    // Open the popup
+    fireEvent.click(infoButton);
+    expect(screen.getByRole("dialog")).toBeDefined();
+    // Verify the earnings info content is rendered
+    expect(screen.getByText("データ加工")).toBeDefined();
+    expect(screen.getByText("所定内給与・所定外給与：月次実値を2020年基準で指数化")).toBeDefined();
+    expect(screen.getByText("特別給与：12か月移動平均を算出し、2020年基準で指数化")).toBeDefined();
+    expect(
+      screen.getByText(
+        "時間当たり給与：(所定内給与実値 + 所定外給与実値 + 特別給与12か月移動平均) ÷ 総労働時間12か月移動平均 を2020年基準で指数化",
+      ),
+    ).toBeDefined();
+    expect(
+      screen.getByText(
+        "15歳以上国民当たり給与：((所定内給与実値 + 所定外給与実値 + 特別給与12か月移動平均) × 就業者数) ÷ 15歳以上人口 を2020年基準で指数化",
+      ),
+    ).toBeDefined();
+    expect(
+      screen.getByText("注：特別給与は12か月移動平均、所定内・所定外給与は実値を表示"),
+    ).toBeDefined();
   });
 });
