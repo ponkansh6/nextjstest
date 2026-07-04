@@ -148,14 +148,14 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
               dataKey="label"
               axisLine={false}
               tickLine={false}
-              tick={{ fill: chartColors.axisText, fontSize: 12 }}
+              tick={{ fill: chartColors.axisText }}
               dy={10}
             />
             <YAxis
               domain={[0, "auto"]}
               axisLine={false}
               tickLine={false}
-              tick={{ fill: chartColors.axisText, fontSize: 12 }}
+              tick={{ fill: chartColors.axisText }}
               dx={-10}
             />
             <Tooltip

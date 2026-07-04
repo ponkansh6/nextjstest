@@ -59,14 +59,14 @@ export const ResidualAreaChart: React.FC<ResidualAreaChartProps> = ({
             dataKey="年月"
             axisLine={false}
             tickLine={false}
-            tick={{ fill: chartColors.axisText, fontSize: 12 }}
+            tick={{ fill: chartColors.axisText }}
             dy={10}
           />
           <YAxis
             domain={["auto", "auto"]}
             axisLine={false}
             tickLine={false}
-            tick={{ fill: chartColors.axisText, fontSize: 12 }}
+            tick={{ fill: chartColors.axisText }}
             dx={-10}
           />
           <Tooltip

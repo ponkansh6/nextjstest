@@ -104,14 +104,14 @@ export const StackedAreaChart: React.FC<StackedAreaChartProps> = ({
             dataKey="年月"
             axisLine={false}
             tickLine={false}
-            tick={{ fill: chartColors.axisText, fontSize: 12 }}
+            tick={{ fill: chartColors.axisText }}
             dy={10}
           />
           <YAxis
             domain={[0, "auto"]}
             axisLine={false}
             tickLine={false}
-            tick={{ fill: chartColors.axisText, fontSize: 12 }}
+            tick={{ fill: chartColors.axisText }}
             dx={-10}
           />
           <Tooltip

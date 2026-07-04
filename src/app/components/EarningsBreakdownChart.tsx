@@ -131,14 +131,14 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
               dataKey="年月"
               axisLine={false}
               tickLine={false}
-              tick={{ fill: chartColors.axisText, fontSize: 12 }}
+              tick={{ fill: chartColors.axisText }}
               dy={10}
             />
             <YAxis
               domain={[0, yAxisMax]}
               axisLine={false}
               tickLine={false}
-              tick={{ fill: chartColors.axisText, fontSize: 12 }}
+              tick={{ fill: chartColors.axisText }}
               dx={-10}
             />
             <Tooltip
