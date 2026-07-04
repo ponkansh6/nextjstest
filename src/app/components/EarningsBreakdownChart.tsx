@@ -172,7 +172,7 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
                   type="monotone"
                   dataKey={key}
                   stroke={color}
-                  strokeWidth={2}
+                  strokeWidth={isMobile ? 2 : 4}
                   dot={false}
                   isAnimationActive={false}
                 />
