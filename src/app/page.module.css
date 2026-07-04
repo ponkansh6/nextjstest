@@ -79,3 +79,18 @@
   color: var(--gray-500);
   margin-top: 0.25rem;
 }
+
+/* ── PC enlargement (≥641px) ── */
+@media (min-width: 641px) {
+  .title {
+    font-size: 4.5rem;
+  }
+
+  .badge {
+    font-size: 1.125rem;
+  }
+
+  .description {
+    font-size: 1.688rem;
+  }
+}
