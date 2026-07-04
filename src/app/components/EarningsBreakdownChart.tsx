@@ -87,10 +87,7 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
     <div className={styles.chartSection}>
       <h2 className={styles.chartTitle}>
         給与指標と関連指標
-        <ChartInfoContentRenderer
-          chartKey="earnings"
-          ariaLabel="給与指標のデータソースを表示"
-        />
+        <ChartInfoContentRenderer chartKey="earnings" ariaLabel="給与指標のデータソースを表示" />
       </h2>
       <div className={styles.legendContainer}>
         <div className={styles.legendSection}>

@@ -192,7 +192,47 @@
 
 @media (min-width: 641px) {
   .chartWrapper {
-    height: 900px;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    max-height: 650px;
+  }
+
+  .filterItem {
+    font-size: 1rem;
+    gap: 1rem;
+  }
+
+  .select {
+    font-size: 1rem;
+    padding: 0.75rem 2.5rem 0.75rem 1rem;
+    background-size: 1.25rem;
+    background-position: right 0.75rem center;
+  }
+
+  .chartTitle {
+    font-size: 1.5rem;
+  }
+
+  .chartNote {
+    font-size: 1rem;
+  }
+
+  .legendTitle {
+    font-size: 1.15rem;
+  }
+
+  .legendItem {
+    font-size: 1rem;
+    padding: 0.625rem 1rem;
+  }
+
+  .legendIcon {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  .actionButton {
+    font-size: 0.95rem;
   }
 }
 
