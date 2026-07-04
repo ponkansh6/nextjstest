@@ -304,21 +304,21 @@ describe("ChartInfoButton", () => {
     fireEvent.click(infoButton);
     expect(screen.getByRole("dialog")).toBeDefined();
     // Verify the earnings info content is rendered
+    expect(screen.getByText("データの内訳")).toBeDefined();
+    expect(screen.getByText("所定内給与（エリア）：基本給等の月次実値を指数化")).toBeDefined();
     expect(screen.getByText("データ加工")).toBeDefined();
-    expect(screen.getByText("所定内給与・所定外給与：月次実値を2020年基準で指数化")).toBeDefined();
-    expect(screen.getByText("特別給与：12か月移動平均を算出し、2020年基準で指数化")).toBeDefined();
+    expect(screen.getByText("すべての給与系列は2020年基準で指数化（2020年平均 = 100）")).toBeDefined();
+    expect(screen.getByText("所定内給与・所定外給与：月次実値を使用")).toBeDefined();
+    expect(screen.getByText("特別給与：12か月移動平均を使用")).toBeDefined();
     expect(
       screen.getByText(
-        "時間当たり給与：(所定内給与実値 + 所定外給与実値 + 特別給与12か月移動平均) ÷ 総労働時間12か月移動平均 を2020年基準で指数化",
+        "時間当たり給与：(所定内給与実値 + 所定外給与実値 + 特別給与12か月移動平均) ÷ 総労働時間12か月移動平均",
       ),
     ).toBeDefined();
     expect(
       screen.getByText(
-        "15歳以上国民当たり給与：((所定内給与実値 + 所定外給与実値 + 特別給与12か月移動平均) × 就業者数) ÷ 15歳以上人口 を2020年基準で指数化",
+        "15歳以上国民当たり給与：((所定内給与実値 + 所定外給与実値 + 特別給与12か月移動平均) × 就業者数) ÷ 15歳以上人口",
       ),
-    ).toBeDefined();
-    expect(
-      screen.getByText("注：特別給与は12か月移動平均、所定内・所定外給与は実値を表示"),
     ).toBeDefined();
   });
 });
