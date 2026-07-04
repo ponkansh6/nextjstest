@@ -190,101 +190,6 @@
   width: 100%;
 }
 
-@media (min-width: 641px) {
-  .chartWrapper {
-    height: auto;
-    aspect-ratio: 4 / 3;
-    max-height: 650px;
-  }
-
-  .filterItem {
-    font-size: 2rem;
-    gap: 2rem;
-  }
-
-  .select {
-    font-size: 2rem;
-    padding: 1.5rem 5rem 1.5rem 2rem;
-    background-size: 2.5rem;
-    background-position: right 1.5rem center;
-  }
-
-  .chartTitle {
-    font-size: 4.5rem;
-  }
-
-  .chartNote {
-    font-size: 2rem;
-  }
-
-  .legendTitle {
-    font-size: 2.3rem;
-  }
-
-  .legendItem {
-    font-size: 2rem;
-    padding: 1.25rem 2rem;
-  }
-
-  .legendIcon {
-    width: 1.75rem;
-    height: 1.75rem;
-  }
-
-  .actionButton {
-    font-size: 1.9rem;
-  }
-
-  .cagrItem label {
-    font-size: 2rem;
-  }
-
-  .cagrItem {
-    gap: 1rem;
-  }
-
-  .cagrControls {
-    gap: 2rem;
-  }
-
-  .cagrSection {
-    padding: 3rem;
-  }
-
-  .cagrContainer {
-    gap: 3rem;
-  }
-
-  .cagrResult {
-    padding: 2.5rem;
-    gap: 1rem;
-    border-width: 4px;
-  }
-
-  .cagrResultLabel {
-    font-size: 1.75rem;
-  }
-
-  .cagrResultValue {
-    font-size: 4rem;
-  }
-
-  .cagrResultDetail {
-    font-size: 1.6rem;
-    margin-top: 0.5rem;
-  }
-
-  .cagrNote {
-    font-size: 1.6rem;
-    margin-top: 1rem;
-  }
-
-  .calculateButton {
-    font-size: 1.75rem;
-    padding: 1.25rem 3rem;
-  }
-}
-
 .chartSection {
   margin-bottom: 3rem;
   padding-bottom: 2rem;
@@ -464,5 +369,101 @@
 
   .cagrResultValue {
     font-size: 1.5rem;
+  }
+}
+
+/* ── PC enlargement (≥641px) — must come after all base rules ── */
+@media (min-width: 641px) {
+  .chartWrapper {
+    height: auto;
+    aspect-ratio: 4 / 3;
+    max-height: 650px;
+  }
+
+  .filterItem {
+    font-size: 2rem;
+    gap: 2rem;
+  }
+
+  .select {
+    font-size: 2rem;
+    padding: 1.5rem 5rem 1.5rem 2rem;
+    background-size: 2.5rem;
+    background-position: right 1.5rem center;
+  }
+
+  .chartTitle {
+    font-size: 4.5rem;
+  }
+
+  .chartNote {
+    font-size: 2rem;
+  }
+
+  .legendTitle {
+    font-size: 2.3rem;
+  }
+
+  .legendItem {
+    font-size: 2rem;
+    padding: 1.25rem 2rem;
+  }
+
+  .legendIcon {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+
+  .actionButton {
+    font-size: 1.9rem;
+  }
+
+  .cagrItem label {
+    font-size: 2rem;
+  }
+
+  .cagrItem {
+    gap: 1rem;
+  }
+
+  .cagrControls {
+    gap: 2rem;
+  }
+
+  .cagrSection {
+    padding: 3rem;
+  }
+
+  .cagrContainer {
+    gap: 3rem;
+  }
+
+  .cagrResult {
+    padding: 2.5rem;
+    gap: 1rem;
+    border-width: 4px;
+  }
+
+  .cagrResultLabel {
+    font-size: 1.75rem;
+  }
+
+  .cagrResultValue {
+    font-size: 4rem;
+  }
+
+  .cagrResultDetail {
+    font-size: 1.6rem;
+    margin-top: 0.5rem;
+  }
+
+  .cagrNote {
+    font-size: 1.6rem;
+    margin-top: 1rem;
+  }
+
+  .calculateButton {
+    font-size: 1.75rem;
+    padding: 1.25rem 3rem;
   }
 }
