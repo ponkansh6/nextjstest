@@ -307,7 +307,9 @@ describe("ChartInfoButton", () => {
     expect(screen.getByText("データの内訳")).toBeDefined();
     expect(screen.getByText("所定内給与（エリア）：基本給等の月次実値を指数化")).toBeDefined();
     expect(screen.getByText("データ加工")).toBeDefined();
-    expect(screen.getByText("すべての給与系列は2020年基準で指数化（2020年平均 = 100）")).toBeDefined();
+    expect(
+      screen.getByText("すべての給与系列は2020年基準で指数化（2020年平均 = 100）"),
+    ).toBeDefined();
     expect(screen.getByText("所定内給与・所定外給与：月次実値を使用")).toBeDefined();
     expect(screen.getByText("特別給与：12か月移動平均を使用")).toBeDefined();
     expect(
