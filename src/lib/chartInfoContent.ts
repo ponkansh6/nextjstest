@@ -150,4 +150,19 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
       },
     ],
   },
+  residual: {
+    source: "厚生労働省「毎月勤労統計調査」／総務省「消費者物価指数」",
+    url: "https://www.mhlw.go.jp/toukei/list/30-1.html",
+    sections: [
+      {
+        heading: "データ加工",
+        items: [
+          { text: "給与指数（総合）：所定内給与 + 所定外給与 + 特別給与12か月移動平均を指数化（2020年平均 = 100）" },
+          { text: "物価指数（総合）：消費者物価指数総合を指数化（2020年平均 = 100）" },
+          { text: "給与指数から物価指数を差し引いた値を表示" },
+          { text: "差分は2020年平均 = 0 となる" },
+        ],
+      },
+    ],
+  },
 };
