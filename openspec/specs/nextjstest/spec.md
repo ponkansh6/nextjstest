@@ -82,7 +82,10 @@ The system SHALL display economic indicators as interactive Recharts-based chart
 - **THEN** the following charts are rendered:
   - CtiChart / MajorIndicesChart (CTI indicators)
   - EarningsBreakdownChart (wage breakdown)
-  - StackedAreaChart / ResidualAreaChart / SpendingBarChart (additional breakdowns)
+  - StackedAreaChart / SpendingBarChart (additional breakdowns)
+  - ResidualAreaChart (給与と物価の差(実質賃金相当)):
+    - Displays the difference between "給与指数（総合）" and "物価指数（総合）".
+    - Both indices are 2020-base (2020 average = 100), so the difference is 2020 average = 0.
   - NewGraph (supplementary view)
 
 ### R3: Data Transformation (Server-Side)
@@ -137,6 +140,7 @@ The system SHALL provide explanatory info for each chart/metric.
 
 - **WHEN** user clicks the info button on a chart
 - **THEN** a tooltip/modal displays the definition, source, and calculation method for the indicator
+- **AND** the content is retrieved based on the `chartKey` defined in `src/lib/chartInfoContent.ts` (supported charts: `cpi-major`, `stacked-area`, `earnings`, `residual`, `consumption-expenditure`)
 
 ### R7: API Routes
 
@@ -175,6 +179,19 @@ The system SHALL be navigable and interpretable by assistive technologies.
 - **WHEN** a screen reader encounters a chart
 - **THEN** the chart has accessible labels, ARIA descriptions, and keyboard-navigable legend
 
+### R10: Page Metadata and Header
+
+The system SHALL provide SEO-friendly metadata and descriptive headers.
+
+#### Scenario R10a: Layout Metadata
+- **THEN** `layout.tsx` defines:
+  - `title`: "日本の経済指標ダッシュボード | 物価・賃金・消費の長期推移"
+  - `description`: "物価指数・現金給与総額・消費支出の2020年基準指数を一画面で比較。費目別寄与度・年率上昇率・給与と物価の乖離を可視化。凡例クリックで系列の表示/非表示を切替可能。"
+
+#### Scenario R10b: Page Header Description
+- **THEN** `page.tsx` header displays:
+  - "2020年基準でスケール統一した主要指標を一覧。各グラフは凡例クリックで系列の表示/非表示を切替可能。"
+
 ## Architecture
 
 ### Component Tree (src/app/components/)
@@ -191,7 +208,7 @@ Page (RSC)
     │   ├── ResidualAreaChart
     │   └── SpendingBarChart
     ├── ChartLegend — Interactive series toggles
-    ├── ChartInfoButton → ChartInfoContentRenderer — Indicator explanations
+    ├── ChartInfoButton → ChartInfoContentRenderer — Indicator explanations (uses `chartKey` mapped to `CHART_INFO` in `src/lib/chartInfoContent.ts`)
     └── NewGraph — Supplementary visualization
 ```
 

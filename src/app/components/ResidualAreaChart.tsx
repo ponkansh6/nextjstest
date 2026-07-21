@@ -36,7 +36,10 @@ export const ResidualAreaChart: React.FC<ResidualAreaChartProps> = ({
   <div className={styles.chartSection}>
     <h2 className={styles.chartTitle}>
       給与と物価の差(実質賃金相当)
-      <ChartInfoContentRenderer chartKey="residual" ariaLabel="給与と物価の差のデータソースを表示" />
+      <ChartInfoContentRenderer
+        chartKey="residual"
+        ariaLabel="給与と物価の差のデータソースを表示"
+      />
     </h2>
     <div className={styles.chartWrapper}>
       <ResponsiveContainer width="100%" height="100%">
