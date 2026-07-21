@@ -184,11 +184,13 @@ The system SHALL be navigable and interpretable by assistive technologies.
 The system SHALL provide SEO-friendly metadata and descriptive headers.
 
 #### Scenario R10a: Layout Metadata
+
 - **THEN** `layout.tsx` defines:
   - `title`: "日本の経済指標ダッシュボード | 物価・賃金・消費の長期推移"
   - `description`: "物価指数・現金給与総額・消費支出の2020年基準指数を一画面で比較。費目別寄与度・年率上昇率・給与と物価の乖離を可視化。凡例クリックで系列の表示/非表示を切替可能。"
 
 #### Scenario R10b: Page Header Description
+
 - **THEN** `page.tsx` header displays:
   - "2020年基準でスケール統一した主要指標を一覧。各グラフは凡例クリックで系列の表示/非表示を切替可能。"
 
