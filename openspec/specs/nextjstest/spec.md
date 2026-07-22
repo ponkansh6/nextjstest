@@ -47,8 +47,11 @@ Static CSV files served from `public/`:
 - `public/total_worked_hours.csv` — Total worked hours
 - `public/population_statistics.csv` — Population statistics
 - `public/employment_indices.csv` — Employment indices
+- `public/hon-mks202512.csv` — 毎月勤労統計調査の生データ（常用労働者数、出勤日数、実労働時間数、現金給与額）
 - `public/contribution.csv` — CPI contribution breakdown
 - `public/cti_support_nominal.csv` / `public/cti_support_real.csv` — CTI supporting series
+
+> Note: `public/cti0211_1.csv` exists but is only used by ETL scripts (`scripts/ts_converters/`), not by the application runtime.
 
 ## Requirements
 
@@ -218,11 +221,44 @@ Page (RSC)
 
 ```
 public/*.csv
-  → server/lib/dataLoader.ts (read + parse)
-    → server/lib/dataProcessor.ts (transform + clean)
-      → server/lib/serverCalculations.ts (derive)
-        → src/app/page.tsx (RSC: load + pass props)
-          → src/app/components/CpiChart.tsx ("use client": render + interact)
+  → server/lib/dataIo.ts (path definitions + CSV parsing utilities)
+    → server/lib/data-loader/{cpi,earnings,population}.ts (domain-specific loading + caching)
+      → server/lib/dataLoader.ts (caching wrapper with maybeCache)
+        → server/lib/dataProcessor.ts (transform + clean)
+          → server/lib/serverCalculations.ts (derive)
+            → src/app/page.tsx (RSC: load + pass props)
+              → src/app/components/CpiChart.tsx ("use client": render + interact)
+```
+
+### Client Modules
+
+#### src/hooks/
+
+| Module             | Description                                   |
+| ------------------ | --------------------------------------------- |
+| `useLegendState.ts` | Legend toggle state (Redux-backed)            |
+| `useChartTheme.ts`  | Chart theme management                       |
+| `useCpiChartData.ts`| CPI chart data fetching and processing       |
+
+#### src/lib/
+
+| Module                | Description                                      |
+| --------------------- | ------------------------------------------------ |
+| `chartInfoContent.ts` | Info button content definitions (`CHART_INFO`)   |
+| `chartConstants.ts`   | Chart colors, keys, and shared constants         |
+| `chartUtils.ts`       | Chart rendering and data manipulation helpers    |
+| `clientCalculations.ts`| Client-side utility functions for calculations  |
+| `resetLogic.ts`       | Application state reset logic                    |
+| `unstableCache.ts`    | Caching utility                                  |
+
+### ETL Scripts
+
+```
+scripts/
+├── ts_converters/   — TypeScript CSV conversion scripts (e.g. convert_scheduled.ts, convert_contractual.ts)
+├── python_backup/   — Legacy Python converters and parity verification
+├── build_*.sh       — Build scripts for standalone executables (PyInstaller)
+└── *.spec           — PyInstaller spec files
 ```
 
 ### State Management
