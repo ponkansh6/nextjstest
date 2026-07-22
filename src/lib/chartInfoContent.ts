@@ -17,7 +17,7 @@ export interface ChartInfoContent {
 export const CHART_INFO: Record<string, ChartInfoContent> = {
   "cpi-major": {
     source: "e-Stat「消費者物価指数 長期時系列データ（2020年基準）」",
-    url: "https://www.e-stat.go.jp/",
+    url: "https://www.e-stat.go.jp/stat-search/files?page=1&toukei=00200573&tstat=000001150147",
     sections: [
       {
         heading: "表示している指数",
@@ -40,7 +40,7 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
   },
   "stacked-area": {
     source: "e-Stat「消費者物価指数 長期時系列データ（2020年基準）」",
-    url: "https://www.e-stat.go.jp/",
+    url: "https://www.e-stat.go.jp/stat-search/files?page=1&toukei=00200573&tstat=000001150147",
     sections: [
       {
         heading: "表示している費目",
@@ -71,8 +71,8 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
     ],
   },
   "consumption-expenditure": {
-    source: "e-Stat「四半期別GDP統計」／「分布調整済み原数値CTI」",
-    url: "https://www.e-stat.go.jp/",
+    source: "e-Stat「四半期別GDP統計」／e-Stat「分布調整済み原数値CTI」",
+    url: "https://www.e-stat.go.jp/stat-search/files?toukei=00100409&tstat=000001014470",
     sections: [
       {
         heading: "データの内訳",
@@ -108,8 +108,8 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
     ],
   },
   earnings: {
-    source: "厚生労働省「毎月勤労統計調査」",
-    url: "https://www.mhlw.go.jp/toukei/list/30-1.html",
+    source: "e-Stat「毎月勤労統計調査」（厚生労働省）",
+    url: "https://www.e-stat.go.jp/stat-search/files?page=1&toukei=00450071&tstat=000001011791",
     sections: [
       {
         heading: "データの内訳",
@@ -151,8 +151,8 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
     ],
   },
   "new-graph": {
-    source: "厚生労働省「毎月勤労統計調査」／総務省「消費者物価指数」／内閣府「四半期別GDP統計」",
-    url: "https://www.mhlw.go.jp/toukei/list/30-1.html",
+    source: "e-Stat「毎月勤労統計調査」／e-Stat「消費者物価指数」／e-Stat「四半期別GDP統計」",
+    url: "https://www.e-stat.go.jp/stat-search/files?page=1&toukei=00200573&tstat=000001150147",
     sections: [
       {
         heading: "表示している系列",
@@ -173,13 +173,14 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
     ],
   },
   residual: {
-    source: "厚生労働省「毎月勤労統計調査」／総務省「消費者物価指数」",
-    url: "https://www.mhlw.go.jp/toukei/list/30-1.html",
+    source: "e-Stat「毎月勤労統計調査」／e-Stat「消費者物価指数」",
+    url: "https://www.e-stat.go.jp/stat-search/files?page=1&toukei=00200573&tstat=000001150147",
     sections: [
       {
         heading: "データ加工",
         items: [
           { text: "給与指数から物価指数を差し引いた値を表示（給与 − 物価）" },
+          { text: "残差系列は2か月移動平均（2MA）で平滑化" },
           { text: "差分は2020年平均 = 0 となる" },
           {
             text: "給与指数（総合）：所定内給与 + 所定外給与 + 特別給与12か月移動平均を指数化（2020年平均 = 100）",

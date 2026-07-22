@@ -89,6 +89,7 @@ The system SHALL display economic indicators as interactive Recharts-based chart
   - ResidualAreaChart (給与と物価の差(実質賃金相当)):
     - Displays the difference between "給与指数（総合）" and "物価指数（総合）".
     - Both indices are 2020-base (2020 average = 100), so the difference is 2020 average = 0.
+    - The residual series is smoothed with a 2-month moving average (2MA).
   - NewGraph (supplementary view)
 
 ### R3: Data Transformation (Server-Side)
