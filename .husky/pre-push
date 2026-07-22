@@ -1,7 +1,24 @@
 #!/bin/sh
 
-# プッシュされるコミットに含まれるファイルのみチェック
-if git diff --name-only origin/main...HEAD | grep -qE "src/app/components|tests/components|src/lib/chart"; then
+PUSH_FILES=$(git diff --name-only origin/main...HEAD 2>/dev/null)
+
+# --- Spec staleness check ---
+# ソースコードやテストが変更された場合、spec.md の更新を確認
+if echo "$PUSH_FILES" | grep -qE "^(src/|server/|tests/)"; then
+  if echo "$PUSH_FILES" | grep -qE "openspec/specs/.*/spec\.md"; then
+    echo "Spec file updated."
+  else
+    echo ""
+    echo "⚠️  Warning: Source/test files changed but openspec/specs/nextjstest/spec.md was NOT updated."
+    echo "   Please review whether the spec needs updating before pushing."
+    echo "   (To skip this check temporarily, use: git push --no-verify)"
+    echo ""
+    # warning only — do not block push
+  fi
+fi
+
+# --- UI tests ---
+if echo "$PUSH_FILES" | grep -qE "src/app/components|tests/components|src/lib/chart"; then
   echo "Running pre-push UI tests for relevant changes..."
   pnpm run test:ui
   TEST_EXIT_CODE=$?
