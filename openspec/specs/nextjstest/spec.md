@@ -143,7 +143,7 @@ The system SHALL provide explanatory info for each chart/metric.
 
 - **WHEN** user clicks the info button on a chart
 - **THEN** a tooltip/modal displays the definition, source, and calculation method for the indicator
-- **AND** the content is retrieved based on the `chartKey` defined in `src/lib/chartInfoContent.ts` (supported charts: `cpi-major`, `stacked-area`, `earnings`, `residual`, `consumption-expenditure`)
+- **AND** the content is retrieved based on the `chartKey` defined in `src/lib/chartInfoContent.ts` (supported charts: `cpi-major`, `stacked-area`, `earnings`, `residual`, `consumption-expenditure`, `new-graph`)
 
 ### R7: API Routes
 
@@ -234,22 +234,22 @@ public/*.csv
 
 #### src/hooks/
 
-| Module             | Description                                   |
-| ------------------ | --------------------------------------------- |
-| `useLegendState.ts` | Legend toggle state (Redux-backed)            |
-| `useChartTheme.ts`  | Chart theme management                       |
-| `useCpiChartData.ts`| CPI chart data fetching and processing       |
+| Module               | Description                            |
+| -------------------- | -------------------------------------- |
+| `useLegendState.ts`  | Legend toggle state (Redux-backed)     |
+| `useChartTheme.ts`   | Chart theme management                 |
+| `useCpiChartData.ts` | CPI chart data fetching and processing |
 
 #### src/lib/
 
-| Module                | Description                                      |
-| --------------------- | ------------------------------------------------ |
-| `chartInfoContent.ts` | Info button content definitions (`CHART_INFO`)   |
-| `chartConstants.ts`   | Chart colors, keys, and shared constants         |
-| `chartUtils.ts`       | Chart rendering and data manipulation helpers    |
-| `clientCalculations.ts`| Client-side utility functions for calculations  |
-| `resetLogic.ts`       | Application state reset logic                    |
-| `unstableCache.ts`    | Caching utility                                  |
+| Module                  | Description                                    |
+| ----------------------- | ---------------------------------------------- |
+| `chartInfoContent.ts`   | Info button content definitions (`CHART_INFO`) |
+| `chartConstants.ts`     | Chart colors, keys, and shared constants       |
+| `chartUtils.ts`         | Chart rendering and data manipulation helpers  |
+| `clientCalculations.ts` | Client-side utility functions for calculations |
+| `resetLogic.ts`         | Application state reset logic                  |
+| `unstableCache.ts`      | Caching utility                                |
 
 ### ETL Scripts
 

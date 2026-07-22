@@ -539,6 +539,7 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
         onToggle={handleMaLegendClick}
         chartColors={chartColors}
         isMobile={isMobile}
+        chartKey="new-graph"
         CustomTooltip={(props: {
           active?: boolean;
           payload?: { name: string; value: number }[];

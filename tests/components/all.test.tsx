@@ -504,7 +504,7 @@ describe("NewGraph", () => {
         CustomTooltip={() => <div>Tooltip</div>}
       />,
     );
-    expect(screen.getByText("給与・消費支出・物価指数の12か月移動平均比較")).toBeDefined();
+    expect(screen.getByText("給与・消費・物価の推移比較(12MA)")).toBeDefined();
   });
 
   it("renders legend items with display names", () => {
@@ -568,6 +568,6 @@ describe("NewGraph", () => {
         CustomTooltip={() => <div>Tooltip</div>}
       />,
     );
-    expect(screen.getByText("給与・消費支出・物価指数の12か月移動平均比較")).toBeDefined();
+    expect(screen.getByText("給与・消費・物価の推移比較(12MA)")).toBeDefined();
   });
 });

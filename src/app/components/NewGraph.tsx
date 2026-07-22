@@ -11,6 +11,7 @@ import {
 } from "recharts";
 import styles from "./CpiChart.module.css";
 import type { CpiData } from "@/types";
+import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
 
 interface NewGraphProps {
   data: CpiData[];
@@ -18,6 +19,7 @@ interface NewGraphProps {
   onToggle: (key: string) => void;
   chartColors: Record<string, string>;
   isMobile: boolean;
+  chartKey?: string;
   CustomTooltip: React.FC<{
     active?: boolean;
     payload?: { name: string; value: number }[];
@@ -46,13 +48,19 @@ export const NewGraph: React.FC<NewGraphProps> = ({
   onToggle,
   chartColors,
   isMobile,
+  chartKey,
   CustomTooltip,
 }) => (
   <div className={styles.chartSection}>
-    <h2 className={styles.chartTitle}>給与・消費支出・物価指数の12か月移動平均比較</h2>
-    <p className={styles.chartNote}>
-      ※給与（総合）＝所定内＋所定外＋特別給与の12か月移動平均。消費支出・物価指数も12か月移動平均
-    </p>
+    <div className={styles.chartTitleRow}>
+      <h2 className={styles.chartTitle}>給与・消費・物価の推移比較(12MA)</h2>
+      {chartKey && (
+        <ChartInfoContentRenderer
+          chartKey={chartKey as never}
+          ariaLabel="給与・消費・物価の推移比較のデータソースを表示"
+        />
+      )}
+    </div>
     <div className={styles.legendContainer}>
       <div className={styles.legendSection}>
         <div className={styles.legendItems}>

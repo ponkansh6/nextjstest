@@ -150,6 +150,28 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
       },
     ],
   },
+  "new-graph": {
+    source: "厚生労働省「毎月勤労統計調査」／総務省「消費者物価指数」／内閣府「四半期別GDP統計」",
+    url: "https://www.mhlw.go.jp/toukei/list/30-1.html",
+    sections: [
+      {
+        heading: "表示している系列",
+        items: [
+          { text: "給与（総合）：所定内給与 + 所定外給与 + 特別給与の12か月移動平均を指数化" },
+          { text: "消費支出（参考）：家計調査の消費支出を12か月移動平均で指数化" },
+          { text: "物価指数（総合）：消費者物価指数総合を12か月移動平均で指数化" },
+        ],
+      },
+      {
+        heading: "データ加工",
+        items: [
+          { text: "すべての系列は2020年基準で指数化（2020年平均 = 100）" },
+          { text: "12か月移動平均（12MA）により季節変動を除去" },
+          { text: "給与・消費・物価を同一スケールで比較可能" },
+        ],
+      },
+    ],
+  },
   residual: {
     source: "厚生労働省「毎月勤労統計調査」／総務省「消費者物価指数」",
     url: "https://www.mhlw.go.jp/toukei/list/30-1.html",
