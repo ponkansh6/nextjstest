@@ -51,4 +51,3 @@ export function applyResidualMovingAverage(data: CpiData[]): void {
     }
   }
 }
-

@@ -13,6 +13,7 @@ export interface QuarterlyRow {
   年: number;
   quarter: number;
   label: string;
+  年月: string;
   [key: string]: number | string;
 }
 
@@ -84,7 +85,8 @@ export function computeQuarterlyAggregates(
         const months =
           q === 1 ? [1, 2, 3] : q === 2 ? [4, 5, 6] : q === 3 ? [7, 8, 9] : [10, 11, 12];
         const label = `${y}年Q${q}`;
-        const item: QuarterlyRow = { label, quarter: q, 年: y };
+        const startMonth = (q - 1) * 3 + 1;
+        const item: QuarterlyRow = { label, quarter: q, 年: y, 年月: `${y}年${startMonth}月` };
 
         // Initialize all keys
         item[SUPPORT_SERIES_KEY_NOMINAL] = 0;

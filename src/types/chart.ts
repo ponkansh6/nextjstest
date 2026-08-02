@@ -15,6 +15,7 @@ export interface QuarterlyView extends Record<string, number | string> {
   label: string;
   quarter: number;
   年: number;
+  年月: string;
 }
 
 export interface EarningsView extends Record<string, string | number> {

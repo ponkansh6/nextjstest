@@ -22,6 +22,7 @@ export interface QuarterlyView {
   label: string;
   quarter: number;
   年: number;
+  年月: string;
   [key: string]: number | string;
 }
 
@@ -66,7 +67,7 @@ export function toEarningsView(rows: CpiData[], selectedKeys: string[]): Earning
 
 export function toQuarterlyView(rows: QuarterlyRow[], selectedKeys: string[]): QuarterlyView[] {
   return rows.map((r) => {
-    const out: QuarterlyView = { label: r.label, quarter: r.quarter, 年: r.年 };
+    const out: QuarterlyView = { label: r.label, quarter: r.quarter, 年: r.年, 年月: r.年月 };
     for (const k of selectedKeys) {
       const v = r[k];
       if (typeof v === "number") {

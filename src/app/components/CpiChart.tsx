@@ -2,10 +2,10 @@
 
 import React, { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import type { CpiData } from "@/types";
 import type { CpiView, QuarterlyView, EarningsView } from "@/types/chart";
 import { filterDataByYear, mergeChartData } from "../../lib/chartUtils";
 import { parseYearMonth } from "../../lib/yearMonth";
+import { adaptCpiViewToChartData, adaptEarningsViewToChartData } from "../../lib/chartAdapters";
 import styles from "./CpiChart.module.css";
 import { ChartFilters } from "./ChartFilters";
 import { useChartTheme } from "../../hooks/useChartTheme";
@@ -100,21 +100,25 @@ export default function CpiChart({
   const [startYear, setStartYear] = useState(initialStartYear);
   const [endYear, setEndYear] = useState(initialEndYear);
 
+  // View Model 型をチャート計算用の内部型に統一
+  const chartData = useMemo(() => adaptCpiViewToChartData(data), [data]);
+
   // ステートに基づいてデータをフィルタリング
   const filteredData = useMemo(
-    () => filterDataByYear(data as unknown as CpiData[], startYear, endYear),
-    [data, startYear, endYear],
+    () => filterDataByYear(chartData, startYear, endYear),
+    [chartData, startYear, endYear],
   );
 
   const filteredTotalEarningData = useMemo(
-    () => filterDataByYear(totalEarningData as unknown as CpiData[], startYear, endYear),
+    () => filterDataByYear(adaptEarningsViewToChartData(totalEarningData), startYear, endYear),
     [totalEarningData, startYear, endYear],
   );
 
   // データマッピングの統合: CPIと賃金データを年月で結合
   const mergedData = useMemo(
-    () => mergeChartData(filteredTotalEarningData, data as unknown as CpiData[], startYear, endYear),
-    [filteredTotalEarningData, data, startYear, endYear],
+    () =>
+      mergeChartData(filteredTotalEarningData, chartData, startYear, endYear),
+    [filteredTotalEarningData, chartData, startYear, endYear],
   );
 
   // 表示項目として mergedData を利用するため、明示的に参照を確保
@@ -212,7 +216,13 @@ export default function CpiChart({
     // クライアントライブラリの calculateCategorySum を使用
     let startValue = 0;
     try {
-      startValue = calculateCategorySum(data as unknown as CpiData[], startYear, cagrMonth, stackedHiddenKeys, stackedKeys);
+      startValue = calculateCategorySum(
+        chartData,
+        startYear,
+        cagrMonth,
+        stackedHiddenKeys,
+        stackedKeys,
+      );
     } catch {
       const monthStr = String(cagrMonth).padStart(2, "0");
       setCagrError(
@@ -223,7 +233,13 @@ export default function CpiChart({
 
     let endValue = 0;
     try {
-      endValue = calculateCategorySum(data as unknown as CpiData[], endYear, cagrMonth, stackedHiddenKeys, stackedKeys);
+      endValue = calculateCategorySum(
+        chartData,
+        endYear,
+        cagrMonth,
+        stackedHiddenKeys,
+        stackedKeys,
+      );
     } catch {
       const monthStr = String(cagrMonth).padStart(2, "0");
       setCagrError(

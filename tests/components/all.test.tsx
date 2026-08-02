@@ -52,7 +52,7 @@ const mockCtiData = [
 ];
 
 const mockQuarterlyData = [
-  { label: "2023年Q1", 年: 2023, quarter: 1, "総合（名目）": 100, "総合（実質）": 100 },
+  { label: "2023年Q1", 年: 2023, quarter: 1, 年月: "2023年1月", "総合（名目）": 100, "総合（実質）": 100 },
 ];
 const mockCpiData: CpiData[] = [
   {
@@ -339,7 +339,7 @@ describe("ChartLegend", () => {
 describe("SpendingBarChart", () => {
   const mockProps = {
     title: "Test Bar Chart",
-    data: [{ label: "2023年Q1", 年: 2023, quarter: 1, キー1: 100 }],
+    data: [{ label: "2023年Q1", 年: 2023, quarter: 1, 年月: "2023年1月", キー1: 100 }],
     keys: ["キー1"],
     colors: ["#000"],
     hiddenKeys: [],

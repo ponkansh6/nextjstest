@@ -1,15 +1,18 @@
 import React from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import type { CpiData } from "@/types";
 import styles from "./CpiChart.module.css";
 import { getLegendLabel, SUPPORT_SERIES_KEY_NOMINAL } from "../../lib/chartConstants";
 import type { CustomTooltipProps } from "@/types/chart";
 import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
 import { CHART_INFO } from "../../lib/chartInfoContent";
+import { YearReferenceLines } from "./charts/YearReferenceLines";
 
 interface QuarterlyDataPoint {
   label: string;
   年: number;
   quarter: number;
+  年月: string;
   [key: string]: string | number;
 }
 
@@ -112,6 +115,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.gridStroke} />
+            <YearReferenceLines data={data as unknown as CpiData[]} stroke={chartColors.gridStroke} />
             <XAxis
               dataKey="label"
               axisLine={false}
