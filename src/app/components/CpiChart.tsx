@@ -7,6 +7,7 @@ import styles from "./CpiChart.module.css";
 import { ChartFilters } from "./ChartFilters";
 import { useChartTheme } from "../../hooks/useChartTheme";
 import { useCpiChartData } from "../../hooks/useCpiChartData";
+import { CustomTooltip } from "./CustomTooltip";
 import { SpendingBarChart } from "./SpendingBarChart";
 import { StackedAreaChart } from "./StackedAreaChart";
 import { EarningsBreakdownChart } from "./EarningsBreakdownChart";
@@ -41,69 +42,6 @@ interface CpiChartProps {
   totalEarningData: CpiData[];
 }
 
-interface CustomTooltipProps {
-  active?: boolean;
-  payload?: { name: string; value: number }[];
-  label?: string;
-  isMobile: boolean;
-  tooltipBg: string;
-  tooltipText: string;
-}
-
-const CustomTooltip: React.FC<CustomTooltipProps> = ({
-  active,
-  payload,
-  label,
-  isMobile,
-  tooltipBg,
-  tooltipText,
-}) => {
-  if (!active || !payload) {
-    return null;
-  }
-
-  const fontSize = isMobile ? "12px" : "14px";
-  const labelFontSize = isMobile ? "11px" : "13px";
-  const padding = isMobile ? "8px" : "12px";
-
-  return (
-    <div
-      style={{
-        backgroundColor: tooltipBg,
-        border: "none",
-        borderRadius: "8px",
-        boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-        color: tooltipText,
-        padding: padding,
-      }}
-    >
-      <p
-        style={{
-          color: tooltipText,
-          fontSize: labelFontSize,
-          fontWeight: "bold",
-          margin: 0,
-          marginBottom: "4px",
-        }}
-      >
-        {label}
-      </p>
-      {payload.map((entry, index) => (
-        <p
-          key={`item-${index}`}
-          style={{
-            color: tooltipText,
-            fontSize: fontSize,
-            margin: "2px 0",
-          }}
-        >
-          {entry.name}: {typeof entry.value === "number" ? entry.value.toFixed(2) : entry.value}
-        </p>
-      ))}
-    </div>
-  );
-};
-
 export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartProps) {
   const { isMobile, chartColors } = useChartTheme();
 
@@ -118,8 +56,6 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
     });
     return [...years].toSorted((a, b) => a - b);
   }, [data]);
-
-  console.log("DEBUG allYears:", allYears);
 
   // 表示範囲のステート
   // 初期値がNaNやundefinedにならないよう、確実に数値(0含む)を返すように修正
@@ -340,14 +276,7 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
           onToggle={handleLegendClick}
           chartColors={chartColors}
           isMobile={isMobile}
-          CustomTooltip={(props: {
-            active?: boolean;
-            payload?: { name: string; value: number }[];
-            label?: string;
-            isMobile: boolean;
-            tooltipBg: string;
-            tooltipText: string;
-          }) => <CustomTooltip {...props} />}
+          CustomTooltip={CustomTooltip}
         />
       </div>
 
@@ -509,28 +438,14 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
         onToggle={handleLegendClick}
         chartColors={chartColors}
         isMobile={isMobile}
-        CustomTooltip={(props: {
-          active?: boolean;
-          payload?: { name: string; value: number }[];
-          label?: string;
-          isMobile: boolean;
-          tooltipBg: string;
-          tooltipText: string;
-        }) => <CustomTooltip {...props} />}
+        CustomTooltip={CustomTooltip}
       />
 
       <ResidualAreaChart
         data={mergedData}
         chartColors={chartColors}
         isMobile={isMobile}
-        CustomTooltip={(props: {
-          active?: boolean;
-          payload?: { name: string; value: number }[];
-          label?: string;
-          isMobile: boolean;
-          tooltipBg: string;
-          tooltipText: string;
-        }) => <CustomTooltip {...props} />}
+        CustomTooltip={CustomTooltip}
       />
 
       <NewGraph
@@ -540,14 +455,7 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
         chartColors={chartColors}
         isMobile={isMobile}
         chartKey="new-graph"
-        CustomTooltip={(props: {
-          active?: boolean;
-          payload?: { name: string; value: number }[];
-          label?: string;
-          isMobile: boolean;
-          tooltipBg: string;
-          tooltipText: string;
-        }) => <CustomTooltip {...props} />}
+        CustomTooltip={CustomTooltip}
       />
     </div>
   );

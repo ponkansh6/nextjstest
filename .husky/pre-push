@@ -17,6 +17,18 @@ if echo "$PUSH_FILES" | grep -qE "^(src/|server/|tests/)"; then
   fi
 fi
 
+# --- Test file staleness check ---
+if echo "$PUSH_FILES" | grep -qE "^src/"; then
+  if echo "$PUSH_FILES" | grep -qE "^tests/"; then
+    echo "Test files updated."
+  else
+    echo ""
+    echo "⚠️  Warning: src/ files changed but tests/ was NOT updated."
+    echo "   Consider adding or updating tests for the changed source code."
+    echo ""
+  fi
+fi
+
 # --- UI tests ---
 if echo "$PUSH_FILES" | grep -qE "src/app/components|tests/components|src/lib/chart"; then
   echo "Running pre-push UI tests for relevant changes..."

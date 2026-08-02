@@ -36,36 +36,36 @@ export function findHeaderRow(rows: string[][], patterns: RegExp[]): number {
 }
 
 export function buildCpiFilePath(filename: string): string {
-  return path.join(process.cwd(), "public", filename);
+  return path.join(process.cwd(), "data/source", filename);
 }
 
 export function buildPopulationFilePath(): string {
-  return path.join(process.cwd(), "public", "population_statistics.csv");
+  return path.join(process.cwd(), "data/source", "population_statistics.csv");
 }
 
 export function buildEarningsFilePaths() {
   return {
-    contractual: path.join(process.cwd(), "public", "contractual_earnings.csv"),
-    scheduled: path.join(process.cwd(), "public", "scheduled_earnings.csv"),
-    total: path.join(process.cwd(), "public", "total_earning.csv"),
-    hours: path.join(process.cwd(), "public", "total_worked_hours.csv"),
-    employment: path.join(process.cwd(), "public", "employment_indices.csv"),
-    honMks: path.join(process.cwd(), "public", "hon-mks202512.csv"),
+    contractual: path.join(process.cwd(), "data/source", "contractual_earnings.csv"),
+    scheduled: path.join(process.cwd(), "data/source", "scheduled_earnings.csv"),
+    total: path.join(process.cwd(), "data/source", "total_earning.csv"),
+    hours: path.join(process.cwd(), "data/source", "total_worked_hours.csv"),
+    employment: path.join(process.cwd(), "data/source", "employment_indices.csv"),
+    honMks: path.join(process.cwd(), "data/source", "hon-mks202512.csv"),
   };
 }
 
 export function buildCtiFilePaths() {
   return {
-    main: path.join(process.cwd(), "public", "cti_data.csv"),
-    supportNominal: path.join(process.cwd(), "public", "cti_support_nominal.csv"),
-    supportReal: path.join(process.cwd(), "public", "cti_support_real.csv"),
+    main: path.join(process.cwd(), "data/source", "cti_data.csv"),
+    supportNominal: path.join(process.cwd(), "data/source", "cti_support_nominal.csv"),
+    supportReal: path.join(process.cwd(), "data/source", "cti_support_real.csv"),
   };
 }
 
 export function buildCpiFilePaths() {
   return {
-    main: path.join(process.cwd(), "public", "cpi_data.csv"),
-    contribution: path.join(process.cwd(), "public", "contribution.csv"),
+    main: path.join(process.cwd(), "data/source", "cpi_data.csv"),
+    contribution: path.join(process.cwd(), "data/source", "contribution.csv"),
   };
 }
 
