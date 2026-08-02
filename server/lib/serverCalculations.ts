@@ -52,30 +52,3 @@ export function applyResidualMovingAverage(data: CpiData[]): void {
   }
 }
 
-/**
- * Generic moving average calculator for a specific key.
- * Used for smoothing '特別給与' with a 12-month window.
- */
-export function applyMovingAverage(
-  data: Array<Record<string, number | string>>,
-  key: string,
-  windowSize: number,
-): void {
-  const originalValues = data.map((d) => {
-    const val = d[key];
-    return typeof val === "number" ? val : 0;
-  });
-
-  data.forEach((item, index) => {
-    let sum = 0;
-    let count = 0;
-    for (let i = Math.max(0, index - (windowSize - 1)); i <= index; i++) {
-      const val = originalValues[i];
-      if (typeof val === "number") {
-        sum += val;
-        count++;
-      }
-    }
-    item[key] = count > 0 ? sum / count : 0;
-  });
-}

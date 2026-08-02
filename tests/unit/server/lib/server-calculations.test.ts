@@ -3,7 +3,7 @@ import {
   calculateSmoothedTotal,
   calculateRawResidual,
   applyResidualMovingAverage,
-  applyMovingAverage,
+  // applyMovingAverage, // Removed: dead code (test-only usage)
 } from "../../../../server/lib/serverCalculations";
 import type { CpiData } from "../../../../src/types";
 
@@ -39,22 +39,22 @@ describe("calculations.ts", () => {
     });
   });
 
-  describe("applyMovingAverage", () => {
-    it("should calculate a simple moving average", () => {
-      const data = [{ val: 10 }, { val: 20 }, { val: 30 }, { val: 40 }];
-      // windowSize = 2
-      applyMovingAverage(data, "val", 2);
-
-      // index 0: (10)/1 = 10
-      // index 1: (10+20)/2 = 15
-      // index 2: (20+30)/2 = 25
-      // index 3: (30+40)/2 = 35
-      expect(data[0].val).toBe(10);
-      expect(data[1].val).toBe(15);
-      expect(data[2].val).toBe(25);
-      expect(data[3].val).toBe(35);
-    });
-  });
+  // describe("applyMovingAverage", () => {
+  //   it("should calculate a simple moving average", () => {
+  //     const data = [{ val: 10 }, { val: 20 }, { val: 30 }, { val: 40 }];
+  //     // windowSize = 2
+  //     applyMovingAverage(data, "val", 2);
+  //
+  //     // index 0: (10)/1 = 10
+  //     // index 1: (10+20)/2 = 15
+  //     // index 2: (20+30)/2 = 25
+  //     // index 3: (30+40)/2 = 35
+  //     expect(data[0].val).toBe(10);
+  //     expect(data[1].val).toBe(15);
+  //     expect(data[2].val).toBe(25);
+  //     expect(data[3].val).toBe(35);
+  //   });
+  // }); // Removed: function deleted (dead code)
 
   describe("applyResidualMovingAverage", () => {
     it("should apply 2-month moving average to residual", () => {

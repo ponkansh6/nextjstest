@@ -6,6 +6,8 @@ import {
   CONSUMPTION_REAL_KEYS,
 } from "@/lib/chartConstants";
 import { applySupportSeriesScaling } from "@server/lib/math/supportSeries";
+import { normalizeYearMonth } from "@/lib/yearMonth";
+import { calculateQuarter } from "@/lib/math/quarter";
 
 export interface QuarterlyRow {
   年: number;
@@ -29,15 +31,10 @@ export function computeQuarterlyAggregates(
   const realKeys = CONSUMPTION_REAL_KEYS;
 
   // Normalize 年月 to canonical form "YYYY年M月"
-  const normalizedData: CpiData[] = ctiData.map((d) => {
-    const ym = String(d.年月 || "");
-    const m = ym.match(/^(\d{4})年0?(\d{1,2})月/);
-    if (!m) return d;
-    return {
-      ...d,
-      年月: `${m[1]}年${parseInt(m[2], 10)}月`,
-    };
-  });
+  const normalizedData: CpiData[] = ctiData.map((d) => ({
+    ...d,
+    年月: normalizeYearMonth(String(d.年月 || "")),
+  }));
 
   // Determine year range: use all data from 1994 up to maxCpiDate.year
   let minYear = 1994;
@@ -82,7 +79,7 @@ export function computeQuarterlyAggregates(
   const getQuarterlyData = (keys: string[]) => {
     const rows: QuarterlyRow[] = [];
     for (let y = minYear; y <= maxYear; y++) {
-      const maxQ = y === maxCpiDate.year ? Math.ceil(maxCpiDate.month / 3) : 4;
+      const maxQ = y === maxCpiDate.year ? calculateQuarter(maxCpiDate.month) : 4;
       for (let q = 1; q <= maxQ; q++) {
         const months =
           q === 1 ? [1, 2, 3] : q === 2 ? [4, 5, 6] : q === 3 ? [7, 8, 9] : [10, 11, 12];

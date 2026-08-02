@@ -86,10 +86,10 @@ export default async function Page() {
 
       {projectedCpiData.length > 0 ? (
         <CpiChart
-          data={projectedCpiData as any}
-          quarterlyNominalData={projectedQuarterlyNominal as any}
-          quarterlyRealData={projectedQuarterlyReal as any}
-          totalEarningData={projectedEarningsData as any}
+          data={projectedCpiData}
+          quarterlyNominalData={projectedQuarterlyNominal}
+          quarterlyRealData={projectedQuarterlyReal}
+          totalEarningData={projectedEarningsData}
           maxCpiDate={maxCpiDate}
         />
       ) : (

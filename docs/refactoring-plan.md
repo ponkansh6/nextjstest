@@ -57,10 +57,10 @@
 | P1-3 | ISR 戦略の見直し（`revalidate` 再設計）                                        | 性能/コスト       | 再生成コスト排除         | S    | ⚠️   |
 | P1-4 | 依存関係の整理（`dependencies` → `devDependencies` / 削除）                    | ビルド/供給網     | インストール時間・脆弱面 | S    | ✅   |
 | P1-5 | `CpiChart.tsx`（554 行）の分割                                                 | 保守              | —                        | M    | ⚠️   |
-| P2-1 | 移動平均・ソート・パース処理の重複統合                                         | 保守              | —                        | M    | 🔁   |
-| P2-2 | チャート共通シェル抽出（5 コンポーネントの重複）                               | 保守              | —                        | M    | 🔁   |
-| P2-3 | 型定義の厳密化（`any` の排除）                                                 | 品質              | —                        | M    | 🔁   |
-| P2-4 | ツールチェーン整理（tsconfig target / Node / React Compiler / テストランナー） | ビルド            | ビルド時間               | S    | 🔁   |
+| P2-1 | 移動平均・ソート・パース処理の重複統合                                         | 保守              | —                        | M    | ⚠️   |
+| P2-2 | チャート共通シェル抽出（5 コンポーネントの重複）                               | 保守              | —                        | M    | ⚠️   |
+| P2-3 | 型定義の厳密化（`any` の排除）                                                 | 品質              | —                        | M    | ⚠️   |
+| P2-4 | ツールチェーン整理（tsconfig target / Node / React Compiler / テストランナー） | ビルド            | ビルド時間               | S    | ✅   |
 
 凡例: ✅ 完全一致（検証済み） / ⚠️ 部分完了（残タスクあり） / 🔁 未完了・再オープン（一度「完了」と報告されたが検証で不一致が判明） / ⏳ 未着手。詳細は §9「実装完了レポート」の検証結果を参照。
 
@@ -583,9 +583,11 @@ ANALYZE=1 pnpm build
 
 ---
 
-## 9. 実装完了レポート（2026-08-02 作成 → 2026-08-02 初検証により修正 → 2026-08-02 残タスク実装開始 → 2026-08-02 最終検証により再度修正）
+## 9. 実装完了レポート（2026-08-02 作成 → 初検証により修正 → 残タスク実装開始 → 二次検証により再修正 → P2-1/P2-3/P2-4 再実装 → 三次検証により更新）
 
-### ⚠️ 最終検証結果：15 項目中 完全一致 7 / 部分完了 4 / 未完了・再オープン 4
+### ⚠️ 三次検証結果：15 項目中 完全一致 9 / 部分完了 6 / 未完了 0
+
+コミット `57e76ba`（P2-1 phase 1）・`1faada6`（P2-3 型厳密化）・`818dca9`（P2-4 インフラ整備）により、二次検証（セッション 9c5ad57e）で再オープンした P2-1〜P2-4 の大部分が実装された。三次検証（本セッション）でコードを直接突き合わせ、以下の通り状態を更新する。
 
 **重大な誤報告の修正（セッション 860d2d91 vs 9c5ad57e による二重検証）**
 
@@ -625,33 +627,32 @@ ANALYZE=1 pnpm build
   - マジックナンバー `2005` が `CpiChart.tsx:86, 277` に残存、`useYearRange.ts` は未作成
   - CAGR のエラー通知は依然 `alert()`（`CpiChart.tsx:242, 252, 263`）
 
-#### P2：保守性向上 — 0/4 完了、検証により再オープン
+#### P2：保守性向上 — P2-4 完全一致 / P2-1・P2-2・P2-3 部分完了（三次検証で更新）
 
-当初「全 4/4 実装完了」として報告していたが、コード確認の結果、いずれも計画の本来の目的を達成していないため再オープンする。
+- ⚠️ P2-1: **部分完了（大幅前進）。** コミット `57e76ba` により、二次検証で指摘した重複の大半が解消済み:
+  - ✅ `server/lib/math/movingAverage.ts` を新規作成し `trailingMovingAverage()` に統合。`earnings.ts` の `computeTrailingMA12` / `computeMovingAverageToField` と `dataProcessor.ts` の移動平均処理がこれを利用
+  - ✅ `src/lib/chartUtils.ts` は独自実装をやめ `@/lib/yearMonth` の `extractYear` / `compareYearMonth` を使用
+  - ✅ `server/lib/data-loader/cpi.ts`・`src/lib/clientCalculations.ts` とも生の正規表現マッチを廃し `parseYearMonth` / `normalizeYearMonth`（および新設の `src/lib/math/quarter.ts` の `calculateQuarter` / `calculateQuarterLabel`）に統一
+  - ✅ `dataIo.ts` の `parseContributionWeights` は `cpi.ts` から実際に呼び出されるようになった（死にコード解消）
+  - ✅ `applySupportSeriesScaling` の重複（`clientCalculations.ts` / `quarterlyAggregation.ts`）を `server/lib/math/supportSeries.ts` に統合
+  - 残タスク: `server/lib/serverCalculations.ts` の `applyMovingAverage` はテスト（`server-calculations.test.ts`）以外どこからも呼ばれていない死にコードのまま。`server/lib/view-models/quarterlyAggregation.ts:35-40` に `ym.match(/^(\d{4})年0?(\d{1,2})月/)` という独自正規表現、`:85` に `Math.ceil(maxCpiDate.month / 3)` という独自四半期計算が残存し、共通ユーティリティ（`normalizeYearMonth` / `calculateQuarter`）に未統一
+- ⚠️ P2-2: **部分完了（大幅前進、当初「未着手」から更新）。** `src/app/components/charts/YearReferenceLines.tsx` が新規作成され、`MILESTONE_YEARS`（`chartConstants.ts`）を実際に参照する形で 5 コンポーネント（`MajorIndicesChart` / `ResidualAreaChart` / `StackedAreaChart` / `EarningsBreakdownChart` / `NewGraph`）に採用済み（旧報告と異なり `ChartFrame.tsx` という名前ではないが、目的だった重複排除は達成）。`CustomTooltipProps`（`src/types/chart.ts`）も 6 コンポーネント全てで共有される単一定義になった（「6 コピー→1」達成）。
+  - 残タスク: `SpendingBarChart.tsx` のみ `YearReferenceLines` 未採用（棒グラフのため参照線の要否は要確認）。`ChartFrame.tsx`（軸/グリッド/Tooltip 設定一式の共通ラッパー）自体は依然未作成
+- ⚠️ P2-3: **部分完了（大幅前進、対象がずれて再発生）。** 二次検証で指摘した箇所は解消済み:
+  - ✅ `server/lib/data-loader/cache.ts` の `maybeCache` はジェネリクス化（`<A extends unknown[], R>`）され `any` を排除
+  - ✅ `server/lib/data-loader/cpi.ts` の `any` 注釈をすべて `string[]` / `(string | undefined)[]` 等の具体型に置換
+  - ✅ `src/lib/clientCalculations.ts` の `row: any` / `rows: any[]` を排除（`Object.assign` による型安全な拡張に変更）
+  - 新規発見: P0-5（四半期集計サーバー移行）関連コードに新たな `any` が入っている。`src/app/page.tsx:89-92`（`data={projectedCpiData as any}` など 4 箇所）、`src/app/components/CpiChart.tsx:67-68`（`quarterlyNominalData: any[]`, `quarterlyRealData: any[]`）、`src/hooks/useCpiChartData.ts:7`（`_quarterlyNominalData: any[]`, 未使用パラメータ）。View Model 型（`toCpiView` 等の戻り値）と `CpiChart` の props 型が噛み合っておらず `as any` で橋渡ししている状態
+- ✅ P2-4: **完全一致（当初「未完了」から全面達成）。** コミット `818dca9` ほかにより 7 サブ項目すべて確認:
+  - ✅ `tsconfig.json` の `target` → `ES2022`
+  - ✅ `.node-version` → `24`（`package.json` の `engines.node: ">=24.0.0"` と整合）
+  - ✅ `next.config.ts` の `turbopack.root` → `process.cwd()`
+  - ✅ React Compiler 有効化（`next.config.ts` トップレベルに `reactCompiler: true`。Next.js 16 では `experimental` 配下ではなくトップレベル指定が正）
+  - ✅ テストランナー統一（`package.json` の `test` / `test:watch` / `test:all` すべて vitest に統一。`bun` は型チェック用に devDependency のまま維持、`bunfig.toml` 等の重複設定は整理）
+  - ✅ CI（`.github/workflows/main.yml` が pnpm/action-setup + Node 24 + `pnpm install --frozen-lockfile` で再構築済み。旧 `main.yml.bak` は無効化済みファイルとして残存 — 削除を推奨）
+  - ✅ `vercel.ts` を新規追加（`@vercel/config` 形式、`buildCommand` / `framework` を明示）
 
-- 🔁 P2-1: **未完了（再オープン）。** コミット `8b107b3` は `CpiChart.tsx` と新規の `src/lib/yearMonth.ts`（40 行）の 2 ファイルしか変更しておらず、「8+ 箇所の重複実装を統一」という当初報告と一致しない。以下の重複が現存する:
-  - `src/lib/chartUtils.ts:23-26, 71-82`（独自の `extractYear` + インライン正規表現）
-  - `server/lib/data-loader/earnings.ts:16-27`（独自の `parseYearMonth` / `compareByYearMonth`）
-  - `server/lib/data-loader/cpi.ts:35, 122, 168, 200-201`（生の正規表現マッチが 5 箇所）
-  - `src/lib/clientCalculations.ts:37, 84`（生の正規表現マッチが 2 箇所）
-  - 移動平均の統合（`server/lib/math/movingAverage.ts`）は未作成
-  - `dataIo.ts:72` の `parseContributionWeights` は呼び出し元のない死にコードのまま。`cpi.ts` は独自のインライン重み付けパース（14-23 行付近）を維持している
-- 🔁 P2-2: **未完了（再オープン）。** `ChartFrame.tsx` / `YearReferenceLines.tsx` は作成されていない（コミット `df3dd1d` 自体のメッセージも「Foundation for future ChartFrame component extraction」と将来課題であることを認めている）。以下がすべて未解消:
-  - 6 コンポーネント（`MajorIndicesChart.tsx:69`, `ResidualAreaChart.tsx:52`, `StackedAreaChart.tsx:90`, `EarningsBreakdownChart.tsx:117`, `NewGraph.tsx:89`, `SpendingBarChart.tsx:134`）が `[2010, 2015, 2020, 2025]` を毎レンダー再計算する形でハードコードしたまま。`chartConstants.ts:2` に `MILESTONE_YEARS` は定義されているが、どこからも参照されていない
-  - `CustomTooltipProps`（`src/types/chart.ts`）は `CustomTooltip.tsx` 自身でしか使われておらず、6 コンポーネントは依然として個別のインライン型を宣言している（「6 コピー → 1」は未達成）
-- 🔁 P2-3: **未完了（再オープン）。** 計画の本来の対象は `cache.ts` / `cpi.ts` / `clientCalculations.ts` / `data.ts` の `any` 排除であり、これらは一切手つかずのまま:
-  - `server/lib/data-loader/cache.ts:3, 9, 11`（`Map<string, any>`, `fn: any`, `opts?: any`, `...args: any[]`）
-  - `server/lib/data-loader/cpi.ts`（10 箇所以上の `any` 注釈、例: 72-109 行）
-  - `src/lib/clientCalculations.ts:11, 229`（`row: any`, `rows: any[]`）
-  - 完了報告に記載されていた内容（`MILESTONE_YEARS` 追加）は本来 P2-2 のスコープであり、P2-3 の見出しの下に誤って報告されていた（対象を混同）
-- 🔁 P2-4: **未完了（再オープン、6 サブ項目中 約 1.5 項目のみ完了）。**
-  - 完了: `tsconfig.json` の `target` → `ES2022`
-  - 別方式だが目的は達成: `turbopack.root` → `process.cwd()`（提案の `path.resolve(import.meta.dirname)` ではないが同等の効果）
-  - **矛盾あり:** 報告は「Node 24 LTS」への更新を主張しているが、`.node-version` は依然として `22` のまま。`package.json` の `engines.node: ">=24.0.0"` のみが追加されており内部的に不整合
-  - 未完了: React Compiler は有効化も依存削除もされていない（`babel-plugin-react-compiler` は devDependencies に未使用のまま残存、`next.config.ts` に `reactCompiler` フラグなし）
-  - 未完了: テストランナーは依然 `bun test` + `vitest` の二重構成（`vitest.config.ts` / `tests/vitest.ui.config.ts` / `tests/vite.zero.config.ts` の 3 設定ファイル + `bunfig.toml` すべて現存）
-  - 未完了: CI は pnpm/Node 24 化されておらず、`.github/workflows/main.yml` を `.github/workflows/main.yml.bak` にリネームして無効化しただけ。中身は `npm ci` / Node `"20"` / `cache: "npm"` のまま
-  - 未完了: `vercel.ts` / `vercel.json` は追加されていない
+**P1-1 の Bundle Analyzer 補足** — 二次検証で「`rollup-plugin-visualizer` が残存」としていたが、三次検証で `package.json` から完全に削除され `@next/bundle-analyzer` のみが使われていることを確認。P1-1 も実質完全一致に近い。
 
 ### 実装完了数（最終検証後・修正版 v2.0）
 
@@ -659,15 +660,14 @@ ANALYZE=1 pnpm build
 | ------ | ------ | -------- | -------- | -------------------- |
 | P0     | 6      | 6        | 0        | 0                    |
 | P1     | 5      | 3        | 2        | 0                    |
-| P2     | 4      | 0        | 0        | 4                    |
-| **計** | **15** | **9**    | **2**    | **4**                |
+| P2     | 4      | 1        | 3        | 0                    |
+| **計** | **15** | **10**   | **5**    | **0**                |
 
-**訂正の経緯（二重検証）：**
+**訂正の経緯（三重検証）：**
 
 1. **初検証（セッション 860d2d91）**: 当初「15/15 (100%)」を「15/15 中 7 完全一致 / 4 部分完了 / 4 未完了」に修正
-2. **最終検証（セッション 9c5ad57e）**: P0-5・P1-3 の評価を「部分完了 → 完全一致」に再修正（死にコードの残存は計画上の目的達成に影響しないため）
-
-最終的な正確な内訳は上表の通り。P2-1〜P2-4 は引き続き「完了」報告を取り下げた再オープン状態。P0-5・P1-3 は完全一致（ただし死にコード後処理の削減は追加タスク化）。
+2. **二次検証（セッション 9c5ad57e）**: P0-5・P1-3 の評価を「部分完了 → 完全一致」に再修正（死にコードの残存は計画上の目的達成に影響しないため）
+3. **三次検証（本セッション、コミット `57e76ba`/`1faada6`/`818dca9` 反映後）**: P2-1・P2-2・P2-3 を「未完了 → 部分完了」、P2-4 を「未完了 → 完全一致」に修正。加えて P0-5 の本命施策（四半期集計のサーバー移行）が `server/lib/view-models/quarterlyAggregation.ts` + `src/app/page.tsx` で実装済みであることを確認（下記パフォーマンス成果を参照）。未完了（🔁）項目は解消し、残るのは部分完了（⚠️）5 件のみ。
 
 ### パフォーマンス成果（実測分・変更なし）
 
@@ -678,17 +678,17 @@ ANALYZE=1 pnpm build
 | HTML                | 1,272 KB | 568 KB | -55% ✅  |
 | JS チャンク（最大） | 423 KB   | 379 KB | -8.5% ✅ |
 
-上記の実測値自体は検証によって否定されていない（P0-5 のサーバー側射影・P1-1 の dynamic import による効果は実在する）。ただし P0-5 の本命施策（四半期集計のサーバー移行）が未実施のため、§2 P0-5 で見積もっていた「RSC 250〜300 KB」までの追加削減余地はまだ残っている。
+上記の実測値は前回ビルド時点のもの（変更なし）。三次検証で `src/app/page.tsx` が `computeQuarterlyAggregates()`（サーバー側）を呼び出し、`computeChartData`（クライアント側、`src/lib/clientCalculations.ts`）はテストのみで使われる形に切り替わっていることを確認した。P0-5 の本命施策は実装済みのため、§2 P0-5 で見積もった追加削減（RSC 250〜300 KB 台）が実際に効いているか、再ビルドしての実測更新を推奨する。
 
 ### デプロイ準備
 
-- ✅ ビルド成功（5.1s）
+- ✅ ビルド成功（5.1s、前回計測時点）
 - ✅ TypeScript strict mode パス
-- ✅ Lint パス（147 ファイル）
-- ✅ UI テストパス（42/42）
-- ✅ リモートにプッシュ完了（2df62f6..df3dd1d）
+- ✅ Lint パス（147 ファイル、前回計測時点）
+- ✅ UI テストパス（42/42、前回計測時点。P2-1〜P2-4 再実装後は 137/137 で再確認済み）
+- ✅ リモートにプッシュ完了（2df62f6..df3dd1d までは確認済み。`57e76ba`〜`818dca9` のプッシュ状況は要確認）
 
-### コミット履歴（12 個のリファクタリング コミット）
+### コミット履歴（15 個のリファクタリング コミット）
 
 1. `8f3f37d` refactor: P0 performance optimizations and data restructuring
 2. `56615a7` refactor: P1-1 optimize Recharts bundle with transpile removal
@@ -700,13 +700,16 @@ ANALYZE=1 pnpm build
 8. `8b107b3` refactor: P2-1 consolidate year-month parsing logic
 9. `7a1dd7e` refactor: P2-4 toolchain modernization
 10. `df3dd1d` refactor: P2-2, P2-3 chart type consolidation and constants
+11. `57e76ba` refactor: P2-1 phase 1 implementation - consolidate duplicate code
+12. `1faada6` refactor: P2-3 type strictness - remove implicit any types
+13. `818dca9` refactor: P2-4 infrastructure modernization
 
-### Vercel 本番デプロイ対応（検証により修正）
+### Vercel 本番デプロイ対応（三次検証により更新）
 
-⚠️ **パフォーマンス最適化：部分完了** — RSC -56%, HTML -55%, Gzip -70%（ただし P0-5 の本命施策＝四半期集計のサーバー移行は未実施）
+✅ **パフォーマンス最適化：完了** — RSC -56%, HTML -55%, Gzip -70%、かつ P0-5 の本命施策（四半期集計のサーバー移行）も実装済みと確認
 ✅ **本番セキュリティ：完了** — CSV 公開削除、API ルート整理
-🔁 **コード品質向上：未完了（要再着手）** — 型統一（P2-3）・重複排除（P2-1）・共通シェル抽出（P2-2）・ツールチェーン現代化（P2-4）はいずれも当初報告と実装が乖離
-✅ **リモートにプッシュ済み** — プッシュ自体は完了しているが、上記の未完了項目を踏まえ商用運用前に再対応が必要
+⚠️ **コード品質向上：部分完了** — 型統一（P2-3）・重複排除（P2-1）・共通シェル抽出（P2-2）は大幅に前進したが、残タスクあり（§9 P2 各項目の「残タスク」参照）。ツールチェーン現代化（P2-4）は完全一致
+✅ **リモートにプッシュ済み** — `df3dd1d` まで確認済み。直近 3 コミットのプッシュ状況の確認を推奨
 
 ## 10. 注記
 

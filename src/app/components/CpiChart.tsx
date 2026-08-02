@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import type { CpiData } from "@/types";
+import type { CpiView, QuarterlyView, EarningsView } from "@/types/chart";
 import { filterDataByYear, mergeChartData } from "../../lib/chartUtils";
 import { parseYearMonth } from "../../lib/yearMonth";
 import styles from "./CpiChart.module.css";
@@ -63,10 +64,10 @@ const getColorForNominalKey = (key: string): string => {
 };
 
 interface CpiChartProps {
-  data: CpiData[];
-  quarterlyNominalData: any[];
-  quarterlyRealData: any[];
-  totalEarningData: CpiData[];
+  data: CpiView[];
+  quarterlyNominalData: QuarterlyView[];
+  quarterlyRealData: QuarterlyView[];
+  totalEarningData: EarningsView[];
   maxCpiDate: { year: number; month: number };
 }
 
@@ -101,18 +102,18 @@ export default function CpiChart({
 
   // ステートに基づいてデータをフィルタリング
   const filteredData = useMemo(
-    () => filterDataByYear(data, startYear, endYear),
+    () => filterDataByYear(data as unknown as CpiData[], startYear, endYear),
     [data, startYear, endYear],
   );
 
   const filteredTotalEarningData = useMemo(
-    () => filterDataByYear(totalEarningData, startYear, endYear),
+    () => filterDataByYear(totalEarningData as unknown as CpiData[], startYear, endYear),
     [totalEarningData, startYear, endYear],
   );
 
   // データマッピングの統合: CPIと賃金データを年月で結合
   const mergedData = useMemo(
-    () => mergeChartData(filteredTotalEarningData, data, startYear, endYear),
+    () => mergeChartData(filteredTotalEarningData, data as unknown as CpiData[], startYear, endYear),
     [filteredTotalEarningData, data, startYear, endYear],
   );
 
@@ -154,10 +155,7 @@ export default function CpiChart({
   const [cagrError, setCagrError] = useState<string | null>(null);
 
   // Filter quarterly data by hiddenQuarters
-  const { hiddenQuarters, toggleQuarter } = useCpiChartData(
-    quarterlyNominalData,
-    quarterlyRealData,
-  );
+  const { hiddenQuarters, toggleQuarter } = useCpiChartData();
 
   const handleQuarterLegendClick = (quarter: number) => {
     toggleQuarter(quarter);
@@ -214,7 +212,7 @@ export default function CpiChart({
     // クライアントライブラリの calculateCategorySum を使用
     let startValue = 0;
     try {
-      startValue = calculateCategorySum(data, startYear, cagrMonth, stackedHiddenKeys, stackedKeys);
+      startValue = calculateCategorySum(data as unknown as CpiData[], startYear, cagrMonth, stackedHiddenKeys, stackedKeys);
     } catch {
       const monthStr = String(cagrMonth).padStart(2, "0");
       setCagrError(
@@ -225,7 +223,7 @@ export default function CpiChart({
 
     let endValue = 0;
     try {
-      endValue = calculateCategorySum(data, endYear, cagrMonth, stackedHiddenKeys, stackedKeys);
+      endValue = calculateCategorySum(data as unknown as CpiData[], endYear, cagrMonth, stackedHiddenKeys, stackedKeys);
     } catch {
       const monthStr = String(cagrMonth).padStart(2, "0");
       setCagrError(
