@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@11.9.0",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "scripts": {
     "preinstall": "pnpm dlx only-allow pnpm",
     "tsgo": "tsgo",
