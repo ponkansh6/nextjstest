@@ -583,7 +583,7 @@ ANALYZE=1 pnpm build
 
 ## 9. 実装完了レポート（2026-08-02）
 
-### 完了項目（9/15）
+### 完了項目（12/15）
 
 #### P0：本番前必須修正 ✅ **全 6/6 完了**
 
@@ -640,6 +640,9 @@ ANALYZE=1 pnpm build
 - `18bea7f` refactor: P1-4 clean up dependencies
 - `3b6ac98` docs: Update spec.md to reflect P0 changes
 - `56a75d4` fix: Update CSV output paths in conversion scripts
+- `9f76f0d` docs: Add script maintenance note to refactoring plan
+- `87dd32e` refactor: P1-3 ISR strategy optimization + dead code cleanup
+- `dcf9a8b` refactor: P1-5 extract CagrPanel component from CpiChart
 
 ## 10. 注記
 
