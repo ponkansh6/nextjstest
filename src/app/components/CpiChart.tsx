@@ -13,17 +13,26 @@ import { StackedAreaChart } from "./StackedAreaChart";
 import { MajorIndicesChart } from "./MajorIndicesChart";
 import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
 
-const SpendingBarChart = dynamic(() => import("./SpendingBarChart").then((m) => m.SpendingBarChart), {
-  loading: () => <div className={styles.chartSkeleton}>Chart loading...</div>,
-});
+const SpendingBarChart = dynamic(
+  () => import("./SpendingBarChart").then((m) => m.SpendingBarChart),
+  {
+    loading: () => <div className={styles.chartSkeleton}>Chart loading...</div>,
+  },
+);
 
-const EarningsBreakdownChart = dynamic(() => import("./EarningsBreakdownChart").then((m) => m.EarningsBreakdownChart), {
-  loading: () => <div className={styles.chartSkeleton}>Chart loading...</div>,
-});
+const EarningsBreakdownChart = dynamic(
+  () => import("./EarningsBreakdownChart").then((m) => m.EarningsBreakdownChart),
+  {
+    loading: () => <div className={styles.chartSkeleton}>Chart loading...</div>,
+  },
+);
 
-const ResidualAreaChart = dynamic(() => import("./ResidualAreaChart").then((m) => m.ResidualAreaChart), {
-  loading: () => <div className={styles.chartSkeleton}>Chart loading...</div>,
-});
+const ResidualAreaChart = dynamic(
+  () => import("./ResidualAreaChart").then((m) => m.ResidualAreaChart),
+  {
+    loading: () => <div className={styles.chartSkeleton}>Chart loading...</div>,
+  },
+);
 
 const NewGraph = dynamic(() => import("./NewGraph").then((m) => m.NewGraph), {
   loading: () => <div className={styles.chartSkeleton}>Chart loading...</div>,
