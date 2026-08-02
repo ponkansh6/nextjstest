@@ -10,15 +10,15 @@
 
 `pnpm build` を実行して取得した実データ（すべて未圧縮バイト、gzip は `gzip -9`）。
 
-| 指標 | 実測値 |
-| --- | --- |
-| `/` プリレンダー HTML | **1,272,346 B**（gzip 130,699 B） |
-| `/` RSC ペイロード（`index.rsc`） | **1,169,282 B**（gzip 127,352 B） |
-| クライアント JS 合計 | **1,025 KB** |
-| 最大チャンク（Recharts 相当） | **422,972 B** |
-| 2 番目のチャンク | 227,537 B |
-| Function にトレースされるファイル数 | **143 個**（うち CSV 24 個 ≒ 2.6 MB） |
-| ルート構成 | `/` = Static (ISR 1h), `/api/{cpi,cti,earnings}` = Dynamic |
+| 指標                                | 実測値                                                     |
+| ----------------------------------- | ---------------------------------------------------------- |
+| `/` プリレンダー HTML               | **1,272,346 B**（gzip 130,699 B）                          |
+| `/` RSC ペイロード（`index.rsc`）   | **1,169,282 B**（gzip 127,352 B）                          |
+| クライアント JS 合計                | **1,025 KB**                                               |
+| 最大チャンク（Recharts 相当）       | **422,972 B**                                              |
+| 2 番目のチャンク                    | 227,537 B                                                  |
+| Function にトレースされるファイル数 | **143 個**（うち CSV 24 個 ≒ 2.6 MB）                      |
+| ルート構成                          | `/` = Static (ISR 1h), `/api/{cpi,cti,earnings}` = Dynamic |
 
 ペイロード内訳（`index.rsc` のキー出現回数）:
 
@@ -33,23 +33,23 @@
 
 ## 1. 優先度サマリ
 
-| # | 項目 | 分類 | 想定効果 | 工数 |
-| --- | --- | --- | --- | --- |
-| P0-1 | `console.log` の本番混入除去 | 品質 | 即時 | XS |
-| P0-2 | `useCpiChartData` の `useMemo` が毎レンダー無効化 | 性能 | 操作レイテンシ大 | S |
-| P0-3 | `CustomTooltip` インライン化によるコンポーネント再マウント | 性能 | 操作レイテンシ大 | S |
-| P0-4 | `useChartTheme` が毎回新オブジェクトを返す | 性能 | 再描画抑制 | XS |
-| P0-5 | サーバー側でのデータ射影・丸め・事前集計 | 性能 | **転送量 -70〜80%** | M |
-| P0-6 | 生 CSV を `public/` から退避 | 配信/セキュリティ | Function サイズ -2.6 MB | S |
-| P1-1 | Recharts チャンク（423 KB）の分割・遅延化 | 性能 | 初期 JS -40% 目標 | M |
-| P1-2 | 未使用 API ルート 3 本の削除 | 保守/コスト | Function 3 本削減 | XS |
-| P1-3 | ISR 戦略の見直し（`revalidate` 再設計） | 性能/コスト | 再生成コスト排除 | S |
-| P1-4 | 依存関係の整理（`dependencies` → `devDependencies` / 削除） | ビルド/供給網 | インストール時間・脆弱面 | S |
-| P1-5 | `CpiChart.tsx`（554 行）の分割 | 保守 | — | M |
-| P2-1 | 移動平均・ソート・パース処理の重複統合 | 保守 | — | M |
-| P2-2 | チャート共通シェル抽出（5 コンポーネントの重複） | 保守 | — | M |
-| P2-3 | 型定義の厳密化（`any` の排除） | 品質 | — | M |
-| P2-4 | ツールチェーン整理（tsconfig target / Node / React Compiler / テストランナー） | ビルド | ビルド時間 | S |
+| #    | 項目                                                                           | 分類              | 想定効果                 | 工数 |
+| ---- | ------------------------------------------------------------------------------ | ----------------- | ------------------------ | ---- |
+| P0-1 | `console.log` の本番混入除去                                                   | 品質              | 即時                     | XS   |
+| P0-2 | `useCpiChartData` の `useMemo` が毎レンダー無効化                              | 性能              | 操作レイテンシ大         | S    |
+| P0-3 | `CustomTooltip` インライン化によるコンポーネント再マウント                     | 性能              | 操作レイテンシ大         | S    |
+| P0-4 | `useChartTheme` が毎回新オブジェクトを返す                                     | 性能              | 再描画抑制               | XS   |
+| P0-5 | サーバー側でのデータ射影・丸め・事前集計                                       | 性能              | **転送量 -70〜80%**      | M    |
+| P0-6 | 生 CSV を `public/` から退避                                                   | 配信/セキュリティ | Function サイズ -2.6 MB  | S    |
+| P1-1 | Recharts チャンク（423 KB）の分割・遅延化                                      | 性能              | 初期 JS -40% 目標        | M    |
+| P1-2 | 未使用 API ルート 3 本の削除                                                   | 保守/コスト       | Function 3 本削減        | XS   |
+| P1-3 | ISR 戦略の見直し（`revalidate` 再設計）                                        | 性能/コスト       | 再生成コスト排除         | S    |
+| P1-4 | 依存関係の整理（`dependencies` → `devDependencies` / 削除）                    | ビルド/供給網     | インストール時間・脆弱面 | S    |
+| P1-5 | `CpiChart.tsx`（554 行）の分割                                                 | 保守              | —                        | M    |
+| P2-1 | 移動平均・ソート・パース処理の重複統合                                         | 保守              | —                        | M    |
+| P2-2 | チャート共通シェル抽出（5 コンポーネントの重複）                               | 保守              | —                        | M    |
+| P2-3 | 型定義の厳密化（`any` の排除）                                                 | 品質              | —                        | M    |
+| P2-4 | ツールチェーン整理（tsconfig target / Node / React Compiler / テストランナー） | ビルド            | ビルド時間               | S    |
 
 ---
 
@@ -97,7 +97,7 @@ const { quarterlyNominalData, ... } = useCpiChartData({
 ```ts
 const { quarterlyNominalData, quarterlyRealData } = useMemo(
   () => computeChartData(props, hiddenQuarters),
-  [hiddenQuarters, props],   // ← props は毎レンダー新しい参照
+  [hiddenQuarters, props], // ← props は毎レンダー新しい参照
 );
 ```
 
@@ -111,8 +111,22 @@ export const useCpiChartData = (props: UseCpiChartDataProps) => {
   const { data, nominalData, startYear, endYear, nominalKeys, realKeys, maxCpiDate } = props;
 
   const result = useMemo(
-    () => computeChartData({ data, nominalData, startYear, endYear, nominalKeys, realKeys, maxCpiDate }, hiddenQuarters),
-    [data, nominalData, startYear, endYear, nominalKeys, realKeys, maxCpiDate.year, maxCpiDate.month, hiddenQuarters],
+    () =>
+      computeChartData(
+        { data, nominalData, startYear, endYear, nominalKeys, realKeys, maxCpiDate },
+        hiddenQuarters,
+      ),
+    [
+      data,
+      nominalData,
+      startYear,
+      endYear,
+      nominalKeys,
+      realKeys,
+      maxCpiDate.year,
+      maxCpiDate.month,
+      hiddenQuarters,
+    ],
   );
   // ...
 };
@@ -218,11 +232,11 @@ export function toCpiView(rows: CpiData[]): CpiView[] {
 
 **期待効果（見積り）**
 
-| | 現状 | 対策後（見積り） |
-| --- | --- | --- |
+|                | 現状     | 対策後（見積り）   |
+| -------------- | -------- | ------------------ |
 | RSC ペイロード | 1,169 KB | **約 250〜300 KB** |
-| gzip 後 | 127 KB | **約 30〜40 KB** |
-| HTML | 1,272 KB | **約 350 KB** |
+| gzip 後        | 127 KB   | **約 30〜40 KB**   |
+| HTML           | 1,272 KB | **約 350 KB**      |
 
 LCP / TTI に直接効く。Vercel の帯域課金・Edge キャッシュ効率にも効く。
 
@@ -270,9 +284,12 @@ git mv public/contribution.csv           data/source/contribution.csv
 2. **ファーストビュー外のチャートを `next/dynamic` 化** — ページには 7 つのチャートが縦に並ぶが、初期表示で見えるのは 1〜2 個。3 番目以降を遅延ロードする。
 
 ```tsx
-const SpendingBarChart = dynamic(() => import("./SpendingBarChart").then((m) => m.SpendingBarChart), {
-  loading: () => <ChartSkeleton />,
-});
+const SpendingBarChart = dynamic(
+  () => import("./SpendingBarChart").then((m) => m.SpendingBarChart),
+  {
+    loading: () => <ChartSkeleton />,
+  },
+);
 ```
 
 `ssr: false` は SEO とレイアウトシフトの観点から**付けない**（SSR させたうえで JS の読み込みだけ遅らせる）。
@@ -292,7 +309,7 @@ const SpendingBarChart = dynamic(() => import("./SpendingBarChart").then((m) => 
 **対策** — 削除する。外部公開 API として意図があるなら、以下を明示する。
 
 ```ts
-export const revalidate = 3600;          // 静的化してキャッシュ
+export const revalidate = 3600; // 静的化してキャッシュ
 export const dynamic = "force-static";
 ```
 
@@ -310,7 +327,7 @@ export const dynamic = "force-static";
 
 ```ts
 // src/app/page.tsx
-export const revalidate = false;   // デプロイ時にのみ生成
+export const revalidate = false; // デプロイ時にのみ生成
 ```
 
 ローダー側の `unstable_cache` も不要になる（`server/lib/data-loader/cache.ts` ごと整理できる）。
@@ -325,15 +342,15 @@ export const revalidate = false;   // デプロイ時にのみ生成
 
 ### P1-4. 依存関係の整理
 
-| パッケージ | 現状 | 実際の使用箇所 | 対応 |
-| --- | --- | --- | --- |
-| `sqlite-vec` | dependencies | **どこからも未使用** | 削除 |
-| `react-is` | dependencies | **未使用** | 削除 |
-| `@reduxjs/toolkit` | dependencies | `tests/vitest.ui.config.ts` の `inline` 指定のみ（実コードで未使用） | 削除（テスト設定も見直し） |
-| `xlsx` (0.18.5) | dependencies | `scripts/ts_converters/**` のみ | **devDependencies へ** |
-| `arquero` | dependencies | `scripts/**` のみ | **devDependencies へ** |
-| `iconv-lite` | dependencies | `scripts/ts_converters/**` のみ | **devDependencies へ** |
-| `rollup-plugin-visualizer` | devDependencies | 未使用（Next では効かない） | `@next/bundle-analyzer` に置換 |
+| パッケージ                 | 現状            | 実際の使用箇所                                                       | 対応                           |
+| -------------------------- | --------------- | -------------------------------------------------------------------- | ------------------------------ |
+| `sqlite-vec`               | dependencies    | **どこからも未使用**                                                 | 削除                           |
+| `react-is`                 | dependencies    | **未使用**                                                           | 削除                           |
+| `@reduxjs/toolkit`         | dependencies    | `tests/vitest.ui.config.ts` の `inline` 指定のみ（実コードで未使用） | 削除（テスト設定も見直し）     |
+| `xlsx` (0.18.5)            | dependencies    | `scripts/ts_converters/**` のみ                                      | **devDependencies へ**         |
+| `arquero`                  | dependencies    | `scripts/**` のみ                                                    | **devDependencies へ**         |
+| `iconv-lite`               | dependencies    | `scripts/ts_converters/**` のみ                                      | **devDependencies へ**         |
+| `rollup-plugin-visualizer` | devDependencies | 未使用（Next では効かない）                                          | `@next/bundle-analyzer` に置換 |
 
 **`xlsx` については補足** — npm 上の `xlsx@0.18.5` は SheetJS が npm 配布を停止する前の版で、プロトタイプ汚染 / ReDoS の既知脆弱性が報告されている。変換スクリプト専用なので `devDependencies` へ移せば本番 Function からは消える。恒久対応としては SheetJS 公式配布版への差し替えを検討する。
 
@@ -386,18 +403,22 @@ CAGR のエラーは `alert()` ではなく `cagrError` state → パネル内�
 
 **移動平均の実装が 3 つある。**
 
-| 実装 | 場所 | 特徴 |
-| --- | --- | --- |
-| `computeTrailingMA12` | `server/lib/data-loader/earnings.ts:30` | `Map` エントリ用、`v > 0` フィルタ、内部ソート |
-| `computeMovingAverageToField` | `server/lib/data-loader/earnings.ts:52` | 配列用、別フィールドへ書き出し |
-| `applyMovingAverage` | `server/lib/serverCalculations.ts:81` | 配列用、破壊的更新、`any[]` |
+| 実装                          | 場所                                    | 特徴                                           |
+| ----------------------------- | --------------------------------------- | ---------------------------------------------- |
+| `computeTrailingMA12`         | `server/lib/data-loader/earnings.ts:30` | `Map` エントリ用、`v > 0` フィルタ、内部ソート |
+| `computeMovingAverageToField` | `server/lib/data-loader/earnings.ts:52` | 配列用、別フィールドへ書き出し                 |
+| `applyMovingAverage`          | `server/lib/serverCalculations.ts:81`   | 配列用、破壊的更新、`any[]`                    |
 
 さらに `server/lib/dataProcessor.ts:70-77` にも 4 つ目のインライン移動平均がある。`applyMovingAverage` は現在どこからも呼ばれていない。
 
 → `server/lib/math/movingAverage.ts` に単一の純粋関数として統合する。
 
 ```ts
-export function trailingMovingAverage(values: readonly number[], window: number, opts?: { skipNonPositive?: boolean }): number[];
+export function trailingMovingAverage(
+  values: readonly number[],
+  window: number,
+  opts?: { skipNonPositive?: boolean },
+): number[];
 ```
 
 **年月パース / ソートが 8 箇所以上に散在。**
@@ -409,7 +430,7 @@ export function trailingMovingAverage(values: readonly number[], window: number,
 ```ts
 export function parseYearMonth(ym: string): { year: number; month: number } | null;
 export function compareYearMonth(a: string, b: string): number;
-export function normalizeYearMonth(ym: string): string;   // "2020年01月" → "2020年1月"
+export function normalizeYearMonth(ym: string): string; // "2020年01月" → "2020年1月"
 export function extractYear(ym: string): number;
 ```
 
@@ -470,15 +491,15 @@ export function maybeCache<A extends unknown[], R>(
 
 ### P2-4. ツールチェーン整理
 
-| 項目 | 現状 | 対応 |
-| --- | --- | --- |
-| `tsconfig.target` | `ES2017` | `ES2022` へ。コードは既に `toSorted`（ES2023）や `??` を使っており、`ES2017` 指定は async/await 等を無意味にダウンレベルしてバンドルを膨らませる |
-| `.node-version` | `22` | Vercel の既定は Node 24 LTS。`24` へ更新し、`package.json` に `engines.node` も明記 |
-| `next.config.ts` の `turbopack.root` | `"./"` | ビルド時に「absolute にせよ」と警告が出る。`path.resolve(import.meta.dirname)` に変更 |
-| React Compiler | `babel-plugin-react-compiler` は導入済みだが `next.config.ts` に `reactCompiler: true` が**ない**＝一切効いていない | **有効化を推奨。** P0-2〜P0-4 のメモ化を自動で肩代わりする。ただし Babel 経由になりビルドが遅くなるため、有効化前後でビルド時間とバンドルサイズを計測する。使わないなら依存ごと削除 |
-| テストランナー | `bun test`（ロジック）+ `vitest`（UI）の二重構成 | 設定ファイル 3 つ（`vitest.config.ts` / `tests/vitest.ui.config.ts` / `tests/vite.zero.config.ts`）+ `bunfig.toml` の維持コストが高い。Vitest への一本化を検討 |
-| CI (`.github/workflows`) | `npm ci` を使っているが、プロジェクトは **pnpm 専用**（`preinstall: only-allow pnpm`）。`cache: "npm"` も不整合。Node は 20 固定 | `pnpm/action-setup` + Node 24 + `pnpm install --frozen-lockfile` に修正。現状 CI は失敗しているはず |
-| Vercel 設定 | 設定ファイルなし | `vercel.ts`（`@vercel/config`）を追加し、ビルドコマンド・リージョン（日本向けなら `hnd1`）・キャッシュヘッダーを明示 |
+| 項目                                 | 現状                                                                                                                             | 対応                                                                                                                                                                                |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tsconfig.target`                    | `ES2017`                                                                                                                         | `ES2022` へ。コードは既に `toSorted`（ES2023）や `??` を使っており、`ES2017` 指定は async/await 等を無意味にダウンレベルしてバンドルを膨らませる                                    |
+| `.node-version`                      | `22`                                                                                                                             | Vercel の既定は Node 24 LTS。`24` へ更新し、`package.json` に `engines.node` も明記                                                                                                 |
+| `next.config.ts` の `turbopack.root` | `"./"`                                                                                                                           | ビルド時に「absolute にせよ」と警告が出る。`path.resolve(import.meta.dirname)` に変更                                                                                               |
+| React Compiler                       | `babel-plugin-react-compiler` は導入済みだが `next.config.ts` に `reactCompiler: true` が**ない**＝一切効いていない              | **有効化を推奨。** P0-2〜P0-4 のメモ化を自動で肩代わりする。ただし Babel 経由になりビルドが遅くなるため、有効化前後でビルド時間とバンドルサイズを計測する。使わないなら依存ごと削除 |
+| テストランナー                       | `bun test`（ロジック）+ `vitest`（UI）の二重構成                                                                                 | 設定ファイル 3 つ（`vitest.config.ts` / `tests/vitest.ui.config.ts` / `tests/vite.zero.config.ts`）+ `bunfig.toml` の維持コストが高い。Vitest への一本化を検討                      |
+| CI (`.github/workflows`)             | `npm ci` を使っているが、プロジェクトは **pnpm 専用**（`preinstall: only-allow pnpm`）。`cache: "npm"` も不整合。Node は 20 固定 | `pnpm/action-setup` + Node 24 + `pnpm install --frozen-lockfile` に修正。現状 CI は失敗しているはず                                                                                 |
+| Vercel 設定                          | 設定ファイルなし                                                                                                                 | `vercel.ts`（`@vercel/config`）を追加し、ビルドコマンド・リージョン（日本向けなら `hnd1`）・キャッシュヘッダーを明示                                                                |
 
 ---
 
@@ -508,15 +529,15 @@ P1-5（CpiChart 分割）→ P2-2（共通シェル）→ P2-1（ロジック統
 
 ## 6. 完了条件（目標値）
 
-| 指標 | 現状 | 目標 |
-| --- | --- | --- |
-| `/` HTML | 1,272 KB | **< 400 KB** |
-| RSC ペイロード (gzip) | 127 KB | **< 40 KB** |
-| クライアント JS 合計 | 1,025 KB | **< 600 KB** |
-| Function トレースファイル | 143 個 / 2.6 MB の CSV | **CSV 0 個**（ビルド時 JSON 化の場合） |
-| 凡例クリック時の再計算 | `computeChartData` 全実行 | **0**（サーバー集計済み） |
-| 本番 `console.log` | 1 箇所 | **0** |
-| `dependencies` 件数 | 11 | **6**（next, react, react-dom, recharts, papaparse ほか） |
+| 指標                      | 現状                      | 目標                                                      |
+| ------------------------- | ------------------------- | --------------------------------------------------------- |
+| `/` HTML                  | 1,272 KB                  | **< 400 KB**                                              |
+| RSC ペイロード (gzip)     | 127 KB                    | **< 40 KB**                                               |
+| クライアント JS 合計      | 1,025 KB                  | **< 600 KB**                                              |
+| Function トレースファイル | 143 個 / 2.6 MB の CSV    | **CSV 0 個**（ビルド時 JSON 化の場合）                    |
+| 凡例クリック時の再計算    | `computeChartData` 全実行 | **0**（サーバー集計済み）                                 |
+| 本番 `console.log`        | 1 箇所                    | **0**                                                     |
+| `dependencies` 件数       | 11                        | **6**（next, react, react-dom, recharts, papaparse ほか） |
 
 ---
 

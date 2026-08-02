@@ -9,7 +9,11 @@ export const useCpiChartData = (props: UseCpiChartDataProps) => {
   const { data, nominalData, startYear, endYear, nominalKeys, realKeys, maxCpiDate } = props;
 
   const { quarterlyNominalData, quarterlyRealData } = useMemo(
-    () => computeChartData({ data, nominalData, startYear, endYear, nominalKeys, realKeys, maxCpiDate }, hiddenQuarters),
+    () =>
+      computeChartData(
+        { data, nominalData, startYear, endYear, nominalKeys, realKeys, maxCpiDate },
+        hiddenQuarters,
+      ),
     [data, nominalData, startYear, endYear, nominalKeys, realKeys, maxCpiDate, hiddenQuarters],
   );
 

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import type { CpiData } from "@/types";
 import { filterDataByYear, mergeChartData } from "../../lib/chartUtils";
 import styles from "./CpiChart.module.css";
@@ -8,13 +9,25 @@ import { ChartFilters } from "./ChartFilters";
 import { useChartTheme } from "../../hooks/useChartTheme";
 import { useCpiChartData } from "../../hooks/useCpiChartData";
 import { CustomTooltip } from "./CustomTooltip";
-import { SpendingBarChart } from "./SpendingBarChart";
 import { StackedAreaChart } from "./StackedAreaChart";
-import { EarningsBreakdownChart } from "./EarningsBreakdownChart";
-import { ResidualAreaChart } from "./ResidualAreaChart";
 import { MajorIndicesChart } from "./MajorIndicesChart";
 import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
-import { NewGraph } from "./NewGraph";
+
+const SpendingBarChart = dynamic(() => import("./SpendingBarChart").then((m) => m.SpendingBarChart), {
+  loading: () => <div className={styles.chartSkeleton}>Chart loading...</div>,
+});
+
+const EarningsBreakdownChart = dynamic(() => import("./EarningsBreakdownChart").then((m) => m.EarningsBreakdownChart), {
+  loading: () => <div className={styles.chartSkeleton}>Chart loading...</div>,
+});
+
+const ResidualAreaChart = dynamic(() => import("./ResidualAreaChart").then((m) => m.ResidualAreaChart), {
+  loading: () => <div className={styles.chartSkeleton}>Chart loading...</div>,
+});
+
+const NewGraph = dynamic(() => import("./NewGraph").then((m) => m.NewGraph), {
+  loading: () => <div className={styles.chartSkeleton}>Chart loading...</div>,
+});
 import { calculateCategorySum, calculateCAGRValue } from "../../lib/clientCalculations";
 import { createDualResetHandler } from "../../lib/resetLogic";
 import {

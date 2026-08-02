@@ -2,7 +2,12 @@ import { loadCpiData, loadCtiData, loadTotalEarningData } from "../../server/lib
 import { toCpiView, toCtiView, toEarningsView } from "../../server/lib/view-models/dashboard";
 import CpiChart from "./components/CpiChart";
 import styles from "./page.module.css";
-import { targetKeys, stackedKeys, CONSUMPTION_NOMINAL_KEYS, CONSUMPTION_REAL_KEYS } from "@/lib/chartConstants";
+import {
+  targetKeys,
+  stackedKeys,
+  CONSUMPTION_NOMINAL_KEYS,
+  CONSUMPTION_REAL_KEYS,
+} from "@/lib/chartConstants";
 
 export default async function Page() {
   const [cleanData, ctiData, totalEarningData] = await Promise.all([
@@ -52,7 +57,11 @@ export default async function Page() {
       </header>
 
       {projectedCpiData.length > 0 ? (
-        <CpiChart data={projectedCpiData as any} ctiData={projectedCtiData as any} totalEarningData={projectedEarningsData as any} />
+        <CpiChart
+          data={projectedCpiData as any}
+          ctiData={projectedCtiData as any}
+          totalEarningData={projectedEarningsData as any}
+        />
       ) : (
         <div className={styles.errorContainer}>
           <p className={styles.errorMessage}>データの読み込みに失敗したか、データが空です。</p>

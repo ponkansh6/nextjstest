@@ -223,10 +223,10 @@ data/source/*.csv
 
 #### src/hooks/
 
-| Module               | Description                            |
-| -------------------- | -------------------------------------- |
-| `useLegendState.ts`  | Legend toggle state (Redux-backed)     |
-| `useChartTheme.ts`   | Chart theme management (module-scoped constants) |
+| Module               | Description                                                                     |
+| -------------------- | ------------------------------------------------------------------------------- |
+| `useLegendState.ts`  | Legend toggle state (Redux-backed)                                              |
+| `useChartTheme.ts`   | Chart theme management (module-scoped constants)                                |
 | `useCpiChartData.ts` | CPI chart data filtering (quarter visibility) — server-side processing complete |
 
 #### src/lib/
