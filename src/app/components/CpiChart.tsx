@@ -4,6 +4,7 @@ import React, { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import type { CpiData } from "@/types";
 import { filterDataByYear, mergeChartData } from "../../lib/chartUtils";
+import { parseYearMonth } from "../../lib/yearMonth";
 import styles from "./CpiChart.module.css";
 import { ChartFilters } from "./ChartFilters";
 import { useChartTheme } from "../../hooks/useChartTheme";
@@ -72,9 +73,9 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
   const allYears = useMemo(() => {
     const years = new Set<number>();
     data.forEach((item) => {
-      const yearMatch = item.年月.match(/^(\d{4})年/);
-      if (yearMatch) {
-        years.add(parseInt(yearMatch[1], 10));
+      const parsed = parseYearMonth(item.年月);
+      if (parsed) {
+        years.add(parsed.year);
       }
     });
     return [...years].toSorted((a, b) => a - b);
@@ -93,13 +94,11 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
     let maxYear = 0;
     let maxMonth = 0;
     data.forEach((item) => {
-      const m = item.年月.match(/^(\d{4})年(\d{1,2})月/);
-      if (m) {
-        const y = parseInt(m[1], 10);
-        const mo = parseInt(m[2], 10);
-        if (y > maxYear || (y === maxYear && mo > maxMonth)) {
-          maxYear = y;
-          maxMonth = mo;
+      const parsed = parseYearMonth(item.年月);
+      if (parsed) {
+        if (parsed.year > maxYear || (parsed.year === maxYear && parsed.month > maxMonth)) {
+          maxYear = parsed.year;
+          maxMonth = parsed.month;
         }
       }
     });
