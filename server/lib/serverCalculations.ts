@@ -56,9 +56,15 @@ export function applyResidualMovingAverage(data: CpiData[]): void {
  * Generic moving average calculator for a specific key.
  * Used for smoothing '特別給与' with a 12-month window.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function applyMovingAverage(data: any[], key: string, windowSize: number): void {
-  const originalValues = data.map((d) => d[key]);
+export function applyMovingAverage(
+  data: Array<Record<string, number | string>>,
+  key: string,
+  windowSize: number,
+): void {
+  const originalValues = data.map((d) => {
+    const val = d[key];
+    return typeof val === "number" ? val : 0;
+  });
 
   data.forEach((item, index) => {
     let sum = 0;

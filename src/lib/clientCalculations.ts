@@ -103,7 +103,7 @@ export const computeChartData = (props: UseCpiChartDataProps, hiddenQuarters: nu
       if (existingData) {
         // 既存データがあっても、SUPPORT_SERIES_KEY_NOMINAL がない場合は初期化する
         if (!(SUPPORT_SERIES_KEY_NOMINAL in existingData)) {
-          (existingData as any)[SUPPORT_SERIES_KEY_NOMINAL] = 0;
+          Object.assign(existingData, { [SUPPORT_SERIES_KEY_NOMINAL]: 0 });
         }
         return existingData;
       }

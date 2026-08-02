@@ -34,9 +34,7 @@ export async function loadPopulationDataInternal(): Promise<
       if (separateYearCol !== -1) monthCol = separateYearCol + 1;
     }
   }
-  const totalIndex = headerRow.findIndex(
-    (c) => typeof c === "string" && /(総数|Total)/.test(c)
-  );
+  const totalIndex = headerRow.findIndex((c) => typeof c === "string" && /(総数|Total)/.test(c));
   const totalCol = totalIndex !== -1 ? totalIndex : 4;
 
   return processPopulationData(rows, headerIndex, yearCol, separateYearCol, monthCol, totalCol);

@@ -18,10 +18,7 @@ export interface SupportSeriesRow {
  * @param rows - Array of data rows to modify
  * @param supportKey - The support series key (e.g., "民間最終消費支出（名目）")
  */
-export function applySupportSeriesScaling(
-  rows: SupportSeriesRow[],
-  supportKey: string,
-): void {
+export function applySupportSeriesScaling(rows: SupportSeriesRow[], supportKey: string): void {
   // Calculate scale factor based on 2020 average
   const quarters2020 = rows
     .filter((r) => r.年 === 2020 && (r[supportKey] as number) > 0)

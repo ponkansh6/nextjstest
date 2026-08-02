@@ -82,21 +82,21 @@ export async function loadCtiDataInternal(): Promise<CpiData[]> {
 
   const rows = Papa.parse<string[]>(ctiContent, { header: false, skipEmptyLines: false }).data;
   const headerIndex = rows.findIndex(
-    (row: any) =>
+    (row: (string | undefined)[]) =>
       Array.isArray(row) &&
       row.some(
-        (c: any) =>
+        (c: string | undefined) =>
           typeof c === "string" && (c.trim() === "月" || c.trim().includes("消費支出（名目）")),
       ),
   );
   if (headerIndex === -1) return [];
-  const header = rows[headerIndex].map((c: any) => c.trim());
+  const header = rows[headerIndex].map((c: string | undefined) => (c ?? "").trim());
   const dataRows = rows.slice(headerIndex + 1);
   const mapped = dataRows
-    .map((row: any) => {
+    .map((row: (string | undefined)[]) => {
       const obj: Record<string, string | number> = {};
-      header.forEach((h: any, i: any) => {
-        let val: string | number = row[i];
+      header.forEach((h: string, i: number) => {
+        let val: string | number = row[i] ?? "";
         if (typeof val === "string") {
           const trimmedVal = val.trim();
           if (h !== "月" && h !== "年月") {
