@@ -9,6 +9,8 @@ import {
   CONSUMPTION_REAL_KEYS,
 } from "@/lib/chartConstants";
 
+export const revalidate = false;
+
 export default async function Page() {
   const [cleanData, ctiData, totalEarningData] = await Promise.all([
     loadCpiData(),
