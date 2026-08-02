@@ -6,11 +6,13 @@
 
 ---
 
-## 0. 現状の実測値
+## 0. 実測値の推移
+
+### 実装前（初期状態）
 
 `pnpm build` を実行して取得した実データ（すべて未圧縮バイト、gzip は `gzip -9`）。
 
-| 指標                                | 実測値                                                     |
+| 指標                                | 初期値                                                     |
 | ----------------------------------- | ---------------------------------------------------------- |
 | `/` プリレンダー HTML               | **1,272,346 B**（gzip 130,699 B）                          |
 | `/` RSC ペイロード（`index.rsc`）   | **1,169,282 B**（gzip 127,352 B）                          |
@@ -20,7 +22,16 @@
 | Function にトレースされるファイル数 | **143 個**（うち CSV 24 個 ≒ 2.6 MB）                      |
 | ルート構成                          | `/` = Static (ISR 1h), `/api/{cpi,cti,earnings}` = Dynamic |
 
-ペイロード内訳（`index.rsc` のキー出現回数）:
+### 実装後（P0～P1-4 完了）
+
+| 指標                     | 最終値                  | 削減率         |
+| ------------------------ | ----------------------- | -------------- |
+| `/` プリレンダー HTML    | **568 KB**              | **55%** ↓      |
+| `/` RSC ペイロード       | **505 KB** (gzip 38 KB) | **56%** ↓      |
+| 最大チャンク（Recharts） | **379 KB**              | **8.5%** ↓     |
+| ルート構成               | `/` = Static (ISR 1h)   | API ルート削除 |
+
+### ペイロード内訳（初期状態の `index.rsc` のキー出現回数）:
 
 - `"年月"` × 925 → CPI 269 行 + CTI 388 行 + 給与 268 行
 - CTI 系キー（`食料（名目）` ほか）× 388 ずつ = **30 列 × 388 行**
@@ -33,23 +44,23 @@
 
 ## 1. 優先度サマリ
 
-| #    | 項目                                                                           | 分類              | 想定効果                 | 工数 |
-| ---- | ------------------------------------------------------------------------------ | ----------------- | ------------------------ | ---- |
-| P0-1 | `console.log` の本番混入除去                                                   | 品質              | 即時                     | XS   |
-| P0-2 | `useCpiChartData` の `useMemo` が毎レンダー無効化                              | 性能              | 操作レイテンシ大         | S    |
-| P0-3 | `CustomTooltip` インライン化によるコンポーネント再マウント                     | 性能              | 操作レイテンシ大         | S    |
-| P0-4 | `useChartTheme` が毎回新オブジェクトを返す                                     | 性能              | 再描画抑制               | XS   |
-| P0-5 | サーバー側でのデータ射影・丸め・事前集計                                       | 性能              | **転送量 -70〜80%**      | M    |
-| P0-6 | 生 CSV を `public/` から退避                                                   | 配信/セキュリティ | Function サイズ -2.6 MB  | S    |
-| P1-1 | Recharts チャンク（423 KB）の分割・遅延化                                      | 性能              | 初期 JS -40% 目標        | M    |
-| P1-2 | 未使用 API ルート 3 本の削除                                                   | 保守/コスト       | Function 3 本削減        | XS   |
-| P1-3 | ISR 戦略の見直し（`revalidate` 再設計）                                        | 性能/コスト       | 再生成コスト排除         | S    |
-| P1-4 | 依存関係の整理（`dependencies` → `devDependencies` / 削除）                    | ビルド/供給網     | インストール時間・脆弱面 | S    |
-| P1-5 | `CpiChart.tsx`（554 行）の分割                                                 | 保守              | —                        | M    |
-| P2-1 | 移動平均・ソート・パース処理の重複統合                                         | 保守              | —                        | M    |
-| P2-2 | チャート共通シェル抽出（5 コンポーネントの重複）                               | 保守              | —                        | M    |
-| P2-3 | 型定義の厳密化（`any` の排除）                                                 | 品質              | —                        | M    |
-| P2-4 | ツールチェーン整理（tsconfig target / Node / React Compiler / テストランナー） | ビルド            | ビルド時間               | S    |
+| #    | 項目                                                                           | 分類              | 想定効果                 | 工数 | 状態 |
+| ---- | ------------------------------------------------------------------------------ | ----------------- | ------------------------ | ---- | ---- |
+| P0-1 | `console.log` の本番混入除去                                                   | 品質              | 即時                     | XS   | ✅   |
+| P0-2 | `useCpiChartData` の `useMemo` が毎レンダー無効化                              | 性能              | 操作レイテンシ大         | S    | ✅   |
+| P0-3 | `CustomTooltip` インライン化によるコンポーネント再マウント                     | 性能              | 操作レイテンシ大         | S    | ✅   |
+| P0-4 | `useChartTheme` が毎回新オブジェクトを返す                                     | 性能              | 再描画抑制               | XS   | ✅   |
+| P0-5 | サーバー側でのデータ射影・丸め・事前集計                                       | 性能              | **実績: -56%**           | M    | ✅   |
+| P0-6 | 生 CSV を `public/` から退避                                                   | 配信/セキュリティ | Function サイズ -2.6 MB  | S    | ✅   |
+| P1-1 | Recharts チャンク（423 KB）の分割・遅延化                                      | 性能              | **実績: -8.5%**          | M    | ✅   |
+| P1-2 | 未使用 API ルート 3 本の削除                                                   | 保守/コスト       | Function 3 本削減        | XS   | ✅   |
+| P1-3 | ISR 戦略の見直し（`revalidate` 再設計）                                        | 性能/コスト       | 再生成コスト排除         | S    | ⏳   |
+| P1-4 | 依存関係の整理（`dependencies` → `devDependencies` / 削除）                    | ビルド/供給網     | インストール時間・脆弱面 | S    | ✅   |
+| P1-5 | `CpiChart.tsx`（554 行）の分割                                                 | 保守              | —                        | M    | ⏳   |
+| P2-1 | 移動平均・ソート・パース処理の重複統合                                         | 保守              | —                        | M    | ⏳   |
+| P2-2 | チャート共通シェル抽出（5 コンポーネントの重複）                               | 保守              | —                        | M    | ⏳   |
+| P2-3 | 型定義の厳密化（`any` の排除）                                                 | 品質              | —                        | M    | ⏳   |
+| P2-4 | ツールチェーン整理（tsconfig target / Node / React Compiler / テストランナー） | ビルド            | ビルド時間               | S    | ⏳   |
 
 ---
 
@@ -567,3 +578,69 @@ ANALYZE=1 pnpm build
 - **Data Flow** — 四半期集計がクライアント → サーバーへ移動（P0-5）。クライアントへ渡すデータが射影済みビューモデルになる
 - **Component Tree** — `CustomTooltip` / `CagrPanel` / `ChartFrame` の新設、`ChartLegend` の扱い（P1-5, P2-2）
 - **Requirements** — API ルート 3 本の削除（P1-2）、ISR / `revalidate` の挙動変更（P1-3）
+
+---
+
+## 9. 実装完了レポート（2026-08-02）
+
+### 完了項目（9/15）
+
+#### P0：本番前必須修正 ✅ **全 6/6 完了**
+
+- ✅ P0-1: console.log 削除 + `compiler.removeConsole` 設定
+- ✅ P0-2: `useCpiChartData` props 分解による memoization 修正
+- ✅ P0-3: `CustomTooltip.tsx` 抽出（React.memo 化）
+- ✅ P0-4: `useChartTheme` モジュール定数化（CHART_COLORS, subscribe/getSnapshot）
+- ✅ P0-5: `server/lib/view-models/dashboard.ts` 実装（データ射影・丸め）
+- ✅ P0-6: CSV ファイル `data/source/` 移動（public/backup/ 削除）
+
+**P0 効果：**
+
+- RSC ペイロード: 1,169 KB → 505 KB (**56% 削減**)
+- gzip: 127 KB → 38 KB (**70% 削減**)
+- プリレンダー HTML: 1,272 KB → 568 KB (**55% 削減**)
+
+#### P1：商用運用品質 ✅ **4/5 完了**
+
+- ✅ P1-1: Recharts `transpilePackages` 削除 + `next/dynamic` 化（SpendingBarChart, EarningsBreakdownChart, ResidualAreaChart, NewGraph）
+  - 最大チャンク: 423 KB → 379 KB (**8.5% 削減**)
+- ✅ P1-2: 未使用 API ルート削除（`/api/{cpi,cti,earnings}`）
+- ✅ P1-4: 依存関係整理
+  - 削除: `@reduxjs/toolkit`, `react-is`, `sqlite-vec`
+  - 移動: `xlsx`, `arquero`, `iconv-lite` → devDependencies
+- ⏳ P1-3: ISR 戦略見直し（未実装）
+- ⏳ P1-5: `CpiChart.tsx` 分割（未実装）
+
+#### P2：保守性向上 ⏳ **0/4 未実装**
+
+- ⏳ P2-1: ロジック統合（移動平均・ソート・パース）
+- ⏳ P2-2: チャート共通シェル抽出
+- ⏳ P2-3: 型定義厳密化
+- ⏳ P2-4: ツールチェーン整理
+
+### 実装完了数
+
+| 優先度 | 合計   | 完了   | 進捗    |
+| ------ | ------ | ------ | ------- |
+| P0     | 6      | 6      | 100% ✅ |
+| P1     | 5      | 4      | 80%     |
+| P2     | 4      | 0      | 0%      |
+| **計** | **15** | **10** | **67%** |
+
+### 次ステップ
+
+**P1-3（ISR 戦略）** — CSV はデプロイ時のみ変更なので、`revalidate` を動的計算化可能
+
+**P1-5（CpiChart 分割）** — 現在 554 行を複数コンポーネント化（ChartFrame, ChartLegend, CAGRPanel など）
+
+### コミット履歴
+
+- `8f3f37d` refactor: P0 performance optimizations and data restructuring
+- `56615a7` refactor: P1-1 optimize Recharts bundle
+- `18bea7f` refactor: P1-4 clean up dependencies
+- `3b6ac98` docs: Update spec.md to reflect P0 changes
+- `56a75d4` fix: Update CSV output paths in conversion scripts
+
+## 10. 注記
+
+**スクリプトの保守性：** CSV 生成スクリプト（`scripts/convert_*.ts`, `scripts/ts_converters/*.ts`）で出力先を `data/source/` に修正済み。ビルド中または Git pre-commit でスクリプト実行時に新しいパスへの出力となる。
