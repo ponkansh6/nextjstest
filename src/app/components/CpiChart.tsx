@@ -9,6 +9,7 @@ import styles from "./CpiChart.module.css";
 import { ChartFilters } from "./ChartFilters";
 import { useChartTheme } from "../../hooks/useChartTheme";
 import { useCpiChartData } from "../../hooks/useCpiChartData";
+import { useToggleSet } from "../../hooks/useToggleSet";
 import { CustomTooltip } from "./CustomTooltip";
 import { StackedAreaChart } from "./StackedAreaChart";
 import { MajorIndicesChart } from "./MajorIndicesChart";
@@ -52,6 +53,7 @@ import {
   SUPPORT_SERIES_KEY_NOMINAL,
   SUPPORT_SERIES_KEY_REAL,
   targetKeys,
+  MIN_DISPLAY_YEAR,
 } from "../../lib/chartConstants";
 
 const getColorForNominalKey = (key: string): string => {
@@ -62,11 +64,19 @@ const getColorForNominalKey = (key: string): string => {
 
 interface CpiChartProps {
   data: CpiData[];
-  ctiData: CpiData[];
+  quarterlyNominalData: any[];
+  quarterlyRealData: any[];
   totalEarningData: CpiData[];
+  maxCpiDate: { year: number; month: number };
 }
 
-export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartProps) {
+export default function CpiChart({
+  data,
+  quarterlyNominalData,
+  quarterlyRealData,
+  totalEarningData,
+  maxCpiDate: _maxCpiDate,
+}: CpiChartProps) {
   const { isMobile, chartColors } = useChartTheme();
 
   // 全ての年を抽出
@@ -83,27 +93,11 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
 
   // 表示範囲のステート
   // 初期値がNaNやundefinedにならないよう、確実に数値(0含む)を返すように修正
-  const initialStartYear = allYears.find((y) => y >= 2005) ?? allYears[0] ?? 2025;
+  const initialStartYear = allYears.find((y) => y >= MIN_DISPLAY_YEAR) ?? allYears[0] ?? 2025;
   const initialEndYear = (allYears.length > 0 ? allYears[allYears.length - 1] : 2025) ?? 2025;
 
   const [startYear, setStartYear] = useState(initialStartYear);
   const [endYear, setEndYear] = useState(initialEndYear);
-
-  // データに含まれる最新の年月を特定
-  const maxCpiDate = useMemo(() => {
-    let maxYear = 0;
-    let maxMonth = 0;
-    data.forEach((item) => {
-      const parsed = parseYearMonth(item.年月);
-      if (parsed) {
-        if (parsed.year > maxYear || (parsed.year === maxYear && parsed.month > maxMonth)) {
-          maxYear = parsed.year;
-          maxMonth = parsed.month;
-        }
-      }
-    });
-    return { month: maxMonth, year: maxYear };
-  }, [data]);
 
   // ステートに基づいてデータをフィルタリング
   const filteredData = useMemo(
@@ -130,28 +124,10 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
   const earningsData = mergedData;
 
   // 表示・非表示を管理するステート（初期値は全て表示）
-  const [hiddenKeys, setHiddenKeys] = useState<string[]>([]);
-  const [stackedHiddenKeys, setStackedHiddenKeys] = useState<string[]>([]);
-  const [maHiddenKeys, setMaHiddenKeys] = useState<string[]>([]);
-
-  // 凡例をクリックした時の処理
-  const handleLegendClick = (dataKey: string) => {
-    setHiddenKeys((prev) =>
-      prev.includes(dataKey) ? prev.filter((k) => k !== dataKey) : [...prev, dataKey],
-    );
-  };
-
-  const handleStackedLegendClick = (dataKey: string) => {
-    setStackedHiddenKeys((prev) =>
-      prev.includes(dataKey) ? prev.filter((k) => k !== dataKey) : [...prev, dataKey],
-    );
-  };
-
-  const handleMaLegendClick = (dataKey: string) => {
-    setMaHiddenKeys((prev) =>
-      prev.includes(dataKey) ? prev.filter((k) => k !== dataKey) : [...prev, dataKey],
-    );
-  };
+  const [hiddenKeys, handleLegendClick] = useToggleSet<string>();
+  const [stackedHiddenKeys, handleStackedLegendClick, setStackedHiddenKeys] =
+    useToggleSet<string>();
+  const [maHiddenKeys, handleMaLegendClick] = useToggleSet<string>();
 
   const nominalKeys = CONSUMPTION_NOMINAL_KEYS;
   const realKeys = CONSUMPTION_REAL_KEYS;
@@ -166,7 +142,6 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
     const index = stackedKeys.indexOf(targetStackedKey || "");
     return index !== -1 ? stackedColors[index] : "#64748b";
   });
-  const nominalData = ctiData;
 
   const [nominalHiddenKeys, setNominalHiddenKeys] = useState<string[]>([]);
   const [realHiddenKeys, setRealHiddenKeys] = useState<string[]>([]);
@@ -176,21 +151,13 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
   const [cagrEndYear, setCagrEndYear] = useState<number>(() => initialEndYear ?? 2025);
   const [cagrMonth, setCagrMonth] = useState<number>(1);
   const [cagrResult, setCagrResult] = useState<number | null>(null);
+  const [cagrError, setCagrError] = useState<string | null>(null);
 
-  // 四半期データの集計をカスタムフックに委譲
-  const { quarterlyNominalData, quarterlyRealData, hiddenQuarters, toggleQuarter, loading, error } =
-    useCpiChartData({
-      data,
-      endYear,
-      maxCpiDate,
-      nominalData,
-      nominalKeys,
-      realKeys,
-      startYear,
-    });
-
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
+  // Filter quarterly data by hiddenQuarters
+  const { hiddenQuarters, toggleQuarter } = useCpiChartData(
+    quarterlyNominalData,
+    quarterlyRealData,
+  );
 
   const handleQuarterLegendClick = (quarter: number) => {
     toggleQuarter(quarter);
@@ -234,12 +201,13 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
 
   // CAGR計算関数
   const calculateCAGR = (): void => {
+    setCagrError(null);
     // 状態が NaN の場合は初期値を適用する
     const startYear = isNaN(cagrStartYear) ? initialStartYear : cagrStartYear;
     const endYear = isNaN(cagrEndYear) ? initialEndYear : cagrEndYear;
 
     if (startYear === endYear) {
-      alert("異なる年を選択してください（同じ年は指定できません）。");
+      setCagrError("異なる年を選択してください（同じ年は指定できません）。");
       return;
     }
 
@@ -249,7 +217,7 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
       startValue = calculateCategorySum(data, startYear, cagrMonth, stackedHiddenKeys, stackedKeys);
     } catch {
       const monthStr = String(cagrMonth).padStart(2, "0");
-      alert(
+      setCagrError(
         `開始年月のデータが見つかりません: ${startYear}年${monthStr}月。積み上げの凡例で必要な費目が選択されているか確認してください。`,
       );
       return;
@@ -260,7 +228,7 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
       endValue = calculateCategorySum(data, endYear, cagrMonth, stackedHiddenKeys, stackedKeys);
     } catch {
       const monthStr = String(cagrMonth).padStart(2, "0");
-      alert(
+      setCagrError(
         `終了年月のデータが見つかりません: ${endYear}年${monthStr}月。積み上げの凡例で必要な費目が選択されているか確認してください。`,
       );
       return;
@@ -274,7 +242,7 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
   return (
     <div className={styles.chartContainer}>
       <ChartFilters
-        allYears={allYears.filter((y) => y >= 2005)}
+        allYears={allYears.filter((y) => y >= MIN_DISPLAY_YEAR)}
         startYear={startYear}
         endYear={endYear}
         setStartYear={setStartYear}
@@ -326,6 +294,7 @@ export default function CpiChart({ data, ctiData, totalEarningData }: CpiChartPr
         cagrEndYear={cagrEndYear}
         cagrMonth={cagrMonth}
         cagrResult={cagrResult}
+        cagrError={cagrError}
         setCagrStartYear={setCagrStartYear}
         setCagrEndYear={setCagrEndYear}
         setCagrMonth={setCagrMonth}

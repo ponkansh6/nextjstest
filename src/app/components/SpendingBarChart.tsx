@@ -3,7 +3,6 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -11,6 +10,7 @@ import {
 } from "recharts";
 import styles from "./CpiChart.module.css";
 import { getLegendLabel, SUPPORT_SERIES_KEY_NOMINAL } from "../../lib/chartConstants";
+import type { CustomTooltipProps } from "@/types/chart";
 import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
 import { CHART_INFO } from "../../lib/chartInfoContent";
 
@@ -31,14 +31,7 @@ interface SpendingBarChartProps {
   onToggle: (key: string) => void;
   chartColors: Record<string, string>;
   isMobile: boolean;
-  CustomTooltip: React.FC<{
-    active?: boolean;
-    payload?: { name: string; value: number }[];
-    label?: string;
-    isMobile: boolean;
-    tooltipBg: string;
-    tooltipText: string;
-  }>;
+  CustomTooltip: React.FC<CustomTooltipProps>;
   hiddenQuarters: number[];
   onToggleQuarter: (q: number) => void;
   onReset: () => void;
@@ -127,23 +120,6 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.gridStroke} />
-            {data
-              .filter(
-                (d) =>
-                  d.label.endsWith("Q1") &&
-                  [2010, 2015, 2020, 2025].includes(parseInt(d.label.split("年")[0])),
-              )
-              .map((d) => (
-                <ReferenceLine
-                  key={d.label}
-                  x={d.label}
-                  stroke={chartColors.gridStroke}
-                  strokeDasharray="3 3"
-                  strokeWidth={1}
-                  strokeOpacity={0.2}
-                  style={{ pointerEvents: "none" }}
-                />
-              ))}
             <XAxis
               dataKey="label"
               axisLine={false}

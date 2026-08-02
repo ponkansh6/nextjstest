@@ -1,5 +1,6 @@
 import { loadCpiData, loadCtiData, loadTotalEarningData } from "../../server/lib/dataLoader";
-import { toCpiView, toCtiView, toEarningsView } from "../../server/lib/view-models/dashboard";
+import { toCpiView, toEarningsView, toQuarterlyView } from "../../server/lib/view-models/dashboard";
+import { computeQuarterlyAggregates } from "../../server/lib/view-models/quarterlyAggregation";
 import CpiChart from "./components/CpiChart";
 import styles from "./page.module.css";
 import {
@@ -18,13 +19,34 @@ export default async function Page() {
     loadTotalEarningData(),
   ]);
 
+  // Determine maxCpiDate from cleanData
+  let maxCpiYear = 1994;
+  let maxCpiMonth = 1;
+  for (const d of cleanData) {
+    const m = String(d.年月).match(/^(\d{4})年(\d{1,2})月/);
+    if (m) {
+      const y = parseInt(m[1], 10);
+      const mo = parseInt(m[2], 10);
+      if (y > maxCpiYear || (y === maxCpiYear && mo > maxCpiMonth)) {
+        maxCpiYear = y;
+        maxCpiMonth = mo;
+      }
+    }
+  }
+  const maxCpiDate = { year: maxCpiYear, month: maxCpiMonth };
+
+  // Compute quarterly aggregates on the server
+  const { nominal: quarterlyNominalData, real: quarterlyRealData } = computeQuarterlyAggregates(ctiData, maxCpiDate);
+
   const cpiKeys = [...targetKeys, ...stackedKeys];
-  const ctiKeys = [
-    "年月",
+  const quarterlyKeys = [
+    "label",
+    "quarter",
+    "年",
     ...CONSUMPTION_NOMINAL_KEYS,
     ...CONSUMPTION_REAL_KEYS,
     "民間最終消費支出（名目）",
-    "消費支出（名目）",
+    "民間最終消費支出（実質）",
   ];
   const earningsKeys = [
     "年月",
@@ -45,7 +67,8 @@ export default async function Page() {
   ];
 
   const projectedCpiData = toCpiView(cleanData, cpiKeys);
-  const projectedCtiData = toCtiView(ctiData, ctiKeys);
+  const projectedQuarterlyNominal = toQuarterlyView(quarterlyNominalData, quarterlyKeys);
+  const projectedQuarterlyReal = toQuarterlyView(quarterlyRealData, quarterlyKeys);
   const projectedEarningsData = toEarningsView(totalEarningData, earningsKeys);
 
   return (
@@ -61,8 +84,10 @@ export default async function Page() {
       {projectedCpiData.length > 0 ? (
         <CpiChart
           data={projectedCpiData as any}
-          ctiData={projectedCtiData as any}
+          quarterlyNominalData={projectedQuarterlyNominal as any}
+          quarterlyRealData={projectedQuarterlyReal as any}
           totalEarningData={projectedEarningsData as any}
+          maxCpiDate={maxCpiDate}
         />
       ) : (
         <div className={styles.errorContainer}>
