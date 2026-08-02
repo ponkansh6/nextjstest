@@ -12,6 +12,7 @@ const nextConfig: NextConfig = {
   compiler: {
     removeConsole: process.env.NODE_ENV === "production" ? { exclude: ["error", "warn"] } : false,
   },
+  reactCompiler: true,
 };
 
 export default withBundleAnalyzer(nextConfig);
