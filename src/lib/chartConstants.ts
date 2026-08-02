@@ -1,3 +1,6 @@
+// Milestone years for chart reference lines
+export const MILESTONE_YEARS = [2010, 2015, 2020, 2025] as const;
+
 // CPIの基本カテゴリー
 export const CPI_CATEGORIES = [
   "住居",

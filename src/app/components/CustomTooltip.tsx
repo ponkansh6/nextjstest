@@ -1,13 +1,5 @@
 import React from "react";
-
-interface CustomTooltipProps {
-  active?: boolean;
-  payload?: { name: string; value: number }[];
-  label?: string;
-  isMobile: boolean;
-  tooltipBg: string;
-  tooltipText: string;
-}
+import type { CustomTooltipProps } from "@/types/chart";
 
 export const CustomTooltip = React.memo<CustomTooltipProps>(
   ({ active, payload, label, isMobile, tooltipBg, tooltipText }) => {
