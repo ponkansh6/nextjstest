@@ -3,7 +3,6 @@ import {
   Area,
   AreaChart,
   CartesianGrid,
-  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -11,6 +10,8 @@ import {
 } from "recharts";
 import styles from "./CpiChart.module.css";
 import type { CpiData } from "@/types";
+import type { CustomTooltipProps } from "@/types/chart";
+import { YearReferenceLines } from "./charts/YearReferenceLines";
 
 interface MajorIndicesChartProps {
   data: CpiData[];
@@ -20,14 +21,7 @@ interface MajorIndicesChartProps {
   onToggle: (key: string) => void;
   chartColors: Record<string, string>;
   isMobile: boolean;
-  CustomTooltip: React.FC<{
-    active?: boolean;
-    payload?: { name: string; value: number }[];
-    label?: string;
-    isMobile: boolean;
-    tooltipBg: string;
-    tooltipText: string;
-  }>;
+  CustomTooltip: React.FC<CustomTooltipProps>;
 }
 
 export const MajorIndicesChart: React.FC<MajorIndicesChartProps> = ({
@@ -62,23 +56,7 @@ export const MajorIndicesChart: React.FC<MajorIndicesChartProps> = ({
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.gridStroke} />
-          {data
-            .filter(
-              (d) =>
-                d.年月.endsWith("年1月") &&
-                [2010, 2015, 2020, 2025].includes(parseInt(d.年月.split("年")[0])),
-            )
-            .map((d) => (
-              <ReferenceLine
-                key={d.年月}
-                x={d.年月}
-                stroke={chartColors.gridStroke}
-                strokeDasharray="3 3"
-                strokeWidth={1}
-                strokeOpacity={0.2}
-                style={{ pointerEvents: "none" }}
-              />
-            ))}
+          <YearReferenceLines data={data} stroke={chartColors.gridStroke} />
           <XAxis
             dataKey="年月"
             axisLine={false}

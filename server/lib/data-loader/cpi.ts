@@ -1,7 +1,9 @@
 import * as fs from "node:fs";
 import Papa from "papaparse";
 import type { CpiData } from "@/types";
-import { buildCpiFilePaths, buildCtiFilePaths } from "../dataIo";
+import { buildCpiFilePaths, buildCtiFilePaths, parseContributionWeights } from "../dataIo";
+import { parseYearMonth, compareYearMonth } from "@/lib/yearMonth";
+import { calculateQuarter, calculateQuarterLabel } from "@/lib/math/quarter";
 
 export async function loadCpiDataInternal(): Promise<CpiData[]> {
   const paths = buildCpiFilePaths();
@@ -11,19 +13,7 @@ export async function loadCpiDataInternal(): Promise<CpiData[]> {
   }
   const cpiContent = fs.readFileSync(paths.main, "utf8");
   const contributionContent = fs.readFileSync(paths.contribution, "utf8");
-  const contributionLines = contributionContent.split("\n");
-  const categoryLine = contributionLines.find((line) => line.startsWith("類・品目"));
-  const weightLine = contributionLines.find((line) => line.startsWith("ウエイト"));
-  const weights: Record<string, number> = {};
-  if (categoryLine && weightLine) {
-    const categories = categoryLine.split(",");
-    const weightValues = weightLine.split(",");
-    categories.forEach((cat, i) => {
-      const trimmedCat = cat.trim();
-      const weight = parseFloat(weightValues[i]);
-      if (trimmedCat && !isNaN(weight)) weights[trimmedCat] = weight;
-    });
-  }
+  const weights = parseContributionWeights(contributionContent);
   const { data } = Papa.parse<CpiData>(cpiContent, {
     dynamicTyping: true,
     header: true,
@@ -32,8 +22,8 @@ export async function loadCpiDataInternal(): Promise<CpiData[]> {
   return (data as CpiData[])
     .filter((row) => {
       if (!row["年月"]) return false;
-      const yearMatch = (row["年月"] as string).match(/^(\d{4})年/);
-      return yearMatch ? parseInt(yearMatch[1], 10) >= 2004 : false;
+      const parsed = parseYearMonth(row["年月"] as string);
+      return parsed ? parsed.year >= 2004 : false;
     })
     .map((row) => {
       const newRow: CpiData = { ...row };
@@ -69,15 +59,14 @@ export async function loadCtiDataInternal(): Promise<CpiData[]> {
   const loadSupportMap = (content: string, targetMap: Map<string, number>) => {
     const rows = Papa.parse<string[]>(content, { header: false, skipEmptyLines: false }).data;
     const headerIndex = rows.findIndex(
-      (row: any) =>
-        Array.isArray(row) &&
-        row.some((c: any) => typeof c === "string" && /民間最終消費支出/.test(c)),
+      (row) =>
+        Array.isArray(row) && row.some((c) => typeof c === "string" && /民間最終消費支出/.test(c)),
     );
     if (headerIndex === -1) return;
-    const header = rows[headerIndex].map((c: any) => (typeof c === "string" ? c.trim() : c));
+    const header = rows[headerIndex].map((c) => (typeof c === "string" ? c.trim() : c));
     const ymIndex = header.indexOf("時間軸（四半期）");
-    const valueIndex = header.findIndex((h: any) => h === "民間最終消費支出");
-    rows.slice(headerIndex + 1).forEach((row: any) => {
+    const valueIndex = header.findIndex((h) => h === "民間最終消費支出");
+    rows.slice(headerIndex + 1).forEach((row) => {
       const ym = row[ymIndex];
       const valStr =
         typeof row[valueIndex] === "string"
@@ -119,12 +108,10 @@ export async function loadCtiDataInternal(): Promise<CpiData[]> {
       });
       if (typeof obj["月"] === "string" && !obj.年月) obj.年月 = obj["月"];
       const ymStr = String(obj.年月 || "").trim();
-      const m = ymStr.match(/^(\d{4})年0?(\d{1,2})月/);
-      if (m) {
-        const year = m[1];
-        const month = parseInt(m[2], 10);
-        const q = Math.ceil(month / 3);
-        const normYm = `${year}年${(q - 1) * 3 + 1}～${q * 3}月期`;
+      const parsed = parseYearMonth(ymStr);
+      if (parsed) {
+        const q = calculateQuarter(parsed.month);
+        const normYm = calculateQuarterLabel(parsed.year, q);
         obj["民間最終消費支出（名目）"] = supportMap.get(normYm) ?? 0;
         obj["民間最終消費支出（実質）"] = supportMapReal.get(normYm) ?? 0;
       } else {
@@ -165,8 +152,8 @@ export async function loadCtiDataInternal(): Promise<CpiData[]> {
     })
     .filter((row) => {
       if (!row.年月) return false;
-      const m = String(row.年月).match(/^(\d{4})年/);
-      return m ? parseInt(m[1], 10) >= 1994 : false;
+      const parsed = parseYearMonth(String(row.年月));
+      return parsed ? parsed.year >= 1994 : false;
     });
 
   const existingMonths = new Set(mapped.map((r) => r.年月));
@@ -174,10 +161,10 @@ export async function loadCtiDataInternal(): Promise<CpiData[]> {
     for (let m = 1; m <= 12; m++) {
       const ym = `${y}年${m}月`;
       if (!existingMonths.has(ym)) {
-        const q = Math.ceil(m / 3);
-        const normYm = `${y}年${(q - 1) * 3 + 1}～${q * 3}月期`;
-        const dummyRow: any = { 年月: ym };
-        header.forEach((h: any) => {
+        const q = calculateQuarter(m);
+        const normYm = calculateQuarterLabel(y, q);
+        const dummyRow: Record<string, string | number> = { 年月: ym };
+        header.forEach((h) => {
           if (h !== "年月" && h !== "月") dummyRow[h] = 0;
         });
         const nominalSupport = supportMap.get(normYm) ?? 0;
@@ -192,19 +179,10 @@ export async function loadCtiDataInternal(): Promise<CpiData[]> {
         // この期間の総消費支出はサポート系列（民間最終消費支出）で表現される。
         dummyRow["その他の消費支出（名目）"] = 0;
         dummyRow["その他の消費支出（実質）"] = 0;
-        mapped.push(dummyRow as any);
+        mapped.push(dummyRow as unknown as CpiData);
       }
     }
   }
-  mapped.sort((a, b) => {
-    const ma = String(a.年月).match(/^(\d{4})年(\d{1,2})月/);
-    const mb = String(b.年月).match(/^(\d{4})年(\d{1,2})月/);
-    if (!ma || !mb) return 0;
-    const ay = parseInt(ma[1], 10);
-    const am = parseInt(ma[2], 10);
-    const by = parseInt(mb[1], 10);
-    const bm = parseInt(mb[2], 10);
-    return ay !== by ? ay - by : am - bm;
-  });
+  mapped.sort((a, b) => compareYearMonth(String(a.年月), String(b.年月)));
   return mapped;
 }

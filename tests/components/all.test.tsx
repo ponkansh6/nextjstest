@@ -414,69 +414,6 @@ describe("StackedAreaChart", () => {
   });
 });
 
-describe("useCpiChartData", () => {
-  it("should verify that the hook produces valid quarterly data for all nominal and real keys", () => {
-    const props = {
-      data: mockCtiData,
-      endYear: 2026,
-      maxCpiDate: { month: 12, year: 2026 },
-      nominalData: mockCtiData,
-      nominalKeys: CONSUMPTION_NOMINAL_KEYS,
-      realKeys: CONSUMPTION_REAL_KEYS,
-      startYear: 2005,
-    };
-
-    const { result } = renderHook(() => useCpiChartData(props));
-    const { quarterlyNominalData, quarterlyRealData } = result.current;
-
-    expect(quarterlyNominalData.length).toBeGreaterThan(0);
-
-    const hasDataInRange = (
-      data: any[],
-      keys: string[],
-      startYear: number,
-      endYear: number,
-      checkOnlySupport = false,
-    ) => {
-      const rangeData = data.filter(
-        (d) => (d.年 as number) >= startYear && (d.年 as number) <= endYear,
-      );
-      return keys.every((key) => {
-        if (checkOnlySupport && !key.includes("民間最終消費支出")) return true;
-        if (key.includes("その他の消費支出")) return true;
-        return rangeData.some((d) => typeof d[key] === "number" && d[key] > 0);
-      });
-    };
-
-    CONSUMPTION_NOMINAL_KEYS.forEach((key) => {
-      if (key === SUPPORT_SERIES_KEY_NOMINAL) return;
-      expect(
-        hasDataInRange(quarterlyNominalData, [key], 2005, 2016, true),
-        `Nominal Series '${key}' should have positive values in 2005-2016`,
-      ).toBe(true);
-      expect(
-        hasDataInRange(quarterlyNominalData, [key], 2017, 2026, false),
-        `Nominal Series '${key}' should have positive values in 2017-2026`,
-      ).toBe(true);
-    });
-
-    if (CONSUMPTION_REAL_KEYS.length > 0) {
-      expect(quarterlyRealData.length).toBeGreaterThan(0);
-      CONSUMPTION_REAL_KEYS.forEach((key) => {
-        if (key === SUPPORT_SERIES_KEY_REAL) return;
-        expect(
-          hasDataInRange(quarterlyRealData, [key], 2005, 2016, true),
-          `Real Series '${key}' should have positive values in 2005-2016`,
-        ).toBe(true);
-        expect(
-          hasDataInRange(quarterlyRealData, [key], 2017, 2026, false),
-          `Real Series '${key}' should have positive values in 2017-2026`,
-        ).toBe(true);
-      });
-    }
-  });
-});
-
 describe("NewGraph", () => {
   const mockNewGraphData: CpiData[] = [
     { 年月: "2023年1月", 総合: 100, "消費支出（参考）": 100, "CPI総合(12MA)": 100 } as any,

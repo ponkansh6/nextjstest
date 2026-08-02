@@ -6,13 +6,19 @@ import {
   CONSUMPTION_NOMINAL_KEYS,
   CONSUMPTION_REAL_KEYS,
 } from "./chartConstants";
+import { parseYearMonth, normalizeYearMonth } from "./yearMonth";
+import { applySupportSeriesScaling } from "@server/lib/math/supportSeries";
 
 // 行データとキーリストから合計を算出する共通ロジック
-export const sumCategoryValues = (row: any, keys: string[], hiddenKeys: string[] = []): number => {
+export const sumCategoryValues = (
+  row: CpiData,
+  keys: string[],
+  hiddenKeys: string[] = [],
+): number => {
   let sum = 0;
   keys.forEach((key) => {
     if (!hiddenKeys.includes(key)) {
-      const value = row[key];
+      const value = row[key as keyof CpiData];
       if (typeof value === "number") {
         sum += value;
       }
@@ -34,13 +40,11 @@ export const calculateCategorySum = (
     if (!item.年月 || typeof item.年月 !== "string") {
       return false;
     }
-    const m = item.年月.match(/^\s*(\d{4})年\s*0?(\d{1,2})月/);
-    if (!m) {
+    const parsed = parseYearMonth(item.年月);
+    if (!parsed) {
       return false;
     }
-    const y = parseInt(m[1], 10);
-    const mo = parseInt(m[2], 10);
-    return y === year && mo === month;
+    return parsed.year === year && parsed.month === month;
   });
 
   if (!dataPoint) {
@@ -78,18 +82,10 @@ export const computeChartData = (props: UseCpiChartDataProps, hiddenQuarters: nu
   const nominalKeys = props.nominalKeys || CONSUMPTION_NOMINAL_KEYS;
   const realKeys = props.realKeys || CONSUMPTION_REAL_KEYS;
 
-  // Normalize 年月 formatting to a canonical form (e.g., "2020年1月") to tolerate zero-padded months like "2020年01月".
-  const normalizeYm = (ym?: string | number) => {
-    if (!ym || typeof ym !== "string") return String(ym || "").trim();
-    const m = ym.trim().match(/^(\d{4})年0?(\d{1,2})月/);
-    if (!m) return ym.trim();
-    return `${m[1]}年${parseInt(m[2], 10)}月`;
-  };
-
   const normalizedNominalData: CpiData[] = nominalData.map((d) => {
     return {
       ...d,
-      年月: normalizeYm(String(d.年月)),
+      年月: normalizeYearMonth(String(d.年月)),
     };
   });
 
@@ -225,25 +221,6 @@ export const computeChartData = (props: UseCpiChartDataProps, hiddenQuarters: nu
   // compute quarterly nominal/real rows
   const nominalRows = getQuarterlyData(nominalKeys);
   const realRows = getQuarterlyData(realKeys);
-
-  const applySupportSeriesScaling = (rows: any[], supportKey: string) => {
-    const quarters2020 = rows
-      .filter((r) => r.年 === 2020 && (r[supportKey] as number) > 0)
-      .map((r) => r[supportKey] as number);
-    const avg2020 =
-      quarters2020.length > 0 ? quarters2020.reduce((a, b) => a + b, 0) / quarters2020.length : 0;
-    const scale = avg2020 > 0 ? 100 / avg2020 : 1;
-
-    rows.forEach((r) => {
-      const year = r.年 as number;
-      const rawVal = (r[supportKey] as number) || 0;
-      if (year >= 2005 && year <= 2016) {
-        r[supportKey] = rawVal * scale;
-      } else {
-        r[supportKey] = 0;
-      }
-    });
-  };
 
   applySupportSeriesScaling(nominalRows, SUPPORT_SERIES_KEY_NOMINAL);
   applySupportSeriesScaling(realRows, SUPPORT_SERIES_KEY_REAL);

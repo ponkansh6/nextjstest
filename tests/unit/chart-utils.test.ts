@@ -40,11 +40,11 @@ describe("chartUtils", () => {
   });
 
   it("should handle invalid date formats gracefully", () => {
-    const data = [{ 年月: "invalid-date" }, { 年月: "2020年" }];
+    const data = [{ 年月: "invalid-date" }, { 年月: "2020年" }, { 年月: "2020年1月" }];
     const filtered = filterDataByYear(data, 2020, 2020);
-    // extractYear should return 0 for "invalid-date" and 2020 for "2020年"
+    // extractYear should return null for "invalid-date" and "2020年", and 2020 for "2020年1月"
     expect(filtered).toHaveLength(1);
-    expect(filtered[0].年月).toBe("2020年");
+    expect(filtered[0].年月).toBe("2020年1月");
   });
 
   it("should merge wage and CPI data correctly", () => {

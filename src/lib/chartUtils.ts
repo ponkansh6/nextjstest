@@ -1,4 +1,5 @@
 import type { CpiData } from "@/types";
+import { extractYear, compareYearMonth } from "@/lib/yearMonth";
 
 type MergedData = CpiData;
 
@@ -18,14 +19,6 @@ export const calculateSupportScale = (data: CpiData[], key: string): number => {
 };
 
 /**
- * 年月文字列（例: "2020年1月"）から年を抽出するヘルパー
- */
-export const extractYear = (ym: string): number => {
-  const match = ym.match(/^(\d{4})年/);
-  return match ? parseInt(match[1], 10) : 0;
-};
-
-/**
  * 年範囲でデータをフィルタリングする
  */
 export const filterDataByYear = <T extends { 年月: string }>(
@@ -35,7 +28,7 @@ export const filterDataByYear = <T extends { 年月: string }>(
 ): T[] =>
   data.filter((item) => {
     const year = extractYear(item.年月);
-    return year >= startYear && year <= endYear;
+    return year !== null && year >= startYear && year <= endYear;
   });
 
 /**
@@ -57,7 +50,7 @@ export const mergeChartData = (
   // CPIデータの結合（給与データに存在する年月のみ）
   cpiData.forEach((row) => {
     const year = extractYear(row.年月);
-    if (year < startYear || year > endYear) {
+    if (year === null || year < startYear || year > endYear) {
       return;
     }
 
@@ -68,18 +61,7 @@ export const mergeChartData = (
     // Note: CPIのみの日付は追加しない（給与データが不足するため）
   });
 
-  const result = [...map.values()].toSorted((a, b) => {
-    const ma = a.年月.match(/^(\d{4})年(\d{1,2})月/);
-    const mb = b.年月.match(/^(\d{4})年(\d{1,2})月/);
-    if (!ma || !mb) {
-      return 0;
-    }
-    const ay = parseInt(ma[1], 10);
-    const am = parseInt(ma[2], 10);
-    const by = parseInt(mb[1], 10);
-    const bm = parseInt(mb[2], 10);
-    return ay !== by ? ay - by : am - bm;
-  });
+  const result = [...map.values()].toSorted((a, b) => compareYearMonth(a.年月, b.年月));
 
   return result;
 };
@@ -96,6 +78,7 @@ export function replaceWithAnnualAverage<T extends Record<string, unknown>>(
   const byYear = new Map<number, number[]>();
   data.forEach((d) => {
     const year = extractYear(String(d.年月 ?? ""));
+    if (year === null) return;
     const val = Number(d[key]) || 0;
     if (val > 0) {
       if (!byYear.has(year)) byYear.set(year, []);
@@ -114,6 +97,7 @@ export function replaceWithAnnualAverage<T extends Record<string, unknown>>(
   // 各月の値を年平均で置き換え（年平均が取れない年はnull）
   return data.map((d) => {
     const year = extractYear(String(d.年月 ?? ""));
+    if (year === null) return { ...d, [key]: null };
     const avg = annualAvg.get(year);
     if (avg !== undefined) {
       return { ...d, [key]: avg };

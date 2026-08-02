@@ -1,3 +1,6 @@
+import { compareYearMonth } from "@/lib/yearMonth";
+import { trailingMovingAverage } from "./math/movingAverage";
+
 /**
  * Population data processing: calculates population indices and moving averages.
  */
@@ -51,30 +54,15 @@ export function processPopulationData(
     const avg2020 = year2020.reduce((a, b) => a + b, 0) / year2020.length;
     const indexFactor = avg2020 > 0 ? 100 / avg2020 : 1;
     const entries = [...map.entries()];
-    entries.sort((a, b) => {
-      const ma = a[0].match(/^(\d{4})年(\d{1,2})月/);
-      const mb = b[0].match(/^(\d{4})年(\d{1,2})月/);
-      if (!ma || !mb) return 0;
-      const ay = parseInt(ma[1], 10);
-      const am = parseInt(ma[2], 10);
-      const by = parseInt(mb[1], 10);
-      const bm = parseInt(mb[2], 10);
-      return ay !== by ? ay - by : am - bm;
-    });
+    entries.sort((a, b) => compareYearMonth(a[0], b[0]));
     entries.forEach(([, data]) => {
       data.index = data.total * indexFactor;
     });
+    const indexValues = entries.map(([, data]) => data.index);
+    const maValues = trailingMovingAverage(indexValues, 12);
     entries.forEach((_entry, index) => {
-      let sum = 0;
-      let count = 0;
-      for (let i = Math.max(0, index - 11); i <= index; i++) {
-        sum += entries[i][1].index;
-        count++;
-      }
-      _entry[1].ma = count > 0 ? sum / count : 0;
+      _entry[1].ma = maValues[index];
     });
   }
   return map;
 }
-
-// ... (existing processing code)

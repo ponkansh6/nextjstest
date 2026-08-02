@@ -11,34 +11,18 @@ import {
 import { loadPopulationDataInternal } from "./population";
 import { loadCpiDataInternal, loadCtiDataInternal } from "./cpi";
 import { calculateSupportScale } from "@/lib/chartUtils";
-
-/** 年月文字列（例: "2020年1月"）から {year, month} を抽出 */
-function parseYearMonth(ym: string): { year: number; month: number } | null {
-  const m = ym.match(/^(\d{4})年(\d{1,2})月/);
-  return m ? { year: parseInt(m[1], 10), month: parseInt(m[2], 10) } : null;
-}
-
-/** 年月文字列の昇順ソート用比較関数 */
-function compareByYearMonth(a: string, b: string): number {
-  const pa = parseYearMonth(a);
-  const pb = parseYearMonth(b);
-  if (!pa || !pb) return 0;
-  return pa.year !== pb.year ? pa.year - pb.year : pa.month - pb.month;
-}
+import { compareYearMonth, parseYearMonth } from "@/lib/yearMonth";
+import { trailingMovingAverage } from "../math/movingAverage";
 
 /** エントリー配列の12か月移動平均マップを計算（値>0のみ対象） */
 function computeTrailingMA12(entries: [string, number][]): Map<string, number> {
-  const sorted = entries.filter(([_, v]) => v > 0).sort(([a], [b]) => compareByYearMonth(a, b));
+  const sorted = entries.filter(([_, v]) => v > 0).sort(([a], [b]) => compareYearMonth(a, b));
+  const values = sorted.map(([_, v]) => v);
+  const maValues = trailingMovingAverage(values, 12);
   const maMap = new Map<string, number>();
-  for (let i = 0; i < sorted.length; i++) {
-    let sum = 0;
-    let count = 0;
-    for (let j = Math.max(0, i - 11); j <= i; j++) {
-      sum += sorted[j][1];
-      count++;
-    }
-    maMap.set(sorted[i][0], count > 0 ? sum / count : 0);
-  }
+  sorted.forEach((entry, i) => {
+    maMap.set(entry[0], maValues[i]);
+  });
   return maMap;
 }
 
@@ -56,17 +40,10 @@ function computeMovingAverageToField(
   windowSize: number,
 ): void {
   const originalValues = data.map((d) => d[sourceKey] as number | undefined);
+  const cleaned = originalValues.map((v) => (typeof v === "number" ? v : 0));
+  const maValues = trailingMovingAverage(cleaned, windowSize, { skipNonPositive: true });
   data.forEach((item, index) => {
-    let sum = 0;
-    let count = 0;
-    for (let i = Math.max(0, index - (windowSize - 1)); i <= index; i++) {
-      const val = originalValues[i];
-      if (typeof val === "number" && val > 0) {
-        sum += val;
-        count++;
-      }
-    }
-    (item as Record<string, unknown>)[targetKey] = count > 0 ? sum / count : 0;
+    (item as Record<string, unknown>)[targetKey] = maValues[index];
   });
 }
 
@@ -165,10 +142,10 @@ export async function loadTotalEarningDataInternal(): Promise<CpiData[]> {
 
   const findPopulationTotal = (ym: string): number | undefined => {
     if (populationDataMap.has(ym)) return populationDataMap.get(ym)?.total;
-    const m = ym.match(/^(\d{4})年0?(\d{1,2})月$/);
-    if (!m) return undefined;
-    const padded = `${m[1]}年${String(m[2]).padStart(2, "0")}月`;
-    const unpadded = `${m[1]}年${parseInt(m[2], 10)}月`;
+    const parsed = parseYearMonth(ym);
+    if (!parsed) return undefined;
+    const padded = `${parsed.year}年${String(parsed.month).padStart(2, "0")}月`;
+    const unpadded = `${parsed.year}年${parsed.month}月`;
     return populationDataMap.get(padded)?.total ?? populationDataMap.get(unpadded)?.total;
   };
 
@@ -212,7 +189,7 @@ export async function loadTotalEarningDataInternal(): Promise<CpiData[]> {
     } as unknown as CpiData;
   });
 
-  result.sort((a, b) => compareByYearMonth(a.年月, b.年月));
+  result.sort((a, b) => compareYearMonth(a.年月, b.年月));
 
   // 各フィールドの12か月移動平均を別フィールドに計算（生値は保持）
   for (const field of ["特別給与", "所定内給与", "所定外給与"] as const) {

@@ -1,7 +1,6 @@
 import React from "react";
 import styles from "./CpiChart.module.css";
-
-const MIN_DISPLAY_YEAR = 2005;
+import { MIN_DISPLAY_YEAR } from "../../lib/chartConstants";
 
 interface CagrPanelProps {
   allYears: number[];
@@ -9,6 +8,7 @@ interface CagrPanelProps {
   cagrEndYear: number;
   cagrMonth: number;
   cagrResult: number | null;
+  cagrError?: string | null;
   setCagrStartYear: (year: number) => void;
   setCagrEndYear: (year: number) => void;
   setCagrMonth: (month: number) => void;
@@ -22,6 +22,7 @@ export const CagrPanel = React.memo<CagrPanelProps>(
     cagrEndYear,
     cagrMonth,
     cagrResult,
+    cagrError,
     setCagrStartYear,
     setCagrEndYear,
     setCagrMonth,
@@ -90,6 +91,12 @@ export const CagrPanel = React.memo<CagrPanelProps>(
               Calculate
             </button>
           </div>
+
+          {cagrError && (
+            <div className={styles.cagrError}>
+              <p className={styles.cagrErrorText}>{cagrError}</p>
+            </div>
+          )}
 
           {cagrResult !== null && (
             <div className={styles.cagrResult}>

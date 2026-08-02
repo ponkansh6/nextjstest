@@ -36,7 +36,10 @@ export default async function Page() {
   const maxCpiDate = { year: maxCpiYear, month: maxCpiMonth };
 
   // Compute quarterly aggregates on the server
-  const { nominal: quarterlyNominalData, real: quarterlyRealData } = computeQuarterlyAggregates(ctiData, maxCpiDate);
+  const { nominal: quarterlyNominalData, real: quarterlyRealData } = computeQuarterlyAggregates(
+    ctiData,
+    maxCpiDate,
+  );
 
   const cpiKeys = [...targetKeys, ...stackedKeys];
   const quarterlyKeys = [

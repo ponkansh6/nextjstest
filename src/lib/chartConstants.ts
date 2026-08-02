@@ -1,6 +1,9 @@
 // Milestone years for chart reference lines
 export const MILESTONE_YEARS = [2010, 2015, 2020, 2025] as const;
 
+// Minimum display year (used for filtering in CpiChart)
+export const MIN_DISPLAY_YEAR = 2005;
+
 // CPIの基本カテゴリー
 export const CPI_CATEGORIES = [
   "住居",
