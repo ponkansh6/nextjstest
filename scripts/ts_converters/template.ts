@@ -8,8 +8,8 @@ const SRC_FILE = "REPLACE_ME_SRC";
 const TARGET_FILE = "REPLACE_ME_TARGET";
 const HEADER_SKIP = 0; // Number of rows to skip
 
-const SRC_PATH = path.join(process.cwd(), "public", "economics_source", SRC_FILE);
-const TARGET_PATH = path.join(process.cwd(), "public", TARGET_FILE);
+const SRC_PATH = path.join(process.cwd(), "data/source", "economics_source", SRC_FILE);
+const TARGET_PATH = path.join(process.cwd(), "data/source", TARGET_FILE);
 
 function main() {
   if (!fs.existsSync(SRC_PATH)) {

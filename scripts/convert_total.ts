@@ -4,7 +4,7 @@ import XLSX from "xlsx";
 import * as aq from "arquero";
 
 const SRC_XLS = path.join(process.cwd(), "public", "economics_source", "hon-t07.xls");
-const TARGET_CSV = path.join(process.cwd(), "public", "total_earning.csv");
+const TARGET_CSV = path.join(process.cwd(), "data/source", "total_earning.csv");
 
 const EXPECTED_ORDER = [
   "年",

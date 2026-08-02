@@ -7,8 +7,8 @@ import { writeCSVWithBackup } from "./lib/csv-writer";
 import { ensureYM } from "./lib/date-utils";
 import { extractTable } from "./lib/table-extractor";
 
-const SRC_DIR = path.join(process.cwd(), "public", "economics_source");
-const OUT_DIR = path.join(process.cwd(), "public", "cpi_data");
+const SRC_DIR = path.join(process.cwd(), "data/source", "economics_source");
+const OUT_DIR = path.join(process.cwd(), "data/source", "cpi_data");
 
 function main(n = 5) {
   if (!fs.existsSync(OUT_DIR)) fs.mkdirSync(OUT_DIR, { recursive: true });

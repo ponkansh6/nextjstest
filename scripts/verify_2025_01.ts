@@ -28,7 +28,7 @@ async function verify() {
   );
 
   // CPIデータのロードロジックを簡易再現
-  const cpiPath = path.join(process.cwd(), "public/cpi_data.csv");
+  const cpiPath = path.join(process.cwd(), "data/source/cpi_data.csv");
   const cpiContent = fs.readFileSync(cpiPath, "utf8");
   const parsed = Papa.parse(cpiContent, { header: true, dynamicTyping: true });
   const cpi202412 = (parsed.data as any[]).find((d) => d["年月"] === "2024年12月")?.総合 || 0;

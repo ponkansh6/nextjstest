@@ -4,7 +4,7 @@ import XLSX from "xlsx";
 import * as aq from "arquero";
 
 const SRC_XLS = path.join(process.cwd(), "public", "economics_source", "hon-t13.xls");
-const TARGET_CSV = path.join(process.cwd(), "public", "contractual_earnings.csv");
+const TARGET_CSV = path.join(process.cwd(), "data/source", "contractual_earnings.csv");
 
 function main() {
   if (!fs.existsSync(SRC_XLS)) {

@@ -5,8 +5,8 @@ import * as XLSX from "xlsx";
 const SRC_FILE = "lt01-b10.xlsx";
 const TARGET_FILE = "population_statistics.csv";
 
-const SRC_PATH = path.join(process.cwd(), "public", "economics_source", SRC_FILE);
-const TARGET_PATH = path.join(process.cwd(), "public", TARGET_FILE);
+const SRC_PATH = path.join(process.cwd(), "data/source", "economics_source", SRC_FILE);
+const TARGET_PATH = path.join(process.cwd(), "data/source", TARGET_FILE);
 
 function escapeCsv(value: unknown): string {
   const str = value == null ? "" : String(value);
