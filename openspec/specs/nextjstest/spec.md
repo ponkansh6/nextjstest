@@ -37,21 +37,21 @@ The shared data type with an index signature `[key: string]: string | number` fo
 
 ### Data Sources
 
-Static CSV files served from `public/`:
+Static CSV files (not publicly served) stored in `data/source/`:
 
-- `public/cpi_data.csv` — CPI time-series
-- `public/cti_data.csv` — Business Cycle Index
-- `public/total_earning.csv` — Total earnings
-- `public/contractual_earnings.csv` — Contractual earnings
-- `public/scheduled_earnings.csv` — Scheduled earnings
-- `public/total_worked_hours.csv` — Total worked hours
-- `public/population_statistics.csv` — Population statistics
-- `public/employment_indices.csv` — Employment indices
-- `public/hon-mks202512.csv` — 毎月勤労統計調査の生データ（常用労働者数、出勤日数、実労働時間数、現金給与額）
-- `public/contribution.csv` — CPI contribution breakdown
-- `public/cti_support_nominal.csv` / `public/cti_support_real.csv` — CTI supporting series
+- `data/source/cpi_data.csv` — CPI time-series
+- `data/source/cti_data.csv` — Business Cycle Index
+- `data/source/total_earning.csv` — Total earnings
+- `data/source/contractual_earnings.csv` — Contractual earnings
+- `data/source/scheduled_earnings.csv` — Scheduled earnings
+- `data/source/total_worked_hours.csv` — Total worked hours
+- `data/source/population_statistics.csv` — Population statistics
+- `data/source/employment_indices.csv` — Employment indices
+- `data/source/hon-mks202512.csv` — 毎月勤労統計調査の生データ（常用労働者数、出勤日数、実労働時間数、現金給与額）
+- `data/source/contribution.csv` — CPI contribution breakdown
+- `data/source/cti_support_nominal.csv` / `data/source/cti_support_real.csv` — CTI supporting series
 
-> Note: `public/cti0211_1.csv` exists but is only used by ETL scripts (`scripts/ts_converters/`), not by the application runtime.
+> Note: These files are loaded server-side during data loading and are not publicly accessible via HTTP. The `data/` directory is excluded from static file serving.
 
 ## Requirements
 
@@ -99,18 +99,21 @@ The system SHALL load and process CSV data on the server before rendering.
 #### Scenario R3a: CPI Data Loading
 
 - **WHEN** `loadCpiData()` is called
-- **THEN** it reads `public/cpi_data.csv`, parses with PapaParse, transforms columns, and returns `CpiData[]`
+- **THEN** it reads `data/source/cpi_data.csv`, parses with PapaParse, transforms columns, and returns `CpiData[]`
 
 #### Scenario R3b: CTI / Earnings Data Loading
 
 - **WHEN** `loadCtiData()` / `loadTotalEarningData()` is called
-- **THEN** corresponding CSV files are read and processed through `server/lib/dataLoader.ts`
+- **THEN** corresponding CSV files are read from `data/source/` and processed through `server/lib/dataLoader.ts`
 
-#### Scenario R3c: Data Processing
+#### Scenario R3c: Data Processing & Projection
 
 - **WHEN** raw data is loaded
 - **THEN** `dataProcessor.ts` applies server-side calculations (indexing, moving averages, smoothing)
 - **AND** `serverCalculations.ts` performs derived computations
+- **AND** `server/lib/view-models/dashboard.ts` projects the full dataset to remove unused columns and round floating-point values to 2 decimal places
+- **AND** the projected data (as `CpiView[]`, `CtiView[]`, `EarningsView[]`) is passed to the client component instead of raw `CpiData[]`
+- **THEN** the RSC payload size is reduced by ~56% (1,169 KB → 505 KB uncompressed)
 
 ### R4: Interactive Legend
 
@@ -146,54 +149,35 @@ The system SHALL provide explanatory info for each chart/metric.
 - **THEN** a tooltip/modal displays the definition, source, and calculation method for the indicator
 - **AND** the content is retrieved based on the `chartKey` defined in `src/lib/chartInfoContent.ts` (supported charts: `cpi-major`, `stacked-area`, `earnings`, `residual`, `consumption-expenditure`, `new-graph`)
 
-### R7: API Routes
-
-The system SHALL expose data through REST API endpoints for client-side fetching.
-
-#### Scenario R7a: CPI API
-
-- **WHEN** `GET /api/cpi` is called
-- **THEN** processed CPI data is returned as JSON
-
-#### Scenario R7b: CTI API
-
-- **WHEN** `GET /api/cti` is called
-- **THEN** processed CTI data is returned as JSON
-
-#### Scenario R7c: Earnings API
-
-- **WHEN** `GET /api/earnings` is called
-- **THEN** processed earnings data is returned as JSON
-
-### R8: Responsive Layout
+### R7: Responsive Layout
 
 The system SHALL adapt to viewport size for mobile and desktop.
 
-#### Scenario R8a: Responsive Charts
+#### Scenario R7a: Responsive Charts
 
 - **WHEN** viewport width changes
 - **THEN** charts resize to fit available space without overflow or clipping
 
-### R9: Accessibility
+### R8: Accessibility
 
 The system SHALL be navigable and interpretable by assistive technologies.
 
-#### Scenario R9a: Chart Labels
+#### Scenario R8a: Chart Labels
 
 - **WHEN** a screen reader encounters a chart
 - **THEN** the chart has accessible labels, ARIA descriptions, and keyboard-navigable legend
 
-### R10: Page Metadata and Header
+### R9: Page Metadata and Header
 
 The system SHALL provide SEO-friendly metadata and descriptive headers.
 
-#### Scenario R10a: Layout Metadata
+#### Scenario R9a: Layout Metadata
 
 - **THEN** `layout.tsx` defines:
   - `title`: "日本の経済指標ダッシュボード | 物価・賃金・消費の長期推移"
   - `description`: "物価指数・現金給与総額・消費支出の2020年基準指数を一画面で比較。費目別寄与度・年率上昇率・給与と物価の乖離を可視化。凡例クリックで系列の表示/非表示を切替可能。"
 
-#### Scenario R10b: Page Header Description
+#### Scenario R9b: Page Header Description
 
 - **THEN** `page.tsx` header displays:
   - "2020年基準でスケール統一した主要指標を一覧。各グラフは凡例クリックで系列の表示/非表示を切替可能。"
@@ -208,28 +192,32 @@ Page (RSC)
 └── CpiChart (client component)
     ├── ChartFilters — Date range / indicator filters
     ├── [Chart variants]
-    │   ├── MajorIndicesChart
-    │   ├── EarningsBreakdownChart
-    │   ├── StackedAreaChart
-    │   ├── ResidualAreaChart
+    │   ├── MajorIndicesChart → CustomTooltip
+    │   ├── EarningsBreakdownChart → CustomTooltip
+    │   ├── StackedAreaChart → CustomTooltip
+    │   ├── ResidualAreaChart → CustomTooltip
     │   └── SpendingBarChart
     ├── ChartLegend — Interactive series toggles
     ├── ChartInfoButton → ChartInfoContentRenderer — Indicator explanations (uses `chartKey` mapped to `CHART_INFO` in `src/lib/chartInfoContent.ts`)
-    └── NewGraph — Supplementary visualization
+    ├── CustomTooltip (React.memo, module-level component for charts)
+    └── NewGraph → CustomTooltip — Supplementary visualization
 ```
 
 ### Data Flow
 
 ```
-public/*.csv
+data/source/*.csv
   → server/lib/dataIo.ts (path definitions + CSV parsing utilities)
     → server/lib/data-loader/{cpi,earnings,population}.ts (domain-specific loading + caching)
       → server/lib/dataLoader.ts (caching wrapper with maybeCache)
         → server/lib/dataProcessor.ts (transform + clean)
           → server/lib/serverCalculations.ts (derive)
-            → src/app/page.tsx (RSC: load + pass props)
-              → src/app/components/CpiChart.tsx ("use client": render + interact)
+            → server/lib/view-models/dashboard.ts (project: select columns, round 2 decimals)
+              → src/app/page.tsx (RSC: load + project + pass props)
+                → src/app/components/CpiChart.tsx ("use client": render + interact)
 ```
+
+**Key optimization:** The view-models layer reduces RSC payload from 1,169 KB to ~505 KB by removing unused columns and rounding to 2 decimal places before sending to client.
 
 ### Client Modules
 
@@ -238,8 +226,8 @@ public/*.csv
 | Module               | Description                            |
 | -------------------- | -------------------------------------- |
 | `useLegendState.ts`  | Legend toggle state (Redux-backed)     |
-| `useChartTheme.ts`   | Chart theme management                 |
-| `useCpiChartData.ts` | CPI chart data fetching and processing |
+| `useChartTheme.ts`   | Chart theme management (module-scoped constants) |
+| `useCpiChartData.ts` | CPI chart data filtering (quarter visibility) — server-side processing complete |
 
 #### src/lib/
 
