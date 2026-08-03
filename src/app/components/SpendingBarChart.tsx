@@ -31,6 +31,7 @@ interface SpendingBarChartProps {
   onToggleQuarter: (q: number) => void;
   onReset: () => void;
   hideLegend?: boolean;
+  testId?: string;
 }
 
 export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
@@ -49,10 +50,11 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
     onToggleQuarter,
     onReset,
     hideLegend = false,
+    testId,
   } = props;
 
   return (
-    <div className={styles.chartSection}>
+    <div className={styles.chartSection} data-testid={testId}>
       <h2 className={styles.chartTitle}>
         {title}
         {infoKey && (

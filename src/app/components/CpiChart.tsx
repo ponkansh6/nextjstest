@@ -350,6 +350,7 @@ export default function CpiChart({
             setHiddenKeys: setRealHiddenKeys,
           },
         )}
+        testId="spending-chart-nominal"
       />
 
       <SpendingBarChart
@@ -378,6 +379,7 @@ export default function CpiChart({
           },
         )}
         hideLegend
+        testId="spending-chart-real"
       />
 
       <EarningsBreakdownChart
