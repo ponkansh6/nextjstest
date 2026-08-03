@@ -68,20 +68,18 @@ test.describe("描画範囲変更 E2E", () => {
     // 初期棒本数を記録
     const initialCount = await bars(page, NOMINAL).count();
 
-    // オプション取得＆2番目の年、および現在の終了年を取得
+    // オプション取得＆現在の終了年を取得、開始年を変更
     const startOptions = await page.locator("#startYear").locator("option").allTextContents();
-    const endOptions = await page.locator("#endYear").locator("option").allTextContents();
+    const currentEndYear = Number(await page.locator("#endYear").inputValue());
 
-    if (startOptions.length < 2 || endOptions.length < 1) {
-      test.skip(); // 複数年オプションがない場合はスキップ
+    if (startOptions.length < 2) {
+      test.skip();
     }
 
     const newStartYear = Number(startOptions[1]?.replace("年", ""));
-    const endYear = Number(endOptions[endOptions.length - 1]?.replace("年", ""));
+    if (!newStartYear || isNaN(currentEndYear)) return;
 
-    if (!newStartYear || !endYear) return;
-
-    await setRange(page, newStartYear, endYear);
+    await setRange(page, newStartYear, currentEndYear);
 
     // 棒本数が減少していることで「フィルタが効いている」ことを検証
     const newCount = await bars(page, NOMINAL).count();
@@ -92,20 +90,18 @@ test.describe("描画範囲変更 E2E", () => {
     // 初期棒本数を記録
     const initialCount = await bars(page, REAL).count();
 
-    // オプション取得＆2番目の年、および現在の終了年を取得
+    // オプション取得＆現在の終了年を取得、開始年を変更
     const startOptions = await page.locator("#startYear").locator("option").allTextContents();
-    const endOptions = await page.locator("#endYear").locator("option").allTextContents();
+    const currentEndYear = Number(await page.locator("#endYear").inputValue());
 
-    if (startOptions.length < 2 || endOptions.length < 1) {
+    if (startOptions.length < 2) {
       test.skip();
     }
 
     const newStartYear = Number(startOptions[1]?.replace("年", ""));
-    const endYear = Number(endOptions[endOptions.length - 1]?.replace("年", ""));
+    if (!newStartYear || isNaN(currentEndYear)) return;
 
-    if (!newStartYear || !endYear) return;
-
-    await setRange(page, newStartYear, endYear);
+    await setRange(page, newStartYear, currentEndYear);
 
     // 棒本数が減少していること
     const newCount = await bars(page, REAL).count();
@@ -116,20 +112,18 @@ test.describe("描画範囲変更 E2E", () => {
     // 初期棒本数を記録
     const initialCount = await bars(page, NOMINAL).count();
 
-    // オプション取得＆最後の前の年、および現在の開始年を取得
-    const startOptions = await page.locator("#startYear").locator("option").allTextContents();
+    // オプション取得＆現在の開始年を取得、終了年を変更
     const endOptions = await page.locator("#endYear").locator("option").allTextContents();
+    const currentStartYear = Number(await page.locator("#startYear").inputValue());
 
-    if (endOptions.length < 2 || startOptions.length < 1) {
+    if (endOptions.length < 2) {
       test.skip();
     }
 
-    const startYear = Number(startOptions[0]?.replace("年", ""));
     const newEndYear = Number(endOptions[endOptions.length - 2]?.replace("年", ""));
+    if (!newEndYear || isNaN(currentStartYear)) return;
 
-    if (!startYear || !newEndYear) return;
-
-    await setRange(page, startYear, newEndYear);
+    await setRange(page, currentStartYear, newEndYear);
 
     // 棒本数が減少していること
     const newCount = await bars(page, NOMINAL).count();
@@ -140,20 +134,18 @@ test.describe("描画範囲変更 E2E", () => {
     // 初期棒本数を記録
     const initialCount = await bars(page, REAL).count();
 
-    // オプション取得＆最後の前の年、および現在の開始年を取得
-    const startOptions = await page.locator("#startYear").locator("option").allTextContents();
+    // オプション取得＆現在の開始年を取得、終了年を変更
     const endOptions = await page.locator("#endYear").locator("option").allTextContents();
+    const currentStartYear = Number(await page.locator("#startYear").inputValue());
 
-    if (endOptions.length < 2 || startOptions.length < 1) {
+    if (endOptions.length < 2) {
       test.skip();
     }
 
-    const startYear = Number(startOptions[0]?.replace("年", ""));
     const newEndYear = Number(endOptions[endOptions.length - 2]?.replace("年", ""));
+    if (!newEndYear || isNaN(currentStartYear)) return;
 
-    if (!startYear || !newEndYear) return;
-
-    await setRange(page, startYear, newEndYear);
+    await setRange(page, currentStartYear, newEndYear);
 
     // 棒本数が減少していること
     const newCount = await bars(page, REAL).count();
