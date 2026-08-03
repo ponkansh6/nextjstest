@@ -38,7 +38,9 @@ describe("Support series join contract (loadSupportMap / cpi.ts:59-78)", () => {
         Array.isArray(row) && row.some((c) => typeof c === "string" && /民間最終消費支出/.test(c)),
     );
     const header =
-      headerIndex === -1 ? [] : rows[headerIndex].map((c) => (typeof c === "string" ? c.trim() : c));
+      headerIndex === -1
+        ? []
+        : rows[headerIndex].map((c) => (typeof c === "string" ? c.trim() : c));
     return { rows, headerIndex, header };
   };
 
@@ -105,7 +107,10 @@ describe("Support series join contract (loadSupportMap / cpi.ts:59-78)", () => {
 
     it("Map が空にならず、2005-2016 の全48四半期のキーを保持している", () => {
       const map = buildMap(filePath);
-      expect(map.size, `${label}: supportMap が空です（3つの分岐のいずれかが発火しています）`).toBeGreaterThan(0);
+      expect(
+        map.size,
+        `${label}: supportMap が空です（3つの分岐のいずれかが発火しています）`,
+      ).toBeGreaterThan(0);
 
       const missing: string[] = [];
       const zeroValued: string[] = [];

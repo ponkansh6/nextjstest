@@ -1,5 +1,12 @@
 import { test, expect } from "@playwright/test";
-import { extractFlightFromHtml, extractArrayProp, filter2005to2016, formatDistribution, REAL_PROP, type QuarterlyRow } from "../utils/flight-payload";
+import {
+  extractFlightFromHtml,
+  extractArrayProp,
+  filter2005to2016,
+  formatDistribution,
+  REAL_PROP,
+  type QuarterlyRow,
+} from "../utils/flight-payload";
 
 /**
  * E2E テスト: page.tsx の実ビルド・実サーバー・実ブラウザ検証。
@@ -12,9 +19,7 @@ import { extractFlightFromHtml, extractArrayProp, filter2005to2016, formatDistri
  * ⚠️ このテストの失敗 = page.tsx の回帰（今回のバグと同型）を検知
  */
 test.describe("page.tsx E2E: real consumption chart with actual browser", () => {
-  test("should render page and extract quarterlyRealData from Flight payload", async ({
-    page,
-  }) => {
+  test("should render page and extract quarterlyRealData from Flight payload", async ({ page }) => {
     // ページにアクセス
     await page.goto("/");
 
@@ -35,18 +40,14 @@ test.describe("page.tsx E2E: real consumption chart with actual browser", () => 
     try {
       realRows = filter2005to2016(extractArrayProp(payload, REAL_PROP));
     } catch (e) {
-      console.log(
-        `Failed to extract ${REAL_PROP}: ${e}. Payload length: ${payload.length}`,
-      );
+      console.log(`Failed to extract ${REAL_PROP}: ${e}. Payload length: ${payload.length}`);
       throw e;
     }
 
     expect(realRows.length, "2005-2016 should have 48 quarters").toBe(48);
   });
 
-  test("should have non-zero 民間最終消費支出（実質） for 2005-2016", async ({
-    page,
-  }) => {
+  test("should have non-zero 民間最終消費支出（実質） for 2005-2016", async ({ page }) => {
     /**
      * ⚠️ このテストの失敗 = 商用で起きたバグと同じ症状をローカル実ビルドで再現。
      * page.tsx の quarterlyKeys から実質キーが削られたなど、アプリケーション層の
@@ -91,9 +92,7 @@ test.describe("page.tsx E2E: real consumption chart with actual browser", () => 
     expect(errors, `Page should load without errors.\nErrors:\n${errors.join("\n")}`).toEqual([]);
   });
 
-  test("should render UI components in real consumption chart", async ({
-    page,
-  }) => {
+  test("should render UI components in real consumption chart", async ({ page }) => {
     /**
      * 実質消費グラフのセクションが DOM に存在することを確認。
      * 詳細な recharts 要素検査は jsdom/vitest での検証で十分なため、

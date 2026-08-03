@@ -40,7 +40,7 @@ describe("Support Series Filtering - Private Final Consumption", () => {
       scaled2005_2016.forEach((d) => {
         expect(
           d[SUPPORT_SERIES_KEY_REAL],
-          `2005-2016年のデータは0ではないはずです (年: ${d.年})`
+          `2005-2016年のデータは0ではないはずです (年: ${d.年})`,
         ).not.toBe(0);
       });
     });
@@ -62,10 +62,7 @@ describe("Support Series Filtering - Private Final Consumption", () => {
       const scaled = testData.filter((d) => d.年 >= 2005 && d.年 <= 2016);
       scaled.forEach((d) => {
         const val = d[SUPPORT_SERIES_KEY_NOMINAL] as number;
-        expect(
-          val,
-          `2005-2016年の名目値は50-150範囲で0ではないはずです (年: ${d.年})`
-        ).not.toBe(0);
+        expect(val, `2005-2016年の名目値は50-150範囲で0ではないはずです (年: ${d.年})`).not.toBe(0);
       });
     });
   });
@@ -118,7 +115,7 @@ describe("Support Series Filtering - Private Final Consumption", () => {
       const year2005Data = testData.find((d) => d.年 === 2005);
       expect(
         year2005Data?.[SUPPORT_SERIES_KEY_REAL],
-        "BUG CHECK: 本番環境では2005年でも0になっています（既知の問題）"
+        "BUG CHECK: 本番環境では2005年でも0になっています（既知の問題）",
       ).not.toBe(0);
     });
   });

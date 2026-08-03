@@ -114,6 +114,17 @@ export default function CpiChart({
     [totalEarningData, startYear, endYear],
   );
 
+  // 四半期データのフィルタリング（消費支出グラフ用）
+  const filteredQuarterlyNominalData = useMemo(
+    () => filterDataByYear(quarterlyNominalData, startYear, endYear),
+    [quarterlyNominalData, startYear, endYear],
+  );
+
+  const filteredQuarterlyRealData = useMemo(
+    () => filterDataByYear(quarterlyRealData, startYear, endYear),
+    [quarterlyRealData, startYear, endYear],
+  );
+
   // データマッピングの統合: CPIと賃金データを年月で結合
   const mergedData = useMemo(
     () => mergeChartData(filteredTotalEarningData, chartData, startYear, endYear),
@@ -317,7 +328,7 @@ export default function CpiChart({
       <SpendingBarChart
         title="消費支出（名目）"
         infoKey="consumption-expenditure"
-        data={quarterlyNominalData}
+        data={filteredQuarterlyNominalData}
         keys={nominalKeysWithSupport}
         colors={nominalColorsWithSupport}
         hiddenKeys={nominalHiddenKeys}
@@ -344,7 +355,7 @@ export default function CpiChart({
       <SpendingBarChart
         title="消費支出（実質）"
         infoKey="consumption-expenditure"
-        data={quarterlyRealData}
+        data={filteredQuarterlyRealData}
         keys={realKeysWithSupport}
         colors={[...realColors, "#94a3b8"]}
         hiddenKeys={realHiddenKeys}

@@ -280,13 +280,25 @@ describe("Integrated UI Chart Tests", () => {
       mockMergedData.forEach((d) => {
         // 名目
         const nominalVal = Number(d[SUPPORT_SERIES_KEY_NOMINAL] || 0);
-        expect(nominalVal, `${SUPPORT_SERIES_KEY_NOMINAL} at ${d.年月} should be 50-150`).toBeGreaterThanOrEqual(50);
-        expect(nominalVal, `${SUPPORT_SERIES_KEY_NOMINAL} at ${d.年月} should be 50-150`).toBeLessThanOrEqual(150);
+        expect(
+          nominalVal,
+          `${SUPPORT_SERIES_KEY_NOMINAL} at ${d.年月} should be 50-150`,
+        ).toBeGreaterThanOrEqual(50);
+        expect(
+          nominalVal,
+          `${SUPPORT_SERIES_KEY_NOMINAL} at ${d.年月} should be 50-150`,
+        ).toBeLessThanOrEqual(150);
 
         // 実質
         const realVal = Number(d[SUPPORT_SERIES_KEY_REAL] || 0);
-        expect(realVal, `${SUPPORT_SERIES_KEY_REAL} at ${d.年月} should be 50-150`).toBeGreaterThanOrEqual(50);
-        expect(realVal, `${SUPPORT_SERIES_KEY_REAL} at ${d.年月} should be 50-150`).toBeLessThanOrEqual(150);
+        expect(
+          realVal,
+          `${SUPPORT_SERIES_KEY_REAL} at ${d.年月} should be 50-150`,
+        ).toBeGreaterThanOrEqual(50);
+        expect(
+          realVal,
+          `${SUPPORT_SERIES_KEY_REAL} at ${d.年月} should be 50-150`,
+        ).toBeLessThanOrEqual(150);
       });
     });
   });
@@ -533,4 +545,3 @@ describe("NewGraph", () => {
     expect(screen.getByText("給与・消費・物価の推移比較(12MA)")).toBeDefined();
   });
 });
-

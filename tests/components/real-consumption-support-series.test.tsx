@@ -39,7 +39,9 @@ import type { CpiData } from "../../src/types";
 import { setupUiMocks } from "../utils/ui-mocks";
 
 vi.mock("recharts", () => ({
-  ResponsiveContainer: ({ children }: any) => <div data-testid="responsive-container">{children}</div>,
+  ResponsiveContainer: ({ children }: any) => (
+    <div data-testid="responsive-container">{children}</div>
+  ),
   BarChart: ({ data, children }: any) => (
     <div data-testid="barchart" data-rows={JSON.stringify(data)}>
       {children}
@@ -116,7 +118,10 @@ describe("Real Consumption Support Series - Local Pipeline Regression Guard", ()
     expect(cleanData.length, "cleanData should be non-empty").toBeGreaterThan(0);
     expect(ctiData.length, "ctiData should be non-empty").toBeGreaterThan(0);
     expect(maxCpiDate.year, "maxCpiDate.year should be set").toBeGreaterThan(1994);
-    expect(projectedQuarterlyReal.length, "projectedQuarterlyReal should have rows").toBeGreaterThan(0);
+    expect(
+      projectedQuarterlyReal.length,
+      "projectedQuarterlyReal should have rows",
+    ).toBeGreaterThan(0);
 
     // Verify raw monthly CTI data actually carries support-series values
     // (from cti_support_real.csv, before any quarterly aggregation/scaling).
@@ -136,7 +141,9 @@ describe("Real Consumption Support Series - Local Pipeline Regression Guard", ()
       `✓ Data loaded: cleanData=${cleanData.length}, ctiData=${ctiData.length}, maxCpiDate=${maxCpiDate.year}-${maxCpiDate.month}`,
     );
     console.log(`✓ Quarterly rows generated: ${projectedQuarterlyReal.length}`);
-    console.log(`✓ Raw 2005-2016 rows with non-zero support value: ${rawSupportRows2005_2016.length}`);
+    console.log(
+      `✓ Raw 2005-2016 rows with non-zero support value: ${rawSupportRows2005_2016.length}`,
+    );
   });
 
   it("T1: pipeline — 民間最終消費支出（実質） is not zero for 2005-2016 years", () => {
