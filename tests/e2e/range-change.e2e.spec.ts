@@ -47,9 +47,10 @@ test.describe("描画範囲変更 E2E", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
-    // 他のテストから状態が変わっている可能性があるため、明示的にリロード
-    await page.reload();
-    await page.waitForLoadState("networkidle");
+    // networkidle はチャートの非同期描画(ResizeObserver経由)完了を保証しないため、
+    // 実際に棒が描画されるまで明示的に待つ
+    await expect(bars(page, NOMINAL).first()).toBeVisible({ timeout: 10000 });
+    await expect(bars(page, REAL).first()).toBeVisible({ timeout: 10000 });
   });
 
   test("【サニティ】初期状態でグラフが表示される", async ({ page }) => {
