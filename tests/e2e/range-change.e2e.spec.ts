@@ -20,7 +20,8 @@ const NOMINAL = "spending-chart-nominal";
 const REAL = "spending-chart-real";
 
 // Helper: 指定テスト ID のグラフ内 .recharts-bar-rectangle locator
-const bars = (page: Page, testId: string) => page.getByTestId(testId).locator(".recharts-bar-rectangle");
+const bars = (page: Page, testId: string) =>
+  page.getByTestId(testId).locator(".recharts-bar-rectangle");
 
 // Helper: 開始年・終了年を変更（制約: start <= end）
 const setRange = async (page: Page, start: number, end: number) => {
