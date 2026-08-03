@@ -47,6 +47,9 @@ test.describe("描画範囲変更 E2E", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
+    // 他のテストから状態が変わっている可能性があるため、明示的にリロード
+    await page.reload();
+    await page.waitForLoadState("networkidle");
   });
 
   test("【サニティ】初期状態でグラフが表示される", async ({ page }) => {
