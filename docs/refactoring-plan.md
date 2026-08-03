@@ -733,6 +733,7 @@ ANALYZE=1 pnpm build
 **コミット**: `ab1ca82` refactor: Phase 6 失敗した実装の再検討・完結
 
 **再実装 #1: P2-2.1 SpendingBarChart → YearReferenceLines**
+
 - 問題：型互換性（QuarterlyDataPoint vs CpiData）で前回実装取消
 - 解決：QuarterlyDataPoint に 年月フィールドを追加
   - `quarterlyAggregation.ts` で 年月を計算・付与（quarter の最初の月）
@@ -740,6 +741,7 @@ ANALYZE=1 pnpm build
 - 効果：全 6 チャートで YearReferenceLines が一貫使用可能に → P2-2 完全実装へ昇格
 
 **再実装 #2: CpiChart 型互換性の完全解決**
+
 - 問題：`as unknown as CpiData[]` キャストが 3 箇所存在（型チェーン断落）
 - 解決：アダプタレイヤー（`src/lib/chartAdapters.ts`）で型安全な変換関数を作成
   - `adaptCpiViewToChartData()` で CpiView[] → CpiData[]
@@ -748,6 +750,7 @@ ANALYZE=1 pnpm build
 - 効果：型チェーン完全化、キャスト削除可能、保守性向上
 
 **検証（全通過）**:
+
 - ✅ type-check: 0 errors
 - ✅ test:all: 136/136 passed
 - ✅ UI tests: 41/41 passed
@@ -755,5 +758,6 @@ ANALYZE=1 pnpm build
 - ✅ git push: リモート同期完了
 
 **統計更新**:
+
 - P2：完全一致 3 → 4、部分完了 1 → 0
 - 計：完全一致 12 → 13 (87%)、部分完了 3 → 2 (13%)

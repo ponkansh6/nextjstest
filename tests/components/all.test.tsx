@@ -52,7 +52,14 @@ const mockCtiData = [
 ];
 
 const mockQuarterlyData = [
-  { label: "2023年Q1", 年: 2023, quarter: 1, 年月: "2023年1月", "総合（名目）": 100, "総合（実質）": 100 },
+  {
+    label: "2023年Q1",
+    年: 2023,
+    quarter: 1,
+    年月: "2023年1月",
+    "総合（名目）": 100,
+    "総合（実質）": 100,
+  },
 ];
 const mockCpiData: CpiData[] = [
   {
@@ -90,6 +97,8 @@ const mockMergedData: CpiData[] = [
     持家の帰属家賃を除く総合: 100,
     "消費支出（参考）": 100,
     "CPI総合(12MA)": 100,
+    "民間最終消費支出（名目）": 100,
+    "民間最終消費支出（実質）": 100,
   } as any,
   {
     label: "2025年Q1",
@@ -106,6 +115,8 @@ const mockMergedData: CpiData[] = [
     持家の帰属家賃を除く総合: 105,
     "消費支出（参考）": 105,
     "CPI総合(12MA)": 105,
+    "民間最終消費支出（名目）": 105,
+    "民間最終消費支出（実質）": 105,
   } as any,
 ];
 
@@ -262,6 +273,20 @@ describe("Integrated UI Chart Tests", () => {
         const val = Number(d["消費支出（参考）"] || 0);
         expect(val, `消費支出（参考） at ${d.年月} should be 50-150`).toBeGreaterThanOrEqual(50);
         expect(val, `消費支出（参考） at ${d.年月} should be 50-150`).toBeLessThanOrEqual(150);
+      });
+    });
+
+    it("should verify 民間最終消費支出 (nominal and real) is within 50-150 range", () => {
+      mockMergedData.forEach((d) => {
+        // 名目
+        const nominalVal = Number(d[SUPPORT_SERIES_KEY_NOMINAL] || 0);
+        expect(nominalVal, `${SUPPORT_SERIES_KEY_NOMINAL} at ${d.年月} should be 50-150`).toBeGreaterThanOrEqual(50);
+        expect(nominalVal, `${SUPPORT_SERIES_KEY_NOMINAL} at ${d.年月} should be 50-150`).toBeLessThanOrEqual(150);
+
+        // 実質
+        const realVal = Number(d[SUPPORT_SERIES_KEY_REAL] || 0);
+        expect(realVal, `${SUPPORT_SERIES_KEY_REAL} at ${d.年月} should be 50-150`).toBeGreaterThanOrEqual(50);
+        expect(realVal, `${SUPPORT_SERIES_KEY_REAL} at ${d.年月} should be 50-150`).toBeLessThanOrEqual(150);
       });
     });
   });
@@ -508,3 +533,4 @@ describe("NewGraph", () => {
     expect(screen.getByText("給与・消費・物価の推移比較(12MA)")).toBeDefined();
   });
 });
+

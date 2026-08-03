@@ -115,7 +115,10 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.gridStroke} />
-            <YearReferenceLines data={data as unknown as CpiData[]} stroke={chartColors.gridStroke} />
+            <YearReferenceLines
+              data={data as unknown as CpiData[]}
+              stroke={chartColors.gridStroke}
+            />
             <XAxis
               dataKey="label"
               axisLine={false}

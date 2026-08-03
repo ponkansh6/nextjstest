@@ -29,18 +29,31 @@ if echo "$PUSH_FILES" | grep -qE "^src/"; then
   fi
 fi
 
-# --- UI tests ---
-if echo "$PUSH_FILES" | grep -qE "src/app/components|tests/components|src/lib/chart"; then
-  echo "Running pre-push UI tests for relevant changes..."
-  pnpm run test:ui
-  TEST_EXIT_CODE=$?
-  if [ $TEST_EXIT_CODE -ne 0 ]; then
-    echo "UI Tests failed with code $TEST_EXIT_CODE"
-    exit $TEST_EXIT_CODE
-  fi
-  echo "Pre-push UI tests passed!"
-else
-  echo "No UI-related changes detected in this push. Skipping UI tests."
+# --- Full unit/component test suite ---
+# パスパターンによる条件実行はやめ、push時は無条件で全テストを実行する。
+# 理由: vitest related（pre-commit）はimportグラフに乗らないファイル（例: src/app/page.tsx）を
+# 変更しても「関連テスト0件」で無言パスする。push時の条件付きtest:uiも、パスパターンに
+# 一致しない変更（page.tsx単体やserver/**単体など）を素通りさせていた。
+echo "Running full unit/component test suite..."
+pnpm run test:all
+TEST_EXIT_CODE=$?
+if [ $TEST_EXIT_CODE -ne 0 ]; then
+  echo "Unit/component tests failed with code $TEST_EXIT_CODE"
+  exit $TEST_EXIT_CODE
 fi
+echo "Unit/component tests passed!"
+
+# --- E2E tests ---
+# 実ビルド・実サーバー・実ブラウザで page.tsx の実行結果を検証。
+# 今回のバグ（page.tsx の quarterlyKeys 欠落）はここで検知される。
+echo ""
+echo "Running E2E tests (page.tsx with real build/server/browser)..."
+pnpm run test:e2e
+E2E_EXIT_CODE=$?
+if [ $E2E_EXIT_CODE -ne 0 ]; then
+  echo "E2E tests failed with code $E2E_EXIT_CODE"
+  exit $E2E_EXIT_CODE
+fi
+echo "E2E tests passed!"
 
 exit 0

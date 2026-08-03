@@ -129,5 +129,41 @@ describe("CTI Data Integrity", () => {
         }
       });
     });
+
+    it("should verify private consumption expenditure is not zero for 2005-2016 (computeChartData contract)", () => {
+      /**
+       * Unit test for computeChartData function's support series scaling.
+       * Verifies that 2005-2016 years have non-zero values after computeChartData processes them.
+       * Note: computeChartData is not used in the production UI pipeline; this is a contract test for the function itself.
+       */
+      const props = {
+        data: ctiData,
+        endYear: 2026,
+        maxCpiDate: { month: 12, year: 2026 },
+        nominalData: ctiData,
+        nominalKeys: CONSUMPTION_NOMINAL_KEYS,
+        realKeys: CONSUMPTION_REAL_KEYS,
+        startYear: 2005,
+      };
+
+      const result = computeChartData(props, []);
+      const { quarterlyNominalData, quarterlyRealData } = result;
+
+      // 本番環境での問題チェック: 民間最終消費支出が0になっているか
+      [SUPPORT_SERIES_KEY_NOMINAL, SUPPORT_SERIES_KEY_REAL].forEach((supportKey) => {
+        const isNominal = supportKey === SUPPORT_SERIES_KEY_NOMINAL;
+        const targetData = isNominal ? quarterlyNominalData : quarterlyRealData;
+
+        // 2005-2016年では0ではない値を持つべき
+        const pre2017Data = targetData.filter((d) => (d.年 as number) <= 2016);
+        pre2017Data.forEach((d) => {
+          const val = d[supportKey] as number;
+          expect(
+            val,
+            `BUG CHECK: ${d.label} ${supportKey} should NOT be zero (expected value in 50-150 range)`,
+          ).not.toBe(0);
+        });
+      });
+    });
   });
 });

@@ -116,8 +116,7 @@ export default function CpiChart({
 
   // データマッピングの統合: CPIと賃金データを年月で結合
   const mergedData = useMemo(
-    () =>
-      mergeChartData(filteredTotalEarningData, chartData, startYear, endYear),
+    () => mergeChartData(filteredTotalEarningData, chartData, startYear, endYear),
     [filteredTotalEarningData, chartData, startYear, endYear],
   );
 
