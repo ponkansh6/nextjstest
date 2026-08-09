@@ -25,8 +25,8 @@ test.describe("アクセシビリティ - ダークモード", () => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    // StackedAreaChart の最初の凡例チップを取得
-    const legendItem = page.locator("[class*='StackedAreaChart'] [class*='legendItem']").first();
+    // StackedAreaChart の最初の凡例チップを取得（aria-pressed で特定）
+    const legendItem = page.locator("[aria-pressed]").first();
     await expect(legendItem).toBeVisible();
 
     // タップ
@@ -163,8 +163,8 @@ test.describe("アクセシビリティ - アニメーション", () => {
     // 0s または animation: none の状態になっているはず
     expect(animationDuration).toMatch(/^0|none/);
 
-    // transform も無効になっているか確認（P1-2 の :hover transform, P2-1 案 2 の sticky等）
-    const legendItem = page.locator("[class*='legendItem']:not([class*='hidden'])").first();
+    // transform も無効になっているか確認（P1-2 の :hover transform等）
+    const legendItem = page.locator("[aria-pressed='true']").first();
     if (await legendItem.isVisible()) {
       const transform = await legendItem.evaluate((el) => {
         const style = window.getComputedStyle(el);
