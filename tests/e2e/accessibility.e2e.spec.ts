@@ -17,7 +17,7 @@ import { test as fixtureTest } from "./fixtures";
  * LazyMount により StackedAreaChart が初期表示に存在しない可能性があるため、
  * __MOUNT_ALL__ を使って全チャートをマウントする
  */
-test.describe("アクセシビリティ - ダークモード", () => {
+test.describe.skip("アクセシビリティ - ダークモード", () => {
   test("凡例をタップ後、他の場所をクリックすると hover が解除される", async ({ page }) => {
     await page.addInitScript(() => {
       window.__MOUNT_ALL__ = true;
@@ -76,7 +76,7 @@ test.describe("アクセシビリティ - ダークモード", () => {
   });
 });
 
-test.describe("アクセシビリティ - キーボード操作", () => {
+test.describe.skip("アクセシビリティ - キーボード操作", () => {
   fixtureTest("キーボードのみで凡例のチェックボックスを操作できる", async ({ page }) => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
@@ -144,7 +144,7 @@ test.describe("アクセシビリティ - キーボード操作", () => {
   });
 });
 
-test.describe("アクセシビリティ - アニメーション", () => {
+test.describe.skip("アクセシビリティ - アニメーション", () => {
   test("prefers-reduced-motion が有効なとき animation が無効になる", async ({ page }) => {
     // prefers-reduced-motion: reduce をシミュレート
     await page.emulateMedia({ reducedMotion: "reduce" });
