@@ -104,10 +104,9 @@ test.describe("page.tsx E2E: real consumption chart with actual browser", () => 
     await page.goto("/");
 
     const realChartSection = page.locator("#section-consumption-real");
-    await expect(
-      realChartSection,
-      "Real consumption chart section should be visible",
-    ).toBeVisible({ timeout: 15000 });
+    await expect(realChartSection, "Real consumption chart section should be visible").toBeVisible({
+      timeout: 15000,
+    });
   });
 
   test("should handle legend toggle and update chart visibility", async ({ page }) => {
@@ -116,10 +115,11 @@ test.describe("page.tsx E2E: real consumption chart with actual browser", () => 
      * 凡例クリックによる系列表示/非表示の切り替え。
      */
     await page.goto("/");
+    await page.waitForLoadState("networkidle");
 
-    // 凡例アイテムを探す（クリック可能な凡例テキスト要素）
-    const legendItems = page.locator("text=/食料|住居|交通|教育/").first();
-    const isVisible = await legendItems.isVisible();
+    // 凡例アイテムを探す（aria-pressed 属性で特定、LazyMount 対応）
+    const legendItems = page.locator("[aria-pressed]").first();
+    const isVisible = await legendItems.isVisible({ timeout: 10000 });
 
     expect(isVisible, "Should have legend items visible").toBe(true);
     console.log(`✓ Found visible legend items`);
