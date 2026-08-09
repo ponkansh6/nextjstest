@@ -100,7 +100,12 @@ export default function CpiChart({
   const initialStartYear = allYears.find((y) => y >= MIN_DISPLAY_YEAR) ?? allYears[0] ?? 2025;
   const initialEndYear = (allYears.length > 0 ? allYears[allYears.length - 1] : 2025) ?? 2025;
 
-  const { from, to, hiddenKeys: urlHiddenKeys, updateUrl } = useUrlState(initialStartYear, initialEndYear);
+  const {
+    from,
+    to,
+    hiddenKeys: urlHiddenKeys,
+    updateUrl,
+  } = useUrlState(initialStartYear, initialEndYear);
 
   const [startYear, setStartYear] = useState(from);
   const [endYear, setEndYear] = useState(to);
@@ -179,7 +184,12 @@ export default function CpiChart({
   const [cagrError, setCagrError] = useState<string | null>(null);
 
   // 入力条件が変わったら結果をリセット（stale 防止）
-  const [prevCagrDeps, setPrevCagrDeps] = useState({ cagrStartYear, cagrEndYear, cagrMonth, stackedHiddenKeys });
+  const [prevCagrDeps, setPrevCagrDeps] = useState({
+    cagrStartYear,
+    cagrEndYear,
+    cagrMonth,
+    stackedHiddenKeys,
+  });
   if (
     prevCagrDeps.cagrStartYear !== cagrStartYear ||
     prevCagrDeps.cagrEndYear !== cagrEndYear ||
@@ -351,10 +361,7 @@ export default function CpiChart({
 
       {rangeSheetOpen && (
         <>
-          <div
-            className={styles.rangeSheetBackdrop}
-            onClick={() => setRangeSheetOpen(false)}
-          />
+          <div className={styles.rangeSheetBackdrop} onClick={() => setRangeSheetOpen(false)} />
           <div className={styles.rangeSheet}>
             <div className={styles.rangeSheetHeader}>
               <span className={styles.rangeSheetTitle}>表示期間の選択</span>
@@ -365,54 +372,6 @@ export default function CpiChart({
                 aria-label="閉じる"
               >
                 ✕
-              </button>
-            </div>
-            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "1rem" }}>
-              <button
-                type="button"
-                className={styles.sectionTab}
-                onClick={() => {
-                  const max = allYears[allYears.length - 1] ?? 2025;
-                  setStartYear(Math.max(MIN_DISPLAY_YEAR, max - 10));
-                  setEndYear(max);
-                  setRangeSheetOpen(false);
-                }}
-              >
-                過去10年
-              </button>
-              <button
-                type="button"
-                className={styles.sectionTab}
-                onClick={() => {
-                  const max = allYears[allYears.length - 1] ?? 2025;
-                  setStartYear(Math.max(MIN_DISPLAY_YEAR, max - 20));
-                  setEndYear(max);
-                  setRangeSheetOpen(false);
-                }}
-              >
-                過去20年
-              </button>
-              <button
-                type="button"
-                className={styles.sectionTab}
-                onClick={() => {
-                  setStartYear(2020);
-                  setEndYear(allYears[allYears.length - 1] ?? 2025);
-                  setRangeSheetOpen(false);
-                }}
-              >
-                2020年〜
-              </button>
-              <button
-                type="button"
-                className={styles.sectionTab}
-                onClick={() => {
-                  setStartYear(allYears[0] ?? MIN_DISPLAY_YEAR);
-                  setEndYear(allYears[allYears.length - 1] ?? 2025);
-                  setRangeSheetOpen(false);
-                }}
-              >
-                全期間
               </button>
             </div>
             <ChartFilters
@@ -427,7 +386,11 @@ export default function CpiChart({
       )}
 
       {/* CPI 主要指数 */}
-      <div id="section-cpi-major" className={styles.chartSection} style={{ scrollMarginTop: "5rem" }}>
+      <div
+        id="section-cpi-major"
+        className={styles.chartSection}
+        style={{ scrollMarginTop: "5rem" }}
+      >
         <h2 className={styles.chartTitle}>
           消費者物価指数（主要指数）
           <ChartInfoContentRenderer

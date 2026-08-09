@@ -224,7 +224,7 @@ The system SHALL let users move between the eight chart sections without unbound
 - **WHEN** the user is anywhere on the page
 - **THEN** the tab bar shows the active year range (e.g. `2000–2026`)
 - **AND WHEN** the range label is tapped
-- **THEN** a range sheet opens with presets (過去10年 / 過去20年 / 2020年〜 / 全期間) and detailed selects
+- **THEN** a range sheet opens with start-year / end-year selects
 
 ### R11: Shareable State
 
@@ -298,8 +298,8 @@ Page (RSC)
 ├── header (badge, ThemeToggle, title, description)
 └── CpiChart (client component)
     ├── SectionTabs — Sticky navigation section tabs & range display
-    ├── ChartFilters — Date range / indicator filters
-    ├── Range sheet — Presets (過去10年 / 過去20年 / 2020年〜 / 全期間) + ChartFilters
+    ├── ChartFilters — Date range (start year / end year selects)
+    ├── Range sheet — ChartFilters (start year / end year selects)
     ├── [Chart variants]                     — eager: rendered directly
     │   ├── MajorIndicesChart → CustomTooltip
     │   └── StackedAreaChart → CustomTooltip — collapsible 12-series legend + solo buttons
@@ -340,15 +340,15 @@ data/source/*.csv
 
 | Module               | Description                                                                     |
 | -------------------- | ------------------------------------------------------------------------------- |
-| `useToggleSet.ts`    | Legend toggle state (React state using `useToggleSet`)                           |
+| `useToggleSet.ts`    | Legend toggle state (React state using `useToggleSet`)                          |
 | `useChartTheme.ts`   | Chart theme management; `isMobile` derives from `MOBILE_BREAKPOINT_PX`          |
 | `useCpiChartData.ts` | CPI chart data filtering (quarter visibility) — server-side processing complete |
 | `useUrlState.ts`     | Syncs `?from` / `?to` / `?hidden` with `router.replace` (R11)                   |
 
 #### src/lib/
 
-| Module                  | Description                                    |
-| ----------------------- | ---------------------------------------------- |
+| Module                  | Description                                             |
+| ----------------------- | ------------------------------------------------------- |
 | `chartInfoContent.ts`   | Info button content definitions (`CHART_INFO`)          |
 | `chartConstants.ts`     | Chart colors, keys, and shared constants                |
 | `chartUtils.ts`         | Chart rendering and data manipulation helpers           |

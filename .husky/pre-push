@@ -46,6 +46,20 @@ echo "Unit/component tests passed!"
 # --- E2E tests ---
 # 実ビルド・実サーバー・実ブラウザで page.tsx の実行結果を検証。
 # 今回のバグ（page.tsx の quarterlyKeys 欠落）はここで検知される。
+#
+# ここで明示的に build するのは、push するコミットの内容を確実にテストするため。
+# .next が無い/古いまま test:e2e だけ実行すると、次のいずれかの事故になる:
+#   - .next が無ければ next start が失敗する
+#   - .next が古ければ古いビルドを黙って検証してしまう（push するコードを見ていない）
+echo ""
+echo "Building for E2E (pnpm build)..."
+pnpm run build
+BUILD_EXIT_CODE=$?
+if [ $BUILD_EXIT_CODE -ne 0 ]; then
+  echo "Build failed with code $BUILD_EXIT_CODE"
+  exit $BUILD_EXIT_CODE
+fi
+
 echo ""
 echo "Running E2E tests (page.tsx with real build/server/browser)..."
 pnpm run test:e2e
