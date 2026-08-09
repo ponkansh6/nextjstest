@@ -62,12 +62,12 @@ export const StackedAreaChart: React.FC<StackedAreaChartProps> = ({
               </button>
             </div>
           </div>
-          <div className={`${styles.stackedLegendItems} ${styles.stackedLegendItemsDense}`}>
+          <div className={styles.stackedLegendItems}>
             {keys.map((key, index) => (
               <button
                 key={key}
                 onClick={() => onToggle(key)}
-                className={`${styles.legendItem} ${styles.legendItemDense} ${hiddenKeys.includes(key) ? styles.hidden : ""}`}
+                className={`${styles.legendItem} ${hiddenKeys.includes(key) ? styles.hidden : ""}`}
                 aria-pressed={!hiddenKeys.includes(key)}
               >
                 <span className={styles.legendIcon} style={{ backgroundColor: colors[index] }} />

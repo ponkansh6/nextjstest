@@ -71,33 +71,16 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
       </h2>
 
       {hideLegend && (
-        <div className={styles.legendContainer}>
-          <div className={styles.legendSection}>
-            <div className={styles.legendHeader}>
-              <h3 className={styles.legendTitle}>費目（読み取り専用凡例）</h3>
-            </div>
-            <div className={styles.stackedLegendItems}>
-              {keys.map((key, index) => (
-                <div
-                  key={key}
-                  className={`${styles.legendItemReadonly} ${hiddenKeys.includes(key) ? styles.hidden : ""}`}
-                  aria-hidden="true"
-                >
-                  <span
-                    className={styles.legendIcon}
-                    style={{
-                      backgroundColor: colors[index],
-                    }}
-                  />
-                  <span className={styles.legendLabel}>{getLegendLabel(key)}</span>
-                </div>
-              ))}
-            </div>
-            <p className={styles.chartNote} style={{ marginTop: "0.5rem", marginBottom: 0 }}>
-              凡例は「<a href="#spending-chart-nominal" style={{ color: "var(--blue-500)", textDecoration: "underline" }}>消費支出（名目）</a>」と連動しています。
-            </p>
-          </div>
-        </div>
+        <p className={styles.chartNote}>
+          凡例は「
+          <a
+            href="#spending-chart-nominal"
+            style={{ color: "var(--blue-500)", textDecoration: "underline" }}
+          >
+            消費支出（名目）
+          </a>
+          」と連動しています。
+        </p>
       )}
 
       {!hideLegend && (
@@ -213,12 +196,21 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
           />
         </div>
         <table>
-          <thead><tr><th>年月</th>{keys.map((k) => <th key={k}>{getLegendLabel(k)}</th>)}</tr></thead>
+          <thead>
+            <tr>
+              <th>年月</th>
+              {keys.map((k) => (
+                <th key={k}>{getLegendLabel(k)}</th>
+              ))}
+            </tr>
+          </thead>
           <tbody>
             {data.slice(-12).map((d) => (
               <tr key={d.年月 || d.label}>
                 <td>{d.年月 || d.label}</td>
-                {keys.map((k) => <td key={k}>{typeof d[k] === "number" ? (d[k] as number).toFixed(2) : "-"}</td>)}
+                {keys.map((k) => (
+                  <td key={k}>{typeof d[k] === "number" ? (d[k] as number).toFixed(2) : "-"}</td>
+                ))}
               </tr>
             ))}
           </tbody>
