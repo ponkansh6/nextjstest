@@ -81,13 +81,6 @@ test.describe.skip("アクセシビリティ - キーボード操作", () => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    // 凡例を展開（P1-3 で折りたたみ UI あり）
-    const openLegend = page.getByRole("button", { name: "費目を選ぶ" });
-    if (await openLegend.isVisible()) {
-      await openLegend.focus();
-      await page.keyboard.press("Enter");
-    }
-
     // 最初の凡例チップに Tab キーで移動
     await page.keyboard.press("Tab");
     const firstLegend = page.locator("[aria-pressed]").first();

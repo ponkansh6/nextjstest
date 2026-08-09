@@ -419,7 +419,6 @@ export default function CpiChart({
         colors={stackedColors}
         hiddenKeys={stackedHiddenKeys}
         onToggle={handleStackedLegendClick}
-        onSolo={(key: string) => setStackedHiddenKeys(stackedKeys.filter((k) => k !== key))}
         chartColors={chartColors}
         isMobile={isMobile}
         CustomTooltip={CustomTooltip}

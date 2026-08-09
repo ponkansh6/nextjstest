@@ -302,7 +302,7 @@ Page (RSC)
     ├── Range sheet — ChartFilters (start year / end year selects)
     ├── [Chart variants]                     — eager: rendered directly
     │   ├── MajorIndicesChart → CustomTooltip
-    │   └── StackedAreaChart → CustomTooltip — collapsible 12-series legend + solo buttons
+    │   └── StackedAreaChart → CustomTooltip — always-expanded 12-series legend (compact on mobile)
     ├── CagrPanel — CAGR calculation controls & result card
     ├── [Chart variants]                     — deferred: wrapped in LazyMount
     │   ├── SpendingBarChart (nominal / real)

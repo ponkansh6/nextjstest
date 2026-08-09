@@ -17,12 +17,6 @@ test.describe("モバイル UX ルール", () => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    // 折りたたまれている凡例も検証対象に含めるため展開しておく
-    const openLegend = page.getByRole("button", { name: "費目を選ぶ" });
-    if (await openLegend.isVisible()) {
-      await openLegend.click();
-    }
-
     const buttons = await page.getByRole("button").all();
     expect(buttons.length, "検証対象のボタンが取得できていること").toBeGreaterThan(0);
 
@@ -40,10 +34,7 @@ test.describe("モバイル UX ルール", () => {
       }
     }
 
-    expect(
-      tooSmall,
-      `44x44px 未満のタップターゲット:\n${tooSmall.join("\n")}`,
-    ).toEqual([]);
+    expect(tooSmall, `44x44px 未満のタップターゲット:\n${tooSmall.join("\n")}`).toEqual([]);
   });
 
   test("375px 幅で横方向にはみ出さない", async ({ page }) => {
