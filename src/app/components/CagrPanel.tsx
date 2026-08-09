@@ -3,6 +3,7 @@ import styles from "./CpiChart.module.css";
 import { MIN_DISPLAY_YEAR } from "../../lib/chartConstants";
 
 interface CagrPanelProps {
+  sectionId?: string;
   allYears: number[];
   cagrStartYear: number;
   cagrEndYear: number;
@@ -17,6 +18,7 @@ interface CagrPanelProps {
 
 export const CagrPanel = React.memo<CagrPanelProps>(
   ({
+    sectionId,
     allYears,
     cagrStartYear,
     cagrEndYear,
@@ -31,7 +33,11 @@ export const CagrPanel = React.memo<CagrPanelProps>(
     const displayYears = allYears.filter((y) => y >= MIN_DISPLAY_YEAR);
 
     return (
-      <div className={styles.cagrSection}>
+      <div
+        id={sectionId}
+        className={styles.cagrSection}
+        style={{ scrollMarginTop: "5rem" }}
+      >
         <h2 className={styles.chartTitle}>年率上昇率（CAGR）</h2>
         <div className={styles.cagrContainer}>
           <div className={styles.cagrControls}>
@@ -83,13 +89,13 @@ export const CagrPanel = React.memo<CagrPanelProps>(
               </select>
             </div>
 
-            <button
-              onClick={calculateCAGR}
-              className={styles.calculateButton}
-              disabled={cagrStartYear === cagrEndYear}
-            >
-              Calculate
-            </button>
+              <button
+                onClick={calculateCAGR}
+                className={styles.calculateButton}
+                disabled={cagrStartYear === cagrEndYear}
+              >
+                計算する
+              </button>
           </div>
 
           {cagrError && (

@@ -34,11 +34,26 @@ export default defineConfig({
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
     },
+    {
+      name: "chromium-dark",
+      use: { ...devices["Desktop Chrome"], colorScheme: "dark" },
+    },
+    {
+      name: "mobile-iphone",
+      use: { ...devices["iPhone 13"] },
+    },
+    {
+      name: "mobile-pixel",
+      use: { ...devices["Pixel 7"] },
+    },
   ],
 
   webServer: {
     command: "pnpm start",
+    // url が無いと Playwright は起動完了を待たず、初回 goto が
+    // ERR_CONNECTION_REFUSED になる（特にテストを絞って実行したとき）
+    url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
+    timeout: 180 * 1000,
   },
 });

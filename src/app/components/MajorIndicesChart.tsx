@@ -9,9 +9,11 @@ import {
   YAxis,
 } from "recharts";
 import styles from "./CpiChart.module.css";
+import { ChartExportButton } from "./ChartExportButton";
 import type { CpiData } from "@/types";
 import type { CustomTooltipProps } from "@/types/chart";
 import { YearReferenceLines } from "./charts/YearReferenceLines";
+import { getLegendLabel } from "../../lib/chartConstants";
 
 interface MajorIndicesChartProps {
   data: CpiData[];
@@ -52,7 +54,7 @@ export const MajorIndicesChart: React.FC<MajorIndicesChartProps> = ({
         </div>
       </div>
     </div>
-    <div className={styles.chartWrapper}>
+    <div className={styles.chartWrapper} role="img" aria-label="消費者物価指数 主要指数の推移グラフ">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.gridStroke} />
@@ -97,5 +99,27 @@ export const MajorIndicesChart: React.FC<MajorIndicesChartProps> = ({
         </AreaChart>
       </ResponsiveContainer>
     </div>
+    <details className={styles.chartDataTable}>
+      <summary>データテーブルを表示</summary>
+      <div className={styles.chartDataTableActions}>
+        <ChartExportButton
+          title={"消費者物価指数_主要指数"}
+          data={data as unknown as Record<string, unknown>[]}
+          keys={keys}
+          headers={keys.map(getLegendLabel)}
+        />
+      </div>
+      <table>
+        <thead><tr><th>年月</th>{keys.map((k) => <th key={k}>{getLegendLabel(k)}</th>)}</tr></thead>
+        <tbody>
+          {data.slice(-12).map((d) => (
+            <tr key={d.年月}>
+              <td>{d.年月}</td>
+              {keys.map((k) => <td key={k}>{typeof d[k] === "number" ? (d[k] as number).toFixed(2) : "-"}</td>)}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </details>
   </>
 );

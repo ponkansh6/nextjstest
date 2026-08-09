@@ -9,12 +9,14 @@ import {
   YAxis,
 } from "recharts";
 import styles from "./CpiChart.module.css";
+import { ChartExportButton } from "./ChartExportButton";
 import type { CpiData } from "@/types";
 import type { CustomTooltipProps } from "@/types/chart";
 import { YearReferenceLines } from "./charts/YearReferenceLines";
 import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
 
 interface NewGraphProps {
+  sectionId?: string;
   data: CpiData[];
   hiddenKeys: string[];
   onToggle: (key: string) => void;
@@ -37,6 +39,7 @@ const LINE_CONFIGS: LineConfig[] = [
 ];
 
 export const NewGraph: React.FC<NewGraphProps> = ({
+  sectionId,
   data,
   hiddenKeys,
   onToggle,
@@ -45,7 +48,11 @@ export const NewGraph: React.FC<NewGraphProps> = ({
   chartKey,
   CustomTooltip,
 }) => (
-  <div className={styles.chartSection}>
+  <div
+    id={sectionId}
+    className={styles.chartSection}
+    style={{ scrollMarginTop: "5rem" }}
+  >
     <div className={styles.chartTitleRow}>
       <h2 className={styles.chartTitle}>給与・消費・物価の推移比較(12MA)</h2>
       {chartKey && (
@@ -72,7 +79,7 @@ export const NewGraph: React.FC<NewGraphProps> = ({
         </div>
       </div>
     </div>
-    <div className={styles.chartWrapper}>
+    <div className={styles.chartWrapper} role="img" aria-label="給与・消費・物価の推移比較（12MA）グラフ">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.gridStroke} />
@@ -101,15 +108,14 @@ export const NewGraph: React.FC<NewGraphProps> = ({
               />
             }
           />
-          {LINE_CONFIGS.map(({ key, color, displayName }) =>
+          {LINE_CONFIGS.map(({ key, color }) =>
             !hiddenKeys.includes(key) ? (
               <Line
                 key={key}
                 type="monotone"
                 dataKey={key}
-                name={displayName}
                 stroke={color}
-                strokeWidth={2}
+                strokeWidth={isMobile ? 2 : 3}
                 dot={false}
                 isAnimationActive={false}
               />
@@ -118,5 +124,27 @@ export const NewGraph: React.FC<NewGraphProps> = ({
         </LineChart>
       </ResponsiveContainer>
     </div>
+    <details className={styles.chartDataTable}>
+      <summary>データテーブルを表示</summary>
+      <div className={styles.chartDataTableActions}>
+        <ChartExportButton
+          title={"移動平均比較"}
+          data={data as unknown as Record<string, unknown>[]}
+          keys={LINE_CONFIGS.map((c) => c.key)}
+          headers={LINE_CONFIGS.map((c) => c.displayName)}
+        />
+      </div>
+      <table>
+        <thead><tr><th>年月</th>{LINE_CONFIGS.map((c) => <th key={c.key}>{c.displayName}</th>)}</tr></thead>
+        <tbody>
+          {data.slice(-12).map((d) => (
+            <tr key={d.年月}>
+              <td>{d.年月}</td>
+              {LINE_CONFIGS.map((c) => <td key={c.key}>{typeof d[c.key] === "number" ? (d[c.key] as number).toFixed(2) : "-"}</td>)}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </details>
   </div>
 );

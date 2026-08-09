@@ -165,7 +165,7 @@ describe("Integrated UI Chart Tests", () => {
           CustomTooltip={MockTooltip}
         />,
       );
-      targetKeys.forEach((key) => expect(screen.getByText(key)).toBeDefined());
+      targetKeys.forEach((key) => expect(screen.getAllByText(key).length).toBeGreaterThan(0));
     });
 
     it("should render EarningsBreakdownChart with real data legends and common chart elements", () => {
@@ -186,7 +186,7 @@ describe("Integrated UI Chart Tests", () => {
         "時間当たり給与",
         "15歳以上国民当たり給与",
       ];
-      expectedLabels.forEach((label) => expect(screen.getByText(label)).toBeDefined());
+      expectedLabels.forEach((label) => expect(screen.getAllByText(label).length).toBeGreaterThan(0));
     });
 
     it("should render StackedAreaChart with real data and common chart elements", () => {
@@ -265,7 +265,7 @@ describe("Integrated UI Chart Tests", () => {
         />,
       );
       // 凡例ラベルは getLegendLabel で変換されるため、変換後のラベルを確認する
-      expect(screen.getByText("諸雑費・CPI外支出")).toBeDefined();
+      expect(screen.getAllByText("諸雑費・CPI外支出").length).toBeGreaterThan(0);
     });
 
     it("should verify 消費支出（参考） is within 50-150 range", () => {
@@ -432,13 +432,13 @@ describe("StackedAreaChart", () => {
   it("renders correctly", () => {
     render(<StackedAreaChart {...mockProps} />);
     expect(screen.getByText("Test Stacked Chart")).toBeDefined();
-    expect(screen.getByText("キー1")).toBeDefined();
-    expect(screen.getByText("キー2")).toBeDefined();
+    expect(screen.getAllByText("キー1").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("キー2").length).toBeGreaterThan(0);
   });
 
   it("calls onToggle when a legend item is clicked", () => {
     render(<StackedAreaChart {...mockProps} />);
-    const button = screen.getByText("キー1");
+    const button = screen.getAllByText("キー1").find(el => el.closest("button")) || screen.getAllByText("キー1")[0];
     fireEvent.click(button);
     expect(mockProps.onToggle).toHaveBeenCalledWith("キー1");
   });
@@ -492,9 +492,9 @@ describe("NewGraph", () => {
         CustomTooltip={() => <div>Tooltip</div>}
       />,
     );
-    expect(screen.getByText("給与(総合)")).toBeDefined();
-    expect(screen.getByText("消費支出(総合)")).toBeDefined();
-    expect(screen.getByText("物価指数(総合)")).toBeDefined();
+    expect(screen.getAllByText("給与(総合)").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("消費支出(総合)").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("物価指数(総合)").length).toBeGreaterThan(0);
   });
 
   it("calls onToggle when a legend item is clicked", () => {
@@ -508,7 +508,7 @@ describe("NewGraph", () => {
         CustomTooltip={() => <div>Tooltip</div>}
       />,
     );
-    const button = screen.getByText("給与(総合)");
+    const button = screen.getAllByText("給与(総合)").find(el => el.closest("button")) || screen.getAllByText("給与(総合)")[0];
     fireEvent.click(button);
     expect(mockOnToggle).toHaveBeenCalledWith("総合(12MA)");
   });
@@ -525,10 +525,10 @@ describe("NewGraph", () => {
       />,
     );
     // The hidden legend item should still be rendered
-    expect(screen.getByText("消費支出(総合)")).toBeDefined();
+    expect(screen.getAllByText("消費支出(総合)").length).toBeGreaterThan(0);
     // The visible ones should be there too
-    expect(screen.getByText("給与(総合)")).toBeDefined();
-    expect(screen.getByText("物価指数(総合)")).toBeDefined();
+    expect(screen.getAllByText("給与(総合)").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("物価指数(総合)").length).toBeGreaterThan(0);
   });
 
   it("handles empty data gracefully", () => {

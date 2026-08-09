@@ -11,11 +11,13 @@ import {
 } from "recharts";
 import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
 import styles from "./CpiChart.module.css";
+import { ChartExportButton } from "./ChartExportButton";
 import type { CpiData } from "@/types";
 import type { CustomTooltipProps } from "@/types/chart";
 import { YearReferenceLines } from "./charts/YearReferenceLines";
 
 interface EarningsBreakdownChartProps {
+  sectionId?: string;
   data: CpiData[];
   hiddenKeys: string[];
   onToggle: (key: string) => void;
@@ -25,6 +27,7 @@ interface EarningsBreakdownChartProps {
 }
 
 export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
+  sectionId,
   data,
   hiddenKeys,
   onToggle,
@@ -78,7 +81,11 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
   }, [data]);
 
   return (
-    <div className={styles.chartSection}>
+    <div
+      id={sectionId}
+      className={styles.chartSection}
+      style={{ scrollMarginTop: "5rem" }}
+    >
       <h2 className={styles.chartTitle}>
         給与指標と関連指標
         <ChartInfoContentRenderer chartKey="earnings" ariaLabel="給与指標のデータソースを表示" />
@@ -100,7 +107,7 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
           </div>
         </div>
       </div>
-      <div className={styles.chartWrapper}>
+      <div className={styles.chartWrapper} role="img" aria-label="給与指標と関連指標の推移グラフ">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} margin={{ bottom: 20, left: 0, right: 30, top: 10 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.gridStroke} />
@@ -159,6 +166,28 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
           </AreaChart>
         </ResponsiveContainer>
       </div>
+      <details className={styles.chartDataTable}>
+        <summary>データテーブルを表示</summary>
+        <div className={styles.chartDataTableActions}>
+          <ChartExportButton
+            title={"給与内訳"}
+            data={data as unknown as Record<string, unknown>[]}
+            keys={configs.map((c) => c.key)}
+            headers={configs.map((c) => c.displayName || c.key)}
+          />
+        </div>
+        <table>
+          <thead><tr><th>年月</th>{configs.map((c) => <th key={c.key}>{c.displayName || c.key}</th>)}</tr></thead>
+          <tbody>
+            {data.slice(-12).map((d) => (
+              <tr key={d.年月}>
+                <td>{d.年月}</td>
+                {configs.map((c) => <td key={c.key}>{typeof d[c.key] === "number" ? (d[c.key] as number).toFixed(2) : "-"}</td>)}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </details>
     </div>
   );
 };

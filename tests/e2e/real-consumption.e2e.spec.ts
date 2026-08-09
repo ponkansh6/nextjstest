@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 import {
   extractFlightFromHtml,
   extractArrayProp,
@@ -97,15 +97,17 @@ test.describe("page.tsx E2E: real consumption chart with actual browser", () => 
      * 実質消費グラフのセクションが DOM に存在することを確認。
      * 詳細な recharts 要素検査は jsdom/vitest での検証で十分なため、
      * E2E では主要な章立てが実ブラウザで描画されたことの確認のみ。
+     *
+     * ⚠️ このセクションは LazyMount(P5-1) 配下でハイドレーション後にマウントされるため、
+     * SSR の HTML には存在しない。id で特定し、expect の自動待機で解決させる。
      */
     await page.goto("/");
 
-    // 実質消費グラフのセクションが表示されているか
-    const realChartSection = page.locator(":has-text('消費支出（実質）')").first();
-    const isVisible = await realChartSection.isVisible();
-
-    expect(isVisible, "Real consumption chart section should be visible").toBe(true);
-    console.log(`✓ Real consumption chart section is rendered`);
+    const realChartSection = page.locator("#section-consumption-real");
+    await expect(
+      realChartSection,
+      "Real consumption chart section should be visible",
+    ).toBeVisible({ timeout: 15000 });
   });
 
   test("should handle legend toggle and update chart visibility", async ({ page }) => {

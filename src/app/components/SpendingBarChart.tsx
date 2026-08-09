@@ -2,6 +2,7 @@ import React from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { CpiData } from "@/types";
 import styles from "./CpiChart.module.css";
+import { ChartExportButton } from "./ChartExportButton";
 import { getLegendLabel, SUPPORT_SERIES_KEY_NOMINAL } from "../../lib/chartConstants";
 import type { CustomTooltipProps } from "@/types/chart";
 import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
@@ -18,6 +19,7 @@ interface QuarterlyDataPoint {
 
 interface SpendingBarChartProps {
   title: string;
+  sectionId?: string;
   infoKey?: keyof typeof CHART_INFO;
   data: QuarterlyDataPoint[];
   keys: string[];
@@ -37,6 +39,7 @@ interface SpendingBarChartProps {
 export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
   const {
     title,
+    sectionId,
     infoKey,
     data,
     keys,
@@ -54,13 +57,48 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
   } = props;
 
   return (
-    <div className={styles.chartSection} data-testid={testId}>
+    <div
+      id={sectionId}
+      className={styles.chartSection}
+      style={{ scrollMarginTop: "5rem" }}
+      data-testid={testId}
+    >
       <h2 className={styles.chartTitle}>
         {title}
         {infoKey && (
           <ChartInfoContentRenderer chartKey={infoKey} ariaLabel={`${title}のデータソースを表示`} />
         )}
       </h2>
+
+      {hideLegend && (
+        <div className={styles.legendContainer}>
+          <div className={styles.legendSection}>
+            <div className={styles.legendHeader}>
+              <h3 className={styles.legendTitle}>費目（読み取り専用凡例）</h3>
+            </div>
+            <div className={styles.stackedLegendItems}>
+              {keys.map((key, index) => (
+                <div
+                  key={key}
+                  className={`${styles.legendItemReadonly} ${hiddenKeys.includes(key) ? styles.hidden : ""}`}
+                  aria-hidden="true"
+                >
+                  <span
+                    className={styles.legendIcon}
+                    style={{
+                      backgroundColor: colors[index],
+                    }}
+                  />
+                  <span className={styles.legendLabel}>{getLegendLabel(key)}</span>
+                </div>
+              ))}
+            </div>
+            <p className={styles.chartNote} style={{ marginTop: "0.5rem", marginBottom: 0 }}>
+              凡例は「<a href="#spending-chart-nominal" style={{ color: "var(--blue-500)", textDecoration: "underline" }}>消費支出（名目）</a>」と連動しています。
+            </p>
+          </div>
+        </div>
+      )}
 
       {!hideLegend && (
         <div className={styles.legendContainer}>
@@ -113,7 +151,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
           </div>
         </div>
       )}
-      <div className={styles.chartWrapper}>
+      <div className={styles.chartWrapper} role="img" aria-label={`${title}の推移グラフ`}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.gridStroke} />
@@ -164,6 +202,28 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
           </BarChart>
         </ResponsiveContainer>
       </div>
+      <details className={styles.chartDataTable}>
+        <summary>データテーブルを表示</summary>
+        <div className={styles.chartDataTableActions}>
+          <ChartExportButton
+            title={title}
+            data={data as unknown as Record<string, unknown>[]}
+            keys={keys}
+            headers={keys.map(getLegendLabel)}
+          />
+        </div>
+        <table>
+          <thead><tr><th>年月</th>{keys.map((k) => <th key={k}>{getLegendLabel(k)}</th>)}</tr></thead>
+          <tbody>
+            {data.slice(-12).map((d) => (
+              <tr key={d.年月 || d.label}>
+                <td>{d.年月 || d.label}</td>
+                {keys.map((k) => <td key={k}>{typeof d[k] === "number" ? (d[k] as number).toFixed(2) : "-"}</td>)}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </details>
     </div>
   );
 };

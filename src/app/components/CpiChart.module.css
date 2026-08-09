@@ -21,25 +21,26 @@
 .filterItem {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  font-size: 0.875rem;
+  gap: clamp(0.75rem, 0.25rem + 1.04vw, 2rem);
+  font-size: clamp(0.875rem, 0.12rem + 1.56vw, 2rem);
   font-weight: 500;
   color: var(--card-text);
 }
 
 .select {
-  padding: 0.5rem 2rem 0.5rem 0.75rem;
+  padding: clamp(0.5rem, 1.39vw - 0.17rem, 1.5rem) clamp(2rem, 4.17vw, 5rem)
+    clamp(0.5rem, 1.39vw - 0.17rem, 1.5rem) clamp(0.75rem, 1.74vw - 0.09rem, 2rem);
   border-radius: 0.375rem;
   border: 1px solid var(--card-border);
   background-color: var(--card-bg);
   color: var(--card-text);
-  font-size: 0.875rem;
+  font-size: clamp(0.875rem, 0.12rem + 1.56vw, 2rem);
   cursor: pointer;
   appearance: none;
   background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
   background-repeat: no-repeat;
-  background-position: right 0.5rem center;
-  background-size: 1rem;
+  background-position: right clamp(0.5rem, 1.39vw - 0.17rem, 1.5rem) center;
+  background-size: clamp(1rem, 2.09vw, 2.5rem);
   transition: border-color 0.2s;
 }
 
@@ -60,7 +61,7 @@
 }
 
 .legendTitle {
-  font-size: 0.95rem;
+  font-size: clamp(0.95rem, 0.43rem + 1.08vw, 1.725rem);
   font-weight: 600;
   color: var(--card-text);
   margin-bottom: 0.75rem;
@@ -79,20 +80,76 @@
   gap: 0.5rem;
 }
 
-.actionButton {
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.375rem;
-  border: 1px solid var(--card-border);
-  background-color: var(--card-bg);
-  color: var(--card-text);
-  font-size: 0.85rem;
-  cursor: pointer;
+.legendItem:focus-visible,
+.actionButton:focus-visible,
+.calculateButton:focus-visible,
+.select:focus-visible,
+.presetChip:focus-visible,
+.sectionTab:focus-visible,
+.soloButton:focus-visible {
+  outline: 2px solid var(--blue-500);
+  outline-offset: 2px;
 }
 
-.actionButton:hover {
-  border-color: var(--blue-500);
-  background-color: var(--blue-50);
+.chartDataTable {
+  font-size: 0.8rem;
+  margin-top: 1rem;
+  padding: 0.5rem;
+  background-color: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 0.375rem;
   color: var(--card-text);
+  overflow-x: auto;
+}
+
+.chartDataTable summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0.25rem;
+}
+
+.chartDataTableActions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+
+.chartDataTable table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.5rem;
+}
+
+.chartDataTable th,
+.chartDataTable td {
+  border: 1px solid var(--card-border);
+  padding: 0.25rem 0.5rem;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.chartDataTable th:first-child,
+.chartDataTable td:first-child {
+  text-align: left;
+}
+
+/* P1-1: 44px タップターゲット / P6-1: 断崖のない流体スケール（≥769px の段階指定を廃止） */
+.actionButton {
+  min-height: 44px;
+  padding: 0.625rem 1rem;
+  font-size: clamp(0.875rem, 0.19rem + 1.42vw, 1.9rem);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .actionButton:hover {
+    border-color: var(--blue-500);
+    background-color: var(--blue-50);
+    color: var(--card-text);
+  }
+}
+
+.actionButton:active {
+  background-color: var(--blue-50);
 }
 
 .legendItems,
@@ -107,12 +164,12 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
+  padding: clamp(0.5rem, 0.21rem + 0.61vw, 0.9375rem) clamp(0.75rem, 0.25rem + 1.04vw, 1.5rem);
   border: 1px solid var(--card-border);
   border-radius: 0.375rem;
   background-color: var(--card-bg);
   cursor: pointer;
-  font-size: 0.875rem;
+  font-size: clamp(0.875rem, 0.46rem + 0.87vw, 1.5rem);
   color: var(--card-text);
   transition: all 0.2s ease;
   user-select: none;
@@ -120,15 +177,18 @@
   min-width: fit-content;
 }
 
-.legendItem:hover {
-  border-color: var(--blue-500);
-  background-color: var(--blue-50);
-  color: var(--card-text);
-  transform: translateY(-1px);
+@media (hover: hover) and (pointer: fine) {
+  .legendItem:hover {
+    border-color: var(--blue-500);
+    background-color: var(--blue-50);
+    color: var(--card-text);
+    transform: translateY(-1px);
+  }
 }
 
 .legendItem:active {
   transform: translateY(0);
+  background-color: var(--blue-50);
 }
 
 .legendItem.hidden {
@@ -136,19 +196,25 @@
   background-color: var(--card-border);
 }
 
+.legendItem.hidden .legendLabel {
+  text-decoration: line-through;
+}
+
 .legendIcon {
   display: inline-block;
-  width: 0.75rem;
-  height: 0.75rem;
+  width: clamp(0.75rem, 0.37rem + 0.78vw, 1.3125rem);
+  height: clamp(0.75rem, 0.37rem + 0.78vw, 1.3125rem);
   border-radius: 0.125rem;
   flex-shrink: 0;
 }
 
 .legendLabel {
   font-weight: 500;
+  overflow-wrap: break-word;
 }
 
-@media (max-width: 640px) {
+/* 同期: MOBILE_BREAKPOINT_PX = 768 */
+@media (max-width: 768px) {
   .chartContainer {
     padding: 1rem;
   }
@@ -175,7 +241,7 @@
 
   .legendItem {
     padding: 0.625rem 0.875rem;
-    min-height: 2.25rem;
+    min-height: 2.75rem;
     font-size: 0.8rem;
   }
 
@@ -186,8 +252,14 @@
 }
 
 .chartWrapper {
-  height: 500px;
+  height: min(500px, 60svh);
   width: 100%;
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .chartWrapper {
+    height: 85svh;
+  }
 }
 
 .chartSection {
@@ -203,7 +275,7 @@
 }
 
 .chartTitle {
-  font-size: 1.25rem;
+  font-size: clamp(1.25rem, 2.95vw - 0.17rem, 3.375rem);
   font-weight: 600;
   color: var(--card-text);
   margin-bottom: 0.5rem;
@@ -211,7 +283,7 @@
 }
 
 .chartNote {
-  font-size: 0.85rem;
+  font-size: clamp(0.85rem, 0.08rem + 1.6vw, 2rem);
   color: var(--card-text);
   margin-bottom: 1.5rem;
   text-align: center;
@@ -240,7 +312,7 @@
 
 .cagrSection {
   margin-bottom: 2rem;
-  padding: 1.5rem;
+  padding: clamp(1.5rem, 0.5rem + 2.09vw, 3rem);
   background-color: var(--card-bg);
   border-radius: 0.75rem;
   border: 1px solid var(--card-border);
@@ -249,12 +321,12 @@
 .cagrContainer {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: clamp(1.5rem, 0.5rem + 2.09vw, 3rem);
 }
 
 .cagrControls {
   display: flex;
-  gap: 1rem;
+  gap: clamp(1rem, 0.33rem + 1.39vw, 2rem);
   align-items: flex-end;
   flex-wrap: wrap;
 }
@@ -262,32 +334,36 @@
 .cagrItem {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: clamp(0.5rem, 0.17rem + 0.7vw, 1rem);
   min-width: fit-content;
 }
 
 .cagrItem label {
-  font-size: 0.875rem;
+  font-size: clamp(0.875rem, 0.12rem + 1.56vw, 2rem);
   font-weight: 500;
   color: var(--card-text);
 }
 
 .calculateButton {
-  padding: 0.625rem 1.5rem;
+  /* P1-1: モバイルではパディングだけだと 40px 止まりになる */
+  min-height: 44px;
+  padding: clamp(0.625rem, 0.4rem + 0.5vw, 1.25rem) clamp(1.5rem, 1rem + 1.5vw, 3rem);
   border-radius: 0.375rem;
   border: none;
   background-color: var(--blue-500);
   color: white;
-  font-size: 0.875rem;
+  font-size: clamp(0.875rem, 0.6rem + 0.8vw, 1.75rem);
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.calculateButton:hover:not(:disabled) {
-  background-color: var(--blue-600);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+@media (hover: hover) and (pointer: fine) {
+  .calculateButton:hover:not(:disabled) {
+    background-color: var(--blue-600);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  }
 }
 
 .calculateButton:active:not(:disabled) {
@@ -319,16 +395,16 @@
 
 .cagrResult {
   background-color: var(--card-bg);
-  border: 2px solid var(--blue-500);
+  border: clamp(2px, 0.17vw, 4px) solid var(--blue-500);
   border-radius: 0.5rem;
-  padding: 1.25rem;
+  padding: clamp(1.25rem, 0.42rem + 1.74vw, 2.5rem);
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: clamp(0.5rem, 0.17rem + 0.7vw, 1rem);
 }
 
 .cagrResultLabel {
-  font-size: 0.875rem;
+  font-size: clamp(0.875rem, 0.29rem + 1.22vw, 1.75rem);
   font-weight: 600;
   color: var(--card-text);
   margin: 0;
@@ -336,7 +412,7 @@
 }
 
 .cagrResultValue {
-  font-size: 2rem;
+  font-size: clamp(2rem, 0.66rem + 2.78vw, 4rem);
   font-weight: 700;
   color: var(--blue-500);
   margin: 0;
@@ -344,21 +420,22 @@
 }
 
 .cagrResultDetail {
-  font-size: 0.8rem;
+  font-size: clamp(0.8rem, 0.27rem + 1.11vw, 1.6rem);
   color: var(--chart-text);
   margin: 0;
-  margin-top: 0.25rem;
+  margin-top: clamp(0.25rem, 0.35vw, 0.5rem);
 }
 
 .cagrNote {
-  font-size: 0.8rem;
+  font-size: clamp(0.8rem, 0.27rem + 1.11vw, 1.6rem);
   color: var(--chart-text);
   font-style: italic;
   margin: 0;
-  margin-top: 0.5rem;
+  margin-top: clamp(0.5rem, 0.17rem + 0.7vw, 1rem);
 }
 
-@media (max-width: 640px) {
+/* 同期: MOBILE_BREAKPOINT_PX = 768 */
+@media (max-width: 768px) {
   .cagrSection {
     padding: 1rem;
   }
@@ -389,105 +466,109 @@
   }
 }
 
-/* ── PC enlargement (≥641px) — must come after all base rules ── */
-@media (min-width: 641px) {
+/* ── レイアウトのみ ≥769px で切替（タイポ/余白は clamp による流体スケール = P6-1） ── */
+/* 同期: MOBILE_BREAKPOINT_PX = 768 */
+@media (min-width: 769px) {
   .chartWrapper {
     height: auto;
     aspect-ratio: 4 / 3;
     max-height: 650px;
   }
+}
 
-  .filterItem {
-    font-size: 2rem;
-    gap: 2rem;
+.legendSummary {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.legendSummaryText {
+  font-size: 0.85rem;
+  color: var(--chart-text);
+  font-weight: 500;
+}
+
+.soloButton {
+  /* P1-1: 見た目は小さいままでも当たり判定は 44x44px 確保する */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  border: 1px solid var(--card-border);
+  background-color: var(--card-bg);
+  color: var(--card-text);
+  font-size: 0.75rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.soloButton:active {
+  background-color: var(--blue-50);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .soloButton:hover {
+    border-color: var(--blue-500);
+    background-color: var(--blue-50);
   }
+}
 
-  .select {
-    font-size: 2rem;
-    padding: 1.5rem 5rem 1.5rem 2rem;
-    background-size: 2.5rem;
-    background-position: right 1.5rem center;
-  }
+.legendItemReadonly {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--card-border);
+  border-radius: 0.375rem;
+  background-color: var(--card-bg);
+  cursor: default;
+  font-size: 0.875rem;
+  color: var(--card-text);
+  user-select: none;
+  min-height: 2rem;
+  min-width: fit-content;
+}
 
-  .chartTitle {
-    font-size: 3.375rem;
-  }
+.legendItemReadonly.hidden {
+  opacity: 0.5;
+  background-color: var(--card-border);
+}
 
-  .chartNote {
-    font-size: 2rem;
-  }
+.legendItemReadonly.hidden .legendLabel {
+  text-decoration: line-through;
+}
 
-  .legendTitle {
-    font-size: 1.725rem;
-  }
+.presetChip {
+  flex-shrink: 0;
+  min-height: 44px;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  border: 1px solid var(--card-border);
+  background-color: var(--card-bg);
+  color: var(--card-text);
+  font-size: 0.875rem;
+  cursor: pointer;
+  scroll-snap-align: start;
+  transition: border-color 0.2s;
+}
 
-  .legendItem {
-    font-size: 1.5rem;
-    padding: 0.9375rem 1.5rem;
-  }
+.presetChip:active {
+  background-color: var(--blue-50);
+}
 
-  .legendIcon {
-    width: 1.3125rem;
-    height: 1.3125rem;
-  }
-
-  .actionButton {
-    font-size: 1.9rem;
-  }
-
-  .cagrItem label {
-    font-size: 2rem;
-  }
-
-  .cagrItem {
-    gap: 1rem;
-  }
-
-  .cagrControls {
-    gap: 2rem;
-  }
-
-  .cagrSection {
-    padding: 3rem;
-  }
-
-  .cagrContainer {
-    gap: 3rem;
-  }
-
-  .cagrResult {
-    padding: 2.5rem;
-    gap: 1rem;
-    border-width: 4px;
-  }
-
-  .cagrResultLabel {
-    font-size: 1.75rem;
-  }
-
-  .cagrResultValue {
-    font-size: 4rem;
-  }
-
-  .cagrResultDetail {
-    font-size: 1.6rem;
-    margin-top: 0.5rem;
-  }
-
-  .cagrNote {
-    font-size: 1.6rem;
-    margin-top: 1rem;
-  }
-
-  .calculateButton {
-    font-size: 1.75rem;
-    padding: 1.25rem 3rem;
+@media (hover: hover) and (pointer: fine) {
+  .presetChip:hover {
+    border-color: var(--blue-500);
+    background-color: var(--blue-50);
   }
 }
 
 .chartSkeleton {
   width: 100%;
-  height: 400px;
+  height: min(500px, 60svh);
   background: linear-gradient(
     90deg,
     var(--card-bg) 25%,
@@ -511,4 +592,110 @@
   100% {
     background-position: -200% 0;
   }
+}
+
+.sectionTabs {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  background-color: var(--card-bg);
+  border-bottom: 1px solid var(--card-border);
+  padding: 0.5rem;
+  margin-bottom: 1.5rem;
+  -webkit-overflow-scrolling: touch;
+}
+.sectionTab {
+  flex-shrink: 0;
+  min-height: 44px;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  border: 1px solid var(--card-border);
+  background-color: var(--card-bg);
+  color: var(--card-text);
+  font-size: 0.875rem;
+  cursor: pointer;
+  scroll-snap-align: start;
+  white-space: nowrap;
+}
+.sectionTab[aria-current="true"] {
+  background-color: var(--blue-500);
+  border-color: var(--blue-500);
+  color: #ffffff;
+}
+.sectionTab:active {
+  background-color: var(--blue-50);
+}
+@media (hover: hover) and (pointer: fine) {
+  .sectionTab:hover {
+    border-color: var(--blue-500);
+  }
+}
+.sectionRange {
+  margin-left: auto;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--card-text);
+  white-space: nowrap;
+  background-color: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 9999px;
+  cursor: pointer;
+}
+.sectionRange:active {
+  background-color: var(--blue-50);
+}
+
+.rangeSheetBackdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 100;
+}
+.rangeSheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 101;
+  max-height: 60dvh;
+  overflow-y: auto;
+  background-color: var(--card-bg);
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
+  border-top: 1px solid var(--card-border);
+  padding: 1.5rem;
+  box-shadow: 0 -10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+.rangeSheetHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.rangeSheetTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--card-text);
+}
+.rangeSheetClose {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  color: var(--card-text);
+  padding: 0.5rem;
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }

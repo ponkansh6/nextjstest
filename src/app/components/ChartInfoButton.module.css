@@ -13,6 +13,8 @@
   justify-content: center;
   width: 20px;
   height: 20px;
+  min-width: 44px;
+  min-height: 44px;
   padding: 0;
   border: none;
   border-radius: 50%;
@@ -25,15 +27,22 @@
   flex-shrink: 0;
 }
 
-.trigger:hover,
+@media (hover: hover) and (pointer: fine) {
+  .trigger:hover {
+    color: var(--blue-500);
+    background-color: var(--blue-50);
+  }
+}
+
 .trigger:focus-visible {
   color: var(--blue-500);
   background-color: var(--blue-50);
   outline: none;
+  box-shadow: 0 0 0 2px var(--blue-500);
 }
 
-.trigger:focus-visible {
-  box-shadow: 0 0 0 2px var(--blue-500);
+.trigger:active {
+  background-color: var(--blue-50);
 }
 
 /* ── Popup panel (desktop) ── */
@@ -82,6 +91,8 @@
   justify-content: center;
   width: 22px;
   height: 22px;
+  min-width: 44px;
+  min-height: 44px;
   padding: 0;
   border: none;
   border-radius: 4px;
@@ -95,8 +106,14 @@
     background-color 0.15s ease;
 }
 
-.closeButton:hover {
-  color: var(--card-text);
+@media (hover: hover) and (pointer: fine) {
+  .closeButton:hover {
+    color: var(--card-text);
+    background-color: var(--card-border);
+  }
+}
+
+.closeButton:active {
   background-color: var(--card-border);
 }
 
@@ -183,12 +200,18 @@
   margin-bottom: 8px;
 }
 
-.url:hover {
+@media (hover: hover) and (pointer: fine) {
+  .url:hover {
+    opacity: 0.8;
+  }
+}
+
+.url:active {
   opacity: 0.8;
 }
 
-/* ── Mobile overlay (below 640px) ── */
-@media (max-width: 640px) {
+/* ── Mobile overlay (below 768px) - 同期: MOBILE_BREAKPOINT_PX = 768 ── */
+@media (max-width: 768px) {
   .wrapper {
     position: static;
   }
@@ -201,7 +224,7 @@
     right: auto;
     width: calc(100% - 2rem);
     max-width: 360px;
-    max-height: calc(100vh - 4rem);
+    max-height: calc(100dvh - 4rem);
     overflow-y: auto;
     animation: popupInMobile 150ms ease-out forwards;
     transform-origin: center center;
@@ -219,8 +242,8 @@
   }
 }
 
-/* ── PC enlargement (≥641px) ── */
-@media (min-width: 641px) {
+/* ── PC enlargement (≥769px) - 同期: MOBILE_BREAKPOINT_PX = 768 ── */
+@media (min-width: 769px) {
   .trigger {
     width: 40px;
     height: 40px;
@@ -232,7 +255,8 @@
   }
 
   .popup {
-    width: 1280px;
+    /* P6-1: 1280px 固定だと 769〜1280px 帯でビューポートを溢れる */
+    width: min(1280px, calc(100vw - 4rem));
     padding: 32px;
     font-size: 1.7rem;
   }
@@ -278,7 +302,8 @@
   display: none;
 }
 
-@media (max-width: 640px) {
+/* 同期: MOBILE_BREAKPOINT_PX = 768 */
+@media (max-width: 768px) {
   .backdrop {
     display: block;
     position: fixed;

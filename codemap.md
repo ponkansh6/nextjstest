@@ -90,15 +90,20 @@ Economic indicators dashboard application that visualizes Japan's CPI (Consumer 
 
 **Integration Points**:
 
-- **Storage**: LocalStorage for chart preferences and user settings
-- **Responsive Design**: Adapts to mobile/desktop viewports
-- **Accessibility**: ARIA labels and keyboard navigation support
-- **Performance**: Code splitting, caching, and optimized re-renders
+- **Storage**: React hooks (`useState`) plus custom hooks. View state (year range, hidden series)
+  lives in the URL query via `useUrlState`; the selected theme is persisted in `localStorage`.
+  No Redux or other state-management library.
+- **Responsive Design**: Mobile-first. `src/lib/breakpoints.ts` (`MOBILE_BREAKPOINT_PX = 768`) is the
+  single source of truth shared by JS and CSS; sizing scales fluidly with `clamp()` rather than
+  stepping at a breakpoint.
+- **Accessibility**: ARIA labels, keyboard navigation, `role="img"` + `<details>` data tables on
+  charts, 44px tap targets, `:focus-visible`, and `prefers-reduced-motion` support
+- **Performance**: Code splitting, caching, optimized re-renders, and `LazyMount`
+  (IntersectionObserver) deferring off-screen charts
 
 **Dependencies**:
 
 - React 19.2.7 with Server Components
 - Next.js 16.2.7 with Turbopack
-- Redux Toolkit for potential state management
 - Arquero for data processing
 - PapaParse for CSV parsing

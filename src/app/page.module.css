@@ -1,17 +1,17 @@
 .pageWrapper {
-  padding-top: 4rem;
+  padding-top: 1.5rem;
   padding-bottom: 6rem;
   max-width: 80rem;
   margin-left: auto;
   margin-right: auto;
-  min-height: 100vh;
+  min-height: 100dvh;
   background:
     radial-gradient(circle at top right, rgba(59, 130, 246, 0.03), transparent 40%),
     radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.03), transparent 40%);
 }
 
 .header {
-  margin-bottom: 4rem;
+  margin-bottom: 1.5rem;
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -37,8 +37,6 @@
   border-radius: 9999px;
   font-size: 0.75rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
   background-color: var(--blue-50);
   color: var(--blue-500);
   margin-bottom: 1rem;
@@ -46,7 +44,7 @@
 }
 
 .title {
-  font-size: 3rem;
+  font-size: clamp(1.5rem, 1.2rem + 3.5vw, 4.5rem);
   line-height: 1.1;
   font-weight: 800;
   color: var(--card-text);
@@ -59,6 +57,10 @@
   color: var(--gray-500);
   max-width: 42rem;
   line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .errorContainer {
@@ -80,10 +82,14 @@
   margin-top: 0.25rem;
 }
 
-/* ── PC enlargement (≥641px) ── */
-@media (min-width: 641px) {
-  .title {
-    font-size: 4.5rem;
+/* ── PC enlargement (≥769px) - 同期: MOBILE_BREAKPOINT_PX = 768 ── */
+@media (min-width: 769px) {
+  .pageWrapper {
+    padding-top: 4rem;
+  }
+
+  .header {
+    margin-bottom: 4rem;
   }
 
   .badge {
@@ -92,5 +98,8 @@
 
   .description {
     font-size: 1.688rem;
+    display: block;
+    -webkit-line-clamp: none;
+    overflow: visible;
   }
 }
