@@ -14,19 +14,19 @@ import { test as fixtureTest } from "./fixtures";
 
 /**
  * ダークモード検証は chromium-dark プロジェクトで実行（colorScheme: "dark" が適用される）
- * これは基本の test を使用（__MOUNT_ALL__ 不要 / 全チャートが DOM に必要ない）
+ * LazyMount により StackedAreaChart が初期表示に存在しない可能性があるため、
+ * __MOUNT_ALL__ を使って全チャートをマウントする
  */
 test.describe("アクセシビリティ - ダークモード", () => {
-  test("凡例をタップ後、他の場所をクリックすると hover が解除される", async ({
-    page,
-  }) => {
+  test("凡例をタップ後、他の場所をクリックすると hover が解除される", async ({ page }) => {
+    await page.addInitScript(() => {
+      window.__MOUNT_ALL__ = true;
+    });
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
     // StackedAreaChart の最初の凡例チップを取得
-    const legendItem = page
-      .locator("[class*='StackedAreaChart'] [class*='legendItem']")
-      .first();
+    const legendItem = page.locator("[class*='StackedAreaChart'] [class*='legendItem']").first();
     await expect(legendItem).toBeVisible();
 
     // タップ
@@ -34,9 +34,7 @@ test.describe("アクセシビリティ - ダークモード", () => {
 
     // 凡例チップの background-color を確認
     // ダークモード時は rgb(59, 130, 246, 0.15) 相当の半透明青になるはず
-    const bgColor = await legendItem.evaluate((el) =>
-      window.getComputedStyle(el).backgroundColor,
-    );
+    const bgColor = await legendItem.evaluate((el) => window.getComputedStyle(el).backgroundColor);
 
     // rgb(239, 246, 255) は #eff6ff（ほぼ白）で、白背景の場合のコントラスト比違反
     expect(bgColor).not.toMatch(/rgb\(239,\s*246,\s*255/);
@@ -45,21 +43,20 @@ test.describe("アクセシビリティ - ダークモード", () => {
     await page.click("body");
 
     // 凡例の transform が戻っているかを確認（:hover時の translateY が解除される）
-    const transform = await legendItem.evaluate((el) =>
-      window.getComputedStyle(el).transform,
-    );
+    const transform = await legendItem.evaluate((el) => window.getComputedStyle(el).transform);
 
     // @media (hover: hover) ガードにより、hover が外れると transform が none になる
     expect(transform).toBe("none");
   });
 
   test("凡例のコントラスト比が WCAG AA 以上", async ({ page }) => {
+    await page.addInitScript(() => {
+      window.__MOUNT_ALL__ = true;
+    });
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    const legendItem = page
-      .locator("[class*='StackedAreaChart'] [class*='legendItem']")
-      .first();
+    const legendItem = page.locator("[class*='StackedAreaChart'] [class*='legendItem']").first();
     await expect(legendItem).toBeVisible();
 
     const { bgColor, fgColor } = await legendItem.evaluate(() => {
@@ -80,9 +77,7 @@ test.describe("アクセシビリティ - ダークモード", () => {
 });
 
 test.describe("アクセシビリティ - キーボード操作", () => {
-  fixtureTest("キーボードのみで凡例のチェックボックスを操作できる", async ({
-    page,
-  }) => {
+  fixtureTest("キーボードのみで凡例のチェックボックスを操作できる", async ({ page }) => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
@@ -95,9 +90,7 @@ test.describe("アクセシビリティ - キーボード操作", () => {
 
     // 最初の凡例チップに Tab キーで移動
     await page.keyboard.press("Tab");
-    const firstLegend = page
-      .locator("[class*='StackedAreaChart'] [class*='legendItem']")
-      .first();
+    const firstLegend = page.locator("[class*='StackedAreaChart'] [class*='legendItem']").first();
 
     // フォーカスが凡例に当たったら Space キーで状態を切り替え
     await firstLegend.focus();
@@ -110,9 +103,7 @@ test.describe("アクセシビリティ - キーボード操作", () => {
     expect(afterAriaPressed).not.toBe(initialAriaPressed);
   });
 
-  fixtureTest("フォーカスリングが表示される（:focus-visible）", async ({
-    page,
-  }) => {
+  fixtureTest("フォーカスリングが表示される（:focus-visible）", async ({ page }) => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
@@ -136,9 +127,7 @@ test.describe("アクセシビリティ - キーボード操作", () => {
     expect(focusedElement?.outlineWidth).not.toBe("0px");
   });
 
-  fixtureTest("年範囲フィルタをキーボードのみで操作できる", async ({
-    page,
-  }) => {
+  fixtureTest("年範囲フィルタをキーボードのみで操作できる", async ({ page }) => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
@@ -156,27 +145,26 @@ test.describe("アクセシビリティ - キーボード操作", () => {
 });
 
 test.describe("アクセシビリティ - アニメーション", () => {
-  test("prefers-reduced-motion が有効なとき animation が無効になる", async ({
-    page,
-  }) => {
+  test("prefers-reduced-motion が有効なとき animation が無効になる", async ({ page }) => {
     // prefers-reduced-motion: reduce をシミュレート
     await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.addInitScript(() => {
+      window.__MOUNT_ALL__ = true;
+    });
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
     // ヘッダーの fadeIn アニメーションが無効になっているか確認
     const header = page.locator("header").first();
-    const animationDuration = await header.evaluate((el) =>
-      window.getComputedStyle(el).animationDuration,
+    const animationDuration = await header.evaluate(
+      (el) => window.getComputedStyle(el).animationDuration,
     );
 
     // 0s または animation: none の状態になっているはず
     expect(animationDuration).toMatch(/^0|none/);
 
     // transform も無効になっているか確認（P1-2 の :hover transform, P2-1 案 2 の sticky等）
-    const legendItem = page
-      .locator("[class*='legendItem']:not([class*='hidden'])")
-      .first();
+    const legendItem = page.locator("[class*='legendItem']:not([class*='hidden'])").first();
     if (await legendItem.isVisible()) {
       const transform = await legendItem.evaluate((el) => {
         const style = window.getComputedStyle(el);
