@@ -56,11 +56,11 @@ test.describe("アクセシビリティ - ダークモード", () => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    const legendItem = page.locator("[class*='StackedAreaChart'] [class*='legendItem']").first();
+    const legendItem = page.locator("[aria-pressed]").first();
     await expect(legendItem).toBeVisible();
 
     const { bgColor, fgColor } = await legendItem.evaluate(() => {
-      const el = document.querySelector("[class*='legendItem']") as HTMLElement;
+      const el = document.querySelector("[aria-pressed]") as HTMLElement;
       if (!el) return { bgColor: "", fgColor: "" };
       const styles = window.getComputedStyle(el);
       return {
@@ -90,7 +90,7 @@ test.describe("アクセシビリティ - キーボード操作", () => {
 
     // 最初の凡例チップに Tab キーで移動
     await page.keyboard.press("Tab");
-    const firstLegend = page.locator("[class*='StackedAreaChart'] [class*='legendItem']").first();
+    const firstLegend = page.locator("[aria-pressed]").first();
 
     // フォーカスが凡例に当たったら Space キーで状態を切り替え
     await firstLegend.focus();
