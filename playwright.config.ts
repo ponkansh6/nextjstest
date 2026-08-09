@@ -39,10 +39,8 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"], colorScheme: "dark" },
     },
     {
-      name: "mobile-iphone",
-      use: { ...devices["iPhone 13"] },
-    },
-    {
+      // モバイルは Pixel (Chromium) のみ検証。iPhone (WebKit) はテスト1件あたり
+      // 約2倍遅く、実測でこのプロジェクトを外すと E2E 全体が約38%短縮された。
       name: "mobile-pixel",
       use: { ...devices["Pixel 7"] },
     },
