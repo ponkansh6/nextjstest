@@ -53,15 +53,10 @@ export const StackedAreaChart: React.FC<StackedAreaChartProps> = ({
       </h2>
       <div className={styles.legendContainer}>
         <div className={styles.legendSection}>
-          <div className={styles.legendHeader}>
-            <h3 className={styles.legendTitle}>費目</h3>
-            <div className={styles.legendActions}>
-              <button onClick={onReset} className={styles.actionButton}>
-                全選択解除
-              </button>
-            </div>
-          </div>
           <div className={styles.stackedLegendItems}>
+            <button onClick={onReset} className={styles.legendItem}>
+              全選択解除
+            </button>
             {keys.map((key, index) => (
               <button
                 key={key}

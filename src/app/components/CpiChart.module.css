@@ -68,18 +68,6 @@
   text-align: center;
 }
 
-.legendHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-}
-
-.legendActions {
-  display: flex;
-  gap: 0.5rem;
-}
-
 .legendItem:focus-visible,
 .actionButton:focus-visible,
 .calculateButton:focus-visible,
