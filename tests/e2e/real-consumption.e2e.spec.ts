@@ -119,7 +119,7 @@ test.describe("page.tsx E2E: real consumption chart with actual browser", () => 
      */
     await page.goto("/");
 
-    const noteLink = page.locator("#section-consumption-real a");
+    const noteLink = page.getByRole("link", { name: "消費支出（名目）" });
     await expect(noteLink, "Note link in real consumption chart should be visible").toBeVisible({
       timeout: 15000,
     });
