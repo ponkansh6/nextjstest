@@ -33,11 +33,7 @@ export const CagrPanel = React.memo<CagrPanelProps>(
     const displayYears = allYears.filter((y) => y >= MIN_DISPLAY_YEAR);
 
     return (
-      <div
-        id={sectionId}
-        className={styles.cagrSection}
-        style={{ scrollMarginTop: "5rem" }}
-      >
+      <div id={sectionId} className={styles.cagrSection} style={{ scrollMarginTop: "5rem" }}>
         <h2 className={styles.chartTitle}>年率上昇率（CAGR）</h2>
         <div className={styles.cagrContainer}>
           <div className={styles.cagrControls}>
@@ -89,13 +85,13 @@ export const CagrPanel = React.memo<CagrPanelProps>(
               </select>
             </div>
 
-              <button
-                onClick={calculateCAGR}
-                className={styles.calculateButton}
-                disabled={cagrStartYear === cagrEndYear}
-              >
-                計算する
-              </button>
+            <button
+              onClick={calculateCAGR}
+              className={styles.calculateButton}
+              disabled={cagrStartYear === cagrEndYear}
+            >
+              計算する
+            </button>
           </div>
 
           {cagrError && (

@@ -27,11 +27,25 @@ export function ThemeToggle() {
   };
 
   return (
-    <div className={styles.themeToggleContainer} style={{ display: "flex", gap: "0.25rem", background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: "9999px", padding: "0.25rem" }}>
+    <div
+      className={styles.themeToggleContainer}
+      style={{
+        display: "flex",
+        gap: "0.25rem",
+        background: "var(--card-bg)",
+        border: "1px solid var(--card-border)",
+        borderRadius: "9999px",
+        padding: "0.25rem",
+      }}
+    >
       <button
         type="button"
         className={styles.actionButton}
-        style={{ borderRadius: "9999px", border: theme === "light" ? "1px solid var(--blue-500)" : "1px solid transparent", background: theme === "light" ? "var(--blue-50)" : "transparent" }}
+        style={{
+          borderRadius: "9999px",
+          border: theme === "light" ? "1px solid var(--blue-500)" : "1px solid transparent",
+          background: theme === "light" ? "var(--blue-50)" : "transparent",
+        }}
         onClick={() => changeTheme("light")}
         aria-label="ライトモード"
       >
@@ -40,7 +54,11 @@ export function ThemeToggle() {
       <button
         type="button"
         className={styles.actionButton}
-        style={{ borderRadius: "9999px", border: theme === "system" ? "1px solid var(--blue-500)" : "1px solid transparent", background: theme === "system" ? "var(--blue-50)" : "transparent" }}
+        style={{
+          borderRadius: "9999px",
+          border: theme === "system" ? "1px solid var(--blue-500)" : "1px solid transparent",
+          background: theme === "system" ? "var(--blue-50)" : "transparent",
+        }}
         onClick={() => changeTheme("system")}
         aria-label="システム設定に従う"
       >
@@ -49,7 +67,11 @@ export function ThemeToggle() {
       <button
         type="button"
         className={styles.actionButton}
-        style={{ borderRadius: "9999px", border: theme === "dark" ? "1px solid var(--blue-500)" : "1px solid transparent", background: theme === "dark" ? "var(--blue-50)" : "transparent" }}
+        style={{
+          borderRadius: "9999px",
+          border: theme === "dark" ? "1px solid var(--blue-500)" : "1px solid transparent",
+          background: theme === "dark" ? "var(--blue-50)" : "transparent",
+        }}
         onClick={() => changeTheme("dark")}
         aria-label="ダークモード"
       >

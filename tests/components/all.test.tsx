@@ -186,7 +186,9 @@ describe("Integrated UI Chart Tests", () => {
         "時間当たり給与",
         "15歳以上国民当たり給与",
       ];
-      expectedLabels.forEach((label) => expect(screen.getAllByText(label).length).toBeGreaterThan(0));
+      expectedLabels.forEach((label) =>
+        expect(screen.getAllByText(label).length).toBeGreaterThan(0),
+      );
     });
 
     it("should render StackedAreaChart with real data and common chart elements", () => {
@@ -438,7 +440,9 @@ describe("StackedAreaChart", () => {
 
   it("calls onToggle when a legend item is clicked", () => {
     render(<StackedAreaChart {...mockProps} />);
-    const button = screen.getAllByText("キー1").find(el => el.closest("button")) || screen.getAllByText("キー1")[0];
+    const button =
+      screen.getAllByText("キー1").find((el) => el.closest("button")) ||
+      screen.getAllByText("キー1")[0];
     fireEvent.click(button);
     expect(mockProps.onToggle).toHaveBeenCalledWith("キー1");
   });
@@ -508,7 +512,9 @@ describe("NewGraph", () => {
         CustomTooltip={() => <div>Tooltip</div>}
       />,
     );
-    const button = screen.getAllByText("給与(総合)").find(el => el.closest("button")) || screen.getAllByText("給与(総合)")[0];
+    const button =
+      screen.getAllByText("給与(総合)").find((el) => el.closest("button")) ||
+      screen.getAllByText("給与(総合)")[0];
     fireEvent.click(button);
     expect(mockOnToggle).toHaveBeenCalledWith("総合(12MA)");
   });

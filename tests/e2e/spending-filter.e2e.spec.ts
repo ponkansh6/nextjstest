@@ -42,10 +42,9 @@ test.describe("消費支出絞り込み E2E", () => {
     expect(await q1Button.getAttribute("aria-pressed")).toBe("false");
 
     const newCount = await bars(page, NOMINAL).count();
-    expect(
-      newCount,
-      "Q1 非表示後は Q1 に該当する棒が描画から除外されるべき",
-    ).toBeLessThan(initialCount);
+    expect(newCount, "Q1 非表示後は Q1 に該当する棒が描画から除外されるべき").toBeLessThan(
+      initialCount,
+    );
   });
 
   test("費目を非表示にするとグラフの棒本数が減る（名目）", async ({ page }) => {
@@ -53,10 +52,7 @@ test.describe("消費支出絞り込み E2E", () => {
 
     // 四半期(Q1〜Q4)ボタンではなく費目の凡例ボタンを選ぶ
     // 「全選択解除」の直後、費目リストの先頭ボタンを対象にする
-    const categoryButton = page
-      .getByTestId(NOMINAL)
-      .locator("[aria-pressed]")
-      .nth(4);
+    const categoryButton = page.getByTestId(NOMINAL).locator("[aria-pressed]").nth(4);
     const label = await categoryButton.textContent();
 
     await categoryButton.click();
@@ -65,9 +61,8 @@ test.describe("消費支出絞り込み E2E", () => {
     expect(await categoryButton.getAttribute("aria-pressed")).toBe("false");
 
     const newCount = await bars(page, NOMINAL).count();
-    expect(
-      newCount,
-      `費目「${label}」非表示後は該当系列の棒が描画から除外されるべき`,
-    ).toBeLessThan(initialCount);
+    expect(newCount, `費目「${label}」非表示後は該当系列の棒が描画から除外されるべき`).toBeLessThan(
+      initialCount,
+    );
   });
 });

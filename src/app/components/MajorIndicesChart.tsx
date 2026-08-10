@@ -54,7 +54,11 @@ export const MajorIndicesChart: React.FC<MajorIndicesChartProps> = ({
         </div>
       </div>
     </div>
-    <div className={styles.chartWrapper} role="img" aria-label="消費者物価指数 主要指数の推移グラフ">
+    <div
+      className={styles.chartWrapper}
+      role="img"
+      aria-label="消費者物価指数 主要指数の推移グラフ"
+    >
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.gridStroke} />
@@ -110,12 +114,21 @@ export const MajorIndicesChart: React.FC<MajorIndicesChartProps> = ({
         />
       </div>
       <table>
-        <thead><tr><th>年月</th>{keys.map((k) => <th key={k}>{getLegendLabel(k)}</th>)}</tr></thead>
+        <thead>
+          <tr>
+            <th>年月</th>
+            {keys.map((k) => (
+              <th key={k}>{getLegendLabel(k)}</th>
+            ))}
+          </tr>
+        </thead>
         <tbody>
           {data.slice(-12).map((d) => (
             <tr key={d.年月}>
               <td>{d.年月}</td>
-              {keys.map((k) => <td key={k}>{typeof d[k] === "number" ? (d[k] as number).toFixed(2) : "-"}</td>)}
+              {keys.map((k) => (
+                <td key={k}>{typeof d[k] === "number" ? (d[k] as number).toFixed(2) : "-"}</td>
+              ))}
             </tr>
           ))}
         </tbody>

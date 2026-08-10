@@ -48,11 +48,7 @@ export const NewGraph: React.FC<NewGraphProps> = ({
   chartKey,
   CustomTooltip,
 }) => (
-  <div
-    id={sectionId}
-    className={styles.chartSection}
-    style={{ scrollMarginTop: "5rem" }}
-  >
+  <div id={sectionId} className={styles.chartSection} style={{ scrollMarginTop: "5rem" }}>
     <div className={styles.chartTitleRow}>
       <h2 className={styles.chartTitle}>給与・消費・物価の推移比較(12MA)</h2>
       {chartKey && (
@@ -79,7 +75,11 @@ export const NewGraph: React.FC<NewGraphProps> = ({
         </div>
       </div>
     </div>
-    <div className={styles.chartWrapper} role="img" aria-label="給与・消費・物価の推移比較（12MA）グラフ">
+    <div
+      className={styles.chartWrapper}
+      role="img"
+      aria-label="給与・消費・物価の推移比較（12MA）グラフ"
+    >
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.gridStroke} />
@@ -135,12 +135,23 @@ export const NewGraph: React.FC<NewGraphProps> = ({
         />
       </div>
       <table>
-        <thead><tr><th>年月</th>{LINE_CONFIGS.map((c) => <th key={c.key}>{c.displayName}</th>)}</tr></thead>
+        <thead>
+          <tr>
+            <th>年月</th>
+            {LINE_CONFIGS.map((c) => (
+              <th key={c.key}>{c.displayName}</th>
+            ))}
+          </tr>
+        </thead>
         <tbody>
           {data.slice(-12).map((d) => (
             <tr key={d.年月}>
               <td>{d.年月}</td>
-              {LINE_CONFIGS.map((c) => <td key={c.key}>{typeof d[c.key] === "number" ? (d[c.key] as number).toFixed(2) : "-"}</td>)}
+              {LINE_CONFIGS.map((c) => (
+                <td key={c.key}>
+                  {typeof d[c.key] === "number" ? (d[c.key] as number).toFixed(2) : "-"}
+                </td>
+              ))}
             </tr>
           ))}
         </tbody>

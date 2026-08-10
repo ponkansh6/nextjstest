@@ -14,13 +14,13 @@ Next.js 16 App Router + Recharts の単一ページダッシュボード。サ�
 
 ### モバイルでの基準値（本プランで用いる想定）
 
-| 項目 | 想定 |
-|---|---|
-| 基準幅 | 375px（iPhone SE/13 mini 相当）／ 390〜430px（主流） |
-| 基準高（縦持ち・可視領域） | 約 630〜730px（ブラウザ UI 込みで実質はさらに小さい） |
-| 横持ち可視高 | 約 320〜390px |
-| 最小タップターゲット | 44×44px（WCAG 2.5.8 AAA / Apple HIG、Android は 48dp） |
-| ポインタ | `hover: none` / `pointer: coarse` |
+| 項目                       | 想定                                                   |
+| -------------------------- | ------------------------------------------------------ |
+| 基準幅                     | 375px（iPhone SE/13 mini 相当）／ 390〜430px（主流）   |
+| 基準高（縦持ち・可視領域） | 約 630〜730px（ブラウザ UI 込みで実質はさらに小さい）  |
+| 横持ち可視高               | 約 320〜390px                                          |
+| 最小タップターゲット       | 44×44px（WCAG 2.5.8 AAA / Apple HIG、Android は 48dp） |
+| ポインタ                   | `hover: none` / `pointer: coarse`                      |
 
 ---
 
@@ -34,64 +34,64 @@ Next.js 16 App Router + Recharts の単一ページダッシュボード。サ�
 
 ### 実施済み（✅）
 
-| Phase | 項目 | 実装内容 | 状態 |
-|---|---|---|---|
-| 1 | P0-1 ブレークポイント統一 | `src/lib/breakpoints.ts`（`MOBILE_BREAKPOINT_PX = 768`）導入、CSS 変数と連携 | ✅ |
-| 1 | P0-2 / P0-3 CSS 変数 | `--blue-600` 定義、ダークモード `--blue-50/500/600` 上書き（`globals.css`） | ✅ |
-| 1 | P0-4 `100dvh` 置換 | `page.module.css` / `ChartInfoButton.module.css` | ✅ |
-| 1 | P0-5 codemap 訂正 | `codemap.md` を実装に一致 | ✅ |
-| 2 | P1-1 タップターゲット | `.trigger`/`.closeButton`/`.actionButton`/`.legendItem` に 44px 確保 | ✅ |
-| 2 | P1-2 hover ガード | `@media (hover: hover)` 化、`:active` へ移行 | ✅ |
-| 2 | P3-3 文言統一 | 「Calculate」→「計算する」等日本語化 | ✅ |
-| 3 | P2-1 案1 ヘッダー圧縮 | モバイル padding / `.title` clamp 化 | ✅ |
-| 3 | P2-3 チャート高さ | `min(500px, 60svh)` 等ビューポート連動 | ✅ |
-| 3 | P5-2 スケルトン一致 | `.chartSkeleton` 寸法を実チャートに一致 | ✅ |
-| 4 | P1-3 凡例折りたたみ | 12 系列凡例の折りたたみ＋要約表示 | ✅ |
-| 4 | P1-5 期間プリセット | `.presetChip`（過去10年 / 過去20年 / 2020年〜 / 全期間） | ✅ |
-| 4 | P3-2 CAGR stale 防止 | 入力変化時の結果リセット | ✅ |
-| 4 | P1-4 ツールチップ最適化 | `CustomTooltip.tsx` モバイル対応 | ✅ |
-| 4 | P3-4 solo ボタン | `StackedAreaChart` に「この費目だけ」ボタン（`.soloButton`） | ✅ |
-| 5 | P2-1 案2 セクションタブ | `SectionTabs.tsx` スティッキータブバー（`aria-current` 連動） | ✅ |
-| 5 | P2-2 範囲表示 | タブバー内に範囲ラベル＋ピッカー起動 | ✅ |
-| 5 | P3-1 URL 同期 | `useUrlState.ts`（`?from&to&hidden`、`router.replace`） | ✅ |
-| 6 | P5-1 遅延マウント | `LazyMount.tsx`（IntersectionObserver / rootMargin 200px、`__MOUNT_ALL__` フック付き） | ✅ |
-| 6 | P4-1 フォーカスリング | `:focus-visible` を全ボタン/セレクトに追加 | ✅ |
-| 6 | P4-2 reduced-motion | `@media (prefers-reduced-motion: reduce)` | ✅ |
-| 6 | P4-4 テーマトグル | `ThemeToggle.tsx` + `layout.tsx` `themeColor` | ✅ |
-| 6 | Playwright プロジェクト | chromium / mobile-iphone（iPhone 13）/ mobile-pixel（Pixel 7） | ✅ |
-| 6 | E2E テスト | `range-change.e2e.spec.ts` / `real-consumption.e2e.spec.ts` | ✅ 追加済み |
+| Phase | 項目                      | 実装内容                                                                               | 状態        |
+| ----- | ------------------------- | -------------------------------------------------------------------------------------- | ----------- |
+| 1     | P0-1 ブレークポイント統一 | `src/lib/breakpoints.ts`（`MOBILE_BREAKPOINT_PX = 768`）導入、CSS 変数と連携           | ✅          |
+| 1     | P0-2 / P0-3 CSS 変数      | `--blue-600` 定義、ダークモード `--blue-50/500/600` 上書き（`globals.css`）            | ✅          |
+| 1     | P0-4 `100dvh` 置換        | `page.module.css` / `ChartInfoButton.module.css`                                       | ✅          |
+| 1     | P0-5 codemap 訂正         | `codemap.md` を実装に一致                                                              | ✅          |
+| 2     | P1-1 タップターゲット     | `.trigger`/`.closeButton`/`.actionButton`/`.legendItem` に 44px 確保                   | ✅          |
+| 2     | P1-2 hover ガード         | `@media (hover: hover)` 化、`:active` へ移行                                           | ✅          |
+| 2     | P3-3 文言統一             | 「Calculate」→「計算する」等日本語化                                                   | ✅          |
+| 3     | P2-1 案1 ヘッダー圧縮     | モバイル padding / `.title` clamp 化                                                   | ✅          |
+| 3     | P2-3 チャート高さ         | `min(500px, 60svh)` 等ビューポート連動                                                 | ✅          |
+| 3     | P5-2 スケルトン一致       | `.chartSkeleton` 寸法を実チャートに一致                                                | ✅          |
+| 4     | P1-3 凡例折りたたみ       | 12 系列凡例の折りたたみ＋要約表示                                                      | ✅          |
+| 4     | P1-5 期間プリセット       | `.presetChip`（過去10年 / 過去20年 / 2020年〜 / 全期間）                               | ✅          |
+| 4     | P3-2 CAGR stale 防止      | 入力変化時の結果リセット                                                               | ✅          |
+| 4     | P1-4 ツールチップ最適化   | `CustomTooltip.tsx` モバイル対応                                                       | ✅          |
+| 4     | P3-4 solo ボタン          | `StackedAreaChart` に「この費目だけ」ボタン（`.soloButton`）                           | ✅          |
+| 5     | P2-1 案2 セクションタブ   | `SectionTabs.tsx` スティッキータブバー（`aria-current` 連動）                          | ✅          |
+| 5     | P2-2 範囲表示             | タブバー内に範囲ラベル＋ピッカー起動                                                   | ✅          |
+| 5     | P3-1 URL 同期             | `useUrlState.ts`（`?from&to&hidden`、`router.replace`）                                | ✅          |
+| 6     | P5-1 遅延マウント         | `LazyMount.tsx`（IntersectionObserver / rootMargin 200px、`__MOUNT_ALL__` フック付き） | ✅          |
+| 6     | P4-1 フォーカスリング     | `:focus-visible` を全ボタン/セレクトに追加                                             | ✅          |
+| 6     | P4-2 reduced-motion       | `@media (prefers-reduced-motion: reduce)`                                              | ✅          |
+| 6     | P4-4 テーマトグル         | `ThemeToggle.tsx` + `layout.tsx` `themeColor`                                          | ✅          |
+| 6     | Playwright プロジェクト   | chromium / mobile-iphone（iPhone 13）/ mobile-pixel（Pixel 7）                         | ✅          |
+| 6     | E2E テスト                | `range-change.e2e.spec.ts` / `real-consumption.e2e.spec.ts`                            | ✅ 追加済み |
 
 ### 追加で実施済み（2026-08-10）
 
-| Phase | 項目 | 実装内容 | 状態 |
-|---|---|---|---|
-| 7 | P4-3 グラフ SR 対応 | 全 6 チャートに `role="img"` + `aria-label`、`<details>` データテーブル | ✅ |
-| 7 | P4-5 パレット境界線 | `StackedAreaChart` の各 `Area` に `stroke`（gridStroke / opacity 0.4） | ✅ |
-| 8 | P6-1 流体タイポグラフィ | `min-width: 769px` の段階指定を全廃し `clamp()` へ。同ブロックは `.chartWrapper` のレイアウト切替のみ残置。`.popup` の `width: 1280px` → `min(1280px, calc(100vw - 4rem))` | ✅ |
-| 8 | P6-2 コンテナ幅統一 | `.container` の段階的 max-width を廃止、`.pageWrapper` の 80rem に一本化 | ✅ |
-| 8 | P6-3 エラー文言 | エンドユーザー向け文言 + `NODE_ENV === "development"` 時のみ開発者向け詳細 | ✅ |
-| 8 | P6-5 OGP・metadataBase | `openGraph` / `twitter` / `metadataBase` / `viewport.themeColor` | ✅ |
-| 8 | P6-6 エクスポート | `src/lib/csvExport.ts`（純関数）+ `ChartExportButton.tsx`。各グラフの `<details>` 内に CSV ボタン | ✅ |
-| 8 | P5-3 横溢れ | `overflow-x: hidden` を撤廃し、375px で溢れないことを E2E でアサート | ✅ |
+| Phase | 項目                    | 実装内容                                                                                                                                                                   | 状態 |
+| ----- | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
+| 7     | P4-3 グラフ SR 対応     | 全 6 チャートに `role="img"` + `aria-label`、`<details>` データテーブル                                                                                                    | ✅   |
+| 7     | P4-5 パレット境界線     | `StackedAreaChart` の各 `Area` に `stroke`（gridStroke / opacity 0.4）                                                                                                     | ✅   |
+| 8     | P6-1 流体タイポグラフィ | `min-width: 769px` の段階指定を全廃し `clamp()` へ。同ブロックは `.chartWrapper` のレイアウト切替のみ残置。`.popup` の `width: 1280px` → `min(1280px, calc(100vw - 4rem))` | ✅   |
+| 8     | P6-2 コンテナ幅統一     | `.container` の段階的 max-width を廃止、`.pageWrapper` の 80rem に一本化                                                                                                   | ✅   |
+| 8     | P6-3 エラー文言         | エンドユーザー向け文言 + `NODE_ENV === "development"` 時のみ開発者向け詳細                                                                                                 | ✅   |
+| 8     | P6-5 OGP・metadataBase  | `openGraph` / `twitter` / `metadataBase` / `viewport.themeColor`                                                                                                           | ✅   |
+| 8     | P6-6 エクスポート       | `src/lib/csvExport.ts`（純関数）+ `ChartExportButton.tsx`。各グラフの `<details>` 内に CSV ボタン                                                                          | ✅   |
+| 8     | P5-3 横溢れ             | `overflow-x: hidden` を撤廃し、375px で溢れないことを E2E でアサート                                                                                                       | ✅   |
 
 **この回で見つけて直した実バグ**:
 
-| 箇所 | 内容 |
-|---|---|
-| `.soloButton` | 42×27px でタップターゲット違反（P3-4 で追加した「単独」ボタン）→ `min-width/min-height: 44px` |
-| `.calculateButton` | モバイルで 40px 高（padding だけでは 44px に届かない）→ `min-height: 44px` |
-| `playwright.config.ts` | `webServer` に `url` が無く起動完了を待てず、`ERR_CONNECTION_REFUSED` で不安定 → `url` 追加 |
+| 箇所                           | 内容                                                                                                                                                     |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `.soloButton`                  | 42×27px でタップターゲット違反（P3-4 で追加した「単独」ボタン）→ `min-width/min-height: 44px`                                                            |
+| `.calculateButton`             | モバイルで 40px 高（padding だけでは 44px に届かない）→ `min-height: 44px`                                                                               |
+| `playwright.config.ts`         | `webServer` に `url` が無く起動完了を待てず、`ERR_CONNECTION_REFUSED` で不安定 → `url` 追加                                                              |
 | `real-consumption.e2e.spec.ts` | `LazyMount` 配下のセクションは SSR HTML に無いため、`goto` 直後の同期チェックが常に失敗 → `#section-consumption-real` を `expect().toBeVisible()` で待機 |
-| `LazyMount.tsx` | effect 内 setState（lint エラー / カスケードレンダリング）→ `useSyncExternalStore` で SSR 安全に判定 |
+| `LazyMount.tsx`                | effect 内 setState（lint エラー / カスケードレンダリング）→ `useSyncExternalStore` で SSR 安全に判定                                                     |
 
 ### 実施予定（⏳）
 
-| 項目 | 内容 | 備考 |
-|---|---|---|
-| WebKit 実行環境 | mobile-iphone プロジェクトはホストのシステムライブラリ不足で起動不可。`sudo apt-get install libevent-2.1-7t64 libavif16 libmanette-0.2-0`（`lxqt-sudo` 経由）が必要 | **要ユーザー判断**（sudo） |
-| Lighthouse モバイル計測 | 改善前後の Performance / Accessibility をモバイルプリセットで比較 | 未着手 |
-| ダークモード E2E | `colorScheme: "dark"` プロジェクトで凡例タップ後の残留 hover とコントラストを検証（P0-3 / P1-2 の回帰防止） | 未着手 |
-| キーボードのみ通し操作 | P4-1 の通し検証 | 未着手 |
+| 項目                    | 内容                                                                                                                                                                | 備考                       |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| WebKit 実行環境         | mobile-iphone プロジェクトはホストのシステムライブラリ不足で起動不可。`sudo apt-get install libevent-2.1-7t64 libavif16 libmanette-0.2-0`（`lxqt-sudo` 経由）が必要 | **要ユーザー判断**（sudo） |
+| Lighthouse モバイル計測 | 改善前後の Performance / Accessibility をモバイルプリセットで比較                                                                                                   | 未着手                     |
+| ダークモード E2E        | `colorScheme: "dark"` プロジェクトで凡例タップ後の残留 hover とコントラストを検証（P0-3 / P1-2 の回帰防止）                                                         | 未着手                     |
+| キーボードのみ通し操作  | P4-1 の通し検証                                                                                                                                                     | 未着手                     |
 
 ### 非採用（維持）
 
@@ -139,12 +139,12 @@ Next.js 16 App Router + Recharts の単一ページダッシュボード。サ�
 
 現状の実測値（モバイル ≤640px 時）:
 
-| 要素 | 箇所 | 実効サイズ | 44px 比 |
-|---|---|---|---|
-| 情報ボタン `.trigger` | `ChartInfoButton.module.css:14` | **20×20px** | 45% |
-| ポップアップ閉じるボタン `.closeButton` | `ChartInfoButton.module.css:83` | **22×22px** | 50% |
-| 全表示/全非表示 `.actionButton` | `CpiChart.module.css:83,88` | 約 **24px 高**（モバイル上書きなし） | 55% |
-| 凡例チップ `.legendItem` | `CpiChart.module.css:178` | **36px 高**（`min-height: 2.25rem`） | 82% |
+| 要素                                    | 箇所                            | 実効サイズ                           | 44px 比 |
+| --------------------------------------- | ------------------------------- | ------------------------------------ | ------- |
+| 情報ボタン `.trigger`                   | `ChartInfoButton.module.css:14` | **20×20px**                          | 45%     |
+| ポップアップ閉じるボタン `.closeButton` | `ChartInfoButton.module.css:83` | **22×22px**                          | 50%     |
+| 全表示/全非表示 `.actionButton`         | `CpiChart.module.css:83,88`     | 約 **24px 高**（モバイル上書きなし） | 55%     |
+| 凡例チップ `.legendItem`                | `CpiChart.module.css:178`       | **36px 高**（`min-height: 2.25rem`） | 82%     |
 
 - **問題**: 情報ボタン 20px はスマホでは「押せない」に等しく、隣接する `chartTitle` テキストと重なって誤タップも起きる。`.actionButton` に至ってはモバイル用の上書きが一切なく、PC のベース値がそのまま出ている。
 - **修正**:
@@ -338,23 +338,27 @@ Next.js 16 App Router + Recharts の単一ページダッシュボード。サ�
 
 モバイル値を基準にすると、`min-width: 641px` を越えた瞬間に以下が当たる:
 
-| 要素 | モバイル | 641px 以上 | 倍率 |
-|---|---|---|---|
-| `.title` | 3rem | **4.5rem** | 1.5× |
-| `.description` | 1.125rem | **1.688rem** | 1.5× |
-| `.chartTitle` | 1.25rem | **3.375rem** | 2.7× |
-| `.select` | 0.875rem | **2rem** (padding 1.5rem 5rem) | 2.3× |
-| `.filterItem` | 0.875rem | **2rem** | 2.3× |
-| `.legendItem` | 0.875rem | **1.5rem** | 1.7× |
-| `.cagrResultValue` | 2rem | **4rem** | 2× |
-| 軸ラベル (`globals.css:142`) | 12px | **24px** | 2× |
-| `.popup` (`ChartInfoButton`) | 画面幅-2rem | **1280px 固定** | — |
+| 要素                         | モバイル    | 641px 以上                     | 倍率 |
+| ---------------------------- | ----------- | ------------------------------ | ---- |
+| `.title`                     | 3rem        | **4.5rem**                     | 1.5× |
+| `.description`               | 1.125rem    | **1.688rem**                   | 1.5× |
+| `.chartTitle`                | 1.25rem     | **3.375rem**                   | 2.7× |
+| `.select`                    | 0.875rem    | **2rem** (padding 1.5rem 5rem) | 2.3× |
+| `.filterItem`                | 0.875rem    | **2rem**                       | 2.3× |
+| `.legendItem`                | 0.875rem    | **1.5rem**                     | 1.7× |
+| `.cagrResultValue`           | 2rem        | **4rem**                       | 2×   |
+| 軸ラベル (`globals.css:142`) | 12px        | **24px**                       | 2×   |
+| `.popup` (`ChartInfoButton`) | 画面幅-2rem | **1280px 固定**                | —    |
 
 - **問題**: 641px（小型タブレット）でも 1920px（デスクトップ）でも同じ「巨大サイズ」。641px 幅で `font-size: 2rem` のセレクトが 2 つ並ぶと横幅を食い潰し、`chartTitle` 3.375rem は折り返す。**この帯は大型スマホの横持ちが入り得る領域でもあるため、モバイル観点でも修正が必要**（P0-1 と併せて）。
 - **改善案（推奨）**: 段階指定をやめ、`clamp()` による流体タイポグラフィに置き換える。モバイル基準値を下限、現在の大画面値を上限に取れば、両端の意図を保ったまま断崖が消える。
   ```css
-  .chartTitle { font-size: clamp(1.25rem, 1rem + 2.2vw, 3.375rem); }
-  .title      { font-size: clamp(1.5rem, 1.2rem + 3.5vw, 4.5rem); }
+  .chartTitle {
+    font-size: clamp(1.25rem, 1rem + 2.2vw, 3.375rem);
+  }
+  .title {
+    font-size: clamp(1.5rem, 1.2rem + 3.5vw, 4.5rem);
+  }
   ```
 - **併せて**: `.recharts-cartesian-axis-tick-value` の 24px も `clamp(12px, 0.6vw + 9px, 24px)` 相当に。`.popup` の `width: 1280px` も `min(1280px, calc(100vw - 4rem))` に。
 
@@ -388,16 +392,16 @@ Next.js 16 App Router + Recharts の単一ページダッシュボード。サ�
 
 ## 実行順序の提案
 
-| フェーズ | 内容 | 見積 | モバイルでの効果 |
-|---|---|---|---|
-| **1** | P0 全件（ブレークポイント統一 / CSS 変数 2 件 / `dvh` / codemap 訂正） | 小 | ダークモードの表示崩れ・大型端末横持ちの崩壊・不要スクロールが消える |
-| **2** | P1-1 タップターゲット 44px、P1-2 `@media (hover: hover)`、P3-3 文言統一 | 小 | 「押せない・貼り付く」が解消し、まず操作できる状態になる |
-| **3** | P2-1 案 1（ヘッダー圧縮）、P2-3 チャート高さ `svh` 化、P5-2 スケルトン一致 | 小 | ファーストビューにグラフが入り、横持ちが実用になり、CLS が消える |
-| **4** | P1-3 凡例の折りたたみ、P1-5 期間プリセット | 中 | 凡例が画面を占有しなくなり、最頻操作が 1 タップになる |
-| **5** | P2-1 案 2（スティッキータブバー、P5-3 が前提）、P2-2 範囲シート、P3-1 URL 同期 | 中〜大 | 7 グラフ間の回遊が成立し、復帰・共有で状態が消えなくなる |
-| **6** | P1-4 ツールチップ固定表示、P3-2 CAGR stale、P3-4 solo、P2-4 実質グラフ注記 | 中 | 値の読み取りと誤解を生む挙動が解消 |
-| **7** | P4 全件（フォーカス / reduced-motion / SR 対応 / テーマトグル / パレット境界線）、P5-1 遅延マウント | 中〜大 | アクセシビリティとモバイル性能の底上げ |
-| **8** | P6 全件（clamp / 幅統一 / OGP / エクスポート） | 中 | 大画面での破綻解消と仕上げ |
+| フェーズ | 内容                                                                                                | 見積   | モバイルでの効果                                                     |
+| -------- | --------------------------------------------------------------------------------------------------- | ------ | -------------------------------------------------------------------- |
+| **1**    | P0 全件（ブレークポイント統一 / CSS 変数 2 件 / `dvh` / codemap 訂正）                              | 小     | ダークモードの表示崩れ・大型端末横持ちの崩壊・不要スクロールが消える |
+| **2**    | P1-1 タップターゲット 44px、P1-2 `@media (hover: hover)`、P3-3 文言統一                             | 小     | 「押せない・貼り付く」が解消し、まず操作できる状態になる             |
+| **3**    | P2-1 案 1（ヘッダー圧縮）、P2-3 チャート高さ `svh` 化、P5-2 スケルトン一致                          | 小     | ファーストビューにグラフが入り、横持ちが実用になり、CLS が消える     |
+| **4**    | P1-3 凡例の折りたたみ、P1-5 期間プリセット                                                          | 中     | 凡例が画面を占有しなくなり、最頻操作が 1 タップになる                |
+| **5**    | P2-1 案 2（スティッキータブバー、P5-3 が前提）、P2-2 範囲シート、P3-1 URL 同期                      | 中〜大 | 7 グラフ間の回遊が成立し、復帰・共有で状態が消えなくなる             |
+| **6**    | P1-4 ツールチップ固定表示、P3-2 CAGR stale、P3-4 solo、P2-4 実質グラフ注記                          | 中     | 値の読み取りと誤解を生む挙動が解消                                   |
+| **7**    | P4 全件（フォーカス / reduced-motion / SR 対応 / テーマトグル / パレット境界線）、P5-1 遅延マウント | 中〜大 | アクセシビリティとモバイル性能の底上げ                               |
+| **8**    | P6 全件（clamp / 幅統一 / OGP / エクスポート）                                                      | 中     | 大画面での破綻解消と仕上げ                                           |
 
 ---
 

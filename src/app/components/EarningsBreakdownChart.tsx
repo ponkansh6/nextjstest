@@ -81,11 +81,7 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
   }, [data]);
 
   return (
-    <div
-      id={sectionId}
-      className={styles.chartSection}
-      style={{ scrollMarginTop: "5rem" }}
-    >
+    <div id={sectionId} className={styles.chartSection} style={{ scrollMarginTop: "5rem" }}>
       <h2 className={styles.chartTitle}>
         給与指標と関連指標
         <ChartInfoContentRenderer chartKey="earnings" ariaLabel="給与指標のデータソースを表示" />
@@ -177,12 +173,23 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
           />
         </div>
         <table>
-          <thead><tr><th>年月</th>{configs.map((c) => <th key={c.key}>{c.displayName || c.key}</th>)}</tr></thead>
+          <thead>
+            <tr>
+              <th>年月</th>
+              {configs.map((c) => (
+                <th key={c.key}>{c.displayName || c.key}</th>
+              ))}
+            </tr>
+          </thead>
           <tbody>
             {data.slice(-12).map((d) => (
               <tr key={d.年月}>
                 <td>{d.年月}</td>
-                {configs.map((c) => <td key={c.key}>{typeof d[c.key] === "number" ? (d[c.key] as number).toFixed(2) : "-"}</td>)}
+                {configs.map((c) => (
+                  <td key={c.key}>
+                    {typeof d[c.key] === "number" ? (d[c.key] as number).toFixed(2) : "-"}
+                  </td>
+                ))}
               </tr>
             ))}
           </tbody>

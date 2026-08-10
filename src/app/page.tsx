@@ -79,7 +79,14 @@ export default async function Page() {
   return (
     <div className={`container ${styles.pageWrapper}`}>
       <header className={styles.header}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "0.5rem",
+          }}
+        >
           <div className={styles.badge}>経済指標ダッシュボード</div>
           <ThemeToggle />
         </div>
@@ -102,9 +109,13 @@ export default async function Page() {
       ) : (
         <div className={styles.errorContainer}>
           <p className={styles.errorMessage}>データの読み込みに失敗したか、データが空です。</p>
-          <p className={styles.errorSubMessage}>データを読み込めませんでした。時間をおいて再度お試しください。</p>
+          <p className={styles.errorSubMessage}>
+            データを読み込めませんでした。時間をおいて再度お試しください。
+          </p>
           {process.env.NODE_ENV === "development" && (
-            <p className={styles.errorSubMessage}>public/cpi_data.csv ファイルを確認してください。</p>
+            <p className={styles.errorSubMessage}>
+              public/cpi_data.csv ファイルを確認してください。
+            </p>
           )}
         </div>
       )}

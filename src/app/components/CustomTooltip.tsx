@@ -12,12 +12,11 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
     const padding = isMobile ? "12px 16px" : "12px";
 
     const displayPayload = isMobile
-      ? [...payload]
-          .sort((a, b) => {
-            const valA = typeof a.value === "number" ? a.value : 0;
-            const valB = typeof b.value === "number" ? b.value : 0;
-            return valB - valA;
-          })
+      ? [...payload].sort((a, b) => {
+          const valA = typeof a.value === "number" ? a.value : 0;
+          const valB = typeof b.value === "number" ? b.value : 0;
+          return valB - valA;
+        })
       : payload;
 
     const topPayload = isMobile ? displayPayload.slice(0, 5) : displayPayload;

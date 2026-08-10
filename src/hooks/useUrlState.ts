@@ -38,7 +38,7 @@ export function useUrlState(defaultStart: number, defaultEnd: number) {
       const url = query ? `?${query}` : window.location.pathname;
       router.replace(url, { scroll: false });
     },
-    [searchParams, router, defaultStart, defaultEnd]
+    [searchParams, router, defaultStart, defaultEnd],
   );
 
   return {

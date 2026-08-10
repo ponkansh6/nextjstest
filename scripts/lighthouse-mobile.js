@@ -30,10 +30,7 @@ async function runLighthouse(url) {
     fs.mkdirSync(reportDir, { recursive: true });
   }
 
-  const reportPath = path.join(
-    reportDir,
-    `mobile-${timestamp}-${Date.now()}.json`,
-  );
+  const reportPath = path.join(reportDir, `mobile-${timestamp}-${Date.now()}.json`);
 
   console.log(`🌐 Lighthouse 計測開始: ${url}`);
   console.log(`📱 デバイス: Pixel 5（モバイルプリセット）`);
@@ -61,12 +58,8 @@ async function runLighthouse(url) {
     const scores = runnerResult.lhr.categories;
     console.log("\n✅ 計測完了");
     console.log(`\n📊 スコア:`);
-    console.log(
-      `  Performance: ${scores.performance.score * 100 || "N/A"} (配点: 0-100)`,
-    );
-    console.log(
-      `  Accessibility: ${scores.accessibility.score * 100 || "N/A"} (配点: 0-100)`,
-    );
+    console.log(`  Performance: ${scores.performance.score * 100 || "N/A"} (配点: 0-100)`);
+    console.log(`  Accessibility: ${scores.accessibility.score * 100 || "N/A"} (配点: 0-100)`);
 
     if (runnerResult.lhr.audits["largest-contentful-paint"]) {
       const lcp = runnerResult.lhr.audits["largest-contentful-paint"].displayValue;

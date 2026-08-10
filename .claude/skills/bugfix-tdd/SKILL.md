@@ -14,14 +14,14 @@ version: 0.1.0
 
 ## 前提コマンド(このプロジェクト固有)
 
-| 目的 | コマンド |
-|---|---|
-| ユニット/コンポーネントテスト(vitest、数秒で完了) | `pnpm run test:all` |
-| E2E用ビルド(**E2E実行前に必須**) | `pnpm run build` |
-| E2Eテスト全体(chromium / chromium-dark / mobile-pixel) | `pnpm run test:e2e` |
-| E2Eの一部だけ高速に再実行 | `npx playwright test --project=chromium -g "テスト名の一部"` |
-| 残存 next-server プロセスの確認 | `ps aux \| grep next-server` |
-| 残存プロセスの停止 | `kill <PID>`(または `pkill -f "next start"`) |
+| 目的                                                   | コマンド                                                     |
+| ------------------------------------------------------ | ------------------------------------------------------------ |
+| ユニット/コンポーネントテスト(vitest、数秒で完了)      | `pnpm run test:all`                                          |
+| E2E用ビルド(**E2E実行前に必須**)                       | `pnpm run build`                                             |
+| E2Eテスト全体(chromium / chromium-dark / mobile-pixel) | `pnpm run test:e2e`                                          |
+| E2Eの一部だけ高速に再実行                              | `npx playwright test --project=chromium -g "テスト名の一部"` |
+| 残存 next-server プロセスの確認                        | `ps aux \| grep next-server`                                 |
+| 残存プロセスの停止                                     | `kill <PID>`(または `pkill -f "next start"`)                 |
 
 `playwright.config.ts` の `webServer.reuseExistingServer` は `false` 固定である。これは、ポート3000に古い `next-server` が残っていると、ビルドID/アセット不整合で無関係なテストまで大量に落ちる事故が実際に起きたための設定である。したがって E2E を実行する前に必ず次の2点を満たす:
 
@@ -33,6 +33,7 @@ version: 0.1.0
 **確認内容**: ユーザー報告を再現条件(操作手順・期待結果・実際の結果)に分解する。関連するコンポーネント/関数を `grep` や `Read` で特定し、疑わしい実装箇所に当たりをつける。
 
 **コマンド例**:
+
 ```bash
 grep -rn "<関連キーワード>" src/ server/
 ```
@@ -45,13 +46,14 @@ grep -rn "<関連キーワード>" src/ server/
 
 以下の薄いテストのパターンに該当しないか確認する:
 
-| パターン | 症状 |
-|---|---|
-| (a) コールバックだけ検証 | コンポーネントテストが `onToggle` 等のモック呼び出しだけを確認し、呼び出し先の実データ変化を見ていない |
-| (b) 純粋関数だけ検証 | `computeChartData` 等の単体テストは関数自体の正しさしか証明せず、本番コードがその関数を実際に呼んでいる保証がない |
-| (c) クラッシュしないことだけ確認する薄い E2E | 「エラーが出ない」ことしか assert していない smoke test |
+| パターン                                     | 症状                                                                                                              |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| (a) コールバックだけ検証                     | コンポーネントテストが `onToggle` 等のモック呼び出しだけを確認し、呼び出し先の実データ変化を見ていない            |
+| (b) 純粋関数だけ検証                         | `computeChartData` 等の単体テストは関数自体の正しさしか証明せず、本番コードがその関数を実際に呼んでいる保証がない |
+| (c) クラッシュしないことだけ確認する薄い E2E | 「エラーが出ない」ことしか assert していない smoke test                                                           |
 
 **コマンド例**:
+
 ```bash
 grep -rln "<関連コンポーネント名>" tests/
 ```
@@ -65,6 +67,7 @@ grep -rln "<関連コンポーネント名>" tests/
 assert 対象は「コールバックが呼ばれたか」ではなく「実際に見える結果(DOM上の要素数、表示テキスト、計算結果の値など)が変化したか」にする。
 
 **コマンド例(E2Eテンプレートとして `tests/e2e/spending-filter.e2e.spec.ts` を参照)**:
+
 ```bash
 sed -n '1,40p' tests/e2e/spending-filter.e2e.spec.ts
 ```
@@ -82,6 +85,7 @@ sed -n '1,40p' tests/e2e/spending-filter.e2e.spec.ts
 **確認内容**: ステップ4で特定した見落としパターン(a/b/c)が、同じコンポーネント/モジュールの他の機能にも当てはまらないか横展開して確認する。例えば「Q1〜Q4トグルのテストが薄かった」なら、「費目トグルのテストも同じパターンで薄くないか」を確認する。
 
 **コマンド例**:
+
 ```bash
 grep -n "onToggle\|onToggleQuarter" tests/components/*.test.tsx
 ```
@@ -99,6 +103,7 @@ grep -n "onToggle\|onToggleQuarter" tests/components/*.test.tsx
 **確認内容**: ステップ3・6で作成/強化したテストを実際に実行し、FAIL の出力を目視で確認する。**コードを読んだだけの推測で「これは失敗するはずだ」と済ませることは禁止**。ユニットテストで再現するものは `pnpm run test:all`、E2Eでしか再現しないものは以下の手順で実行する。
 
 **コマンド例(E2E)**:
+
 ```bash
 ps aux | grep next-server   # 残存プロセスがあれば kill
 pnpm run build               # 変更を確実に .next に反映
@@ -106,6 +111,7 @@ npx playwright test --project=chromium -g "<新規テスト名の一部>"
 ```
 
 **コマンド例(ユニット/コンポーネント)**:
+
 ```bash
 pnpm run test:all
 ```
@@ -123,6 +129,7 @@ pnpm run test:all
 **確認内容**: ステップ7と**同一のテスト実行コマンド**を再実行し、PASS(緑)を確認する。同一コマンドで再実行することで、赤→緑が同じテストに対する真のBefore/Afterであることを保証する。E2Eの場合はステップ8の変更を反映させるため、再度 `pnpm run build` してから実行する。
 
 **コマンド例**:
+
 ```bash
 ps aux | grep next-server   # 残存プロセスがあれば kill
 pnpm run build
@@ -130,6 +137,7 @@ npx playwright test --project=chromium -g "<ステップ7と同じテスト名>"
 ```
 
 緑を確認したら、必要に応じて広い範囲の回帰も確認する:
+
 ```bash
 pnpm run test:all
 pnpm run test:e2e

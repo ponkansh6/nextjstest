@@ -30,11 +30,7 @@ export const ResidualAreaChart: React.FC<ResidualAreaChartProps> = ({
   isMobile,
   CustomTooltip,
 }) => (
-  <div
-    id={sectionId}
-    className={styles.chartSection}
-    style={{ scrollMarginTop: "5rem" }}
-  >
+  <div id={sectionId} className={styles.chartSection} style={{ scrollMarginTop: "5rem" }}>
     <h2 className={styles.chartTitle}>
       給与と物価の差(実質賃金相当)
       <ChartInfoContentRenderer
@@ -42,7 +38,11 @@ export const ResidualAreaChart: React.FC<ResidualAreaChartProps> = ({
         ariaLabel="給与と物価の差のデータソースを表示"
       />
     </h2>
-    <div className={styles.chartWrapper} role="img" aria-label="給与と物価の差（実質賃金相当）の推移グラフ">
+    <div
+      className={styles.chartWrapper}
+      role="img"
+      aria-label="給与と物価の差（実質賃金相当）の推移グラフ"
+    >
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.gridStroke} />
@@ -93,7 +93,12 @@ export const ResidualAreaChart: React.FC<ResidualAreaChartProps> = ({
         />
       </div>
       <table>
-        <thead><tr><th>年月</th><th>残差</th></tr></thead>
+        <thead>
+          <tr>
+            <th>年月</th>
+            <th>残差</th>
+          </tr>
+        </thead>
         <tbody>
           {data.slice(-12).map((d) => (
             <tr key={d.年月}>

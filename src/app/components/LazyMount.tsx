@@ -18,7 +18,13 @@ const getForceMount = () =>
 /** サーバーでは常に false。useSyncExternalStore 経由なので hydration 不一致にならない。 */
 const getServerForceMount = () => false;
 
-export function LazyMount({ children, placeholderHeight = 500 }: { children: React.ReactNode; placeholderHeight?: number }) {
+export function LazyMount({
+  children,
+  placeholderHeight = 500,
+}: {
+  children: React.ReactNode;
+  placeholderHeight?: number;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const [intersected, setIntersected] = useState(false);
   const forceMount = useSyncExternalStore(neverChanges, getForceMount, getServerForceMount);
