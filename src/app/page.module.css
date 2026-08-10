@@ -44,12 +44,16 @@
 }
 
 .title {
-  font-size: clamp(1.5rem, 1.2rem + 3.5vw, 4.5rem);
+  /* モバイルで大きすぎた見出しを縮小(375pxで約32px→約26px)。
+     デスクトップ側(~1280px超)は旧clampとほぼ同じ描画結果になるよう係数を調整。 */
+  font-size: clamp(1.5rem, 0.64rem + 4.2vw, 4.5rem);
   line-height: 1.1;
   font-weight: 800;
   color: var(--card-text);
   letter-spacing: -0.02em;
   margin-bottom: 1rem;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .description {
