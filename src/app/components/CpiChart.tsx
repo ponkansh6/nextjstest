@@ -308,11 +308,54 @@ export default function CpiChart({
 
   const handleSelectSection = (id: string) => {
     setActiveId(id);
-    const el = document.getElementById(id);
-    if (el) {
-      isProgrammaticScrollRef.current = true;
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+    // LazyMount配下のセクションはまだDOMに存在しない(IntersectionObserverで
+    // 交差するまでプレースホルダーのみ)場合があり、その場合は data-lazy-section
+    // を持つプレースホルダーへスクロールする。スクロールで近づくにつれて
+    // IntersectionObserverが発火し、実コンテンツに差し替わる。
+    const getTarget = () =>
+      document.getElementById(id) ??
+      document.querySelector<HTMLElement>(`[data-lazy-section="${id}"]`);
+    const target = getTarget();
+    if (!target) return;
+
+    isProgrammaticScrollRef.current = true;
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    // 目的セクションより手前に未マウントの LazyMount セクションが挟まっている場合、
+    // スクロールで近づくにつれてそれらが順に実コンテンツへ差し替わり、高さが変化する。
+    // この高さ変化は scrollIntoView 呼び出し後に起きるため、単発の呼び出しだけでは
+    // (特に遠く離れたタブへ直接ジャンプする場合)目的位置からずれてしまう。目的要素の
+    // 位置が一定時間(約500ms)連続して安定するまで、現在位置を追跡して補正スクロール
+    // する(最大約3秒でタイムアウトし、無限ループを防ぐ)。
+    let lastTop = target.getBoundingClientRect().top;
+    let stableFrames = 0;
+    let framesElapsed = 0;
+    const STABLE_FRAMES_THRESHOLD = 30;
+    const MAX_FRAMES = 180;
+    const chase = () => {
+      framesElapsed++;
+      const current = getTarget();
+      if (!current) {
+        requestAnimationFrame(chase);
+        return;
+      }
+      const top = current.getBoundingClientRect().top;
+      if (Math.abs(top - lastTop) > 1) {
+        lastTop = top;
+        stableFrames = 0;
+        if (Math.abs(top) > 2) {
+          current.scrollIntoView({ behavior: "auto", block: "start" });
+        }
+      } else {
+        stableFrames++;
+      }
+      if (stableFrames >= STABLE_FRAMES_THRESHOLD || framesElapsed > MAX_FRAMES) {
+        isProgrammaticScrollRef.current = false;
+        return;
+      }
+      requestAnimationFrame(chase);
+    };
+    requestAnimationFrame(chase);
   };
 
   // CAGR計算関数
@@ -517,7 +560,7 @@ export default function CpiChart({
         calculateCAGR={calculateCAGR}
       />
 
-      <LazyMount>
+      <LazyMount sectionId="section-consumption-nominal">
         <SpendingBarChart
           title="消費支出（名目）"
           sectionId="section-consumption-nominal"
@@ -548,7 +591,7 @@ export default function CpiChart({
         />
       </LazyMount>
 
-      <LazyMount>
+      <LazyMount sectionId="section-consumption-real">
         <SpendingBarChart
           title="消費支出（実質）"
           sectionId="section-consumption-real"
@@ -581,7 +624,7 @@ export default function CpiChart({
         />
       </LazyMount>
 
-      <LazyMount>
+      <LazyMount sectionId="section-earnings">
         <EarningsBreakdownChart
           sectionId="section-earnings"
           data={earningsData}
@@ -593,7 +636,7 @@ export default function CpiChart({
         />
       </LazyMount>
 
-      <LazyMount>
+      <LazyMount sectionId="section-residual">
         <ResidualAreaChart
           sectionId="section-residual"
           data={mergedData}
@@ -603,7 +646,7 @@ export default function CpiChart({
         />
       </LazyMount>
 
-      <LazyMount>
+      <LazyMount sectionId="section-new-graph">
         <NewGraph
           sectionId="section-new-graph"
           data={mergedData}

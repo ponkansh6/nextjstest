@@ -21,9 +21,15 @@ const getServerForceMount = () => false;
 export function LazyMount({
   children,
   placeholderHeight = 500,
+  sectionId,
 }: {
   children: React.ReactNode;
   placeholderHeight?: number;
+  /** タブバー押下時、まだマウントされていないセクションへスクロールするための
+   * フォールバック識別子。中身のセクションIDと同じ値を渡す(idではなくdata属性
+   * にするのは、マウント後に中身のセクション本体が同じidを持つため、id重複を
+   * 避けるため)。 */
+  sectionId?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [intersected, setIntersected] = useState(false);
@@ -49,7 +55,14 @@ export function LazyMount({
   const visible = forceMount || intersected;
 
   return (
-    <div ref={ref} style={{ minHeight: visible ? undefined : placeholderHeight }}>
+    <div
+      ref={ref}
+      data-lazy-section={sectionId}
+      style={{
+        minHeight: visible ? undefined : placeholderHeight,
+        scrollMarginTop: "5rem",
+      }}
+    >
       {visible ? children : null}
     </div>
   );
