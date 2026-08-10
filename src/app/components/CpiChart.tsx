@@ -135,15 +135,25 @@ export default function CpiChart({
     [totalEarningData, startYear, endYear],
   );
 
+  // 四半期の表示/非表示を管理するステート（消費支出グラフの Q1〜Q4 トグル用）
+  const { hiddenQuarters, toggleQuarter } = useCpiChartData();
+
   // 四半期データのフィルタリング（消費支出グラフ用）
+  // 年範囲だけでなく、Q1〜Q4 トグルで非表示にされた四半期の行も除外する
   const filteredQuarterlyNominalData = useMemo(
-    () => filterDataByYear(quarterlyNominalData, startYear, endYear),
-    [quarterlyNominalData, startYear, endYear],
+    () =>
+      filterDataByYear(quarterlyNominalData, startYear, endYear).filter(
+        (row) => !hiddenQuarters.includes(row.quarter),
+      ),
+    [quarterlyNominalData, startYear, endYear, hiddenQuarters],
   );
 
   const filteredQuarterlyRealData = useMemo(
-    () => filterDataByYear(quarterlyRealData, startYear, endYear),
-    [quarterlyRealData, startYear, endYear],
+    () =>
+      filterDataByYear(quarterlyRealData, startYear, endYear).filter(
+        (row) => !hiddenQuarters.includes(row.quarter),
+      ),
+    [quarterlyRealData, startYear, endYear, hiddenQuarters],
   );
 
   // データマッピングの統合: CPIと賃金データを年月で結合
@@ -201,9 +211,6 @@ export default function CpiChart({
       setCagrResult(null);
     }
   }
-
-  // Filter quarterly data by hiddenQuarters
-  const { hiddenQuarters, toggleQuarter } = useCpiChartData();
 
   const handleQuarterLegendClick = (quarter: number) => {
     toggleQuarter(quarter);
