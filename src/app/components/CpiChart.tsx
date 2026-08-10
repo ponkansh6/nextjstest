@@ -264,7 +264,7 @@ export default function CpiChart({
       { id: "section-consumption-real", label: "消費(実質)" },
       { id: "section-earnings", label: "給与" },
       { id: "section-residual", label: "残差" },
-      { id: "section-new-graph", label: "移動平均" },
+      { id: "section-new-graph", label: "3種比較" },
     ],
     [],
   );
