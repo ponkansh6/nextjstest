@@ -29,36 +29,50 @@ if echo "$PUSH_FILES" | grep -qE "^src/"; then
   fi
 fi
 
-# --- Full unit/component test suite ---
+# --- Full unit/component test suite + E2E build (parallel) ---
 # パスパターンによる条件実行はやめ、push時は無条件で全テストを実行する。
 # 理由: vitest related（pre-commit）はimportグラフに乗らないファイル（例: src/app/page.tsx）を
 # 変更しても「関連テスト0件」で無言パスする。push時の条件付きtest:uiも、パスパターンに
 # 一致しない変更（page.tsx単体やserver/**単体など）を素通りさせていた。
-echo "Running full unit/component test suite..."
-pnpm run test:all
+#
+# test:all と build は互いに依存しないため並列実行して待ち合わせる（逐次実行より高速）。
+# build を明示的に実行するのは、push するコミットの内容を確実にテストするため。
+# .next が無い/古いまま test:e2e だけ実行すると、次のいずれかの事故になる:
+#   - .next が無ければ next start が失敗する
+#   - .next が古ければ古いビルドを黙って検証してしまう（push するコードを見ていない）
+echo "Running unit/component tests and build in parallel..."
+TEST_LOG=$(mktemp)
+BUILD_LOG=$(mktemp)
+
+pnpm run test:all >"$TEST_LOG" 2>&1 &
+TEST_PID=$!
+pnpm run build >"$BUILD_LOG" 2>&1 &
+BUILD_PID=$!
+
+wait $TEST_PID
 TEST_EXIT_CODE=$?
+wait $BUILD_PID
+BUILD_EXIT_CODE=$?
+
+echo ""
+echo "--- test:all output ---"
+cat "$TEST_LOG"
+echo ""
+echo "--- build output ---"
+cat "$BUILD_LOG"
+rm -f "$TEST_LOG" "$BUILD_LOG"
+
 if [ $TEST_EXIT_CODE -ne 0 ]; then
   echo "Unit/component tests failed with code $TEST_EXIT_CODE"
   exit $TEST_EXIT_CODE
 fi
 echo "Unit/component tests passed!"
 
-# --- E2E tests ---
-# 実ビルド・実サーバー・実ブラウザで page.tsx の実行結果を検証。
-# 今回のバグ（page.tsx の quarterlyKeys 欠落）はここで検知される。
-#
-# ここで明示的に build するのは、push するコミットの内容を確実にテストするため。
-# .next が無い/古いまま test:e2e だけ実行すると、次のいずれかの事故になる:
-#   - .next が無ければ next start が失敗する
-#   - .next が古ければ古いビルドを黙って検証してしまう（push するコードを見ていない）
-echo ""
-echo "Building for E2E (pnpm build)..."
-pnpm run build
-BUILD_EXIT_CODE=$?
 if [ $BUILD_EXIT_CODE -ne 0 ]; then
   echo "Build failed with code $BUILD_EXIT_CODE"
   exit $BUILD_EXIT_CODE
 fi
+echo "Build passed!"
 
 echo ""
 echo "Running E2E tests (page.tsx with real build/server/browser)..."

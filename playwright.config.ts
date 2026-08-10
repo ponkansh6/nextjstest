@@ -20,7 +20,9 @@ export default defineConfig({
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: 1,
+  // 各テストは beforeEach でページを新規取得しファイル間で状態を共有しないため、
+  // 複数ワーカーでの並列実行が安全。実測(4コア環境)では 3 で頭打ちだったため 3 に設定。
+  workers: 3,
   reporter: "html",
   timeout: 60 * 1000,
 
