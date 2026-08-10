@@ -6,14 +6,17 @@ import { test } from "./fixtures";
  *
  * ここは「個別の見た目」ではなく、プラン上ルールとして書ける不変条件を検証する:
  *   - タップターゲットは 44x44px 以上（WCAG 2.5.8 AAA / Apple HIG）
+ *     ただし凡例チップ(.legendItem)は、多系列凡例の折り返し行数を減らすため
+ *     意図的にこの基準を下回る(WCAG 2.5.8 AA相当の絶対最小24pxには余裕を残す32px)。
  *   - 375px 幅で横方向にはみ出さない（overflow-x: hidden で隠していないこと）
  *   - LazyMount がビューポート外のチャートを実際に遅延させている
  */
 
 const MIN_TAP_TARGET_PX = 44;
+const MIN_LEGEND_CHIP_TAP_TARGET_PX = 32;
 
 test.describe("モバイル UX ルール", () => {
-  test("表示中のボタンはすべて 44x44px 以上", async ({ page }) => {
+  test("表示中のボタンはすべて基準のタップターゲット以上", async ({ page }) => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
@@ -25,16 +28,20 @@ test.describe("モバイル UX ルール", () => {
       if (!(await button.isVisible())) continue;
       const box = await button.boundingBox();
       if (!box) continue;
-      if (box.width < MIN_TAP_TARGET_PX || box.height < MIN_TAP_TARGET_PX) {
+      const isLegendChip = await button.evaluate((el) => el.className.includes("legendItem"));
+      const minSize = isLegendChip ? MIN_LEGEND_CHIP_TAP_TARGET_PX : MIN_TAP_TARGET_PX;
+      if (box.width < minSize || box.height < minSize) {
         const label =
           (await button.getAttribute("aria-label")) ??
           (await button.textContent())?.trim() ??
           "(no label)";
-        tooSmall.push(`${label}: ${Math.round(box.width)}x${Math.round(box.height)}`);
+        tooSmall.push(
+          `${label}: ${Math.round(box.width)}x${Math.round(box.height)} (基準: ${minSize}px)`,
+        );
       }
     }
 
-    expect(tooSmall, `44x44px 未満のタップターゲット:\n${tooSmall.join("\n")}`).toEqual([]);
+    expect(tooSmall, `基準未満のタップターゲット:\n${tooSmall.join("\n")}`).toEqual([]);
   });
 
   test("375px 幅で横方向にはみ出さない", async ({ page }) => {

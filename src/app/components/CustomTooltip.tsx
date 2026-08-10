@@ -25,7 +25,7 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
 
     const fontSize = isMobile ? "12px" : "14px";
     const labelFontSize = isMobile ? "11px" : "13px";
-    const padding = isMobile ? "12px 16px" : "12px";
+    const padding = isMobile ? "10px 14px" : "12px";
 
     const displayPayload = isMobile
       ? [...payload].sort((a, b) => {
@@ -133,7 +133,7 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
               alignItems: "center",
               gap: "6px",
               fontSize: fontSize,
-              margin: "2px 0",
+              margin: "1px 0",
               color: tooltipText,
             }}
           >
