@@ -547,7 +547,6 @@
   }
 }
 .sectionRange {
-  margin-left: auto;
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
@@ -566,6 +565,7 @@
   background-color: var(--blue-50);
 }
 .themeToggleButton {
+  margin-left: auto;
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;

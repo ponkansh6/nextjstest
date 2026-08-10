@@ -31,6 +31,14 @@ export function SectionTabs({
 
   return (
     <div className={styles.sectionTabs} ref={scrollRef}>
+      <button
+        type="button"
+        className={styles.sectionRange}
+        onClick={onRangeClick}
+        aria-label="表示期間を変更"
+      >
+        {rangeLabel} ▾
+      </button>
       {sections.map((sec) => {
         const isActive = sec.id === activeId;
         return (
@@ -45,14 +53,6 @@ export function SectionTabs({
           </button>
         );
       })}
-      <button
-        type="button"
-        className={styles.sectionRange}
-        onClick={onRangeClick}
-        aria-label="表示期間を変更"
-      >
-        {rangeLabel} ▾
-      </button>
       <ThemeToggle />
     </div>
   );
