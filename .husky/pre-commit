@@ -1,4 +1,3 @@
 pnpm run lint:fast
-pnpm exec oxfmt --write .
 pnpm exec tsgo --noEmit
 pnpm exec lint-staged
