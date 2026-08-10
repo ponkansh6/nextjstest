@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from "react";
 import styles from "./CpiChart.module.css";
+import { ThemeToggle } from "./ThemeToggle";
 
 interface SectionTabsProps {
   sections: { id: string; label: string }[];
@@ -52,6 +53,7 @@ export function SectionTabs({
       >
         {rangeLabel} ▾
       </button>
+      <ThemeToggle />
     </div>
   );
 }

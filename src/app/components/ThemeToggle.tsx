@@ -5,6 +5,27 @@ import styles from "./CpiChart.module.css";
 
 type Theme = "light" | "dark" | "system";
 
+const THEME_ORDER: Theme[] = ["light", "dark", "system"];
+const THEME_ICON: Record<Theme, string> = { light: "☀️", dark: "🌙", system: "💻" };
+const THEME_LABEL: Record<Theme, string> = {
+  light: "ライトモード",
+  dark: "ダークモード",
+  system: "システム設定に従う",
+};
+
+function applyTheme(theme: Theme) {
+  if (theme === "dark") {
+    localStorage.setItem("theme", "dark");
+    document.documentElement.setAttribute("data-theme", "dark");
+  } else if (theme === "light") {
+    localStorage.setItem("theme", "light");
+    document.documentElement.setAttribute("data-theme", "light");
+  } else {
+    localStorage.removeItem("theme");
+    document.documentElement.removeAttribute("data-theme");
+  }
+}
+
 export function ThemeToggle() {
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof window === "undefined") return "system";
@@ -12,71 +33,21 @@ export function ThemeToggle() {
     return saved || "system";
   });
 
-  const changeTheme = (newTheme: Theme) => {
-    setTheme(newTheme);
-    if (newTheme === "dark") {
-      localStorage.setItem("theme", "dark");
-      document.documentElement.setAttribute("data-theme", "dark");
-    } else if (newTheme === "light") {
-      localStorage.setItem("theme", "light");
-      document.documentElement.setAttribute("data-theme", "light");
-    } else {
-      localStorage.removeItem("theme");
-      document.documentElement.removeAttribute("data-theme");
-    }
+  const nextTheme = THEME_ORDER[(THEME_ORDER.indexOf(theme) + 1) % THEME_ORDER.length];
+
+  const handleClick = () => {
+    setTheme(nextTheme);
+    applyTheme(nextTheme);
   };
 
   return (
-    <div
-      className={styles.themeToggleContainer}
-      style={{
-        display: "flex",
-        gap: "0.25rem",
-        background: "var(--card-bg)",
-        border: "1px solid var(--card-border)",
-        borderRadius: "9999px",
-        padding: "0.25rem",
-      }}
+    <button
+      type="button"
+      className={styles.themeToggleButton}
+      onClick={handleClick}
+      aria-label={`テーマ: ${THEME_LABEL[theme]}（タップで${THEME_LABEL[nextTheme]}に切替）`}
     >
-      <button
-        type="button"
-        className={styles.actionButton}
-        style={{
-          borderRadius: "9999px",
-          border: theme === "light" ? "1px solid var(--blue-500)" : "1px solid transparent",
-          background: theme === "light" ? "var(--blue-50)" : "transparent",
-        }}
-        onClick={() => changeTheme("light")}
-        aria-label="ライトモード"
-      >
-        ☀️
-      </button>
-      <button
-        type="button"
-        className={styles.actionButton}
-        style={{
-          borderRadius: "9999px",
-          border: theme === "system" ? "1px solid var(--blue-500)" : "1px solid transparent",
-          background: theme === "system" ? "var(--blue-50)" : "transparent",
-        }}
-        onClick={() => changeTheme("system")}
-        aria-label="システム設定に従う"
-      >
-        💻
-      </button>
-      <button
-        type="button"
-        className={styles.actionButton}
-        style={{
-          borderRadius: "9999px",
-          border: theme === "dark" ? "1px solid var(--blue-500)" : "1px solid transparent",
-          background: theme === "dark" ? "var(--blue-50)" : "transparent",
-        }}
-        onClick={() => changeTheme("dark")}
-        aria-label="ダークモード"
-      >
-        🌙
-      </button>
-    </div>
+      {THEME_ICON[theme]}
+    </button>
   );
 }

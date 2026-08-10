@@ -3,7 +3,6 @@ import { loadCpiData, loadCtiData, loadTotalEarningData } from "../../server/lib
 import { toCpiView, toEarningsView, toQuarterlyView } from "../../server/lib/view-models/dashboard";
 import { computeQuarterlyAggregates } from "../../server/lib/view-models/quarterlyAggregation";
 import CpiChart from "./components/CpiChart";
-import { ThemeToggle } from "./components/ThemeToggle";
 import styles from "./page.module.css";
 import {
   targetKeys,
@@ -79,17 +78,7 @@ export default async function Page() {
   return (
     <div className={`container ${styles.pageWrapper}`}>
       <header className={styles.header}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "0.5rem",
-          }}
-        >
-          <div className={styles.badge}>経済指標ダッシュボード</div>
-          <ThemeToggle />
-        </div>
+        <div className={styles.badge}>経済指標ダッシュボード</div>
         <h1 className={styles.title}>物価・賃金・消費の長期推移</h1>
         <p className={styles.description}>
           2020年基準でスケール統一した主要指標を一覧。各グラフは凡例クリックで系列の表示/非表示を切替可能。

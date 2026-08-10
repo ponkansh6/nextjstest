@@ -510,6 +510,7 @@
   top: 0;
   z-index: 50;
   display: flex;
+  align-items: center;
   gap: 0.5rem;
   overflow-x: auto;
   scroll-snap-type: x proximity;
@@ -563,6 +564,28 @@
 }
 .sectionRange:active {
   background-color: var(--blue-50);
+}
+.themeToggleButton {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 44px;
+  font-size: 1.125rem;
+  color: var(--card-text);
+  background-color: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 9999px;
+  cursor: pointer;
+}
+.themeToggleButton:active {
+  background-color: var(--blue-50);
+}
+@media (hover: hover) and (pointer: fine) {
+  .themeToggleButton:hover {
+    border-color: var(--blue-500);
+  }
 }
 
 .rangeSheetBackdrop {
