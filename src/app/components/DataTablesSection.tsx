@@ -18,7 +18,11 @@ interface DataTablesSectionProps {
 
 export function DataTablesSection({ tables }: DataTablesSectionProps) {
   return (
-    <div id="section-data-tables" className={styles.chartSection} style={{ scrollMarginTop: "5rem" }}>
+    <div
+      id="section-data-tables"
+      className={styles.chartSection}
+      style={{ scrollMarginTop: "5rem" }}
+    >
       <h2 className={styles.chartTitle}>データテーブル</h2>
       {tables.map((t) => (
         <details
@@ -37,7 +41,9 @@ export function DataTablesSection({ tables }: DataTablesSectionProps) {
             <thead>
               <tr>
                 <th>年月</th>
-                {t.keys.map((k, i) => <th key={k}>{t.headers?.[i] ?? k}</th>)}
+                {t.keys.map((k, i) => (
+                  <th key={k}>{t.headers?.[i] ?? k}</th>
+                ))}
               </tr>
             </thead>
             <tbody>
@@ -47,7 +53,9 @@ export function DataTablesSection({ tables }: DataTablesSectionProps) {
                   <tr key={rowLabel || rowIndex}>
                     <td>{rowLabel}</td>
                     {t.keys.map((k) => (
-                      <td key={k}>{typeof d[k] === "number" ? (d[k] as number).toFixed(2) : "-"}</td>
+                      <td key={k}>
+                        {typeof d[k] === "number" ? (d[k] as number).toFixed(2) : "-"}
+                      </td>
                     ))}
                   </tr>
                 );
