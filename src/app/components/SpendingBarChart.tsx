@@ -2,7 +2,6 @@ import React from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { CpiData } from "@/types";
 import styles from "./CpiChart.module.css";
-import { ChartExportButton } from "./ChartExportButton";
 import { getLegendLabel, SUPPORT_SERIES_KEY_NOMINAL } from "../../lib/chartConstants";
 import type { CustomTooltipProps } from "@/types/chart";
 import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
@@ -187,37 +186,9 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
           </BarChart>
         </ResponsiveContainer>
       </div>
-      <details className={styles.chartDataTable}>
-        <summary>データテーブルを表示</summary>
-        <div className={styles.chartDataTableActions}>
-          <ChartExportButton
-            title={title}
-            data={data as unknown as Record<string, unknown>[]}
-            keys={keys}
-            headers={keys.map(getLegendLabel)}
-          />
-        </div>
-        <table>
-          <thead>
-            <tr>
-              <th>年月</th>
-              {keys.map((k) => (
-                <th key={k}>{getLegendLabel(k)}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {data.slice(-12).map((d) => (
-              <tr key={d.年月 || d.label}>
-                <td>{d.年月 || d.label}</td>
-                {keys.map((k) => (
-                  <td key={k}>{typeof d[k] === "number" ? (d[k] as number).toFixed(2) : "-"}</td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </details>
+      <p className={styles.chartNote}>
+        <a href={`#data-table-${sectionId}`}>データテーブルを表示 ▾</a>
+      </p>
     </div>
   );
 };

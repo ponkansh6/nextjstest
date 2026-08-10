@@ -9,11 +9,11 @@ import {
   YAxis,
 } from "recharts";
 import styles from "./CpiChart.module.css";
-import { ChartExportButton } from "./ChartExportButton";
 import type { CpiData } from "@/types";
 import type { CustomTooltipProps } from "@/types/chart";
 import { YearReferenceLines } from "./charts/YearReferenceLines";
 import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
+import { LINE_CONFIGS } from "../../lib/chartConstants";
 
 interface NewGraphProps {
   sectionId?: string;
@@ -25,18 +25,6 @@ interface NewGraphProps {
   chartKey?: string;
   CustomTooltip: React.FC<CustomTooltipProps>;
 }
-
-interface LineConfig {
-  key: string;
-  color: string;
-  displayName: string;
-}
-
-const LINE_CONFIGS: LineConfig[] = [
-  { key: "総合(12MA)", color: "#e11d48", displayName: "給与(総合)" },
-  { key: "消費支出（参考）", color: "#0891b2", displayName: "消費支出(総合)" },
-  { key: "CPI総合(12MA)", color: "#65a30d", displayName: "物価指数(総合)" },
-];
 
 export const NewGraph: React.FC<NewGraphProps> = ({
   sectionId,
@@ -124,38 +112,8 @@ export const NewGraph: React.FC<NewGraphProps> = ({
         </LineChart>
       </ResponsiveContainer>
     </div>
-    <details className={styles.chartDataTable}>
-      <summary>データテーブルを表示</summary>
-      <div className={styles.chartDataTableActions}>
-        <ChartExportButton
-          title={"移動平均比較"}
-          data={data as unknown as Record<string, unknown>[]}
-          keys={LINE_CONFIGS.map((c) => c.key)}
-          headers={LINE_CONFIGS.map((c) => c.displayName)}
-        />
-      </div>
-      <table>
-        <thead>
-          <tr>
-            <th>年月</th>
-            {LINE_CONFIGS.map((c) => (
-              <th key={c.key}>{c.displayName}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {data.slice(-12).map((d) => (
-            <tr key={d.年月}>
-              <td>{d.年月}</td>
-              {LINE_CONFIGS.map((c) => (
-                <td key={c.key}>
-                  {typeof d[c.key] === "number" ? (d[c.key] as number).toFixed(2) : "-"}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </details>
+    <p className={styles.chartNote}>
+      <a href={`#data-table-${sectionId}`}>データテーブルを表示 ▾</a>
+    </p>
   </div>
 );

@@ -9,7 +9,6 @@ import {
   YAxis,
 } from "recharts";
 import styles from "./CpiChart.module.css";
-import { ChartExportButton } from "./ChartExportButton";
 import type { CpiData } from "@/types";
 import type { CustomTooltipProps } from "@/types/chart";
 import { YearReferenceLines } from "./charts/YearReferenceLines";
@@ -82,32 +81,8 @@ export const ResidualAreaChart: React.FC<ResidualAreaChartProps> = ({
         </AreaChart>
       </ResponsiveContainer>
     </div>
-    <details className={styles.chartDataTable}>
-      <summary>データテーブルを表示</summary>
-      <div className={styles.chartDataTableActions}>
-        <ChartExportButton
-          title={"給与と物価の差"}
-          data={data as unknown as Record<string, unknown>[]}
-          keys={["残差"]}
-          headers={["残差"]}
-        />
-      </div>
-      <table>
-        <thead>
-          <tr>
-            <th>年月</th>
-            <th>残差</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.slice(-12).map((d) => (
-            <tr key={d.年月}>
-              <td>{d.年月}</td>
-              <td>{typeof d["残差"] === "number" ? (d["残差"] as number).toFixed(2) : "-"}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </details>
+    <p className={styles.chartNote}>
+      <a href={`#data-table-${sectionId}`}>データテーブルを表示 ▾</a>
+    </p>
   </div>
 );

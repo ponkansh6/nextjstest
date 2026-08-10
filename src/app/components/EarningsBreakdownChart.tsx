@@ -11,10 +11,10 @@ import {
 } from "recharts";
 import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
 import styles from "./CpiChart.module.css";
-import { ChartExportButton } from "./ChartExportButton";
 import type { CpiData } from "@/types";
 import type { CustomTooltipProps } from "@/types/chart";
 import { YearReferenceLines } from "./charts/YearReferenceLines";
+import { EARNINGS_TABLE_CONFIGS } from "../../lib/chartConstants";
 
 interface EarningsBreakdownChartProps {
   sectionId?: string;
@@ -35,28 +35,7 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
   isMobile,
   CustomTooltip,
 }) => {
-  const configs: {
-    key: string;
-    color: string;
-    type: "area" | "line";
-    displayName?: string;
-  }[] = [
-    { color: "#1e40af", key: "所定内給与", type: "area" },
-    { color: "#3b82f6", key: "所定外給与", type: "area" },
-    { color: "#60a5fa", key: "特別給与", type: "area" },
-    { color: "#16a34a", key: "時間当たり給与", type: "line" },
-    {
-      color: "#a3e635",
-      key: "15歳以上国民当たり給与",
-      type: "line",
-    },
-    {
-      color: "#eab308",
-      displayName: "物価指数総合(参考)",
-      key: "CPI総合(参考)",
-      type: "line",
-    },
-  ];
+  const configs = EARNINGS_TABLE_CONFIGS;
 
   const yAxisMax = React.useMemo(() => {
     const keys = [
@@ -162,39 +141,9 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
           </AreaChart>
         </ResponsiveContainer>
       </div>
-      <details className={styles.chartDataTable}>
-        <summary>データテーブルを表示</summary>
-        <div className={styles.chartDataTableActions}>
-          <ChartExportButton
-            title={"給与内訳"}
-            data={data as unknown as Record<string, unknown>[]}
-            keys={configs.map((c) => c.key)}
-            headers={configs.map((c) => c.displayName || c.key)}
-          />
-        </div>
-        <table>
-          <thead>
-            <tr>
-              <th>年月</th>
-              {configs.map((c) => (
-                <th key={c.key}>{c.displayName || c.key}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {data.slice(-12).map((d) => (
-              <tr key={d.年月}>
-                <td>{d.年月}</td>
-                {configs.map((c) => (
-                  <td key={c.key}>
-                    {typeof d[c.key] === "number" ? (d[c.key] as number).toFixed(2) : "-"}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </details>
+      <p className={styles.chartNote}>
+        <a href={`#data-table-${sectionId}`}>データテーブルを表示 ▾</a>
+      </p>
     </div>
   );
 };

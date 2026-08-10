@@ -123,3 +123,43 @@ export const keyPairs = CONSUMPTION_NOMINAL_KEYS.map((key, index) => ({
   real: CONSUMPTION_REAL_KEYS[index],
   label: getDisplayLabel(key),
 }));
+
+// EarningsBreakdownChart の系列設定(データテーブル集約セクションからも参照するため
+// chart component とは独立にここへ定義する。next/dynamic で遅延ロードされる
+// EarningsBreakdownChart.tsx から直接importすると、その巨大なrecharts依存モジュールが
+// CpiChart.tsx の静的importに巻き込まれコード分割が無効化されるため避ける)
+export const EARNINGS_TABLE_CONFIGS: {
+  key: string;
+  color: string;
+  type: "area" | "line";
+  displayName?: string;
+}[] = [
+  { color: "#1e40af", key: "所定内給与", type: "area" },
+  { color: "#3b82f6", key: "所定外給与", type: "area" },
+  { color: "#60a5fa", key: "特別給与", type: "area" },
+  { color: "#16a34a", key: "時間当たり給与", type: "line" },
+  {
+    color: "#a3e635",
+    key: "15歳以上国民当たり給与",
+    type: "line",
+  },
+  {
+    color: "#eab308",
+    displayName: "物価指数総合(参考)",
+    key: "CPI総合(参考)",
+    type: "line",
+  },
+];
+
+// NewGraph の系列設定(理由はEARNINGS_TABLE_CONFIGSと同様)
+export interface LineConfig {
+  key: string;
+  color: string;
+  displayName: string;
+}
+
+export const LINE_CONFIGS: LineConfig[] = [
+  { key: "総合(12MA)", color: "#e11d48", displayName: "給与(総合)" },
+  { key: "消費支出（参考）", color: "#0891b2", displayName: "消費支出(総合)" },
+  { key: "CPI総合(12MA)", color: "#65a30d", displayName: "物価指数(総合)" },
+];

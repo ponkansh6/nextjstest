@@ -58,7 +58,11 @@ import {
   SUPPORT_SERIES_KEY_REAL,
   targetKeys,
   MIN_DISPLAY_YEAR,
+  getLegendLabel,
+  EARNINGS_TABLE_CONFIGS,
+  LINE_CONFIGS,
 } from "../../lib/chartConstants";
+import { DataTablesSection, type DataTableSpec } from "./DataTablesSection";
 
 const getColorForNominalKey = (key: string): string => {
   const targetStackedKey = nominalColorMap[key];
@@ -348,6 +352,58 @@ export default function CpiChart({
     setCagrResult(cagr);
   };
 
+  const dataTables: DataTableSpec[] = [
+    {
+      chartSectionId: "section-cpi-major",
+      title: "消費者物価指数（主要指数）",
+      data: filteredData as unknown as Record<string, unknown>[],
+      keys: targetKeys,
+      headers: targetKeys.map(getLegendLabel),
+    },
+    {
+      chartSectionId: "section-stacked",
+      title: "物価指数 費目別寄与度",
+      data: filteredData as unknown as Record<string, unknown>[],
+      keys: stackedKeys,
+      headers: stackedKeys.map(getLegendLabel),
+    },
+    {
+      chartSectionId: "section-consumption-nominal",
+      title: "消費支出（名目）",
+      data: filteredQuarterlyNominalData as unknown as Record<string, unknown>[],
+      keys: nominalKeysWithSupport,
+      headers: nominalKeysWithSupport.map(getLegendLabel),
+    },
+    {
+      chartSectionId: "section-consumption-real",
+      title: "消費支出（実質）",
+      data: filteredQuarterlyRealData as unknown as Record<string, unknown>[],
+      keys: realKeysWithSupport,
+      headers: realKeysWithSupport.map(getLegendLabel),
+    },
+    {
+      chartSectionId: "section-earnings",
+      title: "給与指標と関連指標",
+      data: earningsData as unknown as Record<string, unknown>[],
+      keys: EARNINGS_TABLE_CONFIGS.map((c) => c.key),
+      headers: EARNINGS_TABLE_CONFIGS.map((c) => c.displayName ?? c.key),
+    },
+    {
+      chartSectionId: "section-residual",
+      title: "給与と物価の差(実質賃金相当)",
+      data: mergedData as unknown as Record<string, unknown>[],
+      keys: ["残差"],
+      headers: ["残差"],
+    },
+    {
+      chartSectionId: "section-new-graph",
+      title: "給与・消費・物価の推移比較(12MA)",
+      data: mergedData as unknown as Record<string, unknown>[],
+      keys: LINE_CONFIGS.map((c) => c.key),
+      headers: LINE_CONFIGS.map((c) => c.displayName),
+    },
+  ];
+
   return (
     <div className={styles.chartContainer}>
       <SectionTabs
@@ -415,6 +471,9 @@ export default function CpiChart({
           isMobile={isMobile}
           CustomTooltip={CustomTooltip}
         />
+        <p className={styles.chartNote}>
+          <a href="#data-table-section-cpi-major">データテーブルを表示 ▾</a>
+        </p>
       </div>
 
       {/* CPI 費目別積み上げ */}
@@ -548,6 +607,8 @@ export default function CpiChart({
           CustomTooltip={CustomTooltip}
         />
       </LazyMount>
+
+      <DataTablesSection tables={dataTables} />
     </div>
   );
 }
