@@ -33,6 +33,7 @@ interface SpendingBarChartProps {
   onToggleQuarter: (q: number) => void;
   onReset: () => void;
   hideLegend?: boolean;
+  linkedSectionId?: string;
   testId?: string;
 }
 
@@ -53,6 +54,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
     onToggleQuarter,
     onReset,
     hideLegend = false,
+    linkedSectionId,
     testId,
   } = props;
 
@@ -74,7 +76,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
         <p className={styles.chartNote}>
           凡例は「
           <a
-            href="#spending-chart-nominal"
+            href={`#${linkedSectionId}`}
             style={{ color: "var(--blue-500)", textDecoration: "underline" }}
           >
             消費支出（名目）

@@ -509,6 +509,7 @@ export default function CpiChart({
             },
           )}
           hideLegend
+          linkedSectionId="section-consumption-nominal"
           testId="spending-chart-real"
         />
       </LazyMount>

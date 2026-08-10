@@ -109,6 +109,32 @@ test.describe("page.tsx E2E: real consumption chart with actual browser", () => 
     });
   });
 
+  test("legend note link should point to an anchor that actually exists in the DOM", async ({
+    page,
+  }) => {
+    /**
+     * 「凡例は『消費支出（名目）』と連動しています」のリンク先が実在する id を
+     * 指しているかを検証する。下線は付いているがリンク先が存在しないと、
+     * クリックしても何も起きない「見た目だけのリンク」になる。
+     */
+    await page.goto("/");
+
+    const noteLink = page.locator("#section-consumption-real a");
+    await expect(noteLink, "Note link in real consumption chart should be visible").toBeVisible({
+      timeout: 15000,
+    });
+
+    const href = await noteLink.getAttribute("href");
+    expect(href, "Note link should have a fragment href").toMatch(/^#/);
+
+    const targetId = href!.slice(1);
+    const target = page.locator(`#${targetId}`);
+    await expect(
+      target,
+      `Note link's target "#${targetId}" should exist as an element id in the DOM`,
+    ).toHaveCount(1);
+  });
+
   test("should handle legend toggle and update chart visibility", async ({ page }) => {
     /**
      * UI インタラクション sanity: 実ブラウザだからこそテスト可能な、
