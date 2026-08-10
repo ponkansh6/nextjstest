@@ -61,10 +61,6 @@
   color: var(--gray-500);
   max-width: 42rem;
   line-height: 1.6;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
 }
 
 .errorContainer {
@@ -102,8 +98,5 @@
 
   .description {
     font-size: 1.688rem;
-    display: block;
-    -webkit-line-clamp: none;
-    overflow: visible;
   }
 }
