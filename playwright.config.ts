@@ -37,7 +37,15 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"] },
     },
     {
+      // ダークモード固有のアサーションは accessibility.e2e.spec.ts の
+      // 「アクセシビリティ - ダークモード」ブロックのみが持つ(現在は
+      // 仕様精査待ちで describe.skip 中、コミット 808fa99 参照)。それ以外の
+      // 全ファイルは colorScheme に依存しないロジック検証であり、chromium
+      // プロジェクトと完全に重複する。testMatch を絞らずに全ファイルを
+      // 実行すると、chromium と同じ35件を毎回そのまま重複実行することになり、
+      // pre-push の所要時間を大きく押し上げていた(実測でE2E全体の約1/3)。
       name: "chromium-dark",
+      testMatch: /accessibility\.e2e\.spec\.ts/,
       use: { ...devices["Desktop Chrome"], colorScheme: "dark" },
     },
     {
