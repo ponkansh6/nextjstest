@@ -52,6 +52,9 @@ test.describe("描画範囲変更 E2E", () => {
     // 実際に棒が描画されるまで明示的に待つ
     await expect(bars(page, NOMINAL).first()).toBeVisible({ timeout: 10000 });
     await expect(bars(page, REAL).first()).toBeVisible({ timeout: 10000 });
+    // 開始年/終了年セレクトは常時表示ではなくボトムシート内にのみ存在するため、
+    // 各テストの前にシートを開いておく(以後クリックしない限り開いたまま)
+    await page.getByRole("button", { name: "表示期間を変更" }).click();
   });
 
   test("【サニティ】初期状態でグラフが表示される", async ({ page }) => {

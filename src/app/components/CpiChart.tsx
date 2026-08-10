@@ -414,14 +414,6 @@ export default function CpiChart({
         onRangeClick={() => setRangeSheetOpen(true)}
       />
 
-      <ChartFilters
-        allYears={allYears.filter((y) => y >= MIN_DISPLAY_YEAR)}
-        startYear={startYear}
-        endYear={endYear}
-        setStartYear={setStartYear}
-        setEndYear={setEndYear}
-      />
-
       {rangeSheetOpen && (
         <>
           <div className={styles.rangeSheetBackdrop} onClick={() => setRangeSheetOpen(false)} />

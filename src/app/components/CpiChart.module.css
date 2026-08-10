@@ -538,6 +538,12 @@
   }
 }
 .sectionRange {
+  /* タブ行(.sectionTabs)は横スクロール可能なため、他のタブと同様に並べただけでは
+     右方向にスクロールした際に一緒に流れて見えなくなる。sticky+left:0 で左端に
+     固定し、常にアクセスできるようにする(スプレッドシートの固定列と同じ仕組み)。 */
+  position: sticky;
+  left: 0;
+  z-index: 2;
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
