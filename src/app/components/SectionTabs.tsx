@@ -48,7 +48,7 @@ export function SectionTabs({
   };
 
   return (
-    <div className={styles.sectionTabs} ref={scrollRef}>
+    <div className={styles.sectionTabs}>
       <button
         type="button"
         className={styles.sectionRange}
@@ -57,21 +57,23 @@ export function SectionTabs({
       >
         {rangeLabel} ▾
       </button>
-      {sections.map((sec) => {
-        const isActive = sec.id === activeId;
-        return (
-          <button
-            key={sec.id}
-            type="button"
-            className={styles.sectionTab}
-            aria-current={isActive ? "true" : "false"}
-            onClick={(e) => handleTabClick(sec.id, e)}
-          >
-            {sec.label}
-          </button>
-        );
-      })}
-      <ThemeToggle />
+      <div className={styles.sectionTabsScroll} ref={scrollRef}>
+        {sections.map((sec) => {
+          const isActive = sec.id === activeId;
+          return (
+            <button
+              key={sec.id}
+              type="button"
+              className={styles.sectionTab}
+              aria-current={isActive ? "true" : "false"}
+              onClick={(e) => handleTabClick(sec.id, e)}
+            >
+              {sec.label}
+            </button>
+          );
+        })}
+        <ThemeToggle />
+      </div>
     </div>
   );
 }

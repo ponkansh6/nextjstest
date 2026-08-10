@@ -503,12 +503,25 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  overflow-x: auto;
-  scroll-snap-type: x proximity;
   background-color: var(--card-bg);
   border-bottom: 1px solid var(--card-border);
   padding: 0.5rem;
   margin-bottom: 1.5rem;
+}
+.sectionTabsScroll {
+  /* 期間指定ボタン(.sectionRange)をこの横スクロール領域の外側(固定位置)に
+     置くための入れ子構造。以前は .sectionRange を position:sticky; left:0 で
+     タブ行内に重ねて固定していたが、その方式だと横スクロール時にタブが
+     ボタンの不透明な背景の裏へ滑り込んで隠れてしまっていた。ボタンとタブを
+     別領域に分離することで、両者が画面上で重なること自体が起こらないように
+     している。 */
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
   -webkit-overflow-scrolling: touch;
 }
 .sectionTab {
@@ -538,12 +551,8 @@
   }
 }
 .sectionRange {
-  /* タブ行(.sectionTabs)は横スクロール可能なため、他のタブと同様に並べただけでは
-     右方向にスクロールした際に一緒に流れて見えなくなる。sticky+left:0 で左端に
-     固定し、常にアクセスできるようにする(スプレッドシートの固定列と同じ仕組み)。 */
-  position: sticky;
-  left: 0;
-  z-index: 2;
+  /* タブの横スクロール領域(.sectionTabsScroll)の外側に配置される固定ボタン。
+     スクロールの影響を受けないため、常にアクセスできる。 */
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
