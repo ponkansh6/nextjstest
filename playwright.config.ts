@@ -46,6 +46,16 @@ export default defineConfig({
       name: "mobile-pixel",
       use: { ...devices["Pixel 7"] },
     },
+    {
+      // タブ押下時のスクロール競合はWebKit(Safari)固有の不具合で、Chromiumでは
+      // 再現しない(進行中のsmooth scrollIntoViewを別のscrollIntoView呼び出しが
+      // キャンセルする挙動の差異による)。iPhone WebKit全体を通常のE2E行列に
+      // 含めると実測で約38%遅くなるため、この回帰検知専用テスト1ファイルのみに
+      // 限定して実行する。
+      name: "webkit-tabs-regression",
+      testMatch: /section-tabs-scroll\.e2e\.spec\.ts/,
+      use: { ...devices["iPhone 13"] },
+    },
   ],
 
   webServer: {

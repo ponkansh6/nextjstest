@@ -20,14 +20,32 @@ export function SectionTabs({
   onRangeClick,
 }: SectionTabsProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  // タブクリックで発生した activeId 変更かどうかを追跡する。WebKit(Safari)では、
+  // このタブ行の横方向 scrollIntoView と、CpiChart 側のセクション本体への縦方向
+  // scrollIntoView(smooth)が近接して発火すると、後から呼ばれた方が先の smooth
+  // スクロールをキャンセルしてしまい、ページが全くスクロールしない不具合があった
+  // (実機のiPhone/Androidで確認)。クリック起因の場合は横スクロールをクリック
+  // ハンドラー内で即時(instant)に先に完了させておき、この effect 側では
+  // スキップすることで、縦方向の smooth スクロールと競合しないようにする。
+  const skipNextAutoScrollRef = useRef(false);
 
   useEffect(() => {
     if (!scrollRef.current) return;
+    if (skipNextAutoScrollRef.current) {
+      skipNextAutoScrollRef.current = false;
+      return;
+    }
     const activeEl = scrollRef.current.querySelector(`[aria-current="true"]`);
     if (activeEl) {
       activeEl.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
     }
   }, [activeId]);
+
+  const handleTabClick = (id: string, event: React.MouseEvent<HTMLButtonElement>) => {
+    event.currentTarget.scrollIntoView({ behavior: "auto", inline: "center", block: "nearest" });
+    skipNextAutoScrollRef.current = true;
+    onSelect(id);
+  };
 
   return (
     <div className={styles.sectionTabs} ref={scrollRef}>
@@ -47,7 +65,7 @@ export function SectionTabs({
             type="button"
             className={styles.sectionTab}
             aria-current={isActive ? "true" : "false"}
-            onClick={() => onSelect(sec.id)}
+            onClick={(e) => handleTabClick(sec.id, e)}
           >
             {sec.label}
           </button>

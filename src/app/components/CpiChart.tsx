@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import type { CpiView, QuarterlyView, EarningsView } from "@/types/chart";
 import { filterDataByYear, mergeChartData } from "../../lib/chartUtils";
@@ -271,9 +271,17 @@ export default function CpiChart({
 
   const [activeId, setActiveId] = useState(sections[0].id);
   const [rangeSheetOpen, setRangeSheetOpen] = useState(false);
+  // タブクリックで開始したスムーズスクロールの最中は true。アニメーション中も
+  // window の scroll イベントは連続して発火し続けるため、この間 handleScroll が
+  // 素通しで setActiveId を呼ぶと、SectionTabs 側の横スクロール追従 effect が
+  // アニメーション途中で何度も再発火してしまう。WebKit(Safari)ではこれが原因で
+  // 進行中の縦方向 smooth スクロールが中断され、目的のセクションまで届かずに
+  // 止まってしまう不具合があった(実機のiPhone/Androidで確認)。
+  const isProgrammaticScrollRef = useRef(false);
 
   useEffect(() => {
     const handleScroll = () => {
+      if (isProgrammaticScrollRef.current) return;
       const scrollPos = window.scrollY + window.innerHeight * 0.4;
       for (const sec of sections) {
         const el = document.getElementById(sec.id);
@@ -287,14 +295,22 @@ export default function CpiChart({
         }
       }
     };
+    const handleScrollEnd = () => {
+      isProgrammaticScrollRef.current = false;
+    };
     window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener("scrollend", handleScrollEnd);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("scrollend", handleScrollEnd);
+    };
   }, [sections]);
 
   const handleSelectSection = (id: string) => {
     setActiveId(id);
     const el = document.getElementById(id);
     if (el) {
+      isProgrammaticScrollRef.current = true;
       el.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   };
