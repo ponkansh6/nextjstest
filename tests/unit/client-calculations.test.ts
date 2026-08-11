@@ -116,7 +116,7 @@ describe("src/lib/clientCalculations", () => {
       const { quarterlyNominalData } = computeChartData(props as any, []);
 
       expect(quarterlyNominalData.length).toBe(1);
-      expect(quarterlyNominalData[0].label).toBe("2020年Q1");
+      expect(quarterlyNominalData[0].label).toBe("2020Q1");
       expect(typeof quarterlyNominalData[0]["食料（名目）"]).toBe("number");
       expect(quarterlyNominalData[0]["食料（名目）"]).toBeGreaterThan(0);
     });
@@ -143,11 +143,11 @@ describe("src/lib/clientCalculations", () => {
 
       const { quarterlyNominalData } = computeChartData(props as any, []);
 
-      const q12005 = quarterlyNominalData.find((r) => r.label === "2005年Q1");
+      const q12005 = quarterlyNominalData.find((r) => r.label === "2005Q1");
       expect(q12005).toBeDefined();
       expect(q12005![SUPPORT_SERIES_KEY_NOMINAL]).toBeCloseTo(100);
 
-      const q12020 = quarterlyNominalData.find((r) => r.label === "2020年Q1");
+      const q12020 = quarterlyNominalData.find((r) => r.label === "2020Q1");
       expect(q12020).toBeDefined();
       expect(q12020![SUPPORT_SERIES_KEY_NOMINAL]).toBe(0);
     });
@@ -172,7 +172,7 @@ describe("src/lib/clientCalculations", () => {
 
       const { quarterlyNominalData } = computeChartData(props, []);
 
-      const q12010 = quarterlyNominalData.find((r) => r.label === "2010年Q1");
+      const q12010 = quarterlyNominalData.find((r) => r.label === "2010Q1");
 
       // 四半期データなので、各月の値を合計せず、存在する値（例えば100）を期待する
       expect(q12010![SUPPORT_SERIES_KEY_NOMINAL], "民間最終消費支出 should be 100").toBe(100);
@@ -219,7 +219,7 @@ describe("src/lib/clientCalculations", () => {
           maxCpiDate: { year: 2010, month: 3 }, // 3月まで必要
         };
         const { quarterlyNominalData } = computeChartData(props, []);
-        // quarterlyNominalData[0] は 2010年Q1 となる
+        // quarterlyNominalData[0] は 2010Q1 となる
         return quarterlyNominalData[0][SUPPORT_SERIES_KEY_NOMINAL];
       };
 

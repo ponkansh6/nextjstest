@@ -74,8 +74,8 @@ describe("Client Data Structure Integrity", () => {
       startYear: 2020,
     };
     const result = computeChartData(props, []);
-    // 2020年Q1の食料（名目）は (30+60+90)/3 = 60
-    const q1Data = result.quarterlyNominalData.find((d) => d.label === "2020年Q1");
+    // 2020Q1の食料（名目）は (30+60+90)/3 = 60
+    const q1Data = result.quarterlyNominalData.find((d) => d.label === "2020Q1");
     expect(q1Data?.["食料（名目）"]).toBe(60);
   });
 

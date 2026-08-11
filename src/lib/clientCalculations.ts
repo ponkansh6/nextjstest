@@ -135,7 +135,7 @@ export const computeChartData = (props: UseCpiChartDataProps, hiddenQuarters: nu
         // 1994年1～3月期 => [1, 2, 3] (q=1)
         const months =
           q === 1 ? [1, 2, 3] : q === 2 ? [4, 5, 6] : q === 3 ? [7, 8, 9] : [10, 11, 12];
-        const label = `${y}年Q${q}`;
+        const label = `${y}Q${q}`;
         const item: {
           年: number;
           quarter: number;
