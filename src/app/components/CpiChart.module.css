@@ -523,6 +523,13 @@
   overflow-x: auto;
   scroll-snap-type: x proximity;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* 念のため(旧Edge) */
+  mask-image: linear-gradient(to right, black calc(100% - 24px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, black calc(100% - 24px), transparent 100%);
+}
+.sectionTabsScroll::-webkit-scrollbar {
+  display: none; /* Chrome / Safari / Chromium系Edge */
 }
 .sectionTab {
   flex-shrink: 0;

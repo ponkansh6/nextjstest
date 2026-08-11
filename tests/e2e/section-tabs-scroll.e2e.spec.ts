@@ -103,3 +103,52 @@ base.describe("タブバー押下時のスクロール(初回読み込み・未�
     );
   }
 });
+
+/**
+ * タブバー(.sectionTabsScroll)のスクロールバー非表示と右端フェードの検証。
+ * shared_plan/03 参照。
+ */
+base.describe("タブバーのスクロールバー非表示と右端フェード", () => {
+  base.beforeEach(async ({ page }) => {
+    // モバイル幅でコンテンツが確実に横にはみ出す状態を作る
+    await page.setViewportSize({ width: 375, height: 800 });
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
+  });
+
+  const scrollContainer = '[class*="sectionTabsScroll"]';
+
+  base("リロード直後(タブ未操作)にネイティブスクロールバーが非表示である", async ({ page }) => {
+    const scrollbarWidth = await page.locator(scrollContainer).evaluate((el) => {
+      return getComputedStyle(el).scrollbarWidth;
+    });
+    expect(scrollbarWidth).toBe("none");
+  });
+
+  base("スクロールバー非表示でも横スクロールが機能する", async ({ page }) => {
+    const result = await page.locator(scrollContainer).evaluate((el) => {
+      const before = el.scrollLeft;
+      el.scrollLeft = el.scrollWidth;
+      return {
+        before,
+        after: el.scrollLeft,
+        scrollWidth: el.scrollWidth,
+        clientWidth: el.clientWidth,
+      };
+    });
+    expect(result.scrollWidth).toBeGreaterThan(result.clientWidth);
+    expect(result.after).toBeGreaterThan(0);
+  });
+
+  base("右端フェード(mask-image)が適用されている", async ({ page }) => {
+    const mask = await page.locator(scrollContainer).evaluate((el) => {
+      const cs = getComputedStyle(el);
+      return {
+        maskImage: cs.maskImage,
+        webkitMaskImage: (cs as unknown as { webkitMaskImage?: string }).webkitMaskImage ?? "none",
+      };
+    });
+    expect(mask.maskImage).not.toBe("none");
+    expect(mask.webkitMaskImage).not.toBe("none");
+  });
+});

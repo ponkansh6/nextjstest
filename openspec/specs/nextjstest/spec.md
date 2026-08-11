@@ -256,6 +256,12 @@ The system SHALL let users move between the eight chart sections without unbound
 - **AND WHEN** the range label is tapped
 - **THEN** a range sheet opens with start-year / end-year selects
 
+#### Scenario R10c: Horizontal Tab Scroll
+
+- **WHEN** the tab row content overflows the viewport width
+- **THEN** the tab row scrolls horizontally without showing a native scrollbar (`scrollbar-width: none` / `::-webkit-scrollbar { display: none }`)
+- **AND** a right-edge fade (`mask-image`) indicates that more tabs are available
+
 ### R11: Shareable State
 
 The system SHALL keep view state in the URL so it survives reload and can be shared.
