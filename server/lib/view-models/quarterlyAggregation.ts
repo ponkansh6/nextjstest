@@ -84,7 +84,7 @@ export function computeQuarterlyAggregates(
       for (let q = 1; q <= maxQ; q++) {
         const months =
           q === 1 ? [1, 2, 3] : q === 2 ? [4, 5, 6] : q === 3 ? [7, 8, 9] : [10, 11, 12];
-        const label = `${y}年Q${q}`;
+        const label = `${y}Q${q}`;
         const startMonth = (q - 1) * 3 + 1;
         const item: QuarterlyRow = { label, quarter: q, 年: y, 年月: `${y}年${startMonth}月` };
 
