@@ -181,6 +181,7 @@
 .legendItem.hidden {
   opacity: 0.5;
   background-color: var(--card-border);
+  border: 1px solid var(--chart-text);
 }
 
 .legendItem.hidden .legendLabel {
@@ -193,6 +194,7 @@
   height: clamp(0.75rem, 0.37rem + 0.78vw, 1.3125rem);
   border-radius: 0.125rem;
   flex-shrink: 0;
+  box-shadow: 0 0 0 1px var(--card-bg);
 }
 
 .legendLabel {

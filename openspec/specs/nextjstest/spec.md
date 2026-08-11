@@ -311,6 +311,14 @@ The system SHALL allow explicit theme selection independent of the OS setting.
 - **AND WHEN** the page reloads
 - **THEN** an inline script applies the stored theme before paint to avoid FOUC
 
+#### Scenario R14b: Theme-Aware Series Palette & Visual Enhancements
+
+- **WHEN** the dashboard renders in light or dark mode
+- **THEN** `--series-1` through `--series-12` CSS custom properties are applied from `globals.css`
+- **AND** `StackedAreaChart` series colors adapt automatically to the active theme via `var(--series-N)` references in `chartConstants.ts`
+- **AND** fill opacity is set to 1.0, and stacking separator gaps use `var(--card-bg)` for clear layer distinction
+- **AND** hidden legend items (`.legendItem.hidden`) display enhanced borders and swatches with rings
+
 ### R9: Page Metadata and Header
 
 The system SHALL provide SEO-friendly metadata and descriptive headers.

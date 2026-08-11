@@ -77,18 +77,18 @@ export const targetKeys = [
 export const colors = ["#1d4ed8", "#3b82f6", "#60a5fa", "#93c5fd"];
 
 export const stackedColors = [
-  "#2a2080",
-  "#4647ea",
-  "#3481fe",
-  "#18b3ec",
-  "#00d0a5",
-  "#22c55e",
-  "#85e022",
-  "#fbe020",
-  "#fb923c",
-  "#c21a00",
-  "#b01500",
-  "#550500",
+  "var(--series-1)",
+  "var(--series-2)",
+  "var(--series-3)",
+  "var(--series-4)",
+  "var(--series-5)",
+  "var(--series-6)",
+  "var(--series-7)",
+  "var(--series-8)",
+  "var(--series-9)",
+  "var(--series-10)",
+  "var(--series-11)",
+  "var(--series-12)",
 ];
 
 // CPI積み上げ用

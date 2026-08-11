@@ -67,7 +67,7 @@ import { DataTablesSection, type DataTableSpec } from "./DataTablesSection";
 const getColorForNominalKey = (key: string): string => {
   const targetStackedKey = nominalColorMap[key];
   const index = stackedKeys.indexOf(targetStackedKey || "");
-  return index !== -1 ? stackedColors[index] : "#64748b";
+  return index !== -1 ? stackedColors[index] : "var(--series-1)";
 };
 
 interface CpiChartProps {
@@ -184,7 +184,7 @@ export default function CpiChart({
     const nominalKey = key.replace("（実質）", "（名目）");
     const targetStackedKey = nominalColorMap[nominalKey];
     const index = stackedKeys.indexOf(targetStackedKey || "");
-    return index !== -1 ? stackedColors[index] : "#64748b";
+    return index !== -1 ? stackedColors[index] : "var(--series-1)";
   });
 
   const [nominalHiddenKeys, setNominalHiddenKeys] = useState<string[]>([]);

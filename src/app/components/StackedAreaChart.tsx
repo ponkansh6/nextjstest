@@ -116,11 +116,11 @@ export const StackedAreaChart: React.FC<StackedAreaChartProps> = ({
                   dataKey={key}
                   stackId="a"
                   type="monotone"
-                  stroke={chartColors.gridStroke}
-                  strokeWidth={1}
-                  strokeOpacity={0.4}
+                  stroke="var(--card-bg)"
+                  strokeWidth={2}
+                  strokeOpacity={1}
                   fill={colors[index]}
-                  fillOpacity={0.8}
+                  fillOpacity={1.0}
                   isAnimationActive={false}
                 />
               ) : null,

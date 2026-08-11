@@ -1,6 +1,6 @@
 :root,
 :root[data-theme="light"] {
-  --background: #ffffff;
+  --background: #f9f9f7;
   --foreground: #171717;
 
   /* Tailwind-like colors used in the project */
@@ -18,11 +18,25 @@
   --blue-500: #3b82f6;
   --blue-600: #2563eb;
 
+  /* Series Colors (F-1) */
+  --series-1: #0c5a9a;
+  --series-2: #9fbb21;
+  --series-3: #6c2cb4;
+  --series-4: #26cd65;
+  --series-5: #90108b;
+  --series-6: #26c6af;
+  --series-7: #3f40c4;
+  --series-8: #26c2d1;
+  --series-9: #a0104b;
+  --series-10: #fc875e;
+  --series-11: #a21037;
+  --series-12: #d0a720;
+
   /* Component colors */
-  --card-bg: #ffffff;
+  --card-bg: #fcfcfb;
   --card-border: #f3f4f6;
   --card-text: #1f2937;
-  --chart-text: #6b7280;
+  --chart-text: #898781;
   --chart-grid: #f0f0f0;
   --tooltip-bg: rgba(255, 255, 255, 0.95);
   --tooltip-text: #000000;
@@ -46,12 +60,26 @@
     --gray-800: #f5f5f5;
     --gray-900: #ffffff;
 
+    /* Series Colors (F-1) */
+    --series-1: #0f66ac;
+    --series-2: #89a01b;
+    --series-3: #773ac1;
+    --series-4: #1fb056;
+    --series-5: #9d2398;
+    --series-6: #1faa96;
+    --series-7: #484dd2;
+    --series-8: #1fa6b3;
+    --series-9: #b31355;
+    --series-10: #f35c19;
+    --series-11: #b6143f;
+    --series-12: #b28f1a;
+
     /* Component colors for dark mode */
     --card-bg: #1a1a1a;
     --card-border: #262626;
     --card-text: #e5e5e5;
-    --chart-text: #a3a3a3;
-    --chart-grid: #2a2a2a;
+    --chart-text: #898781;
+    --chart-grid: #383835;
     --tooltip-bg: rgba(26, 26, 26, 0.95);
     --tooltip-text: #e5e5e5;
     --blue-50: rgba(59, 130, 246, 0.15);
@@ -75,12 +103,26 @@
   --gray-800: #f5f5f5;
   --gray-900: #ffffff;
 
+  /* Series Colors (F-1) */
+  --series-1: #0f66ac;
+  --series-2: #89a01b;
+  --series-3: #773ac1;
+  --series-4: #1fb056;
+  --series-5: #9d2398;
+  --series-6: #1faa96;
+  --series-7: #484dd2;
+  --series-8: #1fa6b3;
+  --series-9: #b31355;
+  --series-10: #f35c19;
+  --series-11: #b6143f;
+  --series-12: #b28f1a;
+
   /* Component colors for dark mode */
   --card-bg: #1a1a1a;
   --card-border: #262626;
   --card-text: #e5e5e5;
-  --chart-text: #a3a3a3;
-  --chart-grid: #2a2a2a;
+  --chart-text: #898781;
+  --chart-grid: #383835;
   --tooltip-bg: rgba(26, 26, 26, 0.95);
   --tooltip-text: #e5e5e5;
   --blue-50: rgba(59, 130, 246, 0.15);
