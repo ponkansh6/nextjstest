@@ -11,7 +11,7 @@ export const CPI_CATEGORIES = [
   "被服履物",
   "保健医療",
   "教育",
-  "交通・自動車等関係費",
+  "交通自動車等",
   "通信",
   "光熱・水道",
   "教養娯楽",
@@ -52,7 +52,7 @@ export const NOMINAL_CONSUMPTION_CATEGORIES = Array.from(new Set(Object.values(N
 export const REAL_CONSUMPTION_CATEGORIES = Array.from(new Set(Object.values(REAL_MAPPING)));
 
 export const nominalColorMap: Record<string, string> = {
-  "交通・通信（名目）": "交通・自動車等関係費",
+  "交通・通信（名目）": "交通自動車等",
   "住居（名目）": "住居",
   "保健医療（名目）": "保健医療",
   "光熱・水道（名目）": "光熱・水道",
