@@ -39,7 +39,11 @@ const mockChartColors = {
   tooltipText: "#374151",
 };
 
-const MockTooltip = () => null;
+const tooltipProps = {
+  cursor: { stroke: "#000", strokeWidth: 1, strokeOpacity: 0.6 },
+  trigger: "hover" as const,
+  content: <div />,
+};
 
 // ── Helper: content shared across tests ──
 
@@ -287,7 +291,7 @@ describe("ChartInfoButton", () => {
         onToggle={() => {}}
         chartColors={mockChartColors}
         isMobile={false}
-        CustomTooltip={MockTooltip}
+        tooltipProps={tooltipProps}
       />,
     );
     // Verify the chart title is rendered

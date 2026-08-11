@@ -4,9 +4,13 @@ import React, { useEffect, useRef, useState } from "react";
 import type { CustomTooltipProps } from "@/types/chart";
 
 export const CustomTooltip = React.memo<CustomTooltipProps>(
-  ({ active, payload, label, isMobile, tooltipBg, tooltipText }) => {
+  ({ active, payload, label, isMobile, isTouch, tooltipBg, tooltipText, resetKey }) => {
     const [dismissed, setDismissed] = useState(false);
     const prevKeyRef = useRef<string | null>(null);
+
+    useEffect(() => {
+      setDismissed(false);
+    }, [resetKey]);
 
     useEffect(() => {
       const key = active ? (label ?? "") : null;
@@ -16,10 +20,22 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
       prevKeyRef.current = key;
     }, [active, label]);
 
+    useEffect(() => {
+      if (!active || !isTouch) return;
+      const startY = window.scrollY;
+      const handleScroll = () => {
+        if (Math.abs(window.scrollY - startY) > 40) {
+          setDismissed(true);
+        }
+      };
+      window.addEventListener("scroll", handleScroll, { passive: true });
+      return () => window.removeEventListener("scroll", handleScroll);
+    }, [active, isTouch]);
+
     if (!active || !payload) {
       return null;
     }
-    if (isMobile && dismissed) {
+    if (isTouch && dismissed) {
       return null;
     }
 
@@ -85,7 +101,7 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
           >
             {label}
           </p>
-          {isMobile && (
+          {isTouch && (
             <button
               type="button"
               onClick={(e) => {

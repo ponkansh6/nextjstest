@@ -3,8 +3,10 @@ export interface CustomTooltipProps {
   payload?: { name: string; value: number; color?: string }[];
   label?: string;
   isMobile: boolean;
+  isTouch: boolean;
   tooltipBg: string;
   tooltipText: string;
+  resetKey?: number;
 }
 
 export interface CpiView extends Record<string, string | number> {

@@ -3,7 +3,7 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 import type { CpiData } from "@/types";
 import styles from "./CpiChart.module.css";
 import { getLegendLabel, SUPPORT_SERIES_KEY_NOMINAL } from "../../lib/chartConstants";
-import type { CustomTooltipProps } from "@/types/chart";
+import type { ChartTooltipProps } from "./charts/useChartTooltipProps";
 import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
 import { CHART_INFO } from "../../lib/chartInfoContent";
 import { YearReferenceLines } from "./charts/YearReferenceLines";
@@ -26,8 +26,8 @@ interface SpendingBarChartProps {
   hiddenKeys: string[];
   onToggle: (key: string) => void;
   chartColors: Record<string, string>;
-  isMobile: boolean;
-  CustomTooltip: React.FC<CustomTooltipProps>;
+  tooltipProps: ChartTooltipProps;
+  onClick?: () => void;
   hiddenQuarters: number[];
   onToggleQuarter: (q: number) => void;
   onReset: () => void;
@@ -47,8 +47,8 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
     hiddenKeys,
     onToggle,
     chartColors,
-    isMobile,
-    CustomTooltip,
+    tooltipProps,
+    onClick,
     hiddenQuarters,
     onToggleQuarter,
     onReset,
@@ -132,7 +132,11 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
       )}
       <div className={styles.chartWrapper} role="img" aria-label={`${title}の推移グラフ`}>
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>
+          <BarChart
+            data={data}
+            margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
+            onClick={onClick}
+          >
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.gridStroke} />
             <YearReferenceLines
               data={data as unknown as CpiData[]}
@@ -152,16 +156,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
               tick={{ fill: chartColors.axisText }}
               dx={-10}
             />
-            <Tooltip
-              cursor={{ stroke: chartColors.gridStroke, strokeWidth: 1, strokeOpacity: 0.6 }}
-              content={
-                <CustomTooltip
-                  isMobile={isMobile}
-                  tooltipBg={chartColors.tooltipBg}
-                  tooltipText={chartColors.tooltipText}
-                />
-              }
-            />
+            <Tooltip {...tooltipProps} />
             {keys.map((key, index) =>
               !hiddenKeys.includes(key) ? (
                 <Bar

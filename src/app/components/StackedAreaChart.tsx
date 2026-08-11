@@ -11,7 +11,7 @@ import {
 import { getLegendLabel } from "../../lib/chartConstants";
 import styles from "./CpiChart.module.css";
 import type { CpiData } from "@/types";
-import type { CustomTooltipProps } from "@/types/chart";
+import type { ChartTooltipProps } from "./charts/useChartTooltipProps";
 import { YearReferenceLines } from "./charts/YearReferenceLines";
 import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
 
@@ -24,8 +24,8 @@ interface StackedAreaChartProps {
   hiddenKeys: string[];
   onToggle: (key: string) => void;
   chartColors: Record<string, string>;
-  isMobile: boolean;
-  CustomTooltip: React.FC<CustomTooltipProps>;
+  tooltipProps: ChartTooltipProps;
+  onClick?: () => void;
   onReset: () => void;
 }
 
@@ -38,8 +38,8 @@ export const StackedAreaChart: React.FC<StackedAreaChartProps> = ({
   hiddenKeys,
   onToggle,
   chartColors,
-  isMobile,
-  CustomTooltip,
+  tooltipProps,
+  onClick,
   onReset,
 }) => {
   return (
@@ -77,7 +77,11 @@ export const StackedAreaChart: React.FC<StackedAreaChartProps> = ({
         aria-label="物価指数 費目別寄与度の積み上げグラフ"
       >
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>
+          <AreaChart
+            data={data}
+            margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
+            onClick={onClick}
+          >
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.gridStroke} />
             <YearReferenceLines data={data} stroke={chartColors.gridStroke} />
             <XAxis
@@ -94,16 +98,7 @@ export const StackedAreaChart: React.FC<StackedAreaChartProps> = ({
               tick={{ fill: chartColors.axisText }}
               dx={-10}
             />
-            <Tooltip
-              cursor={{ stroke: chartColors.gridStroke, strokeWidth: 1, strokeOpacity: 0.6 }}
-              content={
-                <CustomTooltip
-                  isMobile={isMobile}
-                  tooltipBg={chartColors.tooltipBg}
-                  tooltipText={chartColors.tooltipText}
-                />
-              }
-            />
+            <Tooltip {...tooltipProps} />
             {keys.map((key, index) =>
               !hiddenKeys.includes(key) ? (
                 <Area

@@ -127,7 +127,11 @@ const chartColors = {
   tooltipText: "#000",
 };
 
-const MockTooltip = () => <div>Tooltip</div>;
+const tooltipProps = {
+  cursor: { stroke: "#000", strokeWidth: 1, strokeOpacity: 0.6 },
+  trigger: "hover" as const,
+  content: <div>Tooltip</div>,
+};
 
 // --- Tests ---
 
@@ -143,8 +147,7 @@ describe("Integrated UI Chart Tests", () => {
           hiddenKeys={[]}
           onToggle={() => {}}
           chartColors={chartColors}
-          isMobile={false}
-          CustomTooltip={MockTooltip}
+          tooltipProps={tooltipProps}
           hiddenQuarters={[]}
           onToggleQuarter={() => {}}
           onReset={() => {}}
@@ -161,8 +164,7 @@ describe("Integrated UI Chart Tests", () => {
           hiddenKeys={[]}
           onToggle={() => {}}
           chartColors={chartColors}
-          isMobile={false}
-          CustomTooltip={MockTooltip}
+          tooltipProps={tooltipProps}
         />,
       );
       targetKeys.forEach((key) => expect(screen.getAllByText(key).length).toBeGreaterThan(0));
@@ -176,7 +178,7 @@ describe("Integrated UI Chart Tests", () => {
           onToggle={() => {}}
           chartColors={chartColors}
           isMobile={false}
-          CustomTooltip={MockTooltip}
+          tooltipProps={tooltipProps}
         />,
       );
       const expectedLabels = [
@@ -201,8 +203,7 @@ describe("Integrated UI Chart Tests", () => {
           hiddenKeys={[]}
           onToggle={() => {}}
           chartColors={chartColors}
-          isMobile={false}
-          CustomTooltip={MockTooltip}
+          tooltipProps={tooltipProps}
           onReset={() => {}}
         />,
       );
@@ -261,8 +262,7 @@ describe("Integrated UI Chart Tests", () => {
           hiddenKeys={[]}
           onToggle={() => {}}
           chartColors={chartColors}
-          isMobile={false}
-          CustomTooltip={MockTooltip}
+          tooltipProps={tooltipProps}
           onReset={() => {}}
         />,
       );
@@ -384,8 +384,7 @@ describe("SpendingBarChart", () => {
     hiddenKeys: [],
     onToggle: vi.fn(),
     chartColors,
-    isMobile: false,
-    CustomTooltip: () => <div>Tooltip</div>,
+    tooltipProps,
     hiddenQuarters: [],
     onToggleQuarter: vi.fn(),
     onReset: vi.fn(),
@@ -426,8 +425,7 @@ describe("StackedAreaChart", () => {
     hiddenKeys: [],
     onToggle: vi.fn(),
     chartColors,
-    isMobile: false,
-    CustomTooltip: () => <div>Tooltip</div>,
+    tooltipProps,
     onReset: vi.fn(),
   };
 
@@ -479,7 +477,7 @@ describe("NewGraph", () => {
         onToggle={mockOnToggle}
         chartColors={mockNewGraphColors}
         isMobile={false}
-        CustomTooltip={() => <div>Tooltip</div>}
+        tooltipProps={tooltipProps}
       />,
     );
     expect(screen.getByText("給与・消費・物価の推移比較(12MA)")).toBeDefined();
@@ -493,7 +491,7 @@ describe("NewGraph", () => {
         onToggle={mockOnToggle}
         chartColors={mockNewGraphColors}
         isMobile={false}
-        CustomTooltip={() => <div>Tooltip</div>}
+        tooltipProps={tooltipProps}
       />,
     );
     expect(screen.getAllByText("給与(総合)").length).toBeGreaterThan(0);
@@ -509,7 +507,7 @@ describe("NewGraph", () => {
         onToggle={mockOnToggle}
         chartColors={mockNewGraphColors}
         isMobile={false}
-        CustomTooltip={() => <div>Tooltip</div>}
+        tooltipProps={tooltipProps}
       />,
     );
     const button =
@@ -527,7 +525,7 @@ describe("NewGraph", () => {
         onToggle={mockOnToggle}
         chartColors={mockNewGraphColors}
         isMobile={false}
-        CustomTooltip={() => <div>Tooltip</div>}
+        tooltipProps={tooltipProps}
       />,
     );
     // The hidden legend item should still be rendered
@@ -545,7 +543,7 @@ describe("NewGraph", () => {
         onToggle={mockOnToggle}
         chartColors={mockNewGraphColors}
         isMobile={false}
-        CustomTooltip={() => <div>Tooltip</div>}
+        tooltipProps={tooltipProps}
       />,
     );
     expect(screen.getByText("給与・消費・物価の推移比較(12MA)")).toBeDefined();

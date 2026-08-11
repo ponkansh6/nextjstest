@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useEffect, useRef } from "react";
+import React, { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import dynamic from "next/dynamic";
 import type { CpiView, QuarterlyView, EarningsView } from "@/types/chart";
 import { filterDataByYear, mergeChartData } from "../../lib/chartUtils";
@@ -11,10 +11,10 @@ import { ChartFilters } from "./ChartFilters";
 import { SectionTabs } from "./SectionTabs";
 import { LazyMount } from "./LazyMount";
 import { useChartTheme } from "../../hooks/useChartTheme";
+import { useChartTooltipProps } from "./charts/useChartTooltipProps";
 import { useCpiChartData } from "../../hooks/useCpiChartData";
 import { useToggleSet } from "../../hooks/useToggleSet";
 import { useUrlState } from "../../hooks/useUrlState";
-import { CustomTooltip } from "./CustomTooltip";
 import { StackedAreaChart } from "./StackedAreaChart";
 import { MajorIndicesChart } from "./MajorIndicesChart";
 import { CagrPanel } from "./CagrPanel";
@@ -278,6 +278,33 @@ export default function CpiChart({
   // 進行中の縦方向 smooth スクロールが中断され、目的のセクションまで届かずに
   // 止まってしまう不具合があった(実機のiPhone/Androidで確認)。
   const isProgrammaticScrollRef = useRef(false);
+  const [tapNonce, setTapNonce] = useState(0);
+  const [isProgrammaticScroll, setIsProgrammaticScroll] = useState(false);
+  const programmaticScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const endProgrammaticScroll = useCallback(() => {
+    isProgrammaticScrollRef.current = false;
+    if (programmaticScrollTimerRef.current) {
+      clearTimeout(programmaticScrollTimerRef.current);
+    }
+    programmaticScrollTimerRef.current = setTimeout(() => {
+      setIsProgrammaticScroll(false);
+    }, 150);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (programmaticScrollTimerRef.current) {
+        clearTimeout(programmaticScrollTimerRef.current);
+      }
+    };
+  }, []);
+
+  const tooltipProps = useChartTooltipProps({
+    resetKey: tapNonce,
+    suppressed: isProgrammaticScroll,
+  });
+  const handleChartClick = () => setTapNonce((n) => n + 1);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -296,7 +323,7 @@ export default function CpiChart({
       }
     };
     const handleScrollEnd = () => {
-      isProgrammaticScrollRef.current = false;
+      endProgrammaticScroll();
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
     window.addEventListener("scrollend", handleScrollEnd);
@@ -304,7 +331,7 @@ export default function CpiChart({
       window.removeEventListener("scroll", handleScroll);
       window.removeEventListener("scrollend", handleScrollEnd);
     };
-  }, [sections]);
+  }, [sections, endProgrammaticScroll]);
 
   const handleSelectSection = (id: string) => {
     setActiveId(id);
@@ -319,6 +346,7 @@ export default function CpiChart({
     if (!target) return;
 
     isProgrammaticScrollRef.current = true;
+    setIsProgrammaticScroll(true);
     target.scrollIntoView({ behavior: "smooth", block: "start" });
 
     // 目的セクションより手前に未マウントの LazyMount セクションが挟まっている場合、
@@ -350,7 +378,7 @@ export default function CpiChart({
         stableFrames++;
       }
       if (stableFrames >= STABLE_FRAMES_THRESHOLD || framesElapsed > MAX_FRAMES) {
-        isProgrammaticScrollRef.current = false;
+        endProgrammaticScroll();
         return;
       }
       requestAnimationFrame(chase);
@@ -519,8 +547,8 @@ export default function CpiChart({
           hiddenKeys={hiddenKeys}
           onToggle={handleLegendClick}
           chartColors={chartColors}
-          isMobile={isMobile}
-          CustomTooltip={CustomTooltip}
+          tooltipProps={tooltipProps}
+          onClick={handleChartClick}
         />
         <p className={styles.chartNote}>
           <a href="#data-table-section-cpi-major">データテーブルを表示 ▾</a>
@@ -537,8 +565,8 @@ export default function CpiChart({
         hiddenKeys={stackedHiddenKeys}
         onToggle={handleStackedLegendClick}
         chartColors={chartColors}
-        isMobile={isMobile}
-        CustomTooltip={CustomTooltip}
+        tooltipProps={tooltipProps}
+        onClick={handleChartClick}
         onReset={() =>
           setStackedHiddenKeys((prev) =>
             prev.length === stackedKeys.length ? [] : [...stackedKeys],
@@ -571,8 +599,8 @@ export default function CpiChart({
           hiddenKeys={nominalHiddenKeys}
           onToggle={handleLegendToggle}
           chartColors={chartColors}
-          isMobile={isMobile}
-          CustomTooltip={CustomTooltip}
+          tooltipProps={tooltipProps}
+          onClick={handleChartClick}
           hiddenQuarters={hiddenQuarters}
           onToggleQuarter={handleQuarterLegendClick}
           onReset={createDualResetHandler(
@@ -602,8 +630,8 @@ export default function CpiChart({
           hiddenKeys={realHiddenKeys}
           onToggle={handleLegendToggle}
           chartColors={chartColors}
-          isMobile={isMobile}
-          CustomTooltip={CustomTooltip}
+          tooltipProps={tooltipProps}
+          onClick={handleChartClick}
           hiddenQuarters={hiddenQuarters}
           onToggleQuarter={handleQuarterLegendClick}
           onReset={createDualResetHandler(
@@ -632,7 +660,8 @@ export default function CpiChart({
           onToggle={handleLegendClick}
           chartColors={chartColors}
           isMobile={isMobile}
-          CustomTooltip={CustomTooltip}
+          tooltipProps={tooltipProps}
+          onClick={handleChartClick}
         />
       </LazyMount>
 
@@ -641,8 +670,8 @@ export default function CpiChart({
           sectionId="section-residual"
           data={mergedData}
           chartColors={chartColors}
-          isMobile={isMobile}
-          CustomTooltip={CustomTooltip}
+          tooltipProps={tooltipProps}
+          onClick={handleChartClick}
         />
       </LazyMount>
 
@@ -655,7 +684,8 @@ export default function CpiChart({
           chartColors={chartColors}
           isMobile={isMobile}
           chartKey="new-graph"
-          CustomTooltip={CustomTooltip}
+          tooltipProps={tooltipProps}
+          onClick={handleChartClick}
         />
       </LazyMount>
 

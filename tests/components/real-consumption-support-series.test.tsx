@@ -188,6 +188,12 @@ describe("Real Consumption Support Series - Local Pipeline Regression Guard", ()
       tooltipText: "#f1f5f9",
     };
 
+    const tooltipProps = {
+      cursor: { stroke: "#000", strokeWidth: 1, strokeOpacity: 0.6 },
+      trigger: "hover" as const,
+      content: <div />,
+    };
+
     const { container } = render(
       <SpendingBarChart
         title="消費支出（実質）"
@@ -197,8 +203,7 @@ describe("Real Consumption Support Series - Local Pipeline Regression Guard", ()
         hiddenKeys={[]}
         onToggle={vi.fn()}
         chartColors={chartColors}
-        isMobile={false}
-        CustomTooltip={() => <div>Tooltip</div>}
+        tooltipProps={tooltipProps}
         hiddenQuarters={[]}
         onToggleQuarter={vi.fn()}
         onReset={vi.fn()}
@@ -240,6 +245,12 @@ describe("Real Consumption Support Series - Local Pipeline Regression Guard", ()
       tooltipText: "#f1f5f9",
     };
 
+    const tooltipProps = {
+      cursor: { stroke: "#000", strokeWidth: 1, strokeOpacity: 0.6 },
+      trigger: "hover" as const,
+      content: <div />,
+    };
+
     render(
       <SpendingBarChart
         title="消費支出（実質）"
@@ -249,8 +260,7 @@ describe("Real Consumption Support Series - Local Pipeline Regression Guard", ()
         hiddenKeys={[]}
         onToggle={vi.fn()}
         chartColors={chartColors}
-        isMobile={false}
-        CustomTooltip={() => <div>Tooltip</div>}
+        tooltipProps={tooltipProps}
         hiddenQuarters={[]}
         onToggleQuarter={vi.fn()}
         onReset={vi.fn()}

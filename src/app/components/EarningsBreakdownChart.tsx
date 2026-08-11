@@ -9,12 +9,12 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import type { ChartTooltipProps } from "./charts/useChartTooltipProps";
+import { YearReferenceLines } from "./charts/YearReferenceLines";
 import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
+import { EARNINGS_TABLE_CONFIGS } from "../../lib/chartConstants";
 import styles from "./CpiChart.module.css";
 import type { CpiData } from "@/types";
-import type { CustomTooltipProps } from "@/types/chart";
-import { YearReferenceLines } from "./charts/YearReferenceLines";
-import { EARNINGS_TABLE_CONFIGS } from "../../lib/chartConstants";
 
 interface EarningsBreakdownChartProps {
   sectionId?: string;
@@ -23,7 +23,8 @@ interface EarningsBreakdownChartProps {
   onToggle: (key: string) => void;
   chartColors: Record<string, string>;
   isMobile: boolean;
-  CustomTooltip: React.FC<CustomTooltipProps>;
+  tooltipProps: ChartTooltipProps;
+  onClick?: () => void;
 }
 
 export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
@@ -33,7 +34,8 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
   onToggle,
   chartColors,
   isMobile,
-  CustomTooltip,
+  tooltipProps,
+  onClick,
 }) => {
   const configs = EARNINGS_TABLE_CONFIGS;
 
@@ -84,7 +86,11 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
       </div>
       <div className={styles.chartWrapper} role="img" aria-label="給与指標と関連指標の推移グラフ">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ bottom: 20, left: 0, right: 30, top: 10 }}>
+          <AreaChart
+            data={data}
+            margin={{ bottom: 20, left: 0, right: 30, top: 10 }}
+            onClick={onClick}
+          >
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.gridStroke} />
             <YearReferenceLines data={data} stroke={chartColors.gridStroke} />
             <XAxis
@@ -101,16 +107,7 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
               tick={{ fill: chartColors.axisText }}
               dx={-10}
             />
-            <Tooltip
-              cursor={{ stroke: chartColors.gridStroke, strokeWidth: 1, strokeOpacity: 0.6 }}
-              content={
-                <CustomTooltip
-                  isMobile={isMobile}
-                  tooltipBg={chartColors.tooltipBg}
-                  tooltipText={chartColors.tooltipText}
-                />
-              }
-            />
+            <Tooltip {...tooltipProps} />
             {configs.map(({ key, color, type }) => {
               if (hiddenKeys.includes(key)) {
                 return null;

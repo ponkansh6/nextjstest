@@ -10,7 +10,7 @@ import {
 } from "recharts";
 import styles from "./CpiChart.module.css";
 import type { CpiData } from "@/types";
-import type { CustomTooltipProps } from "@/types/chart";
+import type { ChartTooltipProps } from "./charts/useChartTooltipProps";
 import { YearReferenceLines } from "./charts/YearReferenceLines";
 import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
 
@@ -18,16 +18,16 @@ interface ResidualAreaChartProps {
   sectionId?: string;
   data: CpiData[];
   chartColors: Record<string, string>;
-  isMobile: boolean;
-  CustomTooltip: React.FC<CustomTooltipProps>;
+  tooltipProps: ChartTooltipProps;
+  onClick?: () => void;
 }
 
 export const ResidualAreaChart: React.FC<ResidualAreaChartProps> = ({
   sectionId,
   data,
   chartColors,
-  isMobile,
-  CustomTooltip,
+  tooltipProps,
+  onClick,
 }) => (
   <div id={sectionId} className={styles.chartSection} style={{ scrollMarginTop: "5rem" }}>
     <h2 className={styles.chartTitle}>
@@ -43,7 +43,11 @@ export const ResidualAreaChart: React.FC<ResidualAreaChartProps> = ({
       aria-label="給与と物価の差（実質賃金相当）の推移グラフ"
     >
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>
+        <AreaChart
+          data={data}
+          margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
+          onClick={onClick}
+        >
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.gridStroke} />
           <YearReferenceLines data={data} stroke={chartColors.gridStroke} />
           <XAxis
@@ -60,16 +64,7 @@ export const ResidualAreaChart: React.FC<ResidualAreaChartProps> = ({
             tick={{ fill: chartColors.axisText }}
             dx={-10}
           />
-          <Tooltip
-            cursor={{ stroke: chartColors.gridStroke, strokeWidth: 1, strokeOpacity: 0.6 }}
-            content={
-              <CustomTooltip
-                isMobile={isMobile}
-                tooltipBg={chartColors.tooltipBg}
-                tooltipText={chartColors.tooltipText}
-              />
-            }
-          />
+          <Tooltip {...tooltipProps} />
           <Area
             type="monotone"
             dataKey="残差"

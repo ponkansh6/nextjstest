@@ -181,6 +181,30 @@ The system SHALL adapt to viewport size for mobile and desktop, designed mobile-
 - **WHEN** the device is held in landscape with a short viewport
 - **THEN** chart height follows the viewport (`svh`/`dvh` units) instead of a fixed 500px
 
+### R15: Touch Tooltip Interaction & Scroll Suppression
+
+The system SHALL ensure that chart tooltips on touch devices open only on explicit taps and do not trigger during vertical scrolling or programmatic scroll animations.
+
+#### Scenario R15a: Touch Pointer Trigger
+
+- **WHEN** the device has coarse pointer (`pointer: coarse`)
+- **THEN** chart tooltip trigger is set to `"click"` and tooltips never open during touchmove / vertical scrolling.
+
+#### Scenario R15b: Fine Pointer Hover
+
+- **WHEN** the device has fine pointer (`pointer: fine`)
+- **THEN** chart tooltip trigger remains `"hover"`.
+
+#### Scenario R15c: Re-taping Dismissed Tooltip
+
+- **WHEN** a tooltip is closed via the close button on a touch device
+- **THEN** tapping the same point again re-opens the tooltip (via `resetKey`).
+
+#### Scenario R15d: Programmatic Scroll Suppression
+
+- **WHEN** a section tab is pressed triggering programmatic scroll
+- **THEN** tooltips are suppressed during the scroll animation.
+
 ### R8: Accessibility
 
 The system SHALL be navigable and interpretable by assistive technologies.
@@ -311,7 +335,7 @@ Page (RSC)
     │   └── NewGraph → CustomTooltip — Supplementary visualization
     ├── ChartInfoButton → ChartInfoContentRenderer — Indicator explanations (uses `chartKey` mapped to `CHART_INFO` in `src/lib/chartInfoContent.ts`)
     ├── ChartExportButton — CSV download of the displayed rows (inside each chart's <details>)
-    └── CustomTooltip (React.memo, module-level component for charts)
+    └── CustomTooltip (React.memo, module-level component for charts, managed via `useChartTooltipProps`)
 ```
 
 Every chart renders `role="img"` on its wrapper plus a `<details>` data table (R8a) containing a
@@ -341,7 +365,7 @@ data/source/*.csv
 | Module               | Description                                                                     |
 | -------------------- | ------------------------------------------------------------------------------- |
 | `useToggleSet.ts`    | Legend toggle state (React state using `useToggleSet`)                          |
-| `useChartTheme.ts`   | Chart theme management; `isMobile` derives from `MOBILE_BREAKPOINT_PX`          |
+| `useChartTheme.ts`   | Chart theme management; `isMobile` and `isTouch` (`pointer: coarse`)            |
 | `useCpiChartData.ts` | CPI chart data filtering (quarter visibility) — server-side processing complete |
 | `useUrlState.ts`     | Syncs `?from` / `?to` / `?hidden` with `router.replace` (R11)                   |
 
