@@ -2,7 +2,7 @@ import { MILESTONE_YEARS } from "@/lib/chartConstants";
 
 // 開始年・終了年のラベルと近接しすぎるマイルストーンラベルは、
 // 被り防止のため開始年・終了年を優先して非表示にする際の閾値(月数)。
-const EDGE_GAP_MONTHS = 35;
+const EDGE_GAP_MONTHS = 36;
 
 interface XAxisTickSource {
   年月: string;
