@@ -8,6 +8,7 @@ import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
 import { CHART_INFO } from "../../lib/chartInfoContent";
 import { YearReferenceLines } from "./charts/YearReferenceLines";
 import { XAxisEdgeTick } from "./charts/XAxisEdgeTick";
+import { computeXAxisTicks } from "./charts/xAxisTicks";
 
 interface QuarterlyDataPoint {
   label: string;
@@ -155,7 +156,8 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
                 />
               )}
               dy={10}
-              interval="preserveStartEnd"
+              ticks={computeXAxisTicks(data, "label")}
+              interval={0}
             />
             <YAxis
               domain={[0, "auto"]}

@@ -12,6 +12,7 @@ import {
 import type { ChartTooltipProps } from "./charts/useChartTooltipProps";
 import { YearReferenceLines } from "./charts/YearReferenceLines";
 import { XAxisEdgeTick } from "./charts/XAxisEdgeTick";
+import { computeXAxisTicks } from "./charts/xAxisTicks";
 import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
 import { EARNINGS_TABLE_CONFIGS } from "../../lib/chartConstants";
 import styles from "./CpiChart.module.css";
@@ -106,7 +107,8 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
                 />
               )}
               dy={10}
-              interval="preserveStartEnd"
+              ticks={computeXAxisTicks(data)}
+              interval={0}
             />
             <YAxis
               domain={[0, yAxisMax]}

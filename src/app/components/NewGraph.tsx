@@ -13,6 +13,7 @@ import type { CpiData } from "@/types";
 import type { ChartTooltipProps } from "./charts/useChartTooltipProps";
 import { YearReferenceLines } from "./charts/YearReferenceLines";
 import { XAxisEdgeTick } from "./charts/XAxisEdgeTick";
+import { computeXAxisTicks } from "./charts/xAxisTicks";
 import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
 import { LINE_CONFIGS } from "../../lib/chartConstants";
 
@@ -91,7 +92,8 @@ export const NewGraph: React.FC<NewGraphProps> = ({
               />
             )}
             dy={10}
-            interval="preserveStartEnd"
+            ticks={computeXAxisTicks(data)}
+            interval={0}
           />
           <YAxis
             domain={["auto", "auto"]}

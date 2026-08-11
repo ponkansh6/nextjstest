@@ -13,6 +13,7 @@ import type { CpiData } from "@/types";
 import type { ChartTooltipProps } from "./charts/useChartTooltipProps";
 import { YearReferenceLines } from "./charts/YearReferenceLines";
 import { XAxisEdgeTick } from "./charts/XAxisEdgeTick";
+import { computeXAxisTicks } from "./charts/xAxisTicks";
 import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
 
 interface ResidualAreaChartProps {
@@ -63,7 +64,8 @@ export const ResidualAreaChart: React.FC<ResidualAreaChartProps> = ({
               />
             )}
             dy={10}
-            interval="preserveStartEnd"
+            ticks={computeXAxisTicks(data)}
+            interval={0}
           />
           <YAxis
             domain={["auto", "auto"]}
