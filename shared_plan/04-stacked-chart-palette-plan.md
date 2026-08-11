@@ -214,3 +214,49 @@ dark:  #0f66ac,#89a01b,#773ac1,#1fb056,#9d2398,#1faa96,#484dd2,#1fa6b3,#b31355,#
 | `scripts/validate-palette.mjs`            | F-3（新規）             |
 | `tests/unit/palette.test.ts`              | V-2（新規）             |
 | `openspec/specs/nextjstest/spec.md`       | V-4                     |
+
+---
+
+## 実施状況(2026-08-11 完了)
+
+### 実装した全施策
+
+1. **F-1 系列色の CSS 変数化**: `src/app/globals.css` に `--series-1`〜`--series-12` を3スコープ（`:root` / `@media (prefers-color-scheme: dark)` / `:root[data-theme="dark"]`）で定義。light は `#0c5a9a,#9fbb21,#6c2cb4,#26cd65,#90108b,#26c6af,#3f40c4,#26c2d1,#a0104b,#fc875e,#a21037,#d0a720`、dark は `#0f66ac,#89a01b,#773ac1,#1fb056,#9d2398,#1faa96,#484dd2,#1fa6b3,#b31355,#f35c19,#b6143f,#b28f1a`。
+2. **F-2 `stackedColors` の変数参照化**: `src/lib/chartConstants.ts` の `stackedColors` を `["var(--series-1)", …, "var(--series-12)"]` に置換。`CpiChart.tsx` のフォールバック `"#64748b"`（2箇所）も `"var(--series-1)"` に変数化。
+3. **P-1/P-2 新12色パレット適用**: 明暗2ティア交互配置（明ティア: light L 0.745 / dark L 0.665、暗ティア: light L 0.46 / dark L 0.50、彩度上限 C 0.20）。**R-2（住居↔教養娯楽の色相入れ替え）は不適用**とし、プラン第2節の確定パレットを採用。
+4. **P-3 `fillOpacity` 1.0 化**: `StackedAreaChart.tsx` の `fillOpacity={0.8}` → `fillOpacity={1.0}`。検証値と画面上の色を一致させる必須変更。
+5. **C-1 帯の分離線**: `StackedAreaChart.tsx` の `stroke={chartColors.gridStroke} strokeWidth={1} strokeOpacity={0.4}` → `stroke="var(--card-bg)" strokeWidth={2} strokeOpacity={1}`。積み上げ帯の区切りを「背景色の 2px ギャップ」に変更。
+6. **C-2 dark グリッド可視化**: `globals.css` dark スコープの `--chart-grid: #2a2a2a` → `#383835`。
+7. **C-4 light チャート面の分離**: `globals.css` light スコープの `--card-bg: #ffffff` → `#fcfcfb`、`--background: #ffffff` → `#f9f9f7`。
+8. **C-5 軸テキスト統一**: `--chart-text` を両スコープで共通の `#898781` に統一（light `#6b7280` / dark `#a3a3a3` → `#898781`）。
+9. **A-3 凡例 hidden 状態**: `CpiChart.module.css` の `.legendItem.hidden` に `border: 1px solid var(--chart-text)` を追加し、非選択状態を両モードで明示。
+10. **A-4 凡例スウォッチのリング**: `.legendIcon` に `box-shadow: 0 0 0 1px var(--card-bg)` を追加。
+
+### 仕様書更新
+
+- `openspec/specs/nextjstest/spec.md` の R14 Theme Control に **Scenario R14b: Theme-Aware Series Palette & Visual Enhancements** を追記（WHEN/THEN 形式）。`--series-1`〜`--series-12` のテーマ連動、fill opacity 1.0、`var(--card-bg)` によるスタックギャップ分離、凡例 hidden のボーダー・リング強調を明文化。
+
+### テスト対応状況
+
+- **F-3 検証スクリプト常設化**: `scripts/validate-palette.mjs` を新規作成。OKLCH 明度バンド・彩度（0.10〜0.20）・CVD 分離（deuteranopia シミュレーション、ΔE ≥ 8）・通常視力フロア（CIEDE2000、ΔE ≥ 15）の4ハードゲートを機械検証。CLI 実行可能（`node scripts/validate-palette.mjs`）。
+- **V-2 パレット回帰テスト**: `tests/unit/palette.test.ts` を新規作成。新 light / dark パレットが全ゲート PASS、旧パレットが FAIL することを assert。
+- 初回実装で CIEDE2000 でなく簡易式（`*75` スケーリング）を使い、通常視力フロアを 15→12 に緩めていた逸脱を検出し、プランのハードゲート通りに是正した。
+
+### 検証結果
+
+| ゲート                              | 結果                                                                                                                 |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `pnpm type-check`                   | 成功                                                                                                                 |
+| `pnpm lint`                         | 成功（0 errors, 5 warnings）                                                                                         |
+| `pnpm test`                         | 成功（188件）                                                                                                        |
+| `pnpm build`                        | 成功                                                                                                                 |
+| `pnpm test:e2e`                     | 成功（52件）                                                                                                         |
+| `pnpm test:e2e:dark`                | 成功                                                                                                                 |
+| `node scripts/validate-palette.mjs` | 成功（light CVD 34.1 / 通常 37.4、dark CVD 22.2 / 通常 28.7。プラン参考値 light 28.2/29.5、dark 17.0/18.6 を上回る） |
+
+- コミット: `941acbb` `feat(chart): 費目別寄与度チャートの配色をテーマ対応パレットに刷新`
+
+### 残タスク
+
+- **R-3 目視確認（未実施）**: dev サーバを起動し、light / dark 双方で `#section-stacked` を確認する（積み上げの上端・下端が背景から分離しているか、凡例スウォッチが両モードで視認できるか、帯の 2px ギャップが両モードで同じ方向に効いているか）。
+- **push 未実施**: `main` が `origin/main` より1コミット先行している。
