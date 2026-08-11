@@ -271,6 +271,16 @@ export default function CpiChart({
 
   const [activeId, setActiveId] = useState(sections[0].id);
   const [rangeSheetOpen, setRangeSheetOpen] = useState(false);
+  // 開始年・終了年のどちらかを変更するのが主流のユースケースのため、
+  // 値が変わった時点でボトムシートを自動的に閉じる
+  const handleSetStartYear = (year: number) => {
+    setStartYear(year);
+    setRangeSheetOpen(false);
+  };
+  const handleSetEndYear = (year: number) => {
+    setEndYear(year);
+    setRangeSheetOpen(false);
+  };
   // タブクリックで開始したスムーズスクロールの最中は true。アニメーション中も
   // window の scroll イベントは連続して発火し続けるため、この間 handleScroll が
   // 素通しで setActiveId を呼ぶと、SectionTabs 側の横スクロール追従 effect が
@@ -520,8 +530,8 @@ export default function CpiChart({
               allYears={allYears.filter((y) => y >= MIN_DISPLAY_YEAR)}
               startYear={startYear}
               endYear={endYear}
-              setStartYear={setStartYear}
-              setEndYear={setEndYear}
+              setStartYear={handleSetStartYear}
+              setEndYear={handleSetEndYear}
             />
           </div>
         </>

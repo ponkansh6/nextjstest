@@ -15,6 +15,12 @@ import type { Page } from "@playwright/test";
  * - `.recharts-xAxis .recharts-cartesian-axis-tick-value` で年テキストを抽出
  * - `.recharts-bar-rectangle` の本数で四半期×表示系列の増減を検証
  * - `data-testid` で特定グラフをスコープ限定
+ *
+ * 注意: 開始年/終了年のいずれかを変更すると、ボトムシートは自動的に閉じる
+ * (片方のみを変更するのが主流のユースケースであるため)。開始年・終了年を
+ * 連続して変更する場合は、1つ目の変更後にシートが閉じた前提で、2つ目を
+ * 変更する前に再度シートを開き直す必要がある(setRange ヘルパー内の
+ * ensureSheetOpen を参照)。
  */
 
 const NOMINAL = "spending-chart-nominal";
@@ -24,8 +30,21 @@ const REAL = "spending-chart-real";
 const bars = (page: Page, testId: string) =>
   page.getByTestId(testId).locator(".recharts-bar-rectangle");
 
+// Helper: 開始年/終了年のいずれかを変更するとボトムシートが自動的に閉じるため、
+// シートが閉じていれば「表示期間を変更」ボタンを再クリックして開き直す
+const ensureSheetOpen = async (page: Page) => {
+  const isOpen = await page
+    .locator("#startYear")
+    .isVisible()
+    .catch(() => false);
+  if (!isOpen) {
+    await page.getByRole("button", { name: "表示期間を変更" }).click();
+  }
+};
+
 // Helper: 開始年・終了年を変更（制約: start <= end）
 const setRange = async (page: Page, start: number, end: number) => {
+  await ensureSheetOpen(page);
   const startSelect = page.locator("#startYear");
   const endSelect = page.locator("#endYear");
 
@@ -35,11 +54,15 @@ const setRange = async (page: Page, start: number, end: number) => {
     await startSelect.selectOption(String(start));
     // フィルタ変更後に終了年の選択肢が変わる可能性があるため、少し待つ
     await page.waitForTimeout(100);
+    // 開始年の変更でシートが自動的に閉じているため、終了年を選ぶ前に開き直す
+    await ensureSheetOpen(page);
     await endSelect.selectOption(String(end));
   } else {
     // 逆順の場合は終了→開始で設定
     await endSelect.selectOption(String(end));
     await page.waitForTimeout(100);
+    // 終了年の変更でシートが自動的に閉じているため、開始年を選ぶ前に開き直す
+    await ensureSheetOpen(page);
     await startSelect.selectOption(String(start));
   }
 };
@@ -53,7 +76,8 @@ test.describe("描画範囲変更 E2E", () => {
     await expect(bars(page, NOMINAL).first()).toBeVisible({ timeout: 10000 });
     await expect(bars(page, REAL).first()).toBeVisible({ timeout: 10000 });
     // 開始年/終了年セレクトは常時表示ではなくボトムシート内にのみ存在するため、
-    // 各テストの前にシートを開いておく(以後クリックしない限り開いたまま)
+    // 各テストの前にシートを開いておく(年変更で自動的に閉じるため、以後
+    // 必要に応じて setRange 内の ensureSheetOpen で開き直す)
     await page.getByRole("button", { name: "表示期間を変更" }).click();
   });
 
@@ -182,6 +206,33 @@ test.describe("描画範囲変更 E2E", () => {
 
     // 2014–2015が2015のみより多いこと（年が倍になるため）
     expect(bars2014to2015).toBeGreaterThan(bars2015Only);
+  });
+
+  test("開始年または終了年を変更するとボトムシートが自動的に閉じる", async ({ page }) => {
+    // beforeEach でシートは開いている
+    await expect(page.locator("#startYear")).toBeVisible();
+
+    const startOptions = await page.locator("#startYear").locator("option").allTextContents();
+    const currentEndYear = Number(await page.locator("#endYear").inputValue());
+    const newStartYear = Number(startOptions[1]?.replace("年", ""));
+    if (!newStartYear || isNaN(currentEndYear)) return;
+
+    await page.locator("#startYear").selectOption(String(newStartYear));
+
+    // 開始年変更のみでシートが自動的に閉じること
+    await expect(page.locator("#startYear")).toBeHidden();
+
+    // シートを開き直し、終了年変更でも同様に閉じることを確認
+    await page.getByRole("button", { name: "表示期間を変更" }).click();
+    await expect(page.locator("#endYear")).toBeVisible();
+
+    const endOptions = await page.locator("#endYear").locator("option").allTextContents();
+    const newEndYear = Number(endOptions[endOptions.length - 2]?.replace("年", ""));
+    if (!newEndYear) return;
+
+    await page.locator("#endYear").selectOption(String(newEndYear));
+
+    await expect(page.locator("#endYear")).toBeHidden();
   });
 
   test("操作中にコンソール/ページエラーが発生しない", async ({ page }) => {
