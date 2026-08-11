@@ -51,7 +51,14 @@ export default defineConfig({
     {
       // モバイルは Pixel (Chromium) のみ検証。iPhone (WebKit) はテスト1件あたり
       // 約2倍遅く、実測でこのプロジェクトを外すと E2E 全体が約38%短縮された。
+      //
+      // testMatch でモバイル/タッチ固有のアサーションを持つファイルのみに限定する。
+      // range-change/real-consumption/spending-filter/accessibility(ダークモード除く)
+      // はビューポートに依存しないロジック検証で chromium プロジェクトと内容が
+      // 完全に重複しており、絞り込まず全ファイルを実行すると43件が丸ごと重複し、
+      // pre-push の所要時間を大きく押し上げていた(実測でE2E全体の約1/3)。
       name: "mobile-pixel",
+      testMatch: /(mobile-ux|tooltip-dismiss)\.e2e\.spec\.ts/,
       use: { ...devices["Pixel 7"] },
     },
     {
