@@ -156,3 +156,41 @@ CSS のみの変更で、JS/TS 側のロジック変更は不要。
   ではエミュレートできないため、可能であれば実施)。
 - 実 iOS Safari / Android Chrome で、右端フェードが不自然に見えないこと、
   スワイプでのタブ横スクロールが従来どおり機能することを確認する。
+
+---
+
+## 実施状況(2026-08-11 完了)
+
+### 実装した全施策
+
+1. **ネイティブスクロールバーの非表示**: `src/app/components/CpiChart.module.css` の `.sectionTabsScroll` に `scrollbar-width: none` / `-ms-overflow-style: none` / `.sectionTabsScroll::-webkit-scrollbar { display: none }` を追加。具象コンテナの `overflow-x: auto` 自体は変更せず、スクロール機能・`scroll-snap-type`・`scrollIntoView` はそのまま動作。
+2. **右端フェード**: 同じく `.sectionTabsScroll` に `mask-image` / `-webkit-mask-image` の `linear-gradient(to right, black calc(100% - 24px), transparent 100%)` を追加し、スクロール可能であることを視覚的に示す。
+
+### 仕様書更新
+
+- `openspec/specs/nextjstest/spec.md` の R10 Section Navigation に **Scenario R10c: Horizontal Tab Scroll** を追記(WHEN/THEN 形式)。
+
+### テスト対応状況
+
+- `tests/e2e/section-tabs-scroll.e2e.spec.ts` に「タブバーのスクロールバー非表示と右端フェード」ブロック(3テスト)を追加:
+  - リロード直後(タブ未操作)に `getComputedStyle(...).scrollbarWidth === "none"` であること
+  - スクロールバー非表示でも横スクロールが機能すること(回帰ガード)
+  - 右端に `mask-image` が適用されていること
+- TDD で進行: テスト追加後に赤出し(2件失敗)を確認 → CSS 実装後に緑化(3件成功)を確認。
+
+### 検証結果
+
+| ゲート                                                                       | 結果          |
+| ---------------------------------------------------------------------------- | ------------- |
+| `lint:fast`                                                                  | 成功          |
+| `tsgo --noEmit`                                                              | 成功          |
+| `test:all`                                                                   | 成功(185件)   |
+| `build`                                                                      | 成功          |
+| `test:e2e`(chromium / chromium-dark / mobile-pixel / webkit-tabs-regression) | 成功(失敗0件) |
+
+- コミット: `3184fdd` `fix(ui): タブバーのネイティブスクロールバーを非表示にし右端フェードでスクロール可能性を示す`
+
+### 残タスク
+
+- Windows Chrome/Edge、Linux(GNOME/クラシックスクロールバー設定)でのリロード直後のスクロールバー非表示を実機確認する。
+- 実 iOS Safari / Android Chrome で、右端フェードが不自然に見えないこと、スワイプでのタブ横スクロールが従来どおり機能することを確認する。
