@@ -84,6 +84,7 @@ export const NewGraph: React.FC<NewGraphProps> = ({
             tickLine={false}
             tick={{ fill: chartColors.axisText }}
             dy={10}
+            interval="preserveStartEnd"
           />
           <YAxis
             domain={["auto", "auto"]}

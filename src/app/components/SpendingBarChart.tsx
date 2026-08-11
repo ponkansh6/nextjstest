@@ -148,6 +148,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
               tickLine={false}
               tick={{ fill: chartColors.axisText }}
               dy={10}
+              interval="preserveStartEnd"
             />
             <YAxis
               domain={[0, "auto"]}

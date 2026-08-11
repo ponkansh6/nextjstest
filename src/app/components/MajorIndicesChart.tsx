@@ -71,6 +71,7 @@ export const MajorIndicesChart: React.FC<MajorIndicesChartProps> = ({
             tickLine={false}
             tick={{ fill: chartColors.axisText }}
             dy={10}
+            interval="preserveStartEnd"
           />
           <YAxis
             domain={[0, "auto"]}

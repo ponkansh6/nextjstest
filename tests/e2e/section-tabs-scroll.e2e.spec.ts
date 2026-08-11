@@ -14,12 +14,12 @@ import { test } from "./fixtures";
  *    が競合し、後から発火する呼び出しが先の smooth スクロールをキャンセル/中断
  *    してしまう。横方向のタブスクロールが実際に発生する場合にのみ起きるため、
  *    初期表示で横スクロール無しに見えているタブ(CPI主要)では再現せず、それ
- *    以降のタブ(CAGR等)でのみ再現する。Chromiumでは再現しないWebKit固有の
+ *    以降のタブ(CPI年率等)でのみ再現する。Chromiumでは再現しないWebKit固有の
  *    挙動のため、専用の webkit-tabs-regression プロジェクト
  *    (playwright.config.ts)でのみ実行する。
  *
  * 2. LazyMount未マウント: ページ初回読み込み時、LazyMount配下のセクション
- *    (消費支出名目/実質・給与・残差・3種比較)はまだDOMに存在しない。この
+ *    (消費支出名目/実質・給与・給与物価差・3種比較)はまだDOMに存在しない。この
  *    状態でタブを押すと document.getElementById が null を返し、完全に何も
  *    起きなかった(WebKit/Chromium問わず発生)。CpiChart.tsx の
  *    handleSelectSection に LazyMount のプレースホルダー(data-lazy-section
@@ -38,7 +38,7 @@ test.describe("タブバー押下時のスクロール", () => {
   });
 
   const cases = [
-    { label: "CAGR", sectionId: "section-cagr" },
+    { label: "CPI年率", sectionId: "section-cagr" },
     { label: "消費(名目)", sectionId: "section-consumption-nominal" },
     { label: "給与", sectionId: "section-earnings" },
     { label: "3種比較", sectionId: "section-new-graph" },

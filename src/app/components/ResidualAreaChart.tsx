@@ -56,6 +56,7 @@ export const ResidualAreaChart: React.FC<ResidualAreaChartProps> = ({
             tickLine={false}
             tick={{ fill: chartColors.axisText }}
             dy={10}
+            interval="preserveStartEnd"
           />
           <YAxis
             domain={["auto", "auto"]}
