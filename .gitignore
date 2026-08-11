@@ -49,3 +49,6 @@ public/*_trial.csv
 # Ad-hoc test files
 tests/test_arquero*
 tests/test_perm.txt
+
+# Claude Code session summaries
+.claude/summaries/
