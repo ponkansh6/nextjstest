@@ -2,8 +2,14 @@
  * Validate 12-color palettes for light and dark modes according to specific quantitative gates:
  * 1. Brightness Band (OKLCH L target values & tolerances)
  * 2. Chroma Floor & Ceiling (OKLCH C bounds)
- * 3. CVD Separation (Deuteranopia simulation, minimum DeltaE >= 8 for adjacent pairs)
- * 4. Normal Vision Floor (Minimum DeltaE >= 15 for adjacent pairs)
+ * 3. CVD Separation (Machado-Oliveira-Fernandes 2009 protan/deutan simulation,
+ *    OKLab ΔE×100 >= 8, worst of protan/deutan, adjacent pairs only)
+ * 4. Normal Vision Floor (OKLab ΔE×100 >= 15, unsimulated, adjacent pairs only)
+ *
+ * "Adjacent" means (i, i+1) only, no wraparound — the stacked-area chart never
+ * renders slot 12 next to slot 1. Thresholds and simulation model match the
+ * dataviz skill's reference validator, so results here mean the same thing as
+ * the numbers documented in shared_plan/04-stacked-chart-palette-plan.md.
  */
 
 export const SLOT_CATEGORIES = [
@@ -92,112 +98,55 @@ export function hexToOklch(hex) {
   return oklabToOklch(lab);
 }
 
-export function simulateDeuteranopiaHex(hex) {
-  const [r, g, b] = hexToRgb(hex).map((v) => v / 255);
-  const dr = 0.625 * r + 0.375 * g;
-  const dg = 0.7 * r + 0.3 * g;
-  const db = 0.03491 * r + 0.12684 * g + 0.83825 * b;
+// Machado, Oliveira & Fernandes (2009) CVD transforms at severity 1.0 (linear RGB).
+// This is the model the dataviz skill's validator (and the CVD ΔE thresholds
+// below) are calibrated against — swapping in a different simulation matrix
+// (e.g. the older Brettel/Vienot-style linear approximation) shifts borderline
+// pairs and silently invalidates the ΔE >= 8 / >= 15 thresholds.
+const MACHADO = {
+  protan: [
+    [0.152286, 1.052583, -0.204868],
+    [0.114503, 0.786281, 0.099216],
+    [-0.003882, -0.048116, 1.051998],
+  ],
+  deutan: [
+    [0.367322, 0.860646, -0.227968],
+    [0.280085, 0.672501, 0.047413],
+    [-0.01182, 0.04294, 0.968881],
+  ],
+};
 
-  const clamp = (v) => Math.min(255, Math.max(0, Math.round(v * 255)));
-  const outR = clamp(dr);
-  const outG = clamp(dg);
-  const outB = clamp(db);
-
-  return `#${[outR, outG, outB].map((c) => c.toString(16).padStart(2, "0")).join("")}`;
+export function simulateCvdHex(hex, kind) {
+  const [r, g, b] = rgbToLinear(hexToRgb(hex));
+  const M = MACHADO[kind];
+  const clamp = (v) => Math.min(1, Math.max(0, v));
+  const lin = [
+    clamp(M[0][0] * r + M[0][1] * g + M[0][2] * b),
+    clamp(M[1][0] * r + M[1][1] * g + M[1][2] * b),
+    clamp(M[2][0] * r + M[2][1] * g + M[2][2] * b),
+  ];
+  const s2gamma = (c) => (c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055);
+  return lin.map((c) => Math.round(clamp(s2gamma(c)) * 255));
 }
 
-export function xyzToLab(xyz) {
-  // XYZ to CIELAB (D65 white point: Xn = 0.95047, Yn = 1.00000, Zn = 1.08883)
-  const Xn = 0.95047;
-  const Yn = 1.0;
-  const Zn = 1.08883;
-
-  const x = xyz[0] / Xn;
-  const y = xyz[1] / Yn;
-  const z = xyz[2] / Zn;
-
-  const f = (t) => (t > 216 / 24389 ? Math.cbrt(t) : (841 / 108) * t + 4 / 29);
-
-  const fx = f(x);
-  const fy = f(y);
-  const fz = f(z);
-
-  const L = 116 * fy - 16;
-  const a = 500 * (fx - fy);
-  const b = 200 * (fy - fz);
-
-  return [L, a, b];
-}
-
-export function deltaE(hex1, hex2) {
-  const rgb1 = hexToRgb(hex1);
-  const rgb2 = hexToRgb(hex2);
-  const lab1 = xyzToLab(linearRgbToXyz(rgbToLinear(rgb1)));
-  const lab2 = xyzToLab(linearRgbToXyz(rgbToLinear(rgb2)));
-
-  const L1 = lab1[0],
-    a1 = lab1[1],
-    b1 = lab1[2];
-  const L2 = lab2[0],
-    a2 = lab2[1],
-    b2 = lab2[2];
-
-  // CIEDE2000 Implementation
-  const rad = (deg) => (deg * Math.PI) / 180;
-  const deg = (rad) => (rad * 180) / Math.PI;
-
-  const avgL = (L1 + L2) / 2;
-  const c1 = Math.sqrt(a1 * a1 + b1 * b1);
-  const c2 = Math.sqrt(a2 * a2 + b2 * b2);
-  const avgC = (c1 + c2) / 2;
-
-  const g = 0.5 * (1 - Math.sqrt(Math.pow(avgC, 7) / (Math.pow(avgC, 7) + Math.pow(25, 7))));
-  const a1Prime = a1 * (1 + g);
-  const a2Prime = a2 * (1 + g);
-
-  const c1Prime = Math.sqrt(a1Prime * a1Prime + b1 * b1);
-  const c2Prime = Math.sqrt(a2Prime * a2Prime + b2 * b2);
-  const avgCPrime = (c1Prime + c2Prime) / 2;
-
-  let h1Prime = deg(Math.atan2(b1, a1Prime));
-  if (h1Prime < 0) h1Prime += 360;
-  let h2Prime = deg(Math.atan2(b2, a2Prime));
-  if (h2Prime < 0) h2Prime += 360;
-
-  let avghPrime =
-    Math.abs(h1Prime - h2Prime) > 180 ? (h1Prime + h2Prime + 360) / 2 : (h1Prime + h2Prime) / 2;
-  let deltahPrime = h2Prime - h1Prime;
-  if (Math.abs(deltahPrime) > 180) {
-    if (h2Prime <= h1Prime) deltahPrime += 360;
-    else deltahPrime -= 360;
-  }
-
-  const deltaLPrime = L2 - L1;
-  const deltaCPrime = c2Prime - c1Prime;
-  const deltaHPrime = 2 * Math.sqrt(c1Prime * c2Prime) * Math.sin(rad(deltahPrime / 2));
-
-  const t =
-    1 -
-    0.17 * Math.cos(rad(avghPrime - 30)) +
-    0.24 * Math.cos(rad(2 * avghPrime)) +
-    0.32 * Math.cos(rad(3 * avghPrime + 6)) -
-    0.2 * Math.cos(rad(4 * avghPrime - 63));
-
-  const sl = 1 + (0.015 * Math.pow(avgL - 50, 2)) / Math.sqrt(20 + Math.pow(avgL - 50, 2));
-  const sc = 1 + 0.045 * avgCPrime;
-  const sh = 1 + 0.015 * avgCPrime * t;
-
-  const deltaTheta = 30 * Math.exp(-Math.pow((avghPrime - 275) / 25, 2));
-  const rc = 2 * Math.sqrt(Math.pow(avgCPrime, 7) / (Math.pow(avgCPrime, 7) + Math.pow(25, 7)));
-  const rt = -Math.sin(rad(2 * deltaTheta)) * rc;
-
-  const termL = deltaLPrime / sl;
-  const termC = deltaCPrime / sc;
-  const termH = deltaHPrime / sh;
-
-  return Math.sqrt(
-    Math.pow(termL, 2) + Math.pow(termC, 2) + Math.pow(termH, 2) + rt * termC * termH,
-  );
+// OKLab Euclidean distance ×100 — matches the dataviz skill's validator so the
+// ΔE >= 8 (CVD) / >= 15 (normal-vision) thresholds mean the same thing here as
+// in shared_plan/04-stacked-chart-palette-plan.md.
+export function oklabDeltaE(hex1, hex2) {
+  const toOklab = (hex) => {
+    const [r, g, b] = rgbToLinear(hexToRgb(hex));
+    const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+    const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+    const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+    return [
+      0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s,
+      1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s,
+      0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s,
+    ];
+  };
+  const a = toOklab(hex1);
+  const b = toOklab(hex2);
+  return 100 * Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
 }
 
 export function validatePalette(colorString, mode) {
@@ -229,20 +178,26 @@ export function validatePalette(colorString, mode) {
     chromaDetails.push({ slot, hex, C, passed });
   });
 
+  // Adjacent pairs only (i, i+1) — no wraparound. The stacked-area chart never
+  // renders slot N next to slot 1 (they are top and bottom of the stack, not
+  // neighbors), and the dataviz skill's reference validator uses the same
+  // non-circular pairlist for stacks/bars/lines.
   let minCvdDeltaE = Infinity;
-  for (let i = 0; i < colors.length; i++) {
-    const nextIdx = (i + 1) % colors.length;
-    const sim1 = simulateDeuteranopiaHex(colors[i]);
-    const sim2 = simulateDeuteranopiaHex(colors[nextIdx]);
-    const d = deltaE(sim1, sim2);
-    if (d < minCvdDeltaE) minCvdDeltaE = d;
+  for (let i = 0; i < colors.length - 1; i++) {
+    for (const kind of ["protan", "deutan"]) {
+      const [r1, g1, b1] = simulateCvdHex(colors[i], kind);
+      const [r2, g2, b2] = simulateCvdHex(colors[i + 1], kind);
+      const hex1 = `#${[r1, g1, b1].map((c) => c.toString(16).padStart(2, "0")).join("")}`;
+      const hex2 = `#${[r2, g2, b2].map((c) => c.toString(16).padStart(2, "0")).join("")}`;
+      const d = oklabDeltaE(hex1, hex2);
+      if (d < minCvdDeltaE) minCvdDeltaE = d;
+    }
   }
   const cvdPassed = minCvdDeltaE >= 8;
 
   let minNormalDeltaE = Infinity;
-  for (let i = 0; i < colors.length; i++) {
-    const nextIdx = (i + 1) % colors.length;
-    const d = deltaE(colors[i], colors[nextIdx]);
+  for (let i = 0; i < colors.length - 1; i++) {
+    const d = oklabDeltaE(colors[i], colors[i + 1]);
     if (d < minNormalDeltaE) minNormalDeltaE = d;
   }
   const normalPassed = minNormalDeltaE >= 15;
