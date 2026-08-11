@@ -91,6 +91,7 @@ The system SHALL display economic indicators as interactive Recharts-based chart
     - Both indices are 2020-base (2020 average = 100), so the difference is 2020 average = 0.
     - The residual series is smoothed with a 2-month moving average (2MA).
   - NewGraph (supplementary view)
+  - Charts using `interval="preserveStartEnd"` on their XAxis (MajorIndicesChart, EarningsBreakdownChart, StackedAreaChart, SpendingBarChart, ResidualAreaChart, NewGraph) render the first/last (start year / end year) tick label in `--foreground` via the shared `XAxisEdgeTick` component (`src/app/components/charts/XAxisEdgeTick.tsx`), while other tick labels use the default `--chart-text` color
 
 ### R3: Data Transformation (Server-Side)
 

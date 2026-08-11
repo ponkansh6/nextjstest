@@ -3,6 +3,7 @@ import { MOBILE_BREAKPOINT_PX } from "@/lib/breakpoints";
 
 const CHART_COLORS = {
   axisText: "var(--chart-text)",
+  axisTextEmphasis: "var(--foreground)",
   gridStroke: "var(--chart-grid)",
   tooltipBg: "var(--tooltip-bg)",
   tooltipText: "var(--tooltip-text)",

@@ -7,6 +7,7 @@ import type { ChartTooltipProps } from "./charts/useChartTooltipProps";
 import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
 import { CHART_INFO } from "../../lib/chartInfoContent";
 import { YearReferenceLines } from "./charts/YearReferenceLines";
+import { XAxisEdgeTick } from "./charts/XAxisEdgeTick";
 
 interface QuarterlyDataPoint {
   label: string;
@@ -146,7 +147,13 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
               dataKey="label"
               axisLine={false}
               tickLine={false}
-              tick={{ fill: chartColors.axisText }}
+              tick={(props) => (
+                <XAxisEdgeTick
+                  {...props}
+                  fill={chartColors.axisText}
+                  emphasisFill={chartColors.axisTextEmphasis}
+                />
+              )}
               dy={10}
               interval="preserveStartEnd"
             />

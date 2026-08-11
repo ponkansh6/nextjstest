@@ -12,6 +12,7 @@ import styles from "./CpiChart.module.css";
 import type { CpiData } from "@/types";
 import type { ChartTooltipProps } from "./charts/useChartTooltipProps";
 import { YearReferenceLines } from "./charts/YearReferenceLines";
+import { XAxisEdgeTick } from "./charts/XAxisEdgeTick";
 
 interface MajorIndicesChartProps {
   data: CpiData[];
@@ -69,7 +70,13 @@ export const MajorIndicesChart: React.FC<MajorIndicesChartProps> = ({
             dataKey="年月"
             axisLine={false}
             tickLine={false}
-            tick={{ fill: chartColors.axisText }}
+            tick={(props) => (
+              <XAxisEdgeTick
+                {...props}
+                fill={chartColors.axisText}
+                emphasisFill={chartColors.axisTextEmphasis}
+              />
+            )}
             dy={10}
             interval="preserveStartEnd"
           />
