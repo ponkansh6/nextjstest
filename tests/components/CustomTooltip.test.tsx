@@ -171,6 +171,98 @@ describe("CustomTooltip", () => {
     expect(screen.getByText("2024年1月")).toBeDefined();
   });
 
+  it("keeps the tooltip hidden when a tap during programmatic scroll is released (late-display suppression)", () => {
+    const { rerender } = render(
+      <CustomTooltip
+        active={false}
+        payload={payload}
+        label="2024年1月"
+        isMobile
+        isTouch
+        tooltipBg="#1e293b"
+        tooltipText="#f1f5f9"
+        resetKey={0}
+        suppressed={true}
+      />,
+    );
+    // 抑制中のタップで resetKey が増える（active は抑制中なので false のまま）
+    rerender(
+      <CustomTooltip
+        active={false}
+        payload={payload}
+        label="2024年1月"
+        isMobile
+        isTouch
+        tooltipBg="#1e293b"
+        tooltipText="#f1f5f9"
+        resetKey={1}
+        suppressed={true}
+      />,
+    );
+    // 抑制解除。Recharts 内部に残ったクリック状態が active として後出し表示される
+    rerender(
+      <CustomTooltip
+        active
+        payload={payload}
+        label="2024年1月"
+        isMobile
+        isTouch
+        tooltipBg="#1e293b"
+        tooltipText="#f1f5f9"
+        resetKey={1}
+        suppressed={false}
+      />,
+    );
+    // 何も操作していないのに表示されてはならない
+    expect(screen.queryByText("2024年1月")).toBeNull();
+  });
+
+  it("shows the tooltip again for a legitimate tap after suppression is released", () => {
+    const { rerender } = render(
+      <CustomTooltip
+        active={false}
+        payload={payload}
+        label="2024年1月"
+        isMobile
+        isTouch
+        tooltipBg="#1e293b"
+        tooltipText="#f1f5f9"
+        resetKey={0}
+        suppressed={true}
+      />,
+    );
+    // 抑制解除（抑制中のタップなし）
+    rerender(
+      <CustomTooltip
+        active
+        payload={payload}
+        label="2024年1月"
+        isMobile
+        isTouch
+        tooltipBg="#1e293b"
+        tooltipText="#f1f5f9"
+        resetKey={0}
+        suppressed={false}
+      />,
+    );
+    expect(screen.queryByText("2024年1月")).toBeNull();
+    // 抑制解除後の正当な新規タップで resetKey が増える
+    rerender(
+      <CustomTooltip
+        active
+        payload={payload}
+        label="2024年1月"
+        isMobile
+        isTouch
+        tooltipBg="#1e293b"
+        tooltipText="#f1f5f9"
+        resetKey={1}
+        suppressed={false}
+      />,
+    );
+    expect(screen.getByText("2024年1月")).toBeDefined();
+  });
+
   it("dismisses automatically on page scroll when active and isTouch", () => {
     Object.defineProperty(window, "scrollY", { value: 0, configurable: true });
     render(

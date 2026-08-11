@@ -7,6 +7,8 @@ export interface CustomTooltipProps {
   tooltipBg: string;
   tooltipText: string;
   resetKey?: number;
+  /** プログラム的スクロール（タブジャンプ）の抑制中であることを示す */
+  suppressed?: boolean;
 }
 
 export interface CpiView extends Record<string, string | number> {

@@ -127,9 +127,15 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
       });
     }
 
-    await page.waitForTimeout(300);
+    // 固定待ちではなく、プログラム的スクロール継続中〜抑制解除後まで一定時間
+    // ポーリングして「一度も表示されない」ことを確認する。抑制解除のタイミングは
+    // 環境負荷で変動するため（最大約3秒の追跡ループ + 150msテール）、単発の
+    // アサーションでは抑制中タップの「後出し」表示を見逃す可能性がある。
     const closeButton = page.getByRole("button", { name: "閉じる" });
-    await expect(closeButton).not.toBeVisible();
+    for (let i = 0; i < 6; i++) {
+      await expect(closeButton).not.toBeVisible();
+      await page.waitForTimeout(500);
+    }
   });
 });
 

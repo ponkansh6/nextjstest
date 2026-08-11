@@ -4,9 +4,11 @@ import React, { useEffect, useRef, useState } from "react";
 import type { CustomTooltipProps } from "@/types/chart";
 
 export const CustomTooltip = React.memo<CustomTooltipProps>(
-  ({ active, payload, label, isMobile, isTouch, tooltipBg, tooltipText, resetKey }) => {
+  ({ active, payload, label, isMobile, isTouch, tooltipBg, tooltipText, resetKey, suppressed }) => {
     const [dismissed, setDismissed] = useState(false);
     const prevKeyRef = useRef<string | null>(null);
+    const prevSuppressedRef = useRef(suppressed);
+    const prevResetKeyRef = useRef(resetKey);
 
     useEffect(() => {
       setDismissed(false);
@@ -19,6 +21,22 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
       }
       prevKeyRef.current = key;
     }, [active, label]);
+
+    useEffect(() => {
+      // 抑制（タブジャンプのプログラム的スクロール）が解除された直後、
+      // 抑制中に Recharts 内部へ登録されたクリック状態が active として
+      // 「後出し」表示されるのを防ぐ。ただし、解除と同時に新しい正当な
+      // タップ（resetKey の変化）が伴う場合はそれを潰さない。
+      // この effect を label 監視 effect より後に置くことで、同一コミット内の
+      // setDismissed 呼び出しの最終結果として後出し表示を打ち消す。
+      if (prevSuppressedRef.current && !suppressed) {
+        if (resetKey === prevResetKeyRef.current) {
+          setDismissed(true);
+        }
+      }
+      prevSuppressedRef.current = suppressed;
+      prevResetKeyRef.current = resetKey;
+    }, [suppressed, resetKey]);
 
     useEffect(() => {
       if (!active || !isTouch) return;

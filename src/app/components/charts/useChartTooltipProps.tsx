@@ -30,6 +30,7 @@ export const useChartTooltipProps = ({
         tooltipBg={chartColors.tooltipBg}
         tooltipText={chartColors.tooltipText}
         resetKey={resetKey}
+        suppressed={suppressed}
       />
     ),
   };

@@ -244,3 +244,96 @@ scroll リスナを張り、表示開始時点の `window.scrollY` から一定�
    - 実 iOS Safari / Android Chrome でのタップ→表示、スクロール→非表示
    - 施策4のエッジケース（抑制解除の瞬間にツールチップが飛び出さないか）
    - タブレット横向きでの `isTouch` 判定
+
+---
+
+## 第三者検証: E2E「タブジャンプ中抑制」テストのフレーキー原因分析（2026-08-11）
+
+「実施状況」に記載の「全E2E(68 passed)」を別セッションで再実行したところ、
+`tooltip-dismiss.e2e.spec.ts` の「タブジャンプ中（プログラム的スクロール中）に
+グラフへ触れてもツールチップが出ないこと」(mobile-pixel) が2回中1回失敗した。
+これは施策4のエッジケースとして計画自身が「実機確認が必要」と記していた懸念が
+的中したものであり、**テストのタイミング設計の問題ではなく実装側の本物のバグ**
+であることを Recharts のソース(`node_modules/recharts/lib/`)を辿って特定した。
+
+### 根本原因: `active={false}` は表示のみを止め、内部クリック状態は止めない
+
+1. **抑制中のタップも Recharts 内部状態を書き換えてしまう**
+   `RechartsWrapper.js:248` — チャートの `onClick` は常に2つを同時に行う:
+
+   ```js
+   dispatch(mouseClickAction(e));       // Redux の axisInteraction.click を無条件更新
+   callback({ handler: onClick, ... }); // 我々の handleChartClick (tapNonce++) も同時発火
+   ```
+
+   `isProgrammaticScroll=true` で `<Tooltip active={false}>` を渡していても、
+   このチャート `onClick` 自体は抑制されない。`tapNonce` が増えるのと**全く同じ
+   イベントで** Recharts 内部の「クリック位置」状態(`axisInteraction.click`)も
+   同時に書き込まれる。
+
+2. **`active={false}` は一時的な上書きに過ぎない**
+   `Tooltip.js:140`:
+
+   ```js
+   finalIsActive = activeFromProps ?? isActive ?? false;
+   ```
+
+   抑制中は `activeFromProps=false` が勝つため確かに非表示になる。しかし抑制が
+   解除されると `useChartTooltipProps.tsx:25` の `active: suppressed ? false : undefined`
+   により `active` prop は `undefined` に戻り、`finalIsActive` は Redux 由来の
+   `isActive` にフォールバックする。この `isActive` は手順1で書き込まれたまま
+   残っているクリック状態を指すため、**何も操作していないのに抑制解除の瞬間に
+   「後出し」でツールチップが表示される**。
+
+3. **`CustomTooltip.tsx` 側もこの後出しを弾けない**
+   抑制中のタップでも `resetKey`(=`tapNonce`)は即座に増えるため
+   `useEffect(() => setDismissed(false), [resetKey])`(:11-13)が先に走り、
+   `dismissed` フラグは邪魔にならない。label 監視の effect(:15-21)も
+   「`active` が false→true に変わり label が変化した」ことを"新しい正当な
+   タップ"と区別できないため、素通しで再表示させてしまう。
+
+### なぜ「フレーキー」に見えたか
+
+抑制解除のタイミング(rAF `chase` ループの `STABLE_FRAMES_THRESHOLD=30` フレーム、
+または `scrollend` + 150msテール)は実時間換算が環境負荷で変動する。テストの
+固定 `waitForTimeout(300)` のウィンドウ内に「抑制解除→後出し表示」が収まるか
+どうかがブレるため、実行のたびに合否が変わって見えていた。表面上はタイミング
+依存のテストに見えるが、本質は「抑制中にタップが Recharts 内部へ登録されて
+しまい、解除後にそれが表示として顕在化する」という機能上の欠陥である。
+
+### 実運用上の影響
+
+E2E に限らず、実機でタブジャンプ中にグラフへ触れた場合も、スクロール(または
+追跡ループ)が収まった直後に、何も操作していないのにツールチップが突然出現する。
+これは本プランの目的(「タブジャンプ中の誤タップ対策」)を正面から破る不具合であり、
+**修正が必要**と判断する。
+
+### 修正方針(実装済み 2026-08-11)
+
+`suppressed` の状態を `CustomTooltip` に明示的な prop として渡し、
+「抑制が true→false に変わった瞬間、かつ新しい正当なタップ(=タブジャンプ終了後
+の追加の `resetKey` 変化)が伴っていない場合」は強制的に `dismissed=true` にする
+effect を追加した。既存の label 監視 effect より**後**に実行させることで、
+同一コミット内の `setDismissed` 呼び出しの最終結果として後出し表示を打ち消す
+(React は同一コミットの複数 `setState` を宣言順に適用するため)。
+
+実装の要点:
+
+- `src/app/components/charts/useChartTooltipProps.tsx` — `suppressed` を
+  `CustomTooltip` へ明示的に渡す(従来は `active` の算出にのみ使用)。
+- `src/types/chart.ts` — `CustomTooltipProps` に `suppressed?: boolean` を追加。
+- `src/app/components/CustomTooltip.tsx` — 抑制解除 effect を追加。
+  `prevSuppressedRef` / `prevResetKeyRef` で「解除と同時の正当な新規タップ
+  (resetKey 変化)」を区別し、その場合は抑制しない。
+- `tests/components/CustomTooltip.test.tsx` — 「抑制中のタップは解除後も
+  表示されないこと」「抑制解除後の正当な新規タップは表示されること」を追加。
+- `tests/e2e/tooltip-dismiss.e2e.spec.ts` — 「タブジャンプ中」テストの固定
+  `waitForTimeout(300)` を、約3秒間の `not.toBeVisible()` ポーリングに変更し、
+  抑制解除タイミングの変動に依存しないようにした。
+
+検証結果:
+
+- ユニット: `CustomTooltip.test.tsx` 11件(新規2件含む) / `test:all` 185件 すべて成功
+- E2E: `tooltip-dismiss.e2e.spec.ts` 全件PASS。「タブジャンプ中」テストは
+  3回連続実行で安定(修正前は2回中1回失敗)。
+- 全E2E 68件 PASS / `tsgo --noEmit` / `lint`(0 errors) / `next build` 成功

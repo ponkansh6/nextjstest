@@ -205,6 +205,12 @@ The system SHALL ensure that chart tooltips on touch devices open only on explic
 - **WHEN** a section tab is pressed triggering programmatic scroll
 - **THEN** tooltips are suppressed during the scroll animation.
 
+#### Scenario R15e: No Late Tooltip After Suppression Release
+
+- **WHEN** a tap occurs during programmatic scroll suppression and the suppression is then released
+- **THEN** the tooltip does not appear afterwards without a new legitimate tap (the tap registered inside Recharts during suppression must not surface as a late display).
+- **AND** a legitimate tap after the suppression is released still opens the tooltip.
+
 ### R8: Accessibility
 
 The system SHALL be navigable and interpretable by assistive technologies.
