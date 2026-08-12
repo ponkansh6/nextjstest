@@ -32,6 +32,9 @@
   --series-11: #762ea1;
   --series-12: #8ca7ff;
 
+  /* 消費支出バーチャート専用の独立色（CPIカテゴリーの色を流用しない） */
+  --nominal-food: #891e90;
+
   /* Component colors */
   --card-bg: #fcfcfb;
   --card-border: #f3f4f6;
@@ -73,6 +76,9 @@
     --series-10: #d465db;
     --series-11: #823bae;
     --series-12: #758ee3;
+
+    /* 消費支出バーチャート専用の独立色（CPIカテゴリーの色を流用しない） */
+    --nominal-food: #962d9d;
 
     /* Component colors for dark mode */
     --card-bg: #1a1a1a;
@@ -116,6 +122,9 @@
   --series-10: #d465db;
   --series-11: #823bae;
   --series-12: #758ee3;
+
+  /* 消費支出バーチャート専用の独立色（CPIカテゴリーの色を流用しない） */
+  --nominal-food: #962d9d;
 
   /* Component colors for dark mode */
   --card-bg: #1a1a1a;

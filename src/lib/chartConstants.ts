@@ -29,9 +29,9 @@ const NOMINAL_MAPPING: Record<string, string> = {
   "被服及び履物（名目）": "被服履物",
   "保健医療（名目）": "保健医療",
   "教育（名目）": "教育",
-  "交通・通信（名目）": "交通・通信",
   "光熱・水道（名目）": "光熱・水道",
   "教養娯楽（名目）": "教養娯楽",
+  "交通・通信（名目）": "交通・通信",
   "食料（名目）": "食料",
   "その他の消費支出（名目）": "諸雑費・CPI外支出",
 };
@@ -63,6 +63,24 @@ export const nominalColorMap: Record<string, string> = {
   "その他の消費支出（名目）": "諸雑費",
   "食料（名目）": "外食以外食料",
   "通信（名目）": "通信",
+};
+
+// 消費支出バーチャート専用の独立色（CPIカテゴリーの色を流用しない）。
+// 食料はCPI側の「外食以外食料」(bright tier)をそのまま使うとバーチャート内の
+// 隣接カテゴリーとの明度差が最適でないため、0.75/0.45交互のtier原則に沿って
+// darker tier (L=0.460/0.501, H=325°は維持)で独立に定義している。
+const NOMINAL_COLOR_OVERRIDES: Record<string, string> = {
+  "食料（名目）": "var(--nominal-food)",
+  "食料（実質）": "var(--nominal-food)",
+};
+
+export const getColorForNominalKey = (key: string): string => {
+  if (NOMINAL_COLOR_OVERRIDES[key]) {
+    return NOMINAL_COLOR_OVERRIDES[key];
+  }
+  const targetStackedKey = nominalColorMap[key];
+  const index = CPI_CATEGORIES.indexOf(targetStackedKey || "");
+  return index !== -1 ? stackedColors[index] : "var(--series-1)";
 };
 
 // --- 以下、既存の定数とユーティリティ ---

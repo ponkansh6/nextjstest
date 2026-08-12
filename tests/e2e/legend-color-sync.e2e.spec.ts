@@ -44,3 +44,34 @@ test("凡例スウォッチの色が globals.css の最新値と一致する（�
 
   expect(actualRgb).toBe(expectedRgb);
 });
+
+/**
+ * 食料は消費支出バーチャート専用の独立色（--nominal-food）を使う。
+ * CPIの「外食以外食料」(--series-10)とは値が異なるため、誤って series-10
+ * を参照する実装に戻ってしまうリグレッションもこのテストで検知できる。
+ */
+test("凡例スウォッチの色が globals.css の最新値と一致する（食料 / --nominal-food）", async ({
+  page,
+}) => {
+  const cssPath = path.resolve(__dirname, "../../src/app/globals.css");
+  const cssContent = readFileSync(cssPath, "utf-8");
+
+  const match = cssContent.match(/--nominal-food:\s*#([0-9a-fA-F]{6})/);
+  if (!match) {
+    throw new Error("globals.css に --nominal-food が見つからない");
+  }
+  const expectedHex = `#${match[1]}`;
+  const [r, g, b] = hexToRgb(expectedHex);
+  const expectedRgb = `rgb(${r}, ${g}, ${b})`;
+
+  await page.goto("/");
+
+  const nominalSection = page.locator("#section-consumption-nominal");
+  const legendButton = nominalSection.getByRole("button", { name: "食料", exact: true });
+  await expect(legendButton).toBeVisible();
+
+  const swatch = legendButton.locator("span").first();
+  const actualRgb = await swatch.evaluate((el) => window.getComputedStyle(el).backgroundColor);
+
+  expect(actualRgb).toBe(expectedRgb);
+});
