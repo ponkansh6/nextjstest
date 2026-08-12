@@ -34,8 +34,8 @@ export const TIER_MAP = {
 
 export const PALETTES = {
   light:
-    "#0c5a9a,#26c2d1,#6c2cb4,#26c6af,#006b2e,#d2a700,#7e4a00,#ff855a,#9d2527,#f66dcf,#762ea1,#8ca7ff",
-  dark: "#0f66ac,#1fa6b3,#773ac1,#1faa96,#007835,#b48f00,#8e5300,#e76737,#b02a2d,#e55dbf,#823bae,#758ee3",
+    "#0c5a9a,#26c2d1,#005e8c,#26c6af,#006b2e,#d2a700,#7e4a00,#ff855a,#9d2527,#f66dcf,#762ea1,#8ca7ff",
+  dark: "#0f66ac,#1fa6b3,#006a9d,#1faa96,#007835,#b48f00,#8e5300,#e76737,#b02a2d,#e55dbf,#823bae,#758ee3",
   oldLight:
     "#2a2080,#4647ea,#3481fe,#18b3ec,#00d0a5,#22c55e,#85e022,#fbe020,#fb923c,#c21a00,#b01500,#550500",
   oldDark:
