@@ -8,12 +8,12 @@ export const MIN_DISPLAY_YEAR = 2005;
 export const CPI_CATEGORIES = [
   "住居",
   "家具・家事用品",
-  "被服履物",
+  "被服及び履物",
   "保健医療",
   "教育",
   "光熱・水道",
   "教養娯楽",
-  "交通自動車等",
+  "交通・自動車等関係費",
   "通信",
   "外食以外食料",
   "外食",
@@ -52,14 +52,14 @@ export const NOMINAL_CONSUMPTION_CATEGORIES = Array.from(new Set(Object.values(N
 export const REAL_CONSUMPTION_CATEGORIES = Array.from(new Set(Object.values(REAL_MAPPING)));
 
 export const nominalColorMap: Record<string, string> = {
-  "交通・通信（名目）": "交通自動車等",
+  "交通・通信（名目）": "交通・自動車等関係費",
   "住居（名目）": "住居",
   "保健医療（名目）": "保健医療",
   "光熱・水道（名目）": "光熱・水道",
   "家具・家事用品（名目）": "家具・家事用品",
   "教育（名目）": "教育",
   "教養娯楽（名目）": "教養娯楽",
-  "被服及び履物（名目）": "被服履物",
+  "被服及び履物（名目）": "被服及び履物",
   "その他の消費支出（名目）": "諸雑費",
   "食料（名目）": "外食以外食料",
   "通信（名目）": "通信",
@@ -112,6 +112,11 @@ export const DISPLAY_LABEL_OVERRIDES: Record<string, string> = {
   [SUPPORT_SERIES_KEY_REAL]: "民間最終消費支出",
   food: "food",
   housing: "housing",
+  // CPI_CATEGORIES の値はデータローダーが生成する実データのフィールド名と
+  // 一致させる必要があるため正式名称のままにし、凡例表示のみここで短縮する
+  // (CPI_CATEGORIES 自体を短縮すると dataKey が実データと一致せず描画されなくなる)。
+  被服及び履物: "被服履物",
+  "交通・自動車等関係費": "交通自動車等",
 };
 
 export const getLegendLabel = (key: string) => {

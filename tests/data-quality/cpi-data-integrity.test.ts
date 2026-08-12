@@ -41,5 +41,25 @@ describe("CPI Data Integrity", () => {
         expect(sum, `Sum of CPI categories at ${d.年月} should be 50-150`).toBeLessThanOrEqual(150);
       });
     });
+
+    it("should have non-zero values for every individual CPI category (each stacked-area key must exist in the loaded data)", async () => {
+      const targetData = cpiData.filter((d) => {
+        if (!d.年月 || typeof d.年月 !== "string") return false;
+        const m = d.年月.match(/^(\d{4})年/);
+        return m ? parseInt(m[1], 10) >= 2005 : false;
+      });
+
+      expect(targetData.length).toBeGreaterThan(0);
+
+      CPI_CATEGORIES.forEach((key) => {
+        const nonZeroCount = targetData.filter(
+          (d) => Number(d[key as keyof CpiData] || 0) !== 0,
+        ).length;
+        expect(
+          nonZeroCount,
+          `CPI category "${key}" has no non-zero values in the loaded data — the key likely does not match the field name produced by the data loader, so its stacked-area layer renders as an empty (invisible) series.`,
+        ).toBeGreaterThan(0);
+      });
+    });
   });
 });
