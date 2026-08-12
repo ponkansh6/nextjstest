@@ -98,6 +98,84 @@ export function hexToOklch(hex) {
   return oklabToOklch(lab);
 }
 
+// OKLab -> Linear sRGB, Björn Ottosson's direct matrix (NOT via XYZ — the
+// matrix below already targets sRGB primaries). Feeding its output through a
+// second XYZ->RGB matrix (as an earlier ad hoc script in this project did)
+// silently produces a wrong hue/chroma with no error thrown, since the
+// numbers still look like a plausible RGB triple.
+function oklabToLinearSrgb(L, a, b) {
+  const l_ = L + 0.3963377774 * a + 0.2158037573 * b;
+  const m_ = L - 0.1055613458 * a - 0.0638541728 * b;
+  const s_ = L - 0.0894841775 * a - 1.291485548 * b;
+
+  const l = l_ ** 3;
+  const m = m_ ** 3;
+  const s = s_ ** 3;
+
+  return [
+    4.0767416621 * l - 3.3077363322 * m + 0.2309590544 * s,
+    -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+    -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s,
+  ];
+}
+
+function linearToSrgbChannel(c) {
+  const clamped = Math.max(0, Math.min(1, c));
+  return clamped <= 0.0031308 ? 12.92 * clamped : 1.055 * Math.pow(clamped, 1 / 2.4) - 0.055;
+}
+
+export function oklchToRgbLinear(L, C, H) {
+  const h_rad = (H * Math.PI) / 180;
+  const a = C * Math.cos(h_rad);
+  const b = C * Math.sin(h_rad);
+  return oklabToLinearSrgb(L, a, b);
+}
+
+// True only for values that need no clamping — an out-of-gamut triple still
+// "converts" to a hex string via linearToSrgbChannel's internal clamp, but
+// clamping each RGB channel independently shifts hue/chroma away from the
+// requested (L, C, H). Callers that care about hue accuracy must check this
+// (or go through oklchToHexInGamut, which reduces C instead of clamping RGB).
+export function isRgbInGamut(rgb, eps = 1e-7) {
+  return rgb.every((c) => c >= -eps && c <= 1 + eps);
+}
+
+export function oklchToHex(L, C, H) {
+  const [r, g, b] = oklchToRgbLinear(L, C, H);
+  const toHex = (v) =>
+    Math.round(linearToSrgbChannel(v) * 255)
+      .toString(16)
+      .padStart(2, "0");
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+// Binary search for the largest chroma at a fixed (L, H) that stays inside
+// the sRGB gamut. This is the hue-preserving alternative to clamping RGB
+// channels after the fact — clamping keeps L and H nominally the same
+// number but changes the color that actually renders (see oklchToHex above).
+export function maxChromaInGamut(L, H, { tolerance = 1e-4, maxIterations = 40 } = {}) {
+  let lo = 0;
+  let hi = 0.4; // safely above the sRGB gamut's chroma ceiling everywhere
+  for (let i = 0; i < maxIterations && hi - lo > tolerance; i++) {
+    const mid = (lo + hi) / 2;
+    if (isRgbInGamut(oklchToRgbLinear(L, mid, H))) {
+      lo = mid;
+    } else {
+      hi = mid;
+    }
+  }
+  return lo;
+}
+
+// Converts (L, C, H) to hex, reducing C to the gamut boundary (holding L, H
+// fixed) instead of clamping RGB when the requested chroma is unreachable.
+export function oklchToHexInGamut(L, C, H) {
+  if (isRgbInGamut(oklchToRgbLinear(L, C, H))) {
+    return oklchToHex(L, C, H);
+  }
+  return oklchToHex(L, maxChromaInGamut(L, H), H);
+}
+
 // Machado, Oliveira & Fernandes (2009) CVD transforms at severity 1.0 (linear RGB).
 // This is the model the dataviz skill's validator (and the CVD ΔE thresholds
 // below) are calibrated against — swapping in a different simulation matrix
