@@ -509,6 +509,12 @@
   border-bottom: 1px solid var(--card-border);
   padding: 0.5rem;
   margin-bottom: 1.5rem;
+  /* Android Chrome はスクロール中にアドレスバーを表示/非表示アニメーションさせるが、
+     この間 position: sticky 要素がメインスレッドのレイアウト再計算に同期して
+     再描画されず、タブバーがアドレスバーの高さ分だけ一時的にクリップされて見える
+     (実機で報告)。独立した合成レイヤーに昇格させ、描画をレイアウト再計算から
+     切り離すことで解消する。 */
+  transform: translateZ(0);
 }
 .sectionTabsScroll {
   /* 期間指定ボタン(.sectionRange)をこの横スクロール領域の外側(固定位置)に
