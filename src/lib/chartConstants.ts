@@ -77,18 +77,18 @@ export const targetKeys = [
 export const colors = ["#1d4ed8", "#3b82f6", "#60a5fa", "#93c5fd"];
 
 export const stackedColors = [
-  "var(--series-1)",
-  "var(--series-2)",
-  "var(--series-3)",
-  "var(--series-4)",
-  "var(--series-5)",
-  "var(--series-6)",
-  "var(--series-7)",
-  "var(--series-8)",
-  "var(--series-9)",
-  "var(--series-10)",
-  "var(--series-11)",
-  "var(--series-12)",
+  "var(--series-1)", // 住居
+  "var(--series-2)", // 家具・家事用品
+  "var(--series-3)", // 被服履物
+  "var(--series-4)", // 保健医療
+  "var(--series-5)", // 教育
+  "var(--series-8)", // 光熱・水道
+  "var(--series-9)", // 教養娯楽
+  "var(--series-6)", // 交通自動車等
+  "var(--series-7)", // 通信
+  "var(--series-10)", // 外食以外食料
+  "var(--series-11)", // 外食
+  "var(--series-12)", // 諸雑費
 ];
 
 // CPI積み上げ用
