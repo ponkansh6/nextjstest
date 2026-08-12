@@ -34,8 +34,8 @@ export const TIER_MAP = {
 
 export const PALETTES = {
   light:
-    "#0c5a9a,#26c2d1,#006943,#6cc380,#406500,#d2a700,#7e4a00,#ff855a,#9d2527,#eb72e3,#762ea1,#8ca7ff",
-  dark: "#0f66ac,#1fa6b3,#00764c,#5ba76d,#497100,#b48f00,#8e5300,#e76737,#b02a2d,#da62d2,#823bae,#758ee3",
+    "#0c5a9a,#26c2d1,#006943,#6cc380,#406500,#d2a700,#7e4a00,#ff855a,#9d2527,#e575ec,#762ea1,#8ca7ff",
+  dark: "#0f66ac,#1fa6b3,#00764c,#5ba76d,#497100,#b48f00,#8e5300,#e76737,#b02a2d,#d465db,#823bae,#758ee3",
   oldLight:
     "#2a2080,#4647ea,#3481fe,#18b3ec,#00d0a5,#22c55e,#85e022,#fbe020,#fb923c,#c21a00,#b01500,#550500",
   oldDark:
@@ -294,6 +294,63 @@ export function validatePalette(colorString, mode) {
   };
 }
 
+/**
+ * H変更のプレビュー: PALETTES.light/dark をそのまま読み、指定カテゴリの
+ * 色相だけを差し替えて検証する。手動で12要素配列を書き写す(=落とし穴2の
+ * 温床)ことを避けるための唯一の入口として使う。
+ */
+export function previewHueChange(categoryQuery, newH) {
+  const idx = SLOT_CATEGORIES.findIndex((label) => label.includes(categoryQuery));
+  if (idx === -1) {
+    throw new Error(
+      `カテゴリ "${categoryQuery}" が見つかりません。候補: ${SLOT_CATEGORIES.join(", ")}`,
+    );
+  }
+
+  const lightArr = PALETTES.light.split(",");
+  const darkArr = PALETTES.dark.split(",");
+
+  const [Ll] = hexToOklch(lightArr[idx]);
+  const [Ld] = hexToOklch(darkArr[idx]);
+
+  // 0.2006 ぴったりを要求すると hex 量子化の丸めでチロマ上限(0.2006)を
+  // わずかに超えることがあるため、0.2 で余白を確保する。
+  const newLightHex = oklchToHexInGamut(Ll, 0.2, newH);
+  const newDarkHex = oklchToHexInGamut(Ld, 0.2, newH);
+
+  lightArr[idx] = newLightHex;
+  darkArr[idx] = newDarkHex;
+
+  const lightRes = validatePalette(lightArr.join(","), "light");
+  const darkRes = validatePalette(darkArr.join(","), "dark");
+
+  // 落とし穴4: 同tier(非隣接)の色相衝突は必須ゲートで検知されないため、
+  // ここで別途警告する。
+  const slotNum = idx + 1;
+  const tier = TIER_MAP.bright.includes(slotNum) ? "bright" : "darker";
+  const sameTierWarnings = TIER_MAP[tier]
+    .filter((s) => s !== slotNum)
+    .map((s) => {
+      const [, , h] = hexToOklch(lightArr[s - 1]);
+      let dist = Math.abs(h - newH) % 360;
+      if (dist > 180) dist = 360 - dist;
+      return { slot: s, category: SLOT_CATEGORIES[s - 1], hue: h, dist };
+    })
+    .filter((w) => w.dist < 20);
+
+  return {
+    category: SLOT_CATEGORIES[idx],
+    index: idx,
+    newLightHex,
+    newDarkHex,
+    lightPassed: lightRes.passed,
+    darkPassed: darkRes.passed,
+    lightGates: lightRes.gates,
+    darkGates: darkRes.gates,
+    sameTierWarnings,
+  };
+}
+
 export function runValidation() {
   console.log("=== Palette Validation CLI ===");
   const lightRes = validatePalette(PALETTES.light, "light");
@@ -318,8 +375,4 @@ export function runValidation() {
     console.log("\n✅ All validation gates passed successfully!");
     process.exit(0);
   }
-}
-
-if (typeof require !== "undefined" && typeof module !== "undefined" && require.main === module) {
-  runValidation();
 }
