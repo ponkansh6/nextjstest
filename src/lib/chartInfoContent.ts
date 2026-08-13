@@ -151,14 +151,17 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
     ],
   },
   "new-graph": {
-    source: "e-Stat「毎月勤労統計調査」／e-Stat「消費者物価指数」／e-Stat「四半期別GDP統計」",
+    source:
+      "e-Stat「毎月勤労統計調査」／e-Stat「消費者物価指数」／e-Stat「分布調整済み原数値CTI」／e-Stat「四半期別GDP統計」",
     url: "https://www.e-stat.go.jp/stat-search/files?page=1&toukei=00200573&tstat=000001150147",
     sections: [
       {
         heading: "表示している系列",
         items: [
           { text: "給与（総合）：所定内給与 + 所定外給与 + 特別給与の12か月移動平均を指数化" },
-          { text: "消費支出（参考）：家計調査の消費支出を12か月移動平均で指数化" },
+          {
+            text: "消費支出（参考）：2017年以降は分布調整済み原数値CTIの消費支出（名目）、2016年以前は四半期別GDP統計の「民間最終消費支出」を使用し、12か月移動平均で指数化",
+          },
           { text: "物価指数（総合）：消費者物価指数総合を12か月移動平均で指数化" },
         ],
       },
