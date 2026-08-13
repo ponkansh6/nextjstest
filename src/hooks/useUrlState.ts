@@ -1,11 +1,10 @@
 "use client";
 
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import React from "react";
 
 export function useUrlState(defaultStart: number, defaultEnd: number) {
   const searchParams = useSearchParams();
-  const router = useRouter();
 
   const fromParam = searchParams.get("from");
   const toParam = searchParams.get("to");
@@ -17,7 +16,10 @@ export function useUrlState(defaultStart: number, defaultEnd: number) {
 
   const updateUrl = React.useCallback(
     (newFrom: number, newTo: number, newHidden: string[]) => {
-      const params = new URLSearchParams(searchParams.toString());
+      // router.replace は同一パスでのクエリ変更時に scroll:false でもスクロール位置をリセットする
+      // （Next.js App Router の既知の挙動）ため、window.history.replaceState で
+      // スクロール位置に影響しないURL同期を行う
+      const params = new URLSearchParams(window.location.search);
       if (newFrom !== defaultStart) {
         params.set("from", String(newFrom));
       } else {
@@ -36,9 +38,9 @@ export function useUrlState(defaultStart: number, defaultEnd: number) {
 
       const query = params.toString();
       const url = query ? `?${query}` : window.location.pathname;
-      router.replace(url, { scroll: false });
+      window.history.replaceState(window.history.state, "", url);
     },
-    [searchParams, router, defaultStart, defaultEnd],
+    [defaultStart, defaultEnd],
   );
 
   return {

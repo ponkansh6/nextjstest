@@ -265,4 +265,34 @@ test.describe("描画範囲変更 E2E", () => {
     // エラーなし
     expect(errors).toEqual([]);
   });
+
+  test("年範囲変更後もスクロール位置が維持されるべき", async ({ page }) => {
+    // NOMINAL チャートは data-testid なので getByTestId で取得し、十分下にスクロールする
+    const nominalLocator = page.getByTestId("spending-chart-nominal");
+    await nominalLocator.scrollIntoViewIfNeeded();
+    await page.evaluate(() => window.scrollBy(0, 300));
+
+    const before = await page.evaluate(() => window.scrollY);
+    expect(before).toBeGreaterThan(50);
+
+    // 開始年を1回だけ変更する。
+    // 注意: setRange は変更後にシートを開き直してページ上部の「表示期間を変更」
+    // ボタンを再クリックするため、それが自動スクロールを誘発して測定を汚染する。
+    // ここでは beforeEach で開いたシートのまま直接 selectOption する。
+    const startOptions = await page.locator("#startYear").locator("option").allTextContents();
+    const currentEndYear = Number(await page.locator("#endYear").inputValue());
+    if (startOptions.length < 2) {
+      test.skip();
+      return;
+    }
+
+    const newStartYear = Number(startOptions[1]?.replace("年", ""));
+    if (!newStartYear || isNaN(currentEndYear)) return;
+
+    await page.locator("#startYear").selectOption(String(newStartYear));
+    await page.waitForTimeout(500);
+
+    const after = await page.evaluate(() => window.scrollY);
+    expect(Math.abs(after - before)).toBeLessThan(50);
+  });
 });

@@ -290,9 +290,15 @@ The system SHALL keep view state in the URL so it survives reload and can be sha
 #### Scenario R11a: URL Synchronization
 
 - **WHEN** the year range or hidden series changes
-- **THEN** `useUrlState` writes `?from`, `?to`, `?hidden` via `router.replace`
+- **THEN** `useUrlState` writes `?from`, `?to`, `?hidden` via `window.history.replaceState`
 - **AND WHEN** the page is opened with those params
 - **THEN** the dashboard restores that range and series visibility
+
+#### Scenario R11b: Scroll Position Preservation
+
+- **WHEN** the user filters series via legend click or changes the year range
+- **THEN** URL parameters (`?from`, `?to`, `?hidden`) are synchronized using `window.history.replaceState`
+- **AND** the page scroll position is preserved without resetting to the top of the page.
 
 ### R12: Deferred Chart Mounting
 
@@ -409,7 +415,7 @@ data/source/*.csv
 | `useToggleSet.ts`    | Legend toggle state (React state using `useToggleSet`)                          |
 | `useChartTheme.ts`   | Chart theme management; `isMobile` and `isTouch` (`pointer: coarse`)            |
 | `useCpiChartData.ts` | CPI chart data filtering (quarter visibility) — server-side processing complete |
-| `useUrlState.ts`     | Syncs `?from` / `?to` / `?hidden` with `router.replace` (R11)                   |
+| `useUrlState.ts`     | Syncs `?from` / `?to` / `?hidden` with `window.history.replaceState` (R11)      |
 
 #### src/lib/
 
@@ -437,7 +443,7 @@ scripts/
 ### State Management
 
 - Legend toggle state: React state (via `useToggleSet` custom hook)
-- Year range and hidden stacked series: mirrored into the URL query by `useUrlState` (R11)
+- Year range and hidden stacked series: mirrored into the URL query by `useUrlState` via `window.history.replaceState` without altering scroll position (R11)
 - Theme: `data-theme` on `<html>`, persisted in `localStorage`, applied pre-paint by an inline script (R14)
 - Chart data: React props from server component (no client-side re-fetch on initial load)
 - API routes available for dynamic client-side queries
