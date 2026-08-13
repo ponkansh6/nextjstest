@@ -22,6 +22,7 @@ interface ResidualAreaChartProps {
   chartColors: Record<string, string>;
   tooltipProps: ChartTooltipProps;
   onClick?: () => void;
+  activeDot?: boolean;
 }
 
 export const ResidualAreaChart: React.FC<ResidualAreaChartProps> = ({
@@ -30,6 +31,7 @@ export const ResidualAreaChart: React.FC<ResidualAreaChartProps> = ({
   chartColors,
   tooltipProps,
   onClick,
+  activeDot,
 }) => (
   <div id={sectionId} className={styles.chartSection} style={{ scrollMarginTop: "5rem" }}>
     <h2 className={styles.chartTitle}>
@@ -82,6 +84,7 @@ export const ResidualAreaChart: React.FC<ResidualAreaChartProps> = ({
             fill={chartColors.barFill || "#94a3b8"}
             fillOpacity={0.8}
             isAnimationActive={false}
+            activeDot={activeDot}
           />
         </AreaChart>
       </ResponsiveContainer>

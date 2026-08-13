@@ -185,4 +185,33 @@ describe("useChartTooltipController", () => {
     });
     expect(result.current.bind("A").tooltipProps.active).toBeFalsy();
   });
+
+  it("returns activeDot as false initially on touch for inactive chart", () => {
+    const { result } = renderHook(() =>
+      useChartTooltipController({ isTouch: true, suppressed: false }),
+    );
+    const bindA = result.current.bind("A");
+    expect(bindA.activeDot).toBe(false);
+  });
+
+  it("returns activeDot as undefined for active chart and false for inactive chart after onClick", () => {
+    const { result } = renderHook(() =>
+      useChartTooltipController({ isTouch: true, suppressed: false }),
+    );
+
+    act(() => {
+      result.current.bind("A").onClick();
+    });
+
+    expect(result.current.bind("A").activeDot).toBeUndefined();
+    expect(result.current.bind("B").activeDot).toBe(false);
+  });
+
+  it("returns activeDot as undefined when isTouch is false", () => {
+    const { result } = renderHook(() =>
+      useChartTooltipController({ isTouch: false, suppressed: false }),
+    );
+    const bindA = result.current.bind("A");
+    expect(bindA.activeDot).toBeUndefined();
+  });
 });

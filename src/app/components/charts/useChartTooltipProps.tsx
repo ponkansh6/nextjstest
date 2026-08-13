@@ -18,7 +18,13 @@ export const useChartTooltipController = ({
 }: {
   suppressed: boolean;
   isTouch: boolean;
-}): { bind: (chartId: string) => { tooltipProps: ChartTooltipProps; onClick: () => void } } => {
+}): {
+  bind: (chartId: string) => {
+    tooltipProps: ChartTooltipProps;
+    onClick: () => void;
+    activeDot?: boolean;
+  };
+} => {
   const { isMobile, chartColors } = useChartTheme();
   const [activeChartId, setActiveChartId] = useState<string | null>(null);
 
@@ -88,6 +94,7 @@ export const useChartTooltipController = ({
             setActiveChartId(chartId);
           }
         },
+        activeDot: isTouch ? (isThisActive ? undefined : false) : undefined,
       };
     },
     [chartColors, isMobile, isTouch, suppressed, activeChartId, dismiss],

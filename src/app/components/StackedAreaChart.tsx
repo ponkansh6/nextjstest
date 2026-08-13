@@ -29,6 +29,7 @@ interface StackedAreaChartProps {
   tooltipProps: ChartTooltipProps;
   onClick?: () => void;
   onReset: () => void;
+  activeDot?: boolean;
 }
 
 export const StackedAreaChart: React.FC<StackedAreaChartProps> = ({
@@ -43,6 +44,7 @@ export const StackedAreaChart: React.FC<StackedAreaChartProps> = ({
   tooltipProps,
   onClick,
   onReset,
+  activeDot,
 }) => {
   return (
     <div id={sectionId} className={styles.chartSection} style={{ scrollMarginTop: "5rem" }}>
@@ -122,6 +124,7 @@ export const StackedAreaChart: React.FC<StackedAreaChartProps> = ({
                   fill={colors[index]}
                   fillOpacity={1.0}
                   isAnimationActive={false}
+                  activeDot={activeDot}
                 />
               ) : null,
             )}

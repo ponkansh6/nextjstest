@@ -27,6 +27,7 @@ interface NewGraphProps {
   chartKey?: string;
   tooltipProps: ChartTooltipProps;
   onClick?: () => void;
+  activeDot?: boolean;
 }
 
 export const NewGraph: React.FC<NewGraphProps> = ({
@@ -39,6 +40,7 @@ export const NewGraph: React.FC<NewGraphProps> = ({
   chartKey,
   tooltipProps,
   onClick,
+  activeDot,
 }) => (
   <div id={sectionId} className={styles.chartSection} style={{ scrollMarginTop: "5rem" }}>
     <div className={styles.chartTitleRow}>
@@ -113,6 +115,7 @@ export const NewGraph: React.FC<NewGraphProps> = ({
                 strokeWidth={isMobile ? 2 : 3}
                 dot={false}
                 isAnimationActive={false}
+                activeDot={activeDot}
               />
             ) : null,
           )}

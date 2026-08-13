@@ -24,6 +24,7 @@ interface MajorIndicesChartProps {
   chartColors: Record<string, string>;
   tooltipProps: ChartTooltipProps;
   onClick?: () => void;
+  activeDot?: boolean;
 }
 
 export const MajorIndicesChart: React.FC<MajorIndicesChartProps> = ({
@@ -35,6 +36,7 @@ export const MajorIndicesChart: React.FC<MajorIndicesChartProps> = ({
   chartColors,
   tooltipProps,
   onClick,
+  activeDot,
 }) => (
   <>
     <div className={styles.legendContainer}>
@@ -100,6 +102,7 @@ export const MajorIndicesChart: React.FC<MajorIndicesChartProps> = ({
                 fill={colors[index]}
                 fillOpacity={0.8}
                 isAnimationActive={false}
+                activeDot={activeDot}
               />
             ) : null,
           )}

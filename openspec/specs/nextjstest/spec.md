@@ -227,6 +227,11 @@ The system SHALL ensure that chart tooltips on touch devices open only on explic
 - **WHEN** the user closes the tooltip via the close button or scrolls 40px or more on a touch device
 - **THEN** the guide line disappears together with the tooltip.
 
+#### Scenario R15i: Active Dot Dismissal
+
+- **WHEN** the user dismisses a tooltip on a touch device (close button, outside tap, or scroll) on an area or line chart
+- **THEN** the active data point dots (`.recharts-active-dot`) disappear together with the guide line and tooltip.
+
 ### R8: Accessibility
 
 The system SHALL be navigable and interpretable by assistive technologies.

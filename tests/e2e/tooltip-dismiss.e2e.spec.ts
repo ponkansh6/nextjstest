@@ -164,6 +164,68 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
     ).toBeVisible({ timeout: 5000 });
   });
 
+  test("エリアチャートをグラフ外タップで閉じるとアクティブドットも消える", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
+
+    const stacked = page.locator("#section-stacked");
+    await stacked.scrollIntoViewIfNeeded();
+    const wrapper = stacked.locator(".recharts-wrapper").first();
+    await expect(wrapper).toBeVisible({ timeout: 10000 });
+
+    const box = await wrapper.boundingBox();
+    expect(box).not.toBeNull();
+    if (!box) return;
+    await wrapper.tap({ position: { x: box.width / 2, y: box.height / 2 } });
+
+    const closeButton = page.getByRole("button", { name: "閉じる" });
+    await expect(closeButton).toBeVisible({ timeout: 5000 });
+    await expect(page.locator(".recharts-tooltip-cursor")).toHaveCount(1);
+    const dotCountAfterTap = await page.locator(".recharts-active-dot").count();
+    expect(
+      dotCountAfterTap,
+      "タップ後、エリアチャートにアクティブドットが表示されるべき",
+    ).toBeGreaterThan(0);
+
+    // グラフ外（チャートタイトル見出し）をタップして閉じる
+    const heading = page.getByRole("heading", { name: /費目別寄与度/ }).first();
+    await heading.tap();
+
+    await expect(closeButton).not.toBeVisible({ timeout: 5000 });
+    await expect(page.locator(".recharts-tooltip-cursor")).toHaveCount(0);
+    await expect(
+      page.locator(".recharts-active-dot"),
+      "グラフ外タップで閉じた後、アクティブドットも消えるべき",
+    ).toHaveCount(0);
+  });
+
+  test("エリアチャートを✕で閉じるとアクティブドットも消える", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
+
+    const stacked = page.locator("#section-stacked");
+    await stacked.scrollIntoViewIfNeeded();
+    const wrapper = stacked.locator(".recharts-wrapper").first();
+    await expect(wrapper).toBeVisible({ timeout: 10000 });
+
+    const box = await wrapper.boundingBox();
+    expect(box).not.toBeNull();
+    if (!box) return;
+    await wrapper.tap({ position: { x: box.width / 2, y: box.height / 2 } });
+
+    const closeButton = page.getByRole("button", { name: "閉じる" });
+    await expect(closeButton).toBeVisible({ timeout: 5000 });
+    expect(await page.locator(".recharts-active-dot").count()).toBeGreaterThan(0);
+
+    await closeButton.tap();
+
+    await expect(closeButton).not.toBeVisible({ timeout: 5000 });
+    await expect(
+      page.locator(".recharts-active-dot"),
+      "✕で閉じた後、アクティブドットも消えるべき",
+    ).toHaveCount(0);
+  });
+
   test("タブジャンプ中（プログラム的スクロール中）にグラフへ触れてもツールチップが出ないこと", async ({
     page,
   }) => {

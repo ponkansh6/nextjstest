@@ -27,6 +27,7 @@ interface EarningsBreakdownChartProps {
   isMobile: boolean;
   tooltipProps: ChartTooltipProps;
   onClick?: () => void;
+  activeDot?: boolean;
 }
 
 export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
@@ -38,6 +39,7 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
   isMobile,
   tooltipProps,
   onClick,
+  activeDot,
 }) => {
   const configs = EARNINGS_TABLE_CONFIGS;
 
@@ -132,6 +134,7 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
                   fill={color}
                   fillOpacity={0.8}
                   isAnimationActive={false}
+                  activeDot={activeDot}
                 />
               ) : (
                 <Line
@@ -142,6 +145,7 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
                   strokeWidth={isMobile ? 2 : 4}
                   dot={false}
                   isAnimationActive={false}
+                  activeDot={activeDot}
                 />
               );
             })}
