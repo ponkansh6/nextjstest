@@ -318,6 +318,7 @@ The system SHALL allow explicit theme selection independent of the OS setting.
 - **AND** `StackedAreaChart` series colors adapt automatically to the active theme via `var(--series-N)` references in `chartConstants.ts`
 - **AND** fill opacity is set to 1.0, and stacking separator gaps use `var(--card-bg)` for clear layer distinction
 - **AND** hidden legend items (`.legendItem.hidden`) display enhanced borders and swatches with rings
+- **AND** each `globals.css` theme scope (`:root` / `@media (prefers-color-scheme: dark)` / `:root[data-theme="dark"]`) applies the validated palette values (`PALETTES.light` / `PALETTES.dark` in `scripts/validate-palette.mjs`) to `--series-1` through `--series-12`, and the two dark scopes remain identical
 
 ### R9: Page Metadata and Header
 
