@@ -9,6 +9,7 @@ import { test, expect } from "./fixtures";
  * また、同じ地点の再タップで再表示される機能や、プログラム的スクロール中の抑制を検証する。
  */
 const NOMINAL = "spending-chart-nominal";
+const REAL = "spending-chart-real";
 
 test.describe("モバイル ツールチップの閉じるボタンとインタラクション", () => {
   test.beforeEach(({}, testInfo) => {
@@ -18,7 +19,9 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
     );
   });
 
-  test("グラフをタップするとツールチップが表示され、✕ボタンで閉じられる", async ({ page }) => {
+  test("グラフをタップするとツールチップが表示され、✕ボタンとガイド線で閉じられる", async ({
+    page,
+  }) => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
@@ -31,6 +34,7 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
     await expect(closeButton, "タップ後、ツールチップの閉じるボタンが表示されるべき").toBeVisible({
       timeout: 5000,
     });
+    expect(await page.locator(".recharts-tooltip-cursor").count()).toBeGreaterThan(0);
 
     await closeButton.tap();
 
@@ -38,6 +42,71 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
       closeButton,
       "閉じるボタンをタップした後、ツールチップは非表示になるべき",
     ).not.toBeVisible({ timeout: 5000 });
+    await expect(page.locator(".recharts-tooltip-cursor")).toHaveCount(0);
+  });
+
+  test("グラフ外をタップすると閉じるボタンとガイド線の両方が消える", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
+
+    const bar = page.getByTestId(NOMINAL).locator(".recharts-bar-rectangle").first();
+    await expect(bar).toBeVisible({ timeout: 10000 });
+    await bar.tap();
+
+    const closeButton = page.getByRole("button", { name: "閉じる" });
+    await expect(closeButton).toBeVisible({ timeout: 5000 });
+    expect(await page.locator(".recharts-tooltip-cursor").count()).toBeGreaterThan(0);
+
+    // Tap outside the chart (the chart title heading is outside .recharts-wrapper)
+    const heading = page.getByRole("heading", { name: /消費支出（名目）/ }).first();
+    await heading.tap();
+
+    await expect(closeButton).not.toBeVisible({ timeout: 5000 });
+    await expect(page.locator(".recharts-tooltip-cursor")).toHaveCount(0);
+  });
+
+  test("別グラフをタップすると既存のガイド線が消え、新しいガイド線が1本だけになる", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
+
+    const realChart = page.getByTestId(REAL);
+    await realChart.scrollIntoViewIfNeeded();
+
+    const nominalBar = page.getByTestId(NOMINAL).locator(".recharts-bar-rectangle").first();
+    await nominalBar.scrollIntoViewIfNeeded();
+    await nominalBar.tap();
+
+    const closeButton = page.getByRole("button", { name: "閉じる" });
+    await expect(closeButton).toBeVisible({ timeout: 5000 });
+    expect(await page.locator(".recharts-tooltip-cursor").count()).toBe(1);
+
+    const realBar = realChart.locator(".recharts-bar-rectangle").first();
+    await realBar.tap();
+
+    await expect(closeButton).toBeVisible({ timeout: 5000 });
+    // Total count of tooltip cursor across the page should still be 1 (old one dismissed)
+    await expect(page.locator(".recharts-tooltip-cursor")).toHaveCount(1);
+  });
+
+  test("スクロールするとガイド線とツールチップが自動で消える", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
+
+    const bar = page.getByTestId(NOMINAL).locator(".recharts-bar-rectangle").first();
+    await expect(bar).toBeVisible({ timeout: 10000 });
+    await bar.tap();
+
+    const closeButton = page.getByRole("button", { name: "閉じる" });
+    await expect(closeButton).toBeVisible({ timeout: 5000 });
+    expect(await page.locator(".recharts-tooltip-cursor").count()).toBe(1);
+
+    // Scroll down by 60px
+    await page.mouse.wheel(0, 60);
+
+    await expect(closeButton).not.toBeVisible({ timeout: 5000 });
+    await expect(page.locator(".recharts-tooltip-cursor")).toHaveCount(0);
   });
 
   test("グラフ上を縦にスワイプしてもツールチップが表示されないこと（ネガティブテスト）", async ({
@@ -71,7 +140,6 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
       touchPoints: [],
     });
 
-    // スワイプ操作のみの場合はツールチップが開かないため、閉じるボタンは最初から存在しない
     const closeButton = page.getByRole("button", { name: "閉じる" });
     await expect(closeButton).not.toBeVisible();
   });
@@ -83,14 +151,12 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
     const bar = page.getByTestId(NOMINAL).locator(".recharts-bar-rectangle").first();
     await expect(bar).toBeVisible({ timeout: 10000 });
 
-    // 1回目タップ＆クローズ
     await bar.tap();
     const closeButton = page.getByRole("button", { name: "閉じる" });
     await expect(closeButton).toBeVisible({ timeout: 5000 });
     await closeButton.tap();
     await expect(closeButton).not.toBeVisible({ timeout: 5000 });
 
-    // 同じバーをもう一度タップ
     await bar.tap();
     await expect(
       closeButton,
@@ -107,11 +173,9 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
     const cpiWrapper = page.locator("#section-cpi-major .recharts-wrapper").first();
     await cpiWrapper.scrollIntoViewIfNeeded();
 
-    // SectionTabs のタブを正確に指定（CSS モジュールのハッシュに依存しない）
     const tabButton = page.getByRole("button", { name: "給与", exact: true });
     await tabButton.tap();
 
-    // タブタップ直後、スクロール開始直後に CPI チャート上にタップを dispatch
     const box = await cpiWrapper.boundingBox();
     if (box) {
       const cx = box.x + box.width / 2;
@@ -127,10 +191,6 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
       });
     }
 
-    // 固定待ちではなく、プログラム的スクロール継続中〜抑制解除後まで一定時間
-    // ポーリングして「一度も表示されない」ことを確認する。抑制解除のタイミングは
-    // 環境負荷で変動するため（最大約3秒の追跡ループ + 150msテール）、単発の
-    // アサーションでは抑制中タップの「後出し」表示を見逃す可能性がある。
     const closeButton = page.getByRole("button", { name: "閉じる" });
     for (let i = 0; i < 6; i++) {
       await expect(closeButton).not.toBeVisible();
@@ -161,5 +221,9 @@ test.describe("デスクトップ ツールチップのホバー回帰テスト"
     await expect(tooltipWrapper, "ホバー時にツールチップラッパーが表示されるべき").toBeVisible({
       timeout: 5000,
     });
+
+    // Move mouse away to ensure it clears
+    await page.mouse.move(0, 0);
+    await expect(tooltipWrapper).not.toBeVisible({ timeout: 5000 });
   });
 });

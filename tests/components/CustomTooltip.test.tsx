@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { CustomTooltip } from "../../src/app/components/CustomTooltip";
 
 const payload = [{ name: "総合", value: 112.5, color: "#1d4ed8" }];
@@ -66,7 +66,8 @@ describe("CustomTooltip", () => {
     expect(screen.getByRole("button", { name: "閉じる" })).toBeDefined();
   });
 
-  it("hides the tooltip after the close button is clicked", () => {
+  it("calls onDismiss when close button is clicked or touchEnd", () => {
+    const handleDismiss = vi.fn();
     render(
       <CustomTooltip
         active
@@ -76,210 +77,14 @@ describe("CustomTooltip", () => {
         isTouch
         tooltipBg="#1e293b"
         tooltipText="#f1f5f9"
+        onDismiss={handleDismiss}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
-    expect(screen.queryByText("2024年1月")).toBeNull();
-  });
+    const closeBtn = screen.getByRole("button", { name: "閉じる" });
+    fireEvent.click(closeBtn);
+    expect(handleDismiss).toHaveBeenCalledTimes(1);
 
-  it("stays hidden while the same data point remains active (rerender with same label)", () => {
-    const { rerender } = render(
-      <CustomTooltip
-        active
-        payload={payload}
-        label="2024年1月"
-        isMobile
-        isTouch
-        tooltipBg="#1e293b"
-        tooltipText="#f1f5f9"
-      />,
-    );
-    fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
-    expect(screen.queryByText("2024年1月")).toBeNull();
-
-    rerender(
-      <CustomTooltip
-        active
-        payload={payload}
-        label="2024年1月"
-        isMobile
-        isTouch
-        tooltipBg="#1e293b"
-        tooltipText="#f1f5f9"
-      />,
-    );
-    expect(screen.queryByText("2024年1月")).toBeNull();
-  });
-
-  it("reopens automatically when a different data point becomes active", () => {
-    const { rerender } = render(
-      <CustomTooltip
-        active
-        payload={payload}
-        label="2024年1月"
-        isMobile
-        isTouch
-        tooltipBg="#1e293b"
-        tooltipText="#f1f5f9"
-      />,
-    );
-    fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
-    expect(screen.queryByText("2024年1月")).toBeNull();
-
-    rerender(
-      <CustomTooltip
-        active
-        payload={payload}
-        label="2024年2月"
-        isMobile
-        isTouch
-        tooltipBg="#1e293b"
-        tooltipText="#f1f5f9"
-      />,
-    );
-    expect(screen.getByText("2024年2月")).toBeDefined();
-  });
-
-  it("reopens when resetKey changes even if label is the same", () => {
-    const { rerender } = render(
-      <CustomTooltip
-        active
-        payload={payload}
-        label="2024年1月"
-        isMobile
-        isTouch
-        tooltipBg="#1e293b"
-        tooltipText="#f1f5f9"
-        resetKey={0}
-      />,
-    );
-    fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
-    expect(screen.queryByText("2024年1月")).toBeNull();
-
-    rerender(
-      <CustomTooltip
-        active
-        payload={payload}
-        label="2024年1月"
-        isMobile
-        isTouch
-        tooltipBg="#1e293b"
-        tooltipText="#f1f5f9"
-        resetKey={1}
-      />,
-    );
-    expect(screen.getByText("2024年1月")).toBeDefined();
-  });
-
-  it("keeps the tooltip hidden when a tap during programmatic scroll is released (late-display suppression)", () => {
-    const { rerender } = render(
-      <CustomTooltip
-        active={false}
-        payload={payload}
-        label="2024年1月"
-        isMobile
-        isTouch
-        tooltipBg="#1e293b"
-        tooltipText="#f1f5f9"
-        resetKey={0}
-        suppressed={true}
-      />,
-    );
-    // 抑制中のタップで resetKey が増える（active は抑制中なので false のまま）
-    rerender(
-      <CustomTooltip
-        active={false}
-        payload={payload}
-        label="2024年1月"
-        isMobile
-        isTouch
-        tooltipBg="#1e293b"
-        tooltipText="#f1f5f9"
-        resetKey={1}
-        suppressed={true}
-      />,
-    );
-    // 抑制解除。Recharts 内部に残ったクリック状態が active として後出し表示される
-    rerender(
-      <CustomTooltip
-        active
-        payload={payload}
-        label="2024年1月"
-        isMobile
-        isTouch
-        tooltipBg="#1e293b"
-        tooltipText="#f1f5f9"
-        resetKey={1}
-        suppressed={false}
-      />,
-    );
-    // 何も操作していないのに表示されてはならない
-    expect(screen.queryByText("2024年1月")).toBeNull();
-  });
-
-  it("shows the tooltip again for a legitimate tap after suppression is released", () => {
-    const { rerender } = render(
-      <CustomTooltip
-        active={false}
-        payload={payload}
-        label="2024年1月"
-        isMobile
-        isTouch
-        tooltipBg="#1e293b"
-        tooltipText="#f1f5f9"
-        resetKey={0}
-        suppressed={true}
-      />,
-    );
-    // 抑制解除（抑制中のタップなし）
-    rerender(
-      <CustomTooltip
-        active
-        payload={payload}
-        label="2024年1月"
-        isMobile
-        isTouch
-        tooltipBg="#1e293b"
-        tooltipText="#f1f5f9"
-        resetKey={0}
-        suppressed={false}
-      />,
-    );
-    expect(screen.queryByText("2024年1月")).toBeNull();
-    // 抑制解除後の正当な新規タップで resetKey が増える
-    rerender(
-      <CustomTooltip
-        active
-        payload={payload}
-        label="2024年1月"
-        isMobile
-        isTouch
-        tooltipBg="#1e293b"
-        tooltipText="#f1f5f9"
-        resetKey={1}
-        suppressed={false}
-      />,
-    );
-    expect(screen.getByText("2024年1月")).toBeDefined();
-  });
-
-  it("dismisses automatically on page scroll when active and isTouch", () => {
-    Object.defineProperty(window, "scrollY", { value: 0, configurable: true });
-    render(
-      <CustomTooltip
-        active
-        payload={payload}
-        label="2024年1月"
-        isMobile
-        isTouch
-        tooltipBg="#1e293b"
-        tooltipText="#f1f5f9"
-      />,
-    );
-    expect(screen.getByText("2024年1月")).toBeDefined();
-
-    Object.defineProperty(window, "scrollY", { value: 100, configurable: true });
-    fireEvent.scroll(window);
-    expect(screen.queryByText("2024年1月")).toBeNull();
+    fireEvent.touchEnd(closeBtn);
+    expect(handleDismiss).toHaveBeenCalledTimes(2);
   });
 });

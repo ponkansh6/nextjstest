@@ -11,7 +11,7 @@ import { ChartFilters } from "./ChartFilters";
 import { SectionTabs } from "./SectionTabs";
 import { LazyMount } from "./LazyMount";
 import { useChartTheme } from "../../hooks/useChartTheme";
-import { useChartTooltipProps } from "./charts/useChartTooltipProps";
+import { useChartTooltipController } from "./charts/useChartTooltipProps";
 import { useCpiChartData } from "../../hooks/useCpiChartData";
 import { useToggleSet } from "../../hooks/useToggleSet";
 import { useUrlState } from "../../hooks/useUrlState";
@@ -280,7 +280,6 @@ export default function CpiChart({
   // 進行中の縦方向 smooth スクロールが中断され、目的のセクションまで届かずに
   // 止まってしまう不具合があった(実機のiPhone/Androidで確認)。
   const isProgrammaticScrollRef = useRef(false);
-  const [tapNonce, setTapNonce] = useState(0);
   const [isProgrammaticScroll, setIsProgrammaticScroll] = useState(false);
   const programmaticScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -302,11 +301,8 @@ export default function CpiChart({
     };
   }, []);
 
-  const tooltipProps = useChartTooltipProps({
-    resetKey: tapNonce,
-    suppressed: isProgrammaticScroll,
-  });
-  const handleChartClick = () => setTapNonce((n) => n + 1);
+  const { isTouch } = useChartTheme();
+  const chartTooltip = useChartTooltipController({ suppressed: isProgrammaticScroll, isTouch });
 
   useEffect(() => {
     const handleScroll = () => {
@@ -549,8 +545,7 @@ export default function CpiChart({
           hiddenKeys={hiddenKeys}
           onToggle={handleLegendClick}
           chartColors={chartColors}
-          tooltipProps={tooltipProps}
-          onClick={handleChartClick}
+          {...chartTooltip.bind("section-cpi-major")}
         />
         <p className={styles.chartNote}>
           <a href="#data-table-section-cpi-major">データテーブルを表示 ▾</a>
@@ -567,8 +562,7 @@ export default function CpiChart({
         hiddenKeys={stackedHiddenKeys}
         onToggle={handleStackedLegendClick}
         chartColors={chartColors}
-        tooltipProps={tooltipProps}
-        onClick={handleChartClick}
+        {...chartTooltip.bind("section-stacked")}
         onReset={() =>
           setStackedHiddenKeys((prev) =>
             prev.length === stackedKeys.length ? [] : [...stackedKeys],
@@ -601,8 +595,7 @@ export default function CpiChart({
           hiddenKeys={nominalHiddenKeys}
           onToggle={handleLegendToggle}
           chartColors={chartColors}
-          tooltipProps={tooltipProps}
-          onClick={handleChartClick}
+          {...chartTooltip.bind("section-consumption-nominal")}
           hiddenQuarters={hiddenQuarters}
           onToggleQuarter={handleQuarterLegendClick}
           onReset={createDualResetHandler(
@@ -632,8 +625,7 @@ export default function CpiChart({
           hiddenKeys={realHiddenKeys}
           onToggle={handleLegendToggle}
           chartColors={chartColors}
-          tooltipProps={tooltipProps}
-          onClick={handleChartClick}
+          {...chartTooltip.bind("section-consumption-real")}
           hiddenQuarters={hiddenQuarters}
           onToggleQuarter={handleQuarterLegendClick}
           onReset={createDualResetHandler(
@@ -662,8 +654,7 @@ export default function CpiChart({
           onToggle={handleLegendClick}
           chartColors={chartColors}
           isMobile={isMobile}
-          tooltipProps={tooltipProps}
-          onClick={handleChartClick}
+          {...chartTooltip.bind("section-earnings")}
         />
       </LazyMount>
 
@@ -672,8 +663,7 @@ export default function CpiChart({
           sectionId="section-residual"
           data={mergedData}
           chartColors={chartColors}
-          tooltipProps={tooltipProps}
-          onClick={handleChartClick}
+          {...chartTooltip.bind("section-residual")}
         />
       </LazyMount>
 
@@ -686,8 +676,7 @@ export default function CpiChart({
           chartColors={chartColors}
           isMobile={isMobile}
           chartKey="new-graph"
-          tooltipProps={tooltipProps}
-          onClick={handleChartClick}
+          {...chartTooltip.bind("section-new-graph")}
         />
       </LazyMount>
 

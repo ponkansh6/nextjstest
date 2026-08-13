@@ -199,7 +199,7 @@ The system SHALL ensure that chart tooltips on touch devices open only on explic
 #### Scenario R15c: Re-taping Dismissed Tooltip
 
 - **WHEN** a tooltip is closed via the close button on a touch device
-- **THEN** tapping the same point again re-opens the tooltip (via `resetKey`).
+- **THEN** tapping the same point again re-opens the tooltip.
 
 #### Scenario R15d: Programmatic Scroll Suppression
 
@@ -209,8 +209,23 @@ The system SHALL ensure that chart tooltips on touch devices open only on explic
 #### Scenario R15e: No Late Tooltip After Suppression Release
 
 - **WHEN** a tap occurs during programmatic scroll suppression and the suppression is then released
-- **THEN** the tooltip does not appear afterwards without a new legitimate tap (the tap registered inside Recharts during suppression must not surface as a late display).
+- **THEN** the tooltip does not appear afterwards without a new legitimate tap, because taps during suppression do not update the `activeChartId` display state.
 - **AND** a legitimate tap after the suppression is released still opens the tooltip.
+
+#### Scenario R15f: Outside Tap Dismissal
+
+- **WHEN** the user taps outside the chart (outside `.recharts-wrapper`) on a touch device while a tooltip is shown
+- **THEN** both the tooltip and the guide line (`.recharts-tooltip-cursor`) disappear.
+
+#### Scenario R15g: Single Guide Line Across Charts
+
+- **WHEN** the user taps a second chart while the first chart's tooltip is shown
+- **THEN** the first chart's guide line disappears and at most one guide line is visible at a time.
+
+#### Scenario R15h: Guide Line Dismissal with Close / Scroll
+
+- **WHEN** the user closes the tooltip via the close button or scrolls 40px or more on a touch device
+- **THEN** the guide line disappears together with the tooltip.
 
 ### R8: Accessibility
 
@@ -357,7 +372,7 @@ Page (RSC)
     │   └── NewGraph → CustomTooltip — Supplementary visualization
     ├── ChartInfoButton → ChartInfoContentRenderer — Indicator explanations (uses `chartKey` mapped to `CHART_INFO` in `src/lib/chartInfoContent.ts`)
     ├── ChartExportButton — CSV download of the displayed rows (inside each chart's <details>)
-    └── CustomTooltip (React.memo, module-level component for charts, managed via `useChartTooltipProps`)
+    └── CustomTooltip (React.memo, module-level component for charts, managed via `useChartTooltipController`)
 ```
 
 Every chart renders `role="img"` on its wrapper plus a `<details>` data table (R8a) containing a
