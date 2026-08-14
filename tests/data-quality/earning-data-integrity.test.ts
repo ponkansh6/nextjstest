@@ -247,7 +247,7 @@ describe("Earnings Data Integrity", () => {
         const minkanVal = d["民間最終消費支出（参考）" as keyof CpiData];
         const ctiVal = d["CTI消費支出（参考）" as keyof CpiData];
 
-        if (year <= 2016) {
+        if (year <= 2017) {
           expect(
             minkanVal,
             `民間最終消費支出（参考） at ${d.年月} should be positive number`,
@@ -268,17 +268,17 @@ describe("Earnings Data Integrity", () => {
         }
       });
 
-      // 2014年と2019年の特定月で確認
+      // 2014年と2020年の特定月で確認
       const d2014 = earningData.find((d) => d.年月 === "2014年6月");
-      const d2019 = earningData.find((d) => d.年月 === "2019年6月");
+      const d2020 = earningData.find((d) => d.年月 === "2020年6月");
 
       expect(d2014).toBeDefined();
       expect(d2014!["民間最終消費支出（参考）"]).toBeGreaterThan(0);
       expect(d2014!["CTI消費支出（参考）"]).toBeNull();
 
-      expect(d2019).toBeDefined();
-      expect(d2019!["民間最終消費支出（参考）"]).toBeNull();
-      expect(d2019!["CTI消費支出（参考）"]).toBeGreaterThan(0);
+      expect(d2020).toBeDefined();
+      expect(d2020!["民間最終消費支出（参考）"]).toBeNull();
+      expect(d2020!["CTI消費支出（参考）"]).toBeGreaterThan(0);
     });
   });
 });

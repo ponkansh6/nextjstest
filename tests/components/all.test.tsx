@@ -520,8 +520,8 @@ describe("NewGraph", () => {
       />,
     );
     expect(screen.getAllByText("給与(総合)").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("民間最終消費(参考)").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("CTI消費支出(参考)").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("民間最終消費(総合)").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("CTI消費(総合)").length).toBeGreaterThan(0);
     expect(screen.getAllByText("物価指数(総合)").length).toBeGreaterThan(0);
   });
 
@@ -555,7 +555,7 @@ describe("NewGraph", () => {
       />,
     );
     // The hidden legend item should still be rendered
-    expect(screen.getAllByText("CTI消費支出(参考)").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("CTI消費(総合)").length).toBeGreaterThan(0);
     // The visible ones should be there too
     expect(screen.getAllByText("給与(総合)").length).toBeGreaterThan(0);
     expect(screen.getAllByText("物価指数(総合)").length).toBeGreaterThan(0);

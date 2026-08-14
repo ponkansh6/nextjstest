@@ -16,8 +16,8 @@ The shared data type with an index signature `[key: string]: string | number` fo
 | 総合                     | number         | CPI / earnings total index (2020=100)                                                                   |
 | 生鮮食品を除く総合       | number         | CPI excluding Fresh Food                                                                                |
 | 持家の帰属家賃を除く総合 | number         | CPI excluding Imputed Rent                                                                              |
-| 民間最終消費支出（参考） | number \| null | Consumption expenditure (private final, 2005-2016, 12MA, indexed 2020=100); null outside period         |
-| CTI消費支出（参考）      | number \| null | Consumption expenditure (CTI distribution-adjusted, 2017-, 12MA, indexed 2020=100); null outside period |
+| 民間最終消費支出（参考） | number \| null | Consumption expenditure (private final, 2005-2017, 12MA, indexed 2020=100); null outside period         |
+| CTI消費支出（参考）      | number \| null | Consumption expenditure (CTI distribution-adjusted, 2018-, 12MA, indexed 2020=100); null outside period |
 | 消費支出（参考）         | number         | Consumption expenditure (combined legacy series, 12MA, indexed 2020=100) — kept for compatibility       |
 | CPI総合(参考)            | number         | CPI All Items (reference)                                                                               |
 
@@ -93,7 +93,7 @@ The system SHALL display economic indicators as interactive Recharts-based chart
     - Both indices are 2020-base (2020 average = 100), so the difference is 2020 average = 0.
     - The residual series is smoothed with a 2-month moving average (2MA).
   - NewGraph (supplementary view):
-    - Displays "民間最終消費支出（参考）" (2005-2016) and "CTI消費支出（参考）" (2017-) as two separate series with `null` outside their respective active periods so lines correctly truncate instead of dropping to zero.
+    - Displays "民間最終消費支出（参考）" (2005-2017) and "CTI消費支出（参考）" (2018-) as two separate series with `null` outside their respective active periods so lines correctly truncate instead of dropping to zero.
   - Charts using `interval="preserveStartEnd"` on their XAxis (MajorIndicesChart, EarningsBreakdownChart, StackedAreaChart, SpendingBarChart, ResidualAreaChart, NewGraph) render the first/last (start year / end year) tick label in `--foreground` via the shared `XAxisEdgeTick` component (`src/app/components/charts/XAxisEdgeTick.tsx`), while other tick labels use the default `--chart-text` color
 
 ### R3: Data Transformation (Server-Side)

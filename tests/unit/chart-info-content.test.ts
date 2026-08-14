@@ -4,8 +4,8 @@ import { CHART_INFO } from "@/lib/chartInfoContent";
 /**
  * 3種比較（new-graph）の info 説明文が、実際のデータソースと一致していることを検証する。
  * 消費支出（参考）は家計調査ではなく、
- * - 2017年以降: 分布調整済み原数値CTIの消費支出（名目）（server/lib/data-loader/earnings.ts buildConsumptionMap）
- * - 2016年以前: 四半期別GDP統計の民間最終消費支出（cti_support_nominal.csv、スケーリングして結合）
+ * - 2018年以降: 分布調整済み原数値CTIの消費支出（名目）（server/lib/data-loader/earnings.ts buildConsumptionMap）
+ * - 2017年以前: 四半期別GDP統計の民間最終消費支出（cti_support_nominal.csv、スケーリングして結合）
  * を12か月移動平均で指数化したもの。
  */
 describe("new-graph chart info (3種比較)", () => {
