@@ -93,8 +93,9 @@ The system SHALL display economic indicators as interactive Recharts-based chart
     - Displays the difference between "給与指数（総合）" and "物価指数（総合）".
     - Both indices are 2020-base (2020 average = 100), so the difference is 2020 average = 0.
     - The residual series is smoothed with a 2-month moving average (2MA).
-  - NewGraph (supplementary view):
-    - Displays "民間最終消費支出（参考）" (2005-2017) and "CTI消費支出（参考）" (2018-) as two separate series with `null` outside their respective active periods so lines correctly truncate instead of dropping to zero.
+  - NewGraph (supplementary view, 3種比較):
+    - Displays four main series in legend order: 物価指数(総合), 給与(総合), CTI消費(総合), 民間最終消費(総合)
+    - "民間最終消費支出（参考）" (2005-2017) and "CTI消費支出（参考）" (2018-) are shown as two separate series with `null` outside their respective active periods so lines correctly truncate instead of dropping to zero.
     - Also includes an advanced reference-only series "民間最終消費支出（参考・延長）" (2017-) which is hidden by default and can be enabled via `?adv=1` URL query parameter or the ⓘ info panel toggle.
   - Charts using `interval="preserveStartEnd"` on their XAxis (MajorIndicesChart, EarningsBreakdownChart, StackedAreaChart, SpendingBarChart, ResidualAreaChart, NewGraph) render the first/last (start year / end year) tick label in `--foreground` via the shared `XAxisEdgeTick` component (`src/app/components/charts/XAxisEdgeTick.tsx`), while other tick labels use the default `--chart-text` color
 
