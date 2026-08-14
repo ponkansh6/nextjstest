@@ -12,6 +12,10 @@ export interface ChartTooltipProps {
   content: ReactElement;
 }
 
+export interface ChartTooltipBindOptions {
+  showTotal?: boolean;
+}
+
 export const useChartTooltipController = ({
   suppressed,
   isTouch,
@@ -19,7 +23,10 @@ export const useChartTooltipController = ({
   suppressed: boolean;
   isTouch: boolean;
 }): {
-  bind: (chartId: string) => {
+  bind: (
+    chartId: string,
+    options?: ChartTooltipBindOptions,
+  ) => {
     tooltipProps: ChartTooltipProps;
     onClick: () => void;
     activeDot?: boolean;
@@ -62,17 +69,8 @@ export const useChartTooltipController = ({
     };
   }, [activeChartId, isTouch]);
 
-  // 3. 抑制時に activeChartId をクリア (Adjusting state during rendering pattern as recommended by React docs)
-  const [prevSuppressed, setPrevSuppressed] = useState(suppressed);
-  if (suppressed !== prevSuppressed) {
-    setPrevSuppressed(suppressed);
-    if (suppressed && activeChartId !== null) {
-      setActiveChartId(null);
-    }
-  }
-
   const bind = useCallback(
-    (chartId: string) => {
+    (chartId: string, options?: ChartTooltipBindOptions) => {
       const isThisActive = activeChartId === chartId;
       return {
         tooltipProps: {
@@ -86,6 +84,7 @@ export const useChartTooltipController = ({
               tooltipBg={chartColors.tooltipBg}
               tooltipText={chartColors.tooltipText}
               onDismiss={dismiss}
+              showTotal={options?.showTotal}
             />
           ),
         },

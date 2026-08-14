@@ -7,6 +7,8 @@ export interface CustomTooltipProps {
   tooltipBg: string;
   tooltipText: string;
   onDismiss?: () => void;
+  /** 積み上げチャート向け: 描画中系列の合計を先頭に表示する */
+  showTotal?: boolean;
 }
 
 export interface CpiView extends Record<string, string | number> {

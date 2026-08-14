@@ -214,4 +214,20 @@ describe("useChartTooltipController", () => {
     const bindA = result.current.bind("A");
     expect(bindA.activeDot).toBeUndefined();
   });
+
+  it("T5: passes showTotal to tooltipProps content props when specified in bind options", () => {
+    const { result } = renderHook(() =>
+      useChartTooltipController({ isTouch: false, suppressed: false }),
+    );
+    const bound = result.current.bind("chart-id", { showTotal: true });
+    expect((bound.tooltipProps.content as any).props.showTotal).toBe(true);
+  });
+
+  it("T6: showTotal is falsy when bind options are omitted", () => {
+    const { result } = renderHook(() =>
+      useChartTooltipController({ isTouch: false, suppressed: false }),
+    );
+    const bound = result.current.bind("chart-id");
+    expect((bound.tooltipProps.content as any).props.showTotal).toBeFalsy();
+  });
 });

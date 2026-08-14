@@ -103,6 +103,9 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
           {
             text: "「諸雑費・CPI外支出」は、総消費支出から各費目（住居、食料等）の合計を差し引いた差分として別途算出",
           },
+          {
+            text: "ツールチップの「合計」は、その時点で表示中（凡例で非表示にしていない）の系列の合計値",
+          },
         ],
       },
     ],

@@ -308,6 +308,21 @@ The system SHALL keep view state in the URL so it survives reload and can be sha
 - **AND WHEN** the page is opened with those params
 - **THEN** the dashboard restores that range, series visibility, and advanced series toggle.
 
+### R15: Chart Tooltip Stack Total
+
+The system SHALL display the sum of active series in stacked chart tooltips when requested.
+
+#### Scenario R15a: Consumption Expenditure Tooltip Total
+
+- **WHEN** the user taps or hovers over a data point in the Consumption Expenditure (nominal/real) charts
+- **THEN** the tooltip displays the sum of currently visible series as `合計` right below the date label
+- **AND WHEN** series are hidden via legend toggles
+- **THEN** the total reflects only the remaining visible series
+- **AND WHEN** mobile view truncates series list to the top 5 entries
+- **THEN** the total is calculated from all active series prior to truncation
+- **AND WHEN** other charts (such as stacked contributions) are viewed
+- **THEN** no total row is rendered.
+
 #### Scenario R11c: Advanced Series Toggle
 
 - **WHEN** 3種比較 is opened without `?adv=1`
@@ -400,8 +415,8 @@ Page (RSC)
     │   └── StackedAreaChart → CustomTooltip — always-expanded 12-series legend (compact on mobile)
     ├── CagrPanel — CAGR calculation controls & result card
     ├── [Chart variants]                     — deferred: wrapped in LazyMount
-    │   ├── SpendingBarChart (nominal / real)
-    │   ├── EarningsBreakdownChart → CustomTooltip
+     │   ├── SpendingBarChart (nominal / real) — supports `showTotal` opt-in via tooltip controller
+     │   ├── EarningsBreakdownChart → CustomTooltip
     │   ├── ResidualAreaChart → CustomTooltip
     │   └── NewGraph → CustomTooltip — Supplementary visualization
     ├── ChartInfoButton → ChartInfoContentRenderer — Indicator explanations (uses `chartKey` mapped to `CHART_INFO` in `src/lib/chartInfoContent.ts`)

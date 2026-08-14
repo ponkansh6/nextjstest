@@ -4,7 +4,7 @@ import React from "react";
 import type { CustomTooltipProps } from "@/types/chart";
 
 export const CustomTooltip = React.memo<CustomTooltipProps>(
-  ({ active, payload, label, isMobile, isTouch, tooltipBg, tooltipText, onDismiss }) => {
+  ({ active, payload, label, isMobile, isTouch, tooltipBg, tooltipText, onDismiss, showTotal }) => {
     if (!active || !payload) {
       return null;
     }
@@ -12,6 +12,10 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
     const fontSize = isMobile ? "12px" : "14px";
     const labelFontSize = isMobile ? "11px" : "13px";
     const padding = isMobile ? "10px 14px" : "12px";
+
+    const total = showTotal
+      ? payload.reduce((acc, e) => acc + (typeof e.value === "number" ? e.value : 0), 0)
+      : null;
 
     const displayPayload = isMobile
       ? [...payload].sort((a, b) => {
@@ -111,6 +115,28 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
             </button>
           )}
         </div>
+        {total !== null && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "baseline",
+              justifyContent: "space-between",
+              gap: "12px",
+              fontSize: fontSize,
+              fontWeight: "bold",
+              color: tooltipText,
+              padding: "2px 0 6px",
+              marginBottom: "6px",
+              borderBottom: "1px solid currentColor",
+            }}
+          >
+            <span>合計</span>
+            <span>
+              <span style={{ opacity: 0.25 }}></span>
+              {total.toFixed(2)}
+            </span>
+          </div>
+        )}
         {topPayload.map((entry, index) => (
           <div
             key={`item-${index}`}
