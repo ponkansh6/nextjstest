@@ -10,14 +10,16 @@ A dashboard application to visualize and track Japanese economic indicators — 
 
 The shared data type with an index signature `[key: string]: string | number` for extensibility. Below are the explicitly defined fields; additional fields are added at runtime by each data loader.
 
-| Field                    | Type   | Description                                       |
-| ------------------------ | ------ | ------------------------------------------------- |
-| 年月                     | string | Year-month (e.g. "2020年1月")                     |
-| 総合                     | number | CPI / earnings total index (2020=100)             |
-| 生鮮食品を除く総合       | number | CPI excluding Fresh Food                          |
-| 持家の帰属家賃を除く総合 | number | CPI excluding Imputed Rent                        |
-| 消費支出（参考）         | number | Consumption expenditure (12MA, indexed, 2020=100) |
-| CPI総合(参考)            | number | CPI All Items (reference)                         |
+| Field                    | Type           | Description                                                                                             |
+| ------------------------ | -------------- | ------------------------------------------------------------------------------------------------------- |
+| 年月                     | string         | Year-month (e.g. "2020年1月")                                                                           |
+| 総合                     | number         | CPI / earnings total index (2020=100)                                                                   |
+| 生鮮食品を除く総合       | number         | CPI excluding Fresh Food                                                                                |
+| 持家の帰属家賃を除く総合 | number         | CPI excluding Imputed Rent                                                                              |
+| 民間最終消費支出（参考） | number \| null | Consumption expenditure (private final, 2005-2016, 12MA, indexed 2020=100); null outside period         |
+| CTI消費支出（参考）      | number \| null | Consumption expenditure (CTI distribution-adjusted, 2017-, 12MA, indexed 2020=100); null outside period |
+| 消費支出（参考）         | number         | Consumption expenditure (combined legacy series, 12MA, indexed 2020=100) — kept for compatibility       |
+| CPI総合(参考)            | number         | CPI All Items (reference)                                                                               |
 
 **Major runtime-added fields per data loader:**
 
@@ -90,7 +92,8 @@ The system SHALL display economic indicators as interactive Recharts-based chart
     - Displays the difference between "給与指数（総合）" and "物価指数（総合）".
     - Both indices are 2020-base (2020 average = 100), so the difference is 2020 average = 0.
     - The residual series is smoothed with a 2-month moving average (2MA).
-  - NewGraph (supplementary view)
+  - NewGraph (supplementary view):
+    - Displays "民間最終消費支出（参考）" (2005-2016) and "CTI消費支出（参考）" (2017-) as two separate series with `null` outside their respective active periods so lines correctly truncate instead of dropping to zero.
   - Charts using `interval="preserveStartEnd"` on their XAxis (MajorIndicesChart, EarningsBreakdownChart, StackedAreaChart, SpendingBarChart, ResidualAreaChart, NewGraph) render the first/last (start year / end year) tick label in `--foreground` via the shared `XAxisEdgeTick` component (`src/app/components/charts/XAxisEdgeTick.tsx`), while other tick labels use the default `--chart-text` color
 
 ### R3: Data Transformation (Server-Side)
@@ -102,10 +105,10 @@ The system SHALL load and process CSV data on the server before rendering.
 - **WHEN** `loadCpiData()` is called
 - **THEN** it reads `data/source/cpi_data.csv`, parses with PapaParse, transforms columns, and returns `CpiData[]`
 
-#### Scenario R3b: CTI / Earnings Data Loading
+#### Scenario R3b: CTI / Earnings / Consumption Data Loading
 
-- **WHEN** `loadCtiData()` / `loadTotalEarningData()` is called
-- **THEN** corresponding CSV files are read from `data/source/` and processed through `server/lib/dataLoader.ts`
+- **WHEN** `loadCtiData()` / `loadTotalEarningData()` / consumption map builder is called
+- **THEN** corresponding CSV files are read from `data/source/`, processed through `server/lib/dataLoader.ts`, and consumption expenditure is split into `民間最終消費支出（参考）` (2005-2016) and `CTI消費支出（参考）` (2017-) with `null` for periods outside their active ranges.
 
 #### Scenario R3c: Data Processing & Projection
 
@@ -459,7 +462,7 @@ scripts/
 
 ## Test Requirements
 
-- Unit tests for data loading and transformation (`tests/unit/`)
+- Unit tests for data loading, transformation, and data quality/integrity (`tests/unit/`, `tests/data-quality/`)
 - Component tests for chart rendering and interaction (`tests/components/`)
 - Integration tests for data mapping and computation accuracy (`tests/data-mapping/`, `tests/computation-contract/`)
 - Constant/fixture tests for expected data quality (`tests/constants/`, `tests/fixtures/`)

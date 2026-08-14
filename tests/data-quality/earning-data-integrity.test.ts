@@ -192,8 +192,13 @@ describe("Earnings Data Integrity", () => {
     });
 
     it("should confirm NewGraph series fields exist in merged data", async () => {
-      // Verify all three fields used by NewGraph are present
-      const newGraphKeys = ["総合(12MA)", "消費支出（参考）", "CPI総合(12MA)"];
+      // Verify all fields used by NewGraph are present
+      const newGraphKeys = [
+        "総合(12MA)",
+        "民間最終消費支出（参考）",
+        "CTI消費支出（参考）",
+        "CPI総合(12MA)",
+      ];
       newGraphKeys.forEach((key) => {
         const hasData = earningData.some((d) => {
           const v = d[key as keyof CpiData];
@@ -229,6 +234,51 @@ describe("Earnings Data Integrity", () => {
         changeRatio,
         `消費支出（参考） change across 2016/12-2017/01 should be < 50% (actual: ${(changeRatio * 100).toFixed(1)}%)`,
       ).toBeLessThan(0.5);
+    });
+
+    it("should verify split consumption series (民間最終消費支出（参考） and CTI消費支出（参考） have correct period bounds and nulls)", () => {
+      expect(earningData.length).toBeGreaterThan(0);
+
+      earningData.forEach((d) => {
+        if (!d.年月 || typeof d.年月 !== "string") return;
+        const year = parseInt(d.年月.substring(0, 4), 10);
+        if (year < 2005) return;
+
+        const minkanVal = d["民間最終消費支出（参考）" as keyof CpiData];
+        const ctiVal = d["CTI消費支出（参考）" as keyof CpiData];
+
+        if (year <= 2016) {
+          expect(
+            minkanVal,
+            `民間最終消費支出（参考） at ${d.年月} should be positive number`,
+          ).toBeGreaterThan(0);
+          expect(
+            ctiVal,
+            `CTI消費支出（参考） at ${d.年月} should be null outside its period`,
+          ).toBeNull();
+        } else {
+          expect(
+            minkanVal,
+            `民間最終消費支出（参考） at ${d.年月} should be null outside its period`,
+          ).toBeNull();
+          expect(
+            ctiVal,
+            `CTI消費支出（参考） at ${d.年月} should be positive number`,
+          ).toBeGreaterThan(0);
+        }
+      });
+
+      // 2014年と2019年の特定月で確認
+      const d2014 = earningData.find((d) => d.年月 === "2014年6月");
+      const d2019 = earningData.find((d) => d.年月 === "2019年6月");
+
+      expect(d2014).toBeDefined();
+      expect(d2014!["民間最終消費支出（参考）"]).toBeGreaterThan(0);
+      expect(d2014!["CTI消費支出（参考）"]).toBeNull();
+
+      expect(d2019).toBeDefined();
+      expect(d2019!["民間最終消費支出（参考）"]).toBeNull();
+      expect(d2019!["CTI消費支出（参考）"]).toBeGreaterThan(0);
     });
   });
 });

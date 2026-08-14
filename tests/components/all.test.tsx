@@ -270,11 +270,18 @@ describe("Integrated UI Chart Tests", () => {
       expect(screen.getAllByText("諸雑費・CPI外支出").length).toBeGreaterThan(0);
     });
 
-    it("should verify 消費支出（参考） is within 50-150 range", () => {
+    it("should verify 民間最終消費支出（参考） and CTI消費支出（参考） range", () => {
       mockMergedData.forEach((d) => {
-        const val = Number(d["消費支出（参考）"] || 0);
-        expect(val, `消費支出（参考） at ${d.年月} should be 50-150`).toBeGreaterThanOrEqual(50);
-        expect(val, `消費支出（参考） at ${d.年月} should be 50-150`).toBeLessThanOrEqual(150);
+        const minkan = Number(d["民間最終消費支出（参考）" as keyof CpiData] || 0);
+        const cti = Number(d["CTI消費支出（参考）" as keyof CpiData] || 0);
+        if (minkan > 0) {
+          expect(minkan, `民間最終消費支出（参考） should be 50-150`).toBeGreaterThanOrEqual(50);
+          expect(minkan, `民間最終消費支出（参考） should be 50-150`).toBeLessThanOrEqual(150);
+        }
+        if (cti > 0) {
+          expect(cti, `CTI消費支出（参考） should be 50-150`).toBeGreaterThanOrEqual(50);
+          expect(cti, `CTI消費支出（参考） should be 50-150`).toBeLessThanOrEqual(150);
+        }
       });
     });
 
@@ -455,9 +462,27 @@ describe("StackedAreaChart", () => {
 
 describe("NewGraph", () => {
   const mockNewGraphData: CpiData[] = [
-    { 年月: "2023年1月", 総合: 100, "消費支出（参考）": 100, "CPI総合(12MA)": 100 } as any,
-    { 年月: "2023年2月", 総合: 101, "消費支出（参考）": 101, "CPI総合(12MA)": 101 } as any,
-    { 年月: "2023年3月", 総合: 102, "消費支出（参考）": 102, "CPI総合(12MA)": 102 } as any,
+    {
+      年月: "2023年1月",
+      総合: 100,
+      "民間最終消費支出（参考）": 0,
+      "CTI消費支出（参考）": 100,
+      "CPI総合(12MA)": 100,
+    } as any,
+    {
+      年月: "2023年2月",
+      総合: 101,
+      "民間最終消費支出（参考）": 0,
+      "CTI消費支出（参考）": 101,
+      "CPI総合(12MA)": 101,
+    } as any,
+    {
+      年月: "2023年3月",
+      総合: 102,
+      "民間最終消費支出（参考）": 0,
+      "CTI消費支出（参考）": 102,
+      "CPI総合(12MA)": 102,
+    } as any,
   ];
 
   const mockNewGraphColors = {
@@ -495,7 +520,8 @@ describe("NewGraph", () => {
       />,
     );
     expect(screen.getAllByText("給与(総合)").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("消費支出(総合)").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("民間最終消費(参考)").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("CTI消費支出(参考)").length).toBeGreaterThan(0);
     expect(screen.getAllByText("物価指数(総合)").length).toBeGreaterThan(0);
   });
 
@@ -521,7 +547,7 @@ describe("NewGraph", () => {
     render(
       <NewGraph
         data={mockNewGraphData}
-        hiddenKeys={["消費支出（参考）"]}
+        hiddenKeys={["CTI消費支出（参考）"]}
         onToggle={mockOnToggle}
         chartColors={mockNewGraphColors}
         isMobile={false}
@@ -529,7 +555,7 @@ describe("NewGraph", () => {
       />,
     );
     // The hidden legend item should still be rendered
-    expect(screen.getAllByText("消費支出(総合)").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("CTI消費支出(参考)").length).toBeGreaterThan(0);
     // The visible ones should be there too
     expect(screen.getAllByText("給与(総合)").length).toBeGreaterThan(0);
     expect(screen.getAllByText("物価指数(総合)").length).toBeGreaterThan(0);

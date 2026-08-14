@@ -48,29 +48,44 @@ function computeMovingAverageToField(
 }
 
 /**
- * CTIデータから消費支出Mapを構築する。
- * 2016年以前はサポート系列（民間最終消費支出）をスケーリングして使用。
- * 2017年以降は消費支出（名目）の実値をそのまま使用。
+ * CTIデータから民間最終消費支出MapおよびCTI消費支出Mapを構築する。
+ * 民間最終消費支出（参考）: 2005〜2016年、GDPベース
+ * CTI消費支出（参考）: 2017年以降、CTIベース
  */
-function buildConsumptionMap(ctiData: CpiData[], supportScale: number): Map<string, number> {
-  const consumptionMap = new Map<string, number>();
+function buildConsumptionMaps(
+  ctiData: CpiData[],
+  supportScale: number,
+): {
+  minkanMap: Map<string, number>;
+  ctiConsumptionMap: Map<string, number>;
+} {
+  const minkanRawMap = new Map<string, number>();
+  const ctiRawMap = new Map<string, number>();
+
   ctiData.forEach((d) => {
     const ym = d.年月 as string | undefined;
     if (!ym) return;
     const match = ym.match(/^(\d{4})年(\d+)月$/);
     if (!match) return;
     const year = parseInt(match[1], 10);
-    let val = 0;
-    if (year < 2017) {
-      // 2016年12月までは名目民間最終消費支出の値をスケール
-      val = ((d["民間最終消費支出（名目）"] as number) || 0) * supportScale;
+
+    if (year <= 2016) {
+      const val = ((d["民間最終消費支出（名目）"] as number) || 0) * supportScale;
+      minkanRawMap.set(ym, val);
     } else {
-      // 2017年1月以降は全ての名目消費支出内訳費目を足し合わせた値（消費支出（名目））
-      val = (d["消費支出（名目）"] as number) || 0;
+      const val = (d["消費支出（名目）"] as number) || 0;
+      ctiRawMap.set(ym, val);
     }
-    consumptionMap.set(ym, val);
   });
-  return consumptionMap;
+
+  const minkanMAMap = computeTrailingMA12([...minkanRawMap.entries()]);
+  const ctiMAMap = computeTrailingMA12([...ctiRawMap.entries()]);
+
+  // 2020年基準のスケーリング方針：
+  // 2020年はCTI系列が値を持つため、CTI消費支出側の2020年平均を基準100とする係数（ctiFactor）を算出する。
+  // 民間最終消費支出系列（2005〜2016年）は2020年に値を持たないため、同じスケール空間（2020=100）に一致させるため、
+  // CTI側と共通のスケール係数（minkanFactor = ctiFactor）を適用する。
+  return { minkanMap: minkanMAMap, ctiConsumptionMap: ctiMAMap };
 }
 
 export async function loadTotalEarningDataInternal(): Promise<CpiData[]> {
@@ -129,8 +144,7 @@ export async function loadTotalEarningDataInternal(): Promise<CpiData[]> {
   });
   // 2020年基準のスケーリング係数を算出
   const supportScale = calculateSupportScale(ctiData, "民間最終消費支出（名目）");
-  // CTIデータから消費支出Mapを構築
-  const consumptionMap = buildConsumptionMap(ctiData, supportScale);
+  const { minkanMap, ctiConsumptionMap } = buildConsumptionMaps(ctiData, supportScale);
 
   const year2020 = [...keys].filter((ym) => ym.startsWith("2020年"));
   const hourly2020 =
@@ -164,10 +178,14 @@ export async function loadTotalEarningDataInternal(): Promise<CpiData[]> {
   const hourlyFactor = hourly2020 > 0 ? 100 / hourly2020 : 1;
   const popFactor = perCapitaBase2020 > 0 ? 100 / perCapitaBase2020 : 1;
 
-  // 消費支出の12か月移動平均を計算し、2020年平均を基準100とする
-  const consumptionMAMap = computeTrailingMA12([...consumptionMap.entries()]);
-  const avgMA2020 = averageForYear(consumptionMAMap, "2020年");
-  const maConsumptionFactor = avgMA2020 > 0 ? 100 / avgMA2020 : 1;
+  // CTI消費支出の2020年平均を基準100とする
+  const avgCTI2020 = averageForYear(ctiConsumptionMap, "2020年");
+  const ctiFactor = avgCTI2020 > 0 ? 100 / avgCTI2020 : 1;
+
+  // 民間最終消費支出のスケール係数：
+  // 民間最終側には2020年の値が存在しないため、CTI系列から算出した ctiFactor を共通で適用することで、
+  // 2020年を基準（100）とする同一のスケール空間に正確に一致させる。
+  const minkanFactor = ctiFactor;
 
   // CPI総合の12か月移動平均を計算（CPIデータは既に2020年基準）
   const cpiMAMap = computeTrailingMA12([...cpiMap.entries()]);
@@ -249,9 +267,18 @@ export async function loadTotalEarningDataInternal(): Promise<CpiData[]> {
     item["残差"] = calculateRawResidual(smoothedTotal, rawCpi);
     item["CPI総合(参考)"] = rawCpi;
     item["CPI総合(12MA)"] = cpiMAMap.get(item.年月) ?? 0;
-    // 消費支出（参考）の計算（12か月移動平均）
-    const maConsumption = consumptionMAMap.get(item.年月) ?? 0;
-    item["消費支出（参考）"] = maConsumption > 0 ? maConsumption * maConsumptionFactor : 0;
+    // 民間最終消費支出（参考）およびCTI消費支出（参考）の計算（12か月移動平均）
+    // 各系列は自身の期間のみ値を持ち、期間外は null（欠測）としてゼロ方向への誤った線引きを防ぐ。
+    const maMinkan = minkanMap.get(item.年月) ?? 0;
+    const maCti = ctiConsumptionMap.get(item.年月) ?? 0;
+    const parsedYear = parseInt(item.年月.substring(0, 4), 10);
+    item["民間最終消費支出（参考）"] =
+      parsedYear <= 2016 && maMinkan > 0 ? maMinkan * minkanFactor : null;
+    item["CTI消費支出（参考）"] = parsedYear >= 2017 && maCti > 0 ? maCti * ctiFactor : null;
+    // 既存の「消費支出（参考）」も互換性・他箇所への影響を考慮して維持（2017年前後で統合したもの）
+    const combinedConsumption =
+      maMinkan > 0 ? maMinkan * minkanFactor : maCti > 0 ? maCti * ctiFactor : 0;
+    item["消費支出（参考）"] = combinedConsumption;
   });
   applyResidualMovingAverage(result);
   return result;

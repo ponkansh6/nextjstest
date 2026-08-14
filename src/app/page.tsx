@@ -68,6 +68,8 @@ export default async function Page() {
     "CPI総合(参考)",
     "CPI総合(12MA)",
     "消費支出（参考）",
+    "民間最終消費支出（参考）",
+    "CTI消費支出（参考）",
   ];
 
   const projectedCpiData = toCpiView(cleanData, cpiKeys);
