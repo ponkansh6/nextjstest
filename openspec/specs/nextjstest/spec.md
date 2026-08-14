@@ -113,6 +113,14 @@ The system SHALL load and process CSV data on the server before rendering.
 - **WHEN** `loadCtiData()` / `loadTotalEarningData()` / consumption map builder is called
 - **THEN** corresponding CSV files are read from `data/source/`, processed through `server/lib/dataLoader.ts`, and consumption expenditure is split into `民間最終消費支出（参考）` (2005-2017) and `CTI消費支出（参考）` (2017-) with `null` for periods outside their active ranges, while `民間最終消費支出（参考・延長）` is generated for 2017 onwards as an advanced reference-only series.
 
+#### Scenario R3d: 2020 Base Alignment Across Series
+
+- **WHEN** a series in 3種比較 is normalized to the 2020 base
+- **THEN** the scaling factor is derived from the **raw** (pre-moving-average) 2020 calendar-year average, never from the 12MA series
+- **AND** `ctiFactor` in `server/lib/data-loader/earnings.ts` uses the raw CTI `消費支出（名目）` 2020 average, consistent with `calculateSupportScale` (`src/lib/chartUtils.ts`)
+- **AND** `CTI消費支出（参考）` at 2020年12月 — whose 12MA window is exactly 2020年1月〜12月 — equals 100
+- **AND** normalizing on the 12MA series instead would blend the pre-COVID 2019 level into the denominator (101.97 vs raw 100.00), sinking the CTI series ~1.9% below `CPI総合(12MA)` and `給与 総合(12MA)` and breaking cross-series comparison
+
 #### Scenario R3c: Data Processing & Projection
 
 - **WHEN** raw data is loaded

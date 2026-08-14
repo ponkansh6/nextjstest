@@ -58,6 +58,7 @@ function buildConsumptionMaps(
 ): {
   minkanMap: Map<string, number>;
   ctiConsumptionMap: Map<string, number>;
+  ctiRawMap: Map<string, number>;
 } {
   const minkanRawMap = new Map<string, number>();
   const ctiRawMap = new Map<string, number>();
@@ -91,7 +92,8 @@ function buildConsumptionMaps(
   // 2020年はCTI系列が値を持つため、CTI消費支出側の2020年平均を基準100とする係数（ctiFactor）を算出する。
   // 民間最終消費支出系列（2005〜2017年）は2020年に値を持たないため、同じスケール空間（2020=100）に一致させるため、
   // CTI側と共通のスケール係数（minkanFactor = ctiFactor）を適用する。
-  return { minkanMap: minkanMAMap, ctiConsumptionMap: ctiMAMap };
+  // ctiFactor の分母は 12MA 後ではなく生値の2020年平均を使うため（理由は呼び出し側のコメント参照）、生値マップも返す。
+  return { minkanMap: minkanMAMap, ctiConsumptionMap: ctiMAMap, ctiRawMap };
 }
 
 export async function loadTotalEarningDataInternal(): Promise<CpiData[]> {
@@ -150,7 +152,7 @@ export async function loadTotalEarningDataInternal(): Promise<CpiData[]> {
   });
   // 2020年基準のスケーリング係数を算出
   const supportScale = calculateSupportScale(ctiData, "民間最終消費支出（名目）");
-  const { minkanMap, ctiConsumptionMap } = buildConsumptionMaps(ctiData, supportScale);
+  const { minkanMap, ctiConsumptionMap, ctiRawMap } = buildConsumptionMaps(ctiData, supportScale);
 
   const year2020 = [...keys].filter((ym) => ym.startsWith("2020年"));
   const hourly2020 =
@@ -184,8 +186,13 @@ export async function loadTotalEarningDataInternal(): Promise<CpiData[]> {
   const hourlyFactor = hourly2020 > 0 ? 100 / hourly2020 : 1;
   const popFactor = perCapitaBase2020 > 0 ? 100 / perCapitaBase2020 : 1;
 
-  // CTI消費支出の2020年平均を基準100とする
-  const avgCTI2020 = averageForYear(ctiConsumptionMap, "2020年");
+  // CTI消費支出の2020年平均を基準100とする。
+  // 分母は必ず「生値」の2020年平均を使う。12MA後の系列を2020年で平均すると、2020年各月の12MAが
+  // 2019年2月〜2020年12月を三角加重で含むため、コロナ前の2019年の高い水準が混入して分母が過大になり
+  // （生値100.00に対し101.97）、CTI系列だけが約1.9%下方にずれて3種比較の他系列と比較できなくなる。
+  // CPIは生値が既に2020=100、給与も totalIndexFactor を生値ベースの2020年平均から算出しており、
+  // 「暦年2020の生値平均＝100」という基準を3系列で揃える。
+  const avgCTI2020 = averageForYear(ctiRawMap, "2020年");
   const ctiFactor = avgCTI2020 > 0 ? 100 / avgCTI2020 : 1;
 
   // 民間最終消費支出のスケール係数：

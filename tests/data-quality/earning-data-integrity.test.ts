@@ -314,8 +314,25 @@ describe("Earnings Data Integrity", () => {
       const val2014 = d2014!["民間最終消費支出（参考）" as keyof CpiData] as number;
       const val2017 = d2017!["民間最終消費支出（参考）" as keyof CpiData] as number;
 
-      expect(val2014).toBeCloseTo(99.79, 1);
-      expect(val2017).toBeCloseTo(101.34, 1);
+      expect(val2014).toBeCloseTo(101.75, 1);
+      expect(val2017).toBeCloseTo(103.33, 1);
+    });
+
+    it("should base CTI消費支出（参考） on the raw 2020 calendar-year average (2020年12月 12MA = 100)", () => {
+      expect(earningData.length).toBeGreaterThan(0);
+      const dec2020 = earningData.find((d) => d.年月 === "2020年12月");
+      expect(dec2020).toBeDefined();
+
+      // 2020年12月の12MA窓は2020年1月〜12月、すなわち2020暦年平均に等しい。
+      // 2020年基準（暦年平均=100）が正しく適用されていれば100になる。
+      // 12MA後の系列で正規化すると2019年の水準が混入して約98.07に沈むため、その回帰を防ぐ。
+      expect(Number(dec2020!["CTI消費支出（参考）"])).toBeCloseTo(100, 1);
+
+      // 同一チャート（3種比較）の他系列も同じ2020基準に揃っていること。
+      // 給与は totalIndexFactor が生値ベース、総合(12MA) が12MA合計であるため
+      // 特別給与の平滑化分だけ約0.5のずれが残る（本件の1.9%ずれとは別要因）。
+      expect(Math.abs(Number(dec2020!["CPI総合(12MA)"]) - 100)).toBeLessThan(0.5);
+      expect(Math.abs(Number(dec2020!["総合(12MA)"]) - 100)).toBeLessThan(1);
     });
 
     it("should verify advanced series 民間最終消費支出（参考・延長） has values from 2017 to latest and null before 2017", () => {
