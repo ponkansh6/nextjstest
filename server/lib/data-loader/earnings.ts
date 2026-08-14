@@ -73,6 +73,11 @@ function buildConsumptionMaps(
       const val = ((d["民間最終消費支出（名目）"] as number) || 0) * supportScale;
       minkanRawMap.set(ym, val);
     }
+    // 延長系列のために2017年以降もminkanRawMapに蓄積（computeTrailingMA12は全エントリ対象）
+    const valExtended = ((d["民間最終消費支出（名目）"] as number) || 0) * supportScale;
+    if (valExtended > 0 && !minkanRawMap.has(ym)) {
+      minkanRawMap.set(ym, valExtended);
+    }
     if (year >= 2017) {
       const val = (d["消費支出（名目）"] as number) || 0;
       ctiRawMap.set(ym, val);
@@ -275,6 +280,8 @@ export async function loadTotalEarningDataInternal(): Promise<CpiData[]> {
     const parsedYear = parseInt(item.年月.substring(0, 4), 10);
     item["民間最終消費支出（参考）"] =
       parsedYear <= 2017 && maMinkan > 0 ? maMinkan * minkanFactor : null;
+    item["民間最終消費支出（参考・延長）"] =
+      parsedYear >= 2017 && maMinkan > 0 ? maMinkan * minkanFactor : null;
     item["CTI消費支出（参考）"] = parsedYear >= 2018 && maCti > 0 ? maCti * ctiFactor : null;
     // 既存の「消費支出（参考）」も互換性・他箇所への影響を考慮して維持（2017年前後で統合したもの）
     const combinedConsumption =

@@ -102,11 +102,20 @@ export default function CpiChart({
     from,
     to,
     hiddenKeys: urlHiddenKeys,
+    adv,
     updateUrl,
   } = useUrlState(initialStartYear, initialEndYear);
 
   const [startYear, setStartYear] = useState(from);
   const [endYear, setEndYear] = useState(to);
+  const [showAdvanced, setShowAdvanced] = useState<boolean>(() => {
+    if (adv) return true;
+    try {
+      return window.localStorage.getItem("newGraphShowAdvanced") === "1";
+    } catch {
+      return false;
+    }
+  });
 
   // 表示・非表示を管理するステート（初期値は全て表示）
   const [hiddenKeys, handleLegendClick] = useToggleSet<string>();
@@ -116,8 +125,13 @@ export default function CpiChart({
 
   // URL sync when state changes
   useEffect(() => {
-    updateUrl(startYear, endYear, stackedHiddenKeys);
-  }, [startYear, endYear, stackedHiddenKeys, updateUrl]);
+    try {
+      window.localStorage.setItem("newGraphShowAdvanced", showAdvanced ? "1" : "0");
+    } catch {
+      // ignore
+    }
+    updateUrl(startYear, endYear, stackedHiddenKeys, showAdvanced);
+  }, [startYear, endYear, stackedHiddenKeys, showAdvanced, updateUrl]);
 
   // View Model 型をチャート計算用の内部型に統一
   const chartData = useMemo(() => adaptCpiViewToChartData(data), [data]);
@@ -437,6 +451,11 @@ export default function CpiChart({
     setCagrResult(cagr);
   };
 
+  const visibleLineConfigs = useMemo(
+    () => LINE_CONFIGS.filter((c) => !c.advanced || showAdvanced),
+    [showAdvanced],
+  );
+
   const dataTables: DataTableSpec[] = [
     {
       chartSectionId: "section-cpi-major",
@@ -484,8 +503,8 @@ export default function CpiChart({
       chartSectionId: "section-new-graph",
       title: "給与・消費・物価の推移比較(12MA)",
       data: mergedData as unknown as Record<string, unknown>[],
-      keys: LINE_CONFIGS.map((c) => c.key),
-      headers: LINE_CONFIGS.map((c) => c.displayName),
+      keys: visibleLineConfigs.map((c) => c.key),
+      headers: visibleLineConfigs.map((c) => c.displayName),
     },
   ];
 
@@ -676,6 +695,38 @@ export default function CpiChart({
           chartColors={chartColors}
           isMobile={isMobile}
           chartKey="new-graph"
+          showAdvanced={showAdvanced}
+          advancedToggle={
+            <div
+              style={{
+                marginTop: "1rem",
+                borderTop: "1px solid var(--border, #e2e8f0)",
+                paddingTop: "0.75rem",
+              }}
+            >
+              <div style={{ fontSize: "0.875rem", fontWeight: 600, marginBottom: "0.5rem" }}>
+                参考・延長系列
+              </div>
+              <label
+                htmlFor="adv-toggle"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                  cursor: "pointer",
+                  fontSize: "0.875rem",
+                }}
+              >
+                <input
+                  id="adv-toggle"
+                  type="checkbox"
+                  checked={showAdvanced}
+                  onChange={(e) => setShowAdvanced(e.target.checked)}
+                />
+                <span>参考・延長系列（民間最終消費支出（参考・延長））を表示する</span>
+              </label>
+            </div>
+          }
           {...chartTooltip.bind("section-new-graph")}
         />
       </LazyMount>

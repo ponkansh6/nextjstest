@@ -574,4 +574,34 @@ describe("NewGraph", () => {
     );
     expect(screen.getByText("給与・消費・物価の推移比較(12MA)")).toBeDefined();
   });
+
+  it("does not render advanced series legend when showAdvanced is false/undefined", () => {
+    render(
+      <NewGraph
+        data={mockNewGraphData}
+        hiddenKeys={[]}
+        onToggle={mockOnToggle}
+        chartColors={mockNewGraphColors}
+        isMobile={false}
+        tooltipProps={tooltipProps}
+        showAdvanced={false}
+      />,
+    );
+    expect(screen.queryByText("民間最終消費(延長・参考)")).toBeNull();
+  });
+
+  it("renders advanced series legend when showAdvanced is true", () => {
+    render(
+      <NewGraph
+        data={mockNewGraphData}
+        hiddenKeys={[]}
+        onToggle={mockOnToggle}
+        chartColors={mockNewGraphColors}
+        isMobile={false}
+        tooltipProps={tooltipProps}
+        showAdvanced={true}
+      />,
+    );
+    expect(screen.getAllByText("民間最終消費(延長・参考)").length).toBeGreaterThan(0);
+  });
 });

@@ -179,11 +179,20 @@ export interface LineConfig {
   key: string;
   color: string;
   displayName: string;
+  advanced?: boolean;
+  strokeDasharray?: string;
 }
 
 export const LINE_CONFIGS: LineConfig[] = [
   { key: "総合(12MA)", color: "#e11d48", displayName: "給与(総合)" },
   { key: "民間最終消費支出（参考）", color: "#38bdf8", displayName: "民間最終消費(総合)" },
+  {
+    key: "民間最終消費支出（参考・延長）",
+    color: "#7dd3fc",
+    displayName: "民間最終消費(延長・参考)",
+    advanced: true,
+    strokeDasharray: "6 3",
+  },
   { key: "CTI消費支出（参考）", color: "#2563eb", displayName: "CTI消費(総合)" },
   { key: "CPI総合(12MA)", color: "#65a30d", displayName: "物価指数(総合)" },
 ];

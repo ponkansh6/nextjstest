@@ -10,16 +10,17 @@ A dashboard application to visualize and track Japanese economic indicators — 
 
 The shared data type with an index signature `[key: string]: string | number` for extensibility. Below are the explicitly defined fields; additional fields are added at runtime by each data loader.
 
-| Field                    | Type           | Description                                                                                                                   |
-| ------------------------ | -------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| 年月                     | string         | Year-month (e.g. "2020年1月")                                                                                                 |
-| 総合                     | number         | CPI / earnings total index (2020=100)                                                                                         |
-| 生鮮食品を除く総合       | number         | CPI excluding Fresh Food                                                                                                      |
-| 持家の帰属家賃を除く総合 | number         | CPI excluding Imputed Rent                                                                                                    |
-| 民間最終消費支出（参考） | number \| null | Consumption expenditure (private final, 2005-2017, 12MA, indexed 2020=100); null outside period                               |
-| CTI消費支出（参考）      | number \| null | Consumption expenditure (CTI distribution-adjusted, 2018-, 12MA window uses 2017 data, indexed 2020=100); null outside period |
-| 消費支出（参考）         | number         | Consumption expenditure (combined legacy series, 12MA, indexed 2020=100) — kept for compatibility                             |
-| CPI総合(参考)            | number         | CPI All Items (reference)                                                                                                     |
+| Field                          | Type           | Description                                                                                                                                                                        |
+| ------------------------------ | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 年月                           | string         | Year-month (e.g. "2020年1月")                                                                                                                                                      |
+| 総合                           | number         | CPI / earnings total index (2020=100)                                                                                                                                              |
+| 生鮮食品を除く総合             | number         | CPI excluding Fresh Food                                                                                                                                                           |
+| 持家の帰属家賃を除く総合       | number         | CPI excluding Imputed Rent                                                                                                                                                         |
+| 民間最終消費支出（参考）       | number \| null | Consumption expenditure (private final, 2005-2017, 12MA, indexed 2020=100); null outside period                                                                                    |
+| 民間最終消費支出（参考・延長） | number \| null | Consumption expenditure (private final, 2017-, advanced/reference-only series, 12MA, indexed 2020=100); null outside period; hidden by default, shown via ?adv=1 or ⓘ panel toggle |
+| CTI消費支出（参考）            | number \| null | Consumption expenditure (CTI distribution-adjusted, 2018-, 12MA window uses 2017 data, indexed 2020=100); null outside period                                                      |
+| 消費支出（参考）               | number         | Consumption expenditure (combined legacy series, 12MA, indexed 2020=100) — kept for compatibility                                                                                  |
+| CPI総合(参考)                  | number         | CPI All Items (reference)                                                                                                                                                          |
 
 **Major runtime-added fields per data loader:**
 
@@ -94,6 +95,7 @@ The system SHALL display economic indicators as interactive Recharts-based chart
     - The residual series is smoothed with a 2-month moving average (2MA).
   - NewGraph (supplementary view):
     - Displays "民間最終消費支出（参考）" (2005-2017) and "CTI消費支出（参考）" (2018-) as two separate series with `null` outside their respective active periods so lines correctly truncate instead of dropping to zero.
+    - Also includes an advanced reference-only series "民間最終消費支出（参考・延長）" (2017-) which is hidden by default and can be enabled via `?adv=1` URL query parameter or the ⓘ info panel toggle.
   - Charts using `interval="preserveStartEnd"` on their XAxis (MajorIndicesChart, EarningsBreakdownChart, StackedAreaChart, SpendingBarChart, ResidualAreaChart, NewGraph) render the first/last (start year / end year) tick label in `--foreground` via the shared `XAxisEdgeTick` component (`src/app/components/charts/XAxisEdgeTick.tsx`), while other tick labels use the default `--chart-text` color
 
 ### R3: Data Transformation (Server-Side)
@@ -108,7 +110,7 @@ The system SHALL load and process CSV data on the server before rendering.
 #### Scenario R3b: CTI / Earnings / Consumption Data Loading
 
 - **WHEN** `loadCtiData()` / `loadTotalEarningData()` / consumption map builder is called
-- **THEN** corresponding CSV files are read from `data/source/`, processed through `server/lib/dataLoader.ts`, and consumption expenditure is split into `民間最終消費支出（参考）` (2005-2016) and `CTI消費支出（参考）` (2017-) with `null` for periods outside their active ranges.
+- **THEN** corresponding CSV files are read from `data/source/`, processed through `server/lib/dataLoader.ts`, and consumption expenditure is split into `民間最終消費支出（参考）` (2005-2017) and `CTI消費支出（参考）` (2017-) with `null` for periods outside their active ranges, while `民間最終消費支出（参考・延長）` is generated for 2017 onwards as an advanced reference-only series.
 
 #### Scenario R3c: Data Processing & Projection
 
@@ -292,10 +294,19 @@ The system SHALL keep view state in the URL so it survives reload and can be sha
 
 #### Scenario R11a: URL Synchronization
 
-- **WHEN** the year range or hidden series changes
-- **THEN** `useUrlState` writes `?from`, `?to`, `?hidden` via `window.history.replaceState`
+- **WHEN** the year range, hidden series, or advanced series state changes
+- **THEN** `useUrlState` writes `?from`, `?to`, `?hidden`, `?adv` via `window.history.replaceState`
 - **AND WHEN** the page is opened with those params
-- **THEN** the dashboard restores that range and series visibility
+- **THEN** the dashboard restores that range, series visibility, and advanced series toggle.
+
+#### Scenario R11c: Advanced Series Toggle
+
+- **WHEN** 3種比較 is opened without `?adv=1`
+- **THEN** the advanced series is not rendered and does not appear in the legend.
+- **WHEN** the user turns ON the toggle in the ⓘ panel
+- **THEN** the advanced series and its legend chip appear, and `adv=1` is added to the URL.
+- **WHEN** the user opens a URL with `?adv=1`
+- **THEN** the advanced series is rendered from initial load.
 
 #### Scenario R11b: Scroll Position Preservation
 
@@ -413,12 +424,12 @@ data/source/*.csv
 
 #### src/hooks/
 
-| Module               | Description                                                                     |
-| -------------------- | ------------------------------------------------------------------------------- |
-| `useToggleSet.ts`    | Legend toggle state (React state using `useToggleSet`)                          |
-| `useChartTheme.ts`   | Chart theme management; `isMobile` and `isTouch` (`pointer: coarse`)            |
-| `useCpiChartData.ts` | CPI chart data filtering (quarter visibility) — server-side processing complete |
-| `useUrlState.ts`     | Syncs `?from` / `?to` / `?hidden` with `window.history.replaceState` (R11)      |
+| Module               | Description                                                                         |
+| -------------------- | ----------------------------------------------------------------------------------- |
+| `useToggleSet.ts`    | Legend toggle state (React state using `useToggleSet`)                              |
+| `useChartTheme.ts`   | Chart theme management; `isMobile` and `isTouch` (`pointer: coarse`)                |
+| `useCpiChartData.ts` | CPI chart data filtering (quarter visibility) — server-side processing complete     |
+| `useUrlState.ts`     | Syncs `?from` / `?to` / `?hidden` / `?adv` with `window.history.replaceState` (R11) |
 
 #### src/lib/
 
@@ -446,7 +457,7 @@ scripts/
 ### State Management
 
 - Legend toggle state: React state (via `useToggleSet` custom hook)
-- Year range and hidden stacked series: mirrored into the URL query by `useUrlState` via `window.history.replaceState` without altering scroll position (R11)
+- Year range, hidden stacked series, and advanced series toggle: mirrored into the URL query by `useUrlState` via `window.history.replaceState` without altering scroll position (R11)
 - Theme: `data-theme` on `<html>`, persisted in `localStorage`, applied pre-paint by an inline script (R14)
 - Chart data: React props from server component (no client-side re-fetch on initial load)
 - API routes available for dynamic client-side queries

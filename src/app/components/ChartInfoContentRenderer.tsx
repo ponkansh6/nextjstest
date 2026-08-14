@@ -11,12 +11,14 @@ interface ChartInfoContentRendererProps {
   chartKey: keyof typeof CHART_INFO;
   ariaLabel?: string;
   className?: string;
+  footer?: React.ReactNode;
 }
 
 export default function ChartInfoContentRenderer({
   chartKey,
   ariaLabel,
   className,
+  footer,
 }: ChartInfoContentRendererProps) {
   const content = CHART_INFO[chartKey];
   if (!content) return null;
@@ -50,6 +52,7 @@ export default function ChartInfoContentRenderer({
           </ul>
         </React.Fragment>
       ))}
+      {footer}
     </ChartInfoButton>
   );
 }

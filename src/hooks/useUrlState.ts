@@ -9,13 +9,15 @@ export function useUrlState(defaultStart: number, defaultEnd: number) {
   const fromParam = searchParams.get("from");
   const toParam = searchParams.get("to");
   const hiddenParam = searchParams.get("hidden");
+  const advParam = searchParams.get("adv");
 
   const from = fromParam ? parseInt(fromParam, 10) : defaultStart;
   const to = toParam ? parseInt(toParam, 10) : defaultEnd;
   const hiddenKeys = hiddenParam ? hiddenParam.split(",").filter(Boolean) : [];
+  const adv = advParam === "1";
 
   const updateUrl = React.useCallback(
-    (newFrom: number, newTo: number, newHidden: string[]) => {
+    (newFrom: number, newTo: number, newHidden: string[], newAdv: boolean) => {
       // router.replace は同一パスでのクエリ変更時に scroll:false でもスクロール位置をリセットする
       // （Next.js App Router の既知の挙動）ため、window.history.replaceState で
       // スクロール位置に影響しないURL同期を行う
@@ -35,6 +37,11 @@ export function useUrlState(defaultStart: number, defaultEnd: number) {
       } else {
         params.delete("hidden");
       }
+      if (newAdv) {
+        params.set("adv", "1");
+      } else {
+        params.delete("adv");
+      }
 
       const query = params.toString();
       const url = query ? `?${query}` : window.location.pathname;
@@ -47,6 +54,7 @@ export function useUrlState(defaultStart: number, defaultEnd: number) {
     from,
     to,
     hiddenKeys,
+    adv,
     updateUrl,
   };
 }

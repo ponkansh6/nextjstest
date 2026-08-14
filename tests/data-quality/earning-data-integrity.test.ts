@@ -302,5 +302,63 @@ describe("Earnings Data Integrity", () => {
         `CTI消費支出（参考） change across 2018/01-2018/02 should be < 2% (actual: ${(changeRatio * 100).toFixed(2)}%)`,
       ).toBeLessThan(0.02);
     });
+
+    it("should keep existing 民間最終消費支出（参考） values unchanged (regression for extended series)", () => {
+      expect(earningData.length).toBeGreaterThan(0);
+      const d2014 = earningData.find((d) => d.年月 === "2014年6月");
+      const d2017 = earningData.find((d) => d.年月 === "2017年12月");
+
+      expect(d2014).toBeDefined();
+      expect(d2017).toBeDefined();
+
+      const val2014 = d2014!["民間最終消費支出（参考）" as keyof CpiData] as number;
+      const val2017 = d2017!["民間最終消費支出（参考）" as keyof CpiData] as number;
+
+      expect(val2014).toBeCloseTo(99.79, 1);
+      expect(val2017).toBeCloseTo(101.34, 1);
+    });
+
+    it("should verify advanced series 民間最終消費支出（参考・延長） has values from 2017 to latest and null before 2017", () => {
+      expect(earningData.length).toBeGreaterThan(0);
+      earningData.forEach((d) => {
+        if (!d.年月 || typeof d.年月 !== "string") return;
+        const year = parseInt(d.年月.substring(0, 4), 10);
+        if (year < 2010) return;
+
+        const val = d["民間最終消費支出（参考・延長）" as keyof CpiData];
+        if (year >= 2017 && year <= 2025) {
+          expect(
+            val,
+            `民間最終消費支出（参考・延長） at ${d.年月} should be a positive number`,
+          ).toBeGreaterThan(0);
+        } else if (year >= 2026) {
+          // 生データの終端以降はnullになり得る
+          expect(
+            val === null || (typeof val === "number" && val > 0),
+            `民間最終消費支出（参考・延長） at ${d.年月} should be positive or null`,
+          ).toBe(true);
+        } else {
+          expect(
+            val,
+            `民間最終消費支出（参考・延長） at ${d.年月} should be null before 2017`,
+          ).toBeNull();
+        }
+      });
+    });
+
+    it("should verify 民間最終消費支出（参考） and 民間最終消費支出（参考・延長） match in 2017 (same source, same scale)", () => {
+      expect(earningData.length).toBeGreaterThan(0);
+      const d2017 = earningData.filter((d) => d.年月 && d.年月.startsWith("2017年"));
+      expect(d2017.length).toBeGreaterThan(0);
+
+      d2017.forEach((d) => {
+        const orig = d["民間最終消費支出（参考）" as keyof CpiData] as number;
+        const ext = d["民間最終消費支出（参考・延長）" as keyof CpiData] as number;
+
+        expect(orig).toBeGreaterThan(0);
+        expect(ext).toBeGreaterThan(0);
+        expect(ext).toBeCloseTo(orig, 1);
+      });
+    });
   });
 });
