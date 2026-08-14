@@ -50,7 +50,7 @@ function computeMovingAverageToField(
 /**
  * CTIデータから民間最終消費支出MapおよびCTI消費支出Mapを構築する。
  * 民間最終消費支出（参考）: 2005〜2017年、GDPベース
- * CTI消費支出（参考）: 2018年以降、CTIベース
+ * CTI消費支出（参考）: 2018年以降、CTIベース（12か月移動平均の計算には2017年のデータも使用）
  */
 function buildConsumptionMaps(
   ctiData: CpiData[],
@@ -72,7 +72,8 @@ function buildConsumptionMaps(
     if (year <= 2017) {
       const val = ((d["民間最終消費支出（名目）"] as number) || 0) * supportScale;
       minkanRawMap.set(ym, val);
-    } else {
+    }
+    if (year >= 2017) {
       const val = (d["消費支出（名目）"] as number) || 0;
       ctiRawMap.set(ym, val);
     }

@@ -280,5 +280,27 @@ describe("Earnings Data Integrity", () => {
       expect(d2020!["民間最終消費支出（参考）"]).toBeNull();
       expect(d2020!["CTI消費支出（参考）"]).toBeGreaterThan(0);
     });
+
+    it("should use 2017 data for CTI 12MA (2018 first months should be smooth, no partial-window dip)", () => {
+      expect(earningData.length).toBeGreaterThan(0);
+      const jan2018 = earningData.find((d) => d.年月 === "2018年1月");
+      const feb2018 = earningData.find((d) => d.年月 === "2018年2月");
+
+      expect(jan2018).toBeDefined();
+      expect(feb2018).toBeDefined();
+
+      const valJan = Number(jan2018!["CTI消費支出（参考）"] ?? 0);
+      const valFeb = Number(feb2018!["CTI消費支出（参考）"] ?? 0);
+
+      expect(valJan).toBeGreaterThan(0);
+      expect(valFeb).toBeGreaterThan(0);
+
+      // 変化率が2%未満であることを検証（不完全窓によるdipがなく滑らか）
+      const changeRatio = Math.abs(valFeb - valJan) / valJan;
+      expect(
+        changeRatio,
+        `CTI消費支出（参考） change across 2018/01-2018/02 should be < 2% (actual: ${(changeRatio * 100).toFixed(2)}%)`,
+      ).toBeLessThan(0.02);
+    });
   });
 });

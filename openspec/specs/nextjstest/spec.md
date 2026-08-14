@@ -10,16 +10,16 @@ A dashboard application to visualize and track Japanese economic indicators — 
 
 The shared data type with an index signature `[key: string]: string | number` for extensibility. Below are the explicitly defined fields; additional fields are added at runtime by each data loader.
 
-| Field                    | Type           | Description                                                                                             |
-| ------------------------ | -------------- | ------------------------------------------------------------------------------------------------------- |
-| 年月                     | string         | Year-month (e.g. "2020年1月")                                                                           |
-| 総合                     | number         | CPI / earnings total index (2020=100)                                                                   |
-| 生鮮食品を除く総合       | number         | CPI excluding Fresh Food                                                                                |
-| 持家の帰属家賃を除く総合 | number         | CPI excluding Imputed Rent                                                                              |
-| 民間最終消費支出（参考） | number \| null | Consumption expenditure (private final, 2005-2017, 12MA, indexed 2020=100); null outside period         |
-| CTI消費支出（参考）      | number \| null | Consumption expenditure (CTI distribution-adjusted, 2018-, 12MA, indexed 2020=100); null outside period |
-| 消費支出（参考）         | number         | Consumption expenditure (combined legacy series, 12MA, indexed 2020=100) — kept for compatibility       |
-| CPI総合(参考)            | number         | CPI All Items (reference)                                                                               |
+| Field                    | Type           | Description                                                                                                                   |
+| ------------------------ | -------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| 年月                     | string         | Year-month (e.g. "2020年1月")                                                                                                 |
+| 総合                     | number         | CPI / earnings total index (2020=100)                                                                                         |
+| 生鮮食品を除く総合       | number         | CPI excluding Fresh Food                                                                                                      |
+| 持家の帰属家賃を除く総合 | number         | CPI excluding Imputed Rent                                                                                                    |
+| 民間最終消費支出（参考） | number \| null | Consumption expenditure (private final, 2005-2017, 12MA, indexed 2020=100); null outside period                               |
+| CTI消費支出（参考）      | number \| null | Consumption expenditure (CTI distribution-adjusted, 2018-, 12MA window uses 2017 data, indexed 2020=100); null outside period |
+| 消費支出（参考）         | number         | Consumption expenditure (combined legacy series, 12MA, indexed 2020=100) — kept for compatibility                             |
+| CPI総合(参考)            | number         | CPI All Items (reference)                                                                                                     |
 
 **Major runtime-added fields per data loader:**
 
