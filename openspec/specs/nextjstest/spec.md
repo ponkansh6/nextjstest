@@ -308,11 +308,11 @@ The system SHALL keep view state in the URL so it survives reload and can be sha
 - **AND WHEN** the page is opened with those params
 - **THEN** the dashboard restores that range, series visibility, and advanced series toggle.
 
-### R15: Chart Tooltip Stack Total
+### R16: Chart Tooltip Stack Total
 
 The system SHALL display the sum of active series in stacked chart tooltips when requested.
 
-#### Scenario R15a: Consumption Expenditure Tooltip Total
+#### Scenario R16a: Consumption Expenditure Tooltip Total
 
 - **WHEN** the user taps or hovers over a data point in the Consumption Expenditure (nominal/real) charts
 - **THEN** the tooltip displays the sum of currently visible series as `合計` right below the date label

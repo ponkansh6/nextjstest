@@ -131,10 +131,7 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
             }}
           >
             <span>合計</span>
-            <span>
-              <span style={{ opacity: 0.25 }}></span>
-              {total.toFixed(2)}
-            </span>
+            <span>{total.toFixed(2)}</span>
           </div>
         )}
         {topPayload.map((entry, index) => (
