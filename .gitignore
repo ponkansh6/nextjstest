@@ -55,3 +55,4 @@ tests/test_perm.txt
 
 # Local session logs
 log/
+.vercel

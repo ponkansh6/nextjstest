@@ -516,6 +516,7 @@ scripts/
   - `range-change.e2e.spec.ts` — year-range filtering changes the rendered bars
   - `real-consumption.e2e.spec.ts` — Flight payload integrity for the real-consumption series
   - `mobile-ux.e2e.spec.ts` — 44px tap targets (R8b), 375px horizontal overflow (R7d),
+    horizontal layout for start year, end year, and max-range button on mobile viewports,
     and `LazyMount` deferral (R12)
   - `accessibility.e2e.spec.ts` — dark-mode legend contrast (P0-3 / P1-2 regression),
     `:focus-visible` rings (P4-1), keyboard-only operation (P4-1), and `prefers-reduced-motion` (P4-2)
