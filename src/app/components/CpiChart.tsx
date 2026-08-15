@@ -108,14 +108,11 @@ export default function CpiChart({
 
   const [startYear, setStartYear] = useState(from);
   const [endYear, setEndYear] = useState(to);
-  const [showAdvanced, setShowAdvanced] = useState<boolean>(() => {
-    if (adv) return true;
-    try {
-      return window.localStorage.getItem("newGraphShowAdvanced") === "1";
-    } catch {
-      return false;
-    }
-  });
+  // 初期表示は URL の ?adv=1 のみで判定する（R11c）。
+  // localStorage は過去のセッションの値を保持しているだけなので、
+  // ここで読み込むと ?adv=1 の付かない通常アクセス時にも
+  // 前回 ON にした状態が復元され、adv=1 が勝手に URL へ書き戻されてしまう。
+  const [showAdvanced, setShowAdvanced] = useState<boolean>(adv);
 
   // 表示・非表示を管理するステート（初期値は全て表示）
   const [hiddenKeys, handleLegendClick] = useToggleSet<string>();
