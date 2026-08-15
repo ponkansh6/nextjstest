@@ -240,8 +240,25 @@
     align-items: flex-start;
   }
 
+  .filterItem:has(#endYear) {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .filterItem:has(#endYear) > label {
+    width: 100%;
+  }
+
   .select {
     width: 100%;
+  }
+
+  .filterItem:has(#endYear) > .select {
+    flex: 1;
+    min-width: 0;
+    width: auto;
   }
 
   /* 多系列(最大16チップ)の折り返し行数を減らすため、意図的に44pxのタップ

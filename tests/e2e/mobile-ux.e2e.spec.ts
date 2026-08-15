@@ -60,6 +60,36 @@ test.describe("モバイル UX ルール", () => {
       `375px 幅で ${scrollWidth - clientWidth}px はみ出している`,
     ).toBeLessThanOrEqual(clientWidth);
   });
+
+  test("モバイル幅（375px）でも最大期間ボタンが終了年 select の右側に配置されること", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
+
+    await page.getByRole("button", { name: "表示期間を変更" }).click();
+
+    const endYearSelect = page.locator("#endYear");
+    const maxButton = page.getByRole("button", { name: "最大期間" });
+
+    await expect(endYearSelect).toBeVisible();
+    await expect(maxButton).toBeVisible();
+
+    const selectBox = await endYearSelect.boundingBox();
+    const buttonBox = await maxButton.boundingBox();
+
+    expect(selectBox, "endYear select boundingBox").not.toBeNull();
+    expect(buttonBox, "maxButton boundingBox").not.toBeNull();
+
+    if (selectBox && buttonBox) {
+      // ボタンの左端 x が select の右端 (x + width) 以上であること（右側に配置されている）
+      expect(buttonBox.x).toBeGreaterThanOrEqual(selectBox.x);
+      // 同じ行にあること（yの差が両者の高さの合計未満であることなど、大まかな同一行判定）
+      const verticalDiff = Math.abs(selectBox.y - buttonBox.y);
+      expect(verticalDiff).toBeLessThan(selectBox.height + buttonBox.height);
+    }
+  });
 });
 
 /**
