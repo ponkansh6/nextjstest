@@ -66,4 +66,66 @@ describe("husky pre-push detached HEAD leftover check", () => {
     expect(exitCode).toBe(0);
     fs.rmSync(repo, { recursive: true, force: true });
   });
+
+  it("d. normal branch: wrapper using sh (subprocess) continues after check script returns 0", () => {
+    const repo = setupRepo();
+    execSync("git checkout -b feature-branch", { cwd: repo, stdio: "ignore" });
+    execSync('git commit --allow-empty -m "feature commit"', { cwd: repo, stdio: "ignore" });
+
+    // Create wrapper script that calls check-script via subprocess (sh) and adds marker
+    const wrapperPath = path.join(repo, "wrapper.sh");
+    const wrapperContent = `#!/bin/sh
+sh "${scriptPath}"
+if [ $? -ne 0 ]; then
+  exit 1
+fi
+echo "FULL_SEQUENCE_MARKER"
+`;
+    fs.writeFileSync(wrapperPath, wrapperContent);
+    fs.chmodSync(wrapperPath, 0o755);
+
+    let output = "";
+    let exitCode = 0;
+    try {
+      output = execSync(`sh "${wrapperPath}"`, { cwd: repo, encoding: "utf8" });
+    } catch (err: any) {
+      exitCode = err.status;
+      output = err.stdout || "";
+    }
+
+    expect(exitCode).toBe(0);
+    expect(output).toContain("FULL_SEQUENCE_MARKER");
+    fs.rmSync(repo, { recursive: true, force: true });
+  });
+
+  it("e. detached HEAD with leftover: wrapper blocks before marker (subprocess exit propagates)", () => {
+    const repo = setupRepo();
+    execSync("git checkout --detach", { cwd: repo, stdio: "ignore" });
+    execSync('git commit --allow-empty -m "leftover commit"', { cwd: repo, stdio: "ignore" });
+
+    // Create wrapper script that calls check-script via subprocess (sh) and adds marker
+    const wrapperPath = path.join(repo, "wrapper.sh");
+    const wrapperContent = `#!/bin/sh
+sh "${scriptPath}"
+if [ $? -ne 0 ]; then
+  exit 1
+fi
+echo "FULL_SEQUENCE_MARKER"
+`;
+    fs.writeFileSync(wrapperPath, wrapperContent);
+    fs.chmodSync(wrapperPath, 0o755);
+
+    let output = "";
+    let exitCode = 0;
+    try {
+      output = execSync(`sh "${wrapperPath}"`, { cwd: repo, encoding: "utf8" });
+    } catch (err: any) {
+      exitCode = err.status;
+      output = err.stdout || "";
+    }
+
+    expect(exitCode).toBe(1);
+    expect(output).not.toContain("FULL_SEQUENCE_MARKER");
+    fs.rmSync(repo, { recursive: true, force: true });
+  });
 });
