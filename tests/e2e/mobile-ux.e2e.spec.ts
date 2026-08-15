@@ -121,6 +121,52 @@ test.describe("モバイル UX ルール", () => {
       expect(Math.abs(startBox.width - endBox.width)).toBeLessThanOrEqual(4);
     }
   });
+
+  test("モバイル幅（375px）で開始年・終了年・最大期間の3要素すべてが同一行（横並び）に配置されること", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
+
+    await page.getByRole("button", { name: "表示期間を変更" }).click();
+
+    const startYearSelect = page.locator("#startYear");
+    const endYearSelect = page.locator("#endYear");
+    const maxButton = page.getByRole("button", { name: "最大期間" });
+
+    await expect(startYearSelect).toBeVisible();
+    await expect(endYearSelect).toBeVisible();
+    await expect(maxButton).toBeVisible();
+
+    const startBox = await startYearSelect.boundingBox();
+    const endBox = await endYearSelect.boundingBox();
+    const buttonBox = await maxButton.boundingBox();
+
+    expect(startBox, "startYear boundingBox").not.toBeNull();
+    expect(endBox, "endYear boundingBox").not.toBeNull();
+    expect(buttonBox, "maxButton boundingBox").not.toBeNull();
+
+    if (startBox && endBox && buttonBox) {
+      // 3要素のY座標がすべてほぼ一致していること（同一行）
+      const maxAllowedYDiff = 15; // 行の許容差
+      const yDiffStartEnd = Math.abs(startBox.y - endBox.y);
+      const yDiffEndBtn = Math.abs(endBox.y - buttonBox.y);
+
+      expect(
+        yDiffStartEnd,
+        `開始年と終了年のY座標が異なります: start.y=${startBox.y}, end.y=${endBox.y}`,
+      ).toBeLessThan(maxAllowedYDiff);
+      expect(
+        yDiffEndBtn,
+        `終了年と最大期間ボタンのY座標が異なります: end.y=${endBox.y}, btn.y=${buttonBox.y}`,
+      ).toBeLessThan(maxAllowedYDiff);
+
+      // X座標の順序: 開始年 < 終了年 < ボタン
+      expect(startBox.x).toBeLessThan(endBox.x);
+      expect(endBox.x + endBox.width).toBeLessThanOrEqual(buttonBox.x + 10);
+    }
+  });
 });
 
 /**

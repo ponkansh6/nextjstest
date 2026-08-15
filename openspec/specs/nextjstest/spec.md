@@ -157,7 +157,15 @@ The system SHALL provide date range and indicator filters.
 #### Scenario R5b: Uniform Select Width on Mobile
 
 - **WHEN** user views period selection filters on a mobile viewport (≤768px)
-- **THEN** start year select and end year select have uniform width (fixed 120px) to eliminate layout asymmetry caused by the adjacent max range button.
+- **THEN** start year select and end year select have uniform width (both `width: 70px` via the shared `.select` rule, `flex: 1 1 70px`) to eliminate layout asymmetry caused by the adjacent max range button
+- **AND** start year item, end year item, and max range button are all laid out in a single horizontal row (same baseline Y coordinate) without overflowing a 375px viewport
+
+#### Scenario R5c: Mobile Filter Row Horizontal Invariant
+
+- **WHEN** the period selection filters are displayed on a mobile viewport (≤768px)
+- **THEN** the start year select, end year select, and max range button share the same row (Y-coordinate difference below the element height threshold)
+- **AND** they are ordered left-to-right as start year select → end year select → max range button
+- **AND** the start year select and end year select widths match within 4px
 
 ### R6: Chart Information
 

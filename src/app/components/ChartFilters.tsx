@@ -18,15 +18,7 @@ export const ChartFilters = ({
 }: ChartFiltersProps) => {
   return (
     <div className={styles.filterContainer}>
-      <div
-        style={{
-          display: "flex",
-          gap: "2rem",
-          width: "100%",
-          flexWrap: "wrap",
-          alignItems: "center",
-        }}
-      >
+      <div className={styles.filterRow}>
         <div className={styles.filterItem}>
           <label htmlFor="startYear">開始年:</label>
           <select
