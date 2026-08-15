@@ -524,6 +524,9 @@ scripts/
 - Integration tests for data mapping and computation accuracy (`tests/data-mapping/`, `tests/computation-contract/`)
 - Constant/fixture tests for expected data quality (`tests/constants/`, `tests/fixtures/`)
 - Performance checkpoint tests (`tests/perf-checkpoint.test.ts`)
+- **Husky pre-push hook verification** (`tests/unit/husky-pre-push.test.ts`):
+  - T1–T3: `check-detached-leftover.sh` detects and blocks detached HEAD commits not reachable from origin/main
+  - T4–T5: Pre-push wrapper (using subprocess call, not source) correctly propagates exit codes and allows full validation sequence to run when safe
 - E2E against a real build/server (`tests/e2e/`, Playwright) across three projects:
   `chromium` (Desktop Chrome), `chromium-dark` (dark mode), `mobile-pixel` (Pixel 7 / Chromium)
   - `range-change.e2e.spec.ts` — year-range filtering changes the rendered bars
