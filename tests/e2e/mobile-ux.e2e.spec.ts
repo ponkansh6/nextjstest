@@ -83,11 +83,14 @@ test.describe("モバイル UX ルール", () => {
     expect(buttonBox, "maxButton boundingBox").not.toBeNull();
 
     if (selectBox && buttonBox) {
-      // ボタンの左端 x が select の右端 (x + width) 以上であること（右側に配置されている）
-      expect(buttonBox.x).toBeGreaterThanOrEqual(selectBox.x);
-      // 同じ行にあること（yの差が両者の高さの合計未満であることなど、大まかな同一行判定）
+      // 1. ボタンの左端が select の右端 (x + width) 以上 → 確実に右側（縦積みなら x が揃うので FAIL する）
+      expect(buttonBox.x).toBeGreaterThanOrEqual(selectBox.x + selectBox.width - 1); // 1px 許容
+      // 2. 同一行判定: y 差が小さい側の高さの 50% 未満（縦積みなら ≈ select.height で FAIL する）
       const verticalDiff = Math.abs(selectBox.y - buttonBox.y);
-      expect(verticalDiff).toBeLessThan(selectBox.height + buttonBox.height);
+      const maxAllowedVerticalDiff = Math.min(selectBox.height, buttonBox.height) * 0.5;
+      expect(verticalDiff).toBeLessThan(maxAllowedVerticalDiff);
+      // 3. 冗長チェック: ボタン右端が select 右端より右
+      expect(buttonBox.x + buttonBox.width).toBeGreaterThan(selectBox.x + selectBox.width);
     }
   });
 });

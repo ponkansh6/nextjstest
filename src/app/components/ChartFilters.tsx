@@ -42,7 +42,7 @@ export const ChartFilters = ({
             ))}
           </select>
         </div>
-        <div className={styles.filterItem}>
+        <div className={`${styles.filterItem} ${styles.endYearFilterItem}`}>
           <label htmlFor="endYear">終了年:</label>
           <select
             id="endYear"
