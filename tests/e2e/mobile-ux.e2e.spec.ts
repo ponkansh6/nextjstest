@@ -93,6 +93,34 @@ test.describe("モバイル UX ルール", () => {
       expect(buttonBox.x + buttonBox.width).toBeGreaterThan(selectBox.x + selectBox.width);
     }
   });
+
+  test("モバイル幅（375px）で開始年と終了年の select 幅がほぼ一致すること", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
+
+    await page.getByRole("button", { name: "表示期間を変更" }).click();
+
+    const startYearSelect = page.locator("#startYear");
+    const endYearSelect = page.locator("#endYear");
+
+    await expect(startYearSelect).toBeVisible();
+    await expect(endYearSelect).toBeVisible();
+
+    const startBox = await startYearSelect.boundingBox();
+    const endBox = await endYearSelect.boundingBox();
+
+    expect(startBox, "startYear boundingBox").not.toBeNull();
+    expect(endBox, "endYear boundingBox").not.toBeNull();
+
+    if (startBox && endBox) {
+      console.log(
+        `[MEASURE] startYear width: ${startBox.width}, endYear width: ${endBox.width}, diff: ${Math.abs(startBox.width - endBox.width)}`,
+      );
+      // 現状の赤出し確認用: 差が4px以内であることを検証するが、最初は失敗するはず
+      expect(Math.abs(startBox.width - endBox.width)).toBeLessThanOrEqual(4);
+    }
+  });
 });
 
 /**

@@ -154,6 +154,11 @@ The system SHALL provide date range and indicator filters.
 - **WHEN** user adjusts a filter control
 - **THEN** the visible date range or indicator set updates accordingly
 
+#### Scenario R5b: Uniform Select Width on Mobile
+
+- **WHEN** user views period selection filters on a mobile viewport (≤768px)
+- **THEN** start year select and end year select have uniform width (fixed 120px) to eliminate layout asymmetry caused by the adjacent max range button.
+
 ### R6: Chart Information
 
 The system SHALL provide explanatory info for each chart/metric.
