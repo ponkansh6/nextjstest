@@ -364,9 +364,18 @@ The system SHALL let users take the displayed data with them.
 - **THEN** a UTF-8 BOM CSV of the currently filtered rows and series downloads
 - **AND** the file name derives from the chart title
 
-### R14: Theme Control
+### R17: Max Period Button
 
-The system SHALL allow explicit theme selection independent of the OS setting.
+The system SHALL provide a "最大期間" button within the range filter sheet to quickly reset the date range to 2005 through the latest available year.
+
+#### Scenario R17a: Max Period Activation
+
+- **WHEN** the user opens the range filter and clicks the "最大期間" button
+- **THEN** the start year is set to 2005 and the end year is set to the latest available year in `allYears`
+- **AND** the URL parameters `from=2005` and `to=<latestYear>` are updated via `replaceState`
+- **AND** the range bottom sheet automatically closes
+- **AND WHEN** the range is already set to the maximum period and the button is clicked again
+- **THEN** the range remains unchanged (idempotent).
 
 #### Scenario R14a: Manual Theme Toggle
 
@@ -408,8 +417,8 @@ Page (RSC)
 ├── header (badge, ThemeToggle, title, description)
 └── CpiChart (client component)
     ├── SectionTabs — Sticky navigation section tabs & range display
-    ├── ChartFilters — Date range (start year / end year selects)
-    ├── Range sheet — ChartFilters (start year / end year selects)
+    ├── ChartFilters — Date range (start year / end year selects with "最大期間" button)
+    ├── Range sheet — ChartFilters (start year / end year selects with "最大期間" button)
     ├── [Chart variants]                     — eager: rendered directly
     │   ├── MajorIndicesChart → CustomTooltip
     │   └── StackedAreaChart → CustomTooltip — always-expanded 12-series legend (compact on mobile)

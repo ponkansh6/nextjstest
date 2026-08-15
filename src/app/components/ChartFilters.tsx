@@ -1,4 +1,5 @@
 import styles from "./CpiChart.module.css";
+import { MIN_DISPLAY_YEAR } from "@/lib/chartConstants";
 
 interface ChartFiltersProps {
   allYears: number[];
@@ -17,7 +18,15 @@ export const ChartFilters = ({
 }: ChartFiltersProps) => {
   return (
     <div className={styles.filterContainer}>
-      <div style={{ display: "flex", gap: "2rem", width: "100%", flexWrap: "wrap" }}>
+      <div
+        style={{
+          display: "flex",
+          gap: "2rem",
+          width: "100%",
+          flexWrap: "wrap",
+          alignItems: "center",
+        }}
+      >
         <div className={styles.filterItem}>
           <label htmlFor="startYear">開始年:</label>
           <select
@@ -47,6 +56,17 @@ export const ChartFilters = ({
               </option>
             ))}
           </select>
+          <button
+            type="button"
+            className={styles.maxRangeButton}
+            onClick={() => {
+              const maxYear = allYears[allYears.length - 1] ?? MIN_DISPLAY_YEAR;
+              setStartYear(MIN_DISPLAY_YEAR);
+              setEndYear(maxYear);
+            }}
+          >
+            最大期間
+          </button>
         </div>
       </div>
     </div>

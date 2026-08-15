@@ -50,6 +50,26 @@
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
+.maxRangeButton {
+  padding: clamp(0.5rem, 1.39vw - 0.17rem, 1.5rem) clamp(1rem, 2vw, 2rem);
+  border-radius: 0.375rem;
+  border: 1px solid var(--card-border);
+  background-color: var(--card-bg);
+  color: var(--card-text);
+  font-size: clamp(0.875rem, 0.12rem + 1.56vw, 2rem);
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    background-color 0.2s;
+  flex-shrink: 0;
+}
+
+.maxRangeButton:hover {
+  border-color: var(--blue-500);
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
 .legendContainer {
   margin-bottom: 1.5rem;
   padding-bottom: 1rem;
@@ -72,6 +92,7 @@
 .actionButton:focus-visible,
 .calculateButton:focus-visible,
 .select:focus-visible,
+.maxRangeButton:focus-visible,
 .sectionTab:focus-visible {
   outline: 2px solid var(--blue-500);
   outline-offset: 2px;

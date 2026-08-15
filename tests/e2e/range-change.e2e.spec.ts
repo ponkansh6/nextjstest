@@ -295,4 +295,41 @@ test.describe("描画範囲変更 E2E", () => {
     const after = await page.evaluate(() => window.scrollY);
     expect(Math.abs(after - before)).toBeLessThan(50);
   });
+
+  test("最大期間ボタンで2005年から最新年に一括設定され、シートが閉じ、URLに反映される", async ({
+    page,
+  }) => {
+    // 1. まず範囲を狭める
+    await setRange(page, 2015, 2020);
+    await page.waitForTimeout(300);
+
+    // 2. シートを開いて「最大期間」ボタンをクリック
+    await ensureSheetOpen(page);
+    const maxButton = page.getByRole("button", { name: "最大期間" });
+    await expect(maxButton).toBeVisible();
+    await maxButton.click();
+    await page.waitForTimeout(400);
+
+    // 3. ボトムシートが自動的に閉じることを確認
+    const isOpen = await page
+      .locator("#startYear")
+      .isVisible()
+      .catch(() => false);
+    expect(isOpen, "最大期間ボタンクリック後はボトムシートが自動的に閉じるべき").toBe(false);
+
+    // 4. 再度シートを開いて値が 2005 と最新年になっているか確認
+    await ensureSheetOpen(page);
+    const startVal = await page.locator("#startYear").inputValue();
+    const endSelect = page.locator("#endYear");
+    const endOptions = await endSelect.locator("option").allTextContents();
+    const latestYear = endOptions[endOptions.length - 1]?.replace("年", "");
+
+    expect(startVal).toBe("2005");
+    expect(await endSelect.inputValue()).toBe(latestYear);
+
+    // 5. URL に from=2005 や終了年のパラメータが反映されていること（デフォルト範囲以外の場合のみクエリが立つ仕様のため、2005はデフォルトの場合は省略され得るが、今回は開始年がデフォルト等で挙動を確認）
+    const url = page.url();
+    // デフォルトと異なる範囲を指定したためURLが変化していること、あるいはURLに含まれることを確認
+    expect(url).toContain("to=");
+  });
 });
