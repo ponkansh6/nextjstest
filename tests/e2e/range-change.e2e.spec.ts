@@ -327,9 +327,9 @@ test.describe("描画範囲変更 E2E", () => {
     expect(startVal).toBe("2005");
     expect(await endSelect.inputValue()).toBe(latestYear);
 
-    // 5. URL に from=2005 や終了年のパラメータが反映されていること（デフォルト範囲以外の場合のみクエリが立つ仕様のため、2005はデフォルトの場合は省略され得るが、今回は開始年がデフォルト等で挙動を確認）
+    // 5. 最大期間（初期デフォルト）に戻ったためURLからパラメータがクリーンアップされること
     const url = page.url();
-    // デフォルトと異なる範囲を指定したためURLが変化していること、あるいはURLに含まれることを確認
-    expect(url).toContain("to=");
+    expect(url).not.toContain("from=");
+    expect(url).not.toContain("to=");
   });
 });
