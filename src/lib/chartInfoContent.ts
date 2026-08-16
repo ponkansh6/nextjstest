@@ -71,7 +71,7 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
     ],
   },
   "consumption-expenditure": {
-    source: "e-Stat「四半期別GDP統計」／e-Stat「分布調整済み原数値CTI」",
+    source: "e-Stat「四半期別GDP統計」／e-Stat「分布調整済み原数値CTIミクロ」",
     url: "https://www.e-stat.go.jp/stat-search/files?toukei=00100409&tstat=000001014470",
     sections: [
       {
@@ -98,7 +98,7 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
             text: "2020年基準で指数化（2020年平均 = 100）",
           },
           {
-            text: "2017年まではサポート系列（民間最終消費支出）をCTIの2020年水準にスケーリングして結合",
+            text: "2017年まではサポート系列（民間最終消費支出）をCTIミクロの2020年水準にスケーリングして結合",
           },
           {
             text: "「諸雑費・CPI外支出」は、総消費支出から各費目（住居、食料等）の合計を差し引いた差分として別途算出",
@@ -155,7 +155,7 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
   },
   "new-graph": {
     source:
-      "e-Stat「毎月勤労統計調査」／e-Stat「消費者物価指数」／e-Stat「分布調整済み原数値CTI」／e-Stat「四半期別GDP統計」",
+      "e-Stat「毎月勤労統計調査」／e-Stat「消費者物価指数」／e-Stat「分布調整済み原数値CTIミクロ」／e-Stat「四半期別GDP統計」",
     url: "https://www.e-stat.go.jp/stat-search/files?page=1&toukei=00200573&tstat=000001150147",
     sections: [
       {
@@ -163,13 +163,10 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
         items: [
           { text: "給与（総合）：所定内給与 + 所定外給与 + 特別給与の12か月移動平均を指数化" },
           {
-            text: "民間最終消費支出（参考）：2005年〜2017年、四半期別GDP統計の「民間最終消費支出（名目原系列）」を12か月移動平均で指数化",
+            text: "民間最終消費支出（総合）：2005年〜2017年、四半期別GDP統計の「民間最終消費支出（名目原系列）」を12か月移動平均で指数化（※2018年以降の延長オプションを用意）",
           },
           {
-            text: "民間最終消費支出（参考・延長）：2017年以降、四半期別GDP統計の「民間最終消費支出（名目原系列）」を12か月移動平均で指数化した参考・延長系列（※上級者向け。既定では非表示。このⓘパネルのトグルまたは URL に ?adv=1 を付けると表示。CTIとは物差しが異なるため、2つの消費系列を直接比較することはできません）",
-          },
-          {
-            text: "CTI消費支出（参考）：2018年以降、分布調整済み原数値CTIの「消費支出（名目）」を12か月移動平均で指数化（※12か月移動平均の計算には2017年のデータも使用。物差しが異なるため両系列を直接比較することはできません）",
+            text: "CTI消費支出（総合）：2018年以降、分布調整済み原数値CTIミクロの「消費支出（名目）」を12か月移動平均で指数化（※12か月移動平均の計算には2017年のデータも使用。物差しが異なるため両系列を直接比較することはできません）",
           },
           { text: "物価指数（総合）：消費者物価指数総合を12か月移動平均で指数化" },
         ],
