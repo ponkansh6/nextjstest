@@ -93,7 +93,7 @@ describe("BottomSheet", () => {
     expect(document.activeElement).toBe(closeButton);
     // Tab → 子ボタン
     fireEvent.keyDown(document, { key: "Tab" });
-    // Tab → 最後なので循环回 ✕ ボタン
+    // Tab → 最後なので ✕ ボタンへ循環する
     fireEvent.keyDown(document, { key: "Tab" });
     expect(document.activeElement).toBe(closeButton);
     // Shift+Tab → 最後（子ボタン）へ

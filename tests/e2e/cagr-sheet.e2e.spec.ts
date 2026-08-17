@@ -62,9 +62,10 @@ test.describe("CAGR 設定ボトムシート", () => {
     await expect(resultValue).toBeVisible({ timeout: 5000 });
     await expect(resultValue).toHaveText(/^-?\d+\.\d{2}%$/);
 
-    // 詳細表示がトリガーの設定と整合することを確認
+    // トリガーボタンのラベルから期待値を導出し、終了年のハードコードを排除
+    const triggerLabel = (await trigger.textContent())?.replace(" ▾", "").trim();
     const resultDetail = page.locator("[class*='cagrResultDetail']");
-    await expect(resultDetail).toContainText("2015年01月 → 2026年01月");
+    await expect(resultDetail).toContainText(triggerLabel!);
   });
 
   test("T-E2E-3: 背景タップでシートが閉じる", async ({ page }) => {

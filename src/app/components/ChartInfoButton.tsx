@@ -23,7 +23,7 @@ export default function ChartInfoButton({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
 
-  useFocusTrap(popupRef, open);
+  useFocusTrap(popupRef, open, { restoreRef: triggerRef, restoreFocus: false });
 
   // ── Close on click outside ──
   useEffect(() => {
@@ -58,7 +58,6 @@ export default function ChartInfoButton({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setOpen(false);
-        triggerRef.current?.focus();
       }
     };
 
@@ -72,7 +71,6 @@ export default function ChartInfoButton({
 
   const handleClose = () => {
     setOpen(false);
-    triggerRef.current?.focus();
   };
 
   return (

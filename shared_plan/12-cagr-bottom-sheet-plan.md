@@ -403,3 +403,435 @@ const formatCagrRange = (startYear: number, endYear: number, month: number) => {
 5. **C-1**（spec.md 追記）— 他の積み残しとまとめて
 
 **未実施の検証**: プラン 63 行の「実機幅での `position: fixed` 表示位置の目視確認」は E2E（T-E2E-1 / T-E2E-3 でシートの可視性・背景タップは検証済み）では代替できないため、実機またはブラウザのデバイスエミュレーションでの目視確認が残っている。
+
+---
+
+# 追加対応の検証結果（2026-08-17 実施 / 対象コミット `375308c`）
+
+## 総合判定
+
+**A-1 / A-2 / B-1 / B-2 / C-1 の 5 件すべてが実装され、全検証ゲートを通過した。**
+
+ただし **A-1 のフォーカス復帰実装が `ChartInfoButton` に新たなスクロールジャンプ回帰を持ち込んでいる**ことを実測で確認した。後述 **D-1** として修正を要する（優先度: 高）。
+
+## 検証ゲートの実行結果
+
+| ゲート                  | 結果                                                                      |
+| ----------------------- | ------------------------------------------------------------------------- |
+| `pnpm type-check`       | ✅ エラー 0                                                               |
+| `pnpm lint`             | ✅ エラー 0 / 警告 5（**前回と同一の既存警告**、新規増加なし）            |
+| `pnpm test`             | ✅ 31 ファイル / **246 テスト全 pass**（前回 243 → T10/T11/T12 の +3 件） |
+| `pnpm build`            | ✅ 成功                                                                   |
+| `pnpm test:e2e`（全体） | ✅ **81 passed / 22 skipped / 0 failed**                                  |
+
+`ChartInfoButton.test.tsx` を含む既存コンポーネントテストも全 pass。`useFocusTrap` への切り出しでユニットテスト層の回帰は発生していない。
+
+## 対応項目ごとの突合
+
+| 項目    | 実装状況                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **A-1** | ✅ `src/hooks/useFocusTrap.ts` を新設（69 行）。初期フォーカス（`useFocusTrap.ts:24-30`）・Tab 循環（`38-68`）・クローズ時のフォーカス復帰（`32-34`）の 3 点すべて実装。`BottomSheet.tsx:16` と `ChartInfoButton.tsx:26` の両方が利用し、`ChartInfoButton` 側の重複実装 44 行を削除。`BottomSheet.tsx:38` に `tabIndex={-1}` を追加してフォールバックの `container.focus()` を機能させている点も正しい。テスト T10/T11/T12 追加済み |
+| **A-2** | ✅ `CagrPanel.tsx:51` の `aria-label` に現在値を埋め込み。セレクタは提案どおりユニット（`CagrPanel.test.tsx:42,49,57,66`）・E2E（`cagr-sheet.e2e.spec.ts:24,42,54,68`）の 8 箇所すべて正規表現化済み。`SectionTabs` は提案どおり手を付けず（別コミット判断は妥当）                                                                                                                                                                  |
+| **B-1** | ✅ `cagr-sheet.e2e.spec.ts:56-63` を `[class*='cagrResultValue']` の `toHaveText(/^-?\d+\.\d{2}%$/)` と `[class*='cagrResultDetail']` の `toContainText` に差し替え。**見出しへの誤マッチが解消され、計算が動かなければ落ちるテストになった**ことを確認                                                                                                                                                                             |
+| **B-2** | ✅ `CagrPanel.tsx:22` から `▾` を除去し、`:53` の JSX 側で付与。`:75` の `.replace(" ▾", "")` は削除済み                                                                                                                                                                                                                                                                                                                            |
+| **C-1** | ✅ `spec.md:562` に `cagr-sheet.e2e.spec.ts — CAGR 設定ボトムシートの開閉と計算導線（R18）` を追記                                                                                                                                                                                                                                                                                                                                  |
+
+A-1 で提案した「E2E（`accessibility.e2e.spec.ts`）でのフォーカストラップ検証追加」のみ未実施。ユニット T10〜T12 で機能自体は担保されているため必須ではないが、下記 D-1 の回帰はユニット層では捕まらなかったため、E2E 層の追加は依然として有意である。
+
+## BottomSheet 側のフォーカス復帰の影響（実測・問題なし）
+
+一時 Playwright スペックで、フォーカス復帰による `Element.focus()` のスクロール副作用を実測した。
+
+| シナリオ                                                       | スクロール差分 |
+| -------------------------------------------------------------- | -------------- |
+| CAGR シートを開いたまま下方向へスクロール → 背景タップで閉じる | **0px** ✅     |
+| 表示期間シートを開き `#startYear` を変更して自動クローズ       | **0px** ✅     |
+
+いずれも復帰先のトリガー（`.cagrRangeButton` / sticky な `.sectionRange`）が視界内に留まるため副作用が出ない。**本プランのスコープである `BottomSheet` 2 経路は健全。**
+
+---
+
+## D-1【要修正・優先度 高】`useFocusTrap` が `ChartInfoButton` の外側クリック時にページ最上部までスクロールを巻き戻す
+
+### 症状（実測で確認）
+
+info（ⓘ）ポップアップを開いたままページ下方へスクロールし、ポップアップ外をクリックして閉じると、**スクロール位置が info ボタンの位置まで一気に戻る**。
+
+一時 Playwright スペックによる A/B 実測:
+
+| 対象コミット                       | 外側クリック前 `scrollY` | クリック後 `scrollY` | 差分           |
+| ---------------------------------- | ------------------------ | -------------------- | -------------- |
+| `5e32275`（`useFocusTrap` 導入前） | 3000                     | 3000                 | **0px** ✅     |
+| `375308c`（`useFocusTrap` 導入後） | 3000                     | 134                  | **-2866px** ❌ |
+
+> 検証方法: `ChartInfoButton.tsx` のみを `5e32275` の内容へ差し替えて再ビルドし、同一スペックで比較。検証後に作業ツリーは元に戻してある（`git status` clean）。
+
+### 原因
+
+1. `useFocusTrap.ts:32-34` のクリーンアップは、**閉じ方を問わず無条件に** `previousFocusRef.current?.focus()` を実行する。
+2. `Element.focus()` は既定でその要素を視界内へスクロールする（`preventScroll` 未指定）。
+3. 変更前の `ChartInfoButton` は、外側 `pointerdown` 経路（`ChartInfoButton.tsx:29-52`）では `setOpen(false)` のみでフォーカスを動かしていなかった。`triggerRef.current?.focus()` は ✕ / backdrop（`handleClose`）と Escape の**キーボード／明示クローズ経路に限定**されていた。共通フック化でこの区別が失われ、外側クリック経路にもフォーカス復帰が適用された。
+
+`BottomSheet` 側で問題が出ないのはトリガーが視界内に留まる配置だからであり、`ChartInfoButton` はページ全体に散在する（`ChartInfoContentRenderer` 経由で各チャート見出しに配置）ため影響が顕在化する。**モバイルでは「ⓘ を閉じたら画面が飛ぶ」という体感的に大きな不具合になる。**
+
+### 変更プラン（E 案を推奨）
+
+- **E 案（推奨・最小かつ確実）**: `useFocusTrap.ts:33` を `preventScroll` 付きに変更する。
+
+  ```ts
+  return () => {
+    previousFocusRef.current?.focus({ preventScroll: true });
+  };
+  ```
+
+  フォーカス復帰（アクセシビリティ上の要件）は維持したまま、スクロール副作用のみを打ち消す。`ChartInfoButton` の `handleClose` / Escape 経路にある既存の `triggerRef.current?.focus()`（`ChartInfoButton.tsx:61,75`）はスクロール込みの `focus()` だが、これらは元から存在する挙動なので変更しない。
+  - 影響範囲: `src/hooks/useFocusTrap.ts` の 1 行のみ。
+
+- **F 案（併用推奨・重複解消）**: E 案の適用後、`ChartInfoButton.tsx:61` と `:75` の `triggerRef.current?.focus()` は `useFocusTrap` のクリーンアップと二重にフォーカス復帰を行うため冗長になる。`triggerRef` を `focus` 用途で使っているのはこの 2 箇所だけなので、削除してフックに一任するとフォーカス制御の責務が 1 箇所に集約される。
+  - ただし削除するとこの 2 経路もスクロールしなくなる（＝挙動変更）。**先に E 案のみを入れて回帰を止め、F 案は別途判断するのが安全。**
+
+### テスト追加（回帰の再発防止）
+
+ユニット層（jsdom）では `focus()` のスクロール副作用が再現しないため、**E2E で押さえる必要がある**。`tests/e2e/accessibility.e2e.spec.ts` に追加する:
+
+```ts
+fixtureTest(
+  "info ポップアップを外側クリックで閉じてもスクロール位置が保持される",
+  async ({ page }) => {
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
+
+    await page
+      .getByRole("button", { name: /データソース/ })
+      .first()
+      .click();
+    await expect(page.getByRole("dialog").first()).toBeVisible();
+
+    await page.evaluate(() => window.scrollTo(0, 3000));
+    const before = await page.evaluate(() => window.scrollY);
+
+    await page.mouse.click(200, 400); // ポップアップ外
+    await page.waitForTimeout(300);
+
+    const after = await page.evaluate(() => window.scrollY);
+    expect(Math.abs(after - before)).toBeLessThan(50);
+  },
+);
+```
+
+あわせて A-1 で未実施だったフォーカストラップの E2E も同ファイルに追加する:
+
+```ts
+fixtureTest("ボトムシートを開いた状態で Tab がシート内に留まる", async ({ page }) => {
+  await page.goto("/");
+  await page.waitForLoadState("networkidle");
+  await page.getByRole("button", { name: "表示期間を変更" }).click();
+
+  for (let i = 0; i < 10; i++) await page.keyboard.press("Tab");
+
+  const inside = await page.evaluate(() =>
+    document.querySelector('[role="dialog"]')?.contains(document.activeElement),
+  );
+  expect(inside).toBe(true);
+});
+```
+
+**影響範囲**: `src/hooks/useFocusTrap.ts`（1 行）、`tests/e2e/accessibility.e2e.spec.ts`（2 テスト追加）、spec.md の Test Requirements の `accessibility.e2e.spec.ts` 行にフォーカス管理の記述を追記。
+
+---
+
+## D-2【低優先】T-E2E-2 の期待値に終了年 `2026` がハードコードされている
+
+`cagr-sheet.e2e.spec.ts:63` は `toContainText("2015年01月 → 2026年01月")` と終了年を直書きしている。`cagrEndYear` の既定値は `initialEndYear`（データの最新年）由来（`CpiChart.tsx:198`）なので、**CSV データが 2027 年分まで伸びた時点でこのテストが落ちる**。時刻依存ではなくデータ依存だが、ETL 更新のたびに手直しが必要になる。
+
+**変更プラン**: トリガーのラベルから期待値を導出して自己整合にする。
+
+```ts
+const triggerLabel = (await trigger.textContent())?.replace(" ▾", "").trim();
+await expect(resultDetail).toContainText(triggerLabel!);
+```
+
+**影響範囲**: `tests/e2e/cagr-sheet.e2e.spec.ts` のみ。
+
+## D-3【低優先・体裁】テストコメントに中国語が混入
+
+`tests/components/BottomSheet.test.tsx:96` のコメント `// Tab → 最後なので循环回 ✕ ボタン` に簡体字（`循环回`）が混じっている。`// Tab → 最後なので ✕ ボタンへ循環する` 等に修正する。**影響範囲**: コメントのみ。
+
+---
+
+## 推奨する対応順序（追加分）
+
+1. **D-1 / E 案**（`preventScroll: true` の 1 行）+ E2E 2 件追加 — 実測済みの回帰であり、最優先
+2. **D-2**（E2E 期待値の自己整合化）
+3. **D-3**（コメント修正）
+4. **F 案**（`ChartInfoButton` の重複フォーカス復帰の整理）— D-1 が落ち着いた後に別コミットで
+
+**引き続き未実施**: 実機幅での `position: fixed` 表示位置の目視確認（前回検証から変わらず）。
+
+---
+
+# 現在のブロッカー状況メモ（2026-08-17）
+
+## コミット状態
+
+| コミット   | 内容                                                                                                     |
+| ---------- | -------------------------------------------------------------------------------------------------------- |
+| `5e32275`  | 共通実装（BottomSheet / CagrPanel ボトムシート化 / テスト / E2E / spec.md）                              |
+| `375308c`  | A-1〜C-1 修正（useFocusTrap 共通化 / aria-label 現在値 / E2E アサーション強化 / formatCagrRange ▾ 分離） |
+| 未コミット | D-1〜D-3 / F 案 の変更（useFocusTrap restoreRef / E2E スクロール保持テスト追加 / 動的年 / コメント修正） |
+
+## ユニットテスト / 型チェック
+
+- `pnpm type-check` → 0 エラー
+- `pnpm test -- --run` → 246/246 パス
+
+## E2E ブロッカー
+
+> **⚠️ 以下の「ブロッカー」は実在しない。**
+> Orchestrator が 2026-08-17 に再検証したところ、**現在の未コミット変更で当該テストは pass する**。
+> 詳細は末尾の「# ブロッカー再検証の結果」を参照。以下の根本原因分析（項目 4・5）と
+> 「試した対策と結果」の表、および G / H / I 案はいずれも**誤った前提に基づくため破棄する**。
+
+**失敗テスト**: `accessibility.e2e.spec.ts:172` — "info ポップアップを外側クリックで閉じてもスクロール位置が保持される"
+**失敗内容**: scrollY が 3000 → 134 にジャンプ（差分 2866px、許容 < 50）
+
+### 根本原因分析（※項目 4・5 は誤り）
+
+1. **デスクトップ（≥769px）では `.backdrop` が `display: none`**
+   - CSS: `ChartInfoButton.module.css:301` → `@media (max-width: 768px)` のみで `.backdrop { display: block }`
+   - E2E は Chromium デフォルトビューポート（1280×720）で実行 → backdrop が DOM 上に存在するが不可視
+
+2. **クリック（200, 400）がバックドップに届かない**
+   - backdrop は `position: fixed; inset: 0` だが `display: none` → ヒットテスト対象外
+   - クリックはページ本文の要素にヒット
+   - `handlePointerDown` の `wrapperRef/popupRef.contains()` が false → `setOpen(false)` 呼出
+
+3. **`setOpen(false)` → popup の条件付きレンダリング除去 `{open && ...}`**
+   - React の reconciler が popup ノードを DOM から除去
+   - `useFocusTrap` の cleanup 効果が実行 → `triggerRef.current?.focus({ preventScroll: true })`
+
+4. **`preventScroll: true` がスクロールを防止できない**
+   - triggerRef（(i) ボタン）はページ上部のチャートセクション内に存在
+   - scrollY=3000 の状態で triggerRef をフォーカス → ブラウザがトリガーボタンの位置までスクロール
+   - Chromium 127 で `preventScroll: true` は **フォーカス移動時のスクロール** を防ぐが、**React の DOM 削除に伴うレイアウト変化によるスクロール** は防げない可能性がある
+
+5. **React の DOM 削除サイクルの問題**
+   - React は cleanup 効果を実行する前に DOM の変更（popup 削除）をコミット済み
+   - popup 削除によりブラウザがスクロール位置を再計算 → layout shift → scroll jump
+   - `preventScroll` はその後の `focus()` にしか効かず、DOM 削除時のブラウザ動作は制御できない
+
+### 試した対策と結果
+
+| 対策                              | 結果                          |
+| --------------------------------- | ----------------------------- |
+| `preventScroll: true` のみ        | ✗ 2866px ジャンプ（変化なし） |
+| `restoreRef` で triggerRef を明示 | ✗ 2866px ジャンプ（変化なし） |
+| F 案: 重複 focus 呼び出し削除     | ✗ 2866px ジャンプ（変化なし） |
+
+### 残る選択肢
+
+**G 案**: `ChartInfoButton` の `useFocusTrap` を **フォーカス復帰なし** で利用する。
+
+- `useFocusTrap` に `restoreRef` オプション「restore なし」を追加（例: `restoreFocus: false`）
+- info ポップアップはトリガーボタンがページ上部に固定配置（スクロール連動）ではないため、フォーカス復帰の実用性が低い
+- フォーカスは DOM 削除後にブラウザが body へ戻す（= 自然挙動）
+- E2E テストの期待値を `scrollY` 保持から「フォーカスが body に移動し、エラーが発生しない」ことへ変更
+
+**H 案**: ポップアップの `display: none` パターンを活用。
+
+- `open=false` 時に `display: none` で非表示にし、DOM には残す（条件付きレンダリング `{open && ...}` を廃止）
+- React が DOM を除去しない → layout shift が起きない → `preventScroll` が効く
+- メモリコスト（ポップアップ DOM が常時存在）は軽微
+
+**I 案**: `useFocusTrap` の cleanup を `requestAnimationFrame` で遅延。
+
+- React の DOM 削除後に `focus()` を実行 → DOM 安定後にフォーカス復帰
+- ただし `preventScroll` が効く保証はなく、タイミング依存
+
+### 現時点の推奨
+
+**G 案** が最もシンプルで確実。
+
+- ChartInfoButton の useFocusTrap は「フォーカス トラップ（Tab 循環）」と「開いたときの初期フォーカス」のためだけに使う
+- 閉じるときのフォーカス復帰は不要（トリガーボタンがスクロール連動で動くため、復帰先が不定）
+- フックに `restoreRef` を渡さない（= 現行の `BottomSheet` と同じパス）→ `previousFocusRef` が `body` を指す → `target` が body → 何もしない（= 自然挙動）
+
+> **【破棄】** 上記 G 案は不要。D-1 は既存の未コミット変更（`preventScroll: true` + `restoreRef`）で
+> 解決済みであることを実測で確認した。フォーカス復帰を諦める必要はない。
+
+---
+
+# ブロッカー再検証の結果（2026-08-17 / 未コミット変更を対象）
+
+## 結論: **ブロッカーは存在しない。全ゲートが pass する。**
+
+`pnpm build` を実行してから E2E を走らせたところ、「失敗する」とされたテストを含め全件が通った。
+
+| ゲート                                | 結果                                                                                                     |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `pnpm type-check`                     | ✅ エラー 0                                                                                              |
+| `pnpm test`                           | ✅ 31 ファイル / **246 テスト全 pass**                                                                   |
+| `pnpm lint`                           | ⚠️ エラー 0 / **警告 6**（既存 5 + **新規 1 件** → 下記 J-1）                                            |
+| `pnpm build`                          | ✅ 成功                                                                                                  |
+| `pnpm test:e2e`（全体）               | ✅ **85 passed / 22 skipped / 0 failed**（前回 81 → 新規 2 テスト × 2 プロジェクト）                     |
+| 当該 `accessibility.e2e.spec.ts` 単体 | ✅ `:172`（スクロール保持）・`:189`（Tab 循環）とも **chromium / chromium-dark の両プロジェクトで pass** |
+
+## 「失敗した」原因の推定: **stale な `.next` を検証していた**
+
+ブラウザ内で `HTMLElement.prototype.focus` をフックして実測した結果、外側クリック時に発生する
+`focus()` 呼び出しは **1 回だけ**で、`preventScroll: true` が渡り、`scrollY` は 3000 のまま動かなかった。
+
+```
+[DIAG] before: 3000 after: 3000 delta: 0
+[DIAG] focusLog: [{ tag: "BUTTON", cls: "...trigger",
+                    label: "消費者物価指数のデータソースを表示",
+                    preventScroll: true, scrollYBefore: 3000, scrollYAfter: 3000 }]
+```
+
+つまり `preventScroll: true` は正しく効いている。「試した対策 3 つすべてが 2866px で変化なし」という
+**症状がまったく変わらない**のは、ソースを直しても検証対象のバンドルが変わっていなかったことを強く示唆する。
+
+`pnpm test:e2e`（Playwright の `webServer` は `pnpm start`）は **`.next` を再ビルドしない**。
+`.husky/pre-push` 自身が次のようにこの罠を警告している:
+
+> `.next` が古ければ古いビルドを黙って検証してしまう（push するコードを見ていない）
+
+**教訓**: `src/` を変更した後に E2E を走らせるときは必ず `pnpm build && pnpm test:e2e` の順で実行する。
+
+## 根本原因分析の誤りについて
+
+破棄した分析の項目 4・5 は「React の DOM 削除に伴う layout shift でスクロールする」「`preventScroll`
+では防げない」と述べているが、これは誤り。**根拠**: `375308c` 時点（`preventScroll` なし）と
+`5e32275` 時点（フォーカス復帰なし）の A/B 実測で、React の DOM 削除は両者で同一に起きているのに
+`5e32275` では差分 0px だった。したがってスクロールの原因は DOM 削除ではなく `focus()` 呼び出しであり、
+`preventScroll: true` はそれを正しく打ち消す。
+
+## D-1〜D-3 / F 案の実装確認
+
+| 項目     | 実装状況                                                                                                                                                                                                 |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **D-1**  | ✅ `useFocusTrap.ts:41` で `target.focus({ preventScroll: true })`。加えて `restoreRef` 引数（第 3 引数）を新設し、`ChartInfoButton.tsx:26` が `triggerRef` を明示的に渡す形にした。提案（E 案）より堅牢 |
+| **D-2**  | ✅ `cagr-sheet.e2e.spec.ts:65-68` でトリガーラベルから期待値を導出。終了年 `2026` のハードコードを排除                                                                                                   |
+| **D-3**  | ✅ `BottomSheet.test.tsx:96` の簡体字コメントを修正                                                                                                                                                      |
+| **F 案** | ✅ 適用済み。`ChartInfoButton` の `handleClose`（旧 `:75`）と Escape ハンドラー（旧 `:61`）から重複する `triggerRef.current?.focus()` を削除し、フォーカス制御を `useFocusTrap` に一元化                 |
+| E2E 追加 | ✅ `accessibility.e2e.spec.ts:171-200` に「アクセシビリティ - フォーカス管理」describe を新設し、提案どおり 2 件を追加                                                                                   |
+
+---
+
+# 未解決の項目
+
+## J-1【要対応】新規の lint 警告 1 件（警告 5 → 6 に増加）
+
+```
+src/hooks/useFocusTrap.ts
+  41:34  warning  The ref value 'restoreRef.current' will likely have changed by the time
+                  this effect cleanup function runs. If this ref points to a node rendered
+                  by React, copy 'restoreRef.current' to a variable inside the effect,
+                  and use that variable in the cleanup function
+                  react-hooks/exhaustive-deps
+```
+
+これまで「警告 5 件（すべて本変更と無関係な既存分）」を維持できていたが、**本変更で初めて 1 件増えた**。
+`restoreRef.current`（= ⓘ トリガーボタン）はポップアップの開閉をまたいでマウントされ続けるため
+実害は無いが、警告を残すと以降の「新規警告ゼロ」の判定が効かなくなる。
+
+**変更プラン**: エフェクト内でローカル変数へ退避し、クリーンアップではそれを使う。
+
+```ts
+useEffect(() => {
+  if (!open) return;
+  previousFocusRef.current = document.activeElement as HTMLElement | null;
+
+  const container = containerRef.current;
+  if (!container) return;
+
+  // lint 対策 & 意図の明示: cleanup 時点で ref を読まずエフェクト実行時の値を使う
+  const restoreTarget = restoreRef?.current ?? previousFocusRef.current;
+
+  const focusable = container.querySelectorAll<HTMLElement>(FOCUSABLE);
+  const first = focusable[0];
+  if (first) first.focus();
+  else container.focus();
+
+  return () => {
+    restoreTarget?.focus({ preventScroll: true });
+  };
+}, [open, containerRef, restoreRef]);
+```
+
+**影響範囲**: `src/hooks/useFocusTrap.ts` のみ。挙動は不変（トリガーは開閉をまたいで同一ノード）。
+
+## J-2【要対応】F 案の挙動変更にコンポーネント側のテストが無い
+
+F 案で `ChartInfoButton` の `handleClose` / Escape から `triggerRef.current?.focus()` を削除し、
+フォーカス復帰を `useFocusTrap` のクリーンアップ 1 箇所に委ねた。しかし
+`tests/components/ChartInfoButton.test.tsx` には**✕ / Escape で閉じた後にトリガーへフォーカスが戻ることを
+検証するテストが無い**（`grep` で確認: `focus` に関するアサーションはゼロ）。
+`BottomSheet.test.tsx` の T12 はフック自体を間接的に守るが、`restoreRef` を渡す経路は
+`ChartInfoButton` だけであり、その経路は未テストである。
+
+**変更プラン**: `tests/components/ChartInfoButton.test.tsx` に 2 件追加する。
+
+- **T13**: ⓘ トリガーをクリックして開き、✕ をクリックして閉じると `document.activeElement` がトリガーへ戻る
+- **T14**: Escape で閉じた場合も同様にトリガーへ戻る
+
+**影響範囲**: `tests/components/ChartInfoButton.test.tsx` のみ。
+
+## J-3【要対応】spec.md がフォーカス管理の要件・テストを反映していない
+
+D-1 の変更プランで挙げた spec.md 更新が未実施。`grep` の結果、spec.md にフォーカストラップ／
+フォーカス復帰に関する記述は無く（`:284-285` の `:focus-visible` と `:561` の記述のみ）、
+新設した「アクセシビリティ - フォーカス管理」の 2 テストもどこにも登録されていない。
+AGENTS.md の「コンポーネントの追加・アーキテクチャ変更は仕様書に反映する」に照らすと、
+`useFocusTrap` という新規共通フックが未記載である点も漏れである。
+
+**変更プラン**:
+
+1. **R8（Accessibility）に新シナリオを追加**
+
+   ```md
+   #### Scenario R8e: Modal Focus Management
+
+   - **WHEN** a `BottomSheet` or `ChartInfoButton` popup opens
+   - **THEN** focus moves to the first focusable element inside it and `Tab` / `Shift+Tab` cycle within it (`useFocusTrap`)
+   - **AND WHEN** it closes
+   - **THEN** focus returns to the trigger via `focus({ preventScroll: true })` so the scroll position is preserved
+   ```
+
+2. **Test Requirements の `accessibility.e2e.spec.ts` の行にフォーカス管理を追記**
+
+   ```md
+   - `accessibility.e2e.spec.ts` — dark-mode legend contrast (P0-3 / P1-2 regression),
+     `:focus-visible` rings (P4-1), keyboard-only operation (P4-1), `prefers-reduced-motion` (P4-2),
+     and modal focus management — scroll preservation on dismiss & `Tab` containment (R8e)
+   ```
+
+3. **Client Modules / `src/hooks/` の節に `useFocusTrap` を追記**
+
+   ```md
+   - `useFocusTrap.ts` — initial focus, `Tab` containment, and scroll-preserving focus restore for modal surfaces (R8e)
+   ```
+
+**影響範囲**: `openspec/specs/nextjstest/spec.md` のみ。
+
+## J-4【要対応】変更が未コミット
+
+D-1〜D-3 / F 案の変更（`src/hooks/useFocusTrap.ts`, `src/app/components/ChartInfoButton.tsx`,
+`tests/components/BottomSheet.test.tsx`, `tests/e2e/accessibility.e2e.spec.ts`,
+`tests/e2e/cagr-sheet.e2e.spec.ts`）はすべて作業ツリー上のみに存在する。
+J-1〜J-3 を反映してからコミットするのが望ましい。
+
+## J-5【低優先・継続】実機幅での目視確認
+
+前回・前々回から変わらず未実施。`position: fixed` のボトムシート表示位置を、実機または
+ブラウザのデバイスエミュレーションで目視確認する項目が残っている（プラン 63 行）。
+
+---
+
+# 対応順序（未解決分）
+
+1. **J-1**（lint 警告の解消）— エフェクト内でのローカル変数退避。1 箇所
+2. **J-2**（`ChartInfoButton` のフォーカス復帰テスト T13/T14）
+3. **J-3**（spec.md に R8e・テスト一覧・`useFocusTrap` を追記）
+4. **J-4**（`pnpm build && pnpm test:e2e` まで通してからコミット）
+5. **J-5**（実機目視確認）
