@@ -19,6 +19,7 @@ import { StackedAreaChart } from "./StackedAreaChart";
 import { MajorIndicesChart } from "./MajorIndicesChart";
 import { CagrPanel } from "./CagrPanel";
 import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
+import { BottomSheet } from "./BottomSheet";
 
 const SpendingBarChart = dynamic(
   () => import("./SpendingBarChart").then((m) => m.SpendingBarChart),
@@ -515,31 +516,19 @@ export default function CpiChart({
         onRangeClick={() => setRangeSheetOpen(true)}
       />
 
-      {rangeSheetOpen && (
-        <>
-          <div className={styles.rangeSheetBackdrop} onClick={() => setRangeSheetOpen(false)} />
-          <div className={styles.rangeSheet}>
-            <div className={styles.rangeSheetHeader}>
-              <span className={styles.rangeSheetTitle}>表示期間の選択</span>
-              <button
-                type="button"
-                className={styles.rangeSheetClose}
-                onClick={() => setRangeSheetOpen(false)}
-                aria-label="閉じる"
-              >
-                ✕
-              </button>
-            </div>
-            <ChartFilters
-              allYears={allYears.filter((y) => y >= MIN_DISPLAY_YEAR)}
-              startYear={startYear}
-              endYear={endYear}
-              setStartYear={handleSetStartYear}
-              setEndYear={handleSetEndYear}
-            />
-          </div>
-        </>
-      )}
+      <BottomSheet
+        open={rangeSheetOpen}
+        title="表示期間の選択"
+        onClose={() => setRangeSheetOpen(false)}
+      >
+        <ChartFilters
+          allYears={allYears.filter((y) => y >= MIN_DISPLAY_YEAR)}
+          startYear={startYear}
+          endYear={endYear}
+          setStartYear={handleSetStartYear}
+          setEndYear={handleSetEndYear}
+        />
+      </BottomSheet>
 
       {/* CPI 主要指数 */}
       <div

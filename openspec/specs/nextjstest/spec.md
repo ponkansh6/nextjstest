@@ -302,7 +302,7 @@ The system SHALL let users move between the eight chart sections without unbound
 - **WHEN** the user is anywhere on the page
 - **THEN** the tab bar shows the active year range (e.g. `2000–2026`)
 - **AND WHEN** the range label is tapped
-- **THEN** a range sheet opens with start-year / end-year selects
+- **THEN** a `BottomSheet` opens with start-year / end-year selects
 
 #### Scenario R10c: Horizontal Tab Scroll
 
@@ -390,6 +390,28 @@ The system SHALL provide a "最大期間" button within the range filter sheet t
 - **AND WHEN** the range is already set to the maximum period and the button is clicked again
 - **THEN** the range remains unchanged (idempotent).
 
+### R18: CAGR Settings Bottom Sheet
+
+The system SHALL collect CAGR start year, end year, and evaluation month through a bottom sheet rather than inline selects.
+
+#### Scenario R18a: Open CAGR Settings
+
+- **WHEN** the user views the CPI 年率 section
+- **THEN** a trigger button shows the current setting (e.g. `2000年01月 → 2025年01月 ▾`) and the three selects are not rendered
+- **AND WHEN** the trigger is tapped
+- **THEN** a `BottomSheet` opens with start-year / end-year / evaluation-month selects
+
+#### Scenario R18b: Sheet Stays Open While Editing
+
+- **WHEN** the user changes one of the three selects inside the CAGR sheet
+- **THEN** the sheet stays open so the remaining values can be set
+- **AND** the previously calculated CAGR result is cleared
+
+#### Scenario R18c: Dismissal
+
+- **WHEN** the user taps the backdrop, the ✕ button, or presses Escape
+- **THEN** the sheet closes and the trigger button label reflects the new setting
+
 #### Scenario R14a: Manual Theme Toggle
 
 - **WHEN** the user selects a theme via `ThemeToggle`
@@ -430,12 +452,13 @@ Page (RSC)
 ├── header (badge, ThemeToggle, title, description)
 └── CpiChart (client component)
     ├── SectionTabs — Sticky navigation section tabs & range display
+    ├── BottomSheet — shared bottom-sheet shell (backdrop / header / close / Escape)
     ├── ChartFilters — Date range (start year / end year selects with "最大期間" button)
-    ├── Range sheet — ChartFilters (start year / end year selects with "最大期間" button)
+    ├── Range sheet — BottomSheet wrapping ChartFilters (start year / end year selects with "最大期間" button)
     ├── [Chart variants]                     — eager: rendered directly
     │   ├── MajorIndicesChart → CustomTooltip
     │   └── StackedAreaChart → CustomTooltip — always-expanded 12-series legend (compact on mobile)
-    ├── CagrPanel — CAGR calculation controls & result card
+    ├── CagrPanel — CAGR trigger button, bottom-sheet settings & result card
     ├── [Chart variants]                     — deferred: wrapped in LazyMount
      │   ├── SpendingBarChart (nominal / real) — supports `showTotal` opt-in via tooltip controller
      │   ├── EarningsBreakdownChart → CustomTooltip

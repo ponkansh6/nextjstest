@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import styles from "./CpiChart.module.css";
 import { MIN_DISPLAY_YEAR } from "../../lib/chartConstants";
+import { BottomSheet } from "./BottomSheet";
 
 interface CagrPanelProps {
   sectionId?: string;
@@ -16,6 +17,11 @@ interface CagrPanelProps {
   calculateCAGR: () => void;
 }
 
+const formatCagrRange = (startYear: number, endYear: number, month: number) => {
+  const mm = String(month).padStart(2, "0");
+  return `${startYear}年${mm}月 → ${endYear}年${mm}月 ▾`;
+};
+
 export const CagrPanel = React.memo<CagrPanelProps>(
   ({
     sectionId,
@@ -30,6 +36,7 @@ export const CagrPanel = React.memo<CagrPanelProps>(
     setCagrMonth,
     calculateCAGR,
   }) => {
+    const [sheetOpen, setSheetOpen] = useState(false);
     const displayYears = allYears.filter((y) => y >= MIN_DISPLAY_YEAR);
 
     return (
@@ -37,6 +44,47 @@ export const CagrPanel = React.memo<CagrPanelProps>(
         <h2 className={styles.chartTitle}>年率上昇率（CAGR）</h2>
         <div className={styles.cagrContainer}>
           <div className={styles.cagrControls}>
+            <button
+              type="button"
+              className={styles.cagrRangeButton}
+              onClick={() => setSheetOpen(true)}
+              aria-label="CAGRの期間・評価月を変更"
+            >
+              {formatCagrRange(cagrStartYear, cagrEndYear, cagrMonth)}
+            </button>
+            <button
+              onClick={calculateCAGR}
+              className={styles.calculateButton}
+              disabled={cagrStartYear === cagrEndYear}
+            >
+              計算する
+            </button>
+          </div>
+
+          {cagrError && (
+            <div className={styles.cagrError}>
+              <p className={styles.cagrErrorText}>{cagrError}</p>
+            </div>
+          )}
+
+          {cagrResult !== null && (
+            <div className={styles.cagrResult}>
+              <p className={styles.cagrResultLabel}>年率上昇率（CAGR）:</p>
+              <p className={styles.cagrResultValue}>{(cagrResult * 100).toFixed(2)}%</p>
+              <p className={styles.cagrResultDetail}>
+                {formatCagrRange(cagrStartYear, cagrEndYear, cagrMonth).replace(" ▾", "")}
+              </p>
+            </div>
+          )}
+        </div>
+        <p className={styles.cagrNote}>※凡例で選択した費目の合計を基準にCAGRを算出</p>
+
+        <BottomSheet
+          open={sheetOpen}
+          title="CAGRの期間・評価月"
+          onClose={() => setSheetOpen(false)}
+        >
+          <div className={styles.cagrSheetControls}>
             <div className={styles.cagrItem}>
               <label htmlFor="cagrStartYear">開始年:</label>
               <select
@@ -84,34 +132,8 @@ export const CagrPanel = React.memo<CagrPanelProps>(
                 ))}
               </select>
             </div>
-
-            <button
-              onClick={calculateCAGR}
-              className={styles.calculateButton}
-              disabled={cagrStartYear === cagrEndYear}
-            >
-              計算する
-            </button>
           </div>
-
-          {cagrError && (
-            <div className={styles.cagrError}>
-              <p className={styles.cagrErrorText}>{cagrError}</p>
-            </div>
-          )}
-
-          {cagrResult !== null && (
-            <div className={styles.cagrResult}>
-              <p className={styles.cagrResultLabel}>年率上昇率（CAGR）:</p>
-              <p className={styles.cagrResultValue}>{(cagrResult * 100).toFixed(2)}%</p>
-              <p className={styles.cagrResultDetail}>
-                {cagrStartYear}年{String(cagrMonth).padStart(2, "0")}月 → {cagrEndYear}年
-                {String(cagrMonth).padStart(2, "0")}月
-              </p>
-            </div>
-          )}
-        </div>
-        <p className={styles.cagrNote}>※凡例で選択した費目の合計を基準にCAGRを算出</p>
+        </BottomSheet>
       </div>
     );
   },
