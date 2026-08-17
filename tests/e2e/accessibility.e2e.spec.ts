@@ -169,29 +169,28 @@ test.describe.skip("アクセシビリティ - アニメーション", () => {
 });
 
 test.describe("アクセシビリティ - フォーカス管理", () => {
-  fixtureTest("info ポップアップを外側クリックで閉じてエラーが発生しない", async ({ page }) => {
-    await page.goto("/");
-    await page.waitForLoadState("networkidle");
+  fixtureTest(
+    "info ポップアップを外側クリックで閉じてもスクロール位置が保持される",
+    async ({ page }) => {
+      await page.goto("/");
+      await page.waitForLoadState("networkidle");
 
-    await page
-      .getByRole("button", { name: /データソース/ })
-      .first()
-      .click();
-    await expect(page.getByRole("dialog").first()).toBeVisible();
+      await page
+        .getByRole("button", { name: /データソース/ })
+        .first()
+        .click();
+      await expect(page.getByRole("dialog").first()).toBeVisible();
 
-    await page.evaluate(() => window.scrollTo(0, 3000));
+      await page.evaluate(() => window.scrollTo(0, 3000));
+      const before = await page.evaluate(() => window.scrollY);
 
-    await page.mouse.click(200, 400); // ポップアップ外
-    await page.waitForTimeout(300);
+      await page.mouse.click(200, 400); // ポップアップ外
+      await page.waitForTimeout(300);
 
-    // ダイアログが閉じられている
-    await expect(page.getByRole("dialog").first()).not.toBeVisible();
-    // ページに JS エラーがないことを確認
-    const errors: string[] = [];
-    page.on("pageerror", (err) => errors.push(err.message));
-    await page.waitForTimeout(100);
-    expect(errors).toHaveLength(0);
-  });
+      const after = await page.evaluate(() => window.scrollY);
+      expect(Math.abs(after - before)).toBeLessThan(50);
+    },
+  );
 
   fixtureTest("info ポップアップを Esc で閉じてエラーが発生しない", async ({ page }) => {
     await page.goto("/");

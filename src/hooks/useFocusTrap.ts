@@ -7,20 +7,15 @@ const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabi
  *
  * @param containerRef - ref to the container element (the dialog/panel)
  * @param open         - whether the container is currently visible
- * @param options.restoreRef   - optional ref to the element that should receive focus on close.
- *                               When provided, this element is focused instead of the saved activeElement.
- * @param options.restoreFocus - when false, skip focus restoration on close (default: true).
+ * @param restoreRef   - optional ref to the element that should receive focus on close.
+ *                       When provided, this element is focused instead of the saved activeElement.
  */
 export function useFocusTrap(
   containerRef: React.RefObject<HTMLElement | null>,
   open: boolean,
-  options?: {
-    restoreRef?: React.RefObject<HTMLElement | null>;
-    restoreFocus?: boolean;
-  },
+  restoreRef?: React.RefObject<HTMLElement | null>,
 ) {
   const previousFocusRef = useRef<HTMLElement | null>(null);
-  const restoreFocus = options?.restoreFocus ?? true;
 
   // Save & restore focus around open/close
   useEffect(() => {
@@ -41,17 +36,15 @@ export function useFocusTrap(
       container.focus();
     }
 
-    if (!restoreFocus) return;
-
     // Capture ref value now (cleanup runs later when ref may have changed)
-    const restoreTarget = options?.restoreRef?.current ?? previousFocusRef.current;
+    const restoreTarget = restoreRef?.current ?? previousFocusRef.current;
 
     return () => {
       if (restoreTarget) {
         restoreTarget.focus({ preventScroll: true });
       }
     };
-  }, [open, containerRef, restoreFocus, options?.restoreRef]);
+  }, [open, containerRef, restoreRef]);
 
   // Trap Tab / Shift+Tab inside the container
   useEffect(() => {

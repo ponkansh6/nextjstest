@@ -286,6 +286,13 @@ The system SHALL be navigable and interpretable by assistive technologies.
 - **AND WHEN** the user requests reduced motion
 - **THEN** animations and transitions are suppressed
 
+#### Scenario R8e: Modal Focus Management
+
+- **WHEN** a `BottomSheet` or `ChartInfoButton` popup opens
+- **THEN** focus moves to the first focusable element inside it and `Tab` / `Shift+Tab` cycle within it (`useFocusTrap`)
+- **AND WHEN** it closes
+- **THEN** focus returns to the trigger via `focus({ preventScroll: true })` so the scroll position is preserved
+
 ### R10: Section Navigation
 
 The system SHALL let users move between the eight chart sections without unbounded scrolling.
@@ -493,12 +500,13 @@ data/source/*.csv
 
 #### src/hooks/
 
-| Module               | Description                                                                         |
-| -------------------- | ----------------------------------------------------------------------------------- |
-| `useToggleSet.ts`    | Legend toggle state (React state using `useToggleSet`)                              |
-| `useChartTheme.ts`   | Chart theme management; `isMobile` and `isTouch` (`pointer: coarse`)                |
-| `useCpiChartData.ts` | CPI chart data filtering (quarter visibility) — server-side processing complete     |
-| `useUrlState.ts`     | Syncs `?from` / `?to` / `?hidden` / `?adv` with `window.history.replaceState` (R11) |
+| Module               | Description                                                                                    |
+| -------------------- | ---------------------------------------------------------------------------------------------- |
+| `useToggleSet.ts`    | Legend toggle state (React state using `useToggleSet`)                                         |
+| `useChartTheme.ts`   | Chart theme management; `isMobile` and `isTouch` (`pointer: coarse`)                           |
+| `useCpiChartData.ts` | CPI chart data filtering (quarter visibility) — server-side processing complete                |
+| `useUrlState.ts`     | Syncs `?from` / `?to` / `?hidden` / `?adv` with `window.history.replaceState` (R11)            |
+| `useFocusTrap.ts`    | Initial focus, `Tab` containment, and scroll-preserving focus restore for modal surfaces (R8e) |
 
 #### src/lib/
 
@@ -558,7 +566,8 @@ scripts/
     horizontal layout for start year, end year, and max-range button on mobile viewports,
     and `LazyMount` deferral (R12)
   - `accessibility.e2e.spec.ts` — dark-mode legend contrast (P0-3 / P1-2 regression),
-    `:focus-visible` rings (P4-1), keyboard-only operation (P4-1), and `prefers-reduced-motion` (P4-2)
+    `:focus-visible` rings (P4-1), keyboard-only operation (P4-1), `prefers-reduced-motion` (P4-2),
+    and modal focus management — scroll preservation on dismiss & `Tab` containment (R8e)
   - `cagr-sheet.e2e.spec.ts` — CAGR 設定ボトムシートの開閉と計算導線（R18）
   - `fixtures.ts` — shared `test` that sets `window.__MOUNT_ALL__` (R12b); specs verifying
     deferral itself must use the plain `@playwright/test` `test`

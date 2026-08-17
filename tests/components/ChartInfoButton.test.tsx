@@ -282,6 +282,33 @@ describe("ChartInfoButton", () => {
     expect(screen.queryByText("内容B")).toBeNull();
   });
 
+  // ── Focus restore (J-2) ──
+
+  it("T13: ✕ クリックで閉じるとフォーカスがトリガーへ戻る", () => {
+    render(<ChartInfoButton>{SampleContent}</ChartInfoButton>);
+    const trigger = screen.getByRole("button", { name: "データソースの説明を表示" });
+    fireEvent.click(trigger);
+    expect(screen.getByRole("dialog")).toBeDefined();
+    // Close via ✕ button
+    const closeBtn = screen.getByRole("button", { name: "閉じる" });
+    fireEvent.click(closeBtn);
+    expect(screen.queryByRole("dialog")).toBeNull();
+    // Focus should return to trigger
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it("T14: Escape で閉じた場合もフォーカスがトリガーへ戻る", () => {
+    render(<ChartInfoButton>{SampleContent}</ChartInfoButton>);
+    const trigger = screen.getByRole("button", { name: "データソースの説明を表示" });
+    fireEvent.click(trigger);
+    expect(screen.getByRole("dialog")).toBeDefined();
+    // Close via Escape
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByRole("dialog")).toBeNull();
+    // Focus should return to trigger
+    expect(document.activeElement).toBe(trigger);
+  });
+
   // ── EarningsBreakdownChart integration test ──
   it("should render EarningsBreakdownChart with ChartInfoButton for earnings info", () => {
     render(

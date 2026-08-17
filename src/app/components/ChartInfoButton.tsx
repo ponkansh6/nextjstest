@@ -23,7 +23,7 @@ export default function ChartInfoButton({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
 
-  useFocusTrap(popupRef, open, { restoreRef: triggerRef, restoreFocus: false });
+  useFocusTrap(popupRef, open, triggerRef);
 
   // ── Close on click outside ──
   useEffect(() => {
