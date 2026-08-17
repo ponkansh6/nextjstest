@@ -8,9 +8,16 @@ interface BottomSheetProps {
   title: string;
   onClose: () => void;
   children: React.ReactNode;
+  compact?: boolean;
 }
 
-export const BottomSheet: React.FC<BottomSheetProps> = ({ open, title, onClose, children }) => {
+export const BottomSheet: React.FC<BottomSheetProps> = ({
+  open,
+  title,
+  onClose,
+  children,
+  compact,
+}) => {
   const sheetRef = useRef<HTMLDivElement>(null);
 
   useFocusTrap(sheetRef, open);
@@ -31,7 +38,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({ open, title, onClose, 
       <div className={styles.bottomSheetBackdrop} onClick={onClose} />
       <div
         ref={sheetRef}
-        className={styles.bottomSheet}
+        className={`${styles.bottomSheet}${compact ? ` ${styles.bottomSheetCompact}` : ""}`}
         role="dialog"
         aria-modal="true"
         aria-label={title}

@@ -30,6 +30,7 @@ interface StackedAreaChartProps {
   onClick?: () => void;
   onReset: () => void;
   activeDot?: boolean;
+  belowChartSlot?: React.ReactNode;
 }
 
 export const StackedAreaChart: React.FC<StackedAreaChartProps> = ({
@@ -45,6 +46,7 @@ export const StackedAreaChart: React.FC<StackedAreaChartProps> = ({
   onClick,
   onReset,
   activeDot,
+  belowChartSlot,
 }) => {
   return (
     <div id={sectionId} className={styles.chartSection} style={{ scrollMarginTop: "5rem" }}>
@@ -131,6 +133,7 @@ export const StackedAreaChart: React.FC<StackedAreaChartProps> = ({
           </AreaChart>
         </ResponsiveContainer>
       </div>
+      {belowChartSlot}
       <p className={styles.chartNote}>
         <a href={`#data-table-${sectionId}`}>データテーブルを表示 ▾</a>
       </p>

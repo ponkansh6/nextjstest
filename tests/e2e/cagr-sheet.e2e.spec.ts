@@ -1,87 +1,86 @@
 import { test, expect } from "./fixtures";
 
 /**
- * E2E テスト: CAGR 設定ボトムシート（R18）
+ * E2E テスト: CAGR コンパクトシート（R18）
  *
- * T-E2E-1: トリガーボタンでボトムシートが開く
- * T-E2E-2: シート内で設定 → 閉じる → 計算で結果表示
+ * T-E2E-1: section-stacked 内のリンクからシートが開き、3 select と「計算する」がシート内に見える
+ * T-E2E-2: シート内で設定変更 → 計算 → 結果がシート内に表示
  * T-E2E-3: 背景タップでシートが閉じる
- * T-E2E-4: モバイル幅で CAGR セクションに横スクロールなし（R7d 回帰）
+ * T-E2E-4: モバイル幅で横スクロールなし（R7d 回帰）
+ * T-E2E-5: シート表示中、グラフ描画領域の可視高さが 120px 以上（コンセプト検証）
+ * T-E2E-6: section-cagr が DOM に存在せず、タブバーに「CPI年率」ボタンが無い
  */
 
-const CAGR_SECTION = "#section-cagr";
-
-test.describe("CAGR 設定ボトムシート", () => {
+test.describe("CAGR コンパクトシート", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
   });
 
-  test("T-E2E-1: トリガーボタンをタップするとボトムシートが開く", async ({ page }) => {
-    // CPI年率セクションにスクロール
-    await page.locator(CAGR_SECTION).scrollIntoViewIfNeeded();
+  test("T-E2E-1: #section-stacked 内のリンクからシートが開き、3 select と「計算する」がシート内に見える", async ({
+    page,
+  }) => {
+    // 費目別寄与度セクションにスクロール
+    await page.locator("#section-stacked").scrollIntoViewIfNeeded();
 
-    const trigger = page.getByRole("button", { name: /CAGRの期間・評価月を変更/ });
-    await expect(trigger).toBeVisible();
-    await trigger.click();
+    // グラフ直下の CAGR リンクをクリック
+    const link = page
+      .locator("#section-stacked")
+      .getByRole("button", { name: /年率上昇率（CAGR）を計算/ });
+    await expect(link).toBeVisible();
+    await link.click();
 
-    // ダイアログ（ボトムシート）が開く
-    const dialog = page.getByRole("dialog", { name: "CAGRの期間・評価月" });
+    // ダイアログが開く
+    const dialog = page.getByRole("dialog", { name: "年率上昇率（CAGR）" });
     await expect(dialog).toBeVisible();
 
-    // シート内に3つの select がある
+    // シート内に3つの select と「計算する」ボタンがある
     await expect(page.locator("#cagrStartYear")).toBeVisible();
     await expect(page.locator("#cagrEndYear")).toBeVisible();
     await expect(page.locator("#cagrMonth")).toBeVisible();
+    await expect(page.getByRole("button", { name: "計算する" })).toBeVisible();
   });
 
-  test("T-E2E-2: 設定変更 → 閉じる → 計算で結果またはエラーが表示される", async ({ page }) => {
-    await page.locator(CAGR_SECTION).scrollIntoViewIfNeeded();
+  test("T-E2E-2: シート内で開始年変更 → 計算 → 結果がシート内に表示", async ({ page }) => {
+    await page.locator("#section-stacked").scrollIntoViewIfNeeded();
 
     // シートを開く
-    await page.getByRole("button", { name: /CAGRの期間・評価月を変更/ }).click();
-    const dialog = page.getByRole("dialog", { name: "CAGRの期間・評価月" });
+    const link = page
+      .locator("#section-stacked")
+      .getByRole("button", { name: /年率上昇率（CAGR）を計算/ });
+    await link.click();
+    const dialog = page.getByRole("dialog", { name: "年率上昇率（CAGR）" });
     await expect(dialog).toBeVisible();
 
-    // 開始年を変更（デフォルトの終了年の範囲内に収まるよう 2015 を選択）
+    // 開始年を変更
     await page.locator("#cagrStartYear").selectOption("2015");
 
-    // ✕ で閉じる
-    await page.getByRole("button", { name: "閉じる" }).click();
-    await expect(dialog).not.toBeVisible();
-
-    // トリガーボタンのラベルが更新されている
-    const trigger = page.getByRole("button", { name: /CAGRの期間・評価月を変更/ });
-    await expect(trigger).toContainText("2015年01月");
-
-    // 「計算する」をクリック
+    // シートは開いたまま「計算する」をクリック
+    await expect(dialog).toBeVisible();
     await page.getByRole("button", { name: "計算する" }).click();
 
-    // 結果カード内の値を直接検証（見出し「年率上昇率」の常時マッチを回避）
+    // 結果がシート内に表示される
     const resultValue = page.locator("[class*='cagrResultValue']");
     await expect(resultValue).toBeVisible({ timeout: 5000 });
     await expect(resultValue).toHaveText(/^-?\d+\.\d{2}%$/);
-
-    // トリガーボタンのラベルから期待値を導出し、終了年のハードコードを排除
-    const triggerLabel = (await trigger.textContent())?.replace(" ▾", "").trim();
-    const resultDetail = page.locator("[class*='cagrResultDetail']");
-    await expect(resultDetail).toContainText(triggerLabel!);
   });
 
   test("T-E2E-3: 背景タップでシートが閉じる", async ({ page }) => {
-    await page.locator(CAGR_SECTION).scrollIntoViewIfNeeded();
+    await page.locator("#section-stacked").scrollIntoViewIfNeeded();
 
-    await page.getByRole("button", { name: /CAGRの期間・評価月を変更/ }).click();
-    const dialog = page.getByRole("dialog", { name: "CAGRの期間・評価月" });
+    await page
+      .locator("#section-stacked")
+      .getByRole("button", { name: /年率上昇率（CAGR）を計算/ })
+      .click();
+    const dialog = page.getByRole("dialog", { name: "年率上昇率（CAGR）" });
     await expect(dialog).toBeVisible();
 
-    // バックドップ（position:fixed; inset:0）の領域をページ左上座標でクリック
+    // バックドップの領域をクリック
     await page.mouse.click(10, 10);
-
     await expect(dialog).not.toBeVisible({ timeout: 3000 });
   });
 
-  test("T-E2E-4: モバイル幅で CAGR セクションに横スクロールが発生しない", async ({ page }) => {
+  test("T-E2E-4: モバイル幅で横スクロールが発生しない", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto("/");
     await page.waitForLoadState("networkidle");
@@ -95,5 +94,47 @@ test.describe("CAGR 設定ボトムシート", () => {
       scrollWidth,
       `375px 幅で ${scrollWidth - clientWidth}px はみ出している`,
     ).toBeLessThanOrEqual(clientWidth);
+  });
+
+  test("T-E2E-5: 375x667 でシートを開いた状態で、グラフ描画領域の可視高さが 120px 以上", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
+
+    // 費目別セクションにスクロール
+    await page.locator("#section-stacked").scrollIntoViewIfNeeded();
+
+    // CAGR リンクを開く
+    const link = page
+      .locator("#section-stacked")
+      .getByRole("button", { name: /年率上昇率（CAGR）を計算/ });
+    await link.click();
+    await expect(page.getByRole("dialog", { name: "年率上昇率（CAGR）" })).toBeVisible();
+
+    // グラフ描画領域の可視高さを計算
+    const visible = await page.evaluate(() => {
+      const chart = document.querySelector("#section-stacked [class*='chartWrapper']")!;
+      const sheet = document.querySelector("[class*='bottomSheet']:not([class*='Backdrop'])")!;
+      const c = chart.getBoundingClientRect();
+      const s = sheet.getBoundingClientRect();
+      return Math.max(0, Math.min(c.bottom, s.top) - Math.max(c.top, 0));
+    });
+    expect(visible, `グラフ可視高さ ${visible}px が 120px 未満`).toBeGreaterThanOrEqual(120);
+  });
+
+  test("T-E2E-6: section-cagr が DOM に存在せず、タブバーに「CPI年率」ボタンが無い", async ({
+    page,
+  }) => {
+    // section-cagr が存在しない
+    const sectionCagr = page.locator("#section-cagr");
+    await expect(sectionCagr).toHaveCount(0);
+
+    // タブバーに「CPI年率」ボタンが無い
+    const tabButton = page
+      .locator('[class*="sectionTabs"]')
+      .getByRole("button", { name: "CPI年率" });
+    await expect(tabButton).toHaveCount(0);
   });
 });

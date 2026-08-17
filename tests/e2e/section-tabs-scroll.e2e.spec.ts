@@ -38,7 +38,6 @@ test.describe("タブバー押下時のスクロール", () => {
   });
 
   const cases = [
-    { label: "CPI年率", sectionId: "section-cagr" },
     { label: "消費(名目)", sectionId: "section-consumption-nominal" },
     { label: "給与", sectionId: "section-earnings" },
     { label: "3種比較", sectionId: "section-new-graph" },

@@ -263,7 +263,6 @@ export default function CpiChart({
     () => [
       { id: "section-cpi-major", label: "CPI主要" },
       { id: "section-stacked", label: "CPI費目別" },
-      { id: "section-cagr", label: "CPI年率" },
       { id: "section-consumption-nominal", label: "消費(名目)" },
       { id: "section-consumption-real", label: "消費(実質)" },
       { id: "section-earnings", label: "給与" },
@@ -573,20 +572,20 @@ export default function CpiChart({
             prev.length === stackedKeys.length ? [] : [...stackedKeys],
           )
         }
-      />
-
-      <CagrPanel
-        sectionId="section-cagr"
-        allYears={allYears}
-        cagrStartYear={cagrStartYear}
-        cagrEndYear={cagrEndYear}
-        cagrMonth={cagrMonth}
-        cagrResult={cagrResult}
-        cagrError={cagrError}
-        setCagrStartYear={setCagrStartYear}
-        setCagrEndYear={setCagrEndYear}
-        setCagrMonth={setCagrMonth}
-        calculateCAGR={calculateCAGR}
+        belowChartSlot={
+          <CagrPanel
+            allYears={allYears}
+            cagrStartYear={cagrStartYear}
+            cagrEndYear={cagrEndYear}
+            cagrMonth={cagrMonth}
+            cagrResult={cagrResult}
+            cagrError={cagrError}
+            setCagrStartYear={setCagrStartYear}
+            setCagrEndYear={setCagrEndYear}
+            setCagrMonth={setCagrMonth}
+            calculateCAGR={calculateCAGR}
+          />
+        }
       />
 
       <LazyMount sectionId="section-consumption-nominal">

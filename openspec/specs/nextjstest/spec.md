@@ -295,7 +295,7 @@ The system SHALL be navigable and interpretable by assistive technologies.
 
 ### R10: Section Navigation
 
-The system SHALL let users move between the eight chart sections without unbounded scrolling.
+The system SHALL let users move between the seven chart sections without unbounded scrolling.
 
 #### Scenario R10a: Sticky Section Tabs
 
@@ -397,27 +397,33 @@ The system SHALL provide a "最大期間" button within the range filter sheet t
 - **AND WHEN** the range is already set to the maximum period and the button is clicked again
 - **THEN** the range remains unchanged (idempotent).
 
-### R18: CAGR Settings Bottom Sheet
+### R18: CAGR Compact Sheet Under the Contribution Chart
 
-The system SHALL collect CAGR start year, end year, and evaluation month through a bottom sheet rather than inline selects.
+The system SHALL expose CAGR as a compact bottom sheet anchored to the 費目別寄与度 chart,
+so that part of the chart stays visible while the user adjusts and reads the CAGR.
 
-#### Scenario R18a: Open CAGR Settings
+#### Scenario R18a: Entry Point
 
-- **WHEN** the user views the CPI 年率 section
-- **THEN** a trigger button shows the current setting (e.g. `2000年01月 → 2025年01月 ▾`) and the three selects are not rendered
-- **AND WHEN** the trigger is tapped
-- **THEN** a `BottomSheet` opens with start-year / end-year / evaluation-month selects
+- **WHEN** the user views the 費目別寄与度 chart
+- **THEN** a popup link appears between the chart and the "データテーブルを表示" link
+- **AND** no standalone CAGR section or `CPI年率` tab exists
 
-#### Scenario R18b: Sheet Stays Open While Editing
+#### Scenario R18b: Self-Contained Sheet
 
-- **WHEN** the user changes one of the three selects inside the CAGR sheet
-- **THEN** the sheet stays open so the remaining values can be set
-- **AND** the previously calculated CAGR result is cleared
+- **WHEN** the link is tapped
+- **THEN** a compact `BottomSheet` opens containing start-year / end-year / evaluation-month
+  selects on one row, the 計算する button, and the result or error
+- **AND** none of these controls are rendered outside the sheet
 
-#### Scenario R18c: Dismissal
+#### Scenario R18c: Chart Remains Visible
 
-- **WHEN** the user taps the backdrop, the ✕ button, or presses Escape
-- **THEN** the sheet closes and the trigger button label reflects the new setting
+- **WHEN** the sheet is open on a 375x667 viewport
+- **THEN** at least 120px of the contribution chart's plot area remains visible above the sheet
+
+#### Scenario R18d: Sheet Stays Open While Editing
+
+- **WHEN** the user changes one of the three selects
+- **THEN** the sheet stays open and the previously calculated result is cleared
 
 #### Scenario R14a: Manual Theme Toggle
 
@@ -465,7 +471,7 @@ Page (RSC)
     ├── [Chart variants]                     — eager: rendered directly
     │   ├── MajorIndicesChart → CustomTooltip
     │   └── StackedAreaChart → CustomTooltip — always-expanded 12-series legend (compact on mobile)
-    ├── CagrPanel — CAGR trigger button, bottom-sheet settings & result card
+    │       └── belowChartSlot: CagrPanel — popup link + compact BottomSheet (R18)
     ├── [Chart variants]                     — deferred: wrapped in LazyMount
      │   ├── SpendingBarChart (nominal / real) — supports `showTotal` opt-in via tooltip controller
      │   ├── EarningsBreakdownChart → CustomTooltip
@@ -568,7 +574,7 @@ scripts/
   - `accessibility.e2e.spec.ts` — dark-mode legend contrast (P0-3 / P1-2 regression),
     `:focus-visible` rings (P4-1), keyboard-only operation (P4-1), `prefers-reduced-motion` (P4-2),
     and modal focus management — scroll preservation on dismiss & `Tab` containment (R8e)
-  - `cagr-sheet.e2e.spec.ts` — CAGR 設定ボトムシートの開閉と計算導線（R18）
+  - `cagr-sheet.e2e.spec.ts` — CAGR コンパクトシートの開閉・計算導線・グラフ可視性（R18）
   - `fixtures.ts` — shared `test` that sets `window.__MOUNT_ALL__` (R12b); specs verifying
     deferral itself must use the plain `@playwright/test` `test`
 

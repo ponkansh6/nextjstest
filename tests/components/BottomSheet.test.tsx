@@ -129,4 +129,22 @@ describe("BottomSheet", () => {
     // フォーカスがトリガーへ戻る
     expect(document.activeElement).toBe(triggerBtn);
   });
+
+  it("T18: compact 指定時に bottomSheetCompact クラスが付与され、非指定時は付かない", () => {
+    const { rerender } = render(
+      <BottomSheet open={true} title={title} onClose={onClose}>
+        <div>コンテンツ</div>
+      </BottomSheet>,
+    );
+    const dialog = screen.getByRole("dialog");
+    expect(dialog.className).not.toContain("bottomSheetCompact");
+
+    rerender(
+      <BottomSheet open={true} title={title} onClose={onClose} compact>
+        <div>コンテンツ</div>
+      </BottomSheet>,
+    );
+    const dialogCompact = screen.getByRole("dialog");
+    expect(dialogCompact.className).toContain("bottomSheetCompact");
+  });
 });

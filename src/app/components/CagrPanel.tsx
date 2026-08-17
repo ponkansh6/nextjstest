@@ -4,7 +4,6 @@ import { MIN_DISPLAY_YEAR } from "../../lib/chartConstants";
 import { BottomSheet } from "./BottomSheet";
 
 interface CagrPanelProps {
-  sectionId?: string;
   allYears: number[];
   cagrStartYear: number;
   cagrEndYear: number;
@@ -24,7 +23,6 @@ const formatCagrRange = (startYear: number, endYear: number, month: number) => {
 
 export const CagrPanel = React.memo<CagrPanelProps>(
   ({
-    sectionId,
     allYears,
     cagrStartYear,
     cagrEndYear,
@@ -38,53 +36,28 @@ export const CagrPanel = React.memo<CagrPanelProps>(
   }) => {
     const [sheetOpen, setSheetOpen] = useState(false);
     const displayYears = allYears.filter((y) => y >= MIN_DISPLAY_YEAR);
+    const mm = String(cagrMonth).padStart(2, "0");
 
     return (
-      <div id={sectionId} className={styles.cagrSection} style={{ scrollMarginTop: "5rem" }}>
-        <h2 className={styles.chartTitle}>年率上昇率（CAGR）</h2>
-        <div className={styles.cagrContainer}>
-          <div className={styles.cagrControls}>
-            <button
-              type="button"
-              className={styles.cagrRangeButton}
-              onClick={() => setSheetOpen(true)}
-              aria-label={`CAGRの期間・評価月を変更（現在: ${cagrStartYear}年${String(cagrMonth).padStart(2, "0")}月から${cagrEndYear}年${String(cagrMonth).padStart(2, "0")}月）`}
-            >
-              {formatCagrRange(cagrStartYear, cagrEndYear, cagrMonth)} ▾
-            </button>
-            <button
-              onClick={calculateCAGR}
-              className={styles.calculateButton}
-              disabled={cagrStartYear === cagrEndYear}
-            >
-              計算する
-            </button>
-          </div>
-
-          {cagrError && (
-            <div className={styles.cagrError}>
-              <p className={styles.cagrErrorText}>{cagrError}</p>
-            </div>
-          )}
-
-          {cagrResult !== null && (
-            <div className={styles.cagrResult}>
-              <p className={styles.cagrResultLabel}>年率上昇率（CAGR）:</p>
-              <p className={styles.cagrResultValue}>{(cagrResult * 100).toFixed(2)}%</p>
-              <p className={styles.cagrResultDetail}>
-                {formatCagrRange(cagrStartYear, cagrEndYear, cagrMonth)}
-              </p>
-            </div>
-          )}
-        </div>
-        <p className={styles.cagrNote}>※凡例で選択した費目の合計を基準にCAGRを算出</p>
+      <>
+        <p className={styles.chartNote}>
+          <button
+            type="button"
+            className={styles.cagrLink}
+            onClick={() => setSheetOpen(true)}
+            aria-label={`年率上昇率（CAGR）を計算（現在: ${cagrStartYear}年${mm}月から${cagrEndYear}年${mm}月）`}
+          >
+            年率上昇率（CAGR）を計算 ▾
+          </button>
+        </p>
 
         <BottomSheet
+          compact
           open={sheetOpen}
-          title="CAGRの期間・評価月"
+          title="年率上昇率（CAGR）"
           onClose={() => setSheetOpen(false)}
         >
-          <div className={styles.cagrSheetControls}>
+          <div className={styles.cagrSheetRow}>
             <div className={styles.cagrItem}>
               <label htmlFor="cagrStartYear">開始年:</label>
               <select
@@ -133,8 +106,33 @@ export const CagrPanel = React.memo<CagrPanelProps>(
               </select>
             </div>
           </div>
+
+          <button
+            className={styles.calculateButton}
+            onClick={calculateCAGR}
+            disabled={cagrStartYear === cagrEndYear}
+          >
+            計算する
+          </button>
+
+          {cagrError && (
+            <div className={styles.cagrError}>
+              <p className={styles.cagrErrorText}>{cagrError}</p>
+            </div>
+          )}
+
+          {cagrResult !== null && (
+            <div className={styles.cagrResult}>
+              <p className={styles.cagrResultValue}>{(cagrResult * 100).toFixed(2)}%</p>
+              <p className={styles.cagrResultDetail}>
+                {formatCagrRange(cagrStartYear, cagrEndYear, cagrMonth)}
+              </p>
+            </div>
+          )}
+
+          <p className={styles.cagrSheetNote}>※凡例で選択した費目の合計を基準に算出</p>
         </BottomSheet>
-      </div>
+      </>
     );
   },
 );
