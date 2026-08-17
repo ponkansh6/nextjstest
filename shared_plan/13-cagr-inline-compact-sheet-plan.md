@@ -842,3 +842,134 @@ CSS を直す**（`bugfix-tdd` の手順）と確実。
 
 **検証時の注意**: `pnpm test:e2e` は `.next` を再ビルドしない。
 CSS を触ったら必ず `pnpm build && pnpm test:e2e` の順で実行する。
+
+---
+
+# L-2 / M-1 / M-2 対応の検証結果（2026-08-17 / 対象コミット `92b8c9a`）
+
+## 総合判定: **L-2・M-1・M-2 すべて解消。本プランの機能要求は完了。**
+
+残るのは spec.md の記載更新（N-1）のみで、実装・テストの不具合はない。
+
+## 検証ゲート
+
+| ゲート                  | 結果                                     |
+| ----------------------- | ---------------------------------------- |
+| `pnpm type-check`       | ✅ エラー 0                              |
+| `pnpm lint`             | ✅ エラー 0 / 警告 5（既存分のみ）       |
+| `pnpm test`             | ✅ **252 テスト全 pass**                 |
+| `pnpm build`            | ✅ 成功                                  |
+| `pnpm test:e2e`（全体） | ✅ **90 passed / 22 skipped / 0 failed** |
+
+## L-2: ✅ 解消（カスケード順の修正を実測で確認）
+
+`@media (orientation: landscape)` ブロックが `.bottomSheetCompact` の基底定義（`:668`）より
+**後ろ（`:678-682`）へ移動**され、`70dvh` が有効になった。
+「基底定義より後ろに置くこと／メディアクエリは詳細度を上げない」旨のコメントも添えられており、
+将来の並べ替えによる再発防止になっている。
+
+| ビューポート | シート高さ                  | 隠れる量 | 結果の値 | 詳細行                           | 注記              |
+| ------------ | --------------------------- | -------- | -------- | -------------------------------- | ----------------- |
+| 375×667      | 295px                       | **0px**  | OK       | OK                               | OK                |
+| 390×844      | 295px                       | **0px**  | OK       | OK                               | OK                |
+| 667×375 横   | **263px**（169px から改善） | 32px     | OK       | **OK**（画面外だったものが解消） | OUT（M-2 で許容） |
+| 844×390 横   | **262px**                   | **0px**  | OK       | OK                               | OK                |
+
+横向きのスクリーンショットでも、シート内に `0.78%` と `2005年01月 → 2026年01月` が
+**1 行で収まって表示されている**ことを目視確認した。
+
+## M-1: ✅ 解消（ミューテーションテストで検知能力を証明）
+
+T-E2E-9 は恒真アサーション（`sheetHeight <= 263`）から症状ベース
+（`cagrResultDetail.bottom <= window.innerHeight`）へ書き換えられた。
+テスト名も「シート高さが70dvh以内」→「結果の詳細行がビューポート内に収まること」へ修正され、
+**ファイル冒頭コメントとの食い違いも解消**している。
+
+**検知能力の検証**: `CpiChart.module.css` を `9cbe1eb`（カスケードのバグがある版）へ差し戻して
+再ビルドし、同テストを実行した。
+
+```
+✘ 9 [chromium] › T-E2E-9: 667x375 横向きで結果の詳細行がビューポート内に収まること（L-2 回帰）
+  Error: 横向きで cagrResultDetail の下端 418.25px が画面外
+  1 failed / 8 passed
+```
+
+**バグを戻すと確実に赤になり、修正すると緑になる**ことを確認した。恒真性は完全に解消されている。
+（検証後 CSS は元に戻して再ビルド済み。作業ツリーはクリーン。）
+
+> 同時に、他の 8 件（T-E2E-1〜8）はバグ版でも緑だった。これは L-1 の対応（縦向き）が
+> 横向きの問題と独立していることの裏付けでもある。
+
+## M-2: ✅ 解消（推奨した (a) を採用）
+
+- `T-E2E-5` に「縦向き専用の閾値。横向きでは 70dvh で十分なグラフ表示を確保できない場合があるため」
+  というコメントが追加され、**120px を横向きに適用しない**方針が明文化された。
+  実測でも横向きは 113px で閾値を下回るため、この明文化は必要だった。
+- `T-E2E-9` に「注記は 70dvh でも収まりきらない場合があるため対象外」というコメントが追加され、
+  横向きで注記 1 行分（32px）の内部スクロールを許容する判断が記録されている。
+
+いずれも推奨案 (a) のとおり。**暗黙の妥協ではなくコメントとして残っている点が良い。**
+
+---
+
+## N-1【要対応・低】spec.md に L-1 / L-2 の不変条件が未記載
+
+`92b8c9a` のコミットメッセージ 4 行目は
+
+> - Update spec.md with verification results and L-1/L-2/L-3/M-1/M-2 analysis
+
+と述べているが、**このコミットに `openspec/specs/nextjstest/spec.md` は含まれていない**
+（変更されたのは `shared_plan/13-…md` / CSS / E2E の 3 ファイル）。
+実際に spec.md を確認すると、R18 は R18a〜R18d のままで、今回追加した 3 つの不変条件
+（T-E2E-7 内部スクロールなし / T-E2E-8 詳細行と注記の可視 / T-E2E-9 横向きの詳細行の可視）が
+どこにも記載されていない。**プラン「対応順序（今回分）」の項目 4 が未実施。**
+
+`Test Requirements` の行（`spec.md:577`）は
+`cagr-sheet.e2e.spec.ts — CAGR コンパクトシートの開閉・計算導線・グラフ可視性（R18）` に
+更新済みだが、シート内の収まりには触れていない。
+
+**変更プラン**:
+
+1. **R18c を縦向き明記へ改め、R18e を新設**
+
+   ```md
+   #### Scenario R18c: Chart Remains Visible (Portrait)
+
+   - **WHEN** the sheet is open on a 375x667 portrait viewport
+   - **THEN** at least 120px of the contribution chart's plot area remains visible above the sheet
+   - **AND** this threshold does not apply in landscape, where the sheet is allowed up to 70dvh
+
+   #### Scenario R18e: Sheet Content Fits Without Inner Scrolling
+
+   - **WHEN** a CAGR result is displayed on a 375x667 portrait viewport
+   - **THEN** the sheet requires no inner scrolling and the result value, its period detail,
+     and the basis note are all within the viewport
+   - **AND WHEN** the viewport is landscape (max-height 500px)
+   - **THEN** the result value and its period detail remain within the viewport
+     (the basis note may require inner scrolling)
+   ```
+
+2. **Test Requirements の該当行に追記**
+
+   ```md
+   - `cagr-sheet.e2e.spec.ts` — CAGR コンパクトシートの開閉・計算導線・グラフ可視性・
+     シート内の収まり（縦向きは内部スクロールなし / 横向きは詳細行まで可視）（R18）
+   ```
+
+3. **コミットメッセージの齟齬** — 今後は「spec.md」と書いた場合に実際に spec.md を含めるか、
+   `shared_plan` と正しく書き分ける。今回は実害なしだが、コミットログを信頼できなくする。
+
+**影響範囲**: `openspec/specs/nextjstest/spec.md` のみ。
+
+---
+
+## 本プランの最終状態
+
+| 要求                                                       | 状態                                                                                         |
+| ---------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| 1. 計算ボタンと計算結果もボトムシートへ                    | ✅ シート外は `.cagrLink` のみ（T-E2E-1 / T15〜T16 で担保）                                  |
+| 2. ボトムシートをコンパクトに                              | ✅ 縦向き 295px（45dvh）/ 横向き 263px（70dvh）。**44px タップターゲット規約は緩めずに達成** |
+| 3. CAGR 独立セクション廃止・グラフ直下にポップアップリンク | ✅ `belowChartSlot` 経由。`section-cagr` と「CPI年率」タブを削除（T-E2E-6 で担保）           |
+| コンセプト（上部にグラフ・下部に CAGR）                    | ✅ 縦向きでグラフ可視 150〜287px、横向きでも 113〜128px。スクリーンショットで目視確認        |
+
+**残件**: N-1（spec.md の記載更新）のみ。実装・テスト面の不具合はない。
