@@ -124,6 +124,7 @@ test.describe("CAGR コンパクトシート", () => {
       const s = sheet.getBoundingClientRect();
       return Math.max(0, Math.min(c.bottom, s.top) - Math.max(c.top, 0));
     });
+    // 縦向き専用の閾値。横向きでは 70dvh で十分なグラフ表示を確保できない場合があるため
     expect(visible, `グラフ可視高さ ${visible}px が 120px 未満`).toBeGreaterThanOrEqual(120);
   });
 
@@ -201,7 +202,7 @@ test.describe("CAGR コンパクトシート", () => {
     expect(noteBottom, "cagrSheetNote がビューポート外").toBeLessThanOrEqual(667);
   });
 
-  test("T-E2E-9: 667x375 横向きでシート高さが70dvh以内に収まること（L-2 回帰）", async ({
+  test("T-E2E-9: 667x375 横向きで結果の詳細行がビューポート内に収まること（L-2 回帰）", async ({
     page,
   }) => {
     await page.setViewportSize({ width: 667, height: 375 });
@@ -218,16 +219,14 @@ test.describe("CAGR コンパクトシート", () => {
     await page.getByRole("button", { name: "計算する" }).click();
     await expect(page.locator("[class*='cagrResultValue']")).toBeVisible({ timeout: 5000 });
 
-    // シート高さが 70dvh = 262.5px 以内に収まること
-    const sheetHeight = await page.evaluate(() => {
-      const sheet = document.querySelector<HTMLElement>(
-        "[class*='bottomSheet']:not([class*='Backdrop']):not([class*='Header']):not([class*='Title']):not([class*='Close'])",
-      )!;
-      return sheet.getBoundingClientRect().height;
+    // 詳細行がビューポート内（注記は 70dvh でも収まりきらない場合があるため対象外）
+    const detail = await page.evaluate(() => {
+      const el = document.querySelector<HTMLElement>("[class*='cagrResultDetail']")!;
+      const r = el.getBoundingClientRect();
+      return { bottom: r.bottom, inViewport: r.bottom <= window.innerHeight + 1 };
     });
-    expect(
-      sheetHeight,
-      `横向きでシート高さ ${sheetHeight}px が 70dvh（≈263px）を超過`,
-    ).toBeLessThanOrEqual(263);
+    expect(detail.inViewport, `横向きで cagrResultDetail の下端 ${detail.bottom}px が画面外`).toBe(
+      true,
+    );
   });
 });

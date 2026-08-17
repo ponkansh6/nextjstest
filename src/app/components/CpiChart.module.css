@@ -327,9 +327,6 @@
   .chartWrapper {
     height: 85svh;
   }
-  .bottomSheetCompact {
-    max-height: 70dvh;
-  }
 }
 
 .chartSection {
@@ -674,6 +671,14 @@
 }
 .bottomSheetCompact .bottomSheetHeader {
   margin-bottom: 0.375rem;
+}
+
+/* 横向きは縦の余裕が無いため上限を緩める（基底定義より後ろに置くこと。
+   メディアクエリは詳細度を上げないため、先に書くと 45dvh に負ける） */
+@media (orientation: landscape) and (max-height: 500px) {
+  .bottomSheetCompact {
+    max-height: 70dvh;
+  }
 }
 
 /* グラフ直下のポップアップリンク。データテーブルリンクと並ぶ見た目に揃える */
