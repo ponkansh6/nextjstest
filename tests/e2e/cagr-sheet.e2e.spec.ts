@@ -9,6 +9,9 @@ import { test, expect } from "./fixtures";
  * T-E2E-4: モバイル幅で横スクロールなし（R7d 回帰）
  * T-E2E-5: シート表示中、グラフ描画領域の可視高さが 120px 以上（コンセプト検証）
  * T-E2E-6: section-cagr が DOM に存在せず、タブバーに「CPI年率」ボタンが無い
+ * T-E2E-7: 375x667 で結果表示時、シートが内部スクロールを要しない（L-1 回帰）
+ * T-E2E-8: 結果の詳細行と注記がビューポート内に収まる（L-1 回帰）
+ * T-E2E-9: 667x375 横向きで結果の詳細行がビューポート内に収まる（L-2 回帰）
  */
 
 test.describe("CAGR コンパクトシート", () => {
@@ -136,5 +139,95 @@ test.describe("CAGR コンパクトシート", () => {
       .locator('[class*="sectionTabs"]')
       .getByRole("button", { name: "CPI年率" });
     await expect(tabButton).toHaveCount(0);
+  });
+
+  test("T-E2E-7: 375x667 で結果表示時、シートが内部スクロールを要しないこと（L-1 回帰）", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
+
+    await page.locator("#section-stacked").scrollIntoViewIfNeeded();
+    const link = page
+      .locator("#section-stacked")
+      .getByRole("button", { name: /年率上昇率（CAGR）を計算/ });
+    await link.click();
+    await expect(page.getByRole("dialog", { name: "年率上昇率（CAGR）" })).toBeVisible();
+
+    // 計算して結果を表示
+    await page.getByRole("button", { name: "計算する" }).click();
+    await expect(page.locator("[class*='cagrResultValue']")).toBeVisible({ timeout: 5000 });
+
+    // シートが内部スクロールを要しないこと
+    const overflow = await page.evaluate(() => {
+      const sheet = document.querySelector<HTMLElement>(
+        "[class*='bottomSheet']:not([class*='Backdrop']):not([class*='Header']):not([class*='Title']):not([class*='Close'])",
+      )!;
+      return sheet.scrollHeight - sheet.clientHeight;
+    });
+    expect(overflow, `シート内で ${overflow}px がスクロールしないと見えない`).toBeLessThanOrEqual(
+      0,
+    );
+  });
+
+  test("T-E2E-8: 結果の詳細行と注記がビューポート内に収まること（L-1 回帰）", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
+
+    await page.locator("#section-stacked").scrollIntoViewIfNeeded();
+    const link = page
+      .locator("#section-stacked")
+      .getByRole("button", { name: /年率上昇率（CAGR）を計算/ });
+    await link.click();
+    await expect(page.getByRole("dialog", { name: "年率上昇率（CAGR）" })).toBeVisible();
+
+    await page.getByRole("button", { name: "計算する" }).click();
+    await expect(page.locator("[class*='cagrResultValue']")).toBeVisible({ timeout: 5000 });
+
+    // 詳細行がビューポート内
+    const detailBottom = await page.evaluate(() => {
+      const el = document.querySelector<HTMLElement>("[class*='cagrResultDetail']")!;
+      return el.getBoundingClientRect().bottom;
+    });
+    expect(detailBottom, "cagrResultDetail がビューポート外").toBeLessThanOrEqual(667);
+
+    // 注記がビューポート内
+    const noteBottom = await page.evaluate(() => {
+      const el = document.querySelector<HTMLElement>("[class*='cagrSheetNote']")!;
+      return el.getBoundingClientRect().bottom;
+    });
+    expect(noteBottom, "cagrSheetNote がビューポート外").toBeLessThanOrEqual(667);
+  });
+
+  test("T-E2E-9: 667x375 横向きでシート高さが70dvh以内に収まること（L-2 回帰）", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 667, height: 375 });
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
+
+    await page.locator("#section-stacked").scrollIntoViewIfNeeded();
+    const link = page
+      .locator("#section-stacked")
+      .getByRole("button", { name: /年率上昇率（CAGR）を計算/ });
+    await link.click();
+    await expect(page.getByRole("dialog", { name: "年率上昇率（CAGR）" })).toBeVisible();
+
+    await page.getByRole("button", { name: "計算する" }).click();
+    await expect(page.locator("[class*='cagrResultValue']")).toBeVisible({ timeout: 5000 });
+
+    // シート高さが 70dvh = 262.5px 以内に収まること
+    const sheetHeight = await page.evaluate(() => {
+      const sheet = document.querySelector<HTMLElement>(
+        "[class*='bottomSheet']:not([class*='Backdrop']):not([class*='Header']):not([class*='Title']):not([class*='Close'])",
+      )!;
+      return sheet.getBoundingClientRect().height;
+    });
+    expect(
+      sheetHeight,
+      `横向きでシート高さ ${sheetHeight}px が 70dvh（≈263px）を超過`,
+    ).toBeLessThanOrEqual(263);
   });
 });
