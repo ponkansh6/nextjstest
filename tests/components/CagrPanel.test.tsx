@@ -116,4 +116,19 @@ describe("CagrPanel", () => {
     const { container } = render(<CagrPanel {...defaultProps} />);
     expect(container.firstChild).not.toBeNull();
   });
+
+  it("T19: トリガーの可視テキストが「年率上昇率（CAGR）を計算」のままであること", () => {
+    render(<CagrPanel {...defaultProps} />);
+    const trigger = screen.getByRole("button", { name: /年率上昇率（CAGR）を計算/ });
+    // textContent に SVG の invisible テキストが含まれないことを確認
+    expect(trigger.textContent?.trim()).toBe("年率上昇率（CAGR）を計算");
+  });
+
+  it('T20: アイコン <svg> が aria-hidden="true" を持ち、アクセシブル名に混入しないこと', () => {
+    render(<CagrPanel {...defaultProps} />);
+    const trigger = screen.getByRole("button", { name: /年率上昇率（CAGR）を計算/ });
+    const svg = trigger.querySelector("svg");
+    expect(svg).not.toBeNull();
+    expect(svg!.getAttribute("aria-hidden")).toBe("true");
+  });
 });

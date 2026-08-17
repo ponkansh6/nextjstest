@@ -681,20 +681,53 @@
   }
 }
 
-/* グラフ直下のポップアップリンク。データテーブルリンクと並ぶ見た目に揃える */
-.cagrLink {
-  background: none;
-  border: none;
-  padding: 0.625rem 0.75rem;
-  min-height: 44px;
-  font: inherit;
-  color: var(--blue-500);
-  text-decoration: underline;
-  cursor: pointer;
+/* CAGR トリガーの行。.chartNote と違い opacity を掛けない
+   （塗りのあるボタンに親 opacity を掛けるとコントラストが落ちるため） */
+.cagrLinkRow {
+  margin: 0.75rem 0 1.25rem;
+  text-align: center;
 }
+
+/* トーナルピルボタン（light: 薄い青地/濃い青文字, dark: 半透明青地/水色文字） */
+.cagrLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 44px;
+  padding: 0 1.125rem;
+  border: none;
+  border-radius: 9999px;
+  background-color: var(--cta-tonal-bg);
+  color: var(--cta-tonal-text);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .cagrLink:hover {
+    background-color: var(--cta-tonal-bg-hover);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.08);
+  }
+}
+
+.cagrLink:active {
+  background-color: var(--cta-tonal-bg-hover);
+}
+
 .cagrLink:focus-visible {
   outline: 2px solid var(--blue-500);
   outline-offset: 2px;
+}
+
+.cagrLinkIcon {
+  width: 1em;
+  height: 1em;
+  flex-shrink: 0;
 }
 
 /* シート内 3 項目の横並び。ChartFilters の filterRow と同じ考え方 */

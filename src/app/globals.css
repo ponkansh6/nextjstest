@@ -45,6 +45,10 @@
   --tooltip-text: #000000;
 
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+  --cta-tonal-bg: #eff6ff;
+  --cta-tonal-bg-hover: #dbeafe;
+  --cta-tonal-text: #1d4ed8;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -91,6 +95,10 @@
     --blue-50: rgba(59, 130, 246, 0.15);
     --blue-500: #60a5fa;
     --blue-600: #3b82f6;
+
+    --cta-tonal-bg: rgba(59, 130, 246, 0.15);
+    --cta-tonal-bg-hover: rgba(59, 130, 246, 0.24);
+    --cta-tonal-text: #93c5fd;
   }
 }
 
@@ -137,6 +145,10 @@
   --blue-50: rgba(59, 130, 246, 0.15);
   --blue-500: #60a5fa;
   --blue-600: #3b82f6;
+
+  --cta-tonal-bg: rgba(59, 130, 246, 0.15);
+  --cta-tonal-bg-hover: rgba(59, 130, 246, 0.24);
+  --cta-tonal-text: #93c5fd;
 }
 
 * {

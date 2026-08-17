@@ -405,7 +405,9 @@ so that part of the chart stays visible while the user adjusts and reads the CAG
 #### Scenario R18a: Entry Point
 
 - **WHEN** the user views the 費目別寄与度 chart
-- **THEN** a popup link appears between the chart and the "データテーブルを表示" link
+- **THEN** a tonal pill button appears between the chart and the "データテーブルを表示" link,
+  visually stronger than that plain text link and weaker than the filled 計算する button
+- **AND** its label and text contrast meet WCAG AA (4.5:1) in both light and dark themes
 - **AND** no standalone CAGR section or `CPI年率` tab exists
 
 #### Scenario R18b: Self-Contained Sheet

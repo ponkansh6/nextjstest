@@ -76,6 +76,89 @@ test.describe.skip("アクセシビリティ - ダークモード", () => {
   });
 });
 
+test.describe("CAGR トリガーのコントラスト比", () => {
+  test("T-A11Y-1: CAGR トリガーのコントラスト比が WCAG AA（4.5:1）以上", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
+
+    // 費目別セクションにスクロールして CAGR リンクを表示
+    await page.locator("#section-stacked").scrollIntoViewIfNeeded();
+    const link = page
+      .locator("#section-stacked")
+      .getByRole("button", { name: /年率上昇率（CAGR）を計算/ });
+    await expect(link).toBeVisible();
+
+    // 実際の前景色と背景色を取得し、コントラスト比を計算
+    const ratio = await link.evaluate((el) => {
+      // 相対輝度計算（WCAG 2.0）
+      const luminance = (r: number, g: number, b: number) => {
+        const [rs, gs, bs] = [r, g, b].map((c) => {
+          const s = c / 255;
+          return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+        });
+        return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+      };
+
+      // rgb/rgba 文字列をパース（レガシー "rgb(r, g, b)" と
+      // モダン "rgb(r g b / a)" の両方に対応）
+      const parseRgba = (str: string): [number, number, number, number] => {
+        // 数値だけを抽出（カンマ区切り・スペース区切りどちらも対応）
+        const nums = str.match(/[\d.]+/g);
+        if (!nums || nums.length < 3) return [0, 0, 0, 1];
+        const r = +nums[0];
+        const g = +nums[1];
+        const b = +nums[2];
+        // 4番目の値が alpha（"rgb(r, g, b)" なら alpha は無い → 1.0）
+        const a = nums.length >= 4 ? +nums[3] : 1;
+        return [r, g, b, a];
+      };
+
+      const styles = window.getComputedStyle(el);
+      const fgRgba = parseRgba(styles.color);
+      const bgRgba = parseRgba(styles.backgroundColor);
+
+      // bgRgba の alpha が < 1 なら、親要素の不透明背景と合成
+      let bg: [number, number, number] = [bgRgba[0], bgRgba[1], bgRgba[2]];
+      if (bgRgba[3] < 1) {
+        let parent = el.parentElement;
+        let found = false;
+        while (parent) {
+          const [pr, pg, pb, pa] = parseRgba(window.getComputedStyle(parent).backgroundColor);
+          if (pa >= 1) {
+            // 不透明な親背景を発見 → 合成
+            const a = bgRgba[3];
+            bg = [
+              Math.round(bgRgba[0] * a + pr * (1 - a)),
+              Math.round(bgRgba[1] * a + pg * (1 - a)),
+              Math.round(bgRgba[2] * a + pb * (1 - a)),
+            ];
+            found = true;
+            break;
+          }
+          parent = parent.parentElement;
+        }
+        if (!found) {
+          // 不透明な親が見つからない場合、bg 自体の RGB を使用
+          bg = [bgRgba[0], bgRgba[1], bgRgba[2]];
+        }
+      } else {
+        bg = [bgRgba[0], bgRgba[1], bgRgba[2]];
+      }
+
+      const l1 = luminance(fgRgba[0], fgRgba[1], fgRgba[2]);
+      const l2 = luminance(bg[0], bg[1], bg[2]);
+      const lighter = Math.max(l1, l2);
+      const darker = Math.min(l1, l2);
+      return (lighter + 0.05) / (darker + 0.05);
+    });
+
+    expect(
+      ratio,
+      `CAGR トリガーのコントラスト比 ${ratio.toFixed(2)}:1 が WCAG AA（4.5:1）未満`,
+    ).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
 test.describe.skip("アクセシビリティ - キーボード操作", () => {
   fixtureTest("キーボードのみで凡例のチェックボックスを操作できる", async ({ page }) => {
     await page.goto("/");
