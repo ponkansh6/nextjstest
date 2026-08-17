@@ -237,3 +237,169 @@ The system SHALL collect CAGR start year, end year, and evaluation month through
 | z-index 競合（`.sectionTabs` の sticky ヘッダー）        | 既存の表示期間シートと同じ `z-index: 100 / 101` を流用するため、挙動は表示期間シートと同一になる        |
 | シートを開いたまま背景がスクロールする                   | 現行の表示期間シートと同じ挙動（body スクロールロックなし）。**パリティ維持のため今回は追加しない**     |
 | 「計算する」がシート外にあることでユーザーが計算し忘れる | 設定変更で `cagrResult` が `null` になり結果カードが消えるため、未計算状態は視覚的に明示される          |
+
+---
+
+# 検証結果（2026-08-17 実施 / 対象コミット `5e32275`）
+
+## 総合判定
+
+**実装はプランどおり完了しており、全検証ゲートを通過した。** 機能上のブロッカーは無い。
+ただし後述の **A-1（`aria-modal` とフォーカス管理の不整合）** はアクセシビリティ上の実害があるため、追加対応を推奨する。
+
+## 検証ゲートの実行結果
+
+| ゲート                   | コマンド                                         | 結果                                                                     |
+| ------------------------ | ------------------------------------------------ | ------------------------------------------------------------------------ |
+| type-check               | `pnpm type-check` (`tsc --noEmit`)               | ✅ エラー 0                                                              |
+| lint                     | `pnpm lint` (`eslint --cache`)                   | ✅ エラー 0 / 警告 5（**全て変更前から存在する既存警告**、新規増加なし） |
+| ユニット・コンポーネント | `pnpm test` (`vitest run`)                       | ✅ 31 ファイル / **243 テスト全 pass**（9.44s）                          |
+| build                    | `pnpm build`                                     | ✅ 成功（静的 4 ページ生成）                                             |
+| E2E（全体）              | `pnpm test:e2e`                                  | ✅ **81 passed / 22 skipped / 0 failed**（1.3m）                         |
+| E2E（新規のみ）          | `pnpm test:e2e tests/e2e/cagr-sheet.e2e.spec.ts` | ✅ **T-E2E-1〜T-E2E-4 の 4 件すべて pass**（7.9s）                       |
+
+> 既存 lint 警告の内訳（すべて本変更と無関係）: `lint-staged.config.js:1`（anonymous default export）、`server/lib/data-loader/earnings.ts:19,20,31`（未使用 `_`）、`src/app/components/CpiChart.tsx:81`（未使用 `_maxCpiDate`）。
+
+### 回帰確認（プラン 183-188 行に挙げた既存テスト）
+
+| 対象                              | 結果                                                                                                        |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `range-change.e2e.spec.ts`        | ✅ pass。「最大期間ボタンで 2005 年から最新年に一括設定され、シートが閉じ、URL に反映される」も含めて通過   |
+| `mobile-ux.e2e.spec.ts`           | ✅ pass。タップターゲット 44px、375px 横はみ出しなし、開始年/終了年 select 幅一致（diff 0px）、3 要素横並び |
+| `accessibility.e2e.spec.ts`       | ✅ pass（`role="dialog"` / `aria-modal` 追加による破壊なし）。ただし後述 A-2 参照                           |
+| `section-tabs-scroll.e2e.spec.ts` | ✅ pass（chromium / webkit-tabs-regression 両プロジェクト）。「CPI年率」タブジャンプも到達                  |
+
+### プラン記載事項との突合
+
+| プラン項目                                                          | 実装状況                                                                                                                           |
+| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `BottomSheet.tsx` 新設（`open` / `title` / `onClose` / `children`） | ✅ `src/app/components/BottomSheet.tsx:5-10` プラン記載の props と完全一致                                                         |
+| `open === false` で `null` を返す                                   | ✅ `BottomSheet.tsx:22`                                                                                                            |
+| `role="dialog"` / `aria-modal` / `aria-label={title}`               | ✅ `BottomSheet.tsx:27`                                                                                                            |
+| Escape キーで close                                                 | ✅ `BottomSheet.tsx:13-20`                                                                                                         |
+| フォーカストラップはスコープ外                                      | ✅ 実装されていない（プランどおり）— ただし A-1 参照                                                                               |
+| `.rangeSheet*` → `.bottomSheet*` 改称（値は不変）                   | ✅ 差分は識別子のみ。`grep -rn "rangeSheet" src/ tests/ openspec/` の残存は state 名 `rangeSheetOpen` のみ（プランで意図的に維持） |
+| `.cagrRangeButton` / `.cagrSheetControls` 追加                      | ✅ `CpiChart.module.css:731-761` プラン記載の CSS と一致                                                                           |
+| `CagrPanel` の Props 変更なし・内部 `useState` で開閉               | ✅ `CagrPanel.tsx:6-18, 39`                                                                                                        |
+| トリガーの `aria-label="CAGRの期間・評価月を変更"`                  | ✅ `CagrPanel.tsx:51`                                                                                                              |
+| select 変更で自動クローズしない                                     | ✅ `CagrPanel.tsx:93,109,125` は setter のみ呼ぶ。T4 / T-E2E-2 で担保                                                              |
+| `<option disabled>` 条件・`MIN_DISPLAY_YEAR` フィルタ維持           | ✅ `CagrPanel.tsx:40,97,113`                                                                                                       |
+| 「計算する」はシート外・`disabled` 条件維持                         | ✅ `CagrPanel.tsx:55-61`                                                                                                           |
+| `CpiChart.tsx` の表示期間シートを `BottomSheet` へ置換              | ✅ `CpiChart.tsx:519-529`。`handleSetStartYear` / `handleSetEndYear` の自動クローズは維持                                          |
+| spec.md（R10b 調整 / R18 追加 / Component Tree）                    | ✅ `spec.md:305, 393-414, 455, 457, 461`                                                                                           |
+
+### プランからの差異（いずれも許容）
+
+1. **`.cagrControls` のシート内再利用を取りやめ**
+   プラン 111 行では「シート内でも `.cagrControls` を再利用し `.cagrSheetControls` で上書き」としたが、実装はシート内で `.cagrSheetControls` **のみ**を使用（`CagrPanel.tsx:87`）。上書きの重ね掛けが無くなり CSS の見通しが良いため、**この差異は実装側が優れている**。既存の `@media (max-width: 768px)` 内 `.cagrControls { flex-direction: column }`（`CpiChart.module.css:510-513`）はパネル本体（トリガー + 計算するの 2 ボタン）にのみ効き、`align-items: stretch` で両ボタンが全幅化する。意図どおり。
+2. **T6 が T6 / T6b の 2 ケースに分割**（enabled 側の検証を追加）。カバレッジ増につき問題なし。
+3. **T-E2E-2 の最終アサーションが緩い**
+   プラン 179 行は「`.cagrResultDetail` の表示がトリガーボタンのラベルと一致する」だが、実装は `getByText(/年率上昇率|データが見つかりません/)` と OR 条件（`cagr-sheet.e2e.spec.ts:61`）。「年率上昇率」は `<h2>` にも存在するため、**計算が失敗しても pass しうる**。→ 後述 B-1 で改善提案。
+
+---
+
+## 変更提案
+
+### A-1【推奨・アクセシビリティ】`aria-modal="true"` とフォーカス管理の不整合
+
+**問題**: `BottomSheet.tsx:27` は `aria-modal="true"` を宣言しているが、フォーカストラップも初期フォーカス移動も無い。支援技術には「背後は不活性」と伝わる一方、実際には Tab で背後のチャート・凡例・タブバーへ抜けられる。さらに ✕ ボタンで閉じるとフォーカス先の要素が DOM から消え、**フォーカスが `<body>` に落ちてページ先頭へ戻る**。キーボード / スクリーンリーダー利用者にとっては実害のある挙動で、`aria-modal` は現状「嘘の宣言」になっている。
+
+`ChartInfoButton.tsx:66-101` に既にフォーカストラップの実装があるため、パターンを流用できる。
+
+**変更プラン（いずれかを選択。A 案を推奨）**
+
+- **A 案（推奨）**: `BottomSheet` にフォーカス管理を追加する。
+  1. `open` になった瞬間、シート内の最初のフォーカス可能要素（実質 ✕ ボタン）へ `focus()` する。
+  2. `Tab` / `Shift+Tab` をシート内で循環させる（`ChartInfoButton.tsx:73-95` と同じ `querySelectorAll` ベースの実装）。
+  3. `open` が `true` → `false` に変わる際、直前にフォーカスされていた要素（トリガーボタン）へ `focus()` を戻す。`useRef<HTMLElement | null>` に `document.activeElement` を退避する。
+  4. 実装が重複するため、`ChartInfoButton` と共有できる `useFocusTrap(ref, open)` フックを `src/hooks/` に切り出すのが望ましい。
+  - テスト追加（`tests/components/BottomSheet.test.tsx`）:
+    - **T10**: `open` になると ✕ ボタンにフォーカスが当たる
+    - **T11**: シート内最後の要素で `Tab` を押すと最初の要素へ戻る
+    - **T12**: `open` → `close` でトリガー要素へフォーカスが戻る
+  - E2E 追加（`tests/e2e/accessibility.e2e.spec.ts`）: シートを開いた状態で `Tab` を 10 回押しても `document.activeElement` が `[role="dialog"]` の内側に留まること
+- **B 案（最小対応）**: `aria-modal="true"` を削除し、宣言を実態に合わせる。実害（フォーカスが body に落ちる）は残るため非推奨。
+
+**影響範囲**: `src/app/components/BottomSheet.tsx`、（切り出す場合）`src/hooks/useFocusTrap.ts`、`src/app/components/ChartInfoButton.tsx`、`tests/components/BottomSheet.test.tsx`、`tests/e2e/accessibility.e2e.spec.ts`、spec.md（R18c にフォーカス復帰を追記）。
+
+### A-2【推奨・アクセシビリティ】トリガーの `aria-label` が現在値を隠している
+
+**問題**: `CagrPanel.tsx:51` の `aria-label="CAGRの期間・評価月を変更"` は、可視テキスト `2000年01月 → 2025年01月 ▾` を**上書きする**。spec.md の Scenario R18a は「a trigger button shows the current setting」と規定しているが、スクリーンリーダー利用者には現在の設定値が一切読み上げられない。`SectionTabs.tsx:56` の `.sectionRange`（`aria-label="表示期間を変更"` / 可視テキスト `2005–2026 ▾`）も同じ問題を抱えており、本変更でパターンが 2 箇所に増えた。
+
+**変更プラン**:
+
+```tsx
+aria-label={`CAGRの期間・評価月を変更（現在: ${cagrStartYear}年${mm}月から${cagrEndYear}年${mm}月）`}
+```
+
+- E2E は `getByRole("button", { name: "CAGRの期間・評価月を変更" })` の完全一致で引いているため、`{ name: /CAGRの期間・評価月を変更/ }` の正規表現へ変更する必要がある（`cagr-sheet.e2e.spec.ts:24,42,54,68`）。ユニットテスト T2〜T5 も同様（`CagrPanel.test.tsx:42,49,57,66`）。
+- 同じ修正を `SectionTabs.tsx` の `.sectionRange` にも適用するかは別判断。適用する場合は `mobile-ux.e2e.spec.ts:71,102,132` と `range-change.e2e.spec.ts:41,81,226` のセレクタも正規表現化が必要。**まず `CagrPanel` のみ対応し、`SectionTabs` は別コミットに分けることを推奨**（回帰面が広いため）。
+
+### B-1【推奨・テスト品質】T-E2E-2 のアサーションが計算失敗を検知できない
+
+**問題**: `cagr-sheet.e2e.spec.ts:61` の `getByText(/年率上昇率|データが見つかりません/)` は、セクション見出し `<h2>年率上昇率（CAGR）</h2>` に常時マッチする。`.first()` を取っているため、**「計算する」が全く機能しなくてもこのテストは pass する**。結果としてプラン 179 行の意図（結果表示の検証）を満たしていない。
+
+**変更プラン**: 結果カード内の値要素を直接検証する。
+
+```ts
+// CagrPanel.tsx:73 の .cagrResultValue（例: "1.23%"）を検証
+const resultValue = page.locator(`[class*="cagrResultValue"]`);
+await expect(resultValue).toBeVisible({ timeout: 5000 });
+await expect(resultValue).toHaveText(/^-?\d+\.\d{2}%$/);
+
+// プラン 179 行の意図どおり、詳細表示がトリガーのラベルと整合することを検証
+const resultDetail = page.locator(`[class*="cagrResultDetail"]`);
+await expect(resultDetail).toHaveText("2015年01月 → 2025年01月");
+```
+
+**影響範囲**: `tests/e2e/cagr-sheet.e2e.spec.ts` のみ。
+
+### B-2【推奨・保守性】`formatCagrRange(...).replace(" ▾", "")` の逆変換を排除
+
+**問題**: `CagrPanel.tsx:75` は、フォーマッタが埋め込んだ `▾` を文字列置換で剥がしている。`formatCagrRange` の書式（例: 全角スペース化、`▾` を別記号に変更）をいじると結果カードの表示だけが静かに壊れる。`replace` は文字列が一致しなければ黙って何もしないため、テストでも検知しづらい。
+
+**変更プラン**: 装飾記号を呼び出し側の責務にする。
+
+```tsx
+const formatCagrRange = (startYear: number, endYear: number, month: number) => {
+  const mm = String(month).padStart(2, "0");
+  return `${startYear}年${mm}月 → ${endYear}年${mm}月`;
+};
+```
+
+- トリガー: `{formatCagrRange(...)} ▾`（JSX 側で付与）
+- 結果カード: `{formatCagrRange(...)}`（`.replace()` を削除）
+
+**影響範囲**: `src/app/components/CagrPanel.tsx` のみ。既存テストは `toContain("2000年01月")` 等の部分一致なので変更不要。
+
+### C-1【低優先・仕様書】Test Requirements に新規 E2E ファイルが未記載
+
+**問題**: `spec.md:552-563` の E2E ファイル一覧に `cagr-sheet.e2e.spec.ts` が無い。
+
+**変更プラン**: 一覧に 1 行追加する。
+
+```md
+- `cagr-sheet.e2e.spec.ts` — CAGR 設定ボトムシートの開閉と計算導線（R18）
+```
+
+なお同一覧には `section-tabs-scroll` / `tooltip-dismiss` / `tooltip-stack-total` / `spending-filter` / `legend-color-sync` / `advanced-series` / `cpi-chart-categories` も未記載（本変更以前からの積み残し）。また「across three projects」の記述は現在 4 プロジェクト（`webkit-tabs-regression` を含む）に増えており実態とずれている。**まとめて是正するのが望ましいが、本タスクのスコープ外として別途対応する。**
+
+### C-2【低優先・軽微】`BottomSheet` 未使用時の子要素評価
+
+`CpiChart.tsx:519-529` は `{rangeSheetOpen && ...}` によるショートサーキットを廃したため、シートが閉じていても毎レンダーで `allYears.filter((y) => y >= MIN_DISPLAY_YEAR)` が実行され `<ChartFilters>` の React element が生成される（マウントはされない）。実測に現れない規模のため**対応不要**。気になる場合は `allYears` のフィルタ結果を `useMemo` 化する。
+
+### C-3【低優先・軽微】`"use client"` ディレクティブの有無が不揃い
+
+`BottomSheet.tsx:1` には `"use client"` があるが `CagrPanel.tsx` には無い（親 `CpiChart` 経由で client 境界に入るため動作上は問題なく、build も通過）。既存の `ChartFilters.tsx` にも無く、リポジトリ全体で不揃いなため**本タスクでの対応は不要**。
+
+---
+
+## 推奨する対応順序
+
+1. **A-1**（フォーカス管理）— アクセシビリティの実害。`useFocusTrap` フック切り出しを含むため最も工数が大きい
+2. **B-1**（E2E アサーション強化）— 現状テストが実質的に無効なため、A-1 より先に入れてもよい
+3. **B-2**（`replace` 排除）— 小さく安全
+4. **A-2**（`aria-label` に現在値）— `CagrPanel` のみ先行
+5. **C-1**（spec.md 追記）— 他の積み残しとまとめて
+
+**未実施の検証**: プラン 63 行の「実機幅での `position: fixed` 表示位置の目視確認」は E2E（T-E2E-1 / T-E2E-3 でシートの可視性・背景タップは検証済み）では代替できないため、実機またはブラウザのデバイスエミュレーションでの目視確認が残っている。

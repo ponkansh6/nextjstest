@@ -559,6 +559,7 @@ scripts/
     and `LazyMount` deferral (R12)
   - `accessibility.e2e.spec.ts` — dark-mode legend contrast (P0-3 / P1-2 regression),
     `:focus-visible` rings (P4-1), keyboard-only operation (P4-1), and `prefers-reduced-motion` (P4-2)
+  - `cagr-sheet.e2e.spec.ts` — CAGR 設定ボトムシートの開閉と計算導線（R18）
   - `fixtures.ts` — shared `test` that sets `window.__MOUNT_ALL__` (R12b); specs verifying
     deferral itself must use the plain `@playwright/test` `test`
 

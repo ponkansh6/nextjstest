@@ -21,7 +21,7 @@ test.describe("CAGR 設定ボトムシート", () => {
     // CPI年率セクションにスクロール
     await page.locator(CAGR_SECTION).scrollIntoViewIfNeeded();
 
-    const trigger = page.getByRole("button", { name: "CAGRの期間・評価月を変更" });
+    const trigger = page.getByRole("button", { name: /CAGRの期間・評価月を変更/ });
     await expect(trigger).toBeVisible();
     await trigger.click();
 
@@ -39,7 +39,7 @@ test.describe("CAGR 設定ボトムシート", () => {
     await page.locator(CAGR_SECTION).scrollIntoViewIfNeeded();
 
     // シートを開く
-    await page.getByRole("button", { name: "CAGRの期間・評価月を変更" }).click();
+    await page.getByRole("button", { name: /CAGRの期間・評価月を変更/ }).click();
     const dialog = page.getByRole("dialog", { name: "CAGRの期間・評価月" });
     await expect(dialog).toBeVisible();
 
@@ -51,21 +51,26 @@ test.describe("CAGR 設定ボトムシート", () => {
     await expect(dialog).not.toBeVisible();
 
     // トリガーボタンのラベルが更新されている
-    const trigger = page.getByRole("button", { name: "CAGRの期間・評価月を変更" });
+    const trigger = page.getByRole("button", { name: /CAGRの期間・評価月を変更/ });
     await expect(trigger).toContainText("2015年01月");
 
     // 「計算する」をクリック
     await page.getByRole("button", { name: "計算する" }).click();
 
-    // 結果（「年率上昇率」テキスト）かエラーのいずれかが表示される
-    const cagrOutput = page.getByText(/年率上昇率|データが見つかりません/);
-    await expect(cagrOutput.first()).toBeVisible({ timeout: 5000 });
+    // 結果カード内の値を直接検証（見出し「年率上昇率」の常時マッチを回避）
+    const resultValue = page.locator("[class*='cagrResultValue']");
+    await expect(resultValue).toBeVisible({ timeout: 5000 });
+    await expect(resultValue).toHaveText(/^-?\d+\.\d{2}%$/);
+
+    // 詳細表示がトリガーの設定と整合することを確認
+    const resultDetail = page.locator("[class*='cagrResultDetail']");
+    await expect(resultDetail).toContainText("2015年01月 → 2026年01月");
   });
 
   test("T-E2E-3: 背景タップでシートが閉じる", async ({ page }) => {
     await page.locator(CAGR_SECTION).scrollIntoViewIfNeeded();
 
-    await page.getByRole("button", { name: "CAGRの期間・評価月を変更" }).click();
+    await page.getByRole("button", { name: /CAGRの期間・評価月を変更/ }).click();
     const dialog = page.getByRole("dialog", { name: "CAGRの期間・評価月" });
     await expect(dialog).toBeVisible();
 

@@ -19,7 +19,7 @@ interface CagrPanelProps {
 
 const formatCagrRange = (startYear: number, endYear: number, month: number) => {
   const mm = String(month).padStart(2, "0");
-  return `${startYear}年${mm}月 → ${endYear}年${mm}月 ▾`;
+  return `${startYear}年${mm}月 → ${endYear}年${mm}月`;
 };
 
 export const CagrPanel = React.memo<CagrPanelProps>(
@@ -48,9 +48,9 @@ export const CagrPanel = React.memo<CagrPanelProps>(
               type="button"
               className={styles.cagrRangeButton}
               onClick={() => setSheetOpen(true)}
-              aria-label="CAGRの期間・評価月を変更"
+              aria-label={`CAGRの期間・評価月を変更（現在: ${cagrStartYear}年${String(cagrMonth).padStart(2, "0")}月から${cagrEndYear}年${String(cagrMonth).padStart(2, "0")}月）`}
             >
-              {formatCagrRange(cagrStartYear, cagrEndYear, cagrMonth)}
+              {formatCagrRange(cagrStartYear, cagrEndYear, cagrMonth)} ▾
             </button>
             <button
               onClick={calculateCAGR}
@@ -72,7 +72,7 @@ export const CagrPanel = React.memo<CagrPanelProps>(
               <p className={styles.cagrResultLabel}>年率上昇率（CAGR）:</p>
               <p className={styles.cagrResultValue}>{(cagrResult * 100).toFixed(2)}%</p>
               <p className={styles.cagrResultDetail}>
-                {formatCagrRange(cagrStartYear, cagrEndYear, cagrMonth).replace(" ▾", "")}
+                {formatCagrRange(cagrStartYear, cagrEndYear, cagrMonth)}
               </p>
             </div>
           )}

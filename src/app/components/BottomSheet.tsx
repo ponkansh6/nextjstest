@@ -1,5 +1,6 @@
 "use client";
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
+import { useFocusTrap } from "../../hooks/useFocusTrap";
 import styles from "./CpiChart.module.css";
 
 interface BottomSheetProps {
@@ -10,6 +11,10 @@ interface BottomSheetProps {
 }
 
 export const BottomSheet: React.FC<BottomSheetProps> = ({ open, title, onClose, children }) => {
+  const sheetRef = useRef<HTMLDivElement>(null);
+
+  useFocusTrap(sheetRef, open);
+
   useEffect(() => {
     if (!open) return;
     const handleKey = (e: KeyboardEvent) => {
@@ -24,7 +29,14 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({ open, title, onClose, 
   return (
     <>
       <div className={styles.bottomSheetBackdrop} onClick={onClose} />
-      <div className={styles.bottomSheet} role="dialog" aria-modal="true" aria-label={title}>
+      <div
+        ref={sheetRef}
+        className={styles.bottomSheet}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        tabIndex={-1}
+      >
         <div className={styles.bottomSheetHeader}>
           <span className={styles.bottomSheetTitle}>{title}</span>
           <button

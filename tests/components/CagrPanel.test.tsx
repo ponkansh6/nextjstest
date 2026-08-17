@@ -39,14 +39,14 @@ describe("CagrPanel", () => {
 
   it("T2: トリガーボタンのラベルが現在値を反映する", () => {
     render(<CagrPanel {...defaultProps} cagrStartYear={2000} cagrEndYear={2025} cagrMonth={1} />);
-    const trigger = screen.getByRole("button", { name: "CAGRの期間・評価月を変更" });
+    const trigger = screen.getByRole("button", { name: /CAGRの期間・評価月を変更/ });
     expect(trigger.textContent).toContain("2000年01月");
     expect(trigger.textContent).toContain("2025年01月");
   });
 
   it("T3: トリガーボタンをクリックすると3つのselectが表示される", () => {
     render(<CagrPanel {...defaultProps} />);
-    fireEvent.click(screen.getByRole("button", { name: "CAGRの期間・評価月を変更" }));
+    fireEvent.click(screen.getByRole("button", { name: /CAGRの期間・評価月を変更/ }));
     expect(screen.getByLabelText("開始年:")).not.toBeNull();
     expect(screen.getByLabelText("終了年:")).not.toBeNull();
     expect(screen.getByLabelText("評価月:")).not.toBeNull();
@@ -54,7 +54,7 @@ describe("CagrPanel", () => {
 
   it("T4: シート内の開始年select変更でsetCagrStartYearが呼ばれ、シートは開いたままである", () => {
     render(<CagrPanel {...defaultProps} />);
-    fireEvent.click(screen.getByRole("button", { name: "CAGRの期間・評価月を変更" }));
+    fireEvent.click(screen.getByRole("button", { name: /CAGRの期間・評価月を変更/ }));
     fireEvent.change(screen.getByLabelText("開始年:"), { target: { value: "2010" } });
     expect(defaultProps.setCagrStartYear).toHaveBeenCalledWith(2010);
     // シートは開いたまま: selectがまだDOMにある
@@ -63,7 +63,7 @@ describe("CagrPanel", () => {
 
   it("T5: 開始年selectでcagrEndYearより後の年がdisabledになる", () => {
     render(<CagrPanel {...defaultProps} cagrStartYear={2015} cagrEndYear={2020} />);
-    fireEvent.click(screen.getByRole("button", { name: "CAGRの期間・評価月を変更" }));
+    fireEvent.click(screen.getByRole("button", { name: /CAGRの期間・評価月を変更/ }));
     const startSelect = screen.getByLabelText("開始年:");
     const options = Array.from(startSelect.querySelectorAll("option"));
     const disabledYears = options.filter((o) => o.disabled).map((o) => o.textContent);

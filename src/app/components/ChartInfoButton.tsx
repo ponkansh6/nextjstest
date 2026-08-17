@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, type ReactNode } from "react";
+import { useFocusTrap } from "../../hooks/useFocusTrap";
 import styles from "./ChartInfoButton.module.css";
 
 interface ChartInfoButtonProps {
@@ -21,6 +22,8 @@ export default function ChartInfoButton({
   const wrapperRef = useRef<HTMLSpanElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
+
+  useFocusTrap(popupRef, open);
 
   // ── Close on click outside ──
   useEffect(() => {
@@ -61,47 +64,6 @@ export default function ChartInfoButton({
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [open]);
-
-  // ── Trap focus inside popup when open ──
-  useEffect(() => {
-    if (!open) return;
-
-    const popup = popupRef.current;
-    if (!popup) return;
-
-    const focusable = popup.querySelectorAll<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-    );
-
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-
-    const handleTab = (e: KeyboardEvent) => {
-      if (e.key !== "Tab") return;
-
-      if (e.shiftKey) {
-        if (document.activeElement === first) {
-          e.preventDefault();
-          last?.focus();
-        }
-      } else {
-        if (document.activeElement === last) {
-          e.preventDefault();
-          first?.focus();
-        }
-      }
-    };
-
-    // Focus the first focusable element, or the popup itself
-    if (first) {
-      first.focus();
-    } else {
-      popup.focus();
-    }
-
-    document.addEventListener("keydown", handleTab);
-    return () => document.removeEventListener("keydown", handleTab);
   }, [open]);
 
   const handleToggle = () => {
