@@ -167,7 +167,6 @@ The system SHALL allow users to toggle chart series visibility.
 - **AND** a chevron SVG (`aria-hidden="true"`) is rendered inside the summary
 - **AND WHEN** the accordion is open (`details[open]`)
 - **THEN** the chevron rotates 180° via CSS transition
-- **AND** a guidance text "凡例を開くと四半期と費目の表示を切り替えられます。" is displayed below the accordion
 
 ### R5: Chart Filters
 

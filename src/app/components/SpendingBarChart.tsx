@@ -150,7 +150,6 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
             </summary>
             {renderLegend()}
           </details>
-          <p className={styles.chartNote}>凡例を開くと四半期と費目の表示を切り替えられます。</p>
         </>
       )}
 

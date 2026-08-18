@@ -288,12 +288,6 @@ test.describe("page.tsx E2E: real consumption chart with actual browser", () => 
       await expect(chevron).toBeAttached();
       const ariaHidden = await chevron.getAttribute("aria-hidden");
       expect(ariaHidden).toBe("true");
-
-      // ガイドテキストがアコーディオンの外に表示されている
-      const guideText = realSection.locator("p", {
-        hasText: "凡例を開くと四半期と費目の表示を切り替えられます。",
-      });
-      await expect(guideText).toBeVisible();
     });
   });
 });
