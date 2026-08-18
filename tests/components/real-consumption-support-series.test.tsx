@@ -207,7 +207,7 @@ describe("Real Consumption Support Series - Local Pipeline Regression Guard", ()
         hiddenQuarters={[]}
         onToggleQuarter={vi.fn()}
         onReset={vi.fn()}
-        hideLegend
+        legendMode="collapsible"
       />,
     );
 
@@ -264,7 +264,7 @@ describe("Real Consumption Support Series - Local Pipeline Regression Guard", ()
         hiddenQuarters={[]}
         onToggleQuarter={vi.fn()}
         onReset={vi.fn()}
-        hideLegend
+        legendMode="collapsible"
       />,
     );
 

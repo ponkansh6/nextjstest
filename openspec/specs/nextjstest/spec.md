@@ -145,6 +145,20 @@ The system SHALL allow users to toggle chart series visibility.
 - **WHEN** legend state changes
 - **THEN** the state is managed via `useToggleSet` hook (React state)
 
+#### Scenario R4c: Linked Nominal / Real Legends
+
+- **WHEN** the user toggles a category in either the 消費支出（名目） or 消費支出（実質） legend
+- **THEN** `handleLegendToggle` resolves the nominal/real key pair and hides the series in **both** charts
+- **AND** the quarter filter (`hiddenQuarters`) and 全選択解除 are likewise shared by both charts
+
+#### Scenario R4d: Collapsed Legend Accordion (Real Consumption)
+
+- **WHEN** the 消費支出（実質） section renders
+- **THEN** its legend is placed in a native `<details>` accordion that is **closed by default**
+- **AND** the "凡例は「消費支出（名目）」と連動しています" note stays visible outside the accordion
+- **AND WHEN** the user opens the accordion
+- **THEN** the same quarter and category controls as the nominal chart become operable
+
 ### R5: Chart Filters
 
 The system SHALL provide date range and indicator filters.

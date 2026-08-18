@@ -33,7 +33,7 @@ interface SpendingBarChartProps {
   hiddenQuarters: number[];
   onToggleQuarter: (q: number) => void;
   onReset: () => void;
-  hideLegend?: boolean;
+  legendMode?: "expanded" | "collapsible";
   linkedSectionId?: string;
   testId?: string;
 }
@@ -54,10 +54,57 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
     hiddenQuarters,
     onToggleQuarter,
     onReset,
-    hideLegend = false,
+    legendMode = "expanded",
     linkedSectionId,
     testId,
   } = props;
+
+  const renderLegend = () => (
+    <div className={styles.legendContainer}>
+      <div className={styles.legendSection} style={{ marginBottom: "1.5rem" }}>
+        <h3 className={styles.legendTitle}>四半期</h3>
+        <div className={styles.legendItems}>
+          {[1, 2, 3, 4].map((q) => (
+            <button
+              key={q}
+              onClick={() => onToggleQuarter(q)}
+              className={`${styles.legendItem} ${hiddenQuarters.includes(q) ? styles.hidden : ""}`}
+              aria-pressed={!hiddenQuarters.includes(q)}
+            >
+              <span className={styles.legendLabel}>Q{q}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className={styles.legendSection}>
+        <div className={styles.stackedLegendItems}>
+          <button onClick={onReset} className={styles.legendItem}>
+            全選択解除
+          </button>
+          {keys.map((key, index) => (
+            <button
+              key={key}
+              onClick={() => onToggle(key)}
+              className={`${styles.legendItem} ${hiddenKeys.includes(key) ? styles.hidden : ""}`}
+              aria-pressed={!hiddenKeys.includes(key)}
+            >
+              <span
+                className={styles.legendIcon}
+                style={{
+                  backgroundColor:
+                    key === SUPPORT_SERIES_KEY_NOMINAL
+                      ? chartColors.barFill || "#94a3b8"
+                      : colors[index],
+                }}
+              />
+
+              <span className={styles.legendLabel}>{getLegendLabel(key)}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div
@@ -73,65 +120,26 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
         )}
       </h2>
 
-      {hideLegend && (
-        <p className={styles.chartNote}>
-          凡例は「
-          <a
-            href={`#${linkedSectionId}`}
-            style={{ color: "var(--blue-500)", textDecoration: "underline" }}
-          >
-            消費支出（名目）
-          </a>
-          」と連動しています。
-        </p>
+      {legendMode === "collapsible" && (
+        <>
+          <p className={styles.chartNote}>
+            凡例は「
+            <a
+              href={`#${linkedSectionId}`}
+              style={{ color: "var(--blue-500)", textDecoration: "underline" }}
+            >
+              消費支出（名目）
+            </a>
+            」と連動しています。
+          </p>
+          <details className={styles.legendAccordion}>
+            <summary>凡例を表示（費目・四半期）</summary>
+            {renderLegend()}
+          </details>
+        </>
       )}
 
-      {!hideLegend && (
-        <div className={styles.legendContainer}>
-          <div className={styles.legendSection} style={{ marginBottom: "1.5rem" }}>
-            <h3 className={styles.legendTitle}>四半期</h3>
-            <div className={styles.legendItems}>
-              {[1, 2, 3, 4].map((q) => (
-                <button
-                  key={q}
-                  onClick={() => onToggleQuarter(q)}
-                  className={`${styles.legendItem} ${hiddenQuarters.includes(q) ? styles.hidden : ""}`}
-                  aria-pressed={!hiddenQuarters.includes(q)}
-                >
-                  <span className={styles.legendLabel}>Q{q}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className={styles.legendSection}>
-            <div className={styles.stackedLegendItems}>
-              <button onClick={onReset} className={styles.legendItem}>
-                全選択解除
-              </button>
-              {keys.map((key, index) => (
-                <button
-                  key={key}
-                  onClick={() => onToggle(key)}
-                  className={`${styles.legendItem} ${hiddenKeys.includes(key) ? styles.hidden : ""}`}
-                  aria-pressed={!hiddenKeys.includes(key)}
-                >
-                  <span
-                    className={styles.legendIcon}
-                    style={{
-                      backgroundColor:
-                        key === SUPPORT_SERIES_KEY_NOMINAL
-                          ? chartColors.barFill || "#94a3b8"
-                          : colors[index],
-                    }}
-                  />
-
-                  <span className={styles.legendLabel}>{getLegendLabel(key)}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+      {legendMode === "expanded" && renderLegend()}
       <div className={styles.chartWrapper} role="img" aria-label={`${title}の推移グラフ`}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart

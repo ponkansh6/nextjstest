@@ -162,4 +162,107 @@ test.describe("page.tsx E2E: real consumption chart with actual browser", () => 
     await page.waitForTimeout(500);
     // 意図的なエラー検知は page.on("pageerror") で追跡済み
   });
+
+  test.describe("実質消費凡例アコーディオン", () => {
+    test("T-E2E-A1: 初期表示で実質セクションの凡例ボタンが見えない（アコーディオンが閉じている）", async ({
+      page,
+    }) => {
+      await page.goto("/");
+      await page.waitForLoadState("networkidle");
+
+      // LazyMount のためスクロールしてマウントを促す
+      const realSection = page.locator("#section-consumption-real");
+      await realSection.scrollIntoViewIfNeeded();
+      await expect(realSection).toBeVisible({ timeout: 15000 });
+
+      // summary should be visible
+      const summary = realSection.locator("summary");
+      await expect(summary).toBeVisible();
+      await expect(summary).toHaveText("凡例を表示（費目・四半期）");
+
+      // legend items (buttons with aria-pressed) inside real section should NOT be visible or count as 0 if hidden by details
+      const items = realSection.locator("[aria-pressed]");
+      // When <details> is closed, items are either not visible or not rendered in layout
+      const count = await items.count();
+      if (count > 0) {
+        for (let i = 0; i < count; i++) {
+          await expect(items.nth(i)).not.toBeVisible();
+        }
+      } else {
+        expect(count).toBe(0);
+      }
+    });
+
+    test("T-E2E-A2: <summary> をクリックすると凡例が現れ、費目ボタンが可視になる", async ({
+      page,
+    }) => {
+      await page.goto("/");
+      await page.waitForLoadState("networkidle");
+
+      // LazyMount のためスクロールしてマウントを促す
+      const realSection = page.locator("#section-consumption-real");
+      await realSection.scrollIntoViewIfNeeded();
+      await expect(realSection).toBeVisible({ timeout: 15000 });
+
+      const summary = realSection.locator("summary");
+      await expect(summary).toBeVisible();
+      await summary.click();
+
+      const firstBtn = realSection.locator("[aria-pressed]").first();
+      await expect(firstBtn).toBeVisible();
+    });
+
+    test("T-E2E-A3: 連動の検証: 実質側の凡例で費目を非表示にすると、名目チャートの棒本数も減る", async ({
+      page,
+    }) => {
+      await page.goto("/");
+      await page.waitForLoadState("networkidle");
+
+      // LazyMount のため両セクションをスクロールしてマウントを促す
+      const nominalSection = page.locator("#section-consumption-nominal");
+      await nominalSection.scrollIntoViewIfNeeded();
+      await expect(nominalSection).toBeVisible({ timeout: 15000 });
+
+      const countBars = async (sectionId: string) => {
+        const bars = page.locator(`#${sectionId} .recharts-bar-rectangle`);
+        return await bars.count();
+      };
+
+      const nominalBarsBefore = await countBars("section-consumption-nominal");
+      expect(nominalBarsBefore).toBeGreaterThan(0);
+
+      // Scroll to real section and open accordion
+      const realSection = page.locator("#section-consumption-real");
+      await realSection.scrollIntoViewIfNeeded();
+      await expect(realSection).toBeVisible({ timeout: 15000 });
+      await realSection.locator("summary").click();
+
+      // Click a category button in real section legend (index 4+ are categories, 0-3 are Q1-Q4)
+      const categoryBtn = realSection.locator("[aria-pressed]").nth(4);
+      await expect(categoryBtn).toBeVisible();
+      await categoryBtn.click();
+
+      const nominalBarsAfter = await countBars("section-consumption-nominal");
+      expect(nominalBarsAfter).toBeLessThan(nominalBarsBefore);
+    });
+
+    test("T-E2E-A4: 案内文リンク「消費支出（名目）」はアコーディオンの開閉に関係なく常に可視", async ({
+      page,
+    }) => {
+      await page.goto("/");
+      await page.waitForLoadState("networkidle");
+
+      // LazyMount のためスクロールしてマウントを促す
+      const realSection = page.locator("#section-consumption-real");
+      await realSection.scrollIntoViewIfNeeded();
+      await expect(realSection).toBeVisible({ timeout: 15000 });
+
+      const link = realSection.getByRole("link", { name: "消費支出（名目）" });
+      await expect(link).toBeVisible();
+
+      // Open accordion
+      await realSection.locator("summary").click();
+      await expect(link).toBeVisible();
+    });
+  });
 });

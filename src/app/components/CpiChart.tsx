@@ -644,7 +644,7 @@ export default function CpiChart({
               setHiddenKeys: setRealHiddenKeys,
             },
           )}
-          hideLegend
+          legendMode="collapsible"
           linkedSectionId="section-consumption-nominal"
           testId="spending-chart-real"
         />
