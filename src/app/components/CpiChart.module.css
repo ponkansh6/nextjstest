@@ -132,28 +132,75 @@
   background-color: var(--card-bg);
 }
 
-.legendAccordion summary {
-  display: list-item;
+/* モダンアコーディオンヘッダー: トナル・ピル */
+.legendAccordionSummary {
+  display: flex;
   align-items: center;
   justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
   min-height: 44px;
-  padding: 0 0.75rem;
+  padding: 0 1.125rem;
+  background-color: var(--cta-tonal-bg);
+  color: var(--cta-tonal-text);
+  border: none;
+  border-radius: 0.375rem;
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--card-text);
+  line-height: 1;
   cursor: pointer;
+  list-style: none;
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+/* Chrome/Safari で <summary> の三角マーカーを非表示 */
+.legendAccordionSummary::-webkit-details-marker {
+  display: none;
+}
+/* Firefox で三角マーカーを非表示 */
+.legendAccordionSummary::marker {
+  content: "";
 }
 
-.legendAccordion summary:focus-visible {
+@media (hover: hover) and (pointer: fine) {
+  .legendAccordionSummary:hover {
+    background-color: var(--cta-tonal-bg-hover);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.08);
+  }
+}
+
+.legendAccordionSummary:active {
+  background-color: var(--cta-tonal-bg-hover);
+}
+
+.legendAccordionSummary:focus-visible {
   outline: 2px solid var(--blue-500);
   outline-offset: 2px;
+}
+
+.legendAccordionLabel {
+  flex: 1;
+  text-align: center;
+}
+
+.legendAccordionChevron {
+  width: 1em;
+  height: 1em;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+/* details[open] 時に矢印を下向きに回転 */
+.legendAccordion[open] .legendAccordionChevron {
+  transform: rotate(180deg);
 }
 
 /* 中の .legendContainer は下線と下余白が二重になるので打ち消す */
 .legendAccordion .legendContainer {
   margin-bottom: 0;
   border-bottom: none;
-  padding: 0 0.75rem 1rem;
+  padding: 0.75rem 0.75rem 1rem;
 }
 
 .chartDataTableActions {

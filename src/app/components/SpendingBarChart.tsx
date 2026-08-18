@@ -133,9 +133,24 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
             」と連動しています。
           </p>
           <details className={styles.legendAccordion}>
-            <summary>凡例を表示（費目・四半期）</summary>
+            <summary className={styles.legendAccordionSummary}>
+              <span className={styles.legendAccordionLabel}>凡例を表示（費目・四半期）</span>
+              <svg
+                className={styles.legendAccordionChevron}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </summary>
             {renderLegend()}
           </details>
+          <p className={styles.chartNote}>凡例を開くと四半期と費目の表示を切り替えられます。</p>
         </>
       )}
 

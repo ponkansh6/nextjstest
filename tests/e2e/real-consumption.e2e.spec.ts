@@ -264,5 +264,36 @@ test.describe("page.tsx E2E: real consumption chart with actual browser", () => 
       await realSection.locator("summary").click();
       await expect(link).toBeVisible();
     });
+
+    test("T-E2E-A5: summary ヘッダーがトナルピル装飾で、矢印SVGが含まれ、ガイドテキストが表示される", async ({
+      page,
+    }) => {
+      await page.goto("/");
+      await page.waitForLoadState("networkidle");
+
+      // LazyMount のためスクロールしてマウントを促す
+      const realSection = page.locator("#section-consumption-real");
+      await realSection.scrollIntoViewIfNeeded();
+      await expect(realSection).toBeVisible({ timeout: 15000 });
+
+      const summary = realSection.locator("summary");
+      await expect(summary).toBeVisible();
+
+      // summary に legendAccordionSummary クラスが適用されている
+      const summaryClass = await summary.getAttribute("class");
+      expect(summaryClass).toContain("legendAccordionSummary");
+
+      // 矢印 SVG が含まれている（CSS Modules がクラス名をハッシュ化するため要素セレクタで特定）
+      const chevron = summary.locator("svg");
+      await expect(chevron).toBeAttached();
+      const ariaHidden = await chevron.getAttribute("aria-hidden");
+      expect(ariaHidden).toBe("true");
+
+      // ガイドテキストがアコーディオンの外に表示されている
+      const guideText = realSection.locator("p", {
+        hasText: "凡例を開くと四半期と費目の表示を切り替えられます。",
+      });
+      await expect(guideText).toBeVisible();
+    });
   });
 });

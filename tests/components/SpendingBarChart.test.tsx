@@ -190,4 +190,71 @@ describe("SpendingBarChart component legendMode tests", () => {
     expect(summary).not.toBeNull();
     expect(summary?.textContent).toContain("凡例");
   });
+
+  // U6: <summary> にトナルピルヘッダー用の className が適用され、矢印SVGが含まれる
+  it("U6: summary has tonal pill header class and chevron SVG", () => {
+    const { container } = render(
+      <SpendingBarChart
+        title="実質消費"
+        data={mockData}
+        keys={mockKeys}
+        colors={mockColors}
+        hiddenKeys={[]}
+        onToggle={vi.fn()}
+        chartColors={mockChartColors}
+        tooltipProps={mockTooltipProps}
+        hiddenQuarters={[]}
+        onToggleQuarter={vi.fn()}
+        onReset={vi.fn()}
+        legendMode="collapsible"
+        linkedSectionId="target-section"
+      />,
+    );
+
+    const summary = container.querySelector("summary");
+    expect(summary).not.toBeNull();
+    expect(summary?.getAttribute("class")).toContain("legendAccordionSummary");
+    const chevron = summary?.querySelector("svg");
+    expect(chevron).not.toBeNull();
+    expect(chevron?.getAttribute("class")).toContain("legendAccordionChevron");
+    expect(chevron?.getAttribute("aria-hidden")).toBe("true");
+  });
+
+  // U7: details の open 属性のトグルに応じ凡例コンテンツの表示状態が変わる
+  it("U7: details open attribute toggles legend visibility state", () => {
+    const { container } = render(
+      <SpendingBarChart
+        title="実質消費"
+        data={mockData}
+        keys={mockKeys}
+        colors={mockColors}
+        hiddenKeys={[]}
+        onToggle={vi.fn()}
+        chartColors={mockChartColors}
+        tooltipProps={mockTooltipProps}
+        hiddenQuarters={[]}
+        onToggleQuarter={vi.fn()}
+        onReset={vi.fn()}
+        legendMode="collapsible"
+        linkedSectionId="target-section"
+      />,
+    );
+
+    const details = container.querySelector("details") as HTMLDetailsElement;
+    expect(details).not.toBeNull();
+
+    // 閉じている状態: open 属性がない
+    expect(details.hasAttribute("open")).toBe(false);
+
+    // 開いた状態: open 属性が付き、凡例ボタンが操作可能
+    details.open = true;
+    fireEvent(details, new Event("toggle"));
+    expect(details.hasAttribute("open")).toBe(true);
+    expect(screen.getByRole("button", { name: /Q1/ })).toBeDefined();
+
+    // 再び閉じた状態: open 属性が外れる
+    details.open = false;
+    fireEvent(details, new Event("toggle"));
+    expect(details.hasAttribute("open")).toBe(false);
+  });
 });

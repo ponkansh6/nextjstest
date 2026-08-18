@@ -159,6 +159,16 @@ The system SHALL allow users to toggle chart series visibility.
 - **AND WHEN** the user opens the accordion
 - **THEN** the same quarter and category controls as the nominal chart become operable
 
+#### Scenario R4e: Modernized Accordion Summary Header (Tonal Pill)
+
+- **WHEN** the 消費支出（実質） legend accordion renders
+- **THEN** the `<summary>` element uses the `.legendAccordionSummary` tonal pill class with `--cta-tonal-bg` / `--cta-tonal-text` tokens
+- **AND** the native marker is hidden (`::-webkit-details-marker: display: none`, `::marker: content: ""`)
+- **AND** a chevron SVG (`aria-hidden="true"`) is rendered inside the summary
+- **AND WHEN** the accordion is open (`details[open]`)
+- **THEN** the chevron rotates 180° via CSS transition
+- **AND** a guidance text "凡例を開くと四半期と費目の表示を切り替えられます。" is displayed below the accordion
+
 ### R5: Chart Filters
 
 The system SHALL provide date range and indicator filters.
