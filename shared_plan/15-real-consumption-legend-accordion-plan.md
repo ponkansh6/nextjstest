@@ -323,3 +323,146 @@ Component Tree の `SpendingBarChart` の説明にも `legendMode` を追記す�
 4. **`legendMode` に `"hidden"` を残すか** — 現状 `hideLegend` の用途は実質チャート 1 箇所のみで、
    完全非表示を使う場所は無くなる。本プランは **2 値（`expanded` / `collapsible`）**とし、
    将来必要になったら足す方針。
+
+---
+
+# 検証結果（2026-08-18 実施 / 対象コミット `0825ec0`）
+
+## 総合判定: **プランどおり完了。機能面の不具合なし。**
+
+指摘は `<summary>` の縦位置に関する **Q-1（CSS の無効プロパティ）** と、
+文言に関する **Q-2（プランで既知としていたトレードオフの再確認）** の 2 件のみ。
+
+## 検証ゲート
+
+| ゲート                  | 結果                                                                |
+| ----------------------- | ------------------------------------------------------------------- |
+| `pnpm type-check`       | ✅ エラー 0                                                         |
+| `pnpm lint`             | ✅ エラー 0 / **警告 5**（既存分のみ・新規増加なし）                |
+| `pnpm test`             | ✅ 32 ファイル / **259 テスト全 pass**（254 → U1〜U5 の +5）        |
+| `pnpm build`            | ✅ 成功                                                             |
+| `pnpm test:e2e`（全体） | ✅ **96 passed / 22 skipped / 0 failed**（92 → T-E2E-A1〜A4 の +4） |
+
+## プラン記載事項との突合
+
+| プラン項目                                               | 実装状況                                                                         |
+| -------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `hideLegend` → `legendMode` 置換（2 値）                 | ✅ `SpendingBarChart.tsx:36,57`。`grep -rn "hideLegend" src/ tests/` は**0 件**  |
+| 凡例本体を `renderLegend()` へ切り出し（重複を作らない） | ✅ `SpendingBarChart.tsx:62-107`。分岐は「どこに置くか」だけ（`:123-142`）       |
+| ネイティブ `<details>`・既定で閉                         | ✅ `SpendingBarChart.tsx:135-138`。実測で `details.open === false`               |
+| 案内文をアコーディオンの**外**に置く                     | ✅ `:125-134`。既存 E2E `real-consumption.e2e.spec.ts:112` は**そのまま pass**   |
+| `.legendAccordion` CSS の追加                            | ✅ `CpiChart.module.css:127-157`                                                 |
+| `min-height: 44px`                                       | ✅ 実測 307×44px                                                                 |
+| `CpiChart.tsx` の呼び出し変更（名目側は無変更）          | ✅ 実質のみ `legendMode="collapsible"`                                           |
+| 既存ユニットテスト 2 箇所の追随                          | ✅ `real-consumption-support-series.test.tsx` の 2 箇所を置換                    |
+| U1〜U5（新規ユニット）                                   | ✅ `tests/components/SpendingBarChart.test.tsx:60,83,108,136,170`                |
+| T-E2E-A1〜A4（新規 E2E）                                 | ✅ `real-consumption.e2e.spec.ts:167,196,215,249`                                |
+| spec.md R4c / R4d                                        | ✅ `spec.md:148-160`。**未記載だった名目/実質の連動（R4c）も併せて明文化された** |
+
+### 未確定事項への回答（実装で確定した内容）
+
+1. **`<summary>` の文言** — `凡例を表示（費目・四半期）` を採用（→ Q-2 参照）
+2. **四半期セクションを含めるか** — 含める。開いた状態で「四半期（Q1〜Q4）」＋費目の 2 段構成を目視確認
+3. **開閉マーカー** — **残った。** `display: list-item` を採用し `list-style-type: disclosure-closed`（閉）
+   → `disclosure-open`（開）でマーカーが ▶ / ▼ と切り替わることを目視確認。プランの推奨どおり
+4. **`legendMode` に `"hidden"` を残すか** — 残さず 2 値。プランどおり
+
+## 実測・目視確認（375×667 / light・dark 両テーマ）
+
+| 状態       | 実測                                                                         |
+| ---------- | ---------------------------------------------------------------------------- |
+| 閉（既定） | `details.open === false` / `summary` 307×44px / マーカー `disclosure-closed` |
+| 開         | `details.open === true` / アコーディオン高さ **344px**                       |
+
+スクリーンショットで確認した内容:
+
+- 閉じた状態: 案内文 → アコーディオン（1 行）→ 棒グラフ の順で、**凡例は一切見えない**。要求どおり。
+- 開いた状態: マーカーが ▼ に変わり、「四半期」+ 費目の凡例が名目チャートと同じ構成で現れる。
+- dark テーマ: `--card-border: #262626` の枠が `--card-bg: #1a1a1a` の塗りとともに
+  カードとして識別でき、**プランで懸念した「枠が見えにくい」問題は起きていない**。
+- 開くとグラフが 344px 下へずれるが、アコーディオンはグラフの**上**にあるため想定内。
+
+### 回帰確認（既存テスト）
+
+| 対象                                                                | 結果                                                                      |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `real-consumption.e2e.spec.ts:112`（案内文リンク）                  | ✅ pass。**案内文を外に出す設計により、プランで予告した破綻を回避できた** |
+| `real-consumption.e2e.spec.ts:138`（未スコープの `[aria-pressed]`） | ✅ pass。DOM 順は変わっていない                                           |
+| `spending-filter.e2e.spec.ts`                                       | ✅ pass（`nth(4)` のインデックスも不変）                                  |
+| `legend-color-sync.e2e.spec.ts`（3 件）                             | ✅ pass。セクションスコープ済みで影響なし                                 |
+| `mobile-ux.e2e.spec.ts:19`（44px）                                  | ✅ pass（chromium / mobile-pixel 双方）                                   |
+
+### T-E2E-A3（連動の検証）について
+
+プランで「最も価値が高い」とした連動テストが追加され pass している。
+実質セクションのアコーディオンを開いて費目を非表示にすると、
+**名目チャートの `.recharts-bar-rectangle` の本数が減る**ことを検証しており、
+`handleLegendToggle` のペア連動を初めて E2E で固定できた。
+アサーションは前後の実数比較（`after < before`）であり、恒真ではない。
+
+---
+
+## Q-1【要対応・低〜中】`<summary>` の中央寄せが効いておらず、テキストが上に寄っている
+
+### 症状（実測）
+
+`.legendAccordion summary`（`CpiChart.module.css:132-141`）は
+`display: list-item` に対して `align-items: center` / `justify-content: center` を指定しているが、
+**これらは flex / grid コンテナ専用のプロパティで、`list-item` では無効**。
+`min-height: 44px` だけが効くため、44px の箱の中でテキストが上端に張り付く。
+
+```
+[P15b] {"summaryH":44,"textH":18,"gapAbove":2,"gapBelow":24}
+```
+
+**上 2px / 下 24px** と非対称で、スクリーンショットでもラベルの下に空白の帯が見える。
+
+（`padding: 0 0.75rem` で上下パディングが 0 のため、`min-height` で増えた分がすべて下に付く。）
+
+### 変更プラン
+
+無効な 2 行を削除し、上下パディングで中央寄せを作る。
+
+```css
+.legendAccordion summary {
+  display: list-item; /* マーカーを残すため維持 */
+  min-height: 44px;
+  padding: 0.75rem; /* 0 0.75rem から変更。上下 12px で 12+18+12=42 → min-height が 44 に補う */
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--card-text);
+  cursor: pointer;
+}
+```
+
+`align-items` / `justify-content` は**削除する**（`display: flex` に変えるとネイティブの
+開閉マーカーが消えるため、`list-item` のまま padding で解決するのが正しい）。
+
+なお `text-align: center` を足せば水平方向も中央に寄るが、マーカーが行頭に付く関係で
+左寄せのままの方が自然。**水平位置は現状維持を推奨。**
+
+**影響範囲**: `src/app/components/CpiChart.module.css` のみ。E2E / ユニットへの影響なし。
+
+## Q-2【判断のみ・低】開いている間も `<summary>` が「凡例を表示」のまま
+
+プランの「未確定事項 1」で挙げたトレードオフがそのまま残っている。
+開いた状態のスクリーンショットでは、凡例を表示中にもかかわらず
+`▼ 凡例を表示（費目・四半期）` と表示される。
+
+ネイティブ `<details>` で文言を出し分けるには JS か CSS の細工が必要なため、
+**状態非依存の文言に変えるのが最も簡潔**。
+
+- 変更する場合: `凡例（費目・四半期）`
+  - 併せて `real-consumption.e2e.spec.ts:180` の
+    `toHaveText("凡例を表示（費目・四半期）")` と、ユニット U5 の文言検証を更新する。
+- 変更しない場合: マーカー（▶/▼）が状態を示しているため実害は小さい。**現状維持でも可。**
+
+---
+
+## 対応順序
+
+1. **Q-1**（`summary` の無効プロパティ削除 + padding 修正）— CSS のみ、1 箇所
+2. **Q-2**（文言を変えるかの判断）— 変える場合は E2E 1 箇所 + ユニット 1 箇所も更新
+
+**検証時の注意**: `pnpm test:e2e` は `.next` を再ビルドしない。
+CSS を触ったら必ず `pnpm build && pnpm test:e2e` の順で実行する。

@@ -5,8 +5,8 @@ import { defineConfig, devices } from "@playwright/test";
  *
  * 実行フロー:
  *   pnpm build (キャッシュ再利用で高速化)
- *   -> pnpm start (バックグラウンド)
- *   -> playwright test (http://localhost:3000 へブラウザアクセス)
+ *   -> pnpm start --port 3100 (バックグラウンド)
+ *   -> playwright test (http://127.0.0.1:3100 へブラウザアクセス)
  *   -> サーバ停止
  *
  * 特徴:
@@ -15,25 +15,32 @@ import { defineConfig, devices } from "@playwright/test";
  *   - Flight ペイロード直接検証（tests/utils/flight-payload.ts を流用）
  *   - 実 recharts の描画健全性も確認（モックではなく実DOM）
  */
+const E2E_PORT = Number(process.env.E2E_PORT ?? 3100);
+const BASE_URL = `http://127.0.0.1:${E2E_PORT}`;
+
 export default defineConfig({
   testDir: "./tests/e2e",
+  globalSetup: "./tests/e2e/global-setup",
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   // 各テストは beforeEach でページを新規取得しファイル間で状態を共有しないため、
   // 複数ワーカーでの並列実行が安全。実測(4コア環境)では 3 で頭打ちだったため 3 に設定。
   workers: 3,
-  reporter: "html",
+  reporter: [["list"], ["html", { open: "on-failure" }]],
   timeout: 60 * 1000,
 
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL: BASE_URL,
     trace: "on-first-retry",
   },
 
   projects: [
     {
       name: "chromium",
+      // mobile-ux は本文で setViewportSize を自前指定しており、
+      // Desktop Chrome で走らせても mobile-pixel と検証内容が変わらないため除外する。
+      testIgnore: /mobile-ux\.e2e\.spec\.ts/,
       use: { ...devices["Desktop Chrome"] },
     },
     {
@@ -46,6 +53,7 @@ export default defineConfig({
       // pre-push の所要時間を大きく押し上げていた(実測でE2E全体の約1/3)。
       name: "chromium-dark",
       testMatch: /accessibility\.e2e\.spec\.ts/,
+      grep: /@dark/,
       use: { ...devices["Desktop Chrome"], colorScheme: "dark" },
     },
     {
@@ -74,14 +82,14 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: "pnpm start",
+    command: `pnpm start --port ${E2E_PORT}`,
     // url が無いと Playwright は起動完了を待たず、初回 goto が
     // ERR_CONNECTION_REFUSED になる（特にテストを絞って実行したとき）
-    url: "http://localhost:3000",
-    // 常に false: ローカルにポート3000で古い next-server プロセスが残っていると、
+    url: BASE_URL,
+    // 常に false: ローカルにポート3100で古い next-server プロセスが残っていると、
     // ビルドID/アセットの不整合により無関係なテストが大量に失敗する事故が実際に発生した。
     // 起動済みサーバーを使い回さず、必ずこの実行の pnpm build 結果でサーバーを立て直す。
     reuseExistingServer: false,
-    timeout: 180 * 1000,
+    timeout: 90 * 1000,
   },
 });

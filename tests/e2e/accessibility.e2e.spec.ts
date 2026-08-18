@@ -77,7 +77,7 @@ test.describe.skip("アクセシビリティ - ダークモード", () => {
 });
 
 test.describe("CAGR トリガーのコントラスト比", () => {
-  test("T-A11Y-1: CAGR トリガーのコントラスト比が WCAG AA（4.5:1）以上", async ({ page }) => {
+  test("T-A11Y-1: CAGR トリガーのコントラスト比が WCAG AA（4.5:1）以上 @dark", async ({ page }) => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 

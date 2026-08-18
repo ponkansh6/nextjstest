@@ -19,6 +19,8 @@
     "test:build-parity": "vitest run -c tests/vitest.integration.config.ts tests/build",
     "test:e2e": "playwright test",
     "test:e2e:dark": "playwright test --project=chromium-dark",
+    "test:e2e:clean": "node scripts/kill-e2e-port.mjs",
+    "test:e2e:fresh": "pnpm build && pnpm test:e2e",
     "test:all": "vitest run",
     "lighthouse:mobile": "node scripts/lighthouse-mobile.js",
     "lint": "eslint --cache",
