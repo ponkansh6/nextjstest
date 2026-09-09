@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { loadCpiData, loadCtiData, loadTotalEarningData } from "../../server/lib/dataLoader";
+import { getCpiDataStatus } from "../../server/lib/data-loader/cpi";
 import { toCpiView, toEarningsView, toQuarterlyView } from "../../server/lib/view-models/dashboard";
 import { computeQuarterlyAggregates } from "../../server/lib/view-models/quarterlyAggregation";
 import CpiChart from "./components/CpiChart";
@@ -14,11 +15,34 @@ import {
 export const revalidate = false;
 
 export default async function Page() {
-  const [cleanData, ctiData, totalEarningData] = await Promise.all([
+  const [cleanData, ctiData, totalEarningData, cpiDataStatus] = await Promise.all([
     loadCpiData(),
     loadCtiData(),
     loadTotalEarningData(),
+    getCpiDataStatus(),
   ]);
+  const cpiInfoState =
+    cpiDataStatus.baseYear === 2025
+      ? {
+          baseYear: 2025 as const,
+          sourceMode: "official-long" as const,
+          label: "2025年基準の公式接続指数",
+        }
+      : cpiDataStatus.baseYear === 2020
+        ? {
+            baseYear: 2020 as const,
+            sourceMode: "fallback" as const,
+            label: "2020年基準のフォールバックCSV",
+          }
+        : {
+            baseYear: null,
+            sourceMode: "unavailable" as const,
+            label: "CPIデータは現在利用できません",
+          };
+  const cpiSummary =
+    cpiInfoState.baseYear === null
+      ? "CPIデータは現在利用できません。"
+      : `CPIは${cpiInfoState.label}を使用しています。`;
 
   // Determine maxCpiDate from cleanData
   let maxCpiYear = 1994;
@@ -83,9 +107,7 @@ export default async function Page() {
       <header className={styles.header}>
         <div className={styles.badge}>経済指標ダッシュボード</div>
         <h1 className={styles.title}>物価・賃金・消費の推移</h1>
-        <p className={styles.description}>
-          2020年基準で統一した主要指標の一覧。凡例クリックで系列を切替可能。
-        </p>
+        <p className={styles.description}>{cpiSummary} 凡例クリックで系列を切替可能。</p>
       </header>
 
       {projectedCpiData.length > 0 ? (
@@ -96,17 +118,26 @@ export default async function Page() {
             quarterlyRealData={projectedQuarterlyReal}
             totalEarningData={projectedEarningsData}
             maxCpiDate={maxCpiDate}
+            cpiInfoState={cpiInfoState}
           />
         </Suspense>
       ) : (
         <div className={styles.errorContainer}>
-          <p className={styles.errorMessage}>データの読み込みに失敗したか、データが空です。</p>
+          <p className={styles.errorMessage}>
+            {cpiInfoState.baseYear === null
+              ? "CPIデータは現在利用できません。"
+              : "データの読み込みに失敗したか、データが空です。"}
+          </p>
           <p className={styles.errorSubMessage}>
-            データを読み込めませんでした。時間をおいて再度お試しください。
+            {cpiInfoState.baseYear === null
+              ? "CPIデータを確認中です。時間をおいて再度お試しください。"
+              : "データを読み込めませんでした。時間をおいて再度お試しください。"}
           </p>
           {process.env.NODE_ENV === "development" && (
             <p className={styles.errorSubMessage}>
-              public/cpi_data.csv ファイルを確認してください。
+              data/source/cpi_data2025_long.csv と
+              data/source/cpi_data2025_long.metadata.json（利用できない場合は
+              data/source/cpi_data.csv）を確認してください。
             </p>
           )}
         </div>

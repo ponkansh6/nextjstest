@@ -16,6 +16,7 @@ import { YearReferenceLines } from "./charts/YearReferenceLines";
 import { XAxisEdgeTick } from "./charts/XAxisEdgeTick";
 import { computeXAxisTicks } from "./charts/xAxisTicks";
 import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
+import type { ChartInfoContent } from "@/lib/chartInfoContent";
 
 interface StackedAreaChartProps {
   title: string;
@@ -31,6 +32,7 @@ interface StackedAreaChartProps {
   onReset: () => void;
   activeDot?: boolean;
   belowChartSlot?: React.ReactNode;
+  chartInfoContent?: ChartInfoContent;
 }
 
 export const StackedAreaChart: React.FC<StackedAreaChartProps> = ({
@@ -47,6 +49,7 @@ export const StackedAreaChart: React.FC<StackedAreaChartProps> = ({
   onReset,
   activeDot,
   belowChartSlot,
+  chartInfoContent,
 }) => {
   return (
     <div id={sectionId} className={styles.chartSection} style={{ scrollMarginTop: "5rem" }}>
@@ -55,6 +58,7 @@ export const StackedAreaChart: React.FC<StackedAreaChartProps> = ({
         <ChartInfoContentRenderer
           chartKey="stacked-area"
           ariaLabel="費目別寄与度のデータソースを表示"
+          content={chartInfoContent}
         />
       </h2>
       <div className={styles.legendContainer}>

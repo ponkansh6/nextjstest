@@ -20,6 +20,7 @@ import { MajorIndicesChart } from "./MajorIndicesChart";
 import { CagrPanel } from "./CagrPanel";
 import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
 import { BottomSheet } from "./BottomSheet";
+import { getChartInfoContent, type CpiChartInfoState } from "@/lib/chartInfoContent";
 
 const SpendingBarChart = dynamic(
   () => import("./SpendingBarChart").then((m) => m.SpendingBarChart),
@@ -71,6 +72,7 @@ interface CpiChartProps {
   quarterlyRealData: QuarterlyView[];
   totalEarningData: EarningsView[];
   maxCpiDate: { year: number; month: number };
+  cpiInfoState?: CpiChartInfoState;
 }
 
 export default function CpiChart({
@@ -79,8 +81,11 @@ export default function CpiChart({
   quarterlyRealData,
   totalEarningData,
   maxCpiDate: _maxCpiDate,
+  cpiInfoState,
 }: CpiChartProps) {
   const { isMobile, chartColors } = useChartTheme();
+  const cpiMajorInfo = getChartInfoContent("cpi-major", cpiInfoState);
+  const stackedAreaInfo = getChartInfoContent("stacked-area", cpiInfoState);
 
   // 全ての年を抽出
   const allYears = useMemo(() => {
@@ -540,6 +545,7 @@ export default function CpiChart({
           <ChartInfoContentRenderer
             chartKey="cpi-major"
             ariaLabel="消費者物価指数のデータソースを表示"
+            content={cpiMajorInfo}
           />
         </h2>
         <MajorIndicesChart
@@ -566,6 +572,7 @@ export default function CpiChart({
         hiddenKeys={stackedHiddenKeys}
         onToggle={handleStackedLegendClick}
         chartColors={chartColors}
+        chartInfoContent={stackedAreaInfo}
         {...chartTooltip.bind("section-stacked")}
         onReset={() =>
           setStackedHiddenKeys((prev) =>

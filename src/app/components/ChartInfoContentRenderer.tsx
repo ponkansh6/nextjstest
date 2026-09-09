@@ -1,5 +1,5 @@
 import React from "react";
-import { CHART_INFO } from "@/lib/chartInfoContent";
+import { CHART_INFO, type ChartInfoContent } from "@/lib/chartInfoContent";
 import ChartInfoButton, {
   ChartInfoSectionHeading,
   ChartInfoSource,
@@ -12,6 +12,7 @@ interface ChartInfoContentRendererProps {
   ariaLabel?: string;
   className?: string;
   footer?: React.ReactNode;
+  content?: ChartInfoContent;
 }
 
 export default function ChartInfoContentRenderer({
@@ -19,8 +20,9 @@ export default function ChartInfoContentRenderer({
   ariaLabel,
   className,
   footer,
+  content: providedContent,
 }: ChartInfoContentRendererProps) {
-  const content = CHART_INFO[chartKey];
+  const content = providedContent ?? CHART_INFO[chartKey];
   if (!content) return null;
 
   return (

@@ -1,25 +1,237 @@
 import * as fs from "node:fs";
+import { createHash } from "node:crypto";
+import path from "node:path";
 import Papa from "papaparse";
 import type { CpiData } from "@/types";
 import { buildCpiFilePaths, buildCtiFilePaths, parseContributionWeights } from "../dataIo";
 import { parseYearMonth, compareYearMonth } from "@/lib/yearMonth";
 import { calculateQuarter, calculateQuarterLabel } from "@/lib/math/quarter";
 
-export async function loadCpiDataInternal(): Promise<CpiData[]> {
-  const paths = buildCpiFilePaths();
-  if (!fs.existsSync(paths.main) || !fs.existsSync(paths.contribution)) {
-    console.error("Data files not found");
-    return [];
+const CPI_MAJOR_CATEGORIES = [
+  "食料",
+  "住居",
+  "光熱・水道",
+  "家具・家事用品",
+  "被服及び履物",
+  "保健医療",
+  "交通・通信",
+  "教育",
+  "教養娯楽",
+  "諸雑費",
+] as const;
+
+// These are the mutually exclusive source series behind the stacked display.
+// Their parent 10-major-category weights sum to 10002 in the published 2025
+// table because of rounding, so normalize only this comparison set by its
+// actual total rather than altering the published weights.
+const CPI_COMPARISON_COMPONENTS = new Set([
+  "住居",
+  "家具・家事用品",
+  "被服及び履物",
+  "保健医療",
+  "教育",
+  "光熱・水道",
+  "教養娯楽",
+  "交通",
+  "自動車等関係費",
+  "通信",
+  "食料",
+  "外食",
+  "諸雑費",
+]);
+
+const isFiniteNumber = (value: unknown): value is number =>
+  typeof value === "number" && Number.isFinite(value);
+
+export type CpiDataStatus = {
+  baseYear: 2020 | 2025 | null;
+  pair: "2020" | "2025" | null;
+  valid: boolean;
+  reason?: string;
+};
+
+type CpiPair = {
+  baseYear: 2020 | 2025;
+  pair: "2020" | "2025";
+  mainPath: string;
+  contributionPath: string;
+};
+
+type Cpi2025Metadata = {
+  status: string;
+  baseYear: number;
+  indexFile: string;
+  contributionFile: string;
+  csvSha256: string;
+  period: { start: string; end: string; monthlyRows: number };
+  seriesCount: number;
+};
+
+type ValidatedCpiPair = {
+  weights: Record<string, number>;
+  data: CpiData[];
+};
+
+const CPI_DATE_HEADER = "年月";
+
+function validateContribution(
+  content: string,
+): { weights: Record<string, number>; headers: string[] } | string {
+  const rows = Papa.parse<string[]>(content, { header: false, skipEmptyLines: false }).data;
+  const categories = rows.find((row) => row[0]?.trim() === "類・品目");
+  const weightRow = rows.find((row) => row[0]?.trim().startsWith("ウエイト"));
+  if (!categories || !weightRow) return "missing 類・品目 or ウエイト header";
+
+  const headers = categories
+    .slice(1)
+    .map((value) => value?.trim())
+    .filter(Boolean) as string[];
+  if (!headers.includes("総合")) return "missing required contribution header: 総合";
+  if (new Set(headers).size !== headers.length) return "duplicate contribution headers";
+
+  const weights = parseContributionWeights(content);
+  const missingWeights = headers.filter((header) => !isFiniteNumber(weights[header]));
+  if (missingWeights.length > 0) return `missing or invalid weights: ${missingWeights.join(", ")}`;
+  return { weights, headers };
+}
+
+function validate2025Metadata(metadataPath: string): Cpi2025Metadata | string {
+  if (!fs.existsSync(metadataPath)) return "missing 2025 metadata";
+  try {
+    const metadata = JSON.parse(fs.readFileSync(metadataPath, "utf8")) as Cpi2025Metadata;
+    if (metadata.status !== "ready") return "2025 metadata is not ready";
+    if (metadata.baseYear !== 2025) return "2025 metadata baseYear mismatch";
+    if (metadata.indexFile !== "cpi_data2025_long.csv") return "2025 metadata indexFile mismatch";
+    if (metadata.contributionFile !== "contribution2025.csv")
+      return "2025 metadata contributionFile mismatch";
+    if (metadata.period?.monthlyRows !== 679) return "2025 metadata monthlyRows mismatch";
+    if (metadata.period?.start !== "1970年1月" || metadata.period?.end !== "2026年7月") {
+      return "2025 metadata period mismatch";
+    }
+    if (metadata.seriesCount !== 78) return "2025 metadata seriesCount mismatch";
+    if (!/^[a-f0-9]{64}$/.test(metadata.csvSha256 ?? ""))
+      return "2025 metadata CSV SHA-256 mismatch";
+    return metadata;
+  } catch {
+    return "invalid 2025 metadata";
   }
-  const cpiContent = fs.readFileSync(paths.main, "utf8");
-  const contributionContent = fs.readFileSync(paths.contribution, "utf8");
-  const weights = parseContributionWeights(contributionContent);
-  const { data } = Papa.parse<CpiData>(cpiContent, {
+}
+
+function validateCpiPair(pair: CpiPair, metadataPath: string): ValidatedCpiPair | string {
+  if (!fs.existsSync(pair.mainPath) || !fs.existsSync(pair.contributionPath)) {
+    return "missing index or contribution file";
+  }
+  const contribution = validateContribution(fs.readFileSync(pair.contributionPath, "utf8"));
+  if (typeof contribution === "string") return contribution;
+  const cpiContent = fs.readFileSync(pair.mainPath, "utf8");
+  const { data, meta } = Papa.parse<CpiData>(cpiContent, {
     dynamicTyping: true,
     header: true,
     skipEmptyLines: true,
   });
-  return (data as CpiData[])
+  const headers = (meta.fields ?? []).map((header) => header.trim());
+  if (!headers.includes(CPI_DATE_HEADER))
+    return `missing required index header: ${CPI_DATE_HEADER}`;
+  if (
+    !(data as CpiData[]).some((row) => {
+      if (!row[CPI_DATE_HEADER]) return false;
+      const parsed = parseYearMonth(row[CPI_DATE_HEADER] as string);
+      return parsed ? parsed.year >= 2004 : false;
+    })
+  ) {
+    return "index contains no valid 年月 rows";
+  }
+  const missingIndexHeaders = contribution.headers.filter((header) => !headers.includes(header));
+  if (missingIndexHeaders.length > 0) {
+    return `missing required index headers: ${missingIndexHeaders.join(", ")}`;
+  }
+  if (pair.baseYear === 2025) {
+    const metadata = validate2025Metadata(metadataPath);
+    if (typeof metadata === "string") return metadata;
+    if (
+      path.basename(pair.mainPath) !== metadata.indexFile ||
+      path.basename(pair.contributionPath) !== metadata.contributionFile
+    ) {
+      return "2025 metadata file pairing mismatch";
+    }
+    if (createHash("sha256").update(cpiContent).digest("hex") !== metadata.csvSha256) {
+      return "2025 CSV SHA-256 mismatch";
+    }
+    const rows = data as CpiData[];
+    const months = rows
+      .map((row) => row[CPI_DATE_HEADER])
+      .filter((month): month is string => typeof month === "string");
+    if (rows.length !== metadata.period.monthlyRows || months.length !== rows.length)
+      return "2025 CSV monthly row count mismatch";
+    if ((meta.fields?.length ?? 0) !== metadata.seriesCount + 1)
+      return "2025 CSV series count mismatch";
+    if (months[0] !== metadata.period.start || months.at(-1) !== metadata.period.end)
+      return "2025 CSV period mismatch";
+    if (new Set(months).size !== months.length) return "2025 CSV contains duplicate months";
+    for (let index = 1; index < months.length; index += 1) {
+      const previous = parseYearMonth(months[index - 1]);
+      const current = parseYearMonth(months[index]);
+      if (
+        !previous ||
+        !current ||
+        current.year * 12 + current.month !== previous.year * 12 + previous.month + 1
+      ) {
+        return "2025 CSV monthly series is not continuous";
+      }
+    }
+    const baseYearValues = rows
+      .filter((row) => parseYearMonth(row[CPI_DATE_HEADER] as string)?.year === 2025)
+      .map((row) => row.総合)
+      .filter(isFiniteNumber);
+    const average = baseYearValues.reduce((sum, value) => sum + value, 0) / baseYearValues.length;
+    // Official monthly values are rounded; accept the documented 99.9–100.1 range.
+    if (baseYearValues.length !== 12 || average < 99.9 || average > 100.1)
+      return "2025 CSV general-index average mismatch";
+  }
+  return { weights: contribution.weights, data: data as CpiData[] };
+}
+
+function selectCpiPair(): { pair: CpiPair; validated: ValidatedCpiPair } | CpiDataStatus {
+  const paths = buildCpiFilePaths();
+  const pairs: CpiPair[] = [
+    { baseYear: 2025, pair: "2025", mainPath: paths.main, contributionPath: paths.contribution },
+    {
+      baseYear: 2020,
+      pair: "2020",
+      mainPath: paths.fallbackMain,
+      contributionPath: paths.fallbackContribution,
+    },
+  ];
+  let lastReason = "no complete CPI pair";
+  for (const pair of pairs) {
+    const validation = validateCpiPair(pair, paths.metadata);
+    if (typeof validation !== "string") return { pair, validated: validation };
+    lastReason = `${pair.pair} pair: ${validation}`;
+    console.error(`CPI data pair validation failed (${lastReason})`);
+  }
+  return { baseYear: null, pair: null, valid: false, reason: lastReason };
+}
+
+export async function getCpiDataStatus(): Promise<CpiDataStatus> {
+  const selected = selectCpiPair();
+  if ("baseYear" in selected) return selected;
+  return { baseYear: selected.pair.baseYear, pair: selected.pair.pair, valid: true };
+}
+
+export function getCpiMajorWeightTotal(weights: Record<string, number>): number {
+  const total = CPI_MAJOR_CATEGORIES.reduce((sum, key) => sum + weights[key], 0);
+  return Number.isFinite(total) && total > 0 ? total : 10_000;
+}
+
+export async function loadCpiDataInternal(): Promise<CpiData[]> {
+  const selected = selectCpiPair();
+  if ("baseYear" in selected) {
+    console.error(`CPI data unavailable: ${selected.reason}`);
+    return [];
+  }
+  const weights = selected.validated.weights;
+  const comparisonWeightTotal = getCpiMajorWeightTotal(weights);
+  return selected.validated.data
     .filter((row) => {
       if (!row["年月"]) return false;
       const parsed = parseYearMonth(row["年月"] as string);
@@ -29,16 +241,25 @@ export async function loadCpiDataInternal(): Promise<CpiData[]> {
       const newRow: CpiData = { ...row };
       Object.keys(weights).forEach((key) => {
         const value = row[key];
-        if (typeof value === "number") newRow[key] = (value * weights[key]) / 10_000;
+        if (isFiniteNumber(value)) {
+          const denominator = CPI_COMPARISON_COMPONENTS.has(key) ? comparisonWeightTotal : 10_000;
+          newRow[key] = (value * weights[key]) / denominator;
+        } else {
+          // A missing official series must remain missing; zero would fabricate
+          // a contribution and corrupt dependent derived values.
+          newRow[key] = undefined;
+        }
       });
-      const foodTotal = typeof newRow.食料 === "number" ? newRow.食料 : 0;
-      const dinedOut = typeof newRow.外食 === "number" ? newRow.外食 : 0;
-      newRow["外食以外食料"] = foodTotal - dinedOut;
-      newRow["諸雑費"] = typeof newRow["諸雑費"] === "number" ? newRow["諸雑費"] : 0;
-      const transport = typeof newRow.交通 === "number" ? newRow.交通 : 0;
-      const autoRelated =
-        typeof newRow["自動車等関係費"] === "number" ? newRow["自動車等関係費"] : 0;
-      newRow["交通・自動車等関係費"] = transport + autoRelated;
+      const foodTotal = newRow.食料;
+      const dinedOut = newRow.外食;
+      newRow["外食以外食料"] =
+        isFiniteNumber(foodTotal) && isFiniteNumber(dinedOut) ? foodTotal - dinedOut : undefined;
+      const transport = newRow.交通;
+      const autoRelated = newRow["自動車等関係費"];
+      newRow["交通・自動車等関係費"] =
+        isFiniteNumber(transport) && isFiniteNumber(autoRelated)
+          ? transport + autoRelated
+          : undefined;
       delete newRow["教養娯楽サービス"];
       delete newRow["教養娯楽用品"];
       delete newRow["交通"];

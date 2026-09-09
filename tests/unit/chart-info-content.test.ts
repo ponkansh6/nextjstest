@@ -37,3 +37,73 @@ describe("new-graph chart info (3種比較)", () => {
     expect(ctiItem!.text).toContain("12か月移動平均");
   });
 });
+
+/**
+ * CPI の説明は、静的な CHART_INFO をそのまま利用できることを保ちつつ、
+ * 実際に選択された長期系列（2025 long / 2020 fallback）で解決される必要がある。
+ *
+ * 現在は cpi_data2025_long.csv が未配置なので、画面に渡す解決済み説明は
+ * 2020年基準のフォールバックを明示しなければならない。このテストは、
+ * CPI ローダーの選択状態を受け取る chart-info の公開 API を対象にする。
+ */
+describe("CPI chart info data-source state", () => {
+  it("2020 fallback では e-Stat 出典と固定ウェイト試算を維持し、2020年基準を明示する", async () => {
+    const { getChartInfoContent } = await import("@/lib/chartInfoContent");
+
+    const info = getChartInfoContent("cpi-major", {
+      baseYear: 2020,
+      dataState: "2020-fallback",
+    });
+    const text = [
+      info.source,
+      ...info.sections.flatMap((section) =>
+        section.items.flatMap((item) => [item.text, ...(item.subItems ?? [])]),
+      ),
+    ].join("\n");
+
+    expect(info.source).toContain("e-Stat");
+    expect(text).toContain("2020年基準");
+    expect(text).toContain("フォールバック");
+    expect(text).not.toContain("2025年平均=100の公式接続指数を表示");
+    expect(text).toContain("固定して適用した試算");
+    expect(info.url).toContain("tstat=000001150147");
+  });
+
+  it("2025 long が選択された場合は 2025年基準の公式接続指数として説明する", async () => {
+    const { getChartInfoContent } = await import("@/lib/chartInfoContent");
+
+    const info = getChartInfoContent("stacked-area", {
+      baseYear: 2025,
+      dataState: "2025-long",
+    });
+    const text = [
+      info.source,
+      ...info.sections.flatMap((section) =>
+        section.items.flatMap((item) => [item.text, ...(item.subItems ?? [])]),
+      ),
+    ].join("\n");
+
+    expect(info.source).toContain("e-Stat");
+    expect(text).toContain("2025年基準");
+    expect(text).toContain("公式接続指数");
+    expect(text).not.toContain("2020年基準のフォールバック");
+    expect(text).toContain("固定適用した加重指数水準を試算");
+    expect(info.url).toContain("tstat=000001243876");
+  });
+
+  it("CPI unavailable では2020年基準のフォールバックとして表示しない", async () => {
+    const { getChartInfoContent } = await import("@/lib/chartInfoContent");
+
+    const info = getChartInfoContent("cpi-major", {
+      baseYear: null,
+      sourceMode: "unavailable",
+    });
+    const text = info.sections
+      .flatMap((section) => section.items.map((item) => item.text))
+      .join("\n");
+
+    expect(text).toContain("CPIデータは現在利用できません");
+    expect(text).not.toContain("2020年基準");
+    expect(text).not.toContain("フォールバック");
+  });
+});

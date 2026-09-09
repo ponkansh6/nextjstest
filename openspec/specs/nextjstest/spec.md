@@ -2,7 +2,7 @@
 
 ## Purpose
 
-A dashboard application to visualize and track Japanese economic indicators — CPI (Consumer Price Index), CTI (Business Cycle Index), wage statistics, and population trends — with a unified 2020-base scale for long-term comparison.
+A dashboard application to visualize and track Japanese economic indicators — CPI (Consumer Price Index), CTI (Business Cycle Index), wage statistics, and population trends. CPI selects a validated, same-base CSV pair: the official 2025-base connected series when available, otherwise the compatible 2020-base pair. The UI states the pair actually selected; other comparison series retain their 2020-base normalization.
 
 ## Data Model
 
@@ -13,7 +13,7 @@ The shared data type with an index signature `[key: string]: string | number` fo
 | Field                          | Type           | Description                                                                                                                                                                        |
 | ------------------------------ | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 年月                           | string         | Year-month (e.g. "2020年1月")                                                                                                                                                      |
-| 総合                           | number         | CPI / earnings total index (2020=100)                                                                                                                                              |
+| 総合                           | number         | CPI all-items index (2025 annual average = 100) or earnings total index (2020 annual average = 100), depending on loader                                                           |
 | 生鮮食品を除く総合             | number         | CPI excluding Fresh Food                                                                                                                                                           |
 | 持家の帰属家賃を除く総合       | number         | CPI excluding Imputed Rent                                                                                                                                                         |
 | 民間最終消費支出（参考）       | number \| null | Consumption expenditure (private final, 2005-2017, 12MA, indexed 2020=100); null outside period                                                                                    |
@@ -24,11 +24,11 @@ The shared data type with an index signature `[key: string]: string | number` fo
 
 **Major runtime-added fields per data loader:**
 
-| Loader                        | Example fields                                                                                                                                                   |
-| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| CPI (`loadCpiData`)           | 生鮮食品及びエネルギーを除く総合, 食料（酒類を除く）及びエネルギーを除く総合, 外食以外食料, 交通・自動車等関係費, 寄与度カテゴリ (住居, 家具・家事用品, 教育, …) |
-| CTI (`loadCtiData`)           | 消費支出（名目/実質）, 食料/住居/光熱・水道/…（名目/実質）, その他の消費支出（名目/実質）, 民間最終消費支出（名目/実質）                                         |
-| 賃金 (`loadTotalEarningData`) | 所定内給与, 所定外給与, 特別給与, 時間当たり給与, 15歳以上国民当たり給与, 残差, \*(12MA) 系列                                                                    |
+| Loader                        | Example fields                                                                                                                                                                          |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CPI (`loadCpiData`)           | 生鮮食品及びエネルギーを除く総合, 食料（酒類を除く）及びエネルギーを除く総合, 外食以外食料, 交通・自動車等関係費, 選択済みCPIペアの固定ウェイト加重費目 (住居, 家具・家事用品, 教育, …) |
+| CTI (`loadCtiData`)           | 消費支出（名目/実質）, 食料/住居/光熱・水道/…（名目/実質）, その他の消費支出（名目/実質）, 民間最終消費支出（名目/実質）                                                                |
+| 賃金 (`loadTotalEarningData`) | 所定内給与, 所定外給与, 特別給与, 時間当たり給与, 15歳以上国民当たり給与, 残差, \*(12MA) 系列                                                                                           |
 
 ### PopulationData (src/types/index.ts)
 
@@ -42,7 +42,13 @@ The shared data type with an index signature `[key: string]: string | number` fo
 
 Static CSV files (not publicly served) stored in `data/source/`:
 
-- `data/source/cpi_data.csv` — CPI time-series
+- `data/source/cpi_data2025_long.csv` — Primary CPI index input, when generated: official nationwide monthly long connected index, 1970 through the latest month, converted/connected to 2025 annual average = 100.
+- `data/source/contribution2025.csv` — Primary CPI weight input: published 2025-base weights per 10,000; values are retained without editing.
+- `data/source/cpi_data2025_long.metadata.json` — Required provenance and readiness metadata for the 2025 pair; it identifies the index and contribution files, base year, source identifiers, expected row/series counts, covered period, generated-file SHA-256, source-original SHA-256, and official-snapshot SHA-256.
+- `data/source/cpi-2025-official-series.csv` — Minimal offline snapshot of official series codes and names derived from the long-source CSV identified by `statInfId=000040482945`; it is retained for deterministic mapping verification and is not selected as a dashboard input.
+- `data/source/cpi-2025-series-map.csv` — 78-series mapping table that records official series codes, dashboard keys, classification/missing-data handling, and mapping evidence; its code and name fields are verified against `cpi-2025-official-series.csv`, not merely against a hash of the mapping table itself.
+- `data/source/cpi_data.csv` / `data/source/contribution.csv` — Compatible 2020-base fallback pair. They are selected together only when the complete 2025 pair cannot be validated.
+- `data/source/cpi_data2025.csv` — Saved 2025-base raw monthly data beginning in 2025; it is not a long connected series and MUST NOT be selected as the dashboard CPI input.
 - `data/source/cti_data.csv` — Business Cycle Index
 - `data/source/total_earning.csv` — Total earnings
 - `data/source/contractual_earnings.csv` — Contractual earnings
@@ -51,7 +57,6 @@ Static CSV files (not publicly served) stored in `data/source/`:
 - `data/source/population_statistics.csv` — Population statistics
 - `data/source/employment_indices.csv` — Employment indices
 - `data/source/hon-mks202512.csv` — 毎月勤労統計調査の生データ（常用労働者数、出勤日数、実労働時間数、現金給与額）
-- `data/source/contribution.csv` — CPI contribution breakdown
 - `data/source/cti_support_nominal.csv` / `data/source/cti_support_real.csv` — CTI supporting series
 
 > Note: These files are loaded server-side during data loading and are not publicly accessible via HTTP. The `data/` directory is excluded from static file serving.
@@ -71,11 +76,12 @@ The system SHALL render the main dashboard as a server-rendered page at `/`.
 #### Scenario R1b: Data Loading Error
 
 - **WHEN** CSV data fails to load or is empty
-- **THEN** the system displays a descriptive error message with file path guidance
+- **THEN** the system displays a descriptive error message with guidance to the current `data/source/` CPI input paths
+- **AND** it does not direct operators to the obsolete `public/cpi_data.csv` path
 
 ### R2: Chart Visualization
 
-The system SHALL display economic indicators as interactive Recharts-based charts with 2020-base normalization.
+The system SHALL display economic indicators as interactive Recharts-based charts; CPI uses the validated 2025-base connected pair when available, otherwise the compatible 2020-base pair, while the other comparable indicator series use 2020-base normalization.
 
 #### Scenario R2a: CPI Chart
 
@@ -91,7 +97,7 @@ The system SHALL display economic indicators as interactive Recharts-based chart
   - StackedAreaChart / SpendingBarChart (additional breakdowns)
   - ResidualAreaChart (給与と物価の差(実質賃金相当)):
     - Displays the difference between "給与指数（総合）" and "物価指数（総合）".
-    - Both indices are 2020-base (2020 average = 100), so the difference is 2020 average = 0.
+    - The CPI input is 2025-base and the earnings input is 2020-base; this direct difference is a dashboard reference measure, not a same-base index residual.
     - The residual series is smoothed with a 2-month moving average (2MA).
   - NewGraph (supplementary view, 3種比較):
     - Displays four main series in legend order: 物価指数(総合), 給与(総合), CTI消費(総合), 民間最終消費(総合)
@@ -103,10 +109,58 @@ The system SHALL display economic indicators as interactive Recharts-based chart
 
 The system SHALL load and process CSV data on the server before rendering.
 
-#### Scenario R3a: CPI Data Loading
+#### Scenario R3a: CPI Pair Selection and Data Loading
 
 - **WHEN** `loadCpiData()` is called
-- **THEN** it reads `data/source/cpi_data.csv`, parses with PapaParse, transforms columns, and returns `CpiData[]`
+- **THEN** it selects one complete, validated CPI pair before parsing and transforming either file
+- **AND** the preferred pair is `cpi_data2025_long.csv` with `contribution2025.csv`, whose index represents nationwide monthly official connected indices from 1970 through the latest available month at 2025 annual average = 100
+- **AND** the selected index and contribution CSV always have the same base year
+- **AND** the loader retains the dashboard display range of 2005 through the latest available month
+
+#### Scenario R3aa: CPI Pair Validation
+
+- **WHEN** a CPI pair is considered for selection
+- **THEN** the loader requires both index and contribution files, the `年月` index header, a row with a valid year-month, unique contribution headers including `総合`, and finite weights for every declared contribution header
+- **AND** it rejects a pair whose contribution headers are absent from the index CSV
+- **AND** for the 2025 pair, it also requires ready, valid metadata declaring base year 2025 and the expected index and contribution filenames
+- **AND** it verifies the metadata-declared row count, series count, covered period, and SHA-256 against the generated index CSV
+- **AND** it verifies unique, gap-free monthly keys and that the all-items 2025 calendar-year average is approximately 100 within the documented rounding tolerance
+
+#### Scenario R3ab: 2025 Series Mapping
+
+- **WHEN** the 2025 long connected index is generated or maintained
+- **THEN** `cpi-2025-series-map.csv` provides a traceable mapping for all 78 supported official series, including official series code, dashboard key, classification or derivation handling, start month, missing-data policy, and source evidence
+- **AND** every mapping code and official name is unconditionally checked against `cpi-2025-official-series.csv`, whose SHA-256 and its `statInfId=000040482945` source-original SHA-256 are recorded in the metadata; the verification MUST NOT be conditionally skipped or replaced by a hash of the mapping table itself
+- **AND** an official series with no confirmed equivalent is retained as missing rather than fabricated as zero or substituted by name alone
+
+#### Scenario R3e: CPI Fixed-Weight Derivation
+
+- **WHEN** CPI category values are transformed for display
+- **THEN** each available official index is multiplied by the published weight from the selected same-base pair
+- **AND** all-items calculations use the published all-items denominator of 10,000
+- **AND** mutually exclusive 10-major-category comparisons use the actual sum of their published weights as the denominator, without changing the CSV values; the 2025 weights total 10002
+- **AND** the resulting values are selected-base fixed-weighted index levels, not official month-on-month or year-on-year contribution measures
+
+#### Scenario R3f: CPI Derived Values and Missing Data
+
+- **WHEN** both weighted `食料` and weighted `外食` are available for a month
+- **THEN** `外食以外食料` equals weighted `食料` minus weighted `外食`, so weighted `食料 = 外食以外食料 + 外食`
+- **AND WHEN** either source value is missing or non-finite
+- **THEN** the dependent weighted and derived values remain missing and are never replaced with zero
+
+#### Scenario R3g: CPI CSV Fallback and Fail-Closed Behavior
+
+- **WHEN** the 2025 pair is missing or fails any pair validation
+- **THEN** the loader selects the complete, validated 2020 pair (`cpi_data.csv` and `contribution.csv`) only
+- **AND** it never combines an index CSV from one base year with weights from another base year
+- **AND WHEN** neither complete pair validates
+- **THEN** the loader returns no CPI rows and `getCpiDataStatus()` reports an invalid status with no selected base year, rather than serving mixed or partially validated CPI data
+
+#### Scenario R3h: CPI Data Status for the UI
+
+- **WHEN** the dashboard page loads CPI data
+- **THEN** it also obtains `getCpiDataStatus()` and passes the selected base year and source mode to the CPI information UI
+- **AND** the UI identifies a validated 2025 pair as the official connected series, a validated 2020 pair as the fallback CSV, and does not describe either state as another base year
 
 #### Scenario R3b: CTI / Earnings / Consumption Data Loading
 
@@ -199,6 +253,13 @@ The system SHALL provide explanatory info for each chart/metric.
 - **WHEN** user clicks the info button on a chart
 - **THEN** a tooltip/modal displays the definition, source, and calculation method for the indicator
 - **AND** the content is retrieved based on the `chartKey` defined in `src/lib/chartInfoContent.ts` (supported charts: `cpi-major`, `stacked-area`, `earnings`, `residual`, `consumption-expenditure`, `new-graph`)
+
+#### Scenario R6b: CPI Calculation Explanation
+
+- **WHEN** a user opens the `cpi-major` or `stacked-area` information panel
+- **THEN** it identifies the base year and source mode returned by `getCpiDataStatus()`; for a validated 2025 pair, it identifies the nationwide monthly 2025 annual average = 100 connected CPI series and explains that pre-2025 values are connected from earlier base years
+- **AND** it explains that category values use the selected pair's fixed-base weights rather than official contribution measures
+- **AND** the stacked-area explanation identifies `外食以外食料` as a weighted difference and describes the major-category normalization (10002 for the 2025 pair)
 
 ### R7: Responsive Layout
 
@@ -514,15 +575,28 @@ hydration — tests must wait for them rather than reading the initial markup.
 ### Data Flow
 
 ```
-data/source/*.csv
+e-Stat official CPI long connected CSV (`statInfId=000040482945`) + source-original SHA-256
+  → data/source/cpi-2025-official-series.csv (minimal official code/name snapshot; SHA-256 recorded in metadata)
+  → cpi-2025-series-map.csv (unconditional 78-series official-code/name verification against snapshot; classification and missing-data rules)
+  → data/source/cpi_data2025_long.csv + cpi_data2025_long.metadata.json (generated 2025 index and ready metadata)
+data/source/contribution2025.csv (published 2025-base weights per 10,000)
+data/source/cpi_data.csv + data/source/contribution.csv (compatible 2020 fallback pair)
+  → server/lib/dataIo.ts (CPI file paths)
+    → server/lib/data-loader/cpi.ts (validate metadata, file names, row/series counts, period, SHA-256, monthly continuity, 2025 average≈100, required headers, finite weights, and valid 年月)
+      → select complete 2025 pair; otherwise select complete 2020 pair; otherwise fail closed with invalid `getCpiDataStatus()`
+      → apply selected-pair fixed weights: all-items denominator 10000; mutually exclusive 10-major-category comparison denominator 10002
+      → derive `外食以外食料 = weighted 食料 − weighted 外食`; propagate source missing values to all dependent values
+data/source/{cti,total_earning,contractual_earnings,scheduled_earnings,total_worked_hours,population_statistics,employment_indices,cti_support_nominal,cti_support_real}.csv
   → server/lib/dataIo.ts (path definitions + CSV parsing utilities)
-    → server/lib/data-loader/{cpi,earnings,population}.ts (domain-specific loading + caching)
-      → server/lib/dataLoader.ts (caching wrapper with maybeCache)
-        → server/lib/dataProcessor.ts (transform + clean)
-          → server/lib/serverCalculations.ts (derive)
-            → server/lib/view-models/dashboard.ts (project: select columns, round 2 decimals)
-              → src/app/page.tsx (RSC: load + project + pass props)
-                → src/app/components/CpiChart.tsx ("use client": render + interact)
+    → server/lib/data-loader/{earnings,population}.ts (domain-specific loading + caching)
+
+CPI / CTI / earnings / population loader results
+  → server/lib/dataLoader.ts (caching wrapper with maybeCache)
+    → server/lib/dataProcessor.ts (transform + clean)
+      → server/lib/serverCalculations.ts (derive)
+        → server/lib/view-models/dashboard.ts (project: select columns, round 2 decimals)
+          → src/app/page.tsx (RSC: load + project + `getCpiDataStatus()` + pass props)
+            → src/app/components/CpiChart.tsx ("use client": render + interact)
 ```
 
 **Key optimization:** The view-models layer reduces RSC payload from 1,169 KB to ~505 KB by removing unused columns and rounding to 2 decimal places before sending to client.
@@ -582,6 +656,8 @@ scripts/
 ## Test Requirements
 
 - Unit tests for data loading, transformation, and data quality/integrity (`tests/unit/`, `tests/data-quality/`)
+- CPI pair integrity tests MUST unconditionally validate the 78 mapping records against `data/source/cpi-2025-official-series.csv`, including official code and name; they MUST validate the metadata-recorded source-original and snapshot SHA-256 values rather than relying only on a mapping-table hash.
+- CPI loader tests MUST cover runtime validation of metadata row/series counts, period, generated-file SHA-256, monthly continuity, and 2025 all-items annual average, plus complete 2020-pair fallback when 2025 validation fails.
 - Component tests for chart rendering and interaction (`tests/components/`)
 - Integration tests for data mapping and computation accuracy (`tests/data-mapping/`, `tests/computation-contract/`)
 - Constant/fixture tests for expected data quality (`tests/constants/`, `tests/fixtures/`)

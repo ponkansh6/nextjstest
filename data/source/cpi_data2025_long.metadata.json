@@ -1,0 +1,49 @@
+{
+  "status": "ready",
+  "provider": "総務省統計局/e-Stat",
+  "statsDataId": "0004052037",
+  "statsDataIdPurpose": "e-Statの統計表表示およびAPI取得に使う識別子。配布CSVの変換元を示すstatInfIdとは別物。",
+  "statInfId": "000040482945",
+  "statInfIdPurpose": "cpi_data2025_long.csvへ変換した、e-Statファイル配布CSVの識別子。",
+  "baseYear": 2025,
+  "indexFile": "cpi_data2025_long.csv",
+  "contributionFile": "contribution2025.csv",
+  "apiEndpoint": "https://api.e-stat.go.jp/rest/3.0/app/getSimpleStatsData",
+  "apiRetrievalConditions": {
+    "statsDataId": "0004052037",
+    "format": "CSV",
+    "cdArea": "00000",
+    "cdTab": "1",
+    "startTime": "197001",
+    "endTime": "202607",
+    "limit": 100000,
+    "startPosition": [1, 100001, 200001, 300001, 400001]
+  },
+  "sourceFileUrl": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=1&statInfId=000040482945",
+  "artifactUpdatedAt": "2026-09-09",
+  "retrievedAt": "2026-09-09T14:55:48+09:00",
+  "csvSha256": "c5d1c58a29ec506b8800a6c66ce25fdb0aa3d9c7aece10488310729fe4c64723",
+  "sourceResponseSha256": "9e538bb82998b09824708cb1976161ec9c2e7fbf49799e12f79a2ec50cad180f",
+  "officialSeriesMapFile": "cpi-2025-series-map.csv",
+  "officialSeriesMapSha256": "d60244de9f459fc9561cbbf91bc224a590fdddc5898ee7de3e73229aaf21b76e",
+  "officialSeriesSnapshotFile": "cpi-2025-official-series.csv",
+  "officialSeriesSnapshotSha256": "861fee13e93e4531186807709b712da57fdf841574a9dfb319da2e12f4e0b4e7",
+  "officialSeriesSnapshotSourceStatInfId": "000040482945",
+  "officialSeriesSnapshotSourceSha256": "2e6335c191b459f3446e7f93cf38f4df9814c90371c794aac9d58efa337ee51b",
+  "period": {
+    "start": "1970年1月",
+    "end": "2026年7月",
+    "monthlyRows": 679
+  },
+  "seriesCount": 78,
+  "extraction": {
+    "area": "全国 (cdArea=00000)",
+    "frequency": "月次（年次・年度値を除外）",
+    "measure": "指数 (cdTab=1)",
+    "categories": "contribution2025.csv の類・品目78系列",
+    "sourceRows": 54286,
+    "pages": 5,
+    "apiTotalNumber": 479417,
+    "missingValuePolicy": "公式値 *** は空欄として保持"
+  }
+}

@@ -64,8 +64,13 @@ export function buildCtiFilePaths() {
 
 export function buildCpiFilePaths() {
   return {
-    main: path.join(process.cwd(), "data/source", "cpi_data.csv"),
-    contribution: path.join(process.cwd(), "data/source", "contribution.csv"),
+    // The 2025-base long connected series is intentionally a new file: do not
+    // overwrite the existing 2020-base long series, which remains a fallback.
+    main: path.join(process.cwd(), "data/source", "cpi_data2025_long.csv"),
+    fallbackMain: path.join(process.cwd(), "data/source", "cpi_data.csv"),
+    contribution: path.join(process.cwd(), "data/source", "contribution2025.csv"),
+    fallbackContribution: path.join(process.cwd(), "data/source", "contribution.csv"),
+    metadata: path.join(process.cwd(), "data/source", "cpi_data2025_long.metadata.json"),
   };
 }
 
