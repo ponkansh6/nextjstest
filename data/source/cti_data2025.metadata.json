@@ -1,0 +1,37 @@
+{
+  "status": "ready",
+  "baseYear": 2025,
+  "outputFile": "cti_data2025.csv",
+  "statInfId": "000040499069",
+  "sourceUrl": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499069",
+  "retrievedAt": "2026-09-09",
+  "sourceFile": "official-cti-2025/cti-basic-000040499069.xlsx",
+  "sourceFileSha256": "5e99cf3c61e26ba90bcde12b3311eb553458f97e5624258712d7414bed53197b",
+  "csvSha256": "4c9ce15ad2d9af40513cbb1049fec1fde369cdb61bb893c9b8ad2a0cbb008d15",
+  "officialSeriesMapFile": "cti-2025-series-map.csv",
+  "officialSeriesMapSha256": "532f3cff75760acdcb6cf48b17170898f85ca3f738b71ff718e9e723f081ff0a",
+  "officialSeriesSnapshotFile": "cti-2025-official-series.csv",
+  "officialSeriesSnapshotSha256": "5ec228c9231c5bdbe36de168ee792aaca36cf2089e8a014aa4c7ccd826ea4534",
+  "officialSeriesSnapshotSourceStatInfId": "000040499069",
+  "officialSeriesSnapshotSourceSha256": "5e99cf3c61e26ba90bcde12b3311eb553458f97e5624258712d7414bed53197b",
+  "sourceBasis": "2025年消費支出平均月額=100の公式基本系列（原数値・総世帯）",
+  "comparisonNormalization": "なし。cti_data2025.csvは公式指数値をそのまま保持する。",
+  "officialSeriesSnapshot": {
+    "sourceSheet": "総・月(原)",
+    "tableCode": "00401",
+    "seriesCount": 22,
+    "representativeMonth": "2025年1月",
+    "identifier": "official_code is the official table code and column code joined as 00401-01 through 00401-22"
+  },
+  "seriesClassification": "基本系列（原数値）",
+  "tableTitle": "10大費目別 世帯消費動向指数（原数値） 総世帯",
+  "householdScope": "総世帯",
+  "frequency": "月次",
+  "valueType": "指数",
+  "period": {
+    "start": "2017年1月",
+    "end": "2026年7月",
+    "monthlyRows": 115
+  },
+  "extraction": "公式Excelの「総・月(原)」シートから、総世帯の月次指数列（時間軸コード・月・10大費目別の名目値/実質値）を列順・値表記を保持して抽出。"
+}

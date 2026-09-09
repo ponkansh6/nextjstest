@@ -8,7 +8,11 @@ import {
   loadCtiData,
   clearTestCache,
 } from "../../../../server/lib/dataLoader";
-import { getCpiDataStatus, getCpiMajorWeightTotal } from "../../../../server/lib/data-loader/cpi";
+import {
+  getCpiDataStatus,
+  getCpiMajorWeightTotal,
+  getGdpSupportStatus,
+} from "../../../../server/lib/data-loader/cpi";
 
 vi.mock("node:fs", () => ({
   existsSync: vi.fn(),
@@ -45,6 +49,17 @@ describe("server/lib/dataLoader", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     clearTestCache();
+  });
+
+  describe("getGdpSupportStatus", () => {
+    it("reports an unavailable GDP comparison independently when its validated set is absent", async () => {
+      (fs.existsSync as any).mockReturnValue(false);
+
+      await expect(getGdpSupportStatus()).resolves.toEqual({
+        valid: false,
+        reason: "missing GDP display set file",
+      });
+    });
   });
 
   describe("loadCpiData", () => {
@@ -304,10 +319,10 @@ Year and month ,,,,,,Total aged 15+,,,
     });
 
     it("should ensure民間最終消費支出 is populated when support data exists for the quarter", async () => {
-      const mockCtiCsv = `月,消費支出（名目）
-2005年1月,1000
-2005年2月,1000
-2005年3月,1000`;
+      const mockCtiCsv = `月,消費支出（名目）,消費支出（実質）
+2005年1月,1000,1000
+2005年2月,1000,1000
+2005年3月,1000,1000`;
       const mockSupportCsv = `
 時間軸（四半期）,民間最終消費支出
 2005年1～3月期,100`;
@@ -315,12 +330,15 @@ Year and month ,,,,,,Total aged 15+,,,
       (fs.existsSync as any).mockImplementation((path: any) => {
         if (typeof path === "string" && path.includes("cti_data.csv")) return true;
         if (typeof path === "string" && path.includes("cti_support_nominal.csv")) return true;
+        if (typeof path === "string" && path.includes("cti_support_real.csv")) return true;
         return false;
       });
 
       (fs.readFileSync as any).mockImplementation((path: any) => {
         if (typeof path === "string" && path.includes("cti_data.csv")) return mockCtiCsv;
         if (typeof path === "string" && path.includes("cti_support_nominal.csv"))
+          return mockSupportCsv;
+        if (typeof path === "string" && path.includes("cti_support_real.csv"))
           return mockSupportCsv;
         return "";
       });
@@ -335,9 +353,7 @@ Year and month ,,,,,,Total aged 15+,,,
               row["民間最終消費支出（名目）"],
               `Row ${row.年月} should have populated expenditure`,
             ).toBeGreaterThan(0);
-          } else {
-            expect(row["民間最終消費支出（名目）"]).toBe(0);
-          }
+          } else expect(row["民間最終消費支出（名目）"]).toBe(0);
         }
       });
     });

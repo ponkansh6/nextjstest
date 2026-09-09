@@ -79,6 +79,43 @@ describe("Client Data Structure Integrity", () => {
     expect(q1Data?.["食料（名目）"]).toBe(60);
   });
 
+  it("keeps GDP raw and normalized values out of quarterly CTI rows", () => {
+    const nominalData = createCpiDataList([
+      {
+        年月: "2020年1月",
+        "食料（名目）": 30,
+        "民間最終消費支出（名目）": 400,
+        "民間最終消費支出（実質）": 380,
+        "民間最終消費支出（名目・原値）": 400,
+        "民間最終消費支出（実質・原値）": 380,
+        "民間最終消費支出（名目・比較指数）": 101,
+        "民間最終消費支出（実質・比較指数）": null,
+      },
+      { 年月: "2020年2月", "食料（名目）": 60 },
+      { 年月: "2020年3月", "食料（名目）": 90 },
+    ]);
+    const result = computeChartData(
+      {
+        data: [],
+        endYear: 2020,
+        maxCpiDate: { month: 3, year: 2020 },
+        nominalData,
+        nominalKeys: CONSUMPTION_NOMINAL_KEYS,
+        realKeys: CONSUMPTION_REAL_KEYS,
+        startYear: 2020,
+      },
+      [],
+    );
+    const q1 = result.quarterlyNominalData[0];
+
+    expect(q1["食料（名目）"]).toBe(60);
+    expect(typeof q1["食料（名目）"]).toBe("number");
+    expect(q1).not.toHaveProperty("民間最終消費支出（名目・原値）");
+    expect(q1).not.toHaveProperty("民間最終消費支出（実質・原値）");
+    expect(q1).not.toHaveProperty("民間最終消費支出（名目・比較指数）");
+    expect(q1).not.toHaveProperty("民間最終消費支出（実質・比較指数）");
+  });
+
   it("should correctly calculate quarterly average with real data", async () => {
     const realData = await loadCtiData();
     const props = {
@@ -128,14 +165,10 @@ describe("Client Data Structure Integrity", () => {
     const completeData = recentData.filter((d) => !(d.年 === maxYear && d.quarter === lastQuarter));
 
     completeData.forEach((row) => {
-      // 民間消費以外のキーを特定
-      const keysToCheck = Object.keys(row).filter(
-        (k) =>
-          k !== "年" &&
-          k !== "quarter" &&
-          k !== "label" &&
-          k !== SUPPORT_SERIES_KEY_NOMINAL &&
-          k !== SUPPORT_SERIES_KEY_REAL,
+      // CTI費目だけを検証する。GDPのraw/normalized値や状態オブジェクトは
+      // 四半期CTI積み上げの契約外であり、Object.keys()から推測しない。
+      const keysToCheck = [...CONSUMPTION_NOMINAL_KEYS, ...CONSUMPTION_REAL_KEYS].filter(
+        (key) => key in row,
       );
 
       keysToCheck.forEach((key) => {

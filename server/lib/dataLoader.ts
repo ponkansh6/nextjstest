@@ -7,14 +7,14 @@ export async function loadPopulationData() {
   return loadPopulationDataInternal();
 }
 
-export async function loadTotalEarningData() {
+export async function loadTotalEarningData(options?: import("./data-loader/cpi").CtiLoadOptions) {
   const { loadTotalEarningDataInternal } = await import("./data-loader/earnings");
-  return loadTotalEarningDataInternal();
+  return loadTotalEarningDataInternal(options);
 }
 
-export async function loadCtiData() {
+export async function loadCtiData(options?: import("./data-loader/cpi").CtiLoadOptions) {
   const { loadCtiDataInternal } = await import("./data-loader/cpi");
-  return loadCtiDataInternal();
+  return loadCtiDataInternal(options);
 }
 
 export async function loadCpiData() {

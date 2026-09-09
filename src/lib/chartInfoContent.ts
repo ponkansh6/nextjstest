@@ -23,6 +23,28 @@ export interface CpiChartInfoState {
   dataState?: "2020-fallback" | "2025-long";
 }
 
+/**
+ * Selected CTI compatibility-set state passed from the server.  The loader is
+ * the source of truth: the UI must not infer a series variant from a filename
+ * or describe an unverified 2025 input as selected.
+ */
+export interface CtiChartInfoState {
+  baseYear: 2020 | 2025 | null;
+  sourceMode: "official-connected" | "rollback" | "unavailable";
+  seriesLabel?: string;
+  supportLabel?: string;
+  comparisonNormalization?: "2025-annual-average" | "unavailable";
+  unavailableReason?: string;
+  /** GDP comparison state is independently validated by the server loader. */
+  gdp?: GdpChartInfoState;
+}
+
+export interface GdpChartInfoState {
+  availability: "available" | "unavailable";
+  displayNormalizationYear?: 2025;
+  reason?: string;
+}
+
 export const CHART_INFO: Record<string, ChartInfoContent> = {
   "cpi-major": {
     source: "e-Stat「消費者物価指数 長期時系列データ（2025年基準）」",
@@ -91,17 +113,17 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
     ],
   },
   "consumption-expenditure": {
-    source: "e-Stat「四半期別GDP統計」／e-Stat「分布調整済み原数値CTIミクロ」",
+    source: "e-Stat「消費動向指数（CTIミクロ）」／e-Stat「四半期別GDP統計」",
     url: "https://www.e-stat.go.jp/stat-search/files?toukei=00100409&tstat=000001014470",
     sections: [
       {
         heading: "データの内訳",
         items: [
           {
-            text: "2005年〜2017年：四半期別GDP統計の「民間最終消費支出」を使用",
+            text: "GDP参考値：四半期別GDP統計の「民間最終消費支出」を公式金額のまま使用",
           },
           {
-            text: "2018年〜最新：分布調整済み原数値CTIミクロを使用",
+            text: "CTIミクロ：選択済みの総世帯公式系列を使用。公式提供範囲は2017年以降で、旧CTI系列との接続は行いません。",
           },
           {
             text: "内訳は9大費目（食料、住居、光熱・水道、家具・家事用品、被服及び履物、保健医療、交通・通信、教育、教養娯楽）と諸雑費・CPI外支出に分類して表示",
@@ -115,16 +137,19 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
             text: "月次原系列データ（名目・実質）を四半期ごと（1-3月、4-6月、7-9月、10-12月）に平均化",
           },
           {
-            text: "2020年基準で指数化（2020年平均 = 100）",
+            text: "消費支出（名目・実質）と費目別の値は、選択済みCTI公式系列の公表値を表示。GDP参考値はCTI費目合計に加算しません。",
           },
           {
-            text: "2017年まではサポート系列（民間最終消費支出）をCTIミクロの2020年水準にスケーリングして結合",
+            text: "GDP参考値の名目は公式金額（current prices、固定の基準年なし）、実質は前暦年基準連鎖方式の公式値（2020暦年連鎖価格が参照年）です。実質連鎖系列は非加法的なため、内訳を足し上げません。",
+          },
+          {
+            text: "GDPとCTIは調査定義と作成方法が異なるため、両者を統計的な係数で接続していません。",
           },
           {
             text: "「諸雑費・CPI外支出」は、総消費支出から各費目（住居、食料等）の合計を差し引いた差分として別途算出",
           },
           {
-            text: "ツールチップの「合計」は、その時点で表示中（凡例で非表示にしていない）の系列の合計値",
+            text: "表、CSV、ツールチップのGDP参考値は公式金額として、名目・実質と価格概念を区別して表示します。ツールチップの「合計」は、その時点で表示中（凡例で非表示にしていない）のCTI費目のみの合計値です。",
           },
         ],
       },
@@ -175,7 +200,7 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
   },
   "new-graph": {
     source:
-      "e-Stat「毎月勤労統計調査」／e-Stat「消費者物価指数」／e-Stat「分布調整済み原数値CTIミクロ」／e-Stat「四半期別GDP統計」",
+      "e-Stat「毎月勤労統計調査」／e-Stat「消費者物価指数」／e-Stat「消費動向指数（CTIミクロ）」／e-Stat「四半期別GDP統計」",
     url: "https://www.e-stat.go.jp/stat-search/files?page=1&toukei=00200573&tstat=000001150147",
     sections: [
       {
@@ -185,10 +210,10 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
             text: "給与（総合）：所定内給与 + 所定外給与 + 特別給与の12か月移動平均を指数化",
           },
           {
-            text: "民間最終消費支出（総合）：2005年〜2017年、四半期別GDP統計の「民間最終消費支出（名目原系列）」を12か月移動平均で指数化（※2018年以降の延長オプションを用意）",
+            text: "民間最終消費支出（総合）：四半期別GDP統計の公式金額を比較用に2025年の4四半期平均=100へ換算した指数。2017年までを表示し、2017年以降は延長オプションとして参考表示に切り替え可能です。",
           },
           {
-            text: "CTI消費支出（総合）：2018年以降、分布調整済み原数値CTIミクロの「消費支出（名目）」を12か月移動平均で指数化",
+            text: "CTI消費支出（総合）：選択済みの総世帯CTIミクロ「消費支出（名目）」を12か月移動平均で表示。公式提供範囲は2017年以降で、旧CTI系列との接続は行いません。",
           },
           {
             text: "物価指数（総合）：消費者物価指数総合を12か月移動平均で指数化",
@@ -198,9 +223,15 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
       {
         heading: "データ加工",
         items: [
-          { text: "すべての系列は2020年基準で指数化（2020年平均 = 100）" },
-          { text: "12か月移動平均（12MA）により季節変動を除去" },
-          { text: "給与・消費・物価を同一スケールで比較可能" },
+          {
+            text: "12か月移動平均（12MA）は各系列の生値から、連続する12か月がそろう場合だけ計算します。",
+          },
+          {
+            text: "GDP比較線は、名目・実質それぞれの公式金額を2025年の4四半期平均=100へ換算した比較指数だけを使用します。この換算は表示尺度をそろえるだけで、公式GDPの単位、価格概念、基準・参照年を変更しません。",
+          },
+          {
+            text: "GDPの2025年4四半期または来歴を確認できない場合、GDP比較線は表示しません。表示可否はCTIの基準年とは独立して判定し、直近値による補完、CTI係数の流用、GDPとCTIの境界接続は行いません。",
+          },
         ],
       },
     ],
@@ -247,8 +278,12 @@ const fallbackCpiText = (text: string) =>
 export function getChartInfoContent(
   chartKey: keyof typeof CHART_INFO,
   cpiState?: CpiChartInfoState,
+  ctiState?: CtiChartInfoState,
 ): ChartInfoContent {
   const content = CHART_INFO[chartKey];
+  if (chartKey === "consumption-expenditure" || chartKey === "new-graph") {
+    return resolveCtiChartInfo(content, ctiState, chartKey === "new-graph");
+  }
   if (!cpiState || (chartKey !== "cpi-major" && chartKey !== "stacked-area")) return content;
 
   const isUnavailable = cpiState.sourceMode === "unavailable" || cpiState.baseYear === null;
@@ -282,5 +317,66 @@ export function getChartInfoContent(
       ? "https://www.e-stat.go.jp/stat-search/files?page=1&toukei=00200573&tstat=000001150147"
       : content.url,
     sections: [{ heading: "データ状態", items: [{ text: label }] }, ...sections],
+  };
+}
+
+function resolveCtiChartInfo(
+  content: ChartInfoContent,
+  ctiState: CtiChartInfoState | undefined,
+  isComparison: boolean,
+): ChartInfoContent {
+  const gdpItem = isComparison ? getGdpComparisonInfoItem(ctiState?.gdp) : undefined;
+  if (!ctiState || ctiState.sourceMode === "unavailable" || ctiState.baseYear === null) {
+    return {
+      ...content,
+      sections: [
+        {
+          heading: "データ状態",
+          items: [
+            {
+              text: ctiState?.unavailableReason
+                ? `消費データを表示できません：${ctiState.unavailableReason}`
+                : "消費データは現在利用できません。",
+            },
+          ],
+        },
+        ...(gdpItem ? [{ heading: "GDP比較の状態", items: [gdpItem] }] : []),
+        ...(isComparison ? content.sections : []),
+      ],
+    };
+  }
+
+  const isOfficial = ctiState.sourceMode === "official-connected";
+  const series = ctiState.seriesLabel ?? "選択済みの公式系列";
+  const stateItems: ChartInfoItem[] = [
+    {
+      text: isOfficial
+        ? `総世帯の2025年基準CTIミクロ（${series}）を使用しています。2024年以前は、総務省統計局が2025年基準へ接続して公表した系列です。`
+        : "現在は2020年基準の互換データを表示しています。",
+    },
+    {
+      text: "CTIミクロは、家計調査、家計消費状況調査、家計消費単身モニター調査の結果を合成して作成されます。",
+    },
+  ];
+  if (ctiState.supportLabel) stateItems.push({ text: ctiState.supportLabel });
+  if (gdpItem) stateItems.push(gdpItem);
+
+  return {
+    ...content,
+    source: `${content.source}（${isOfficial ? "2025年基準の公式接続系列" : "2020年基準の互換データ"}）`,
+    sections: [{ heading: "データ状態", items: stateItems }, ...content.sections],
+  };
+}
+
+function getGdpComparisonInfoItem(gdpState: GdpChartInfoState | undefined): ChartInfoItem {
+  if (gdpState?.availability === "available") {
+    return {
+      text: "GDP比較線は、GDPの公式金額を2025年の4四半期平均=100へ換算した表示用の指数です。これはCTIの基準年とは別の表示尺度です。",
+    };
+  }
+  return {
+    text: gdpState?.reason
+      ? `GDP比較線は利用できません。${gdpState.reason}`
+      : "GDP比較線は利用できません。GDP比較に必要なデータを確認中です。",
   };
 }

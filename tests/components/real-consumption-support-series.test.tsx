@@ -25,7 +25,7 @@
 
 import { expect, it, describe, beforeAll, vi } from "vitest";
 import { render, screen, getAllByTestId } from "@testing-library/react";
-import { loadCpiData, loadCtiData } from "../../server/lib/dataLoader";
+import { loadCpiData } from "../../server/lib/dataLoader";
 import { computeQuarterlyAggregates } from "../../server/lib/view-models/quarterlyAggregation";
 import { toQuarterlyView } from "../../server/lib/view-models/dashboard";
 import { SpendingBarChart } from "../../src/app/components/SpendingBarChart";
@@ -37,6 +37,7 @@ import {
 } from "../../src/lib/chartConstants";
 import type { CpiData } from "../../src/types";
 import { setupUiMocks } from "../utils/ui-mocks";
+import { loadCti2020RollbackFixture } from "../utils/cti-2020-rollback-fixture";
 
 vi.mock("recharts", () => ({
   ResponsiveContainer: ({ children }: any) => (
@@ -78,7 +79,7 @@ describe("Real Consumption Support Series - Local Pipeline Regression Guard", ()
     setupUiMocks();
 
     // Load source data (same as page.tsx:16-20)
-    [cleanData, ctiData] = await Promise.all([loadCpiData(), loadCtiData()]);
+    [cleanData, ctiData] = await Promise.all([loadCpiData(), loadCti2020RollbackFixture()]);
 
     // Derive maxCpiDate from cleanData (page.tsx:23-36)
     let maxCpiYear = 1994;

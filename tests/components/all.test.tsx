@@ -465,23 +465,26 @@ describe("NewGraph", () => {
     {
       年月: "2023年1月",
       総合: 100,
-      "民間最終消費支出（参考）": 0,
+      "民間最終消費支出（参考）": 100,
       "CTI消費支出（参考）": 100,
       "CPI総合(12MA)": 100,
+      "総合(12MA)": 100,
     } as any,
     {
       年月: "2023年2月",
       総合: 101,
-      "民間最終消費支出（参考）": 0,
+      "民間最終消費支出（参考）": 101,
       "CTI消費支出（参考）": 101,
       "CPI総合(12MA)": 101,
+      "総合(12MA)": 101,
     } as any,
     {
       年月: "2023年3月",
       総合: 102,
-      "民間最終消費支出（参考）": 0,
+      "民間最終消費支出（参考）": 102,
       "CTI消費支出（参考）": 102,
       "CPI総合(12MA)": 102,
+      "総合(12MA)": 102,
     } as any,
   ];
 
@@ -573,6 +576,43 @@ describe("NewGraph", () => {
       />,
     );
     expect(screen.getByText("給与・消費・物価の推移比較(12MA)")).toBeDefined();
+  });
+
+  it("keeps GDP legend labels when its comparison values are unavailable", () => {
+    render(
+      <NewGraph
+        data={mockNewGraphData.map((row) => ({
+          ...row,
+          "民間最終消費支出（参考）": null,
+        }))}
+        hiddenKeys={[]}
+        onToggle={mockOnToggle}
+        chartColors={mockNewGraphColors}
+        isMobile={false}
+        tooltipProps={tooltipProps}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "民間最終消費(総合)" })).toBeDefined();
+  });
+
+  it("keeps the advanced reference legend when its values are unavailable", () => {
+    render(
+      <NewGraph
+        data={mockNewGraphData.map((row) => ({
+          ...row,
+          "民間最終消費支出（参考・延長）": null,
+        }))}
+        hiddenKeys={[]}
+        onToggle={mockOnToggle}
+        chartColors={mockNewGraphColors}
+        isMobile={false}
+        tooltipProps={tooltipProps}
+        showAdvanced
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "民間最終消費(延長・参考)" })).toBeDefined();
   });
 
   it("does not render advanced series legend when showAdvanced is false/undefined", () => {

@@ -20,7 +20,11 @@ import { MajorIndicesChart } from "./MajorIndicesChart";
 import { CagrPanel } from "./CagrPanel";
 import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
 import { BottomSheet } from "./BottomSheet";
-import { getChartInfoContent, type CpiChartInfoState } from "@/lib/chartInfoContent";
+import {
+  getChartInfoContent,
+  type CpiChartInfoState,
+  type CtiChartInfoState,
+} from "@/lib/chartInfoContent";
 
 const SpendingBarChart = dynamic(
   () => import("./SpendingBarChart").then((m) => m.SpendingBarChart),
@@ -73,6 +77,7 @@ interface CpiChartProps {
   totalEarningData: EarningsView[];
   maxCpiDate: { year: number; month: number };
   cpiInfoState?: CpiChartInfoState;
+  ctiInfoState?: CtiChartInfoState;
 }
 
 export default function CpiChart({
@@ -82,10 +87,13 @@ export default function CpiChart({
   totalEarningData,
   maxCpiDate: _maxCpiDate,
   cpiInfoState,
+  ctiInfoState,
 }: CpiChartProps) {
   const { isMobile, chartColors } = useChartTheme();
   const cpiMajorInfo = getChartInfoContent("cpi-major", cpiInfoState);
   const stackedAreaInfo = getChartInfoContent("stacked-area", cpiInfoState);
+  const consumptionInfo = getChartInfoContent("consumption-expenditure", undefined, ctiInfoState);
+  const newGraphInfo = getChartInfoContent("new-graph", undefined, ctiInfoState);
 
   // 全ての年を抽出
   const allYears = useMemo(() => {
@@ -600,6 +608,7 @@ export default function CpiChart({
           title="消費支出（名目）"
           sectionId="section-consumption-nominal"
           infoKey="consumption-expenditure"
+          chartInfoContent={consumptionInfo}
           data={filteredQuarterlyNominalData}
           keys={nominalKeysWithSupport}
           colors={nominalColorsWithSupport}
@@ -630,6 +639,7 @@ export default function CpiChart({
           title="消費支出（実質）"
           sectionId="section-consumption-real"
           infoKey="consumption-expenditure"
+          chartInfoContent={consumptionInfo}
           data={filteredQuarterlyRealData}
           keys={realKeysWithSupport}
           colors={[...realColors, "#94a3b8"]}
@@ -687,6 +697,7 @@ export default function CpiChart({
           chartColors={chartColors}
           isMobile={isMobile}
           chartKey="new-graph"
+          chartInfoContent={newGraphInfo}
           showAdvanced={showAdvanced}
           advancedToggle={
             <div

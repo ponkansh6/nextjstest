@@ -4,15 +4,15 @@ import { CHART_INFO } from "@/lib/chartInfoContent";
 /**
  * 3種比較（new-graph）の info 説明文が、実際のデータソースと一致していることを検証する。
  * 消費支出（参考）は家計調査ではなく、
- * - 2018年以降: 分布調整済み原数値CTIの消費支出（名目）（server/lib/data-loader/earnings.ts buildConsumptionMap）
- * - 2017年以前: 四半期別GDP統計の民間最終消費支出（cti_support_nominal.csv、スケーリングして結合）
- * を12か月移動平均で指数化したもの。
+ * - 選択済みの総世帯CTIミクロの消費支出（名目）
+ * - 四半期別GDP統計の民間最終消費支出（参考系列）
+ * を、生値から計算した12か月移動平均で比較するもの。
  */
 describe("new-graph chart info (3種比較)", () => {
   const info = CHART_INFO["new-graph"];
 
   it("source に CTI と四半期別GDP統計の両方を記載している", () => {
-    expect(info.source).toContain("分布調整済み原数値CTI");
+    expect(info.source).toContain("消費動向指数（CTIミクロ）");
     expect(info.source).toContain("四半期別GDP統計");
   });
 
@@ -24,17 +24,83 @@ describe("new-graph chart info (3種比較)", () => {
     expect(minkanItem, "民間最終消費支出（総合）の説明が見つからない").toBeDefined();
     expect(ctiItem, "CTI消費支出（総合）の説明が見つからない").toBeDefined();
 
-    // 家計調査は使用していないため説明に登場してはならない
+    // GDP参考系列の説明にCTIの構成調査を混ぜない
     expect(minkanItem!.text).not.toContain("家計調査");
     expect(minkanItem!.text).toContain("四半期別GDP統計");
     expect(minkanItem!.text).toContain("民間最終消費支出");
-    expect(minkanItem!.text).toContain("12か月移動平均");
+    expect(minkanItem!.text).toContain("2025年の4四半期平均=100");
     // 延長系列（2018年以降に実質的な新規データ、?adv=1で表示）は本文に統合し、短い注記のみ残す
     expect(minkanItem!.text).toContain("延長オプション");
 
-    expect(ctiItem!.text).not.toContain("家計調査");
-    expect(ctiItem!.text).toContain("分布調整済み原数値CTI");
+    expect(ctiItem!.text).toContain("選択済みの総世帯CTIミクロ");
     expect(ctiItem!.text).toContain("12か月移動平均");
+  });
+});
+
+describe("CTI chart info data-source state", () => {
+  it("検証済み2025セットでは採用系列、三調査合成、比較用リベースを説明する", async () => {
+    const { getChartInfoContent } = await import("@/lib/chartInfoContent");
+    const info = getChartInfoContent("new-graph", undefined, {
+      baseYear: 2025,
+      sourceMode: "official-connected",
+      seriesLabel: "基本系列（原数値）",
+      supportLabel: "GDP参考系列は名目・実質を別々に接続検証しています。",
+      comparisonNormalization: "2025-annual-average",
+    });
+    const text = [info.source, ...info.sections.flatMap((s) => s.items.map((i) => i.text))].join(
+      "\n",
+    );
+
+    expect(text).toContain("総世帯の2025年基準CTIミクロ");
+    expect(text).toContain("基本系列（原数値）");
+    expect(text).toContain("家計調査、家計消費状況調査、家計消費単身モニター調査");
+    expect(text).toContain("2025年の4四半期平均=100");
+    expect(text).toContain("GDP参考系列は名目・実質を別々に接続検証しています。");
+  });
+
+  it("GDP比較の利用不可状態と理由はCTIが利用不可でも表示する", async () => {
+    const { getChartInfoContent } = await import("@/lib/chartInfoContent");
+    const info = getChartInfoContent("new-graph", undefined, {
+      baseYear: null,
+      sourceMode: "unavailable",
+      gdp: {
+        availability: "unavailable",
+        reason: "GDP比較に必要な2025年の四半期値または確認情報がそろっていません。",
+      },
+    });
+    const text = info.sections.flatMap((s) => s.items.map((i) => i.text)).join("\n");
+
+    expect(text).toContain("GDP比較線は利用できません");
+    expect(text).toContain("2025年の四半期値または確認情報がそろっていません");
+    expect(text).not.toMatch(/fallback|metadata|CSV/i);
+  });
+
+  it("2020年基準CTIとGDPの2025年表示尺度を混同しない", async () => {
+    const { getChartInfoContent } = await import("@/lib/chartInfoContent");
+    const info = getChartInfoContent("new-graph", undefined, {
+      baseYear: 2020,
+      sourceMode: "rollback",
+      gdp: { availability: "available", displayNormalizationYear: 2025 },
+    });
+    const text = info.sections.flatMap((s) => s.items.map((i) => i.text)).join("\n");
+
+    expect(text).toContain("2020年基準の互換データ");
+    expect(text).toContain("2025年の4四半期平均=100");
+    expect(text).toContain("CTIの基準年とは別の表示尺度");
+  });
+
+  it("データなしでは利用者向けの状態だけを表示し、基準年を推測しない", async () => {
+    const { getChartInfoContent } = await import("@/lib/chartInfoContent");
+    const info = getChartInfoContent("consumption-expenditure", undefined, {
+      baseYear: null,
+      sourceMode: "unavailable",
+      unavailableReason: "必要な消費データを確認中です。",
+    });
+    const text = info.sections.flatMap((s) => s.items.map((i) => i.text)).join("\n");
+
+    expect(text).toContain("消費データを表示できません");
+    expect(text).not.toContain("2020年基準");
+    expect(text).not.toMatch(/metadata|CSV|fallback/i);
   });
 });
 

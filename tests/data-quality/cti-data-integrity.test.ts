@@ -1,5 +1,4 @@
 import { expect, it, describe, beforeAll } from "vitest";
-import { loadCtiData } from "../../server/lib/dataLoader";
 import {
   CONSUMPTION_NOMINAL_KEYS,
   CONSUMPTION_REAL_KEYS,
@@ -8,12 +7,13 @@ import {
 } from "../../src/lib/chartConstants";
 import type { CpiData } from "../../src/types";
 import { computeChartData } from "../../src/lib/clientCalculations";
+import { loadCti2020RollbackFixture } from "../utils/cti-2020-rollback-fixture";
 
 describe("CTI Data Integrity", () => {
   let ctiData: CpiData[];
 
   beforeAll(async () => {
-    ctiData = await loadCtiData();
+    ctiData = await loadCti2020RollbackFixture();
   });
 
   describe("Basic Integrity", () => {
@@ -70,29 +70,31 @@ describe("CTI Data Integrity", () => {
       });
     });
 
-    it("should verify normalization of support series (50-150 range)", async () => {
-      const props = {
-        data: ctiData,
-        endYear: 2026,
-        maxCpiDate: { month: 12, year: 2026 },
-        nominalData: ctiData,
-        nominalKeys: CONSUMPTION_NOMINAL_KEYS,
-        realKeys: CONSUMPTION_REAL_KEYS,
-        startYear: 2005,
-      };
+    describe("2020 rollback support-series compatibility", () => {
+      it("should verify support-series normalization (50-150 range)", async () => {
+        const props = {
+          data: ctiData,
+          endYear: 2026,
+          maxCpiDate: { month: 12, year: 2026 },
+          nominalData: ctiData,
+          nominalKeys: CONSUMPTION_NOMINAL_KEYS,
+          realKeys: CONSUMPTION_REAL_KEYS,
+          startYear: 2005,
+        };
 
-      const result = computeChartData(props, []);
-      const { quarterlyNominalData, quarterlyRealData } = result;
+        const result = computeChartData(props, []);
+        const { quarterlyNominalData, quarterlyRealData } = result;
 
-      [SUPPORT_SERIES_KEY_NOMINAL, SUPPORT_SERIES_KEY_REAL].forEach((supportKey) => {
-        const isNominal = supportKey === SUPPORT_SERIES_KEY_NOMINAL;
-        const targetData = isNominal ? quarterlyNominalData : quarterlyRealData;
+        [SUPPORT_SERIES_KEY_NOMINAL, SUPPORT_SERIES_KEY_REAL].forEach((supportKey) => {
+          const isNominal = supportKey === SUPPORT_SERIES_KEY_NOMINAL;
+          const targetData = isNominal ? quarterlyNominalData : quarterlyRealData;
 
-        const pre2017Data = targetData.filter((d) => (d.年 as number) <= 2016);
-        pre2017Data.forEach((d) => {
-          const val = d[supportKey] as number;
-          expect(val, `${d.label} support value should be 50-150`).toBeGreaterThanOrEqual(50);
-          expect(val, `${d.label} support value should be 50-150`).toBeLessThanOrEqual(150);
+          const pre2017Data = targetData.filter((d) => (d.年 as number) <= 2016);
+          pre2017Data.forEach((d) => {
+            const val = d[supportKey] as number;
+            expect(val, `${d.label} support value should be 50-150`).toBeGreaterThanOrEqual(50);
+            expect(val, `${d.label} support value should be 50-150`).toBeLessThanOrEqual(150);
+          });
         });
       });
     });
@@ -130,38 +132,40 @@ describe("CTI Data Integrity", () => {
       });
     });
 
-    it("should verify private consumption expenditure is not zero for 2005-2016 (computeChartData contract)", () => {
-      /**
-       * Unit test for computeChartData function's support series scaling.
-       * Verifies that 2005-2016 years have non-zero values after computeChartData processes them.
-       * Note: computeChartData is not used in the production UI pipeline; this is a contract test for the function itself.
-       */
-      const props = {
-        data: ctiData,
-        endYear: 2026,
-        maxCpiDate: { month: 12, year: 2026 },
-        nominalData: ctiData,
-        nominalKeys: CONSUMPTION_NOMINAL_KEYS,
-        realKeys: CONSUMPTION_REAL_KEYS,
-        startYear: 2005,
-      };
+    describe("2020 rollback support-series compatibility", () => {
+      it("should retain private consumption expenditure for 2005-2016", () => {
+        /**
+         * Unit test for computeChartData function's support series scaling.
+         * Verifies that 2005-2016 years have non-zero values after computeChartData processes them.
+         * Note: computeChartData is not used in the production UI pipeline; this is a contract test for the function itself.
+         */
+        const props = {
+          data: ctiData,
+          endYear: 2026,
+          maxCpiDate: { month: 12, year: 2026 },
+          nominalData: ctiData,
+          nominalKeys: CONSUMPTION_NOMINAL_KEYS,
+          realKeys: CONSUMPTION_REAL_KEYS,
+          startYear: 2005,
+        };
 
-      const result = computeChartData(props, []);
-      const { quarterlyNominalData, quarterlyRealData } = result;
+        const result = computeChartData(props, []);
+        const { quarterlyNominalData, quarterlyRealData } = result;
 
-      // 本番環境での問題チェック: 民間最終消費支出が0になっているか
-      [SUPPORT_SERIES_KEY_NOMINAL, SUPPORT_SERIES_KEY_REAL].forEach((supportKey) => {
-        const isNominal = supportKey === SUPPORT_SERIES_KEY_NOMINAL;
-        const targetData = isNominal ? quarterlyNominalData : quarterlyRealData;
+        // 本番環境での問題チェック: 民間最終消費支出が0になっているか
+        [SUPPORT_SERIES_KEY_NOMINAL, SUPPORT_SERIES_KEY_REAL].forEach((supportKey) => {
+          const isNominal = supportKey === SUPPORT_SERIES_KEY_NOMINAL;
+          const targetData = isNominal ? quarterlyNominalData : quarterlyRealData;
 
-        // 2005-2016年では0ではない値を持つべき
-        const pre2017Data = targetData.filter((d) => (d.年 as number) <= 2016);
-        pre2017Data.forEach((d) => {
-          const val = d[supportKey] as number;
-          expect(
-            val,
-            `BUG CHECK: ${d.label} ${supportKey} should NOT be zero (expected value in 50-150 range)`,
-          ).not.toBe(0);
+          // 2005-2016年では0ではない値を持つべき
+          const pre2017Data = targetData.filter((d) => (d.年 as number) <= 2016);
+          pre2017Data.forEach((d) => {
+            const val = d[supportKey] as number;
+            expect(
+              val,
+              `BUG CHECK: ${d.label} ${supportKey} should NOT be zero (expected value in 50-150 range)`,
+            ).not.toBe(0);
+          });
         });
       });
     });

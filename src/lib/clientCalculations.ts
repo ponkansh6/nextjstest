@@ -9,6 +9,8 @@ import {
 import { parseYearMonth, normalizeYearMonth } from "./yearMonth";
 import { applySupportSeriesScaling } from "@server/lib/math/supportSeries";
 
+const CTI_CATEGORY_KEYS = new Set([...CONSUMPTION_NOMINAL_KEYS, ...CONSUMPTION_REAL_KEYS]);
+
 // 行データとキーリストから合計を算出する共通ロジック
 export const sumCategoryValues = (
   row: CpiData,
@@ -123,11 +125,15 @@ export const computeChartData = (props: UseCpiChartDataProps, hiddenQuarters: nu
   const filteredNominalMap = new Map(filteredNominalData.map((d) => [d.年月, d]));
 
   const getQuarterlyData = (keys: string[]) => {
+    // Quarter rows are exclusively for normalized CTI category series. GDP
+    // raw/comparison values and their metadata remain on monthly source rows
+    // for CSV/table use and must not enter CTI stacking or validation.
+    const ctiKeys = keys.filter((key) => CTI_CATEGORY_KEYS.has(key));
     const rows: {
       年: number;
       quarter: number;
       label: string;
-      [key: string]: number | string;
+      [key: string]: number | string | null;
     }[] = [];
     for (let y = startYear; y <= effectiveEndYear; y++) {
       const maxQ = y === maxCpiDate.year ? Math.ceil(maxCpiDate.month / 3) : 4;
@@ -140,14 +146,14 @@ export const computeChartData = (props: UseCpiChartDataProps, hiddenQuarters: nu
           年: number;
           quarter: number;
           label: string;
-          [key: string]: number | string;
+          [key: string]: number | string | null;
         } = { label, quarter: q, 年: y };
 
         // サポートキーを常に初期化
         item[SUPPORT_SERIES_KEY_NOMINAL] = 0;
         item[SUPPORT_SERIES_KEY_REAL] = 0;
 
-        keys.forEach((k: string) => (item[k] = 0));
+        ctiKeys.forEach((key) => (item[key] = 0));
 
         let validMonthsCount = 0;
         months.forEach((m) => {
@@ -158,7 +164,7 @@ export const computeChartData = (props: UseCpiChartDataProps, hiddenQuarters: nu
               validMonthsCount++;
             }
             // キーごとの値チェック
-            keys.forEach((k) => {
+            ctiKeys.forEach((k) => {
               if (
                 typeof row[k as keyof CpiData] === "number" &&
                 (row[k as keyof CpiData] as number) > 0
@@ -169,7 +175,7 @@ export const computeChartData = (props: UseCpiChartDataProps, hiddenQuarters: nu
 
             // keys だけではなく、サポートキーも含めて集計する
             const allKeys = [
-              ...new Set([...keys, SUPPORT_SERIES_KEY_NOMINAL, SUPPORT_SERIES_KEY_REAL]),
+              ...new Set([...ctiKeys, SUPPORT_SERIES_KEY_NOMINAL, SUPPORT_SERIES_KEY_REAL]),
             ];
 
             allKeys.forEach((k: string) => {
@@ -182,7 +188,7 @@ export const computeChartData = (props: UseCpiChartDataProps, hiddenQuarters: nu
                 if (typeof v === "number") {
                   item[k] = v;
                 }
-              } else if (keys.includes(k)) {
+              } else if (ctiKeys.includes(k)) {
                 // 月次データは合計
                 const v = row[k as keyof CpiData];
                 if (typeof v === "number") {
@@ -194,11 +200,11 @@ export const computeChartData = (props: UseCpiChartDataProps, hiddenQuarters: nu
         });
 
         // 月次データの集計要件チェック（support系列は除く）
-        const needsValidation = keys.some(
+        const needsValidation = ctiKeys.some(
           (k) => k !== SUPPORT_SERIES_KEY_NOMINAL && k !== SUPPORT_SERIES_KEY_REAL,
         );
         if (needsValidation && validMonthsCount !== 3) {
-          keys.forEach((k: string) => {
+          ctiKeys.forEach((k: string) => {
             if (k !== SUPPORT_SERIES_KEY_NOMINAL && k !== SUPPORT_SERIES_KEY_REAL) {
               item[k] = 0;
             }
@@ -206,7 +212,7 @@ export const computeChartData = (props: UseCpiChartDataProps, hiddenQuarters: nu
         }
         if (!hiddenQuarters.includes(q)) {
           // 四半期データの各カテゴリーを3で割る（月次指数合計(≒300) → 四半期平均(≒100)）
-          keys.forEach((k: string) => {
+          ctiKeys.forEach((k: string) => {
             if (k !== SUPPORT_SERIES_KEY_NOMINAL && k !== SUPPORT_SERIES_KEY_REAL) {
               item[k] = (item[k] as number) / 3;
             }

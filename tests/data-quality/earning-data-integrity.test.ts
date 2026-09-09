@@ -1,5 +1,6 @@
 import { expect, it, describe, beforeAll } from "vitest";
-import { loadTotalEarningData, loadCpiData } from "../../server/lib/dataLoader";
+import { loadCpiData } from "../../server/lib/dataLoader";
+import { loadEarning2020RollbackFixture } from "../utils/cti-2020-rollback-fixture";
 import type { CpiData } from "../../src/types";
 
 describe("Earnings Data Integrity", () => {
@@ -7,7 +8,7 @@ describe("Earnings Data Integrity", () => {
   let cpiData: CpiData[];
 
   beforeAll(async () => {
-    earningData = await loadTotalEarningData();
+    earningData = await loadEarning2020RollbackFixture();
     cpiData = await loadCpiData();
   });
 

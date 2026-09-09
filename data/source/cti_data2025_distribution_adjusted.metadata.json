@@ -1,0 +1,22 @@
+{
+  "status": "ready",
+  "baseYear": 2025,
+  "outputFile": "cti_data2025_distribution_adjusted.csv",
+  "statInfId": "000040499087",
+  "sourceUrl": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499087",
+  "retrievedAt": "2026-09-09",
+  "sourceFile": "official-cti-2025/cti-distribution-adjusted-000040499087.xlsx",
+  "sourceFileSha256": "7224e5eb424c94d90402502f665a4953cfe16377f65f1040a939696ac948ef41",
+  "csvSha256": "6fd12df575b4a7700a737707f24a16479ead43f7c692ff1e3145d74cad87dfd9",
+  "seriesClassification": "調整系列・分布調整値（原数値）",
+  "tableTitle": "10大費目別 世帯消費動向指数 分布調整値（原数値） 総世帯",
+  "householdScope": "総世帯",
+  "frequency": "月次",
+  "valueType": "指数",
+  "period": {
+    "start": "2017年1月",
+    "end": "2026年7月",
+    "monthlyRows": 115
+  },
+  "extraction": "公式Excelの「総・月(原)」シートから、総世帯の月次指数列（時間軸コード・月・10大費目別の名目値/実質値）を列順・値表記を保持して抽出。"
+}

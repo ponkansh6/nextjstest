@@ -16,6 +16,7 @@ import { XAxisEdgeTick } from "./charts/XAxisEdgeTick";
 import { computeXAxisTicks } from "./charts/xAxisTicks";
 import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
 import { LINE_CONFIGS } from "../../lib/chartConstants";
+import type { ChartInfoContent } from "@/lib/chartInfoContent";
 
 interface NewGraphProps {
   sectionId?: string;
@@ -30,6 +31,7 @@ interface NewGraphProps {
   activeDot?: boolean;
   showAdvanced?: boolean;
   advancedToggle?: React.ReactNode;
+  chartInfoContent?: ChartInfoContent;
 }
 
 export const NewGraph: React.FC<NewGraphProps> = ({
@@ -45,8 +47,15 @@ export const NewGraph: React.FC<NewGraphProps> = ({
   activeDot,
   showAdvanced,
   advancedToggle,
+  chartInfoContent,
 }) => {
   const isAdvanced = showAdvanced ?? false;
+  const visibleLineConfigs = LINE_CONFIGS.filter((config) => !config.advanced || isAdvanced);
+  // Keep the established legend labels available even when the independently
+  // validated GDP comparison index is absent. Only omit the all-null line.
+  const renderedLineConfigs = visibleLineConfigs.filter((config) =>
+    data.some((row) => typeof row[config.key] === "number" && Number.isFinite(row[config.key])),
+  );
 
   return (
     <div id={sectionId} className={styles.chartSection} style={{ scrollMarginTop: "5rem" }}>
@@ -55,6 +64,7 @@ export const NewGraph: React.FC<NewGraphProps> = ({
         {chartKey && (
           <ChartInfoContentRenderer
             chartKey={chartKey as never}
+            content={chartInfoContent}
             ariaLabel="給与・消費・物価の推移比較のデータソースを表示"
             footer={advancedToggle}
           />
@@ -63,19 +73,17 @@ export const NewGraph: React.FC<NewGraphProps> = ({
       <div className={styles.legendContainer}>
         <div className={styles.legendSection}>
           <div className={styles.legendItems}>
-            {LINE_CONFIGS.filter((c) => !c.advanced || isAdvanced).map(
-              ({ key, color, displayName }) => (
-                <button
-                  key={key}
-                  onClick={() => onToggle(key)}
-                  className={`${styles.legendItem} ${hiddenKeys.includes(key) ? styles.hidden : ""}`}
-                  aria-pressed={!hiddenKeys.includes(key)}
-                >
-                  <span className={styles.legendIcon} style={{ backgroundColor: color }} />
-                  <span className={styles.legendLabel}>{displayName}</span>
-                </button>
-              ),
-            )}
+            {visibleLineConfigs.map(({ key, color, displayName }) => (
+              <button
+                key={key}
+                onClick={() => onToggle(key)}
+                className={`${styles.legendItem} ${hiddenKeys.includes(key) ? styles.hidden : ""}`}
+                aria-pressed={!hiddenKeys.includes(key)}
+              >
+                <span className={styles.legendIcon} style={{ backgroundColor: color }} />
+                <span className={styles.legendLabel}>{displayName}</span>
+              </button>
+            ))}
           </div>
         </div>
       </div>
@@ -115,21 +123,20 @@ export const NewGraph: React.FC<NewGraphProps> = ({
               dx={-10}
             />
             <Tooltip {...tooltipProps} />
-            {LINE_CONFIGS.filter((c) => !c.advanced || isAdvanced).map(
-              ({ key, color, strokeDasharray }) =>
-                !hiddenKeys.includes(key) ? (
-                  <Line
-                    key={key}
-                    type="monotone"
-                    dataKey={key}
-                    stroke={color}
-                    strokeWidth={isMobile ? 2 : 3}
-                    dot={false}
-                    isAnimationActive={false}
-                    activeDot={activeDot}
-                    strokeDasharray={strokeDasharray}
-                  />
-                ) : null,
+            {renderedLineConfigs.map(({ key, color, strokeDasharray }) =>
+              !hiddenKeys.includes(key) ? (
+                <Line
+                  key={key}
+                  type="monotone"
+                  dataKey={key}
+                  stroke={color}
+                  strokeWidth={isMobile ? 2 : 3}
+                  dot={false}
+                  isAnimationActive={false}
+                  activeDot={activeDot}
+                  strokeDasharray={strokeDasharray}
+                />
+              ) : null,
             )}
           </LineChart>
         </ResponsiveContainer>

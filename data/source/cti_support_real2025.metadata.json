@@ -1,0 +1,26 @@
+{
+  "status": "ready",
+  "source": {
+    "provider": "e-Stat",
+    "statDataId": "0003109751",
+    "url": "https://www.e-stat.go.jp/dbview?sid=0003109751",
+    "tableTitle": "実質暦年（1994年～）",
+    "retrievedAt": "2026-09-10",
+    "resultSha256": "02f8ad6e77ec09e1143ef51fb16be9555389037b870ea04d1a2e11f33bd2acb8"
+  },
+  "seriesConcept": "private-final-consumption-expenditure",
+  "seriesCode": "12",
+  "seriesName": "民間最終消費支出",
+  "unit": "10億円",
+  "priceMeasure": "previous-year-chain-linked",
+  "referenceYear": 2020,
+  "sourceFrequency": "annual",
+  "rawValuePreserved": true,
+  "displayNormalizationYear": 2025,
+  "period": { "start": "1994", "end": "2025", "annualRows": 32 },
+  "value2025": 308122.2,
+  "normalizationFactor": 0.00032454655977401175,
+  "normalizationYear": "2025",
+  "monthlyExpansionRule": "The annual raw value may be associated only with its twelve months in a downstream display transform; it is not used to calculate normalization.",
+  "csvSha256": "0c6973e2b4a2686b94a7954a5a55058a5101de05ebed316066f7d0b517e6e744"
+}

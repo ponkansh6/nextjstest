@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import * as fs from "node:fs";
 import Papa from "papaparse";
-import { buildCtiFilePaths } from "../../server/lib/dataIo";
-import { loadCtiData } from "../../server/lib/dataLoader";
+import { buildCtiRollback2020FilePaths } from "../../server/lib/dataIo";
 import { calculateQuarterLabel } from "@/lib/math/quarter";
 import { SUPPORT_SERIES_KEY_REAL, SUPPORT_SERIES_KEY_NOMINAL } from "@/lib/chartConstants";
 import type { CpiData } from "@/types";
+import { loadCti2020RollbackFixture } from "../utils/cti-2020-rollback-fixture";
 
 /**
  * サポート系列（民間最終消費支出）の結合キー契約テスト。
@@ -26,13 +26,16 @@ import type { CpiData } from "@/types";
  *
  * 本テストはその3つの分岐と、文字列完全一致で行われる結合キーの契約をピン留めする。
  */
-describe("Support series join contract (loadSupportMap / cpi.ts:59-78)", () => {
-  const paths = buildCtiFilePaths();
+describe("Legacy 2020 rollback support-series join contract (loadSupportMap / cpi.ts:59-78)", () => {
+  const paths = buildCtiRollback2020FilePaths();
 
   /** cpi.ts:60-68 と同じ手順でヘッダ行と列位置を求める（実装が依存する前提条件の検証）。 */
   const readHeader = (filePath: string) => {
     const content = fs.readFileSync(filePath, "utf8");
-    const rows = Papa.parse<string[]>(content, { header: false, skipEmptyLines: false }).data;
+    const rows = Papa.parse<string[]>(content, {
+      header: false,
+      skipEmptyLines: false,
+    }).data;
     const headerIndex = rows.findIndex(
       (row) =>
         Array.isArray(row) && row.some((c) => typeof c === "string" && /民間最終消費支出/.test(c)),
@@ -153,11 +156,11 @@ describe("Support series join contract (loadSupportMap / cpi.ts:59-78)", () => {
     ).toBe("ff5e");
   });
 
-  describe("end-to-end: loadCtiData() の実出力（private な loadSupportMap を実際に通す）", () => {
+  describe("end-to-end: 明示的な2020 rollback fixture の実出力（private な loadSupportMap を実際に通す）", () => {
     let ctiData: CpiData[];
 
     beforeAll(async () => {
-      ctiData = await loadCtiData();
+      ctiData = await loadCti2020RollbackFixture();
     });
 
     it.each([SUPPORT_SERIES_KEY_REAL, SUPPORT_SERIES_KEY_NOMINAL])(

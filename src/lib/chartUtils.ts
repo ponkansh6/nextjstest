@@ -19,6 +19,26 @@ export const calculateSupportScale = (data: CpiData[], key: string): number => {
 };
 
 /**
+ * Returns a display-only factor when a source has every required raw value for
+ * the selected calendar year. It deliberately never uses moving averages.
+ */
+export const calculateRawCalendarYearFactor = (
+  values: Array<{ year: number; value: number | null | undefined }>,
+  year: number,
+  requiredCount: number,
+): number | undefined => {
+  const selected = values.filter((entry) => entry.year === year).map((entry) => entry.value);
+  if (
+    selected.length !== requiredCount ||
+    selected.some((value) => typeof value !== "number" || !Number.isFinite(value) || value === 0)
+  ) {
+    return undefined;
+  }
+  const mean = selected.reduce<number>((sum, value) => sum + (value as number), 0) / requiredCount;
+  return mean > 0 ? 100 / mean : undefined;
+};
+
+/**
  * 年範囲でデータをフィルタリングする
  */
 export const filterDataByYear = <T extends { 年月: string }>(

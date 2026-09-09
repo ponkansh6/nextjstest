@@ -10,7 +10,10 @@ export async function parseCsvFile<T = string[][]>(
     return [] as T;
   }
   const content = fs.readFileSync(filePath, "utf8");
-  const parsed = Papa.parse<T>(content, { header: options.header ?? false, skipEmptyLines: false });
+  const parsed = Papa.parse<T>(content, {
+    header: options.header ?? false,
+    skipEmptyLines: false,
+  });
   return parsed.data as T;
 }
 
@@ -54,11 +57,48 @@ export function buildEarningsFilePaths() {
   };
 }
 
-export function buildCtiFilePaths() {
+export function buildCtiRollback2020FilePaths() {
   return {
     main: path.join(process.cwd(), "data/source", "cti_data.csv"),
     supportNominal: path.join(process.cwd(), "data/source", "cti_support_nominal.csv"),
     supportReal: path.join(process.cwd(), "data/source", "cti_support_real.csv"),
+  };
+}
+
+export function buildCtiFilePaths() {
+  return {
+    ...buildCtiRollback2020FilePaths(),
+    candidateMain: path.join(process.cwd(), "data/source", "cti_data2025.csv"),
+    candidateDistributionAdjusted: path.join(
+      process.cwd(),
+      "data/source",
+      "cti_data2025_distribution_adjusted.csv",
+    ),
+    candidateDistributionAdjustedMetadata: path.join(
+      process.cwd(),
+      "data/source",
+      "cti_data2025_distribution_adjusted.metadata.json",
+    ),
+    candidateSupportNominal: path.join(process.cwd(), "data/source", "cti_support_nominal2025.csv"),
+    candidateSupportReal: path.join(process.cwd(), "data/source", "cti_support_real2025.csv"),
+    seriesMap: path.join(process.cwd(), "data/source", "cti-2025-series-map.csv"),
+    officialSnapshot: path.join(process.cwd(), "data/source", "cti-2025-official-series.csv"),
+    metadata: path.join(process.cwd(), "data/source", "cti_data2025.metadata.json"),
+    supportNominalMetadata: path.join(
+      process.cwd(),
+      "data/source",
+      "cti_support_nominal2025.metadata.json",
+    ),
+    supportRealMetadata: path.join(
+      process.cwd(),
+      "data/source",
+      "cti_support_real2025.metadata.json",
+    ),
+    gdpDisplayNormalization: path.join(
+      process.cwd(),
+      "data/source",
+      "cti-gdp-display-normalization2025.json",
+    ),
   };
 }
 
@@ -92,7 +132,10 @@ export function parseContributionWeights(contributionContent: string): Record<st
 }
 
 export function parseIndexSection(content: string): Map<string, number> {
-  const parsed = Papa.parse<string[]>(content, { header: false, skipEmptyLines: false });
+  const parsed = Papa.parse<string[]>(content, {
+    header: false,
+    skipEmptyLines: false,
+  });
   const rows = parsed.data;
   const startIndex = rows.findIndex(
     (row) => (row[0]?.trim() === "年" || row[0]?.trim() === "year") && row[8]?.trim() === "１月",

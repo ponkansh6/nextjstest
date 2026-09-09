@@ -2,7 +2,7 @@
 
 ## Purpose
 
-A dashboard application to visualize and track Japanese economic indicators — CPI (Consumer Price Index), CTI (Business Cycle Index), wage statistics, and population trends. CPI selects a validated, same-base CSV pair: the official 2025-base connected series when available, otherwise the compatible 2020-base pair. The UI states the pair actually selected; other comparison series retain their 2020-base normalization.
+A dashboard application to visualize and track Japanese economic indicators — CPI (Consumer Price Index), CTI (Consumption Trend Index micro), wage statistics, and population trends. CPI selects its complete validated 2025-base set when available. CTI has 2025 candidate CSVs but, because its official map and snapshot are not yet created, currently selects the complete 2020-base rollback set. GDP comparison readiness is assessed independently from CTI: the verified nominal and real annual artifacts cover 1994–2025 and each uses its own official 2025 value for display normalization. Comparison-only normalization never overwrites official source values.
 
 ## Data Model
 
@@ -10,17 +10,17 @@ A dashboard application to visualize and track Japanese economic indicators — 
 
 The shared data type with an index signature `[key: string]: string | number` for extensibility. Below are the explicitly defined fields; additional fields are added at runtime by each data loader.
 
-| Field                          | Type           | Description                                                                                                                                                                        |
-| ------------------------------ | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 年月                           | string         | Year-month (e.g. "2020年1月")                                                                                                                                                      |
-| 総合                           | number         | CPI all-items index (2025 annual average = 100) or earnings total index (2020 annual average = 100), depending on loader                                                           |
-| 生鮮食品を除く総合             | number         | CPI excluding Fresh Food                                                                                                                                                           |
-| 持家の帰属家賃を除く総合       | number         | CPI excluding Imputed Rent                                                                                                                                                         |
-| 民間最終消費支出（参考）       | number \| null | Consumption expenditure (private final, 2005-2017, 12MA, indexed 2020=100); null outside period                                                                                    |
-| 民間最終消費支出（参考・延長） | number \| null | Consumption expenditure (private final, 2017-, advanced/reference-only series, 12MA, indexed 2020=100); null outside period; hidden by default, shown via ?adv=1 or ⓘ panel toggle |
-| CTI消費支出（参考）            | number \| null | Consumption expenditure (CTI distribution-adjusted, 2018-, 12MA window uses 2017 data, indexed 2020=100); null outside period                                                      |
-| 消費支出（参考）               | number         | Consumption expenditure (combined legacy series, 12MA, indexed 2020=100) — kept for compatibility                                                                                  |
-| CPI総合(参考)                  | number         | CPI All Items (reference)                                                                                                                                                          |
+| Field                                                   | Type           | Description                                                                                                                                                                                                                                        |
+| ------------------------------------------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 年月                                                    | string         | Year-month (e.g. "2020年1月")                                                                                                                                                                                                                      |
+| 総合                                                    | number         | CPI all-items index (2025 annual average = 100) or earnings total index (2020 annual average = 100), depending on loader                                                                                                                           |
+| 生鮮食品を除く総合                                      | number         | CPI excluding Fresh Food                                                                                                                                                                                                                           |
+| 持家の帰属家賃を除く総合                                | number         | CPI excluding Imputed Rent                                                                                                                                                                                                                         |
+| 民間最終消費支出（名目・原値） / （実質・原値）         | number \| null | GDP private final consumption official raw amount. The loader emits these only when the complete nominal-and-real GDP comparison set validates; nominal is current prices and real is previous-year chain-linked with its recorded reference year. |
+| 民間最終消費支出（名目・比較指数） / （実質・比較指数） | number \| null | GDP comparison-only normalized value; separate from official raw values and omitted when either verified 2025 annual value is absent or invalid.                                                                                                   |
+| CTI消費支出（参考）                                     | number \| null | Consumption expenditure (selected all-household CTI micro series, 12MA, official availability begins in 2017; no legacy CTI connection)                                                                                                            |
+| 消費支出（参考）                                        | number         | Consumption expenditure (combined legacy series, 12MA, indexed 2020=100) — kept for compatibility                                                                                                                                                  |
+| CPI総合(参考)                                           | number         | CPI All Items (reference)                                                                                                                                                                                                                          |
 
 **Major runtime-added fields per data loader:**
 
@@ -49,7 +49,12 @@ Static CSV files (not publicly served) stored in `data/source/`:
 - `data/source/cpi-2025-series-map.csv` — 78-series mapping table that records official series codes, dashboard keys, classification/missing-data handling, and mapping evidence; its code and name fields are verified against `cpi-2025-official-series.csv`, not merely against a hash of the mapping table itself.
 - `data/source/cpi_data.csv` / `data/source/contribution.csv` — Compatible 2020-base fallback pair. They are selected together only when the complete 2025 pair cannot be validated.
 - `data/source/cpi_data2025.csv` — Saved 2025-base raw monthly data beginning in 2025; it is not a long connected series and MUST NOT be selected as the dashboard CPI input.
-- `data/source/cti_data.csv` — Business Cycle Index
+- `data/source/cti_data2025.csv` / `cti_data2025_distribution_adjusted.csv` — 2025-base CTI candidate CSVs, each covering 2017年1月〜2026年7月. They are not selected until the adopted variant, official map, and snapshot are complete.
+- `data/source/cti_data2025.metadata.json` / `cti_data2025_distribution_adjusted.metadata.json` — Candidate provenance and integrity metadata; they do not by themselves make a 2025 CTI set selectable.
+- `data/source/cti-2025-series-map.csv` / `cti-2025-official-series.csv` — **Planned, not present**: the official-code map and independent snapshot required to verify the adopted CTI candidate.
+- `data/source/cti_support_nominal2025.csv` / `cti_support_real2025.csv` — Official annual GDP artifacts for 1994–2025, each containing e-Stat series code 12 (`民間最終消費支出`) in 10億円. The nominal source is 0003109786 and the real source is 0003109751.
+- `data/source/cti_support_nominal2025.metadata.json` / `cti_support_real2025.metadata.json` / `cti-gdp-display-normalization2025.json` — Ready provenance, hash, annual-period, and independent 2025 annual-value normalization records. Nominal remains current prices; real remains previous-year chain-linked at its recorded 2020 reference year.
+- `data/source/cti_data.csv` / `cti_support_nominal.csv` / `cti_support_real.csv` — Complete compatible 2020-base CTI rollback set; never mixed with a 2025 CTI input.
 - `data/source/total_earning.csv` — Total earnings
 - `data/source/contractual_earnings.csv` — Contractual earnings
 - `data/source/scheduled_earnings.csv` — Scheduled earnings
@@ -99,7 +104,7 @@ The system SHALL render the main dashboard as a server-rendered page at `/`.
 
 ### R2: Chart Visualization
 
-The system SHALL display economic indicators as interactive Recharts-based charts; CPI uses the validated 2025-base connected pair when available, otherwise the compatible 2020-base pair, while the other comparable indicator series use 2020-base normalization.
+The system SHALL display economic indicators as interactive Recharts-based charts; CPI and CTI select only complete compatible base-year sets, and comparison-only fields are normalized independently from their official source basis.
 
 #### Scenario R2a: CPI Chart
 
@@ -115,11 +120,13 @@ The system SHALL display economic indicators as interactive Recharts-based chart
   - StackedAreaChart / SpendingBarChart (additional breakdowns)
   - ResidualAreaChart (給与と物価の差(実質賃金相当)):
     - Displays the difference between "給与指数（総合）" and "物価指数（総合）".
-    - The CPI input is 2025-base and the earnings input is 2020-base; this direct difference is a dashboard reference measure, not a same-base index residual.
+    - Uses comparison-only fields normalized from each series’ raw 2025 calendar-year average when every required series has 12 valid months; it is not a rewrite of CPI, CTI, earnings, or GDP source values.
     - The residual series is smoothed with a 2-month moving average (2MA).
   - NewGraph (supplementary view, 3種比較):
     - Displays four main series in legend order: 物価指数(総合), 給与(総合), CTI消費(総合), 民間最終消費(総合)
-    - "民間最終消費支出（参考）" (2005-2017) and "CTI消費支出（参考）" (2018-) are shown as two separate series with `null` outside their respective active periods so lines correctly truncate instead of dropping to zero.
+    - GDP reference and CTI consumption are shown as separate series with `null` outside their validated active periods so lines correctly truncate instead of dropping to zero.
+    - CTI begins in its official 2017 availability range and is not connected to a legacy CTI series. GDP and CTI remain separate lines.
+    - NewGraph receives only GDP comparison indices normalized independently from each series' official 2025 annual value. A GDP line is omitted when that GDP validation is incomplete, regardless of the CTI state.
     - Also includes an advanced reference-only series "民間最終消費支出（参考・延長）" (2017-) which is hidden by default and can be enabled via `?adv=1` URL query parameter or the ⓘ info panel toggle.
   - Charts using `interval="preserveStartEnd"` on their XAxis (MajorIndicesChart, EarningsBreakdownChart, StackedAreaChart, SpendingBarChart, ResidualAreaChart, NewGraph) render the first/last (start year / end year) tick label in `--foreground` via the shared `XAxisEdgeTick` component (`src/app/components/charts/XAxisEdgeTick.tsx`), while other tick labels use the default `--chart-text` color
 
@@ -183,15 +190,28 @@ The system SHALL load and process CSV data on the server before rendering.
 #### Scenario R3b: CTI / Earnings / Consumption Data Loading
 
 - **WHEN** `loadCtiData()` / `loadTotalEarningData()` / consumption map builder is called
-- **THEN** corresponding CSV files are read from `data/source/`, processed through `server/lib/dataLoader.ts`, and consumption expenditure is split into `民間最終消費支出（参考）` (2005-2017) and `CTI消費支出（参考）` (2017-) with `null` for periods outside their active ranges, while `民間最終消費支出（参考・延長）` is generated for 2017 onwards as an advanced reference-only series.
+- **THEN** it selects a complete, verified 2025 CTI set only when the adopted CTI CSV, metadata, official map, and official snapshot validate; otherwise it selects the complete compatible 2020 rollback set
+- **AND** it validates the CTI set and the nominal/real GDP comparison set independently and never treats GDP availability or a CTI base year as a condition for CTI selection
+- **AND** it returns an explicit unavailable state when neither complete set is valid
+- **AND** missing CTI inputs remain missing; they are not converted to zero, and a derived residual is missing when any required component is missing.
 
-#### Scenario R3d: 2020 Base Alignment Across Series
+At the current artifact state, the missing CTI map/snapshot causes the 2020 CTI rollback to be selected. The annual nominal/real GDP pair is independently ready, so `getGdpSupportStatus()` reports available GDP comparison normalization without selecting the CTI 2025 candidate.
 
-- **WHEN** a series in 3種比較 is normalized to the 2020 base
-- **THEN** the scaling factor is derived from the **raw** (pre-moving-average) 2020 calendar-year average, never from the 12MA series
-- **AND** `ctiFactor` in `server/lib/data-loader/earnings.ts` uses the raw CTI `消費支出（名目）` 2020 average, consistent with `calculateSupportScale` (`src/lib/chartUtils.ts`)
-- **AND** `CTI消費支出（参考）` at 2020年12月 — whose 12MA window is exactly 2020年1月〜12月 — equals 100
-- **AND** normalizing on the 12MA series instead would blend the pre-COVID 2019 level into the denominator (101.97 vs raw 100.00), sinking the CTI series ~1.9% below `CPI総合(12MA)` and `給与 総合(12MA)` and breaking cross-series comparison
+#### Scenario R3d: CTI Source Basis, 12MA, and Comparison Rebase
+
+- **WHEN** a validated selected CTI 2025 series is used for the consumption charts
+- **THEN** the chart and data table retain its official source basis; the source basis is not overwritten by comparison normalization
+- **AND WHEN** a 3種比較 or wage-price-difference field is generated
+- **THEN** its 12MA is calculated from continuous raw values first and its display factor is derived only from the raw selected-base calendar-year average
+- **AND** the comparison field is omitted when the 2025 average cannot be verified from 12 valid months.
+
+#### Scenario R3i: GDP Raw and Comparison Values
+
+- **WHEN** GDP has complete, verified annual observations through 2025 and one finite non-zero 2025 value per price concept
+- **THEN** nominal and real GDP each receive their own 2025 annual-value normalization factor for the comparison view
+- **AND** the raw official amounts remain available to the spending table, CSV, and tooltip with their price concept and reference year
+- **AND WHEN** GDP values or provenance are incomplete
+- **THEN** the GDP comparison line is not rendered and the system does not interpolate values, fit the CTI/GDP boundary, or reuse a CTI factor.
 
 #### Scenario R3c: Data Processing & Projection
 
@@ -333,6 +353,22 @@ The system SHALL provide explanatory info for each chart/metric.
 - **THEN** it identifies the base year and source mode returned by `getCpiDataStatus()`; for a validated 2025 pair, it identifies the nationwide monthly 2025 annual average = 100 connected CPI series and explains that pre-2025 values are connected from earlier base years
 - **AND** it explains that category values use the selected pair's fixed-base weights rather than official contribution measures
 - **AND** the stacked-area explanation identifies `外食以外食料` as a weighted difference and describes the major-category normalization (10002 for the 2025 pair)
+
+#### Scenario R6c: CTI Data-State Explanation
+
+- **WHEN** a user opens the consumption-expenditure or 3種比較 information panel
+- **THEN** it identifies the CTI compatibility set selected by the loader without inferring a series variant from a filename
+- **AND** a validated 2025 set explains the all-household official connected CTI series, its selected variant, the three household surveys combined in CTI micro, and the separately verified GDP reference connection
+- **AND** it explains that 12MA is calculated from raw continuous monthly values and that a valid GDP comparison uses a separate raw 2025 annual value without changing official source values
+- **AND WHEN** the 2025 set is unavailable, invalid, or no complete compatible set exists
+- **THEN** the panel uses user-facing language to identify the 2020 rollback data or that consumption data cannot currently be displayed, without exposing internal file or validation terminology.
+
+#### Scenario R6d: GDP and CTI Comparison Explanation
+
+- **WHEN** a user opens the spending or 3種比較 information panel
+- **THEN** it identifies GDP raw values as official amounts, distinguishing nominal current prices from real previous-year chain-linked values and their reference year
+- **AND** it explains that GDP comparison values use a separate 2025 annual-value display normalization
+- **AND** it states that CTI begins in 2017 and is not statistically connected to GDP or a legacy CTI series.
 
 ### R7: Responsive Layout
 
@@ -632,11 +668,11 @@ Page (RSC)
     │   └── StackedAreaChart → CustomTooltip — always-expanded 12-series legend (compact on mobile)
     │       └── belowChartSlot: CagrPanel — popup link + compact BottomSheet (R18)
     ├── [Chart variants]                     — deferred: wrapped in LazyMount
-     │   ├── SpendingBarChart (nominal / real) — supports `showTotal` opt-in via tooltip controller
+    │   ├── SpendingBarChart (nominal / real) — receives quarterly aggregates of the selected CTI fields; it does not currently receive the pending GDP raw/comparison artifacts
      │   ├── EarningsBreakdownChart → CustomTooltip
     │   ├── ResidualAreaChart → CustomTooltip
-    │   └── NewGraph → CustomTooltip — Supplementary visualization
-    ├── ChartInfoButton → ChartInfoContentRenderer — Indicator explanations (uses `chartKey` mapped to `CHART_INFO` in `src/lib/chartInfoContent.ts`)
+    │   └── NewGraph → ChartInfoContentRenderer → CustomTooltip — comparison visualization receives CTI plus GDP comparison-only normalized values; it omits unavailable GDP lines
+    ├── ChartInfoButton → ChartInfoContentRenderer — Indicator explanations (uses `chartKey` plus loader-resolved state in `src/lib/chartInfoContent.ts`)
     ├── ChartExportButton — CSV download of the displayed rows (inside each chart's <details>)
     └── CustomTooltip (React.memo, module-level component for charts, managed via `useChartTooltipController`)
 ```
@@ -659,8 +695,17 @@ data/source/cpi_data.csv + data/source/contribution.csv (compatible 2020 fallbac
       → select complete 2025 pair; otherwise select complete 2020 pair; otherwise fail closed with invalid `getCpiDataStatus()`
       → apply selected-pair fixed weights: all-items denominator 10000; mutually exclusive 10-major-category comparison denominator 10002
       → derive `外食以外食料 = weighted 食料 − weighted 外食`; propagate source missing values to all dependent values
-data/source/{cti,total_earning,contractual_earnings,scheduled_earnings,total_worked_hours,population_statistics,employment_indices,cti_support_nominal,cti_support_real}.csv
-  → server/lib/dataIo.ts (path definitions + CSV parsing utilities)
+official all-household CTI micro CSV → planned official-code snapshot + planned series map + candidate metadata
+data/source/cti_data2025.csv / data/source/cti_data2025_distribution_adjusted.csv (candidates; map/snapshot absent)
+data/source/cti_data.csv + cti_support_nominal.csv + cti_support_real.csv (complete 2020 rollback set)
+  → server/lib/dataIo.ts → server/lib/data-loader/cpi.ts
+    → reject the 2025 CTI candidates while map/snapshot are absent; select the 2020 rollback set; preserve source-basis values and missing values
+GDP nominal/real annual CSVs + ready metadata + independent annual-2025 factors
+  → validate both price concepts and their one 2025 annual value as one comparison set
+    → current result: fail closed; omit GDP raw/comparison fields and the NewGraph GDP line without altering CTI selection
+    → future valid result: raw official amounts and separate comparison-only normalized values
+data/source/{total_earning,contractual_earnings,scheduled_earnings,total_worked_hours,population_statistics,employment_indices}.csv
+  → server/lib/dataIo.ts
     → server/lib/data-loader/{earnings,population}.ts (domain-specific loading + caching)
 
 CPI / CTI / earnings / population loader results
@@ -668,8 +713,8 @@ CPI / CTI / earnings / population loader results
     → server/lib/dataProcessor.ts (transform + clean)
       → server/lib/serverCalculations.ts (derive)
         → server/lib/view-models/dashboard.ts (project: select columns, round 2 decimals)
-          → src/app/page.tsx (RSC: load + project + `getCpiDataStatus()` + pass props)
-            → src/app/components/CpiChart.tsx ("use client": render + interact)
+          → src/app/page.tsx (RSC: load + project + CPI/CTI selected data state + pass props)
+            → src/app/components/CpiChart.tsx ("use client": resolve info content and pass CTI state to consumption and NewGraph UI)
 ```
 
 **Key optimization:** The view-models layer reduces RSC payload from 1,169 KB to ~505 KB by removing unused columns and rounding to 2 decimal places before sending to client.
@@ -747,6 +792,8 @@ scripts/
 - Unit tests for data loading, transformation, and data quality/integrity (`tests/unit/`, `tests/data-quality/`)
 - CPI pair integrity tests MUST unconditionally validate the 78 mapping records against `data/source/cpi-2025-official-series.csv`, including official code and name; they MUST validate the metadata-recorded source-original and snapshot SHA-256 values rather than relying only on a mapping-table hash.
 - CPI loader tests MUST cover runtime validation of metadata row/series counts, period, generated-file SHA-256, monthly continuity, and 2025 all-items annual average, plus complete 2020-pair fallback when 2025 validation fails.
+- CTI tests MUST treat the missing `cti-2025-series-map.csv` and `cti-2025-official-series.csv` as a 2025-candidate failure until those planned artifacts exist; after creation, they MUST unconditionally verify official codes, names, and representative values against the snapshot.
+- GDP tests MUST require both nominal and real annual 1994–2025 artifacts, valid hashes, and one finite non-zero 2025 value each before emitting comparison values. They MUST NOT mix price concepts or substitute a 2020/CTI factor.
 - Component tests for chart rendering and interaction (`tests/components/`)
 - Integration tests for data mapping and computation accuracy (`tests/data-mapping/`, `tests/computation-contract/`)
 - Constant/fixture tests for expected data quality (`tests/constants/`, `tests/fixtures/`)

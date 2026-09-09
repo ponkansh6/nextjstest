@@ -5,7 +5,7 @@ import styles from "./CpiChart.module.css";
 import { getLegendLabel, SUPPORT_SERIES_KEY_NOMINAL } from "../../lib/chartConstants";
 import type { ChartTooltipProps } from "./charts/useChartTooltipProps";
 import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
-import { CHART_INFO } from "../../lib/chartInfoContent";
+import { CHART_INFO, type ChartInfoContent } from "../../lib/chartInfoContent";
 import { YearReferenceLines } from "./charts/YearReferenceLines";
 import { XAxisEdgeTick } from "./charts/XAxisEdgeTick";
 import { computeXAxisTicks } from "./charts/xAxisTicks";
@@ -22,6 +22,7 @@ interface SpendingBarChartProps {
   title: string;
   sectionId?: string;
   infoKey?: keyof typeof CHART_INFO;
+  chartInfoContent?: ChartInfoContent;
   data: QuarterlyDataPoint[];
   keys: string[];
   colors: string[];
@@ -43,6 +44,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
     title,
     sectionId,
     infoKey,
+    chartInfoContent,
     data,
     keys,
     colors,
@@ -116,7 +118,11 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
       <h2 className={styles.chartTitle}>
         {title}
         {infoKey && (
-          <ChartInfoContentRenderer chartKey={infoKey} ariaLabel={`${title}のデータソースを表示`} />
+          <ChartInfoContentRenderer
+            chartKey={infoKey}
+            content={chartInfoContent}
+            ariaLabel={`${title}のデータソースを表示`}
+          />
         )}
       </h2>
 

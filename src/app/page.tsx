@@ -1,6 +1,10 @@
 import { Suspense } from "react";
 import { loadCpiData, loadCtiData, loadTotalEarningData } from "../../server/lib/dataLoader";
-import { getCpiDataStatus } from "../../server/lib/data-loader/cpi";
+import {
+  getCpiDataStatus,
+  getCtiDataStatus,
+  getGdpSupportStatus,
+} from "../../server/lib/data-loader/cpi";
 import { toCpiView, toEarningsView, toQuarterlyView } from "../../server/lib/view-models/dashboard";
 import { computeQuarterlyAggregates } from "../../server/lib/view-models/quarterlyAggregation";
 import CpiChart from "./components/CpiChart";
@@ -14,13 +18,24 @@ import {
 
 export const revalidate = false;
 
+function getGdpInfoReason(reason: string | undefined): string {
+  // Validation reasons are deliberately precise for server diagnostics. Keep
+  // implementation terms out of the information panel.
+  return reason
+    ? "GDP比較に必要な2025年の四半期値または確認情報がそろっていません。"
+    : "GDP比較に必要なデータを確認中です。";
+}
+
 export default async function Page() {
-  const [cleanData, ctiData, totalEarningData, cpiDataStatus] = await Promise.all([
-    loadCpiData(),
-    loadCtiData(),
-    loadTotalEarningData(),
-    getCpiDataStatus(),
-  ]);
+  const [cleanData, ctiData, totalEarningData, cpiDataStatus, ctiDataStatus, gdpSupportStatus] =
+    await Promise.all([
+      loadCpiData(),
+      loadCtiData(),
+      loadTotalEarningData(),
+      getCpiDataStatus(),
+      getCtiDataStatus(),
+      getGdpSupportStatus(),
+    ]);
   const cpiInfoState =
     cpiDataStatus.baseYear === 2025
       ? {
@@ -32,7 +47,8 @@ export default async function Page() {
         ? {
             baseYear: 2020 as const,
             sourceMode: "fallback" as const,
-            label: "2020年基準のフォールバックCSV",
+            // 利用者向けの表示では、ファイル選択の内部用語を出さない。
+            label: "2020年基準の互換データ",
           }
         : {
             baseYear: null,
@@ -43,6 +59,27 @@ export default async function Page() {
     cpiInfoState.baseYear === null
       ? "CPIデータは現在利用できません。"
       : `CPIは${cpiInfoState.label}を使用しています。`;
+  const ctiInfoState =
+    ctiDataStatus.valid && ctiDataStatus.baseYear === 2025
+      ? {
+          baseYear: 2025 as const,
+          sourceMode: "official-connected" as const,
+        }
+      : ctiDataStatus.valid && ctiDataStatus.baseYear === 2020
+        ? {
+            baseYear: 2020 as const,
+            sourceMode: "rollback" as const,
+          }
+        : {
+            baseYear: null,
+            sourceMode: "unavailable" as const,
+          };
+  const gdpInfoState = gdpSupportStatus.valid
+    ? { availability: "available" as const, displayNormalizationYear: 2025 as const }
+    : {
+        availability: "unavailable" as const,
+        reason: getGdpInfoReason(gdpSupportStatus.reason),
+      };
 
   // Determine maxCpiDate from cleanData
   let maxCpiYear = 1994;
@@ -119,6 +156,7 @@ export default async function Page() {
             totalEarningData={projectedEarningsData}
             maxCpiDate={maxCpiDate}
             cpiInfoState={cpiInfoState}
+            ctiInfoState={{ ...ctiInfoState, gdp: gdpInfoState }}
           />
         </Suspense>
       ) : (

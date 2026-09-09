@@ -1,0 +1,25 @@
+{
+  "status": "ready",
+  "displayNormalizationYear": 2025,
+  "normalizationYear": "2025",
+  "nominal": {
+    "status": "ready",
+    "value2025": 350910.7,
+    "factor": 0.0002849727865237509,
+    "normalizedValue2025": 100,
+    "csv": "cti_support_nominal2025.csv",
+    "csvSha256": "9a6331e1cc0ff0f4acb8da67dbdf5ed0c2b1457122b1a1b8c990911dbce2038f"
+  },
+  "real": {
+    "status": "ready",
+    "value2025": 308122.2,
+    "factor": 0.00032454655977401175,
+    "normalizedValue2025": 100,
+    "csv": "cti_support_real2025.csv",
+    "csvSha256": "0c6973e2b4a2686b94a7954a5a55058a5101de05ebed316066f7d0b517e6e744"
+  },
+  "validation": {
+    "allSeriesReady": true,
+    "basis": "Each series uses its own official annual 2025 value."
+  }
+}
