@@ -318,7 +318,7 @@ describe("Earnings Data Integrity", () => {
       expect(val2017).toBeCloseTo(103.33, 1);
     });
 
-    it("should base CTI消費支出（参考） on the raw 2020 calendar-year average (2020年12月 12MA = 100)", () => {
+    it("should base comparison series on the raw 2020 calendar-year average (2020年12月 12MA = 100)", () => {
       expect(earningData.length).toBeGreaterThan(0);
       const dec2020 = earningData.find((d) => d.年月 === "2020年12月");
       expect(dec2020).toBeDefined();
@@ -328,10 +328,34 @@ describe("Earnings Data Integrity", () => {
       // 12MA後の系列で正規化すると2019年の水準が混入して約98.07に沈むため、その回帰を防ぐ。
       expect(Number(dec2020!["CTI消費支出（参考）"])).toBeCloseTo(100, 1);
 
+      // earnings用CPI参考系列は、CPIダッシュボードの基準年にかかわらず
+      // raw CPI総合の2020暦年平均を分母として再正規化する。
+      const rawCpi2020 = cpiData
+        .filter((d) => d.年月.startsWith("2020年"))
+        .map((d) => Number(d.総合 ?? 0))
+        .filter((value) => value > 0);
+      const rawCpi2020Average =
+        rawCpi2020.reduce((sum, value) => sum + value, 0) / rawCpi2020.length;
+      const rawCpiDec2020 = Number(cpiData.find((d) => d.年月 === "2020年12月")?.総合 ?? 0);
+      const earningsCpi2020 = earningData
+        .filter((d) => d.年月.startsWith("2020年"))
+        .map((d) => Number(d["CPI総合(参考)"] ?? 0));
+      const earningsCpi2020Average =
+        earningsCpi2020.reduce((sum, value) => sum + value, 0) / earningsCpi2020.length;
+
+      expect(rawCpi2020Average).toBeGreaterThan(0);
+      expect(rawCpiDec2020).toBeGreaterThan(0);
+      expect(earningsCpi2020Average).toBeCloseTo(100, 6);
+      expect(Number(dec2020!["CPI総合(参考)"])).toBeCloseTo(
+        (rawCpiDec2020 * 100) / rawCpi2020Average,
+        6,
+      );
+      // 2020年12月の12MA窓は2020年1月〜12月なので、再正規化後は100になる。
+      expect(Number(dec2020!["CPI総合(12MA)"])).toBeCloseTo(100, 6);
+
       // 同一チャート（3種比較）の他系列も同じ2020基準に揃っていること。
       // 給与は totalIndexFactor が生値ベース、総合(12MA) が12MA合計であるため
       // 特別給与の平滑化分だけ約0.5のずれが残る（本件の1.9%ずれとは別要因）。
-      expect(Math.abs(Number(dec2020!["CPI総合(12MA)"]) - 100)).toBeLessThan(0.5);
       expect(Math.abs(Number(dec2020!["総合(12MA)"]) - 100)).toBeLessThan(1);
     });
 

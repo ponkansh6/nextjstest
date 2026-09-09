@@ -61,6 +61,24 @@ Static CSV files (not publicly served) stored in `data/source/`:
 
 > Note: These files are loaded server-side during data loading and are not publicly accessible via HTTP. The `data/` directory is excluded from static file serving.
 
+### e-Stat Connection Foundation
+
+The application also provides a same-origin e-Stat API proxy for dynamic statistical
+catalogue, metadata, and data queries. The e-Stat `appId` is server-only configuration:
+it is read from the server environment and MUST NOT be returned to, embedded in, or
+otherwise exposed to the browser. A shared e-Stat client centralizes upstream request
+construction, response handling, timeout handling, and error normalization for all
+three proxy routes.
+
+| Route                   | e-Stat operation | Purpose                                           |
+| ----------------------- | ---------------- | ------------------------------------------------- |
+| `/api/estat/stats-list` | StatsList        | Search available statistics tables                |
+| `/api/estat/meta`       | MetaInfo         | Retrieve metadata for a selected statistics table |
+| `/api/estat/data`       | StatsData        | Retrieve values for a selected statistics table   |
+
+The existing `data/source/*.csv` datasets remain the dashboard's compatible fallback
+source when e-Stat is unavailable or a dynamic query cannot be completed.
+
 ## Requirements
 
 ### R1: Dashboard Page (SSR)
@@ -183,6 +201,61 @@ The system SHALL load and process CSV data on the server before rendering.
 - **AND** `server/lib/view-models/dashboard.ts` projects the full dataset to remove unused columns and round floating-point values to 2 decimal places
 - **AND** the projected data (as `CpiView[]`, `CtiView[]`, `EarningsView[]`) is passed to the client component instead of raw `CpiData[]`
 - **THEN** the RSC payload size is reduced by ~56% (1,169 KB → 505 KB uncompressed)
+
+### R19: e-Stat API Connection Foundation
+
+The system SHALL provide server-mediated access to e-Stat statistics search, metadata,
+and data operations while protecting the e-Stat application ID and preserving existing
+CSV-backed dashboard data as a fallback.
+
+#### Scenario R19a: Server-Only Application ID and Shared Client
+
+- **WHEN** an e-Stat proxy route makes an upstream request
+- **THEN** it obtains the `appId` only from server-side environment configuration
+- **AND** it uses the common e-Stat client for request construction and response handling
+- **AND** the `appId` is absent from route responses, browser-visible configuration, and client bundles
+
+#### Scenario R19b: Statistics List Proxy
+
+- **WHEN** a client requests `/api/estat/stats-list` with supported statistics-search parameters
+- **THEN** the route requests the corresponding e-Stat StatsList resource through the common client
+- **AND** it returns the normalized upstream result without exposing the server-side `appId`
+
+#### Scenario R19c: Metadata Proxy
+
+- **WHEN** a client requests `/api/estat/meta` for a statistics table identifier
+- **THEN** the route requests the corresponding e-Stat MetaInfo resource through the common client
+- **AND** it returns the metadata required to interpret that table
+
+#### Scenario R19d: Statistics Data Proxy
+
+- **WHEN** a client requests `/api/estat/data` for a statistics table identifier and supported filters
+- **THEN** the route requests the corresponding e-Stat StatsData resource through the common client
+- **AND** it returns the resulting statistical values and associated response metadata
+
+#### Scenario R19e: Invalid Requests and Upstream Errors
+
+- **WHEN** an e-Stat proxy request is missing required input, has invalid input, or e-Stat returns an error response
+- **THEN** the route returns a consistent error response with an appropriate HTTP status
+- **AND** it does not disclose the `appId`, upstream credentials, or internal implementation details
+
+#### Scenario R19f: Timeout Handling
+
+- **WHEN** an e-Stat upstream request exceeds the configured request timeout
+- **THEN** the common client cancels the upstream request
+- **AND** the proxy route returns a timeout error response that clients can distinguish from a successful result
+
+#### Scenario R19g: CSV Fallback Continuity
+
+- **WHEN** e-Stat cannot be reached, times out, or returns an error for a dynamic query
+- **THEN** existing dashboard loading continues to use the compatible server-side CSV datasets in `data/source/`
+- **AND** no e-Stat failure makes previously available CSV-backed dashboard indicators unavailable
+
+#### Scenario R19h: e-Stat Attribution
+
+- **WHEN** e-Stat-sourced statistics or metadata are presented to a user
+- **THEN** the interface displays an e-Stat credit identifying e-Stat as the source
+- **AND** the credit remains available alongside the presented e-Stat-derived content
 
 ### R4: Interactive Legend
 
@@ -600,6 +673,22 @@ CPI / CTI / earnings / population loader results
 ```
 
 **Key optimization:** The view-models layer reduces RSC payload from 1,169 KB to ~505 KB by removing unused columns and rounding to 2 decimal places before sending to client.
+
+### e-Stat Request Flow
+
+```
+Browser
+  → /api/estat/{stats-list,meta,data}
+    → common server-side e-Stat client (server environment appId, validation, timeout, error normalization)
+      → e-Stat REST API
+
+e-Stat request failure or timeout
+  → existing server-side data/source/*.csv loading for compatible dashboard indicators
+```
+
+The e-Stat proxy applies a bounded upstream timeout as a non-functional reliability
+requirement; an upstream request MUST NOT wait indefinitely or expose server-side
+configuration in its error result.
 
 ### Client Modules
 

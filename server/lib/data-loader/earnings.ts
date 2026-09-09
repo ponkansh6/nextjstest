@@ -200,7 +200,10 @@ export async function loadTotalEarningDataInternal(): Promise<CpiData[]> {
   // 2020年を基準（100）とする同一のスケール空間に正確に一致させる。
   const minkanFactor = ctiFactor;
 
-  // CPI総合の12か月移動平均を計算（CPIデータは既に2020年基準）
+  // earningsの比較用CPIは、CPIダッシュボードの基準年とは独立して2020年平均=100に揃える。
+  // 12MAは基準変更前の生値から既存どおり計算し、出力時に同じ係数を適用する。
+  const avgCpi2020 = averageForYear(cpiMap, "2020年");
+  const cpiFactor = avgCpi2020 > 0 ? 100 / avgCpi2020 : 1;
   const cpiMAMap = computeTrailingMA12([...cpiMap.entries()]);
 
   const result: CpiData[] = [...keys].map((ym) => {
@@ -278,8 +281,8 @@ export async function loadTotalEarningDataInternal(): Promise<CpiData[]> {
     );
     const rawCpi = cpiMap.get(item.年月) || 0;
     item["残差"] = calculateRawResidual(smoothedTotal, rawCpi);
-    item["CPI総合(参考)"] = rawCpi;
-    item["CPI総合(12MA)"] = cpiMAMap.get(item.年月) ?? 0;
+    item["CPI総合(参考)"] = rawCpi * cpiFactor;
+    item["CPI総合(12MA)"] = (cpiMAMap.get(item.年月) ?? 0) * cpiFactor;
     // 民間最終消費支出（参考）およびCTI消費支出（参考）の計算（12か月移動平均）
     // 各系列は自身の期間のみ値を持ち、期間外は null（欠測）としてゼロ方向への誤った線引きを防ぐ。
     const maMinkan = minkanMap.get(item.年月) ?? 0;

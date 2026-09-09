@@ -49,9 +49,6 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
           {
             text: "費目別の加重表示は2025年基準ウェイトを全期間に固定して適用した試算であり、公式の前年比寄与度ではありません。総合への影響は通常小さい一方、個別費目では差が生じる場合があります。",
           },
-          {
-            text: "2025年基準の長期接続CSVが未配置の場合は、連続表示を維持するため既存の長期CSVへフォールバックします。",
-          },
           { text: "表示期間：2005年〜最新月" },
           { text: "基準年：2025年（2025年平均 = 100）" },
         ],
@@ -86,9 +83,6 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
           },
           {
             text: "10大費目の比較は、公表ウェイトの丸め差を保持し、実際の合計（10002）で正規化",
-          },
-          {
-            text: "2025年基準の長期接続CSVが未配置の場合は、連続表示を維持するため既存の長期CSVへフォールバック",
           },
           { text: "表示期間：2005年〜最新月" },
           { text: "基準年：2025年（2025年平均 = 100、2024年以前は接続指数）" },
@@ -237,17 +231,9 @@ const fallbackCpiText = (text: string) =>
   text
     .replace(
       "全国・月次の2025年平均=100の公式接続指数を表示",
-      "全国・月次の2020年平均=100の既存長期CSV（フォールバック）を表示",
+      "全国・月次の2020年平均=100の指数データを表示",
     )
     .replace(/2025年基準ウェイト/g, "2020年基準ウェイト")
-    .replace(
-      "2025年基準の長期接続CSVが未配置の場合は、連続表示を維持するため既存の長期CSVへフォールバックします。",
-      "2025年基準の長期接続CSVが未配置のため、2020年基準のフォールバックCSVを使用しています。",
-    )
-    .replace(
-      "2025年基準の長期接続CSVが未配置の場合は、連続表示を維持するため既存の長期CSVへフォールバック",
-      "2025年基準の長期接続CSVが未配置のため、2020年基準のフォールバックCSVを使用",
-    )
     .replace(
       /基準年：2025年（2025年平均 = 100、2024年以前は接続指数）/,
       "基準年：2020年（2020年平均 = 100）",
@@ -267,7 +253,7 @@ export function getChartInfoContent(
 
   const isUnavailable = cpiState.sourceMode === "unavailable" || cpiState.baseYear === null;
   if (isUnavailable) {
-    const label = cpiState.label ?? "CPIデータは現在利用できません";
+    const label = "CPIデータ未取得";
     return {
       ...content,
       sections: [{ heading: "データ状態", items: [{ text: label }] }],
@@ -275,8 +261,7 @@ export function getChartInfoContent(
   }
 
   const isFallback = cpiState.sourceMode === "fallback" || cpiState.dataState === "2020-fallback";
-  const label =
-    cpiState.label ?? (isFallback ? "2020年基準のフォールバックCSV" : "2025年基準の公式接続指数");
+  const label = isFallback ? "2020年基準の指数データ" : "2025年基準の公式接続指数";
   const sections = content.sections.map((section) => ({
     ...section,
     items: section.items
