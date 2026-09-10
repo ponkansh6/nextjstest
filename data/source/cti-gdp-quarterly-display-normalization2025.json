@@ -1,8 +1,8 @@
 {
-  "status": "pending-independent-confirmation",
+  "status": "ready",
   "displayNormalizationYear": 2025,
   "basePeriod": "2025-Q1..Q4",
-  "normalizationFactors": null,
+  "normalizationFactors": { "nominal": 0.0011398911460950036, "real": 0.001298186239096047 },
   "rawValuesPreserved": true,
-  "reason": "e-Stat independent confirmation has not been mechanically retrieved; comparison series disabled."
+  "reason": "e-Stat and Cabinet Office snapshots match for all 84 quarters."
 }

@@ -5,6 +5,7 @@ import { buildCtiFilePaths } from "../../server/lib/dataIo";
 import {
   getGdpSupportStatus,
   getQuarterlyGdpSupportStatus,
+  loadQuarterlyGdpData,
 } from "../../server/lib/data-loader/cpi";
 
 describe("Plan21 quarterly GDP artifacts", () => {
@@ -29,12 +30,43 @@ describe("Plan21 quarterly GDP artifacts", () => {
     }
   });
 
-  it("keeps comparison readiness fail-closed while independent confirmation is pending", async () => {
+  it("stores independent e-Stat snapshots and compares all 84 quarters", () => {
+    for (const [metadata, estat, statsDataId] of [
+      [paths.quarterlySupportNominalMetadata, paths.quarterlyEstatNominal, "0003113633"],
+      [paths.quarterlySupportRealMetadata, paths.quarterlyEstatReal, "0003113612"],
+    ]) {
+      const record = JSON.parse(fs.readFileSync(metadata, "utf8"));
+      const snapshot = fs.readFileSync(estat, "utf8");
+      expect(record.estatSource.provider).toBe("e-Stat");
+      expect(record.estatSource.statsDataId).toBe(statsDataId);
+      expect(record.estatSource.snapshotCsvSha256).toBe(
+        createHash("sha256").update(snapshot).digest("hex"),
+      );
+      expect(record.estatSource.comparison).toMatchObject({
+        status: "ready",
+        rowsCompared: 84,
+        mismatches: 0,
+      });
+    }
+  });
+
+  it("enables comparison readiness after independent confirmation", async () => {
     await expect(getQuarterlyGdpSupportStatus()).resolves.toMatchObject({
       valid: true,
-      comparisonReady: false,
-      independentConfirmation: "pending-independent-confirmation",
+      comparisonReady: true,
+      independentConfirmation: "ready",
+      normalizationFactors: { nominal: expect.any(Number), real: expect.any(Number) },
     });
+  });
+
+  it("returns distinct quarterly raw values and separate comparison fields", () => {
+    const result = loadQuarterlyGdpData();
+    expect(result.rows).toHaveLength(84);
+    expect(new Set(result.rows.slice(0, 4).map((row) => row.nominalRaw)).size).toBeGreaterThan(1);
+    expect(new Set(result.rows.slice(0, 4).map((row) => row.realRaw)).size).toBeGreaterThan(1);
+    expect(result.rows[0]).toHaveProperty("nominalRaw");
+    expect(result.rows[0]).toHaveProperty("nominalComparison");
+    expect(result.rows[0]).not.toHaveProperty("民間最終消費支出（名目）");
   });
 
   it("does not alter the annual GDP status contract", async () => {

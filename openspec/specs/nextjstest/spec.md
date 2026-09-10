@@ -57,7 +57,7 @@ Static CSV files (not publicly served) stored in `data/source/`:
 - `data/source/cti_support_nominal2025.csv` / `cti_support_real2025.csv` — Official annual GDP artifacts for 1994–2025, each containing e-Stat series code 12 (`民間最終消費支出`) in 10億円. The nominal source is 0003109786 and the real source is 0003109751.
 - `data/source/cti_support_nominal2025.metadata.json` / `cti_support_real2025.metadata.json` / `cti-gdp-display-normalization2025.json` — Provenance, hash, annual-period, and independent 2025 annual-value normalization records. Metadata, source CSV, and normalization JSON hashes must agree before use. Nominal remains current prices; real remains previous-year chain-linked at its recorded 2020 reference year.
 - `data/source/cti_support_nominal_quarterly2025.csv` / `cti_support_real_quarterly2025.csv` — Plan21 official Cabinet Office original-series long data, 2005Q1–2025Q4 (84 rows), nominal current prices and real previous-year chain-linked values.
-- Matching `.metadata.json` and `.official.csv` files record source URL, retrieval/revision state, CSV SHA-256, and `pending-independent-confirmation`; `cti-gdp-quarterly-display-normalization2025.json` records the separate 2025Q1–Q4 average=100 contract. Pending confirmation disables comparison values and never silently falls back to annual data.
+- Matching `.metadata.json`, `.official.csv`, and e-Stat snapshots record source URL, retrieval/revision state, CSV SHA-256, and ready independent confirmation; `cti-gdp-quarterly-display-normalization2025.json` records separate nominal/real 2025Q1–Q4 average=100 factors. Invalid or unavailable confirmation disables comparison values and never silently falls back to annual data.
 - `data/source/cti_data.csv` / `cti_support_nominal.csv` / `cti_support_real.csv` — Complete compatible 2020-base CTI rollback set; never mixed with a 2025 CTI input.
 - `data/source/total_earning.csv` — Total earnings
 - `data/source/contractual_earnings.csv` — Contractual earnings
@@ -726,7 +726,7 @@ Plan21 quarterly nominal/real CSVs + metadata + official snapshots
       → getQuarterlyGdpSupportStatus(): separate status; comparisonReady is false while independent confirmation is pending
         → page.tsx: pass granularity, comparisonReady, and independentConfirmation to chart info
           → pending-independent-confirmation: fail closed; do not render the quarterly comparison line
-          → quarterly raw/comparison values are not yet connected to chart, table, or CSV display paths
+          → ready: quarterly raw/comparison values are connected to chart, table, and CSV display paths; pending/failed remains fail-closed
 data/source/{total_earning,contractual_earnings,scheduled_earnings,total_worked_hours,population_statistics,employment_indices}.csv
   → server/lib/dataIo.ts
     → server/lib/data-loader/{earnings,population}.ts (domain-specific loading + caching)
@@ -818,7 +818,7 @@ scripts/
 - CTI tests MUST require the map and snapshot to exist and MUST unconditionally match every official map row against the snapshot by official code, name, and representative values before selecting the 2025 candidate; otherwise the complete 2020 rollback is selected.
 - GDP tests MUST require continuous annual observations for every year 1994–2025, valid metadata/CSV/normalization-JSON hashes, and one finite non-zero 2025 value per price concept before generating raw and comparison values. They MUST verify raw and normalized values remain separate in table, CSV, and tooltip projections, MUST NOT mix price concepts or substitute a 2020/CTI factor, and MUST assert fail-closed omission when validation fails.
 - Plan21 tests MUST require both 84-row quarterly artifacts, `YYYY-Qn` continuity from 2005Q1, metadata SHA-256 agreement, separate nominal/real 2025Q1–Q4 factors, and fail-closed comparison readiness for `pending-independent-confirmation`; they MUST also retain the annual `getGdpSupportStatus()` regression contract.
-- Plan21 tests MUST verify that `page.tsx` obtains `getQuarterlyGdpSupportStatus()` and propagates `granularity`, `comparisonReady`, and `independentConfirmation` to chart info, and that pending status suppresses the comparison line. They MUST separately keep e-Stat independent confirmation, independent official-snapshot provenance, production activation of comparison factors, quarterly raw/comparison rendering in chart/table/CSV, removal of annual-value repetition, and UI/E2E smoke as incomplete acceptance items until implemented.
+- Plan21 tests MUST verify that `page.tsx` obtains `getQuarterlyGdpSupportStatus()` and propagates `granularity`, `comparisonReady`, and `independentConfirmation` to chart info, that ready real data renders quarterly raw/comparison values in chart/table/CSV, and that pending status suppresses the comparison line. The annual rollback path MUST remain available. `tests/e2e/quarterly-gdp.e2e.spec.ts` provides the ready-state UI smoke; E2E/build execution is environment-dependent and must be recorded when not run.
 - Tests that use 2020 as a prerequisite MUST be limited to the CTI rollback path; 2020 MUST NOT be used as a general GDP normalization or continuity assumption.
 - Component tests for chart rendering and interaction (`tests/components/`)
 - Integration tests for data mapping and computation accuracy (`tests/data-mapping/`, `tests/computation-contract/`)

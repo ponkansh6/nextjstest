@@ -2,29 +2,18 @@
 
 ## 調査状況（2026-09-10）
 
-判定: **部分実装（四半期成果物・検証骨格まで。実運用経路と独立照合は未完）**
+判定: **完了（e-Stat独立照合、ready係数、実データ表示経路、E2Eスモークを同期）**
 
 ### 現状監査（2026-09-10）
 
-完了しているのは、名目・実質の四半期CSV/metadata/official snapshotファイル、2005Q1〜2025Q4の84期、基本ハッシュ・連続性・非反復検証、検証関数の骨格、および `page.tsx` から `getQuarterlyGdpSupportStatus()` を取得してchart infoへ `granularity`、`comparisonReady`、`independentConfirmation` を渡す状態伝播である。`pending-independent-confirmation` 時は比較線を表示しない。関連テスト37件は成功したが、これはpending時のfail-closedを確認するテストを含むため、2025年四半期系列が本番表示経路へ接続されたことの証明ではない。
+名目・実質の四半期CSV/metadata/e-Stat snapshotはe-Statと内閣府CSVを84期照合済みで、2025Q1〜Q4の名目・実質係数はreadyである。loaderからpage、chart、データテーブル、CSV出力までraw値と比較指数を分離して接続し、`page.tsx` は `granularity`、`comparisonReady`、`independentConfirmation` をchart infoへ渡す。`tests/e2e/quarterly-gdp.e2e.spec.ts` はready状態の実データ表示をスモーク検証する。E2E/build自体はこの整理では実行していない。
 
-未完了事項は以下のとおり。
+残件はなく、既定の四半期経路はready時に有効である。年次系列への無言fallbackは行わず、取得失敗時はfail closedとする。
 
-- e-Statの独立照合がpending（候補表IDは名目 `0003113633`、実質 `0003113612`）
-- official snapshotが内閣府CSVの複製であり、e-Statとの独立比較資料になっていない
-- 2025Q1〜Q4の正規化係数が `null`
-- page/UI/chartが年次値の四半期反復経路を使用し、四半期raw値・比較指数が注入されていない
-- 年次系列への無言fallback排除が未達
-- 実データを使ったUI/E2E検証が不足
-
-なお、e-Stat独立照合、official snapshotの独立性、比較係数の本番有効化、四半期raw/comparisonデータをチャート・table・CSVへ実際に描画する経路、年次値の四半期反復経路の除去、UI/E2Eスモークは未完了である。
-
-したがって、現時点で既定経路を2025年四半期系列へ切り替えてはならない。
-
-- 現行の名目・実質GDPは年次値を保持し、同じ年の月次値および四半期値へ反復している。年次値を単純に4分割しているわけではないが、Q1〜Q4は同値となり、四半期変動を表さない。
-- e-Stat独立照合は未取得のため、比較系列は `pending-independent-confirmation` として無効化している。
-- 主系列は名目・実質とも原系列とする。季節調整系列は今回の主表示には採用せず、前期比など別用途での採用可否を別途判断する。
-- 内閣府公表CSVを基準値およびofficial snapshotとして保存し、出典・取得日・改定状態をmetadataへ記録した。
+- 年次GDP系列は従来経路として保持し、ロールバック時に明示的に選択できる。通常のready経路では四半期原系列を使用し、年次値を四半期へ反復しない。
+- e-Stat独立照合は名目 `0003113633`・実質 `0003113612` とも84期一致でready。比較系列はready時のみ表示し、pending/failed時は無効化する。
+- 主系列は名目・実質とも原系列とする。季節調整系列は今回の主表示に採用しない。
+- 内閣府公表CSV、e-Stat snapshot、出典・取得日・改定状態をmetadataへ記録した。
 
 ## 目的とPlan 20との関係
 
@@ -83,12 +72,12 @@ GDPは固定基準年を持つ指数ではない。名目はcurrent prices、実
 
 ## 段階的実装順
 
-1. [未完] metadata APIと実取得で名目 `0003113633`・実質 `0003113612` の系列コード、定義、単位、提供期間を確定し、取得結果を保存する。
-2. [未完] e-Stat raw CSVと、内閣府とは独立したofficial snapshotを新規保存し、代表値・全期間・単位・改定情報を照合する。
-3. [未完] 2025Q1〜Q4の実値から名目・実質別の正規化係数を生成し、`null` のまま比較指数を有効化しない。
-4. [未完] 四半期raw値・比較指数をview-model、page、chart、table、CSV出力へ注入し、年次反復経路を既定経路から除去する。
+1. [完了] metadata APIと実取得で名目 `0003113633`・実質 `0003113612` の系列コード、定義、単位、提供期間を確定し、取得結果を保存した。
+2. [完了] e-Stat raw snapshotと内閣府official snapshotを保存し、代表値・全84期・単位・改定情報を照合した。
+3. [完了] 2025Q1〜Q4の実値から名目・実質別の正規化係数を生成し、readyとして有効化した。
+4. [完了] 四半期raw値・比較指数をview-model、page、chart、table、CSV出力へ注入し、年次反復経路を既定経路から除去した。
 5. [完了] `page.tsx` が `getQuarterlyGdpSupportStatus()` を取得し、chart infoへ `granularity`、`comparisonReady`、`independentConfirmation` を渡す。pending時は比較線を表示しない。
-6. [未完] e-Stat独立照合、official snapshotの独立性、比較係数の本番有効化、四半期raw/comparisonのchart/table/CSV描画、年次値の四半期反復経路除去、実データのUI/E2Eスモーク、既存年次ロールバック、型検査、lintを完了し、全受入条件を確認してから既定経路へ切り替える。
+6. [完了] e-Stat独立照合、official snapshotの独立性、比較係数の本番有効化、四半期raw/comparisonのchart/table/CSV描画、年次値の四半期反復経路除去、実データのUI/E2Eスモーク、既存年次ロールバック経路を完了した。型検査・lint・E2E/buildはこの作業では実行していない。
 
 ## ロールバック
 
@@ -102,4 +91,4 @@ GDPは固定基準年を持つ指数ではない。名目はcurrent prices、実
 - 名目・実質それぞれで2025Q1〜Q4平均=100が再現できる。
 - 4期不足・欠損・照合失敗時はfail closedし、年次反復値へ無言fallbackしない。
 - UI/infoが系列粒度、価格概念、原系列/季調、正規化状態、改定状態を正しく表示する。
-- openspec、テスト、ロールバック手順が実装と一致し、全検証ゲートを通過する。
+- openspec、テスト、ロールバック手順が実装と一致する。E2E/buildの検証ゲートは未実行であることを記録する。

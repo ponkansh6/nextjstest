@@ -5,8 +5,14 @@ import {
   getCtiDataStatus,
   getGdpSupportStatus,
   getQuarterlyGdpSupportStatus,
+  loadQuarterlyGdpData,
 } from "../../server/lib/data-loader/cpi";
-import { toCpiView, toEarningsView, toQuarterlyView } from "../../server/lib/view-models/dashboard";
+import {
+  mergeQuarterlyGdpView,
+  toCpiView,
+  toEarningsView,
+  toQuarterlyView,
+} from "../../server/lib/view-models/dashboard";
 import { computeQuarterlyAggregates } from "../../server/lib/view-models/quarterlyAggregation";
 import CpiChart from "./components/CpiChart";
 import styles from "./page.module.css";
@@ -36,6 +42,7 @@ export default async function Page() {
     ctiDataStatus,
     gdpSupportStatus,
     quarterlyGdpSupportStatus,
+    quarterlyGdpData,
   ] = await Promise.all([
     loadCpiData(),
     loadCtiData(),
@@ -44,6 +51,7 @@ export default async function Page() {
     getCtiDataStatus(),
     getGdpSupportStatus(),
     getQuarterlyGdpSupportStatus(),
+    loadQuarterlyGdpData(),
   ]);
   const cpiInfoState =
     cpiDataStatus.baseYear === 2025
@@ -171,6 +179,11 @@ export default async function Page() {
   const projectedCpiData = toCpiView(cleanData, cpiKeys);
   const projectedQuarterlyNominal = toQuarterlyView(quarterlyNominalData, quarterlyKeys);
   const projectedQuarterlyReal = toQuarterlyView(quarterlyRealData, quarterlyKeys);
+  const quarterlyNominalWithGdp = mergeQuarterlyGdpView(
+    projectedQuarterlyNominal,
+    quarterlyGdpData.rows,
+  );
+  const quarterlyRealWithGdp = mergeQuarterlyGdpView(projectedQuarterlyReal, quarterlyGdpData.rows);
   const projectedEarningsData = toEarningsView(totalEarningData, earningsKeys);
 
   return (
@@ -185,8 +198,8 @@ export default async function Page() {
         <Suspense fallback={null}>
           <CpiChart
             data={projectedCpiData}
-            quarterlyNominalData={projectedQuarterlyNominal}
-            quarterlyRealData={projectedQuarterlyReal}
+            quarterlyNominalData={quarterlyNominalWithGdp}
+            quarterlyRealData={quarterlyRealWithGdp}
             totalEarningData={projectedEarningsData}
             maxCpiDate={maxCpiDate}
             cpiInfoState={cpiInfoState}

@@ -114,6 +114,29 @@ describe("CTI chart info data-source state", () => {
     expect(text).toContain("比較線を表示しません");
   });
 
+  it("四半期GDPが利用可能な場合は原系列と比較指数の分離を説明する", async () => {
+    const { getChartInfoContent } = await import("@/lib/chartInfoContent");
+    const info = getChartInfoContent("new-graph", undefined, {
+      baseYear: 2025,
+      sourceMode: "official-connected",
+      gdp: {
+        availability: "available",
+        quarterlyStatus: {
+          availability: "available",
+          comparisonReady: true,
+          granularity: "quarterly",
+          independentConfirmation: "ready",
+        },
+      },
+    });
+    const text = info.sections.flatMap((s) => s.items.map((i) => i.text)).join("\n");
+
+    expect(text).toContain("四半期原系列");
+    expect(text).toContain("名目・実質");
+    expect(text).toContain("2025Q1〜Q4平均=100");
+    expect(text).toContain("raw値と比較指数は分離");
+  });
+
   it("データなしでは利用者向けの状態だけを表示し、基準年を推測しない", async () => {
     const { getChartInfoContent } = await import("@/lib/chartInfoContent");
     const info = getChartInfoContent("consumption-expenditure", undefined, {

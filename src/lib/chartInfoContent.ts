@@ -392,6 +392,11 @@ function getGdpComparisonInfoItem(gdpState: GdpChartInfoState | undefined): Char
         : "四半期GDP比較線は利用できません。",
     };
   }
+  if (quarterly?.availability === "available") {
+    return {
+      text: "四半期GDP比較線は、名目・実質それぞれの公式金額を四半期原系列として表示し、2025Q1〜Q4平均=100の比較指数へ換算して使用します。raw値と比較指数は分離して管理し、価格概念を保持します。",
+    };
+  }
   if (gdpState?.availability === "available") {
     return {
       text: "GDP比較線は、GDPの名目・実質それぞれのraw値を、2025年の年次公式値を基準にした比較指数へ換算した表示用の指数です。価格概念とraw値は保持し、これはCTIの基準年とは別の表示尺度です。",

@@ -70,6 +70,19 @@ export type QuarterlyGdpSupportStatus = {
   normalizationFactors?: { nominal: number; real: number };
 };
 
+export type QuarterlyGdpRow = {
+  period: string;
+  nominalRaw: number;
+  realRaw: number;
+  nominalComparison?: number;
+  realComparison?: number;
+};
+
+export type QuarterlyGdpData = {
+  rows: QuarterlyGdpRow[];
+  comparisonReady: boolean;
+};
+
 type QuarterlySeries = { period: string; value: number; series: string; priceMeasure: string };
 
 type GdpSupportMetadata = {
@@ -513,8 +526,11 @@ function validateQuarterlyGdpSeries(
   csvPath: string,
   metadataPath: string,
   officialPath: string,
+  estatPath: string,
+  expectedStatsDataId: string,
+  expectedPriceMeasure: QuarterlySeries["priceMeasure"],
 ): { values: Map<string, number>; factor: number; status: string } | string {
-  if (![csvPath, metadataPath, officialPath].every(fs.existsSync))
+  if (![csvPath, metadataPath, officialPath, estatPath].every(fs.existsSync))
     return "missing quarterly GDP artifact";
   const content = fs.readFileSync(csvPath, "utf8");
   let metadata: Record<string, unknown>;
@@ -532,6 +548,22 @@ function validateQuarterlyGdpSeries(
     (metadata.period as Record<string, unknown> | undefined)?.rows !== 84
   )
     return "quarterly metadata contract mismatch";
+  const estatSource = metadata.estatSource as Record<string, unknown> | undefined;
+  if (
+    metadata.status !== "ready" ||
+    metadata.seriesConcept !== "private-final-consumption-expenditure" ||
+    metadata.priceMeasure !== expectedPriceMeasure ||
+    metadata.unit !== "billion-yen" ||
+    metadata.seasonalAdjustment !== "original" ||
+    estatSource?.provider !== "e-Stat" ||
+    estatSource.statsDataId !== expectedStatsDataId ||
+    typeof estatSource.seriesCode !== "string" ||
+    typeof estatSource.seriesName !== "string" ||
+    typeof estatSource.unit !== "string" ||
+    typeof estatSource.retrievedAt !== "string" ||
+    !/^[a-f0-9]{64}$/.test(String(estatSource.jsonSha256))
+  )
+    return "invalid e-Stat source identity";
   const rows = Papa.parse<QuarterlySeries>(content, {
     header: true,
     dynamicTyping: true,
@@ -548,6 +580,34 @@ function validateQuarterlyGdpSeries(
     )
       return "invalid quarterly period/value";
     values.set(row.period, row.value);
+  }
+  const parseSnapshot = (snapshotPath: string) =>
+    Papa.parse<QuarterlySeries>(fs.readFileSync(snapshotPath, "utf8"), {
+      header: true,
+      dynamicTyping: true,
+      skipEmptyLines: true,
+    }).data;
+  if (
+    estatSource.snapshotFile !== path.basename(estatPath) ||
+    estatSource.snapshotCsvSha256 !==
+      createHash("sha256").update(fs.readFileSync(estatPath)).digest("hex")
+  )
+    return "e-Stat snapshot SHA-256 mismatch";
+  const officialRows = parseSnapshot(officialPath);
+  const estatRows = parseSnapshot(estatPath);
+  if (officialRows.length !== 84 || estatRows.length !== 84)
+    return "quarterly snapshot row count mismatch";
+  for (let index = 0; index < 84; index += 1) {
+    const row = rows[index];
+    for (const snapshot of [officialRows[index], estatRows[index]]) {
+      if (
+        snapshot.period !== row.period ||
+        snapshot.value !== row.value ||
+        snapshot.series !== "private-final-consumption-expenditure" ||
+        snapshot.priceMeasure !== expectedPriceMeasure
+      )
+        return "quarterly snapshot comparison failed";
+    }
   }
   const periods = [...values.keys()];
   for (let i = 0; i < periods.length; i++) {
@@ -574,11 +634,17 @@ export function validateQuarterlyGdpSupport(): QuarterlyGdpSupportStatus {
     paths.quarterlySupportNominal,
     paths.quarterlySupportNominalMetadata,
     paths.quarterlyOfficialNominal,
+    paths.quarterlyEstatNominal,
+    "0003113633",
+    "current-prices",
   );
   const real = validateQuarterlyGdpSeries(
     paths.quarterlySupportReal,
     paths.quarterlySupportRealMetadata,
     paths.quarterlyOfficialReal,
+    paths.quarterlyEstatReal,
+    "0003113612",
+    "previous-year-chain-linked",
   );
   if (typeof nominal === "string" || typeof real === "string")
     return {
@@ -603,6 +669,48 @@ export function validateQuarterlyGdpSupport(): QuarterlyGdpSupportStatus {
 
 export async function getQuarterlyGdpSupportStatus(): Promise<QuarterlyGdpSupportStatus> {
   return validateQuarterlyGdpSupport();
+}
+
+/**
+ * Load the independent Plan21 quarterly GDP series.  This deliberately does
+ * not derive quarters from the annual GDP path; the raw values come from the
+ * validated 84-row artifacts above.
+ */
+export function loadQuarterlyGdpData(): QuarterlyGdpData {
+  const paths = buildCtiFilePaths();
+  const nominal = validateQuarterlyGdpSeries(
+    paths.quarterlySupportNominal,
+    paths.quarterlySupportNominalMetadata,
+    paths.quarterlyOfficialNominal,
+    paths.quarterlyEstatNominal,
+    "0003113633",
+    "current-prices",
+  );
+  const real = validateQuarterlyGdpSeries(
+    paths.quarterlySupportReal,
+    paths.quarterlySupportRealMetadata,
+    paths.quarterlyOfficialReal,
+    paths.quarterlyEstatReal,
+    "0003113612",
+    "previous-year-chain-linked",
+  );
+  if (typeof nominal === "string" || typeof real === "string") {
+    return { rows: [], comparisonReady: false };
+  }
+  const comparisonReady = nominal.status === "ready" && real.status === "ready";
+  const rows = [...nominal.values.keys()].map((period) => {
+    const row: QuarterlyGdpRow = {
+      period,
+      nominalRaw: nominal.values.get(period)!,
+      realRaw: real.values.get(period)!,
+    };
+    if (comparisonReady) {
+      row.nominalComparison = row.nominalRaw * nominal.factor;
+      row.realComparison = row.realRaw * real.factor;
+    }
+    return row;
+  });
+  return { rows, comparisonReady };
 }
 
 function validateCtiMetadata(

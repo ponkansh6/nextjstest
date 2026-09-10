@@ -122,12 +122,20 @@ export const CANONICAL_REAL_KEY = "その他の消費支出（実質）";
 
 export const SUPPORT_SERIES_KEY_NOMINAL = "民間最終消費支出（名目）";
 export const SUPPORT_SERIES_KEY_REAL = "民間最終消費支出（実質）";
+export const QUARTERLY_GDP_RAW_NOMINAL_KEY = "GDP名目原値";
+export const QUARTERLY_GDP_RAW_REAL_KEY = "GDP実質原値";
+export const QUARTERLY_GDP_COMPARISON_NOMINAL_KEY = "GDP名目比較指数";
+export const QUARTERLY_GDP_COMPARISON_REAL_KEY = "GDP実質比較指数";
 
 export const DISPLAY_LABEL_OVERRIDES: Record<string, string> = {
   [CANONICAL_NOMINAL_KEY]: "諸雑費・CPI外支出",
   [CANONICAL_REAL_KEY]: "諸雑費・CPI外支出",
   [SUPPORT_SERIES_KEY_NOMINAL]: "民間最終消費支出",
   [SUPPORT_SERIES_KEY_REAL]: "民間最終消費支出",
+  [QUARTERLY_GDP_RAW_NOMINAL_KEY]: "GDP名目原値",
+  [QUARTERLY_GDP_RAW_REAL_KEY]: "GDP実質原値",
+  [QUARTERLY_GDP_COMPARISON_NOMINAL_KEY]: "GDP名目比較指数（2025Q1-Q4平均=100）",
+  [QUARTERLY_GDP_COMPARISON_REAL_KEY]: "GDP実質比較指数（2025Q1-Q4平均=100）",
   food: "food",
   housing: "housing",
   // CPI_CATEGORIES の値はデータローダーが生成する実データのフィールド名と

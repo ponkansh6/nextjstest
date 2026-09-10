@@ -129,6 +129,16 @@ export function buildCtiFilePaths() {
       "data/source",
       "cti_support_real_quarterly2025.official.csv",
     ),
+    quarterlyEstatNominal: path.join(
+      process.cwd(),
+      "data/source",
+      "cti_support_nominal_quarterly2025.estat.csv",
+    ),
+    quarterlyEstatReal: path.join(
+      process.cwd(),
+      "data/source",
+      "cti_support_real_quarterly2025.estat.csv",
+    ),
     quarterlyNormalization: path.join(
       process.cwd(),
       "data/source",

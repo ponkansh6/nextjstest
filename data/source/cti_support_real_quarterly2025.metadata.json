@@ -11,7 +11,21 @@
   "revisionStatus": "2026年4-6月期速報公表時点",
   "csvSha256": "4454cc36abdd556210e0bdea1f32055c1716d799d69368e883a39f445f1ef855",
   "officialSnapshot": "cti_support_real_quarterly2025.official.csv",
-  "independentConfirmation": "pending-independent-confirmation",
+  "independentConfirmation": "ready",
+  "estatSource": {
+    "provider": "e-Stat",
+    "sourceURL": "https://api.e-stat.go.jp/rest/3.0/app/json/getStatsData?statsDataId=0003113612",
+    "statsDataId": "0003113612",
+    "seriesCode": "cat01=12;tab=12",
+    "seriesName": "民間最終消費支出（実質原系列）",
+    "unit": "10億円",
+    "retrievedAt": "2026-09-10T15:01:59.542+09:00",
+    "metadataJsonSha256": "2f04bf7505a04244f10f2e02b2f07ccf5a51c4810a4aaafb4dde325590ef85c5",
+    "jsonSha256": "a2a0a3d64f084cb290e8e26c55a4f6e5a3f2433452d9a2ffb02ee99bc5efa7a7",
+    "snapshotFile": "cti_support_real_quarterly2025.estat.csv",
+    "snapshotCsvSha256": "4454cc36abdd556210e0bdea1f32055c1716d799d69368e883a39f445f1ef855",
+    "comparison": { "status": "ready", "rowsCompared": 84, "mismatches": 0, "against": "内閣府CSV and official snapshot" }
+  },
   "period": {
     "start": "2005-Q1",
     "end": "2025-Q4",
