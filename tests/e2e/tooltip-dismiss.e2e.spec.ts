@@ -1,4 +1,5 @@
 import { test, expect } from "./fixtures";
+import type { Locator, Page } from "@playwright/test";
 
 /**
  * E2E テスト: モバイルでグラフをタップした際に出るRechartsツールチップの
@@ -10,6 +11,34 @@ import { test, expect } from "./fixtures";
  */
 const NOMINAL = "spending-chart-nominal";
 const REAL = "spending-chart-real";
+
+type ViewportPoint = { x: number; y: number };
+
+async function findViewportBar(page: Page, chart: Locator): Promise<ViewportPoint> {
+  await chart.scrollIntoViewIfNeeded();
+  const bars = chart.locator(".recharts-bar-rectangle");
+  const viewport = page.viewportSize();
+  if (!viewport) throw new Error("Playwright viewport is unavailable");
+
+  for (let index = 0; index < (await bars.count()); index += 1) {
+    const bar = bars.nth(index);
+    const box = await bar.boundingBox();
+    if (
+      box &&
+      box.width > 0 &&
+      box.height > 0 &&
+      box.x >= 0 &&
+      box.y >= 0 &&
+      box.x + box.width <= viewport.width &&
+      box.y + box.height <= viewport.height
+    ) {
+      return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+    }
+  }
+  throw new Error("No actionable bar is fully inside the viewport");
+}
+
+const viewportBar = (page: Page, testId: string) => findViewportBar(page, page.getByTestId(testId));
 
 test.describe("モバイル ツールチップの閉じるボタンとインタラクション", () => {
   test.beforeEach(({}, testInfo) => {
@@ -25,10 +54,8 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    const bar = page.getByTestId(NOMINAL).locator(".recharts-bar-rectangle").first();
-    await expect(bar).toBeVisible({ timeout: 10000 });
-
-    await bar.tap();
+    const point = await viewportBar(page, NOMINAL);
+    await page.touchscreen.tap(point.x, point.y);
 
     const closeButton = page.getByRole("button", { name: "閉じる" });
     await expect(closeButton, "タップ後、ツールチップの閉じるボタンが表示されるべき").toBeVisible({
@@ -49,9 +76,8 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    const bar = page.getByTestId(NOMINAL).locator(".recharts-bar-rectangle").first();
-    await expect(bar).toBeVisible({ timeout: 10000 });
-    await bar.tap();
+    const point = await viewportBar(page, NOMINAL);
+    await page.touchscreen.tap(point.x, point.y);
 
     const closeButton = page.getByRole("button", { name: "閉じる" });
     await expect(closeButton).toBeVisible({ timeout: 5000 });
@@ -74,16 +100,15 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
     const realChart = page.getByTestId(REAL);
     await realChart.scrollIntoViewIfNeeded();
 
-    const nominalBar = page.getByTestId(NOMINAL).locator(".recharts-bar-rectangle").first();
-    await nominalBar.scrollIntoViewIfNeeded();
-    await nominalBar.tap();
+    const nominalPoint = await viewportBar(page, NOMINAL);
+    await page.touchscreen.tap(nominalPoint.x, nominalPoint.y);
 
     const closeButton = page.getByRole("button", { name: "閉じる" });
     await expect(closeButton).toBeVisible({ timeout: 5000 });
     expect(await page.locator(".recharts-tooltip-cursor").count()).toBe(1);
 
-    const realBar = realChart.locator(".recharts-bar-rectangle").first();
-    await realBar.tap();
+    const realPoint = await findViewportBar(page, realChart);
+    await page.touchscreen.tap(realPoint.x, realPoint.y);
 
     await expect(closeButton).toBeVisible({ timeout: 5000 });
     // Total count of tooltip cursor across the page should still be 1 (old one dismissed)
@@ -94,9 +119,8 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    const bar = page.getByTestId(NOMINAL).locator(".recharts-bar-rectangle").first();
-    await expect(bar).toBeVisible({ timeout: 10000 });
-    await bar.tap();
+    const point = await viewportBar(page, NOMINAL);
+    await page.touchscreen.tap(point.x, point.y);
 
     const closeButton = page.getByRole("button", { name: "閉じる" });
     await expect(closeButton).toBeVisible({ timeout: 5000 });
@@ -148,16 +172,15 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    const bar = page.getByTestId(NOMINAL).locator(".recharts-bar-rectangle").first();
-    await expect(bar).toBeVisible({ timeout: 10000 });
-
-    await bar.tap();
+    const point = await viewportBar(page, NOMINAL);
+    await page.touchscreen.tap(point.x, point.y);
     const closeButton = page.getByRole("button", { name: "閉じる" });
     await expect(closeButton).toBeVisible({ timeout: 5000 });
     await closeButton.tap();
     await expect(closeButton).not.toBeVisible({ timeout: 5000 });
 
-    await bar.tap();
+    const repeatPoint = await viewportBar(page, NOMINAL);
+    await page.touchscreen.tap(repeatPoint.x, repeatPoint.y);
     await expect(
       closeButton,
       "同じバーを再タップした際、閉じるボタンが再び表示されるべき",
@@ -274,10 +297,8 @@ test.describe("デスクトップ ツールチップのホバー回帰テスト"
     await page.waitForLoadState("networkidle");
 
     const chart = page.getByTestId(NOMINAL);
-    const bar = chart.locator(".recharts-bar-rectangle").first();
-    await expect(bar).toBeVisible({ timeout: 10000 });
-
-    await bar.hover();
+    const point = await findViewportBar(page, chart);
+    await page.mouse.move(point.x, point.y);
 
     const tooltipWrapper = chart.locator(".recharts-tooltip-wrapper");
     await expect(tooltipWrapper, "ホバー時にツールチップラッパーが表示されるべき").toBeVisible({
