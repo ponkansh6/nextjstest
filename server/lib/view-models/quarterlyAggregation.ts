@@ -8,6 +8,7 @@ import {
 import { applySupportSeriesScaling } from "@server/lib/math/supportSeries";
 import { normalizeYearMonth } from "@/lib/yearMonth";
 import { calculateQuarter } from "@/lib/math/quarter";
+import type { QuarterlyGdpData } from "@server/lib/data-loader/cpi";
 
 export interface QuarterlyRow {
   年: number;
@@ -15,6 +16,45 @@ export interface QuarterlyRow {
   label: string;
   年月: string;
   [key: string]: number | string;
+}
+
+/** Join only validated, finite, exact quarter comparisons onto CTI rows. */
+export function mergeQuarterlyGdpRows(
+  nominalRows: QuarterlyRow[],
+  realRows: QuarterlyRow[],
+  gdp: QuarterlyGdpData,
+): { nominal: QuarterlyRow[]; real: QuarterlyRow[] } {
+  const nominal = nominalRows.map((row) => ({ ...row }));
+  const real = realRows.map((row) => ({ ...row }));
+  const nominalByPeriod = new Map<string, QuarterlyRow>();
+  for (const row of nominal) {
+    const period = `${row.年}-Q${row.quarter}`;
+    if (!nominalByPeriod.has(period)) nominalByPeriod.set(period, row);
+  }
+  const realByPeriod = new Map<string, QuarterlyRow>();
+  for (const row of real) {
+    const period = `${row.年}-Q${row.quarter}`;
+    if (!realByPeriod.has(period)) realByPeriod.set(period, row);
+  }
+  for (const row of [...nominal, ...real]) {
+    delete row[SUPPORT_SERIES_KEY_NOMINAL];
+    delete row[SUPPORT_SERIES_KEY_REAL];
+  }
+  if (!gdp.comparisonReady) return { nominal, real };
+  for (const gdpRow of gdp.rows) {
+    if (!/^\d{4}-Q[1-4]$/.test(gdpRow.period)) continue;
+    const nominal = gdpRow.nominalComparison;
+    const real = gdpRow.realComparison;
+    const nominalRow = nominalByPeriod.get(gdpRow.period);
+    const realRow = realByPeriod.get(gdpRow.period);
+    if (nominalRow && typeof nominal === "number" && Number.isFinite(nominal)) {
+      nominalRow[SUPPORT_SERIES_KEY_NOMINAL] = nominal;
+    }
+    if (realRow && typeof real === "number" && Number.isFinite(real)) {
+      realRow[SUPPORT_SERIES_KEY_REAL] = real;
+    }
+  }
+  return { nominal, real };
 }
 
 /**
@@ -88,10 +128,6 @@ export function computeQuarterlyAggregates(
         const startMonth = (q - 1) * 3 + 1;
         const item: QuarterlyRow = { label, quarter: q, 年: y, 年月: `${y}年${startMonth}月` };
 
-        // These support keys are the legacy monthly-CTI compatibility path.
-        // Plan21 quarterly GDP raw/comparison values are merged separately by
-        // page.tsx and must never be sourced from the annual values injected
-        // into monthly CTI rows.
         item[SUPPORT_SERIES_KEY_NOMINAL] = 0;
         item[SUPPORT_SERIES_KEY_REAL] = 0;
         keys.forEach((k) => (item[k] = 0));
@@ -125,22 +161,16 @@ export function computeQuarterlyAggregates(
           }
         });
 
-        const needsValidation = keys.some(
-          (k) => k !== SUPPORT_SERIES_KEY_NOMINAL && k !== SUPPORT_SERIES_KEY_REAL,
-        );
+        const needsValidation = keys.length > 0;
         if (needsValidation && validMonthsCount !== 3) {
           keys.forEach((k) => {
-            if (k !== SUPPORT_SERIES_KEY_NOMINAL && k !== SUPPORT_SERIES_KEY_REAL) {
-              item[k] = 0;
-            }
+            item[k] = 0;
           });
         }
 
         // Divide by 3 to get quarterly average
         keys.forEach((k) => {
-          if (k !== SUPPORT_SERIES_KEY_NOMINAL && k !== SUPPORT_SERIES_KEY_REAL) {
-            item[k] = ((item[k] as number) || 0) / 3;
-          }
+          item[k] = ((item[k] as number) || 0) / 3;
         });
         rows.push(item);
       }

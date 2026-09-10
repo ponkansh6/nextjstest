@@ -15,6 +15,14 @@ describe("chartUtils", () => {
     expect(filtered[1].年月).toBe("2026年1月");
   });
 
+  it("should filter quarterly data using YYYYQn dates", () => {
+    const data = [{ 年月: "2024Q4" }, { 年月: "2025Q1" }, { 年月: "2025Q4" }, { 年月: "2026Q1" }];
+
+    const filtered = filterDataByYear(data, 2025, 2025);
+
+    expect(filtered.map((item) => item.年月)).toEqual(["2025Q1", "2025Q4"]);
+  });
+
   it("should filter data by year range correctly at boundaries", () => {
     const data = [
       { 年月: "2019年12月" },
@@ -40,9 +48,14 @@ describe("chartUtils", () => {
   });
 
   it("should handle invalid date formats gracefully", () => {
-    const data = [{ 年月: "invalid-date" }, { 年月: "2020年" }, { 年月: "2020年1月" }];
+    const data = [
+      { 年月: "invalid-date" },
+      { 年月: "2020年" },
+      { 年月: "2020Q5" },
+      { 年月: "2020年1月" },
+    ];
     const filtered = filterDataByYear(data, 2020, 2020);
-    // extractYear should return null for "invalid-date" and "2020年", and 2020 for "2020年1月"
+    // extractYear should return null for invalid formats and support monthly dates.
     expect(filtered).toHaveLength(1);
     expect(filtered[0].年月).toBe("2020年1月");
   });

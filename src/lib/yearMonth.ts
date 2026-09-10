@@ -26,6 +26,9 @@ export function normalizeYearMonth(ym: string): string {
 
 /** Extract year from year-month string */
 export function extractYear(ym: string): number | null {
+  const quarterMatch = ym.match(/^(\d{4})Q[1-4]$/);
+  if (quarterMatch) return parseInt(quarterMatch[1], 10);
+
   const parsed = parseYearMonth(ym);
   return parsed?.year ?? null;
 }

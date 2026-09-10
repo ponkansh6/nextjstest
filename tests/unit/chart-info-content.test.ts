@@ -30,6 +30,8 @@ describe("new-graph chart info (3種比較)", () => {
     expect(minkanItem!.text).toContain("民間最終消費支出");
     expect(minkanItem!.text).toContain("四半期粒度");
     expect(minkanItem!.text).toContain("名目・実質各1系列");
+    expect(minkanItem!.text).toContain("2025年平均=100");
+    expect(minkanItem!.text).toContain("公式金額そのものではありません");
     expect(minkanItem!.text).toContain("raw値と比較指数は内部で検証・保持");
     expect(minkanItem!.text).toContain("独立照合がpendingの間は比較線を表示しません");
 

@@ -12,7 +12,7 @@ The shared data type with an index signature `[key: string]: string | number` fo
 
 | Field                                                   | Type           | Description                                                                                                                                                                                                                                        |
 | ------------------------------------------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 年月                                                    | string         | Year-month (e.g. "2020年1月")                                                                                                                                                                                                                      |
+| 年月                                                    | string         | Public period label; quarterly views use `label` such as `2025Q1`, while monthly views use `YYYY年M月`                                                                                                                                             |
 | 総合                                                    | number         | CPI all-items index (2025 annual average = 100) or earnings total index (2020 annual average = 100), depending on loader                                                                                                                           |
 | 生鮮食品を除く総合                                      | number         | CPI excluding Fresh Food                                                                                                                                                                                                                           |
 | 持家の帰属家賃を除く総合                                | number         | CPI excluding Imputed Rent                                                                                                                                                                                                                         |
@@ -215,8 +215,9 @@ When the CTI map/snapshot or any other candidate input fails validation, the com
 - **WHEN** GDP has complete, verified annual observations through 2025 and one finite non-zero 2025 value per price concept
 - **THEN** annual coverage is continuous for every year 1994–2025 and metadata, source CSV, and normalization JSON SHA-256 values agree
 - **THEN** nominal and real GDP each receive their own 2025 annual-value normalization factor for the comparison view
-- **AND** the raw official amounts remain available to the spending table, CSV, and tooltip with their price concept and reference year
-- **AND** raw official amounts and normalized comparison values remain separate in the table, CSV, and tooltip
+- **AND** raw official amounts remain internal for validation while public quarterly table, CSV, and tooltip surfaces expose only the normalized comparison values
+- **AND** public quarterly `年月`, table period labels, CSV period labels, and tooltip period labels all use the row `label` (`YYYYQn`)
+- **AND** displayed comparison values are rounded to two decimal places
 - **AND WHEN** GDP values or provenance are incomplete
 - **THEN** validation fails closed: raw and comparison GDP outputs are omitted, the GDP comparison line is not rendered, and the system does not interpolate values, fit the CTI/GDP boundary, or reuse a CTI factor
 
@@ -227,6 +228,14 @@ When the CTI map/snapshot or any other candidate input fails validation, the com
 - **AND WHEN** `independentConfirmation` is `pending-independent-confirmation` or `comparisonReady` is false
 - **THEN** chart info reports the pending state and the quarterly comparison line is not rendered
 - **AND** the status propagation does not imply that quarterly raw or comparison values are connected to the chart, table, or CSV output
+
+#### Scenario R3k: Quarterly GDP Consumption Join
+
+- **WHEN** `page.tsx` receives quarterly CTI aggregates and `loadQuarterlyGdpData()` output
+- **THEN** it joins them by an exact `YYYY-Qn` key regardless of input order
+- **AND** it publishes only finite nominal/real comparison values when `comparisonReady` is true
+- **AND** missing, non-finite, out-of-range, or non-ready GDP values remain absent while CTI rows remain present
+- **AND** chart, tooltip, table, and CSV consume the same joined public rows
 
 #### Scenario R3c: Data Processing & Projection
 
@@ -698,6 +707,9 @@ hydration — tests must wait for them rather than reading the initial markup.
 
 ### Data Flow
 
+- `src/app/page.tsx` loads `loadQuarterlyGdpData()` alongside CTI, computes quarterly CTI aggregates, and calls the pure `buildQuarterlyPublicViews()` path, which joins by exact `YYYY-Qn` keys before applying the public projection.
+- The joined public rows are passed unchanged to `CpiChart`; chart, tooltip, table, and CSV derive their displayed values from those same rows. GDP raw fields never cross the public projection boundary.
+
 ```
 e-Stat official CPI long connected CSV (`statInfId=000040482945`) + source-original SHA-256
   → data/source/cpi-2025-official-series.csv (minimal official code/name snapshot; SHA-256 recorded in metadata)
@@ -811,6 +823,8 @@ scripts/
 - Migrating off Recharts, PWA/offline support, or a state-management library
 
 ## Test Requirements
+
+- Quarterly GDP regression tests MUST cover quarter-specific (not annual-repeated) values, input reordering, year boundaries, non-ready state, missing/non-finite values, and periods outside the CTI rows, while asserting CTI rows remain present and the public projection excludes internal GDP fields.
 
 - Unit tests for data loading, transformation, and data quality/integrity (`tests/unit/`, `tests/data-quality/`)
 - CPI pair integrity tests MUST unconditionally validate the 78 mapping records against `data/source/cpi-2025-official-series.csv`, including official code and name; they MUST validate the metadata-recorded source-original and snapshot SHA-256 values rather than relying only on a mapping-table hash.

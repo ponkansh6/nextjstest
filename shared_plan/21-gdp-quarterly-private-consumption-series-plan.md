@@ -92,3 +92,11 @@ GDPは固定基準年を持つ指数ではない。名目はcurrent prices、実
 - 4期不足・欠損・照合失敗時はfail closedし、年次反復値へ無言fallbackしない。
 - UI/infoが系列粒度、価格概念、原系列/季調、正規化状態、改定状態を正しく表示する。
 - openspec、テスト、ロールバック手順が実装と一致する。E2E/buildの検証ゲートは未実行であることを記録する。
+
+## Plan23による最新状態（2026-09-10）
+
+- 四半期raw/comparison artifactsと独立確認は維持する。独立性は保存済みmetadataに記録された出典・取得日時・改定情報・照合結果の範囲で確認できるものであり、保存metadataだけでは外部公表値との再照合や将来時点の独立性まで保証しない。
+- 公開projectionはGDP内部4系列（名目/実質のraw・comparison）を除外し、既存の「民間最終消費支出（名目）」と「民間最終消費支出（実質）」の2系列のみを公開する。
+- Plan23でpage結合を修正し、四半期内部データと公開projectionの境界を同期した。
+- 実行済み検証は、`pnpm test`（37 files / 309 tests）、type-check、build、quarterly-gdp Playwright E2E（1 passed）である。
+- 外部公表値との再照合はPlan23の対象外であり、完了扱いにしない。

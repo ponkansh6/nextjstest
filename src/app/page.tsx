@@ -8,8 +8,8 @@ import {
   loadQuarterlyGdpData,
 } from "../../server/lib/data-loader/cpi";
 import { toCpiView, toEarningsView } from "../../server/lib/view-models/dashboard";
-import { projectQuarterlyPublicView } from "../../src/lib/quarterlyPublicProjection";
 import { computeQuarterlyAggregates } from "../../server/lib/view-models/quarterlyAggregation";
+import { buildQuarterlyPublicViews } from "../../server/lib/view-models/quarterlyProjection";
 import CpiChart from "./components/CpiChart";
 import styles from "./page.module.css";
 import { targetKeys, stackedKeys } from "@/lib/chartConstants";
@@ -33,6 +33,7 @@ export default async function Page() {
     ctiDataStatus,
     gdpSupportStatus,
     quarterlyGdpSupportStatus,
+    quarterlyGdpData,
   ] = await Promise.all([
     loadCpiData(),
     loadCtiData(),
@@ -130,10 +131,12 @@ export default async function Page() {
   const maxCpiDate = { year: maxCpiYear, month: maxCpiMonth };
 
   // Compute quarterly aggregates on the server
-  const { nominal: quarterlyNominalData, real: quarterlyRealData } = computeQuarterlyAggregates(
+  const { nominal: aggregatedNominalData, real: aggregatedRealData } = computeQuarterlyAggregates(
     ctiData,
     maxCpiDate,
   );
+  const { nominal: projectedQuarterlyNominal, real: projectedQuarterlyReal } =
+    buildQuarterlyPublicViews(aggregatedNominalData, aggregatedRealData, quarterlyGdpData);
 
   const cpiKeys = [...targetKeys, ...stackedKeys];
   const earningsKeys = [
@@ -158,8 +161,6 @@ export default async function Page() {
   ];
 
   const projectedCpiData = toCpiView(cleanData, cpiKeys);
-  const projectedQuarterlyNominal = projectQuarterlyPublicView(quarterlyNominalData);
-  const projectedQuarterlyReal = projectQuarterlyPublicView(quarterlyRealData);
   const projectedEarningsData = toEarningsView(totalEarningData, earningsKeys);
 
   return (

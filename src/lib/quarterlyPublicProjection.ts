@@ -29,7 +29,8 @@ export function projectQuarterlyPublicView(rows: QuarterlyRow[]): QuarterlyView[
       label: row.label,
       quarter: row.quarter,
       年: row.年,
-      年月: row.年月,
+      // Public quarterly surfaces use the same human-readable period key.
+      年月: row.label,
     };
     for (const key of QUARTERLY_PUBLIC_KEYS) {
       const value = row[key];
