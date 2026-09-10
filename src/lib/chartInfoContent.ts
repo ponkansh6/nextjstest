@@ -43,6 +43,13 @@ export interface GdpChartInfoState {
   availability: "available" | "unavailable";
   displayNormalizationYear?: 2025;
   reason?: string;
+  quarterlyStatus?: {
+    availability: "available" | "pending" | "unavailable";
+    comparisonReady: boolean;
+    granularity: "quarterly";
+    independentConfirmation?: "pending-independent-confirmation" | "ready" | "failed";
+    reason?: string;
+  };
 }
 
 export const CHART_INFO: Record<string, ChartInfoContent> = {
@@ -213,7 +220,7 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
             text: "給与（総合）：所定内給与 + 所定外給与 + 特別給与の12か月移動平均を指数化",
           },
           {
-            text: "民間最終消費支出（総合）：四半期別GDP統計の公式金額を、2025年の年次公式値を基準にした比較指数として表示。2017年までを表示し、2017年以降は延長オプションとして参考表示に切り替え可能です。",
+            text: "民間最終消費支出（総合）：四半期別GDP統計の名目・実質の原系列（2025Q1〜Q4平均=100）を四半期粒度で表示。年次経路の2025年年次正規化とは別管理です。独立照合がpendingの間は比較線を表示しません。",
           },
           {
             text: "CTI消費支出（総合）：選択済みの総世帯CTIミクロ「消費支出（名目）」を12か月移動平均で表示。公式提供範囲は2017年以降で、旧CTI系列との接続は行いません。",
@@ -328,7 +335,7 @@ function resolveCtiChartInfo(
   ctiState: CtiChartInfoState | undefined,
   isComparison: boolean,
 ): ChartInfoContent {
-  const gdpItem = isComparison ? getGdpComparisonInfoItem(ctiState?.gdp) : undefined;
+  const gdpItem = ctiState?.gdp ? getGdpComparisonInfoItem(ctiState.gdp) : undefined;
   if (!ctiState || ctiState.sourceMode === "unavailable" || ctiState.baseYear === null) {
     return {
       ...content,
@@ -372,6 +379,19 @@ function resolveCtiChartInfo(
 }
 
 function getGdpComparisonInfoItem(gdpState: GdpChartInfoState | undefined): ChartInfoItem {
+  const quarterly = gdpState?.quarterlyStatus;
+  if (quarterly?.availability === "pending") {
+    return {
+      text: "四半期GDP比較線は独立照合がpendingのため表示しません。名目・実質の原系列（四半期粒度、2025Q1〜Q4平均=100）は別経路で管理しています。",
+    };
+  }
+  if (quarterly?.availability === "unavailable") {
+    return {
+      text: quarterly.reason
+        ? `四半期GDP比較線は利用できません。${quarterly.reason}`
+        : "四半期GDP比較線は利用できません。",
+    };
+  }
   if (gdpState?.availability === "available") {
     return {
       text: "GDP比較線は、GDPの名目・実質それぞれのraw値を、2025年の年次公式値を基準にした比較指数へ換算した表示用の指数です。価格概念とraw値は保持し、これはCTIの基準年とは別の表示尺度です。",

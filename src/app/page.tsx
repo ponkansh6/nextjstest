@@ -4,6 +4,7 @@ import {
   getCpiDataStatus,
   getCtiDataStatus,
   getGdpSupportStatus,
+  getQuarterlyGdpSupportStatus,
 } from "../../server/lib/data-loader/cpi";
 import { toCpiView, toEarningsView, toQuarterlyView } from "../../server/lib/view-models/dashboard";
 import { computeQuarterlyAggregates } from "../../server/lib/view-models/quarterlyAggregation";
@@ -27,15 +28,23 @@ function getGdpInfoReason(reason: string | undefined): string {
 }
 
 export default async function Page() {
-  const [cleanData, ctiData, totalEarningData, cpiDataStatus, ctiDataStatus, gdpSupportStatus] =
-    await Promise.all([
-      loadCpiData(),
-      loadCtiData(),
-      loadTotalEarningData(),
-      getCpiDataStatus(),
-      getCtiDataStatus(),
-      getGdpSupportStatus(),
-    ]);
+  const [
+    cleanData,
+    ctiData,
+    totalEarningData,
+    cpiDataStatus,
+    ctiDataStatus,
+    gdpSupportStatus,
+    quarterlyGdpSupportStatus,
+  ] = await Promise.all([
+    loadCpiData(),
+    loadCtiData(),
+    loadTotalEarningData(),
+    getCpiDataStatus(),
+    getCtiDataStatus(),
+    getGdpSupportStatus(),
+    getQuarterlyGdpSupportStatus(),
+  ]);
   const cpiInfoState =
     cpiDataStatus.baseYear === 2025
       ? {
@@ -75,10 +84,35 @@ export default async function Page() {
             sourceMode: "unavailable" as const,
           };
   const gdpInfoState = gdpSupportStatus.valid
-    ? { availability: "available" as const, displayNormalizationYear: 2025 as const }
+    ? {
+        availability: "available" as const,
+        displayNormalizationYear: 2025 as const,
+        quarterlyStatus: {
+          availability: quarterlyGdpSupportStatus.valid
+            ? quarterlyGdpSupportStatus.comparisonReady
+              ? ("available" as const)
+              : ("pending" as const)
+            : ("unavailable" as const),
+          comparisonReady: quarterlyGdpSupportStatus.comparisonReady,
+          granularity: "quarterly" as const,
+          independentConfirmation: quarterlyGdpSupportStatus.independentConfirmation,
+          reason: quarterlyGdpSupportStatus.reason,
+        },
+      }
     : {
         availability: "unavailable" as const,
         reason: getGdpInfoReason(gdpSupportStatus.reason),
+        quarterlyStatus: {
+          availability: quarterlyGdpSupportStatus.valid
+            ? quarterlyGdpSupportStatus.comparisonReady
+              ? ("available" as const)
+              : ("pending" as const)
+            : ("unavailable" as const),
+          comparisonReady: quarterlyGdpSupportStatus.comparisonReady,
+          granularity: "quarterly" as const,
+          independentConfirmation: quarterlyGdpSupportStatus.independentConfirmation,
+          reason: quarterlyGdpSupportStatus.reason,
+        },
       };
 
   // Determine maxCpiDate from cleanData

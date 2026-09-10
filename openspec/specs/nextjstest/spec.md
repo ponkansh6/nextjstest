@@ -220,6 +220,14 @@ When the CTI map/snapshot or any other candidate input fails validation, the com
 - **AND WHEN** GDP values or provenance are incomplete
 - **THEN** validation fails closed: raw and comparison GDP outputs are omitted, the GDP comparison line is not rendered, and the system does not interpolate values, fit the CTI/GDP boundary, or reuse a CTI factor
 
+#### Scenario R3j: Quarterly GDP Support Status and Fail-Closed Comparison
+
+- **WHEN** `page.tsx` loads the quarterly GDP support status
+- **THEN** it obtains `getQuarterlyGdpSupportStatus()` and passes `granularity`, `comparisonReady`, and `independentConfirmation` to chart info
+- **AND WHEN** `independentConfirmation` is `pending-independent-confirmation` or `comparisonReady` is false
+- **THEN** chart info reports the pending state and the quarterly comparison line is not rendered
+- **AND** the status propagation does not imply that quarterly raw or comparison values are connected to the chart, table, or CSV output
+
 #### Scenario R3c: Data Processing & Projection
 
 - **WHEN** raw data is loaded
@@ -716,6 +724,9 @@ Plan21 quarterly nominal/real CSVs + metadata + official snapshots
   → server/lib/dataIo.ts (quarterly paths)
     → server/lib/data-loader/cpi.ts (84-row continuity, duplicate/missing/zero, SHA-256, and 2025Q1–Q4 factor validation)
       → getQuarterlyGdpSupportStatus(): separate status; comparisonReady is false while independent confirmation is pending
+        → page.tsx: pass granularity, comparisonReady, and independentConfirmation to chart info
+          → pending-independent-confirmation: fail closed; do not render the quarterly comparison line
+          → quarterly raw/comparison values are not yet connected to chart, table, or CSV display paths
 data/source/{total_earning,contractual_earnings,scheduled_earnings,total_worked_hours,population_statistics,employment_indices}.csv
   → server/lib/dataIo.ts
     → server/lib/data-loader/{earnings,population}.ts (domain-specific loading + caching)
@@ -807,6 +818,7 @@ scripts/
 - CTI tests MUST require the map and snapshot to exist and MUST unconditionally match every official map row against the snapshot by official code, name, and representative values before selecting the 2025 candidate; otherwise the complete 2020 rollback is selected.
 - GDP tests MUST require continuous annual observations for every year 1994–2025, valid metadata/CSV/normalization-JSON hashes, and one finite non-zero 2025 value per price concept before generating raw and comparison values. They MUST verify raw and normalized values remain separate in table, CSV, and tooltip projections, MUST NOT mix price concepts or substitute a 2020/CTI factor, and MUST assert fail-closed omission when validation fails.
 - Plan21 tests MUST require both 84-row quarterly artifacts, `YYYY-Qn` continuity from 2005Q1, metadata SHA-256 agreement, separate nominal/real 2025Q1–Q4 factors, and fail-closed comparison readiness for `pending-independent-confirmation`; they MUST also retain the annual `getGdpSupportStatus()` regression contract.
+- Plan21 tests MUST verify that `page.tsx` obtains `getQuarterlyGdpSupportStatus()` and propagates `granularity`, `comparisonReady`, and `independentConfirmation` to chart info, and that pending status suppresses the comparison line. They MUST separately keep e-Stat independent confirmation, independent official-snapshot provenance, production activation of comparison factors, quarterly raw/comparison rendering in chart/table/CSV, removal of annual-value repetition, and UI/E2E smoke as incomplete acceptance items until implemented.
 - Tests that use 2020 as a prerequisite MUST be limited to the CTI rollback path; 2020 MUST NOT be used as a general GDP normalization or continuity assumption.
 - Component tests for chart rendering and interaction (`tests/components/`)
 - Integration tests for data mapping and computation accuracy (`tests/data-mapping/`, `tests/computation-contract/`)

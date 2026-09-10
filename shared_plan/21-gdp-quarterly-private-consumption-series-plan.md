@@ -2,7 +2,24 @@
 
 ## 調査状況（2026-09-10）
 
-判定: **公式CSV抽出・成果物・検証契約を実装済み（独立照合待ち）**
+判定: **部分実装（四半期成果物・検証骨格まで。実運用経路と独立照合は未完）**
+
+### 現状監査（2026-09-10）
+
+完了しているのは、名目・実質の四半期CSV/metadata/official snapshotファイル、2005Q1〜2025Q4の84期、基本ハッシュ・連続性・非反復検証、検証関数の骨格、および `page.tsx` から `getQuarterlyGdpSupportStatus()` を取得してchart infoへ `granularity`、`comparisonReady`、`independentConfirmation` を渡す状態伝播である。`pending-independent-confirmation` 時は比較線を表示しない。関連テスト37件は成功したが、これはpending時のfail-closedを確認するテストを含むため、2025年四半期系列が本番表示経路へ接続されたことの証明ではない。
+
+未完了事項は以下のとおり。
+
+- e-Statの独立照合がpending（候補表IDは名目 `0003113633`、実質 `0003113612`）
+- official snapshotが内閣府CSVの複製であり、e-Statとの独立比較資料になっていない
+- 2025Q1〜Q4の正規化係数が `null`
+- page/UI/chartが年次値の四半期反復経路を使用し、四半期raw値・比較指数が注入されていない
+- 年次系列への無言fallback排除が未達
+- 実データを使ったUI/E2E検証が不足
+
+なお、e-Stat独立照合、official snapshotの独立性、比較係数の本番有効化、四半期raw/comparisonデータをチャート・table・CSVへ実際に描画する経路、年次値の四半期反復経路の除去、UI/E2Eスモークは未完了である。
+
+したがって、現時点で既定経路を2025年四半期系列へ切り替えてはならない。
 
 - 現行の名目・実質GDPは年次値を保持し、同じ年の月次値および四半期値へ反復している。年次値を単純に4分割しているわけではないが、Q1〜Q4は同値となり、四半期変動を表さない。
 - e-Stat独立照合は未取得のため、比較系列は `pending-independent-confirmation` として無効化している。
@@ -66,12 +83,12 @@ GDPは固定基準年を持つ指数ではない。名目はcurrent prices、実
 
 ## 段階的実装順
 
-1. metadata APIと実取得で表・系列コード、定義、単位、提供期間を確定する。
-2. e-Stat raw CSV、metadata、内閣府official snapshotを新規保存し、独立照合を実装する。
-3. 四半期データモデル、連続性検証、raw/normalized分離、2025年4期正規化を実装する。
-4. quarter→月次表示契約と既存aggregationの置換範囲を確定する。
-5. UI、info、データテーブル、CSV出力、openspecを同期する。
-6. テスト、型検査、lint、実データスモークテストを実行し、問題がなければ段階的に既定経路へ切り替える。
+1. [未完] metadata APIと実取得で名目 `0003113633`・実質 `0003113612` の系列コード、定義、単位、提供期間を確定し、取得結果を保存する。
+2. [未完] e-Stat raw CSVと、内閣府とは独立したofficial snapshotを新規保存し、代表値・全期間・単位・改定情報を照合する。
+3. [未完] 2025Q1〜Q4の実値から名目・実質別の正規化係数を生成し、`null` のまま比較指数を有効化しない。
+4. [未完] 四半期raw値・比較指数をview-model、page、chart、table、CSV出力へ注入し、年次反復経路を既定経路から除去する。
+5. [完了] `page.tsx` が `getQuarterlyGdpSupportStatus()` を取得し、chart infoへ `granularity`、`comparisonReady`、`independentConfirmation` を渡す。pending時は比較線を表示しない。
+6. [未完] e-Stat独立照合、official snapshotの独立性、比較係数の本番有効化、四半期raw/comparisonのchart/table/CSV描画、年次値の四半期反復経路除去、実データのUI/E2Eスモーク、既存年次ロールバック、型検査、lintを完了し、全受入条件を確認してから既定経路へ切り替える。
 
 ## ロールバック
 
