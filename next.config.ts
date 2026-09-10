@@ -6,9 +6,6 @@ const withBundleAnalyzer = bundleAnalyzer({
 });
 
 const nextConfig: NextConfig = {
-  experimental: {
-    useTypeScriptCli: false,
-  },
   turbopack: {
     root: process.cwd(),
   },
@@ -16,6 +13,10 @@ const nextConfig: NextConfig = {
     removeConsole: process.env.NODE_ENV === "production" ? { exclude: ["error", "warn"] } : false,
   },
   reactCompiler: true,
+  experimental: {
+    // Keep the legacy TypeScript CLI path to avoid --showConfig parsing failures.
+    useTypeScriptCli: false,
+  },
 };
 
 export default withBundleAnalyzer(nextConfig);

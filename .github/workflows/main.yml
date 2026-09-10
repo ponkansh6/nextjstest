@@ -33,7 +33,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nextjs-
 
-      - name: Install dependencies
+      - name: Install dependencies (lockfile must be up to date)
         run: pnpm install --frozen-lockfile
 
       - name: Type check
