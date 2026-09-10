@@ -10,7 +10,7 @@
     "preinstall": "pnpm dlx only-allow pnpm",
     "tsgo": "tsgo",
     "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
+    "build": "next build --webpack",
     "start": "next start",
     "test": "vitest run",
     "test:watch": "vitest --watch",
