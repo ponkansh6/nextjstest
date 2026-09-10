@@ -4,9 +4,9 @@
 
 判定: **完了（e-Stat独立照合、ready係数、実データ表示経路、E2Eスモークを同期）**
 
-### 現状監査（2026-09-10）
+### 現状監査（2026-09-10、Plan22反映）
 
-名目・実質の四半期CSV/metadata/e-Stat snapshotはe-Statと内閣府CSVを84期照合済みで、2025Q1〜Q4の名目・実質係数はreadyである。loaderからpage、chart、データテーブル、CSV出力までraw値と比較指数を分離して接続し、`page.tsx` は `granularity`、`comparisonReady`、`independentConfirmation` をchart infoへ渡す。`tests/e2e/quarterly-gdp.e2e.spec.ts` はready状態の実データ表示をスモーク検証する。E2E/build自体はこの整理では実行していない。
+名目・実質の四半期CSV/metadata/e-Stat snapshotはe-Statと内閣府CSVを84期照合済みで、2025Q1〜Q4の名目・実質係数は内部で保持する。公開projectionではGDP raw/comparison 4キーを除外し、既存の民間最終消費支出（名目・実質）各1系列のみをchart/table/CSVへ渡す。`page.tsx` は `granularity`、`comparisonReady`、`independentConfirmation` をchart infoへ渡す。E2E/build自体はこの整理では実行していない。
 
 残件はなく、既定の四半期経路はready時に有効である。年次系列への無言fallbackは行わず、取得失敗時はfail closedとする。
 

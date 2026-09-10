@@ -7,9 +7,29 @@ import {
   getQuarterlyGdpSupportStatus,
   loadQuarterlyGdpData,
 } from "../../server/lib/data-loader/cpi";
+import {
+  projectQuarterlyPublicView,
+  QUARTERLY_PUBLIC_KEYS,
+} from "../../src/lib/quarterlyPublicProjection";
 
 describe("Plan21 quarterly GDP artifacts", () => {
   const paths = buildCtiFilePaths();
+
+  it("retains internal GDP values but excludes them from the public projection", () => {
+    const internal = loadQuarterlyGdpData();
+    expect(internal.rows[0]).toHaveProperty("nominalRaw");
+    expect(internal.rows[0]).toHaveProperty("realRaw");
+    expect(QUARTERLY_PUBLIC_KEYS).toEqual(
+      expect.arrayContaining(["民間最終消費支出（名目）", "民間最終消費支出（実質）"]),
+    );
+    expect(QUARTERLY_PUBLIC_KEYS).toHaveLength(22);
+    const projected = projectQuarterlyPublicView([
+      { label: "2025Q1", quarter: 1, 年: 2025, 年月: "2025年1月", GDP名目原値: 1 } as any,
+    ]);
+    expect(Object.keys(projected[0])).not.toEqual(
+      expect.arrayContaining(["GDP名目原値", "GDP名目比較指数", "GDP実質原値", "GDP実質比較指数"]),
+    );
+  });
 
   it("provides two 84-row long-form official artifacts and matching hashes", () => {
     for (const [csv, metadata] of [

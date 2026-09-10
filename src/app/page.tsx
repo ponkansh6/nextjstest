@@ -7,21 +7,12 @@ import {
   getQuarterlyGdpSupportStatus,
   loadQuarterlyGdpData,
 } from "../../server/lib/data-loader/cpi";
-import {
-  mergeQuarterlyGdpView,
-  toCpiView,
-  toEarningsView,
-  toQuarterlyView,
-} from "../../server/lib/view-models/dashboard";
+import { toCpiView, toEarningsView } from "../../server/lib/view-models/dashboard";
+import { projectQuarterlyPublicView } from "../../src/lib/quarterlyPublicProjection";
 import { computeQuarterlyAggregates } from "../../server/lib/view-models/quarterlyAggregation";
 import CpiChart from "./components/CpiChart";
 import styles from "./page.module.css";
-import {
-  targetKeys,
-  stackedKeys,
-  CONSUMPTION_NOMINAL_KEYS,
-  CONSUMPTION_REAL_KEYS,
-} from "@/lib/chartConstants";
+import { targetKeys, stackedKeys } from "@/lib/chartConstants";
 
 export const revalidate = false;
 
@@ -42,7 +33,6 @@ export default async function Page() {
     ctiDataStatus,
     gdpSupportStatus,
     quarterlyGdpSupportStatus,
-    quarterlyGdpData,
   ] = await Promise.all([
     loadCpiData(),
     loadCtiData(),
@@ -146,15 +136,6 @@ export default async function Page() {
   );
 
   const cpiKeys = [...targetKeys, ...stackedKeys];
-  const quarterlyKeys = [
-    "label",
-    "quarter",
-    "年",
-    ...CONSUMPTION_NOMINAL_KEYS,
-    ...CONSUMPTION_REAL_KEYS,
-    "民間最終消費支出（名目）",
-    "民間最終消費支出（実質）",
-  ];
   const earningsKeys = [
     "年月",
     "所定内給与",
@@ -177,13 +158,8 @@ export default async function Page() {
   ];
 
   const projectedCpiData = toCpiView(cleanData, cpiKeys);
-  const projectedQuarterlyNominal = toQuarterlyView(quarterlyNominalData, quarterlyKeys);
-  const projectedQuarterlyReal = toQuarterlyView(quarterlyRealData, quarterlyKeys);
-  const quarterlyNominalWithGdp = mergeQuarterlyGdpView(
-    projectedQuarterlyNominal,
-    quarterlyGdpData.rows,
-  );
-  const quarterlyRealWithGdp = mergeQuarterlyGdpView(projectedQuarterlyReal, quarterlyGdpData.rows);
+  const projectedQuarterlyNominal = projectQuarterlyPublicView(quarterlyNominalData);
+  const projectedQuarterlyReal = projectQuarterlyPublicView(quarterlyRealData);
   const projectedEarningsData = toEarningsView(totalEarningData, earningsKeys);
 
   return (
@@ -198,8 +174,8 @@ export default async function Page() {
         <Suspense fallback={null}>
           <CpiChart
             data={projectedCpiData}
-            quarterlyNominalData={quarterlyNominalWithGdp}
-            quarterlyRealData={quarterlyRealWithGdp}
+            quarterlyNominalData={projectedQuarterlyNominal}
+            quarterlyRealData={projectedQuarterlyReal}
             totalEarningData={projectedEarningsData}
             maxCpiDate={maxCpiDate}
             cpiInfoState={cpiInfoState}

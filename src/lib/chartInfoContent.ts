@@ -130,7 +130,7 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
             text: "GDP参考値：四半期別GDP統計の「民間最終消費支出」を公式金額のまま使用",
           },
           {
-            text: "Plan21四半期系列は内閣府の名目・実質、原系列（2005Q1〜2025Q4）で、2025Q1〜Q4平均=100の比較指数を別管理します。独立照合がpendingの間は比較系列を無効化（fail-closed）します。",
+            text: "Plan22四半期GDP系列は内部でraw値と比較指数を検証・保持します。公開画面では既存の民間最終消費支出（名目・実質）各1系列のみを表示します。",
           },
           {
             text: "CTIミクロ：選択済みの総世帯公式系列を使用。公式提供範囲は2017年以降で、旧CTI系列との接続は行いません。",
@@ -220,7 +220,7 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
             text: "給与（総合）：所定内給与 + 所定外給与 + 特別給与の12か月移動平均を指数化",
           },
           {
-            text: "民間最終消費支出（総合）：四半期別GDP統計の名目・実質の原系列（2025Q1〜Q4平均=100）を四半期粒度で表示。年次経路の2025年年次正規化とは別管理です。独立照合がpendingの間は比較線を表示しません。",
+            text: "民間最終消費支出（総合）：四半期別GDP統計の既存の名目・実質各1系列を四半期粒度で表示します。raw値と比較指数は内部で検証・保持し、年次経路の2025年年次正規化とは別管理です。独立照合がpendingの間は比較線を表示しません。",
           },
           {
             text: "CTI消費支出（総合）：選択済みの総世帯CTIミクロ「消費支出（名目）」を12か月移動平均で表示。公式提供範囲は2017年以降で、旧CTI系列との接続は行いません。",
@@ -237,7 +237,7 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
             text: "12か月移動平均（12MA）は各系列の生値から、連続する12か月がそろう場合だけ計算します。",
           },
           {
-            text: "GDP比較線は、名目・実質それぞれの公式金額を、2025年の年次公式値を基準にした比較指数へ換算して使用します。名目はcurrent prices、実質は連鎖価格という価格概念を維持し、raw値と比較指数を分離します。換算は表示尺度だけをそろえ、公式GDPの単位、基準・参照年を変更しません。",
+            text: "GDP比較線は、公開する名目・実質各1系列のために内部で公式金額を比較指数へ換算します。raw値と比較指数は内部保持し、名目はcurrent prices、実質は連鎖価格という価格概念を維持します。換算は表示尺度だけをそろえ、公式GDPの単位、基準・参照年を変更しません。",
           },
           {
             text: "GDPの2025年の年次公式値または来歴を検証できない場合、GDP比較線は表示しません。表示可否はCTIの基準年とは独立して判定し、直近値による補完、CTI係数の流用、GDPとCTIの境界接続は行いません。",
@@ -382,7 +382,7 @@ function getGdpComparisonInfoItem(gdpState: GdpChartInfoState | undefined): Char
   const quarterly = gdpState?.quarterlyStatus;
   if (quarterly?.availability === "pending") {
     return {
-      text: "四半期GDP比較線は独立照合がpendingのため表示しません。名目・実質の原系列（四半期粒度、2025Q1〜Q4平均=100）は別経路で管理しています。",
+      text: "四半期GDP比較線は独立照合がpendingのため表示しません。公開する名目・実質各1系列のraw値と比較指数は内部で検証・保持しています。",
     };
   }
   if (quarterly?.availability === "unavailable") {
@@ -394,7 +394,7 @@ function getGdpComparisonInfoItem(gdpState: GdpChartInfoState | undefined): Char
   }
   if (quarterly?.availability === "available") {
     return {
-      text: "四半期GDP比較線は、名目・実質それぞれの公式金額を四半期原系列として表示し、2025Q1〜Q4平均=100の比較指数へ換算して使用します。raw値と比較指数は分離して管理し、価格概念を保持します。",
+      text: "四半期GDP比較線は、公開する名目・実質各1系列のために、公式金額を内部で比較指数へ換算して検証します。raw値と比較指数は内部保持し、価格概念を保持します。",
     };
   }
   if (gdpState?.availability === "available") {

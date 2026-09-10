@@ -88,16 +88,8 @@ export function mergeQuarterlyGdpView(
     realComparison?: number;
   }>,
 ): QuarterlyView[] {
-  const byPeriod = new Map(gdpRows.map((row) => [row.period, row]));
-  return rows.map((row) => {
-    const gdp = byPeriod.get(row.label.replace(/(\d{4})Q([1-4])/, "$1-Q$2"));
-    if (!gdp) return row;
-    return {
-      ...row,
-      GDP名目原値: gdp.nominalRaw,
-      GDP実質原値: gdp.realRaw,
-      ...(gdp.nominalComparison === undefined ? {} : { GDP名目比較指数: gdp.nominalComparison }),
-      ...(gdp.realComparison === undefined ? {} : { GDP実質比較指数: gdp.realComparison }),
-    };
-  });
+  // GDP raw/comparison values remain an internal loader contract and never
+  // cross the public quarterly view boundary.
+  void gdpRows;
+  return rows;
 }

@@ -726,7 +726,7 @@ Plan21 quarterly nominal/real CSVs + metadata + official snapshots
       → getQuarterlyGdpSupportStatus(): separate status; comparisonReady is false while independent confirmation is pending
         → page.tsx: pass granularity, comparisonReady, and independentConfirmation to chart info
           → pending-independent-confirmation: fail closed; do not render the quarterly comparison line
-          → ready: quarterly raw/comparison values are connected to chart, table, and CSV display paths; pending/failed remains fail-closed
+          → ready: quarterly validation remains available internally; public projection exposes only the existing nominal/real private-consumption keys, while pending/failed remains fail-closed
 data/source/{total_earning,contractual_earnings,scheduled_earnings,total_worked_hours,population_statistics,employment_indices}.csv
   → server/lib/dataIo.ts
     → server/lib/data-loader/{earnings,population}.ts (domain-specific loading + caching)
@@ -818,7 +818,7 @@ scripts/
 - CTI tests MUST require the map and snapshot to exist and MUST unconditionally match every official map row against the snapshot by official code, name, and representative values before selecting the 2025 candidate; otherwise the complete 2020 rollback is selected.
 - GDP tests MUST require continuous annual observations for every year 1994–2025, valid metadata/CSV/normalization-JSON hashes, and one finite non-zero 2025 value per price concept before generating raw and comparison values. They MUST verify raw and normalized values remain separate in table, CSV, and tooltip projections, MUST NOT mix price concepts or substitute a 2020/CTI factor, and MUST assert fail-closed omission when validation fails.
 - Plan21 tests MUST require both 84-row quarterly artifacts, `YYYY-Qn` continuity from 2005Q1, metadata SHA-256 agreement, separate nominal/real 2025Q1–Q4 factors, and fail-closed comparison readiness for `pending-independent-confirmation`; they MUST also retain the annual `getGdpSupportStatus()` regression contract.
-- Plan21 tests MUST verify that `page.tsx` obtains `getQuarterlyGdpSupportStatus()` and propagates `granularity`, `comparisonReady`, and `independentConfirmation` to chart info, that ready real data renders quarterly raw/comparison values in chart/table/CSV, and that pending status suppresses the comparison line. The annual rollback path MUST remain available. `tests/e2e/quarterly-gdp.e2e.spec.ts` provides the ready-state UI smoke; E2E/build execution is environment-dependent and must be recorded when not run.
+- Plan21 tests MUST verify that `page.tsx` obtains `getQuarterlyGdpSupportStatus()` and propagates `granularity`, `comparisonReady`, and `independentConfirmation` to chart info, while public quarterly chart/table/CSV projections contain only the existing nominal/real private-consumption keys and none of the four GDP raw/comparison keys. Internal loader validation and the annual rollback path MUST remain available. `tests/e2e/quarterly-gdp.e2e.spec.ts` provides the public projection smoke; E2E/build execution is environment-dependent and must be recorded when not run.
 - Tests that use 2020 as a prerequisite MUST be limited to the CTI rollback path; 2020 MUST NOT be used as a general GDP normalization or continuity assumption.
 - Component tests for chart rendering and interaction (`tests/components/`)
 - Integration tests for data mapping and computation accuracy (`tests/data-mapping/`, `tests/computation-contract/`)

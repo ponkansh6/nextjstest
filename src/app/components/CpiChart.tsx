@@ -67,11 +67,11 @@ import {
   getLegendLabel,
   EARNINGS_TABLE_CONFIGS,
   LINE_CONFIGS,
-  QUARTERLY_GDP_RAW_NOMINAL_KEY,
-  QUARTERLY_GDP_RAW_REAL_KEY,
-  QUARTERLY_GDP_COMPARISON_NOMINAL_KEY,
-  QUARTERLY_GDP_COMPARISON_REAL_KEY,
 } from "../../lib/chartConstants";
+import {
+  QUARTERLY_PUBLIC_NOMINAL_KEYS,
+  QUARTERLY_PUBLIC_REAL_KEYS,
+} from "../../lib/quarterlyPublicProjection";
 import { DataTablesSection, type DataTableSpec } from "./DataTablesSection";
 
 interface CpiChartProps {
@@ -198,21 +198,9 @@ export default function CpiChart({
 
   const nominalKeys = CONSUMPTION_NOMINAL_KEYS;
   const realKeys = CONSUMPTION_REAL_KEYS;
-  const hasQuarterlyGdpComparison = quarterlyNominalData.some(
-    (row) => typeof row[QUARTERLY_GDP_COMPARISON_NOMINAL_KEY] === "number",
-  );
-  const nominalGdpKeys = [
-    QUARTERLY_GDP_RAW_NOMINAL_KEY,
-    ...(hasQuarterlyGdpComparison ? [QUARTERLY_GDP_COMPARISON_NOMINAL_KEY] : []),
-  ];
-  const realGdpKeys = [
-    QUARTERLY_GDP_RAW_REAL_KEY,
-    ...(hasQuarterlyGdpComparison ? [QUARTERLY_GDP_COMPARISON_REAL_KEY] : []),
-  ];
-
   const nominalColors = nominalKeys.map(getColorForNominalKey);
-  const nominalKeysWithSupport = [...nominalKeys, SUPPORT_SERIES_KEY_NOMINAL, ...nominalGdpKeys];
-  const realKeysWithSupport = [...realKeys, SUPPORT_SERIES_KEY_REAL, ...realGdpKeys];
+  const nominalKeysWithSupport = [...QUARTERLY_PUBLIC_NOMINAL_KEYS];
+  const realKeysWithSupport = [...QUARTERLY_PUBLIC_REAL_KEYS];
   const nominalColorsWithSupport = [...nominalColors, "#94a3b8", "#475569", "#0f766e"];
   const realColors = realKeys.map((key) => {
     const nominalKey = key.replace("（実質）", "（名目）");
