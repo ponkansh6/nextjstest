@@ -3,7 +3,7 @@ import * as fs from "node:fs";
 import Papa from "papaparse";
 import { describe, expect, it } from "vitest";
 import { buildCtiFilePaths } from "../../server/lib/dataIo";
-import { getGdpSupportStatus } from "../../server/lib/data-loader/cpi";
+import { getGdpSupportStatus, loadCtiDataInternal } from "../../server/lib/data-loader/cpi";
 
 type CtiMetadata = {
   statInfId: string;
@@ -146,5 +146,21 @@ describe("Plan 20 source artifacts", () => {
     expect(normalization.nominal.factor).toBe(100 / 350910.7);
     expect(normalization.real.factor).toBe(100 / 308122.2);
     await expect(getGdpSupportStatus()).resolves.toMatchObject({ valid: true });
+  });
+
+  it("aliases 2025 GDP comparison indexes to the existing display keys across regular and long-term rows", async () => {
+    const rows = await loadCtiDataInternal();
+    const regular = rows.find((row) => row.年月 === "2025年1月");
+    const longTerm = rows.find((row) => row.年月 === "2016年1月");
+    expect(regular).toBeDefined();
+    expect(longTerm).toBeDefined();
+    for (const row of [regular!, longTerm!]) {
+      expect(row["民間最終消費支出（名目）" as keyof typeof row]).toBe(
+        row["民間最終消費支出（名目・比較指数）" as keyof typeof row],
+      );
+      expect(row["民間最終消費支出（実質）" as keyof typeof row]).toBe(
+        row["民間最終消費支出（実質・比較指数）" as keyof typeof row],
+      );
+    }
   });
 });

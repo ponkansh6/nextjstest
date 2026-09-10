@@ -804,21 +804,35 @@ export async function loadCtiDataInternal(options: CtiLoadOptions = {}): Promise
         const normYm = calculateQuarterLabel(parsed.year, q);
         const nominalSupport = supportMap.get(normYm);
         const realSupport = supportMapReal.get(normYm);
-        if (nominalSupport !== undefined || isLegacy2020)
-          obj["民間最終消費支出（名目）"] = nominalSupport ?? 0;
-        if (realSupport !== undefined || isLegacy2020)
-          obj["民間最終消費支出（実質）"] = realSupport ?? 0;
         const nominalRaw =
           rawNominalGdp instanceof Map ? rawNominalGdp.get(parsed.year) : undefined;
         const realRaw = rawRealGdp instanceof Map ? rawRealGdp.get(parsed.year) : undefined;
         if (nominalRaw !== undefined) {
           obj["民間最終消費支出（名目・原値）"] = nominalRaw;
-          if (gdp) obj["民間最終消費支出（名目・比較指数）"] = nominalRaw * gdp.factors.nominal;
+          if (gdp) {
+            const comparison = nominalRaw * gdp.factors.nominal;
+            obj["民間最終消費支出（名目・比較指数）"] = comparison;
+            obj["民間最終消費支出（名目）"] = comparison;
+          }
         }
         if (realRaw !== undefined) {
           obj["民間最終消費支出（実質・原値）"] = realRaw;
-          if (gdp) obj["民間最終消費支出（実質・比較指数）"] = realRaw * gdp.factors.real;
+          if (gdp) {
+            const comparison = realRaw * gdp.factors.real;
+            obj["民間最終消費支出（実質・比較指数）"] = comparison;
+            obj["民間最終消費支出（実質）"] = comparison;
+          }
         }
+        if (
+          obj["民間最終消費支出（名目）"] === undefined &&
+          (nominalSupport !== undefined || isLegacy2020)
+        )
+          obj["民間最終消費支出（名目）"] = nominalSupport ?? 0;
+        if (
+          obj["民間最終消費支出（実質）"] === undefined &&
+          (realSupport !== undefined || isLegacy2020)
+        )
+          obj["民間最終消費支出（実質）"] = realSupport ?? 0;
       }
       const nominalTotal = obj["消費支出（名目）"];
       const realTotal = obj["消費支出（実質）"];
@@ -887,21 +901,34 @@ export async function loadCtiDataInternal(options: CtiLoadOptions = {}): Promise
         }
         const nominalSupport = supportMap.get(normYm);
         const realSupport = supportMapReal.get(normYm);
-        if (nominalSupport !== undefined || isLegacy2020)
-          dummyRow["民間最終消費支出（名目）"] = nominalSupport ?? 0;
-        if (realSupport !== undefined || isLegacy2020)
-          dummyRow["民間最終消費支出（実質）"] = realSupport ?? 0;
         const nominalRaw = rawNominalGdp instanceof Map ? rawNominalGdp.get(y) : undefined;
         const realRaw = rawRealGdp instanceof Map ? rawRealGdp.get(y) : undefined;
         if (nominalRaw !== undefined) {
           dummyRow["民間最終消費支出（名目・原値）"] = nominalRaw;
-          if (gdp)
-            dummyRow["民間最終消費支出（名目・比較指数）"] = nominalRaw * gdp.factors.nominal;
+          if (gdp) {
+            const comparison = nominalRaw * gdp.factors.nominal;
+            dummyRow["民間最終消費支出（名目・比較指数）"] = comparison;
+            dummyRow["民間最終消費支出（名目）"] = comparison;
+          }
         }
         if (realRaw !== undefined) {
           dummyRow["民間最終消費支出（実質・原値）"] = realRaw;
-          if (gdp) dummyRow["民間最終消費支出（実質・比較指数）"] = realRaw * gdp.factors.real;
+          if (gdp) {
+            const comparison = realRaw * gdp.factors.real;
+            dummyRow["民間最終消費支出（実質・比較指数）"] = comparison;
+            dummyRow["民間最終消費支出（実質）"] = comparison;
+          }
         }
+        if (
+          dummyRow["民間最終消費支出（名目）"] === undefined &&
+          (nominalSupport !== undefined || isLegacy2020)
+        )
+          dummyRow["民間最終消費支出（名目）"] = nominalSupport ?? 0;
+        if (
+          dummyRow["民間最終消費支出（実質）"] === undefined &&
+          (realSupport !== undefined || isLegacy2020)
+        )
+          dummyRow["民間最終消費支出（実質）"] = realSupport ?? 0;
         if (isLegacy2020) {
           dummyRow["消費支出（名目）"] = nominalSupport ?? 0;
           dummyRow["消費支出（実質）"] = realSupport ?? 0;

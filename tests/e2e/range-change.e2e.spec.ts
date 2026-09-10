@@ -86,7 +86,8 @@ test.describe("描画範囲変更 E2E", () => {
     const nominalBarCount = await bars(page, NOMINAL).count();
     const realBarCount = await bars(page, REAL).count();
 
-    // 四半期数×系列数で計算: MIN 2005 ～ MAX 2016（48四半期） × 5系列 = 240本が上限
+    // チャート全体の長期表示範囲（MIN 2005）を対象とするため、
+    // CTIの公式データ有効期間（2017年以降）だけを前提にしない。
     // 初期状態はフルレンジなので、かなりの本数が期待できる
     expect(nominalBarCount).toBeGreaterThan(20);
     expect(realBarCount).toBeGreaterThan(20);
@@ -181,8 +182,8 @@ test.describe("描画範囲変更 E2E", () => {
   });
 
   test("【境界値】開始年=終了年でグラフが1年に狭まる", async ({ page }) => {
-    // 2015年に固定
-    await setRange(page, 2015, 2015);
+    // CTIの公式データ有効期間内で1年に固定
+    await setRange(page, 2017, 2017);
 
     // 棒本数が4の倍数（4 quarters × 表示系列数）
     // 1年 = 4四半期なので、表示系列数に応じた4の倍数になるはず
@@ -196,16 +197,16 @@ test.describe("描画範囲変更 E2E", () => {
   });
 
   test("【比例検証】範囲が2倍になると棒本数が増加", async ({ page }) => {
-    // 2015年のみ
-    await setRange(page, 2015, 2015);
-    const bars2015Only = await bars(page, NOMINAL).count();
+    // 2017年のみ
+    await setRange(page, 2017, 2017);
+    const bars2017Only = await bars(page, NOMINAL).count();
 
-    // 2014–2015年
-    await setRange(page, 2014, 2015);
-    const bars2014to2015 = await bars(page, NOMINAL).count();
+    // 2017–2018年
+    await setRange(page, 2017, 2018);
+    const bars2017to2018 = await bars(page, NOMINAL).count();
 
-    // 2014–2015が2015のみより多いこと（年が倍になるため）
-    expect(bars2014to2015).toBeGreaterThan(bars2015Only);
+    // 2年分が1年分より多いこと
+    expect(bars2017to2018).toBeGreaterThan(bars2017Only);
   });
 
   test("開始年または終了年を変更するとボトムシートが自動的に閉じる", async ({ page }) => {
