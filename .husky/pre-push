@@ -82,7 +82,7 @@ echo "Build passed!"
 
 echo ""
 echo "Running E2E tests (page.tsx with real build/server/browser)..."
-pnpm run test:e2e
+pnpm run test:e2e:clean && pnpm run test:e2e
 E2E_EXIT_CODE=$?
 if [ $E2E_EXIT_CODE -ne 0 ]; then
   echo "E2E tests failed with code $E2E_EXIT_CODE"
