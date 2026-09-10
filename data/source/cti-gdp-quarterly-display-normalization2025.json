@@ -1,0 +1,8 @@
+{
+  "status": "pending-independent-confirmation",
+  "displayNormalizationYear": 2025,
+  "basePeriod": "2025-Q1..Q4",
+  "normalizationFactors": null,
+  "rawValuesPreserved": true,
+  "reason": "e-Stat independent confirmation has not been mechanically retrieved; comparison series disabled."
+}

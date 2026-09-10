@@ -123,6 +123,9 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
             text: "GDP参考値：四半期別GDP統計の「民間最終消費支出」を公式金額のまま使用",
           },
           {
+            text: "Plan21四半期系列は内閣府の名目・実質、原系列（2005Q1〜2025Q4）で、2025Q1〜Q4平均=100の比較指数を別管理します。独立照合がpendingの間は比較系列を無効化（fail-closed）します。",
+          },
+          {
             text: "CTIミクロ：選択済みの総世帯公式系列を使用。公式提供範囲は2017年以降で、旧CTI系列との接続は行いません。",
           },
           {

@@ -1,0 +1,20 @@
+{
+  "status": "ready",
+  "seriesConcept": "private-final-consumption-expenditure",
+  "priceMeasure": "current-prices",
+  "unit": "billion-yen",
+  "frequency": "quarterly",
+  "seasonalAdjustment": "original",
+  "sourceURL": "https://www.esri.cao.go.jp/jp/sna/data/data_list/sokuhou/files/2026/qe262/tables/gaku-mg2621.csv",
+  "sourcePublisher": "内閣府",
+  "retrievedAt": "2026-09-10",
+  "revisionStatus": "2026年4-6月期速報公表時点",
+  "csvSha256": "0b5b4b21fcc03071973c96e4c7dfffba02eb63ee600c19de023aef1c345a49a7",
+  "officialSnapshot": "cti_support_nominal_quarterly2025.official.csv",
+  "independentConfirmation": "pending-independent-confirmation",
+  "period": {
+    "start": "2005-Q1",
+    "end": "2025-Q4",
+    "rows": 84
+  }
+}

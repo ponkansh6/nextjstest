@@ -62,6 +62,16 @@ export type GdpSupportStatus = {
   normalizationFactors?: { nominal: number; real: number };
 };
 
+export type QuarterlyGdpSupportStatus = {
+  valid: boolean;
+  comparisonReady: boolean;
+  independentConfirmation: "pending-independent-confirmation" | "ready" | "failed";
+  reason?: string;
+  normalizationFactors?: { nominal: number; real: number };
+};
+
+type QuarterlySeries = { period: string; value: number; series: string; priceMeasure: string };
+
 type GdpSupportMetadata = {
   status: string;
   seriesConcept: string;
@@ -497,6 +507,102 @@ export async function getGdpSupportStatus(): Promise<GdpSupportStatus> {
   return typeof validated === "string"
     ? { valid: false, reason: validated }
     : { valid: true, normalizationFactors: validated.factors };
+}
+
+function validateQuarterlyGdpSeries(
+  csvPath: string,
+  metadataPath: string,
+  officialPath: string,
+): { values: Map<string, number>; factor: number; status: string } | string {
+  if (![csvPath, metadataPath, officialPath].every(fs.existsSync))
+    return "missing quarterly GDP artifact";
+  const content = fs.readFileSync(csvPath, "utf8");
+  let metadata: Record<string, unknown>;
+  try {
+    metadata = JSON.parse(fs.readFileSync(metadataPath, "utf8")) as Record<string, unknown>;
+  } catch {
+    return "invalid quarterly metadata";
+  }
+  if (metadata.csvSha256 !== createHash("sha256").update(content).digest("hex"))
+    return "quarterly CSV SHA-256 mismatch";
+  if (
+    metadata.frequency !== "quarterly" ||
+    (metadata.period as Record<string, unknown> | undefined)?.start !== "2005-Q1" ||
+    (metadata.period as Record<string, unknown> | undefined)?.end !== "2025-Q4" ||
+    (metadata.period as Record<string, unknown> | undefined)?.rows !== 84
+  )
+    return "quarterly metadata contract mismatch";
+  const rows = Papa.parse<QuarterlySeries>(content, {
+    header: true,
+    dynamicTyping: true,
+    skipEmptyLines: true,
+  }).data;
+  if (rows.length !== 84) return "quarterly row count mismatch";
+  const values = new Map<string, number>();
+  for (const row of rows) {
+    if (
+      !/^\d{4}-Q[1-4]$/.test(row.period) ||
+      !Number.isFinite(row.value) ||
+      row.value === 0 ||
+      values.has(row.period)
+    )
+      return "invalid quarterly period/value";
+    values.set(row.period, row.value);
+  }
+  const periods = [...values.keys()];
+  for (let i = 0; i < periods.length; i++) {
+    const year = 2005 + Math.floor(i / 4);
+    const quarter = (i % 4) + 1;
+    if (periods[i] !== `${year}-Q${quarter}`) return "quarterly series is not continuous";
+  }
+  const base = ["2025-Q1", "2025-Q2", "2025-Q3", "2025-Q4"].map(
+    (period) => values.get(period) ?? NaN,
+  );
+  const mean = base.reduce((sum, value) => sum + value, 0) / 4;
+  if (!Number.isFinite(mean) || mean === 0) return "invalid quarterly normalization base";
+  const independentStatus = metadata.independentConfirmation;
+  return {
+    values,
+    factor: 100 / mean,
+    status: typeof independentStatus === "string" ? independentStatus : "failed",
+  };
+}
+
+export function validateQuarterlyGdpSupport(): QuarterlyGdpSupportStatus {
+  const paths = buildCtiFilePaths();
+  const nominal = validateQuarterlyGdpSeries(
+    paths.quarterlySupportNominal,
+    paths.quarterlySupportNominalMetadata,
+    paths.quarterlyOfficialNominal,
+  );
+  const real = validateQuarterlyGdpSeries(
+    paths.quarterlySupportReal,
+    paths.quarterlySupportRealMetadata,
+    paths.quarterlyOfficialReal,
+  );
+  if (typeof nominal === "string" || typeof real === "string")
+    return {
+      valid: false,
+      comparisonReady: false,
+      independentConfirmation: "failed",
+      reason: typeof nominal === "string" ? nominal : (real as string),
+    };
+  const status =
+    nominal.status === "ready" && real.status === "ready"
+      ? "ready"
+      : "pending-independent-confirmation";
+  return {
+    valid: true,
+    comparisonReady: status === "ready",
+    independentConfirmation: status,
+    reason: status === "ready" ? undefined : "official values are pending independent confirmation",
+    normalizationFactors:
+      status === "ready" ? { nominal: nominal.factor, real: real.factor } : undefined,
+  };
+}
+
+export async function getQuarterlyGdpSupportStatus(): Promise<QuarterlyGdpSupportStatus> {
+  return validateQuarterlyGdpSupport();
 }
 
 function validateCtiMetadata(

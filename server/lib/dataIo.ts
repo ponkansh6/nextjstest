@@ -99,6 +99,41 @@ export function buildCtiFilePaths() {
       "data/source",
       "cti-gdp-display-normalization2025.json",
     ),
+    quarterlySupportNominal: path.join(
+      process.cwd(),
+      "data/source",
+      "cti_support_nominal_quarterly2025.csv",
+    ),
+    quarterlySupportReal: path.join(
+      process.cwd(),
+      "data/source",
+      "cti_support_real_quarterly2025.csv",
+    ),
+    quarterlySupportNominalMetadata: path.join(
+      process.cwd(),
+      "data/source",
+      "cti_support_nominal_quarterly2025.metadata.json",
+    ),
+    quarterlySupportRealMetadata: path.join(
+      process.cwd(),
+      "data/source",
+      "cti_support_real_quarterly2025.metadata.json",
+    ),
+    quarterlyOfficialNominal: path.join(
+      process.cwd(),
+      "data/source",
+      "cti_support_nominal_quarterly2025.official.csv",
+    ),
+    quarterlyOfficialReal: path.join(
+      process.cwd(),
+      "data/source",
+      "cti_support_real_quarterly2025.official.csv",
+    ),
+    quarterlyNormalization: path.join(
+      process.cwd(),
+      "data/source",
+      "cti-gdp-quarterly-display-normalization2025.json",
+    ),
   };
 }
 

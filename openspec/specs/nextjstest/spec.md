@@ -18,6 +18,8 @@ The shared data type with an index signature `[key: string]: string | number` fo
 | 持家の帰属家賃を除く総合                                | number         | CPI excluding Imputed Rent                                                                                                                                                                                                                         |
 | 民間最終消費支出（名目・原値） / （実質・原値）         | number \| null | GDP private final consumption official raw amount. The loader emits these only when the complete nominal-and-real GDP comparison set validates; nominal is current prices and real is previous-year chain-linked with its recorded reference year. |
 | 民間最終消費支出（名目・比較指数） / （実質・比較指数） | number \| null | GDP comparison-only normalized value; separate from official raw values and omitted when either verified 2025 annual value is absent or invalid.                                                                                                   |
+| 民間最終消費支出（四半期raw）                           | number \| null | Plan21 original-series quarterly official amount, keyed by `YYYY-Qn`; nominal and real remain separate.                                                                                                                                            |
+| 民間最終消費支出（四半期比較指数）                      | number \| null | Separate 2025Q1–Q4 average=100 value, emitted only when independent confirmation is `ready`; pending status is fail-closed.                                                                                                                        |
 | CTI消費支出（参考）                                     | number \| null | Consumption expenditure (selected all-household CTI micro series, 12MA, official availability begins in 2017; no legacy CTI connection)                                                                                                            |
 | 消費支出（参考）                                        | number         | Consumption expenditure (combined legacy series, 12MA, indexed 2020=100) — kept for compatibility                                                                                                                                                  |
 | CPI総合(参考)                                           | number         | CPI All Items (reference)                                                                                                                                                                                                                          |
@@ -54,6 +56,8 @@ Static CSV files (not publicly served) stored in `data/source/`:
 - `data/source/cti-2025-series-map.csv` / `cti-2025-official-series.csv` — Official-code map and independent snapshot required to verify the adopted CTI candidate; every mapped official row is matched against the snapshot by code, name, and representative values.
 - `data/source/cti_support_nominal2025.csv` / `cti_support_real2025.csv` — Official annual GDP artifacts for 1994–2025, each containing e-Stat series code 12 (`民間最終消費支出`) in 10億円. The nominal source is 0003109786 and the real source is 0003109751.
 - `data/source/cti_support_nominal2025.metadata.json` / `cti_support_real2025.metadata.json` / `cti-gdp-display-normalization2025.json` — Provenance, hash, annual-period, and independent 2025 annual-value normalization records. Metadata, source CSV, and normalization JSON hashes must agree before use. Nominal remains current prices; real remains previous-year chain-linked at its recorded 2020 reference year.
+- `data/source/cti_support_nominal_quarterly2025.csv` / `cti_support_real_quarterly2025.csv` — Plan21 official Cabinet Office original-series long data, 2005Q1–2025Q4 (84 rows), nominal current prices and real previous-year chain-linked values.
+- Matching `.metadata.json` and `.official.csv` files record source URL, retrieval/revision state, CSV SHA-256, and `pending-independent-confirmation`; `cti-gdp-quarterly-display-normalization2025.json` records the separate 2025Q1–Q4 average=100 contract. Pending confirmation disables comparison values and never silently falls back to annual data.
 - `data/source/cti_data.csv` / `cti_support_nominal.csv` / `cti_support_real.csv` — Complete compatible 2020-base CTI rollback set; never mixed with a 2025 CTI input.
 - `data/source/total_earning.csv` — Total earnings
 - `data/source/contractual_earnings.csv` — Contractual earnings
@@ -708,6 +712,10 @@ GDP nominal/real annual CSVs + ready metadata + independent annual-2025 factors
     → verify 1994–2025 continuity and metadata/CSV/normalization-JSON hash agreement
     → valid result: generate separate raw official amounts and comparison-only normalized values for tables, CSV, tooltips, and NewGraph
     → invalid result: fail closed and omit GDP raw/comparison fields and the NewGraph GDP line without altering CTI selection
+Plan21 quarterly nominal/real CSVs + metadata + official snapshots
+  → server/lib/dataIo.ts (quarterly paths)
+    → server/lib/data-loader/cpi.ts (84-row continuity, duplicate/missing/zero, SHA-256, and 2025Q1–Q4 factor validation)
+      → getQuarterlyGdpSupportStatus(): separate status; comparisonReady is false while independent confirmation is pending
 data/source/{total_earning,contractual_earnings,scheduled_earnings,total_worked_hours,population_statistics,employment_indices}.csv
   → server/lib/dataIo.ts
     → server/lib/data-loader/{earnings,population}.ts (domain-specific loading + caching)
@@ -798,6 +806,7 @@ scripts/
 - CPI loader tests MUST cover runtime validation of metadata row/series counts, period, generated-file SHA-256, monthly continuity, and 2025 all-items annual average, plus complete 2020-pair fallback when 2025 validation fails.
 - CTI tests MUST require the map and snapshot to exist and MUST unconditionally match every official map row against the snapshot by official code, name, and representative values before selecting the 2025 candidate; otherwise the complete 2020 rollback is selected.
 - GDP tests MUST require continuous annual observations for every year 1994–2025, valid metadata/CSV/normalization-JSON hashes, and one finite non-zero 2025 value per price concept before generating raw and comparison values. They MUST verify raw and normalized values remain separate in table, CSV, and tooltip projections, MUST NOT mix price concepts or substitute a 2020/CTI factor, and MUST assert fail-closed omission when validation fails.
+- Plan21 tests MUST require both 84-row quarterly artifacts, `YYYY-Qn` continuity from 2005Q1, metadata SHA-256 agreement, separate nominal/real 2025Q1–Q4 factors, and fail-closed comparison readiness for `pending-independent-confirmation`; they MUST also retain the annual `getGdpSupportStatus()` regression contract.
 - Tests that use 2020 as a prerequisite MUST be limited to the CTI rollback path; 2020 MUST NOT be used as a general GDP normalization or continuity assumption.
 - Component tests for chart rendering and interaction (`tests/components/`)
 - Integration tests for data mapping and computation accuracy (`tests/data-mapping/`, `tests/computation-contract/`)
