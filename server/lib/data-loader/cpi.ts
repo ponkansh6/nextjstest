@@ -604,6 +604,57 @@ function validateCtiPair(
       if (createHash("sha256").update(content).digest("hex") !== metadata.csvSha256)
         return "metadata SHA-256 mismatch";
     }
+    // The map and the independently captured official snapshot are the
+    // provenance contract for every adopted CTI column.  Check the snapshot
+    // against the actual candidate row, not just the two auxiliary files.
+    const parseRecords = (filePath: string) =>
+      Papa.parse<Record<string, string>>(fs.readFileSync(filePath, "utf8"), {
+        header: true,
+        skipEmptyLines: true,
+      }).data.map((row) =>
+        Object.fromEntries(Object.entries(row).map(([key, value]) => [key.trim(), value?.trim()])),
+      );
+    const seriesMap = parseRecords(paths.seriesMap);
+    const officialSnapshot = parseRecords(paths.officialSnapshot);
+    const mapByCode = new Map<string, Record<string, string>>();
+    for (const row of seriesMap) {
+      const code = row.official_code;
+      if (!code || mapByCode.has(code) || !row.official_name || !row.dashboard_key)
+        return "invalid or duplicate 2025 series map rows";
+      mapByCode.set(code, row);
+      if (!header.includes(row.dashboard_key))
+        return `2025 series map column missing: ${row.dashboard_key}`;
+    }
+    const officialByCode = new Map<string, Record<string, string>>();
+    for (const row of officialSnapshot) {
+      const code = row.official_code;
+      if (!code || officialByCode.has(code) || !row.official_name)
+        return "invalid or duplicate 2025 official snapshot rows";
+      officialByCode.set(code, row);
+    }
+    if (
+      mapByCode.size === 0 ||
+      mapByCode.size !== officialByCode.size ||
+      [...mapByCode.keys()].some((code) => !officialByCode.has(code))
+    )
+      return "2025 series map and official snapshot code set mismatch";
+    for (const [code, mapped] of mapByCode) {
+      const official = officialByCode.get(code)!;
+      if (mapped.official_name !== official.official_name)
+        return `2025 official name mismatch: ${code}`;
+      const representativeMonth = official.representative_month;
+      const representativeValue = official.representative_value;
+      if (!representativeMonth || !representativeValue)
+        return `2025 official representative value missing: ${code}`;
+      const representativeRow = parsed
+        .slice(headerIndex + 1)
+        .find((row) => row[monthIndex]?.trim() === representativeMonth);
+      if (!representativeRow)
+        return `2025 official representative month missing: ${representativeMonth}`;
+      const actualValue = representativeRow[header.indexOf(mapped.dashboard_key)]?.trim();
+      if (!actualValue || actualValue !== representativeValue)
+        return `2025 official representative value mismatch: ${code}`;
+    }
     const values2025 = parsed
       .slice(headerIndex + 1)
       .filter((row) => parseYearMonth(row[monthIndex]?.trim() ?? "")?.year === 2025)
