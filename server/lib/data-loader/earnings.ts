@@ -71,7 +71,7 @@ function computeMovingAverageToField(
 function buildConsumptionMaps(
   ctiData: CpiData[],
   useGdpComparison: boolean,
-  supportScale: number,
+  legacy2020SupportScale: number,
 ): {
   minkanMap: Map<string, number>;
   minkanNominalRawMap: Map<string, number>;
@@ -91,13 +91,12 @@ function buildConsumptionMaps(
     if (!match) return;
     const year = parseInt(match[1], 10);
 
-    // Keep official GDP raw values separate from display values. Until the
-    // complete GDP comparison set is valid, the established support series
-    // remains the compatibility source for the legacy reference series.
+    // The 2020 rollback path is a compatibility-only scale. It must never
+    // transform or replace the independently validated 2025 GDP values.
     const nominalValue = d["民間最終消費支出（名目）"];
     const supportValue =
       typeof nominalValue === "number" && Number.isFinite(nominalValue)
-        ? nominalValue * supportScale
+        ? nominalValue * legacy2020SupportScale
         : undefined;
     const nominalRawValue = d["民間最終消費支出（名目・原値）"];
     const nominalComparisonValue = d["民間最終消費支出（名目・比較指数）"];
@@ -107,6 +106,8 @@ function buildConsumptionMaps(
     if (typeof nominalComparisonValue === "number" && Number.isFinite(nominalComparisonValue)) {
       minkanNominalComparisonMap.set(ym, nominalComparisonValue);
     }
+    // Prefer the validated GDP comparison key; use the 2020 rollback scale
+    // only when the GDP comparison path is not active.
     const minkanValue = useGdpComparison ? nominalComparisonValue : supportValue;
     if (typeof minkanValue === "number" && Number.isFinite(minkanValue)) {
       minkanRawMap.set(ym, minkanValue);
@@ -196,14 +197,14 @@ export async function loadTotalEarningDataInternal(
       typeof item["民間最終消費支出（名目・比較指数）"] === "number" &&
       Number.isFinite(item["民間最終消費支出（名目・比較指数）"]),
   );
-  const supportScale = calculateSupportScale(ctiData, "民間最終消費支出（名目）");
+  const legacy2020SupportScale = calculateSupportScale(ctiData, "民間最終消費支出（名目）");
   const {
     minkanMap,
     minkanNominalRawMap,
     minkanNominalComparisonMap,
     ctiConsumptionMap,
     ctiRawMap,
-  } = buildConsumptionMaps(ctiData, hasGdpComparison, supportScale);
+  } = buildConsumptionMaps(ctiData, hasGdpComparison, legacy2020SupportScale);
 
   const comparisonYearKeys = comparisonYear
     ? [...keys].filter((ym) => ym.startsWith(comparisonYearPrefix))

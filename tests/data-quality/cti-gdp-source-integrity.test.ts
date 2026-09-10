@@ -33,6 +33,62 @@ function expectContinuousYears(years: string[]) {
 }
 
 describe("Plan 20 source artifacts", () => {
+  it("validates the CTI 2025 map and official snapshot row by row", () => {
+    const map = Papa.parse<Record<string, string>>(fs.readFileSync(paths.seriesMap, "utf8"), {
+      header: true,
+      skipEmptyLines: true,
+    }).data;
+    const official = Papa.parse<Record<string, string>>(
+      fs.readFileSync(paths.officialSnapshot, "utf8"),
+      { header: true, skipEmptyLines: true },
+    ).data;
+    expect(Object.keys(map[0])).toEqual([
+      "official_code",
+      "official_name",
+      "source_stat_inf_id",
+      "source_variant",
+      "dashboard_key",
+      "value_type",
+      "transform",
+      "coverage_start",
+      "missing_policy",
+      "evidence",
+    ]);
+    expect(Object.keys(official[0])).toEqual([
+      "official_code",
+      "official_name",
+      "table_code",
+      "series_code",
+      "representative_month",
+      "representative_value",
+    ]);
+    expect(map).toHaveLength(22);
+    expect(official).toHaveLength(22);
+    for (const rows of [map, official]) {
+      expect(new Set(rows.map((row) => row.official_code)).size).toBe(rows.length);
+      for (const row of rows) {
+        expect(Object.values(row).every((value) => value.trim() !== "")).toBe(true);
+        expect(Object.values(row).every((value) => !/未検証|unverified/i.test(value))).toBe(true);
+      }
+    }
+    const mapByCode = new Map(map.map((row) => [row.official_code, row]));
+    for (const row of official) {
+      const mapped = mapByCode.get(row.official_code);
+      expect(mapped).toBeDefined();
+      expect(mapped?.official_name).toBe(row.official_name);
+      expect(Number(row.representative_value)).toBeGreaterThanOrEqual(0);
+    }
+    const cti = Papa.parse<Record<string, string>>(fs.readFileSync(paths.candidateMain, "utf8"), {
+      header: true,
+      skipEmptyLines: true,
+    }).data.find((row) => row.月 === "2025年1月");
+    expect(cti).toBeDefined();
+    for (const row of official) {
+      const mapped = mapByCode.get(row.official_code)!;
+      expect(cti?.[mapped.dashboard_key]).toBe(row.representative_value);
+    }
+  });
+
   it("validates the present CTI 2025 candidate identity, hash, period, and monthly continuity", () => {
     const content = fs.readFileSync(paths.candidateMain, "utf8");
     const metadata = JSON.parse(fs.readFileSync(paths.metadata, "utf8")) as CtiMetadata;

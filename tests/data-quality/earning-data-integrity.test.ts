@@ -402,5 +402,17 @@ describe("Earnings Data Integrity", () => {
         expect(ext).toBeCloseTo(orig, 1);
       });
     });
+
+    // This 2020 assumption is intentionally limited to the rollback fixture.
+    it("should keep 2020 fixed scaling rollback-only and leave GDP 2025 comparison keys unset", () => {
+      const rollbackRows = earningData.filter((d) => d.年月.startsWith("2020年"));
+      expect(rollbackRows.length).toBeGreaterThan(0);
+
+      rollbackRows.forEach((row) => {
+        expect(row["民間最終消費支出（名目・比較指数）" as keyof CpiData]).toBeNull();
+        expect(row["民間最終消費支出（名目・原値）" as keyof CpiData]).toBeUndefined();
+        expect(row).toHaveProperty("民間最終消費支出（参考）");
+      });
+    });
   });
 });

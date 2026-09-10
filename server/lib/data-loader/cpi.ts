@@ -439,6 +439,17 @@ function validateGdpSupport(): ValidatedGdpSupport | string {
   };
   if (!validatePeriod(nominalMetadata, nominal) || !validatePeriod(realMetadata, real))
     return "GDP metadata period mismatch";
+  for (const values of [nominal, real]) {
+    const years = [...values.keys()].sort((a, b) => a - b);
+    if (
+      years.length !== 32 ||
+      years[0] !== 1994 ||
+      years[years.length - 1] !== 2025 ||
+      years.some((year, index) => index > 0 && year !== years[index - 1] + 1)
+    ) {
+      return "GDP support years must be continuous from 1994 through 2025";
+    }
+  }
   const nominalFactor = calculateGdp2025NormalizationFactor([nominal.get(2025) ?? NaN]);
   const realFactor = calculateGdp2025NormalizationFactor([real.get(2025) ?? NaN]);
   if (!nominalFactor || !realFactor) return "missing or invalid 2025 annual GDP value";
@@ -447,6 +458,19 @@ function validateGdpSupport(): ValidatedGdpSupport | string {
       fs.readFileSync(paths.gdpDisplayNormalization, "utf8"),
     ) as Record<string, unknown>;
     if (normalization.displayNormalizationYear !== 2025) return "GDP normalization year mismatch";
+    for (const [kind, content, expectedPath] of [
+      ["nominal", nominalContent, paths.candidateSupportNominal],
+      ["real", realContent, paths.candidateSupportReal],
+    ] as const) {
+      const record = normalization[kind] as Record<string, unknown> | undefined;
+      if (
+        !record ||
+        record.csv !== path.basename(expectedPath) ||
+        record.csvSha256 !== createHash("sha256").update(content).digest("hex")
+      ) {
+        return `GDP normalization ${kind} CSV reference mismatch`;
+      }
+    }
     const factors = (normalization.factors ?? normalization) as Record<string, unknown>;
     const readFactor = (key: "nominal" | "real") => {
       const value = factors[key];

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-A dashboard application to visualize and track Japanese economic indicators — CPI (Consumer Price Index), CTI (Consumption Trend Index micro), wage statistics, and population trends. CPI selects its complete validated 2025-base set when available. CTI has 2025 candidate CSVs but, because its official map and snapshot are not yet created, currently selects the complete 2020-base rollback set. GDP comparison readiness is assessed independently from CTI: the verified nominal and real annual artifacts cover 1994–2025 and each uses its own official 2025 value for display normalization. Comparison-only normalization never overwrites official source values.
+A dashboard application to visualize and track Japanese economic indicators — CPI (Consumer Price Index), CTI (Consumption Trend Index micro), wage statistics, and population trends. CPI selects its complete validated 2025-base set when available. CTI 2025 candidates are selectable only after the official map and snapshot pass official-row-level matching. GDP comparison readiness is assessed independently from CTI: verified nominal and real annual artifacts must cover every year from 1994 through 2025 and pass metadata, CSV, and normalization-JSON hash checks. Successful validation generates separate raw and comparison values; comparison-only normalization never overwrites official source values, and incomplete validation fails closed.
 
 ## Data Model
 
@@ -51,9 +51,9 @@ Static CSV files (not publicly served) stored in `data/source/`:
 - `data/source/cpi_data2025.csv` — Saved 2025-base raw monthly data beginning in 2025; it is not a long connected series and MUST NOT be selected as the dashboard CPI input.
 - `data/source/cti_data2025.csv` / `cti_data2025_distribution_adjusted.csv` — 2025-base CTI candidate CSVs, each covering 2017年1月〜2026年7月. They are not selected until the adopted variant, official map, and snapshot are complete.
 - `data/source/cti_data2025.metadata.json` / `cti_data2025_distribution_adjusted.metadata.json` — Candidate provenance and integrity metadata; they do not by themselves make a 2025 CTI set selectable.
-- `data/source/cti-2025-series-map.csv` / `cti-2025-official-series.csv` — **Planned, not present**: the official-code map and independent snapshot required to verify the adopted CTI candidate.
+- `data/source/cti-2025-series-map.csv` / `cti-2025-official-series.csv` — Official-code map and independent snapshot required to verify the adopted CTI candidate; every mapped official row is matched against the snapshot by code, name, and representative values.
 - `data/source/cti_support_nominal2025.csv` / `cti_support_real2025.csv` — Official annual GDP artifacts for 1994–2025, each containing e-Stat series code 12 (`民間最終消費支出`) in 10億円. The nominal source is 0003109786 and the real source is 0003109751.
-- `data/source/cti_support_nominal2025.metadata.json` / `cti_support_real2025.metadata.json` / `cti-gdp-display-normalization2025.json` — Ready provenance, hash, annual-period, and independent 2025 annual-value normalization records. Nominal remains current prices; real remains previous-year chain-linked at its recorded 2020 reference year.
+- `data/source/cti_support_nominal2025.metadata.json` / `cti_support_real2025.metadata.json` / `cti-gdp-display-normalization2025.json` — Provenance, hash, annual-period, and independent 2025 annual-value normalization records. Metadata, source CSV, and normalization JSON hashes must agree before use. Nominal remains current prices; real remains previous-year chain-linked at its recorded 2020 reference year.
 - `data/source/cti_data.csv` / `cti_support_nominal.csv` / `cti_support_real.csv` — Complete compatible 2020-base CTI rollback set; never mixed with a 2025 CTI input.
 - `data/source/total_earning.csv` — Total earnings
 - `data/source/contractual_earnings.csv` — Contractual earnings
@@ -192,10 +192,11 @@ The system SHALL load and process CSV data on the server before rendering.
 - **WHEN** `loadCtiData()` / `loadTotalEarningData()` / consumption map builder is called
 - **THEN** it selects a complete, verified 2025 CTI set only when the adopted CTI CSV, metadata, official map, and official snapshot validate; otherwise it selects the complete compatible 2020 rollback set
 - **AND** it validates the CTI set and the nominal/real GDP comparison set independently and never treats GDP availability or a CTI base year as a condition for CTI selection
+- **AND** it matches every adopted CTI map row to the official snapshot row-by-row, including official code, name, and representative values
 - **AND** it returns an explicit unavailable state when neither complete set is valid
 - **AND** missing CTI inputs remain missing; they are not converted to zero, and a derived residual is missing when any required component is missing.
 
-At the current artifact state, the missing CTI map/snapshot causes the 2020 CTI rollback to be selected. The annual nominal/real GDP pair is independently ready, so `getGdpSupportStatus()` reports available GDP comparison normalization without selecting the CTI 2025 candidate.
+When the CTI map/snapshot or any other candidate input fails validation, the complete 2020 CTI rollback is selected. When the annual nominal/real GDP pair passes its independent validation, `getGdpSupportStatus()` reports available GDP comparison normalization without affecting CTI selection.
 
 #### Scenario R3d: CTI Source Basis, 12MA, and Comparison Rebase
 
@@ -208,10 +209,12 @@ At the current artifact state, the missing CTI map/snapshot causes the 2020 CTI 
 #### Scenario R3i: GDP Raw and Comparison Values
 
 - **WHEN** GDP has complete, verified annual observations through 2025 and one finite non-zero 2025 value per price concept
+- **THEN** annual coverage is continuous for every year 1994–2025 and metadata, source CSV, and normalization JSON SHA-256 values agree
 - **THEN** nominal and real GDP each receive their own 2025 annual-value normalization factor for the comparison view
 - **AND** the raw official amounts remain available to the spending table, CSV, and tooltip with their price concept and reference year
+- **AND** raw official amounts and normalized comparison values remain separate in the table, CSV, and tooltip
 - **AND WHEN** GDP values or provenance are incomplete
-- **THEN** the GDP comparison line is not rendered and the system does not interpolate values, fit the CTI/GDP boundary, or reuse a CTI factor.
+- **THEN** validation fails closed: raw and comparison GDP outputs are omitted, the GDP comparison line is not rendered, and the system does not interpolate values, fit the CTI/GDP boundary, or reuse a CTI factor
 
 #### Scenario R3c: Data Processing & Projection
 
@@ -668,7 +671,7 @@ Page (RSC)
     │   └── StackedAreaChart → CustomTooltip — always-expanded 12-series legend (compact on mobile)
     │       └── belowChartSlot: CagrPanel — popup link + compact BottomSheet (R18)
     ├── [Chart variants]                     — deferred: wrapped in LazyMount
-    │   ├── SpendingBarChart (nominal / real) — receives quarterly aggregates of the selected CTI fields; it does not currently receive the pending GDP raw/comparison artifacts
+    │   ├── SpendingBarChart (nominal / real) — receives quarterly aggregates of selected CTI fields and keeps GDP raw amounts separate from comparison indices in tables, CSV, and tooltips
      │   ├── EarningsBreakdownChart → CustomTooltip
     │   ├── ResidualAreaChart → CustomTooltip
     │   └── NewGraph → ChartInfoContentRenderer → CustomTooltip — comparison visualization receives CTI plus GDP comparison-only normalized values; it omits unavailable GDP lines
@@ -695,15 +698,16 @@ data/source/cpi_data.csv + data/source/contribution.csv (compatible 2020 fallbac
       → select complete 2025 pair; otherwise select complete 2020 pair; otherwise fail closed with invalid `getCpiDataStatus()`
       → apply selected-pair fixed weights: all-items denominator 10000; mutually exclusive 10-major-category comparison denominator 10002
       → derive `外食以外食料 = weighted 食料 − weighted 外食`; propagate source missing values to all dependent values
-official all-household CTI micro CSV → planned official-code snapshot + planned series map + candidate metadata
-data/source/cti_data2025.csv / data/source/cti_data2025_distribution_adjusted.csv (candidates; map/snapshot absent)
+official all-household CTI micro CSV → official-code snapshot + series map + candidate metadata
+data/source/cti_data2025.csv / data/source/cti_data2025_distribution_adjusted.csv (candidates)
 data/source/cti_data.csv + cti_support_nominal.csv + cti_support_real.csv (complete 2020 rollback set)
   → server/lib/dataIo.ts → server/lib/data-loader/cpi.ts
-    → reject the 2025 CTI candidates while map/snapshot are absent; select the 2020 rollback set; preserve source-basis values and missing values
+    → match every map row to the official snapshot row-by-row; select the verified 2025 candidate or complete 2020 rollback; preserve source-basis values and missing values
 GDP nominal/real annual CSVs + ready metadata + independent annual-2025 factors
   → validate both price concepts and their one 2025 annual value as one comparison set
-    → current result: fail closed; omit GDP raw/comparison fields and the NewGraph GDP line without altering CTI selection
-    → future valid result: raw official amounts and separate comparison-only normalized values
+    → verify 1994–2025 continuity and metadata/CSV/normalization-JSON hash agreement
+    → valid result: generate separate raw official amounts and comparison-only normalized values for tables, CSV, tooltips, and NewGraph
+    → invalid result: fail closed and omit GDP raw/comparison fields and the NewGraph GDP line without altering CTI selection
 data/source/{total_earning,contractual_earnings,scheduled_earnings,total_worked_hours,population_statistics,employment_indices}.csv
   → server/lib/dataIo.ts
     → server/lib/data-loader/{earnings,population}.ts (domain-specific loading + caching)
@@ -792,8 +796,9 @@ scripts/
 - Unit tests for data loading, transformation, and data quality/integrity (`tests/unit/`, `tests/data-quality/`)
 - CPI pair integrity tests MUST unconditionally validate the 78 mapping records against `data/source/cpi-2025-official-series.csv`, including official code and name; they MUST validate the metadata-recorded source-original and snapshot SHA-256 values rather than relying only on a mapping-table hash.
 - CPI loader tests MUST cover runtime validation of metadata row/series counts, period, generated-file SHA-256, monthly continuity, and 2025 all-items annual average, plus complete 2020-pair fallback when 2025 validation fails.
-- CTI tests MUST treat the missing `cti-2025-series-map.csv` and `cti-2025-official-series.csv` as a 2025-candidate failure until those planned artifacts exist; after creation, they MUST unconditionally verify official codes, names, and representative values against the snapshot.
-- GDP tests MUST require both nominal and real annual 1994–2025 artifacts, valid hashes, and one finite non-zero 2025 value each before emitting comparison values. They MUST NOT mix price concepts or substitute a 2020/CTI factor.
+- CTI tests MUST require the map and snapshot to exist and MUST unconditionally match every official map row against the snapshot by official code, name, and representative values before selecting the 2025 candidate; otherwise the complete 2020 rollback is selected.
+- GDP tests MUST require continuous annual observations for every year 1994–2025, valid metadata/CSV/normalization-JSON hashes, and one finite non-zero 2025 value per price concept before generating raw and comparison values. They MUST verify raw and normalized values remain separate in table, CSV, and tooltip projections, MUST NOT mix price concepts or substitute a 2020/CTI factor, and MUST assert fail-closed omission when validation fails.
+- Tests that use 2020 as a prerequisite MUST be limited to the CTI rollback path; 2020 MUST NOT be used as a general GDP normalization or continuity assumption.
 - Component tests for chart rendering and interaction (`tests/components/`)
 - Integration tests for data mapping and computation accuracy (`tests/data-mapping/`, `tests/computation-contract/`)
 - Constant/fixture tests for expected data quality (`tests/constants/`, `tests/fixtures/`)
