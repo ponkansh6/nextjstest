@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import React from "react";
 import { SpendingBarChart } from "@/app/components/SpendingBarChart";
+import { SUPPORT_SERIES_KEY_NOMINAL } from "@/lib/chartConstants";
 
 // Mock Recharts components because JSDOM cannot render SVG / layout
 vi.mock("recharts", () => ({
@@ -16,6 +17,7 @@ vi.mock("recharts", () => ({
     </div>
   ),
   Bar: ({ dataKey }: { dataKey: string }) => <div data-testid="bar-mock" data-key={dataKey} />,
+  Line: ({ dataKey }: { dataKey: string }) => <div data-testid="line-mock" data-key={dataKey} />,
   CartesianGrid: () => <div data-testid="cartesian-grid" />,
   XAxis: () => <div data-testid="xaxis" />,
   YAxis: () => <div data-testid="yaxis" />,
@@ -55,6 +57,79 @@ describe("SpendingBarChart component legendMode tests", () => {
     trigger: "hover" as const,
     content: <div />,
   };
+
+  const renderChart = (overrides: Partial<React.ComponentProps<typeof SpendingBarChart>> = {}) =>
+    render(
+      <SpendingBarChart
+        title="消費支出"
+        data={mockData}
+        keys={["食料", SUPPORT_SERIES_KEY_NOMINAL]}
+        colors={mockColors}
+        hiddenKeys={[]}
+        onToggle={vi.fn()}
+        chartColors={mockChartColors}
+        tooltipProps={mockTooltipProps}
+        hiddenQuarters={[]}
+        onToggleQuarter={vi.fn()}
+        onReset={vi.fn()}
+        {...overrides}
+      />,
+    );
+
+  it("Plan24: renders the pre-2018 GDP series as a Bar and never renders a GDP Line", () => {
+    renderChart({
+      data: [
+        {
+          label: "2017 Q4",
+          年: 2017,
+          quarter: 4,
+          年月: "2017-10",
+          [SUPPORT_SERIES_KEY_NOMINAL]: 100,
+        },
+      ],
+      keys: [SUPPORT_SERIES_KEY_NOMINAL],
+    });
+
+    expect(screen.getAllByTestId("bar-mock").map((node) => node.getAttribute("data-key"))).toEqual([
+      SUPPORT_SERIES_KEY_NOMINAL,
+    ]);
+    expect(screen.queryAllByTestId("line-mock")).toHaveLength(0);
+  });
+
+  it("Plan24: switches at 2018Q1 without filling, copying, or interpolating the boundary", () => {
+    renderChart({
+      data: [
+        {
+          label: "2017 Q4",
+          年: 2017,
+          quarter: 4,
+          年月: "2017-10",
+          [SUPPORT_SERIES_KEY_NOMINAL]: 100,
+          食料: 20,
+        },
+        {
+          label: "2018 Q1",
+          年: 2018,
+          quarter: 1,
+          年月: "2018-01",
+          [SUPPORT_SERIES_KEY_NOMINAL]: 200,
+          食料: 30,
+          住居: 20,
+        },
+      ],
+      keys: ["食料", "住居", SUPPORT_SERIES_KEY_NOMINAL],
+    });
+
+    const rows = JSON.parse(screen.getByTestId("barchart").getAttribute("data-rows") || "[]");
+    expect(rows).toHaveLength(2);
+    expect(rows[0][SUPPORT_SERIES_KEY_NOMINAL]).toBe(100);
+    expect(rows[0].食料).toBeNull();
+    expect(rows[1][SUPPORT_SERIES_KEY_NOMINAL]).toBeNull();
+    expect(rows[1].食料).toBe(30);
+    expect(rows[1].住居).toBe(20);
+    expect(rows[1][SUPPORT_SERIES_KEY_NOMINAL]).not.toBe(0);
+    expect(screen.queryAllByTestId("line-mock")).toHaveLength(0);
+  });
 
   // U1: legendMode 未指定（既定 expanded）で <details> が描画されず、凡例が直接表示される
   it("U1: defaults to expanded mode, rendering legend directly without details", () => {

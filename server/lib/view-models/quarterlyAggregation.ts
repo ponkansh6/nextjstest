@@ -128,8 +128,6 @@ export function computeQuarterlyAggregates(
         const startMonth = (q - 1) * 3 + 1;
         const item: QuarterlyRow = { label, quarter: q, 年: y, 年月: `${y}年${startMonth}月` };
 
-        item[SUPPORT_SERIES_KEY_NOMINAL] = 0;
-        item[SUPPORT_SERIES_KEY_REAL] = 0;
         keys.forEach((k) => (item[k] = 0));
 
         let validMonthsCount = 0;

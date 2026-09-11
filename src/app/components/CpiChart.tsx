@@ -618,7 +618,9 @@ export default function CpiChart({
           hiddenKeys={nominalHiddenKeys}
           onToggle={handleLegendToggle}
           chartColors={chartColors}
-          {...chartTooltip.bind("section-consumption-nominal", { showTotal: true })}
+          {...chartTooltip.bind("section-consumption-nominal", {
+            showTotal: true,
+          })}
           hiddenQuarters={hiddenQuarters}
           onToggleQuarter={handleQuarterLegendClick}
           onReset={createDualResetHandler(
@@ -649,7 +651,9 @@ export default function CpiChart({
           hiddenKeys={realHiddenKeys}
           onToggle={handleLegendToggle}
           chartColors={chartColors}
-          {...chartTooltip.bind("section-consumption-real", { showTotal: true })}
+          {...chartTooltip.bind("section-consumption-real", {
+            showTotal: true,
+          })}
           hiddenQuarters={hiddenQuarters}
           onToggleQuarter={handleQuarterLegendClick}
           onReset={createDualResetHandler(

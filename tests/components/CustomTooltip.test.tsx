@@ -1,6 +1,7 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { CustomTooltip } from "../../src/app/components/CustomTooltip";
+import { SUPPORT_SERIES_KEY_NOMINAL } from "../../src/lib/chartConstants";
 
 const payload = [{ name: "総合", value: 112.5, color: "#1d4ed8" }];
 
@@ -177,5 +178,28 @@ describe("CustomTooltip", () => {
     );
     expect(screen.getByText("合計")).toBeDefined();
     expect(screen.getByText("150.00")).toBeDefined();
+  });
+
+  it("Plan24: excludes GDP comparison values from the CTI total", () => {
+    render(
+      <CustomTooltip
+        active
+        payload={[
+          { name: "食料", dataKey: "食料", value: 100, color: "#f00" },
+          { name: "GDP", dataKey: SUPPORT_SERIES_KEY_NOMINAL, value: 200, color: "#0ff" },
+        ]}
+        label="2025年1月"
+        isMobile={false}
+        isTouch={false}
+        tooltipBg="#1e293b"
+        tooltipText="#f1f5f9"
+        showTotal
+        totalExcludedKeys={[SUPPORT_SERIES_KEY_NOMINAL]}
+      />,
+    );
+
+    expect(screen.getByText("100.00")).toBeDefined();
+    expect(screen.queryByText("300.00")).toBeNull();
+    expect(screen.getByText("GDP: 200.00")).toBeDefined();
   });
 });

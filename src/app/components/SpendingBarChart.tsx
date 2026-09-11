@@ -2,7 +2,11 @@ import React from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { CpiData } from "@/types";
 import styles from "./CpiChart.module.css";
-import { getLegendLabel, SUPPORT_SERIES_KEY_NOMINAL } from "../../lib/chartConstants";
+import {
+  getLegendLabel,
+  SUPPORT_SERIES_KEY_NOMINAL,
+  SUPPORT_SERIES_KEY_REAL,
+} from "../../lib/chartConstants";
 import type { ChartTooltipProps } from "./charts/useChartTooltipProps";
 import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
 import { CHART_INFO, type ChartInfoContent } from "../../lib/chartInfoContent";
@@ -15,7 +19,7 @@ interface QuarterlyDataPoint {
   年: number;
   quarter: number;
   年月: string;
-  [key: string]: string | number;
+  [key: string]: string | number | null;
 }
 
 interface SpendingBarChartProps {
@@ -60,6 +64,23 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
     linkedSectionId,
     testId,
   } = props;
+  const supportKey = keys.includes(SUPPORT_SERIES_KEY_REAL)
+    ? SUPPORT_SERIES_KEY_REAL
+    : keys.includes(SUPPORT_SERIES_KEY_NOMINAL)
+      ? SUPPORT_SERIES_KEY_NOMINAL
+      : undefined;
+  const ctiKeys = keys.filter((key) => key !== supportKey);
+  const hasLegacyGdp = data.some(
+    (row) => row.年 < 2018 && supportKey && typeof row[supportKey] === "number",
+  );
+  const legendKeys = hasLegacyGdp ? keys : ctiKeys;
+  // Plan24: GDP is a standalone bar before 2018Q1; CTI is the only stack afterwards.
+  const chartData = data.map((row) => {
+    const next = { ...row };
+    if (row.年 < 2018) ctiKeys.forEach((key) => (next[key] = null));
+    else if (supportKey) next[supportKey] = null;
+    return next;
+  });
 
   const renderLegend = () => (
     <div className={styles.legendContainer}>
@@ -83,7 +104,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
           <button onClick={onReset} className={styles.legendItem}>
             全選択解除
           </button>
-          {keys.map((key, index) => (
+          {legendKeys.map((key) => (
             <button
               key={key}
               onClick={() => onToggle(key)}
@@ -96,7 +117,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
                   backgroundColor:
                     key === SUPPORT_SERIES_KEY_NOMINAL
                       ? chartColors.barFill || "#94a3b8"
-                      : colors[index],
+                      : colors[keys.indexOf(key)],
                 }}
               />
 
@@ -114,6 +135,14 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
       className={styles.chartSection}
       style={{ scrollMarginTop: "5rem" }}
       data-testid={testId}
+      data-gdp-periods={chartData
+        .filter((row) => supportKey && typeof row[supportKey] === "number")
+        .map((row) => row.label)
+        .join(",")}
+      data-cti-periods={chartData
+        .filter((row) => ctiKeys.some((key) => typeof row[key] === "number"))
+        .map((row) => row.label)
+        .join(",")}
     >
       <h2 className={styles.chartTitle}>
         {title}
@@ -163,7 +192,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
       <div className={styles.chartWrapper} role="img" aria-label={`${title}の推移グラフ`}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
-            data={data}
+            data={chartData}
             margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
             onClick={onClick}
           >
@@ -195,16 +224,26 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
               dx={-10}
             />
             <Tooltip {...tooltipProps} />
-            {keys.map((key, index) =>
+            {supportKey && hasLegacyGdp && !hiddenKeys.includes(supportKey) && (
+              <Bar
+                dataKey={supportKey}
+                data-testid={`spending-series-${supportKey}`}
+                fill={chartColors.barFill || "#94a3b8"}
+                fillOpacity={0.8}
+                isAnimationActive={false}
+              />
+            )}
+            {ctiKeys.map((key) =>
               !hiddenKeys.includes(key) ? (
                 <Bar
                   key={key}
                   dataKey={key}
+                  data-testid={`spending-series-${key}`}
                   stackId="a"
                   fill={
                     key === SUPPORT_SERIES_KEY_NOMINAL
                       ? chartColors.barFill || "#94a3b8"
-                      : colors[index]
+                      : colors[keys.indexOf(key)]
                   }
                   fillOpacity={0.8}
                   isAnimationActive={false}

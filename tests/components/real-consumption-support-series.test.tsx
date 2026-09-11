@@ -168,7 +168,7 @@ describe("Real Consumption Support Series - Local Pipeline Regression Guard", ()
     });
   });
 
-  it("T2: UI — SpendingBarChart renders with non-zero 民間最終消費支出（実質） for 2005-2016", () => {
+  it("T2: UI — pre-2018 rows render GDP as the only bar and no Line", () => {
     /**
      * 回帰ガード（成功が期待値）。ローカル経路が壊れたときに赤くなる。商用再現は prod-payload.test.ts。
      * Renders SpendingBarChart with the exact same props as CpiChart.tsx:344-370 (real consumption chart).
@@ -226,7 +226,9 @@ describe("Real Consumption Support Series - Local Pipeline Regression Guard", ()
         `REGRESSION UI: ${d.label} ${SUPPORT_SERIES_KEY_REAL} = ${val} (expected > 0 in BarChart data)`,
       ).toBeGreaterThan(0);
       expect(val, `${d.label}: should not be exactly 0 in rendered data`).not.toBe(0);
+      for (const key of CONSUMPTION_REAL_KEYS) expect(d[key]).toBeNull();
     });
+    expect(screen.queryAllByTestId("line-mock")).toHaveLength(0);
   });
 
   it("T3: UI — 民間最終消費支出（実質） Bar series is rendered", () => {
@@ -276,6 +278,35 @@ describe("Real Consumption Support Series - Local Pipeline Regression Guard", ()
     expect(barKeys, "Bar series list should include SUPPORT_SERIES_KEY_REAL").toContain(
       SUPPORT_SERIES_KEY_REAL,
     );
+    expect(screen.queryAllByTestId("line-mock")).toHaveLength(0);
+  });
+
+  it("T5: UI — 2018Q1 onward removes GDP from rows and legend", () => {
+    const post2018Data = projectedQuarterlyReal.filter((d) => (d.年 as number) >= 2018);
+    render(
+      <SpendingBarChart
+        title="消費支出（実質）"
+        data={post2018Data}
+        keys={[...CONSUMPTION_REAL_KEYS, SUPPORT_SERIES_KEY_REAL]}
+        colors={[...CONSUMPTION_REAL_KEYS.map(() => "#64748b"), "#94a3b8"]}
+        hiddenKeys={[]}
+        onToggle={vi.fn()}
+        chartColors={{ barFill: "#94a3b8", gridStroke: "#e2e8f0", axisText: "#64748b" }}
+        tooltipProps={{
+          cursor: { stroke: "#000", strokeWidth: 1, strokeOpacity: 0.6 },
+          trigger: "hover",
+          content: <div />,
+        }}
+        hiddenQuarters={[]}
+        onToggleQuarter={vi.fn()}
+        onReset={vi.fn()}
+      />,
+    );
+    const rows = JSON.parse(screen.getByTestId("barchart").getAttribute("data-rows") || "[]");
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.every((row: any) => row[SUPPORT_SERIES_KEY_REAL] == null)).toBe(true);
+    expect(screen.queryAllByTestId("line-mock")).toHaveLength(0);
+    expect(screen.queryByRole("button", { name: "民間最終消費支出" })).toBeNull();
   });
 
   it("T4: diagnostic — 2005-2016 data distribution: all quarters must have non-zero values", () => {

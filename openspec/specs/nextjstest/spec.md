@@ -134,6 +134,15 @@ The system SHALL display economic indicators as interactive Recharts-based chart
     - Also includes an advanced reference-only series "民間最終消費支出（参考・延長）" (2017-) which is hidden by default and can be enabled via `?adv=1` URL query parameter or the ⓘ info panel toggle.
   - Charts using `interval="preserveStartEnd"` on their XAxis (MajorIndicesChart, EarningsBreakdownChart, StackedAreaChart, SpendingBarChart, ResidualAreaChart, NewGraph) render the first/last (start year / end year) tick label in `--foreground` via the shared `XAxisEdgeTick` component (`src/app/components/charts/XAxisEdgeTick.tsx`), while other tick labels use the default `--chart-text` color
 
+#### Scenario R2c: Legacy GDP Bars and CTI Consumption Bars
+
+- **WHEN** nominal or real consumption data is rendered in `SpendingBarChart`
+- **THEN** 2017Q4以前はGDP比較値だけを単独のBarとして描画する
+- **AND** 2018Q1以降は検証済みCTI費目だけを積み上げBarとして描画する
+- **AND** GDPとCTIを同一四半期に同時表示・合算せず、GDP Lineは描画しない
+- **AND** 2018Q1以降の表示データ、凡例、tooltipからGDP比較値を除外する
+- **AND** GDP欠損を0埋めせず、境界で値の複製・補間・表示用係数合わせをしない
+
 ### R3: Data Transformation (Server-Side)
 
 The system SHALL load and process CSV data on the server before rendering.
@@ -236,6 +245,14 @@ When the CTI map/snapshot or any other candidate input fails validation, the com
 - **AND** it publishes only finite nominal/real comparison values when `comparisonReady` is true
 - **AND** missing, non-finite, out-of-range, or non-ready GDP values remain absent while CTI rows remain present
 - **AND** chart, tooltip, table, and CSV consume the same joined public rows
+- **AND** the consumption chart maps pre-2018Q1 GDP comparison fields to standalone bars and 2018Q1+ CTI expense fields to stacked bars
+- **AND** GDP values are excluded from 2018Q1+ chart data, legends, tooltips, and CTI totals while the public projection retains the comparison keys as `null`
+- **AND** before 2018Q1 the tooltip total includes the standalone GDP comparison value, while from 2018Q1 the tooltip total includes only visible CTI expense fields
+- **AND** the public table and CSV may retain the normalized quarterly comparison column for verification, but never expose raw/internal GDP fields; chart, legend, and tooltip visibility remains governed by the display-period contract
+- **AND WHEN** a joined GDP value is missing, or the series ends before later CTI rows
+- **THEN** the public row retains the CTI data and does not zero-fill, copy, interpolate, or rescale the missing GDP value
+- **AND WHEN** quarterly GDP confirmation is not ready or validation fails
+- **THEN** the GDP comparison field remains absent and its line is not rendered, while CTI data remains available
 
 #### Scenario R3c: Data Processing & Projection
 
@@ -692,7 +709,7 @@ Page (RSC)
     │   └── StackedAreaChart → CustomTooltip — always-expanded 12-series legend (compact on mobile)
     │       └── belowChartSlot: CagrPanel — popup link + compact BottomSheet (R18)
     ├── [Chart variants]                     — deferred: wrapped in LazyMount
-    │   ├── SpendingBarChart (nominal / real) — receives quarterly aggregates of selected CTI fields and keeps GDP raw amounts separate from comparison indices in tables, CSV, and tooltips
+    │   ├── SpendingBarChart (nominal / real) — renders legacy GDP as standalone bars before 2018Q1 and CTI expense fields as stacked bars from 2018Q1; GDP is excluded thereafter
      │   ├── EarningsBreakdownChart → CustomTooltip
     │   ├── ResidualAreaChart → CustomTooltip
     │   └── NewGraph → ChartInfoContentRenderer → CustomTooltip — comparison visualization receives CTI plus GDP comparison-only normalized values; it omits unavailable GDP lines
@@ -709,6 +726,9 @@ hydration — tests must wait for them rather than reading the initial markup.
 
 - `src/app/page.tsx` loads `loadQuarterlyGdpData()` alongside CTI, computes quarterly CTI aggregates, and calls the pure `buildQuarterlyPublicViews()` path, which joins by exact `YYYY-Qn` keys before applying the public projection.
 - The joined public rows are passed unchanged to `CpiChart`; chart, tooltip, table, and CSV derive their displayed values from those same rows. GDP raw fields never cross the public projection boundary.
+- `CpiChart` passes CTI expense keys and legacy GDP comparison keys to `SpendingBarChart`; the chart component renders only GDP bars before 2018Q1 and only CTI `Bar` stacks from 2018Q1.
+- Tooltip aggregation follows the display contract: before 2018Q1 it receives only the standalone GDP comparison field; from 2018Q1 it receives only visible CTI expense fields. GDP comparison values are never included in the post-2018 CTI total.
+- Missing, ended, unready, or failed-validation GDP comparison values remain `null` in the public projection and are hidden at the chart boundary; GDP is never zero-filled, copied, interpolated, or rescaled at the boundary.
 
 ```
 e-Stat official CPI long connected CSV (`statInfId=000040482945`) + source-original SHA-256

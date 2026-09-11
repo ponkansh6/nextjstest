@@ -3,6 +3,7 @@ import {
   mergeQuarterlyGdpRows,
   type QuarterlyRow,
 } from "../../server/lib/view-models/quarterlyAggregation";
+import { loadQuarterlyGdpData } from "../../server/lib/data-loader/cpi";
 import { buildQuarterlyPublicViews } from "../../server/lib/view-models/quarterlyProjection";
 
 const rows = (): [QuarterlyRow[], QuarterlyRow[]] => [
@@ -108,9 +109,9 @@ describe("quarterly GDP join", () => {
     expect(projected.nominal).toHaveLength(2);
     expect(projected.real).toHaveLength(2);
     expect(projected.nominal[1]).toMatchObject({ label: "2025Q1", 年: 2025, quarter: 1 });
-    expect(projected.nominal[1]).not.toHaveProperty("民間最終消費支出（名目）");
+    expect(projected.nominal[1]["民間最終消費支出（名目）"]).toBeNull();
     expect(projected.nominal[1]).not.toHaveProperty("nominalRaw");
-    expect(projected.real[1]).not.toHaveProperty("民間最終消費支出（実質・比較指数）");
+    expect(projected.real[1]["民間最終消費支出（実質）"]).toBeNull();
   });
 
   it("publishes only rounded nominal/real comparisons without raw or internal keys", () => {
@@ -135,4 +136,58 @@ describe("quarterly GDP join", () => {
     expect(projected.real[1]).not.toHaveProperty("realRaw");
     expect(projected.real[1]).not.toHaveProperty("realComparison");
   });
+
+  it("independently recomputes 2025 Q1-Q4 factors from the raw support data", () => {
+    const loaded = loadQuarterlyGdpData();
+    expect(loaded.comparisonReady).toBe(true);
+    const target = loaded.rows.filter((row) => /^2025-Q[1-4]$/.test(row.period));
+    expect(target).toHaveLength(4);
+
+    for (const field of ["nominalRaw", "realRaw"] as const) {
+      const values = target
+        .filter((row) => row.period.startsWith("2025-"))
+        .map((row) => row[field]);
+      const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
+      const factor = 100 / mean;
+      for (const row of target.filter((candidate) => candidate.period.startsWith("2025-"))) {
+        const comparison = field === "nominalRaw" ? row.nominalComparison : row.realComparison;
+        expect(comparison).toBeCloseTo(row[field] * factor, 10);
+      }
+      const swappedFactor =
+        field === "nominalRaw"
+          ? (100 / target.reduce((sum, row) => sum + row.realRaw, 0)) * 4
+          : (100 / target.reduce((sum, row) => sum + row.nominalRaw, 0)) * 4;
+      expect(rowValue(target[0], field) * swappedFactor).not.toBeCloseTo(
+        field === "nominalRaw" ? target[0].nominalComparison! : target[0].realComparison!,
+        8,
+      );
+    }
+  });
+
+  it("publishes independently recomputed 2025 values through the real projection path", () => {
+    const loaded = loadQuarterlyGdpData();
+    expect(loaded.comparisonReady).toBe(true);
+    const target = loaded.rows.filter((row) => /^2025-Q[1-4]$/.test(row.period));
+    const nominalRows = target.map((row) => ({
+      年: 2025,
+      quarter: Number(row.period.slice(-1)),
+      label: row.period.replace("-", ""),
+      年月: `2025年${Number(row.period.slice(-1)) * 3 - 2}月`,
+    }));
+    const realRows = nominalRows.map((row) => ({ ...row }));
+    const projected = buildQuarterlyPublicViews(nominalRows, realRows, loaded);
+
+    for (const [index, row] of target.entries()) {
+      expect(projected.nominal[index]["民間最終消費支出（名目）"]).toBe(
+        Number(row.nominalComparison?.toFixed(2)),
+      );
+      expect(projected.real[index]["民間最終消費支出（実質）"]).toBe(
+        Number(row.realComparison?.toFixed(2)),
+      );
+    }
+  });
 });
+
+function rowValue(row: { nominalRaw?: number; realRaw?: number }, field: "nominalRaw" | "realRaw") {
+  return row[field] ?? 0;
+}

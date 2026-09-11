@@ -82,7 +82,7 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: `pnpm start --port ${E2E_PORT}`,
+    command: `pnpm start --port ${E2E_PORT} --hostname 127.0.0.1`,
     // url が無いと Playwright は起動完了を待たず、初回 goto が
     // ERR_CONNECTION_REFUSED になる（特にテストを絞って実行したとき）
     url: BASE_URL,

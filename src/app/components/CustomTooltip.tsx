@@ -4,7 +4,18 @@ import React from "react";
 import type { CustomTooltipProps } from "@/types/chart";
 
 export const CustomTooltip = React.memo<CustomTooltipProps>(
-  ({ active, payload, label, isMobile, isTouch, tooltipBg, tooltipText, onDismiss, showTotal }) => {
+  ({
+    active,
+    payload,
+    label,
+    isMobile,
+    isTouch,
+    tooltipBg,
+    tooltipText,
+    onDismiss,
+    showTotal,
+    totalExcludedKeys = [],
+  }) => {
     if (!active || !payload) {
       return null;
     }
@@ -14,7 +25,13 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
     const padding = isMobile ? "10px 14px" : "12px";
 
     const total = showTotal
-      ? payload.reduce((acc, e) => acc + (typeof e.value === "number" ? e.value : 0), 0)
+      ? payload.reduce(
+          (acc, e) =>
+            totalExcludedKeys.includes(e.dataKey as string)
+              ? acc
+              : acc + (typeof e.value === "number" ? e.value : 0),
+          0,
+        )
       : null;
 
     const displayPayload = isMobile

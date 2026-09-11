@@ -7,7 +7,7 @@ import {
 import type { QuarterlyView } from "@/types/chart";
 import type { QuarterlyRow } from "../../server/lib/view-models/quarterlyAggregation";
 
-/** Public quarterly surfaces intentionally exclude all internal GDP raw/index keys. */
+/** Public quarterly surfaces expose comparison keys while excluding internal GDP raw/index keys. */
 export const QUARTERLY_PUBLIC_NOMINAL_KEYS = [
   ...CONSUMPTION_NOMINAL_KEYS,
   SUPPORT_SERIES_KEY_NOMINAL,
@@ -34,7 +34,7 @@ export function projectQuarterlyPublicView(rows: QuarterlyRow[]): QuarterlyView[
     };
     for (const key of QUARTERLY_PUBLIC_KEYS) {
       const value = row[key];
-      if (typeof value === "number") out[key] = Math.round(value * 100) / 100;
+      out[key] = typeof value === "number" ? Math.round(value * 100) / 100 : null;
     }
     return out;
   });
