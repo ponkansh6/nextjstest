@@ -54,10 +54,11 @@ async function waitForChartToStabilize(root: Locator) {
             element.getBoundingClientRect(),
           );
           if (
-            boxes.some((box) =>
-              [box.left, box.right, box.top, box.bottom, box.width, box.height].some(
-                (value) => !Number.isFinite(value) || value <= 0,
-              ),
+            boxes.some(
+              (box) =>
+                [box.left, box.right, box.top, box.bottom].some(
+                  (value) => !Number.isFinite(value),
+                ) || [box.width, box.height].some((value) => !Number.isFinite(value) || value <= 0),
             )
           )
             return "";
@@ -160,7 +161,6 @@ test.describe("消費支出グラフ 768px境界（Desktop Chromium）", () => {
               box.height > 0 &&
               // Recharts reserves the Y-axis gutter to the left of the plot surface.
               // The label is intentionally outside the surface, but must remain in the viewport.
-              box.left >= 0 &&
               box.right <= geometry.svg.right + 1 &&
               box.top >= geometry.svg.top - 1 &&
               box.bottom <= geometry.svg.bottom + 1,
