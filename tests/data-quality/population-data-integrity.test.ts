@@ -13,4 +13,9 @@ describe("Population Data Integrity", () => {
     const positiveTotals = Array.from(populationData.values()).filter((v) => v.total > 0).length;
     expect(positiveTotals, "Population data should have positive total values").toBeGreaterThan(0);
   });
+
+  it("uses the official 2026 May and June observations without filling gaps", () => {
+    expect(populationData.get("2026年5月")?.total).toBe(10976 * 10000);
+    expect(populationData.get("2026年6月")?.total).toBe(10969 * 10000);
+  });
 });

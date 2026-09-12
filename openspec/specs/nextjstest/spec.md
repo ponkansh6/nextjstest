@@ -64,6 +64,7 @@ Static CSV files (not publicly served) stored in `data/source/`:
 - `data/source/scheduled_earnings.csv` — Scheduled earnings
 - `data/source/total_worked_hours.csv` — Total worked hours
 - `data/source/population_statistics.csv` — Population statistics
+- `data/source/population_statistics.metadata.json` — 総務省統計局「労働力調査（基本集計）」長期時系列 表1-b-1（e-Stat `statInfId=000031831366`）の取得URL、表ID、取得日時、公式Excelサイズ/SHA-256、欠測ポリシーを記録する。
 - `data/source/employment_indices.csv` — Employment indices
 - `data/source/hon-mks202512.csv` — 毎月勤労統計調査の生データ（常用労働者数、出勤日数、実労働時間数、現金給与額）
 - `data/source/hon-mks202606.xls` / `earnings_method_b_202606.csv` — Plan26方式Bの公式一括原表と、実数原表から抽出した2026-06確報5系列の断面成果物。既存の指数・前年比履歴CSVとは単位と定義が異なるため混在させない。
@@ -160,6 +161,16 @@ The system SHALL display economic indicators as interactive Recharts-based chart
 - **AND** tooltipはモバイルでも全費目を内部スクロール付きで表示する
 
 ### R3: Data Transformation (Server-Side)
+
+#### Scenario R3p: Official Population Data and Missing Values
+
+- **WHEN** population statistics are loaded
+- **THEN** the source is the official nationwide, both-sexes, original-value series in table 1-b-1 and its provenance metadata is present
+- **AND** official 2026-05 and 2026-06 totals are 10,976 and 10,969万人 respectively
+- **AND WHEN** a population observation is missing
+- **THEN** it remains missing and is never treated as zero, interpolated, or otherwise inferred
+- **AND** dependent 15歳以上国民当たり給与 values remain missing when their population moving-average window is incomplete
+- **AND** dependent hourly and per-capita wage values remain missing when their related hours/employment inputs are incomplete
 
 The system SHALL load and process CSV data on the server before rendering.
 

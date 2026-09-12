@@ -159,10 +159,18 @@ export async function loadTotalEarningDataInternal(
     const contractualReal = parseFloat(tRow[13].replace(/,/g, ""));
     const scheduledReal = parseFloat(tRow[14].replace(/,/g, ""));
     const ym202512 = "2025年12月";
-    const totalIdx = totalMap.get(ym202512) || 0;
-    const contractualIdx = contractualMap.get(ym202512) || 0;
-    const scheduledIdx = scheduledMap.get(ym202512) || 0;
-    if (totalReal !== 0 && totalIdx !== 0 && contractualIdx !== 0 && scheduledIdx !== 0) {
+    const totalIdx = totalMap.get(ym202512);
+    const contractualIdx = contractualMap.get(ym202512);
+    const scheduledIdx = scheduledMap.get(ym202512);
+    if (
+      totalReal !== 0 &&
+      totalIdx !== undefined &&
+      contractualIdx !== undefined &&
+      scheduledIdx !== undefined &&
+      totalIdx !== 0 &&
+      contractualIdx !== 0 &&
+      scheduledIdx !== 0
+    ) {
       const baseUnit = totalReal / totalIdx;
       factorScheduled = scheduledReal / scheduledIdx / baseUnit;
       factorContractual = contractualReal / contractualIdx / baseUnit;
@@ -209,12 +217,17 @@ export async function loadTotalEarningDataInternal(
   const comparisonYearKeys = comparisonYear
     ? [...keys].filter((ym) => ym.startsWith(comparisonYearPrefix))
     : [];
+  const hourlyBaseValues = comparisonYearKeys
+    .map((ym) => {
+      const h = hoursMap.get(ym);
+      const t = totalMap.get(ym);
+      return h !== undefined && t !== undefined && h > 0 && t > 0 ? t / h : undefined;
+    })
+    .filter((value): value is number => value !== undefined);
   const hourly2020 =
-    comparisonYearKeys.reduce((acc, ym) => {
-      const h = hoursMap.get(ym) ?? 0;
-      const t = totalMap.get(ym) ?? 0;
-      return acc + (h > 0 ? t / h : 0);
-    }, 0) / (comparisonYearKeys.length || 1);
+    hourlyBaseValues.length === comparisonYearKeys.length && hourlyBaseValues.length > 0
+      ? hourlyBaseValues.reduce((acc, value) => acc + value, 0) / hourlyBaseValues.length
+      : undefined;
 
   const findPopulationTotal = (ym: string): number | undefined => {
     if (populationDataMap.has(ym)) return populationDataMap.get(ym)?.total;
@@ -228,17 +241,22 @@ export async function loadTotalEarningDataInternal(
   const perCapitaBase2020 = (() => {
     const ratios = comparisonYearKeys
       .map((ym) => {
-        const t = totalMap.get(ym) ?? 0;
-        const e = employmentMap.get(ym) ?? 0;
-        const p = findPopulationTotal(ym) ?? 0;
-        return p > 0 ? (t * e) / p : 0;
+        const t = totalMap.get(ym);
+        const e = employmentMap.get(ym);
+        const p = findPopulationTotal(ym);
+        return t !== undefined && e !== undefined && p !== undefined && t > 0 && e > 0 && p > 0
+          ? (t * e) / p
+          : undefined;
       })
-      .filter((r) => r > 0);
-    return ratios.length > 0 ? ratios.reduce((a, b) => a + b, 0) / ratios.length : 0;
+      .filter((r): r is number => r !== undefined);
+    return ratios.length === comparisonYearKeys.length && ratios.length > 0
+      ? ratios.reduce((a, b) => a + b, 0) / ratios.length
+      : undefined;
   })();
 
-  const hourlyFactor = hourly2020 > 0 ? 100 / hourly2020 : 1;
-  const popFactor = perCapitaBase2020 > 0 ? 100 / perCapitaBase2020 : 1;
+  const hourlyFactor = hourly2020 !== undefined && hourly2020 > 0 ? 100 / hourly2020 : undefined;
+  const popFactor =
+    perCapitaBase2020 !== undefined && perCapitaBase2020 > 0 ? 100 / perCapitaBase2020 : undefined;
 
   // Comparison values use the selected set's complete calendar year and raw
   // observations. Moving averages never serve as normalization denominators.
@@ -257,19 +275,25 @@ export async function loadTotalEarningDataInternal(
   const cpiMAMap = computeTrailingMA12([...cpiMap.entries()]);
 
   const result: CpiData[] = [...keys].map((ym) => {
-    const contractualVal = contractualMap.get(ym) ?? 0;
-    const scheduledVal = scheduledMap.get(ym) ?? 0;
-    const totalVal = totalMap.get(ym) ?? 0;
-    const finalTotal = totalVal;
-    const finalContractual = contractualVal * factorContractual;
-    const finalScheduled = scheduledVal * factorScheduled;
+    const contractualVal = contractualMap.get(ym);
+    const scheduledVal = scheduledMap.get(ym);
+    const totalVal = totalMap.get(ym);
+    const finalContractual =
+      contractualVal === undefined ? null : contractualVal * factorContractual;
+    const finalScheduled = scheduledVal === undefined ? null : scheduledVal * factorScheduled;
     return {
       年月: ym,
       所定内給与: finalScheduled,
       _契約給与: finalContractual,
-      所定外給与: Math.max(0, finalContractual - finalScheduled),
-      特別給与: Math.max(0, finalTotal - finalContractual),
-      総合: 0,
+      所定外給与:
+        finalContractual === null || finalScheduled === null
+          ? null
+          : Math.max(0, finalContractual - finalScheduled),
+      特別給与:
+        totalVal === undefined || finalContractual === null
+          ? null
+          : Math.max(0, totalVal - finalContractual),
+      総合: null,
     } as unknown as CpiData;
   });
 
@@ -281,57 +305,91 @@ export async function loadTotalEarningDataInternal(
   }
   // 特別給与の生値を12か月移動平均で置き換え（所定内・所定外は生値のまま）
   for (const item of result) {
-    item["特別給与"] = (item["特別給与(12MA)"] as number) || null;
+    const value = item["特別給与(12MA)"];
+    item["特別給与"] = typeof value === "number" && Number.isFinite(value) ? value : null;
   }
   const totals2020 = result
     .filter((r) => comparisonYear !== null && r.年月.startsWith(comparisonYearPrefix))
     .map((r) => calculateSmoothedTotal(r));
   const avg2020 =
     totals2020.length > 0 ? totals2020.reduce((a, b) => a + b, 0) / totals2020.length : 0;
-  const totalIndexFactor = avg2020 > 0 ? 100 / avg2020 : 1;
+  // A missing comparison year is not an index with factor 1.  Keep the
+  // absence explicit so every dependent derived value remains null.
+  const totalIndexFactor = avg2020 > 0 ? 100 / avg2020 : undefined;
 
   result.forEach((item, index) => {
+    const scale = (value: unknown): number | null =>
+      typeof value === "number" && Number.isFinite(value) && totalIndexFactor !== undefined
+        ? value * totalIndexFactor
+        : null;
     // (12MA)フィールドのスケーリング
-    item["所定内給与(12MA)"] = Number(item["所定内給与(12MA)"] || 0) * totalIndexFactor;
-    item["所定外給与(12MA)"] = Number(item["所定外給与(12MA)"] || 0) * totalIndexFactor;
-    item["特別給与(12MA)"] = Number(item["特別給与(12MA)"] || 0) * totalIndexFactor;
+    item["所定内給与(12MA)"] = scale(item["所定内給与(12MA)"]);
+    item["所定外給与(12MA)"] = scale(item["所定外給与(12MA)"]);
+    item["特別給与(12MA)"] = scale(item["特別給与(12MA)"]);
     // 生値フィールドのスケーリング（所定内・所定外は生値、特別給与はMA値）
-    item["所定内給与"] = Number(item["所定内給与"] || 0) * totalIndexFactor;
-    item["所定外給与"] = Number(item["所定外給与"] || 0) * totalIndexFactor;
-    item["特別給与"] = Number(item["特別給与"] || 0) * totalIndexFactor;
+    item["所定内給与"] = scale(item["所定内給与"]);
+    item["所定外給与"] = scale(item["所定外給与"]);
+    item["特別給与"] = scale(item["特別給与"]);
     // 総合 = 生値所定内 + 生値所定外 + MA特別給与
     const smoothedTotal = calculateSmoothedTotal(item);
     item["総合"] = smoothedTotal;
     // 総合(12MA) = 全3系列の(12MA)合計（NewGraph用）
-    const maTotal =
-      ((item["所定内給与(12MA)"] as number) ?? 0) +
-      ((item["所定外給与(12MA)"] as number) ?? 0) +
-      ((item["特別給与(12MA)"] as number) ?? 0);
+    const maValues = [item["所定内給与(12MA)"], item["所定外給与(12MA)"], item["特別給与(12MA)"]];
+    const maTotal = maValues.every((value) => typeof value === "number" && Number.isFinite(value))
+      ? (maValues as number[]).reduce((sum, value) => sum + value, 0)
+      : null;
     item["総合(12MA)"] = maTotal;
     let sumHours = 0,
       sumEmp = 0,
       sumPop = 0,
       count = 0;
+    let populationWindowComplete = true;
+    let relatedWindowComplete = true;
     for (let i = Math.max(0, index - 11); i <= index; i++) {
       const ym = result[i].年月;
-      sumHours += hoursMap.get(ym) || 0;
-      sumEmp += employmentMap.get(ym) || 0;
-      sumPop += populationDataMap.get(ym)?.total || 0;
+      const hours = hoursMap.get(ym);
+      const employment = employmentMap.get(ym);
+      if (
+        hours === undefined ||
+        !Number.isFinite(hours) ||
+        employment === undefined ||
+        !Number.isFinite(employment)
+      ) {
+        relatedWindowComplete = false;
+      } else {
+        sumHours += hours;
+        sumEmp += employment;
+      }
+      const population = populationDataMap.get(ym)?.total;
+      if (typeof population !== "number" || !Number.isFinite(population)) {
+        populationWindowComplete = false;
+      } else {
+        sumPop += population;
+      }
       count++;
     }
     const denom = count > 0 ? count : 1;
     const smoothedHours = sumHours / denom;
     const smoothedEmp = sumEmp / denom;
-    const smoothedPop = sumPop / denom;
-    item["時間当たり給与"] = calculateAdjustedMetric(smoothedTotal, smoothedHours, hourlyFactor);
-    item["15歳以上国民当たり給与"] = calculateAdjustedMetric(
-      smoothedTotal * smoothedEmp,
-      smoothedPop,
-      popFactor,
-    );
-    const rawCpi = cpiMap.get(item.年月) || 0;
-    item["残差"] = calculateRawResidual(smoothedTotal, rawCpi);
-    item["CPI総合(参考)"] = cpiFactor !== undefined && rawCpi !== 0 ? rawCpi * cpiFactor : null;
+    const smoothedPop = populationWindowComplete ? sumPop / denom : Number.NaN;
+    item["時間当たり給与"] =
+      relatedWindowComplete && hourlyFactor !== undefined
+        ? calculateAdjustedMetric(smoothedTotal, smoothedHours, hourlyFactor)
+        : null;
+    const parsedItemDate = parseYearMonth(item.年月);
+    const salaryInputAvailable =
+      parsedItemDate === null || !(parsedItemDate.year === 2026 && parsedItemDate.month >= 5);
+    item["15歳以上国民当たり給与"] =
+      salaryInputAvailable &&
+      relatedWindowComplete &&
+      populationWindowComplete &&
+      popFactor !== undefined
+        ? calculateAdjustedMetric(smoothedTotal * smoothedEmp, smoothedPop, popFactor)
+        : null;
+    const rawCpi = cpiMap.get(item.年月);
+    item["残差"] = rawCpi !== undefined ? calculateRawResidual(smoothedTotal, rawCpi) : null;
+    item["CPI総合(参考)"] =
+      cpiFactor !== undefined && rawCpi !== undefined ? rawCpi * cpiFactor : null;
     const cpiMa = cpiMAMap.get(item.年月);
     item["CPI総合(12MA)"] =
       cpiFactor !== undefined && cpiMa !== undefined ? cpiMa * cpiFactor : null;
@@ -349,32 +407,27 @@ export async function loadTotalEarningDataInternal(
       parsedYear <= 2017 &&
       maMinkan !== undefined &&
       minkanFactor !== undefined &&
-      (!isLegacy2020 || maMinkan > 0)
+      Number.isFinite(maMinkan)
         ? maMinkan * minkanFactor
         : null;
     item["民間最終消費支出（参考・延長）"] =
       parsedYear >= 2018 &&
       maMinkan !== undefined &&
       minkanFactor !== undefined &&
-      (!isLegacy2020 || maMinkan > 0)
+      Number.isFinite(maMinkan)
         ? maMinkan * minkanFactor
         : null;
     item["CTI消費支出（参考）"] =
-      parsedYear >= 2018 &&
-      maCti !== undefined &&
-      ctiFactor !== undefined &&
-      (!isLegacy2020 || maCti > 0)
+      parsedYear >= 2018 && maCti !== undefined && ctiFactor !== undefined && Number.isFinite(maCti)
         ? maCti * ctiFactor
         : null;
     // 既存の「消費支出（参考）」も互換性・他箇所への影響を考慮して維持（2017年前後で統合したもの）
     const combinedConsumption =
-      maMinkan !== undefined && minkanFactor !== undefined && (!isLegacy2020 || maMinkan > 0)
+      maMinkan !== undefined && Number.isFinite(maMinkan) && minkanFactor !== undefined
         ? maMinkan * minkanFactor
-        : maCti !== undefined && ctiFactor !== undefined && (!isLegacy2020 || maCti > 0)
+        : maCti !== undefined && Number.isFinite(maCti) && ctiFactor !== undefined
           ? maCti * ctiFactor
-          : isLegacy2020
-            ? 0
-            : null;
+          : null;
     item["消費支出（参考）"] = combinedConsumption;
   });
   applyResidualMovingAverage(result);

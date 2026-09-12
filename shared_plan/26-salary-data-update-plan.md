@@ -67,6 +67,10 @@
 
 ## 検証ゲート
 
+### RSC parity smoke 調査記録（2026-09-12）
+
+`pnpm test:build-parity` の初回失敗（2005–2016 の実質「民間最終消費支出」が build は非ゼロ、vitest は0）は、今回の人口/欠測修正および既存CSVの不整合ではない。`tests/build/rsc-payload-parity.test.ts` のvitest側が、実際の `page.tsx` の公開経路にある `loadQuarterlyGdpData()` と `buildQuarterlyPublicViews()` を省略していたため、GDP比較値の結合前の0を比較していた既存テスト側の問題である。テストを実経路に同期し、データ・人口・欠測ポリシーの変更は維持する。
+
 - データ品質: 欠測0補完なし、重複なし、年月連続、単位・対象・改訂状態一致、全系列の共通最新月が2026-06。
 - 計算品質: 特別給与12か月移動平均、総合、時間当たり給与、国民当たり給与、残差、2020年平均=100を独立に再計算し、既存式と一致。
 - 回帰検証: `pnpm lint`、type-check、データ品質テスト、コンポーネントテスト、smoke testを実行し、コマンドと結果を記録する。未実行を成功扱いにしない。
@@ -118,6 +122,22 @@
 - 完了条件のうち、共通最新確報の確認、CSV/派生値更新、2026-06表示同期、全検証ゲートは未達。e-Stat取得可能な環境で公式ファイルを取得し、再開する。
 
 ## 再試行・全監査（2026-09-12）
+
+### 最終監査残件対応（2026-09-12）
+
+- `server/lib/data-loader/earnings.ts` の比較年欠測時フォールバック（平均0・係数1）を廃止し、派生指数を未算出（`null`）へ伝播するよう修正した。
+- 消費支出参考値の欠測時フォールバック0を廃止した。有限な入力値0は欠測として扱わない。
+- 2026年5月・6月の給与入力欠測時に `15歳以上国民当たり給与 === null` となる回帰テストを追加した。
+- 検証ゲートは本監査の末尾に実行結果を追記する。
+
+### 検証結果（2026-09-12 最終監査）
+
+- `pnpm lint`: PASS（既存warning 5件、error 0件）。
+- `pnpm type-check`: PASS。
+- `pnpm test -- tests/data-quality/earning-data-integrity.test.ts`: PASS（39 files / 338 tests）。
+- `pnpm build`: PASS。
+- `pnpm test:e2e`: PASS（108 passed / 16 skipped、124 tests）。sandboxでは待受EPERMだったため権限付き実行。
+- `pnpm test:build-parity`（smoke）: FAIL。既存のRSC parityで2005–2016の実質消費支出がbuild値とvitest値（0）で不一致。今回の給与ローダー変更とは無関係だが、全ゲートPASS条件は未達。
 
 - 指定された公式確報ページ `https://www.e-stat.go.jp/stat-search/files?layout=dataset&stat_infid=000040187500` をブラウザ取得で再試行したが、キャッシュ未収載で取得できなかった。`curl` による直接取得も `www.e-stat.go.jp` の名前解決失敗（curl error 6）となった。
 - ローカル代替経路を確認した。作業ツリーにある給与関連公式相当ファイルは `data/source/hon-mks202512.csv` のみで、`hon-mks202606.xls`、2026年6月の `.xls/.xlsx/.csv`、e-Stat snapshot/cache は存在しなかった。既存変換器は `hon-t01/07/13/19/29.xls` の個別表入力を前提としており、`hon-mks202512.csv` から2026年6月値を復元する経路はない。
@@ -188,6 +208,19 @@
 
 ## 実装サイクル完了記録（2026-09-12）
 
+### 欠測入力監査修正（2026-09-12）
+
+- `earnings.ts` の基準年人口・就業者・給与・時間入力を欠測時に0扱いしないよう修正し、基準値が未算出の場合は係数と依存派生値をnullとして伝播させた。
+- 15歳以上国民あたり給与は人口・就業者の12か月窓が完全な場合のみ算出し、時間当たり給与も時間・就業者窓の欠測を伝播する回帰テストを追加した。
+- 対象テスト: PASS（18 tests）。2026-05/06値、直近派生値、欠測・重複・連続性、SHA/出典の再確認と全ゲートは本変更後に実行する。
+
+### 人口統計更新監査（2026-09-12）
+
+- 総務省統計局「労働力調査（基本集計）」長期時系列 表1-b-1（e-Stat `statInfId=000031831366`）の公式Excelを取得し、`data/source/population_statistics.csv` を既存形式で再生成した。
+- 公式照合: 2026-05 = 10,976万人、2026-06 = 10,969万人。取得日時、ファイルサイズ、SHA-256、URL、表IDは `data/source/population_statistics.metadata.json` に固定した。
+- 欠測セルはCSVで空欄のまま保持し、給与派生値の人口12か月窓に欠測がある場合は0ではなく欠測を返す実装とし、人口データ品質テストを追加した。
+- 検証結果: 対象人口テスト 2件 PASS。`pnpm lint` PASS（error 0、既存warning 5）、`pnpm type-check` PASS、`pnpm test` PASS（39 files / 336 tests）、`pnpm build` PASS。
+
 - e-Stat公式の長期時系列「実数・指数累積データ」CSV（`statInfId=000032189776` 実数、`000032189777` 指数・伸び率）を取得し、指数CSVの `TL / T / 0`（調査産業計・5人以上・就業形態計）を抽出した。公式ファイルSHA-256は順に `ccaa95ffaa8fff6dbccf4c476060e7cf0ca23f718ca8366185e28e4ea6aedc1a`（実数）、`825c8b31dd045187ed4dac378e83018e9e6a307eb0994c7ff5b2747c2ea62e12`（指数）。
 - 既存CSV形式を保ったまま、5系列を2026-06まで更新した。2026-07速報は取り込んでいない。`hon-mks202512` は2025-12アンカーとして保持し、`hon-mks202606.xls` は断面実数の来歴資料として混在させていない。
 - `earnings.ts` と移動平均処理は非有限値をゼロへ変換せず、欠測を移動平均の有効値から除外するよう修正した。派生値の既存計算式、2020年平均=100の指数化は維持した。
@@ -217,6 +250,22 @@
 - `pnpm lint --no-cache`、`pnpm type-check`、`pnpm test`（39 files / 335 tests）、`pnpm build`、`pnpm test:e2e --reporter=line`（108 passed / 16 skipped / 0 failed）を再実行しPASS。旧Playwright失敗5件はbuildとstartの同時実行による生成物競合で、build完了後の再実行で解消した。旧レポートは削除せず、本記録で誤認を明確化した。
 
 ## 最終監査残件の再実行（2026-09-12）
+
+## 欠測補完監査の最終実行（2026-09-12）
+
+### 今回の最終検証ゲート（2026-09-12）
+
+- `pnpm build`: PASS。
+- `pnpm test`: PASS（39 files / 338 tests）。
+- `pnpm test:build-parity`: PASS（1 file / 3 tests）。
+- build 完了後、`pnpm test:e2e --reporter=line` を単独実行: PASS（108 passed / 16 skipped / 0 failed、124 tests）。sandbox の listen EPERM は成功扱いにせず、権限付き経路で完走を確認した。
+- 独立smoke `pnpm exec playwright test tests/e2e/plan24-rendering.e2e.spec.ts --project=chromium --reporter=line`: PASS（4 passed / 0 failed）。
+- 上記全ゲートの完走を確認したため、今回の人口データ・欠測処理・RSC parity修正に関係する差分のみを通常フック付きでコミットし、既定リモートへpushする。
+
+- `earnings.ts` の給与・時間・就業者・人口の欠測経路を nullable に統一し、実数0は保持した。12MA、総合(12MA)、残差も入力欠測を0へ変換しない。
+- 独立出力コマンド: `pnpm exec vitest run tests/data-quality/earning-data-integrity.test.ts`。対象データに2026-05/06の給与入力行が存在しないため、15歳以上国民当たり給与の実計算結果は2026-05=`null`（未算出）、2026-06=`null`（未算出）。異常な0値は出力されないことを確認した。
+- 入力SHA-256（`sha256sum data/source/{total_earning,contractual_earnings,scheduled_earnings,total_worked_hours,employment_indices}.csv`）: `7878907f44cf8e2916df446d0b19b00ce65e0a352e0e8e7ee3874174879e1b54`, `077509ae750d22888195ca06861d31f718d6432326b35f41141158d57a9b6c67`, `1151fe3e80b523dc31d48fd11322d1127c2943da49e08fd595c8b3a3a8c7906d`, `b7da3c178221ad241d483f862f6950c12aab6d013717bfa8f17690c55fcb1566`, `e341c8bb8a1f01608c820a89867540e004a679a74a4ed5765839f0e21cdf07fa`。出典・系列対応は既存 metadata（e-Stat statInfId `000032189777`、方式B原表）に記録済み。
+- 検証: `pnpm type-check` PASS、`pnpm test -- tests/data-quality/earning-data-integrity.test.ts` PASS（39 files / 337 tests）、`pnpm lint --no-cache` PASS（0 errors、既存warning 5）、`pnpm build` PASS。
 
 - SHA-256再計算コマンドは上記5値とmetadataの`normalizedCsvSha256`に完全一致（PASS）。
 - `pnpm build`完了後に`pnpm test:e2e --reporter=line`を単独実行。sandboxの127.0.0.1 listen EPERMは成功扱いにせず、通常権限の許可済み経路で再実行し、108 passed / 16 skipped / 0 failed（PASS）。

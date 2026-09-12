@@ -75,7 +75,12 @@ describe("Earnings Data Integrity", () => {
         "15歳以上国民当たり給与",
         "総合",
       ];
-      const lastRow = earningData[earningData.length - 1];
+      const lastRow =
+        earningData.findLast((item) =>
+          requiredWageKeys.every(
+            (key) => typeof item[key] === "number" && (item[key] as number) > 0,
+          ),
+        ) ?? earningData[earningData.length - 1];
       requiredWageKeys.forEach((key) => {
         expect(lastRow[key], `Key "${key}" must be present and positive`).toBeGreaterThan(0);
       });
@@ -83,6 +88,24 @@ describe("Earnings Data Integrity", () => {
   });
 
   describe("Validation", () => {
+    it("should propagate incomplete population and related-input windows as missing", () => {
+      const perCapitaValues = earningData.map((row) => row["15歳以上国民当たり給与"]);
+      expect(perCapitaValues.some((value) => value === 0)).toBe(false);
+      perCapitaValues.forEach((value) => {
+        expect(
+          value === null || value === undefined || (typeof value === "number" && value > 0),
+        ).toBe(true);
+      });
+    });
+
+    it("should keep 2026-05/06 per-capita wages null when salary inputs are missing", () => {
+      for (const month of ["2026年5月", "2026年6月"]) {
+        const row = earningData.find((item) => item.年月 === month);
+        expect(row, `Expected an output row for ${month}`).toBeDefined();
+        expect(row?.["15歳以上国民当たり給与"], `${month} must remain uncomputed`).toBeNull();
+      }
+    });
+
     it("should verify 総合 = 所定内給与 + 所定外給与 + 特別給与 (main fields)", async () => {
       expect(earningData.length).toBeGreaterThan(0);
 
