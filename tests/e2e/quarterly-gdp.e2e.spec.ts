@@ -37,13 +37,13 @@ test.describe("Plan23 quarterly public projection", () => {
     await realLegend.click();
 
     for (const section of [nominal, real]) {
-      await expect(section.getByText("民間最終消費支出", { exact: true })).toBeVisible();
+      await expect(section.getByText("民間最終消費", { exact: true })).toBeVisible();
       await expect(section).not.toContainText(INTERNAL_SERIES);
     }
 
     const tableChecks = [
-      ["#data-table-section-consumption-nominal", "民間最終消費支出", "GDP名目"] as const,
-      ["#data-table-section-consumption-real", "民間最終消費支出", "GDP実質"] as const,
+      ["#data-table-section-consumption-nominal", "民間最終消費", "GDP名目"] as const,
+      ["#data-table-section-consumption-real", "民間最終消費", "GDP実質"] as const,
     ];
     for (const [selector, rawHeader, comparisonHeader] of tableChecks) {
       const table = page.locator(selector);

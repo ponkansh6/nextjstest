@@ -166,9 +166,9 @@ test.describe("Plan24 rendering contract", () => {
       [
         "spending-chart-nominal",
         "#data-table-section-consumption-nominal",
-        "民間最終消費支出",
+        "民間最終消費",
       ] as const,
-      ["spending-chart-real", "#data-table-section-consumption-real", "民間最終消費支出"] as const,
+      ["spending-chart-real", "#data-table-section-consumption-real", "民間最終消費"] as const,
     ]) {
       const table = page.locator(tableId);
       await table.getByText(/データテーブルを表示/).click({ timeout: ACTION_TIMEOUT });
