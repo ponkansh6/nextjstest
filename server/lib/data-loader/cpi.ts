@@ -922,6 +922,7 @@ export async function getCtiDataStatus(options: CtiLoadOptions = {}): Promise<Ct
 }
 
 export async function loadCtiDataInternal(options: CtiLoadOptions = {}): Promise<CpiData[]> {
+  const paths = buildCtiFilePaths();
   const selected = selectCtiPair(options);
   if ("baseYear" in selected) {
     console.error(`CTI data unavailable: ${selected.reason}`);
@@ -1072,6 +1073,46 @@ export async function loadCtiDataInternal(options: CtiLoadOptions = {}): Promise
       const parsed = parseYearMonth(String(row.年月));
       return parsed ? parsed.year >= 1994 : false;
     });
+
+  // The annual GDP support artifacts are the source for the earnings
+  // comparison projection as well. Keep the official amount and its display
+  // index separate, but expose both on every month in the corresponding year.
+  if (!isLegacy2020) {
+    const gdpStatus = await getGdpSupportStatus();
+    if (gdpStatus.valid && gdpStatus.normalizationFactors) {
+      const loadAnnual = (filePath: string) => {
+        const rows = Papa.parse<string[]>(fs.readFileSync(filePath, "utf8"), {
+          header: false,
+          skipEmptyLines: true,
+        }).data;
+        const header = rows[0] ?? [];
+        const yearIndex = header.indexOf("時間軸（暦年）");
+        const valueIndex = header.indexOf("民間最終消費支出");
+        return new Map(
+          rows
+            .slice(1)
+            .map((row) => [row[yearIndex], Number(row[valueIndex]?.replace(/,/g, ""))] as const)
+            .filter(([year, value]) => /^\d{4}$/.test(year ?? "") && Number.isFinite(value)),
+        );
+      };
+      const nominal = loadAnnual(paths.candidateSupportNominal);
+      const real = loadAnnual(paths.candidateSupportReal);
+      const factors = gdpStatus.normalizationFactors;
+      for (const row of mapped) {
+        const year = String(parseYearMonth(String(row.年月))?.year ?? "");
+        const nominalRaw = nominal.get(year);
+        const realRaw = real.get(year);
+        if (nominalRaw !== undefined && realRaw !== undefined) {
+          row["民間最終消費支出（名目・原値）"] = nominalRaw;
+          row["民間最終消費支出（実質・原値）"] = realRaw;
+          row["民間最終消費支出（名目・比較指数）"] = nominalRaw * factors.nominal;
+          row["民間最終消費支出（実質・比較指数）"] = realRaw * factors.real;
+          row["民間最終消費支出（名目）"] = nominalRaw * factors.nominal;
+          row["民間最終消費支出（実質）"] = realRaw * factors.real;
+        }
+      }
+    }
+  }
 
   const existingMonths = new Set(mapped.map((r) => r.年月));
   for (let y = 1994; y <= 2016; y++) {

@@ -316,3 +316,8 @@
 - build成果物を再生成せず、build完了後に `pnpm test:e2e --reporter=line` を単独実行: PASS（108 passed / 16 skipped / 0 failed、124 tests）。sandbox内の初回起動は `listen EPERM` で失敗したため成功扱いにせず、承認付き通常権限で完走を確認した。
 - 独立smoke `pnpm exec playwright test tests/e2e/plan24-rendering.e2e.spec.ts --project=chromium --reporter=line`: PASS（4 passed / 0 failed、21.4秒）。
 - 今回はコード変更、コミット、pushを行っていない。
+
+### 3種比較GDP線復旧（2026-09-13）
+
+- 2025 CTIローダーが検証済み年次GDPのraw値・比較指数を月次行へ結合し、`earnings.ts` の2017年以前/2018年以降の相互排他的な投影が同じ公式比較値から生成されるよう同期した。
+- `advanced-series.e2e.spec.ts` に通常/`adv=1` のSVG path存在確認とスクリーンショット証跡を追加した。

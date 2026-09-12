@@ -23,6 +23,8 @@ test.describe("3種比較チャートの上級者向け隠し系列 (adv=1)", ()
       exact: true,
     });
     await expect(extendedLegend).toHaveCount(0);
+    await expect(newGraphSection.locator("svg path")).not.toHaveCount(0);
+    await newGraphSection.screenshot({ path: "artifacts/new-graph-default.png" });
   });
 
   test("?adv=1 付きで開くと延長系列の凡例チップが追加で表示される", async ({ page }) => {
@@ -36,5 +38,7 @@ test.describe("3種比較チャートの上級者向け隠し系列 (adv=1)", ()
       exact: true,
     });
     await expect(extendedLegend).toBeVisible();
+    await expect(newGraphSection.locator("svg path")).not.toHaveCount(0);
+    await newGraphSection.screenshot({ path: "artifacts/new-graph-advanced.png" });
   });
 });
