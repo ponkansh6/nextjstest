@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -163,24 +163,22 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
     else if (supportKey) next[supportKey] = null;
     return next;
   });
-  const yAxisMax = useMemo(() => {
-    const maxHeight = chartData.reduce((max, row) => {
-      const visibleKeys = keys.filter((key) => !hiddenKeys.includes(key));
-      const height = visibleKeys.reduce((sum, key) => {
-        const value = row[key];
-        return sum + (typeof value === "number" && Number.isFinite(value) ? value : 0);
-      }, 0);
-      return Math.max(max, height);
+  const maxHeight = chartData.reduce((max, row) => {
+    const visibleKeys = keys.filter((key) => !hiddenKeys.includes(key));
+    const height = visibleKeys.reduce((sum, key) => {
+      const value = row[key];
+      return sum + (typeof value === "number" && Number.isFinite(value) ? value : 0);
     }, 0);
-    const maxLineValue =
-      showAdvanced && advancedSupportKey && supportKey && !hiddenKeys.includes(supportKey)
-        ? chartData.reduce((max, row) => {
-            const value = row[advancedSupportKey];
-            return Math.max(max, typeof value === "number" && Number.isFinite(value) ? value : 0);
-          }, 0)
-        : 0;
-    return Math.round(Math.max(maxHeight, maxLineValue) + 3);
-  }, [chartData, keys, hiddenKeys, showAdvanced, advancedSupportKey, supportKey]);
+    return Math.max(max, height);
+  }, 0);
+  const maxLineValue =
+    showAdvanced && advancedSupportKey && supportKey && !hiddenKeys.includes(supportKey)
+      ? chartData.reduce((max, row) => {
+          const value = row[advancedSupportKey];
+          return Math.max(max, typeof value === "number" && Number.isFinite(value) ? value : 0);
+        }, 0)
+      : 0;
+  const yAxisMax = Math.round(Math.max(maxHeight, maxLineValue) + 3);
 
   const renderLegend = () => (
     <div className={styles.legendContainer}>

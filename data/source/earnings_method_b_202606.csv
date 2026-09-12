@@ -1,0 +1,6 @@
+series,年月,value,unit,target,revision
+total_earning,2026-06,534823,円,現金給与額/総額,確報
+contractual_earnings,2026-06,299671,円,現金給与額/きまって支給する給与,確報
+scheduled_earnings,2026-06,279511,円,現金給与額/所定内給与,確報
+total_worked_hours,2026-06,139.3,時間,実労働時間数/総数,確報
+employment_indices,2026-06,52186412,人,常用労働者数/本調査期間末,確報

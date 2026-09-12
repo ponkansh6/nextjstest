@@ -54,7 +54,7 @@ function computeMovingAverageToField(
   windowSize: number,
 ): void {
   const originalValues = data.map((d) => d[sourceKey] as number | undefined);
-  const cleaned = originalValues.map((v) => (typeof v === "number" ? v : 0));
+  const cleaned = originalValues.map((v) => (typeof v === "number" ? v : Number.NaN));
   const maValues = trailingMovingAverage(cleaned, windowSize, {
     skipNonPositive: true,
   });
@@ -281,7 +281,7 @@ export async function loadTotalEarningDataInternal(
   }
   // 特別給与の生値を12か月移動平均で置き換え（所定内・所定外は生値のまま）
   for (const item of result) {
-    item["特別給与"] = (item["特別給与(12MA)"] as number) ?? 0;
+    item["特別給与"] = (item["特別給与(12MA)"] as number) || null;
   }
   const totals2020 = result
     .filter((r) => comparisonYear !== null && r.年月.startsWith(comparisonYearPrefix))

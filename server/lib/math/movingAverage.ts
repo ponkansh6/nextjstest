@@ -18,7 +18,7 @@ export function trailingMovingAverage(
     let count = 0;
     for (let j = Math.max(0, i - (window - 1)); j <= i; j++) {
       const val = values[j];
-      if (typeof val === "number") {
+      if (typeof val === "number" && Number.isFinite(val)) {
         if (skipNonPositive && val <= 0) continue;
         sum += val;
         count++;

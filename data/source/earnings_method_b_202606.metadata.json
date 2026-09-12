@@ -1,0 +1,52 @@
+{
+  "sourceFile": "hon-mks202606.xls",
+  "sourcePath": "data/source/hon-mks202606.xls",
+  "sourceUrl": "https://www.e-stat.go.jp/stat-search/files?stat_infid=000040491571",
+  "statInfId": "000040491571",
+  "statisticCode": "00450071",
+  "retrievedAt": "2026-09-12T09:41:55.239Z",
+  "bytes": 1099776,
+  "sha256": "bdb5b5ad4f79030728c89502d1f27c2d3234c30b09a8f287900016eb89ab61c8",
+  "normalizedCsvSha256": {
+    "total_earning.csv": "7878907f44cf8e2916df446d0b19b00ce65e0a352e0e8e7ee3874174879e1b54",
+    "contractual_earnings.csv": "077509ae750d22888195ca06861d31f718d6432326b35f41141158d57a9b6c67",
+    "scheduled_earnings.csv": "1151fe3e80b523dc31d48fd11322d1127c2943da49e08fd595c8b3a3a8c7906d",
+    "total_worked_hours.csv": "b7da3c178221ad241d483f862f6950c12aab6d013717bfa8f17690c55fcb1566",
+    "employment_indices.csv": "e341c8bb8a1f01608c820a89867540e004a679a74a4ed5765839f0e21cdf07fa"
+  },
+  "method": "B",
+  "sheet": "実数原表",
+  "tableHeader": "毎月勤労統計調査全国調査結果原表",
+  "period": "2026-06",
+  "periodLabel": "令和8年6月",
+  "revision": "確報",
+  "target": "調査産業計 / 就業形態計 / 5人以上",
+  "mapping": [
+    {
+      "series": "total_earning",
+      "unit": "円",
+      "target": "現金給与額/総額"
+    },
+    {
+      "series": "contractual_earnings",
+      "unit": "円",
+      "target": "現金給与額/きまって支給する給与"
+    },
+    {
+      "series": "scheduled_earnings",
+      "unit": "円",
+      "target": "現金給与額/所定内給与"
+    },
+    {
+      "series": "total_worked_hours",
+      "unit": "時間",
+      "target": "実労働時間数/総数"
+    },
+    {
+      "series": "employment_indices",
+      "unit": "人",
+      "target": "常用労働者数/本調査期間末"
+    }
+  ],
+  "note": "断面原表の実数抽出。既存の年行＋月列の指数CSVとは単位・値定義が異なるため、自動置換しない。"
+}

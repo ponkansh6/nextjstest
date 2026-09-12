@@ -66,6 +66,9 @@ Static CSV files (not publicly served) stored in `data/source/`:
 - `data/source/population_statistics.csv` — Population statistics
 - `data/source/employment_indices.csv` — Employment indices
 - `data/source/hon-mks202512.csv` — 毎月勤労統計調査の生データ（常用労働者数、出勤日数、実労働時間数、現金給与額）
+- `data/source/hon-mks202606.xls` / `earnings_method_b_202606.csv` — Plan26方式Bの公式一括原表と、実数原表から抽出した2026-06確報5系列の断面成果物。既存の指数・前年比履歴CSVとは単位と定義が異なるため混在させない。
+- `data/source/earnings_method_b_202606.metadata.json` — 方式Bの取得元URL、統計表ID、シート、表頭、対象区分、単位、確報状態、SHA-256、系列対応表を記録する。
+- 方式Bの断面抽出は公式履歴CSVと単位・期間が互換でないため、履歴入力へ自動連結せず、5月・6月など未取得月を補完しない。履歴ファイルが対象系列・対象区分・単位・改訂状態を満たすまで、既存の検証済み履歴と表示範囲を維持する。
 - `data/source/cti_support_nominal.csv` / `data/source/cti_support_real.csv` — CTI supporting series
 
 > Note: These files are loaded server-side during data loading and are not publicly accessible via HTTP. The `data/` directory is excluded from static file serving.
