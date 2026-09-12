@@ -119,9 +119,7 @@ test.describe("消費支出 mobile-pixel acceptance (Plan25/OpenSpec)", () => {
     }
   });
 
-  test("名目・実質の初期summaryは閉じ、費目・四半期の変更方法と状態要約を示す", async ({
-    page,
-  }) => {
+  test("名目・実質の初期summaryは閉じ、1行の状態要約を示す", async ({ page }) => {
     await page.setViewportSize({ width: 412, height: 915 });
     await page.goto("/");
     await page.waitForLoadState("networkidle");
@@ -132,8 +130,8 @@ test.describe("消費支出 mobile-pixel acceptance (Plan25/OpenSpec)", () => {
       const details = chart.locator("details");
       const summary = details.locator("summary");
       await expect(details).not.toHaveAttribute("open");
-      await expect(summary).toContainText("費目・四半期");
-      await expect(summary).toContainText(/変更|状態|表示/);
+      await expect(summary).toHaveCSS("white-space", "nowrap");
+      await expect(summary).toContainText(/費目|四半期|絞り込み中|全選択/);
     }
   });
 

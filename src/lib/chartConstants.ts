@@ -128,10 +128,10 @@ export const QUARTERLY_GDP_COMPARISON_NOMINAL_KEY = "GDP名目比較指数";
 export const QUARTERLY_GDP_COMPARISON_REAL_KEY = "GDP実質比較指数";
 
 export const DISPLAY_LABEL_OVERRIDES: Record<string, string> = {
-  [CANONICAL_NOMINAL_KEY]: "諸雑費・CPI外支出",
-  [CANONICAL_REAL_KEY]: "諸雑費・CPI外支出",
-  [SUPPORT_SERIES_KEY_NOMINAL]: "民間最終消費支出",
-  [SUPPORT_SERIES_KEY_REAL]: "民間最終消費支出",
+  [CANONICAL_NOMINAL_KEY]: "諸雑費・CPI外",
+  [CANONICAL_REAL_KEY]: "諸雑費・CPI外",
+  [SUPPORT_SERIES_KEY_NOMINAL]: "民間最終消費",
+  [SUPPORT_SERIES_KEY_REAL]: "民間最終消費",
   [QUARTERLY_GDP_RAW_NOMINAL_KEY]: "GDP名目原値",
   [QUARTERLY_GDP_RAW_REAL_KEY]: "GDP実質原値",
   [QUARTERLY_GDP_COMPARISON_NOMINAL_KEY]: "GDP名目比較指数（2025Q1-Q4平均=100）",
@@ -142,6 +142,14 @@ export const DISPLAY_LABEL_OVERRIDES: Record<string, string> = {
   // 一致させる必要があるため正式名称のままにし、凡例表示のみここで短縮する
   // (CPI_CATEGORIES 自体を短縮すると dataKey が実データと一致せず描画されなくなる)。
   被服及び履物: "被服履物",
+  "被服及び履物（名目）": "被服履物",
+  "被服及び履物（実質）": "被服履物",
+  "光熱・水道": "光熱水道",
+  "光熱・水道（名目）": "光熱水道",
+  "光熱・水道（実質）": "光熱水道",
+  "交通・通信": "交通通信",
+  "交通・通信（名目）": "交通通信",
+  "交通・通信（実質）": "交通通信",
   "交通・自動車等関係費": "交通自動車等",
 };
 

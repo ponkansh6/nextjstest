@@ -646,6 +646,7 @@ export default function CpiChart({
         <SpendingBarChart
           title="消費支出（実質）"
           sectionId="section-consumption-real"
+          linkedSectionId="section-consumption-nominal"
           infoKey="consumption-expenditure"
           chartInfoContent={consumptionInfo}
           data={filteredQuarterlyRealData}
@@ -674,7 +675,6 @@ export default function CpiChart({
             },
           )}
           legendMode="collapsible"
-          linkedSectionId="section-consumption-nominal"
           testId="spending-chart-real"
         />
       </LazyMount>

@@ -178,6 +178,36 @@ describe("SpendingBarChart component legendMode tests", () => {
     expect(pressedButtons.length).toBeGreaterThan(0);
   });
 
+  it("shows the nominal legend link only for a linked collapsible chart", () => {
+    const { rerender } = renderChart({
+      legendMode: "collapsible",
+      linkedSectionId: "section-consumption-nominal",
+    });
+
+    expect(screen.getByRole("link", { name: "消費支出（名目）" }).getAttribute("href")).toBe(
+      "#section-consumption-nominal",
+    );
+
+    rerender(
+      <SpendingBarChart
+        title="消費支出（名目）"
+        data={mockData}
+        keys={mockKeys}
+        colors={mockColors}
+        hiddenKeys={[]}
+        onToggle={vi.fn()}
+        chartColors={mockChartColors}
+        tooltipProps={mockTooltipProps}
+        hiddenQuarters={[]}
+        onToggleQuarter={vi.fn()}
+        onReset={vi.fn()}
+        legendMode="collapsible"
+      />,
+    );
+
+    expect(screen.queryByRole("link", { name: "消費支出（名目）" })).toBeNull();
+  });
+
   // U2: legendMode="collapsible" で <details> が描画され、open 属性を持たない（既定で閉）
   it("U2: legendMode=collapsible renders details without open attribute by default", () => {
     const { container } = render(
@@ -194,7 +224,6 @@ describe("SpendingBarChart component legendMode tests", () => {
         onToggleQuarter={vi.fn()}
         onReset={vi.fn()}
         legendMode="collapsible"
-        linkedSectionId="target-section"
       />,
     );
 
@@ -203,36 +232,8 @@ describe("SpendingBarChart component legendMode tests", () => {
     expect(details?.hasAttribute("open")).toBe(false);
   });
 
-  // U3: legendMode="collapsible" でも案内文リンク（消費支出（名目））は <details> の外にある
-  it("U3: note link is outside the details element", () => {
-    const { container } = render(
-      <SpendingBarChart
-        title="実質消費"
-        data={mockData}
-        keys={mockKeys}
-        colors={mockColors}
-        hiddenKeys={[]}
-        onToggle={vi.fn()}
-        chartColors={mockChartColors}
-        tooltipProps={mockTooltipProps}
-        hiddenQuarters={[]}
-        onToggleQuarter={vi.fn()}
-        onReset={vi.fn()}
-        legendMode="collapsible"
-        linkedSectionId="target-section"
-      />,
-    );
-
-    const details = container.querySelector("details");
-    const link = screen.getByRole("link", { name: "消費支出（名目）" });
-
-    expect(details).not.toBeNull();
-    expect(link).not.toBeNull();
-    expect(details?.contains(link)).toBe(false);
-  });
-
-  // U4: <details> を開くと四半期ボタン（Q1〜Q4）と費目ボタンが操作可能になり、onToggle が呼ばれる
-  it("U4: opening details reveals interactive legend items and triggers onToggle", () => {
+  // U3: <details> を開くと四半期ボタン（Q1〜Q4）と費目ボタンが操作可能になり、onToggle が呼ばれる
+  it("U3: opening details reveals interactive legend items and triggers onToggle", () => {
     const onToggle = vi.fn();
     const { container } = render(
       <SpendingBarChart
@@ -248,7 +249,6 @@ describe("SpendingBarChart component legendMode tests", () => {
         onToggleQuarter={vi.fn()}
         onReset={vi.fn()}
         legendMode="collapsible"
-        linkedSectionId="target-section"
       />,
     );
 
@@ -265,8 +265,8 @@ describe("SpendingBarChart component legendMode tests", () => {
     expect(onToggle).toHaveBeenCalledWith("食料");
   });
 
-  // U5: legendMode="collapsible" の <summary> に費目・四半期の変更方法と状態要約が出る
-  it("U5: summary element describes category and quarter selection state", () => {
+  // U4: legendMode="collapsible" の <summary> に費目・四半期の変更方法と状態要約が出る
+  it("U4: summary element describes category and quarter selection state", () => {
     const { container } = render(
       <SpendingBarChart
         title="実質消費"
@@ -281,7 +281,6 @@ describe("SpendingBarChart component legendMode tests", () => {
         onToggleQuarter={vi.fn()}
         onReset={vi.fn()}
         legendMode="collapsible"
-        linkedSectionId="target-section"
       />,
     );
 
@@ -290,8 +289,8 @@ describe("SpendingBarChart component legendMode tests", () => {
     expect(summary?.textContent).toBe("費目・四半期を変更（費目 2/2・四半期 4/4）・全選択");
   });
 
-  // U6: <summary> にトナルピルヘッダー用の className が適用され、矢印SVGが含まれる
-  it("U6: summary has tonal pill header class and chevron SVG", () => {
+  // U5: <summary> にトナルピルヘッダー用の className が適用され、矢印SVGが含まれる
+  it("U5: summary has tonal pill header class and chevron SVG", () => {
     const { container } = render(
       <SpendingBarChart
         title="実質消費"
@@ -306,7 +305,6 @@ describe("SpendingBarChart component legendMode tests", () => {
         onToggleQuarter={vi.fn()}
         onReset={vi.fn()}
         legendMode="collapsible"
-        linkedSectionId="target-section"
       />,
     );
 
@@ -319,8 +317,8 @@ describe("SpendingBarChart component legendMode tests", () => {
     expect(chevron?.getAttribute("aria-hidden")).toBe("true");
   });
 
-  // U7: details の open 属性のトグルに応じ凡例コンテンツの表示状態が変わる
-  it("U7: details open attribute toggles legend visibility state", () => {
+  // U6: details の open 属性のトグルに応じ凡例コンテンツの表示状態が変わる
+  it("U6: details open attribute toggles legend visibility state", () => {
     const { container } = render(
       <SpendingBarChart
         title="実質消費"
@@ -335,7 +333,6 @@ describe("SpendingBarChart component legendMode tests", () => {
         onToggleQuarter={vi.fn()}
         onReset={vi.fn()}
         legendMode="collapsible"
-        linkedSectionId="target-section"
       />,
     );
 

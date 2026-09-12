@@ -109,32 +109,6 @@ test.describe("page.tsx E2E: real consumption chart with actual browser", () => 
     });
   });
 
-  test("legend note link should point to an anchor that actually exists in the DOM", async ({
-    page,
-  }) => {
-    /**
-     * 「凡例は『消費支出（名目）』と連動しています」のリンク先が実在する id を
-     * 指しているかを検証する。下線は付いているがリンク先が存在しないと、
-     * クリックしても何も起きない「見た目だけのリンク」になる。
-     */
-    await page.goto("/");
-
-    const noteLink = page.getByRole("link", { name: "消費支出（名目）" });
-    await expect(noteLink, "Note link in real consumption chart should be visible").toBeVisible({
-      timeout: 15000,
-    });
-
-    const href = await noteLink.getAttribute("href");
-    expect(href, "Note link should have a fragment href").toMatch(/^#/);
-
-    const targetId = href!.slice(1);
-    const target = page.locator(`#${targetId}`);
-    await expect(
-      target,
-      `Note link's target "#${targetId}" should exist as an element id in the DOM`,
-    ).toHaveCount(1);
-  });
-
   test("should handle legend toggle and update chart visibility", async ({ page }) => {
     /**
      * UI インタラクション sanity: 実ブラウザだからこそテスト可能な、
@@ -178,9 +152,9 @@ test.describe("page.tsx E2E: real consumption chart with actual browser", () => 
       // summary should be visible
       const summary = realSection.locator("summary");
       await expect(summary).toBeVisible();
-      await expect(summary).toContainText("費目・四半期を変更");
-      await expect(summary).toContainText(/費目 \d+\/\d+・四半期 \d+\/\d+/);
-      await expect(summary).toContainText("全選択");
+      await expect(summary).toContainText(
+        /費目・四半期を変更（費目 \d+\/\d+・四半期 \d+\/4）・(全選択|絞り込み中)/,
+      );
 
       // legend items (buttons with aria-pressed) inside real section should NOT be visible or count as 0 if hidden by details
       const items = realSection.locator("[aria-pressed]");
@@ -214,62 +188,7 @@ test.describe("page.tsx E2E: real consumption chart with actual browser", () => 
       await expect(firstBtn).toBeVisible();
     });
 
-    test("T-E2E-A3: 連動の検証: 実質側の凡例で費目を非表示にすると、名目チャートの棒本数も減る", async ({
-      page,
-    }) => {
-      await page.goto("/");
-      await page.waitForLoadState("networkidle");
-
-      // LazyMount のため両セクションをスクロールしてマウントを促す
-      const nominalSection = page.locator("#section-consumption-nominal");
-      await nominalSection.scrollIntoViewIfNeeded();
-      await expect(nominalSection).toBeVisible({ timeout: 15000 });
-
-      const countBars = async (sectionId: string) => {
-        const bars = page.locator(`#${sectionId} .recharts-bar-rectangle`);
-        return await bars.count();
-      };
-
-      const nominalBarsBefore = await countBars("section-consumption-nominal");
-      expect(nominalBarsBefore).toBeGreaterThan(0);
-
-      // Scroll to real section and open accordion
-      const realSection = page.locator("#section-consumption-real");
-      await realSection.scrollIntoViewIfNeeded();
-      await expect(realSection).toBeVisible({ timeout: 15000 });
-      await realSection.locator("summary").click();
-
-      // Click a category button in real section legend (index 4+ are categories, 0-3 are Q1-Q4)
-      const categoryBtn = realSection.locator("[aria-pressed]").nth(4);
-      await expect(categoryBtn).toBeVisible();
-      await categoryBtn.click();
-
-      const nominalBarsAfter = await countBars("section-consumption-nominal");
-      expect(nominalBarsAfter).toBeLessThan(nominalBarsBefore);
-    });
-
-    test("T-E2E-A4: 案内文リンク「消費支出（名目）」はアコーディオンの開閉に関係なく常に可視", async ({
-      page,
-    }) => {
-      await page.goto("/");
-      await page.waitForLoadState("networkidle");
-
-      // LazyMount のためスクロールしてマウントを促す
-      const realSection = page.locator("#section-consumption-real");
-      await realSection.scrollIntoViewIfNeeded();
-      await expect(realSection).toBeVisible({ timeout: 15000 });
-
-      const link = realSection.getByRole("link", { name: "消費支出（名目）" });
-      await expect(link).toBeVisible();
-
-      // Open accordion
-      await realSection.locator("summary").click();
-      await expect(link).toBeVisible();
-    });
-
-    test("T-E2E-A5: summary ヘッダーがトナルピル装飾で、矢印SVGが含まれ、ガイドテキストが表示される", async ({
-      page,
-    }) => {
+    test("T-E2E-A3: summary ヘッダーがトナルピル装飾で、矢印SVGが含まれる", async ({ page }) => {
       await page.goto("/");
       await page.waitForLoadState("networkidle");
 

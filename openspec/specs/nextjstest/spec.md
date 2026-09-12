@@ -336,27 +336,22 @@ The system SHALL allow users to toggle chart series visibility.
 - **WHEN** legend state changes
 - **THEN** the state is managed via `useToggleSet` hook (React state)
 
-#### Scenario R4c: Linked Nominal / Real Legends
-
-- **WHEN** the user toggles a category in either the 消費支出（名目） or 消費支出（実質） legend
-- **THEN** `handleLegendToggle` resolves the nominal/real key pair and hides the series in **both** charts
-- **AND** the quarter filter (`hiddenQuarters`) and 全選択解除 are likewise shared by both charts
-
-#### Scenario R4d: Collapsed Legend Accordion (Mobile Consumption)
+#### Scenario R4c: Collapsed Legend Accordion (Mobile Consumption)
 
 - **WHEN** either 消費支出（名目） or 消費支出（実質） section renders on a mobile viewport (≤768px)
 - **THEN** its legend is placed in a native `<details>` accordion that is **closed by default**
-- **AND** the closed summary shows 「費目・四半期を変更」, the selected expense-item and quarter counts, and whether filtering is active
-- **AND** the note that nominal and real controls are linked stays visible outside the accordion
+- **AND** the closed summary is a single line and shows the selected expense-item and quarter counts, and whether filtering is active
+- **AND** the summary does not display a separate 四半期 heading
+- **AND** the real chart displays a link note to the nominal consumption section, while the nominal chart does not display that note
 - **AND WHEN** the user opens the accordion
 - **THEN** the same quarter and category controls as the nominal chart become operable
 
-#### Scenario R4f: Desktop Legend Preservation
+#### Scenario R4e: Desktop Legend Preservation
 
 - **WHEN** either consumption section renders on a viewport wider than 768px
 - **THEN** the existing desktop legend behavior remains available without the mobile collapsed-summary contract
 
-#### Scenario R4e: Modernized Accordion Summary Header (Tonal Pill)
+#### Scenario R4f: Modernized Accordion Summary Header (Tonal Pill)
 
 - **WHEN** either 消費支出（名目） or 消費支出（実質） legend accordion renders
 - **THEN** the `<summary>` element uses the `.legendAccordionSummary` tonal pill class with `--cta-tonal-bg` / `--cta-tonal-text` tokens
@@ -757,7 +752,7 @@ Page (RSC)
     │   └── StackedAreaChart → CustomTooltip — always-expanded 12-series legend (compact on mobile)
     │       └── belowChartSlot: CagrPanel — popup link + compact BottomSheet (R18)
     ├── [Chart variants]                     — deferred: wrapped in LazyMount
-    │   ├── SpendingBarChart (nominal / real) — mobile-specific spacing/ticks, bar width, and all-value tooltip/details; both legends use a closed-by-default collapsed summary with selected expense-item/quarter counts and filtering state; renders legacy GDP as standalone bars before 2018Q1 and CTI expense fields as stacked bars from 2018Q1; GDP is excluded thereafter
+    │   ├── SpendingBarChart (nominal / real) — mobile-specific spacing/ticks, bar width, and all-value tooltip/details; both legends use a closed-by-default single-line summary with selected expense-item/quarter counts and filtering state; renders legacy GDP as standalone bars before 2018Q1 and CTI expense fields as stacked bars from 2018Q1; GDP is excluded thereafter
      │   ├── EarningsBreakdownChart → CustomTooltip
     │   ├── ResidualAreaChart → CustomTooltip
     │   └── NewGraph → ChartInfoContentRenderer → CustomTooltip — comparison visualization receives CTI plus GDP comparison-only normalized values; it omits unavailable GDP lines
@@ -777,8 +772,8 @@ hydration — tests must wait for them rather than reading the initial markup.
 - `CpiChart` passes CTI expense keys and legacy GDP comparison keys to `SpendingBarChart`; the chart component renders only GDP bars before 2018Q1 and only CTI `Bar` stacks from 2018Q1.
 - Tooltip aggregation follows the display contract: before 2018Q1 it receives only the standalone GDP comparison field; from 2018Q1 it receives only visible CTI expense fields. GDP comparison values are never included in the post-2018 CTI total.
 - Missing, ended, unready, or failed-validation GDP comparison values remain `null` in the public projection and are hidden at the chart boundary; GDP is never zero-filled, copied, interpolated, or rescaled at the boundary.
-- Consumption presentation state is client-side and shared by nominal/real charts where already supported: hidden quarters, selected categories, and detail expansion flow into both charts without changing source-basis values, table values, or CSV values.
-- On mobile (≤768px), `SpendingBarChart` uses consumption-only layout options for margins, CPI-style axis ticks, typography, bar width/spacing, all-value tooltip/details, and safe-area-aware internal scrolling; both nominal and real legends are closed-by-default collapsible controls whose summaries report selected expense-item/quarter counts and filtering state. Selected-quarter emphasis is not added. Shared tooltip/axis behavior is not changed for other charts.
+- Consumption presentation state is client-side: hidden quarters, selected categories, and detail expansion control each chart without changing source-basis values, table values, or CSV values.
+- On mobile (≤768px), `SpendingBarChart` uses consumption-only layout options for margins, CPI-style axis ticks, typography, bar width/spacing, all-value tooltip/details, and safe-area-aware internal scrolling; both nominal and real legends are closed-by-default collapsible controls whose single-line summaries report selected expense-item/quarter counts and filtering state, without a separate 四半期 heading. The real chart may additionally show the linked nominal-section note when `linkedSectionId` is provided; the nominal chart omits it. Selected-quarter emphasis is not added. Shared tooltip/axis behavior is not changed for other charts.
 
 Data Sources are unchanged by the mobile-readability plan: no new source, transformation, normalization, or CTI/GDP join is adopted. Plan24's standalone-GDP-before-2018Q1 and CTI-stacked-from-2018Q1 contract remains authoritative.
 

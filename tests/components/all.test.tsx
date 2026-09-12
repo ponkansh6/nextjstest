@@ -267,7 +267,7 @@ describe("Integrated UI Chart Tests", () => {
         />,
       );
       // 凡例ラベルは getLegendLabel で変換されるため、変換後のラベルを確認する
-      expect(screen.getAllByText("諸雑費・CPI外支出").length).toBeGreaterThan(0);
+      expect(screen.getAllByText("諸雑費・CPI外").length).toBeGreaterThan(0);
     });
 
     it("should verify 民間最終消費支出（参考） and CTI消費支出（参考） range", () => {
@@ -376,7 +376,7 @@ describe("ChartLegend", () => {
     };
     render(<ChartLegend {...props} />);
     // 凡例ラベルは getLegendLabel で変換されるため、変換後のラベルを確認する
-    const button = screen.getByText("諸雑費・CPI外支出");
+    const button = screen.getByText("諸雑費・CPI外");
     fireEvent.click(button);
     expect(props.onToggle).toHaveBeenCalledWith("その他の消費支出（名目）");
   });

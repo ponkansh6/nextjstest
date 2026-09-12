@@ -144,7 +144,6 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
   const renderLegend = () => (
     <div className={styles.legendContainer}>
       <div className={styles.legendSection} style={{ marginBottom: "1.5rem" }}>
-        <h3 className={styles.legendTitle}>四半期</h3>
         <div className={styles.legendItems}>
           {[1, 2, 3, 4].map((q) => (
             <button
@@ -216,21 +215,27 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
 
       {legendMode === "collapsible" && (
         <>
-          <p className={styles.chartNote}>
-            凡例は「
-            <a
-              href={`#${linkedSectionId}`}
-              style={{ color: "var(--blue-500)", textDecoration: "underline" }}
-            >
-              消費支出（名目）
-            </a>
-            」と連動しています。
-          </p>
+          {linkedSectionId && (
+            <p className={styles.chartNote}>
+              凡例は「
+              <a
+                href={`#${linkedSectionId}`}
+                style={{ color: "var(--blue-500)", textDecoration: "underline" }}
+              >
+                消費支出（名目）
+              </a>
+              」と連動しています。
+            </p>
+          )}
           <details className={styles.legendAccordion}>
             <summary className={styles.legendAccordionSummary}>
               <span className={styles.legendAccordionLabel}>
-                費目・四半期を変更（費目 {selectedLegendCount}/{legendKeys.length}・四半期{" "}
-                {selectedQuarterCount}/4）・{hasActiveLegendFilter ? "絞り込み中" : "全選択"}
+                <span>費目・四半期を変更</span>
+                <span>
+                  （費目 {selectedLegendCount}/{legendKeys.length}・四半期 {selectedQuarterCount}
+                  /4）
+                </span>
+                <span>・{hasActiveLegendFilter ? "絞り込み中" : "全選択"}</span>
               </span>
               <svg
                 className={styles.legendAccordionChevron}
