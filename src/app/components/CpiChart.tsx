@@ -620,7 +620,9 @@ export default function CpiChart({
           chartColors={chartColors}
           {...chartTooltip.bind("section-consumption-nominal", {
             showTotal: true,
+            showAllPayload: true,
           })}
+          isMobile={isMobile}
           hiddenQuarters={hiddenQuarters}
           onToggleQuarter={handleQuarterLegendClick}
           onReset={createDualResetHandler(
@@ -635,6 +637,7 @@ export default function CpiChart({
               setHiddenKeys: setRealHiddenKeys,
             },
           )}
+          legendMode={isMobile ? "collapsible" : "expanded"}
           testId="spending-chart-nominal"
         />
       </LazyMount>
@@ -653,7 +656,9 @@ export default function CpiChart({
           chartColors={chartColors}
           {...chartTooltip.bind("section-consumption-real", {
             showTotal: true,
+            showAllPayload: true,
           })}
+          isMobile={isMobile}
           hiddenQuarters={hiddenQuarters}
           onToggleQuarter={handleQuarterLegendClick}
           onReset={createDualResetHandler(

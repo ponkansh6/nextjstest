@@ -402,6 +402,27 @@
   width: 100%;
 }
 
+.spendingChartSection {
+  min-width: 0;
+}
+.spendingChartWrapper {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.spendingChartWrapper .recharts-tooltip-wrapper {
+  max-width: 100%;
+}
+
+@media (max-width: 768px) {
+  .spendingChartSection {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+
 @media (orientation: landscape) and (max-height: 500px) {
   .chartWrapper {
     height: 85svh;
@@ -418,6 +439,13 @@
   margin-bottom: 0;
   padding-bottom: 0;
   border-bottom: none;
+}
+
+@media (max-width: 768px) {
+  /* Keep dedicated space on each spending section, including the last section. */
+  div.chartSection.spendingChartSection {
+    padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 .chartTitle {

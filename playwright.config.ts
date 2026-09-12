@@ -40,7 +40,9 @@ export default defineConfig({
       name: "chromium",
       // mobile-ux は本文で setViewportSize を自前指定しており、
       // Desktop Chrome で走らせても mobile-pixel と検証内容が変わらないため除外する。
-      testIgnore: /mobile-ux\.e2e\.spec\.ts/,
+      // consumption-boundary は実viewportの境界検証なので Desktop Chromium で実行する。
+      testIgnore:
+        /(mobile-ux|consumption-mobile-readability|consumption-mobile-acceptance)\.e2e\.spec\.ts/,
       use: { ...devices["Desktop Chrome"] },
     },
     {
@@ -66,7 +68,9 @@ export default defineConfig({
       // 完全に重複しており、絞り込まず全ファイルを実行すると43件が丸ごと重複し、
       // pre-push の所要時間を大きく押し上げていた(実測でE2E全体の約1/3)。
       name: "mobile-pixel",
-      testMatch: /(mobile-ux|tooltip-dismiss)\.e2e\.spec\.ts/,
+      // consumption-boundary は Desktop Chromium 専用で、ここには含めない。
+      testMatch:
+        /(mobile-ux|tooltip-dismiss|consumption-mobile-readability|consumption-mobile-acceptance)\.e2e\.spec\.ts/,
       use: { ...devices["Pixel 7"] },
     },
     {

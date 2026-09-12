@@ -11,6 +11,7 @@ export interface CustomTooltipProps {
   showTotal?: boolean;
   /** 合計から除外する独立比較系列 */
   totalExcludedKeys?: string[];
+  showAllPayload?: boolean;
 }
 
 export interface CpiView extends Record<string, string | number> {

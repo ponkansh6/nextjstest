@@ -15,12 +15,14 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
     onDismiss,
     showTotal,
     totalExcludedKeys = [],
+    showAllPayload = false,
   }) => {
     if (!active || !payload) {
       return null;
     }
 
-    const fontSize = isMobile ? "12px" : "14px";
+    const fontSize = "14px";
+    const totalFontSize = "16px";
     const labelFontSize = isMobile ? "11px" : "13px";
     const padding = isMobile ? "10px 14px" : "12px";
 
@@ -42,8 +44,11 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
         })
       : payload;
 
-    const topPayload = isMobile ? displayPayload.slice(0, 5) : displayPayload;
-    const remainingCount = isMobile ? displayPayload.length - topPayload.length : 0;
+    // Consumption tooltips opt into every series on either viewport. When the
+    // option is omitted, retain the existing mobile/desktop presentation.
+    const shouldShowAllPayload = showAllPayload;
+    const topPayload = shouldShowAllPayload ? displayPayload : displayPayload.slice(0, 5);
+    const remainingPayloadCount = displayPayload.length - topPayload.length;
 
     return (
       <div
@@ -54,17 +59,20 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
           boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
           color: tooltipText,
           padding: padding,
+          paddingBottom: isMobile ? "calc(10px + env(safe-area-inset-bottom, 0px))" : undefined,
           ...(isMobile
             ? {
                 position: "fixed",
-                bottom: 0,
+                bottom: "env(safe-area-inset-bottom, 0px)",
                 left: 0,
                 right: 0,
                 width: "100%",
                 zIndex: 1000,
-                maxHeight: "40dvh",
+                maxHeight:
+                  "min(40dvh, calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 8px))",
                 overflowY: "auto",
                 boxSizing: "border-box",
+                overscrollBehavior: "contain",
                 // Recharts の .recharts-tooltip-wrapper は pointer-events: none が
                 // 既定値(ホバー中もカーソル追従イベントをチャート側へ通すため)。
                 // これを継承すると閉じるボタンをタップしても反応しないため上書きする。
@@ -80,6 +88,10 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
             justifyContent: "space-between",
             gap: "8px",
             marginBottom: "4px",
+            position: "sticky",
+            top: 0,
+            zIndex: 1,
+            backgroundColor: tooltipBg,
           }}
         >
           <p
@@ -139,7 +151,7 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
               alignItems: "baseline",
               justifyContent: "space-between",
               gap: "12px",
-              fontSize: fontSize,
+              fontSize: totalFontSize,
               fontWeight: "bold",
               color: tooltipText,
               padding: "2px 0 6px",
@@ -161,6 +173,7 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
               fontSize: fontSize,
               margin: "1px 0",
               color: tooltipText,
+              justifyContent: "space-between",
             }}
           >
             {entry.color && (
@@ -175,22 +188,31 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
                 }}
               />
             )}
-            <span>
-              {entry.name}: {typeof entry.value === "number" ? entry.value.toFixed(2) : entry.value}
+            <span style={{ minWidth: 0, overflowWrap: "anywhere" }}>{entry.name}</span>
+            <span
+              style={{
+                flexShrink: 0,
+                marginLeft: "auto",
+                textAlign: "right",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {typeof entry.value === "number" ? entry.value.toFixed(2) : entry.value}
             </span>
           </div>
         ))}
-        {remainingCount > 0 && (
-          <p
+        {remainingPayloadCount > 0 && (
+          <div
+            aria-label="その他の項目を省略"
             style={{
               color: tooltipText,
               fontSize: fontSize,
-              opacity: 0.7,
-              margin: "4px 0 0 0",
+              textAlign: "center",
+              marginTop: "4px",
             }}
           >
-            他 {remainingCount} 件
-          </p>
+            他 {remainingPayloadCount} 件
+          </div>
         )}
       </div>
     );

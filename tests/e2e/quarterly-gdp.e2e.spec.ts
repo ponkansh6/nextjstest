@@ -11,7 +11,9 @@ async function hoverQuarterActionableMark(
   const chart = page.getByTestId(testId);
   await chart.scrollIntoViewIfNeeded();
   // 開始年を2025年に設定しているため、先頭の棒は2025Q1に対応する。
-  await expect(chart.locator("tspan").filter({ hasText: "2025Q1" }).first()).toBeVisible();
+  await expect(
+    chart.locator(".recharts-xAxis-tick-labels text").filter({ hasText: "2025Q1" }).first(),
+  ).toBeVisible();
   await chart.locator(".recharts-bar-rectangle").nth(index).hover();
   return chart.locator(".recharts-tooltip-wrapper");
 }
@@ -29,7 +31,9 @@ test.describe("Plan23 quarterly public projection", () => {
 
     // 実質チャートの凡例は仕様上初期折畳のため、公開系列を検証する前に展開する。
     const realLegend = real.locator("summary");
-    await expect(realLegend).toHaveText("凡例を表示（費目・四半期）");
+    await expect(realLegend).toContainText("費目・四半期を変更");
+    await expect(realLegend).toContainText(/費目 \d+\/\d+・四半期 \d+\/\d+/);
+    await expect(realLegend).toContainText("全選択");
     await realLegend.click();
 
     for (const section of [nominal, real]) {

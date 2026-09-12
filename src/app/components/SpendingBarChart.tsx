@@ -1,4 +1,6 @@
-import React from "react";
+"use client";
+
+import React, { useEffect, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { CpiData } from "@/types";
 import styles from "./CpiChart.module.css";
@@ -12,7 +14,45 @@ import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
 import { CHART_INFO, type ChartInfoContent } from "../../lib/chartInfoContent";
 import { YearReferenceLines } from "./charts/YearReferenceLines";
 import { XAxisEdgeTick } from "./charts/XAxisEdgeTick";
-import { computeXAxisTicks } from "./charts/xAxisTicks";
+
+function computeSpendingXAxisTicks(data: QuarterlyDataPoint[], viewportWidth: number): string[] {
+  if (data.length === 0) return [];
+  const first = data[0];
+  const last = data[data.length - 1];
+  const candidates = [first, ...data.filter((row) => row.quarter === 1), last].filter(
+    (row, index, rows) => rows.findIndex((candidate) => candidate.label === row.label) === index,
+  );
+  const priorityTicks = candidates.filter(
+    (row) => row === first || row === last || (row.年 - first.年) % 5 === 0,
+  );
+  // ラベル幅は12pxの「YYYY年Q1」を基準に保守的に見積もる。DOM実測は行わず、
+  // 利用可能幅とデータ上の位置だけで決定する。
+  const estimatedLabelWidth = 76;
+  const chartWidth = Math.max(0, viewportWidth - (isMobileViewport(viewportWidth) ? 56 : 70));
+  const position = (row: QuarterlyDataPoint) =>
+    (data.indexOf(row) / Math.max(1, data.length - 1)) * chartWidth;
+  const selected: QuarterlyDataPoint[] = [first];
+  for (const candidate of priorityTicks.slice(1, -1)) {
+    const previous = selected[selected.length - 1];
+    // The first and last labels are edge-anchored by XAxisEdgeTick, so only
+    // their inward half has to be kept clear of a neighbouring centered label.
+    const previousGap = previous === first ? estimatedLabelWidth * 1.5 : estimatedLabelWidth;
+    const nextGap = estimatedLabelWidth * 1.5;
+    if (
+      position(candidate) - position(previous) >= previousGap &&
+      position(last) - position(candidate) >= nextGap
+    ) {
+      selected.push(candidate);
+    }
+  }
+  // 開始・終了ラベルは常に残す。通常の表示幅では上の条件により、隣接間隔も保証される。
+  selected.push(last);
+  return selected.map((row) => row.label);
+}
+
+function isMobileViewport(viewportWidth: number): boolean {
+  return viewportWidth <= 768;
+}
 
 interface QuarterlyDataPoint {
   label: string;
@@ -41,6 +81,7 @@ interface SpendingBarChartProps {
   legendMode?: "expanded" | "collapsible";
   linkedSectionId?: string;
   testId?: string;
+  isMobile?: boolean;
 }
 
 export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
@@ -63,7 +104,17 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
     legendMode = "expanded",
     linkedSectionId,
     testId,
+    isMobile = false,
   } = props;
+  const [viewportWidth, setViewportWidth] = useState(1024);
+
+  useEffect(() => {
+    const updateViewportWidth = () => setViewportWidth(window.innerWidth);
+    updateViewportWidth();
+    window.addEventListener("resize", updateViewportWidth);
+    return () => window.removeEventListener("resize", updateViewportWidth);
+  }, []);
+
   const supportKey = keys.includes(SUPPORT_SERIES_KEY_REAL)
     ? SUPPORT_SERIES_KEY_REAL
     : keys.includes(SUPPORT_SERIES_KEY_NOMINAL)
@@ -74,6 +125,14 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
     (row) => row.年 < 2018 && supportKey && typeof row[supportKey] === "number",
   );
   const legendKeys = hasLegacyGdp ? keys : ctiKeys;
+  const selectedLegendCount = legendKeys.filter((key) => !hiddenKeys.includes(key)).length;
+  const visibleCtiKeyCount = ctiKeys.filter((key) => !hiddenKeys.includes(key)).length;
+  const hasVisibleExpenseSeries = visibleCtiKeyCount > 0;
+  const hasVisibleSupportSeries =
+    supportKey !== undefined && hasLegacyGdp && !hiddenKeys.includes(supportKey);
+  const shouldShowEmptyState = !hasVisibleExpenseSeries && !hasVisibleSupportSeries;
+  const selectedQuarterCount = [1, 2, 3, 4].filter((q) => !hiddenQuarters.includes(q)).length;
+  const hasActiveLegendFilter = selectedLegendCount < legendKeys.length || selectedQuarterCount < 4;
   // Plan24: GDP is a standalone bar before 2018Q1; CTI is the only stack afterwards.
   const chartData = data.map((row) => {
     const next = { ...row };
@@ -132,7 +191,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
   return (
     <div
       id={sectionId}
-      className={styles.chartSection}
+      className={`${styles.chartSection} ${styles.spendingChartSection}`}
       style={{ scrollMarginTop: "5rem" }}
       data-testid={testId}
       data-gdp-periods={chartData
@@ -169,7 +228,10 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
           </p>
           <details className={styles.legendAccordion}>
             <summary className={styles.legendAccordionSummary}>
-              <span className={styles.legendAccordionLabel}>凡例を表示（費目・四半期）</span>
+              <span className={styles.legendAccordionLabel}>
+                費目・四半期を変更（費目 {selectedLegendCount}/{legendKeys.length}・四半期{" "}
+                {selectedQuarterCount}/4）・{hasActiveLegendFilter ? "絞り込み中" : "全選択"}
+              </span>
               <svg
                 className={styles.legendAccordionChevron}
                 viewBox="0 0 24 24"
@@ -189,11 +251,19 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
       )}
 
       {legendMode === "expanded" && renderLegend()}
-      <div className={styles.chartWrapper} role="img" aria-label={`${title}の推移グラフ`}>
+      <div
+        className={`${styles.chartWrapper} ${styles.spendingChartWrapper}`}
+        style={{ position: "relative" }}
+        role="img"
+        aria-label={`${title}の推移グラフ`}
+        onClick={onClick}
+      >
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={chartData}
-            margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
+            margin={{ top: 10, right: isMobile ? 10 : 30, left: 0, bottom: 20 }}
+            barCategoryGap={isMobile ? (viewportWidth <= 350 ? "28%" : "22%") : "10%"}
+            barSize={isMobile ? (viewportWidth <= 350 ? 9 : 11) : undefined}
             onClick={onClick}
           >
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.gridStroke} />
@@ -210,13 +280,15 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
                   {...props}
                   fill={chartColors.axisText}
                   emphasisFill={chartColors.axisTextEmphasis}
+                  fontSize={isMobile ? 12 : undefined}
                 />
               )}
               dy={10}
-              ticks={computeXAxisTicks(data, "label")}
+              ticks={computeSpendingXAxisTicks(data, viewportWidth)}
               interval={0}
             />
             <YAxis
+              width={isMobile ? 46 : undefined}
               domain={[0, "auto"]}
               axisLine={false}
               tickLine={false}
@@ -252,6 +324,23 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
             )}
           </BarChart>
         </ResponsiveContainer>
+        {shouldShowEmptyState && (
+          <div
+            role="status"
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "grid",
+              placeItems: "center",
+              padding: "1rem",
+              color: "var(--card-text)",
+              textAlign: "center",
+              pointerEvents: "none",
+            }}
+          >
+            表示する系列がありません。凡例から費目を1つ以上選択してください。
+          </div>
+        )}
       </div>
       <p className={styles.chartNote}>
         <a href={`#data-table-${sectionId}`}>データテーブルを表示 ▾</a>

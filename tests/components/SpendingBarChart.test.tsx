@@ -11,16 +11,40 @@ vi.mock("recharts", () => ({
       {children}
     </div>
   ),
-  BarChart: ({ children, data }: { children: React.ReactNode; data: any[] }) => (
-    <div data-testid="barchart" data-rows={JSON.stringify(data)}>
+  BarChart: ({
+    children,
+    data,
+    margin,
+    barCategoryGap,
+    barSize,
+  }: {
+    children: React.ReactNode;
+    data: any[];
+    margin?: Record<string, number>;
+    barCategoryGap?: string;
+    barSize?: number;
+  }) => (
+    <div
+      data-testid="barchart"
+      data-rows={JSON.stringify(data)}
+      data-margin={JSON.stringify(margin)}
+      data-bar-category-gap={barCategoryGap}
+      data-bar-size={barSize}
+    >
       {children}
     </div>
   ),
   Bar: ({ dataKey }: { dataKey: string }) => <div data-testid="bar-mock" data-key={dataKey} />,
   Line: ({ dataKey }: { dataKey: string }) => <div data-testid="line-mock" data-key={dataKey} />,
   CartesianGrid: () => <div data-testid="cartesian-grid" />,
-  XAxis: () => <div data-testid="xaxis" />,
-  YAxis: () => <div data-testid="yaxis" />,
+  XAxis: (props: { ticks?: string[]; interval?: number }) => (
+    <div
+      data-testid="xaxis"
+      data-ticks={JSON.stringify(props.ticks)}
+      data-interval={props.interval}
+    />
+  ),
+  YAxis: (props: { width?: number }) => <div data-testid="yaxis" data-width={props.width} />,
   Tooltip: () => <div data-testid="tooltip" />,
 }));
 
@@ -241,8 +265,8 @@ describe("SpendingBarChart component legendMode tests", () => {
     expect(onToggle).toHaveBeenCalledWith("食料");
   });
 
-  // U5: legendMode="collapsible" の <summary> に 凡例 を含む文言が出る
-  it("U5: summary element contains 凡例 text", () => {
+  // U5: legendMode="collapsible" の <summary> に費目・四半期の変更方法と状態要約が出る
+  it("U5: summary element describes category and quarter selection state", () => {
     const { container } = render(
       <SpendingBarChart
         title="実質消費"
@@ -263,7 +287,7 @@ describe("SpendingBarChart component legendMode tests", () => {
 
     const summary = container.querySelector("summary");
     expect(summary).not.toBeNull();
-    expect(summary?.textContent).toContain("凡例");
+    expect(summary?.textContent).toBe("費目・四半期を変更（費目 2/2・四半期 4/4）・全選択");
   });
 
   // U6: <summary> にトナルピルヘッダー用の className が適用され、矢印SVGが含まれる
@@ -331,5 +355,34 @@ describe("SpendingBarChart component legendMode tests", () => {
     details.open = false;
     fireEvent(details, new Event("toggle"));
     expect(details.hasAttribute("open")).toBe(false);
+  });
+
+  it("採用: mobile layout uses the dedicated margin, bar width, and category gap", () => {
+    renderChart({ isMobile: true });
+    const chart = screen.getByTestId("barchart");
+    expect(JSON.parse(chart.dataset.margin!)).toMatchObject({ right: 10 });
+    expect(screen.getByTestId("yaxis").dataset.width).toBe("46");
+    expect(chart.dataset.barSize).toBe("11");
+    expect(chart.dataset.barCategoryGap).toBe("22%");
+  });
+
+  it("採用: X axis keeps Q1 ticks on five-year boundaries and limits dense ticks by width", () => {
+    const data = Array.from({ length: 40 }, (_, index) => {
+      const year = 2015 + Math.floor(index / 4);
+      const quarter = (index % 4) + 1;
+      return {
+        label: `${year} Q${quarter}`,
+        年: year,
+        quarter,
+        年月: `${year}-${quarter}`,
+        食料: index,
+      };
+    });
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: 320 });
+    renderChart({ data });
+    const ticks = JSON.parse(screen.getByTestId("xaxis").dataset.ticks!) as string[];
+    expect(ticks).toEqual(["2015 Q1", "2020 Q1", "2024 Q4"]);
+    expect(new Set(ticks).size).toBe(ticks.length);
+    expect(screen.getByTestId("xaxis").dataset.interval).toBe("0");
   });
 });

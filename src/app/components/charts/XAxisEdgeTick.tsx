@@ -1,5 +1,3 @@
-import { Text } from "recharts";
-
 interface XAxisEdgeTickProps {
   fill: string;
   emphasisFill: string;
@@ -39,8 +37,16 @@ export const XAxisEdgeTick = ({
 }: XAxisEdgeTickProps) => {
   const isEdge = index === 0 || index === (visibleTicksCount ?? 1) - 1;
   return (
-    <Text {...rest} className={className} fill={isEdge ? emphasisFill : fill}>
+    <text
+      {...rest}
+      className={className}
+      fill={isEdge ? emphasisFill : fill}
+      // Recharts positions ticks at the data point and centers text by default.
+      // Anchor edge labels toward the plot so their estimated text box stays
+      // inside the SVG viewport without relying on DOM measurements.
+      textAnchor={index === 0 ? "start" : index === (visibleTicksCount ?? 1) - 1 ? "end" : "middle"}
+    >
       {formatTickLabel(payload?.value)}
-    </Text>
+    </text>
   );
 };

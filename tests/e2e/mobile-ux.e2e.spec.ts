@@ -61,6 +61,21 @@ test.describe("モバイル UX ルール", () => {
     ).toBeLessThanOrEqual(clientWidth);
   });
 
+  for (const width of [320, 375, 390, 430]) {
+    test(`${width}px 幅でページに横 overflow がない`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 667 });
+      await page.goto("/");
+      await page.waitForLoadState("networkidle");
+      const overflow = await page.evaluate(() => ({
+        scrollWidth: document.documentElement.scrollWidth,
+        clientWidth: document.documentElement.clientWidth,
+      }));
+      expect(overflow.scrollWidth, `${width}px 幅で横 overflow`).toBeLessThanOrEqual(
+        overflow.clientWidth,
+      );
+    });
+  }
+
   test("モバイル幅（375px）でも最大期間ボタンが終了年 select の右側に配置されること", async ({
     page,
   }) => {

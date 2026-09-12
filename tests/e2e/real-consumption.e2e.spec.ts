@@ -178,7 +178,9 @@ test.describe("page.tsx E2E: real consumption chart with actual browser", () => 
       // summary should be visible
       const summary = realSection.locator("summary");
       await expect(summary).toBeVisible();
-      await expect(summary).toHaveText("凡例を表示（費目・四半期）");
+      await expect(summary).toContainText("費目・四半期を変更");
+      await expect(summary).toContainText(/費目 \d+\/\d+・四半期 \d+\/\d+/);
+      await expect(summary).toContainText("全選択");
 
       // legend items (buttons with aria-pressed) inside real section should NOT be visible or count as 0 if hidden by details
       const items = realSection.locator("[aria-pressed]");

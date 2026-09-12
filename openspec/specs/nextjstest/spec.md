@@ -142,6 +142,9 @@ The system SHALL display economic indicators as interactive Recharts-based chart
 - **AND** GDPとCTIを同一四半期に同時表示・合算せず、GDP Lineは描画しない
 - **AND** 2018Q1以降の表示データ、凡例、tooltipからGDP比較値を除外する
 - **AND** GDP欠損を0埋めせず、境界で値の複製・補間・表示用係数合わせをしない
+- **AND** 消費支出グラフはモバイル専用の余白・safe-area、棒幅・間隔を適用し、横overflowを発生させない
+- **AND** X軸は5年に一度のQ1を表示し、開始・終了ラベルとの重なりは適宜非表示にする
+- **AND** tooltipはモバイルでも全費目を内部スクロール付きで表示する
 
 ### R3: Data Transformation (Server-Side)
 
@@ -339,17 +342,23 @@ The system SHALL allow users to toggle chart series visibility.
 - **THEN** `handleLegendToggle` resolves the nominal/real key pair and hides the series in **both** charts
 - **AND** the quarter filter (`hiddenQuarters`) and 全選択解除 are likewise shared by both charts
 
-#### Scenario R4d: Collapsed Legend Accordion (Real Consumption)
+#### Scenario R4d: Collapsed Legend Accordion (Mobile Consumption)
 
-- **WHEN** the 消費支出（実質） section renders
+- **WHEN** either 消費支出（名目） or 消費支出（実質） section renders on a mobile viewport (≤768px)
 - **THEN** its legend is placed in a native `<details>` accordion that is **closed by default**
-- **AND** the "凡例は「消費支出（名目）」と連動しています" note stays visible outside the accordion
+- **AND** the closed summary shows 「費目・四半期を変更」, the selected expense-item and quarter counts, and whether filtering is active
+- **AND** the note that nominal and real controls are linked stays visible outside the accordion
 - **AND WHEN** the user opens the accordion
 - **THEN** the same quarter and category controls as the nominal chart become operable
 
+#### Scenario R4f: Desktop Legend Preservation
+
+- **WHEN** either consumption section renders on a viewport wider than 768px
+- **THEN** the existing desktop legend behavior remains available without the mobile collapsed-summary contract
+
 #### Scenario R4e: Modernized Accordion Summary Header (Tonal Pill)
 
-- **WHEN** the 消費支出（実質） legend accordion renders
+- **WHEN** either 消費支出（名目） or 消費支出（実質） legend accordion renders
 - **THEN** the `<summary>` element uses the `.legendAccordionSummary` tonal pill class with `--cta-tonal-bg` / `--cta-tonal-text` tokens
 - **AND** the native marker is hidden (`::-webkit-details-marker: display: none`, `::marker: content: ""`)
 - **AND** a chevron SVG (`aria-hidden="true"`) is rendered inside the summary
@@ -442,6 +451,44 @@ The system SHALL adapt to viewport size for mobile and desktop, designed mobile-
 
 - **WHEN** the device is held in landscape with a short viewport
 - **THEN** chart height follows the viewport (`svh`/`dvh` units) instead of a fixed 500px
+
+### R20: Mobile Consumption Readability
+
+The system SHALL make the nominal and real consumption charts readable and operable on narrow viewports while preserving the Plan24 data and rendering contract.
+
+#### Scenario R20a: Mobile Chart Geometry, Axis, and Bars
+
+- **WHEN** a consumption chart is rendered at 320–430px width
+- **THEN** its dedicated mobile layout preserves a zero-based Y axis, keeps the largest labels visible, uses a chart right margin of 8–12px with a measured Y-axis width of approximately 40–48px, and uses mobile-specific bar width and spacing
+- **AND** X-axis ticks follow the CPI-style cadence of every five years at Q1, with overlapping labels hidden as needed, and use at least 12px text
+- **AND** browser acceptance checks obtain the painted native X-axis `text` nodes from `.recharts-xAxis-tick-labels`, measure viewport CSS-pixel rectangles with `getBoundingClientRect()`, and verify every label is finite, inside the chart SVG display rectangle, and non-intersecting with its adjacent label
+- **AND** no new horizontal scrolling is introduced
+
+#### Scenario R20b: Preserved Boundary Contract
+
+- **WHEN** the user views the consumption charts on mobile
+- **THEN** no new 「直近5年」/「全期間」 period control or selected-quarter emphasis is introduced
+- **AND** the 2017Q4/2018Q1 boundary remains a standalone GDP bar followed by CTI stacked bars, with no overlap, interpolation, or independent GDP line
+
+#### Scenario R20c: Mobile Details
+
+- **WHEN** the user taps a consumption bar
+- **THEN** the tooltip/detail view shows all applicable category values, with category names at least 14px, the total at least 16px, and right-aligned numeric values
+- **AND** the period label font size is outside the Plan25 approval scope
+- **AND** the detail content accounts for safe-area insets, scrolls internally when expanded, and keeps the close control reachable
+
+#### Scenario R20e: Consumption Tooltip Full Payload
+
+- **WHEN** a nominal or real consumption chart requests `showAllPayload=true`
+- **THEN** its tooltip displays every applicable category value on mobile and desktop regardless of touch state
+- **AND** when `showAllPayload` is not specified, the existing mobile/desktop payload omission behavior remains unchanged
+
+#### Scenario R20d: Mobile Empty and Accessibility States
+
+- **WHEN** the user clears every category or enlarges text/uses landscape/dark mode
+- **THEN** the chart explains the empty state and permits recovery without displaying nonexistent bars or values
+- **AND** category names, selected/focused states, and close/reopen actions remain understandable without relying on color alone
+- **AND** the page has no horizontal overflow at 375px
 
 ### R15: Touch Tooltip Interaction & Scroll Suppression
 
@@ -709,7 +756,7 @@ Page (RSC)
     │   └── StackedAreaChart → CustomTooltip — always-expanded 12-series legend (compact on mobile)
     │       └── belowChartSlot: CagrPanel — popup link + compact BottomSheet (R18)
     ├── [Chart variants]                     — deferred: wrapped in LazyMount
-    │   ├── SpendingBarChart (nominal / real) — renders legacy GDP as standalone bars before 2018Q1 and CTI expense fields as stacked bars from 2018Q1; GDP is excluded thereafter
+    │   ├── SpendingBarChart (nominal / real) — mobile-specific spacing/ticks, bar width, and all-value tooltip/details; both legends use a closed-by-default collapsed summary with selected expense-item/quarter counts and filtering state; renders legacy GDP as standalone bars before 2018Q1 and CTI expense fields as stacked bars from 2018Q1; GDP is excluded thereafter
      │   ├── EarningsBreakdownChart → CustomTooltip
     │   ├── ResidualAreaChart → CustomTooltip
     │   └── NewGraph → ChartInfoContentRenderer → CustomTooltip — comparison visualization receives CTI plus GDP comparison-only normalized values; it omits unavailable GDP lines
@@ -729,6 +776,10 @@ hydration — tests must wait for them rather than reading the initial markup.
 - `CpiChart` passes CTI expense keys and legacy GDP comparison keys to `SpendingBarChart`; the chart component renders only GDP bars before 2018Q1 and only CTI `Bar` stacks from 2018Q1.
 - Tooltip aggregation follows the display contract: before 2018Q1 it receives only the standalone GDP comparison field; from 2018Q1 it receives only visible CTI expense fields. GDP comparison values are never included in the post-2018 CTI total.
 - Missing, ended, unready, or failed-validation GDP comparison values remain `null` in the public projection and are hidden at the chart boundary; GDP is never zero-filled, copied, interpolated, or rescaled at the boundary.
+- Consumption presentation state is client-side and shared by nominal/real charts where already supported: hidden quarters, selected categories, and detail expansion flow into both charts without changing source-basis values, table values, or CSV values.
+- On mobile (≤768px), `SpendingBarChart` uses consumption-only layout options for margins, CPI-style axis ticks, typography, bar width/spacing, all-value tooltip/details, and safe-area-aware internal scrolling; both nominal and real legends are closed-by-default collapsible controls whose summaries report selected expense-item/quarter counts and filtering state. Selected-quarter emphasis is not added. Shared tooltip/axis behavior is not changed for other charts.
+
+Data Sources are unchanged by the mobile-readability plan: no new source, transformation, normalization, or CTI/GDP join is adopted. Plan24's standalone-GDP-before-2018Q1 and CTI-stacked-from-2018Q1 contract remains authoritative.
 
 ```
 e-Stat official CPI long connected CSV (`statInfId=000040482945`) + source-original SHA-256

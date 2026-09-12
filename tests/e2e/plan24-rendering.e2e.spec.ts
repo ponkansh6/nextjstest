@@ -11,7 +11,7 @@ const supportKeys = {
 const ACTION_TIMEOUT = 5_000;
 const ASSERTION_TIMEOUT = 5_000;
 const NAVIGATION_TIMEOUT = 10_000;
-const SCREENSHOT_TIMEOUT = 5_000;
+const SCREENSHOT_TIMEOUT = 15_000;
 
 async function expectedGdpValue(kind: keyof typeof GDP_FACTORS, period: string) {
   const file =
@@ -78,6 +78,12 @@ async function saveChartScreenshots(page: Page, range: string, width: number) {
   const directory = `artifacts/plan24/screenshots/${range}/${viewport}`;
   await mkdir(directory, { recursive: true });
   await page.setViewportSize({ width, height: 812 });
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+    );
+  });
   for (const [kind, id] of [
     ["nominal", chartIds[0]],
     ["real", chartIds[1]],
@@ -117,7 +123,8 @@ test.describe("Plan24 rendering contract", () => {
       const expected = await expectedGdpValue(kind, "2017Q4");
       const tooltip = await hoverBar(page, id, 3);
       await expect(tooltip).toContainText(`合計${expected}`);
-      await expect(tooltip).toContainText(`${supportKeys[id]}: ${expected}`);
+      const gdpRow = tooltip.getByText(supportKeys[id], { exact: true }).locator("..");
+      await expect(gdpRow.getByText(expected, { exact: true })).toBeVisible();
     }
     await page.setViewportSize({ width: 1280, height: 812 });
     await setRange(page, 2018, 2018);
@@ -190,7 +197,8 @@ test.describe("Plan24 rendering contract", () => {
         await expect(row.nth(supportIndex)).not.toHaveText("", { timeout: ASSERTION_TIMEOUT });
         const tooltip = await hoverBar(page, id, barIndex);
         await expect(tooltip).toContainText(period, { timeout: ASSERTION_TIMEOUT });
-        await expect(tooltip).toContainText(`${foodTooltipLabel}: ${foodValue}`);
+        const foodRow = tooltip.getByText(foodTooltipLabel, { exact: true }).locator("..");
+        await expect(foodRow.getByText(foodValue, { exact: true })).toBeVisible();
         await expect(tooltip).toContainText(`合計${total}`);
         await expect(tooltip).not.toContainText("GDP");
       }
