@@ -136,11 +136,11 @@ The system SHALL display economic indicators as interactive Recharts-based chart
 
 #### Scenario R2ba: Displayed-value Y-axis upper bounds
 
-- **WHEN** any of MajorIndicesChart, StackedAreaChart, SpendingBarChart, EarningsBreakdownChart, ResidualAreaChart, or NewGraph is rendered
-- **THEN** its Y-axis upper bound is the maximum displayed value plus 3
+- **WHEN** MajorIndicesChart, StackedAreaChart, SpendingBarChart, or EarningsBreakdownChart is rendered
+- **THEN** its Y-axis upper bound is the nearest integer to the maximum displayed value plus 3
 - **AND** hidden series are excluded from that maximum
-- **AND** for StackedAreaChart, the candidate maximum at each time point is the sum of the visible series at that time, and the largest such sum plus 3 is used
-- **AND** for ResidualAreaChart, the existing lower-bound behavior is preserved while its upper bound is the displayed residual maximum plus 3
+- **AND** for StackedAreaChart, the candidate maximum at each time point is the sum of the visible series at that time, and the nearest integer to the largest such sum plus 3 is used
+- **AND** for ResidualAreaChart (給与物価差) and NewGraph (3種比較), the existing automatic Y-axis maximum behavior is preserved
 - **AND** non-finite and missing values do not contribute to the maximum
 
 #### Scenario R2c: Legacy GDP Bars and CTI Consumption Bars

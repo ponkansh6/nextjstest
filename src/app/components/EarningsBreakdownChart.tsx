@@ -46,19 +46,18 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
   const yAxisMax = React.useMemo(() => {
     const areaKeys = configs.filter(({ type }) => type === "area").map(({ key }) => key);
     const lineKeys = configs.filter(({ type }) => type !== "area").map(({ key }) => key);
-    return (
-      data.reduce((max, row) => {
-        const areaTotal = areaKeys.reduce((sum, key) => {
-          const value = hiddenKeys.includes(key) ? null : row[key];
-          return sum + (typeof value === "number" && Number.isFinite(value) ? value : 0);
-        }, 0);
-        const lineMax = lineKeys.reduce((lineMax, key) => {
-          const value = hiddenKeys.includes(key) ? null : row[key];
-          return Math.max(lineMax, typeof value === "number" && Number.isFinite(value) ? value : 0);
-        }, 0);
-        return Math.max(max, areaTotal, lineMax);
-      }, 0) + 3
-    );
+    const maxValue = data.reduce((max, row) => {
+      const areaTotal = areaKeys.reduce((sum, key) => {
+        const value = hiddenKeys.includes(key) ? null : row[key];
+        return sum + (typeof value === "number" && Number.isFinite(value) ? value : 0);
+      }, 0);
+      const lineMax = lineKeys.reduce((lineMax, key) => {
+        const value = hiddenKeys.includes(key) ? null : row[key];
+        return Math.max(lineMax, typeof value === "number" && Number.isFinite(value) ? value : 0);
+      }, 0);
+      return Math.max(max, areaTotal, lineMax);
+    }, 0);
+    return Math.round(maxValue + 3);
   }, [configs, data, hiddenKeys]);
 
   return (

@@ -45,7 +45,7 @@ export const MajorIndicesChart: React.FC<MajorIndicesChartProps> = ({
         .map((key) => row[key])
         .filter((value): value is number => typeof value === "number" && Number.isFinite(value)),
     );
-    return (values.length > 0 ? Math.max(...values) : 0) + 3;
+    return Math.round(values.length > 0 ? Math.max(...values) + 3 : 3);
   }, [data, keys, hiddenKeys]);
 
   return (

@@ -33,13 +33,6 @@ export const ResidualAreaChart: React.FC<ResidualAreaChartProps> = ({
   onClick,
   activeDot,
 }) => {
-  const yAxisMax = React.useMemo(() => {
-    const values = data
-      .map((row) => row["残差"])
-      .filter((value): value is number => typeof value === "number" && Number.isFinite(value));
-    return values.length > 0 ? Math.max(...values) + 3 : "auto";
-  }, [data]);
-
   return (
     <div id={sectionId} className={styles.chartSection} style={{ scrollMarginTop: "5rem" }}>
       <h2 className={styles.chartTitle}>
@@ -78,7 +71,7 @@ export const ResidualAreaChart: React.FC<ResidualAreaChartProps> = ({
               interval={0}
             />
             <YAxis
-              domain={["auto", yAxisMax]}
+              domain={["auto", "auto"]}
               axisLine={false}
               tickLine={false}
               tick={{ fill: chartColors.axisText }}

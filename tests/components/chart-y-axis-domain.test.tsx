@@ -43,7 +43,7 @@ const common = {
 
 const data = [
   { 年月: "2025年1月", 年: 2025, A: 10, B: 20, 残差: -4, 総合: 10, 所定内給与: 10 },
-  { 年月: "2025年2月", 年: 2025, A: 30, B: 5, 残差: 8, 総合: 30, 所定内給与: 30 },
+  { 年月: "2025年2月", 年: 2025, A: 30.6, B: 5, 残差: 8, 総合: 30.6, 所定内給与: 30.6 },
 ] as any;
 
 const domain = () => JSON.parse(screen.getByTestId("y-axis").getAttribute("data-domain")!);
@@ -79,12 +79,12 @@ describe("chart Y-axis domains", () => {
       "EarningsBreakdownChart",
       <EarningsBreakdownChart data={data} hiddenKeys={["総合"]} {...common} />,
     ],
-  ])("uses visible maximum + 3 for %s", (_name, chart) => {
+  ])("uses the nearest integer to visible maximum + 3 for %s", (_name, chart) => {
     render(chart);
-    expect(domain()[1]).toBe(33);
+    expect(domain()[1]).toBe(34);
   });
 
-  it("uses the largest visible per-time stacked total plus 3", () => {
+  it("uses the nearest integer to the largest visible per-time stacked total plus 3", () => {
     render(
       <StackedAreaChart
         title="x"
@@ -95,10 +95,10 @@ describe("chart Y-axis domains", () => {
         {...common}
       />,
     );
-    expect(domain()[1]).toBe(33);
+    expect(domain()[1]).toBe(34);
   });
 
-  it("uses visible NewGraph series maximum plus 3", () => {
+  it("uses the automatic NewGraph maximum", () => {
     render(
       <NewGraph
         data={[
@@ -109,11 +109,11 @@ describe("chart Y-axis domains", () => {
         {...common}
       />,
     );
-    expect(domain()[1]).toBe(33);
+    expect(domain()[1]).toBe("auto");
   });
 
-  it("keeps ResidualAreaChart lower bound behavior and adds 3 to its upper bound", () => {
+  it("keeps ResidualAreaChart automatic bounds", () => {
     render(<ResidualAreaChart data={data} {...common} />);
-    expect(domain()).toEqual(["auto", 11]);
+    expect(domain()).toEqual(["auto", "auto"]);
   });
 });

@@ -60,7 +60,7 @@ export const StackedAreaChart: React.FC<StackedAreaChartProps> = ({
       }, 0);
       return Math.max(max, total);
     }, 0);
-    return maxTotal + 3;
+    return Math.round(maxTotal + 3);
   }, [data, keys, hiddenKeys]);
 
   return (

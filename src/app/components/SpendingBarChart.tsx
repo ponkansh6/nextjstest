@@ -149,7 +149,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
       }, 0);
       return Math.max(max, height);
     }, 0);
-    return maxHeight + 3;
+    return Math.round(maxHeight + 3);
   }, [chartData, keys, hiddenKeys]);
 
   const renderLegend = () => (
