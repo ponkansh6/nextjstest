@@ -353,7 +353,7 @@ export async function loadTotalEarningDataInternal(
         ? maMinkan * minkanFactor
         : null;
     item["民間最終消費支出（参考・延長）"] =
-      parsedYear >= 2017 &&
+      parsedYear >= 2018 &&
       maMinkan !== undefined &&
       minkanFactor !== undefined &&
       (!isLegacy2020 || maMinkan > 0)

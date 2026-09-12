@@ -131,7 +131,8 @@ The system SHALL display economic indicators as interactive Recharts-based chart
     - GDP reference and CTI consumption are shown as separate series with `null` outside their validated active periods so lines correctly truncate instead of dropping to zero.
     - CTI begins in its official 2017 availability range and is not connected to a legacy CTI series. GDP and CTI remain separate lines.
     - NewGraph receives only GDP comparison indices normalized independently from each series' official 2025 annual value. A GDP line is omitted when that GDP validation is incomplete, regardless of the CTI state.
-    - Also includes an advanced reference-only series "民間最終消費支出（参考・延長）" (2017-) which is hidden by default and can be enabled via `?adv=1` URL query parameter or the ⓘ info panel toggle.
+    - Also includes an advanced reference-only series "民間最終消費支出（参考・延長）" (2018-) which is hidden by default and can be enabled via `?adv=1` URL query parameter or the ⓘ info panel toggle; the regular "民間最終消費支出（参考）" covers through 2017, and both boundary series derive from the same `maMinkan * minkanFactor` values.
+    - When `adv=1` is enabled, both nominal and real consumption expenditure charts additionally render the 2018Q1+ GDP comparison values for their existing "民間最終消費支出" series as a line; the default mode keeps the GDP comparison as the pre-2018 standalone bar only.
   - Charts using `interval="preserveStartEnd"` on their XAxis (MajorIndicesChart, EarningsBreakdownChart, StackedAreaChart, SpendingBarChart, ResidualAreaChart, NewGraph) render the first/last (start year / end year) tick label in `--foreground` via the shared `XAxisEdgeTick` component (`src/app/components/charts/XAxisEdgeTick.tsx`), while other tick labels use the default `--chart-text` color
 
 #### Scenario R2ba: Displayed-value Y-axis upper bounds

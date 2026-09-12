@@ -1,7 +1,16 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Line,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import type { CpiData } from "@/types";
 import styles from "./CpiChart.module.css";
 import {
@@ -82,6 +91,7 @@ interface SpendingBarChartProps {
   linkedSectionId?: string;
   testId?: string;
   isMobile?: boolean;
+  showAdvanced?: boolean;
 }
 
 export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
@@ -105,6 +115,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
     linkedSectionId,
     testId,
     isMobile = false,
+    showAdvanced = false,
   } = props;
   const [viewportWidth, setViewportWidth] = useState(1024);
 
@@ -121,6 +132,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
       ? SUPPORT_SERIES_KEY_NOMINAL
       : undefined;
   const ctiKeys = keys.filter((key) => key !== supportKey);
+  const advancedSupportKey = supportKey ? `${supportKey}（延長）` : undefined;
   const hasLegacyGdp = data.some(
     (row) => row.年 < 2018 && supportKey && typeof row[supportKey] === "number",
   );
@@ -136,6 +148,17 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
   // Plan24: GDP is a standalone bar before 2018Q1; CTI is the only stack afterwards.
   const chartData = data.map((row) => {
     const next = { ...row };
+    if (
+      showAdvanced &&
+      supportKey &&
+      advancedSupportKey &&
+      row.年 >= 2018 &&
+      typeof row[supportKey] === "number"
+    ) {
+      next[advancedSupportKey] = row[supportKey];
+    } else if (advancedSupportKey) {
+      next[advancedSupportKey] = null;
+    }
     if (row.年 < 2018) ctiKeys.forEach((key) => (next[key] = null));
     else if (supportKey) next[supportKey] = null;
     return next;
@@ -149,8 +172,15 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
       }, 0);
       return Math.max(max, height);
     }, 0);
-    return Math.round(maxHeight + 3);
-  }, [chartData, keys, hiddenKeys]);
+    const maxLineValue =
+      showAdvanced && advancedSupportKey && supportKey && !hiddenKeys.includes(supportKey)
+        ? chartData.reduce((max, row) => {
+            const value = row[advancedSupportKey];
+            return Math.max(max, typeof value === "number" && Number.isFinite(value) ? value : 0);
+          }, 0)
+        : 0;
+    return Math.round(Math.max(maxHeight, maxLineValue) + 3);
+  }, [chartData, keys, hiddenKeys, showAdvanced, advancedSupportKey, supportKey]);
 
   const renderLegend = () => (
     <div className={styles.legendContainer}>
@@ -338,6 +368,22 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
                 />
               ) : null,
             )}
+            {showAdvanced &&
+              advancedSupportKey &&
+              supportKey &&
+              !hiddenKeys.includes(supportKey) &&
+              chartData.some((row) => typeof row[advancedSupportKey] === "number") && (
+                <Line
+                  type="monotone"
+                  dataKey={advancedSupportKey}
+                  data-testid={`spending-series-${advancedSupportKey}`}
+                  stroke={chartColors.barFill || "#94a3b8"}
+                  strokeWidth={2}
+                  dot={false}
+                  connectNulls={false}
+                  isAnimationActive={false}
+                />
+              )}
           </BarChart>
         </ResponsiveContainer>
         {shouldShowEmptyState && (

@@ -638,6 +638,7 @@ export default function CpiChart({
             },
           )}
           legendMode={isMobile ? "collapsible" : "expanded"}
+          showAdvanced={showAdvanced}
           testId="spending-chart-nominal"
         />
       </LazyMount>
@@ -675,6 +676,7 @@ export default function CpiChart({
             },
           )}
           legendMode="collapsible"
+          showAdvanced={showAdvanced}
           testId="spending-chart-real"
         />
       </LazyMount>

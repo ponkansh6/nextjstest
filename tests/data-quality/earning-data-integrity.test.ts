@@ -360,7 +360,7 @@ describe("Earnings Data Integrity", () => {
       expect(Math.abs(Number(dec2020!["総合(12MA)"]) - 100)).toBeLessThan(1);
     });
 
-    it("should verify advanced series 民間最終消費支出（参考・延長） has values from 2017 to latest and null before 2017", () => {
+    it("should verify advanced series 民間最終消費支出（参考・延長） has values from 2018 to latest and null before 2018", () => {
       expect(earningData.length).toBeGreaterThan(0);
       earningData.forEach((d) => {
         if (!d.年月 || typeof d.年月 !== "string") return;
@@ -368,7 +368,7 @@ describe("Earnings Data Integrity", () => {
         if (year < 2010) return;
 
         const val = d["民間最終消費支出（参考・延長）" as keyof CpiData];
-        if (year >= 2017 && year <= 2025) {
+        if (year >= 2018 && year <= 2025) {
           expect(
             val,
             `民間最終消費支出（参考・延長） at ${d.年月} should be a positive number`,
@@ -382,25 +382,22 @@ describe("Earnings Data Integrity", () => {
         } else {
           expect(
             val,
-            `民間最終消費支出（参考・延長） at ${d.年月} should be null before 2017`,
+            `民間最終消費支出（参考・延長） at ${d.年月} should be null before 2018`,
           ).toBeNull();
         }
       });
     });
 
-    it("should verify 民間最終消費支出（参考） and 民間最終消費支出（参考・延長） match in 2017 (same source, same scale)", () => {
+    it("should verify the 2017/2018 boundary keeps both minkan series on the same source and scale", () => {
       expect(earningData.length).toBeGreaterThan(0);
-      const d2017 = earningData.filter((d) => d.年月 && d.年月.startsWith("2017年"));
-      expect(d2017.length).toBeGreaterThan(0);
-
-      d2017.forEach((d) => {
-        const orig = d["民間最終消費支出（参考）" as keyof CpiData] as number;
-        const ext = d["民間最終消費支出（参考・延長）" as keyof CpiData] as number;
-
-        expect(orig).toBeGreaterThan(0);
-        expect(ext).toBeGreaterThan(0);
-        expect(ext).toBeCloseTo(orig, 1);
-      });
+      const d2017 = earningData.find((d) => d.年月 === "2017年12月");
+      const d2018 = earningData.find((d) => d.年月 === "2018年1月");
+      expect(d2017).toBeDefined();
+      expect(d2018).toBeDefined();
+      expect(d2017!["民間最終消費支出（参考）"]).toBeGreaterThan(0);
+      expect(d2017!["民間最終消費支出（参考・延長）"]).toBeNull();
+      expect(d2018!["民間最終消費支出（参考）"]).toBeNull();
+      expect(d2018!["民間最終消費支出（参考・延長）"]).toBeGreaterThan(0);
     });
 
     // This 2020 assumption is intentionally limited to the rollback fixture.

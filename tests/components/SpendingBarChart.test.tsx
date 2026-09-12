@@ -120,6 +120,37 @@ describe("SpendingBarChart component legendMode tests", () => {
     expect(screen.queryAllByTestId("line-mock")).toHaveLength(0);
   });
 
+  it("renders the 2018+ GDP comparison as a line only in advanced mode", () => {
+    renderChart({
+      showAdvanced: true,
+      data: [
+        {
+          label: "2017 Q4",
+          年: 2017,
+          quarter: 4,
+          年月: "2017-10",
+          [SUPPORT_SERIES_KEY_NOMINAL]: 100,
+        },
+        {
+          label: "2018 Q1",
+          年: 2018,
+          quarter: 1,
+          年月: "2018-01",
+          [SUPPORT_SERIES_KEY_NOMINAL]: 200,
+        },
+      ],
+      keys: [SUPPORT_SERIES_KEY_NOMINAL],
+    });
+
+    expect(screen.getByTestId("line-mock").getAttribute("data-key")).toBe(
+      `${SUPPORT_SERIES_KEY_NOMINAL}（延長）`,
+    );
+    const rows = JSON.parse(screen.getByTestId("barchart").getAttribute("data-rows") || "[]");
+    expect(rows[0][`${SUPPORT_SERIES_KEY_NOMINAL}（延長）`]).toBeNull();
+    expect(rows[1][`${SUPPORT_SERIES_KEY_NOMINAL}（延長）`]).toBe(200);
+    expect(rows[1][SUPPORT_SERIES_KEY_NOMINAL]).toBeNull();
+  });
+
   it("Plan24: switches at 2018Q1 without filling, copying, or interpolating the boundary", () => {
     renderChart({
       data: [
