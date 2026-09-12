@@ -158,7 +158,9 @@ test.describe("消費支出グラフ 768px境界（Desktop Chromium）", () => {
             (box) =>
               box.width > 0 &&
               box.height > 0 &&
-              box.left >= geometry.svg.left - 1 &&
+              // Recharts reserves the Y-axis gutter to the left of the plot surface.
+              // The label is intentionally outside the surface, but must remain in the viewport.
+              box.left >= 0 &&
               box.right <= geometry.svg.right + 1 &&
               box.top >= geometry.svg.top - 1 &&
               box.bottom <= geometry.svg.bottom + 1,
