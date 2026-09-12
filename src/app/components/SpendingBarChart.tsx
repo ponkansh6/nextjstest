@@ -34,8 +34,8 @@ function computeSpendingXAxisTicks(data: QuarterlyDataPoint[], viewportWidth: nu
   const selected: QuarterlyDataPoint[] = [first];
   for (const candidate of priorityTicks.slice(1, -1)) {
     const previous = selected[selected.length - 1];
-    // The first and last labels are edge-anchored by XAxisEdgeTick, so only
-    // their inward half has to be kept clear of a neighbouring centered label.
+    // The first and last labels are centered on their tick coordinates by
+    // XAxisEdgeTick, so keep extra space around both ends.
     const previousGap = previous === first ? estimatedLabelWidth * 1.5 : estimatedLabelWidth;
     const nextGap = estimatedLabelWidth * 1.5;
     if (

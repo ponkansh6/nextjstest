@@ -461,7 +461,8 @@ The system SHALL make the nominal and real consumption charts readable and opera
 - **WHEN** a consumption chart is rendered at 320–430px width
 - **THEN** its dedicated mobile layout preserves a zero-based Y axis, keeps the largest labels visible, uses a chart right margin of 8–12px with a measured Y-axis width of approximately 40–48px, and uses mobile-specific bar width and spacing
 - **AND** X-axis ticks follow the CPI-style cadence of every five years at Q1, with overlapping labels hidden as needed, and use at least 12px text
-- **AND** browser acceptance checks obtain the painted native X-axis `text` nodes from `.recharts-xAxis-tick-labels`, measure viewport CSS-pixel rectangles with `getBoundingClientRect()`, and verify every label is finite, inside the chart SVG display rectangle, and non-intersecting with its adjacent label
+- **AND** each X-axis endpoint label is centered on its endpoint coordinate (`text-anchor="middle"`) and may extend outside the chart/SVG area horizontally
+- **AND** browser acceptance checks obtain the painted native X-axis `text` nodes from `.recharts-xAxis-tick-labels`, measure viewport CSS-pixel rectangles with `getBoundingClientRect()`, and verify every label is finite and non-zero, remains vertically within the chart SVG display rectangle, is not clipped, and does not intersect its adjacent label; horizontal extension beyond the SVG at the endpoints is allowed
 - **AND** no new horizontal scrolling is introduced
 
 #### Scenario R20b: Preserved Boundary Contract

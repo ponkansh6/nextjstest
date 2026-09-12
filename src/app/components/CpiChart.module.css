@@ -400,6 +400,7 @@
 .chartWrapper {
   height: min(500px, 60svh);
   width: 100%;
+  overflow: visible;
 }
 
 .spendingChartSection {

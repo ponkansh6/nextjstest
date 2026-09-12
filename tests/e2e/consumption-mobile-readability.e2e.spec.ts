@@ -31,7 +31,9 @@ async function tapVisibleBar(page: Page, root: Locator) {
 
 test.describe("消費支出グラフ モバイル可読性の証跡", () => {
   for (const width of WIDTHS) {
-    test(`${width}px: 名目・実質の専用余白、Y軸、棒、X軸が画面内に収まる`, async ({ page }) => {
+    test(`${width}px: 名目・実質の専用余白、Y軸、棒、X軸ラベルが欠けず重ならない`, async ({
+      page,
+    }) => {
       await page.setViewportSize({ width, height: 667 });
       await page.goto("/");
       await page.waitForLoadState("networkidle");
@@ -90,6 +92,7 @@ test.describe("消費支出グラフ モバイル可読性の証跡", () => {
                   bottom: box.bottom,
                   width: box.width,
                   height: box.height,
+                  textAnchor: text.getAttribute("text-anchor"),
                 };
               })
               .sort((a, b) => a.left - b.left),
@@ -150,12 +153,11 @@ test.describe("消費支出グラフ モバイル可読性の証跡", () => {
         expect(
           geometry.xTextGeometry.every(
             (box) =>
-              box.left >= geometry.svgLeft &&
-              box.right <= geometry.svgRight &&
               box.top >= geometry.svgTop &&
-              box.bottom <= geometry.svgBottom,
+              box.bottom <= geometry.svgBottom &&
+              box.textAnchor === "middle",
           ),
-          `${id}: X tick labels are inside the SVG display rectangle`,
+          `${id}: X tick labels are vertically un-clipped and centered on tick coordinates`,
         ).toBe(true);
         expect(
           geometry.xTextGeometry

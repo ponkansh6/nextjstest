@@ -41,10 +41,8 @@ export const XAxisEdgeTick = ({
       {...rest}
       className={className}
       fill={isEdge ? emphasisFill : fill}
-      // Recharts positions ticks at the data point and centers text by default.
-      // Anchor edge labels toward the plot so their estimated text box stays
-      // inside the SVG viewport without relying on DOM measurements.
-      textAnchor={index === 0 ? "start" : index === (visibleTicksCount ?? 1) - 1 ? "end" : "middle"}
+      // Keep every label centered on its tick coordinate, including the edges.
+      textAnchor="middle"
     >
       {formatTickLabel(payload?.value)}
     </text>

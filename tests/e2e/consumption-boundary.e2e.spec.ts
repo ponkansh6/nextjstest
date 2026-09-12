@@ -123,12 +123,13 @@ test.describe("消費支出グラフ 768px境界（Desktop Chromium）", () => {
             '[role="img"][aria-label$="の推移グラフ"]',
           );
           const svg = section.querySelector<SVGSVGElement>("svg.recharts-surface");
-          const ticks = [
-            ...section.querySelectorAll<SVGTextElement>(
-              ".recharts-xAxis-tick-labels text, .recharts-yAxis-tick-labels text",
-            ),
+          const xTicks = [
+            ...section.querySelectorAll<SVGTextElement>(".recharts-xAxis-tick-labels text"),
           ];
-          if (!chartElement || !svg || ticks.length < 3)
+          const yTicks = [
+            ...section.querySelectorAll<SVGTextElement>(".recharts-yAxis-tick-labels text"),
+          ];
+          if (!chartElement || !svg || xTicks.length < 2 || yTicks.length < 1)
             throw new Error("Boundary chart or axis labels are unavailable");
           const chartBox = chartElement.getBoundingClientRect();
           const svgBox = svg.getBoundingClientRect();
@@ -137,7 +138,11 @@ test.describe("消費支出グラフ 768px境界（Desktop Chromium）", () => {
             chart: chartBox,
             svg: svgBox,
             section: sectionBox,
-            ticks: ticks.map((tick) => tick.getBoundingClientRect()),
+            xTicks: xTicks.map((tick) => ({
+              box: tick.getBoundingClientRect(),
+              textAnchor: tick.getAttribute("text-anchor"),
+            })),
+            yTicks: yTicks.map((tick) => tick.getBoundingClientRect()),
           };
         });
         expect(geometry.svg.width).toBeGreaterThan(0);
@@ -149,13 +154,30 @@ test.describe("消費支出グラフ 768px境界（Desktop Chromium）", () => {
         expect(geometry.svg.left).toBeGreaterThanOrEqual(0);
         expect(geometry.svg.right).toBeLessThanOrEqual(width + 1);
         expect(
-          geometry.ticks.every(
+          geometry.yTicks.every(
             (box) =>
               box.width > 0 &&
               box.height > 0 &&
               box.left >= geometry.svg.left - 1 &&
-              box.right <= geometry.svg.right + 1,
+              box.right <= geometry.svg.right + 1 &&
+              box.top >= geometry.svg.top - 1 &&
+              box.bottom <= geometry.svg.bottom + 1,
           ),
+        ).toBe(true);
+        expect(
+          geometry.xTicks.every(
+            ({ box, textAnchor }) =>
+              box.width > 0 &&
+              box.height > 0 &&
+              box.top >= geometry.svg.top - 1 &&
+              box.bottom <= geometry.svg.bottom + 1 &&
+              textAnchor === "middle",
+          ),
+        ).toBe(true);
+        expect(
+          geometry.xTicks
+            .slice(1)
+            .every(({ box }, index) => box.left >= geometry.xTicks[index].box.right),
         ).toBe(true);
         expect(geometry.section.left).toBeGreaterThanOrEqual(0);
         expect(geometry.section.right).toBeLessThanOrEqual(width + 1);
