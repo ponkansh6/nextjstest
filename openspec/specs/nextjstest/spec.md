@@ -134,6 +134,15 @@ The system SHALL display economic indicators as interactive Recharts-based chart
     - Also includes an advanced reference-only series "民間最終消費支出（参考・延長）" (2017-) which is hidden by default and can be enabled via `?adv=1` URL query parameter or the ⓘ info panel toggle.
   - Charts using `interval="preserveStartEnd"` on their XAxis (MajorIndicesChart, EarningsBreakdownChart, StackedAreaChart, SpendingBarChart, ResidualAreaChart, NewGraph) render the first/last (start year / end year) tick label in `--foreground` via the shared `XAxisEdgeTick` component (`src/app/components/charts/XAxisEdgeTick.tsx`), while other tick labels use the default `--chart-text` color
 
+#### Scenario R2ba: Displayed-value Y-axis upper bounds
+
+- **WHEN** any of MajorIndicesChart, StackedAreaChart, SpendingBarChart, EarningsBreakdownChart, ResidualAreaChart, or NewGraph is rendered
+- **THEN** its Y-axis upper bound is the maximum displayed value plus 3
+- **AND** hidden series are excluded from that maximum
+- **AND** for StackedAreaChart, the candidate maximum at each time point is the sum of the visible series at that time, and the largest such sum plus 3 is used
+- **AND** for ResidualAreaChart, the existing lower-bound behavior is preserved while its upper bound is the displayed residual maximum plus 3
+- **AND** non-finite and missing values do not contribute to the maximum
+
 #### Scenario R2c: Legacy GDP Bars and CTI Consumption Bars
 
 - **WHEN** nominal or real consumption data is rendered in `SpendingBarChart`
@@ -902,6 +911,7 @@ scripts/
 - Plan21 tests MUST verify that `page.tsx` obtains `getQuarterlyGdpSupportStatus()` and propagates `granularity`, `comparisonReady`, and `independentConfirmation` to chart info, while public quarterly chart/table/CSV projections contain only the existing nominal/real private-consumption keys and none of the four GDP raw/comparison keys. Internal loader validation and the annual rollback path MUST remain available. `tests/e2e/quarterly-gdp.e2e.spec.ts` provides the public projection smoke; E2E/build execution is environment-dependent and must be recorded when not run.
 - Tests that use 2020 as a prerequisite MUST be limited to the CTI rollback path; 2020 MUST NOT be used as a general GDP normalization or continuity assumption.
 - Component tests for chart rendering and interaction (`tests/components/`)
+- Chart component tests MUST verify that MajorIndicesChart, StackedAreaChart, SpendingBarChart, EarningsBreakdownChart, ResidualAreaChart, and NewGraph use displayed-value maximum + 3 for the Y-axis upper bound; stacked tests MUST use per-time visible-series totals, hidden-series tests MUST exclude hidden values, and ResidualAreaChart tests MUST retain its lower-bound behavior.
 - Integration tests for data mapping and computation accuracy (`tests/data-mapping/`, `tests/computation-contract/`)
 - Constant/fixture tests for expected data quality (`tests/constants/`, `tests/fixtures/`)
 - Performance checkpoint tests (`tests/perf-checkpoint.test.ts`)

@@ -44,26 +44,22 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
   const configs = EARNINGS_TABLE_CONFIGS;
 
   const yAxisMax = React.useMemo(() => {
-    const keys = [
-      "所定内給与",
-      "所定外給与",
-      "特別給与",
-      "時間当たり給与",
-      "15歳以上国民当たり給与",
-      "総合",
-      "CPI総合(参考)",
-    ];
-    let maxVal = 0;
-    data.forEach((d) => {
-      keys.forEach((k) => {
-        const val = d[k] as number;
-        if (typeof val === "number" && val > maxVal) {
-          maxVal = val;
-        }
-      });
-    });
-    return Math.ceil(maxVal + 5);
-  }, [data]);
+    const areaKeys = configs.filter(({ type }) => type === "area").map(({ key }) => key);
+    const lineKeys = configs.filter(({ type }) => type !== "area").map(({ key }) => key);
+    return (
+      data.reduce((max, row) => {
+        const areaTotal = areaKeys.reduce((sum, key) => {
+          const value = hiddenKeys.includes(key) ? null : row[key];
+          return sum + (typeof value === "number" && Number.isFinite(value) ? value : 0);
+        }, 0);
+        const lineMax = lineKeys.reduce((lineMax, key) => {
+          const value = hiddenKeys.includes(key) ? null : row[key];
+          return Math.max(lineMax, typeof value === "number" && Number.isFinite(value) ? value : 0);
+        }, 0);
+        return Math.max(max, areaTotal, lineMax);
+      }, 0) + 3
+    );
+  }, [configs, data, hiddenKeys]);
 
   return (
     <div id={sectionId} className={styles.chartSection} style={{ scrollMarginTop: "5rem" }}>

@@ -51,6 +51,18 @@ export const StackedAreaChart: React.FC<StackedAreaChartProps> = ({
   belowChartSlot,
   chartInfoContent,
 }) => {
+  const yAxisMax = React.useMemo(() => {
+    const visibleKeys = keys.filter((key) => !hiddenKeys.includes(key));
+    const maxTotal = data.reduce((max, row) => {
+      const total = visibleKeys.reduce((sum, key) => {
+        const value = row[key];
+        return sum + (typeof value === "number" && Number.isFinite(value) ? value : 0);
+      }, 0);
+      return Math.max(max, total);
+    }, 0);
+    return maxTotal + 3;
+  }, [data, keys, hiddenKeys]);
+
   return (
     <div id={sectionId} className={styles.chartSection} style={{ scrollMarginTop: "5rem" }}>
       <h2 className={styles.chartTitle}>
@@ -110,7 +122,7 @@ export const StackedAreaChart: React.FC<StackedAreaChartProps> = ({
               interval={0}
             />
             <YAxis
-              domain={[0, "auto"]}
+              domain={[0, yAxisMax]}
               axisLine={false}
               tickLine={false}
               tick={{ fill: chartColors.axisText }}

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { CpiData } from "@/types";
 import styles from "./CpiChart.module.css";
@@ -140,6 +140,17 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
     else if (supportKey) next[supportKey] = null;
     return next;
   });
+  const yAxisMax = useMemo(() => {
+    const maxHeight = chartData.reduce((max, row) => {
+      const visibleKeys = keys.filter((key) => !hiddenKeys.includes(key));
+      const height = visibleKeys.reduce((sum, key) => {
+        const value = row[key];
+        return sum + (typeof value === "number" && Number.isFinite(value) ? value : 0);
+      }, 0);
+      return Math.max(max, height);
+    }, 0);
+    return maxHeight + 3;
+  }, [chartData, keys, hiddenKeys]);
 
   const renderLegend = () => (
     <div className={styles.legendContainer}>
@@ -294,7 +305,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
             />
             <YAxis
               width={isMobile ? 46 : undefined}
-              domain={[0, "auto"]}
+              domain={[0, yAxisMax]}
               axisLine={false}
               tickLine={false}
               tick={{ fill: chartColors.axisText }}

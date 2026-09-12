@@ -56,6 +56,15 @@ export const NewGraph: React.FC<NewGraphProps> = ({
   const renderedLineConfigs = visibleLineConfigs.filter((config) =>
     data.some((row) => typeof row[config.key] === "number" && Number.isFinite(row[config.key])),
   );
+  const yAxisMax = React.useMemo(() => {
+    const values = data.flatMap((row) =>
+      renderedLineConfigs
+        .filter(({ key }) => !hiddenKeys.includes(key))
+        .map(({ key }) => row[key])
+        .filter((value): value is number => typeof value === "number" && Number.isFinite(value)),
+    );
+    return (values.length > 0 ? Math.max(...values) : 0) + 3;
+  }, [data, hiddenKeys, renderedLineConfigs]);
 
   return (
     <div id={sectionId} className={styles.chartSection} style={{ scrollMarginTop: "5rem" }}>
@@ -116,7 +125,7 @@ export const NewGraph: React.FC<NewGraphProps> = ({
               interval={0}
             />
             <YAxis
-              domain={["auto", "auto"]}
+              domain={["auto", yAxisMax]}
               axisLine={false}
               tickLine={false}
               tick={{ fill: chartColors.axisText }}
