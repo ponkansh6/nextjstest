@@ -68,6 +68,7 @@ Static CSV files (not publicly served) stored in `data/source/`:
 - `data/source/employment_indices.csv` — Employment indices
 - `data/source/hon-mks202512.csv` — 毎月勤労統計調査の生データ（常用労働者数、出勤日数、実労働時間数、現金給与額）
 - `data/source/hon-mks202606.xls` / `earnings_method_b_202606.csv` — Plan26方式Bの公式一括原表と、実数原表から抽出した2026-06確報5系列の断面成果物。既存の指数・前年比履歴CSVとは単位と定義が異なるため混在させない。
+- `data/source/employment_indices.metadata.json` — `employment_indices.csv` の公式長期指数系列（statInfId `000032189777`、TL/T/0、2020年平均=100）の出典・抽出条件・SHA-256。断面 `hon-mks202606.xls` はこの系列へ混在させない。
 - `data/source/earnings_method_b_202606.metadata.json` — 方式Bの取得元URL、統計表ID、シート、表頭、対象区分、単位、確報状態、SHA-256、系列対応表を記録する。
 - 方式Bの断面抽出は公式履歴CSVと単位・期間が互換でないため、履歴入力へ自動連結せず、5月・6月など未取得月を補完しない。履歴ファイルが対象系列・対象区分・単位・改訂状態を満たすまで、既存の検証済み履歴と表示範囲を維持する。
 - `data/source/cti_support_nominal.csv` / `data/source/cti_support_real.csv` — CTI supporting series
@@ -138,6 +139,13 @@ The system SHALL display economic indicators as interactive Recharts-based chart
     - Also includes an advanced reference-only series "民間最終消費支出（参考・延長）" (2018-) which is hidden by default and can be enabled via `?adv=1` URL query parameter or the ⓘ info panel toggle; the regular "民間最終消費支出（参考）" covers through 2017, and both boundary series derive from the same `maMinkan * minkanFactor` values.
     - When `adv=1` is enabled, both nominal and real consumption expenditure charts additionally render the 2018Q1+ GDP comparison values for their existing "民間最終消費支出" series as a line; the default mode keeps the GDP comparison as the pre-2018 standalone bar only.
   - Charts using `interval="preserveStartEnd"` on their XAxis (MajorIndicesChart, EarningsBreakdownChart, StackedAreaChart, SpendingBarChart, ResidualAreaChart, NewGraph) render the first/last (start year / end year) tick label in `--foreground` via the shared `XAxisEdgeTick` component (`src/app/components/charts/XAxisEdgeTick.tsx`), while other tick labels use the default `--chart-text` color
+
+#### Scenario R2c: Data-driven earnings derivation
+
+- **WHEN** the five earnings inputs (three wage series, worked hours, and employment) and population observations share compatible target, unit, and revision metadata, have a complete consecutive 12-month window, and the 2025 calendar-year factors can be calculated
+- **THEN** hourly and per-capita earnings are calculated from those observations, including 2026年5月 and 2026年6月 when their current CSV values are complete
+- **WHEN** any required observation, metadata match, 12-month window, or 2025 factor is missing
+- **THEN** the affected derived value is `null`; no date-based cutoff, zero substitution, or gap filling is applied, and legitimate zero inputs remain zero
 
 #### Scenario R2ba: Displayed-value Y-axis upper bounds
 
@@ -752,12 +760,12 @@ The system SHALL provide SEO-friendly metadata and descriptive headers.
 
 - **THEN** `layout.tsx` defines:
   - `title`: "日本の経済指標ダッシュボード | 物価・賃金・消費の長期推移"
-  - `description`: "物価指数・現金給与総額・消費支出の2020年基準指数を一画面で比較。費目別寄与度・年率上昇率・給与と物価の乖離を可視化。凡例クリックで系列の表示/非表示を切替可能。"
+  - `description`: "物価指数・現金給与総額・消費支出を各系列の基準で一画面に比較。給与は2025年平均=100、CPI/CTI/GDPの基準化とは独立して表示。費目別寄与度・年率上昇率・給与と物価の乖離を可視化。凡例クリックで系列の表示/非表示を切替可能。"
 
 #### Scenario R9b: Page Header Description
 
 - **THEN** `page.tsx` header displays:
-  - "2020年基準でスケール統一した主要指標を一覧。各グラフは凡例クリックで系列の表示/非表示を切替可能。"
+  - "給与は2025年平均=100、CPI/CTI/GDPは各系列の基準で表示する主要指標を一覧。各グラフは凡例クリックで系列の表示/非表示を切替可能。"
 
 ## Architecture
 

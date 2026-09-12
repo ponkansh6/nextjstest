@@ -46,6 +46,32 @@ function comparisonAverageForYear(
     : undefined;
 }
 
+function hasCompleteWindow(
+  endIndex: number,
+  dates: readonly string[],
+  maps: readonly Map<string, number>[],
+): boolean {
+  if (endIndex < 11) return false;
+  const window = dates.slice(endIndex - 11, endIndex + 1);
+  if (window.length !== 12) return false;
+  for (let i = 1; i < window.length; i++) {
+    const previous = parseYearMonth(window[i - 1]);
+    const current = parseYearMonth(window[i]);
+    if (
+      !previous ||
+      !current ||
+      current.year * 12 + current.month !== previous.year * 12 + previous.month + 1
+    )
+      return false;
+  }
+  return maps.every((map) =>
+    window.every((ym) => {
+      const value = map.get(ym);
+      return typeof value === "number" && Number.isFinite(value);
+    }),
+  );
+}
+
 /** 指定フィールドの移動平均を計算し、新しいフィールドに書き込む */
 function computeMovingAverageToField(
   data: CpiData[],
@@ -56,7 +82,7 @@ function computeMovingAverageToField(
   const originalValues = data.map((d) => d[sourceKey] as number | undefined);
   const cleaned = originalValues.map((v) => (typeof v === "number" ? v : Number.NaN));
   const maValues = trailingMovingAverage(cleaned, windowSize, {
-    skipNonPositive: true,
+    skipNonPositive: false,
   });
   data.forEach((item, index) => {
     (item as Record<string, unknown>)[targetKey] = maValues[index];
@@ -195,6 +221,9 @@ export async function loadTotalEarningDataInternal(
     if (typeof d.総合 === "number") cpiMap.set(d.年月, d.総合);
   });
   const ctiStatus = await getCtiDataStatus(ctiOptions);
+  // Salary indices have an explicit, independent base year. This must not
+  // follow CTI/CPI/GDP availability or their compatibility rollback year.
+  const salaryComparisonYear = 2025;
   const comparisonYear = ctiStatus.valid ? ctiStatus.baseYear : null;
   const comparisonYearPrefix = comparisonYear ? `${comparisonYear}年` : "";
   const isLegacy2020 = ctiStatus.valid && ctiStatus.baseYear === 2020;
@@ -214,9 +243,21 @@ export async function loadTotalEarningDataInternal(
     ctiRawMap,
   } = buildConsumptionMaps(ctiData, hasGdpComparison, legacy2020SupportScale);
 
-  const comparisonYearKeys = comparisonYear
-    ? [...keys].filter((ym) => ym.startsWith(comparisonYearPrefix))
-    : [];
+  const comparisonYearKeys = [...keys]
+    .filter((ym) => ym.startsWith(`${salaryComparisonYear}年`))
+    .sort(compareYearMonth);
+  const comparisonYearComplete =
+    comparisonYearKeys.length === 12 &&
+    comparisonYearKeys.every((ym, index) => {
+      if (index === 0) return true;
+      const previous = parseYearMonth(comparisonYearKeys[index - 1]);
+      const current = parseYearMonth(ym);
+      return (
+        previous !== null &&
+        current !== null &&
+        current.year * 12 + current.month === previous.year * 12 + previous.month + 1
+      );
+    });
   const hourlyBaseValues = comparisonYearKeys
     .map((ym) => {
       const h = hoursMap.get(ym);
@@ -224,8 +265,8 @@ export async function loadTotalEarningDataInternal(
       return h !== undefined && t !== undefined && h > 0 && t > 0 ? t / h : undefined;
     })
     .filter((value): value is number => value !== undefined);
-  const hourly2020 =
-    hourlyBaseValues.length === comparisonYearKeys.length && hourlyBaseValues.length > 0
+  const hourly2025 =
+    comparisonYearComplete && hourlyBaseValues.length === 12
       ? hourlyBaseValues.reduce((acc, value) => acc + value, 0) / hourlyBaseValues.length
       : undefined;
 
@@ -238,7 +279,7 @@ export async function loadTotalEarningDataInternal(
     return populationDataMap.get(padded)?.total ?? populationDataMap.get(unpadded)?.total;
   };
 
-  const perCapitaBase2020 = (() => {
+  const perCapitaBase2025 = (() => {
     const ratios = comparisonYearKeys
       .map((ym) => {
         const t = totalMap.get(ym);
@@ -249,14 +290,14 @@ export async function loadTotalEarningDataInternal(
           : undefined;
       })
       .filter((r): r is number => r !== undefined);
-    return ratios.length === comparisonYearKeys.length && ratios.length > 0
+    return comparisonYearComplete && ratios.length === 12
       ? ratios.reduce((a, b) => a + b, 0) / ratios.length
       : undefined;
   })();
 
-  const hourlyFactor = hourly2020 !== undefined && hourly2020 > 0 ? 100 / hourly2020 : undefined;
+  const hourlyFactor = hourly2025 !== undefined && hourly2025 > 0 ? 100 / hourly2025 : undefined;
   const popFactor =
-    perCapitaBase2020 !== undefined && perCapitaBase2020 > 0 ? 100 / perCapitaBase2020 : undefined;
+    perCapitaBase2025 !== undefined && perCapitaBase2025 > 0 ? 100 / perCapitaBase2025 : undefined;
 
   // Comparison values use the selected set's complete calendar year and raw
   // observations. Moving averages never serve as normalization denominators.
@@ -266,7 +307,8 @@ export async function loadTotalEarningDataInternal(
   const ctiFactor = avgCtiComparison ? 100 / avgCtiComparison : isLegacy2020 ? 1 : undefined;
   const minkanFactor = 1;
 
-  // earningsの比較用CPIは、CPIダッシュボードの基準年とは独立して2020年平均=100に揃える。
+  // Earnings' CPI reference is independent from the CPI dashboard base year,
+  // while still using the fixed salary comparison year.
   // 12MAは基準変更前の生値から既存どおり計算し、出力時に同じ係数を適用する。
   const avgCpiComparison = comparisonYear
     ? comparisonAverageForYear(cpiMap, comparisonYearPrefix)
@@ -308,14 +350,16 @@ export async function loadTotalEarningDataInternal(
     const value = item["特別給与(12MA)"];
     item["特別給与"] = typeof value === "number" && Number.isFinite(value) ? value : null;
   }
-  const totals2020 = result
-    .filter((r) => comparisonYear !== null && r.年月.startsWith(comparisonYearPrefix))
+  const totals2025 = result
+    .filter((r) => r.年月.startsWith(`${salaryComparisonYear}年`))
     .map((r) => calculateSmoothedTotal(r));
-  const avg2020 =
-    totals2020.length > 0 ? totals2020.reduce((a, b) => a + b, 0) / totals2020.length : 0;
+  const avg2025 =
+    totals2025.length === 12
+      ? totals2025.reduce((a, b) => a + b, 0) / totals2025.length
+      : undefined;
   // A missing comparison year is not an index with factor 1.  Keep the
   // absence explicit so every dependent derived value remains null.
-  const totalIndexFactor = avg2020 > 0 ? 100 / avg2020 : undefined;
+  const totalIndexFactor = avg2025 !== undefined && avg2025 > 0 ? 100 / avg2025 : undefined;
 
   result.forEach((item, index) => {
     const scale = (value: unknown): number | null =>
@@ -373,15 +417,21 @@ export async function loadTotalEarningDataInternal(
     const smoothedEmp = sumEmp / denom;
     const smoothedPop = populationWindowComplete ? sumPop / denom : Number.NaN;
     item["時間当たり給与"] =
-      relatedWindowComplete && hourlyFactor !== undefined
+      hasCompleteWindow(
+        index,
+        result.map((row) => row.年月),
+        [totalMap, contractualMap, scheduledMap, hoursMap, employmentMap],
+      ) &&
+      relatedWindowComplete &&
+      hourlyFactor !== undefined
         ? calculateAdjustedMetric(smoothedTotal, smoothedHours, hourlyFactor)
         : null;
-    const parsedItemDate = parseYearMonth(item.年月);
-    const salaryInputAvailable =
-      parsedItemDate === null || !(parsedItemDate.year === 2026 && parsedItemDate.month >= 5);
     item["15歳以上国民当たり給与"] =
-      salaryInputAvailable &&
-      relatedWindowComplete &&
+      hasCompleteWindow(
+        index,
+        result.map((row) => row.年月),
+        [totalMap, contractualMap, scheduledMap, hoursMap, employmentMap],
+      ) &&
       populationWindowComplete &&
       popFactor !== undefined
         ? calculateAdjustedMetric(smoothedTotal * smoothedEmp, smoothedPop, popFactor)
@@ -430,6 +480,27 @@ export async function loadTotalEarningDataInternal(
           : null;
     item["消費支出（参考）"] = combinedConsumption;
   });
+
+  // Normalize each salary output independently to the same fixed 2025
+  // calendar-year average. This accounts for the distinct 12-month windows
+  // used by hourly and per-capita denominators without touching CPI/CTI/GDP.
+  for (const field of ["総合", "時間当たり給与", "15歳以上国民当たり給与"] as const) {
+    const baseValues = result
+      .filter((item) => item.年月.startsWith("2025年"))
+      .map((item) => item[field])
+      .filter((value): value is number => typeof value === "number" && Number.isFinite(value));
+    const baseAverage =
+      baseValues.length === 12
+        ? baseValues.reduce((sum, value) => sum + value, 0) / baseValues.length
+        : undefined;
+    if (baseAverage !== undefined && baseAverage > 0) {
+      for (const item of result) {
+        const value = item[field];
+        (item as Record<string, unknown>)[field] =
+          typeof value === "number" && Number.isFinite(value) ? (value * 100) / baseAverage : null;
+      }
+    }
+  }
   applyResidualMovingAverage(result);
   return result;
 }

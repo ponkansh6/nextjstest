@@ -1,15 +1,15 @@
 import type { CpiData } from "@/types";
 
 /**
- * 給与指標を特定の分母（労働者数や人口など）で割り、基準年（2020年）を100としてスケーリングします。
+ * 給与指標を特定の分母で割り、給与固定の基準年（2025年）を100としてスケーリングします。
  */
 export function calculateAdjustedMetric(
   totalEarnings: number,
   denominator: number,
   scalingFactor: number,
-): number {
+): number | null {
   if (denominator <= 0) {
-    return 0;
+    return null;
   }
   return (totalEarnings / denominator) * scalingFactor;
 }

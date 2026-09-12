@@ -1,0 +1,18 @@
+{
+  "source": "e-Stat 毎月勤労統計調査 長期時系列（実数・指数累積データ）",
+  "sourceUrl": "https://www.e-stat.go.jp/stat-search/files?layout=datalist&lid=000001020001&page=1&stat_infid=000032189777",
+  "statInfId": "000032189777",
+  "sourceSha256": "825c8b31dd045187ed4dac378e83018e9e6a307eb0994c7ff5b2747c2ea62e12",
+  "extraction": {
+    "industry": "TL",
+    "establishmentSize": "T",
+    "employmentType": "0",
+    "unit": "指数（2020年平均=100）",
+    "series": "常用労働者数（本調査期間末）",
+    "period": "1952-01 through 2026-06",
+    "missingDataPolicy": "公式の欠測セルは欠測のまま保持し、0や推測値で補完しない"
+  },
+  "normalizedCsv": "data/source/employment_indices.csv",
+  "normalizedCsvSha256": "e341c8bb8a1f01608c820a89867540e004a679a74a4ed5765839f0e21cdf07fa",
+  "excludedCrossSection": "data/source/hon-mks202606.xls"
+}

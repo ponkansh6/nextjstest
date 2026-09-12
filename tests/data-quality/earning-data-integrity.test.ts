@@ -1,4 +1,7 @@
 import { expect, it, describe, beforeAll } from "vitest";
+import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { loadCpiData } from "../../server/lib/dataLoader";
 import { loadEarning2020RollbackFixture } from "../utils/cti-2020-rollback-fixture";
 import type { CpiData } from "../../src/types";
@@ -10,6 +13,52 @@ describe("Earnings Data Integrity", () => {
   beforeAll(async () => {
     earningData = await loadEarning2020RollbackFixture();
     cpiData = await loadCpiData();
+  });
+
+  it("audits employment index provenance, target selectors, and May/June 2026 continuity", () => {
+    const root = resolve(process.cwd());
+    const csvPath = resolve(root, "data/source/employment_indices.csv");
+    const metadata = JSON.parse(
+      readFileSync(resolve(root, "data/source/employment_indices.metadata.json"), "utf8"),
+    ) as {
+      statInfId: string;
+      sourceSha256: string;
+      normalizedCsvSha256: string;
+      extraction: {
+        industry: string;
+        establishmentSize: string;
+        employmentType: string;
+        unit: string;
+      };
+      excludedCrossSection: string;
+    };
+    const csv = readFileSync(csvPath);
+    expect(createHash("sha256").update(csv).digest("hex")).toBe(metadata.normalizedCsvSha256);
+    expect(metadata).toMatchObject({
+      statInfId: "000032189777",
+      sourceSha256: "825c8b31dd045187ed4dac378e83018e9e6a307eb0994c7ff5b2747c2ea62e12",
+      excludedCrossSection: "data/source/hon-mks202606.xls",
+      extraction: {
+        industry: "TL",
+        establishmentSize: "T",
+        employmentType: "0",
+        unit: "指数（2020年平均=100）",
+      },
+    });
+    const rows = csv
+      .toString("utf8")
+      .split(/\r?\n/)
+      .filter((line) => /^202[56],/.test(line));
+    expect(rows).toHaveLength(2);
+    const mayJune = rows[1].split(",").slice(12, 14);
+    expect(mayJune).toEqual(["31.3", "31.35"]);
+    expect(
+      rows[1]
+        .split(",")
+        .slice(8, 14)
+        .every((value) => value !== ""),
+    ).toBe(true);
+    expect(metadata.extraction.unit).toContain("指数");
   });
 
   describe("Basic Integrity", () => {
@@ -60,10 +109,14 @@ describe("Earnings Data Integrity", () => {
       const recentData = earningData.filter((d) => parseInt(d.年月.substring(0, 4), 10) >= 2005);
       expect(recentData.length).toBeGreaterThan(0);
 
-      const year2020Items = earningData.filter((item) => item.年月.startsWith("2020年"));
-      const avg2020Total =
-        year2020Items.reduce((sum, item) => sum + (item["総合"] || 0), 0) / year2020Items.length;
-      expect(avg2020Total).toBeCloseTo(100, 1);
+      const year2025Items = earningData.filter((item) => item.年月.startsWith("2025年"));
+      for (const key of ["総合", "時間当たり給与", "15歳以上国民当たり給与"]) {
+        const values = year2025Items
+          .map((item) => item[key])
+          .filter((v): v is number => typeof v === "number");
+        expect(values).toHaveLength(12);
+        expect(values.reduce((sum, value) => sum + value, 0) / values.length).toBeCloseTo(100, 1);
+      }
     });
 
     it("should ensure all required wage keys are present in the merged dataset", () => {
@@ -98,11 +151,14 @@ describe("Earnings Data Integrity", () => {
       });
     });
 
-    it("should keep 2026-05/06 per-capita wages null when salary inputs are missing", () => {
+    it("should calculate 2026-05/06 derived wages from complete current inputs", () => {
       for (const month of ["2026年5月", "2026年6月"]) {
         const row = earningData.find((item) => item.年月 === month);
         expect(row, `Expected an output row for ${month}`).toBeDefined();
-        expect(row?.["15歳以上国民当たり給与"], `${month} must remain uncomputed`).toBeNull();
+        expect(row?.["時間当たり給与"], `${month} must be calculated`).toEqual(expect.any(Number));
+        expect(row?.["15歳以上国民当たり給与"], `${month} must be calculated`).toEqual(
+          expect.any(Number),
+        );
       }
     });
 
@@ -346,13 +402,23 @@ describe("Earnings Data Integrity", () => {
       expect(val2017).toBeCloseTo(103.33, 1);
     });
 
-    it("should base comparison series on the raw 2020 calendar-year average (2020年12月 12MA = 100)", () => {
+    it("should base salary series on the raw 2025 calendar-year average", () => {
       expect(earningData.length).toBeGreaterThan(0);
+      const dec2025 = earningData.find((d) => d.年月 === "2025年12月");
       const dec2020 = earningData.find((d) => d.年月 === "2020年12月");
+      expect(dec2025).toBeDefined();
       expect(dec2020).toBeDefined();
+      for (const key of ["総合", "時間当たり給与", "15歳以上国民当たり給与"]) {
+        const values = earningData
+          .filter((d) => d.年月.startsWith("2025年"))
+          .map((d) => d[key])
+          .filter((v): v is number => typeof v === "number");
+        expect(values).toHaveLength(12);
+        expect(values.reduce((sum, value) => sum + value, 0) / values.length).toBeCloseTo(100, 1);
+      }
 
       // 2020年12月の12MA窓は2020年1月〜12月、すなわち2020暦年平均に等しい。
-      // 2020年基準（暦年平均=100）が正しく適用されていれば100になる。
+      // CTI/CPIの2020年基準は給与の2025年基準とは独立して検証する。
       // 12MA後の系列で正規化すると2019年の水準が混入して約98.07に沈むため、その回帰を防ぐ。
       expect(Number(dec2020!["CTI消費支出（参考）"])).toBeCloseTo(100, 1);
 
@@ -381,10 +447,8 @@ describe("Earnings Data Integrity", () => {
       // 2020年12月の12MA窓は2020年1月〜12月なので、再正規化後は100になる。
       expect(Number(dec2020!["CPI総合(12MA)"])).toBeCloseTo(100, 6);
 
-      // 同一チャート（3種比較）の他系列も同じ2020基準に揃っていること。
-      // 給与は totalIndexFactor が生値ベース、総合(12MA) が12MA合計であるため
-      // 特別給与の平滑化分だけ約0.5のずれが残る（本件の1.9%ずれとは別要因）。
-      expect(Math.abs(Number(dec2020!["総合(12MA)"]) - 100)).toBeLessThan(1);
+      // CPI/CTIの比較基準は給与の2025年固定基準とは独立して維持する。
+      expect(Math.abs(Number(dec2025!["総合(12MA)"]) - 100)).toBeLessThan(1);
     });
 
     it("should verify advanced series 民間最終消費支出（参考・延長） has values from 2018 to latest and null before 2018", () => {

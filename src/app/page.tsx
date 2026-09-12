@@ -1,15 +1,13 @@
 import { Suspense } from "react";
-import { loadCpiData, loadCtiData, loadTotalEarningData } from "../../server/lib/dataLoader";
+import { loadCpiData, loadTotalEarningData } from "../../server/lib/dataLoader";
 import {
   getCpiDataStatus,
   getCtiDataStatus,
   getGdpSupportStatus,
   getQuarterlyGdpSupportStatus,
-  loadQuarterlyGdpData,
 } from "../../server/lib/data-loader/cpi";
 import { toCpiView, toEarningsView } from "../../server/lib/view-models/dashboard";
-import { computeQuarterlyAggregates } from "../../server/lib/view-models/quarterlyAggregation";
-import { buildQuarterlyPublicViews } from "../../server/lib/view-models/quarterlyProjection";
+import { loadQuarterlyPublicData } from "../../server/lib/view-models/quarterlyProjection";
 import CpiChart from "./components/CpiChart";
 import styles from "./page.module.css";
 import { targetKeys, stackedKeys } from "@/lib/chartConstants";
@@ -27,22 +25,18 @@ function getGdpInfoReason(reason: string | undefined): string {
 export default async function Page() {
   const [
     cleanData,
-    ctiData,
     totalEarningData,
     cpiDataStatus,
     ctiDataStatus,
     gdpSupportStatus,
     quarterlyGdpSupportStatus,
-    quarterlyGdpData,
   ] = await Promise.all([
     loadCpiData(),
-    loadCtiData(),
     loadTotalEarningData(),
     getCpiDataStatus(),
     getCtiDataStatus(),
     getGdpSupportStatus(),
     getQuarterlyGdpSupportStatus(),
-    loadQuarterlyGdpData(),
   ]);
   const cpiInfoState =
     cpiDataStatus.baseYear === 2025
@@ -114,29 +108,11 @@ export default async function Page() {
         },
       };
 
-  // Determine maxCpiDate from cleanData
-  let maxCpiYear = 1994;
-  let maxCpiMonth = 1;
-  for (const d of cleanData) {
-    const m = String(d.年月).match(/^(\d{4})年(\d{1,2})月/);
-    if (m) {
-      const y = parseInt(m[1], 10);
-      const mo = parseInt(m[2], 10);
-      if (y > maxCpiYear || (y === maxCpiYear && mo > maxCpiMonth)) {
-        maxCpiYear = y;
-        maxCpiMonth = mo;
-      }
-    }
-  }
-  const maxCpiDate = { year: maxCpiYear, month: maxCpiMonth };
-
-  // Compute quarterly aggregates on the server
-  const { nominal: aggregatedNominalData, real: aggregatedRealData } = computeQuarterlyAggregates(
-    ctiData,
+  const {
+    nominal: projectedQuarterlyNominal,
+    real: projectedQuarterlyReal,
     maxCpiDate,
-  );
-  const { nominal: projectedQuarterlyNominal, real: projectedQuarterlyReal } =
-    buildQuarterlyPublicViews(aggregatedNominalData, aggregatedRealData, quarterlyGdpData);
+  } = await loadQuarterlyPublicData();
 
   const cpiKeys = [...targetKeys, ...stackedKeys];
   const earningsKeys = [
