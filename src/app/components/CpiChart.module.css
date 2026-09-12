@@ -431,6 +431,13 @@
   box-sizing: border-box;
 }
 
+/* Keep endpoint X-axis labels visible when their centered text extends past the SVG edge. */
+.spendingChartWrapper :global(.recharts-wrapper),
+.spendingChartWrapper :global(.recharts-surface),
+.spendingChartWrapper :global(svg) {
+  overflow: visible;
+}
+
 .spendingChartWrapper .recharts-tooltip-wrapper {
   max-width: 100%;
 }
