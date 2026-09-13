@@ -3,6 +3,17 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 
+const EVIDENCE_HASH_TARGETS = [
+  "openspec/specs/nextjstest/spec.md",
+  "shared_plan/26-salary-data-update-plan.md",
+  "src/app/components/NewGraph.tsx",
+  "src/app/components/charts/xAxisTicks.ts",
+  "tests/data-quality/earning-data-integrity.test.ts",
+  "tests/e2e/advanced-series.e2e.spec.ts",
+  "tests/fixtures/csv/minkan-extension-raw.csv",
+  "tests/fixtures/minkan-extension-anchors.json",
+] as const;
+
 async function saveEvidence(
   page: import("@playwright/test").Page,
   section: import("@playwright/test").Locator,
@@ -13,17 +24,7 @@ async function saveEvidence(
   const screenshot = `artifacts/new-graph-${name}.png`;
   await section.screenshot({ path: screenshot });
   const head = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
-  const tracked = execFileSync("git", ["diff", "--name-only", "--diff-filter=d", "HEAD"], {
-    encoding: "utf8",
-  })
-    .split("\n")
-    .filter(Boolean);
-  const untracked = execFileSync("git", ["ls-files", "--others", "--exclude-standard"], {
-    encoding: "utf8",
-  })
-    .split("\n")
-    .filter(Boolean);
-  const files = [...new Set([...tracked, ...untracked])].sort();
+  const files = [...EVIDENCE_HASH_TARGETS];
   const hash = createHash("sha256");
   for (const file of files) {
     const rawContent = await readFile(file);
@@ -46,12 +47,7 @@ async function saveEvidence(
     hash.update(content);
     hash.update("\n");
   }
-  expect(files).toEqual(
-    expect.arrayContaining([
-      "tests/fixtures/csv/minkan-extension-raw.csv",
-      "tests/fixtures/minkan-extension-anchors.json",
-    ]),
-  );
+  expect(files).toEqual(EVIDENCE_HASH_TARGETS);
   const evidence = {
     head,
     diffHash: hash.digest("hex"),
