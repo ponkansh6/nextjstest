@@ -47,5 +47,11 @@ export function computeXAxisTicks(data: XAxisTickSource[], tickKey: string = "�
     })
     .map((d) => String(d[tickKey]));
 
-  return [startValue, ...milestoneValues, endValue];
+  // Keep an adjacent-series boundary visible so consumers can audit where a
+  // regular series hands off to its extension (notably 2017/12 -> 2018/1).
+  const boundaryValues = data
+    .filter((d) => d.年月 === "2017年12月" || d.年月 === "2018年1月")
+    .map((d) => String(d[tickKey]));
+
+  return [...new Set([startValue, ...milestoneValues, ...boundaryValues, endValue])];
 }

@@ -130,14 +130,16 @@
 - 2026年5月・6月の給与入力欠測時に `15歳以上国民当たり給与 === null` となる回帰テストを追加した。
 - 検証ゲートは本監査の末尾に実行結果を追記する。
 
-### 検証結果（2026-09-12 最終監査）
+### 検証結果（2026-09-12 最終監査・履歴）
+
+> この節の `test:build-parity` FAIL は修正前の過去結果であり、現行完了記録ではない。現行結果は後段のPASS記録を正とする。
 
 - `pnpm lint`: PASS（既存warning 5件、error 0件）。
 - `pnpm type-check`: PASS。
-- `pnpm test -- tests/data-quality/earning-data-integrity.test.ts`: PASS（39 files / 338 tests）。
+- `pnpm test -- tests/data-quality/earning-data-integrity.test.ts`: PASS（24 tests）。
 - `pnpm build`: PASS。
 - `pnpm test:e2e`: PASS（108 passed / 16 skipped、124 tests）。sandboxでは待受EPERMだったため権限付き実行。
-- `pnpm test:build-parity`（smoke）: FAIL。既存のRSC parityで2005–2016の実質消費支出がbuild値とvitest値（0）で不一致。今回の給与ローダー変更とは無関係だが、全ゲートPASS条件は未達。
+- `pnpm test:build-parity`（旧履歴）: FAIL。既存のRSC parityで2005–2016の実質消費支出がbuild値とvitest値（0）で不一致。修正前の結果であり、現行判定には使用しない。
 
 - 指定された公式確報ページ `https://www.e-stat.go.jp/stat-search/files?layout=dataset&stat_infid=000040187500` をブラウザ取得で再試行したが、キャッシュ未収載で取得できなかった。`curl` による直接取得も `www.e-stat.go.jp` の名前解決失敗（curl error 6）となった。
 - ローカル代替経路を確認した。作業ツリーにある給与関連公式相当ファイルは `data/source/hon-mks202512.csv` のみで、`hon-mks202606.xls`、2026年6月の `.xls/.xlsx/.csv`、e-Stat snapshot/cache は存在しなかった。既存変換器は `hon-t01/07/13/19/29.xls` の個別表入力を前提としており、`hon-mks202512.csv` から2026年6月値を復元する経路はない。
@@ -208,11 +210,28 @@
 
 ## 実装サイクル完了記録（2026-09-12）
 
+### 民間最終消費表示の検証同期（2026-09-13）
+
+- NewGraphの通常系列・延長系列のlegend/Lineに安定した`data-testid`と`data-key`を追加した。
+- ローダー出力テストで2005–2017（156点）と2018–2025（96点）の期間、先頭末尾、系列間のnull分断0、代表値を検証するよう強化した。
+- 実ブラウザテストで通常/延長dataKeyと延長系列のX座標区間、スクリーンショット保存を検証する。
+- default証跡の`targetPaths`も、advanced証跡と同じく対象SVG pathの全コマンドを`type`・絶対x座標`min/max`・`subpath`付きで保存する（件数のみの記録にしない）。
+
 ### 最新検証結果（2026-09-12、GDP parity修正後）
+
+### 再監査修正（2026-09-13）
+
+- advanced-series E2Eの`parsePath`/`PathSegment`をdefault証跡と同一形式へ統一し、全SVGコマンドの`type`・絶対x座標`min/max`・`subpath`、およびpath単位の`xMin/xMax`・開始終了点を保存する共通スキーマ検証を追加した。default/advanced証跡JSONを再生成済み。
+- 追加検証結果（2026-09-13、コミット・pushなし）: targeted advanced E2E `2 passed`、`pnpm lint --no-cache` PASS（warning 5）、`pnpm type-check` PASS、`pnpm test` PASS（39 files / 342 tests）、`pnpm build` PASS。
+
+- `advanced-series.e2e.spec.ts` はNewGraphの`data-testid`/`data-key`で通常系列と延長系列のLineを直接取得し、各strokeを対応づけたうえで、各pathのd座標範囲をX軸の2005/2017/2018/最終年tickへ照合する。色だけで任意のpathを選択する検証は廃止した。
+- E2Eは全SVG dコマンドのx min/maxを全対象pathから集約し、内部path数・区間欠落も検出する。X軸はtextラベルと`getBoundingClientRect()`中心で2005/1、2018/1、利用可能な最終月を特定する。
+- 独立raw fixtureでraw/base/scale式、既知正規化値、loader値を照合し、スクリーンショット隣接JSONへcommit・URL・ISO日時・tick・path座標を保存する。
+- 給与データ品質テストは年月キーの一意性、通常（2005-01〜2017-12）と延長（2018-01〜2025-12）の連続性、境界、系列間の欠測0、独立固定アンカーを明示的に検証する。
 
 - `pnpm lint --no-cache`: PASS（error 0、warning 5）。SpendingBarChartのReact Compilerエラー再発なし。
 - `pnpm type-check`: PASS。
-- `pnpm test`: PASS（39 files / 338 tests）。給与2025年平均=100、時間あたり・国民あたり、null伝播を含む。
+- `pnpm test`: PASS（39 files / 342 tests）。給与2025年平均=100、時間あたり・国民あたり、null伝播を含む。
 - `pnpm build`: PASS。
 - `pnpm test:build-parity`: PASS（1 file / 3 tests）。2005–2016実質GDP値48件のbuild/Vitest一致、全件非ゼロ。
 - `pnpm test:e2e:fresh`: PASS（108 passed / 16 skipped、124 tests）。
@@ -274,7 +293,7 @@
 ### 今回の最終検証ゲート（2026-09-12）
 
 - `pnpm build`: PASS。
-- `pnpm test`: PASS（39 files / 338 tests）。
+- `pnpm test`: PASS（39 files / 342 tests）。
 - `pnpm test:build-parity`: PASS（1 file / 3 tests）。
 - build 完了後、`pnpm test:e2e --reporter=line` を単独実行: PASS（108 passed / 16 skipped / 0 failed、124 tests）。sandbox の listen EPERM は成功扱いにせず、権限付き経路で完走を確認した。
 - 独立smoke `pnpm exec playwright test tests/e2e/plan24-rendering.e2e.spec.ts --project=chromium --reporter=line`: PASS（4 passed / 0 failed）。
@@ -296,7 +315,7 @@
 - `pnpm build`: PASS。
 - build完了後に `pnpm test:e2e --reporter=line` を単独実行: PASS（108 passed / 16 skipped / 0 failed、124 tests）。
 - sandbox内のwebServer起動失敗は `listen EPERM: operation not permitted 127.0.0.1:3100`。`E2E_PORT`、`baseURL`、`webServer.url`、`pnpm start` のポート設定は一致しており、設定競合ではない。承認付き実行では正常起動したため、設定変更は行っていない。
-- `pnpm lint --no-cache`: PASS（error 0、warning 5）、`pnpm type-check`: PASS、`pnpm test`: PASS（39 files / 338 tests）、`pnpm test:build-parity`: PASS（1 file / 3 tests）。
+- `pnpm lint --no-cache`: PASS（error 0、warning 5）、`pnpm type-check`: PASS、`pnpm test`: PASS（39 files / 342 tests）、`pnpm test:build-parity`: PASS（1 file / 3 tests）。
 - 旧 `103 passed / 5 failed` と旧 parity FAIL は履歴記録として保持し、現行判定から除外した。公式2026-05/06給与履歴が未取得の場合に推測更新しない停止条件も維持する。
 
 ### employment_indices 再開監査（2026-09-12）
@@ -321,3 +340,21 @@
 
 - 2025 CTIローダーが検証済み年次GDPのraw値・比較指数を月次行へ結合し、`earnings.ts` の2017年以前/2018年以降の相互排他的な投影が同じ公式比較値から生成されるよう同期した。
 - `advanced-series.e2e.spec.ts` に通常/`adv=1` のSVG path存在確認とスクリーンショット証跡を追加した。
+
+### 現行監査ゲート実行記録（2026-09-13、コミット・pushなし）
+
+- `pnpm lint --no-cache`: 終了コード0（error 0、既存warning 5）。
+- `pnpm type-check`: 終了コード0。
+- `pnpm test`: 終了コード0（39 files / 342 tests）。
+- `pnpm build`: 終了コード0。
+- `pnpm exec playwright test tests/e2e/advanced-series.e2e.spec.ts --project=chromium --reporter=line`: 終了コード0（2 passed）。
+- screenshot JSON (`artifacts/new-graph-default.json`, `artifacts/new-graph-advanced.json`) の `diffHash` は実行時の現行 `git diff HEAD --binary` SHA-256 `0eb54b05a12ec3d1d0b4ef1fb5a340f6f5e5b4401f8bf9519058bc026a5f6204` と一致。default/advanced とも `head`、URL、ISO capture time、axis ticks、target-path coordinates を確認した。
+- 旧 `test:build-parity` FAIL は上記の履歴節に限定し、現行342件／全ゲートPASS記録と混同しないよう整理した。
+
+### 監査NG解消後の現行証跡（2026-09-13、コミット・pushなし）
+
+- E2E証跡の旧hash `0eb54b05a12ec3d1d0b4ef1fb5a340f6f5e5b4401f8bf9519058bc026a5f6204` は履歴として上記記録に保持し、現行値と混同しないよう分離した。
+- `tests/e2e/advanced-series.e2e.spec.ts` は `git diff HEAD` のdiff本文に依存せず、HEADとの差分に含まれるtrackedファイルと、Git管理外のignoredでないuntrackedファイルを明示列挙し、パスと内容bytesを順序固定でhash化する。raw fixture `tests/fixtures/csv/minkan-extension-raw.csv` と anchor `tests/fixtures/minkan-extension-anchors.json` を含む8ファイルを証跡JSONの `files` に保存する。
+- `artifacts/new-graph-default.json` / `new-graph-advanced.json`: `<!-- PLAN26_GENERATED_DIFFHASH --> ed43068250e7977d1af659250b78dfd330046cc3e3021ce9955c2fbe191eca1f`、`head=944c8a99cc855a49d98e8ef0109296951c02d368`。両証跡のhash対象は `openspec/specs/nextjstest/spec.md`、`shared_plan/26-salary-data-update-plan.md`、`src/app/components/NewGraph.tsx`、`src/app/components/charts/xAxisTicks.ts`、`tests/data-quality/earning-data-integrity.test.ts`、`tests/e2e/advanced-series.e2e.spec.ts`、`tests/fixtures/csv/minkan-extension-raw.csv`、`tests/fixtures/minkan-extension-anchors.json` の8ファイルで一致する。URLはそれぞれ `http://127.0.0.1:3100/` / `http://127.0.0.1:3100/?adv=1`、capture timestamp・axis ticks・対象pathごとの実座標（全x min/max、subpath区間、始点終点、コマンド種別・絶対x範囲・subpath所属を含む全コマンド区間）・対象一覧を記録した。
+- sandboxでの `pnpm exec playwright test tests/e2e/advanced-series.e2e.spec.ts --project=chromium --reporter=line` はwebServer listen EPERMで終了コード1。承認付き同一コマンドを再実行し、`2 passed (4.5s)`、終了コード0を確認した。
+- 現行ゲート: `pnpm lint --no-cache` PASS（error 0、既存warning 5）、`pnpm type-check` PASS、`pnpm test` PASS（39 files / 342 tests）、`pnpm build` PASS、対象E2E PASS（2 passed）。

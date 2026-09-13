@@ -75,6 +75,8 @@ export const NewGraph: React.FC<NewGraphProps> = ({
             {visibleLineConfigs.map(({ key, color, displayName }) => (
               <button
                 key={key}
+                data-testid={`new-graph-legend-${key}`}
+                data-key={key}
                 onClick={() => onToggle(key)}
                 className={`${styles.legendItem} ${hiddenKeys.includes(key) ? styles.hidden : ""}`}
                 aria-pressed={!hiddenKeys.includes(key)}
@@ -126,6 +128,8 @@ export const NewGraph: React.FC<NewGraphProps> = ({
               !hiddenKeys.includes(key) ? (
                 <Line
                   key={key}
+                  data-testid={`new-graph-line-${key}`}
+                  data-key={key}
                   type="monotone"
                   dataKey={key}
                   stroke={color}

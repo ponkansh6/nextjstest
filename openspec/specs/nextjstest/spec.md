@@ -965,3 +965,41 @@ scripts/
 - **Dark mode E2E regression** via `pnpm test:e2e:dark`:
   - Validates that `colorScheme: "dark"` fixture in chromium-dark project
   - Ensures legend `:hover` background doesn't degenerate to white-on-white contrast
+
+- **Private-consumption series identification**:
+  - NewGraph uses `民間最終消費支出（参考）` / `民間最終消費(総合)` for the regular line and `民間最終消費支出（参考・延長）` / `民間最終消費(延長・参考)` for the advanced line.
+- Legend and line nodes expose stable `data-key` and `data-testid` attributes.
+- The advanced-series browser regression MUST identify the regular and extended
+  lines through those attributes, associate each node's `stroke` with its
+  expected key, and verify the SVG path coordinate range against the X-axis
+  ticks: regular covers 2005-01 through 2017-12 and extended covers 2018-01
+  through the available final month. It MUST NOT select an arbitrary path by
+  color alone.
+- It MUST parse every SVG path command and aggregate the minimum/maximum x over
+  every path belonging to the selected data key; first/last numeric tokens are
+  insufficient. Missing internal path segments are failures.
+- X-axis assertions MUST resolve labels and `getBoundingClientRect()` centers,
+  including `2005/1`, `2018/1`, and the available final month label, and verify that the
+  aggregated path ranges cover the corresponding ticks within tolerance.
+- Each advanced screenshot MUST have adjacent JSON metadata containing commit,
+  URL, capture time, axis ticks, and target-path coordinates.
+- Extended-series anchors MUST be checked from an independent raw-data fixture:
+  the test verifies raw/base/scale calculation, an independently recorded
+  known value, and the loader output.
+
+#### Scenario R11c-a: Complete SVG X coverage and command continuity
+
+- **WHEN** the regular and advanced NewGraph lines are rendered, including multiple `M/m` subpaths in one SVG `d` attribute
+- **THEN** the browser test parses every command, tracks each command interval and subpath interval, and explicitly fails on missing internal X ranges or discontinuities; a single-subpath path is still required to cover every expected month continuously.
+
+#### Scenario R11c-b: Screenshot evidence metadata reflects the current tree
+
+- **WHEN** the default and `?adv=1` screenshots are captured
+- **THEN** each adjacent JSON file explicitly lists every changed tracked file and every non-ignored untracked file, hashes each listed path and its bytes (including the independent raw fixture and anchor), and requires valid `head`, 64-character `diffHash`, URL, capture timestamp, axis ticks, and per-target-path coordinates including all x min/max values, subpath intervals, command intervals, and start/end points. The hash MUST NOT depend only on `git diff HEAD`; only the explicitly marked Plan26 field that records this generated hash may be canonicalized to prevent recursive self-hashing, and all other historical `diffHash` values MUST remain unchanged.
+- **AND** the current default and advanced evidence MUST use the same ordered hash-target list: `openspec/specs/nextjstest/spec.md`, `shared_plan/26-salary-data-update-plan.md`, `src/app/components/NewGraph.tsx`, `src/app/components/charts/xAxisTicks.ts`, `tests/data-quality/earning-data-integrity.test.ts`, `tests/e2e/advanced-series.e2e.spec.ts`, `tests/fixtures/csv/minkan-extension-raw.csv`, and `tests/fixtures/minkan-extension-anchors.json`.
+- **AND** the default and advanced path metadata MUST use the same schema, and one shared assertion MUST validate every command's `type`, absolute x `min/max`, and `subpath` fields in both modes.
+
+#### Scenario R11c-c: E2E execution under restricted network permissions
+
+- **WHEN** the Playwright web server cannot bind its configured loopback port because the environment returns `listen EPERM`
+- **THEN** the sandbox failure is recorded as not-run and the same targeted command is retried with approved normal host permissions; its actual pass/fail result and command are recorded in Plan26.

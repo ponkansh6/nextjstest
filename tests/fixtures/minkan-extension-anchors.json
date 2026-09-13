@@ -1,0 +1,8 @@
+{
+  "source": "tests/fixtures/csv/minkan-extension-raw.csv",
+  "normalization": { "baseRaw": 87727.675, "scale": 100 },
+  "anchors": [
+    { "month": "2018年1月", "raw": 90744.514397411534, "knownNormalized": 103.4388685183 },
+    { "month": "2025年12月", "raw": 104915.617012813105, "knownNormalized": 119.59238292 }
+  ]
+}

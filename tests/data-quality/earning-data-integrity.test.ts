@@ -5,6 +5,8 @@ import { resolve } from "node:path";
 import { loadCpiData } from "../../server/lib/dataLoader";
 import { loadEarning2020RollbackFixture } from "../utils/cti-2020-rollback-fixture";
 import type { CpiData } from "../../src/types";
+import minkanFixture from "../fixtures/minkan-extension-anchors.json";
+import { parseCsvWithHeader } from "../../server/lib/dataIo";
 
 describe("Earnings Data Integrity", () => {
   let earningData: CpiData[];
@@ -477,6 +479,80 @@ describe("Earnings Data Integrity", () => {
           ).toBeNull();
         }
       });
+    });
+
+    it("should verify exact period coverage, no null gaps, and representative values for both minkan series", () => {
+      const monthNumber = (value: string) => {
+        const match = value.match(/^(\d{4})年(\d{1,2})月$/);
+        return match ? Number(match[1]) * 12 + Number(match[2]) : 0;
+      };
+      const keys = earningData.map((d) => d.年月);
+      expect(new Set(keys).size).toBe(keys.length);
+      const regular = earningData.filter(
+        (d) => monthNumber(d.年月) >= 2005 * 12 + 1 && monthNumber(d.年月) <= 2017 * 12 + 12,
+      );
+      const extended = earningData.filter(
+        (d) => monthNumber(d.年月) >= 2018 * 12 + 1 && monthNumber(d.年月) <= 2025 * 12 + 12,
+      );
+      expect(regular).toHaveLength(156);
+      expect(extended).toHaveLength(96);
+      expect(regular[0].年月).toBe("2005年1月");
+      expect(regular.at(-1)?.年月).toBe("2017年12月");
+      expect(extended[0].年月).toBe("2018年1月");
+      expect(extended.at(-1)?.年月).toBe("2025年12月");
+      expect(regular.every((d) => typeof d["民間最終消費支出（参考）"] === "number")).toBe(true);
+      expect(extended.every((d) => typeof d["民間最終消費支出（参考・延長）"] === "number")).toBe(
+        true,
+      );
+      expect(regular.every((d) => d["民間最終消費支出（参考・延長）"] === null)).toBe(true);
+      expect(extended.every((d) => d["民間最終消費支出（参考）"] === null)).toBe(true);
+      expect(
+        regular.every(
+          (d, index) =>
+            index === 0 || monthNumber(d.年月) === monthNumber(regular[index - 1].年月) + 1,
+        ),
+      ).toBe(true);
+      expect(
+        extended.every(
+          (d, index) =>
+            index === 0 || monthNumber(d.年月) === monthNumber(extended[index - 1].年月) + 1,
+        ),
+      ).toBe(true);
+      expect(
+        earningData.find((d) => d.年月 === "2014年6月")?.["民間最終消費支出（参考）"],
+      ).toBeCloseTo(101.75, 1);
+      expect(
+        earningData.find((d) => d.年月 === "2017年12月")?.["民間最終消費支出（参考）"],
+      ).toBeCloseTo(103.33, 1);
+      expect(
+        earningData.find((d) => d.年月 === "2018年1月")?.["民間最終消費支出（参考・延長）"],
+      ).toBeCloseTo(103.4388685183, 8);
+      expect(
+        earningData.find((d) => d.年月 === "2025年12月")?.["民間最終消費支出（参考・延長）"],
+      ).toBeCloseTo(119.59238292, 8);
+    });
+
+    it("should independently verify extended anchors from raw fixture and normalization formula", () => {
+      expect(minkanFixture.source).toContain("minkan-extension-raw.csv");
+      for (const anchor of minkanFixture.anchors) {
+        const expected =
+          (anchor.raw / minkanFixture.normalization.baseRaw) * minkanFixture.normalization.scale;
+        expect(expected).toBeCloseTo(anchor.knownNormalized, 10);
+        expect(
+          earningData.find((row) => row.年月 === anchor.month)?.["民間最終消費支出（参考・延長）"],
+        ).toBeCloseTo(anchor.knownNormalized, 8);
+      }
+    });
+
+    it("should compare fixture anchors with the actual raw CSV rows", async () => {
+      const rows = await parseCsvWithHeader(
+        resolve(process.cwd(), "tests/fixtures/csv/minkan-extension-raw.csv"),
+      );
+      for (const anchor of minkanFixture.anchors) {
+        const row = rows.find((value) => value.month === anchor.month);
+        expect(row, `missing raw row ${anchor.month}`).toBeDefined();
+        expect(Number(row?.raw)).toBeCloseTo(anchor.raw, 6);
+      }
     });
 
     it("should verify the 2017/2018 boundary keeps both minkan series on the same source and scale", () => {
