@@ -100,11 +100,7 @@ export const NewGraph: React.FC<NewGraphProps> = ({
           >
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.gridStroke} />
             <YearReferenceLines data={data} stroke={chartColors.gridStroke} />
-            <TimeSeriesXAxis
-              data={data}
-              chartColors={chartColors}
-              tickOptions={{ includeBoundaryTicks: true }}
-            />
+            <TimeSeriesXAxis data={data} chartColors={chartColors} />
             <YAxis
               domain={["auto", "auto"]}
               axisLine={false}

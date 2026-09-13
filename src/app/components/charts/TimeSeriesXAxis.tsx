@@ -12,14 +12,14 @@ interface TimeSeriesXAxisProps {
   tickOptions?: XAxisTickOptions;
 }
 
-function useIsNarrowViewport(): boolean {
+function useViewportWidth(): number {
   return React.useSyncExternalStore(
     (onStoreChange) => {
       window.addEventListener("resize", onStoreChange);
       return () => window.removeEventListener("resize", onStoreChange);
     },
-    () => window.matchMedia("(max-width: 390px)").matches,
-    () => false,
+    () => window.innerWidth,
+    () => 0,
   );
 }
 
@@ -29,11 +29,16 @@ export const TimeSeriesXAxis: React.FC<TimeSeriesXAxisProps> = ({
   tickKey = "年月",
   tickOptions,
 }) => {
-  const isNarrowViewport = useIsNarrowViewport();
+  const viewportWidth = useViewportWidth();
+  const isMobile = viewportWidth > 0 && viewportWidth <= 768;
   const ticks = computeXAxisTicks(data, tickKey, {
     ...tickOptions,
-    includeBoundaryTicks: isNarrowViewport ? false : tickOptions?.includeBoundaryTicks,
-    maxTicks: isNarrowViewport ? 5 : tickOptions?.maxTicks,
+    // The adjacent 2017/12 and 2018/1 labels cannot be readable at any
+    // supported chart width. The existing reference lines still expose the
+    // hand-off without overlapping axis text.
+    preserveAllMilestones: isMobile,
+    includeBoundaryTicks: isMobile ? false : tickOptions?.includeBoundaryTicks,
+    maxTicks: isMobile ? undefined : tickOptions?.maxTicks,
   });
 
   return (
@@ -46,6 +51,7 @@ export const TimeSeriesXAxis: React.FC<TimeSeriesXAxisProps> = ({
           {...props}
           fill={chartColors.axisText}
           emphasisFill={chartColors.axisTextEmphasis}
+          avoidEndpointOverlap={isMobile}
         />
       )}
       dy={10}

@@ -11,6 +11,7 @@ interface XAxisTickSource {
 
 export interface XAxisTickOptions {
   includeBoundaryTicks?: boolean;
+  preserveAllMilestones?: boolean;
   maxTicks?: number;
 }
 
@@ -49,11 +50,15 @@ export function computeXAxisTicks(
       if (!match) return false;
       return (MILESTONE_YEARS as readonly number[]).includes(parseInt(match[1], 10));
     })
-    .filter((d) => {
-      const idx = monthIndex(d.年月);
-      if (idx === null || startIndex === null || endIndex === null) return true;
-      return idx - startIndex >= EDGE_GAP_MONTHS && endIndex - idx >= EDGE_GAP_MONTHS;
-    })
+    .filter(
+      (d) =>
+        options.preserveAllMilestones ||
+        (() => {
+          const idx = monthIndex(d.年月);
+          if (idx === null || startIndex === null || endIndex === null) return true;
+          return idx - startIndex >= EDGE_GAP_MONTHS && endIndex - idx >= EDGE_GAP_MONTHS;
+        })(),
+    )
     .map((d) => String(d[tickKey]));
 
   // Keep an adjacent-series boundary visible so consumers can audit where a

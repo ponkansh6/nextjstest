@@ -1,9 +1,15 @@
+import { usePlotArea } from "recharts";
+
 interface XAxisEdgeTickProps {
   fill: string;
   emphasisFill: string;
   index?: number;
   visibleTicksCount?: number;
   payload?: { value: string | number };
+  coordinate?: number;
+  x?: string | number;
+  viewBox?: { x?: number; width?: number };
+  avoidEndpointOverlap?: boolean;
   className?: string;
   [key: string]: unknown;
 }
@@ -32,19 +38,42 @@ export const XAxisEdgeTick = ({
   index,
   visibleTicksCount,
   payload,
+  coordinate,
+  x,
+  viewBox,
+  avoidEndpointOverlap = false,
   className,
   ...rest
 }: XAxisEdgeTickProps) => {
   const isEdge = index === 0 || index === (visibleTicksCount ?? 1) - 1;
+  const plotArea = usePlotArea();
+  const axisBox =
+    plotArea ??
+    (viewBox?.x !== undefined && viewBox.width !== undefined
+      ? { x: viewBox.x, width: viewBox.width }
+      : undefined);
+  const label = formatTickLabel(payload?.value);
+  const tickCoordinate = coordinate ?? (typeof x === "number" ? x : undefined);
+  const estimatedLabelWidth = String(label ?? "").length * 7;
+  const endpointHalfWidth = 22;
+  const isNearEndpoint =
+    !isEdge &&
+    avoidEndpointOverlap &&
+    axisBox &&
+    typeof tickCoordinate === "number" &&
+    (tickCoordinate - axisBox.x < endpointHalfWidth + estimatedLabelWidth / 2 ||
+      axisBox.x + axisBox.width - tickCoordinate < endpointHalfWidth + estimatedLabelWidth / 2);
+  if (isNearEndpoint) return null;
   return (
     <text
       {...rest}
+      x={x}
       className={className}
       fill={isEdge ? emphasisFill : fill}
       // Keep every label centered on its tick coordinate, including the edges.
       textAnchor="middle"
     >
-      {formatTickLabel(payload?.value)}
+      {label}
     </text>
   );
 };

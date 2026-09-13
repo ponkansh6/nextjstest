@@ -33,4 +33,13 @@ describe("computeXAxisTicks", () => {
       }),
     ).toEqual(["2005年1月", "2010年1月", "2015年1月", "2020年1月", "2026年1月"]);
   });
+
+  it("retains milestone candidates for the mobile coordinate-based filter", () => {
+    expect(
+      computeXAxisTicks(data, "年月", {
+        includeBoundaryTicks: false,
+        preserveAllMilestones: true,
+      }),
+    ).toEqual(["2005年1月", "2010年1月", "2015年1月", "2020年1月", "2025年1月", "2026年1月"]);
+  });
 });
