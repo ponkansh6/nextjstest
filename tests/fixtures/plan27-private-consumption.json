@@ -1,0 +1,7 @@
+{
+  "series": "民間最終消費支出（参考）",
+  "extendedSeries": "民間最終消費支出（参考・延長）",
+  "rawSource": "data/source/cti_support_nominal2025.csv",
+  "normalizationSource": "data/source/cti-gdp-display-normalization2025.json",
+  "representativeMonths": ["2014年1月", "2017年12月"]
+}

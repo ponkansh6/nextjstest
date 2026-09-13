@@ -1074,9 +1074,35 @@ export async function loadCtiDataInternal(options: CtiLoadOptions = {}): Promise
       return parsed ? parsed.year >= 1994 : false;
     });
 
-  // The annual GDP support artifacts are the source for the earnings
-  // comparison projection as well. Keep the official amount and its display
-  // index separate, but expose both on every month in the corresponding year.
+  const existingMonths = new Set(mapped.map((r) => r.年月));
+  for (let y = 1994; y <= 2016; y++) {
+    for (let m = 1; m <= 12; m++) {
+      const ym = `${y}年${m}月`;
+      if (!existingMonths.has(ym)) {
+        const q = calculateQuarter(m);
+        const normYm = calculateQuarterLabel(y, q);
+        const dummyRow: Record<string, string | number> = { 年月: ym };
+        if (isLegacy2020) {
+          header.forEach((h) => {
+            if (h !== "年月" && h !== "月") dummyRow[h] = 0;
+          });
+        }
+        const nominalSupport = supportMap.get(normYm);
+        const realSupport = supportMapReal.get(normYm);
+        if (isLegacy2020) {
+          dummyRow["消費支出（名目）"] = nominalSupport ?? 0;
+          dummyRow["消費支出（実質）"] = realSupport ?? 0;
+          dummyRow["民間最終消費支出（名目）"] = nominalSupport ?? 0;
+          dummyRow["民間最終消費支出（実質）"] = realSupport ?? 0;
+          dummyRow["その他の消費支出（名目）"] = 0;
+          dummyRow["その他の消費支出（実質）"] = 0;
+        }
+        mapped.push(dummyRow as unknown as CpiData);
+      }
+    }
+  }
+
+  // Apply validated annual GDP values after recovery rows are present.
   if (!isLegacy2020) {
     const gdpStatus = await getGdpSupportStatus();
     if (gdpStatus.valid && gdpStatus.normalizationFactors) {
@@ -1110,34 +1136,6 @@ export async function loadCtiDataInternal(options: CtiLoadOptions = {}): Promise
           row["民間最終消費支出（名目）"] = nominalRaw * factors.nominal;
           row["民間最終消費支出（実質）"] = realRaw * factors.real;
         }
-      }
-    }
-  }
-
-  const existingMonths = new Set(mapped.map((r) => r.年月));
-  for (let y = 1994; y <= 2016; y++) {
-    for (let m = 1; m <= 12; m++) {
-      const ym = `${y}年${m}月`;
-      if (!existingMonths.has(ym)) {
-        const q = calculateQuarter(m);
-        const normYm = calculateQuarterLabel(y, q);
-        const dummyRow: Record<string, string | number> = { 年月: ym };
-        if (isLegacy2020) {
-          header.forEach((h) => {
-            if (h !== "年月" && h !== "月") dummyRow[h] = 0;
-          });
-        }
-        const nominalSupport = supportMap.get(normYm);
-        const realSupport = supportMapReal.get(normYm);
-        if (isLegacy2020) {
-          dummyRow["消費支出（名目）"] = nominalSupport ?? 0;
-          dummyRow["消費支出（実質）"] = realSupport ?? 0;
-          dummyRow["民間最終消費支出（名目）"] = nominalSupport ?? 0;
-          dummyRow["民間最終消費支出（実質）"] = realSupport ?? 0;
-          dummyRow["その他の消費支出（名目）"] = 0;
-          dummyRow["その他の消費支出（実質）"] = 0;
-        }
-        mapped.push(dummyRow as unknown as CpiData);
       }
     }
   }

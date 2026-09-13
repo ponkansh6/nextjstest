@@ -7,6 +7,9 @@ import { loadEarning2020RollbackFixture } from "../utils/cti-2020-rollback-fixtu
 import type { CpiData } from "../../src/types";
 import minkanFixture from "../fixtures/minkan-extension-anchors.json";
 import { parseCsvWithHeader } from "../../server/lib/dataIo";
+import { loadTotalEarningDataInternal } from "../../server/lib/data-loader/earnings";
+import { buildCtiFilePaths } from "../../server/lib/dataIo";
+import Papa from "papaparse";
 
 describe("Earnings Data Integrity", () => {
   let earningData: CpiData[];
@@ -15,6 +18,96 @@ describe("Earnings Data Integrity", () => {
   beforeAll(async () => {
     earningData = await loadEarning2020RollbackFixture();
     cpiData = await loadCpiData();
+  });
+
+  it("should preserve nulls for incomplete, short, and trailing 12-month windows", () => {
+    const month = (value: string) => {
+      const match = value.match(/^(\d{4})年(\d{1,2})月$/);
+      return match ? Number(match[1]) * 12 + Number(match[2]) : NaN;
+    };
+    const trailing = (rows: Array<{ 年月: string; value: number | null }>) =>
+      rows.map((row, i) => {
+        if (i < 11 || rows.slice(i - 11, i + 1).some((item) => item.value === null)) return null;
+        return rows.slice(i - 11, i + 1).reduce((sum, item) => sum + item.value!, 0) / 12;
+      });
+    const complete: Array<{ 年月: string; value: number | null }> = Array.from(
+      { length: 24 },
+      (_, i) => ({ 年月: `2004年${i + 1}月`, value: 100 }),
+    );
+    complete[13].value = null;
+    const output = trailing(complete);
+    expect(output[10]).toBeNull();
+    expect(output[13]).toBeNull();
+    expect(output[20]).toBeNull();
+    expect(trailing(complete.slice(0, 11)).at(-1)).toBeNull();
+    expect(trailing(complete.map((row) => ({ ...row, value: 100 }))).at(-1)).toBe(100);
+    expect(month(complete[12].年月) - month(complete[11].年月)).toBe(1);
+  });
+
+  it("verifies the regular 2025 GDP-backed NewGraph series independently", async () => {
+    const paths = buildCtiFilePaths();
+    const readGdp = (file: string) => {
+      const rows = Papa.parse<string[]>(readFileSync(file, "utf8"), {
+        skipEmptyLines: true,
+      }).data;
+      const headerIndex = rows.findIndex((row) => row.includes("時間軸（暦年）"));
+      const header = rows[headerIndex];
+      const yearIndex = header.indexOf("時間軸（暦年）");
+      const valueIndex = header.indexOf("民間最終消費支出");
+      return new Map(
+        rows.slice(headerIndex + 1).flatMap((row) => {
+          const year = Number(row[yearIndex]?.replace("年", ""));
+          const value = Number(row[valueIndex]?.replace(/,/g, ""));
+          return Number.isFinite(year) && Number.isFinite(value) ? [[year, value] as const] : [];
+        }),
+      );
+    };
+    const nominal = readGdp(paths.candidateSupportNominal);
+    const normalization = JSON.parse(readFileSync(paths.gdpDisplayNormalization, "utf8")) as {
+      nominal: { factor: number };
+    };
+    const expectedRaw = nominal.get(2005)!;
+    expect(expectedRaw).toBeGreaterThan(0);
+    expect(nominal.get(2014)).toBeGreaterThan(0);
+    expect(nominal.get(2016)).toBeGreaterThan(0);
+
+    const data = await loadTotalEarningDataInternal();
+    const regular = data.filter((row) => {
+      const year = Number(row.年月.slice(0, 4));
+      return year >= 2005 && year <= 2017;
+    });
+    expect(regular).toHaveLength(156);
+    expect(
+      regular.every((row) => {
+        const value = row["民間最終消費支出（参考）"];
+        return typeof value === "number" && Number.isFinite(value) && value > 0;
+      }),
+    ).toBe(true);
+
+    const factor = normalization.nominal.factor;
+    const raw = expectedRaw * factor;
+    const firstWindow = [nominal.get(2004)!, nominal.get(2005)!];
+    const expectedFirstMa = ((firstWindow[0] * 11 + firstWindow[1]) / 12) * factor;
+    expect(factor).toBe(100 / nominal.get(2025)!);
+    expect(raw).toBeGreaterThan(0);
+    expect(firstWindow.every(Number.isFinite)).toBe(true);
+    expect(
+      regular.find((row) => row.年月 === "2005年1月")?.["民間最終消費支出（名目・原値）"],
+    ).toBe(expectedRaw);
+    expect(
+      regular.find((row) => row.年月 === "2005年1月")?.["民間最終消費支出（参考）"],
+    ).toBeCloseTo(expectedFirstMa, 10);
+    expect(
+      regular.find((row) => row.年月 === "2014年6月")?.["民間最終消費支出（名目・原値）"],
+    ).toBe(nominal.get(2014));
+    expect(
+      regular.find((row) => row.年月 === "2016年12月")?.["民間最終消費支出（名目・原値）"],
+    ).toBe(nominal.get(2016));
+    expect(data.find((row) => row.年月 === "2018年1月")).toBeDefined();
+    expect(
+      data.find((row) => row.年月 === "2018年1月")?.["民間最終消費支出（参考）"] ?? null,
+    ).toBeNull();
+    expect(data.at(-1)?.["民間最終消費支出（参考）"] ?? null).toBeNull();
   });
 
   it("audits employment index provenance, target selectors, and May/June 2026 continuity", () => {

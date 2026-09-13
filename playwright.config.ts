@@ -42,7 +42,7 @@ export default defineConfig({
       // Desktop Chrome で走らせても mobile-pixel と検証内容が変わらないため除外する。
       // consumption-boundary は実viewportの境界検証なので Desktop Chromium で実行する。
       testIgnore:
-        /(mobile-ux|consumption-mobile-readability|consumption-mobile-acceptance)\.e2e\.spec\.ts/,
+        /(mobile-ux|consumption-mobile-readability|consumption-mobile-acceptance|plan27-private-consumption)\.e2e\.spec\.ts/,
       use: { ...devices["Desktop Chrome"] },
     },
     {
@@ -70,7 +70,7 @@ export default defineConfig({
       name: "mobile-pixel",
       // consumption-boundary は Desktop Chromium 専用で、ここには含めない。
       testMatch:
-        /(mobile-ux|tooltip-dismiss|consumption-mobile-readability|consumption-mobile-acceptance)\.e2e\.spec\.ts/,
+        /(mobile-ux|tooltip-dismiss|consumption-mobile-readability|consumption-mobile-acceptance|plan27-private-consumption)\.e2e\.spec\.ts/,
       use: { ...devices["Pixel 7"] },
     },
     {

@@ -5,7 +5,7 @@ import { CHART_INFO } from "@/lib/chartInfoContent";
  * 3種比較（new-graph）の info 説明文が、実際のデータソースと一致していることを検証する。
  * 消費支出（参考）は家計調査ではなく、
  * - 選択済みの総世帯CTIミクロの消費支出（名目）
- * - 四半期別GDP統計の民間最終消費支出（名目・実質各1系列）
+ * - 年次GDP統計の民間最終消費支出（名目系列）
  * を、生値から計算した12か月移動平均で比較するもの。
  */
 describe("new-graph chart info (3種比較)", () => {
@@ -26,14 +26,11 @@ describe("new-graph chart info (3種比較)", () => {
 
     // GDP参考系列の説明にCTIの構成調査を混ぜない
     expect(minkanItem!.text).not.toContain("家計調査");
-    expect(minkanItem!.text).toContain("四半期別GDP統計");
+    expect(info.source).toContain("四半期別GDP統計");
     expect(minkanItem!.text).toContain("民間最終消費支出");
-    expect(minkanItem!.text).toContain("四半期粒度");
-    expect(minkanItem!.text).toContain("名目・実質各1系列");
-    expect(minkanItem!.text).toContain("2025年平均=100");
-    expect(minkanItem!.text).toContain("公式金額そのものではありません");
-    expect(minkanItem!.text).toContain("raw値と比較指数は内部で検証・保持");
-    expect(minkanItem!.text).toContain("独立照合がpendingの間は比較線を表示しません");
+    expect(minkanItem!.text).toContain("年次GDP統計");
+    expect(minkanItem!.text).toContain("12か月連続窓");
+    expect(minkanItem!.text).toContain("2025年年次値=100");
 
     expect(ctiItem!.text).toContain("選択済みの総世帯CTIミクロ");
     expect(ctiItem!.text).toContain("12か月移動平均");
@@ -57,8 +54,7 @@ describe("CTI chart info data-source state", () => {
     expect(text).toContain("総世帯の2025年基準CTIミクロ");
     expect(text).toContain("基本系列（原数値）");
     expect(text).toContain("家計調査、家計消費状況調査、家計消費単身モニター調査");
-    expect(text).toContain("四半期粒度");
-    expect(text).toContain("独立照合がpendingの間は比較線を表示しません");
+    expect(text).toContain("年次GDP統計");
     expect(text).toContain("GDP参考系列は名目・実質を別々に接続検証しています。");
   });
 
@@ -89,8 +85,7 @@ describe("CTI chart info data-source state", () => {
     const text = info.sections.flatMap((s) => s.items.map((i) => i.text)).join("\n");
 
     expect(text).toContain("2020年基準の互換データ");
-    expect(text).toContain("四半期粒度");
-    expect(text).toContain("独立照合がpendingの間は比較線を表示しません");
+    expect(text).toContain("年次GDP統計");
     expect(text).toContain("CTIの基準年とは別の表示尺度");
   });
 
@@ -111,7 +106,7 @@ describe("CTI chart info data-source state", () => {
     });
     const text = info.sections.flatMap((s) => s.items.map((i) => i.text)).join("\n");
     expect(text).toContain("独立照合がpending");
-    expect(text).toContain("比較線を表示しません");
+    expect(text).toContain("比較線は表示しません");
   });
 
   it("四半期GDPが利用可能な場合は原系列と比較指数の分離を説明する", async () => {

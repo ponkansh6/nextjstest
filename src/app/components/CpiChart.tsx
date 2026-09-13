@@ -744,7 +744,7 @@ export default function CpiChart({
               </label>
             </div>
           }
-          {...chartTooltip.bind("section-new-graph")}
+          {...chartTooltip.bind("section-new-graph", { dataLength: mergedData.length })}
         />
       </LazyMount>
 

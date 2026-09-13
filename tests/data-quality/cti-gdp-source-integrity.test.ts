@@ -154,7 +154,35 @@ describe("Plan 20 source artifacts", () => {
     const longTerm = rows.find((row) => row.年月 === "2016年1月");
     expect(regular).toBeDefined();
     expect(longTerm).toBeDefined();
+    const supportRows = Papa.parse<string[]>(
+      fs.readFileSync(paths.candidateSupportNominal, "utf8"),
+      {
+        skipEmptyLines: true,
+      },
+    ).data;
+    const supportHeaderIndex = supportRows.findIndex((row) => row.includes("時間軸（暦年）"));
+    const supportHeader = supportRows[supportHeaderIndex];
+    const supportRow = supportRows.find(
+      (row) => row[supportHeader.indexOf("時間軸（暦年）")] === "2016",
+    );
+    const normalization = JSON.parse(fs.readFileSync(paths.gdpDisplayNormalization, "utf8")) as {
+      nominal: { factor: number };
+      real: { factor: number };
+    };
+    const raw = Number(supportRow?.[supportHeader.indexOf("民間最終消費支出")]?.replace(/,/g, ""));
+    expect(Number.isFinite(raw)).toBe(true);
+    expect(raw).toBeGreaterThan(0);
     for (const row of [regular!, longTerm!]) {
+      const nominalRaw = row["民間最終消費支出（名目・原値）" as keyof typeof row];
+      const nominalComparison = row["民間最終消費支出（名目・比較指数）" as keyof typeof row];
+      expect(Number.isFinite(nominalRaw)).toBe(true);
+      expect(nominalRaw).toBeGreaterThan(0);
+      expect(nominalComparison).toBeCloseTo(Number(nominalRaw) * normalization.nominal.factor, 10);
+      const realRaw = row["民間最終消費支出（実質・原値）" as keyof typeof row];
+      const realComparison = row["民間最終消費支出（実質・比較指数）" as keyof typeof row];
+      expect(Number.isFinite(realRaw)).toBe(true);
+      expect(realRaw).toBeGreaterThan(0);
+      expect(realComparison).toBeCloseTo(Number(realRaw) * normalization.real.factor, 10);
       expect(row["民間最終消費支出（名目）" as keyof typeof row]).toBe(
         row["民間最終消費支出（名目・比較指数）" as keyof typeof row],
       );

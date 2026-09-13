@@ -28,6 +28,8 @@ interface NewGraphProps {
   chartKey?: string;
   tooltipProps: ChartTooltipProps;
   onClick?: () => void;
+  onPointerDown?: React.PointerEventHandler<HTMLDivElement>;
+  onPointerMove?: React.PointerEventHandler<HTMLDivElement>;
   activeDot?: boolean;
   showAdvanced?: boolean;
   advancedToggle?: React.ReactNode;
@@ -44,6 +46,8 @@ export const NewGraph: React.FC<NewGraphProps> = ({
   chartKey,
   tooltipProps,
   onClick,
+  onPointerDown,
+  onPointerMove,
   activeDot,
   showAdvanced,
   advancedToggle,
@@ -90,6 +94,10 @@ export const NewGraph: React.FC<NewGraphProps> = ({
       </div>
       <div
         className={styles.chartWrapper}
+        onClick={onClick}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        style={{ touchAction: "pan-y" }}
         role="img"
         aria-label="給与・消費・物価の推移比較（12MA）グラフ"
       >

@@ -762,6 +762,21 @@ The system SHALL provide SEO-friendly metadata and descriptive headers.
   - `title`: "日本の経済指標ダッシュボード | 物価・賃金・消費の長期推移"
   - `description`: "物価指数・現金給与総額・消費支出を各系列の基準で一画面に比較。給与は2025年平均=100、CPI/CTI/GDPの基準化とは独立して表示。費目別寄与度・年率上昇率・給与と物価の乖離を可視化。凡例クリックで系列の表示/非表示を切替可能。"
 
+#### Scenario R11d: Regular GDP-backed NewGraph continuity
+
+- **WHEN** the normal 2025-base loader is called without rollback options
+- **THEN** the regular private-consumption reference series contains every month from 2005-01 through 2017-12, with finite positive values; its raw GDP fields remain separate from comparison values computed as raw × the independently validated 2025 factor.
+- **AND** a 12MA is emitted only for a complete consecutive 12-month window, while insufficient windows, internal gaps, and months after the regular period remain `null`.
+
+#### Scenario R11e: NewGraph browser projection parity
+
+- **WHEN** the real browser opens NewGraph for the full period and a 2014-centered range
+- **THEN** the selected private-consumption SVG path, tooltip, table, and CSV expose the same displayed value, and the regular series is present in both ranges.
+- **AND** `adv=1` and the information-panel state expose the extended 2018+ series without changing the 2017/2018 boundary; the same assertions remain usable at a 375px viewport.
+- **AND** the Plan27 browser acceptance fixture supplies independent 2014 representative values, and tooltip, matching table cells, and downloaded CSV cells are numerically equal within the fixture tolerance; presence-only assertions are insufficient.
+- **AND** every SVG path selected directly by `data-key` is checked for its `d` coordinates, full-period/2014 coverage, and continuous target-period subpaths; `adv=1` checks both 2017-12 regular and 2018-01 extended boundary values.
+- **AND** switching the information panel preserves the selected series keys and matching explanation, and the same chart, tooltip, table, and CSV operations are exercised at 375px.
+
 #### Scenario R9b: Page Header Description
 
 - **THEN** `page.tsx` header displays:
@@ -804,6 +819,7 @@ hydration — tests must wait for them rather than reading the initial markup.
 - `CpiChart` passes CTI expense keys and legacy GDP comparison keys to `SpendingBarChart`; the chart component renders only GDP bars before 2018Q1 and only CTI `Bar` stacks from 2018Q1.
 - Tooltip aggregation follows the display contract: before 2018Q1 it receives only the standalone GDP comparison field; from 2018Q1 it receives only visible CTI expense fields. GDP comparison values are never included in the post-2018 CTI total.
 - Missing, ended, unready, or failed-validation GDP comparison values remain `null` in the public projection and are hidden at the chart boundary; GDP is never zero-filled, copied, interpolated, or rescaled at the boundary.
+- The annual GDP path used by NewGraph is separate from the quarterly public path: validated nominal raw annual observations are expanded onto calendar months, normalized by the independently validated 2025 annual factor, and then passed through a consecutive 12-month window. Raw amounts remain available for table/CSV contracts that request them, while the comparison line receives only normalized values.
 - Consumption presentation state is client-side: hidden quarters, selected categories, and detail expansion control each chart without changing source-basis values, table values, or CSV values.
 - On mobile (≤768px), `SpendingBarChart` uses consumption-only layout options for margins, CPI-style axis ticks, typography, bar width/spacing, all-value tooltip/details, and safe-area-aware internal scrolling; both nominal and real legends are closed-by-default collapsible controls whose single-line summaries report selected expense-item/quarter counts and filtering state, without a separate 四半期 heading. The real chart may additionally show the linked nominal-section note when `linkedSectionId` is provided; the nominal chart omits it. Selected-quarter emphasis is not added. Shared tooltip/axis behavior is not changed for other charts.
 
@@ -951,7 +967,8 @@ scripts/
   - `accessibility.e2e.spec.ts` — dark-mode legend contrast (P0-3 / P1-2 regression),
     `:focus-visible` rings (P4-1), keyboard-only operation (P4-1), `prefers-reduced-motion` (P4-2),
     and modal focus management — scroll preservation on dismiss & `Tab` containment (R8e)
-  - `cagr-sheet.e2e.spec.ts` — CAGR コンパクトシートの開閉・計算導線・グラフ可視性（R18）
+- `cagr-sheet.e2e.spec.ts` — CAGR コンパクトシートの開閉・計算導線・グラフ可視性（R18）
+- `plan27-private-consumption.e2e.spec.ts` — NewGraphの民間最終消費支出について、全期間/2014範囲の実SVG・tooltip・表・CSV導線、adv=1延長系列、情報パネル、375px表示を検証する。
   - `fixtures.ts` — shared `test` that sets `window.__MOUNT_ALL__` (R12b); specs verifying
     deferral itself must use the plain `@playwright/test` `test`
 

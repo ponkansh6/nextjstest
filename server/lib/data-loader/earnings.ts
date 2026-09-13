@@ -33,6 +33,24 @@ function computeTrailingMA12(entries: [string, number][]): Map<string, number> {
   return maMap;
 }
 
+/** 民間最終は欠測を詰めず、暦月連続の12か月窓だけを平均する。 */
+function computeCalendarTrailingMA12(
+  entries: [string, number][],
+  calendar: readonly string[],
+): Map<string, number> {
+  const values = new Map(entries);
+  const result = new Map<string, number>();
+  for (let index = 11; index < calendar.length; index++) {
+    const window = calendar.slice(index - 11, index + 1);
+    if (!hasCompleteWindow(index, calendar, [values])) continue;
+    result.set(
+      window[window.length - 1],
+      window.reduce((sum, ym) => sum + values.get(ym)!, 0) / 12,
+    );
+  }
+  return result;
+}
+
 /** Comparison rebasing is only valid for a complete calendar year of raw values. */
 function comparisonAverageForYear(
   map: Map<string, number>,
@@ -144,7 +162,11 @@ function buildConsumptionMaps(
     }
   });
 
-  const minkanMAMap = computeTrailingMA12([...minkanRawMap.entries()]);
+  const calendar = ctiData
+    .map((d) => d.年月)
+    .filter((ym): ym is string => typeof ym === "string")
+    .sort(compareYearMonth);
+  const minkanMAMap = computeCalendarTrailingMA12([...minkanRawMap.entries()], calendar);
   const ctiMAMap = computeTrailingMA12([...ctiRawMap.entries()]);
 
   return {
