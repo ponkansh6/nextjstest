@@ -138,7 +138,8 @@ The system SHALL display economic indicators as interactive Recharts-based chart
     - NewGraph receives only GDP comparison indices normalized independently from each series' official 2025 annual value. The validated annual GDP raw/comparison pair is projected onto monthly rows by the data loader while retaining separate raw and comparison keys; a GDP line is omitted when that GDP validation is incomplete, regardless of the CTI state.
     - Also includes an advanced reference-only series "民間最終消費支出（参考・延長）" (2018-) which is hidden by default and can be enabled via `?adv=1` URL query parameter or the ⓘ info panel toggle; the regular "民間最終消費支出（参考）" covers through 2017, and both boundary series derive from the same `maMinkan * minkanFactor` values.
     - When `adv=1` is enabled, both nominal and real consumption expenditure charts additionally render the 2018Q1+ GDP comparison values for their existing "民間最終消費支出" series as a line; the default mode keeps the GDP comparison as the pre-2018 standalone bar only.
-  - Charts using `interval="preserveStartEnd"` on their XAxis (MajorIndicesChart, EarningsBreakdownChart, StackedAreaChart, SpendingBarChart, ResidualAreaChart, NewGraph) render the first/last (start year / end year) tick label in `--foreground` via the shared `XAxisEdgeTick` component (`src/app/components/charts/XAxisEdgeTick.tsx`), while other tick labels use the default `--chart-text` color
+  - Time-series charts render the first/last (start year / end year) tick label in `--foreground` via the shared `XAxisEdgeTick` component (`src/app/components/charts/XAxisEdgeTick.tsx`), while other tick labels use the default `--chart-text` color. MajorIndicesChart, ResidualAreaChart, and NewGraph delegate their XAxis configuration to `TimeSeriesXAxis`.
+  - MajorIndicesChart, ResidualAreaChart, and NewGraph use the shared `TimeSeriesXAxis` component (`src/app/components/charts/TimeSeriesXAxis.tsx`) for their year/month axis. It owns tick calculation and edge-label rendering; at viewports up to 390px it suppresses boundary ticks and limits the axis to five non-overlapping ticks, while desktop preserves milestone and applicable boundary ticks.
 
 #### Scenario R2c: Data-driven earnings derivation
 
@@ -866,6 +867,7 @@ CPI / CTI / earnings / population loader results
         → server/lib/view-models/dashboard.ts (project: select columns, round 2 decimals)
           → src/app/page.tsx (RSC: load + project + CPI/CTI selected data state + pass props)
             → src/app/components/CpiChart.tsx ("use client": resolve info content and pass CTI state to consumption and NewGraph UI)
+              → src/app/components/charts/TimeSeriesXAxis.tsx (shared year/month X-axis rendering for CPI major, residual, and NewGraph)
 ```
 
 **Key optimization:** The view-models layer reduces RSC payload from 1,169 KB to ~505 KB by removing unused columns and rounding to 2 decimal places before sending to client.
@@ -900,16 +902,17 @@ configuration in its error result.
 
 #### src/lib/
 
-| Module                  | Description                                             |
-| ----------------------- | ------------------------------------------------------- |
-| `chartInfoContent.ts`   | Info button content definitions (`CHART_INFO`)          |
-| `chartConstants.ts`     | Chart colors, keys, and shared constants                |
-| `chartUtils.ts`         | Chart rendering and data manipulation helpers           |
-| `clientCalculations.ts` | Client-side utility functions for calculations          |
-| `resetLogic.ts`         | Application state reset logic                           |
-| `unstableCache.ts`      | Caching utility                                         |
-| `breakpoints.ts`        | Single source of truth for `MOBILE_BREAKPOINT_PX = 768` |
-| `csvExport.ts`          | Pure CSV serialization for the export button (R13)      |
+| Module                                  | Description                                                                                         |
+| --------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `chartInfoContent.ts`                   | Info button content definitions (`CHART_INFO`)                                                      |
+| `chartConstants.ts`                     | Chart colors, keys, and shared constants                                                            |
+| `chartUtils.ts`                         | Chart rendering and data manipulation helpers                                                       |
+| `components/charts/TimeSeriesXAxis.tsx` | Shared year/month X-axis rendering and responsive tick policy for CPI major, residual, and NewGraph |
+| `clientCalculations.ts`                 | Client-side utility functions for calculations                                                      |
+| `resetLogic.ts`                         | Application state reset logic                                                                       |
+| `unstableCache.ts`                      | Caching utility                                                                                     |
+| `breakpoints.ts`                        | Single source of truth for `MOBILE_BREAKPOINT_PX = 768`                                             |
+| `csvExport.ts`                          | Pure CSV serialization for the export button (R13)                                                  |
 
 ### ETL Scripts
 

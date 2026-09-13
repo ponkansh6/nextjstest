@@ -1,19 +1,10 @@
 import React from "react";
-import {
-  CartesianGrid,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, YAxis } from "recharts";
 import styles from "./CpiChart.module.css";
 import type { CpiData } from "@/types";
 import type { ChartTooltipProps } from "./charts/useChartTooltipProps";
 import { YearReferenceLines } from "./charts/YearReferenceLines";
-import { XAxisEdgeTick } from "./charts/XAxisEdgeTick";
-import { computeXAxisTicks } from "./charts/xAxisTicks";
+import { TimeSeriesXAxis } from "./charts/TimeSeriesXAxis";
 import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
 import { LINE_CONFIGS } from "../../lib/chartConstants";
 import type { ChartInfoContent } from "@/lib/chartInfoContent";
@@ -109,20 +100,10 @@ export const NewGraph: React.FC<NewGraphProps> = ({
           >
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.gridStroke} />
             <YearReferenceLines data={data} stroke={chartColors.gridStroke} />
-            <XAxis
-              dataKey="年月"
-              axisLine={false}
-              tickLine={false}
-              tick={(props) => (
-                <XAxisEdgeTick
-                  {...props}
-                  fill={chartColors.axisText}
-                  emphasisFill={chartColors.axisTextEmphasis}
-                />
-              )}
-              dy={10}
-              ticks={computeXAxisTicks(data)}
-              interval={0}
+            <TimeSeriesXAxis
+              data={data}
+              chartColors={chartColors}
+              tickOptions={{ includeBoundaryTicks: true }}
             />
             <YAxis
               domain={["auto", "auto"]}

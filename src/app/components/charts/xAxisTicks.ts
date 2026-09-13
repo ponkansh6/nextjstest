@@ -9,6 +9,11 @@ interface XAxisTickSource {
   [key: string]: unknown;
 }
 
+export interface XAxisTickOptions {
+  includeBoundaryTicks?: boolean;
+  maxTicks?: number;
+}
+
 function monthIndex(yearMonth: string): number | null {
   const match = yearMonth.match(/^(\d+)年(\d+)月$/);
   if (!match) return null;
@@ -21,7 +26,11 @@ function monthIndex(yearMonth: string): number | null {
  * 開始年・終了年に近接しすぎていないものだけを表示する。
  * dataKey が "年月" と異なる場合(例: 四半期データの "label")は tickKey で指定する。
  */
-export function computeXAxisTicks(data: XAxisTickSource[], tickKey: string = "年月"): string[] {
+export function computeXAxisTicks(
+  data: XAxisTickSource[],
+  tickKey: string = "年月",
+  options: XAxisTickOptions = {},
+): string[] {
   if (data.length === 0) return [];
 
   const start = data[0];
@@ -49,9 +58,26 @@ export function computeXAxisTicks(data: XAxisTickSource[], tickKey: string = "�
 
   // Keep an adjacent-series boundary visible so consumers can audit where a
   // regular series hands off to its extension (notably 2017/12 -> 2018/1).
-  const boundaryValues = data
-    .filter((d) => d.年月 === "2017年12月" || d.年月 === "2018年1月")
-    .map((d) => String(d[tickKey]));
+  const boundaryValues =
+    options.includeBoundaryTicks === false
+      ? []
+      : data
+          .filter((d) => d.年月 === "2017年12月" || d.年月 === "2018年1月")
+          .map((d) => String(d[tickKey]));
 
-  return [...new Set([startValue, ...milestoneValues, ...boundaryValues, endValue])];
+  const ticks = [...new Set([startValue, ...milestoneValues, ...boundaryValues, endValue])];
+  if (!options.maxTicks || ticks.length <= options.maxTicks) return ticks;
+
+  const endpointTicks = [startValue, endValue];
+  const interiorTicks = ticks.filter((tick) => !endpointTicks.includes(tick));
+  const interiorSlots = Math.max(0, options.maxTicks - endpointTicks.length);
+  if (interiorSlots === 0) return endpointTicks;
+  const selectedInterior = Array.from({ length: interiorSlots }, (_, slot) => {
+    const index =
+      interiorSlots === 1
+        ? Math.floor((interiorTicks.length - 1) / 2)
+        : Math.round((slot * (interiorTicks.length - 1)) / (interiorSlots - 1));
+    return interiorTicks[index];
+  });
+  return [...new Set([startValue, ...selectedInterior, endValue])];
 }
