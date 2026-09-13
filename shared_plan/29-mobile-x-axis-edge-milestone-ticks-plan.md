@@ -1,7 +1,7 @@
 # モバイルX軸の端点・マイルストーン表示改善プラン
 
 作成日: 2026-09-13
-状態: 完了
+状態: 実装中
 
 ## 目的
 
@@ -76,6 +76,7 @@
 
 - `computeXAxisTicks` に `preserveAllMilestones` を追加し、モバイルでは固定 `maxTicks` と月数ベースの候補削除を行わないようにした。
 - `TimeSeriesXAxis` はモバイル（768px以下）で全候補をX軸へ渡し、境界tickだけは除外する。
+- 内部の表示候補はキリ番（2010/1・2015/1・2020/1・2025/1）に限定し、2017/12・2018/1などの非キリ番境界ラベルはデスクトップを含めて除外する。
 - `XAxisEdgeTick` は Recharts の `usePlotArea()` とtick座標を使い、端点と交差する内部tickだけを非表示にする。
 - 端点の `textAnchor="middle"` は変更していない。
 - `tests/unit/x-axis-ticks.test.ts` にモバイル候補保持のテストを追加し、既存中央寄せを壊さない構成を維持した。
@@ -84,7 +85,7 @@
 - 対象lint: PASS（テストファイルは既存設定でignore warning）。
 - 対象unit/component test: PASS（40 files / 347 tests）。
 - Rechartsのtick `x` が `string | number` であることに合わせて型を修正し、既存の他チャートも含む型検査を通過させた。
-- 完了判定: 端点の `text-anchor="middle"` を変更せず、plan29の実装・監査条件を達成した。
+- 端点の `text-anchor="middle"` は変更していない。キリ番以外の内部ラベル除外後の最終監査は未実施。
 
 ## 仕様同期予定
 

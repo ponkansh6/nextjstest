@@ -37,7 +37,9 @@ export const TimeSeriesXAxis: React.FC<TimeSeriesXAxisProps> = ({
     // supported chart width. The existing reference lines still expose the
     // hand-off without overlapping axis text.
     preserveAllMilestones: isMobile,
-    includeBoundaryTicks: isMobile ? false : tickOptions?.includeBoundaryTicks,
+    // Series hand-off dates are not round-number milestones and are already
+    // represented by the chart's reference lines, so never add them to the axis.
+    includeBoundaryTicks: false,
     maxTicks: isMobile ? undefined : tickOptions?.maxTicks,
   });
 
