@@ -118,7 +118,7 @@ export const StackedAreaChart: React.FC<StackedAreaChartProps> = ({
                 />
               )}
               dy={10}
-              ticks={computeXAxisTicks(data)}
+              ticks={computeXAxisTicks(data, "年月", { includeBoundaryTicks: false })}
               interval={0}
             />
             <YAxis
