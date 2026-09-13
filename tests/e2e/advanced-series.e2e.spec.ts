@@ -434,10 +434,8 @@ test.describe("3種比較チャートの上級者向け隠し系列 (adv=1)", ()
               Boolean(tick.label) && Number.isFinite(tick.x),
           );
         const startTick = ticks.find((tick) => tick.label === "2005/1");
-        const tick2017 = ticks.find((tick) => tick.label === "2017/12");
-        const tick2018 = ticks.find((tick) => tick.label === "2018/1");
         const endTick = ticks.at(-1);
-        if (!startTick || !tick2017 || !tick2018 || !endTick)
+        if (!startTick || !endTick)
           throw new Error(`missing required axis ticks: ${JSON.stringify(ticks)}`);
         const finalParts = endTick.label!.split("/").map(Number);
         if (finalParts.length !== 2 || !finalParts.every(Number.isFinite))
@@ -487,14 +485,19 @@ test.describe("3種比較チャートの上級者向け隠し系列 (adv=1)", ()
             ];
           }),
         );
+        const startIndex = 2005 * 12;
+        const endIndex = finalParts[0] * 12 + (finalParts[1] - 1);
+        const boundaryX = (year: number, month: number) =>
+          startX +
+          ((year * 12 + (month - 1) - startIndex) / (endIndex - startIndex)) * (endX - startX);
         return {
           ranges,
           ticks,
           axis: {
             start: startX,
             regularStart: startX,
-            regularEnd: tick2017.x,
-            extendedStart: tick2018.x,
+            regularEnd: boundaryX(2017, 12),
+            extendedStart: boundaryX(2018, 1),
             end: endX,
           },
         };

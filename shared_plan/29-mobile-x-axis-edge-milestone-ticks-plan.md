@@ -85,7 +85,14 @@
 - 対象lint: PASS（テストファイルは既存設定でignore warning）。
 - 対象unit/component test: PASS（40 files / 347 tests）。
 - Rechartsのtick `x` が `string | number` であることに合わせて型を修正し、既存の他チャートも含む型検査を通過させた。
-- 端点の `text-anchor="middle"` は変更していない。キリ番以外の内部ラベル除外後の最終監査は未実施。
+- 端点の `text-anchor="middle"` は変更していない。既存E2Eの旧境界tick必須アサーションも、開始・終了・キリ番のみの仕様へ同期した。
+
+### 最終監査（2026-09-13）
+
+- キリ番以外の内部ラベル（2017/12・2018/1）を全幅で除外した。
+- 端点中央寄せは未変更。
+- unit/component 347 tests、build、関連E2E、320/375/390/430/768pxの幅別監査を実施済み。
+- plan29完了。
 
 ## 仕様同期予定
 
