@@ -111,7 +111,20 @@ export const useChartTooltipController = ({
           position: isTouch && isThisActive ? { x: 0, y: 0 } : undefined,
           wrapperStyle:
             isTouch && isThisActive
-              ? { visibility: "visible" as const, width: "100%", minHeight: 1 }
+              ? {
+                  visibility: "visible" as const,
+                  width: "100%",
+                  minHeight: 1,
+                  // Recharts positions the wrapper with translate3d(). That
+                  // transform creates a containing block for the fixed
+                  // CustomTooltip, making it move with the chart/scrollport.
+                  // Keep the wrapper as a viewport-level layer so the
+                  // tooltip's own fixed bottom positioning remains stable.
+                  position: "fixed" as const,
+                  top: 0,
+                  left: 0,
+                  transform: "none",
+                }
               : undefined,
           content: (
             <CustomTooltip

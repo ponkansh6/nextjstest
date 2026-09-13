@@ -504,6 +504,7 @@ The system SHALL make the nominal and real consumption charts readable and opera
 - **THEN** the tooltip/detail view shows all applicable category values, with category names at least 14px, the total at least 16px, and right-aligned numeric values
 - **AND** the period label font size is outside the Plan25 approval scope
 - **AND** the detail content accounts for safe-area insets, scrolls internally when expanded, and keeps the close control reachable
+- **AND** after scrolling the detail content to its internal bottom, the entire tooltip and its close control remain within the viewport on portrait and landscape mobile viewports
 
 #### Scenario R20e: Consumption Tooltip Full Payload
 
