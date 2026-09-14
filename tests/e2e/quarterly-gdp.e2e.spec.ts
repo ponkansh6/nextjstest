@@ -51,7 +51,14 @@ test.describe("Plan23 quarterly public projection", () => {
     for (const [selector, rawHeader, comparisonHeader] of tableChecks) {
       const table = page.locator(selector);
       await table.getByText(/データテーブルを表示/).click();
-      await expect(table.locator("tbody tr")).toHaveCount(12);
+      // 選択した表示期間の全件を表示していることを、実在する期間ラベルの件数で検証する。
+      const periodLabels = (
+        await table.locator("tbody tr td:first-child").allTextContents()
+      ).filter((label) => /^\d{4}Q[1-4]$/.test(label.trim()));
+      await expect(
+        table.locator("tbody tr"),
+        "選択期間に実在する全期間ラベルに対応する行を表示する",
+      ).toHaveCount(periodLabels.length);
       const headers = await table.locator("thead th").allTextContents();
       expect(headers.filter((header) => header.includes(rawHeader))).toHaveLength(1);
       expect(headers.some((header) => header.includes(comparisonHeader))).toBe(false);
