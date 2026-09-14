@@ -6,6 +6,7 @@ import type { ChartTooltipProps } from "./charts/useChartTooltipProps";
 import { YearReferenceLines } from "./charts/YearReferenceLines";
 import { TimeSeriesXAxis } from "./charts/TimeSeriesXAxis";
 import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
+import { ChartDataContract } from "./ChartDataContract";
 
 interface ResidualAreaChartProps {
   sectionId?: string;
@@ -33,6 +34,7 @@ export const ResidualAreaChart: React.FC<ResidualAreaChartProps> = ({
           ariaLabel="給与と物価の差のデータソースを表示"
         />
       </h2>
+      <ChartDataContract data={data} keys={["残差"]} />
       <div
         className={styles.chartWrapper}
         role="img"
@@ -56,6 +58,7 @@ export const ResidualAreaChart: React.FC<ResidualAreaChartProps> = ({
             />
             <Tooltip {...tooltipProps} />
             <Area
+              data-key="残差"
               type="monotone"
               dataKey="残差"
               stroke={chartColors.barFill || "#94a3b8"}

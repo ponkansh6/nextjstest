@@ -1,0 +1,13 @@
+{
+  "source": "annual GDP comparison inputs (frozen E2E boundary)",
+  "normalization": { "value2025": 350910.7 },
+  "annual": [
+    { "year": 2017, "raw": 303099.9 },
+    { "year": 2018, "raw": 305863 },
+    { "year": 2025, "raw": 350910.7 }
+  ],
+  "anchors": [
+    { "month": "2018年1月", "windowYears": [2017, 2017, 2017, 2017, 2017, 2017, 2017, 2017, 2017, 2017, 2017, 2018] },
+    { "month": "2025年12月", "windowYears": [2025, 2025, 2025, 2025, 2025, 2025, 2025, 2025, 2025, 2025, 2025, 2025] }
+  ]
+}

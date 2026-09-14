@@ -1,6 +1,7 @@
 import React from "react";
 import styles from "./CpiChart.module.css";
 import { ChartExportButton } from "./ChartExportButton";
+import { normalizePublicChartData } from "./ChartDataContract";
 
 export interface DataTableSpec {
   /** ジャンプ元グラフの sectionId(例: "section-cpi-major") */
@@ -28,14 +29,22 @@ export function DataTablesSection({ tables }: DataTablesSectionProps) {
         <details
           key={t.chartSectionId}
           id={`data-table-${t.chartSectionId}`}
+          data-testid={`data-table-${t.chartSectionId}`}
           className={styles.chartDataTable}
         >
-          <summary>{t.title} のデータテーブルを表示</summary>
+          <summary data-testid={`data-table-toggle-${t.chartSectionId}`}>
+            {t.title} のデータテーブルを表示
+          </summary>
           <p className={styles.chartNote}>
             <a href={`#${t.chartSectionId}`}>▲ グラフへ戻る</a>
           </p>
           <div className={styles.chartDataTableActions}>
-            <ChartExportButton title={t.title} data={t.data} keys={t.keys} headers={t.headers} />
+            <ChartExportButton
+              title={t.title}
+              data={normalizePublicChartData(t.data, t.keys)}
+              keys={t.keys}
+              headers={t.headers}
+            />
           </div>
           <table>
             <thead>
@@ -47,7 +56,7 @@ export function DataTablesSection({ tables }: DataTablesSectionProps) {
               </tr>
             </thead>
             <tbody>
-              {t.data.slice(-12).map((d, rowIndex) => {
+              {normalizePublicChartData(t.data, t.keys).map((d, rowIndex) => {
                 const rowLabel = String(d["年月"] ?? d["label"] ?? "");
                 return (
                   <tr key={rowLabel || rowIndex}>

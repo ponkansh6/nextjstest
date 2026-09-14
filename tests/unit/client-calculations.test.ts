@@ -14,8 +14,56 @@ import { loadCtiData } from "../../server/lib/dataLoader";
 
 import type { CpiData } from "../../src/types";
 import { createCpiData } from "../factories/cpiDataFactory";
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { scaleSupportSeriesLegacy } from "../../src/lib/math/supportSeries";
 
 describe("src/lib/clientCalculations", () => {
+  it("does not import server-only support-series math", () => {
+    const clientCalculationsPath = resolve("src/lib/clientCalculations.ts");
+    const source = readFileSync(clientCalculationsPath, "utf8");
+    const importSources = [
+      ...source.matchAll(
+        /^\s*import\s+(?:(?:type\s+)?[\s\S]*?\s+from\s+)?["']([^"']+)["']\s*;?\s*$/gm,
+      ),
+    ].map((match) => match[1]);
+    const resolvedSources = importSources
+      .map((importSource) => {
+        if (importSource.startsWith(".")) {
+          return resolve(dirname(clientCalculationsPath), importSource);
+        }
+        if (importSource.startsWith("@server/")) {
+          return resolve("server", importSource.slice("@server/".length));
+        }
+        return undefined;
+      })
+      .filter((path): path is string => path !== undefined)
+      .map((path) => path.replace(/\.(?:[cm]?[jt]sx?)$/, ""));
+
+    expect(resolvedSources).not.toContain(resolve("server/lib/math/supportSeries"));
+  });
+
+  it("keeps the client support-series compatibility matrix", () => {
+    const key = SUPPORT_SERIES_KEY_REAL;
+    const rows = [
+      { 年: 2020, [key]: 100 },
+      { 年: 2004, [key]: 10 },
+      { 年: 2005, [key]: null },
+      { 年: 2010, [key]: Number.NaN },
+      { 年: 2016, [key]: Number.POSITIVE_INFINITY },
+      { 年: 2017, [key]: -10 },
+    ];
+
+    expect(scaleSupportSeriesLegacy(rows, key).map((row) => row[key])).toEqual([
+      0,
+      0,
+      0,
+      0,
+      Number.POSITIVE_INFINITY,
+      0,
+    ]);
+  });
+
   describe("calculateCategorySum", () => {
     it("データが見つかる場合、正常に合計を計算する", () => {
       const mockCpiData = [{ 年月: "2020年1月", 食料: 100, 外食: 50 }];

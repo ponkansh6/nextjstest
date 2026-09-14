@@ -1,22 +1,14 @@
 import React from "react";
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, YAxis } from "recharts";
 import { getLegendLabel } from "../../lib/chartConstants";
 import styles from "./CpiChart.module.css";
 import type { CpiData } from "@/types";
 import type { ChartTooltipProps } from "./charts/useChartTooltipProps";
 import { YearReferenceLines } from "./charts/YearReferenceLines";
-import { XAxisEdgeTick } from "./charts/XAxisEdgeTick";
-import { computeXAxisTicks } from "./charts/xAxisTicks";
+import { TimeSeriesXAxis } from "./charts/TimeSeriesXAxis";
 import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
 import type { ChartInfoContent } from "@/lib/chartInfoContent";
+import { ChartDataContract } from "./ChartDataContract";
 
 interface StackedAreaChartProps {
   title: string;
@@ -73,6 +65,7 @@ export const StackedAreaChart: React.FC<StackedAreaChartProps> = ({
           content={chartInfoContent}
         />
       </h2>
+      <ChartDataContract data={data} keys={keys} />
       <div className={styles.legendContainer}>
         <div className={styles.legendSection}>
           <div className={styles.stackedLegendItems}>
@@ -82,6 +75,7 @@ export const StackedAreaChart: React.FC<StackedAreaChartProps> = ({
             {keys.map((key, index) => (
               <button
                 key={key}
+                data-testid={`legend-${key}`}
                 onClick={() => onToggle(key)}
                 className={`${styles.legendItem} ${hiddenKeys.includes(key) ? styles.hidden : ""}`}
                 aria-pressed={!hiddenKeys.includes(key)}
@@ -106,21 +100,7 @@ export const StackedAreaChart: React.FC<StackedAreaChartProps> = ({
           >
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.gridStroke} />
             <YearReferenceLines data={data} stroke={chartColors.gridStroke} />
-            <XAxis
-              dataKey="年月"
-              axisLine={false}
-              tickLine={false}
-              tick={(props) => (
-                <XAxisEdgeTick
-                  {...props}
-                  fill={chartColors.axisText}
-                  emphasisFill={chartColors.axisTextEmphasis}
-                />
-              )}
-              dy={10}
-              ticks={computeXAxisTicks(data, "年月", { includeBoundaryTicks: false })}
-              interval={0}
-            />
+            <TimeSeriesXAxis data={data} chartColors={chartColors} />
             <YAxis
               domain={[0, yAxisMax]}
               axisLine={false}
@@ -133,6 +113,7 @@ export const StackedAreaChart: React.FC<StackedAreaChartProps> = ({
               !hiddenKeys.includes(key) ? (
                 <Area
                   key={key}
+                  data-key={key}
                   dataKey={key}
                   stackId="a"
                   type="monotone"

@@ -1,6 +1,5 @@
-import type { QuarterlyGdpData } from "@server/lib/data-loader/cpi";
-import { loadCpiData, loadCtiData } from "../dataLoader";
-import { loadQuarterlyGdpData } from "../data-loader/cpi";
+import type { QuarterlyGdpData } from "../dataLoader";
+import { loadCpiData, loadCtiData, loadQuarterlyGdpData } from "../dataLoader";
 import {
   computeQuarterlyAggregates,
   mergeQuarterlyGdpRows,

@@ -15,13 +15,25 @@ const THEME_LABEL: Record<Theme, string> = {
 
 function applyTheme(theme: Theme) {
   if (theme === "dark") {
-    localStorage.setItem("theme", "dark");
+    try {
+      localStorage.setItem("theme", "dark");
+    } catch {
+      // Theme application must continue when storage writes are unavailable.
+    }
     document.documentElement.setAttribute("data-theme", "dark");
   } else if (theme === "light") {
-    localStorage.setItem("theme", "light");
+    try {
+      localStorage.setItem("theme", "light");
+    } catch {
+      // Theme application must continue when storage writes are unavailable.
+    }
     document.documentElement.setAttribute("data-theme", "light");
   } else {
-    localStorage.removeItem("theme");
+    try {
+      localStorage.removeItem("theme");
+    } catch {
+      // Theme application must continue when storage writes are unavailable.
+    }
     document.documentElement.removeAttribute("data-theme");
   }
 }

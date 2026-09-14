@@ -6,8 +6,9 @@ import type { ChartTooltipProps } from "./charts/useChartTooltipProps";
 import { YearReferenceLines } from "./charts/YearReferenceLines";
 import { TimeSeriesXAxis } from "./charts/TimeSeriesXAxis";
 import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
-import { LINE_CONFIGS } from "../../lib/chartConstants";
+import { COMPARISON_SERIES_REGISTRY } from "../../lib/chartConstants";
 import type { ChartInfoContent } from "@/lib/chartInfoContent";
+import { ChartDataContract } from "./ChartDataContract";
 
 interface NewGraphProps {
   sectionId?: string;
@@ -45,7 +46,9 @@ export const NewGraph: React.FC<NewGraphProps> = ({
   chartInfoContent,
 }) => {
   const isAdvanced = showAdvanced ?? false;
-  const visibleLineConfigs = LINE_CONFIGS.filter((config) => !config.advanced || isAdvanced);
+  const visibleLineConfigs = COMPARISON_SERIES_REGISTRY.filter(
+    (config) => !config.advanced || isAdvanced,
+  );
   // Keep the established legend labels available even when the independently
   // validated GDP comparison index is absent. Only omit the all-null line.
   const renderedLineConfigs = visibleLineConfigs.filter((config) =>
@@ -64,6 +67,7 @@ export const NewGraph: React.FC<NewGraphProps> = ({
           />
         )}
       </div>
+      <ChartDataContract data={data} keys={visibleLineConfigs.map(({ key }) => key)} />
       <div className={styles.legendContainer}>
         <div className={styles.legendSection}>
           <div className={styles.legendItems}>

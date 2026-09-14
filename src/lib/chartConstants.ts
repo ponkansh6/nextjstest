@@ -163,52 +163,113 @@ export const keyPairs = CONSUMPTION_NOMINAL_KEYS.map((key, index) => ({
   label: getDisplayLabel(key),
 }));
 
-// EarningsBreakdownChart の系列設定(データテーブル集約セクションからも参照するため
-// chart component とは独立にここへ定義する。next/dynamic で遅延ロードされる
-// EarningsBreakdownChart.tsx から直接importすると、その巨大なrecharts依存モジュールが
-// CpiChart.tsx の静的importに巻き込まれコード分割が無効化されるため避ける)
-export const EARNINGS_TABLE_CONFIGS: {
+/** Shared, presentation-only metadata for a rendered series.
+ *
+ * Chart-specific concerns (renderer, stacking, publication, and initial
+ * visibility) deliberately stay with each consumer.
+ */
+export interface SeriesMetadata {
   key: string;
   color: string;
-  type: "area" | "line";
+  label: string;
+  /** Legacy consumer-facing names retained on the shared metadata object. */
   displayName?: string;
-}[] = [
-  { color: "#1e40af", key: "所定内給与", type: "area" },
-  { color: "#3b82f6", key: "所定外給与", type: "area" },
-  { color: "#60a5fa", key: "特別給与", type: "area" },
-  { color: "#16a34a", key: "時間当たり給与", type: "line" },
-  {
-    color: "#a3e635",
-    key: "15歳以上国民当たり給与",
-    type: "line",
-  },
-  {
-    color: "#eab308",
-    displayName: "物価指数総合(参考)",
-    key: "CPI総合(参考)",
-    type: "line",
-  },
-];
-
-// NewGraph の系列設定(理由はEARNINGS_TABLE_CONFIGSと同様)
-export interface LineConfig {
-  key: string;
-  color: string;
-  displayName: string;
+  type?: "area" | "line";
+  pairKey?: string;
+  kind?: "area" | "line";
   advanced?: boolean;
   strokeDasharray?: string;
 }
 
-export const LINE_CONFIGS: LineConfig[] = [
-  { key: "CPI総合(12MA)", color: "#65a30d", displayName: "物価指数(総合)" },
-  { key: "総合(12MA)", color: "#e11d48", displayName: "給与(総合)" },
-  { key: "CTI消費支出（参考）", color: "#2563eb", displayName: "CTI消費(総合)" },
-  { key: "民間最終消費支出（参考）", color: "#38bdf8", displayName: "民間最終消費(総合)" },
+// EarningsBreakdownChart の系列設定(データテーブル集約セクションからも参照するため
+// chart component とは独立にここへ定義する。next/dynamic で遅延ロードされる
+// EarningsBreakdownChart.tsx から直接importすると、その巨大なrecharts依存モジュールが
+// CpiChart.tsx の静的importに巻き込まれコード分割が無効化されるため避ける)
+export const EARNINGS_SERIES_REGISTRY = [
+  {
+    color: "#1e40af",
+    key: "所定内給与",
+    label: "所定内給与",
+    displayName: "所定内給与",
+    type: "area",
+    kind: "area",
+  },
+  {
+    color: "#3b82f6",
+    key: "所定外給与",
+    label: "所定外給与",
+    displayName: "所定外給与",
+    type: "area",
+    kind: "area",
+  },
+  {
+    color: "#60a5fa",
+    key: "特別給与",
+    label: "特別給与",
+    displayName: "特別給与",
+    type: "area",
+    kind: "area",
+  },
+  {
+    color: "#16a34a",
+    key: "時間当たり給与",
+    label: "時間当たり給与",
+    displayName: "時間当たり給与",
+    type: "line",
+    kind: "line",
+  },
+  {
+    color: "#a3e635",
+    key: "15歳以上国民当たり給与",
+    label: "15歳以上国民当たり給与",
+    displayName: "15歳以上国民当たり給与",
+    type: "line",
+    kind: "line",
+  },
+  {
+    color: "#eab308",
+    key: "CPI総合(参考)",
+    label: "物価指数総合(参考)",
+    displayName: "物価指数総合(参考)",
+    type: "line",
+    kind: "line",
+  },
+] satisfies SeriesMetadata[];
+
+// Compatibility name retained for existing chart/table consumers.
+export const EARNINGS_TABLE_CONFIGS = EARNINGS_SERIES_REGISTRY;
+
+// NewGraph の系列設定(理由はEARNINGS_TABLE_CONFIGSと同様)
+export type LineConfig = SeriesMetadata & { displayName: string };
+
+export const COMPARISON_SERIES_REGISTRY = [
+  {
+    key: "CPI総合(12MA)",
+    color: "#65a30d",
+    label: "物価指数(総合)",
+    displayName: "物価指数(総合)",
+  },
+  { key: "総合(12MA)", color: "#e11d48", label: "給与(総合)", displayName: "給与(総合)" },
+  {
+    key: "CTI消費支出（参考）",
+    color: "#2563eb",
+    label: "CTI消費(総合)",
+    displayName: "CTI消費(総合)",
+  },
+  {
+    key: "民間最終消費支出（参考）",
+    color: "#38bdf8",
+    label: "民間最終消費(総合)",
+    displayName: "民間最終消費(総合)",
+  },
   {
     key: "民間最終消費支出（参考・延長）",
     color: "#7dd3fc",
+    label: "民間最終消費(延長・参考)",
     displayName: "民間最終消費(延長・参考)",
     advanced: true,
     strokeDasharray: "6 3",
   },
-];
+] satisfies SeriesMetadata[];
+
+export const LINE_CONFIGS: LineConfig[] = COMPARISON_SERIES_REGISTRY as LineConfig[];

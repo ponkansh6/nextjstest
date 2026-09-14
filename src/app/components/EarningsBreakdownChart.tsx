@@ -6,17 +6,16 @@ import {
   Line,
   ResponsiveContainer,
   Tooltip,
-  XAxis,
   YAxis,
 } from "recharts";
 import type { ChartTooltipProps } from "./charts/useChartTooltipProps";
 import { YearReferenceLines } from "./charts/YearReferenceLines";
-import { XAxisEdgeTick } from "./charts/XAxisEdgeTick";
-import { computeXAxisTicks } from "./charts/xAxisTicks";
+import { TimeSeriesXAxis } from "./charts/TimeSeriesXAxis";
 import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
-import { EARNINGS_TABLE_CONFIGS } from "../../lib/chartConstants";
+import { EARNINGS_SERIES_REGISTRY } from "../../lib/chartConstants";
 import styles from "./CpiChart.module.css";
 import type { CpiData } from "@/types";
+import { ChartDataContract } from "./ChartDataContract";
 
 interface EarningsBreakdownChartProps {
   sectionId?: string;
@@ -41,7 +40,7 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
   onClick,
   activeDot,
 }) => {
-  const configs = EARNINGS_TABLE_CONFIGS;
+  const configs = EARNINGS_SERIES_REGISTRY;
 
   const yAxisMax = React.useMemo(() => {
     const areaKeys = configs.filter(({ type }) => type === "area").map(({ key }) => key);
@@ -66,12 +65,14 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
         給与指標と関連指標
         <ChartInfoContentRenderer chartKey="earnings" ariaLabel="給与指標のデータソースを表示" />
       </h2>
+      <ChartDataContract data={data} keys={configs.map(({ key }) => key)} />
       <div className={styles.legendContainer}>
         <div className={styles.legendSection}>
           <div className={styles.legendItems}>
             {configs.map(({ key, displayName, color }) => (
               <button
                 key={key}
+                data-testid={`legend-${key}`}
                 className={`${styles.legendItem} ${hiddenKeys.includes(key) ? styles.hidden : ""}`}
                 onClick={() => onToggle(key)}
                 aria-pressed={!hiddenKeys.includes(key)}
@@ -92,21 +93,7 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
           >
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.gridStroke} />
             <YearReferenceLines data={data} stroke={chartColors.gridStroke} />
-            <XAxis
-              dataKey="年月"
-              axisLine={false}
-              tickLine={false}
-              tick={(props) => (
-                <XAxisEdgeTick
-                  {...props}
-                  fill={chartColors.axisText}
-                  emphasisFill={chartColors.axisTextEmphasis}
-                />
-              )}
-              dy={10}
-              ticks={computeXAxisTicks(data, "年月", { includeBoundaryTicks: false })}
-              interval={0}
-            />
+            <TimeSeriesXAxis data={data} chartColors={chartColors} />
             <YAxis
               domain={[0, yAxisMax]}
               axisLine={false}
@@ -122,6 +109,7 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
               return type === "area" ? (
                 <Area
                   key={key}
+                  data-key={key}
                   type="monotone"
                   dataKey={key}
                   stackId="earning"
@@ -134,6 +122,7 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
               ) : (
                 <Line
                   key={key}
+                  data-key={key}
                   type="monotone"
                   dataKey={key}
                   stroke={color}

@@ -4,8 +4,7 @@ import {
   SUPPORT_SERIES_KEY_NOMINAL,
   SUPPORT_SERIES_KEY_REAL,
 } from "./chartConstants";
-import type { QuarterlyView } from "@/types/chart";
-import type { QuarterlyRow } from "../../server/lib/view-models/quarterlyAggregation";
+import type { QuarterlyRow, QuarterlyView } from "@/types/chart";
 
 /** Public quarterly surfaces expose comparison keys while excluding internal GDP raw/index keys. */
 export const QUARTERLY_PUBLIC_NOMINAL_KEYS = [
@@ -23,14 +22,28 @@ export const QUARTERLY_PUBLIC_KEYS = [
 
 export type QuarterlyPublicKey = (typeof QUARTERLY_PUBLIC_KEYS)[number];
 
+function publicQuarterLabel(row: QuarterlyRow): string {
+  return `${row.年}Q${row.quarter}`;
+}
+
+function isQuarterlyRow(row: QuarterlyRow): boolean {
+  return (
+    Number.isInteger(row.年) &&
+    Number.isInteger(row.quarter) &&
+    row.quarter >= 1 &&
+    row.quarter <= 4 &&
+    /^\d{4}Q[1-4]$/.test(row.label)
+  );
+}
+
 export function projectQuarterlyPublicView(rows: QuarterlyRow[]): QuarterlyView[] {
-  return rows.map((row) => {
+  return rows.filter(isQuarterlyRow).map((row) => {
     const out: QuarterlyView = {
       label: row.label,
       quarter: row.quarter,
       年: row.年,
-      // Public quarterly surfaces use the same human-readable period key.
-      年月: row.label,
+      // The established public period contract is YYYYQn on every surface.
+      年月: publicQuarterLabel(row),
     };
     for (const key of QUARTERLY_PUBLIC_KEYS) {
       const value = row[key];

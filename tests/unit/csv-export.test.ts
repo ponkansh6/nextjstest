@@ -30,30 +30,40 @@ describe("buildCsv", () => {
 
   it("ヘッダ行と本体行を生成する", () => {
     const csv = buildCsv(rows, ["総合", "食料"]);
-    expect(csv.split("\n")).toEqual([
-      "年月,総合,食料",
-      "2020年1月,100.00,98.46",
-      "2020年2月,101.20,99.00",
-    ]);
+    expect(csv).toBe(
+      ["年月,総合,食料", "2020年1月,100.00,98.46", "2020年2月,101.20,99.00", ""].join("\r\n"),
+    );
+  });
+
+  it("常にCRLF終端で裸LFを含まない", () => {
+    const csv = buildCsv([{ 年月: "2020年1月", 総合: 100 }], ["総合"]);
+    expect(csv.endsWith("\r\n")).toBe(true);
+    expect(csv.replace(/\r\n/g, "")).not.toContain("\n");
+    expect(csv).not.toContain("\r\r");
+  });
+
+  it("引用符と特殊文字をround-tripできる", () => {
+    const csv = buildCsv([{ 年月: 'a,"b\r\nc', 総合: 100 }], ["総合"]);
+    expect(csv).toContain('"a,""b\r\nc"');
   });
 
   it("headers を渡すと表示名をヘッダに使う", () => {
     const csv = buildCsv(rows, ["総合"], ["CPI総合"]);
-    expect(csv.split("\n")[0]).toBe("年月,CPI総合");
+    expect(csv.split("\r\n")[0]).toBe("年月,CPI総合");
   });
 
   it("年月がない行は label をラベル列に使う", () => {
     const csv = buildCsv([{ label: "2020Q1", 総合: 100 }], ["総合"]);
-    expect(csv.split("\n")[1]).toBe("2020Q1,100.00");
+    expect(csv.split("\r\n")[1]).toBe("2020Q1,100.00");
   });
 
   it("数値でない値・欠損は空セルにする", () => {
     const csv = buildCsv([{ 年月: "2020年1月", 総合: null, 食料: NaN }], ["総合", "食料"]);
-    expect(csv.split("\n")[1]).toBe("2020年1月,,");
+    expect(csv.split("\r\n")[1]).toBe("2020年1月,,");
   });
 
   it("行が空でもヘッダ行は出力する", () => {
-    expect(buildCsv([], ["総合"])).toBe("年月,総合");
+    expect(buildCsv([], ["総合"])).toBe("年月,総合\r\n");
   });
 });
 

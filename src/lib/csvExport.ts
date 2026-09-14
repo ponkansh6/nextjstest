@@ -48,7 +48,8 @@ export const buildCsv = (
     return [escapeCsvCell(label), ...cells].join(",");
   });
 
-  return [headerRow, ...bodyRows].join("\n");
+  // RFC 4180 records are CRLF terminated, including the final record.
+  return `${[headerRow, ...bodyRows].join("\r\n")}\r\n`;
 };
 
 /** Excel が UTF-8 と判定できるよう BOM を付ける。 */

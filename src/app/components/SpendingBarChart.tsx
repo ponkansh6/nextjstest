@@ -1,16 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Line,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { CpiData } from "@/types";
 import styles from "./CpiChart.module.css";
 import {
@@ -23,6 +14,7 @@ import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
 import { CHART_INFO, type ChartInfoContent } from "../../lib/chartInfoContent";
 import { YearReferenceLines } from "./charts/YearReferenceLines";
 import { XAxisEdgeTick } from "./charts/XAxisEdgeTick";
+import { ChartDataContract, getPublicSpendingKeys } from "./ChartDataContract";
 
 function computeSpendingXAxisTicks(data: QuarterlyDataPoint[], viewportWidth: number): string[] {
   if (data.length === 0) return [];
@@ -91,7 +83,24 @@ interface SpendingBarChartProps {
   linkedSectionId?: string;
   testId?: string;
   isMobile?: boolean;
-  showAdvanced?: boolean;
+}
+
+export function normalizeSpendingChartData(
+  data: QuarterlyDataPoint[],
+  keys: string[],
+): QuarterlyDataPoint[] {
+  const supportKey = keys.includes(SUPPORT_SERIES_KEY_REAL)
+    ? SUPPORT_SERIES_KEY_REAL
+    : keys.includes(SUPPORT_SERIES_KEY_NOMINAL)
+      ? SUPPORT_SERIES_KEY_NOMINAL
+      : undefined;
+  const ctiKeys = keys.filter((key) => key !== supportKey);
+  return data.map((row) => {
+    const next = { ...row };
+    if (row.年 < 2018) ctiKeys.forEach((key) => (next[key] = null));
+    else if (supportKey) next[supportKey] = null;
+    return next;
+  });
 }
 
 export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
@@ -115,7 +124,6 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
     linkedSectionId,
     testId,
     isMobile = false,
-    showAdvanced = false,
   } = props;
   const [viewportWidth, setViewportWidth] = useState(1024);
 
@@ -132,7 +140,6 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
       ? SUPPORT_SERIES_KEY_NOMINAL
       : undefined;
   const ctiKeys = keys.filter((key) => key !== supportKey);
-  const advancedSupportKey = supportKey ? `${supportKey}（延長）` : undefined;
   const hasLegacyGdp = data.some(
     (row) => row.年 < 2018 && supportKey && typeof row[supportKey] === "number",
   );
@@ -146,23 +153,8 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
   const selectedQuarterCount = [1, 2, 3, 4].filter((q) => !hiddenQuarters.includes(q)).length;
   const hasActiveLegendFilter = selectedLegendCount < legendKeys.length || selectedQuarterCount < 4;
   // Plan24: GDP is a standalone bar before 2018Q1; CTI is the only stack afterwards.
-  const chartData = data.map((row) => {
-    const next = { ...row };
-    if (
-      showAdvanced &&
-      supportKey &&
-      advancedSupportKey &&
-      row.年 >= 2018 &&
-      typeof row[supportKey] === "number"
-    ) {
-      next[advancedSupportKey] = row[supportKey];
-    } else if (advancedSupportKey) {
-      next[advancedSupportKey] = null;
-    }
-    if (row.年 < 2018) ctiKeys.forEach((key) => (next[key] = null));
-    else if (supportKey) next[supportKey] = null;
-    return next;
-  });
+  const chartData = normalizeSpendingChartData(data, keys);
+  const publicKeys = getPublicSpendingKeys(keys);
   const maxHeight = chartData.reduce((max, row) => {
     const visibleKeys = keys.filter((key) => !hiddenKeys.includes(key));
     const height = visibleKeys.reduce((sum, key) => {
@@ -171,14 +163,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
     }, 0);
     return Math.max(max, height);
   }, 0);
-  const maxLineValue =
-    showAdvanced && advancedSupportKey && supportKey && !hiddenKeys.includes(supportKey)
-      ? chartData.reduce((max, row) => {
-          const value = row[advancedSupportKey];
-          return Math.max(max, typeof value === "number" && Number.isFinite(value) ? value : 0);
-        }, 0)
-      : 0;
-  const yAxisMax = Math.round(Math.max(maxHeight, maxLineValue) + 3);
+  const yAxisMax = Math.round(maxHeight + 3);
 
   const renderLegend = () => (
     <div className={styles.legendContainer}>
@@ -204,6 +189,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
           {legendKeys.map((key) => (
             <button
               key={key}
+              data-testid={`legend-${key}`}
               onClick={() => onToggle(key)}
               className={`${styles.legendItem} ${hiddenKeys.includes(key) ? styles.hidden : ""}`}
               aria-pressed={!hiddenKeys.includes(key)}
@@ -251,6 +237,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
           />
         )}
       </h2>
+      <ChartDataContract data={chartData} keys={publicKeys} />
 
       {legendMode === "collapsible" && (
         <>
@@ -343,6 +330,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
             {supportKey && hasLegacyGdp && !hiddenKeys.includes(supportKey) && (
               <Bar
                 dataKey={supportKey}
+                data-key={supportKey}
                 data-testid={`spending-series-${supportKey}`}
                 fill={chartColors.barFill || "#94a3b8"}
                 fillOpacity={0.8}
@@ -354,6 +342,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
                 <Bar
                   key={key}
                   dataKey={key}
+                  data-key={key}
                   data-testid={`spending-series-${key}`}
                   stackId="a"
                   fill={
@@ -366,22 +355,6 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
                 />
               ) : null,
             )}
-            {showAdvanced &&
-              advancedSupportKey &&
-              supportKey &&
-              !hiddenKeys.includes(supportKey) &&
-              chartData.some((row) => typeof row[advancedSupportKey] === "number") && (
-                <Line
-                  type="monotone"
-                  dataKey={advancedSupportKey}
-                  data-testid={`spending-series-${advancedSupportKey}`}
-                  stroke={chartColors.barFill || "#94a3b8"}
-                  strokeWidth={2}
-                  dot={false}
-                  connectNulls={false}
-                  isAnimationActive={false}
-                />
-              )}
           </BarChart>
         </ResponsiveContainer>
         {shouldShowEmptyState && (

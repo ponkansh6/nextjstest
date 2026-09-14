@@ -18,6 +18,14 @@ export interface CpiView extends Record<string, string | number> {
   年月: string;
 }
 
+export interface QuarterlyRow {
+  年: number;
+  quarter: number;
+  label: string;
+  年月: string;
+  [key: string]: number | string;
+}
+
 export interface QuarterlyView extends Record<string, number | string | null> {
   label: string;
   quarter: number;

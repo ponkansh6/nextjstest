@@ -2,7 +2,13 @@
 
 import { useSearchParams } from "next/navigation";
 import React from "react";
+import { serializeUrlState } from "../lib/urlState";
 
+/**
+ * URL is the source of the initial shared-state snapshot. CpiChart owns the
+ * live React mirrors and sends changes back through updateUrl. This hook does
+ * not subscribe to popstate or read localStorage.
+ */
 export function useUrlState(defaultStart: number, defaultEnd: number) {
   const searchParams = useSearchParams();
 
@@ -21,27 +27,12 @@ export function useUrlState(defaultStart: number, defaultEnd: number) {
       // router.replace は同一パスでのクエリ変更時に scroll:false でもスクロール位置をリセットする
       // （Next.js App Router の既知の挙動）ため、window.history.replaceState で
       // スクロール位置に影響しないURL同期を行う
-      const params = new URLSearchParams(window.location.search);
-      if (newFrom !== defaultStart) {
-        params.set("from", String(newFrom));
-      } else {
-        params.delete("from");
-      }
-      if (newTo !== defaultEnd) {
-        params.set("to", String(newTo));
-      } else {
-        params.delete("to");
-      }
-      if (newHidden.length > 0) {
-        params.set("hidden", newHidden.join(","));
-      } else {
-        params.delete("hidden");
-      }
-      if (newAdv) {
-        params.set("adv", "1");
-      } else {
-        params.delete("adv");
-      }
+      const params = serializeUrlState(
+        new URLSearchParams(window.location.search),
+        { from: newFrom, to: newTo, hidden: newHidden, adv: newAdv },
+        defaultStart,
+        defaultEnd,
+      );
 
       const query = params.toString();
       const url = query ? `?${query}` : window.location.pathname;

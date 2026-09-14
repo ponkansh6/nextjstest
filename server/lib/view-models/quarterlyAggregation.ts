@@ -8,53 +8,19 @@ import {
 import { applySupportSeriesScaling } from "@server/lib/math/supportSeries";
 import { normalizeYearMonth } from "@/lib/yearMonth";
 import { calculateQuarter } from "@/lib/math/quarter";
+import type { QuarterlyRow } from "@/types/chart";
 import type { QuarterlyGdpData } from "@server/lib/data-loader/cpi";
+import { joinQuarterlyGdpRows } from "./quarterlyGdpTransform";
 
-export interface QuarterlyRow {
-  年: number;
-  quarter: number;
-  label: string;
-  年月: string;
-  [key: string]: number | string;
-}
+export type { QuarterlyRow } from "@/types/chart";
 
-/** Join only validated, finite, exact quarter comparisons onto CTI rows. */
+/** Existing adapter name retained for callers of the aggregation module. */
 export function mergeQuarterlyGdpRows(
   nominalRows: QuarterlyRow[],
   realRows: QuarterlyRow[],
   gdp: QuarterlyGdpData,
 ): { nominal: QuarterlyRow[]; real: QuarterlyRow[] } {
-  const nominal = nominalRows.map((row) => ({ ...row }));
-  const real = realRows.map((row) => ({ ...row }));
-  const nominalByPeriod = new Map<string, QuarterlyRow>();
-  for (const row of nominal) {
-    const period = `${row.年}-Q${row.quarter}`;
-    if (!nominalByPeriod.has(period)) nominalByPeriod.set(period, row);
-  }
-  const realByPeriod = new Map<string, QuarterlyRow>();
-  for (const row of real) {
-    const period = `${row.年}-Q${row.quarter}`;
-    if (!realByPeriod.has(period)) realByPeriod.set(period, row);
-  }
-  for (const row of [...nominal, ...real]) {
-    delete row[SUPPORT_SERIES_KEY_NOMINAL];
-    delete row[SUPPORT_SERIES_KEY_REAL];
-  }
-  if (!gdp.comparisonReady) return { nominal, real };
-  for (const gdpRow of gdp.rows) {
-    if (!/^\d{4}-Q[1-4]$/.test(gdpRow.period)) continue;
-    const nominal = gdpRow.nominalComparison;
-    const real = gdpRow.realComparison;
-    const nominalRow = nominalByPeriod.get(gdpRow.period);
-    const realRow = realByPeriod.get(gdpRow.period);
-    if (nominalRow && typeof nominal === "number" && Number.isFinite(nominal)) {
-      nominalRow[SUPPORT_SERIES_KEY_NOMINAL] = nominal;
-    }
-    if (realRow && typeof real === "number" && Number.isFinite(real)) {
-      realRow[SUPPORT_SERIES_KEY_REAL] = real;
-    }
-  }
-  return { nominal, real };
+  return joinQuarterlyGdpRows(nominalRows, realRows, gdp);
 }
 
 /**

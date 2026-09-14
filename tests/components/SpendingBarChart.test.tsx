@@ -120,35 +120,72 @@ describe("SpendingBarChart component legendMode tests", () => {
     expect(screen.queryAllByTestId("line-mock")).toHaveLength(0);
   });
 
-  it("renders the 2018+ GDP comparison as a line only in advanced mode", () => {
-    renderChart({
-      showAdvanced: true,
-      data: [
-        {
-          label: "2017 Q4",
-          年: 2017,
-          quarter: 4,
-          年月: "2017-10",
-          [SUPPORT_SERIES_KEY_NOMINAL]: 100,
-        },
-        {
-          label: "2018 Q1",
-          年: 2018,
-          quarter: 1,
-          年月: "2018-01",
-          [SUPPORT_SERIES_KEY_NOMINAL]: 200,
-        },
-      ],
+  it("keeps the regular GDP series public contract unchanged with or without the advanced flag", () => {
+    const data = [
+      {
+        label: "2017 Q4",
+        年: 2017,
+        quarter: 4,
+        年月: "2017-10",
+        [SUPPORT_SERIES_KEY_NOMINAL]: 100,
+      },
+      {
+        label: "2018 Q1",
+        年: 2018,
+        quarter: 1,
+        年月: "2018-01",
+        [SUPPORT_SERIES_KEY_NOMINAL]: 200,
+      },
+    ];
+    const baseProps = {
+      title: "消費支出",
+      data,
       keys: [SUPPORT_SERIES_KEY_NOMINAL],
+      colors: mockColors,
+      hiddenKeys: [],
+      onToggle: vi.fn(),
+      chartColors: mockChartColors,
+      tooltipProps: mockTooltipProps,
+      hiddenQuarters: [],
+      onToggleQuarter: vi.fn(),
+      onReset: vi.fn(),
+    } satisfies React.ComponentProps<typeof SpendingBarChart>;
+    const readContract = (container: HTMLElement) => ({
+      keys: container
+        .querySelector("[data-testid='chart-data-contract']")
+        ?.getAttribute("data-series"),
+      rows: Array.from(container.querySelectorAll("[data-chart-data-row]")).map((row) => ({
+        period: row.getAttribute("data-period"),
+        values: Array.from(row.querySelectorAll("[data-series-key]")).map((value) => [
+          value.getAttribute("data-series-key"),
+          value.getAttribute("data-value"),
+        ]),
+      })),
     });
+    const renderWithFlag = (showAdvanced: boolean) =>
+      render(
+        <SpendingBarChart
+          {...({ ...baseProps, showAdvanced } as React.ComponentProps<typeof SpendingBarChart>)}
+        />,
+      );
 
-    expect(screen.getByTestId("line-mock").getAttribute("data-key")).toBe(
-      `${SUPPORT_SERIES_KEY_NOMINAL}（延長）`,
+    const regular = renderWithFlag(false);
+    const regularContract = readContract(regular.container);
+    const regularRows = JSON.parse(
+      regular.container.querySelector("[data-testid='barchart']")?.getAttribute("data-rows") ||
+        "[]",
     );
-    const rows = JSON.parse(screen.getByTestId("barchart").getAttribute("data-rows") || "[]");
-    expect(rows[0][`${SUPPORT_SERIES_KEY_NOMINAL}（延長）`]).toBeNull();
-    expect(rows[1][`${SUPPORT_SERIES_KEY_NOMINAL}（延長）`]).toBe(200);
-    expect(rows[1][SUPPORT_SERIES_KEY_NOMINAL]).toBeNull();
+    regular.unmount();
+
+    const advanced = renderWithFlag(true);
+    expect(readContract(advanced.container)).toEqual(regularContract);
+    const advancedRows = JSON.parse(
+      advanced.container.querySelector("[data-testid='barchart']")?.getAttribute("data-rows") ||
+        "[]",
+    );
+    expect(advancedRows).toEqual(regularRows);
+    expect(JSON.stringify(advancedRows)).not.toContain("（延長）");
+    expect(advanced.container.querySelectorAll("[data-testid='line-mock']")).toHaveLength(0);
   });
 
   it("Plan24: switches at 2018Q1 without filling, copying, or interpolating the boundary", () => {

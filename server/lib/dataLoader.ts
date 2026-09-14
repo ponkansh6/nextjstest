@@ -2,6 +2,28 @@ import { clearTestCache } from "./data-loader/cache";
 
 export { clearTestCache };
 
+// Keep all public CPI/CTI/GDP status and data entry points behind this
+// compatibility facade. The implementation remains in the domain loader.
+export {
+  getCpiDataStatus,
+  getCpiMajorWeightTotal,
+  getCtiDataStatus,
+  getGdpSupportStatus,
+  getQuarterlyGdpSupportStatus,
+  loadQuarterlyGdpData,
+  validateQuarterlyGdpSupport,
+} from "./data-loader/cpi";
+export type {
+  CpiDataStatus,
+  CtiDataStatus,
+  CtiLoadOptions,
+  GdpMetadata,
+  GdpSupportStatus,
+  QuarterlyGdpData,
+  QuarterlyGdpRow,
+  QuarterlyGdpSupportStatus,
+} from "./data-loader/cpi";
+
 export async function loadPopulationData() {
   const { loadPopulationDataInternal } = await import("./data-loader/population");
   return loadPopulationDataInternal();

@@ -5,6 +5,7 @@ import type { CpiData } from "@/types";
 import type { ChartTooltipProps } from "./charts/useChartTooltipProps";
 import { YearReferenceLines } from "./charts/YearReferenceLines";
 import { TimeSeriesXAxis } from "./charts/TimeSeriesXAxis";
+import { ChartDataContract } from "./ChartDataContract";
 
 interface MajorIndicesChartProps {
   data: CpiData[];
@@ -41,12 +42,14 @@ export const MajorIndicesChart: React.FC<MajorIndicesChartProps> = ({
 
   return (
     <>
+      <ChartDataContract data={data} keys={keys} />
       <div className={styles.legendContainer}>
         <div className={styles.legendSection}>
           <div className={styles.legendItems}>
             {keys.map((key, index) => (
               <button
                 key={key}
+                data-testid={`legend-${key}`}
                 onClick={() => onToggle(key)}
                 className={`${styles.legendItem} ${hiddenKeys.includes(key) ? styles.hidden : ""}`}
                 aria-pressed={!hiddenKeys.includes(key)}
@@ -84,6 +87,7 @@ export const MajorIndicesChart: React.FC<MajorIndicesChartProps> = ({
               !hiddenKeys.includes(key) ? (
                 <Area
                   key={key}
+                  data-key={key}
                   type="monotone"
                   dataKey={key}
                   stroke={colors[index]}

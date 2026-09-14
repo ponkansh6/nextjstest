@@ -1,11 +1,12 @@
 import { Suspense } from "react";
-import { loadCpiData, loadTotalEarningData } from "../../server/lib/dataLoader";
 import {
   getCpiDataStatus,
   getCtiDataStatus,
   getGdpSupportStatus,
   getQuarterlyGdpSupportStatus,
-} from "../../server/lib/data-loader/cpi";
+  loadCpiData,
+  loadTotalEarningData,
+} from "../../server/lib/dataLoader";
 import { toCpiView, toEarningsView } from "../../server/lib/view-models/dashboard";
 import { loadQuarterlyPublicData } from "../../server/lib/view-models/quarterlyProjection";
 import CpiChart from "./components/CpiChart";

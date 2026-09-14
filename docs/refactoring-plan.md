@@ -334,6 +334,8 @@ export const dynamic = "force-static";
 
 **現状** — `/` は `Static / Revalidate 1h`。`server/lib/dataLoader.ts` の各ローダーが `unstable_cache(..., { revalidate: 3600 })` を使っている。
 
+> 注: この `dataLoader` の記述は旧計画・履歴に基づくものであり、現行構成の根拠として扱わない。
+
 **問題** — データソースはリポジトリにコミットされた CSV であり、**デプロイしない限り変わらない**。1 時間ごとの再生成は、まったく同じ結果を得るために CSV 再パース + 全計算をやり直しているだけ。Vercel の Function 実行時間（Active CPU）を無意味に消費する。
 
 **対策 A（推奨・最小変更）** — 再生成を止める。
@@ -618,7 +620,7 @@ ANALYZE=1 pnpm build
 
 - ⚠️ P1-1: **部分完了。** `transpilePackages` 削除と 4 コンポーネント（SpendingBarChart, EarningsBreakdownChart, ResidualAreaChart, NewGraph）への `next/dynamic` 化は完了し、最大チャンクは 423 KB → 379 KB（8.5% 削減、実測値は変更なし）。ただし計画に含まれていた Bundle Analyzer の置換（`rollup-plugin-visualizer` → `@next/bundle-analyzer`）は未実施 — `rollup-plugin-visualizer` は `package.json:65` に残存したまま。
 - ✅ P1-2: 未使用 API ルート削除（`/api/{cpi,cti,earnings}`）（完全一致）
-- ✅ P1-3: **完全一致。** `unstable_cache` 呼び出しの整理が実装済み。`server/lib/dataLoader.ts` から `maybeCache` 呼び出しは削除済み。ただし `maybeCache` 関数自体が死にコードとして `server/lib/data-loader/cache.ts` に残存している（呼び出し元が無い状態で置き去り）。
+- ✅ P1-3: **完全一致。** `unstable_cache` 呼び出しの整理が実装済み。`server/lib/dataLoader.ts` から `maybeCache` 呼び出しは削除済み。ただし `maybeCache` 関数自体が死にコードとして `server/lib/data-loader/cache.ts` に残存している（呼び出し元が無い状態で置き去り）。この `dataLoader` の記述は旧計画・履歴であり、現行構成の根拠にはしない。
 - ✅ P1-4: 依存関係整理（完全一致）
   - 削除: `@reduxjs/toolkit`, `react-is`, `sqlite-vec`, `src/lib/unstableCache.ts`, `src/hooks/useLegendState.ts`
   - 移動: `xlsx`, `arquero`, `iconv-lite` → devDependencies

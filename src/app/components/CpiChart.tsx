@@ -1,24 +1,20 @@
 "use client";
 
-import React, { useMemo, useState, useEffect, useRef, useCallback } from "react";
-import dynamic from "next/dynamic";
+import React, { useMemo, useState, useEffect } from "react";
 import type { CpiView, QuarterlyView, EarningsView } from "@/types/chart";
-import { filterDataByYear, mergeChartData } from "../../lib/chartUtils";
 import { parseYearMonth } from "../../lib/yearMonth";
-import { adaptCpiViewToChartData, adaptEarningsViewToChartData } from "../../lib/chartAdapters";
 import styles from "./CpiChart.module.css";
 import { ChartFilters } from "./ChartFilters";
 import { SectionTabs } from "./SectionTabs";
-import { LazyMount } from "./LazyMount";
 import { useChartTheme } from "../../hooks/useChartTheme";
 import { useChartTooltipController } from "./charts/useChartTooltipProps";
 import { useCpiChartData } from "../../hooks/useCpiChartData";
+import { useCpiChartDisplayData } from "../../hooks/useCpiChartDisplayData";
+import { useCagrState } from "../../hooks/useCagrState";
 import { useToggleSet } from "../../hooks/useToggleSet";
 import { useUrlState } from "../../hooks/useUrlState";
-import { StackedAreaChart } from "./StackedAreaChart";
-import { MajorIndicesChart } from "./MajorIndicesChart";
-import { CagrPanel } from "./CagrPanel";
-import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
+import { useAdvancedPreference } from "../../hooks/useAdvancedPreference";
+import { CpiChartSections } from "./CpiChartSections";
 import { BottomSheet } from "./BottomSheet";
 import {
   getChartInfoContent,
@@ -26,53 +22,29 @@ import {
   type CtiChartInfoState,
 } from "@/lib/chartInfoContent";
 
-const SpendingBarChart = dynamic(
-  () => import("./SpendingBarChart").then((m) => m.SpendingBarChart),
-  {
-    loading: () => <div className={styles.chartSkeleton}>グラフを読み込み中…</div>,
-  },
-);
-
-const EarningsBreakdownChart = dynamic(
-  () => import("./EarningsBreakdownChart").then((m) => m.EarningsBreakdownChart),
-  {
-    loading: () => <div className={styles.chartSkeleton}>グラフを読み込み中…</div>,
-  },
-);
-
-const ResidualAreaChart = dynamic(
-  () => import("./ResidualAreaChart").then((m) => m.ResidualAreaChart),
-  {
-    loading: () => <div className={styles.chartSkeleton}>グラフを読み込み中…</div>,
-  },
-);
-
-const NewGraph = dynamic(() => import("./NewGraph").then((m) => m.NewGraph), {
-  loading: () => <div className={styles.chartSkeleton}>グラフを読み込み中…</div>,
-});
-import { calculateCategorySum, calculateCAGRValue } from "../../lib/clientCalculations";
-import { createDualResetHandler } from "../../lib/resetLogic";
 import {
-  colors,
   keyPairs,
   getColorForNominalKey,
   CONSUMPTION_NOMINAL_KEYS,
   CONSUMPTION_REAL_KEYS,
-  stackedColors,
   stackedKeys,
   SUPPORT_SERIES_KEY_NOMINAL,
   SUPPORT_SERIES_KEY_REAL,
   targetKeys,
   MIN_DISPLAY_YEAR,
   getLegendLabel,
-  EARNINGS_TABLE_CONFIGS,
-  LINE_CONFIGS,
+  EARNINGS_SERIES_REGISTRY,
+  COMPARISON_SERIES_REGISTRY,
 } from "../../lib/chartConstants";
 import {
   QUARTERLY_PUBLIC_NOMINAL_KEYS,
   QUARTERLY_PUBLIC_REAL_KEYS,
 } from "../../lib/quarterlyPublicProjection";
 import { DataTablesSection, type DataTableSpec } from "./DataTablesSection";
+import { normalizeSpendingChartData } from "./SpendingBarChart";
+import { getPublicSpendingKeys, normalizePublicChartData } from "./ChartDataContract";
+import { CPI_CHART_SECTIONS } from "./cpiChartConfig";
+import { useSectionNavigation } from "../../hooks/useSectionNavigation";
 
 interface CpiChartProps {
   data: CpiView[];
@@ -111,7 +83,10 @@ export default function CpiChart({
     return [...years].toSorted((a, b) => a - b);
   }, [data]);
 
-  // 表示範囲のステート
+  // 共有状態の所有者: useUrlState は URL の初期スナップショットを読み、
+  // CpiChart はその値を live React state として所有する。同期方向は
+  // URL -> 初期化時のReact state、React state -> URL (replaceState) のみ。
+  // popstate による再読込や localStorage との競合解決は行わない。
   // 初期値がNaNやundefinedにならないよう、確実に数値(0含む)を返すように修正
   const initialStartYear = allYears.find((y) => y >= MIN_DISPLAY_YEAR) ?? allYears[0] ?? 2025;
   const initialEndYear = (allYears.length > 0 ? allYears[allYears.length - 1] : 2025) ?? 2025;
@@ -132,75 +107,64 @@ export default function CpiChart({
   // 前回 ON にした状態が復元され、adv=1 が勝手に URL へ書き戻されてしまう。
   const [showAdvanced, setShowAdvanced] = useState<boolean>(adv);
 
-  // 表示・非表示を管理するステート（初期値は全て表示）
+  // 表示・非表示を管理するステート。積み上げ系列だけがURLの hiddenを
+  // 初期値として受け取り、変更後はURLへ返す。その他の凡例stateはReactのみ。
   const [hiddenKeys, handleLegendClick] = useToggleSet<string>();
   const [stackedHiddenKeys, handleStackedLegendClick, setStackedHiddenKeys] =
     useToggleSet<string>(urlHiddenKeys);
   const [maHiddenKeys, handleMaLegendClick] = useToggleSet<string>();
 
+  useAdvancedPreference(showAdvanced, startYear, endYear, stackedHiddenKeys);
+
   // URL sync when state changes
   useEffect(() => {
-    try {
-      window.localStorage.setItem("newGraphShowAdvanced", showAdvanced ? "1" : "0");
-    } catch {
-      // ignore
-    }
     updateUrl(startYear, endYear, stackedHiddenKeys, showAdvanced);
   }, [startYear, endYear, stackedHiddenKeys, showAdvanced, updateUrl]);
 
-  // View Model 型をチャート計算用の内部型に統一
-  const chartData = useMemo(() => adaptCpiViewToChartData(data), [data]);
-
-  // ステートに基づいてデータをフィルタリング
-  const filteredData = useMemo(
-    () => filterDataByYear(chartData, startYear, endYear),
-    [chartData, startYear, endYear],
-  );
-
-  const filteredTotalEarningData = useMemo(
-    () => filterDataByYear(adaptEarningsViewToChartData(totalEarningData), startYear, endYear),
-    [totalEarningData, startYear, endYear],
-  );
-
   // 四半期の表示/非表示を管理するステート（消費支出グラフの Q1〜Q4 トグル用）
   const { hiddenQuarters, toggleQuarter } = useCpiChartData();
-
-  // 四半期データのフィルタリング（消費支出グラフ用）
-  // 年範囲だけでなく、Q1〜Q4 トグルで非表示にされた四半期の行も除外する
-  const filteredQuarterlyNominalData = useMemo(
-    () =>
-      filterDataByYear(quarterlyNominalData, startYear, endYear).filter(
-        (row) => !hiddenQuarters.includes(row.quarter),
-      ),
-    [quarterlyNominalData, startYear, endYear, hiddenQuarters],
-  );
-
-  const filteredQuarterlyRealData = useMemo(
-    () =>
-      filterDataByYear(quarterlyRealData, startYear, endYear).filter(
-        (row) => !hiddenQuarters.includes(row.quarter),
-      ),
-    [quarterlyRealData, startYear, endYear, hiddenQuarters],
-  );
-
-  // データマッピングの統合: CPIと賃金データを年月で結合
-  const mergedData = useMemo(
-    () => mergeChartData(filteredTotalEarningData, chartData, startYear, endYear),
-    [filteredTotalEarningData, chartData, startYear, endYear],
-  );
-
-  // 表示項目として mergedData を利用するため、明示的に参照を確保
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const displayData = mergedData;
-
-  // 消費支出（参考）はサーバー側で12か月移動平均済みのため、そのまま表示する
-  const earningsData = mergedData;
+  const {
+    chartData,
+    filteredData,
+    filteredQuarterlyNominalData,
+    filteredQuarterlyRealData,
+    mergedData,
+    earningsData,
+  } = useCpiChartDisplayData({
+    data,
+    quarterlyNominalData,
+    quarterlyRealData,
+    totalEarningData,
+    startYear,
+    endYear,
+    hiddenQuarters,
+  });
 
   const nominalKeys = CONSUMPTION_NOMINAL_KEYS;
   const realKeys = CONSUMPTION_REAL_KEYS;
   const nominalColors = nominalKeys.map(getColorForNominalKey);
   const nominalKeysWithSupport = [...QUARTERLY_PUBLIC_NOMINAL_KEYS];
   const realKeysWithSupport = [...QUARTERLY_PUBLIC_REAL_KEYS];
+  const nominalTableKeys = getPublicSpendingKeys(nominalKeysWithSupport);
+  const realTableKeys = getPublicSpendingKeys(realKeysWithSupport);
+  const nominalPublicData = normalizePublicChartData(
+    normalizeSpendingChartData(
+      filteredQuarterlyNominalData,
+      nominalKeysWithSupport,
+    ) as unknown as Record<string, unknown>[],
+    nominalTableKeys,
+  ) as unknown as QuarterlyView[];
+  const realPublicData = normalizePublicChartData(
+    normalizeSpendingChartData(filteredQuarterlyRealData, realKeysWithSupport) as unknown as Record<
+      string,
+      unknown
+    >[],
+    realTableKeys,
+  ) as unknown as QuarterlyView[];
+  // The chart, public contract, data table, and CSV all use the complete
+  // selected quarterly projection.
+  const nominalTableData = nominalPublicData;
+  const realTableData = realPublicData;
   const nominalColorsWithSupport = [...nominalColors, "#94a3b8", "#475569", "#0f766e"];
   const realColors = realKeys.map((key) => {
     const nominalKey = key.replace("（実質）", "（名目）");
@@ -210,31 +174,23 @@ export default function CpiChart({
   const [nominalHiddenKeys, setNominalHiddenKeys] = useState<string[]>([]);
   const [realHiddenKeys, setRealHiddenKeys] = useState<string[]>([]);
 
-  // CAGR計算用のステート
-  const [cagrStartYear, setCagrStartYear] = useState<number>(() => initialStartYear ?? 2025);
-  const [cagrEndYear, setCagrEndYear] = useState<number>(() => initialEndYear ?? 2025);
-  const [cagrMonth, setCagrMonth] = useState<number>(1);
-  const [cagrResult, setCagrResult] = useState<number | null>(null);
-  const [cagrError, setCagrError] = useState<string | null>(null);
-
-  // 入力条件が変わったら結果をリセット（stale 防止）
-  const [prevCagrDeps, setPrevCagrDeps] = useState({
+  const {
     cagrStartYear,
     cagrEndYear,
     cagrMonth,
+    cagrResult,
+    cagrError,
+    setCagrStartYear,
+    setCagrEndYear,
+    setCagrMonth,
+    calculateCAGR,
+  } = useCagrState({
+    initialStartYear,
+    initialEndYear,
+    chartData,
     stackedHiddenKeys,
+    stackedKeys,
   });
-  if (
-    prevCagrDeps.cagrStartYear !== cagrStartYear ||
-    prevCagrDeps.cagrEndYear !== cagrEndYear ||
-    prevCagrDeps.cagrMonth !== cagrMonth ||
-    prevCagrDeps.stackedHiddenKeys !== stackedHiddenKeys
-  ) {
-    setPrevCagrDeps({ cagrStartYear, cagrEndYear, cagrMonth, stackedHiddenKeys });
-    if (cagrResult !== null) {
-      setCagrResult(null);
-    }
-  }
 
   const handleQuarterLegendClick = (quarter: number) => {
     toggleQuarter(quarter);
@@ -275,20 +231,8 @@ export default function CpiChart({
       return Array.from(next);
     });
   };
-  const sections = useMemo(
-    () => [
-      { id: "section-cpi-major", label: "CPI主要" },
-      { id: "section-stacked", label: "CPI費目別" },
-      { id: "section-consumption-nominal", label: "消費(名目)" },
-      { id: "section-consumption-real", label: "消費(実質)" },
-      { id: "section-earnings", label: "給与" },
-      { id: "section-residual", label: "給与物価差" },
-      { id: "section-new-graph", label: "3種比較" },
-    ],
-    [],
-  );
+  const sections = CPI_CHART_SECTIONS;
 
-  const [activeId, setActiveId] = useState(sections[0].id);
   const [rangeSheetOpen, setRangeSheetOpen] = useState(false);
   // 開始年・終了年のどちらかを変更するのが主流のユースケースのため、
   // 値が変わった時点でボトムシートを自動的に閉じる
@@ -300,172 +244,15 @@ export default function CpiChart({
     setEndYear(year);
     setRangeSheetOpen(false);
   };
-  // タブクリックで開始したスムーズスクロールの最中は true。アニメーション中も
-  // window の scroll イベントは連続して発火し続けるため、この間 handleScroll が
-  // 素通しで setActiveId を呼ぶと、SectionTabs 側の横スクロール追従 effect が
-  // アニメーション途中で何度も再発火してしまう。WebKit(Safari)ではこれが原因で
-  // 進行中の縦方向 smooth スクロールが中断され、目的のセクションまで届かずに
-  // 止まってしまう不具合があった(実機のiPhone/Androidで確認)。
-  const isProgrammaticScrollRef = useRef(false);
-  const [isProgrammaticScroll, setIsProgrammaticScroll] = useState(false);
-  const programmaticScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const endProgrammaticScroll = useCallback(() => {
-    isProgrammaticScrollRef.current = false;
-    if (programmaticScrollTimerRef.current) {
-      clearTimeout(programmaticScrollTimerRef.current);
-    }
-    programmaticScrollTimerRef.current = setTimeout(() => {
-      setIsProgrammaticScroll(false);
-    }, 150);
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (programmaticScrollTimerRef.current) {
-        clearTimeout(programmaticScrollTimerRef.current);
-      }
-    };
-  }, []);
+  const { activeId, handleSelectSection, isProgrammaticScroll } = useSectionNavigation({
+    sections,
+  });
 
   const { isTouch } = useChartTheme();
   const chartTooltip = useChartTooltipController({ suppressed: isProgrammaticScroll, isTouch });
 
-  useEffect(() => {
-    const handleScroll = () => {
-      if (isProgrammaticScrollRef.current) return;
-      const scrollPos = window.scrollY + window.innerHeight * 0.4;
-      for (const sec of sections) {
-        const el = document.getElementById(sec.id);
-        if (el) {
-          const top = el.offsetTop;
-          const height = el.offsetHeight;
-          if (scrollPos >= top && scrollPos < top + height) {
-            setActiveId(sec.id);
-            break;
-          }
-        }
-      }
-    };
-    const handleScrollEnd = () => {
-      endProgrammaticScroll();
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    window.addEventListener("scrollend", handleScrollEnd);
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("scrollend", handleScrollEnd);
-    };
-  }, [sections, endProgrammaticScroll]);
-
-  const handleSelectSection = (id: string) => {
-    setActiveId(id);
-    // LazyMount配下のセクションはまだDOMに存在しない(IntersectionObserverで
-    // 交差するまでプレースホルダーのみ)場合があり、その場合は data-lazy-section
-    // を持つプレースホルダーへスクロールする。スクロールで近づくにつれて
-    // IntersectionObserverが発火し、実コンテンツに差し替わる。
-    const getTarget = () =>
-      document.getElementById(id) ??
-      document.querySelector<HTMLElement>(`[data-lazy-section="${id}"]`);
-    const target = getTarget();
-    if (!target) return;
-
-    isProgrammaticScrollRef.current = true;
-    setIsProgrammaticScroll(true);
-    target.scrollIntoView({ behavior: "smooth", block: "start" });
-
-    // 目的セクションより手前に未マウントの LazyMount セクションが挟まっている場合、
-    // スクロールで近づくにつれてそれらが順に実コンテンツへ差し替わり、高さが変化する。
-    // この高さ変化は scrollIntoView 呼び出し後に起きるため、単発の呼び出しだけでは
-    // (特に遠く離れたタブへ直接ジャンプする場合)目的位置からずれてしまう。目的要素の
-    // 位置が一定時間(約500ms)連続して安定するまで、現在位置を追跡して補正スクロール
-    // する(最大約3秒でタイムアウトし、無限ループを防ぐ)。
-    let lastTop = target.getBoundingClientRect().top;
-    let stableFrames = 0;
-    let framesElapsed = 0;
-    const STABLE_FRAMES_THRESHOLD = 30;
-    const MAX_FRAMES = 180;
-    const chase = () => {
-      framesElapsed++;
-      const current = getTarget();
-      if (!current) {
-        requestAnimationFrame(chase);
-        return;
-      }
-      const top = current.getBoundingClientRect().top;
-      if (Math.abs(top - lastTop) > 1) {
-        lastTop = top;
-        stableFrames = 0;
-        if (Math.abs(top) > 2) {
-          current.scrollIntoView({ behavior: "auto", block: "start" });
-        }
-      } else {
-        stableFrames++;
-      }
-      if (stableFrames >= STABLE_FRAMES_THRESHOLD || framesElapsed > MAX_FRAMES) {
-        endProgrammaticScroll();
-        return;
-      }
-      requestAnimationFrame(chase);
-    };
-    requestAnimationFrame(chase);
-  };
-
-  // CAGR計算関数
-  const calculateCAGR = (): void => {
-    setCagrError(null);
-
-    // 状態が NaN の場合は初期値を適用する
-    const startYear = isNaN(cagrStartYear) ? initialStartYear : cagrStartYear;
-    const endYear = isNaN(cagrEndYear) ? initialEndYear : cagrEndYear;
-
-    if (startYear === endYear) {
-      setCagrError("異なる年を選択してください（同じ年は指定できません）。");
-      return;
-    }
-
-    // クライアントライブラリの calculateCategorySum を使用
-    let startValue = 0;
-    try {
-      startValue = calculateCategorySum(
-        chartData,
-        startYear,
-        cagrMonth,
-        stackedHiddenKeys,
-        stackedKeys,
-      );
-    } catch {
-      const monthStr = String(cagrMonth).padStart(2, "0");
-      setCagrError(
-        `開始年月のデータが見つかりません: ${startYear}年${monthStr}月。積み上げの凡例で必要な費目が選択されているか確認してください。`,
-      );
-      return;
-    }
-
-    let endValue = 0;
-    try {
-      endValue = calculateCategorySum(
-        chartData,
-        endYear,
-        cagrMonth,
-        stackedHiddenKeys,
-        stackedKeys,
-      );
-    } catch {
-      const monthStr = String(cagrMonth).padStart(2, "0");
-      setCagrError(
-        `終了年月のデータが見つかりません: ${endYear}年${monthStr}月。積み上げの凡例で必要な費目が選択されているか確認してください。`,
-      );
-      return;
-    }
-
-    const years = endYear - startYear;
-    const cagr = calculateCAGRValue(startValue, endValue, years);
-    setCagrResult(cagr);
-  };
-
   const visibleLineConfigs = useMemo(
-    () => LINE_CONFIGS.filter((c) => !c.advanced || showAdvanced),
+    () => COMPARISON_SERIES_REGISTRY.filter((c) => !c.advanced || showAdvanced),
     [showAdvanced],
   );
 
@@ -487,23 +274,23 @@ export default function CpiChart({
     {
       chartSectionId: "section-consumption-nominal",
       title: "消費支出（名目）",
-      data: filteredQuarterlyNominalData as unknown as Record<string, unknown>[],
-      keys: nominalKeysWithSupport,
-      headers: nominalKeysWithSupport.map(getLegendLabel),
+      data: nominalTableData as unknown as Record<string, unknown>[],
+      keys: nominalTableKeys,
+      headers: nominalTableKeys.map(getLegendLabel),
     },
     {
       chartSectionId: "section-consumption-real",
       title: "消費支出（実質）",
-      data: filteredQuarterlyRealData as unknown as Record<string, unknown>[],
-      keys: realKeysWithSupport,
-      headers: realKeysWithSupport.map(getLegendLabel),
+      data: realTableData as unknown as Record<string, unknown>[],
+      keys: realTableKeys,
+      headers: realTableKeys.map(getLegendLabel),
     },
     {
       chartSectionId: "section-earnings",
       title: "給与指標と関連指標",
       data: earningsData as unknown as Record<string, unknown>[],
-      keys: EARNINGS_TABLE_CONFIGS.map((c) => c.key),
-      headers: EARNINGS_TABLE_CONFIGS.map((c) => c.displayName ?? c.key),
+      keys: EARNINGS_SERIES_REGISTRY.map((c) => c.key),
+      headers: EARNINGS_SERIES_REGISTRY.map((c) => c.displayName ?? c.label ?? c.key),
     },
     {
       chartSectionId: "section-residual",
@@ -545,209 +332,50 @@ export default function CpiChart({
         />
       </BottomSheet>
 
-      {/* CPI 主要指数 */}
-      <div
-        id="section-cpi-major"
-        className={styles.chartSection}
-        style={{ scrollMarginTop: "5rem" }}
-      >
-        <h2 className={styles.chartTitle}>
-          消費者物価指数（主要指数）
-          <ChartInfoContentRenderer
-            chartKey="cpi-major"
-            ariaLabel="消費者物価指数のデータソースを表示"
-            content={cpiMajorInfo}
-          />
-        </h2>
-        <MajorIndicesChart
-          data={filteredData}
-          keys={targetKeys}
-          colors={colors}
-          hiddenKeys={hiddenKeys}
-          onToggle={handleLegendClick}
-          chartColors={chartColors}
-          {...chartTooltip.bind("section-cpi-major")}
-        />
-        <p className={styles.chartNote}>
-          <a href="#data-table-section-cpi-major">データテーブルを表示 ▾</a>
-        </p>
-      </div>
-
-      {/* CPI 費目別積み上げ */}
-      <StackedAreaChart
-        title="物価指数 費目別寄与度"
-        sectionId="section-stacked"
-        data={filteredData}
-        keys={stackedKeys}
-        colors={stackedColors}
-        hiddenKeys={stackedHiddenKeys}
-        onToggle={handleStackedLegendClick}
+      <CpiChartSections
+        allYears={allYears}
+        filteredData={filteredData}
+        nominalPublicData={nominalPublicData}
+        realPublicData={realPublicData}
+        earningsData={earningsData}
+        mergedData={mergedData}
         chartColors={chartColors}
-        chartInfoContent={stackedAreaInfo}
-        {...chartTooltip.bind("section-stacked")}
-        onReset={() =>
-          setStackedHiddenKeys((prev) =>
-            prev.length === stackedKeys.length ? [] : [...stackedKeys],
-          )
-        }
-        belowChartSlot={
-          <CagrPanel
-            allYears={allYears}
-            cagrStartYear={cagrStartYear}
-            cagrEndYear={cagrEndYear}
-            cagrMonth={cagrMonth}
-            cagrResult={cagrResult}
-            cagrError={cagrError}
-            setCagrStartYear={setCagrStartYear}
-            setCagrEndYear={setCagrEndYear}
-            setCagrMonth={setCagrMonth}
-            calculateCAGR={calculateCAGR}
-          />
-        }
+        isMobile={isMobile}
+        hiddenKeys={hiddenKeys}
+        stackedHiddenKeys={stackedHiddenKeys}
+        nominalHiddenKeys={nominalHiddenKeys}
+        realHiddenKeys={realHiddenKeys}
+        maHiddenKeys={maHiddenKeys}
+        nominalColorsWithSupport={nominalColorsWithSupport}
+        nominalKeysWithSupport={nominalKeysWithSupport}
+        realKeysWithSupport={realKeysWithSupport}
+        realColors={realColors}
+        hiddenQuarters={hiddenQuarters}
+        showAdvanced={showAdvanced}
+        setShowAdvanced={setShowAdvanced}
+        handleLegendClick={handleLegendClick}
+        handleStackedLegendClick={handleStackedLegendClick}
+        handleLegendToggle={handleLegendToggle}
+        handleMaLegendClick={handleMaLegendClick}
+        handleQuarterLegendClick={handleQuarterLegendClick}
+        setStackedHiddenKeys={setStackedHiddenKeys}
+        setNominalHiddenKeys={setNominalHiddenKeys}
+        setRealHiddenKeys={setRealHiddenKeys}
+        cagrStartYear={cagrStartYear}
+        cagrEndYear={cagrEndYear}
+        cagrMonth={cagrMonth}
+        cagrResult={cagrResult}
+        cagrError={cagrError}
+        setCagrStartYear={setCagrStartYear}
+        setCagrEndYear={setCagrEndYear}
+        setCagrMonth={setCagrMonth}
+        calculateCAGR={calculateCAGR}
+        cpiMajorInfo={cpiMajorInfo}
+        stackedAreaInfo={stackedAreaInfo}
+        consumptionInfo={consumptionInfo}
+        newGraphInfo={newGraphInfo}
+        chartTooltip={chartTooltip}
       />
-
-      <LazyMount sectionId="section-consumption-nominal">
-        <SpendingBarChart
-          title="消費支出（名目）"
-          sectionId="section-consumption-nominal"
-          infoKey="consumption-expenditure"
-          chartInfoContent={consumptionInfo}
-          data={filteredQuarterlyNominalData}
-          keys={nominalKeysWithSupport}
-          colors={nominalColorsWithSupport}
-          hiddenKeys={nominalHiddenKeys}
-          onToggle={handleLegendToggle}
-          chartColors={chartColors}
-          {...chartTooltip.bind("section-consumption-nominal", {
-            showTotal: true,
-            showAllPayload: true,
-          })}
-          isMobile={isMobile}
-          hiddenQuarters={hiddenQuarters}
-          onToggleQuarter={handleQuarterLegendClick}
-          onReset={createDualResetHandler(
-            {
-              hiddenKeys: nominalHiddenKeys,
-              allKeys: nominalKeysWithSupport,
-              setHiddenKeys: setNominalHiddenKeys,
-            },
-            {
-              hiddenKeys: realHiddenKeys,
-              allKeys: realKeysWithSupport,
-              setHiddenKeys: setRealHiddenKeys,
-            },
-          )}
-          legendMode={isMobile ? "collapsible" : "expanded"}
-          showAdvanced={showAdvanced}
-          testId="spending-chart-nominal"
-        />
-      </LazyMount>
-
-      <LazyMount sectionId="section-consumption-real">
-        <SpendingBarChart
-          title="消費支出（実質）"
-          sectionId="section-consumption-real"
-          linkedSectionId="section-consumption-nominal"
-          infoKey="consumption-expenditure"
-          chartInfoContent={consumptionInfo}
-          data={filteredQuarterlyRealData}
-          keys={realKeysWithSupport}
-          colors={[...realColors, "#94a3b8", "#475569", "#0f766e"]}
-          hiddenKeys={realHiddenKeys}
-          onToggle={handleLegendToggle}
-          chartColors={chartColors}
-          {...chartTooltip.bind("section-consumption-real", {
-            showTotal: true,
-            showAllPayload: true,
-          })}
-          isMobile={isMobile}
-          hiddenQuarters={hiddenQuarters}
-          onToggleQuarter={handleQuarterLegendClick}
-          onReset={createDualResetHandler(
-            {
-              hiddenKeys: nominalHiddenKeys,
-              allKeys: nominalKeysWithSupport,
-              setHiddenKeys: setNominalHiddenKeys,
-            },
-            {
-              hiddenKeys: realHiddenKeys,
-              allKeys: realKeysWithSupport,
-              setHiddenKeys: setRealHiddenKeys,
-            },
-          )}
-          legendMode="collapsible"
-          showAdvanced={showAdvanced}
-          testId="spending-chart-real"
-        />
-      </LazyMount>
-
-      <LazyMount sectionId="section-earnings">
-        <EarningsBreakdownChart
-          sectionId="section-earnings"
-          data={earningsData}
-          hiddenKeys={hiddenKeys}
-          onToggle={handleLegendClick}
-          chartColors={chartColors}
-          isMobile={isMobile}
-          {...chartTooltip.bind("section-earnings")}
-        />
-      </LazyMount>
-
-      <LazyMount sectionId="section-residual">
-        <ResidualAreaChart
-          sectionId="section-residual"
-          data={mergedData}
-          chartColors={chartColors}
-          {...chartTooltip.bind("section-residual")}
-        />
-      </LazyMount>
-
-      <LazyMount sectionId="section-new-graph">
-        <NewGraph
-          sectionId="section-new-graph"
-          data={mergedData}
-          hiddenKeys={maHiddenKeys}
-          onToggle={handleMaLegendClick}
-          chartColors={chartColors}
-          isMobile={isMobile}
-          chartKey="new-graph"
-          chartInfoContent={newGraphInfo}
-          showAdvanced={showAdvanced}
-          advancedToggle={
-            <div
-              style={{
-                marginTop: "1rem",
-                borderTop: "1px solid var(--border, #e2e8f0)",
-                paddingTop: "0.75rem",
-              }}
-            >
-              <div style={{ fontSize: "0.875rem", fontWeight: 600, marginBottom: "0.5rem" }}>
-                参考・延長系列
-              </div>
-              <label
-                htmlFor="adv-toggle"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.5rem",
-                  cursor: "pointer",
-                  fontSize: "0.875rem",
-                }}
-              >
-                <input
-                  id="adv-toggle"
-                  type="checkbox"
-                  checked={showAdvanced}
-                  onChange={(e) => setShowAdvanced(e.target.checked)}
-                />
-                <span>参考・延長系列（民間最終消費支出（参考・延長））を表示する</span>
-              </label>
-            </div>
-          }
-          {...chartTooltip.bind("section-new-graph", { dataLength: mergedData.length })}
-        />
-      </LazyMount>
-
       <DataTablesSection tables={dataTables} />
     </div>
   );
