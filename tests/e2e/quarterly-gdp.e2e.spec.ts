@@ -3,6 +3,10 @@ import { readFile } from "node:fs/promises";
 
 const INTERNAL_SERIES = /GDP名目原値|GDP名目比較指数|GDP実質原値|GDP実質比較指数/;
 
+function normalizeMissingCell(value: string): string {
+  return value === "-" ? "" : value;
+}
+
 async function hoverQuarterActionableMark(
   page: import("@playwright/test").Page,
   testId: string,
@@ -82,7 +86,7 @@ test.describe("Plan23 quarterly public projection", () => {
         expect(tableValue).not.toBe("");
         const csvRow = csvRows.find(([rowPeriod]) => rowPeriod === period);
         expect(csvRow).toBeDefined();
-        expect(csvRow?.[supportIndex]).toBe(tableValue);
+        expect(csvRow?.[supportIndex]).toBe(normalizeMissingCell(tableValue));
       }
     }
 
