@@ -45,6 +45,9 @@ test.describe("Plan23 quarterly public projection", () => {
       ["#data-table-section-consumption-nominal", "民間最終消費", "GDP名目"] as const,
       ["#data-table-section-consumption-real", "民間最終消費", "GDP実質"] as const,
     ];
+    await page.getByRole("button", { name: "表示期間を変更" }).click();
+    await page.locator("#startYear").selectOption("2025");
+
     for (const [selector, rawHeader, comparisonHeader] of tableChecks) {
       const table = page.locator(selector);
       await table.getByText(/データテーブルを表示/).click();
@@ -75,9 +78,6 @@ test.describe("Plan23 quarterly public projection", () => {
         expect(csvRow?.[supportIndex]).toBe(tableValue);
       }
     }
-
-    await page.getByRole("button", { name: "表示期間を変更" }).click();
-    await page.locator("#startYear").selectOption("2025");
 
     for (const [kind, testId, selector, ctiLabel] of [
       ["nominal", "spending-chart-nominal", "#data-table-section-consumption-nominal", "食料"],
