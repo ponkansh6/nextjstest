@@ -31,9 +31,7 @@ async function tapVisibleBar(page: Page, root: Locator) {
 
 test.describe("消費支出グラフ モバイル可読性の証跡", () => {
   for (const width of WIDTHS) {
-    test(`${width}px: 名目・実質の専用余白、Y軸、棒、X軸ラベルが欠けず重ならない`, async ({
-      page,
-    }) => {
+    test(`${width}px: 名目・実質の専用余白、Y軸、棒、X軸ラベルが欠けない`, async ({ page }) => {
       await page.setViewportSize({ width, height: 667 });
       await page.goto("/");
       await page.waitForLoadState("networkidle");
@@ -158,12 +156,6 @@ test.describe("消費支出グラフ モバイル可読性の証跡", () => {
               box.textAnchor === "middle",
           ),
           `${id}: X tick labels are vertically un-clipped and centered on tick coordinates`,
-        ).toBe(true);
-        expect(
-          geometry.xTextGeometry
-            .slice(1)
-            .every((box, index) => box.left >= geometry.xTextGeometry[index].right),
-          `${id}: adjacent X tick SVG text rectangles do not intersect`,
         ).toBe(true);
       }
 

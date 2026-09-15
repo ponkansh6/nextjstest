@@ -24,15 +24,11 @@ function quarterIndex(value: string): number | null {
   return match ? Number(match[1]) * 4 + Number(match[2]) - 1 : null;
 }
 
-function computeSpendingXAxisTicks(data: QuarterlyDataPoint[], isMobile: boolean): string[] {
+function computeSpendingXAxisTicks(data: QuarterlyDataPoint[]): string[] {
   return computePeriodXAxisTicks(data, "label", {
     periodIndex: quarterIndex,
     endpointGapPeriods: 12,
     includeBoundaryTicks: false,
-    // At 320px the two fixed Q1 milestones can still overlap each other even
-    // after endpoint protection. Keep the shared selector and retain one
-    // interior milestone alongside the protected endpoints.
-    maxTicks: isMobile ? 3 : undefined,
     milestonePredicate: (row) =>
       row.quarter === 1 && FIXED_SPENDING_MILESTONE_YEARS.has(Number(row.年)),
   });
@@ -290,7 +286,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
                 />
               )}
               dy={10}
-              ticks={computeSpendingXAxisTicks(data, isMobile)}
+              ticks={computeSpendingXAxisTicks(data)}
               interval={0}
             />
             <YAxis

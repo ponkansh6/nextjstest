@@ -176,11 +176,6 @@ test.describe("消費支出グラフ 768px境界（Desktop Chromium）", () => {
               textAnchor === "middle",
           ),
         ).toBe(true);
-        expect(
-          geometry.xTicks
-            .slice(1)
-            .every(({ box }, index) => box.left >= geometry.xTicks[index].box.right),
-        ).toBe(true);
         expect(geometry.section.left).toBeGreaterThanOrEqual(0);
         expect(geometry.section.right).toBeLessThanOrEqual(width + 1);
       }

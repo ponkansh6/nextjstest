@@ -575,7 +575,7 @@ describe("SpendingBarChart component legendMode tests", () => {
     ]);
   });
 
-  it("採用: limits mobile spending ticks to endpoints plus one milestone", () => {
+  it("採用: mobile spending ticks retain eligible endpoints and milestones without a fixed cap", () => {
     const data = Array.from({ length: 88 }, (_, index) => {
       const year = 2005 + Math.floor(index / 4);
       const quarter = (index % 4) + 1;
@@ -591,7 +591,9 @@ describe("SpendingBarChart component legendMode tests", () => {
 
     expect(JSON.parse(screen.getByTestId("xaxis").dataset.ticks!)).toEqual([
       "2005Q1",
+      "2010Q1",
       "2015Q1",
+      "2020Q1",
       "2026Q4",
     ]);
   });
