@@ -16,15 +16,34 @@ import { YearReferenceLines } from "./charts/YearReferenceLines";
 import { XAxisEdgeTick } from "./charts/XAxisEdgeTick";
 import { ChartDataContract, getPublicSpendingKeys } from "./ChartDataContract";
 
-function computeSpendingXAxisTicks(data: QuarterlyDataPoint[], viewportWidth: number): string[] {
-  if (data.length === 0) return [];
+function uniqueSpendingRowsByLabel(rows: QuarterlyDataPoint[]): QuarterlyDataPoint[] {
+  const labels = new Set<string>();
+  return rows.filter((row) => {
+    if (labels.has(row.label)) return false;
+    labels.add(row.label);
+    return true;
+  });
+}
+
+function selectSpendingXAxisRows(
+  data: QuarterlyDataPoint[],
+  viewportWidth: number,
+): QuarterlyDataPoint[] {
   const first = data[0];
   const last = data[data.length - 1];
-  const candidates = [first, ...data.filter((row) => row.quarter === 1), last].filter(
-    (row, index, rows) => rows.findIndex((candidate) => candidate.label === row.label) === index,
-  );
+  const firstLabel = first.label;
+  const lastLabel = last.label;
+  const fixedQ1Years = new Set([2010, 2015, 2020, 2025]);
+  const candidates = uniqueSpendingRowsByLabel([
+    first,
+    ...data.filter((row) => row.quarter === 1),
+    last,
+  ]);
   const priorityTicks = candidates.filter(
-    (row) => row === first || row === last || (row.年 - first.年) % 5 === 0,
+    (row) =>
+      row.label === firstLabel ||
+      row.label === lastLabel ||
+      (row.quarter === 1 && fixedQ1Years.has(row.年)),
   );
   // ラベル幅は12pxの「YYYY年Q1」を基準に保守的に見積もる。DOM実測は行わず、
   // 利用可能幅とデータ上の位置だけで決定する。
@@ -37,7 +56,8 @@ function computeSpendingXAxisTicks(data: QuarterlyDataPoint[], viewportWidth: nu
     const previous = selected[selected.length - 1];
     // The first and last labels are centered on their tick coordinates by
     // XAxisEdgeTick, so keep extra space around both ends.
-    const previousGap = previous === first ? estimatedLabelWidth * 1.5 : estimatedLabelWidth;
+    const previousGap =
+      previous.label === firstLabel ? estimatedLabelWidth * 1.5 : estimatedLabelWidth;
     const nextGap = estimatedLabelWidth * 1.5;
     if (
       position(candidate) - position(previous) >= previousGap &&
@@ -47,8 +67,13 @@ function computeSpendingXAxisTicks(data: QuarterlyDataPoint[], viewportWidth: nu
     }
   }
   // 開始・終了ラベルは常に残す。通常の表示幅では上の条件により、隣接間隔も保証される。
-  selected.push(last);
-  return selected.map((row) => row.label);
+  if (selected[selected.length - 1]?.label !== lastLabel) selected.push(last);
+  return uniqueSpendingRowsByLabel(selected);
+}
+
+function computeSpendingXAxisTicks(data: QuarterlyDataPoint[], viewportWidth: number): string[] {
+  if (data.length === 0) return [];
+  return selectSpendingXAxisRows(data, viewportWidth).map((row) => row.label);
 }
 
 function isMobileViewport(viewportWidth: number): boolean {

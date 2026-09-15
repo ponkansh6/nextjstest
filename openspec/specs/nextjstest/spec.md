@@ -358,8 +358,16 @@ The system SHALL display economic indicators as interactive Recharts-based chart
 - **AND** 2018Q1以降の表示データ、凡例、tooltipからGDP比較値を除外する
 - **AND** GDP欠損を0埋めせず、境界で値の複製・補間・表示用係数合わせをしない
 - **AND** 消費支出グラフはモバイル専用の余白・safe-area、棒幅・間隔を適用し、横overflowを発生させない
-- **AND** X軸は5年に一度のQ1を表示し、開始・終了ラベルとの重なりは適宜非表示にする
 - **AND** tooltipはモバイルでも全費目を内部スクロール付きで表示する
+
+#### Scenario R2c-axis: Spending chart quarterly X-axis ticks
+
+- **WHEN** `SpendingBarChart` renders quarterly data
+- **THEN** its candidate ticks are the Q1 rows for fixed calendar years 2010, 2015, 2020, and 2025, limited to years present in the data range
+- **AND** the first and last data labels are always retained as endpoints, including a one-row dataset or a dataset beginning outside Q1
+- **AND** a candidate is suppressed when the estimated label width would place it too close to either endpoint or another selected tick
+- **AND** labels with the same value are emitted only once, even when distinct data objects share that label
+- **AND** every emitted label uses the `YYYYQn` format
 
 ### R3: Data Transformation (Server-Side)
 
