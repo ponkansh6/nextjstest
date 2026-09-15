@@ -1,3 +1,2 @@
-pnpm run lint:fast
-pnpm exec tsgo --noEmit
-pnpm exec lint-staged
+#!/bin/sh
+exec bash -e "$(dirname "$0")/pre-commit.bash" "$@"

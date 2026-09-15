@@ -73,6 +73,15 @@ only the `setItem`/`removeItem` write operations are absorbed during interaction
 DOM theme application and React state updates continue after a write failure. No browser-state source changes
 the server-loaded data model.
 
+Hook execution inputs are derived from the Git state being validated, not from
+the working-tree default branch: pre-commit reads the staged path list, while
+pre-push consumes every ref line supplied by Git and classifies the actual
+remote-oid to local-oid diff. `PREPUSH_PROFILE` accepts `full` or `changed`;
+an unset value defaults to `changed`, and any other value is treated as the
+safe `full` profile. Pre-push retains only safe repository-relative source,
+server, and test paths as related-test candidates; unsafe, empty, malformed,
+unresolvable, or otherwise indeterminate input selects the full profile.
+
 Static CSV files (not publicly served) stored in `data/source/`:
 
 - `data/source/cpi_data2025_long.csv` — Primary CPI index input, when generated: official nationwide monthly long connected index, 1970 through the latest month, converted/connected to 2025 annual average = 100.
@@ -166,6 +175,96 @@ unless given exactly one positive finite value. Public JSON shape and SSR bounda
 - **AND** the established 2020/2025 basis and rounding are preserved
 
 ## Requirements
+
+### R-Hooks: Commit and Push Validation Architecture
+
+#### Scenario R-Hooks-0: Husky `sh` launcher reaches Bash implementations
+
+- **WHEN** Husky invokes either hook through its generated `sh -e` launcher
+- **THEN** `.husky/pre-commit` and `.husky/pre-push` are POSIX-compatible thin
+  wrappers that `exec bash -e` the corresponding `.bash` implementation and
+  forward `"$@"`
+- **AND** all Bash-only syntax and shared-library references remain in
+  `.husky/pre-commit.bash` and `.husky/pre-push.bash`, respectively
+- **AND** the generated `.husky/_/*` files are not edited
+
+#### Scenario R-Hooks-1: Staged pre-commit typecheck decision
+
+- **WHEN** a commit is attempted
+- **THEN** `lint:fast` runs first, the staged path classifier requires full
+  typecheck for type-bearing/configuration changes and for unsafe deletion,
+  rename, or unavailable decisions, and `tsgo --noEmit` runs before
+  commit-scoped `lint-staged`
+- **AND WHEN** staged changes are limited to documentation, assets, or other
+  non-type paths
+- **THEN** typecheck is skipped and `lint-staged` still runs
+- **AND** a zero-test result is tolerated only by the commit-scoped
+  lint-staged related-test task
+
+#### Scenario R-Hooks-2: Actual pre-push ref classification
+
+- **WHEN** a push is attempted
+- **THEN** every Git pre-push ref line is validated and its remote-oid to
+  local-oid diff is classified; refs are unioned before profile selection
+- **AND WHEN** a ref is initial/deleted, malformed, unresolved, shallow, or
+  its diff cannot be inspected safely, or a configuration/dependency,
+  Playwright, E2E, build, generated, OpenSpec, unknown, deletion, or rename
+  path is present
+- **THEN** the `full` profile is selected as the safe fallback
+- **AND WHEN** only safe repository-relative source/server/test candidates are
+  present
+- **THEN** the `changed` profile may select those candidates for related tests
+
+#### Scenario R-Hooks-3: Pre-push profile normalization and related fallback
+
+- **WHEN** `PREPUSH_PROFILE` is unset, `changed` is selected; **WHEN** it is
+  `full` or `changed`, that profile is used; **WHEN** it has any other value,
+  the safe `full` profile is selected
+- **WHEN** the changed profile has safe candidates
+- **THEN** `vitest related --run --passWithNoTests` runs with JSON output, and
+  a valid result with at least one `testResults` entry permits the changed
+  gate to continue
+- **WHEN** candidates are empty/unsafe, JSON is missing, invalid, or
+  incompatible, `testResults` is empty, or related execution fails
+- **THEN** the full profile runs exactly once
+
+#### Scenario R-Hooks-4: Full and changed gate order
+
+- **WHEN** the changed profile succeeds
+- **THEN** `build` runs before `test:e2e:clean` and `test:e2e`
+- **WHEN** the full profile runs
+- **THEN** gates execute in order: `lint:fast`, `type-check`, `test:all`,
+  `build`, `test:build-parity`, `security-check`, `test:e2e:clean`, and
+  `test:e2e`
+- **AND WHEN** any gate fails
+- **THEN** later gates do not run
+- **AND** production validation is a separate gate and is not substituted for
+  local pre-push validation when production URL/network availability is not
+  established
+
+#### Scenario R-Hooks-5: Isolated validation-detection audit
+
+- **WHEN** `pnpm run audit:validation-detection -- --output /tmp/plan31-validation-detection.json` is invoked
+- **THEN** it creates and removes an OS-temporary fixture, emits schema
+  `nextjstest.validation-detection v1.0.0` JSON evidence for 12 classification
+  cases, and does not modify the shared worktree, Git index, `.next`, existing
+  PIDs, or shared remotes
+- **AND** the measured classification precision, recall, and accuracy are `1`,
+  and full-gate failure detection rate is `1` for lint, type-check, unit, build,
+  build-parity, security, and E2E injections
+- **AND** each injected full-gate failure exits nonzero, stops subsequent gates,
+  and does not write the push marker
+- **AND** changed-E2E detection rate is `1`; changed execution order is
+  `related → build → e2e`, with a nonzero failure and no marker on failure and
+  a marker on success
+- **AND** the fixture cleanup status is `completed`, the artifact remains in OS
+  temporary storage rather than the shared repository, and the audit does not
+  claim to measure real application lint, type-check, build, or browser failure
+  detection, real push, CI, or production validation
+- **WHEN** a representative path classification or injected gate/E2E contract
+  does not match the documented result
+- **THEN** the audit exits non-zero and preserves failure details when the
+  artifact can be written
 
 ### R4-4: Public chart data contract and export parity
 
@@ -974,6 +1073,16 @@ Page (RSC)
     └── CustomTooltip (React.memo, module-level component for charts, managed via `useChartTooltipController`)
 ```
 
+The repository validation boundary is the Husky hook tree rather than a UI
+component: the POSIX `.husky/pre-commit` and `.husky/pre-push` launchers exec
+the Bash implementations in `.husky/pre-commit.bash` and
+`.husky/pre-push.bash`, because Husky's generated `sh -e` launcher cannot
+interpret Bash-only syntax. The Bash implementations run `lint:fast`, staged
+typecheck, commit-scoped `lint-staged`, detached-HEAD validation,
+actual-push-ref impact classification, related-test selection, build, E2E, and
+the full validation profile. Production validation is a separate gate and is
+not implied by the local pre-push hook.
+
 `CpiChart` remains the composition root. The static seven-section definition is owned by the typed `CPI_CHART_SECTIONS` in `src/app/components/cpiChartConfig.ts`; its existing ids and order are `section-cpi-major`, `section-stacked`, `section-consumption-nominal`, `section-consumption-real`, `section-earnings`, `section-residual`, and `section-new-graph`. `CpiChart` passes this same array to the active-section initial value, `SectionTabs`, and DOM/scroll observation.
 
 The support-series domain boundary is `src/lib/math/supportSeries.ts`, a pure module shared by
@@ -1029,6 +1138,64 @@ adapter entry point; `quarterlyGdpTransform.ts` joins validated GDP comparisons 
 `quarterlyPublicProjection.ts` selects and rounds the public fields.
 
 ### Data Flow
+
+- Pre-commit flow is `staged paths` → `staged_typecheck_required()` → either
+  `pnpm exec tsgo --noEmit` or a recorded skip → `pnpm exec lint-staged`.
+  Typecheck is required for TypeScript, type-boundary/shared/generated/config
+  changes and for deletion/rename or unavailable-decision cases; documentation,
+  assets, and other non-type changes may skip it. The lint-staged related test
+  task may pass with zero tests only within the commit hook.
+- Pre-push flow is `Git pre-push ref protocol` → actual ref diff collection and
+  path/category classification → `PREPUSH_PROFILE` normalization. Configuration,
+  dependency, build, Playwright, E2E, OpenSpec, generated, unknown, initial,
+  deletion, rename, shallow, malformed, unresolved, or failed-diff cases are
+  conservative full-profile inputs. Ordinary source/server/test changes retain
+  safe related candidates and use the changed profile. The classifier unions
+  all pushed refs before selecting a profile.
+- In the changed profile, safe related candidates are passed to
+  `vitest related --run --passWithNoTests --reporter=json`; a non-empty valid
+  JSON result allows the changed integration gate to pass, followed by
+  `build` and then `test:e2e:clean` → `test:e2e`. Empty candidates, zero JSON
+  `testResults`, missing/invalid/incompatible JSON, or a related-test failure
+  invoke the full profile exactly once.
+- The full profile is ordered `lint:fast` → `type-check` → `test:all` → `build`
+  → `test:build-parity` → `security-check` → `test:e2e:clean` → `test:e2e`;
+  each gate stops later gates on failure. Build always precedes E2E. Production
+  validation remains a separate production gate and is reported as not run by
+  local pre-push when its URL/network availability is not established.
+- The normal GitHub build job grants only `contents: read` and runs the full
+  dependency `pnpm audit --audit-level=high` plus secretlint on every push and
+  pull request; the dispatch-only full validation repeats its all-dependency
+  `security-check`. Neither security gate uses `continue-on-error`.
+  `PROD_URL` is scoped only to the conditional production-validation step.
+- The cache/E2E measurement writes its artifact after managed-process cleanup;
+  a failed server startup, port conflict, or readiness timeout records a failed
+  server status and exits non-zero rather than treating the artifact as success.
+
+#### Scenario final audit boundaries
+
+- **WHEN** dependencies are installed from the repository lockfile
+  **THEN** xlsx 0.20.3 resolves from `vendor/xlsx-0.20.3.tgz`, and the package
+  and lockfile retain the official SheetJS tarball's SHA-512 integrity value
+  (`oLDq3jw7AcLqKWH2AhCpVTZl8mf6X2YReP+Neh0SJUzV/BdZYjth94tG5toiMB1PPrYtxOCfaoUCkvtuH+3AJA==`)
+  without a live CDN URL dependency.
+- **WHEN** the measurement CLI receives `--output`
+  **THEN** it accepts only a path under the repository root or OS temporary
+  directory and rejects arbitrary absolute paths before creating directories.
+- **WHEN** the measurement CLI receives `--e2e-command`
+  **THEN** it requires a non-empty JSON array of argument strings and starts
+  the command with `spawn` and `shell: false`, preserving argv boundaries.
+- **WHEN** the measurement process receives SIGINT or SIGTERM
+  **THEN** it stops managed process groups, removes its temporary directory,
+  writes the completed artifact, and exits with a non-zero signal-derived code.
+- **WHEN** the pre-push hook smoke command is run
+  **THEN** it exercises the installed hook through a real temporary Git push,
+  verifies hook failure prevents remote advancement, and returns non-zero on
+  any fixture or hook failure.
+- **WHEN** the normal GitHub build job runs for a push or pull request
+  **THEN** all-dependency `pnpm audit --audit-level=high` and secretlint are
+  visible required steps, and either failure fails the job rather than being
+  hidden by `continue-on-error`.
 
 - `src/app/page.tsx` imports its CPI/CTI/GDP status and load functions from the sole public `server/lib/dataLoader.ts` facade, then calls `loadQuarterlyPublicData()` in `server/lib/view-models/quarterlyProjection.ts`. `quarterlyProjection.ts` also imports its loader functions from that facade. It loads CPI/CTI and `loadQuarterlyGdpData()`, computes CTI aggregates through `quarterlyAggregation.ts`, and calls `buildQuarterlyPublicViews()`; the latter uses `mergeQuarterlyGdpRows()`/`quarterlyGdpTransform.ts` for the exact `YYYY-Qn` join and then `projectQuarterlyPublicView()` in `src/lib/quarterlyPublicProjection.ts`. Nominal and real rows must have the same complete period set.
 - Support-series flow is `server/lib/data-loader/gdpSupport.ts` → `src/lib/math/supportSeries.ts` (shared pure normalization/scaling), while `src/lib/clientCalculations.ts` imports the same shared pure module directly. `server/lib/math/supportSeries.ts` is a compatibility adapter/re-export for existing server-side imports and is not on the `gdpSupport.ts` path. Both client and server calculations depend on the same pure domain module; client code does not import `server/`.
@@ -1299,6 +1466,39 @@ Phase 1-1〜1-3 state boundaries preserve the above contracts. `useUrlState` upd
 
 The state ownership contract is explicit: `useUrlState` reads `from`, `to`, `hidden`, and `adv` as the initial shared URL snapshot, with `hidden` applying only to `stackedHiddenKeys`; CpiChart owns the live React mirrors and sends their changes back through `updateUrl`. `adv` is initialized only from `adv=1` and is saved to `newGraphShowAdvanced` without restoring that value on initialization. The advanced save effect may rerun for `startYear`, `endYear`, and hidden-key dependency changes, while persisting only the advanced boolean and ignoring `setItem` exceptions. Theme uses the `theme` storage key and the `data-theme` attribute on `<html>`; `ThemeToggle` saves `light`/`dark` and removes the key for `system`, while the layout inline script applies saved theme before paint. Theme does not use the URL. `useChartTheme` observes mobile/touch media queries with `matchMedia` through `useSyncExternalStore`, and its SSR snapshots are `false`. Quarter visibility, normal/moving-average legend state, nominal/real visibility, CAGR inputs/results, and section navigation are React-owned state. URL/storage conflict precedence, actual reload behavior, and new popstate synchronization are not specified as confirmed contracts.
 
+## Operational validation contracts
+
+#### Scenario Hook smoke validation
+
+- **WHEN** `pnpm run test:hook-smoke` is invoked
+- **THEN** the temporary bare remote/work repository verifies hook stdin/ref handling, normal and multi-ref pushes, remote deletion, failure atomicity, and the explicit full profile
+- **AND** the smoke fixture uses only a stubbed `pnpm`, cleans its temporary directory, and exits nonzero when a hook gate fails
+
+#### Scenario Cache/E2E measurement safety
+
+- **WHEN** `pnpm run measure:cache-e2e` receives `--output` or `--e2e-command`
+- **THEN** output is restricted to the repository or OS temporary directory, and the E2E command is parsed as a non-empty JSON argv array and spawned without a shell
+- **AND** cache/server/test failures, invalid JSON, unsafe output paths, cleanup failures, or signal termination produce a nonzero result while writing the JSON artifact when possible
+
+#### Scenario Vendor archive integrity
+
+- **WHEN** package lifecycle runs `preinstall`
+- **THEN** `scripts/verify-vendor-integrity.mjs` computes SHA512 with only Node standard `crypto` and compares `vendor/xlsx-0.20.3.tgz` with its checked-in `.sha512` manifest
+- **AND** a missing archive, missing/invalid manifest, or digest mismatch fails installation with a nonzero exit, while the existing pnpm-only preinstall guard remains active
+
+#### Scenario Required ordinary CI security gates
+
+- **WHEN** a push or pull request targets `main`
+- **THEN** the ordinary CI job requires `lint:fast`, `type-check`, `test:all`, `build`, `pnpm audit --audit-level=high`, and `pnpm exec secretlint "**/*"`
+- **AND** each nonzero result fails the job without `continue-on-error`
+
+#### Scenario Manual full validation scope
+
+- **WHEN** `workflow_dispatch` runs `full-validation`
+- **THEN** it runs build, build-parity, security, and E2E validation with `contents: read` permissions and records timings in `GITHUB_STEP_SUMMARY` plus logs/reports as artifacts
+- **AND** when `run_production=true`, production validation is attempted in an independent step with `always()` even if build, build-parity, security, or E2E failed; when `run_production=false`, it is not run
+- **AND** production validation requires the external secret `PROD_URL` and network access, passes `PROD_URL` only to that production step, and explicitly fails when the secret is unset
+
 ## Non-Goals
 
 - Real-time data updates (data is loaded from static CSVs)
@@ -1310,6 +1510,30 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, `hid
 - Phase 1-1〜1-3 does not change public UI behavior, the public data model, loader/API responses, API routes, URL format, storage keys, or the Server/Client boundary. Internal types introduced by the new hooks are not public data-model changes.
 
 ## Test Requirements
+
+#### Hook execution architecture
+
+- **WHEN** staged-path classification is tested
+  **THEN** TypeScript, shared/type-boundary, generated, and configuration
+  changes require typecheck; documentation/assets may skip it; staged
+  deletion, rename, or an unavailable decision requires typecheck.
+- **WHEN** the pre-push classifier is tested with multiple ref lines
+  **THEN** it uses the actual pushed ref ranges, unions their paths, retains
+  only safe repository-relative source/server/test candidates for related
+  testing, and selects full for initial/deleted, malformed, unresolved,
+  shallow, empty, or failed-diff cases and all full-impact categories.
+- **WHEN** `PREPUSH_PROFILE` normalization is tested
+  **THEN** unset and `changed` select changed, `full` selects full, and any
+  other value selects full.
+- **WHEN** the changed pre-push related runner is tested
+  **THEN** a valid non-empty Vitest JSON result proceeds to build and then E2E,
+  while empty candidates, zero `testResults`, missing/invalid/incompatible
+  JSON, or a related-test failure invokes the full profile exactly once.
+- **WHEN** full pre-push execution is tested
+  **THEN** the gate order is `lint:fast` → `type-check` → `test:all` → `build`
+  → `test:build-parity` → `security-check` → `test:e2e:clean` → `test:e2e`,
+  build precedes E2E, and a failed gate prevents later gates; production
+  validation remains a separately reported gate.
 
 #### Phase 1 regression requirements
 
@@ -1374,6 +1598,7 @@ These regression requirements do not add requirements for a new `popstate` liste
 - **Husky pre-push hook verification** (`tests/unit/husky-pre-push.test.ts`):
   - T1–T3: `check-detached-leftover.sh` detects and blocks detached HEAD commits not reachable from origin/main
   - T4–T5: Pre-push wrapper (using subprocess call, not source) correctly propagates exit codes and allows full validation sequence to run when safe
+  - launcher contract: both hook wrappers remain POSIX-compatible and point to their `.bash` implementations
 - E2E against a real build/server (`tests/e2e/`, Playwright) across three projects:
   `chromium` (Desktop Chrome), `chromium-dark` (dark mode), `mobile-pixel` (Pixel 7 / Chromium)
   - `range-change.e2e.spec.ts` — year-range filtering changes the rendered bars

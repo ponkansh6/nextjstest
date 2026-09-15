@@ -1,14 +1,26 @@
 name: Next.js Build Check
 
+permissions:
+  contents: read
+
 on:
   push:
     branches: ["main"]
   pull_request:
     branches: ["main"]
+  workflow_dispatch:
+    inputs:
+      run_production:
+        description: "Run production validation against secrets.PROD_URL"
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout
@@ -36,6 +48,12 @@ jobs:
       - name: Install dependencies (lockfile must be up to date)
         run: pnpm install --frozen-lockfile
 
+      - name: Dependency audit
+        run: pnpm audit --audit-level=high
+
+      - name: Secret lint
+        run: pnpm exec secretlint "**/*"
+
       - name: Type check
         run: pnpm type-check
 
@@ -47,3 +65,108 @@ jobs:
 
       - name: Build with Next.js
         run: pnpm build
+
+  full-validation:
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.9.0
+
+      - name: Setup Node
+        id: setup-node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "pnpm"
+
+      - name: Record dependency cache status
+        run: |
+          {
+            echo "## Dependency cache"
+            echo "- pnpm cache hit: ${{ steps.setup-node.outputs.cache-hit || 'false' }}"
+            echo "- pnpm version: $(pnpm --version)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Install dependencies (lockfile must be up to date)
+        run: |
+          mkdir -p artifacts/validation-logs
+          started=$(date +%s)
+          set -o pipefail
+          trap 'status=$?; finished=$(date +%s); echo "- install dependencies: $((finished - started))s (exit $status)" >> "$GITHUB_STEP_SUMMARY"' EXIT
+          pnpm install --frozen-lockfile 2>&1 | tee artifacts/validation-logs/install.log
+
+      - name: Build with Next.js
+        run: |
+          started=$(date +%s)
+          set -o pipefail
+          trap 'status=$?; finished=$(date +%s); echo "- build: $((finished - started))s (exit $status)" >> "$GITHUB_STEP_SUMMARY"' EXIT
+          pnpm build 2>&1 | tee artifacts/validation-logs/build.log
+
+      - name: Build parity
+        run: |
+          started=$(date +%s)
+          set -o pipefail
+          trap 'status=$?; finished=$(date +%s); echo "- build parity: $((finished - started))s (exit $status)" >> "$GITHUB_STEP_SUMMARY"' EXIT
+          pnpm test:build-parity 2>&1 | tee artifacts/validation-logs/build-parity.log
+
+      - name: Security check
+        run: |
+          started=$(date +%s)
+          set -o pipefail
+          trap 'status=$?; finished=$(date +%s); echo "- security check: $((finished - started))s (exit $status)" >> "$GITHUB_STEP_SUMMARY"' EXIT
+          pnpm security-check 2>&1 | tee artifacts/validation-logs/security-check.log
+
+      - name: E2E
+        run: |
+          started=$(date +%s)
+          set -o pipefail
+          trap 'status=$?; finished=$(date +%s); echo "- E2E: $((finished - started))s (exit $status)" >> "$GITHUB_STEP_SUMMARY"' EXIT
+          { pnpm test:e2e:clean && pnpm test:e2e; } 2>&1 | tee artifacts/validation-logs/e2e.log
+
+      - name: Upload Playwright reports
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ github.run_id }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+
+      - name: Upload validation measurements
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-measurements-${{ github.run_id }}
+          path: artifacts/
+          if-no-files-found: ignore
+
+      - name: Production validation
+        if: ${{ always() && inputs.run_production }}
+        env:
+          PROD_URL: ${{ secrets.PROD_URL }}
+        run: |
+          started=$(date +%s)
+          set -o pipefail
+          trap 'status=$?; finished=$(date +%s); echo "- production validation: $((finished - started))s (exit $status)" >> "$GITHUB_STEP_SUMMARY"' EXIT
+          if [ -z "$PROD_URL" ]; then
+            echo "run_production=true requires the PROD_URL secret to be configured." >&2
+            exit 1
+          fi
+          pnpm test:prod 2>&1 | tee artifacts/validation-logs/production.log
+
+      - name: Upload validation logs
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-logs-${{ github.run_id }}
+          path: artifacts/validation-logs/
+          if-no-files-found: ignore
