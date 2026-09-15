@@ -4,7 +4,7 @@ import { MILESTONE_YEARS } from "@/lib/chartConstants";
 // 被り防止のため開始年・終了年を優先して非表示にする際の閾値(月数)。
 const EDGE_GAP_MONTHS = 36;
 
-interface XAxisTickSource {
+export interface XAxisTickSource {
   年月: string;
   [key: string]: unknown;
 }
@@ -13,6 +13,10 @@ export interface XAxisTickOptions {
   includeBoundaryTicks?: boolean;
   preserveAllMilestones?: boolean;
   maxTicks?: number;
+  periodIndex?: (period: string) => number | null;
+  milestonePredicate?: (source: XAxisTickSource) => boolean;
+  boundaryPredicate?: (source: XAxisTickSource) => boolean;
+  endpointGapPeriods?: number;
 }
 
 function monthIndex(yearMonth: string): number | null {
@@ -27,7 +31,7 @@ function monthIndex(yearMonth: string): number | null {
  * 開始年・終了年に近接しすぎていないものだけを表示する。
  * dataKey が "年月" と異なる場合(例: 四半期データの "label")は tickKey で指定する。
  */
-export function computeXAxisTicks(
+export function computePeriodXAxisTicks(
   data: XAxisTickSource[],
   tickKey: string = "年月",
   options: XAxisTickOptions = {},
@@ -40,23 +44,30 @@ export function computeXAxisTicks(
   if (data.length === 1) return [startValue];
   const endValue = String(end[tickKey]);
 
-  const startIndex = monthIndex(start.年月);
-  const endIndex = monthIndex(end.年月);
+  const periodIndex = options.periodIndex ?? monthIndex;
+  const startIndex = periodIndex(start.年月);
+  const endIndex = periodIndex(end.年月);
 
   const milestoneValues = data
     .filter((d) => d !== start && d !== end)
-    .filter((d) => {
-      const match = d.年月.match(/^(\d+)年1月$/);
-      if (!match) return false;
-      return (MILESTONE_YEARS as readonly number[]).includes(parseInt(match[1], 10));
-    })
+    .filter(
+      options.milestonePredicate ??
+        ((d) => {
+          const match = d.年月.match(/^(\d+)年1月$/);
+          return (
+            match !== null &&
+            (MILESTONE_YEARS as readonly number[]).includes(parseInt(match[1], 10))
+          );
+        }),
+    )
     .filter(
       (d) =>
         options.preserveAllMilestones ||
         (() => {
-          const idx = monthIndex(d.年月);
+          const idx = periodIndex(d.年月);
           if (idx === null || startIndex === null || endIndex === null) return true;
-          return idx - startIndex >= EDGE_GAP_MONTHS && endIndex - idx >= EDGE_GAP_MONTHS;
+          const endpointGap = options.endpointGapPeriods ?? EDGE_GAP_MONTHS;
+          return idx - startIndex >= endpointGap && endIndex - idx >= endpointGap;
         })(),
     )
     .map((d) => String(d[tickKey]));
@@ -67,7 +78,9 @@ export function computeXAxisTicks(
     options.includeBoundaryTicks === false
       ? []
       : data
-          .filter((d) => d.年月 === "2017年12月" || d.年月 === "2018年1月")
+          .filter(
+            options.boundaryPredicate ?? ((d) => d.年月 === "2017年12月" || d.年月 === "2018年1月"),
+          )
           .map((d) => String(d[tickKey]));
 
   const ticks = [...new Set([startValue, ...milestoneValues, ...boundaryValues, endValue])];
@@ -85,4 +98,13 @@ export function computeXAxisTicks(
     return interiorTicks[index];
   });
   return [...new Set([startValue, ...selectedInterior, endValue])];
+}
+
+/** CPI-compatible shorthand for the shared period-based tick selector. */
+export function computeXAxisTicks(
+  data: XAxisTickSource[],
+  tickKey: string = "年月",
+  options: XAxisTickOptions = {},
+): string[] {
+  return computePeriodXAxisTicks(data, tickKey, options);
 }

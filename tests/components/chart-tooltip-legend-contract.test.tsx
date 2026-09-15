@@ -14,7 +14,10 @@ vi.mock("recharts", () => ({
 }));
 vi.mock("@/app/components/charts/YearReferenceLines", () => ({ YearReferenceLines: () => null }));
 vi.mock("@/app/components/charts/XAxisEdgeTick", () => ({ XAxisEdgeTick: () => null }));
-vi.mock("@/app/components/charts/xAxisTicks", () => ({ computeXAxisTicks: () => [] }));
+vi.mock("@/app/components/charts/xAxisTicks", () => ({
+  computeXAxisTicks: () => [],
+  computePeriodXAxisTicks: () => [],
+}));
 vi.mock("@/app/components/ChartInfoContentRenderer", () => ({ default: () => null }));
 vi.mock("@/hooks/useChartTheme", () => ({
   useChartTheme: () => ({ chartColors: { gridStroke: "#ddd" } }),

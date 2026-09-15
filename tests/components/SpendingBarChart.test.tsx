@@ -1,4 +1,4 @@
-import { afterEach, describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import React from "react";
 import { SpendingBarChart } from "@/app/components/SpendingBarChart";
@@ -56,23 +56,11 @@ vi.mock("@/app/components/charts/XAxisEdgeTick", () => ({
   XAxisEdgeTick: () => <div data-testid="xaxis-edge-tick" />,
 }));
 
-vi.mock("@/app/components/charts/xAxisTicks", () => ({
-  computeXAxisTicks: () => [],
-}));
-
 vi.mock("@/app/components/ChartInfoContentRenderer", () => ({
   default: () => <div data-testid="chart-info-renderer" />,
 }));
 
 describe("SpendingBarChart component legendMode tests", () => {
-  const originalInnerWidthDescriptor = Object.getOwnPropertyDescriptor(window, "innerWidth");
-
-  afterEach(() => {
-    if (originalInnerWidthDescriptor) {
-      Object.defineProperty(window, "innerWidth", originalInnerWidthDescriptor);
-    }
-  });
-
   const mockData = [
     { label: "2005Q1", 年: 2005, quarter: 1, 年月: "2005Q1", 食料: 100, 住居: 50 },
     { label: "2005Q2", 年: 2005, quarter: 2, 年月: "2005Q2", 食料: 110, 住居: 55 },
@@ -451,7 +439,6 @@ describe("SpendingBarChart component legendMode tests", () => {
         食料: index,
       };
     });
-    Object.defineProperty(window, "innerWidth", { configurable: true, value: 1024 });
     renderChart({ data });
     const ticks = JSON.parse(screen.getByTestId("xaxis").dataset.ticks!) as string[];
     expect(ticks).toEqual(["2010Q1", "2015Q1", "2020Q1", "2025Q4"]);
@@ -471,7 +458,6 @@ describe("SpendingBarChart component legendMode tests", () => {
         食料: index,
       };
     });
-    Object.defineProperty(window, "innerWidth", { configurable: true, value: 1024 });
     renderChart({ data });
 
     const ticks = JSON.parse(screen.getByTestId("xaxis").dataset.ticks!) as string[];
@@ -506,7 +492,6 @@ describe("SpendingBarChart component legendMode tests", () => {
         };
       }),
     ];
-    Object.defineProperty(window, "innerWidth", { configurable: true, value: 1024 });
     renderChart({ data });
 
     expect(JSON.parse(screen.getByTestId("xaxis").dataset.ticks!)).toEqual([
@@ -530,7 +515,6 @@ describe("SpendingBarChart component legendMode tests", () => {
       { label: "2015Q1", 年: 2015, quarter: 1, 年月: "2015Q1", 食料: 2 },
       { label: "2020Q4", 年: 2020, quarter: 4, 年月: "2020Q4", 食料: 3 },
     ];
-    Object.defineProperty(window, "innerWidth", { configurable: true, value: 1024 });
     renderChart({ data });
 
     expect(JSON.parse(screen.getByTestId("xaxis").dataset.ticks!)).toEqual([
@@ -546,7 +530,6 @@ describe("SpendingBarChart component legendMode tests", () => {
       { label: "2022Q1", 年: 2022, quarter: 1, 年月: "2022Q1", 食料: 2 },
       { label: "2020Q1", 年: 2020, quarter: 1, 年月: "2020Q1", 食料: 3 },
     ];
-    Object.defineProperty(window, "innerWidth", { configurable: true, value: 1024 });
     renderChart({ data });
 
     const ticks = JSON.parse(screen.getByTestId("xaxis").dataset.ticks!) as string[];
@@ -570,7 +553,7 @@ describe("SpendingBarChart component legendMode tests", () => {
     expect(new Set(ticks).size).toBe(ticks.length);
   });
 
-  it("採用: suppresses fixed candidates when a narrow viewport cannot fit them", () => {
+  it("採用: uses period-based endpoint protection regardless of viewport width", () => {
     const data = Array.from({ length: 64 }, (_, index) => {
       const year = 2010 + Math.floor(index / 4);
       const quarter = (index % 4) + 1;
@@ -582,9 +565,34 @@ describe("SpendingBarChart component legendMode tests", () => {
         食料: index,
       };
     });
-    Object.defineProperty(window, "innerWidth", { configurable: true, value: 320 });
     renderChart({ data });
 
-    expect(JSON.parse(screen.getByTestId("xaxis").dataset.ticks!)).toEqual(["2010Q1", "2025Q4"]);
+    expect(JSON.parse(screen.getByTestId("xaxis").dataset.ticks!)).toEqual([
+      "2010Q1",
+      "2015Q1",
+      "2020Q1",
+      "2025Q4",
+    ]);
+  });
+
+  it("採用: limits mobile spending ticks to endpoints plus one milestone", () => {
+    const data = Array.from({ length: 88 }, (_, index) => {
+      const year = 2005 + Math.floor(index / 4);
+      const quarter = (index % 4) + 1;
+      return {
+        label: `${year}Q${quarter}`,
+        年: year,
+        quarter,
+        年月: `${year}Q${quarter}`,
+        食料: index,
+      };
+    });
+    renderChart({ data, isMobile: true });
+
+    expect(JSON.parse(screen.getByTestId("xaxis").dataset.ticks!)).toEqual([
+      "2005Q1",
+      "2015Q1",
+      "2026Q4",
+    ]);
   });
 });

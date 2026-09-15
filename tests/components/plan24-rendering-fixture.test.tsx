@@ -23,7 +23,10 @@ vi.mock("@/app/components/charts/YearReferenceLines", () => ({
   YearReferenceLines: () => <div />,
 }));
 vi.mock("@/app/components/charts/XAxisEdgeTick", () => ({ XAxisEdgeTick: () => <div /> }));
-vi.mock("@/app/components/charts/xAxisTicks", () => ({ computeXAxisTicks: () => [] }));
+vi.mock("@/app/components/charts/xAxisTicks", () => ({
+  computeXAxisTicks: () => [],
+  computePeriodXAxisTicks: () => [],
+}));
 vi.mock("@/app/components/ChartInfoContentRenderer", () => ({ default: () => <div /> }));
 
 const nominalFactor = 0.0011398911460950036;

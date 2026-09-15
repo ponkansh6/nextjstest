@@ -331,7 +331,7 @@ The system SHALL display economic indicators as interactive Recharts-based chart
     - When `adv=1` is enabled, only the NewGraph renders the 2018年以降の「民間最終消費支出（参考・延長）」 series; nominal and real quarterly Spending charts keep the regular public key set and the default GDP-before-2018Q1 / CTI-from-2018Q1 boundary. Quarterly public labels remain `YYYYQn`.
     - When validated GDP comparison is available, it is preferred as the `minkanMap` input for the advanced series; that map is expanded to monthly values and then smoothed with a 12-month moving average.
   - Time-series charts render the first/last (start year / end year) tick label in `--foreground` via the shared `XAxisEdgeTick` component (`src/app/components/charts/XAxisEdgeTick.tsx`), while other tick labels use the default `--chart-text` color. MajorIndicesChart, ResidualAreaChart, NewGraph, EarningsBreakdownChart, and StackedAreaChart delegate their XAxis configuration to `TimeSeriesXAxis`.
-  - Time-series charts use the shared tick policy for their year/month axis. MajorIndicesChart, ResidualAreaChart, NewGraph, EarningsBreakdownChart, and StackedAreaChart use `TimeSeriesXAxis`; its boundary-tick policy is equivalent to `includeBoundaryTicks: false` for these charts. The axis displays only the start/end labels and data-present round-number milestones (2010/1, 2015/1, 2020/1, 2025/1); non-round series-boundary labels such as 2017/12・2018/1 are omitted because the hand-off remains visible through reference lines. Candidates whose estimated SVG label rectangle intersects an endpoint are suppressed; endpoint labels retain the existing centered `text-anchor="middle"` behavior.
+  - Time-series charts use the shared period-based tick policy for their year/month axis. MajorIndicesChart, ResidualAreaChart, NewGraph, EarningsBreakdownChart, and StackedAreaChart use `TimeSeriesXAxis`; its boundary-tick policy is equivalent to `includeBoundaryTicks: false` for these charts. The axis displays only the start/end labels and data-present round-number milestones (2010/1, 2015/1, 2020/1, 2025/1); non-round series-boundary labels such as 2017/12・2018/1 are omitted because the hand-off remains visible through reference lines. The shared selector preserves endpoints, de-duplicates label values, and suppresses milestone candidates within the configured period distance of either endpoint; endpoint labels retain the existing centered `text-anchor="middle"` behavior. On mobile, `XAxisEdgeTick` avoids rendering an interior tick close enough to overlap an endpoint label.
 
 #### Scenario R2c: Data-driven earnings derivation
 
@@ -363,11 +363,19 @@ The system SHALL display economic indicators as interactive Recharts-based chart
 #### Scenario R2c-axis: Spending chart quarterly X-axis ticks
 
 - **WHEN** `SpendingBarChart` renders quarterly data
-- **THEN** its candidate ticks are the Q1 rows for fixed calendar years 2010, 2015, 2020, and 2025, limited to years present in the data range
+- **THEN** its candidate ticks are selected by the shared period-based tick core using the Q1 rows for fixed calendar years 2010, 2015, 2020, and 2025, limited to years present in the data range
 - **AND** the first and last data labels are always retained as endpoints, including a one-row dataset or a dataset beginning outside Q1
-- **AND** a candidate is suppressed when the estimated label width would place it too close to either endpoint or another selected tick
+- **AND** a candidate within 12 quarters of either endpoint is suppressed
 - **AND** labels with the same value are emitted only once, even when distinct data objects share that label
 - **AND** every emitted label uses the `YYYYQn` format
+
+#### Scenario R2c-axis-mobile: Spending chart mobile endpoint labels
+
+- **WHEN** `SpendingBarChart` renders on a mobile viewport (≤768px)
+- **THEN** its `XAxisEdgeTick` receives `avoidEndpointOverlap`
+- **AND** interior ticks near either endpoint are omitted at render time
+- **AND** the mobile selector caps the emitted ticks at the two endpoints plus one milestone
+- **AND** no collision detection is added between interior tick labels
 
 ### R3: Data Transformation (Server-Side)
 
@@ -1389,7 +1397,7 @@ Phase 3-3 is complete (implementation, audit, and verification). Phase 3-2 compl
 
 - **WHEN** `EarningsBreakdownChart` or `StackedAreaChart` is rendered
 - **THEN** its X-axis uses the shared `TimeSeriesXAxis` contract while existing ticks, Y-axis behavior, tooltip, legend, `data-testid`, and series rendering are preserved
-- **AND** `SpendingBarChart` remains outside this phase and unchanged because its quarterly bar-axis contract is chart-specific
+- **AND** the shared core in `src/app/components/charts/xAxisTicks.ts` is used by both the monthly CPI axis and the quarterly `SpendingBarChart` axis, while `SpendingBarChart` retains its chart-specific quarterly contract: a 12-quarter edge gap and mobile endpoint avoidance; no intermediate-label collision detection is added
 - **AND** Phase 4-1 is complete (implementation, audit, and verification): unit 13 files / 132 tests passed, type-check succeeded, lint reported 0 errors / 5 existing warnings, production build succeeded, and related Playwright E2E ran 128 tests with 112 passed / 16 skipped / 0 failed, including 320/375/390/430/768px coverage; `git diff --check` succeeded
 
 Phase 4-1 and Phase 4-2 are complete (implementation, audit, and verification). Phase 4-3 and Phase 4-4 are also complete (implementation, audit, and verification). Phase 3-1 through Phase 3-3 completion states are retained, and Phase 4-5 onward remains unstarted. Earlier wording that Phase 4-2 or Phase 4-3 was unstarted refers to pre-implementation history only.
@@ -1404,7 +1412,7 @@ Phase 4-1 and Phase 4-2 are complete (implementation, audit, and verification). 
 
 - **WHEN** desktop/fine-pointer or mobile/coarse-pointer charts display tooltip and legend controls
 - **THEN** hover/tap, outside-tap and scroll dismiss, same-point re-tap, chart switching, stack total/hidden-series filtering, legend `aria-pressed`/keyboard activation, mobile `details`/chevron, and the 44px minimum-style contract remain preserved
-- **AND** `SpendingBarChart`'s quarterly-specific axis remains outside this phase
+- **AND** `SpendingBarChart`'s quarterly axis participates in the shared `xAxisTicks.ts` core while retaining its 12-quarter edge gap and mobile endpoint avoidance; intermediate-label collision detection is not added
 - **AND** Phase 4-2 is complete (implementation, audit, and verification): `tests/components/chart-tooltip-legend-contract.test.tsx` passed as 1 file / 6 tests; the full suite including related existing tests passed with 53 files / 473 tests; type-check succeeded; lint reported 0 errors / 5 existing warnings; related E2E after Phase 4-1 ran 128 tests with 112 passed / 16 skipped / 0 failed; production build and `git diff --check` succeeded
 
 #### Scenario Phase 4-3 Series Registry Acceptance

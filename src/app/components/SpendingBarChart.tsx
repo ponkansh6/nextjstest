@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { CpiData } from "@/types";
 import styles from "./CpiChart.module.css";
@@ -15,69 +15,27 @@ import { CHART_INFO, type ChartInfoContent } from "../../lib/chartInfoContent";
 import { YearReferenceLines } from "./charts/YearReferenceLines";
 import { XAxisEdgeTick } from "./charts/XAxisEdgeTick";
 import { ChartDataContract, getPublicSpendingKeys } from "./ChartDataContract";
+import { computePeriodXAxisTicks } from "./charts/xAxisTicks";
 
-function uniqueSpendingRowsByLabel(rows: QuarterlyDataPoint[]): QuarterlyDataPoint[] {
-  const labels = new Set<string>();
-  return rows.filter((row) => {
-    if (labels.has(row.label)) return false;
-    labels.add(row.label);
-    return true;
+const FIXED_SPENDING_MILESTONE_YEARS = new Set([2010, 2015, 2020, 2025]);
+
+function quarterIndex(value: string): number | null {
+  const match = value.match(/^(\d{4})Q([1-4])$/);
+  return match ? Number(match[1]) * 4 + Number(match[2]) - 1 : null;
+}
+
+function computeSpendingXAxisTicks(data: QuarterlyDataPoint[], isMobile: boolean): string[] {
+  return computePeriodXAxisTicks(data, "label", {
+    periodIndex: quarterIndex,
+    endpointGapPeriods: 12,
+    includeBoundaryTicks: false,
+    // At 320px the two fixed Q1 milestones can still overlap each other even
+    // after endpoint protection. Keep the shared selector and retain one
+    // interior milestone alongside the protected endpoints.
+    maxTicks: isMobile ? 3 : undefined,
+    milestonePredicate: (row) =>
+      row.quarter === 1 && FIXED_SPENDING_MILESTONE_YEARS.has(Number(row.年)),
   });
-}
-
-function selectSpendingXAxisRows(
-  data: QuarterlyDataPoint[],
-  viewportWidth: number,
-): QuarterlyDataPoint[] {
-  const first = data[0];
-  const last = data[data.length - 1];
-  const firstLabel = first.label;
-  const lastLabel = last.label;
-  const fixedQ1Years = new Set([2010, 2015, 2020, 2025]);
-  const candidates = uniqueSpendingRowsByLabel([
-    first,
-    ...data.filter((row) => row.quarter === 1),
-    last,
-  ]);
-  const priorityTicks = candidates.filter(
-    (row) =>
-      row.label === firstLabel ||
-      row.label === lastLabel ||
-      (row.quarter === 1 && fixedQ1Years.has(row.年)),
-  );
-  // ラベル幅は12pxの「YYYY年Q1」を基準に保守的に見積もる。DOM実測は行わず、
-  // 利用可能幅とデータ上の位置だけで決定する。
-  const estimatedLabelWidth = 76;
-  const chartWidth = Math.max(0, viewportWidth - (isMobileViewport(viewportWidth) ? 56 : 70));
-  const position = (row: QuarterlyDataPoint) =>
-    (data.indexOf(row) / Math.max(1, data.length - 1)) * chartWidth;
-  const selected: QuarterlyDataPoint[] = [first];
-  for (const candidate of priorityTicks.slice(1, -1)) {
-    const previous = selected[selected.length - 1];
-    // The first and last labels are centered on their tick coordinates by
-    // XAxisEdgeTick, so keep extra space around both ends.
-    const previousGap =
-      previous.label === firstLabel ? estimatedLabelWidth * 1.5 : estimatedLabelWidth;
-    const nextGap = estimatedLabelWidth * 1.5;
-    if (
-      position(candidate) - position(previous) >= previousGap &&
-      position(last) - position(candidate) >= nextGap
-    ) {
-      selected.push(candidate);
-    }
-  }
-  // 開始・終了ラベルは常に残す。通常の表示幅では上の条件により、隣接間隔も保証される。
-  if (selected[selected.length - 1]?.label !== lastLabel) selected.push(last);
-  return uniqueSpendingRowsByLabel(selected);
-}
-
-function computeSpendingXAxisTicks(data: QuarterlyDataPoint[], viewportWidth: number): string[] {
-  if (data.length === 0) return [];
-  return selectSpendingXAxisRows(data, viewportWidth).map((row) => row.label);
-}
-
-function isMobileViewport(viewportWidth: number): boolean {
-  return viewportWidth <= 768;
 }
 
 interface QuarterlyDataPoint {
@@ -150,15 +108,6 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
     testId,
     isMobile = false,
   } = props;
-  const [viewportWidth, setViewportWidth] = useState(1024);
-
-  useEffect(() => {
-    const updateViewportWidth = () => setViewportWidth(window.innerWidth);
-    updateViewportWidth();
-    window.addEventListener("resize", updateViewportWidth);
-    return () => window.removeEventListener("resize", updateViewportWidth);
-  }, []);
-
   const supportKey = keys.includes(SUPPORT_SERIES_KEY_REAL)
     ? SUPPORT_SERIES_KEY_REAL
     : keys.includes(SUPPORT_SERIES_KEY_NOMINAL)
@@ -318,8 +267,8 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
           <BarChart
             data={chartData}
             margin={{ top: 10, right: isMobile ? 10 : 30, left: 0, bottom: 20 }}
-            barCategoryGap={isMobile ? (viewportWidth <= 350 ? "28%" : "22%") : "10%"}
-            barSize={isMobile ? (viewportWidth <= 350 ? 9 : 11) : undefined}
+            barCategoryGap={isMobile ? "22%" : "10%"}
+            barSize={isMobile ? 11 : undefined}
             onClick={onClick}
           >
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.gridStroke} />
@@ -337,10 +286,11 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
                   fill={chartColors.axisText}
                   emphasisFill={chartColors.axisTextEmphasis}
                   fontSize={isMobile ? 12 : undefined}
+                  avoidEndpointOverlap={isMobile}
                 />
               )}
               dy={10}
-              ticks={computeSpendingXAxisTicks(data, viewportWidth)}
+              ticks={computeSpendingXAxisTicks(data, isMobile)}
               interval={0}
             />
             <YAxis
