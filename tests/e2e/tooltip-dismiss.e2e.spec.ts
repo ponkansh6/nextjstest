@@ -340,20 +340,30 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
         }, scrollY);
         await waitForScrollYToSettle(page);
       };
-      const tapVisibleBar = async () => {
+      const tapVisibleBarUntilTooltip = async () => {
         let lastError: unknown;
-        for (let attempt = 0; attempt < 4; attempt += 1) {
+        for (const horizontalRatio of [0.25, 0.5, 0.75, 0.9]) {
           try {
             // The target scroll position is already established; scrolling the
             // chart here would move it away from the intersection we calculated.
-            const point = await findViewportBar(page, chart, false);
+            const point = await findViewportBar(page, chart, false, horizontalRatio);
             await page.touchscreen.tap(point.x, point.y);
+            await expect
+              .poll(() => tooltip.isVisible(), { timeout: 1200, intervals: [50, 100] })
+              .toBe(true);
             return;
           } catch (error) {
             lastError = error;
           }
         }
-        if (lastError) throw lastError;
+        const scrollY = await page.evaluate(() => window.scrollY);
+        const currentTooltipBox = await getRect(tooltip);
+        const currentLinkBox = await getRect(chartNoteLink);
+        throw new Error(
+          "Tooltipの再表示に失敗しました: 有限の実touch候補を使い切りました " +
+            `(scrollY=${scrollY}, tooltip=${JSON.stringify(currentTooltipBox)}, ` +
+            `link=${JSON.stringify(currentLinkBox)}, lastError=${String(lastError)})`,
+        );
       };
 
       const initialPoint = await findViewportBar(page, chart, false);
@@ -367,8 +377,7 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
       let resetToTop = false;
       for (let attempt = 0; attempt < 8; attempt += 1) {
         if (!(await tooltip.isVisible())) {
-          await tapVisibleBar();
-          await expect(tooltip).toBeVisible({ timeout: 5000 });
+          await tapVisibleBarUntilTooltip();
         }
 
         tooltipBox = await getRect(tooltip);
@@ -400,8 +409,7 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
       }
 
       if (!(await tooltip.isVisible())) {
-        await tapVisibleBar();
-        await expect(tooltip).toBeVisible({ timeout: 5000 });
+        await tapVisibleBarUntilTooltip();
       }
       tooltipBox = await getRect(tooltip);
       linkBox = await getRect(chartNoteLink);
