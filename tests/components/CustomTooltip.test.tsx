@@ -2,10 +2,120 @@ import { render, screen, fireEvent, within } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { CustomTooltip } from "../../src/app/components/CustomTooltip";
 import { SUPPORT_SERIES_KEY_NOMINAL } from "../../src/lib/chartConstants";
+import { CPI_CATEGORIES, getDisplayLabel, stackedColors } from "../../src/lib/chartConstants";
+import { EARNINGS_SERIES_REGISTRY } from "../../src/lib/chartConstants";
+import {
+  formatCpiTooltipTotal,
+  formatCpiTooltipValue,
+} from "../../src/app/components/CustomTooltip";
 
 const payload = [{ name: "総合", value: 112.5, color: "#1d4ed8" }];
 
 describe("CustomTooltip", () => {
+  it("renders all six registered earnings series without an omitted-payload summary", () => {
+    const earnings = [
+      "所定内給与",
+      "所定外給与",
+      "特別給与",
+      "時間当たり給与",
+      "15歳以上国民当たり給与",
+      "CPI総合(参考)",
+    ];
+    render(
+      <CustomTooltip
+        active
+        isMobile={false}
+        isTouch={false}
+        label="2024年1月"
+        payload={earnings.map((name, value) => ({ name, dataKey: name, value }))}
+        seriesMeta={earnings.map((key, order) => ({ key, label: key, order }))}
+        showAllPayload
+        tooltipBg="#000"
+        tooltipText="#fff"
+      />,
+    );
+    for (const name of earnings) expect(screen.getByText(name)).toBeDefined();
+    expect(screen.queryByText(/他 \d+ 件/)).toBeNull();
+  });
+
+  it("excludes unregistered payload keys when a metadata contract is supplied", () => {
+    render(
+      <CustomTooltip
+        active
+        isMobile={false}
+        isTouch={false}
+        label="2024年1月"
+        payload={[
+          { name: "登録済み", dataKey: "registered", value: 10 },
+          { name: "未登録", dataKey: "unregistered", value: 90 },
+        ]}
+        seriesMeta={[{ key: "registered", label: "登録済み", order: 0 }]}
+        showTotal
+        showAllPayload
+        tooltipBg="#000"
+        tooltipText="#fff"
+      />,
+    );
+    expect(screen.getByText("登録済み")).toBeDefined();
+    expect(screen.queryByText("未登録")).toBeNull();
+    expect(
+      within(screen.getByText("合計").parentElement as HTMLElement).getByText("10.00"),
+    ).toBeDefined();
+  });
+
+  it("uses only GDP before 2018Q1 and only CTI after it for detail and total", () => {
+    const gdpKey = "民間最終消費支出（参考）";
+    const ctiKey = "CTI消費支出（参考）";
+    const hiddenKey = "給与(12MA)";
+    const payload = [
+      { name: "旧GDPラベル", dataKey: gdpKey, value: 100 },
+      { name: "旧CTIラベル", dataKey: ctiKey, value: 10 },
+      { name: "境界外", dataKey: "outside", value: 50 },
+      { name: "非表示系列", dataKey: hiddenKey, value: 25 },
+    ];
+    const allowedKeys = (label?: string) =>
+      label === "2017Q4" ? [gdpKey, hiddenKey] : [ctiKey, hiddenKey];
+    const renderBoundary = (label: string) =>
+      render(
+        <CustomTooltip
+          active
+          isMobile={false}
+          isTouch={false}
+          label={label}
+          payload={payload}
+          seriesMeta={[
+            { key: gdpKey, label: "民間最終消費(総合)", color: "#38bdf8", order: 0 },
+            { key: ctiKey, label: "CTI消費(総合)", color: "#2563eb", order: 1 },
+          ]}
+          allowedKeys={allowedKeys}
+          includeUnmappedPayload
+          showTotal
+          showAllPayload
+          tooltipBg="#000"
+          tooltipText="#fff"
+        />,
+      );
+
+    const legacy = renderBoundary("2017Q4");
+    expect(screen.getByText("民間最終消費(総合)")).toBeDefined();
+    expect(screen.queryByText("CTI消費(総合)")).toBeNull();
+    expect(screen.queryByText("境界外")).toBeNull();
+    expect(screen.queryByText("非表示系列")).toBeNull();
+    expect(
+      within(screen.getByText("合計").parentElement as HTMLElement).getByText("100.00"),
+    ).toBeDefined();
+    legacy.unmount();
+
+    renderBoundary("2018Q1");
+    expect(screen.getByText("CTI消費(総合)")).toBeDefined();
+    expect(screen.queryByText("民間最終消費(総合)")).toBeNull();
+    expect(screen.queryByText("境界外")).toBeNull();
+    expect(screen.queryByText("非表示系列")).toBeNull();
+    expect(
+      within(screen.getByText("合計").parentElement as HTMLElement).getByText("10.00"),
+    ).toBeDefined();
+  });
+
   it("renders a close button on touch when active", () => {
     render(
       <CustomTooltip
@@ -302,5 +412,223 @@ describe("CustomTooltip", () => {
     expect(screen.getByText("合計").parentElement?.style.fontSize).toBe("16px");
     const feeRow = screen.getByText("食料").parentElement as HTMLElement;
     expect(within(feeRow).getByText("100.00").style.textAlign).toBe("right");
+  });
+
+  it("resolves CPI rows from metadata, including missing and zero values", () => {
+    render(
+      <CustomTooltip
+        active
+        isMobile={false}
+        isTouch={false}
+        label="2018Q1"
+        payload={[{ name: "自動名", dataKey: "住居", value: 0, color: "wrong" }]}
+        seriesMeta={[
+          { key: "住居", label: "住居", color: "red", order: 0 },
+          { key: "外食", label: "外食", color: "blue", order: 1 },
+        ]}
+        showTotal
+        showAllPayload
+        valueFormatter={(value) => (value == null ? "—" : value.toFixed(2))}
+        tooltipBg="#000"
+        tooltipText="#fff"
+      />,
+    );
+    expect(screen.getByText("住居")).toBeDefined();
+    const housingRow = screen.getByText("住居").parentElement as HTMLElement;
+    expect(within(housingRow).getByText("0.00")).toBeDefined();
+    expect(screen.getByText("外食")).toBeDefined();
+    expect(screen.getByText("—")).toBeDefined();
+    expect(
+      within(screen.getByText("合計").parentElement as HTMLElement).getByText("0.00"),
+    ).toBeDefined();
+    expect(screen.queryByText("自動名")).toBeNull();
+  });
+
+  it("renders all CPI categories in category/color/order contract and sums finite values only", () => {
+    const cpiMeta = CPI_CATEGORIES.map((key, order) => ({
+      key,
+      label: getDisplayLabel(key),
+      color: stackedColors[order],
+      order,
+    }));
+    render(
+      <CustomTooltip
+        active
+        isMobile={false}
+        isTouch={false}
+        label="2024年1月"
+        payload={[
+          { name: "wrong", dataKey: CPI_CATEGORIES[0], value: 0, color: "wrong" },
+          { name: "wrong", dataKey: CPI_CATEGORIES[1], value: 1.25 },
+          { name: "wrong", dataKey: CPI_CATEGORIES[2], value: null },
+          { name: "wrong", dataKey: CPI_CATEGORIES[3], value: Number.NaN },
+        ]}
+        seriesMeta={cpiMeta}
+        showTotal
+        showAllPayload
+        valueFormatter={formatCpiTooltipValue}
+        totalFormatter={formatCpiTooltipTotal}
+        tooltipBg="#000"
+        tooltipText="#fff"
+      />,
+    );
+    const rows = document.querySelectorAll('[data-tooltip-row="true"]');
+    expect(rows).toHaveLength(CPI_CATEGORIES.length);
+    rows.forEach((row, index) => {
+      expect(row.getAttribute("data-tooltip-key")).toBe(CPI_CATEGORIES[index]);
+      expect(row.getAttribute("data-tooltip-order")).toBe(String(index));
+      expect(row.querySelector("[data-tooltip-color]")?.getAttribute("data-tooltip-color")).toBe(
+        stackedColors[index],
+      );
+    });
+    expect(screen.getByText("0.00")).toBeDefined();
+    expect(screen.getAllByText("—").length).toBeGreaterThanOrEqual(2);
+    expect(document.querySelector('[data-tooltip-total="true"]')?.textContent).toContain("1.25");
+  });
+
+  it("keeps CPI formatter units and handles inactive or missing payload rows", () => {
+    expect(formatCpiTooltipValue(1.2)).toBe("1.20");
+    expect(formatCpiTooltipValue(null)).toBe("—");
+    expect(formatCpiTooltipValue(undefined)).toBe("—");
+    expect(formatCpiTooltipValue(Number.POSITIVE_INFINITY)).toBe("—");
+    expect(formatCpiTooltipTotal(12.345)).toBe("12.35");
+    expect(formatCpiTooltipTotal(Number.NaN)).toBe("—");
+    expect(formatCpiTooltipTotal(null)).toBe("—");
+  });
+
+  it("keeps the CPI category palette contract independent of tooltip rendering", () => {
+    expect(CPI_CATEGORIES.length).toBe(12);
+    expect(stackedColors).toHaveLength(CPI_CATEGORIES.length);
+    expect(stackedColors.every((color) => typeof color === "string" && color.length > 0)).toBe(
+      true,
+    );
+  });
+
+  it.each(["2017Q4", "2018Q1"] as const)(
+    "applies the Spending detail boundary at %s without changing the legend contract",
+    (label) => {
+      const gdpKey = "民間最終消費支出（名目）";
+      const ctiKey = "食料（名目）";
+      const allowedKeys = label === "2017Q4" ? [gdpKey] : [ctiKey];
+      render(
+        <CustomTooltip
+          active
+          isMobile={false}
+          isTouch={false}
+          label={label}
+          payload={[
+            { name: "誤表示GDP", dataKey: gdpKey, value: 100 },
+            { name: "誤表示CTI", dataKey: ctiKey, value: 25 },
+          ]}
+          seriesMeta={[
+            { key: gdpKey, label: "民間最終消費", color: "#aaa", order: 0 },
+            { key: ctiKey, label: "食料", color: "#bbb", order: 1 },
+          ]}
+          allowedKeys={allowedKeys}
+          showTotal
+          showAllPayload
+          tooltipBg="#000"
+          tooltipText="#fff"
+        />,
+      );
+      expect(screen.getByText(label)).toBeDefined();
+      if (label === "2017Q4") {
+        expect(screen.getByText("民間最終消費")).toBeDefined();
+        expect(screen.queryByText("食料")).toBeNull();
+      } else {
+        expect(screen.getByText("食料")).toBeDefined();
+        expect(screen.queryByText("民間最終消費")).toBeNull();
+      }
+      expect(
+        within(screen.getByText("合計").parentElement as HTMLElement).getByText(
+          label === "2017Q4" ? "100.00" : "25.00",
+        ),
+      ).toBeDefined();
+    },
+  );
+
+  it("renders all six salary labels at 375px and 430px jsdom widths without fixed-width truncation", () => {
+    // jsdom has no layout engine: viewport/clientWidth are the measurable contract here;
+    // scrollWidth remains a smoke check rather than a painted browser measurement.
+    for (const width of [375, 430]) {
+      Object.defineProperty(document.documentElement, "clientWidth", {
+        configurable: true,
+        value: width,
+      });
+      const view = render(
+        <CustomTooltip
+          active
+          isMobile
+          isTouch={false}
+          label="2024年1月"
+          payload={EARNINGS_SERIES_REGISTRY.map(({ key }, order) => ({
+            dataKey: key,
+            name: "raw",
+            value: order + 1,
+          }))}
+          seriesMeta={EARNINGS_SERIES_REGISTRY.map(({ key, tooltipLabel, color, order }) => ({
+            key,
+            label: tooltipLabel ?? key,
+            color,
+            order,
+          }))}
+          showAllPayload
+          tooltipBg="#000"
+          tooltipText="#fff"
+        />,
+      );
+      const tooltip = view.container.firstElementChild as HTMLElement;
+      Object.defineProperties(tooltip, {
+        clientWidth: { configurable: true, value: width },
+        scrollWidth: { configurable: true, value: width },
+      });
+      vi.spyOn(tooltip, "getBoundingClientRect").mockReturnValue({
+        width,
+        height: 240,
+        top: 427,
+        right: width,
+        bottom: 667,
+        left: 0,
+        x: 0,
+        y: 427,
+        toJSON: () => ({}),
+      });
+      expect(tooltip.style.width).toBe("100%");
+      expect(tooltip.style.overflowY).toBe("auto");
+      expect(tooltip.clientWidth).toBe(width);
+      expect(tooltip.scrollWidth).toBeLessThanOrEqual(tooltip.clientWidth);
+      expect(tooltip.getBoundingClientRect().width).toBeLessThanOrEqual(width);
+      for (const { tooltipLabel } of EARNINGS_SERIES_REGISTRY) {
+        expect(screen.getByText(tooltipLabel as string)).toBeDefined();
+      }
+      view.unmount();
+    }
+  });
+
+  it("excludes hidden CPI metadata independently from missing payload entries", () => {
+    render(
+      <CustomTooltip
+        active
+        isMobile={false}
+        isTouch={false}
+        label="2024年1月"
+        payload={[{ name: "hidden", dataKey: "住居", value: 10 }]}
+        seriesMeta={[
+          { key: "住居", label: "住居", color: stackedColors[0], order: 0 },
+          { key: "外食", label: "外食", color: stackedColors[10], order: 10 },
+        ]}
+        allowedKeys={["外食"]}
+        showTotal
+        showAllPayload
+        valueFormatter={formatCpiTooltipValue}
+        totalFormatter={formatCpiTooltipTotal}
+        tooltipBg="#000"
+        tooltipText="#fff"
+      />,
+    );
+    expect(screen.queryByText("住居")).toBeNull();
+    expect(screen.getByText("外食")).toBeDefined();
+    expect(screen.getByText("—")).toBeDefined();
+    expect(document.querySelector('[data-tooltip-total="true"]')?.textContent).toContain("0.00");
   });
 });

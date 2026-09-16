@@ -8,6 +8,10 @@ const supportKeys = {
   "spending-chart-nominal": "民間最終消費支出（名目）",
   "spending-chart-real": "民間最終消費支出（実質）",
 } as const;
+const supportLabels = {
+  "spending-chart-nominal": "民間最終消費",
+  "spending-chart-real": "民間最終消費",
+} as const;
 const ACTION_TIMEOUT = 5_000;
 const ASSERTION_TIMEOUT = 5_000;
 const NAVIGATION_TIMEOUT = 10_000;
@@ -123,7 +127,7 @@ test.describe("Plan24 rendering contract", () => {
       const expected = await expectedGdpValue(kind, "2017Q4");
       const tooltip = await hoverBar(page, id, 3);
       await expect(tooltip).toContainText(`合計${expected}`);
-      const gdpRow = tooltip.getByText(supportKeys[id], { exact: true }).locator("..");
+      const gdpRow = tooltip.getByText(supportLabels[id], { exact: true }).locator("..");
       await expect(gdpRow.getByText(expected, { exact: true })).toBeVisible();
     }
     await page.setViewportSize({ width: 1280, height: 812 });
@@ -179,7 +183,7 @@ test.describe("Plan24 rendering contract", () => {
       const valueIndex = headers.findIndex((header) => header.includes("食料"));
       expect(valueIndex).toBeGreaterThanOrEqual(0);
       const foodLabel = headers[valueIndex].trim();
-      const foodTooltipLabel = `${foodLabel}（${id.endsWith("nominal") ? "名目" : "実質"}）`;
+      const foodTooltipLabel = foodLabel;
       for (const [period, barIndex] of [
         ["2025Q1", 0],
         ["2025Q4", 3],

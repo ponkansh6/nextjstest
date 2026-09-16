@@ -1,6 +1,7 @@
 export interface CustomTooltipProps {
   active?: boolean;
-  payload?: { name: string; value: number; color?: string; dataKey?: string }[];
+  payload?: { name: string; value: number | null | undefined; color?: string; dataKey?: string }[];
+  seriesMeta?: TooltipSeriesMetadata[];
   label?: string;
   isMobile: boolean;
   isTouch: boolean;
@@ -12,6 +13,20 @@ export interface CustomTooltipProps {
   /** 合計から除外する独立比較系列 */
   totalExcludedKeys?: string[];
   showAllPayload?: boolean;
+  /** Explicit visible-series contract; a function may switch keys by period. */
+  allowedKeys?: string[] | ((label?: string) => string[]);
+  /** Opt in to the raw-payload fallback only when no allowed-key contract is supplied. */
+  includeUnmappedPayload?: boolean;
+  valueFormatter?: (value: number | null | undefined) => string;
+  totalFormatter?: (value: number) => string;
+}
+
+export interface TooltipSeriesMetadata {
+  key: string;
+  label: string;
+  color?: string;
+  order?: number;
+  advanced?: boolean;
 }
 
 export interface CpiView extends Record<string, string | number> {

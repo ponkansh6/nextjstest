@@ -117,6 +117,22 @@ export const getDisplayLabel = (key: string) => {
   return key.replace("（名目）", "").replace("（実質）", "");
 };
 
+/** Build the CPI tooltip contract from the canonical category/palette pairing. */
+export const buildCpiTooltipMetadata = (
+  visibleKeys?: ReadonlySet<string> | readonly string[],
+): TooltipSeriesProjection[] => {
+  const visible = visibleKeys
+    ? visibleKeys instanceof Set
+      ? visibleKeys
+      : new Set(visibleKeys)
+    : undefined;
+  return CPI_CATEGORIES.flatMap((key, order) =>
+    !visible || visible.has(key)
+      ? [{ key, label: getDisplayLabel(key), color: stackedColors[order], order }]
+      : [],
+  );
+};
+
 export const CANONICAL_NOMINAL_KEY = "その他の消費支出（名目）";
 export const CANONICAL_REAL_KEY = "その他の消費支出（実質）";
 
@@ -179,7 +195,44 @@ export interface SeriesMetadata {
   kind?: "area" | "line";
   advanced?: boolean;
   strokeDasharray?: string;
+  /** Tooltip's complete visible label. */
+  tooltipLabel?: string;
+  /** Legend's visible label. */
+  legendLabel?: string;
+  /** Stable display order shared by legend and tooltip. */
+  order?: number;
 }
+
+export interface TooltipSeriesProjection {
+  key: string;
+  label: string;
+  color: string;
+  order: number;
+  advanced?: boolean;
+}
+
+/** Project one display contract into the metadata consumed by CustomTooltip. */
+export const projectTooltipMetadata = (
+  series: readonly SeriesMetadata[],
+  visibleKeys?: ReadonlySet<string> | readonly string[],
+): TooltipSeriesProjection[] => {
+  const visible = visibleKeys
+    ? visibleKeys instanceof Set
+      ? visibleKeys
+      : new Set(visibleKeys)
+    : undefined;
+  return series
+    .filter(({ key }) => !visible || visible.has(key))
+    .map(
+      ({ key, tooltipLabel, legendLabel, displayName, label, color, order, advanced }, index) => ({
+        key,
+        label: tooltipLabel ?? legendLabel ?? displayName ?? label ?? key,
+        color,
+        order: order ?? index,
+        ...(advanced === undefined ? {} : { advanced }),
+      }),
+    );
+};
 
 // EarningsBreakdownChart の系列設定(データテーブル集約セクションからも参照するため
 // chart component とは独立にここへ定義する。next/dynamic で遅延ロードされる
@@ -193,6 +246,9 @@ export const EARNINGS_SERIES_REGISTRY = [
     displayName: "所定内給与",
     type: "area",
     kind: "area",
+    tooltipLabel: "所定内給与",
+    legendLabel: "所定内給与",
+    order: 0,
   },
   {
     color: "#3b82f6",
@@ -201,6 +257,9 @@ export const EARNINGS_SERIES_REGISTRY = [
     displayName: "所定外給与",
     type: "area",
     kind: "area",
+    tooltipLabel: "所定外給与",
+    legendLabel: "所定外給与",
+    order: 1,
   },
   {
     color: "#60a5fa",
@@ -209,6 +268,9 @@ export const EARNINGS_SERIES_REGISTRY = [
     displayName: "特別給与",
     type: "area",
     kind: "area",
+    tooltipLabel: "特別給与",
+    legendLabel: "特別給与",
+    order: 2,
   },
   {
     color: "#16a34a",
@@ -217,6 +279,9 @@ export const EARNINGS_SERIES_REGISTRY = [
     displayName: "時間当たり給与",
     type: "line",
     kind: "line",
+    tooltipLabel: "時間当たり給与",
+    legendLabel: "時間当たり給与",
+    order: 3,
   },
   {
     color: "#a3e635",
@@ -225,6 +290,9 @@ export const EARNINGS_SERIES_REGISTRY = [
     displayName: "15歳以上国民当たり給与",
     type: "line",
     kind: "line",
+    tooltipLabel: "15歳以上国民当たり給与",
+    legendLabel: "15歳以上国民当たり給与",
+    order: 4,
   },
   {
     color: "#eab308",
@@ -233,6 +301,9 @@ export const EARNINGS_SERIES_REGISTRY = [
     displayName: "物価指数総合(参考)",
     type: "line",
     kind: "line",
+    tooltipLabel: "物価指数総合(参考)",
+    legendLabel: "物価指数総合(参考)",
+    order: 5,
   },
 ] satisfies SeriesMetadata[];
 
@@ -248,19 +319,36 @@ export const COMPARISON_SERIES_REGISTRY = [
     color: "#65a30d",
     label: "物価指数(総合)",
     displayName: "物価指数(総合)",
+    tooltipLabel: "物価指数(総合)",
+    legendLabel: "物価指数(総合)",
+    order: 0,
   },
-  { key: "総合(12MA)", color: "#e11d48", label: "給与(総合)", displayName: "給与(総合)" },
+  {
+    key: "総合(12MA)",
+    color: "#e11d48",
+    label: "給与(総合)",
+    displayName: "給与(総合)",
+    tooltipLabel: "給与(総合)",
+    legendLabel: "給与(総合)",
+    order: 1,
+  },
   {
     key: "CTI消費支出（参考）",
     color: "#2563eb",
     label: "CTI消費(総合)",
     displayName: "CTI消費(総合)",
+    tooltipLabel: "CTI消費(総合)",
+    legendLabel: "CTI消費(総合)",
+    order: 2,
   },
   {
     key: "民間最終消費支出（参考）",
     color: "#38bdf8",
     label: "民間最終消費(総合)",
     displayName: "民間最終消費(総合)",
+    tooltipLabel: "民間最終消費(総合)",
+    legendLabel: "民間最終消費(総合)",
+    order: 3,
   },
   {
     key: "民間最終消費支出（参考・延長）",
@@ -268,6 +356,9 @@ export const COMPARISON_SERIES_REGISTRY = [
     label: "民間最終消費(延長・参考)",
     displayName: "民間最終消費(延長・参考)",
     advanced: true,
+    tooltipLabel: "民間最終消費(延長・参考)",
+    legendLabel: "民間最終消費(延長・参考)",
+    order: 4,
     strokeDasharray: "6 3",
   },
 ] satisfies SeriesMetadata[];

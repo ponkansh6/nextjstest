@@ -7,6 +7,15 @@ const WIDTHS = [320, 375, 390, 430] as const;
 const chart = (page: Page, id: string) => page.getByTestId(id);
 const bars = (root: Locator) => root.locator(".recharts-bar-rectangle");
 
+const earningsTooltipLabels = [
+  "所定内給与",
+  "所定外給与",
+  "特別給与",
+  "時間当たり給与",
+  "15歳以上国民当たり給与",
+  "物価指数総合(参考)",
+] as const;
+
 async function tapVisibleBar(page: Page, root: Locator) {
   await root.scrollIntoViewIfNeeded();
   for (let i = (await bars(root).count()) - 1; i >= 0; i -= 1) {
@@ -166,6 +175,85 @@ test.describe("消費支出グラフ モバイル可読性の証跡", () => {
       expect(overflow.scrollWidth, `${width}px: no horizontal overflow`).toBeLessThanOrEqual(
         overflow.clientWidth,
       );
+    });
+  }
+
+  for (const width of [375, 430] as const) {
+    test(`${width}px: 給与tooltipの6系列名・行・値列がviewport内`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 667 });
+      await page.goto("/");
+      await page.waitForLoadState("networkidle");
+
+      const section = page.locator("#section-earnings");
+      await expect(section).toBeVisible({ timeout: 15000 });
+      await section.scrollIntoViewIfNeeded();
+      const chart = section.locator(".recharts-wrapper").first();
+      await expect(chart).toBeVisible();
+      const box = await chart.boundingBox();
+      expect(box).not.toBeNull();
+      if (!box) return;
+      // SVGの曲線はsurface/tabにpointer eventを委譲するため直接clickせず、
+      // 実ブラウザのチャート座標へpointerを送ってwrapperの選択処理を起動する。
+      await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+
+      const tooltip = section.locator('[data-tooltip-root="true"]');
+      await expect(tooltip).toBeVisible({ timeout: 5000 });
+      const evidence = await tooltip.evaluate((root) => {
+        const rootBox = root.getBoundingClientRect();
+        const rows = [...root.querySelectorAll<HTMLElement>('[data-tooltip-row="true"]')];
+        const labels = rows.map((row) => {
+          const spans = [...row.children].filter((child) => child.tagName === "SPAN");
+          return {
+            label: spans
+              .find((span) => !span.hasAttribute("data-tooltip-color"))
+              ?.textContent?.trim(),
+            rowBox: (() => {
+              const box = row.getBoundingClientRect();
+              return { left: box.left, right: box.right, top: box.top, bottom: box.bottom };
+            })(),
+            labelMeasure: (() => {
+              const el = spans.find((span) => !span.hasAttribute("data-tooltip-color")) as
+                | HTMLElement
+                | undefined;
+              return el ? { scrollWidth: el.scrollWidth, clientWidth: el.clientWidth } : null;
+            })(),
+            value: spans.at(-1)?.textContent?.trim(),
+          };
+        });
+        return {
+          rootBox: {
+            left: rootBox.left,
+            right: rootBox.right,
+            top: rootBox.top,
+            bottom: rootBox.bottom,
+          },
+          labels,
+          viewport: { width: innerWidth, height: innerHeight },
+        };
+      });
+      expect(evidence.labels.map((row) => row.label)).toEqual([...earningsTooltipLabels]);
+      expect(evidence.labels).toHaveLength(6);
+      expect(
+        evidence.labels.every(
+          (row) =>
+            row.value &&
+            row.labelMeasure &&
+            row.labelMeasure.scrollWidth >= row.labelMeasure.clientWidth,
+        ),
+      ).toBe(true);
+      expect(evidence.rootBox.left).toBeGreaterThanOrEqual(0);
+      expect(evidence.rootBox.right).toBeLessThanOrEqual(evidence.viewport.width);
+      expect(evidence.rootBox.top).toBeGreaterThanOrEqual(0);
+      expect(evidence.rootBox.bottom).toBeLessThanOrEqual(evidence.viewport.height);
+      expect(
+        evidence.labels.every(
+          (row) =>
+            row.rowBox.left >= 0 &&
+            row.rowBox.right <= evidence.viewport.width &&
+            row.rowBox.top >= 0 &&
+            row.rowBox.bottom <= evidence.viewport.height,
+        ),
+      ).toBe(true);
     });
   }
 

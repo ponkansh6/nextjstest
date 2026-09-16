@@ -5,7 +5,18 @@ import type { Dispatch, SetStateAction } from "react";
 import type { QuarterlyView } from "@/types/chart";
 import type { CpiData } from "@/types";
 import { createDualResetHandler } from "../../lib/resetLogic";
-import { colors, stackedColors, stackedKeys, targetKeys } from "../../lib/chartConstants";
+import {
+  colors,
+  stackedColors,
+  stackedKeys,
+  targetKeys,
+  buildCpiTooltipMetadata,
+  getLegendLabel,
+  EARNINGS_SERIES_REGISTRY,
+  COMPARISON_SERIES_REGISTRY,
+  projectTooltipMetadata,
+} from "../../lib/chartConstants";
+import { formatCpiTooltipTotal, formatCpiTooltipValue } from "./CustomTooltip";
 import { useChartTooltipController } from "./charts/useChartTooltipProps";
 import { LazyMount } from "./LazyMount";
 import { MajorIndicesChart } from "./MajorIndicesChart";
@@ -122,6 +133,56 @@ export function CpiChartSections({
   newGraphInfo,
   chartTooltip,
 }: CpiChartSectionsProps) {
+  const stackedTooltipMeta = buildCpiTooltipMetadata(
+    stackedKeys.filter((key) => !stackedHiddenKeys.includes(key)),
+  );
+  const earningsTooltipMeta = projectTooltipMetadata(
+    EARNINGS_SERIES_REGISTRY,
+    EARNINGS_SERIES_REGISTRY.filter(({ key }) => !hiddenKeys.includes(key)).map(({ key }) => key),
+  );
+  const comparisonVisibleKeys = COMPARISON_SERIES_REGISTRY.filter(
+    ({ advanced }) => !advanced || showAdvanced,
+  )
+    .filter(({ key }) => !maHiddenKeys.includes(key))
+    .map(({ key }) => key);
+  const comparisonProjectedTooltipMeta = projectTooltipMetadata(
+    COMPARISON_SERIES_REGISTRY,
+    comparisonVisibleKeys,
+  );
+  const comparisonTooltipAllowedKeys = (label?: string) => {
+    const period = label?.match(/^(\d{4})Q([1-4])$/);
+    if (!period) return comparisonVisibleKeys;
+    const isLegacyGdp = Number(period[1]) < 2018;
+    return comparisonVisibleKeys.filter(
+      (key) =>
+        key === "CPI総合(12MA)" ||
+        key === "総合(12MA)" ||
+        (isLegacyGdp
+          ? key === "民間最終消費支出（参考）"
+          : key === "CTI消費支出（参考）" || key === "民間最終消費支出（参考・延長）"),
+    );
+  };
+  const spendingTooltipMeta = (keys: string[], chartColorsForSeries: string[]) =>
+    keys.map((key, order) => ({
+      key,
+      label: getLegendLabel(key),
+      color:
+        key === "民間最終消費支出（名目）" || key === "民間最終消費支出（実質）"
+          ? chartColors.barFill
+          : chartColorsForSeries[order],
+      order,
+    }));
+  const spendingAllowedKeys = (keys: string[], hidden: string[]) => (label?: string) => {
+    const period = label?.match(/^(\d{4})Q[1-4]$/);
+    if (!period) return [];
+    const isLegacyGdp = Number(period[1]) < 2018;
+    const supportKey = keys.find(
+      (key) => key === "民間最終消費支出（名目）" || key === "民間最終消費支出（実質）",
+    );
+    return keys.filter(
+      (key) => !hidden.includes(key) && (isLegacyGdp ? key === supportKey : key !== supportKey),
+    );
+  };
   return (
     <>
       <div
@@ -161,7 +222,13 @@ export function CpiChartSections({
         onToggle={handleStackedLegendClick}
         chartColors={chartColors}
         chartInfoContent={stackedAreaInfo}
-        {...chartTooltip.bind("section-stacked")}
+        {...chartTooltip.bind("section-stacked", {
+          showTotal: true,
+          showAllPayload: true,
+          seriesMeta: stackedTooltipMeta,
+          valueFormatter: formatCpiTooltipValue,
+          totalFormatter: formatCpiTooltipTotal,
+        })}
         onReset={() =>
           setStackedHiddenKeys((prev) =>
             prev.length === stackedKeys.length ? [] : [...stackedKeys],
@@ -198,6 +265,8 @@ export function CpiChartSections({
           {...chartTooltip.bind("section-consumption-nominal", {
             showTotal: true,
             showAllPayload: true,
+            seriesMeta: spendingTooltipMeta(nominalKeysWithSupport, nominalColorsWithSupport),
+            allowedKeys: spendingAllowedKeys(nominalKeysWithSupport, nominalHiddenKeys),
           })}
           isMobile={isMobile}
           hiddenQuarters={hiddenQuarters}
@@ -234,6 +303,8 @@ export function CpiChartSections({
           {...chartTooltip.bind("section-consumption-real", {
             showTotal: true,
             showAllPayload: true,
+            seriesMeta: spendingTooltipMeta(realKeysWithSupport, [...realColors, "#94a3b8"]),
+            allowedKeys: spendingAllowedKeys(realKeysWithSupport, realHiddenKeys),
           })}
           isMobile={isMobile}
           hiddenQuarters={hiddenQuarters}
@@ -262,7 +333,10 @@ export function CpiChartSections({
           onToggle={handleLegendClick}
           chartColors={chartColors}
           isMobile={isMobile}
-          {...chartTooltip.bind("section-earnings")}
+          {...chartTooltip.bind("section-earnings", {
+            showAllPayload: true,
+            seriesMeta: earningsTooltipMeta,
+          })}
         />
       </LazyMount>
       <LazyMount sectionId="section-residual">
@@ -315,7 +389,11 @@ export function CpiChartSections({
               </label>
             </div>
           }
-          {...chartTooltip.bind("section-new-graph", { dataLength: mergedData.length })}
+          {...chartTooltip.bind("section-new-graph", {
+            dataLength: mergedData.length,
+            seriesMeta: comparisonProjectedTooltipMeta,
+            allowedKeys: comparisonTooltipAllowedKeys,
+          })}
         />
       </LazyMount>
     </>

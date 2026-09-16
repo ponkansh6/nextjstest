@@ -4,6 +4,7 @@ import type { CSSProperties, ReactElement, PointerEvent as ReactPointerEvent } f
 import { useState, useEffect, useCallback } from "react";
 import { useChartTheme } from "@/hooks/useChartTheme";
 import { CustomTooltip } from "../CustomTooltip";
+import type { TooltipSeriesMetadata } from "@/types/chart";
 
 export interface ChartTooltipProps {
   cursor: { stroke: string; strokeWidth: number; strokeOpacity: number };
@@ -19,6 +20,11 @@ export interface ChartTooltipBindOptions {
   showTotal?: boolean;
   totalExcludedKeys?: string[];
   showAllPayload?: boolean;
+  seriesMeta?: TooltipSeriesMetadata[];
+  allowedKeys?: string[] | ((label?: string) => string[]);
+  includeUnmappedPayload?: boolean;
+  valueFormatter?: (value: number | null | undefined) => string;
+  totalFormatter?: (value: number) => string;
 }
 
 export const useChartTooltipController = ({
@@ -192,6 +198,11 @@ export const useChartTooltipController = ({
               showTotal={options?.showTotal}
               totalExcludedKeys={options?.totalExcludedKeys}
               showAllPayload={options?.showAllPayload}
+              seriesMeta={options?.seriesMeta}
+              allowedKeys={options?.allowedKeys}
+              includeUnmappedPayload={options?.includeUnmappedPayload}
+              valueFormatter={options?.valueFormatter}
+              totalFormatter={options?.totalFormatter}
             />
           ),
         },

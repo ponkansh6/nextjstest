@@ -49,11 +49,9 @@ export const NewGraph: React.FC<NewGraphProps> = ({
   const visibleLineConfigs = COMPARISON_SERIES_REGISTRY.filter(
     (config) => !config.advanced || isAdvanced,
   );
-  // Keep the established legend labels available even when the independently
-  // validated GDP comparison index is absent. Only omit the all-null line.
-  const renderedLineConfigs = visibleLineConfigs.filter((config) =>
-    data.some((row) => typeof row[config.key] === "number" && Number.isFinite(row[config.key])),
-  );
+  // Keep the established legend and line contracts even when a series is
+  // entirely null. Recharts simply has no path to paint for that series.
+  const renderedLineConfigs = visibleLineConfigs;
   return (
     <div id={sectionId} className={styles.chartSection} style={{ scrollMarginTop: "5rem" }}>
       <div className={styles.chartTitleRow}>
@@ -71,7 +69,7 @@ export const NewGraph: React.FC<NewGraphProps> = ({
       <div className={styles.legendContainer}>
         <div className={styles.legendSection}>
           <div className={styles.legendItems}>
-            {visibleLineConfigs.map(({ key, color, displayName }) => (
+            {visibleLineConfigs.map(({ key, color, displayName, legendLabel }) => (
               <button
                 key={key}
                 data-testid={`new-graph-legend-${key}`}
@@ -81,7 +79,7 @@ export const NewGraph: React.FC<NewGraphProps> = ({
                 aria-pressed={!hiddenKeys.includes(key)}
               >
                 <span className={styles.legendIcon} style={{ backgroundColor: color }} />
-                <span className={styles.legendLabel}>{displayName}</span>
+                <span className={styles.legendLabel}>{legendLabel ?? displayName}</span>
               </button>
             ))}
           </div>

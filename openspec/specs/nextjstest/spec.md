@@ -108,6 +108,63 @@ Static CSV files (not publicly served) stored in `data/source/`:
 - `data/source/scheduled_earnings.csv` — Scheduled earnings
 - `data/source/total_worked_hours.csv` — Total worked hours
 - `data/source/population_statistics.csv` — Population statistics
+
+Chart display metadata is sourced from `src/lib/chartConstants.ts`: the ordered
+12-item `CPI_CATEGORIES` list is positionally paired with the 12-item
+`stackedColors` palette at the same index. The CPI expense keys are 住居,
+家具・家事用品, 被服及び履物, 保健医療, 教育, 光熱・水道, 教養娯楽,
+交通・自動車等関係費, 通信, 外食以外食料, 外食, 諸雑費; their values are
+validated CPI contribution/display-unit values. `EARNINGS_SERIES_REGISTRY` is the six-series salary registry;
+`tooltipLabel` is the complete tooltip name and `displayName`/`legendLabel` keep
+the existing legend contract. `COMPARISON_SERIES_REGISTRY` is the five-entry
+comparison registry, where `tooltipLabel === legendLabel` is required; each entry
+also owns `color`, `order`, and `advanced`. `projectTooltipMetadata` resolves
+these fields by `key`, never from Recharts `payload.name`.
+
+`formatCpiTooltipValue` and `formatCpiTooltipTotal` originate in
+`src/app/components/CustomTooltip.tsx`. They accept CPI display-unit values and
+format finite values to two decimals; null/undefined/missing/non-finite values
+render as `—` and are excluded from totals. `formatCpiTooltipTotal` accepts
+nullable input and returns `—` for non-finite values instead of throwing or
+emitting `NaN`/`Infinity`. The applicable expense list is the keys passed to
+`SpendingBarChart`: standalone GDP before 2018Q1, and CTI expense items from
+2018Q1 onward.
+
+### Data Flow
+
+`CpiChartSections` projects CPI, salary, and comparison entries through the
+shared `projectTooltipMetadata` helper. `useChartTooltipProps` passes that
+projection through `useChartTooltipController` to `CustomTooltip`, which
+resolves rows by `dataKey` and takes label, color, and order from the same key.
+Missing registered payload values are complemented as `—`; Spending's explicit
+`allowedKeys` function enforces the GDP-before-2018Q1 / CTI-from-2018Q1 boundary.
+Comparison tooltip visibility uses the same advanced/hidden registry projection
+as NewGraph drawing and legend, then applies the 2017Q4/2018Q1 boundary to
+GDP/CTI detail rows; registered null values remain in the tooltip as `—`, so the
+three surfaces have the same visible registered-series set for each period.
+
+`allowedKeys` is applied before totals and registered metadata rows. Spending,
+CPI, salary, and comparison paths retain strict filtering: when `allowedKeys` is
+present, every payload key (including unknown keys) must be in that set, so
+boundary-inapplicable and hidden series cannot return in detail rows or totals.
+`includeUnmappedPayload` only permits the original payload-key fallback on an
+explicit caller path that omits `allowedKeys`.
+
+For the CPI `StackedAreaChart`, the visible `CPI_CATEGORIES` projection is the
+tooltip row source: a normal hover renders all 12 applicable expense rows and a
+`合計` row, while a hidden legend series is excluded from both the rows and the
+total.
+
+### Component Tree
+
+`CpiChart` → `CpiChartSections` → `NewGraph`, `EarningsBreakdownChart`, and
+`SpendingBarChart`. `CustomTooltip` is the shared display contract consumed by
+those charts through `useChartTooltipProps`. `ChartLegend` and each inline
+legend preserve registry/key order, label, color, hidden state, and advanced
+state; NewGraph additionally retains defined legend entries for all-null data.
+Drawing, legend, and tooltip bind to the same metadata keys while retaining
+each chart's existing renderer.
+
 - `data/source/population_statistics.metadata.json` — 総務省統計局「労働力調査（基本集計）」長期時系列 表1-b-1（e-Stat `statInfId=000031831366`）の取得URL、表ID、取得日時、公式Excelサイズ/SHA-256、欠測ポリシーを記録する。
 - `data/source/employment_indices.csv` — Employment indices
 - `data/source/hon-mks202512.csv` — 毎月勤労統計調査の生データ（常用労働者数、出勤日数、実労働時間数、現金給与額）
@@ -785,6 +842,63 @@ The system SHALL make the nominal and real consumption charts readable and opera
 - **AND** category names, selected/focused states, and close/reopen actions remain understandable without relying on color alone
 - **AND** the page has no horizontal overflow at 375px
 
+### R21: Chart Tooltip and Legend Display Contract
+
+The system SHALL resolve tooltip display rows from chart-side series metadata while preserving the existing tooltip interaction controller.
+
+#### Scenario R21a: CPI rows and total
+
+- **WHEN** a CPI category has value `0`, null/undefined, or is absent from the Recharts payload
+  **THEN** the applicable visible category row remains in registry order, `0` uses the existing two-decimal formatter, null/undefined/missing renders as `—`, and only finite numeric values contribute to `合計`.
+- **WHEN** a CPI category is hidden through its legend
+  **THEN** its row is excluded by visibility state, independently from payload omission, and GDP/support series are not added to the CPI total.
+- **WHEN** a CPI stacked tooltip is shown before or after a legend visibility change
+  **THEN** its shared tooltip root contains 12 visible expense rows plus `合計` initially, and 11 rows with `住居` absent after hiding `住居`.
+
+#### Scenario R21b: Earnings full labels on mobile
+
+- **WHEN** a salary tooltip is displayed at 375px or 430px
+  **THEN** its date, salary category/item, and complete registry tooltip labels are visible without ellipsis, nowrap, fixed-width truncation, or horizontal scrolling; labels wrap naturally and the numeric value column remains readable.
+
+#### Scenario R21c: Comparison registry synchronization
+
+- **WHEN** the three-series comparison is rendered before/at the `2017Q4`/`2018Q1` boundary or with advanced on/off and hidden keys
+  **THEN** drawing, tooltip, and legend use the same visible registry keys, complete tooltip/legend labels, colors, numeric order, and advanced state, while tooltip detail/total includes GDP before 2018Q1 and CTI (including the opt-in extension) from 2018Q1.
+- **WHEN** an unregistered comparison key reaches the tooltip
+  **THEN** the comparison tooltip excludes it whenever `allowedKeys` is present, including when the key is hidden or outside the GDP/CTI boundary; the original payload-key fallback is available only through an explicit opt-in path with no `allowedKeys`.
+
+#### Scenario R21d: Interaction compatibility
+
+- **WHEN** users use hover, click, touch, close/Escape dismissal, or page/programmatic scrolling
+  **THEN** the existing trigger, active dot, guide line, dismissal, and scroll-suppression behavior remains unchanged while only display metadata and row formatting differ.
+- **AND** `tests/components/CustomTooltip.test.tsx` covers the independent
+  `CPI_CATEGORIES.length === stackedColors.length` contract, all 12 CPI rows,
+  positional colors/order, zero/null/undefined/missing payload, hidden metadata,
+  finite-only totals, safe value/NaN/null/total formatter behavior, the
+  2017Q4 GDP and 2018Q1 CTI detail boundary, and six complete salary labels at
+  the 375px/430px jsdom viewport-width contract (with no fixed-width tooltip
+  style).
+- **AND** the 375px/430px test is explicitly a component/DOM check: jsdom does
+  not paint layout, so it checks `clientWidth`, fixed mobile width,
+  `scrollWidth <= clientWidth`, mocked root `getBoundingClientRect().width`,
+  overflow handling, and label presence; painted browser rectangles remain an
+  E2E responsibility.
+- **AND** real-browser E2E evidence is maintained by
+  `tests/e2e/consumption-mobile-readability.e2e.spec.ts` (375px and 430px salary
+  tooltip viewports: six complete labels, all `data-tooltip-row` elements,
+  root/row viewport bounding boxes, label `scrollWidth`/`clientWidth`, and value
+  columns), `tests/e2e/cpi-chart-categories.e2e.spec.ts` (all 12 CPI rows,
+  `合計`, missing-value `—` contract when present, and hidden-row behavior using
+  the shared `data-tooltip-root`/`data-tooltip-row`/`data-tooltip-total` DOM),
+  and `tests/e2e/advanced-series.e2e.spec.ts` (advanced on/off comparison of
+  legend and tooltip labels, colors, and numeric order, including the existing
+  2018Q1 boundary data when available).
+- **AND** `tests/unit/series-registry.test.ts` covers every salary/comparison registry entry, key-based projection, labels, colors, order, advanced state, and tooltip/legend equality; `tests/components/chart-tooltip-legend-contract.test.tsx` drives all comparison registry entries from one projection and verifies legend/tooltip DOM equality, advanced on/off, hidden keys, all-null legend retention, and unregistered-payload exclusion.
+- **AND** that same component contract records the unchanged hover/click trigger,
+  touch outside-dismiss, chart switching, Escape dismissal, and scroll
+  suppression/re-tap path; `tests/hooks/useChartTooltipController.test.tsx`
+  remains the focused controller regression contract.
+
 ### R15: Touch Tooltip Interaction & Scroll Suppression
 
 The system SHALL ensure that chart tooltips on touch devices open only on explicit taps and do not trigger during vertical scrolling or programmatic scroll animations.
@@ -933,8 +1047,15 @@ The system SHALL display the sum of active series in stacked chart tooltips when
 - **THEN** the total reflects only the remaining visible series
 - **AND WHEN** mobile view truncates series list to the top 5 entries
 - **THEN** the total is calculated from all active series prior to truncation
-- **AND WHEN** other charts (such as stacked contributions) are viewed
+- **AND WHEN** an unrelated non-stacked chart is viewed
 - **THEN** no total row is rendered.
+
+#### Scenario R16b: CPI Stacked Tooltip Total
+
+- **WHEN** the user hovers over a data point in the CPI `StackedAreaChart`
+- **THEN** the tooltip renders all 12 visible CPI expense rows in registry order and a `合計` row in the same root
+- **AND WHEN** the user hides the `住居` series through its legend
+- **THEN** the tooltip renders the remaining 11 rows, excludes `住居`, and recalculates `合計` from only those visible rows
 
 #### Scenario R11c: Advanced Series Toggle
 
@@ -1093,17 +1214,18 @@ Page (RSC)
     ├── Range sheet — BottomSheet wrapping ChartFilters (start year / end year selects with "最大期間" button)
     ├── CpiChartSections
     │   ├── MajorIndicesChart → CustomTooltip
-    │   ├── StackedAreaChart → CustomTooltip — always-expanded 12-series legend (compact on mobile)
+    │   ├── StackedAreaChart → CustomTooltip — registry-resolved all-applicable CPI rows, colors, values, and total (12 rows + 合計; hidden rows excluded)
     │   │   └── belowChartSlot: CagrPanel — popup link + compact BottomSheet (R18)
     │   ├── SpendingBarChart (nominal) — mobile-specific spacing/ticks, bar width, and all-value tooltip/details; closed-by-default legend; legacy GDP before 2018Q1 and CTI expense fields from 2018Q1
     │   ├── SpendingBarChart (real) — mobile-specific spacing/ticks, bar width, and all-value tooltip/details; closed-by-default legend; legacy GDP before 2018Q1 and CTI expense fields from 2018Q1
-    │   ├── EarningsBreakdownChart → CustomTooltip
+    │   ├── EarningsBreakdownChart → CustomTooltip — complete registry labels with natural wrapping and stable value column
     │   ├── ResidualAreaChart → CustomTooltip
-    │   └── NewGraph → ChartInfoContentRenderer → CustomTooltip — comparison visualization receives CTI plus GDP comparison-only normalized values; it omits unavailable GDP lines
+    │   └── NewGraph → ChartInfoContentRenderer → CustomTooltip — comparison visualization receives CTI plus GDP comparison-only normalized values; unavailable registered lines remain as null-compatible line contracts
     ├── ChartInfoButton → ChartInfoContentRenderer — Indicator explanations (uses `chartKey` plus loader-resolved state in `src/lib/chartInfoContent.ts`)
     ├── ChartDataContract — stable normalized chart data attributes for each of the seven targets
     ├── ChartExportButton — CSV download of the displayed rows (inside each chart's <details>)
-    └── CustomTooltip (React.memo, module-level component for charts, managed via `useChartTooltipController`)
+    ├── ChartLegend — defined visible-series legend contract; retains values whose current data is null
+    └── CustomTooltip (React.memo, module-level component for charts, managed via `useChartTooltipController`; key-based metadata supplies label/color/order and the total row follows the Spending tooltip hierarchy)
 ```
 
 The repository validation boundary is the Husky hook tree rather than a UI
@@ -1240,6 +1362,9 @@ adapter entry point; `quarterlyGdpTransform.ts` joins validated GDP comparisons 
 - CSV export is serialized as RFC4180 records terminated by CRLF, including the final record, with existing comma/quote/CR/LF escaping and quote round-trip preserved.
 - Phase 4-4 parity evidence is intentionally split: unit tests own CSV serializer edge cases, integration tests use the independent hand-written `tests/fixtures/chart-parity-independent.json` at the real component boundary, and Playwright E2E compares all rows and columns for all seven targets against production data/source, including `hidden`, `adv=1`, nominal/real, and the GDP boundary labels `2017Q4` / `2018Q1`. The fixture is not generated from app constants or the DOM.
 - Tooltip aggregation follows the display contract: before 2018Q1 it receives only the standalone GDP comparison field; from 2018Q1 it receives only visible CTI expense fields. GDP comparison values are never included in the post-2018 CTI total.
+- Tooltip display flow is metadata-first: chart-side registry projections resolve the label, color, order, and advanced state before `CustomTooltip` renders rows; Recharts `payload.name` is only a legacy fallback for unregistered/direct callers. CPI rows are completed from the applicable visible category list, preserving zero and null/missing values independently of payload presence.
+- The concrete client flow is `CpiChartSections → useChartTooltipProps → CustomTooltip`: category/registry metadata and period-specific `allowedKeys` are projected in `CpiChartSections`, forwarded by the existing controller, and used by `CustomTooltip` to complete missing payload rows. Hidden and GDP/CTI boundary-inapplicable keys are removed before detail rendering and totals.
+- Legend/rendering and tooltip collections use the same advanced/hidden registry projection even when data is unavailable: legends and comparison tooltips retain defined all-null series, while registered missing values render as `—`.
 - Missing, ended, unready, or failed-validation GDP comparison values remain `null` in the public projection and are hidden at the chart boundary; GDP is never zero-filled, copied, interpolated, or rescaled at the boundary.
 - The fixture comparison gate independently observes loader data, status, and load/status errors, compares each observation to the fixed golden digest, and verifies every declared GDP source artifact path and SHA-256 before treating the normal path as valid. The annual public loader has no runtime cache wrapper; cache behavior is therefore N/A and is not a required comparison dimension.
 - The gate's invalid-input paths remain fail-closed: missing or malformed CPI/CTI 2025 inputs select the complete compatible 2020 pair when it validates, while invalid annual GDP omits every annual GDP raw/comparison key. Invalid quarterly artifacts return no quarterly rows with `comparisonReady: false`; validated raw quarterly rows are retained when independent confirmation is pending or failed, but comparison values are not generated or published, with no annual-data fallback. The readiness predicate is metadata-only, and never makes unready raw rows comparison-ready. CTI rows may remain present when GDP is unavailable.
@@ -1249,6 +1374,21 @@ adapter entry point; `quarterlyGdpTransform.ts` joins validated GDP comparisons 
 - On mobile (≤768px), `SpendingBarChart` uses consumption-only layout options for margins, CPI-style axis ticks, typography, bar width/spacing, all-value tooltip/details, and safe-area-aware internal scrolling; both nominal and real legends are closed-by-default collapsible controls whose single-line summaries report selected expense-item/quarter counts and filtering state, without a separate 四半期 heading. The real chart may additionally show the linked nominal-section note when `linkedSectionId` is provided; the nominal chart omits it. Selected-quarter emphasis is not added. Shared tooltip/axis behavior is not changed for other charts.
 
 Data Sources are unchanged by the mobile-readability plan: no new source, transformation, normalization, or CTI/GDP join is adopted. Plan24's standalone-GDP-before-2018Q1 and CTI-stacked-from-2018Q1 contract remains authoritative.
+
+Display metadata is sourced from `CPI_CATEGORIES`/`stackedColors`, `EARNINGS_SERIES_REGISTRY`, and `COMPARISON_SERIES_REGISTRY`; their key/color/label/order/advanced projection is passed from `CpiChartSections` through `useChartTooltipProps` to `CustomTooltip`. Chart rendering and legends use the same visible-key projection. Charts with an explicit registry/allowed-key contract exclude unregistered, hidden, and boundary-inapplicable payload keys. The raw-key fallback is only available when `allowedKeys` is absent and the caller explicitly opts in; Spending, CPI, and salary do not opt in.
+
+The component/DOM contract tests measure salary tooltip conditions at 375px and
+430px by setting `document.documentElement.clientWidth` and asserting the
+mobile root's fixed `width: 100%`, `clientWidth`, `scrollWidth <= clientWidth`,
+and `getBoundingClientRect().width <= viewport width`; jsdom does not paint
+layout. The salary full-label, CPI 12-row/total, and comparison boundary,
+unknown/hidden DOM contracts therefore remain deterministic component checks.
+The corresponding real-data browser E2E checks are implemented in the existing
+production-data specs: salary full labels and root/row rectangles at
+375px/430px, CPI 12 rows/total, and comparison tooltip/legend name equality.
+They intentionally use the shared fixture and existing chart locators; comments
+in each spec record the live-data and lazy-mount prerequisites rather than
+skipping when a prerequisite is unavailable.
 
 Phase 1-1〜1-3 responsibilities are split without changing the public flow: `useCpiChartDisplayData` is the existing adapter boundary that calls `filterDataByYear`, excludes quarters, and calls `mergeChartData`; `useCagrState` owns the existing calculation calls plus CAGR input, result, error, and reset state; `src/lib/urlState.ts` performs pure URL query conversion; `useUrlState` owns `history.replaceState`; and `useAdvancedPreference` owns the `newGraphShowAdvanced` saving effect. The URL keys are `from`, `to`, `hidden`, and `adv`, with `hidden` limited to `stackedHiddenKeys`; normal/moving-average legend and nominal/real visibility remain React-owned. URL conversion preserves existing query parameters and deletes a key when its value is the default. The storage keys remain `newGraphShowAdvanced` and `theme`; the advanced preference effect reruns for changes to `showAdvanced` and its `startYear`/`endYear`/hidden-key dependencies, but saves only `showAdvanced` as `1` or `0` at the existing effect timing and remains guarded by `try/catch`. No module performs `window` or `localStorage` access during render or at module scope, including during SSR/module loading.
 

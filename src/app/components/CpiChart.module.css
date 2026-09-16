@@ -442,6 +442,13 @@
   max-width: 100%;
 }
 
+/* Shared tooltip labels are metadata-driven and must remain readable on narrow screens. */
+.customTooltip {
+  box-sizing: border-box;
+  max-width: min(100%, 32rem);
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 768px) {
   .spendingChartSection {
     padding-left: 0.5rem;

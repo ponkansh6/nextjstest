@@ -109,17 +109,43 @@ test.describe("ツールチップ積み上げ合計表示 E2E", () => {
     expect(totalTextBefore).not.toEqual(totalTextAfter);
   });
 
-  test("T9: 物価指数 費目別寄与度（section-stacked）のツールチップには「合計」が出ない", async ({
+  test("T9: CPI費目別（section-stacked）のツールチップに12費目と「合計」が出る", async ({
     page,
   }) => {
     const stackedChart = page.locator("#section-stacked");
     await expect(stackedChart).toBeVisible();
+    await stackedChart.scrollIntoViewIfNeeded();
 
-    await stackedChart.locator(".recharts-surface").hover({ position: { x: 200, y: 150 } });
-
-    const tooltip = stackedChart.locator(".recharts-tooltip-wrapper");
-    if (await tooltip.isVisible().catch(() => false)) {
-      await expect(tooltip.locator("text=合計")).toHaveCount(0);
+    const areaPaths = stackedChart.locator("path.recharts-area-area:visible");
+    await expect(areaPaths).not.toHaveCount(0);
+    const viewport = page.viewportSize();
+    expect(viewport).not.toBeNull();
+    if (!viewport) return;
+    let box: { x: number; y: number; width: number; height: number } | null = null;
+    for (let index = 0; index < (await areaPaths.count()); index += 1) {
+      const candidate = await areaPaths.nth(index).boundingBox();
+      if (
+        candidate &&
+        candidate.width > 0 &&
+        candidate.height > 0 &&
+        candidate.x >= 0 &&
+        candidate.y >= 0 &&
+        candidate.x + candidate.width <= viewport.width &&
+        candidate.y + candidate.height <= viewport.height
+      ) {
+        box = candidate;
+        break;
+      }
     }
+    expect(box, "表示中Area pathにviewport内の有効なboundingBoxがある").not.toBeNull();
+    if (!box) return;
+
+    await page.mouse.move(box.x + box.width * 0.1, box.y + box.height * 0.1);
+    await page.mouse.move(box.x + box.width * 0.5, box.y + box.height * 0.45, { steps: 8 });
+
+    const tooltip = stackedChart.locator('[data-tooltip-root="true"]');
+    await expect(tooltip).toBeVisible();
+    await expect(tooltip.locator('[data-tooltip-total="true"]')).toBeVisible();
+    await expect(tooltip.locator('[data-tooltip-row="true"]')).toHaveCount(12);
   });
 });

@@ -4,14 +4,16 @@ import expected from "../fixtures/plan27-private-consumption.json";
 import anchors from "../fixtures/minkan-extension-anchors.json";
 
 const section = (page: import("@playwright/test").Page) => page.locator("#section-new-graph");
-const regular = "民間最終消費支出（参考）";
-const extended = "民間最終消費支出（参考・延長）";
+const regularKey = "民間最終消費支出（参考）";
+const regularLabel = "民間最終消費(総合)";
+const extendedKey = "民間最終消費支出（参考・延長）";
+const extendedLabel = "民間最終消費(延長・参考)";
 
 async function ready(page: import("@playwright/test").Page) {
   await page.goto("/");
   const graph = section(page);
   await expect(graph).toBeVisible({ timeout: 15000 });
-  await expect(graph.getByTestId(`new-graph-line-${regular}`)).toBeAttached();
+  await expect(graph.getByTestId(`new-graph-line-${regularKey}`)).toBeAttached();
   return graph;
 }
 
@@ -135,7 +137,7 @@ test.describe("Plan27 民間最終消費支出の実ブラウザー回帰", () =
     expect(ranges.every((part) => part.min <= part.max)).toBe(true);
     for (let i = 1; i < ranges.length; i++)
       expect(ranges[i].min).toBeGreaterThanOrEqual(ranges[i - 1].min);
-    expect(await line.getAttribute("data-key")).toBe(regular);
+    expect(await line.getAttribute("data-key")).toBe(regularKey);
 
     await page.locator('a[href="#data-table-section-new-graph"]').click();
     const table = page.locator("#data-table-section-new-graph");
@@ -148,7 +150,7 @@ test.describe("Plan27 民間最終消費支出の実ブラウザー回帰", () =
     // after narrowing the URL range; the table always renders the selected range tail.
     await page.goto("/?from=2014&to=2014");
     const narrowed = section(page);
-    await expect(narrowed.getByTestId(`new-graph-line-${regular}`)).toBeAttached();
+    await expect(narrowed.getByTestId(`new-graph-line-${regularKey}`)).toBeAttached();
     const narrowedPath = narrowed.locator(`path[data-key="${expected.series}"]`);
     const firstX = Number((await narrowedPath.getAttribute("d"))!.match(/^M\s*([-+\d.]+)/)?.[1]);
     const narrowedSurface = narrowed.locator("svg.recharts-surface");
@@ -159,8 +161,8 @@ test.describe("Plan27 民間最終消費支出の実ブラウザー回帰", () =
     );
     await expect(narrowed.locator(".recharts-tooltip-wrapper")).toBeVisible();
     const tooltip = narrowed.locator(".recharts-tooltip-wrapper");
-    await expect(tooltip).toContainText(regular);
-    expect(await exactNumberFromTooltip(tooltip, regular)).toBeCloseTo(
+    await expect(tooltip).toContainText(regularLabel);
+    expect(await exactNumberFromTooltip(tooltip, regularLabel)).toBeCloseTo(
       independent.result["2014年1月"],
       2,
     );
@@ -176,16 +178,16 @@ test.describe("Plan27 民間最終消費支出の実ブラウザー回帰", () =
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto("/?adv=1");
     const graph = section(page);
-    await expect(graph.getByTestId(`new-graph-line-${regular}`)).toBeAttached();
-    await expect(graph.getByTestId(`new-graph-line-${extended}`)).toBeAttached();
-    await expect(graph.getByTestId(`new-graph-legend-${regular}`)).toBeVisible();
-    await expect(graph.getByTestId(`new-graph-legend-${extended}`)).toBeVisible();
+    await expect(graph.getByTestId(`new-graph-line-${regularKey}`)).toBeAttached();
+    await expect(graph.getByTestId(`new-graph-line-${extendedKey}`)).toBeAttached();
+    await expect(graph.getByTestId(`new-graph-legend-${regularKey}`)).toContainText(regularLabel);
+    await expect(graph.getByTestId(`new-graph-legend-${extendedKey}`)).toContainText(extendedLabel);
     await expect(graph.getByRole("img")).toBeVisible();
     const rawAnchor = anchors.anchors.find((anchor) => anchor.month === "2018年1月")!;
     const extendedExpected =
       (rawAnchor.raw / anchors.normalization.baseRaw) * anchors.normalization.scale;
     expect(extendedExpected).toBeCloseTo(rawAnchor.knownNormalized, 10);
-    const extendedPath = graph.locator(`path[data-key="${extended}"]`);
+    const extendedPath = graph.locator(`path[data-key="${extendedKey}"]`);
     const extendedD = await extendedPath.getAttribute("d");
     expect(pathRanges(extendedD!)).toEqual(
       expect.arrayContaining([expect.objectContaining({ command: "M" })]),
@@ -193,20 +195,20 @@ test.describe("Plan27 民間最終消費支出の実ブラウザー回帰", () =
     const info = graph.getByRole("button", { name: /データソースを表示/ });
     await info.click();
     await expect(page.getByText(/年次GDP統計の名目値を各暦月へ展開/)).toBeVisible();
-    await expect(graph.getByTestId(`new-graph-line-${regular}`)).toHaveAttribute(
+    await expect(graph.getByTestId(`new-graph-line-${regularKey}`)).toHaveAttribute(
       "data-key",
-      regular,
+      regularKey,
     );
-    await expect(graph.getByTestId(`new-graph-line-${extended}`)).toHaveAttribute(
+    await expect(graph.getByTestId(`new-graph-line-${extendedKey}`)).toHaveAttribute(
       "data-key",
-      extended,
+      extendedKey,
     );
     await page.keyboard.press("Escape");
     await expect(page.getByText(/年次GDP統計の名目値を各暦月へ展開/)).toBeHidden();
     await page.goto("/?adv=1&from=2014&to=2014");
     const mobileNarrow = section(page);
     await expect(mobileNarrow.locator("svg.recharts-surface")).toBeVisible();
-    const mobilePath = mobileNarrow.locator(`path[data-key="${regular}"]`);
+    const mobilePath = mobileNarrow.locator(`path[data-key="${regularKey}"]`);
     const mobileD = await mobilePath.getAttribute("d");
     expect(mobileD).toMatch(/^M/);
     const mobileFirstPoint = mobileD!.match(/^M\s*([-+\d.]+)[,\s]+([-+\d.]+)/);
@@ -218,7 +220,7 @@ test.describe("Plan27 民間最終消費支出の実ブラウザー回帰", () =
     await tapSvgPoint(surface, Number(mobileFirstPoint![1]), Number(mobileFirstPoint![2]));
     const mobileTooltip = mobileNarrow.locator(".recharts-tooltip-wrapper");
     await expect(mobileTooltip).toBeVisible();
-    expect(await exactNumberFromTooltip(mobileTooltip, regular)).toBeCloseTo(
+    expect(await exactNumberFromTooltip(mobileTooltip, regularLabel)).toBeCloseTo(
       independent.result["2014年1月"],
       2,
     );

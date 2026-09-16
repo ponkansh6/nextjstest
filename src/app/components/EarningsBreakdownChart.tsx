@@ -12,7 +12,7 @@ import type { ChartTooltipProps } from "./charts/useChartTooltipProps";
 import { YearReferenceLines } from "./charts/YearReferenceLines";
 import { TimeSeriesXAxis } from "./charts/TimeSeriesXAxis";
 import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
-import { EARNINGS_SERIES_REGISTRY } from "../../lib/chartConstants";
+import { EARNINGS_SERIES_REGISTRY, getLegendLabel } from "../../lib/chartConstants";
 import styles from "./CpiChart.module.css";
 import type { CpiData } from "@/types";
 import { ChartDataContract } from "./ChartDataContract";
@@ -78,7 +78,9 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
                 aria-pressed={!hiddenKeys.includes(key)}
               >
                 <span className={styles.legendIcon} style={{ backgroundColor: color }} />
-                <span className={styles.legendLabel}>{displayName || key}</span>
+                <span className={styles.legendLabel}>
+                  {getLegendLabel(key) || displayName || key}
+                </span>
               </button>
             ))}
           </div>

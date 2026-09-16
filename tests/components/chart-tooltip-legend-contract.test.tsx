@@ -5,8 +5,9 @@ import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 vi.mock("recharts", () => ({
   ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   BarChart: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  LineChart: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   Bar: () => <div />,
-  Line: () => <div />,
+  Line: ({ "data-testid": testId }: { "data-testid"?: string }) => <div data-testid={testId} />,
   CartesianGrid: () => <div />,
   XAxis: () => <div />,
   YAxis: () => <div />,
@@ -26,6 +27,8 @@ vi.mock("@/hooks/useChartTheme", () => ({
 import { ChartLegend } from "../../src/app/components/ChartLegend";
 import { CustomTooltip } from "../../src/app/components/CustomTooltip";
 import { SpendingBarChart } from "../../src/app/components/SpendingBarChart";
+import { NewGraph } from "../../src/app/components/NewGraph";
+import { COMPARISON_SERIES_REGISTRY, projectTooltipMetadata } from "../../src/lib/chartConstants";
 import { useChartTooltipController } from "../../src/app/components/charts/useChartTooltipProps";
 import { renderHook, act } from "@testing-library/react";
 
@@ -60,6 +63,126 @@ describe("chart tooltip and legend shared contract", () => {
     scrollY = 50;
     act(() => window.dispatchEvent(new Event("scroll")));
     expect(result.current.bind("one").tooltipProps.active).toBeFalsy();
+
+    // The metadata bind path must retain the existing Escape dismissal contract.
+    act(() => result.current.bind("one").onClick());
+    act(() => fireEvent.keyDown(document, { key: "Escape" }));
+    expect(result.current.bind("one").tooltipProps.active).toBeFalsy();
+  });
+
+  it.each([false, true])(
+    "projects every comparison registry entry to matching legend/tooltip DOM with advanced=%s",
+    (showAdvanced) => {
+      const visibleRegistry = COMPARISON_SERIES_REGISTRY.filter(
+        ({ advanced }) => !advanced || showAdvanced,
+      );
+      const metadata = projectTooltipMetadata(visibleRegistry);
+      const data = [
+        {
+          年月: "2018年1月",
+          総合: 100,
+          生鮮食品を除く総合: 100,
+          持家の帰属家賃を除く総合: 100,
+          "消費支出（参考）": null,
+          "CPI総合(参考)": null,
+          ...Object.fromEntries(visibleRegistry.map(({ key }) => [key, null])),
+        },
+      ];
+
+      const { container } = render(
+        <>
+          <NewGraph
+            data={data}
+            hiddenKeys={[]}
+            onToggle={vi.fn()}
+            chartColors={{ gridStroke: "#ddd", axisText: "#111" }}
+            isMobile={false}
+            tooltipProps={{
+              cursor: { stroke: "#ddd", strokeWidth: 1, strokeOpacity: 0.6 },
+              trigger: "hover",
+              content: <div />,
+            }}
+            showAdvanced={showAdvanced}
+          />
+          <CustomTooltip
+            active
+            isMobile={false}
+            isTouch={false}
+            label="2018年1月"
+            payload={visibleRegistry.map(({ key }) => ({ dataKey: key, name: "raw", value: null }))}
+            seriesMeta={metadata}
+            showAllPayload
+            tooltipBg="#000"
+            tooltipText="#fff"
+          />
+        </>,
+      );
+
+      const legendItems = [...container.querySelectorAll("[data-testid^='new-graph-legend-']")];
+      expect(legendItems).toHaveLength(visibleRegistry.length);
+      expect(container.querySelectorAll("[data-testid^='new-graph-line-']")).toHaveLength(
+        visibleRegistry.length,
+      );
+      visibleRegistry.forEach(({ key, legendLabel, color, order }) => {
+        const legend = container.querySelector(
+          `[data-testid="new-graph-legend-${key}"]`,
+        ) as HTMLElement;
+        expect(legend.textContent).toContain(legendLabel);
+        expect(
+          legend.querySelector('[style*="background-color"]')?.getAttribute("style"),
+        ).toContain(color);
+        const row = container.querySelector(`[data-tooltip-key="${key}"]`) as HTMLElement;
+        expect(row.textContent).toContain(legendLabel);
+        expect(row.getAttribute("data-tooltip-order")).toBe(String(order));
+        expect(row.querySelector("[data-tooltip-color]")?.getAttribute("data-tooltip-color")).toBe(
+          color,
+        );
+      });
+    },
+  );
+
+  it("keeps comparison legend entries for all-null data, filters hidden keys, and drops unknown payload", () => {
+    const hiddenKey = COMPARISON_SERIES_REGISTRY[1].key;
+    const visible = COMPARISON_SERIES_REGISTRY.filter(({ key }) => key !== hiddenKey);
+    render(
+      <CustomTooltip
+        active
+        isMobile={false}
+        isTouch={false}
+        label="2017Q4"
+        payload={[
+          ...visible.map(({ key }) => ({ dataKey: key, name: "raw", value: null })),
+          { dataKey: "unregistered", name: "unregistered", value: 99 },
+        ]}
+        seriesMeta={projectTooltipMetadata(visible)}
+        showAllPayload
+        tooltipBg="#000"
+        tooltipText="#fff"
+      />,
+    );
+    expect(screen.queryByText("給与(総合)")).toBeNull();
+    expect(screen.queryByText("unregistered")).toBeNull();
+    expect(screen.getAllByText("—").length).toBe(visible.length);
+  });
+
+  it("allows explicit raw-key fallback only when allowedKeys is omitted", () => {
+    const visible = COMPARISON_SERIES_REGISTRY.slice(0, 3);
+    render(
+      <CustomTooltip
+        active
+        isMobile={false}
+        isTouch={false}
+        label="2018Q1"
+        payload={[{ dataKey: "future-reference", name: "future-reference", value: 42 }]}
+        seriesMeta={projectTooltipMetadata(visible)}
+        includeUnmappedPayload
+        showAllPayload
+        tooltipBg="#000"
+        tooltipText="#fff"
+      />,
+    );
+    expect(screen.getByText("future-reference")).toBeDefined();
+    expect(screen.getByText("42.00")).toBeDefined();
   });
 
   it("computes total from visible payload and excludes configured comparison series", () => {

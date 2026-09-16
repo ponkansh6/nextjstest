@@ -549,3 +549,88 @@ test.describe("3種比較チャートの上級者向け隠し系列 (adv=1)", ()
     );
   });
 });
+
+test("比較3種の凡例とtooltipがラベル・色・順序を共有する", async ({ page }) => {
+  await page.goto("/?adv=1");
+  await page.waitForLoadState("networkidle");
+  const section = page.locator("#section-new-graph");
+  await expect(section).toBeVisible();
+  const chart = section.locator(".recharts-wrapper").first();
+
+  const readContract = async () => {
+    await chart.scrollIntoViewIfNeeded();
+    const surface = chart.locator("svg.recharts-surface");
+    await expect(surface).toBeVisible();
+    const box = await surface.boundingBox();
+    expect(box).not.toBeNull();
+    if (!box) return null;
+    // wrapperの矩形中央ではなく、再描画後のSVG surfaceのplot領域を
+    // 実際にhoverする。チャート外から段階的に移動して遷移後もpointermoveを発生させる。
+    await page.mouse.move(0, 0);
+    await page.mouse.move(box.x + box.width * 0.5, box.y + box.height * 0.45, { steps: 8 });
+    const tooltip = page.locator('[data-tooltip-root="true"]');
+    await expect(tooltip).toBeVisible({ timeout: 5000 });
+    return tooltip.evaluate((root) => ({
+      legends: [
+        ...document.querySelectorAll<HTMLElement>(
+          '#section-new-graph [data-testid^="new-graph-legend-"]',
+        ),
+      ].map((legend) => ({
+        label: legend.textContent?.trim(),
+        color: (() => {
+          const icon = legend.querySelector("span") as HTMLElement | null;
+          return icon ? getComputedStyle(icon).backgroundColor : null;
+        })(),
+        order: [...(legend.parentElement?.children ?? [])].indexOf(legend),
+      })),
+      rows: [...root.querySelectorAll<HTMLElement>('[data-tooltip-row="true"]')].map((row) => ({
+        label: row.getAttribute("data-tooltip-label"),
+        color: row.getAttribute("data-tooltip-color"),
+        order: Number(row.getAttribute("data-tooltip-order")),
+      })),
+    }));
+  };
+
+  // 前提: ?adv=1 は既存のadvanced toggle状態を使い、実在する線をhoverして
+  // 2018Q1以降のCPI/給与/CTI(および延長) tooltipを取得する。
+  const advanced = await readContract();
+  expect(advanced).not.toBeNull();
+  if (!advanced) return;
+  expect(advanced.legends.map((item) => item.label)).toEqual([
+    "物価指数(総合)",
+    "給与(総合)",
+    "CTI消費(総合)",
+    "民間最終消費(総合)",
+    "民間最終消費(延長・参考)",
+  ]);
+  expect(advanced.rows.map((item) => item.label)).toEqual(
+    expect.arrayContaining(["物価指数(総合)", "給与(総合)", "CTI消費(総合)"]),
+  );
+  expect(advanced.rows.map((item) => item.order)).toEqual(
+    [...advanced.rows.map((item) => item.order)].sort((a, b) => a - b),
+  );
+  expect(advanced.rows.every((row) => row.label && row.color)).toBe(true);
+  const expectedColors: Record<string, { hex: string; rgb: string }> = {
+    "物価指数(総合)": { hex: "#65a30d", rgb: "rgb(101, 163, 13)" },
+    "給与(総合)": { hex: "#e11d48", rgb: "rgb(225, 29, 72)" },
+    "CTI消費(総合)": { hex: "#2563eb", rgb: "rgb(37, 99, 235)" },
+    "民間最終消費(総合)": { hex: "#38bdf8", rgb: "rgb(56, 189, 248)" },
+    "民間最終消費(延長・参考)": { hex: "#7dd3fc", rgb: "rgb(125, 211, 252)" },
+  };
+  for (const row of advanced.rows) {
+    expect(row.color?.toLowerCase()).toBe(expectedColors[row.label!].hex);
+    const legend = advanced.legends.find((item) => item.label === row.label);
+    expect(legend?.color).toBe(expectedColors[row.label!].rgb);
+  }
+
+  await page.goto("/");
+  await page.waitForLoadState("networkidle");
+  const normal = await readContract();
+  expect(normal).not.toBeNull();
+  if (!normal) return;
+  expect(normal.legends.map((item) => item.label)).not.toContain("民間最終消費(延長・参考)");
+  expect(normal.rows.map((item) => item.label)).not.toContain("民間最終消費(延長・参考)");
+  expect(normal.rows.map((item) => item.label)).toEqual(
+    expect.arrayContaining(["物価指数(総合)", "給与(総合)", "CTI消費(総合)"]),
+  );
+});

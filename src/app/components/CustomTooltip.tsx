@@ -2,6 +2,18 @@
 
 import React from "react";
 import type { CustomTooltipProps } from "@/types/chart";
+import styles from "./CpiChart.module.css";
+
+type TooltipDisplayPayload = NonNullable<CustomTooltipProps["payload"]>[number] & {
+  order?: number;
+};
+
+export const formatCpiTooltipValue = (value: number | null | undefined): string =>
+  typeof value === "number" && Number.isFinite(value) ? value.toFixed(2) : "—";
+
+/** Format a CPI total without allowing invalid upstream values to throw. */
+export const formatCpiTooltipTotal = (value: number | null | undefined): string =>
+  typeof value === "number" && Number.isFinite(value) ? value.toFixed(2) : "—";
 
 export const CustomTooltip = React.memo<CustomTooltipProps>(
   ({
@@ -16,6 +28,11 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
     showTotal,
     totalExcludedKeys = [],
     showAllPayload = false,
+    seriesMeta,
+    allowedKeys,
+    includeUnmappedPayload = false,
+    valueFormatter,
+    totalFormatter,
   }) => {
     if (!active || !payload) {
       return null;
@@ -26,23 +43,67 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
     const labelFontSize = isMobile ? "11px" : "13px";
     const padding = isMobile ? "10px 14px" : "12px";
 
+    const resolvedAllowedKeys = allowedKeys
+      ? new Set(typeof allowedKeys === "function" ? allowedKeys(label) : allowedKeys)
+      : null;
+    // An explicit allowed-key contract is authoritative for every payload,
+    // including unknown keys. Raw-key fallback is only an explicit escape
+    // hatch for callers that do not provide a period/visibility contract.
+    const canIncludeUnmappedPayload = includeUnmappedPayload && !resolvedAllowedKeys;
+    const visiblePayload = resolvedAllowedKeys
+      ? payload.filter((entry) => resolvedAllowedKeys.has((entry.dataKey ?? entry.name) as string))
+      : payload;
+    const visibleMeta = seriesMeta?.filter(
+      (meta) => !resolvedAllowedKeys || resolvedAllowedKeys.has(meta.key),
+    );
+    const resolvedPayload: TooltipDisplayPayload[] = visibleMeta
+      ? [
+          ...[...visibleMeta]
+            .sort(
+              (a, b) => (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER),
+            )
+            .map((meta) => {
+              const entry = payload.find(
+                (candidate) => (candidate.dataKey ?? candidate.name) === meta.key,
+              );
+              return {
+                name: meta.label,
+                value: entry?.value,
+                color: meta.color ?? entry?.color,
+                dataKey: meta.key,
+                order: meta.order,
+              };
+            }),
+          ...(canIncludeUnmappedPayload
+            ? visiblePayload
+                .filter(
+                  (entry) =>
+                    !visibleMeta.some((meta) => meta.key === (entry.dataKey ?? entry.name)),
+                )
+                .map((entry) => ({ ...entry, name: entry.name }))
+            : []),
+        ]
+      : visiblePayload;
+
     const total = showTotal
-      ? payload.reduce(
+      ? resolvedPayload.reduce(
           (acc, e) =>
             totalExcludedKeys.includes(e.dataKey as string)
               ? acc
-              : acc + (typeof e.value === "number" ? e.value : 0),
+              : acc + (typeof e.value === "number" && Number.isFinite(e.value) ? e.value : 0),
           0,
         )
       : null;
 
-    const displayPayload = isMobile
-      ? [...payload].sort((a, b) => {
-          const valA = typeof a.value === "number" ? a.value : 0;
-          const valB = typeof b.value === "number" ? b.value : 0;
-          return valB - valA;
-        })
-      : payload;
+    const displayPayload = seriesMeta
+      ? resolvedPayload
+      : isMobile
+        ? [...resolvedPayload].sort((a, b) => {
+            const valA = typeof a.value === "number" ? a.value : 0;
+            const valB = typeof b.value === "number" ? b.value : 0;
+            return valB - valA;
+          })
+        : resolvedPayload;
 
     // Consumption tooltips opt into every series on either viewport. When the
     // option is omitted, retain the existing mobile/desktop presentation.
@@ -52,7 +113,9 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
 
     return (
       <div
+        className={styles.customTooltip}
         data-custom-tooltip="true"
+        data-tooltip-root="true"
         style={{
           backgroundColor: tooltipBg,
           border: isMobile ? "1px solid var(--card-border)" : "none",
@@ -97,6 +160,10 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
         >
           <p
             style={{
+              flex: "1 1 auto",
+              minWidth: 0,
+              overflowWrap: "anywhere",
+              wordBreak: "normal",
               color: tooltipText,
               fontSize: labelFontSize,
               fontWeight: "bold",
@@ -147,6 +214,7 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
         </div>
         {total !== null && (
           <div
+            data-tooltip-total="true"
             style={{
               display: "flex",
               alignItems: "baseline",
@@ -161,12 +229,17 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
             }}
           >
             <span>合計</span>
-            <span>{total.toFixed(2)}</span>
+            <span>{totalFormatter ? totalFormatter(total) : total.toFixed(2)}</span>
           </div>
         )}
         {topPayload.map((entry, index) => (
           <div
             key={`item-${index}`}
+            data-tooltip-row="true"
+            data-tooltip-key={entry.dataKey}
+            data-tooltip-label={entry.name}
+            data-tooltip-color={entry.color}
+            data-tooltip-order={entry.order ?? index}
             style={{
               display: "flex",
               alignItems: "center",
@@ -179,6 +252,7 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
           >
             {entry.color && (
               <span
+                data-tooltip-color={entry.color}
                 style={{
                   display: "inline-block",
                   width: "8px",
@@ -189,7 +263,16 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
                 }}
               />
             )}
-            <span style={{ minWidth: 0, overflowWrap: "anywhere" }}>{entry.name}</span>
+            <span
+              style={{
+                minWidth: 0,
+                flex: "1 1 auto",
+                overflowWrap: "anywhere",
+                wordBreak: "normal",
+              }}
+            >
+              {entry.name}
+            </span>
             <span
               style={{
                 flexShrink: 0,
@@ -198,7 +281,15 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
                 whiteSpace: "nowrap",
               }}
             >
-              {typeof entry.value === "number" ? entry.value.toFixed(2) : entry.value}
+              {valueFormatter
+                ? valueFormatter(entry.value)
+                : entry.value == null
+                  ? "—"
+                  : typeof entry.value === "number"
+                    ? Number.isFinite(entry.value)
+                      ? entry.value.toFixed(2)
+                      : "—"
+                    : entry.value}
             </span>
           </div>
         ))}

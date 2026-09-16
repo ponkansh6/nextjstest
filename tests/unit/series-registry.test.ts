@@ -10,7 +10,12 @@ import {
   QUARTERLY_GDP_RAW_REAL_KEY,
   SUPPORT_SERIES_KEY_NOMINAL,
   SUPPORT_SERIES_KEY_REAL,
+  CPI_CATEGORIES,
+  getDisplayLabel,
+  stackedColors,
   type SeriesMetadata,
+  buildCpiTooltipMetadata,
+  projectTooltipMetadata,
 } from "../../src/lib/chartConstants";
 
 const projectMetadata = (series: readonly SeriesMetadata[]) =>
@@ -143,5 +148,103 @@ describe("series registry contracts", () => {
       COMPARISON_SERIES_REGISTRY.find(({ key }) => key === "民間最終消費支出（参考・延長）")
         ?.advanced,
     ).toBe(true);
+  });
+
+  it("exposes stable tooltip/legend labels and unique numeric order", () => {
+    expect(
+      EARNINGS_SERIES_REGISTRY.every((series) => series.tooltipLabel && series.order !== undefined),
+    ).toBe(true);
+    expect(
+      COMPARISON_SERIES_REGISTRY.every((series) => series.tooltipLabel === series.legendLabel),
+    ).toBe(true);
+    expect(new Set(COMPARISON_SERIES_REGISTRY.map((series) => series.order)).size).toBe(
+      COMPARISON_SERIES_REGISTRY.length,
+    );
+    expect(COMPARISON_SERIES_REGISTRY.map(({ order }) => order)).toEqual([0, 1, 2, 3, 4]);
+  });
+
+  it("keeps comparison tooltip labels, colors, order, and advanced visibility synchronized", () => {
+    expect(
+      COMPARISON_SERIES_REGISTRY.map(
+        ({ key, tooltipLabel, legendLabel, color, order, advanced }) => ({
+          key,
+          tooltipLabel,
+          legendLabel,
+          color,
+          order,
+          advanced: advanced ?? false,
+        }),
+      ),
+    ).toEqual([
+      {
+        key: "CPI総合(12MA)",
+        tooltipLabel: "物価指数(総合)",
+        legendLabel: "物価指数(総合)",
+        color: "#65a30d",
+        order: 0,
+        advanced: false,
+      },
+      {
+        key: "総合(12MA)",
+        tooltipLabel: "給与(総合)",
+        legendLabel: "給与(総合)",
+        color: "#e11d48",
+        order: 1,
+        advanced: false,
+      },
+      {
+        key: "CTI消費支出（参考）",
+        tooltipLabel: "CTI消費(総合)",
+        legendLabel: "CTI消費(総合)",
+        color: "#2563eb",
+        order: 2,
+        advanced: false,
+      },
+      {
+        key: "民間最終消費支出（参考）",
+        tooltipLabel: "民間最終消費(総合)",
+        legendLabel: "民間最終消費(総合)",
+        color: "#38bdf8",
+        order: 3,
+        advanced: false,
+      },
+      {
+        key: "民間最終消費支出（参考・延長）",
+        tooltipLabel: "民間最終消費(延長・参考)",
+        legendLabel: "民間最終消費(延長・参考)",
+        color: "#7dd3fc",
+        order: 4,
+        advanced: true,
+      },
+    ]);
+  });
+
+  it("projects tooltip labels by key and preserves registry order/color", () => {
+    expect(projectTooltipMetadata(COMPARISON_SERIES_REGISTRY)).toEqual(
+      COMPARISON_SERIES_REGISTRY.map(({ key, tooltipLabel, color, order, advanced }) => ({
+        key,
+        label: tooltipLabel,
+        color,
+        order,
+        ...(advanced === undefined ? {} : { advanced }),
+      })),
+    );
+    expect(projectTooltipMetadata(EARNINGS_SERIES_REGISTRY, ["CPI総合(参考)"])[0]).toMatchObject({
+      key: "CPI総合(参考)",
+      label: "物価指数総合(参考)",
+      order: 5,
+    });
+  });
+
+  it("builds all CPI tooltip metadata from the category/palette pairing", () => {
+    expect(buildCpiTooltipMetadata()).toEqual(
+      CPI_CATEGORIES.map((key, order) => ({
+        key,
+        label: getDisplayLabel(key),
+        color: stackedColors[order],
+        order,
+      })),
+    );
+    expect(buildCpiTooltipMetadata([CPI_CATEGORIES[0]])).toHaveLength(1);
   });
 });
