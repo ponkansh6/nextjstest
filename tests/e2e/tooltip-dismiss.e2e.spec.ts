@@ -19,6 +19,7 @@ async function findViewportBar(
   page: Page,
   chart: Locator,
   scrollIntoView = true,
+  horizontalRatio = 0.5,
 ): Promise<ViewportPoint> {
   if (scrollIntoView) await chart.scrollIntoViewIfNeeded();
   const bars = chart.locator(".recharts-bar-rectangle");
@@ -28,19 +29,25 @@ async function findViewportBar(
   for (let index = 0; index < (await bars.count()); index += 1) {
     const bar = bars.nth(index);
     const box = await bar.boundingBox();
-    if (
-      box &&
-      box.width > 0 &&
-      box.height > 0 &&
-      box.x >= 0 &&
-      box.y >= 0 &&
-      box.x + box.width <= viewport.width &&
-      box.y + box.height <= viewport.height
-    ) {
-      return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+    if (!box || box.width <= 0 || box.height <= 0) continue;
+
+    // A partially clipped bar is still actionable when the actual tap point
+    // is inside the fixed viewport. Keep the same point used for the tap in
+    // the candidate check so this remains a real-coordinate interaction.
+    const point = {
+      x: box.x + box.width * horizontalRatio,
+      y: box.y + box.height / 2,
+    };
+    if (point.x >= 0 && point.x <= viewport.width && point.y >= 0 && point.y <= viewport.height) {
+      return {
+        x: point.x,
+        y: point.y,
+      };
     }
   }
-  throw new Error("No actionable bar is fully inside the viewport");
+  throw new Error(
+    `No actionable bar tap point is inside the viewport (${viewport.width}x${viewport.height})`,
+  );
 }
 
 const viewportBar = (page: Page, testId: string) => findViewportBar(page, page.getByTestId(testId));
@@ -279,42 +286,94 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
     ).toBeVisible({ timeout: 5000 });
   });
 
-  test("tooltipと実質chartNoteリンクが重なる座標ではリンク遷移を遮蔽しtooltipを維持する", async ({
-    page,
-  }) => {
-    await page.setViewportSize({ width: 412, height: 915 });
-    await page.goto("/");
-    await page.waitForLoadState("networkidle");
+  test.describe("固定viewportでのchartNote/Tooltip重なり", () => {
+    // 実touchを持つmobile-pixel、viewport 412x915、実Tooltipと実座標の前提を固定する。
+    test.use({ viewport: { width: 412, height: 915 } });
 
-    const chart = page.getByTestId(REAL);
-    await chart.scrollIntoViewIfNeeded();
-    const point = await findViewportBar(page, chart, false);
-    await page.touchscreen.tap(point.x, point.y);
+    test("tooltipと実質chartNoteリンクが重なる座標ではリンク遷移を遮蔽しtooltipを維持する", async ({
+      page,
+    }) => {
+      await page.goto("/");
+      await page.waitForLoadState("networkidle");
 
-    const tooltip = page.locator("[data-custom-tooltip]");
-    const chartNoteLink = chart.locator('a[href="#section-consumption-nominal"]');
-    await expect(tooltip).toBeVisible({ timeout: 5000 });
-    await expect(chartNoteLink).toBeVisible();
+      const chart = page.getByTestId(REAL);
+      const realTab = page
+        .locator('[class*="sectionTabs"]')
+        .getByRole("button", { name: "消費(実質)", exact: true });
+      await realTab.tap();
+      await expect(chart).toBeInViewport({ timeout: 5000 });
+      await waitForScrollYToSettle(page);
 
-    const tooltipBox = await tooltip.boundingBox();
-    const linkBox = await chartNoteLink.boundingBox();
-    expect(tooltipBox).not.toBeNull();
-    expect(linkBox).not.toBeNull();
-    if (!tooltipBox || !linkBox) return;
+      const tooltip = page.locator("[data-custom-tooltip]");
+      const chartNoteLink = chart.locator(
+        'a[data-chart-note-link][href="#section-consumption-nominal"]',
+      );
+      await expect(chartNoteLink).toBeAttached();
 
-    const coveredPoint = intersectionPoint(tooltipBox, linkBox);
-    expect(coveredPoint, "tooltip本体と実質chartNoteリンクが重なる座標が必要").not.toBeNull();
-    if (!coveredPoint) return;
+      const initialScrollY = await page.evaluate(() => window.scrollY);
+      const maxScrollY = await page.evaluate(() =>
+        Math.max(0, document.documentElement.scrollHeight - window.innerHeight),
+      );
+      const clampScrollY = (scrollY: number) => Math.max(0, Math.min(maxScrollY, scrollY));
+      const scrollCandidates = [
+        initialScrollY,
+        initialScrollY + 80,
+        initialScrollY + 160,
+        initialScrollY - 80,
+      ].map(clampScrollY);
+      let coveredPoint: ViewportPoint | null = null;
+      let tooltipBox: ViewportBox | null = null;
+      let linkBox: ViewportBox | null = null;
 
-    expect(
-      await page.evaluate(({ x, y }) => {
-        return document.elementFromPoint(x, y)?.closest("[data-custom-tooltip]") != null;
-      }, coveredPoint),
-      "重なり座標の実ヒット対象はTooltip本体であるべき",
-    ).toBe(true);
-    await page.touchscreen.tap(coveredPoint.x, coveredPoint.y);
-    await expect(page).not.toHaveURL(/#section-consumption-nominal$/);
-    await expect(tooltip).toBeVisible();
+      for (let attempt = 0; attempt < 6; attempt += 1) {
+        const scrollY = scrollCandidates[attempt];
+        if (scrollY == null) break;
+        await page.evaluate((nextScrollY) => window.scrollTo(0, nextScrollY), scrollY);
+        await expect
+          .poll(async () => Math.round(await page.evaluate(() => window.scrollY)), {
+            timeout: 5000,
+            intervals: [100, 200, 300],
+          })
+          .toBe(Math.round(scrollY));
+        await waitForScrollYToSettle(page);
+
+        const point = await findViewportBar(page, chart, false);
+        await page.touchscreen.tap(point.x, point.y);
+        await expect(tooltip).toBeVisible({ timeout: 5000 });
+
+        // Tooltip表示後の実レイアウトを再取得する。固定ボトムシートの高さは内容で変わる。
+        tooltipBox = await tooltip.boundingBox();
+        linkBox = await chartNoteLink.boundingBox();
+        coveredPoint = tooltipBox && linkBox ? intersectionPoint(tooltipBox, linkBox) : null;
+        if (coveredPoint) break;
+
+        if (tooltipBox && linkBox) {
+          const tooltipCenterY = tooltipBox.y + tooltipBox.height / 2;
+          const linkCenterY = linkBox.y + linkBox.height / 2;
+          scrollCandidates.push(clampScrollY(scrollY + linkCenterY - tooltipCenterY));
+        }
+
+        await page.keyboard.press("Escape");
+        await expect(tooltip).not.toBeVisible({ timeout: 5000 });
+      }
+
+      if (!coveredPoint || !tooltipBox || !linkBox) {
+        throw new Error(
+          "重なりを再現できません: project=mobile-pixel, viewport=412x915, " +
+            "実touchでchartNoteリンクを含む実Tooltipを表示し、有限回のスクロール候補を試行済み",
+        );
+      }
+
+      expect(
+        await page.evaluate(({ x, y }) => {
+          return document.elementFromPoint(x, y)?.closest("[data-custom-tooltip]") != null;
+        }, coveredPoint),
+        "重なり座標の実ヒット対象はTooltip本体であるべき",
+      ).toBe(true);
+      await page.touchscreen.tap(coveredPoint.x, coveredPoint.y);
+      await expect(page).not.toHaveURL(/#section-consumption-nominal$/);
+      await expect(tooltip).toBeVisible();
+    });
   });
 
   test("tooltip外の実質chartNoteリンクはtooltipを閉じて名目セクションへ遷移する", async ({
@@ -485,8 +544,10 @@ test.describe("デスクトップ ツールチップのホバー回帰テスト"
       timeout: 5000,
     });
 
-    // Escape後のdismiss確認まではマウスを動かしていない。ここで初めて正当なpointermoveを送る。
-    await page.mouse.move(point.x, point.y);
+    // Escape単独のdismiss確認後、まずチャート外へ出てから別の有効bar座標へ移動する。
+    await page.mouse.move(0, 0);
+    const repeatPoint = await findViewportBar(page, chart, false, 0.75);
+    await page.mouse.move(repeatPoint.x, repeatPoint.y);
     await expect(tooltipWrapper).toBeVisible({ timeout: 5000 });
 
     await page.mouse.move(0, 0);

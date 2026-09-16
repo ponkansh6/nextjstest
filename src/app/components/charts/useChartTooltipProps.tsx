@@ -79,9 +79,9 @@ export const useChartTooltipController = ({
         return;
       }
 
-      const isChartNoteLink =
-        target?.closest?.('a[href^="#data-table-"], a[data-chart-note-link]') != null;
-      if (target?.closest?.(".recharts-wrapper") == null || isChartNoteLink) {
+      const isDataTableLink = target?.closest?.('a[href^="#data-table-"]') != null;
+      const isChartNoteLink = target?.closest?.("a[data-chart-note-link]") != null;
+      if (target?.closest?.(".recharts-wrapper") == null || isDataTableLink || isChartNoteLink) {
         dismiss();
       }
     };
@@ -112,7 +112,7 @@ export const useChartTooltipController = ({
     if (activeChartId == null || !isTouch) return;
     const startY = window.scrollY;
     const handleScroll = () => {
-      if (Math.abs(window.scrollY - startY) > 40) {
+      if (Math.abs(window.scrollY - startY) >= 40) {
         setActiveChartId(null);
         setActiveIndices({});
       }

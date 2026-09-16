@@ -837,20 +837,20 @@ The system SHALL ensure that chart tooltips on touch devices open only on explic
 
 #### Scenario R15j: Tooltip Overlay Input Interception
 
-- **WHEN** the user performs a real touch at coordinates that are inside both the explanatory link 「凡例は消費支出（名目）と連動しています」 and the visible tooltip body
+- **WHEN** the user performs a real touch at coordinates that are inside both the visible tooltip body and the chart note link identified by the dedicated `data-chart-note-link` attribute
 - **THEN** the tooltip receives the input, remains visible, and the link does not navigate to the nominal consumption section
 
-#### Scenario R15k: Explanatory Link Outside Tooltip
+#### Scenario R15k: Touch Scroll Dismissal Threshold
 
-- **WHEN** the user performs a real touch at link coordinates that are outside the visible tooltip body
-- **THEN** the tooltip closes and the explanatory link navigates normally to the nominal consumption section
+- **WHEN** the user has a visible tooltip on a touch device and the page scroll position changes by 40px or more
+- **THEN** the tooltip, guide line, and active data point dots are dismissed
 
 #### Scenario R15l: Existing Tooltip Interaction Preservation
 
-- **WHEN** the user dismisses a tooltip by tapping outside it, using its close control, or pressing Escape without moving the mouse/finger
-- **THEN** Escape immediately hides the tooltip, and the next valid pointerdown or pointermove can show it again
+- **WHEN** the user presses Escape while a tooltip is visible, without moving the mouse or finger beforehand
+- **THEN** the tooltip is dismissed immediately, and the next valid pointerdown or pointermove can show it again
 - **WHEN** the user interacts through the desktop `chromium` project or the touch-enabled `mobile-pixel` project
-- **THEN** the existing outside-tap, close, Escape, desktop-hover, and mobile-tap tooltip behaviors remain unchanged
+- **THEN** the existing outside-tap, close, desktop-hover, and mobile-tap tooltip behaviors remain unchanged
 
 ### R8: Accessibility
 
