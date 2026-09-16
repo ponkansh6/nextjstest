@@ -457,7 +457,11 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
         const root = document.documentElement;
         const previousBehavior = root.style.scrollBehavior;
         root.style.scrollBehavior = "auto";
-        window.scrollBy(0, delta);
+        window.scrollTo({
+          left: 0,
+          top: window.scrollY + delta,
+          behavior: "auto",
+        });
         root.style.scrollBehavior = previousBehavior;
       }, correctionDelta);
       await waitForScrollYToSettleWithinTwoSeconds();
