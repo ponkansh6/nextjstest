@@ -176,6 +176,7 @@ export const useChartTooltipController = ({
                   // Keep the wrapper as a viewport-level layer so the
                   // tooltip's own fixed bottom positioning remains stable.
                   position: "fixed" as const,
+                  zIndex: 1000,
                   top: 0,
                   left: 0,
                   transform: "none",
