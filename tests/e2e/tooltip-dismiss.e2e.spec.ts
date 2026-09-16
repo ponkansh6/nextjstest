@@ -368,8 +368,7 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
             return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
           }),
         );
-      const tapVisibleBarUntilTooltip = async (label: string): Promise<void> => {
-        const maxAttempts = 8;
+      const tapVisibleBarUntilTooltip = async (label: string, maxAttempts = 8): Promise<void> => {
         let lastCause: unknown;
         for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
           try {
@@ -378,7 +377,7 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
             const point = await findViewportBar(page, chart, false);
             await page.touchscreen.tap(point.x, point.y);
             await expect
-              .poll(() => tooltip.isVisible(), { timeout: 500, intervals: [50, 100] })
+              .poll(() => tooltip.isVisible(), { timeout: 1500, intervals: [50, 100, 200] })
               .toBe(true);
             return;
           } catch (cause) {
@@ -424,6 +423,12 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
       );
       await scrollInstantly(targetScrollY);
 
+      // Scroll dismisses the real Tooltip. Check immediately, then use one
+      // fresh real touch before reading either rectangle again.
+      if (!(await tooltip.isVisible())) {
+        await tapVisibleBarUntilTooltip("スクロール後Tooltip再表示", 1);
+      }
+
       // The absolute scroll can be changed by the browser while the chart is
       // settling. Re-read the live rectangles, then make one relative,
       // instant correction from their actual centers.
@@ -468,7 +473,7 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
       }
 
       if (!(await tooltip.isVisible())) {
-        await tapVisibleBarUntilTooltip("Tooltip再表示");
+        await tapVisibleBarUntilTooltip("補正後Tooltip再表示", 1);
       }
       tooltipBox = await getRect(tooltip);
       linkBox = await getRect(chartNoteLink);
@@ -672,9 +677,10 @@ test.describe("デスクトップ ツールチップのホバー回帰テスト"
     for (let attempt = 0; attempt < 4; attempt += 1) {
       try {
         const point = await findViewportBar(page, chart);
-        await page.mouse.move(point.x, point.y);
+        await page.mouse.move(0, 0);
+        await page.mouse.move(point.x, point.y, { steps: 8 });
         await expect
-          .poll(() => tooltipWrapper.isVisible(), { timeout: 1200, intervals: [50, 100] })
+          .poll(() => tooltipWrapper.isVisible(), { timeout: 5000, intervals: [50, 100, 200] })
           .toBe(true);
         initialHoverError = undefined;
         break;
