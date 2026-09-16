@@ -310,51 +310,76 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
       );
       await expect(chartNoteLink).toBeAttached();
 
-      const maxScrollY = await page.evaluate(() =>
-        Math.max(0, document.documentElement.scrollHeight - window.innerHeight),
-      );
-      const clampScrollY = (scrollY: number) => Math.max(0, Math.min(maxScrollY, scrollY));
       const getRect = async (locator: Locator): Promise<ViewportBox | null> =>
         locator.evaluate((element) => {
           const rect = element.getBoundingClientRect();
           return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
         });
+      const scrollInstantly = async (scrollY: number) => {
+        await page.evaluate((nextScrollY) => {
+          // Override a possible CSS scroll-behavior: smooth for this one real
+          // page scroll. The following DOM reads must describe the settled page.
+          const root = document.documentElement;
+          const previousBehavior = root.style.scrollBehavior;
+          root.style.scrollBehavior = "auto";
+          window.scrollTo({ left: 0, top: nextScrollY, behavior: "auto" });
+          root.style.scrollBehavior = previousBehavior;
+        }, scrollY);
+        await waitForScrollYToSettle(page);
+      };
 
       const initialPoint = await findViewportBar(page, chart, false);
       await page.touchscreen.tap(initialPoint.x, initialPoint.y);
       await expect(tooltip).toBeVisible({ timeout: 5000 });
 
-      // 実DOMの中心差分から、リンクと固定Tooltipの中心が重なるページ位置を求める。
-      const initialTooltipBox = await getRect(tooltip);
-      const initialLinkBox = await getRect(chartNoteLink);
-      if (!initialTooltipBox || !initialLinkBox) {
-        throw new Error(
-          "重なりを再現できません: chartNoteリンクまたはTooltipのgetBoundingClientRectを取得できません",
+      // 各スクロール後に実DOM矩形を読み直す。スクロールでdismissされた
+      // Tooltipは、その時点の実bar座標をtouchしてから次の計算へ進む。
+      let tooltipBox: ViewportBox | null = null;
+      let linkBox: ViewportBox | null = null;
+      let resetToTop = false;
+      for (let attempt = 0; attempt < 8; attempt += 1) {
+        if (!(await tooltip.isVisible())) {
+          const pointAfterScroll = await findViewportBar(page, chart, false);
+          await page.touchscreen.tap(pointAfterScroll.x, pointAfterScroll.y);
+          await expect(tooltip).toBeVisible({ timeout: 5000 });
+        }
+
+        tooltipBox = await getRect(tooltip);
+        linkBox = await getRect(chartNoteLink);
+        if (!tooltipBox || !linkBox) break;
+
+        if (intersectionPoint(tooltipBox, linkBox)) break;
+
+        const { currentScrollY, maxScrollY } = await page.evaluate(() => ({
+          currentScrollY: window.scrollY,
+          maxScrollY: Math.max(0, document.documentElement.scrollHeight - window.innerHeight),
+        }));
+        const tooltipCenterY = tooltipBox.y + tooltipBox.height / 2;
+        const linkCenterY = linkBox.y + linkBox.height / 2;
+        // Increasing scrollY moves the link upward, hence the signed delta is
+        // link - tooltip (and is deliberately recalculated after every move).
+        const targetScrollY = Math.max(
+          0,
+          Math.min(maxScrollY, currentScrollY + linkCenterY - tooltipCenterY),
         );
+
+        if (Math.abs(targetScrollY - currentScrollY) < 0.5) {
+          if (resetToTop || currentScrollY === 0) break;
+          resetToTop = true;
+          await scrollInstantly(0);
+        } else {
+          await scrollInstantly(targetScrollY);
+        }
       }
-      const currentScrollY = await page.evaluate(() => window.scrollY);
-      const tooltipCenterY = initialTooltipBox.y + initialTooltipBox.height / 2;
-      const linkCenterY = initialLinkBox.y + initialLinkBox.height / 2;
-      const targetScrollY = clampScrollY(currentScrollY + linkCenterY - tooltipCenterY);
 
-      await page.evaluate((nextScrollY) => window.scrollTo(0, nextScrollY), targetScrollY);
-      await expect
-        .poll(async () => Math.round(await page.evaluate(() => window.scrollY)), {
-          timeout: 5000,
-          intervals: [100, 200, 300],
-        })
-        .toBe(Math.round(targetScrollY));
-      await waitForScrollYToSettle(page);
-
-      // スクロールでdismissされる実装では、現在の実bar座標を再度touchしてTooltipを戻す。
       if (!(await tooltip.isVisible())) {
         const pointAfterScroll = await findViewportBar(page, chart, false);
         await page.touchscreen.tap(pointAfterScroll.x, pointAfterScroll.y);
         await expect(tooltip).toBeVisible({ timeout: 5000 });
       }
+      tooltipBox = await getRect(tooltip);
+      linkBox = await getRect(chartNoteLink);
 
-      const tooltipBox = await getRect(tooltip);
-      const linkBox = await getRect(chartNoteLink);
       const coveredPoint = tooltipBox && linkBox ? intersectionPoint(tooltipBox, linkBox) : null;
 
       if (!coveredPoint || !tooltipBox || !linkBox) {
