@@ -410,6 +410,49 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
       );
       await scrollInstantly(targetScrollY);
 
+      // The absolute scroll can be changed by the browser while the chart is
+      // settling. Re-read the live rectangles, then make one relative,
+      // instant correction from their actual centers.
+      tooltipBox = await getRect(tooltip);
+      linkBox = await getRect(chartNoteLink);
+      if (!tooltipBox || !linkBox) {
+        throw new Error(
+          "重なり補正の矩形を取得できません: " +
+            `(scrollY=${await page.evaluate(() => window.scrollY)}, ` +
+            `maxScrollY=${await page.evaluate(() => Math.max(0, document.documentElement.scrollHeight - window.innerHeight))}, ` +
+            `tooltip=${JSON.stringify(tooltipBox)}, link=${JSON.stringify(linkBox)})`,
+        );
+      }
+
+      const correctionDelta =
+        linkBox.y + linkBox.height / 2 - (tooltipBox.y + tooltipBox.height / 2);
+      const correctionStartY = await page.evaluate(() => window.scrollY);
+      const correctionMaxScrollY = await page.evaluate(() =>
+        Math.max(0, document.documentElement.scrollHeight - window.innerHeight),
+      );
+      const expectedCorrectionScrollY = Math.max(
+        0,
+        Math.min(correctionMaxScrollY, correctionStartY + correctionDelta),
+      );
+      await page.evaluate((delta) => {
+        const root = document.documentElement;
+        const previousBehavior = root.style.scrollBehavior;
+        root.style.scrollBehavior = "auto";
+        window.scrollBy(0, delta);
+        root.style.scrollBehavior = previousBehavior;
+      }, correctionDelta);
+      await waitForScrollYToSettleWithinTwoSeconds();
+
+      const correctedScrollY = await page.evaluate(() => window.scrollY);
+      if (Math.abs(correctedScrollY - expectedCorrectionScrollY) > 1) {
+        throw new Error(
+          "Tooltipとリンクの相対スクロール補正に失敗しました: " +
+            `(scrollY=${correctedScrollY}, maxScrollY=${correctionMaxScrollY}, ` +
+            `delta=${correctionDelta}, tooltip=${JSON.stringify(await getRect(tooltip))}, ` +
+            `link=${JSON.stringify(await getRect(chartNoteLink))})`,
+        );
+      }
+
       if (!(await tooltip.isVisible())) {
         try {
           await retapVisibleBarOnce();
@@ -439,7 +482,7 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
       ) {
         throw new Error(
           "重なりを再現できません: project=mobile-pixel, viewport=412x915, " +
-            "実DOMの中心差分でwindow.scrollToし、実touchでTooltipを再表示済みだが矩形が交差しない " +
+            "実DOMの中心差分でwindow.scrollByし、実touchでTooltipを再表示済みだが矩形が交差しない " +
             `(scrollY=${await page.evaluate(() => window.scrollY)}, ` +
             `maxScrollY=${await page.evaluate(() => Math.max(0, document.documentElement.scrollHeight - window.innerHeight))}, ` +
             `targetScrollY=${targetScrollY}, tooltip=${JSON.stringify(tooltipBox)}, ` +
