@@ -21,8 +21,8 @@ async function findViewportBar(
   scrollIntoView = true,
   horizontalRatio = 0.5,
 ): Promise<ViewportPoint> {
-  if (scrollIntoView) await chart.scrollIntoViewIfNeeded();
   const bars = chart.locator(".recharts-bar-rectangle");
+  if (scrollIntoView) await bars.first().scrollIntoViewIfNeeded();
   const viewport = page.viewportSize();
   if (!viewport) throw new Error("Playwright viewport is unavailable");
 
@@ -339,7 +339,7 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
       let resetToTop = false;
       for (let attempt = 0; attempt < 8; attempt += 1) {
         if (!(await tooltip.isVisible())) {
-          const pointAfterScroll = await findViewportBar(page, chart, false);
+          const pointAfterScroll = await findViewportBar(page, chart, true);
           await page.touchscreen.tap(pointAfterScroll.x, pointAfterScroll.y);
           await expect(tooltip).toBeVisible({ timeout: 5000 });
         }
@@ -373,7 +373,7 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
       }
 
       if (!(await tooltip.isVisible())) {
-        const pointAfterScroll = await findViewportBar(page, chart, false);
+        const pointAfterScroll = await findViewportBar(page, chart, true);
         await page.touchscreen.tap(pointAfterScroll.x, pointAfterScroll.y);
         await expect(tooltip).toBeVisible({ timeout: 5000 });
       }
