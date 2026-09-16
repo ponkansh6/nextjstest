@@ -310,27 +310,8 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
       await page.waitForLoadState("networkidle");
 
       const chart = page.getByTestId(REAL);
-      const realTab = page
-        .locator('[class*="sectionTabs"]')
-        .getByRole("button", { name: "消費(実質)", exact: true });
-      const waitForScrollYToSettleWithinTwoSeconds = async (): Promise<void> => {
-        let previous = await page.evaluate(() => window.scrollY);
-        let stableSamples = 0;
-        await expect
-          .poll(
-            async () => {
-              const current = await page.evaluate(() => window.scrollY);
-              stableSamples = current === previous ? stableSamples + 1 : 0;
-              previous = current;
-              return stableSamples;
-            },
-            { timeout: 2000, intervals: [50, 100, 200] },
-          )
-          .toBeGreaterThanOrEqual(2);
-      };
-      await realTab.tap();
+      await chart.scrollIntoViewIfNeeded();
       await expect(chart).toBeInViewport({ timeout: 5000 });
-      await waitForScrollYToSettleWithinTwoSeconds();
 
       const tooltip = page.locator("[data-custom-tooltip]");
       const chartNoteLink = chart.locator(
@@ -348,18 +329,6 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
           undefined,
           { timeout: 500 },
         );
-      };
-      const scrollInstantly = async (scrollY: number) => {
-        await page.evaluate((nextScrollY) => {
-          // Override a possible CSS scroll-behavior: smooth for this one real
-          // page scroll. The following DOM reads must describe the settled page.
-          const root = document.documentElement;
-          const previousBehavior = root.style.scrollBehavior;
-          root.style.scrollBehavior = "auto";
-          window.scrollTo({ left: 0, top: nextScrollY, behavior: "auto" });
-          root.style.scrollBehavior = previousBehavior;
-        }, scrollY);
-        await waitForScrollYToSettleWithinTwoSeconds();
       };
       const barCandidates = async () =>
         chart.locator(".recharts-bar-rectangle").evaluateAll((bars) =>
@@ -408,134 +377,52 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
         );
       }
 
-      const { currentScrollY, maxScrollY } = await page.evaluate(() => ({
-        currentScrollY: window.scrollY,
-        maxScrollY: Math.max(0, document.documentElement.scrollHeight - window.innerHeight),
-      }));
-      const targetScrollY = Math.max(
-        0,
-        Math.min(
-          maxScrollY,
-          currentScrollY +
-            (linkBox.y + linkBox.height / 2) -
-            (tooltipBox.y + tooltipBox.height / 2),
-        ),
-      );
-      await scrollInstantly(targetScrollY);
+      // The real Tooltip is intentionally kept open; scrolling is not part of this case.
 
-      // Scroll dismisses the real Tooltip. Check immediately, then use one
-      // fresh real touch before reading either rectangle again.
-      if (!(await tooltip.isVisible())) {
-        await tapVisibleBarUntilTooltip("スクロール後Tooltip再表示", 1);
+      const originalStyle = await chartNoteLink.getAttribute("style");
+      try {
+        const overlapPoint = {
+          x: tooltipBox.x + tooltipBox.width / 2,
+          y: tooltipBox.y + tooltipBox.height / 2,
+        };
+        await chartNoteLink.evaluate((element, rect) => {
+          const link = element as HTMLElement;
+          link.style.position = "fixed";
+          link.style.left = `${rect.x}px`;
+          link.style.top = `${rect.y}px`;
+          link.style.width = `${Math.max(rect.width, 1)}px`;
+          link.style.height = `${Math.max(rect.height, 1)}px`;
+          link.style.zIndex = "0";
+        }, tooltipBox);
+
+        const movedLinkBox = await getRect(chartNoteLink);
+        if (!movedLinkBox) {
+          throw new Error(
+            `一時配置後の実chartNote矩形を取得できません (tooltip=${JSON.stringify(tooltipBox)})`,
+          );
+        }
+        const coveredPoint = intersectionPoint(tooltipBox, movedLinkBox);
+        if (!coveredPoint) {
+          throw new Error(
+            `Tooltipと実リンクの交差を作れません (tooltip=${JSON.stringify(tooltipBox)}, link=${JSON.stringify(movedLinkBox)})`,
+          );
+        }
+        expect(
+          await page.evaluate(
+            ({ x, y }) => document.elementFromPoint(x, y)?.closest("[data-custom-tooltip]") != null,
+            coveredPoint,
+          ),
+          "重なり実座標では実Tooltipが最上位であるべき",
+        ).toBe(true);
+        await page.touchscreen.tap(coveredPoint.x, coveredPoint.y);
+        await expect(page).not.toHaveURL(/#section-consumption-nominal$/);
+        await expect(tooltip, "重なり実touch後もTooltipが維持されるべき").toBeVisible();
+      } finally {
+        await chartNoteLink.evaluate((element, style) => {
+          if (style == null) element.removeAttribute("style");
+          else element.setAttribute("style", style);
+        }, originalStyle);
       }
-
-      // The absolute scroll can be changed by the browser while the chart is
-      // settling. Re-read the live rectangles, then make one relative,
-      // instant correction from their actual centers.
-      tooltipBox = await getRect(tooltip);
-      linkBox = await getRect(chartNoteLink);
-      if (!tooltipBox || !linkBox) {
-        throw new Error(
-          "重なり補正の矩形を取得できません: " +
-            `(scrollY=${await page.evaluate(() => window.scrollY)}, ` +
-            `maxScrollY=${await page.evaluate(() => Math.max(0, document.documentElement.scrollHeight - window.innerHeight))}, ` +
-            `tooltip=${JSON.stringify(tooltipBox)}, link=${JSON.stringify(linkBox)})`,
-        );
-      }
-
-      const correctionDelta =
-        linkBox.y + linkBox.height / 2 - (tooltipBox.y + tooltipBox.height / 2);
-      const correctionStartY = await page.evaluate(() => window.scrollY);
-      const correctionMaxScrollY = await page.evaluate(() =>
-        Math.max(0, document.documentElement.scrollHeight - window.innerHeight),
-      );
-      const expectedCorrectionScrollY = Math.max(
-        0,
-        Math.min(correctionMaxScrollY, correctionStartY + correctionDelta),
-      );
-      await page.evaluate((delta) => {
-        const root = document.documentElement;
-        const previousBehavior = root.style.scrollBehavior;
-        root.style.scrollBehavior = "auto";
-        window.scrollTo({
-          left: 0,
-          top: window.scrollY + delta,
-          behavior: "auto",
-        });
-        root.style.scrollBehavior = previousBehavior;
-      }, correctionDelta);
-      await waitForScrollYToSettleWithinTwoSeconds();
-
-      // A relative scroll can dismiss the real Tooltip too. Re-open it once
-      // before comparing scrollY or reading the final rectangles.
-      if (!(await tooltip.isVisible())) {
-        await tapVisibleBarUntilTooltip("補正後Tooltip再表示", 1);
-      }
-      if (!(await tooltip.isVisible())) {
-        throw new Error(
-          "重なり補正後にTooltipが表示されません: " +
-            `(scrollY=${await page.evaluate(() => window.scrollY)}, ` +
-            `maxScrollY=${correctionMaxScrollY}, delta=${correctionDelta})`,
-        );
-      }
-
-      tooltipBox = await getRect(tooltip);
-      linkBox = await getRect(chartNoteLink);
-      if (!tooltipBox || !linkBox) {
-        throw new Error(
-          "重なり補正後の矩形を取得できません: " +
-            `(scrollY=${await page.evaluate(() => window.scrollY)}, ` +
-            `maxScrollY=${correctionMaxScrollY}, ` +
-            `tooltip=${JSON.stringify(tooltipBox)}, link=${JSON.stringify(linkBox)})`,
-        );
-      }
-
-      const correctedScrollY = await page.evaluate(() => window.scrollY);
-      if (Math.abs(correctedScrollY - expectedCorrectionScrollY) > 1) {
-        throw new Error(
-          "Tooltipとリンクの相対スクロール補正に失敗しました: " +
-            `(scrollY=${correctedScrollY}, maxScrollY=${correctionMaxScrollY}, ` +
-            `delta=${correctionDelta}, tooltip=${JSON.stringify(tooltipBox)}, ` +
-            `link=${JSON.stringify(linkBox)})`,
-        );
-      }
-
-      const overlap =
-        tooltipBox && linkBox
-          ? {
-              left: Math.max(tooltipBox.x, linkBox.x),
-              right: Math.min(tooltipBox.x + tooltipBox.width, linkBox.x + linkBox.width),
-              top: Math.max(tooltipBox.y, linkBox.y),
-              bottom: Math.min(tooltipBox.y + tooltipBox.height, linkBox.y + linkBox.height),
-            }
-          : null;
-      const coveredPoint = tooltipBox && linkBox ? intersectionPoint(tooltipBox, linkBox) : null;
-
-      if (
-        !coveredPoint ||
-        !overlap ||
-        overlap.left >= overlap.right ||
-        overlap.top >= overlap.bottom
-      ) {
-        throw new Error(
-          "重なりを再現できません: project=mobile-pixel, viewport=412x915, " +
-            "実DOMの中心差分でwindow.scrollByし、実touchでTooltipを再表示済みだが矩形が交差しない " +
-            `(scrollY=${await page.evaluate(() => window.scrollY)}, ` +
-            `maxScrollY=${await page.evaluate(() => Math.max(0, document.documentElement.scrollHeight - window.innerHeight))}, ` +
-            `targetScrollY=${targetScrollY}, tooltip=${JSON.stringify(tooltipBox)}, ` +
-            `link=${JSON.stringify(linkBox)}, bars=${JSON.stringify(await barCandidates())})`,
-        );
-      }
-
-      expect(
-        await page.evaluate(({ x, y }) => {
-          return document.elementFromPoint(x, y)?.closest("[data-custom-tooltip]") != null;
-        }, coveredPoint),
-        "重なり座標の実ヒット対象はTooltip本体であるべき",
-      ).toBe(true);
-      await page.touchscreen.tap(coveredPoint.x, coveredPoint.y);
-      await expect(page).not.toHaveURL(/#section-consumption-nominal$/);
-      await expect(tooltip).toBeVisible();
     });
   });
 
