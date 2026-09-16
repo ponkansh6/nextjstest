@@ -13,9 +13,14 @@ const NOMINAL = "spending-chart-nominal";
 const REAL = "spending-chart-real";
 
 type ViewportPoint = { x: number; y: number };
+type ViewportBox = { x: number; y: number; width: number; height: number };
 
-async function findViewportBar(page: Page, chart: Locator): Promise<ViewportPoint> {
-  await chart.scrollIntoViewIfNeeded();
+async function findViewportBar(
+  page: Page,
+  chart: Locator,
+  scrollIntoView = true,
+): Promise<ViewportPoint> {
+  if (scrollIntoView) await chart.scrollIntoViewIfNeeded();
   const bars = chart.locator(".recharts-bar-rectangle");
   const viewport = page.viewportSize();
   if (!viewport) throw new Error("Playwright viewport is unavailable");
@@ -40,7 +45,64 @@ async function findViewportBar(page: Page, chart: Locator): Promise<ViewportPoin
 
 const viewportBar = (page: Page, testId: string) => findViewportBar(page, page.getByTestId(testId));
 
+function intersectionPoint(a: ViewportBox, b: ViewportBox): ViewportPoint | null {
+  const left = Math.max(a.x, b.x);
+  const right = Math.min(a.x + a.width, b.x + b.width);
+  const top = Math.max(a.y, b.y);
+  const bottom = Math.min(a.y + a.height, b.y + b.height);
+  return left < right && top < bottom ? { x: (left + right) / 2, y: (top + bottom) / 2 } : null;
+}
+
+function pointOutsideBox(link: ViewportBox, covered: ViewportBox): ViewportPoint | null {
+  const insetX = Math.min(2, link.width / 4);
+  const insetY = Math.min(2, link.height / 4);
+  const candidates: ViewportPoint[] = [
+    { x: link.x + link.width / 2, y: link.y + link.height / 2 },
+    { x: link.x + insetX, y: link.y + insetY },
+    { x: link.x + link.width - insetX, y: link.y + insetY },
+    { x: link.x + insetX, y: link.y + link.height - insetY },
+    { x: link.x + link.width - insetX, y: link.y + link.height - insetY },
+  ];
+  const isInside = (box: ViewportBox, point: ViewportPoint) =>
+    point.x > box.x &&
+    point.x < box.x + box.width &&
+    point.y > box.y &&
+    point.y < box.y + box.height;
+
+  const outside = candidates.find((point) => isInside(link, point) && !isInside(covered, point));
+  if (outside) return outside;
+  return null;
+}
+
+async function pointHitByLink(page: Page, link: Locator, point: ViewportPoint): Promise<boolean> {
+  return page.evaluate(
+    ({ x, y, href }) => {
+      const target = document.elementFromPoint(x, y);
+      return href != null && target?.closest("a")?.getAttribute("href") === href;
+    },
+    { ...point, href: await link.getAttribute("href") },
+  );
+}
+
+async function waitForScrollYToSettle(page: Page): Promise<void> {
+  let previous = await page.evaluate(() => window.scrollY);
+  let stableSamples = 0;
+
+  await expect
+    .poll(
+      async () => {
+        const current = await page.evaluate(() => window.scrollY);
+        stableSamples = current === previous ? stableSamples + 1 : 0;
+        previous = current;
+        return stableSamples;
+      },
+      { timeout: 5000, intervals: [100, 200, 300] },
+    )
+    .toBeGreaterThanOrEqual(2);
+}
+
 test.describe("モバイル ツールチップの閉じるボタンとインタラクション", () => {
+  // このdescribeは、実touchを持つPixel 7相当のmobile-pixel projectだけを対象にする。
   test.beforeEach(({}, testInfo) => {
     test.skip(
       testInfo.project.name !== "mobile-pixel",
@@ -70,6 +132,36 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
       "閉じるボタンをタップした後、ツールチップは非表示になるべき",
     ).not.toBeVisible({ timeout: 5000 });
     await expect(page.locator(".recharts-tooltip-cursor")).toHaveCount(0);
+  });
+
+  test("mobile-pixel: タップで表示したTooltipをEscapeで閉じ、Tooltipと閉じるボタンが消える", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
+
+    const point = await viewportBar(page, NOMINAL);
+    await page.touchscreen.tap(point.x, point.y);
+
+    const tooltip = page.locator("[data-custom-tooltip]");
+    const closeButton = page.getByRole("button", { name: "閉じる" });
+    await expect(tooltip).toBeVisible({ timeout: 5000 });
+    await expect(closeButton).toBeVisible({ timeout: 5000 });
+
+    await page.keyboard.press("Escape");
+
+    await expect(tooltip, "Escape後、Tooltipが非表示になるべき").not.toBeVisible({
+      timeout: 5000,
+    });
+    await expect(closeButton, "Escape後、Tooltipの閉じるボタンも非表示になるべき").not.toBeVisible({
+      timeout: 5000,
+    });
+
+    // Escapeからこのtouchまで、マウス/指を動かさずにdismissが完了していることを確認する。
+    await page.touchscreen.tap(point.x, point.y);
+    await expect(tooltip, "Escape後の次の正当なpointerdownでTooltipを再表示できるべき").toBeVisible(
+      { timeout: 5000 },
+    );
   });
 
   test("グラフ外をタップすると閉じるボタンとガイド線の両方が消える", async ({ page }) => {
@@ -187,6 +279,87 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
     ).toBeVisible({ timeout: 5000 });
   });
 
+  test("tooltipと実質chartNoteリンクが重なる座標ではリンク遷移を遮蔽しtooltipを維持する", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 412, height: 915 });
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
+
+    const chart = page.getByTestId(REAL);
+    await chart.scrollIntoViewIfNeeded();
+    const point = await findViewportBar(page, chart, false);
+    await page.touchscreen.tap(point.x, point.y);
+
+    const tooltip = page.locator("[data-custom-tooltip]");
+    const chartNoteLink = chart.locator('a[href="#section-consumption-nominal"]');
+    await expect(tooltip).toBeVisible({ timeout: 5000 });
+    await expect(chartNoteLink).toBeVisible();
+
+    const tooltipBox = await tooltip.boundingBox();
+    const linkBox = await chartNoteLink.boundingBox();
+    expect(tooltipBox).not.toBeNull();
+    expect(linkBox).not.toBeNull();
+    if (!tooltipBox || !linkBox) return;
+
+    const coveredPoint = intersectionPoint(tooltipBox, linkBox);
+    expect(coveredPoint, "tooltip本体と実質chartNoteリンクが重なる座標が必要").not.toBeNull();
+    if (!coveredPoint) return;
+
+    expect(
+      await page.evaluate(({ x, y }) => {
+        return document.elementFromPoint(x, y)?.closest("[data-custom-tooltip]") != null;
+      }, coveredPoint),
+      "重なり座標の実ヒット対象はTooltip本体であるべき",
+    ).toBe(true);
+    await page.touchscreen.tap(coveredPoint.x, coveredPoint.y);
+    await expect(page).not.toHaveURL(/#section-consumption-nominal$/);
+    await expect(tooltip).toBeVisible();
+  });
+
+  test("tooltip外の実質chartNoteリンクはtooltipを閉じて名目セクションへ遷移する", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 412, height: 915 });
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
+
+    const chart = page.getByTestId(REAL);
+    await chart.scrollIntoViewIfNeeded();
+    const point = await findViewportBar(page, chart, false);
+    await page.touchscreen.tap(point.x, point.y);
+
+    const tooltip = page.locator("[data-custom-tooltip]");
+    const chartNoteLink = chart.locator('a[href="#section-consumption-nominal"]');
+    await expect(tooltip).toBeVisible({ timeout: 5000 });
+    await expect(chartNoteLink).toBeVisible();
+
+    const tooltipBox = await tooltip.boundingBox();
+    const linkBox = await chartNoteLink.boundingBox();
+    expect(tooltipBox).not.toBeNull();
+    expect(linkBox).not.toBeNull();
+    if (!tooltipBox || !linkBox) return;
+
+    const outsidePoint = pointOutsideBox(linkBox, tooltipBox);
+    expect(outsidePoint, "tooltip外で同リンクをタップできる座標が必要").not.toBeNull();
+    if (!outsidePoint) return;
+
+    expect(
+      await pointHitByLink(page, chartNoteLink, outsidePoint),
+      "tooltip外の実座標がchartNoteリンクを実際にヒットすべき",
+    ).toBe(true);
+    expect(
+      await page.evaluate(({ x, y }) => {
+        return document.elementFromPoint(x, y)?.closest("[data-custom-tooltip]") == null;
+      }, outsidePoint),
+      "通常遷移の座標はTooltip本体の外側であるべき",
+    ).toBe(true);
+
+    await page.touchscreen.tap(outsidePoint.x, outsidePoint.y);
+    await expect(page).toHaveURL(/#section-consumption-nominal$/);
+    await expect(tooltip).not.toBeVisible({ timeout: 5000 });
+  });
+
   test("エリアチャートをグラフ外タップで閉じるとアクティブドットも消える", async ({ page }) => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
@@ -277,14 +450,14 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
     }
 
     const closeButton = page.getByRole("button", { name: "閉じる" });
-    for (let i = 0; i < 6; i++) {
-      await expect(closeButton).not.toBeVisible();
-      await page.waitForTimeout(500);
-    }
+    await expect(closeButton).not.toBeVisible({ timeout: 5000 });
+    await waitForScrollYToSettle(page);
+    await expect(closeButton).not.toBeVisible({ timeout: 5000 });
   });
 });
 
 test.describe("デスクトップ ツールチップのホバー回帰テスト", () => {
+  // このdescribeは、実mouse/pointermoveを持つDesktop Chromeのchromium projectだけを対象にする。
   test.beforeEach(({}, testInfo) => {
     test.skip(
       testInfo.project.name !== "chromium",
@@ -292,7 +465,9 @@ test.describe("デスクトップ ツールチップのホバー回帰テスト"
     );
   });
 
-  test("デスクトップではホバーで従来どおりツールチップが表示されること", async ({ page }) => {
+  test("chromium: ホバー表示後Escapeで閉じ、外部クリックでもdismissされること", async ({
+    page,
+  }) => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
@@ -305,8 +480,35 @@ test.describe("デスクトップ ツールチップのホバー回帰テスト"
       timeout: 5000,
     });
 
-    // Move mouse away to ensure it clears
+    await page.keyboard.press("Escape");
+    await expect(tooltipWrapper, "EscapeでデスクトップTooltipがdismissされるべき").not.toBeVisible({
+      timeout: 5000,
+    });
+
+    // Escape後のdismiss確認まではマウスを動かしていない。ここで初めて正当なpointermoveを送る。
+    await page.mouse.move(point.x, point.y);
+    await expect(tooltipWrapper).toBeVisible({ timeout: 5000 });
+
     await page.mouse.move(0, 0);
-    await expect(tooltipWrapper).not.toBeVisible({ timeout: 5000 });
+    await expect(
+      tooltipWrapper,
+      "Tooltip外へマウスを移動するとデスクトップTooltipがdismissされるべき",
+    ).not.toBeVisible({ timeout: 5000 });
+
+    const heading = page.getByRole("heading", { name: /消費支出（名目）/ }).first();
+    const headingBox = await heading.boundingBox();
+    expect(headingBox).not.toBeNull();
+    if (!headingBox) return;
+    await page.mouse.move(point.x, point.y);
+    await expect(tooltipWrapper).toBeVisible({ timeout: 5000 });
+    await page.mouse.click(
+      headingBox.x + headingBox.width / 2,
+      headingBox.y + headingBox.height / 2,
+    );
+
+    await expect(
+      tooltipWrapper,
+      "Tooltip外の実座標をクリックするとデスクトップTooltipがdismissされるべき",
+    ).not.toBeVisible({ timeout: 5000 });
   });
 });

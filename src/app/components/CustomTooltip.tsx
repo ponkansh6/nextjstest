@@ -52,6 +52,7 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
 
     return (
       <div
+        data-custom-tooltip="true"
         style={{
           backgroundColor: tooltipBg,
           border: isMobile ? "1px solid var(--card-border)" : "none",

@@ -216,6 +216,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
               凡例は「
               <a
                 href={`#${linkedSectionId}`}
+                data-chart-note-link
                 style={{ color: "var(--blue-500)", textDecoration: "underline" }}
               >
                 消費支出（名目）

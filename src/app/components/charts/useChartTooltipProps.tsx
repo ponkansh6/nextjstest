@@ -41,6 +41,7 @@ export const useChartTooltipController = ({
 } => {
   const { isMobile, chartColors } = useChartTheme();
   const [activeChartId, setActiveChartId] = useState<string | null>(null);
+  const [escapeDismissed, setEscapeDismissed] = useState(false);
   // Each chart owns its selected row.  A single index is incorrect because
   // charts can have different filtered lengths (and NewGraph is range-filtered).
   const [activeIndices, setActiveIndices] = useState<Record<string, number | undefined>>({});
@@ -55,18 +56,58 @@ export const useChartTooltipController = ({
     if (activeChartId == null) return;
     const handlePointerDown = (e: PointerEvent) => {
       const target = e.target as Element | null;
-      if (target?.closest?.(".recharts-wrapper") == null) {
-        setActiveChartId(null);
-        setActiveIndices({});
+      const tooltip = document.querySelector<HTMLElement>("[data-custom-tooltip]");
+      const tooltipRect = tooltip?.getBoundingClientRect();
+      const isTooltipTarget = target?.closest?.("[data-custom-tooltip]") != null;
+      const isInsideVisibleTooltip =
+        tooltipRect != null &&
+        tooltipRect.width > 0 &&
+        tooltipRect.height > 0 &&
+        e.clientX >= tooltipRect.left &&
+        e.clientX <= tooltipRect.right &&
+        e.clientY >= tooltipRect.top &&
+        e.clientY <= tooltipRect.bottom;
+
+      // The tooltip is visually above the page, but Recharts' wrapper can be
+      // pointer-transparent. Block only the back element covered by the
+      // visible tooltip; tooltip controls must keep receiving the event.
+      if (isTooltipTarget) return;
+
+      if (isInsideVisibleTooltip) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+
+      const isChartNoteLink =
+        target?.closest?.('a[href^="#data-table-"], a[data-chart-note-link]') != null;
+      if (target?.closest?.(".recharts-wrapper") == null || isChartNoteLink) {
+        dismiss();
       }
     };
-    document.addEventListener("pointerdown", handlePointerDown, { passive: true, capture: true });
+    document.addEventListener("pointerdown", handlePointerDown, { passive: false, capture: true });
     return () => {
       document.removeEventListener("pointerdown", handlePointerDown, { capture: true });
     };
-  }, [activeChartId]);
+  }, [activeChartId, dismiss]);
 
-  // 2. スクロールによる解除 (touch端末のみ)
+  // 2. Escape による解除
+  useEffect(() => {
+    if (activeChartId == null) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.preventDefault();
+      e.stopPropagation();
+      setEscapeDismissed(true);
+      dismiss();
+    };
+    document.addEventListener("keydown", handleKeyDown, { capture: true });
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown, { capture: true });
+    };
+  }, [activeChartId, dismiss]);
+
+  // 3. スクロールによる解除 (touch端末のみ)
   useEffect(() => {
     if (activeChartId == null || !isTouch) return;
     const startY = window.scrollY;
@@ -88,6 +129,7 @@ export const useChartTooltipController = ({
       const selectIndex = (event: ReactPointerEvent<HTMLElement>) => {
         const length = options?.dataLength ?? 0;
         if (suppressed || length < 1) return;
+        setEscapeDismissed(false);
         const svg = event.currentTarget.querySelector("svg");
         const surface = svg?.getBoundingClientRect() ?? event.currentTarget.getBoundingClientRect();
         const viewBoxWidth = svg?.viewBox.baseVal.width || surface.width;
@@ -106,7 +148,13 @@ export const useChartTooltipController = ({
         tooltipProps: {
           cursor: { stroke: chartColors.gridStroke, strokeWidth: 1, strokeOpacity: 0.6 },
           trigger: isTouch ? ("click" as const) : ("hover" as const),
-          active: isTouch ? (isThisActive ? undefined : false) : suppressed ? false : undefined,
+          active: isTouch
+            ? isThisActive
+              ? undefined
+              : false
+            : suppressed || escapeDismissed
+              ? false
+              : undefined,
           defaultIndex: isThisActive ? activeIndices[chartId] : undefined,
           position: isTouch && isThisActive ? { x: 0, y: 0 } : undefined,
           wrapperStyle:
@@ -149,7 +197,16 @@ export const useChartTooltipController = ({
         activeDot: isTouch ? (isThisActive ? undefined : false) : undefined,
       };
     },
-    [chartColors, isMobile, isTouch, suppressed, activeChartId, activeIndices, dismiss],
+    [
+      chartColors,
+      isMobile,
+      isTouch,
+      suppressed,
+      activeChartId,
+      activeIndices,
+      escapeDismissed,
+      dismiss,
+    ],
   );
 
   return { bind };

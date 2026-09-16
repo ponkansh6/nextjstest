@@ -835,6 +835,23 @@ The system SHALL ensure that chart tooltips on touch devices open only on explic
 - **WHEN** the user dismisses a tooltip on a touch device (close button, outside tap, or scroll) on an area or line chart
 - **THEN** the active data point dots (`.recharts-active-dot`) disappear together with the guide line and tooltip.
 
+#### Scenario R15j: Tooltip Overlay Input Interception
+
+- **WHEN** the user performs a real touch at coordinates that are inside both the explanatory link 「凡例は消費支出（名目）と連動しています」 and the visible tooltip body
+- **THEN** the tooltip receives the input, remains visible, and the link does not navigate to the nominal consumption section
+
+#### Scenario R15k: Explanatory Link Outside Tooltip
+
+- **WHEN** the user performs a real touch at link coordinates that are outside the visible tooltip body
+- **THEN** the tooltip closes and the explanatory link navigates normally to the nominal consumption section
+
+#### Scenario R15l: Existing Tooltip Interaction Preservation
+
+- **WHEN** the user dismisses a tooltip by tapping outside it, using its close control, or pressing Escape without moving the mouse/finger
+- **THEN** Escape immediately hides the tooltip, and the next valid pointerdown or pointermove can show it again
+- **WHEN** the user interacts through the desktop `chromium` project or the touch-enabled `mobile-pixel` project
+- **THEN** the existing outside-tap, close, Escape, desktop-hover, and mobile-tap tooltip behaviors remain unchanged
+
 ### R8: Accessibility
 
 The system SHALL be navigable and interpretable by assistive technologies.
