@@ -362,29 +362,37 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
             return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
           }),
         );
-      const retapVisibleBarOnce = async () => {
-        const point = await findViewportBar(page, chart, false);
-        await page.touchscreen.tap(point.x, point.y);
-        await expect
-          .poll(() => tooltip.isVisible(), { timeout: 1500, intervals: [50, 100] })
-          .toBe(true);
-      };
-      const throwRetapFailure = async (cause: unknown): Promise<never> => {
+      const tapVisibleBarUntilTooltip = async (label: string): Promise<void> => {
+        const maxAttempts = 8;
+        let lastCause: unknown;
+        for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+          try {
+            // Re-read the live bar before every real touch: the chart subtree can
+            // be replaced while the tab's smooth scroll is settling.
+            const point = await findViewportBar(page, chart, false);
+            await page.touchscreen.tap(point.x, point.y);
+            await expect
+              .poll(() => tooltip.isVisible(), { timeout: 500, intervals: [50, 100] })
+              .toBe(true);
+            return;
+          } catch (cause) {
+            lastCause = cause;
+          }
+        }
+
         const scrollY = await page.evaluate(() => window.scrollY);
         const currentTooltipBox = await getRect(tooltip);
         const currentLinkBox = await getRect(chartNoteLink);
         const candidates = await barCandidates();
         throw new Error(
-          "Tooltipの再表示に失敗しました: 現在viewport内のbarを1回touchしました " +
+          `${label}: 実barへのtouchを${maxAttempts}回試行してもTooltipが表示されません ` +
             `(scrollY=${scrollY}, tooltip=${JSON.stringify(currentTooltipBox)}, ` +
             `link=${JSON.stringify(currentLinkBox)}, bars=${JSON.stringify(candidates)}, ` +
-            `cause=${String(cause)})`,
+            `lastCause=${String(lastCause)})`,
         );
       };
 
-      const initialPoint = await findViewportBar(page, chart, false);
-      await page.touchscreen.tap(initialPoint.x, initialPoint.y);
-      await expect(tooltip).toBeVisible({ timeout: 5000 });
+      await tapVisibleBarUntilTooltip("初回Tooltip表示");
 
       let tooltipBox = await getRect(tooltip);
       let linkBox = await getRect(chartNoteLink);
@@ -454,11 +462,7 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
       }
 
       if (!(await tooltip.isVisible())) {
-        try {
-          await retapVisibleBarOnce();
-        } catch (error) {
-          await throwRetapFailure(error);
-        }
+        await tapVisibleBarUntilTooltip("Tooltip再表示");
       }
       tooltipBox = await getRect(tooltip);
       linkBox = await getRect(chartNoteLink);
