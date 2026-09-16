@@ -310,57 +310,59 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
       );
       await expect(chartNoteLink).toBeAttached();
 
-      const initialScrollY = await page.evaluate(() => window.scrollY);
       const maxScrollY = await page.evaluate(() =>
         Math.max(0, document.documentElement.scrollHeight - window.innerHeight),
       );
       const clampScrollY = (scrollY: number) => Math.max(0, Math.min(maxScrollY, scrollY));
-      const scrollCandidates = [
-        initialScrollY,
-        initialScrollY + 80,
-        initialScrollY + 160,
-        initialScrollY - 80,
-      ].map(clampScrollY);
-      let coveredPoint: ViewportPoint | null = null;
-      let tooltipBox: ViewportBox | null = null;
-      let linkBox: ViewportBox | null = null;
+      const getRect = async (locator: Locator): Promise<ViewportBox | null> =>
+        locator.evaluate((element) => {
+          const rect = element.getBoundingClientRect();
+          return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+        });
 
-      for (let attempt = 0; attempt < 6; attempt += 1) {
-        const scrollY = scrollCandidates[attempt];
-        if (scrollY == null) break;
-        await page.evaluate((nextScrollY) => window.scrollTo(0, nextScrollY), scrollY);
-        await expect
-          .poll(async () => Math.round(await page.evaluate(() => window.scrollY)), {
-            timeout: 5000,
-            intervals: [100, 200, 300],
-          })
-          .toBe(Math.round(scrollY));
-        await waitForScrollYToSettle(page);
+      const initialPoint = await findViewportBar(page, chart, false);
+      await page.touchscreen.tap(initialPoint.x, initialPoint.y);
+      await expect(tooltip).toBeVisible({ timeout: 5000 });
 
-        const point = await findViewportBar(page, chart, false);
-        await page.touchscreen.tap(point.x, point.y);
-        await expect(tooltip).toBeVisible({ timeout: 5000 });
-
-        // Tooltip表示後の実レイアウトを再取得する。固定ボトムシートの高さは内容で変わる。
-        tooltipBox = await tooltip.boundingBox();
-        linkBox = await chartNoteLink.boundingBox();
-        coveredPoint = tooltipBox && linkBox ? intersectionPoint(tooltipBox, linkBox) : null;
-        if (coveredPoint) break;
-
-        if (tooltipBox && linkBox) {
-          const tooltipCenterY = tooltipBox.y + tooltipBox.height / 2;
-          const linkCenterY = linkBox.y + linkBox.height / 2;
-          scrollCandidates.push(clampScrollY(scrollY + linkCenterY - tooltipCenterY));
-        }
-
-        await page.keyboard.press("Escape");
-        await expect(tooltip).not.toBeVisible({ timeout: 5000 });
+      // 実DOMの中心差分から、リンクと固定Tooltipの中心が重なるページ位置を求める。
+      const initialTooltipBox = await getRect(tooltip);
+      const initialLinkBox = await getRect(chartNoteLink);
+      if (!initialTooltipBox || !initialLinkBox) {
+        throw new Error(
+          "重なりを再現できません: chartNoteリンクまたはTooltipのgetBoundingClientRectを取得できません",
+        );
       }
+      const currentScrollY = await page.evaluate(() => window.scrollY);
+      const tooltipCenterY = initialTooltipBox.y + initialTooltipBox.height / 2;
+      const linkCenterY = initialLinkBox.y + initialLinkBox.height / 2;
+      const targetScrollY = clampScrollY(currentScrollY + linkCenterY - tooltipCenterY);
+
+      await page.evaluate((nextScrollY) => window.scrollTo(0, nextScrollY), targetScrollY);
+      await expect
+        .poll(async () => Math.round(await page.evaluate(() => window.scrollY)), {
+          timeout: 5000,
+          intervals: [100, 200, 300],
+        })
+        .toBe(Math.round(targetScrollY));
+      await waitForScrollYToSettle(page);
+
+      // スクロールでdismissされる実装では、現在の実bar座標を再度touchしてTooltipを戻す。
+      if (!(await tooltip.isVisible())) {
+        const pointAfterScroll = await findViewportBar(page, chart, false);
+        await page.touchscreen.tap(pointAfterScroll.x, pointAfterScroll.y);
+        await expect(tooltip).toBeVisible({ timeout: 5000 });
+      }
+
+      const tooltipBox = await getRect(tooltip);
+      const linkBox = await getRect(chartNoteLink);
+      const coveredPoint = tooltipBox && linkBox ? intersectionPoint(tooltipBox, linkBox) : null;
 
       if (!coveredPoint || !tooltipBox || !linkBox) {
         throw new Error(
           "重なりを再現できません: project=mobile-pixel, viewport=412x915, " +
-            "実touchでchartNoteリンクを含む実Tooltipを表示し、有限回のスクロール候補を試行済み",
+            "実DOMの中心差分でwindow.scrollToし、実touchでTooltipを再表示済みだが矩形が交差しない " +
+            `(scrollY=${await page.evaluate(() => window.scrollY)}, ` +
+            `tooltip=${JSON.stringify(tooltipBox)}, link=${JSON.stringify(linkBox)})`,
         );
       }
 
