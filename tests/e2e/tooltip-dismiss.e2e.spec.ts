@@ -462,21 +462,39 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
       }, correctionDelta);
       await waitForScrollYToSettleWithinTwoSeconds();
 
+      // A relative scroll can dismiss the real Tooltip too. Re-open it once
+      // before comparing scrollY or reading the final rectangles.
+      if (!(await tooltip.isVisible())) {
+        await tapVisibleBarUntilTooltip("補正後Tooltip再表示", 1);
+      }
+      if (!(await tooltip.isVisible())) {
+        throw new Error(
+          "重なり補正後にTooltipが表示されません: " +
+            `(scrollY=${await page.evaluate(() => window.scrollY)}, ` +
+            `maxScrollY=${correctionMaxScrollY}, delta=${correctionDelta})`,
+        );
+      }
+
+      tooltipBox = await getRect(tooltip);
+      linkBox = await getRect(chartNoteLink);
+      if (!tooltipBox || !linkBox) {
+        throw new Error(
+          "重なり補正後の矩形を取得できません: " +
+            `(scrollY=${await page.evaluate(() => window.scrollY)}, ` +
+            `maxScrollY=${correctionMaxScrollY}, ` +
+            `tooltip=${JSON.stringify(tooltipBox)}, link=${JSON.stringify(linkBox)})`,
+        );
+      }
+
       const correctedScrollY = await page.evaluate(() => window.scrollY);
       if (Math.abs(correctedScrollY - expectedCorrectionScrollY) > 1) {
         throw new Error(
           "Tooltipとリンクの相対スクロール補正に失敗しました: " +
             `(scrollY=${correctedScrollY}, maxScrollY=${correctionMaxScrollY}, ` +
-            `delta=${correctionDelta}, tooltip=${JSON.stringify(await getRect(tooltip))}, ` +
-            `link=${JSON.stringify(await getRect(chartNoteLink))})`,
+            `delta=${correctionDelta}, tooltip=${JSON.stringify(tooltipBox)}, ` +
+            `link=${JSON.stringify(linkBox)})`,
         );
       }
-
-      if (!(await tooltip.isVisible())) {
-        await tapVisibleBarUntilTooltip("補正後Tooltip再表示", 1);
-      }
-      tooltipBox = await getRect(tooltip);
-      linkBox = await getRect(chartNoteLink);
 
       const overlap =
         tooltipBox && linkBox
