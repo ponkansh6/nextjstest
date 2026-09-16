@@ -338,11 +338,17 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
       );
       await expect(chartNoteLink).toBeAttached();
 
-      const getRect = async (locator: Locator): Promise<ViewportBox | null> =>
-        locator.evaluate((element) => {
-          const rect = element.getBoundingClientRect();
-          return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
-        });
+      const getRect = async (locator: Locator): Promise<ViewportBox | null> => {
+        if ((await locator.count()) === 0) return null;
+        return locator.evaluate(
+          (element) => {
+            const rect = element.getBoundingClientRect();
+            return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+          },
+          undefined,
+          { timeout: 500 },
+        );
+      };
       const scrollInstantly = async (scrollY: number) => {
         await page.evaluate((nextScrollY) => {
           // Override a possible CSS scroll-behavior: smooth for this one real
@@ -683,11 +689,14 @@ test.describe("デスクトップ ツールチップのホバー回帰テスト"
       timeout: 5000,
     });
 
-    // Escape単独のdismiss確認後、まずチャート外へ出てから別の有効bar座標へ移動する。
+    // Escape単独のdismiss確認後、チャート外へ出てから実bar座標を再取得し、
+    // bar外からbar内へ実pointermoveする。再表示は次の有効pointermoveだけで判定する。
     await page.mouse.move(0, 0);
     const repeatPoint = await findViewportBar(page, chart, false, 0.75);
-    await page.mouse.move(repeatPoint.x, repeatPoint.y);
-    await expect(tooltipWrapper).toBeVisible({ timeout: 5000 });
+    await page.mouse.move(repeatPoint.x, repeatPoint.y, { steps: 8 });
+    await expect
+      .poll(() => tooltipWrapper.isVisible(), { timeout: 1200, intervals: [50, 100] })
+      .toBe(true);
 
     await page.mouse.move(0, 0);
     await expect(
