@@ -129,7 +129,14 @@ export const useChartTooltipController = ({
       const selectIndex = (event: ReactPointerEvent<HTMLElement>) => {
         const length = options?.dataLength ?? 0;
         if (suppressed || length < 1) return;
-        setEscapeDismissed(false);
+        // The chart wrapper also receives events from its background, axes,
+        // and reference lines. Only a real data shape is a new interaction
+        // after Escape/scroll dismissal.
+        const target = event.target as Element | null;
+        const isDataShape =
+          target?.closest?.(".recharts-bar-rectangle, .recharts-line-curve, .recharts-dot") != null;
+        const clearsEscapeDismissal = escapeDismissed && isDataShape;
+        if (clearsEscapeDismissal) setEscapeDismissed(false);
         const svg = event.currentTarget.querySelector("svg");
         const surface = svg?.getBoundingClientRect() ?? event.currentTarget.getBoundingClientRect();
         const viewBoxWidth = svg?.viewBox.baseVal.width || surface.width;
