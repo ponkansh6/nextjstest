@@ -21,30 +21,43 @@ async function findViewportBar(
   scrollIntoView = true,
   horizontalRatio = 0.5,
 ): Promise<ViewportPoint> {
-  const bars = chart.locator(".recharts-bar-rectangle");
-  if (scrollIntoView) await bars.first().scrollIntoViewIfNeeded();
   const viewport = page.viewportSize();
   if (!viewport) throw new Error("Playwright viewport is unavailable");
 
-  for (let index = 0; index < (await bars.count()); index += 1) {
-    const bar = bars.nth(index);
-    const box = await bar.boundingBox();
-    if (!box || box.width <= 0 || box.height <= 0) continue;
+  let lastError: unknown;
+  for (let retry = 0; retry < 4; retry += 1) {
+    try {
+      const bars = chart.locator(".recharts-bar-rectangle");
+      if (scrollIntoView) await bars.first().scrollIntoViewIfNeeded();
 
-    // A partially clipped bar is still actionable when the actual tap point
-    // is inside the fixed viewport. Keep the same point used for the tap in
-    // the candidate check so this remains a real-coordinate interaction.
-    const point = {
-      x: box.x + box.width * horizontalRatio,
-      y: box.y + box.height / 2,
-    };
-    if (point.x >= 0 && point.x <= viewport.width && point.y >= 0 && point.y <= viewport.height) {
-      return {
-        x: point.x,
-        y: point.y,
-      };
+      for (let index = 0; index < (await bars.count()); index += 1) {
+        // Recharts can replace the SVG subtree between count(), boundingBox(),
+        // and the eventual touch. Re-read the locator on every retry.
+        const bar = chart.locator(".recharts-bar-rectangle").nth(index);
+        const box = await bar.boundingBox();
+        if (!box || box.width <= 0 || box.height <= 0) continue;
+
+        // A partially clipped bar is still actionable when the actual tap point
+        // is inside the fixed viewport. Keep the same point used for the tap in
+        // the candidate check so this remains a real-coordinate interaction.
+        const point = {
+          x: box.x + box.width * horizontalRatio,
+          y: box.y + box.height / 2,
+        };
+        if (
+          point.x >= 0 &&
+          point.x <= viewport.width &&
+          point.y >= 0 &&
+          point.y <= viewport.height
+        ) {
+          return point;
+        }
+      }
+    } catch (error) {
+      lastError = error;
     }
   }
+  if (lastError) throw lastError;
   throw new Error(
     `No actionable bar tap point is inside the viewport (${viewport.width}x${viewport.height})`,
   );
@@ -327,6 +340,21 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
         }, scrollY);
         await waitForScrollYToSettle(page);
       };
+      const tapVisibleBar = async () => {
+        let lastError: unknown;
+        for (let attempt = 0; attempt < 4; attempt += 1) {
+          try {
+            // The target scroll position is already established; scrolling the
+            // chart here would move it away from the intersection we calculated.
+            const point = await findViewportBar(page, chart, false);
+            await page.touchscreen.tap(point.x, point.y);
+            return;
+          } catch (error) {
+            lastError = error;
+          }
+        }
+        if (lastError) throw lastError;
+      };
 
       const initialPoint = await findViewportBar(page, chart, false);
       await page.touchscreen.tap(initialPoint.x, initialPoint.y);
@@ -339,8 +367,7 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
       let resetToTop = false;
       for (let attempt = 0; attempt < 8; attempt += 1) {
         if (!(await tooltip.isVisible())) {
-          const pointAfterScroll = await findViewportBar(page, chart, true);
-          await page.touchscreen.tap(pointAfterScroll.x, pointAfterScroll.y);
+          await tapVisibleBar();
           await expect(tooltip).toBeVisible({ timeout: 5000 });
         }
 
@@ -373,8 +400,7 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
       }
 
       if (!(await tooltip.isVisible())) {
-        const pointAfterScroll = await findViewportBar(page, chart, true);
-        await page.touchscreen.tap(pointAfterScroll.x, pointAfterScroll.y);
+        await tapVisibleBar();
         await expect(tooltip).toBeVisible({ timeout: 5000 });
       }
       tooltipBox = await getRect(tooltip);
@@ -558,13 +584,22 @@ test.describe("デスクトップ ツールチップのホバー回帰テスト"
     await page.waitForLoadState("networkidle");
 
     const chart = page.getByTestId(NOMINAL);
-    const point = await findViewportBar(page, chart);
-    await page.mouse.move(point.x, point.y);
-
     const tooltipWrapper = chart.locator(".recharts-tooltip-wrapper");
-    await expect(tooltipWrapper, "ホバー時にツールチップラッパーが表示されるべき").toBeVisible({
-      timeout: 5000,
-    });
+    let initialHoverError: unknown;
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      try {
+        const point = await findViewportBar(page, chart);
+        await page.mouse.move(point.x, point.y);
+        await expect
+          .poll(() => tooltipWrapper.isVisible(), { timeout: 1200, intervals: [50, 100] })
+          .toBe(true);
+        initialHoverError = undefined;
+        break;
+      } catch (error) {
+        initialHoverError = error;
+      }
+    }
+    if (initialHoverError) throw initialHoverError;
 
     await page.keyboard.press("Escape");
     await expect(tooltipWrapper, "EscapeでデスクトップTooltipがdismissされるべき").not.toBeVisible({
@@ -587,7 +622,8 @@ test.describe("デスクトップ ツールチップのホバー回帰テスト"
     const headingBox = await heading.boundingBox();
     expect(headingBox).not.toBeNull();
     if (!headingBox) return;
-    await page.mouse.move(point.x, point.y);
+    const finalPoint = await findViewportBar(page, chart, false);
+    await page.mouse.move(finalPoint.x, finalPoint.y);
     await expect(tooltipWrapper).toBeVisible({ timeout: 5000 });
     await page.mouse.click(
       headingBox.x + headingBox.width / 2,
