@@ -38,6 +38,105 @@ describe("CustomTooltip", () => {
     expect(screen.queryByText(/他 \d+ 件/)).toBeNull();
   });
 
+  it("separates visible salary groups at the first visible auxiliary row only", () => {
+    const salaryKeys = ["所定内給与", "所定外給与", "特別給与"];
+    const auxiliaryKeys = ["時間当たり給与", "15歳以上国民当たり給与", "CPI総合(参考)"];
+    const metadata = [...salaryKeys, ...auxiliaryKeys].map((key, order) => ({
+      key,
+      label: key,
+      order,
+    }));
+    const payload = [...salaryKeys, ...auxiliaryKeys].map((dataKey, value) => ({
+      dataKey,
+      name: "raw",
+      value,
+    }));
+    const separator = { firstGroupKeys: salaryKeys, secondGroupKeys: auxiliaryKeys };
+    const renderTooltip = (allowedKeys?: string[]) =>
+      render(
+        <CustomTooltip
+          active
+          isMobile={false}
+          isTouch={false}
+          label="2025年1月"
+          payload={payload}
+          seriesMeta={metadata}
+          allowedKeys={allowedKeys}
+          separatorBetweenGroups={separator}
+          showAllPayload
+          tooltipBg="#000"
+          tooltipText="#fff"
+        />,
+      );
+
+    let view = renderTooltip();
+    expect(document.querySelectorAll('[data-tooltip-group-separator="true"]')).toHaveLength(1);
+    const initialSeparator = document.querySelector('[data-tooltip-group-separator="true"]');
+    expect(initialSeparator?.getAttribute("data-tooltip-key")).toBe("時間当たり給与");
+    expect(initialSeparator?.className).toContain("tooltipGroupSeparator");
+    view.unmount();
+
+    view = renderTooltip(auxiliaryKeys);
+    expect(document.querySelectorAll('[data-tooltip-group-separator="true"]')).toHaveLength(0);
+    view.unmount();
+
+    view = renderTooltip(salaryKeys);
+    expect(document.querySelectorAll('[data-tooltip-group-separator="true"]')).toHaveLength(0);
+    view.unmount();
+
+    view = renderTooltip(["所定内給与", "特別給与", "15歳以上国民当たり給与", "CPI総合(参考)"]);
+    expect(document.querySelectorAll('[data-tooltip-group-separator="true"]')).toHaveLength(1);
+    expect(
+      document
+        .querySelector('[data-tooltip-group-separator="true"]')
+        ?.getAttribute("data-tooltip-key"),
+    ).toBe("15歳以上国民当たり給与");
+    view.unmount();
+
+    view = renderTooltip([...salaryKeys, "15歳以上国民当たり給与", "CPI総合(参考)"]);
+    expect(document.querySelectorAll('[data-tooltip-group-separator="true"]')).toHaveLength(1);
+    expect(
+      document
+        .querySelector('[data-tooltip-group-separator="true"]')
+        ?.getAttribute("data-tooltip-key"),
+    ).toBe("15歳以上国民当たり給与");
+    view.unmount();
+
+    view = renderTooltip(["特別給与", ...auxiliaryKeys]);
+    expect(document.querySelectorAll('[data-tooltip-group-separator="true"]')).toHaveLength(1);
+    expect(
+      document
+        .querySelector('[data-tooltip-group-separator="true"]')
+        ?.getAttribute("data-tooltip-key"),
+    ).toBe("時間当たり給与");
+    view.unmount();
+  });
+
+  it("does not add a separator to CPI, consumption, or comparison rows", () => {
+    render(
+      <CustomTooltip
+        active
+        isMobile={false}
+        isTouch={false}
+        payload={[
+          { dataKey: "CPI総合", name: "CPI総合", value: 100 },
+          { dataKey: "CTI消費支出（参考）", name: "CTI消費支出（参考）", value: 101 },
+          { dataKey: "総合(12MA)", name: "給与(総合)", value: 102 },
+        ]}
+        seriesMeta={[
+          { key: "CPI総合", label: "CPI総合", order: 0 },
+          { key: "CTI消費支出（参考）", label: "CTI消費支出（参考）", order: 1 },
+          { key: "総合(12MA)", label: "給与(総合)", order: 2 },
+        ]}
+        showAllPayload
+        tooltipBg="#000"
+        tooltipText="#fff"
+      />,
+    );
+    expect(document.querySelectorAll('[data-tooltip-group-separator="true"]')).toHaveLength(0);
+    expect(document.querySelectorAll(".tooltipGroupSeparator")).toHaveLength(0);
+  });
+
   it("excludes unregistered payload keys when a metadata contract is supplied", () => {
     render(
       <CustomTooltip

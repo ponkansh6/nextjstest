@@ -449,6 +449,12 @@
   overflow-wrap: anywhere;
 }
 
+.tooltipGroupSeparator {
+  border-top: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+  padding-top: 4px;
+  margin-top: 5px;
+}
+
 @media (max-width: 768px) {
   .spendingChartSection {
     padding-left: 0.5rem;

@@ -219,6 +219,8 @@ test.describe("消費支出グラフ モバイル可読性の証跡", () => {
               return el ? { scrollWidth: el.scrollWidth, clientWidth: el.clientWidth } : null;
             })(),
             value: spans.at(-1)?.textContent?.trim(),
+            separator: row.getAttribute("data-tooltip-group-separator") === "true",
+            borderTop: getComputedStyle(row).borderTopWidth,
           };
         });
         return {
@@ -245,6 +247,9 @@ test.describe("消費支出グラフ モバイル可読性の証跡", () => {
       });
       expect(evidence.labels.map((row) => row.label)).toEqual([...earningsTooltipLabels]);
       expect(evidence.labels).toHaveLength(6);
+      expect(evidence.labels.filter((row) => row.separator)).toHaveLength(1);
+      expect(evidence.labels.find((row) => row.separator)?.label).toBe("時間当たり給与");
+      expect(evidence.labels.find((row) => row.separator)?.borderTop).not.toBe("0px");
       expect(evidence.total.label).toBe(earningsTotalLabel);
       expect(evidence.total.value).toMatch(/^\d+\.\d{2}$/);
       expect(evidence.total.box).not.toBeNull();

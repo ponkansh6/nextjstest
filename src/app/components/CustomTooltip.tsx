@@ -29,6 +29,7 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
     totalExcludedKeys = [],
     totalIncludedKeys,
     totalLabel = "合計",
+    separatorBetweenGroups,
     showAllPayload = false,
     seriesMeta,
     allowedKeys,
@@ -113,6 +114,18 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
     const shouldShowAllPayload = showAllPayload;
     const topPayload = shouldShowAllPayload ? displayPayload : displayPayload.slice(0, 5);
     const remainingPayloadCount = displayPayload.length - topPayload.length;
+    const firstGroupKeys = new Set(separatorBetweenGroups?.firstGroupKeys);
+    const secondGroupKeys = new Set(separatorBetweenGroups?.secondGroupKeys);
+    const hasFirstGroup = topPayload.some((entry) =>
+      firstGroupKeys.has(entry.dataKey ?? entry.name),
+    );
+    const hasSecondGroup = topPayload.some((entry) =>
+      secondGroupKeys.has(entry.dataKey ?? entry.name),
+    );
+    const separatorIndex =
+      hasFirstGroup && hasSecondGroup
+        ? topPayload.findIndex((entry) => secondGroupKeys.has(entry.dataKey ?? entry.name))
+        : -1;
 
     return (
       <div
@@ -238,11 +251,13 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
         {topPayload.map((entry, index) => (
           <div
             key={`item-${index}`}
+            className={index === separatorIndex ? styles.tooltipGroupSeparator : undefined}
             data-tooltip-row="true"
             data-tooltip-key={entry.dataKey}
             data-tooltip-label={entry.name}
             data-tooltip-color={entry.color}
             data-tooltip-order={entry.order ?? index}
+            data-tooltip-group-separator={index === separatorIndex ? "true" : undefined}
             style={{
               display: "flex",
               alignItems: "center",

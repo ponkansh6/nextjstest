@@ -312,6 +312,11 @@ export const EARNINGS_TOTAL_KEYS = EARNINGS_SERIES_REGISTRY.filter(({ key }) =>
   ["所定内給与", "所定外給与", "特別給与"].includes(key),
 ).map(({ key }) => key);
 
+/** 給与ツールチップの補助系列。合計対象以外を表示順のまま保持する。 */
+export const EARNINGS_AUXILIARY_KEYS = EARNINGS_SERIES_REGISTRY.filter(
+  ({ key }) => !EARNINGS_TOTAL_KEYS.includes(key),
+).map(({ key }) => key);
+
 // Compatibility name retained for existing chart/table consumers.
 export const EARNINGS_TABLE_CONFIGS = EARNINGS_SERIES_REGISTRY;
 

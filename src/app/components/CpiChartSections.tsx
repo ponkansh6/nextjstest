@@ -14,6 +14,7 @@ import {
   getLegendLabel,
   EARNINGS_SERIES_REGISTRY,
   EARNINGS_TOTAL_KEYS,
+  EARNINGS_AUXILIARY_KEYS,
   COMPARISON_SERIES_REGISTRY,
   projectTooltipMetadata,
 } from "../../lib/chartConstants";
@@ -338,6 +339,10 @@ export function CpiChartSections({
             showTotal: true,
             totalLabel: "給与区分合計（所定内＋所定外＋特別）",
             totalIncludedKeys: EARNINGS_TOTAL_KEYS,
+            separatorBetweenGroups: {
+              firstGroupKeys: EARNINGS_TOTAL_KEYS,
+              secondGroupKeys: EARNINGS_AUXILIARY_KEYS,
+            },
             showAllPayload: true,
             seriesMeta: earningsTooltipMeta,
           })}

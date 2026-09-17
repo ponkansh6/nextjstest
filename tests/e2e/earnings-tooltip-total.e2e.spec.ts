@@ -14,7 +14,13 @@ const EXPECTED_LABELS = [
   "物価指数総合(参考)",
 ] as const;
 
-type TooltipRow = { key: string | null; label: string; value: string };
+type TooltipRow = {
+  key: string | null;
+  label: string;
+  value: string;
+  separator: boolean;
+  borderTop: string;
+};
 type ViewportBox = { x: number; y: number; width: number; height: number };
 
 const earningsSection = (page: Page) => page.locator(EARNINGS_SECTION);
@@ -66,6 +72,8 @@ async function readTooltip(tooltip: Locator) {
         key: element.getAttribute("data-tooltip-key"),
         label: element.getAttribute("data-tooltip-label") ?? spans[1]?.textContent?.trim() ?? "",
         value: spans.at(-1)?.textContent?.trim() ?? "",
+        separator: element.getAttribute("data-tooltip-group-separator") === "true",
+        borderTop: getComputedStyle(element).borderTopWidth,
       };
     }),
   );
@@ -105,6 +113,9 @@ test.describe("給与tooltipの区分合計 desktop E2E", () => {
     expect(evidence.rows.map((row) => row.key)).toEqual([...INCLUDED_KEYS, ...AUXILIARY_KEYS]);
     expect(evidence.rows.map((row) => row.label)).toEqual([...EXPECTED_LABELS]);
     expect(evidence.rows).toHaveLength(6);
+    expect(evidence.rows.filter((row) => row.separator)).toHaveLength(1);
+    expect(evidence.rows.find((row) => row.separator)?.key).toBe("時間当たり給与");
+    expect(evidence.rows.find((row) => row.separator)?.borderTop).not.toBe("0px");
     expect(evidence.total.label).toBe(TOTAL_LABEL);
     expect(Number(evidence.total.value)).toBe(displayedSum(evidence.rows, INCLUDED_KEYS));
     expect(Number(evidence.total.value)).not.toBe(
@@ -132,6 +143,9 @@ test.describe("給与tooltipの区分合計 desktop E2E", () => {
       ...AUXILIARY_KEYS,
     ]);
     expect(freshEvidence.rows).toHaveLength(5);
+    expect(freshEvidence.rows.filter((row) => row.separator)).toHaveLength(1);
+    expect(freshEvidence.rows.find((row) => row.separator)?.key).toBe("時間当たり給与");
+    expect(freshEvidence.rows.find((row) => row.separator)?.borderTop).not.toBe("0px");
     expect(freshEvidence.rows.some((row) => row.key === hiddenKey)).toBe(false);
     expect(freshEvidence.total.label).toBe(TOTAL_LABEL);
     expect(Number(freshEvidence.total.value)).toBe(

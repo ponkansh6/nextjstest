@@ -167,6 +167,11 @@ metadata順で維持し、`EARNINGS_TOTAL_KEYS` に含まれる可視行の有�
 `—`として残す。0は有効値として0.00表示・加算し、null/undefined/NaN/Infinityは
 `—`表示・非加算とする。
 
+給与tooltipの `separatorBetweenGroups` は可視metadata投影上の給与3系列と補助3系列の境界だけを
+装飾する。表示中の各グループを再計算して補助系列の先頭行へ境界を移動し、どちらか一方の
+グループが空なら境界を生成しない。CPI・消費支出・比較tooltipはこの指定を受け取らず、行順・
+表示値・読み上げ内容は変わらない。
+
 ### Component Tree
 
 `CpiChart` → `CpiChartSections` → `NewGraph`, `EarningsBreakdownChart`, and
@@ -185,6 +190,9 @@ each chart's existing renderer.
 - `data/source/earnings_method_b_202606.metadata.json` — 方式Bの取得元URL、統計表ID、シート、表頭、対象区分、単位、確報状態、SHA-256、系列対応表を記録する。
 - 方式Bの断面抽出は公式履歴CSVと単位・期間が互換でないため、履歴入力へ自動連結せず、5月・6月など未取得月を補完しない。履歴ファイルが対象系列・対象区分・単位・改訂状態を満たすまで、既存の検証済み履歴と表示範囲を維持する。
 - `data/source/cti_support_nominal.csv` / `data/source/cti_support_real.csv` — CTI supporting series
+
+Tooltip group separators use no additional source data: the salary-only boundary is derived from
+the visible metadata projection and does not change source values or accessible row content.
 
 For CPI, these candidate files are resolved and validated as complete same-base
 pairs by `server/lib/data-loader/cpiSource.ts`. The 2025 metadata is resolved and
@@ -883,6 +891,15 @@ The system SHALL resolve tooltip display rows from chart-side series metadata wh
 - **WHEN** the tooltip is shown at 375px or 430px
   **THEN** the six rows and explicit total label/value remain within the viewport and readable, while existing hover/click/touch/dismiss/scroll behavior remains unchanged.
 
+#### Scenario R21f: Earnings group separator
+
+- **WHEN** a salary tooltip has at least one visible category from `所定内給与`・`所定外給与`・`特別給与` and at least one visible auxiliary series from `時間当たり給与`・`15歳以上国民当たり給与`・`CPI総合(参考)`
+  **THEN** exactly one decorative separator is rendered on the first visible auxiliary row, including after hidden-series metadata projection, and the 375px/430px mobile tooltip retains readable row spacing and viewport fit
+- **WHEN** all three salary categories or all three auxiliary series are hidden
+  **THEN** no group separator is rendered
+- **WHEN** a CPI, consumption-expenditure, or comparison tooltip is displayed
+  **THEN** no separator metadata or separator CSS is applied and the decorative line adds no screen-reader/read-aloud content
+
 #### Scenario R21c: Comparison registry synchronization
 
 - **WHEN** the three-series comparison is rendered before/at the `2017Q4`/`2018Q1` boundary or with advanced on/off and hidden keys
@@ -1244,7 +1261,7 @@ Page (RSC)
     │   │   └── belowChartSlot: CagrPanel — popup link + compact BottomSheet (R18)
     │   ├── SpendingBarChart (nominal) — mobile-specific spacing/ticks, bar width, and all-value tooltip/details; closed-by-default legend; legacy GDP before 2018Q1 and CTI expense fields from 2018Q1
     │   ├── SpendingBarChart (real) — mobile-specific spacing/ticks, bar width, and all-value tooltip/details; closed-by-default legend; legacy GDP before 2018Q1 and CTI expense fields from 2018Q1
-    │   ├── EarningsBreakdownChart → CustomTooltip — complete registry labels with natural wrapping and stable value column; six rows plus `給与区分合計（所定内＋所定外＋特別）` from visible `EARNINGS_TOTAL_KEYS` (`showTotal`, `totalLabel`, and `totalIncludedKeys=EARNINGS_TOTAL_KEYS`); hidden included rows are removed and the total is recalculated from the remaining visible included rows
+    │   ├── EarningsBreakdownChart → CustomTooltip — complete registry labels with natural wrapping and stable value column; six rows plus `給与区分合計（所定内＋所定外＋特別）` from visible `EARNINGS_TOTAL_KEYS` (`showTotal`, `totalLabel`, and `totalIncludedKeys=EARNINGS_TOTAL_KEYS`); hidden included rows are removed and the total is recalculated from the remaining visible included rows; salary-only `separatorBetweenGroups` is placed on the first visible auxiliary row
     │   ├── ResidualAreaChart → CustomTooltip
     │   └── NewGraph → ChartInfoContentRenderer → CustomTooltip — comparison visualization receives CTI plus GDP comparison-only normalized values; unavailable registered lines remain as null-compatible line contracts
     ├── ChartInfoButton → ChartInfoContentRenderer — Indicator explanations (uses `chartKey` plus loader-resolved state in `src/lib/chartInfoContent.ts`)

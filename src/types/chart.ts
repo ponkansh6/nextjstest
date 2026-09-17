@@ -16,6 +16,11 @@ export interface CustomTooltipProps {
   totalIncludedKeys?: string[];
   /** 合計行の表示ラベル */
   totalLabel?: string;
+  /** 表示中の2グループ間に装飾的な区切り線を表示する設定 */
+  separatorBetweenGroups?: {
+    firstGroupKeys: string[];
+    secondGroupKeys: string[];
+  };
   showAllPayload?: boolean;
   /** Explicit visible-series contract; a function may switch keys by period. */
   allowedKeys?: string[] | ((label?: string) => string[]);
