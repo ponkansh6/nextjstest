@@ -3,7 +3,7 @@ import { describe, it, expect, vi } from "vitest";
 import { CustomTooltip } from "../../src/app/components/CustomTooltip";
 import { SUPPORT_SERIES_KEY_NOMINAL } from "../../src/lib/chartConstants";
 import { CPI_CATEGORIES, getDisplayLabel, stackedColors } from "../../src/lib/chartConstants";
-import { EARNINGS_SERIES_REGISTRY } from "../../src/lib/chartConstants";
+import { EARNINGS_SERIES_REGISTRY, EARNINGS_TOTAL_KEYS } from "../../src/lib/chartConstants";
 import {
   formatCpiTooltipTotal,
   formatCpiTooltipValue,
@@ -58,6 +58,114 @@ describe("CustomTooltip", () => {
     );
     expect(screen.getByText("登録済み")).toBeDefined();
     expect(screen.queryByText("未登録")).toBeNull();
+    expect(
+      within(screen.getByText("合計").parentElement as HTMLElement).getByText("10.00"),
+    ).toBeDefined();
+  });
+
+  it("sums only included earnings rows and preserves missing/invalid row values", () => {
+    const values = new Map<string, number | null | undefined>([
+      ["所定内給与", 0],
+      ["所定外給与", null],
+      ["特別給与", 2.5],
+      ["時間当たり給与", 100],
+      ["15歳以上国民当たり給与", Number.NaN],
+      ["CPI総合(参考)", Number.POSITIVE_INFINITY],
+    ]);
+    render(
+      <CustomTooltip
+        active
+        isMobile={false}
+        isTouch={false}
+        label="2025年1月"
+        payload={[...values.entries()].map(([dataKey, value]) => ({
+          dataKey,
+          name: "raw",
+          value,
+        }))}
+        seriesMeta={EARNINGS_SERIES_REGISTRY.map(({ key, tooltipLabel, order }) => ({
+          key,
+          label: tooltipLabel ?? key,
+          order,
+        }))}
+        showTotal
+        totalLabel="給与区分合計（所定内＋所定外＋特別）"
+        totalIncludedKeys={EARNINGS_TOTAL_KEYS}
+        showAllPayload
+        tooltipBg="#000"
+        tooltipText="#fff"
+      />,
+    );
+    expect(screen.getByText("給与区分合計（所定内＋所定外＋特別）")).toBeDefined();
+    expect(
+      within(
+        screen.getByText("給与区分合計（所定内＋所定外＋特別）").parentElement as HTMLElement,
+      ).getByText("2.50"),
+    ).toBeDefined();
+    expect(screen.getAllByText("—")).toHaveLength(3);
+    expect(
+      within(screen.getByText("所定内給与").parentElement as HTMLElement).getByText("0.00"),
+    ).toBeDefined();
+  });
+
+  it("renders a payload欠落 earnings row and totals only existing finite values", () => {
+    const missingKey = "所定外給与";
+    const payload = EARNINGS_SERIES_REGISTRY.filter(({ key }) => key !== missingKey).map(
+      ({ key }) => ({
+        dataKey: key,
+        name: "raw",
+        value: key === "所定内給与" ? 100 : key === "特別給与" ? 2.5 : 999,
+      }),
+    );
+
+    render(
+      <CustomTooltip
+        active
+        isMobile={false}
+        isTouch={false}
+        label="2025年1月"
+        payload={payload}
+        seriesMeta={EARNINGS_SERIES_REGISTRY.map(({ key, tooltipLabel, order }) => ({
+          key,
+          label: tooltipLabel ?? key,
+          order,
+        }))}
+        showTotal
+        totalLabel="給与区分合計（所定内＋所定外＋特別）"
+        totalIncludedKeys={EARNINGS_TOTAL_KEYS}
+        showAllPayload
+        tooltipBg="#000"
+        tooltipText="#fff"
+      />,
+    );
+
+    expect(screen.getByText(missingKey)).toBeDefined();
+    expect(
+      within(screen.getByText(missingKey).parentElement as HTMLElement).getByText("—"),
+    ).toBeDefined();
+    expect(
+      within(
+        screen.getByText("給与区分合計（所定内＋所定外＋特別）").parentElement as HTMLElement,
+      ).getByText("102.50"),
+    ).toBeDefined();
+  });
+
+  it("retains the legacy totalExcludedKeys behavior when totalIncludedKeys is omitted", () => {
+    render(
+      <CustomTooltip
+        active
+        isMobile={false}
+        isTouch={false}
+        payload={[
+          { name: "対象", dataKey: "included", value: 10 },
+          { name: "除外", dataKey: "excluded", value: 90 },
+        ]}
+        showTotal
+        totalExcludedKeys={["excluded"]}
+        tooltipBg="#000"
+        tooltipText="#fff"
+      />,
+    );
     expect(
       within(screen.getByText("合計").parentElement as HTMLElement).getByText("10.00"),
     ).toBeDefined();

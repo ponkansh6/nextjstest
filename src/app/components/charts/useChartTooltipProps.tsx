@@ -19,6 +19,8 @@ export interface ChartTooltipProps {
 export interface ChartTooltipBindOptions {
   showTotal?: boolean;
   totalExcludedKeys?: string[];
+  totalIncludedKeys?: string[];
+  totalLabel?: string;
   showAllPayload?: boolean;
   seriesMeta?: TooltipSeriesMetadata[];
   allowedKeys?: string[] | ((label?: string) => string[]);
@@ -197,6 +199,8 @@ export const useChartTooltipController = ({
               onDismiss={dismiss}
               showTotal={options?.showTotal}
               totalExcludedKeys={options?.totalExcludedKeys}
+              totalIncludedKeys={options?.totalIncludedKeys}
+              totalLabel={options?.totalLabel}
               showAllPayload={options?.showAllPayload}
               seriesMeta={options?.seriesMeta}
               allowedKeys={options?.allowedKeys}

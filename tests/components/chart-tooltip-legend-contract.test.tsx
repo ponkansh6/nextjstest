@@ -28,7 +28,12 @@ import { ChartLegend } from "../../src/app/components/ChartLegend";
 import { CustomTooltip } from "../../src/app/components/CustomTooltip";
 import { SpendingBarChart } from "../../src/app/components/SpendingBarChart";
 import { NewGraph } from "../../src/app/components/NewGraph";
-import { COMPARISON_SERIES_REGISTRY, projectTooltipMetadata } from "../../src/lib/chartConstants";
+import {
+  COMPARISON_SERIES_REGISTRY,
+  EARNINGS_SERIES_REGISTRY,
+  EARNINGS_TOTAL_KEYS,
+  projectTooltipMetadata,
+} from "../../src/lib/chartConstants";
 import { useChartTooltipController } from "../../src/app/components/charts/useChartTooltipProps";
 import { renderHook, act } from "@testing-library/react";
 
@@ -36,6 +41,13 @@ describe("chart tooltip and legend shared contract", () => {
   let scrollY = 0;
   beforeEach(() => vi.spyOn(window, "scrollY", "get").mockImplementation(() => scrollY));
   afterEach(() => vi.restoreAllMocks());
+
+  it("defines earnings total keys as the three registry salary categories", () => {
+    expect(EARNINGS_TOTAL_KEYS).toEqual(["所定内給与", "所定外給与", "特別給与"]);
+    expect(
+      EARNINGS_TOTAL_KEYS.every((key) => EARNINGS_SERIES_REGISTRY.some((item) => item.key === key)),
+    ).toBe(true);
+  });
 
   it.each([
     [false, "hover"],

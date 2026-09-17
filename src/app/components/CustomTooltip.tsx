@@ -27,6 +27,8 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
     onDismiss,
     showTotal,
     totalExcludedKeys = [],
+    totalIncludedKeys,
+    totalLabel = "合計",
     showAllPayload = false,
     seriesMeta,
     allowedKeys,
@@ -86,13 +88,14 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
       : visiblePayload;
 
     const total = showTotal
-      ? resolvedPayload.reduce(
-          (acc, e) =>
-            totalExcludedKeys.includes(e.dataKey as string)
-              ? acc
-              : acc + (typeof e.value === "number" && Number.isFinite(e.value) ? e.value : 0),
-          0,
-        )
+      ? resolvedPayload.reduce((acc, e) => {
+          const isIncluded = totalIncludedKeys
+            ? totalIncludedKeys.includes(e.dataKey as string)
+            : !totalExcludedKeys.includes(e.dataKey as string);
+          return isIncluded && typeof e.value === "number" && Number.isFinite(e.value)
+            ? acc + e.value
+            : acc;
+        }, 0)
       : null;
 
     const displayPayload = seriesMeta
@@ -228,7 +231,7 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
               borderBottom: "1px solid currentColor",
             }}
           >
-            <span>合計</span>
+            <span>{totalLabel}</span>
             <span>{totalFormatter ? totalFormatter(total) : total.toFixed(2)}</span>
           </div>
         )}

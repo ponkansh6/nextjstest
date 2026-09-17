@@ -12,6 +12,10 @@ export interface CustomTooltipProps {
   showTotal?: boolean;
   /** 合計から除外する独立比較系列 */
   totalExcludedKeys?: string[];
+  /** 合計対象を明示する場合のキー集合。指定時は除外リストより優先する。 */
+  totalIncludedKeys?: string[];
+  /** 合計行の表示ラベル */
+  totalLabel?: string;
   showAllPayload?: boolean;
   /** Explicit visible-series contract; a function may switch keys by period. */
   allowedKeys?: string[] | ((label?: string) => string[]);

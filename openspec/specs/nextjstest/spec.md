@@ -130,6 +130,11 @@ emitting `NaN`/`Infinity`. The applicable expense list is the keys passed to
 `SpendingBarChart`: standalone GDP before 2018Q1, and CTI expense items from
 2018Q1 onward.
 
+給与ツールチップの合計対象は `EARNINGS_SERIES_REGISTRY` から投影した
+`EARNINGS_TOTAL_KEYS`（`所定内給与`、`所定外給与`、`特別給与`）である。
+合計はloaderの生値ではなく、給与独自の2025年平均=100基準化および特別給与の
+12か月移動平均を経た表示値を使用し、補助系列3種は含めない。
+
 ### Data Flow
 
 `CpiChartSections` projects CPI, salary, and comparison entries through the
@@ -154,6 +159,13 @@ For the CPI `StackedAreaChart`, the visible `CPI_CATEGORIES` projection is the
 tooltip row source: a normal hover renders all 12 applicable expense rows and a
 `合計` row, while a hidden legend series is excluded from both the rows and the
 total.
+
+給与は `earnings loader → normalized rows → CpiChartSections` の可視metadata投影を
+`useChartTooltipController` 経由で `CustomTooltip` に渡す。給与tooltipは6系列の行を
+metadata順で維持し、`EARNINGS_TOTAL_KEYS` に含まれる可視行の有限な表示値だけを
+合計する。hidden系列は行と合計から除外するが、metadataに存在するpayload欠落行は
+`—`として残す。0は有効値として0.00表示・加算し、null/undefined/NaN/Infinityは
+`—`表示・非加算とする。
 
 ### Component Tree
 
@@ -860,6 +872,17 @@ The system SHALL resolve tooltip display rows from chart-side series metadata wh
 - **WHEN** a salary tooltip is displayed at 375px or 430px
   **THEN** its date, salary category/item, and complete registry tooltip labels are visible without ellipsis, nowrap, fixed-width truncation, or horizontal scrolling; labels wrap naturally and the numeric value column remains readable.
 
+#### Scenario R21e: Earnings category total
+
+- **WHEN** a salary tooltip is displayed
+  **THEN** it contains the six existing registry rows in their existing label, color, and order, plus `給与区分合計（所定内＋所定外＋特別）`, calculated only from visible finite 2025年平均=100 display values for `所定内給与`, `所定外給与`, and `特別給与`.
+- **WHEN** one of those three salary categories is hidden
+  **THEN** its row and value are excluded and the explicit total is recalculated from the remaining visible category rows; hiding or showing the three auxiliary series does not affect it.
+- **WHEN** a visible included row is 0, null/undefined, missing from payload, NaN, or Infinity
+  **THEN** its row remains with `0.00` for zero or `—` for the other cases, and only finite values contribute to the total.
+- **WHEN** the tooltip is shown at 375px or 430px
+  **THEN** the six rows and explicit total label/value remain within the viewport and readable, while existing hover/click/touch/dismiss/scroll behavior remains unchanged.
+
 #### Scenario R21c: Comparison registry synchronization
 
 - **WHEN** the three-series comparison is rendered before/at the `2017Q4`/`2018Q1` boundary or with advanced on/off and hidden keys
@@ -890,7 +913,10 @@ The system SHALL resolve tooltip display rows from chart-side series metadata wh
   columns), `tests/e2e/cpi-chart-categories.e2e.spec.ts` (all 12 CPI rows,
   `合計`, missing-value `—` contract when present, and hidden-row behavior using
   the shared `data-tooltip-root`/`data-tooltip-row`/`data-tooltip-total` DOM),
-  and `tests/e2e/advanced-series.e2e.spec.ts` (advanced on/off comparison of
+  `tests/e2e/earnings-tooltip-total.e2e.spec.ts` (desktop Chromium hover of a
+  real salary plot, six rows, explicit salary total, auxiliary-series exclusion,
+  and fresh re-hover after hiding an included legend series with recalculated
+  total), and `tests/e2e/advanced-series.e2e.spec.ts` (advanced on/off comparison of
   legend and tooltip labels, colors, and numeric order, including the existing
   2018Q1 boundary data when available).
 - **AND** `tests/unit/series-registry.test.ts` covers every salary/comparison registry entry, key-based projection, labels, colors, order, advanced state, and tooltip/legend equality; `tests/components/chart-tooltip-legend-contract.test.tsx` drives all comparison registry entries from one projection and verifies legend/tooltip DOM equality, advanced on/off, hidden keys, all-null legend retention, and unregistered-payload exclusion.
@@ -1218,7 +1244,7 @@ Page (RSC)
     │   │   └── belowChartSlot: CagrPanel — popup link + compact BottomSheet (R18)
     │   ├── SpendingBarChart (nominal) — mobile-specific spacing/ticks, bar width, and all-value tooltip/details; closed-by-default legend; legacy GDP before 2018Q1 and CTI expense fields from 2018Q1
     │   ├── SpendingBarChart (real) — mobile-specific spacing/ticks, bar width, and all-value tooltip/details; closed-by-default legend; legacy GDP before 2018Q1 and CTI expense fields from 2018Q1
-    │   ├── EarningsBreakdownChart → CustomTooltip — complete registry labels with natural wrapping and stable value column
+    │   ├── EarningsBreakdownChart → CustomTooltip — complete registry labels with natural wrapping and stable value column; six rows plus `給与区分合計（所定内＋所定外＋特別）` from visible `EARNINGS_TOTAL_KEYS` (`showTotal`, `totalLabel`, and `totalIncludedKeys=EARNINGS_TOTAL_KEYS`); hidden included rows are removed and the total is recalculated from the remaining visible included rows
     │   ├── ResidualAreaChart → CustomTooltip
     │   └── NewGraph → ChartInfoContentRenderer → CustomTooltip — comparison visualization receives CTI plus GDP comparison-only normalized values; unavailable registered lines remain as null-compatible line contracts
     ├── ChartInfoButton → ChartInfoContentRenderer — Indicator explanations (uses `chartKey` plus loader-resolved state in `src/lib/chartInfoContent.ts`)

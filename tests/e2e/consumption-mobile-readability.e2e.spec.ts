@@ -15,6 +15,7 @@ const earningsTooltipLabels = [
   "15歳以上国民当たり給与",
   "物価指数総合(参考)",
 ] as const;
+const earningsTotalLabel = "給与区分合計（所定内＋所定外＋特別）";
 
 async function tapVisibleBar(page: Page, root: Locator) {
   await root.scrollIntoViewIfNeeded();
@@ -179,7 +180,7 @@ test.describe("消費支出グラフ モバイル可読性の証跡", () => {
   }
 
   for (const width of [375, 430] as const) {
-    test(`${width}px: 給与tooltipの6系列名・行・値列がviewport内`, async ({ page }) => {
+    test(`${width}px: 給与tooltipの6系列行＋合計・値列がviewport内`, async ({ page }) => {
       await page.setViewportSize({ width, height: 667 });
       await page.goto("/");
       await page.waitForLoadState("networkidle");
@@ -228,11 +229,25 @@ test.describe("消費支出グラフ モバイル可読性の証跡", () => {
             bottom: rootBox.bottom,
           },
           labels,
+          total: (() => {
+            const total = root.querySelector<HTMLElement>('[data-tooltip-total="true"]');
+            const box = total?.getBoundingClientRect();
+            return {
+              label: total?.firstElementChild?.textContent?.trim(),
+              value: total?.lastElementChild?.textContent?.trim(),
+              box: box
+                ? { left: box.left, right: box.right, top: box.top, bottom: box.bottom }
+                : null,
+            };
+          })(),
           viewport: { width: innerWidth, height: innerHeight },
         };
       });
       expect(evidence.labels.map((row) => row.label)).toEqual([...earningsTooltipLabels]);
       expect(evidence.labels).toHaveLength(6);
+      expect(evidence.total.label).toBe(earningsTotalLabel);
+      expect(evidence.total.value).toMatch(/^\d+\.\d{2}$/);
+      expect(evidence.total.box).not.toBeNull();
       expect(
         evidence.labels.every(
           (row) =>
@@ -245,6 +260,10 @@ test.describe("消費支出グラフ モバイル可読性の証跡", () => {
       expect(evidence.rootBox.right).toBeLessThanOrEqual(evidence.viewport.width);
       expect(evidence.rootBox.top).toBeGreaterThanOrEqual(0);
       expect(evidence.rootBox.bottom).toBeLessThanOrEqual(evidence.viewport.height);
+      expect(evidence.total.box?.left).toBeGreaterThanOrEqual(0);
+      expect(evidence.total.box?.right).toBeLessThanOrEqual(evidence.viewport.width);
+      expect(evidence.total.box?.top).toBeGreaterThanOrEqual(0);
+      expect(evidence.total.box?.bottom).toBeLessThanOrEqual(evidence.viewport.height);
       expect(
         evidence.labels.every(
           (row) =>

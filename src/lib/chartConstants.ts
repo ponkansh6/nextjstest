@@ -307,6 +307,11 @@ export const EARNINGS_SERIES_REGISTRY = [
   },
 ] satisfies SeriesMetadata[];
 
+/** 給与区分合計の対象キー。給与registryから投影し、補助系列は含めない。 */
+export const EARNINGS_TOTAL_KEYS = EARNINGS_SERIES_REGISTRY.filter(({ key }) =>
+  ["所定内給与", "所定外給与", "特別給与"].includes(key),
+).map(({ key }) => key);
+
 // Compatibility name retained for existing chart/table consumers.
 export const EARNINGS_TABLE_CONFIGS = EARNINGS_SERIES_REGISTRY;
 
