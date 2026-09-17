@@ -11,6 +11,7 @@ import { calculateQuarter } from "@/lib/math/quarter";
 import type { QuarterlyRow } from "@/types/chart";
 import type { QuarterlyGdpData } from "@server/lib/data-loader/cpi";
 import { joinQuarterlyGdpRows } from "./quarterlyGdpTransform";
+import { isCompleteCtiQuarter } from "@/lib/math/quarterlyCompleteness";
 
 export type { QuarterlyRow } from "@/types/chart";
 
@@ -80,7 +81,7 @@ export function computeQuarterlyAggregates(
   });
 
   const dataMapFilled = new Map(filledData.map((d) => [d.年月, d]));
-  const nominalMonthsSet = new Set(normalizedData.map((d) => d.年月));
+  const ctiKeys = [...new Set([...nominalKeys, ...realKeys])];
 
   // Helper to compute quarterly data
   const getQuarterlyData = (keys: string[]) => {
@@ -96,15 +97,10 @@ export function computeQuarterlyAggregates(
 
         keys.forEach((k) => (item[k] = 0));
 
-        let validMonthsCount = 0;
         months.forEach((m) => {
           const monthStr = `${y}年${m}月`;
           const row = dataMapFilled.get(monthStr);
           if (row) {
-            if (nominalMonthsSet.has(monthStr)) {
-              validMonthsCount++;
-            }
-
             const allKeys = [
               ...new Set([...keys, SUPPORT_SERIES_KEY_NOMINAL, SUPPORT_SERIES_KEY_REAL]),
             ];
@@ -125,12 +121,7 @@ export function computeQuarterlyAggregates(
           }
         });
 
-        const needsValidation = keys.length > 0;
-        if (needsValidation && validMonthsCount !== 3) {
-          keys.forEach((k) => {
-            item[k] = 0;
-          });
-        }
+        if (keys.length > 0 && !isCompleteCtiQuarter(dataMap, y, q, ctiKeys)) continue;
 
         // Divide by 3 to get quarterly average
         keys.forEach((k) => {

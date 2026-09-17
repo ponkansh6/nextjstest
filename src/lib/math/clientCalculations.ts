@@ -1,6 +1,7 @@
 import type { CpiData } from "@/types";
 import { parseYearMonth, normalizeYearMonth } from "../yearMonth";
 import type { SupportSeriesRow } from "./supportSeries";
+import { isCompleteCtiQuarter } from "./quarterlyCompleteness";
 
 export interface ClientCalculationConfig {
   nominalKeys: string[];
@@ -94,11 +95,13 @@ export function computeChartData(
     });
     return empty;
   });
-  const originalPeriods = new Set(normalized.map((d) => d.年月));
   const endYear = Math.min(props.endYear, props.maxCpiDate.year);
   const map = new Map(filled.map((d) => [d.年月, d]));
   const quarterly = (keys: string[]) => {
     const categoryKeys = keys.filter((key) => config.ctiKeys.has(key));
+    const completenessKeys = [...new Set([...nominalKeys, ...realKeys])].filter((key) =>
+      config.ctiKeys.has(key),
+    );
     const rows: QuarterlyAggregationRow[] = [];
     for (let y = props.startYear; y <= endYear; y++) {
       const maxQ = y === props.maxCpiDate.year ? Math.ceil(props.maxCpiDate.month / 3) : 4;
@@ -119,11 +122,9 @@ export function computeChartData(
         categoryKeys.forEach((key) => {
           item[key] = 0;
         });
-        let valid = 0;
         months.forEach((m) => {
           const row = map.get(`${y}年${m}月`);
           if (!row) return;
-          if (originalPeriods.has(row.年月)) valid++;
           [...new Set([...categoryKeys, config.supportNominalKey, config.supportRealKey])].forEach(
             (key) => {
               const value = readNumericValue(row, key);
@@ -134,10 +135,8 @@ export function computeChartData(
             },
           );
         });
-        if (categoryKeys.length && valid !== 3)
-          categoryKeys.forEach((key) => {
-            item[key] = 0;
-          });
+        if (categoryKeys.length && !isCompleteCtiQuarter(sourceMap, y, q, completenessKeys))
+          continue;
         if (hiddenQuarters.includes(q)) continue;
         categoryKeys.forEach((key) => {
           item[key] = (item[key] as number) / 3;

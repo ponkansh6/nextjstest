@@ -18,6 +18,15 @@ import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { scaleSupportSeriesLegacy } from "../../src/lib/math/supportSeries";
 
+const completeCtiRow = (month: number, overrides: Partial<CpiData> = {}): CpiData =>
+  ({
+    年月: `2020年${month}月`,
+    ...Object.fromEntries(
+      [...CONSUMPTION_NOMINAL_KEYS, ...CONSUMPTION_REAL_KEYS].map((key) => [key, 0]),
+    ),
+    ...overrides,
+  }) as CpiData;
+
 describe("src/lib/clientCalculations", () => {
   it("does not import server-only support-series math", () => {
     const clientCalculationsPath = resolve("src/lib/clientCalculations.ts");
@@ -108,24 +117,21 @@ describe("src/lib/clientCalculations", () => {
 
     it("should calculate and aggregate values correctly for a full quarter", () => {
       const mockData = [
-        {
-          年月: "2020年1月",
+        completeCtiRow(1, {
           "住居（名目）": 10,
           "食料（名目）": 20,
           "その他の消費支出（名目）": 5,
-        },
-        {
-          年月: "2020年2月",
+        }),
+        completeCtiRow(2, {
           "住居（名目）": 10,
           "食料（名目）": 20,
           "その他の消費支出（名目）": 5,
-        },
-        {
-          年月: "2020年3月",
+        }),
+        completeCtiRow(3, {
           "住居（名目）": 10,
           "食料（名目）": 20,
           "その他の消費支出（名目）": 5,
-        },
+        }),
       ];
       const testProps = {
         ...baseProps,
@@ -174,9 +180,9 @@ describe("src/lib/clientCalculations", () => {
         createCpiData({ 年月: "2005年1月", [SUPPORT_SERIES_KEY_NOMINAL]: 100 }),
         createCpiData({ 年月: "2005年2月", [SUPPORT_SERIES_KEY_NOMINAL]: 100 }),
         createCpiData({ 年月: "2005年3月", [SUPPORT_SERIES_KEY_NOMINAL]: 100 }),
-        createCpiData({ 年月: "2020年1月", [SUPPORT_SERIES_KEY_NOMINAL]: 100 }),
-        createCpiData({ 年月: "2020年2月", [SUPPORT_SERIES_KEY_NOMINAL]: 100 }),
-        createCpiData({ 年月: "2020年3月", [SUPPORT_SERIES_KEY_NOMINAL]: 100 }),
+        completeCtiRow(1, { [SUPPORT_SERIES_KEY_NOMINAL]: 100 }),
+        completeCtiRow(2, { [SUPPORT_SERIES_KEY_NOMINAL]: 100 }),
+        completeCtiRow(3, { [SUPPORT_SERIES_KEY_NOMINAL]: 100 }),
       ];
 
       const props = {

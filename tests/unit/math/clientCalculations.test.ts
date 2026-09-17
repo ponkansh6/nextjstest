@@ -28,6 +28,13 @@ const props = (
   ...overrides,
 });
 
+const completeRow = (month: number, overrides: Partial<ReturnType<typeof createCpiData>> = {}) =>
+  createCpiData({
+    年月: `2020年${month}月`,
+    ...Object.fromEntries([...config.nominalKeys, ...config.realKeys].map((key) => [key, 0])),
+    ...overrides,
+  });
+
 describe("src/lib/math/clientCalculations", () => {
   it("sums only numeric, visible category values", () => {
     const row = createCpiData({ 年月: "2020年1月", 食料: 10, 住居: 5, 欠損: null, 文字: "1" });
@@ -47,11 +54,11 @@ describe("src/lib/math/clientCalculations", () => {
     expect(calculateCAGRValue(100, 121, 2)).toBeCloseTo(0.1);
   });
 
-  it("normalizes months, fills missing months with zero, and averages a full quarter", () => {
+  it("normalizes months and averages a complete quarter, retaining valid zeroes", () => {
     const data = [
-      createCpiData({ 年月: "2020年1月", "食料（名目）": 9, "支出（名目）": 90 }),
-      createCpiData({ 年月: "2020年2月", "食料（名目）": 0 }),
-      createCpiData({ 年月: "2020年03月", "食料（名目）": 15, "支出（名目）": 150 }),
+      completeRow(1, { "食料（名目）": 9, "支出（名目）": 90 }),
+      completeRow(2, { "食料（名目）": 0 }),
+      completeRow(3, { "食料（名目）": 15, "支出（名目）": 150 }),
     ];
     const result = computeChartData(props(data), [], {
       ...config,
@@ -61,33 +68,28 @@ describe("src/lib/math/clientCalculations", () => {
     expect(result.quarterlyNominalData[0]["支出（名目）"]).toBe(90);
   });
 
-  it("zeroes incomplete category quarters and omits hidden quarters", () => {
+  it("omits incomplete quarters and still omits hidden complete quarters", () => {
     const data = [
-      createCpiData({ 年月: "2020年1月", "食料（名目）": 9 }),
-      createCpiData({ 年月: "2020年2月", "食料（名目）": 12 }),
-      createCpiData({ 年月: "2020年4月", "食料（名目）": 30 }),
-      createCpiData({ 年月: "2020年5月", "食料（名目）": 30 }),
-      createCpiData({ 年月: "2020年6月", "食料（名目）": 30 }),
+      completeRow(1, { "食料（名目）": 9 }),
+      completeRow(2, { "食料（名目）": 12 }),
+      completeRow(4, { "食料（名目）": 30 }),
+      completeRow(5, { "食料（名目）": 30 }),
+      completeRow(6, { "食料（名目）": 30 }),
     ];
     const result = computeChartData(props(data), [2], config);
-    expect(result.quarterlyNominalData).toHaveLength(3);
-    expect(
-      result.quarterlyNominalData.find((row) => row.label === "2020Q1")?.["食料（名目）"],
-    ).toBe(0);
+    expect(result.quarterlyNominalData).toHaveLength(0);
+    expect(result.quarterlyNominalData.some((row) => row.label === "2020Q1")).toBe(false);
     expect(result.quarterlyNominalData.some((row) => row.label === "2020Q2")).toBe(false);
   });
 
-  it("keeps a partial latest quarter with zero category values", () => {
-    const data = [
-      createCpiData({ 年月: "2020年1月", "食料（名目）": 9 }),
-      createCpiData({ 年月: "2020年2月", "食料（名目）": 12 }),
-    ];
+  it("omits a partial latest quarter", () => {
+    const data = [completeRow(1, { "食料（名目）": 9 }), completeRow(2, { "食料（名目）": 12 })];
     const result = computeChartData(
       props(data, { maxCpiDate: { year: 2020, month: 2 } }),
       [],
       config,
     );
-    expect(result.quarterlyNominalData[0]["食料（名目）"]).toBe(0);
+    expect(result.quarterlyNominalData).toEqual([]);
   });
 
   it("uses custom nominal and real keys and is deterministic", () => {

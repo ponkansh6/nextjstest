@@ -10,6 +10,15 @@ import {
 import { loadCtiData } from "../../server/lib/dataLoader";
 import type { CpiData } from "../../src/types";
 
+const completeCtiRow = (month: number, overrides: Partial<CpiData> = {}): CpiData =>
+  ({
+    年月: `2020年${month}月`,
+    ...Object.fromEntries(
+      [...CONSUMPTION_NOMINAL_KEYS, ...CONSUMPTION_REAL_KEYS].map((key) => [key, 0]),
+    ),
+    ...overrides,
+  }) as CpiData;
+
 // データから最新の年月を計算するヘルパー関数
 const calculateMaxCpiDate = (data: CpiData[]) => {
   let maxYear = 0;
@@ -29,11 +38,11 @@ const calculateMaxCpiDate = (data: CpiData[]) => {
 };
 
 describe("Client Data Structure Integrity", () => {
-  const mockNominalData: CpiData[] = createCpiDataList([{ 年月: "2020年1月", "食料（名目）": 10 }]);
+  const mockNominalData: CpiData[] = [completeCtiRow(1), completeCtiRow(2), completeCtiRow(3)];
   const props = {
     data: [],
     endYear: 2020,
-    maxCpiDate: { month: 1, year: 2020 },
+    maxCpiDate: { month: 3, year: 2020 },
     nominalData: mockNominalData,
     CONSUMPTION_NOMINAL_KEYS: CONSUMPTION_NOMINAL_KEYS,
     realKeys: CONSUMPTION_REAL_KEYS,
@@ -60,9 +69,9 @@ describe("Client Data Structure Integrity", () => {
   it("should correctly calculate quarterly average", () => {
     // 2020年1月, 2月, 3月 のデータを作成
     const mockNominalData: CpiData[] = createCpiDataList([
-      { 年月: "2020年1月", "食料（名目）": 30, [SUPPORT_SERIES_KEY_NOMINAL]: 100 },
-      { 年月: "2020年2月", "食料（名目）": 60, [SUPPORT_SERIES_KEY_NOMINAL]: 100 },
-      { 年月: "2020年3月", "食料（名目）": 90, [SUPPORT_SERIES_KEY_NOMINAL]: 100 },
+      completeCtiRow(1, { "食料（名目）": 30, [SUPPORT_SERIES_KEY_NOMINAL]: 100 }),
+      completeCtiRow(2, { "食料（名目）": 60, [SUPPORT_SERIES_KEY_NOMINAL]: 100 }),
+      completeCtiRow(3, { "食料（名目）": 90, [SUPPORT_SERIES_KEY_NOMINAL]: 100 }),
     ]);
     const props = {
       data: [],
@@ -82,8 +91,7 @@ describe("Client Data Structure Integrity", () => {
   it("keeps GDP raw and normalized values out of quarterly CTI rows", () => {
     const nominalData = createCpiDataList([
       {
-        年月: "2020年1月",
-        "食料（名目）": 30,
+        ...completeCtiRow(1, { "食料（名目）": 30 }),
         "民間最終消費支出（名目）": 400,
         "民間最終消費支出（実質）": 380,
         "民間最終消費支出（名目・原値）": 400,
@@ -91,8 +99,8 @@ describe("Client Data Structure Integrity", () => {
         "民間最終消費支出（名目・比較指数）": 101,
         "民間最終消費支出（実質・比較指数）": null,
       },
-      { 年月: "2020年2月", "食料（名目）": 60 },
-      { 年月: "2020年3月", "食料（名目）": 90 },
+      completeCtiRow(2, { "食料（名目）": 60 }),
+      completeCtiRow(3, { "食料（名目）": 90 }),
     ]);
     const result = computeChartData(
       {

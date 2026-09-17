@@ -103,6 +103,7 @@ Static CSV files (not publicly served) stored in `data/source/`:
 - The annual GDP golden source-artifact SHA-256 contract is: nominal CSV `9a6331e1cc0ff0f4acb8da67dbdf5ed0c2b1457122b1a1b8c990911dbce2038f`, real CSV `0c6973e2b4a2686b94a7954a5a55058a5101de05ebed316066f7d0b517e6e744`, nominal metadata `8e482d34a253360918e0acdd1c2c054e969cc3ff278761b4df9263bebed24d2f`, real metadata `b01785b1f7dc7022baddf1628b2fd16e985ef95e308a1bb1c7bb9775b537cb69`, and annual normalization JSON `359e02b2ac1b46e80de9234ac965f2d41cf915cd039a872baf1713887ad836a9`.
 - The quarterly GDP golden source-artifact SHA-256 contract is: nominal CSV `0b5b4b21fcc03071973c96e4c7dfffba02eb63ee600c19de023aef1c345a49a7` and real CSV `4454cc36abdd556210e0bdea1f32055c1716d799d69368e883a39f445f1ef855`. Quarterly comparison factors are calculated from the validated 2025 Q1–Q4 CSV observations; no quarterly normalization JSON is an input artifact.
 - `data/source/cti_data.csv` / `cti_support_nominal.csv` / `cti_support_real.csv` — Complete compatible 2020-base CTI rollback set; never mixed with a 2025 CTI input.
+- CTI monthly observations are the source of truth for quarterly consumption completeness: from 2018Q1, all three normalized `YYYY年M月` records and every nominal/real consumption key must contain finite numeric values. A valid zero is retained; a missing or non-finite observation is not converted to zero.
 - `data/source/total_earning.csv` — Total earnings
 - `data/source/contractual_earnings.csv` — Contractual earnings
 - `data/source/scheduled_earnings.csv` — Scheduled earnings
@@ -136,6 +137,14 @@ emitting `NaN`/`Infinity`. The applicable expense list is the keys passed to
 12か月移動平均を経た表示値を使用し、補助系列3種は含めない。
 
 ### Data Flow
+
+For quarterly consumption, `loadCtiData()` normalizes monthly keys before
+quarterly aggregation builds a completeness set from the original monthly
+records and nominal/real CTI keys. The server aggregation and the legacy
+`src/lib/math/clientCalculations.ts` path both remove incomplete 2018Q1-and-later
+quarters before public projection, so `SpendingBarChart`, data tables, and CSV
+share the same nominal/real row set. GDP support rows before 2018Q1 remain an
+independent exact-quarter join and are not filtered by CTI completeness.
 
 `CpiChartSections` projects CPI, salary, and comparison entries through the
 shared `projectTooltipMetadata` helper. `useChartTooltipProps` passes that
@@ -181,6 +190,11 @@ legend preserve registry/key order, label, color, hidden state, and advanced
 state; NewGraph additionally retains defined legend entries for all-null data.
 Drawing, legend, and tooltip bind to the same metadata keys while retaining
 each chart's existing renderer.
+
+`SpendingBarChart` receives only complete quarterly consumption rows from the
+public projection (or the synchronized legacy calculation path). The table and
+CSV consume that same filtered row collection; GDP support values remain
+independent and may still be null at the existing 2017Q4/2018Q1 boundary.
 
 - `data/source/population_statistics.metadata.json` — 総務省統計局「労働力調査（基本集計）」長期時系列 表1-b-1（e-Stat `statInfId=000031831366`）の取得URL、表ID、取得日時、公式Excelサイズ/SHA-256、欠測ポリシーを記録する。
 - `data/source/employment_indices.csv` — Employment indices
@@ -436,6 +450,17 @@ The system SHALL display economic indicators as interactive Recharts-based chart
 - **AND** GDP欠損を0埋めせず、境界で値の複製・補間・表示用係数合わせをしない
 - **AND** 消費支出グラフはモバイル専用の余白・safe-area、棒幅・間隔を適用し、横overflowを発生させない
 - **AND** tooltipはモバイルでも全費目を内部スクロール付きで表示する
+
+#### Scenario R2c-missing-data: Quarterly CTI completeness and parity
+
+- **WHEN** a 2018Q1-or-later CTI quarter lacks any of its three normalized monthly records, or any nominal/real consumption key is missing or non-finite
+- **THEN** that quarter is omitted from both nominal and real public rows without generating a zero row
+- **AND** the chart, tooltip, data table, and CSV expose the same remaining quarter labels
+- **AND WHEN** all three monthly observations are present and a consumption value is zero
+- **THEN** the quarter remains visible as a valid zero-valued quarter
+- **AND WHEN** `hiddenQuarters` or the displayed year range is changed
+- **THEN** filtering is applied to the already-complete row set and cannot restore an omitted quarter
+- **AND** GDP rows through 2017Q4 and GDP null handling remain independent of CTI completeness
 
 #### Scenario R2c-axis: Spending chart quarterly X-axis ticks
 
