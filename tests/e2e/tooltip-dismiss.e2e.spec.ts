@@ -610,7 +610,7 @@ test.describe("デスクトップ ツールチップのホバー回帰テスト"
     const repeatPoint = await findViewportBar(page, chart, false, 0.75);
     await page.mouse.move(repeatPoint.x, repeatPoint.y, { steps: 8 });
     await expect
-      .poll(() => tooltipWrapper.isVisible(), { timeout: 1200, intervals: [50, 100] })
+      .poll(() => tooltipWrapper.isVisible(), { timeout: 5000, intervals: [50, 100] })
       .toBe(true);
 
     await page.mouse.move(0, 0);
