@@ -3,6 +3,7 @@ import {
   calculateSmoothedTotal,
   calculateRawResidual,
   applyResidualMovingAverage,
+  rebaseResidualToYearAverage,
   // applyMovingAverage, // Removed: dead code (test-only usage)
 } from "../../../../server/lib/serverCalculations";
 import type { CpiData } from "../../../../src/types";
@@ -81,6 +82,41 @@ describe("calculations.ts", () => {
       expect(data[0].残差).toBe(10);
       expect(data[1].残差).toBe(20);
       expect(data[2].残差).toBe(25); // (20+30)/2
+    });
+  });
+
+  describe("rebaseResidualToYearAverage", () => {
+    it("rebases a complete 2025 calendar year to an average of zero", () => {
+      const data: any[] = Array.from({ length: 12 }, (_, index) => ({
+        年月: `2025年${index + 1}月`,
+        残差: index + 1,
+      }));
+
+      rebaseResidualToYearAverage(data, 2025);
+
+      expect(data.reduce((sum, item) => sum + item.残差, 0) / 12).toBe(0);
+    });
+
+    it("does not rebase when the 2025 year is incomplete or has missing residual data", () => {
+      const incomplete: any[] = Array.from({ length: 11 }, (_, index) => ({
+        年月: `2025年${index + 1}月`,
+        残差: index + 1,
+      }));
+      const missing: any[] = Array.from({ length: 12 }, (_, index) => ({
+        年月: `2025年${index + 1}月`,
+        残差: index === 5 ? null : index + 1,
+      }));
+
+      rebaseResidualToYearAverage(incomplete, 2025);
+      rebaseResidualToYearAverage(missing, 2025);
+
+      expect(incomplete.map((item) => item.残差)).toEqual(
+        Array.from({ length: 11 }, (_, index) => index + 1),
+      );
+      expect(missing[5].残差).toBeNull();
+      expect(missing.filter((item) => item.残差 !== null).map((item) => item.残差)).toEqual([
+        1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12,
+      ]);
     });
   });
 });

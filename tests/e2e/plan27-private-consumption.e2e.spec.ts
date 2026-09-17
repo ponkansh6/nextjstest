@@ -194,7 +194,11 @@ test.describe("Plan27 民間最終消費支出の実ブラウザー回帰", () =
     );
     const info = graph.getByRole("button", { name: /データソースを表示/ });
     await info.click();
-    await expect(page.getByText(/年次GDP統計の名目値を各暦月へ展開/)).toBeVisible();
+    await expect(
+      page.getByText(
+        /GDP参考値（総合）：民間最終消費支出の四半期値を月次化したうえで12か月移動平均を算出し、2025年平均=100で表示。/,
+      ),
+    ).toBeVisible();
     await expect(graph.getByTestId(`new-graph-line-${regularKey}`)).toHaveAttribute(
       "data-key",
       regularKey,
@@ -204,7 +208,11 @@ test.describe("Plan27 民間最終消費支出の実ブラウザー回帰", () =
       extendedKey,
     );
     await page.keyboard.press("Escape");
-    await expect(page.getByText(/年次GDP統計の名目値を各暦月へ展開/)).toBeHidden();
+    await expect(
+      page.getByText(
+        /GDP参考値（総合）：民間最終消費支出の四半期値を月次化したうえで12か月移動平均を算出し、2025年平均=100で表示。/,
+      ),
+    ).toBeHidden();
     await page.goto("/?adv=1&from=2014&to=2014");
     const mobileNarrow = section(page);
     await expect(mobileNarrow.locator("svg.recharts-surface")).toBeVisible();

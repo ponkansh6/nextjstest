@@ -7,6 +7,7 @@ import {
   calculateAdjustedMetric,
   calculateRawResidual,
   applyResidualMovingAverage,
+  rebaseResidualToYearAverage,
 } from "../serverCalculations";
 import { loadPopulationDataInternal } from "./population";
 import {
@@ -15,7 +16,6 @@ import {
   loadCtiDataInternal,
   type CtiLoadOptions,
 } from "./cpi";
-import { calculateSupportScale } from "@/lib/chartUtils";
 import { compareYearMonth, parseYearMonth } from "@/lib/yearMonth";
 import { trailingMovingAverage } from "../math/movingAverage";
 
@@ -115,7 +115,7 @@ function computeMovingAverageToField(
 function buildConsumptionMaps(
   ctiData: CpiData[],
   useGdpComparison: boolean,
-  legacy2020SupportScale: number,
+  legacyGdpDisplayScale: number | undefined,
 ): {
   minkanMap: Map<string, number>;
   minkanNominalRawMap: Map<string, number>;
@@ -139,8 +139,10 @@ function buildConsumptionMaps(
     // transform or replace the independently validated 2025 GDP values.
     const nominalValue = d["民間最終消費支出（名目）"];
     const supportValue =
-      typeof nominalValue === "number" && Number.isFinite(nominalValue)
-        ? nominalValue * legacy2020SupportScale
+      typeof nominalValue === "number" &&
+      Number.isFinite(nominalValue) &&
+      legacyGdpDisplayScale !== undefined
+        ? nominalValue * legacyGdpDisplayScale
         : undefined;
     const nominalRawValue = d["民間最終消費支出（名目・原値）"];
     const nominalComparisonValue = d["民間最終消費支出（名目・比較指数）"];
@@ -246,8 +248,6 @@ export async function loadTotalEarningDataInternal(
   // Salary indices have an explicit, independent base year. This must not
   // follow CTI/CPI/GDP availability or their compatibility rollback year.
   const salaryComparisonYear = 2025;
-  const comparisonYear = ctiStatus.valid ? ctiStatus.baseYear : null;
-  const comparisonYearPrefix = comparisonYear ? `${comparisonYear}年` : "";
   const isLegacy2020 = ctiStatus.valid && ctiStatus.baseYear === 2020;
   // The GDP display set is independently validated by the loader before it
   // emits this normalized key. Do not infer validity from CTI availability.
@@ -256,18 +256,34 @@ export async function loadTotalEarningDataInternal(
       typeof item["民間最終消費支出（名目・比較指数）"] === "number" &&
       Number.isFinite(item["民間最終消費支出（名目・比較指数）"]),
   );
-  const legacy2020SupportScale = calculateSupportScale(ctiData, "民間最終消費支出（名目）");
+  // Keep 2020 compatibility raw values unchanged, but use the 2025 calendar
+  // year as the display base for the GDP support series.
+  const legacyGdp2025Average = isLegacy2020
+    ? comparisonAverageForYear(
+        new Map(
+          ctiData.flatMap((item) => {
+            const value = item["民間最終消費支出（名目）"];
+            return typeof value === "number" && Number.isFinite(value)
+              ? [[String(item.年月), value] as const]
+              : [];
+          }),
+        ),
+        "2025年",
+      )
+    : undefined;
+  const legacyGdpDisplayScale = legacyGdp2025Average ? 100 / legacyGdp2025Average : undefined;
   const {
     minkanMap,
     minkanNominalRawMap,
     minkanNominalComparisonMap,
     ctiConsumptionMap,
     ctiRawMap,
-  } = buildConsumptionMaps(ctiData, hasGdpComparison, legacy2020SupportScale);
+  } = buildConsumptionMaps(ctiData, hasGdpComparison, legacyGdpDisplayScale);
 
   const comparisonYearKeys = [...keys]
     .filter((ym) => ym.startsWith(`${salaryComparisonYear}年`))
     .sort(compareYearMonth);
+  const comparisonYearRequiredMaps = [contractualMap, scheduledMap, totalMap, cpiMap];
   const comparisonYearComplete =
     comparisonYearKeys.length === 12 &&
     comparisonYearKeys.every((ym, index) => {
@@ -279,7 +295,13 @@ export async function loadTotalEarningDataInternal(
         current !== null &&
         current.year * 12 + current.month === previous.year * 12 + previous.month + 1
       );
-    });
+    }) &&
+    comparisonYearRequiredMaps.every((map) =>
+      comparisonYearKeys.every((ym) => {
+        const value = map.get(ym);
+        return typeof value === "number" && Number.isFinite(value);
+      }),
+    );
   const hourlyBaseValues = comparisonYearKeys
     .map((ym) => {
       const h = hoursMap.get(ym);
@@ -323,19 +345,15 @@ export async function loadTotalEarningDataInternal(
 
   // Comparison values use the selected set's complete calendar year and raw
   // observations. Moving averages never serve as normalization denominators.
-  const avgCtiComparison = comparisonYear
-    ? comparisonAverageForYear(ctiRawMap, comparisonYearPrefix)
-    : undefined;
-  const ctiFactor = avgCtiComparison ? 100 / avgCtiComparison : isLegacy2020 ? 1 : undefined;
+  const avgCtiComparison = comparisonAverageForYear(ctiRawMap, "2025年");
+  const ctiFactor = avgCtiComparison ? 100 / avgCtiComparison : undefined;
   const minkanFactor = 1;
 
   // Earnings' CPI reference is independent from the CPI dashboard base year,
   // while still using the fixed salary comparison year.
   // 12MAは基準変更前の生値から既存どおり計算し、出力時に同じ係数を適用する。
-  const avgCpiComparison = comparisonYear
-    ? comparisonAverageForYear(cpiMap, comparisonYearPrefix)
-    : undefined;
-  const cpiFactor = avgCpiComparison ? 100 / avgCpiComparison : isLegacy2020 ? 1 : undefined;
+  const avgCpiComparison = comparisonAverageForYear(cpiMap, `${salaryComparisonYear}年`);
+  const cpiFactor = avgCpiComparison ? 100 / avgCpiComparison : undefined;
   const cpiMAMap = computeTrailingMA12([...cpiMap.entries()]);
 
   const result: CpiData[] = [...keys].map((ym) => {
@@ -376,7 +394,7 @@ export async function loadTotalEarningDataInternal(
     .filter((r) => r.年月.startsWith(`${salaryComparisonYear}年`))
     .map((r) => calculateSmoothedTotal(r));
   const avg2025 =
-    totals2025.length === 12
+    comparisonYearComplete && totals2025.length === 12
       ? totals2025.reduce((a, b) => a + b, 0) / totals2025.length
       : undefined;
   // A missing comparison year is not an index with factor 1.  Keep the
@@ -459,7 +477,6 @@ export async function loadTotalEarningDataInternal(
         ? calculateAdjustedMetric(smoothedTotal * smoothedEmp, smoothedPop, popFactor)
         : null;
     const rawCpi = cpiMap.get(item.年月);
-    item["残差"] = rawCpi !== undefined ? calculateRawResidual(smoothedTotal, rawCpi) : null;
     item["CPI総合(参考)"] =
       cpiFactor !== undefined && rawCpi !== undefined ? rawCpi * cpiFactor : null;
     const cpiMa = cpiMAMap.get(item.年月);
@@ -523,6 +540,22 @@ export async function loadTotalEarningDataInternal(
       }
     }
   }
+
+  // Build the displayed salary-index minus CPI-index difference only after
+  // both component indices have been normalized to 2025 annual average = 100.
+  result.forEach((item) => {
+    const salaryIndex = item["総合"];
+    const cpiIndex = item["CPI総合(参考)"];
+    item["残差"] =
+      typeof salaryIndex === "number" &&
+      Number.isFinite(salaryIndex) &&
+      typeof cpiIndex === "number" &&
+      Number.isFinite(cpiIndex)
+        ? calculateRawResidual(salaryIndex, cpiIndex)
+        : null;
+  });
   applyResidualMovingAverage(result);
+  // Rebase after 2MA so the values actually shown for 2025 average to zero.
+  rebaseResidualToYearAverage(result, salaryComparisonYear);
   return result;
 }

@@ -72,6 +72,14 @@ describe("Earnings Data Integrity", () => {
     expect(nominal.get(2016)).toBeGreaterThan(0);
 
     const data = await loadTotalEarningDataInternal();
+    const gdpDisplayValues = data
+      .filter((row) => row.年月.startsWith("2025年"))
+      .map((row) => row["民間最終消費支出（名目・比較指数）"])
+      .filter((value): value is number => typeof value === "number" && Number.isFinite(value));
+    expect(gdpDisplayValues).toHaveLength(12);
+    expect(
+      gdpDisplayValues.reduce((sum, value) => sum + value, 0) / gdpDisplayValues.length,
+    ).toBeCloseTo(100, 6);
     const regular = data.filter((row) => {
       const year = Number(row.年月.slice(0, 4));
       return year >= 2005 && year <= 2017;
@@ -482,7 +490,7 @@ describe("Earnings Data Integrity", () => {
       ).toBeLessThan(0.02);
     });
 
-    it("should keep existing 民間最終消費支出（参考） values unchanged (regression for extended series)", () => {
+    it("年次GDP値に基づく2025基準の表示値を検証", async () => {
       expect(earningData.length).toBeGreaterThan(0);
       const d2014 = earningData.find((d) => d.年月 === "2014年6月");
       const d2017 = earningData.find((d) => d.年月 === "2017年12月");
@@ -493,11 +501,28 @@ describe("Earnings Data Integrity", () => {
       const val2014 = d2014!["民間最終消費支出（参考）" as keyof CpiData] as number;
       const val2017 = d2017!["民間最終消費支出（参考）" as keyof CpiData] as number;
 
-      expect(val2014).toBeCloseTo(101.75, 1);
-      expect(val2017).toBeCloseTo(103.33, 1);
+      expect(val2014).toBeCloseTo(85.09, 1);
+      expect(val2017).toBeCloseTo(86.41, 1);
+
+      const displayData = await loadTotalEarningDataInternal();
+      const gdp2025 = displayData.find((d) => d.年月 === "2025年1月");
+      const annualRaw = gdp2025?.["民間最終消費支出（名目・原値）" as keyof CpiData];
+      const comparison = gdp2025?.["民間最終消費支出（名目・比較指数）" as keyof CpiData];
+      const normalization = JSON.parse(
+        readFileSync(buildCtiFilePaths().gdpDisplayNormalization, "utf8"),
+      ) as { nominal: { factor: number } };
+
+      expect(typeof annualRaw).toBe("number");
+      expect(typeof comparison).toBe("number");
+      expect(annualRaw as number).toBeGreaterThan(0);
+      expect(comparison as number).toBeCloseTo(
+        (annualRaw as number) * normalization.nominal.factor,
+        10,
+      );
+      expect((annualRaw as number) * normalization.nominal.factor).toBeCloseTo(100, 10);
     });
 
-    it("should base salary series on the raw 2025 calendar-year average", () => {
+    it("should base displayed index series on the 2025 calendar-year average", () => {
       expect(earningData.length).toBeGreaterThan(0);
       const dec2025 = earningData.find((d) => d.年月 === "2025年12月");
       const dec2020 = earningData.find((d) => d.年月 === "2020年12月");
@@ -512,38 +537,68 @@ describe("Earnings Data Integrity", () => {
         expect(values.reduce((sum, value) => sum + value, 0) / values.length).toBeCloseTo(100, 1);
       }
 
-      // 2020年12月の12MA窓は2020年1月〜12月、すなわち2020暦年平均に等しい。
-      // CTI/CPIの2020年基準は給与の2025年基準とは独立して検証する。
-      // 12MA後の系列で正規化すると2019年の水準が混入して約98.07に沈むため、その回帰を防ぐ。
-      expect(Number(dec2020!["CTI消費支出（参考）"])).toBeCloseTo(100, 1);
+      const averageFor = (key: keyof CpiData) => {
+        const values = earningData
+          .filter((d) => d.年月.startsWith("2025年"))
+          .map((d) => d[key])
+          .filter((v): v is number => typeof v === "number" && Number.isFinite(v));
+        expect(values).toHaveLength(12);
+        return values.reduce((sum, value) => sum + value, 0) / values.length;
+      };
+      expect(averageFor("CPI総合(参考)" as keyof CpiData)).toBeCloseTo(100, 6);
+      expect(Number(dec2025!["CPI総合(12MA)"])).toBeCloseTo(100, 1);
+      expect(Number(dec2025!["CTI消費支出（参考）"])).toBeCloseTo(100, 1);
+      expect(Number(dec2025!["民間最終消費支出（参考・延長）"])).toBeCloseTo(100, 1);
 
-      // earnings用CPI参考系列は、CPIダッシュボードの基準年にかかわらず
-      // raw CPI総合の2020暦年平均を分母として再正規化する。
-      const rawCpi2020 = cpiData
-        .filter((d) => d.年月.startsWith("2020年"))
-        .map((d) => Number(d.総合 ?? 0))
-        .filter((value) => value > 0);
-      const rawCpi2020Average =
-        rawCpi2020.reduce((sum, value) => sum + value, 0) / rawCpi2020.length;
-      const rawCpiDec2020 = Number(cpiData.find((d) => d.年月 === "2020年12月")?.総合 ?? 0);
-      const earningsCpi2020 = earningData
-        .filter((d) => d.年月.startsWith("2020年"))
-        .map((d) => Number(d["CPI総合(参考)"] ?? 0));
-      const earningsCpi2020Average =
-        earningsCpi2020.reduce((sum, value) => sum + value, 0) / earningsCpi2020.length;
-
-      expect(rawCpi2020Average).toBeGreaterThan(0);
-      expect(rawCpiDec2020).toBeGreaterThan(0);
-      expect(earningsCpi2020Average).toBeCloseTo(100, 6);
+      // 2020年の行も、互換データの取得元基準ではなく2025年表示基準で評価する。
+      const cpi2025Average =
+        cpiData
+          .filter((d) => d.年月.startsWith("2025年"))
+          .reduce((sum, d) => sum + Number(d.総合), 0) / 12;
+      const cpi2020December = Number(cpiData.find((d) => d.年月 === "2020年12月")?.総合);
+      expect(cpi2025Average).toBeGreaterThan(0);
+      expect(cpi2020December).toBeGreaterThan(0);
       expect(Number(dec2020!["CPI総合(参考)"])).toBeCloseTo(
-        (rawCpiDec2020 * 100) / rawCpi2020Average,
+        (cpi2020December * 100) / cpi2025Average,
         6,
       );
-      // 2020年12月の12MA窓は2020年1月〜12月なので、再正規化後は100になる。
-      expect(Number(dec2020!["CPI総合(12MA)"])).toBeCloseTo(100, 6);
 
-      // CPI/CTIの比較基準は給与の2025年固定基準とは独立して維持する。
-      expect(Math.abs(Number(dec2025!["総合(12MA)"]) - 100)).toBeLessThan(1);
+      const ctiRows = Papa.parse<string[]>(
+        readFileSync(resolve(process.cwd(), "data/source/cti_data.csv"), "utf8"),
+        { skipEmptyLines: true },
+      ).data;
+      const ctiHeader = ctiRows[0];
+      const ctiMonthIndex = ctiHeader.indexOf("月");
+      const ctiValueIndex = ctiHeader.indexOf("消費支出（名目）");
+      const ctiValues = new Map(
+        ctiRows.slice(1).flatMap((row) => {
+          const value = Number(row[ctiValueIndex]);
+          return Number.isFinite(value) ? [[row[ctiMonthIndex], value] as const] : [];
+        }),
+      );
+      const ctiAverage = (year: number) => {
+        const values = [...ctiValues.entries()]
+          .filter(([month]) => month.startsWith(String(year) + "年"))
+          .map(([, value]) => value);
+        expect(values).toHaveLength(12);
+        return values.reduce((sum, value) => sum + value, 0) / values.length;
+      };
+      const cti2020Average = ctiAverage(2020);
+      const cti2025Average = ctiAverage(2025);
+      expect(Number(dec2020!["CTI消費支出（参考）"])).toBeCloseTo(
+        (cti2020Average * 100) / cti2025Average,
+        6,
+      );
+
+      const residual2025 = earningData
+        .filter((d) => d.年月.startsWith("2025年"))
+        .map((d) => d["残差"])
+        .filter((value): value is number => typeof value === "number" && Number.isFinite(value));
+      expect(residual2025).toHaveLength(12);
+      expect(residual2025.reduce((sum, value) => sum + value, 0) / residual2025.length).toBeCloseTo(
+        0,
+        6,
+      );
     });
 
     it("should verify advanced series 民間最終消費支出（参考・延長） has values from 2018 to latest and null before 2018", () => {
@@ -613,27 +668,34 @@ describe("Earnings Data Integrity", () => {
       ).toBe(true);
       expect(
         earningData.find((d) => d.年月 === "2014年6月")?.["民間最終消費支出（参考）"],
-      ).toBeCloseTo(101.75, 1);
+      ).toBeCloseTo(85.09, 1);
       expect(
         earningData.find((d) => d.年月 === "2017年12月")?.["民間最終消費支出（参考）"],
-      ).toBeCloseTo(103.33, 1);
+      ).toBeCloseTo(86.41, 1);
       expect(
         earningData.find((d) => d.年月 === "2018年1月")?.["民間最終消費支出（参考・延長）"],
-      ).toBeCloseTo(103.4388685183, 8);
+      ).toBeCloseTo(86.49285681298174, 8);
       expect(
         earningData.find((d) => d.年月 === "2025年12月")?.["民間最終消費支出（参考・延長）"],
-      ).toBeCloseTo(119.59238292, 8);
+      ).toBeCloseTo(100, 8);
     });
 
     it("should independently verify extended anchors from raw fixture and normalization formula", () => {
       expect(minkanFixture.source).toContain("minkan-extension-raw.csv");
+      const normalization = {
+        ...minkanFixture.normalization,
+        baseRaw: minkanFixture.anchors.find((anchor) => anchor.month === "2025年12月")!.raw,
+      };
+      const knownNormalized: Record<string, number> = {
+        "2018年1月": 86.49285681298174,
+        "2025年12月": 100,
+      };
       for (const anchor of minkanFixture.anchors) {
-        const expected =
-          (anchor.raw / minkanFixture.normalization.baseRaw) * minkanFixture.normalization.scale;
-        expect(expected).toBeCloseTo(anchor.knownNormalized, 10);
+        const expected = (anchor.raw / normalization.baseRaw) * normalization.scale;
+        expect(expected).toBeCloseTo(knownNormalized[anchor.month], 9);
         expect(
           earningData.find((row) => row.年月 === anchor.month)?.["民間最終消費支出（参考・延長）"],
-        ).toBeCloseTo(anchor.knownNormalized, 8);
+        ).toBeCloseTo(knownNormalized[anchor.month], 8);
       }
     });
 

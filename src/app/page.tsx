@@ -61,7 +61,7 @@ export default async function Page() {
   const cpiSummary =
     cpiInfoState.baseYear === null
       ? "CPIデータは現在利用できません。"
-      : `CPIは${cpiInfoState.label}を使用しています。`;
+      : "各指標は2025年平均=100の指数で表示しています。凡例クリックで系列を切替可能。";
   const ctiInfoState =
     ctiDataStatus.valid && ctiDataStatus.baseYear === 2025
       ? {
@@ -143,9 +143,8 @@ export default async function Page() {
   return (
     <div className={`container ${styles.pageWrapper}`}>
       <header className={styles.header}>
-        <div className={styles.badge}>経済指標ダッシュボード</div>
         <h1 className={styles.title}>物価・賃金・消費の推移</h1>
-        <p className={styles.description}>{cpiSummary} 凡例クリックで系列を切替可能。</p>
+        <p className={styles.description}>{cpiSummary}</p>
       </header>
 
       {projectedCpiData.length > 0 ? (
