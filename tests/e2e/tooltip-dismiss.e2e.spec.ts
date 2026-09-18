@@ -585,6 +585,10 @@ test.describe("デスクトップ ツールチップのホバー回帰テスト"
     let initialHoverError: unknown;
     for (let attempt = 0; attempt < 4; attempt += 1) {
       try {
+        await expect(chart).toBeVisible({ timeout: 5000 });
+        await expect(chart.locator(".recharts-bar-rectangle").first()).toBeVisible({
+          timeout: 5000,
+        });
         const point = await findViewportBar(page, chart);
         await page.mouse.move(0, 0);
         await page.mouse.move(point.x, point.y, { steps: 8 });
@@ -607,6 +611,10 @@ test.describe("デスクトップ ツールチップのホバー回帰テスト"
     // Escape単独のdismiss確認後、チャート外へ出てから実bar座標を再取得し、
     // bar外からbar内へ実pointermoveする。再表示は次の有効pointermoveだけで判定する。
     await page.mouse.move(0, 0);
+    await expect(chart).toBeVisible({ timeout: 5000 });
+    await expect(chart.locator(".recharts-bar-rectangle").first()).toBeVisible({
+      timeout: 5000,
+    });
     const repeatPoint = await findViewportBar(page, chart, false, 0.75);
     await page.mouse.move(repeatPoint.x, repeatPoint.y, { steps: 8 });
     await expect
