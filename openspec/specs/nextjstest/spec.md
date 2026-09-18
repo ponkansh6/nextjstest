@@ -5,10 +5,10 @@
 ### Plan38 responsibility boundary and completion evidence
 
 The Plan38-only nominal CTI route is the only route that targets 2005Q1 through
-2017Q4. Missing, non-finite, duplicate, out-of-period, or incomplete months on
-that route produce a retained shared row with `value=null` and a non-empty
-reason; the route never zero-fills, interpolates, merges duplicates, or falls
-back to GDP.
+2017Q4. Missing, non-finite, duplicate, or incomplete months inside that window
+produce a retained shared row with `value=null` and a non-empty reason; artifact
+records outside the window are ignored. The route never zero-fills,
+interpolates, merges duplicates, or falls back to GDP.
 
 The existing 2018Q1-and-later legacy expense path in
 `server/lib/view-models/quarterlyAggregation.ts` and
