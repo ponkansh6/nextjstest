@@ -47,10 +47,12 @@ to this public nominal key.
 
 `ctiBasicSeries2025LongTerm.ts` validates the fixed artifact, then
 `aggregateCtiBasicNominalQuarterly` averages the three distinct calendar months
-for each quarter from 2005Q1 through 2017Q4. Missing, non-finite, duplicate,
-out-of-period, or incomplete input produces no value for that quarter and keeps
-the shared row available for a public `null`; zero is valid. The projection then
-passes the dedicated CTI nominal key to the nominal spending chart/table/CSV.
+for each quarter from 2005Q1 through 2017Q4. Artifact records outside this
+fixed Plan38 window are ignored by the quarterly projection. Missing,
+non-finite, duplicate, or incomplete input inside the window produces no value
+for that quarter and keeps the shared row available for a public `null`; zero
+is valid. The projection then passes the dedicated CTI nominal key to the
+nominal spending chart/table/CSV.
 The real projection does not receive that key and retains its existing support
 path. From 2018Q1, existing CTI expense stacking remains unchanged. Its
 legacy zero-fill/2018-start compatibility checks remain confined to that path
@@ -80,10 +82,11 @@ series.
 - **WHEN** a nominal consumption quarter is between 2005Q1 and 2017Q4 and its
   three official CTI months are finite (including zero), **THEN** the dedicated
   CTI nominal key is the simple three-month average.
-- **WHEN** any required month is missing, non-finite, duplicated, outside the
-  requested period, or the quarter has fewer than three months, **THEN** the
-  shared quarter remains and the CTI value is `null` with status/reason exposed;
-  interpolation, zero-fill, duplicate merging, and GDP fallback are forbidden.
+- **WHEN** any required month inside the Plan38 window is missing, non-finite,
+  duplicated, or the quarter has fewer than three months, **THEN** the shared
+  quarter remains and the CTI value is `null` with status/reason exposed;
+  artifact records outside the window are ignored, and interpolation, zero-fill,
+  duplicate merging, and GDP fallback are forbidden.
 - **WHEN** the boundary changes from 2017Q4 to 2018Q1, **THEN** the CTI support
   line is explicitly separate from the existing 2018Q1-and-later expense stack.
 - **WHEN** nominal and real consumption sections render, **THEN** the CTI
@@ -110,8 +113,8 @@ series.
   metadata is reserved for the nominal CTI public key.
 - **WHEN** a CTI row is invalid or unavailable, **THEN** its value is `null`
   and its reason is machine-distinguishable (`missing`, `non_finite`,
-  `duplicate`, `out_of_range`, `insufficient_months`, or `unavailable`), with
-  no fixed valid legend state.
+  `duplicate`, `insufficient_months`, or `unavailable`), with no fixed valid
+  legend state.
 
 ## Purpose
 

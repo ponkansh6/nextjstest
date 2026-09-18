@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
   aggregateCtiBasicNominalQuarterly,
+  loadCtiBasicSeries2025,
   type CtiBasicRecord,
 } from "../../server/lib/ctiBasicSeries2025LongTerm";
 import { projectQuarterlyPublicView } from "../../src/lib/quarterlyPublicProjection";
@@ -134,12 +135,27 @@ describe("Plan38 CTI nominal quarterly support", () => {
     expect(row.measurements).not.toHaveProperty("GDP名目原値");
   });
 
-  it("marks out-of-range input without silently accepting it", () => {
+  it("ignores artifact records outside the fixed Plan38 window", () => {
     const result = aggregateCtiBasicNominalQuarterly(
       records((rows) => rows.push({ ...rows[0]!, month: "2018-01" })),
     );
-    expect(result.status).toBe("invalid");
-    expect(result.reason).toBe("out_of_range");
+    expect(result.status).toBe("valid");
+    expect(result.reason).toBeNull();
+    expect(result.values).toHaveLength(52);
+  });
+
+  it("accepts the complete long-term artifact while projecting only Plan38 quarters", () => {
+    const fullArtifact = loadCtiBasicSeries2025("nominal").filter(
+      (record) => record.seriesIndex === 1,
+    );
+    const result = aggregateCtiBasicNominalQuarterly(fullArtifact);
+
+    expect(result.status).toBe("valid");
+    expect(result.values).toHaveLength(52);
+    expect(result.values.get("2005Q1")).toBe((98.3 + 90.3 + 108.4) / 3);
+    expect([...result.values.keys()].every((key) => /^20(?:0[5-9]|1[0-7])Q[1-4]$/.test(key))).toBe(
+      true,
+    );
   });
 
   it("rejects an identity mismatch without GDP fallback", () => {

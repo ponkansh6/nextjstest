@@ -472,11 +472,7 @@ export function aggregateCtiBasicNominalQuarterly(
   const byMonth = new Map<string, CtiBasicRecord>();
   const reasons = new Map<string, string>();
   let globalReason: string | null = null;
-  const reasonPriority: Record<string, number> = {
-    series_mismatch: 4,
-    out_of_range: 3,
-    duplicate: 2,
-  };
+  const reasonPriority: Record<string, number> = { series_mismatch: 4, duplicate: 2 };
   const setGlobalReason = (reason: string) => {
     if (
       globalReason === null ||
@@ -493,17 +489,14 @@ export function aggregateCtiBasicNominalQuarterly(
       record.seriesIndex === 1 &&
       record.officialSeriesCode === "1" &&
       record.seriesName === "消費支出（名目）";
+    if (!inRange) continue;
     if (!validIdentity) {
-      if (inRange && match) {
+      if (match) {
         const year = Number(match[1]);
         const quarter = Math.floor((Number(match[2]) - 1) / 3) + 1;
         reasons.set(`${year}Q${quarter}`, "series_mismatch");
       }
       setGlobalReason("series_mismatch");
-      continue;
-    }
-    if (!inRange) {
-      setGlobalReason("out_of_range");
       continue;
     }
     if (byMonth.has(record.month)) {
