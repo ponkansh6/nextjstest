@@ -9,6 +9,10 @@ source "$HOOK_DIR/lib/push-impact.sh"
 # shellcheck source=/dev/null
 source "$HOOK_DIR/lib/prepush-profile.sh"
 
+# Do not let local-only fixes make validation pass when they are not part of
+# the commit snapshot sent to the remote build.
+hook_gate "clean worktree check" bash "$HOOK_DIR/check-clean-worktree.sh"
+
 # --- Detached HEAD leftover check ---
 hook_gate "detached HEAD leftover check" bash "$HOOK_DIR/check-detached-leftover.sh"
 

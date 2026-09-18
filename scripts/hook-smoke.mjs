@@ -96,9 +96,14 @@ fi
     join(projectRoot, ".husky", "check-detached-leftover.sh"),
     join(work, ".git", "hooks", "check-detached-leftover.sh"),
   );
+  cpSync(
+    join(projectRoot, ".husky", "check-clean-worktree.sh"),
+    join(work, ".git", "hooks", "check-clean-worktree.sh"),
+  );
   chmodSync(join(work, ".git", "hooks", "pre-push"), 0o755);
   chmodSync(join(work, ".git", "hooks", "pre-push.bash"), 0o755);
   chmodSync(join(work, ".git", "hooks", "check-detached-leftover.sh"), 0o755);
+  chmodSync(join(work, ".git", "hooks", "check-clean-worktree.sh"), 0o755);
 
   writeFileSync(join(work, "README.md"), "hook smoke initial\n");
   git(["add", "README.md"]);

@@ -130,6 +130,70 @@ echo "FULL_SEQUENCE_MARKER"
   });
 });
 
+describe("husky pre-push clean worktree check", () => {
+  const scriptPath = path.resolve(process.cwd(), ".husky/check-clean-worktree.sh");
+
+  function setupRepo(): string {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "git-clean-worktree-test-"));
+    execSync("git init -b main", { cwd: tmpDir, stdio: "ignore" });
+    execSync('git config user.name "Test User"', { cwd: tmpDir, stdio: "ignore" });
+    execSync('git config user.email "test@example.com"', { cwd: tmpDir, stdio: "ignore" });
+    fs.writeFileSync(path.join(tmpDir, "README.md"), "base\n");
+    execSync("git add README.md && git commit -m base", { cwd: tmpDir, stdio: "ignore" });
+    return tmpDir;
+  }
+
+  function runCheck(repo: string): { status: number; output: string } {
+    try {
+      return {
+        status: 0,
+        output: execFileSync("sh", [scriptPath], { cwd: repo, encoding: "utf8" }),
+      };
+    } catch (error: any) {
+      return {
+        status: error.status ?? 1,
+        output: `${error.stdout ?? ""}${error.stderr ?? ""}`,
+      };
+    }
+  }
+
+  it("blocks tracked changes that are not in HEAD", () => {
+    const repo = setupRepo();
+    fs.writeFileSync(path.join(repo, "README.md"), "local-only change\n");
+
+    const result = runCheck(repo);
+
+    expect(result.status).toBe(1);
+    expect(result.output).toContain("未コミットの変更があります");
+    expect(result.output).toContain("README.md");
+    fs.rmSync(repo, { recursive: true, force: true });
+  });
+
+  it("blocks untracked source files while allowing unrelated local artifacts", () => {
+    const repo = setupRepo();
+    fs.mkdirSync(path.join(repo, "server"));
+    fs.writeFileSync(path.join(repo, "server/only-local.ts"), "export const local = true;\n");
+    fs.writeFileSync(path.join(repo, "local.tmp"), "artifact\n");
+
+    const result = runCheck(repo);
+
+    expect(result.status).toBe(1);
+    expect(result.output).toContain("未追跡ファイルがあります");
+    expect(result.output).toContain("server/only-local.ts");
+    fs.rmSync(repo, { recursive: true, force: true });
+  });
+
+  it("allows a clean repository and unrelated untracked artifacts", () => {
+    const repo = setupRepo();
+    fs.writeFileSync(path.join(repo, "local.tmp"), "artifact\n");
+
+    const result = runCheck(repo);
+
+    expect(result.status).toBe(0);
+    fs.rmSync(repo, { recursive: true, force: true });
+  });
+});
+
 describe("husky pre-push profile normalization", () => {
   const profileScriptPath = path.resolve(process.cwd(), ".husky/lib/prepush-profile.sh");
 

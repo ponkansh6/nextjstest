@@ -510,6 +510,20 @@ The Plan37 target skip count is therefore zero in both the audit log and this sp
 - **AND** a zero-test result is tolerated only by the commit-scoped
   lint-staged related-test task
 
+#### Scenario R-Hooks-1a: Pre-push clean worktree guard
+
+- **WHEN** a push is attempted from a repository with tracked changes that
+  differ from `HEAD`
+- **THEN** the pre-push hook stops before any validation gate runs and prints
+  the changed paths so local-only fixes cannot make the push validation pass
+- **AND WHEN** an untracked file exists under `src/`, `server/`, or `tests/`
+- **THEN** the pre-push hook also stops and prints the untracked path because it
+  would not be included in the pushed commit
+- **AND WHEN** the repository has no tracked changes and no untracked source,
+  server, or test files
+- **THEN** the pre-push hook continues to detached-HEAD and push-impact checks;
+  unrelated local artifacts remain outside this guard
+
 #### Scenario R-Hooks-2: Actual pre-push ref classification
 
 - **WHEN** a push is attempted
@@ -1543,9 +1557,9 @@ the Bash implementations in `.husky/pre-commit.bash` and
 `.husky/pre-push.bash`, because Husky's generated `sh -e` launcher cannot
 interpret Bash-only syntax. The Bash implementations run `lint:fast`, staged
 typecheck, commit-scoped `lint-staged`, detached-HEAD validation,
-actual-push-ref impact classification, related-test selection, build, E2E, and
-the full validation profile. Production validation is a separate gate and is
-not implied by the local pre-push hook.
+clean-worktree validation, actual-push-ref impact classification, related-test
+selection, build, E2E, and the full validation profile. Production validation
+is a separate gate and is not implied by the local pre-push hook.
 
 `CpiChart` remains the composition root. The static seven-section definition is owned by the typed `CPI_CHART_SECTIONS` in `src/app/components/cpiChartConfig.ts`; its existing ids and order are `section-cpi-major`, `section-stacked`, `section-consumption-nominal`, `section-consumption-real`, `section-earnings`, `section-residual`, and `section-new-graph`. `CpiChart` passes this same array to the active-section initial value, `SectionTabs`, and DOM/scroll observation.
 
@@ -1610,8 +1624,9 @@ Plan38 rows bypass the GDP join entirely.
   changes and for deletion/rename or unavailable-decision cases; documentation,
   assets, and other non-type changes may skip it. The lint-staged related test
   task may pass with zero tests only within the commit hook.
-- Pre-push flow is `Git pre-push ref protocol` → actual ref diff collection and
-  path/category classification → `PREPUSH_PROFILE` normalization. Configuration,
+- Pre-push flow is `clean worktree guard` → `Git pre-push ref protocol` → actual
+  ref diff collection and path/category classification → `PREPUSH_PROFILE`
+  normalization. Configuration,
   dependency, build, Playwright, E2E, OpenSpec, generated, unknown, initial,
   deletion, rename, shallow, malformed, unresolved, or failed-diff cases are
   conservative full-profile inputs. Ordinary source/server/test changes retain
@@ -1961,6 +1976,8 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, `hid
 
 - **WHEN** `pnpm run test:hook-smoke` is invoked
 - **THEN** the temporary bare remote/work repository verifies hook stdin/ref handling, normal and multi-ref pushes, remote deletion, failure atomicity, and the explicit full profile
+- **AND** the installed hook includes the clean-worktree guard before
+  detached-HEAD and push-impact validation
 - **AND** the smoke fixture uses only a stubbed `pnpm`, cleans its temporary directory, and exits nonzero when a hook gate fails
 
 #### Scenario Cache/E2E measurement safety
@@ -2087,6 +2104,7 @@ These regression requirements do not add requirements for a new `popstate` liste
 - **Husky pre-push hook verification** (`tests/unit/husky-pre-push.test.ts`):
   - T1–T3: `check-detached-leftover.sh` detects and blocks detached HEAD commits not reachable from origin/main
   - T4–T5: Pre-push wrapper (using subprocess call, not source) correctly propagates exit codes and allows full validation sequence to run when safe
+  - T6–T8: `check-clean-worktree.sh` blocks tracked differences and untracked `src/`/`server/`/`tests/` files, while allowing a clean tree with unrelated local artifacts
   - launcher contract: both hook wrappers remain POSIX-compatible and point to their `.bash` implementations
 - E2E against a real build/server (`tests/e2e/`, Playwright) across three projects:
   `chromium` (Desktop Chrome), `chromium-dark` (dark mode), `mobile-pixel` (Pixel 7 / Chromium)

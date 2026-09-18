@@ -7,6 +7,7 @@ const CHART_COLORS = {
   gridStroke: "var(--chart-grid)",
   tooltipBg: "var(--tooltip-bg)",
   tooltipText: "var(--tooltip-text)",
+  barFill: "#94a3b8",
 } as const;
 
 const createMediaQueryStore = (query: string) => ({
