@@ -9,7 +9,12 @@ import { toCpiView, toEarningsView } from "../../server/lib/view-models/dashboar
 import { loadQuarterlyPublicData } from "../../server/lib/view-models/quarterlyProjection";
 import CpiChart from "./components/CpiChart";
 import styles from "./page.module.css";
-import { targetKeys, stackedKeys, SUPPORT_SERIES_KEY_NOMINAL } from "@/lib/chartConstants";
+import {
+  targetKeys,
+  stackedKeys,
+  CTI_BASIC_RAW_KEY,
+  CTI_BASIC_COMPARISON_KEY,
+} from "@/lib/chartConstants";
 
 export const revalidate = false;
 
@@ -47,7 +52,7 @@ export default async function Page() {
     ? {
         baseYear: 2025 as const,
         sourceMode: "official-connected" as const,
-        seriesLabel: "二人以上の世帯「消費支出（名目）」原数値の四半期平均",
+        seriesLabel: "二人以上の世帯「消費支出（名目）」原数値",
         comparisonNormalization: "2025-annual-average" as const,
         status: "valid" as const,
         reason: null,
@@ -59,7 +64,7 @@ export default async function Page() {
         unit: "指数" as const,
         series: {
           raw: {
-            key: SUPPORT_SERIES_KEY_NOMINAL,
+            key: CTI_BASIC_RAW_KEY,
             valueType: "raw" as const,
             unit: "指数",
             source: "e-Stat 公式CTI長期artifact 000040499070",
@@ -67,7 +72,7 @@ export default async function Page() {
             reason: null,
           },
           comparison: {
-            key: SUPPORT_SERIES_KEY_NOMINAL,
+            key: CTI_BASIC_COMPARISON_KEY,
             valueType: "comparison" as const,
             unit: "指数",
             source: "e-Stat 公式CTI長期artifact 000040499070",
@@ -81,7 +86,7 @@ export default async function Page() {
         sourceMode: "unavailable" as const,
         unavailableReason: ctiBasicStatus.reason ?? "CTI長期系列を利用できません。",
         status: "invalid" as const,
-        reason: ctiBasicStatus.reason ?? "CTI長期系列を利用できません。",
+        reason: ctiBasicStatus.reason,
         baseline: ctiBasicStatus.baseline,
         artifactRoot: ctiBasicStatus.artifactRoot,
         artifactStatus: ctiBasicStatus.artifactStatus,
@@ -90,20 +95,20 @@ export default async function Page() {
         unit: "指数" as const,
         series: {
           raw: {
-            key: SUPPORT_SERIES_KEY_NOMINAL,
+            key: CTI_BASIC_RAW_KEY,
             valueType: "raw" as const,
             unit: "指数",
             source: "e-Stat 公式CTI長期artifact 000040499070",
             status: "invalid" as const,
-            reason: ctiBasicStatus.reason ?? "CTI長期系列を利用できません。",
+            reason: ctiBasicStatus.reason,
           },
           comparison: {
-            key: SUPPORT_SERIES_KEY_NOMINAL,
+            key: CTI_BASIC_COMPARISON_KEY,
             valueType: "comparison" as const,
             unit: "指数",
             source: "e-Stat 公式CTI長期artifact 000040499070",
             status: "invalid" as const,
-            reason: ctiBasicStatus.reason ?? "CTI長期系列を利用できません。",
+            reason: ctiBasicStatus.reason,
           },
         },
       };
@@ -130,6 +135,9 @@ export default async function Page() {
     "総合(12MA)",
     "CPI総合(参考)",
     "CPI総合(12MA)",
+    CTI_BASIC_RAW_KEY,
+    CTI_BASIC_COMPARISON_KEY,
+    "CTIミクロ基本系列（名目・参考・延長）",
   ];
 
   const projectedCpiData = toCpiView(cleanData, cpiKeys);

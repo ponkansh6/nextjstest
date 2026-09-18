@@ -27,7 +27,6 @@ interface NewGraphProps {
   advancedToggle?: React.ReactNode;
   chartInfoContent?: ChartInfoContent;
   comparisonSeriesRegistry?: readonly SeriesMetadata[];
-  ctiMetadata?: readonly SeriesMetadata[];
 }
 
 export const NewGraph: React.FC<NewGraphProps> = ({
@@ -47,7 +46,6 @@ export const NewGraph: React.FC<NewGraphProps> = ({
   advancedToggle,
   chartInfoContent,
   comparisonSeriesRegistry = createComparisonSeriesRegistry(),
-  ctiMetadata = [],
 }) => {
   const isAdvanced = showAdvanced ?? false;
   const visibleLineConfigs = comparisonSeriesRegistry.filter(
@@ -72,7 +70,7 @@ export const NewGraph: React.FC<NewGraphProps> = ({
       <ChartDataContract
         data={data}
         keys={visibleLineConfigs.map(({ key }) => key)}
-        descriptors={[...ctiMetadata, ...visibleLineConfigs]}
+        descriptors={visibleLineConfigs}
       />
       <div className={styles.legendContainer}>
         <div className={styles.legendSection}>

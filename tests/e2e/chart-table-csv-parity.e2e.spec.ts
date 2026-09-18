@@ -70,12 +70,11 @@ const CONTRACT: readonly Section[] = [
     tableId: "data-table-section-new-graph",
     chartName: "給与・消費・物価の推移比較（12MA）グラフ",
     period: "2025年1月",
-    keys: ["CPI総合(12MA)", "総合(12MA)"],
+    keys: ["CPI総合(12MA)", "総合(12MA)", "CTIミクロ基本系列（名目・参考）"],
   },
 ];
 const INTERNAL = /GDP名目原値|GDP名目比較指数|GDP実質原値|GDP実質比較指数|四半期raw|原値|比較指数/;
-const LEGACY_CTI = /CTIミクロ基本系列[（(]名目/;
-const RETIRED_CTI_RAW_KEY = `CTIミクロ基本系列（名目・原数値）`;
+const LEGACY_CTI_RAW = /CTIミクロ基本系列（名目・原数値）/;
 
 function parseCsv(input: string): string[][] {
   const source = input.replace(/^\uFEFF/, "");
@@ -152,7 +151,12 @@ async function tableSnapshot(table: import("@playwright/test").Locator) {
   const raw = await htmlTable.evaluate((node) => ({
     headers: [...node.querySelectorAll("thead th")].map((cell) => cell.textContent ?? ""),
     values: [...node.querySelectorAll("tbody tr")].map((row) =>
-      [...row.querySelectorAll("td")].map((cell) => cell.textContent ?? ""),
+      [...row.querySelectorAll("td")].map((cell, columnIndex) => {
+        if (columnIndex === 0) return cell.textContent ?? "";
+        const valueCell = cell.cloneNode(true) as HTMLElement;
+        valueCell.querySelector("[data-measurement-metadata]")?.remove();
+        return valueCell.textContent ?? "";
+      }),
     ),
   }));
   const headers = normalise([raw.headers])[0];
@@ -264,11 +268,6 @@ function assertTypedCsvMetadata(
   contract: Awaited<ReturnType<typeof chartContractSnapshot>>,
   typedKey?: string,
 ) {
-  expect(snapshot.headers).not.toContain(RETIRED_CTI_RAW_KEY);
-  expect(csv[0]).not.toContain(`${RETIRED_CTI_RAW_KEY}__valueType`);
-  expect(contract.keys).not.toContain(RETIRED_CTI_RAW_KEY);
-  expect(contract.descriptors.some(({ key }) => key === RETIRED_CTI_RAW_KEY)).toBe(false);
-
   const metadataKeys = csv[0]
     .filter((header) => header.endsWith("__valueType"))
     .map((header) => header.slice(0, -"__valueType".length));
@@ -405,14 +404,32 @@ test.describe("Phase 4-4 production chart/table/CSV parity", () => {
     const advanced = await assertTableCsv(table);
     const advancedCsv = await csvSnapshot(table);
     const advancedContract = await assertPublicContract(sectionRoot, table, advanced, advancedCsv);
-    expect(advanced.headers).toEqual(regular.headers);
+    expect(advanced.headers.slice(0, regular.headers.length)).toEqual(regular.headers);
+    expect(advanced.headers).toContain("CTIミクロ基本系列(名目・延長)");
     expect(advanced.values.length).toBe(regular.values.length);
     expect(advanced.values.map((r) => r[0])).toEqual(regular.values.map((r) => r[0]));
-    expect(advancedCsv).toEqual(regularCsv);
-    expect(advanced.headers).not.toContain("CTIミクロ基本系列(名目・延長)");
-    expect(advanced.headers.join(" ")).not.toMatch(LEGACY_CTI);
-    expect(advancedContract.keys.join(" ")).not.toMatch(LEGACY_CTI);
-    expect(advancedContract.keys).toEqual(["CPI総合(12MA)", "総合(12MA)"]);
+    const regularCsvHeaders = regularCsv[0]!;
+    const advancedCsvHeaders = advancedCsv[0]!;
+    const commonCsvColumnIndexes = regularCsvHeaders.map((header) => {
+      const advancedIndex = advancedCsvHeaders.indexOf(header);
+      expect(advancedIndex).toBeGreaterThanOrEqual(0);
+      return advancedIndex;
+    });
+    expect(
+      advancedCsv.map((row) => commonCsvColumnIndexes.map((columnIndex) => row[columnIndex])),
+    ).toEqual(regularCsv);
+    const advancedExtensionCsvIndex = advancedCsvHeaders.indexOf("CTIミクロ基本系列(名目・延長)");
+    expect(advancedExtensionCsvIndex).toBeGreaterThanOrEqual(0);
+    expect(advancedCsv.slice(1).every((row) => row[advancedExtensionCsvIndex] !== undefined)).toBe(
+      true,
+    );
+    expect(advanced.headers.join(" ")).not.toMatch(LEGACY_CTI_RAW);
+    expect(advancedContract.keys).toEqual([
+      "CPI総合(12MA)",
+      "総合(12MA)",
+      "CTIミクロ基本系列（名目・参考）",
+      "CTIミクロ基本系列（名目・参考・延長）",
+    ]);
   });
 
   test("CSV parser enforces CRLF-terminated RFC4180 records and rejects malformed CSV", () => {

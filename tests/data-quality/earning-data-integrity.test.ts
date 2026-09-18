@@ -9,6 +9,8 @@ import minkanFixture from "../fixtures/minkan-extension-anchors.json";
 import { parseCsvWithHeader } from "../../server/lib/dataIo";
 import { loadTotalEarningDataInternal } from "../../server/lib/data-loader/earnings";
 import { buildCtiFilePaths } from "../../server/lib/dataIo";
+import { projectQuarterlyPublicView } from "../../src/lib/quarterlyPublicProjection";
+import { SUPPORT_SERIES_KEY_NOMINAL } from "../../src/lib/chartConstants";
 import Papa from "papaparse";
 
 describe("Earnings Data Integrity", () => {
@@ -382,28 +384,37 @@ describe("Earnings Data Integrity", () => {
       });
     });
 
-    it("Plan38: keeps the earnings projection wage-only and explicitly excludes the retired CTI wage keys", async () => {
-      const rows = await loadTotalEarningDataInternal();
+    it("Plan38: keeps the quarterly public projection free of legacy CTI/GDP/consumption keys", () => {
+      const projected = projectQuarterlyPublicView([
+        {
+          年: 2017,
+          quarter: 4,
+          label: "2017Q4",
+          年月: "2017年10月",
+          [SUPPORT_SERIES_KEY_NOMINAL]: 100,
+          "CTIミクロ基本系列（名目・原数値）": 101,
+          "CTIミクロ基本系列（名目・参考）": 102,
+          "CTIミクロ基本系列（名目・参考・延長）": 103,
+          GDP名目原値: 104,
+          GDP名目比較指数: 105,
+          "民間最終消費支出（名目・原値）": 106,
+          "民間最終消費支出（名目・比較指数）": 107,
+        },
+      ] as never)[0];
+      expect(projected).toHaveProperty(SUPPORT_SERIES_KEY_NOMINAL, 100);
       const retiredCtiKeys = [
         "CTIミクロ基本系列（名目・原数値）",
         "CTIミクロ基本系列（名目・参考）",
         "CTIミクロ基本系列（名目・参考・延長）",
       ];
-      const wageKeys = [
-        "所定内給与",
-        "所定外給与",
-        "特別給与",
-        "時間当たり給与",
-        "15歳以上国民当たり給与",
-        "CPI総合(参考)",
-      ];
-      expect(rows).not.toHaveLength(0);
-      for (const row of rows) {
-        for (const key of wageKeys) expect(row).toHaveProperty(key);
-        for (const key of retiredCtiKeys) expect(row).not.toHaveProperty(key);
-        expect(row).not.toHaveProperty("民間最終消費支出（名目・原値）");
-        expect(row).not.toHaveProperty("民間最終消費支出（名目・比較指数）");
-      }
+      for (const key of [
+        ...retiredCtiKeys,
+        "GDP名目原値",
+        "GDP名目比較指数",
+        "民間最終消費支出（名目・原値）",
+        "民間最終消費支出（名目・比較指数）",
+      ])
+        expect(projected).not.toHaveProperty(key);
     });
 
     it.skip("legacy: 年次GDP値に基づく2025基準の表示値を検証", async () => {
@@ -517,15 +528,16 @@ describe("Earnings Data Integrity", () => {
       );
     });
 
-    it("keeps the wage data free of the retired CTI wage registry", () => {
-      const retiredCtiKeys = [
-        "CTIミクロ基本系列（名目・原数値）",
-        "CTIミクロ基本系列（名目・参考）",
-        "CTIミクロ基本系列（名目・参考・延長）",
-      ];
-      for (const row of earningData) {
-        for (const key of retiredCtiKeys) expect(row).not.toHaveProperty(key);
-      }
+    it("keeps Plan37 CTI raw and comparison series for the internal comparison merge", () => {
+      expect(
+        earningData.some((row) => typeof row["CTIミクロ基本系列（名目・原数値）"] === "number"),
+      ).toBe(true);
+      expect(
+        earningData.some((row) => typeof row["CTIミクロ基本系列（名目・参考）"] === "number"),
+      ).toBe(true);
+      expect(
+        earningData.some((row) => typeof row["CTIミクロ基本系列（名目・参考・延長）"] === "number"),
+      ).toBe(true);
     });
 
     it("should compare fixture anchors with the actual raw CSV rows", async () => {

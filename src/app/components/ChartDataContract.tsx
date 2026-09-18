@@ -95,6 +95,8 @@ export function ChartDataContract({
                   data-measurement-value-type={measurement?.valueType}
                   data-unit={measurement?.unit}
                   data-source={measurement?.source}
+                  data-frequency={measurement?.frequency}
+                  data-aggregation={measurement?.aggregation}
                   data-status={measurement?.status}
                   data-reason={measurement?.reason ?? ""}
                 />

@@ -8,7 +8,6 @@ import {
 } from "../../server/lib/ctiBasicSeries2025LongTerm";
 import { projectQuarterlyPublicView } from "../../src/lib/quarterlyPublicProjection";
 import { buildPlan38CtiNominalRowsFromRecords } from "../../server/lib/view-models/quarterlyAggregation";
-import { loadTotalEarningDataInternal } from "../../server/lib/data-loader/earnings";
 import { buildCsv } from "../../src/lib/csvExport";
 import {
   QUARTERLY_GDP_RAW_NOMINAL_KEY,
@@ -257,8 +256,26 @@ describe("Plan38 CTI nominal quarterly support", () => {
     expect([...result.values.keys()].some((key) => key.startsWith("2004"))).toBe(false);
   });
 
-  it("does not expose CTI micro or GDP/consumption columns through earnings", async () => {
-    const rows = await loadTotalEarningDataInternal();
+  it("does not expose legacy CTI, GDP, or consumption columns through the quarterly projection", () => {
+    const rows = projectQuarterlyPublicView(
+      [
+        {
+          年: 2017,
+          quarter: 4,
+          label: "2017Q4",
+          年月: "2017年10月",
+          [SUPPORT_SERIES_KEY_NOMINAL]: 100,
+          "CTIミクロ基本系列（名目・原数値）": 101,
+          "CTIミクロ基本系列（名目・参考）": 102,
+          "CTIミクロ基本系列（名目・参考・延長）": 103,
+          GDP名目原値: 104,
+          GDP名目比較指数: 105,
+          "民間最終消費支出（名目・原値）": 106,
+          "民間最終消費支出（名目・比較指数）": 107,
+        } as never,
+      ],
+      "nominal",
+    );
     const forbidden = [
       "CTIミクロ基本系列（名目・原数値）",
       "CTIミクロ基本系列（名目・参考）",
@@ -268,8 +285,7 @@ describe("Plan38 CTI nominal quarterly support", () => {
       "民間最終消費支出（実質・原値）",
       "民間最終消費支出（実質・比較指数）",
     ];
-    for (const row of rows) {
-      for (const key of forbidden) expect(row).not.toHaveProperty(key);
-    }
+    expect(rows[0]).toHaveProperty(SUPPORT_SERIES_KEY_NOMINAL, 100);
+    for (const key of forbidden) expect(rows[0]).not.toHaveProperty(key);
   });
 });

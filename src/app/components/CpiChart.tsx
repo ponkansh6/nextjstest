@@ -253,13 +253,20 @@ export default function CpiChart({
   const { isTouch } = useChartTheme();
   const chartTooltip = useChartTooltipController({ suppressed: isProgrammaticScroll, isTouch });
 
-  const comparisonSeriesRegistry = useMemo(() => createComparisonSeriesRegistry(), []);
+  const comparisonSeriesRegistry = useMemo(
+    () =>
+      createComparisonSeriesRegistry({
+        status: ctiInfoState?.status ?? "invalid",
+        reason: ctiInfoState?.reason ?? ctiInfoState?.unavailableReason ?? null,
+      }),
+    [ctiInfoState],
+  );
   const ctiMetadata: readonly SeriesMetadata[] = useMemo(() => {
     const state = ctiInfoState?.series?.raw;
     if (!state) return [];
     const measurement: SeriesMeasurement = {
-      key: state.key,
-      label: getLegendLabel(state.key),
+      key: SUPPORT_SERIES_KEY_NOMINAL,
+      label: getLegendLabel(SUPPORT_SERIES_KEY_NOMINAL),
       unit: state.unit,
       source: state.source,
       valueType: state.valueType,
@@ -339,7 +346,7 @@ export default function CpiChart({
       data: mergedData as unknown as Record<string, unknown>[],
       keys: visibleLineConfigs.map((c) => c.key),
       headers: visibleLineConfigs.map((c) => c.displayName ?? c.label),
-      metadata: ctiMetadata,
+      metadata: comparisonSeriesRegistry,
     },
   ];
 

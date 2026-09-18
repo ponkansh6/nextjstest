@@ -5,7 +5,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import independentFixture from "../fixtures/chart-parity-independent.json";
 import CpiChart from "@/app/components/CpiChart";
 import { ChartExportButton } from "@/app/components/ChartExportButton";
-import { getLegendLabel, SUPPORT_SERIES_KEY_NOMINAL } from "@/lib/chartConstants";
+import {
+  createComparisonSeriesRegistry,
+  EARNINGS_SERIES_REGISTRY,
+  getLegendLabel,
+  SUPPORT_SERIES_KEY_NOMINAL,
+} from "@/lib/chartConstants";
 import { setupUiMocks } from "../utils/ui-mocks";
 import "../utils/recharts-mock";
 
@@ -92,7 +97,12 @@ const CONTRACT = {
     publicQuarterly(matrix.real),
     matrix.earnings,
     matrix.residual,
-    matrix.comparison,
+    {
+      ...matrix.comparison,
+      keys: [...matrix.comparison.keys, "CTIミクロ基本系列（名目・参考）"],
+      headers: [...matrix.comparison.headers, "CTIミクロ基本系列(名目・総合)"],
+      expected: matrix.comparison.expected.map((row) => [...row, ""]),
+    },
   ],
 } as const;
 const input = () => {
@@ -374,20 +384,27 @@ describe("Phase 4-4 real chart/table/CSV parity", () => {
       expect([...raw.matchAll(/\r\n|\r|\n/g)].every(([ending]) => ending === "\r\n")).toBe(true);
       const rows = parseCsv(raw);
       const section = CONTRACT.sections[i];
-      const metadataHeaders =
+      const metadataRegistry =
         i === 2
-          ? [{ key: SUPPORT_SERIES_KEY_NOMINAL }].flatMap(({ key }) => [
-              `${key}__label`,
-              `${key}__valueType`,
-              `${key}__value`,
-              `${key}__unit`,
-              `${key}__source`,
-              `${key}__frequency`,
-              `${key}__aggregation`,
-              `${key}__status`,
-              `${key}__reason`,
-            ])
-          : [];
+          ? [{ key: SUPPORT_SERIES_KEY_NOMINAL }]
+          : i === 4
+            ? EARNINGS_SERIES_REGISTRY
+            : i === 6
+              ? createComparisonSeriesRegistry()
+              : [];
+      const metadataHeaders = metadataRegistry
+        .filter(({ key }) => section.keys.includes(key))
+        .flatMap(({ key }) => [
+          `${key}__label`,
+          `${key}__valueType`,
+          `${key}__value`,
+          `${key}__unit`,
+          `${key}__source`,
+          `${key}__frequency`,
+          `${key}__aggregation`,
+          `${key}__status`,
+          `${key}__reason`,
+        ]);
       expect(rows[0]).toEqual(["年月", ...section.headers, ...metadataHeaders]);
       expect(rows.slice(1).map((row) => row.slice(0, section.keys.length + 1))).toEqual(
         section.expected,
@@ -395,6 +412,9 @@ describe("Phase 4-4 real chart/table/CSV parity", () => {
       expect(rows.every((r) => r.length === section.keys.length + 1 + metadataHeaders.length)).toBe(
         true,
       );
+      if (i === 4) {
+        expect(rows[0].slice(section.keys.length + 1)).toEqual(metadataHeaders);
+      }
       if (i === 2) {
         const metadataStart = section.keys.length + 1;
         expect(rows[1]!.slice(metadataStart)).toEqual([
@@ -419,18 +439,6 @@ describe("Phase 4-4 real chart/table/CSV parity", () => {
           "invalid",
           "unavailable",
         ]);
-      }
-      if (i === 4) {
-        expect(rows[0].slice(section.keys.length + 1)).toEqual([]);
-        expect(
-          rows[0].filter((header) =>
-            [
-              "CTIミクロ基本系列（名目・原数値）",
-              "CTIミクロ基本系列（名目・参考）",
-              "CTIミクロ基本系列（名目・参考・延長）",
-            ].some((key) => header.startsWith(`${key}__`)),
-          ),
-        ).toEqual([]);
       }
     }
   });

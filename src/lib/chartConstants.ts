@@ -138,6 +138,49 @@ export const CANONICAL_REAL_KEY = "その他の消費支出（実質）";
 
 export const SUPPORT_SERIES_KEY_NOMINAL = "CTIミクロ四半期系列（名目）";
 export const SUPPORT_SERIES_KEY_REAL = "民間最終消費支出（実質）";
+export const CTI_BASIC_RAW_KEY = "CTIミクロ基本系列（名目・原数値）";
+export const CTI_BASIC_COMPARISON_KEY = "CTIミクロ基本系列（名目・参考）";
+export const CTI_BASIC_EXTENSION_KEY = "CTIミクロ基本系列（名目・参考・延長）";
+export const CTI_BASIC_SOURCE = "e-Stat 公式CTI長期artifact 000040499070";
+export const CTI_BASIC_UNIT = "指数";
+export const CTI_BASIC_SERIES_DESCRIPTORS = [
+  {
+    key: CTI_BASIC_RAW_KEY,
+    label: CTI_BASIC_RAW_KEY,
+    unit: CTI_BASIC_UNIT,
+    source: CTI_BASIC_SOURCE,
+    valueType: "raw" as const,
+    frequency: "monthly" as const,
+    aggregation: "none",
+  },
+  {
+    key: CTI_BASIC_COMPARISON_KEY,
+    label: "CTIミクロ基本系列(名目・総合)",
+    unit: CTI_BASIC_UNIT,
+    source: CTI_BASIC_SOURCE,
+    valueType: "comparison" as const,
+    frequency: "monthly" as const,
+    aggregation: "12_month_moving_average_rebased_to_2025_average",
+  },
+  {
+    key: CTI_BASIC_EXTENSION_KEY,
+    label: "CTIミクロ基本系列(名目・延長)",
+    unit: CTI_BASIC_UNIT,
+    source: CTI_BASIC_SOURCE,
+    valueType: "comparison" as const,
+    frequency: "monthly" as const,
+    aggregation: "12_month_moving_average_rebased_to_2025_average",
+  },
+] satisfies readonly Omit<SeriesMetadata, "color">[];
+
+export function ctiBasicDescriptors(status: "valid" | "invalid", reason: string | null) {
+  return CTI_BASIC_SERIES_DESCRIPTORS.map((descriptor) => ({
+    ...descriptor,
+    status,
+    reason,
+    value: null,
+  }));
+}
 export const QUARTERLY_GDP_RAW_NOMINAL_KEY = "GDP名目原値";
 export const QUARTERLY_GDP_RAW_REAL_KEY = "GDP実質原値";
 export const QUARTERLY_GDP_COMPARISON_NOMINAL_KEY = "GDP名目比較指数";
@@ -152,6 +195,9 @@ export const DISPLAY_LABEL_OVERRIDES: Record<string, string> = {
   [QUARTERLY_GDP_RAW_REAL_KEY]: "GDP実質原値",
   [QUARTERLY_GDP_COMPARISON_NOMINAL_KEY]: "GDP名目比較指数（2025Q1-Q4平均=100）",
   [QUARTERLY_GDP_COMPARISON_REAL_KEY]: "GDP実質比較指数（2025Q1-Q4平均=100）",
+  [CTI_BASIC_RAW_KEY]: CTI_BASIC_RAW_KEY,
+  [CTI_BASIC_COMPARISON_KEY]: "CTIミクロ基本系列(名目・総合)",
+  [CTI_BASIC_EXTENSION_KEY]: "CTIミクロ基本系列(名目・延長)",
   food: "food",
   housing: "housing",
   // CPI_CATEGORIES の値はデータローダーが生成する実データのフィールド名と
@@ -379,7 +425,13 @@ export const EARNINGS_TABLE_CONFIGS = EARNINGS_SERIES_REGISTRY;
 // NewGraph の系列設定(理由はEARNINGS_TABLE_CONFIGSと同様)
 export type LineConfig = SeriesMetadata & { displayName: string };
 
-export function createComparisonSeriesRegistry(): SeriesMetadata[] {
+export function createComparisonSeriesRegistry(
+  ctiState: { status: "valid" | "invalid"; reason: string | null } = {
+    status: "invalid",
+    reason: null,
+  },
+): SeriesMetadata[] {
+  const descriptors = ctiBasicDescriptors(ctiState.status, ctiState.reason);
   return [
     {
       key: "CPI総合(12MA)",
@@ -398,6 +450,38 @@ export function createComparisonSeriesRegistry(): SeriesMetadata[] {
       tooltipLabel: "給与(総合)",
       legendLabel: "給与(総合)",
       order: 1,
+    },
+    {
+      key: CTI_BASIC_COMPARISON_KEY,
+      color: "#2563eb",
+      label: "CTIミクロ基本系列(名目・総合)",
+      displayName: "CTIミクロ基本系列(名目・総合)",
+      tooltipLabel: "CTIミクロ基本系列(名目・総合)",
+      legendLabel: "CTIミクロ基本系列(名目・総合)",
+      order: 2,
+      unit: CTI_BASIC_UNIT,
+      source: CTI_BASIC_SOURCE,
+      valueType: "comparison",
+      status: descriptors[1].status,
+      reason: descriptors[1].reason,
+      descriptor: descriptors[1],
+    },
+    {
+      key: CTI_BASIC_EXTENSION_KEY,
+      color: "#7dd3fc",
+      label: "CTIミクロ基本系列(名目・延長)",
+      displayName: "CTIミクロ基本系列(名目・延長)",
+      advanced: true,
+      tooltipLabel: "CTIミクロ基本系列(名目・延長)",
+      legendLabel: "CTIミクロ基本系列(名目・延長)",
+      order: 3,
+      strokeDasharray: "6 3",
+      unit: CTI_BASIC_UNIT,
+      source: CTI_BASIC_SOURCE,
+      valueType: "comparison",
+      status: descriptors[2].status,
+      reason: descriptors[2].reason,
+      descriptor: descriptors[2],
     },
   ] satisfies SeriesMetadata[];
 }

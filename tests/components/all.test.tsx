@@ -547,7 +547,7 @@ describe("NewGraph", () => {
     expect(screen.getByText("給与・消費・物価の推移比較(12MA)")).toBeDefined();
   });
 
-  it("does not render advanced series legend when showAdvanced is false/undefined", () => {
+  it("renders the normal CTI series while keeping the extension advanced-only", () => {
     render(
       <NewGraph
         data={mockNewGraphData}
@@ -559,10 +559,11 @@ describe("NewGraph", () => {
         showAdvanced={false}
       />,
     );
-    expect(screen.queryByText(/CTIミクロ基本系列/)).toBeNull();
+    expect(screen.getAllByText("CTIミクロ基本系列(名目・総合)").length).toBeGreaterThan(0);
+    expect(screen.queryByText("CTIミクロ基本系列(名目・延長)")).toBeNull();
   });
 
-  it("does not reintroduce a retired CTI legend when showAdvanced is true", () => {
+  it("renders the normal and extension CTI legends when showAdvanced is true", () => {
     render(
       <NewGraph
         data={mockNewGraphData}
@@ -574,6 +575,7 @@ describe("NewGraph", () => {
         showAdvanced={true}
       />,
     );
-    expect(screen.queryByText(/CTIミクロ基本系列/)).toBeNull();
+    expect(screen.getAllByText("CTIミクロ基本系列(名目・総合)").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("CTIミクロ基本系列(名目・延長)").length).toBeGreaterThan(0);
   });
 });

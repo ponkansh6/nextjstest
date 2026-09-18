@@ -4,7 +4,6 @@ import React from "react";
 import styles from "./CpiChart.module.css";
 import { buildCsv, toFileName, withBom } from "../../lib/csvExport";
 import type { BuildCsvOptions } from "../../lib/csvExport";
-import { SUPPORT_SERIES_KEY_NOMINAL } from "../../lib/chartConstants";
 import type { SeriesMetadata } from "../../lib/chartConstants";
 
 interface ChartExportButtonProps {
@@ -32,10 +31,9 @@ export const ChartExportButton: React.FC<ChartExportButtonProps> = ({
   metadata,
 }) => {
   const handleExport = () => {
-    const csvMetadata = metadata?.filter(({ key }) => key === SUPPORT_SERIES_KEY_NOMINAL) ?? [];
+    const csvMetadata = metadata?.filter(({ key }) => keys.includes(key)) ?? [];
     const declaredKeys = new Set(csvMetadata.map(({ key }) => key));
     const rowMetadata: NonNullable<BuildCsvOptions["metadata"]> = keys.flatMap((key) => {
-      if (key !== SUPPORT_SERIES_KEY_NOMINAL) return [];
       if (declaredKeys.has(key)) return [];
       const measurement = data.find((row) => {
         const measurements = row.measurements;

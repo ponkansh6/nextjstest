@@ -93,7 +93,7 @@ interface CpiChartSectionsProps {
   newGraphInfo?: ChartInfoContent;
   chartTooltip: ChartTooltipController;
   comparisonSeriesRegistry: readonly SeriesMetadata[];
-  ctiMetadata: readonly SeriesMetadata[];
+  ctiMetadata?: readonly SeriesMetadata[];
 }
 
 export function CpiChartSections({
@@ -140,7 +140,7 @@ export function CpiChartSections({
   newGraphInfo,
   chartTooltip,
   comparisonSeriesRegistry,
-  ctiMetadata,
+  ctiMetadata = [],
 }: CpiChartSectionsProps) {
   const stackedTooltipMeta = buildCpiTooltipMetadata(
     stackedKeys.filter((key) => !stackedHiddenKeys.includes(key)),
@@ -354,7 +354,6 @@ export function CpiChartSections({
         <NewGraph
           sectionId="section-new-graph"
           comparisonSeriesRegistry={comparisonSeriesRegistry}
-          ctiMetadata={ctiMetadata}
           data={mergedData}
           hiddenKeys={maHiddenKeys}
           onToggle={handleMaLegendClick}
