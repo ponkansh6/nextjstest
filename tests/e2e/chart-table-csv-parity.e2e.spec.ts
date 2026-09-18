@@ -70,7 +70,7 @@ const CONTRACT: readonly Section[] = [
     tableId: "data-table-section-new-graph",
     chartName: "給与・消費・物価の推移比較（12MA）グラフ",
     period: "2025年1月",
-    keys: ["CPI総合(12MA)", "総合(12MA)", "CTIミクロ基本系列（名目・参考）"],
+    keys: ["CPI総合(12MA)", "総合(12MA)", "CTI消費支出（参考）", "CTIミクロ基本系列（名目・参考）"],
   },
 ];
 const INTERNAL = /GDP名目原値|GDP名目比較指数|GDP実質原値|GDP実質比較指数|四半期raw|原値|比較指数/;
@@ -427,6 +427,7 @@ test.describe("Phase 4-4 production chart/table/CSV parity", () => {
     expect(advancedContract.keys).toEqual([
       "CPI総合(12MA)",
       "総合(12MA)",
+      "CTI消費支出（参考）",
       "CTIミクロ基本系列（名目・参考）",
       "CTIミクロ基本系列（名目・参考・延長）",
     ]);

@@ -141,8 +141,11 @@ export const SUPPORT_SERIES_KEY_REAL = "民間最終消費支出（実質）";
 export const CTI_BASIC_RAW_KEY = "CTIミクロ基本系列（名目・原数値）";
 export const CTI_BASIC_COMPARISON_KEY = "CTIミクロ基本系列（名目・参考）";
 export const CTI_BASIC_EXTENSION_KEY = "CTIミクロ基本系列（名目・参考・延長）";
+export const LEGACY_CTI_COMPARISON_KEY = "CTI消費支出（参考）";
 export const CTI_BASIC_SOURCE = "e-Stat 公式CTI長期artifact 000040499070";
 export const CTI_BASIC_UNIT = "指数";
+export const LEGACY_CTI_COMPARISON_SOURCE =
+  "e-Stat 公式CTI長期artifact 000040499070（series_index=1 消費支出（名目））";
 export const CTI_BASIC_SERIES_DESCRIPTORS = [
   {
     key: CTI_BASIC_RAW_KEY,
@@ -452,13 +455,27 @@ export function createComparisonSeriesRegistry(
       order: 1,
     },
     {
+      key: LEGACY_CTI_COMPARISON_KEY,
+      color: "#0f766e",
+      label: "CTI消費支出(参考)",
+      displayName: "CTI消費支出(参考)",
+      tooltipLabel: "CTI消費支出(参考)",
+      legendLabel: "CTI消費支出(参考)",
+      order: 2,
+      unit: "指数",
+      source: LEGACY_CTI_COMPARISON_SOURCE,
+      valueType: "comparison",
+      frequency: "monthly",
+      aggregation: "12_month_moving_average_rebased_to_2025_raw_average",
+    },
+    {
       key: CTI_BASIC_COMPARISON_KEY,
       color: "#2563eb",
       label: "CTIミクロ基本系列(名目・総合)",
       displayName: "CTIミクロ基本系列(名目・総合)",
       tooltipLabel: "CTIミクロ基本系列(名目・総合)",
       legendLabel: "CTIミクロ基本系列(名目・総合)",
-      order: 2,
+      order: 3,
       unit: CTI_BASIC_UNIT,
       source: CTI_BASIC_SOURCE,
       valueType: "comparison",
@@ -474,7 +491,7 @@ export function createComparisonSeriesRegistry(
       advanced: true,
       tooltipLabel: "CTIミクロ基本系列(名目・延長)",
       legendLabel: "CTIミクロ基本系列(名目・延長)",
-      order: 3,
+      order: 4,
       strokeDasharray: "6 3",
       unit: CTI_BASIC_UNIT,
       source: CTI_BASIC_SOURCE,

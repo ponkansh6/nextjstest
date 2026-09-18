@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { loadCpiData } from "../../server/lib/dataLoader";
+import { loadCtiBasicConsumptionOutput } from "../../server/lib/ctiBasicSeries2025LongTerm";
 import { loadEarning2020RollbackFixture } from "../utils/cti-2020-rollback-fixture";
 import type { CpiData } from "../../src/types";
 import minkanFixture from "../fixtures/minkan-extension-anchors.json";
@@ -11,7 +12,15 @@ import { loadTotalEarningDataInternal } from "../../server/lib/data-loader/earni
 import { buildCtiFilePaths } from "../../server/lib/dataIo";
 import { projectQuarterlyPublicView } from "../../src/lib/quarterlyPublicProjection";
 import { SUPPORT_SERIES_KEY_NOMINAL } from "../../src/lib/chartConstants";
+import type { SeriesMeasurement } from "../../src/types/chart";
 import Papa from "papaparse";
+
+type CpiDataWithMeasurements = CpiData & {
+  measurements?: Record<string, SeriesMeasurement>;
+};
+
+const readLegacyCtiAggregation = (row: CpiData | undefined): string | undefined =>
+  (row as CpiDataWithMeasurements | undefined)?.measurements?.["CTI消費支出（参考）"]?.aggregation;
 
 describe("Earnings Data Integrity", () => {
   /*
@@ -490,30 +499,10 @@ describe("Earnings Data Integrity", () => {
         6,
       );
 
-      const ctiRows = Papa.parse<string[]>(
-        readFileSync(resolve(process.cwd(), "data/source/cti_data.csv"), "utf8"),
-        { skipEmptyLines: true },
-      ).data;
-      const ctiHeader = ctiRows[0];
-      const ctiMonthIndex = ctiHeader.indexOf("月");
-      const ctiValueIndex = ctiHeader.indexOf("消費支出（名目）");
-      const ctiValues = new Map(
-        ctiRows.slice(1).flatMap((row) => {
-          const value = Number(row[ctiValueIndex]);
-          return Number.isFinite(value) ? [[row[ctiMonthIndex], value] as const] : [];
-        }),
-      );
-      const ctiAverage = (year: number) => {
-        const values = [...ctiValues.entries()]
-          .filter(([month]) => month.startsWith(String(year) + "年"))
-          .map(([, value]) => value);
-        expect(values).toHaveLength(12);
-        return values.reduce((sum, value) => sum + value, 0) / values.length;
-      };
-      const cti2020Average = ctiAverage(2020);
-      const cti2025Average = ctiAverage(2025);
+      const ctiOutput = loadCtiBasicConsumptionOutput();
+      expect(ctiOutput.status).toBe("valid");
       expect(Number(dec2020!["CTI消費支出（参考）"])).toBeCloseTo(
-        (cti2020Average * 100) / cti2025Average,
+        ctiOutput.comparison.get("2020-12") ?? Number.NaN,
         6,
       );
 
@@ -562,5 +551,45 @@ describe("Earnings Data Integrity", () => {
         expect(row).toHaveProperty("民間最終消費支出（参考）");
       });
     });
+  });
+
+  it("restores the legacy CTI comparison contract without leaking into salary or Plan38 data", async () => {
+    const rows = await loadTotalEarningDataInternal();
+    const row2017 = rows.find((row) => row.年月 === "2017年12月");
+    const row2018 = rows.find((row) => row.年月 === "2018年1月");
+    expect(row2017?.["CTI消費支出（参考）"] ?? null).toBeNull();
+    expect(Number.isFinite(row2018?.["CTI消費支出（参考）"] ?? Number.NaN)).toBe(true);
+
+    const cti = loadCtiBasicConsumptionOutput();
+    expect(cti.status).toBe("valid");
+    const output2025 = rows
+      .filter((row) => row.年月.startsWith("2025年"))
+      .map((row) => row["CTI消費支出（参考）"])
+      .filter((value): value is number => typeof value === "number");
+    expect(output2025).toHaveLength(12);
+    const raw2025 = [...cti.raw.entries()]
+      .filter(([month]) => month.startsWith("2025-"))
+      .map(([, value]) => value);
+    const raw2025Average = raw2025.reduce((sum, value) => sum + value, 0) / raw2025.length;
+    expect(raw2025).toHaveLength(12);
+    expect(
+      raw2025.reduce((sum, value) => sum + (value * 100) / raw2025Average, 0) / raw2025.length,
+    ).toBeCloseTo(100, 6);
+    expect(rows.find((row) => row.年月 === "2018年1月")?.["CTI消費支出（参考）"]).toBeCloseTo(
+      ((cti.movingAverage.get("2018-01") ?? Number.NaN) * 100) / raw2025Average,
+      6,
+    );
+    expect(readLegacyCtiAggregation(rows.find((row) => row.年月 === "2025年1月"))).toBe(
+      "12_month_moving_average_rebased_to_2025_raw_average",
+    );
+    expect(
+      rows.every(
+        (row) =>
+          !("CTI消費支出（参考）" in row) ||
+          row["CTI消費支出（参考）"] === null ||
+          typeof row["CTI消費支出（参考）"] === "number",
+      ),
+    ).toBe(true);
+    expect(rows.some((row) => Object.hasOwn(row, "CTIミクロ四半期系列（名目）"))).toBe(false);
   });
 });

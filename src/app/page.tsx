@@ -14,6 +14,7 @@ import {
   stackedKeys,
   CTI_BASIC_RAW_KEY,
   CTI_BASIC_COMPARISON_KEY,
+  LEGACY_CTI_COMPARISON_KEY,
 } from "@/lib/chartConstants";
 
 export const revalidate = false;
@@ -138,6 +139,7 @@ export default async function Page() {
     CTI_BASIC_RAW_KEY,
     CTI_BASIC_COMPARISON_KEY,
     "CTIミクロ基本系列（名目・参考・延長）",
+    LEGACY_CTI_COMPARISON_KEY,
   ];
 
   const projectedCpiData = toCpiView(cleanData, cpiKeys);

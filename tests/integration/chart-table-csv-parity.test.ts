@@ -9,6 +9,7 @@ import {
   createComparisonSeriesRegistry,
   EARNINGS_SERIES_REGISTRY,
   getLegendLabel,
+  LEGACY_CTI_COMPARISON_KEY,
   SUPPORT_SERIES_KEY_NOMINAL,
 } from "@/lib/chartConstants";
 import { setupUiMocks } from "../utils/ui-mocks";
@@ -99,9 +100,17 @@ const CONTRACT = {
     matrix.residual,
     {
       ...matrix.comparison,
-      keys: [...matrix.comparison.keys, "CTIミクロ基本系列（名目・参考）"],
-      headers: [...matrix.comparison.headers, "CTIミクロ基本系列(名目・総合)"],
-      expected: matrix.comparison.expected.map((row) => [...row, ""]),
+      keys: [
+        ...matrix.comparison.keys,
+        LEGACY_CTI_COMPARISON_KEY,
+        "CTIミクロ基本系列（名目・参考）",
+      ],
+      headers: [...matrix.comparison.headers, "CTI消費支出(参考)", "CTIミクロ基本系列(名目・総合)"],
+      expected: matrix.comparison.expected.map((row) => [
+        ...row,
+        row[0] === "2018年1月" ? "48.00" : "",
+        "",
+      ]),
     },
   ],
 } as const;

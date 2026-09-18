@@ -14,7 +14,11 @@ import { loadCpiDataInternal, loadCtiDataInternal, type CtiLoadOptions } from ".
 import { compareYearMonth, parseYearMonth, toCanonicalYearMonth } from "@/lib/yearMonth";
 import { trailingMovingAverage } from "../math/movingAverage";
 import { loadCtiBasicConsumptionOutput } from "../ctiBasicSeries2025LongTerm";
-import { ctiBasicDescriptors } from "@/lib/chartConstants";
+import {
+  ctiBasicDescriptors,
+  LEGACY_CTI_COMPARISON_KEY,
+  LEGACY_CTI_COMPARISON_SOURCE,
+} from "@/lib/chartConstants";
 import type { SeriesMeasurement } from "@/types/chart";
 
 function computeTrailingMA12(entries: [string, number][]): Map<string, number> {
@@ -86,6 +90,15 @@ function computeMovingAverageToField(
 
 function buildConsumptionMaps(ctiData: CpiData[]) {
   const ctiBasic = loadCtiBasicConsumptionOutput();
+  const legacyCtiRawAverage2025 = comparisonAverageForYear(ctiBasic.raw, "2025-");
+  const legacyCtiFactor =
+    legacyCtiRawAverage2025 !== undefined ? 100 / legacyCtiRawAverage2025 : undefined;
+  const legacyCtiMap = new Map<string, number>();
+  if (legacyCtiFactor !== undefined) {
+    ctiBasic.movingAverage.forEach((value, month) => {
+      if (Number.isFinite(value)) legacyCtiMap.set(month, value * legacyCtiFactor);
+    });
+  }
   const minkanNominalRawMap = new Map<string, number>();
   const minkanNominalComparisonMap = new Map<string, number>();
   for (const row of ctiData) {
@@ -105,6 +118,7 @@ function buildConsumptionMaps(ctiData: CpiData[]) {
     ctiBasicRawMap: ctiBasic.raw,
     ctiBasicStatus: ctiBasic.status,
     ctiBasicReason: ctiBasic.reason,
+    legacyCtiMap,
   };
 }
 
@@ -187,6 +201,7 @@ export async function loadTotalEarningDataInternal(
     ctiBasicRawMap,
     ctiBasicStatus,
     ctiBasicReason,
+    legacyCtiMap,
   } = buildConsumptionMaps(ctiData);
 
   const comparisonYearKeys = [...keys]
@@ -258,7 +273,6 @@ export async function loadTotalEarningDataInternal(
   const avgCpiComparison = comparisonAverageForYear(cpiMap, `${salaryComparisonYear}年`);
   const cpiFactor = avgCpiComparison ? 100 / avgCpiComparison : undefined;
   const cpiMAMap = computeTrailingMA12([...cpiMap.entries()]);
-
   const result: CpiData[] = [...keys].map((ym) => {
     const contractualVal = contractualMap.get(ym);
     const scheduledVal = scheduledMap.get(ym);
@@ -392,6 +406,14 @@ export async function loadTotalEarningDataInternal(
     const minkanNominalRaw = ctiMonth ? minkanNominalRawMap.get(ctiMonth) : undefined;
     const minkanNominalComparison = ctiMonth ? minkanNominalComparisonMap.get(ctiMonth) : undefined;
     const parsedYear = parseYearMonth(item.年月)?.year;
+    const legacyCtiMa = ctiMonth ? legacyCtiMap.get(ctiMonth) : undefined;
+    const legacyCtiValue =
+      parsedYear !== undefined &&
+      parsedYear >= 2018 &&
+      legacyCtiMa !== undefined &&
+      Number.isFinite(legacyCtiMa)
+        ? legacyCtiMa
+        : null;
     if (minkanNominalRaw !== undefined) item["民間最終消費支出（名目・原値）"] = minkanNominalRaw;
     if (ctiBasicRaw !== undefined) item["CTIミクロ基本系列（名目・原数値）"] = ctiBasicRaw;
     item["民間最終消費支出（名目・比較指数）"] =
@@ -421,6 +443,21 @@ export async function loadTotalEarningDataInternal(
     );
     (item as unknown as { measurements: Record<string, SeriesMeasurement> }).measurements =
       measurements;
+    measurements[LEGACY_CTI_COMPARISON_KEY] = {
+      key: LEGACY_CTI_COMPARISON_KEY,
+      label: "CTI消費支出(参考)",
+      unit: "指数",
+      source: LEGACY_CTI_COMPARISON_SOURCE,
+      valueType: "comparison",
+      value: legacyCtiValue,
+      status: typeof legacyCtiValue === "number" ? "valid" : "invalid",
+      reason: typeof legacyCtiValue === "number" ? null : "unavailable",
+      frequency: "monthly",
+      aggregation: "12_month_moving_average_rebased_to_2025_raw_average",
+    };
+    // Keep the scalar row field separate from its metadata object.  This is
+    // the final assignment because both contracts intentionally share a key.
+    item[LEGACY_CTI_COMPARISON_KEY] = measurements[LEGACY_CTI_COMPARISON_KEY].value;
   });
 
   // Normalize each salary output independently to the same fixed 2025

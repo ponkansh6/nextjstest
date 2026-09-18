@@ -1,5 +1,58 @@
 # Specification: Economic Indicators Dashboard (nextjstest)
 
+## Legacy CTI monthly comparison series
+
+### Data Sources
+
+The legacy comparison key `CTI消費支出（参考）` is a separate monthly comparison
+contract from the Plan37 `CTIミクロ基本系列（名目・参考）`/extension and the
+Plan38 `CTIミクロ四半期系列（名目）`. Its source is the official 2025-base
+long-term artifact `data/source/official-cti-2025-long-term/000040499070.normalized.csv`,
+series 1 (`消費支出（名目）`). It does not consume the old CTI loader raw field
+or the Plan38 quarterly projection.
+
+### Data Flow
+
+`ctiBasicSeries2025LongTerm.ts` validates the artifact and provides the series-1
+raw map and its 2017-01-starting trailing 12-month average. The loader emits
+the legacy key only from 2018-01 onward; 2017 and earlier are `null`. The value
+is normalized as `12MA(raw) * 100 / average(raw 2025 months)`.
+The value
+field is carried at the top level of each monthly row, with the same value and
+metadata retained under `measurements["CTI消費支出（参考）"]`; the scalar field
+is assigned after the measurement map is complete so the same-name metadata
+object cannot overwrite it. The NewGraph comparison path can consume both
+value and metadata. The salary
+registry/table/CSV and Plan38 quarterly view do not include the key.
+
+### Component Tree
+
+`loadTotalEarningDataInternal` → `toEarningsView` (comparison-only legacy field)
+→ `CpiChart`/`NewGraph` → shared `createComparisonSeriesRegistry()` metadata →
+ChartDataContract, comparison table, and comparison CSV. The salary registry
+and Plan38 projection remain separate consumers.
+
+### Requirements
+
+- **WHEN** the official 2025-base artifact has a finite positive series-1 raw
+  `消費支出（名目）` value, **THEN** the legacy calculation uses the
+  2017-01-starting 12-month trailing window and does not use the old CTI raw
+  loader field, Plan37 derived values, or Plan38 derived values.
+- **WHEN** a monthly row is before 2018-01, **THEN**
+  `CTI消費支出（参考）` is `null`/not displayable; **WHEN** it is 2018-01 or
+  later and the 12-month window is complete, **THEN** it is
+  `12MA(raw) * 100 / average(raw CTI 2025 months)`, and the 2025 monthly
+  comparison average is 100.
+- **WHEN** the comparison registry is created, **THEN** it contains key
+  `CTI消費支出（参考）` with label `CTI消費支出(参考)` and keeps value fields
+  separate from its source/unit/frequency/aggregation metadata.
+- **WHEN** the comparison graph, legend, tooltip, table, or CSV renders,
+  **THEN** this key and its label/metadata are projected from the same registry
+  and have parity across those surfaces.
+- **WHEN** the salary graph/table/CSV or Plan38 quarterly view renders,
+  **THEN** the legacy key is absent and existing Plan37 normal/extension and
+  Plan38 quarterly contracts remain unchanged.
+
 ## Plan38 CTI quarterly nominal support
 
 ### Plan38 responsibility boundary and completion evidence
