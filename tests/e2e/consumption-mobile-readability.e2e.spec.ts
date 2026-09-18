@@ -14,7 +14,6 @@ const earningsTooltipLabels = [
   "時間当たり給与",
   "15歳以上国民当たり給与",
   "物価指数総合(参考)",
-  "CTIミクロ基本系列（名目・原数値）",
 ] as const;
 const earningsTotalLabel = "給与区分合計（所定内＋所定外＋特別）";
 

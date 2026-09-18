@@ -10,12 +10,9 @@ import {
   rebaseResidualToYearAverage,
 } from "../serverCalculations";
 import { loadPopulationDataInternal } from "./population";
-import { loadCpiDataInternal, loadCtiDataInternal, type CtiLoadOptions } from "./cpi";
-import { compareYearMonth, parseYearMonth, toCanonicalYearMonth } from "@/lib/yearMonth";
+import { loadCpiDataInternal } from "./cpi";
+import { compareYearMonth, parseYearMonth } from "@/lib/yearMonth";
 import { trailingMovingAverage } from "../math/movingAverage";
-import { loadCtiBasicConsumptionOutput } from "../ctiBasicSeries2025LongTerm";
-import { ctiBasicDescriptors } from "@/lib/chartConstants";
-import type { SeriesMeasurement } from "@/types/chart";
 
 function computeTrailingMA12(entries: [string, number][]): Map<string, number> {
   const sorted = entries
@@ -84,51 +81,8 @@ function computeMovingAverageToField(
   });
 }
 
-/**
- * CTIデータから民間最終消費支出MapおよびCTI消費支出Mapを構築する。
- * Plan37: 2005年1月以降の公式CTI基本系列（名目消費支出）を通常/延長ともに使用する。
- */
-function buildConsumptionMaps(ctiData: CpiData[]): {
-  minkanMap: Map<string, number>;
-  minkanNominalRawMap: Map<string, number>;
-  minkanNominalComparisonMap: Map<string, number>;
-  ctiBasicRawMap: Map<string, number>;
-  ctiBasicStatus: "valid" | "invalid";
-  ctiBasicReason: string | null;
-} {
-  const ctiBasic = loadCtiBasicConsumptionOutput();
-  const minkanNominalRawMap = new Map<string, number>();
-  const minkanNominalComparisonMap = new Map<string, number>();
-  ctiData.forEach((d) => {
-    const sourceYearMonth = d.年月 as string | undefined;
-    const ym = sourceYearMonth ? toCanonicalYearMonth(sourceYearMonth) : null;
-    if (!ym) return;
-    // GDP raw/comparison fields remain available for their independent contract;
-    // neither is used by the Plan37 CTI comparison line.
-    const nominalRawValue = d["民間最終消費支出（名目・原値）"];
-    const nominalComparisonValue = d["民間最終消費支出（名目・比較指数）"];
-    if (typeof nominalRawValue === "number" && Number.isFinite(nominalRawValue)) {
-      minkanNominalRawMap.set(ym, nominalRawValue);
-    }
-    if (typeof nominalComparisonValue === "number" && Number.isFinite(nominalComparisonValue)) {
-      minkanNominalComparisonMap.set(ym, nominalComparisonValue);
-    }
-  });
-
-  const minkanMAMap = ctiBasic.comparison;
-
-  return {
-    minkanMap: minkanMAMap,
-    minkanNominalRawMap,
-    minkanNominalComparisonMap,
-    ctiBasicRawMap: ctiBasic.raw,
-    ctiBasicStatus: ctiBasic.status,
-    ctiBasicReason: ctiBasic.reason,
-  };
-}
-
 export async function loadTotalEarningDataInternal(
-  ctiOptions: CtiLoadOptions = {},
+  ..._ignoredOptions: unknown[]
 ): Promise<CpiData[]> {
   const paths = buildEarningsFilePaths();
   const contractualContent = fs.readFileSync(paths.contractual, "utf8");
@@ -186,7 +140,6 @@ export async function loadTotalEarningDataInternal(
   ]);
   const populationDataMap = await loadPopulationDataInternal();
   const cpiData = await loadCpiDataInternal();
-  const ctiData = await loadCtiDataInternal(ctiOptions);
   const cpiMap = new Map<string, number>();
   cpiData.forEach((d) => {
     if (typeof d.総合 === "number") cpiMap.set(d.年月, d.総合);
@@ -194,21 +147,6 @@ export async function loadTotalEarningDataInternal(
   // Salary indices have an explicit, independent base year. This must not
   // follow CTI/CPI/GDP availability or their compatibility rollback year.
   const salaryComparisonYear = 2025;
-  // The GDP display set is independently validated by the loader before it
-  // emits this normalized key. Do not infer validity from CTI availability.
-  const hasGdpComparison = ctiData.some(
-    (item) =>
-      typeof item["民間最終消費支出（名目・比較指数）"] === "number" &&
-      Number.isFinite(item["民間最終消費支出（名目・比較指数）"]),
-  );
-  const {
-    minkanMap,
-    minkanNominalRawMap,
-    minkanNominalComparisonMap,
-    ctiBasicRawMap,
-    ctiBasicStatus,
-    ctiBasicReason,
-  } = buildConsumptionMaps(ctiData);
 
   const comparisonYearKeys = [...keys]
     .filter((ym) => ym.startsWith(`${salaryComparisonYear}年`))
@@ -407,52 +345,6 @@ export async function loadTotalEarningDataInternal(
     const cpiMa = cpiMAMap.get(item.年月);
     item["CPI総合(12MA)"] =
       cpiFactor !== undefined && cpiMa !== undefined ? cpiMa * cpiFactor : null;
-    // Plan37 CTI基本系列の12MA比較指数（通常/延長の境界だけ表示を分ける）。
-    // 各系列は自身の期間のみ値を持ち、期間外は null（欠測）としてゼロ方向への誤った線引きを防ぐ。
-    const ctiMonth = toCanonicalYearMonth(item.年月);
-    const ctiMa = ctiMonth ? minkanMap.get(ctiMonth) : undefined;
-    const ctiBasicRaw = ctiMonth ? ctiBasicRawMap.get(ctiMonth) : undefined;
-    const minkanNominalRaw = ctiMonth ? minkanNominalRawMap.get(ctiMonth) : undefined;
-    const minkanNominalComparison = ctiMonth ? minkanNominalComparisonMap.get(ctiMonth) : undefined;
-    const parsedYear = parseYearMonth(item.年月)?.year;
-    if (minkanNominalRaw !== undefined) item["民間最終消費支出（名目・原値）"] = minkanNominalRaw;
-    if (ctiBasicRaw !== undefined) item["CTIミクロ基本系列（名目・原数値）"] = ctiBasicRaw;
-    item["民間最終消費支出（名目・比較指数）"] =
-      hasGdpComparison && minkanNominalComparison !== undefined ? minkanNominalComparison : null;
-    item["CTIミクロ基本系列（名目・参考）"] =
-      parsedYear !== undefined &&
-      parsedYear <= 2017 &&
-      ctiMa !== undefined &&
-      Number.isFinite(ctiMa)
-        ? ctiMa
-        : null;
-    item["CTIミクロ基本系列（名目・参考・延長）"] =
-      parsedYear !== undefined &&
-      parsedYear >= 2018 &&
-      ctiMa !== undefined &&
-      Number.isFinite(ctiMa)
-        ? ctiMa
-        : null;
-    const measurements: Record<string, SeriesMeasurement> = Object.fromEntries(
-      ctiBasicDescriptors(ctiBasicStatus, ctiBasicReason).map((descriptor) => {
-        const value =
-          descriptor.valueType === "raw"
-            ? (ctiBasicRaw ?? null)
-            : (item[descriptor.key] as number | null);
-        const isRawPresent = descriptor.valueType === "raw" && value !== null;
-        return [
-          descriptor.key,
-          {
-            ...descriptor,
-            status: isRawPresent ? "valid" : descriptor.status,
-            reason: isRawPresent ? null : descriptor.reason,
-            value,
-          },
-        ];
-      }),
-    );
-    (item as unknown as { measurements: Record<string, SeriesMeasurement> }).measurements =
-      measurements;
   });
 
   // Normalize each salary output independently to the same fixed 2025

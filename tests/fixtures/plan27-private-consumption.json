@@ -1,7 +1,7 @@
 {
-  "series": "CTIミクロ基本系列（名目・参考）",
-  "extendedSeries": "CTIミクロ基本系列（名目・参考・延長）",
-  "rawSource": "data/source/official-cti-2025-long-term/000040499070.normalized.csv",
-  "normalizationSource": "2025年12MA平均=100",
-  "representativeMonths": ["2014年1月", "2017年12月"]
+  "series": "CTIミクロ四半期系列（名目）",
+  "label": "CTIミクロ（名目・四半期平均）",
+  "artifact": "data/source/official-cti-2025-long-term/000040499070",
+  "period": "2005Q1〜2017Q4",
+  "quarterCount": 52
 }

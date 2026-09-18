@@ -141,17 +141,17 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
     ],
   },
   "consumption-expenditure": {
-    source: "e-Stat「消費動向指数（CTIミクロ基本系列）」／四半期GDP統計（独立比較線）",
+    source: "e-Stat「消費動向指数（CTIミクロ基本系列）」公式長期artifact",
     url: "https://www.e-stat.go.jp/stat-search/files?toukei=00100409&tstat=000001014470",
     sections: [
       {
         heading: "データの内訳",
         items: [
           {
-            text: "GDP参考値：四半期別GDP統計の「民間最終消費支出」を、2025年平均=100の比較指数として表示（公式金額そのものではありません）",
+            text: "2005Q1〜2017Q4：CTI公式長期artifact（000040499070、series_index=1、official_series_code=1）の名目原指数を四半期3か月単純平均で表示",
           },
           {
-            text: "CTIミクロ基本系列：二人以上の世帯の「消費支出（名目）」原数値を、2005年1月から公表最新月まで使用します。",
+            text: "2018Q1以降：既存CTI名目費目積上を表示し、2017Q4/2018Q1で系列の境界を明示します。",
           },
           {
             text: "内訳は9大費目と諸雑費・CPI外支出に分類して表示",
@@ -165,10 +165,10 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
             text: "月次原系列データ（名目・実質）を四半期ごとに平均化",
           },
           {
-            text: "CTIミクロ基本系列は名目原数値を12か月移動平均し、2025年の12MA平均=100に再基準化して表示します。個別基準月の0は有効値として扱います。",
+            text: "CTI四半期値は補間・0補完・重複統合・GDP fallbackを行わず、3か月の欠損・非有限・重複・不足時はnullとして理由を公開します。0は有効値です。",
           },
           {
-            text: "GDP参考値は名目・実質の元データを2025年平均=100に換算。実質連鎖系列は合計しません。",
+            text: "実質グラフには名目CTI四半期系列を渡さず、既存の実質経路を維持します。",
           },
           {
             text: "「諸雑費・CPI外支出」は、総消費支出から他の費目の合計を差し引いた差分として別途算出",
@@ -235,7 +235,7 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
             text: "給与（総合）：所定内給与 + 所定外給与 + 特別給与の12か月移動平均を指数化",
           },
           {
-            text: "CTIミクロ基本系列（名目・総合）：二人以上世帯の公式「消費支出（名目）」原数値を12か月移動平均し、2025年12MA平均=100で表示。",
+            text: "CTIミクロ名目四半期系列：二人以上世帯の公式原数値を暦年四半期の3か月単純平均で表示。",
           },
           {
             text: "物価指数（総合）：消費者物価指数総合の月次系列を12か月移動平均で指数化",
@@ -248,7 +248,7 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
           { text: "給与：月次系列の12か月移動平均" },
           { text: "物価：月次系列の12か月移動平均" },
           {
-            text: "CTIミクロ基本系列：二人以上の世帯の名目原数値を2005年1月から公表最新月まで使用し、12か月移動平均、2025年の12MA平均=100に再基準化",
+            text: "CTIミクロ名目四半期系列：対象期間は2005Q1〜2017Q4で、3か月がそろわない四半期は欠測として表示。",
           },
           { text: "2018年以降の延長系列は、このinfo下部の切替で表示できます。" },
         ],
@@ -380,13 +380,13 @@ function resolveCtiChartInfo(
   const stateItems: ChartInfoItem[] = [
     {
       text: isOfficial
-        ? `二人以上の世帯の2025年基準CTIミクロ基本系列（${series}）を、2005年1月から公表最新月まで使用しています。`
-        : "CTIミクロ基本系列は現在利用できません。",
+        ? `二人以上の世帯の公式CTI名目原数値を、${series}として2005Q1〜2017Q4の四半期平均で使用しています。`
+        : "CTIミクロ名目四半期系列は現在利用できません。",
     },
   ];
   if (ctiState.status === "invalid" || ctiState.reason) {
     stateItems.push({
-      text: `CTI基本系列の状態：${ctiState.status === "invalid" ? "invalid" : "valid"}、理由：${ctiState.reason ?? ""}、単位：${ctiState.unit ?? "指数"}、出典：${ctiState.source ?? "Plan37 official CSV"}`,
+      text: `CTI名目四半期系列の状態：${ctiState.status === "invalid" ? "invalid" : "valid"}、理由：${ctiState.reason ?? ""}、単位：${ctiState.unit ?? "指数"}、出典：${ctiState.source ?? "e-Stat 公式CTI長期artifact 000040499070"}`,
     });
   }
   if (ctiState.supportLabel) stateItems.push({ text: ctiState.supportLabel });

@@ -2,8 +2,6 @@ import { Suspense } from "react";
 import {
   getCpiDataStatus,
   getCtiBasicConsumptionStatus,
-  getGdpSupportStatus,
-  getQuarterlyGdpSupportStatus,
   loadCpiData,
   loadTotalEarningData,
 } from "../../server/lib/dataLoader";
@@ -11,33 +9,16 @@ import { toCpiView, toEarningsView } from "../../server/lib/view-models/dashboar
 import { loadQuarterlyPublicData } from "../../server/lib/view-models/quarterlyProjection";
 import CpiChart from "./components/CpiChart";
 import styles from "./page.module.css";
-import { targetKeys, stackedKeys } from "@/lib/chartConstants";
+import { targetKeys, stackedKeys, SUPPORT_SERIES_KEY_NOMINAL } from "@/lib/chartConstants";
 
 export const revalidate = false;
 
-function getGdpInfoReason(reason: string | undefined): string {
-  // Validation reasons are deliberately precise for server diagnostics. Keep
-  // implementation terms out of the information panel.
-  return reason
-    ? "GDP比較に必要な2025年の四半期値または確認情報がそろっていません。"
-    : "GDP比較に必要なデータを確認中です。";
-}
-
 export default async function Page() {
-  const [
-    cleanData,
-    totalEarningData,
-    cpiDataStatus,
-    ctiBasicStatus,
-    gdpSupportStatus,
-    quarterlyGdpSupportStatus,
-  ] = await Promise.all([
+  const [cleanData, totalEarningData, cpiDataStatus, ctiBasicStatus] = await Promise.all([
     loadCpiData(),
     loadTotalEarningData(),
     getCpiDataStatus(),
     getCtiBasicConsumptionStatus(),
-    getGdpSupportStatus(),
-    getQuarterlyGdpSupportStatus(),
   ]);
   const cpiInfoState =
     cpiDataStatus.baseYear === 2025
@@ -66,7 +47,7 @@ export default async function Page() {
     ? {
         baseYear: 2025 as const,
         sourceMode: "official-connected" as const,
-        seriesLabel: "二人以上の世帯「消費支出（名目）」原数値",
+        seriesLabel: "二人以上の世帯「消費支出（名目）」原数値の四半期平均",
         comparisonNormalization: "2025-annual-average" as const,
         status: "valid" as const,
         reason: null,
@@ -74,22 +55,22 @@ export default async function Page() {
         artifactRoot: ctiBasicStatus.artifactRoot,
         artifactStatus: ctiBasicStatus.artifactStatus,
         artifactReason: ctiBasicStatus.artifactReason,
-        source: "Plan37 official CSV" as const,
+        source: "e-Stat 公式CTI長期artifact 000040499070" as const,
         unit: "指数" as const,
         series: {
           raw: {
-            key: "CTIミクロ基本系列（名目・原数値）",
+            key: SUPPORT_SERIES_KEY_NOMINAL,
             valueType: "raw" as const,
             unit: "指数",
-            source: "Plan37 official CSV",
+            source: "e-Stat 公式CTI長期artifact 000040499070",
             status: "valid" as const,
             reason: null,
           },
           comparison: {
-            key: "CTIミクロ基本系列（名目・参考）",
+            key: SUPPORT_SERIES_KEY_NOMINAL,
             valueType: "comparison" as const,
             unit: "指数",
-            source: "Plan37 official CSV",
+            source: "e-Stat 公式CTI長期artifact 000040499070",
             status: "valid" as const,
             reason: null,
           },
@@ -105,56 +86,25 @@ export default async function Page() {
         artifactRoot: ctiBasicStatus.artifactRoot,
         artifactStatus: ctiBasicStatus.artifactStatus,
         artifactReason: ctiBasicStatus.artifactReason,
-        source: "Plan37 official CSV" as const,
+        source: "e-Stat 公式CTI長期artifact 000040499070" as const,
         unit: "指数" as const,
         series: {
           raw: {
-            key: "CTIミクロ基本系列（名目・原数値）",
+            key: SUPPORT_SERIES_KEY_NOMINAL,
             valueType: "raw" as const,
             unit: "指数",
-            source: "Plan37 official CSV",
+            source: "e-Stat 公式CTI長期artifact 000040499070",
             status: "invalid" as const,
             reason: ctiBasicStatus.reason ?? "CTI長期系列を利用できません。",
           },
           comparison: {
-            key: "CTIミクロ基本系列（名目・参考）",
+            key: SUPPORT_SERIES_KEY_NOMINAL,
             valueType: "comparison" as const,
             unit: "指数",
-            source: "Plan37 official CSV",
+            source: "e-Stat 公式CTI長期artifact 000040499070",
             status: "invalid" as const,
             reason: ctiBasicStatus.reason ?? "CTI長期系列を利用できません。",
           },
-        },
-      };
-  const gdpInfoState = gdpSupportStatus.valid
-    ? {
-        availability: "available" as const,
-        displayNormalizationYear: 2025 as const,
-        quarterlyStatus: {
-          availability: quarterlyGdpSupportStatus.valid
-            ? quarterlyGdpSupportStatus.comparisonReady
-              ? ("available" as const)
-              : ("pending" as const)
-            : ("unavailable" as const),
-          comparisonReady: quarterlyGdpSupportStatus.comparisonReady,
-          granularity: "quarterly" as const,
-          independentConfirmation: quarterlyGdpSupportStatus.independentConfirmation,
-          reason: quarterlyGdpSupportStatus.reason,
-        },
-      }
-    : {
-        availability: "unavailable" as const,
-        reason: getGdpInfoReason(gdpSupportStatus.reason),
-        quarterlyStatus: {
-          availability: quarterlyGdpSupportStatus.valid
-            ? quarterlyGdpSupportStatus.comparisonReady
-              ? ("available" as const)
-              : ("pending" as const)
-            : ("unavailable" as const),
-          comparisonReady: quarterlyGdpSupportStatus.comparisonReady,
-          granularity: "quarterly" as const,
-          independentConfirmation: quarterlyGdpSupportStatus.independentConfirmation,
-          reason: quarterlyGdpSupportStatus.reason,
         },
       };
 
@@ -180,9 +130,6 @@ export default async function Page() {
     "総合(12MA)",
     "CPI総合(参考)",
     "CPI総合(12MA)",
-    "CTIミクロ基本系列（名目・原数値）",
-    "CTIミクロ基本系列（名目・参考）",
-    "CTIミクロ基本系列（名目・参考・延長）",
   ];
 
   const projectedCpiData = toCpiView(cleanData, cpiKeys);
@@ -204,7 +151,7 @@ export default async function Page() {
             totalEarningData={projectedEarningsData}
             maxCpiDate={maxCpiDate}
             cpiInfoState={cpiInfoState}
-            ctiInfoState={{ ...ctiInfoState, gdp: gdpInfoState }}
+            ctiInfoState={ctiInfoState}
           />
         </Suspense>
       ) : (

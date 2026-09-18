@@ -20,12 +20,13 @@ describe("Plan21 quarterly GDP artifacts", () => {
     expect(internal.rows[0]).toHaveProperty("nominalRaw");
     expect(internal.rows[0]).toHaveProperty("realRaw");
     expect(QUARTERLY_PUBLIC_KEYS).toEqual(
-      expect.arrayContaining(["民間最終消費支出（名目）", "民間最終消費支出（実質）"]),
+      expect.arrayContaining(["CTIミクロ四半期系列（名目）", "民間最終消費支出（実質）"]),
     );
     expect(QUARTERLY_PUBLIC_KEYS).toHaveLength(22);
-    const projected = projectQuarterlyPublicView([
-      { label: "2025Q1", quarter: 1, 年: 2025, 年月: "2025年1月", GDP名目原値: 1 } as any,
-    ]);
+    const projected = projectQuarterlyPublicView(
+      [{ label: "2025Q1", quarter: 1, 年: 2025, 年月: "2025年1月", GDP名目原値: 1 } as any],
+      "nominal",
+    );
     expect(Object.keys(projected[0])).not.toEqual(
       expect.arrayContaining(["GDP名目原値", "GDP名目比較指数", "GDP実質原値", "GDP実質比較指数"]),
     );

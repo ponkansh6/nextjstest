@@ -1,5 +1,6 @@
 import React from "react";
 import type { SeriesMetadata } from "../../lib/chartConstants";
+import type { SeriesMeasurement } from "../../types/chart";
 
 export interface ChartDataContractProps {
   data: Record<string, unknown>[];
@@ -9,6 +10,10 @@ export interface ChartDataContractProps {
 }
 
 export type PublicChartRow = Record<string, unknown>;
+
+function asMeasurement(value: unknown): Partial<SeriesMeasurement> | undefined {
+  return value && typeof value === "object" ? (value as Partial<SeriesMeasurement>) : undefined;
+}
 
 /** The one public row model consumed by chart, table, and CSV surfaces. */
 export function normalizePublicChartData(data: PublicChartRow[], keys: string[]): PublicChartRow[] {
@@ -55,6 +60,30 @@ export function ChartDataContract({
             {keys.map((key) => {
               const value = row[key];
               const isNumber = typeof value === "number" && Number.isFinite(value);
+              const descriptor = descriptors.find((candidate) => candidate.key === key);
+              const measurements = row.measurements;
+              const rowMeasurement =
+                measurements && typeof measurements === "object"
+                  ? asMeasurement((measurements as Record<string, unknown>)[key])
+                  : undefined;
+              const fallbackMeasurement: SeriesMeasurement = {
+                key,
+                label: descriptor?.label ?? key,
+                unit: "",
+                source: "",
+                valueType: "raw",
+                value: null,
+                status: "invalid",
+                reason: "unavailable",
+                frequency: descriptor?.frequency ?? "quarterly",
+                aggregation: "",
+              };
+              const measurement =
+                rowMeasurement && typeof rowMeasurement === "object"
+                  ? rowMeasurement
+                  : descriptor
+                    ? fallbackMeasurement
+                    : undefined;
               return (
                 <span
                   key={key}
@@ -63,12 +92,11 @@ export function ChartDataContract({
                   data-value-type={
                     isNumber ? "number" : typeof value === "string" ? "string" : "null"
                   }
-                  data-unit={descriptors.find((descriptor) => descriptor.key === key)?.unit}
-                  data-source={descriptors.find((descriptor) => descriptor.key === key)?.source}
-                  data-status={descriptors.find((descriptor) => descriptor.key === key)?.status}
-                  data-reason={
-                    descriptors.find((descriptor) => descriptor.key === key)?.reason ?? ""
-                  }
+                  data-measurement-value-type={measurement?.valueType}
+                  data-unit={measurement?.unit}
+                  data-source={measurement?.source}
+                  data-status={measurement?.status}
+                  data-reason={measurement?.reason ?? ""}
                 />
               );
             })}

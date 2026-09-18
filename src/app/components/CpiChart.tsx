@@ -35,8 +35,9 @@ import {
   getLegendLabel,
   EARNINGS_SERIES_REGISTRY,
   createComparisonSeriesRegistry,
-  ctiBasicDescriptors,
+  type SeriesMetadata,
 } from "../../lib/chartConstants";
+import type { SeriesMeasurement } from "@/types/chart";
 import {
   QUARTERLY_PUBLIC_NOMINAL_KEYS,
   QUARTERLY_PUBLIC_REAL_KEYS,
@@ -252,44 +253,35 @@ export default function CpiChart({
   const { isTouch } = useChartTheme();
   const chartTooltip = useChartTooltipController({ suppressed: isProgrammaticScroll, isTouch });
 
-  const comparisonSeriesRegistry = useMemo(
-    () =>
-      createComparisonSeriesRegistry({
-        status: ctiInfoState?.series?.comparison?.status ?? ctiInfoState?.status ?? "invalid",
-        reason:
-          ctiInfoState?.series?.comparison?.reason ??
-          ctiInfoState?.reason ??
-          ctiInfoState?.unavailableReason ??
-          "CTI基本系列の状態が未提供です",
-      }),
-    [ctiInfoState],
-  );
-  const ctiMetadata = useMemo(() => {
-    const fallbackMeasurement = mergedData.find((row) => {
-      const measurements = (
-        row as unknown as {
-          measurements?: Record<string, { status?: "valid" | "invalid"; reason?: string | null }>;
-        }
-      ).measurements;
-      return measurements?.["CTIミクロ基本系列（名目・原数値）"];
-    }) as unknown as
-      | { measurements?: Record<string, { status?: "valid" | "invalid"; reason?: string | null }> }
-      | undefined;
-    const fallback = fallbackMeasurement?.measurements?.["CTIミクロ基本系列（名目・原数値）"];
-    const status = ctiInfoState?.status ?? fallback?.status ?? "invalid";
-    const reason =
-      status === "valid"
-        ? null
-        : (ctiInfoState?.reason ??
-          fallback?.reason ??
-          ctiInfoState?.unavailableReason ??
-          "CTI基本系列の状態が未提供です");
-    return ctiBasicDescriptors(status, reason).map((descriptor, index) => ({
-      ...descriptor,
-      color: index === 0 ? "#0f766e" : index === 1 ? "#2563eb" : "#7dd3fc",
-      displayName: descriptor.label,
-    }));
-  }, [ctiInfoState, mergedData]);
+  const comparisonSeriesRegistry = useMemo(() => createComparisonSeriesRegistry(), []);
+  const ctiMetadata: readonly SeriesMetadata[] = useMemo(() => {
+    const state = ctiInfoState?.series?.raw;
+    if (!state) return [];
+    const measurement: SeriesMeasurement = {
+      key: state.key,
+      label: getLegendLabel(state.key),
+      unit: state.unit,
+      source: state.source,
+      valueType: state.valueType,
+      value: null,
+      status: state.status,
+      reason: state.reason ?? null,
+      frequency: "quarterly",
+      aggregation: "simple_mean_of_three_calendar_months",
+    };
+    return [
+      {
+        ...measurement,
+        color: chartColors.barFill,
+        displayName: measurement.label,
+        tooltipLabel: measurement.label,
+        legendLabel: measurement.label,
+        kind: "line",
+        type: "line",
+        order: 0,
+      },
+    ];
+  }, [ctiInfoState, chartColors.barFill]);
 
   const visibleLineConfigs = useMemo(
     () => comparisonSeriesRegistry.filter((c) => !c.advanced || showAdvanced),
@@ -317,6 +309,7 @@ export default function CpiChart({
       data: nominalTableData as unknown as Record<string, unknown>[],
       keys: nominalTableKeys,
       headers: nominalTableKeys.map(getLegendLabel),
+      metadata: ctiMetadata,
     },
     {
       chartSectionId: "section-consumption-real",
@@ -345,7 +338,7 @@ export default function CpiChart({
       title: "給与・消費・物価の推移比較(12MA)",
       data: mergedData as unknown as Record<string, unknown>[],
       keys: visibleLineConfigs.map((c) => c.key),
-      headers: visibleLineConfigs.map((c) => c.displayName),
+      headers: visibleLineConfigs.map((c) => c.displayName ?? c.label),
       metadata: ctiMetadata,
     },
   ];

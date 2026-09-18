@@ -22,10 +22,13 @@ export interface BuildCsvOptions {
   /** Optional machine-readable metadata columns for measurement-aware exports. */
   metadata?: ReadonlyArray<{
     key: string;
+    label?: string;
     valueType?: "raw" | "comparison";
     value?: number | null;
     unit: string;
     source: string;
+    frequency?: "monthly" | "quarterly" | "annual";
+    aggregation?: string;
     status: "valid" | "invalid";
     reason: string | null;
   }>;
@@ -33,21 +36,30 @@ export interface BuildCsvOptions {
 
 type CsvMeasurement = NonNullable<BuildCsvOptions["metadata"]>[number];
 
-function rowMeasurement(row: Record<string, unknown>, metadata: CsvMeasurement): CsvMeasurement {
+function rowMeasurement(
+  row: Record<string, unknown>,
+  metadata: CsvMeasurement,
+): Partial<CsvMeasurement> & Pick<CsvMeasurement, "key"> {
   const measurements = row.measurements;
-  if (!measurements || typeof measurements !== "object") return metadata;
-  const measurement = (measurements as Record<string, unknown>)[metadata.key];
-  if (!measurement || typeof measurement !== "object") return metadata;
-  const current = measurement as Partial<CsvMeasurement>;
-  return {
-    ...metadata,
-    valueType: current.valueType ?? metadata.valueType,
-    value: current.value ?? null,
-    unit: current.unit ?? metadata.unit,
-    source: current.source ?? metadata.source,
-    status: current.status ?? metadata.status,
-    reason: current.reason ?? metadata.reason,
-  };
+  const measurement =
+    measurements && typeof measurements === "object"
+      ? (measurements as Record<string, unknown>)[metadata.key]
+      : undefined;
+  if (!measurement || typeof measurement !== "object") {
+    return {
+      key: metadata.key,
+      label: metadata.label,
+      valueType: metadata.valueType ?? "raw",
+      value: null,
+      unit: "",
+      source: "",
+      frequency: metadata.frequency,
+      aggregation: "",
+      status: "invalid",
+      reason: "unavailable",
+    };
+  }
+  return measurement as Partial<CsvMeasurement> & Pick<CsvMeasurement, "key">;
 }
 
 /**
@@ -65,12 +77,28 @@ export const buildCsv = (
 ): string => {
   const { labelKeys = ["年月", "label"], labelHeader = "年月", digits = 2 } = options;
 
-  const metadata = options.metadata ?? [];
+  const metadata =
+    options.metadata ??
+    keys.flatMap((key) => {
+      const row = rows.find((candidate) => {
+        const measurements = candidate.measurements;
+        return measurements && typeof measurements === "object" && key in measurements;
+      });
+      const measurement = row?.measurements;
+      const entry =
+        measurement && typeof measurement === "object"
+          ? (measurement as Record<string, unknown>)[key]
+          : undefined;
+      return entry && typeof entry === "object" ? [entry as CsvMeasurement] : [];
+    });
   const metadataHeaders = metadata.flatMap(({ key }) => [
+    `${key}__label`,
     `${key}__valueType`,
     `${key}__value`,
     `${key}__unit`,
     `${key}__source`,
+    `${key}__frequency`,
+    `${key}__aggregation`,
     `${key}__status`,
     `${key}__reason`,
   ]);
@@ -86,8 +114,19 @@ export const buildCsv = (
       return typeof v === "number" && Number.isFinite(v) ? v.toFixed(digits) : "";
     });
     const metadataCells = metadata.flatMap((entry) => {
-      const { valueType, value, unit, source, status, reason } = rowMeasurement(row, entry);
-      return [valueType ?? "", value ?? "", unit, source, status, reason ?? ""].map(escapeCsvCell);
+      const { label, valueType, value, unit, source, frequency, aggregation, status, reason } =
+        rowMeasurement(row, entry);
+      return [
+        label ?? "",
+        valueType ?? "",
+        value ?? "",
+        unit ?? "",
+        source ?? "",
+        frequency ?? "",
+        aggregation ?? "",
+        status ?? "",
+        reason ?? "",
+      ].map(escapeCsvCell);
     });
     return [escapeCsvCell(label), ...cells, ...metadataCells].join(",");
   });

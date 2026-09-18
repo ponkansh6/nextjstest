@@ -3,6 +3,8 @@
 import React from "react";
 import styles from "./CpiChart.module.css";
 import { buildCsv, toFileName, withBom } from "../../lib/csvExport";
+import type { BuildCsvOptions } from "../../lib/csvExport";
+import { SUPPORT_SERIES_KEY_NOMINAL } from "../../lib/chartConstants";
 import type { SeriesMetadata } from "../../lib/chartConstants";
 
 interface ChartExportButtonProps {
@@ -30,17 +32,63 @@ export const ChartExportButton: React.FC<ChartExportButtonProps> = ({
   metadata,
 }) => {
   const handleExport = () => {
+    const csvMetadata = metadata?.filter(({ key }) => key === SUPPORT_SERIES_KEY_NOMINAL) ?? [];
+    const declaredKeys = new Set(csvMetadata.map(({ key }) => key));
+    const rowMetadata: NonNullable<BuildCsvOptions["metadata"]> = keys.flatMap((key) => {
+      if (key !== SUPPORT_SERIES_KEY_NOMINAL) return [];
+      if (declaredKeys.has(key)) return [];
+      const measurement = data.find((row) => {
+        const measurements = row.measurements;
+        return (
+          measurements &&
+          typeof measurements === "object" &&
+          (measurements as Record<string, unknown>)[key] &&
+          typeof (measurements as Record<string, unknown>)[key] === "object"
+        );
+      })?.measurements;
+      const entry =
+        measurement && typeof measurement === "object"
+          ? (measurement as Record<string, unknown>)[key]
+          : undefined;
+      if (!entry || typeof entry !== "object") return [];
+      const current = entry as Record<string, unknown>;
+      return [
+        {
+          key,
+          label: typeof current.label === "string" ? current.label : key,
+          valueType: current.valueType === "comparison" ? "comparison" : "raw",
+          value: typeof current.value === "number" ? current.value : null,
+          unit: typeof current.unit === "string" ? current.unit : "",
+          source: typeof current.source === "string" ? current.source : "",
+          frequency:
+            current.frequency === "monthly" ||
+            current.frequency === "annual" ||
+            current.frequency === "quarterly"
+              ? current.frequency
+              : undefined,
+          aggregation: typeof current.aggregation === "string" ? current.aggregation : "",
+          status: current.status === "invalid" ? "invalid" : "valid",
+          reason: typeof current.reason === "string" ? current.reason : null,
+        } satisfies NonNullable<BuildCsvOptions["metadata"]>[number],
+      ];
+    });
+    const csvMetadataRows: NonNullable<BuildCsvOptions["metadata"]> = csvMetadata.map(
+      ({ key, label, unit, source, valueType, frequency, aggregation, status, reason }) => ({
+        key,
+        label,
+        value: null,
+        unit: unit ?? "",
+        source: source ?? "",
+        valueType: valueType ?? "raw",
+        frequency,
+        aggregation: aggregation ?? "",
+        status: status ?? "valid",
+        reason: reason ?? null,
+      }),
+    );
     const csv = withBom(
       buildCsv(data, keys, headers, {
-        metadata: metadata?.map(({ key, unit, source, valueType, status, reason }) => ({
-          key,
-          valueType,
-          value: null,
-          unit: unit ?? "",
-          source: source ?? "",
-          status: status ?? "valid",
-          reason: reason ?? null,
-        })),
+        metadata: [...csvMetadataRows, ...rowMetadata],
       }),
     );
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });

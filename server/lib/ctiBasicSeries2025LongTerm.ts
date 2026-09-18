@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import * as fs from "node:fs";
 import path from "node:path";
 import Papa from "papaparse";
+import type { SeriesMeasurement } from "@/types/chart";
 
 const ARTIFACT_RELATIVE_ROOT = path.join("data", "source", "official-cti-2025-long-term");
 const ARTIFACT_OVERRIDE_ENV = "CTI_BASIC_ARTIFACT_ROOT";
@@ -439,6 +440,132 @@ export type CtiConsumptionOutput = {
   artifactStatus: "ready" | "unavailable";
   artifactReason: string | null;
 };
+
+export type CtiQuarterlyAggregation = {
+  values: Map<string, number>;
+  measurements: Map<string, SeriesMeasurement>;
+  status: "valid" | "invalid";
+  reason: string | null;
+};
+
+/** Aggregate the fixed nominal series into strict three-calendar-month quarters. */
+export function aggregateCtiBasicNominalQuarterly(
+  records: readonly CtiBasicRecord[],
+): CtiQuarterlyAggregation {
+  const key = "CTIミクロ四半期系列（名目）";
+  const base = (
+    value: number | null,
+    status: "valid" | "invalid",
+    reason: string | null,
+  ): SeriesMeasurement => ({
+    key,
+    label: "CTIミクロ（名目・四半期平均）",
+    unit: "指数",
+    source: "e-Stat 公式CTI長期artifact 000040499070",
+    valueType: "raw",
+    value,
+    status,
+    reason,
+    frequency: "quarterly",
+    aggregation: "simple_mean_of_three_calendar_months",
+  });
+  const byMonth = new Map<string, CtiBasicRecord>();
+  const reasons = new Map<string, string>();
+  let globalReason: string | null = null;
+  const reasonPriority: Record<string, number> = {
+    series_mismatch: 4,
+    out_of_range: 3,
+    duplicate: 2,
+  };
+  const setGlobalReason = (reason: string) => {
+    if (
+      globalReason === null ||
+      (reasonPriority[reason] ?? 0) > (reasonPriority[globalReason] ?? 0)
+    ) {
+      globalReason = reason;
+    }
+  };
+  for (const record of records) {
+    const match = /^(\d{4})-(\d{2})$/.exec(record.month);
+    const inRange = Boolean(match) && Number(match![1]) >= 2005 && Number(match![1]) <= 2017;
+    const validIdentity =
+      record.variant === "nominal" &&
+      record.seriesIndex === 1 &&
+      record.officialSeriesCode === "1" &&
+      record.seriesName === "消費支出（名目）";
+    if (!validIdentity) {
+      if (inRange && match) {
+        const year = Number(match[1]);
+        const quarter = Math.floor((Number(match[2]) - 1) / 3) + 1;
+        reasons.set(`${year}Q${quarter}`, "series_mismatch");
+      }
+      setGlobalReason("series_mismatch");
+      continue;
+    }
+    if (!inRange) {
+      setGlobalReason("out_of_range");
+      continue;
+    }
+    if (byMonth.has(record.month)) {
+      const year = Number(record.month.slice(0, 4));
+      const quarter = Math.floor((Number(record.month.slice(5, 7)) - 1) / 3) + 1;
+      reasons.set(`${year}Q${quarter}`, "duplicate");
+      setGlobalReason("duplicate");
+      continue;
+    }
+    byMonth.set(record.month, record);
+  }
+  const values = new Map<string, number>();
+  const measurements = new Map<string, SeriesMeasurement>();
+  const fatalReason = globalReason === "duplicate" ? null : globalReason;
+  for (let year = 2005; year <= 2017; year += 1) {
+    for (let quarter = 1; quarter <= 4; quarter += 1) {
+      const months = [1, 2, 3].map(
+        (offset) => `${year}-${String((quarter - 1) * 3 + offset).padStart(2, "0")}`,
+      );
+      const period = `${year}Q${quarter}`;
+      const recordsForQuarter = months.map((month) => byMonth.get(month));
+      const reason =
+        reasons.get(period) ??
+        (recordsForQuarter.some((record) => !record) ? "insufficient_months" : null);
+      const quarterValues = recordsForQuarter.map((record) => record?.rawValue);
+      const hasMissing = recordsForQuarter.some(
+        (record) => record?.isMissing || record?.rawValue === null,
+      );
+      const hasNonFinite = quarterValues.some(
+        (value) => value !== null && (typeof value !== "number" || !Number.isFinite(value)),
+      );
+      const finalReason =
+        reason ?? fatalReason ?? (hasMissing ? "missing" : hasNonFinite ? "non_finite" : null);
+      if (
+        !finalReason &&
+        quarterValues.every(
+          (value): value is number => typeof value === "number" && Number.isFinite(value),
+        )
+      ) {
+        const value = quarterValues.reduce((sum, current) => sum + current, 0) / 3;
+        values.set(period, value);
+        measurements.set(period, base(value, "valid", null));
+      } else {
+        measurements.set(period, base(null, "invalid", finalReason ?? globalReason ?? "invalid"));
+      }
+    }
+  }
+  return {
+    values,
+    measurements,
+    status:
+      measurements.size === 52 &&
+      [...measurements.values()].every((measurement) => measurement.status === "valid") &&
+      !globalReason
+        ? "valid"
+        : "invalid",
+    reason:
+      globalReason ??
+      [...measurements.values()].find((measurement) => measurement.status === "invalid")?.reason ??
+      null,
+  };
+}
 
 export type CtiBasicConsumptionStatus = Pick<
   CtiConsumptionOutput,

@@ -42,9 +42,13 @@ describe("CTI Data Integrity", () => {
   });
 
   describe("Consumption Data Integrity", () => {
-    it("should verify all consumption categories (except support) have positive values for 2017 onwards", () => {
+    it("should verify all supported consumption categories have positive values through 2025", () => {
       const recentCtiRows = ctiData.filter(
-        (d) => d.年月 && typeof d.年月 === "string" && parseInt(d.年月.substring(0, 4), 10) >= 2017,
+        (d) =>
+          d.年月 &&
+          typeof d.年月 === "string" &&
+          parseInt(d.年月.substring(0, 4), 10) >= 2017 &&
+          parseInt(d.年月.substring(0, 4), 10) <= 2025,
       );
 
       expect(recentCtiRows.length).toBeGreaterThan(0);
@@ -70,8 +74,8 @@ describe("CTI Data Integrity", () => {
       });
     });
 
-    describe("2020 rollback support-series compatibility", () => {
-      it("should verify support-series normalization (50-150 range)", async () => {
+    describe("server-owned support-series projection", () => {
+      it("should not recalculate or synthesize support values in the client adapter", async () => {
         const props = {
           data: ctiData,
           endYear: 2026,
@@ -83,19 +87,10 @@ describe("CTI Data Integrity", () => {
         };
 
         const result = computeChartData(props, []);
-        const { quarterlyNominalData, quarterlyRealData } = result;
-
-        [SUPPORT_SERIES_KEY_NOMINAL, SUPPORT_SERIES_KEY_REAL].forEach((supportKey) => {
-          const isNominal = supportKey === SUPPORT_SERIES_KEY_NOMINAL;
-          const targetData = isNominal ? quarterlyNominalData : quarterlyRealData;
-
-          const pre2017Data = targetData.filter((d) => (d.年 as number) <= 2016);
-          pre2017Data.forEach((d) => {
-            const val = d[supportKey] as number;
-            expect(val, `${d.label} support value should be 50-150`).toBeGreaterThanOrEqual(50);
-            expect(val, `${d.label} support value should be 50-150`).toBeLessThanOrEqual(150);
-          });
-        });
+        for (const row of [...result.quarterlyNominalData, ...result.quarterlyRealData]) {
+          expect(row).not.toHaveProperty(SUPPORT_SERIES_KEY_NOMINAL);
+          expect(row).not.toHaveProperty(SUPPORT_SERIES_KEY_REAL);
+        }
       });
     });
 
@@ -132,8 +127,8 @@ describe("CTI Data Integrity", () => {
       });
     });
 
-    describe("2020 rollback support-series compatibility", () => {
-      it("should retain private consumption expenditure for 2005-2016", () => {
+    describe("server-owned support-series projection", () => {
+      it("should not retain private consumption expenditure in client calculations", () => {
         /**
          * Unit test for computeChartData function's support series scaling.
          * Verifies that 2005-2016 years have non-zero values after computeChartData processes them.
@@ -150,23 +145,10 @@ describe("CTI Data Integrity", () => {
         };
 
         const result = computeChartData(props, []);
-        const { quarterlyNominalData, quarterlyRealData } = result;
-
-        // 本番環境での問題チェック: 民間最終消費支出が0になっているか
-        [SUPPORT_SERIES_KEY_NOMINAL, SUPPORT_SERIES_KEY_REAL].forEach((supportKey) => {
-          const isNominal = supportKey === SUPPORT_SERIES_KEY_NOMINAL;
-          const targetData = isNominal ? quarterlyNominalData : quarterlyRealData;
-
-          // 2005-2016年では0ではない値を持つべき
-          const pre2017Data = targetData.filter((d) => (d.年 as number) <= 2016);
-          pre2017Data.forEach((d) => {
-            const val = d[supportKey] as number;
-            expect(
-              val,
-              `BUG CHECK: ${d.label} ${supportKey} should NOT be zero (expected value in 50-150 range)`,
-            ).not.toBe(0);
-          });
-        });
+        for (const row of [...result.quarterlyNominalData, ...result.quarterlyRealData]) {
+          expect(row).not.toHaveProperty(SUPPORT_SERIES_KEY_NOMINAL);
+          expect(row).not.toHaveProperty(SUPPORT_SERIES_KEY_REAL);
+        }
       });
     });
   });

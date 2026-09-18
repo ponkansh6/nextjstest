@@ -6,7 +6,6 @@ import {
   SUPPORT_SERIES_KEY_NOMINAL,
 } from "../../src/lib/chartConstants";
 import { computeQuarterlyAggregates } from "../../server/lib/view-models/quarterlyAggregation";
-import { computeChartData } from "../../src/lib/clientCalculations";
 
 const makeMonth = (month: number, value = 10): CpiData => {
   const row = { 年月: `2018年${month}月` } as CpiData;
@@ -47,24 +46,9 @@ describe("2018年以降のCTI四半期完全性", () => {
 
     expect(result.nominal.filter((row) => row.年 >= 2018)).toEqual([]);
     expect(result.real.filter((row) => row.年 >= 2018)).toEqual([]);
-
-    const legacyResult = computeChartData(
-      {
-        data,
-        nominalData: data,
-        nominalKeys: CONSUMPTION_NOMINAL_KEYS,
-        realKeys: CONSUMPTION_REAL_KEYS,
-        startYear: 2018,
-        endYear: 2018,
-        maxCpiDate: { year: 2018, month: 3 },
-      },
-      [],
-    );
-    expect(legacyResult.quarterlyNominalData).toEqual([]);
-    expect(legacyResult.quarterlyRealData).toEqual([]);
   });
 
-  it("2017Q4以前のGDP support行とhiddenQuarters契約を維持する", () => {
+  it("2017Q4以前の固定CTI行とserver public projection境界を維持する", () => {
     const data = [
       { 年月: "2017年10月", [SUPPORT_SERIES_KEY_NOMINAL]: 100 },
       { 年月: "2017年11月", [SUPPORT_SERIES_KEY_NOMINAL]: 100 },
@@ -73,22 +57,6 @@ describe("2018年以降のCTI四半期完全性", () => {
       makeMonth(2),
       makeMonth(3),
     ] as CpiData[];
-    const result = computeChartData(
-      {
-        data,
-        nominalData: data,
-        nominalKeys: CONSUMPTION_NOMINAL_KEYS,
-        realKeys: CONSUMPTION_REAL_KEYS,
-        startYear: 2017,
-        endYear: 2018,
-        maxCpiDate: { year: 2018, month: 3 },
-      },
-      [1],
-    );
-
-    expect(result.quarterlyNominalData.map((row) => row.label)).toContain("2017Q4");
-    expect(result.quarterlyNominalData.map((row) => row.label)).not.toContain("2018Q1");
-
     const serverResult = computeQuarterlyAggregates(data, { year: 2018, month: 3 });
     expect(serverResult.nominal.map((row) => row.label)).toContain("2017Q4");
     expect(serverResult.nominal.filter((row) => row.年 >= 2018).map((row) => row.label)).toEqual([

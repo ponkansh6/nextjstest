@@ -2,7 +2,8 @@ import React from "react";
 import styles from "./CpiChart.module.css";
 import { ChartExportButton } from "./ChartExportButton";
 import { normalizePublicChartData } from "./ChartDataContract";
-import type { SeriesMetadata } from "../../lib/chartConstants";
+import { SUPPORT_SERIES_KEY_NOMINAL, type SeriesMetadata } from "../../lib/chartConstants";
+import type { SeriesMeasurement } from "../../types/chart";
 
 export interface DataTableSpec {
   /** ジャンプ元グラフの sectionId(例: "section-cpi-major") */
@@ -20,6 +21,34 @@ interface DataTablesSectionProps {
 }
 
 export function DataTablesSection({ tables }: DataTablesSectionProps) {
+  const getMeasurement = (
+    row: Record<string, unknown>,
+    key: string,
+    metadata?: readonly SeriesMetadata[],
+  ) => {
+    const measurements = row.measurements;
+    const rowMeasurement =
+      measurements && typeof measurements === "object"
+        ? (measurements as Record<string, unknown>)[key]
+        : undefined;
+    if (rowMeasurement && typeof rowMeasurement === "object")
+      return rowMeasurement as SeriesMeasurement;
+    return key === SUPPORT_SERIES_KEY_NOMINAL && metadata?.some((entry) => entry.key === key)
+      ? ({
+          key,
+          label: key,
+          unit: "",
+          source: "",
+          valueType: "raw",
+          value: null,
+          status: "invalid",
+          reason: "unavailable",
+          frequency: "quarterly",
+          aggregation: "",
+        } satisfies SeriesMeasurement)
+      : undefined;
+  };
+
   return (
     <div
       id="section-data-tables"
@@ -65,8 +94,29 @@ export function DataTablesSection({ tables }: DataTablesSectionProps) {
                   <tr key={rowLabel || rowIndex}>
                     <td>{rowLabel}</td>
                     {t.keys.map((k) => (
-                      <td key={k}>
+                      <td key={k} data-series-key={k}>
                         {typeof d[k] === "number" ? (d[k] as number).toFixed(2) : "-"}
+                        {(() => {
+                          const measurement = getMeasurement(d, k, t.metadata);
+                          if (!measurement) return null;
+                          return (
+                            <small data-measurement-metadata={k}>
+                              <span data-measurement-value-type={measurement.valueType} />
+                              <br />
+                              単位: {measurement.unit || "-"}
+                              <br />
+                              出典: {measurement.source || "-"}
+                              <br />
+                              頻度: {measurement.frequency || "-"}
+                              <br />
+                              集計: {measurement.aggregation || "-"}
+                              <br />
+                              状態: {measurement.status}
+                              <br />
+                              理由: {measurement.reason || "-"}
+                            </small>
+                          );
+                        })()}
                       </td>
                     ))}
                   </tr>

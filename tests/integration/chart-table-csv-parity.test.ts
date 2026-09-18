@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import independentFixture from "../fixtures/chart-parity-independent.json";
 import CpiChart from "@/app/components/CpiChart";
 import { ChartExportButton } from "@/app/components/ChartExportButton";
-import { EARNINGS_SERIES_REGISTRY } from "@/lib/chartConstants";
+import { getLegendLabel, SUPPORT_SERIES_KEY_NOMINAL } from "@/lib/chartConstants";
 import { setupUiMocks } from "../utils/ui-mocks";
 import "../utils/recharts-mock";
 
@@ -27,6 +27,44 @@ type FixtureSection = {
   expected: string[][];
 };
 const matrix = independentFixture.matrix as Record<string, FixtureSection>;
+const ctiNominalLabel = getLegendLabel(SUPPORT_SERIES_KEY_NOMINAL);
+const plan38Nominal = (section: FixtureSection): FixtureSection => {
+  const legacyKey = "民間最終消費支出（名目）";
+  const ctiKey = SUPPORT_SERIES_KEY_NOMINAL;
+  return {
+    ...section,
+    keys: section.keys.map((key) => (key === legacyKey ? ctiKey : key)),
+    headers: section.headers.map((header, index) =>
+      section.keys[index] === legacyKey ? ctiNominalLabel : header,
+    ),
+    rows: section.rows.map((row) => {
+      const { [legacyKey]: legacyValue, ...rest } = row;
+      const ctiValue = row.label === "2017年10-12月" ? legacyValue : null;
+      return {
+        ...rest,
+        [ctiKey]: ctiValue,
+        measurements: {
+          [ctiKey]: {
+            key: ctiKey,
+            label: ctiNominalLabel,
+            unit: typeof ctiValue === "number" ? "指数" : "",
+            source: typeof ctiValue === "number" ? "e-Stat 公式CTI長期artifact 000040499070" : "",
+            valueType: "raw" as const,
+            value: ctiValue,
+            status: typeof ctiValue === "number" ? ("valid" as const) : ("invalid" as const),
+            reason: typeof ctiValue === "number" ? null : "unavailable",
+            frequency: "quarterly" as const,
+            aggregation: typeof ctiValue === "number" ? "simple_mean_of_three_calendar_months" : "",
+          },
+        },
+      };
+    }),
+    expected: section.expected.map((row) => [
+      ...row.slice(0, -1),
+      row[0] === "2017年10-12月" ? row.at(-1)! : "",
+    ]),
+  };
+};
 const publicQuarterly = (section: FixtureSection): FixtureSection => ({
   ...section,
   expected: section.expected.map((row) =>
@@ -50,7 +88,7 @@ const CONTRACT = {
   sections: [
     matrix.cpi,
     matrix.stacked,
-    publicQuarterly(matrix.nominal),
+    publicQuarterly(plan38Nominal(matrix.nominal)),
     publicQuarterly(matrix.real),
     matrix.earnings,
     matrix.residual,
@@ -74,15 +112,9 @@ const input = () => {
   return {
     data: matrix.cpi.rows,
     // Spending quarterly props expose only the regular public keys.
-    quarterlyNominalData: quarterly(matrix.nominal.rows),
+    quarterlyNominalData: quarterly(plan38Nominal(matrix.nominal).rows),
     quarterlyRealData: quarterly(matrix.real.rows),
-    totalEarningData: matrix.earnings.rows.map((row) => ({
-      ...row,
-      ["CTIミクロ基本系列（名目・参考）"]:
-        matrix.comparison.rows.find((comparisonRow) => comparisonRow.年月 === row.年月)?.[
-          "CTIミクロ基本系列（名目・参考）"
-        ] ?? null,
-    })),
+    totalEarningData: matrix.earnings.rows,
   };
 };
 
@@ -90,10 +122,14 @@ function normalizeMissingCell(value: string): string {
   return value === "-" ? "" : value;
 }
 
-async function renderChart() {
+function tableValueText(cell: Element): string {
+  return normalizeMissingCell(cell.firstChild?.textContent?.trim() ?? "");
+}
+
+async function renderChart(chartInput = input()) {
   window.__MOUNT_ALL__ = true;
   const rendered = render(
-    createElement(CpiChart, { ...input(), maxCpiDate: { year: 2018, month: 1 } } as never),
+    createElement(CpiChart, { ...chartInput, maxCpiDate: { year: 2018, month: 1 } } as never),
   );
   await waitFor(() =>
     expect(rendered.container.querySelectorAll('[data-testid="chart-data-contract"]')).toHaveLength(
@@ -166,8 +202,7 @@ function parseCsv(source: string): string[][] {
     else cell += c;
   }
   if (quoted) throw new Error("CSV ended inside a quoted field");
-  if (rows.some((r) => r.length === 0 || r.every((v) => v === "")))
-    throw new Error("extra empty row");
+  if (rows.some((r) => r.every((v) => v === ""))) throw new Error("extra empty row");
   const columns = rows[0]?.length ?? 0;
   if (columns === 0 || rows.some((r) => r.length !== columns))
     throw new Error("CSV column count mismatch");
@@ -178,6 +213,89 @@ describe("Phase 4-4 real chart/table/CSV parity", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     window.localStorage.clear();
+  });
+
+  it("keeps the CTI public descriptor and each row measurement on raw valueType", async () => {
+    const measurement = {
+      key: SUPPORT_SERIES_KEY_NOMINAL,
+      label: ctiNominalLabel,
+      unit: "指数",
+      source: "e-Stat 公式CTI長期artifact 000040499070",
+      valueType: "raw" as const,
+      value: 123,
+      status: "valid" as const,
+      reason: null,
+      frequency: "quarterly" as const,
+      aggregation: "simple_mean_of_three_calendar_months",
+    };
+    const invalidMeasurement = {
+      ...measurement,
+      value: null,
+      status: "invalid" as const,
+      reason: "insufficient_months",
+    };
+    const chartInput = input();
+    chartInput.quarterlyNominalData = chartInput.quarterlyNominalData.map((row, index) => ({
+      ...row,
+      [SUPPORT_SERIES_KEY_NOMINAL]: index === 0 ? 123 : null,
+      measurements: {
+        [SUPPORT_SERIES_KEY_NOMINAL]: index === 0 ? measurement : invalidMeasurement,
+      },
+    }));
+    const ctiState = {
+      baseYear: 2025 as const,
+      sourceMode: "official-connected" as const,
+      status: "valid" as const,
+      reason: null,
+      series: {
+        raw: {
+          key: SUPPORT_SERIES_KEY_NOMINAL,
+          valueType: "raw" as const,
+          unit: measurement.unit,
+          source: measurement.source,
+          status: "valid" as const,
+          reason: null,
+        },
+        comparison: {
+          key: SUPPORT_SERIES_KEY_NOMINAL,
+          valueType: "comparison" as const,
+          unit: measurement.unit,
+          source: measurement.source,
+          status: "valid" as const,
+          reason: null,
+        },
+      },
+    };
+    window.__MOUNT_ALL__ = true;
+    const rendered = render(
+      createElement(CpiChart, {
+        ...chartInput,
+        ctiInfoState: ctiState,
+        maxCpiDate: { year: 2018, month: 1 },
+      } as never),
+    );
+    await waitFor(() =>
+      expect(
+        rendered.container.querySelectorAll('[data-testid="chart-data-contract"]'),
+      ).toHaveLength(7),
+    );
+
+    const contract = contractFor(rendered.container, "section-consumption-nominal");
+    const descriptors = JSON.parse(contract.getAttribute("data-descriptors") ?? "[]") as Array<{
+      key: string;
+      valueType: string;
+    }>;
+    expect(descriptors.find(({ key }) => key === SUPPORT_SERIES_KEY_NOMINAL)).toMatchObject({
+      valueType: "raw",
+    });
+    const rows = [...contract.querySelectorAll("[data-chart-data-row]")];
+    expect(
+      rows.map((row) =>
+        row
+          .querySelector(`[data-series-key="${SUPPORT_SERIES_KEY_NOMINAL}"]`)
+          ?.getAttribute("data-measurement-value-type"),
+      ),
+    ).toEqual(["raw", "raw"]);
   });
   it("compares all seven public key sets, periods, and every table/CSV cell", async () => {
     const { container } = await renderChart();
@@ -220,13 +338,33 @@ describe("Phase 4-4 real chart/table/CSV parity", () => {
           .getAllByRole("columnheader")
           .map((cell) => cell.textContent),
       ).toEqual(["年月", ...section.headers]);
-      expect(
-        rows.slice(1).map((r) =>
-          within(r)
-            .getAllByRole("cell")
-            .map((c) => normalizeMissingCell(c.textContent ?? "")),
-        ),
-      ).toEqual(section.expected);
+      expect(rows.slice(1).map((r) => within(r).getAllByRole("cell").map(tableValueText))).toEqual(
+        section.expected,
+      );
+      const hasCti = section.keys.includes(SUPPORT_SERIES_KEY_NOMINAL);
+      const ctiMetadata = [
+        ...table.querySelectorAll(`[data-measurement-metadata="${SUPPORT_SERIES_KEY_NOMINAL}"]`),
+      ];
+      const nonCtiGdpMetadata = [
+        ...table.querySelectorAll('td[data-series-key^="GDP"] [data-measurement-metadata]'),
+      ];
+      if (hasCti) {
+        const ctiValueCells = [
+          ...table.querySelectorAll(`td[data-series-key="${SUPPORT_SERIES_KEY_NOMINAL}"]`),
+        ];
+        expect(ctiValueCells.map(tableValueText)).toEqual(
+          section.expected.map((row) => row.at(-1)),
+        );
+
+        expect(ctiMetadata).toHaveLength(section.expected.length);
+        expect(ctiMetadata[0]?.textContent).toContain("頻度: quarterly");
+        expect(ctiMetadata[0]?.textContent).toContain("集計: simple_mean_of_three_calendar_months");
+        expect(ctiMetadata[1]?.textContent).toContain("状態: invalid");
+        expect(ctiMetadata[1]?.textContent).toContain("理由: unavailable");
+      } else {
+        expect(ctiMetadata).toHaveLength(0);
+        expect(nonCtiGdpMetadata).toHaveLength(0);
+      }
       (within(table).getByRole("button", { name: /CSVでダウンロード/ }) as HTMLElement).click();
     }
     expect(blobs).toHaveLength(7);
@@ -237,19 +375,15 @@ describe("Phase 4-4 real chart/table/CSV parity", () => {
       const rows = parseCsv(raw);
       const section = CONTRACT.sections[i];
       const metadataHeaders =
-        i === 4 || i === 6
-          ? (i === 4
-              ? EARNINGS_SERIES_REGISTRY
-              : [
-                  { key: "CTIミクロ基本系列（名目・原数値）" },
-                  { key: "CTIミクロ基本系列（名目・参考）" },
-                  { key: "CTIミクロ基本系列（名目・参考・延長）" },
-                ]
-            ).flatMap(({ key }) => [
+        i === 2
+          ? [{ key: SUPPORT_SERIES_KEY_NOMINAL }].flatMap(({ key }) => [
+              `${key}__label`,
               `${key}__valueType`,
               `${key}__value`,
               `${key}__unit`,
               `${key}__source`,
+              `${key}__frequency`,
+              `${key}__aggregation`,
               `${key}__status`,
               `${key}__reason`,
             ])
@@ -261,22 +395,71 @@ describe("Phase 4-4 real chart/table/CSV parity", () => {
       expect(rows.every((r) => r.length === section.keys.length + 1 + metadataHeaders.length)).toBe(
         true,
       );
+      if (i === 2) {
+        const metadataStart = section.keys.length + 1;
+        expect(rows[1]!.slice(metadataStart)).toEqual([
+          ctiNominalLabel,
+          "raw",
+          "61",
+          "指数",
+          "e-Stat 公式CTI長期artifact 000040499070",
+          "quarterly",
+          "simple_mean_of_three_calendar_months",
+          "valid",
+          "",
+        ]);
+        expect(rows[2]!.slice(metadataStart)).toEqual([
+          ctiNominalLabel,
+          "raw",
+          "",
+          "",
+          "",
+          "quarterly",
+          "",
+          "invalid",
+          "unavailable",
+        ]);
+      }
+      if (i === 4) {
+        expect(rows[0].slice(section.keys.length + 1)).toEqual([]);
+        expect(
+          rows[0].filter((header) =>
+            [
+              "CTIミクロ基本系列（名目・原数値）",
+              "CTIミクロ基本系列（名目・参考）",
+              "CTIミクロ基本系列（名目・参考・延長）",
+            ].some((key) => header.startsWith(`${key}__`)),
+          ),
+        ).toEqual([]);
+      }
     }
   });
   it("keeps raw quarterly keys private and publishes YYYYQn boundary labels", async () => {
     const { container } = await renderChart();
+    expect(CONTRACT.sections[2].keys).toContain(SUPPORT_SERIES_KEY_NOMINAL);
+    expect(CONTRACT.sections[2].keys).not.toContain("民間最終消費支出（名目）");
+    expect(CONTRACT.sections[2].keys.some((key) => key.startsWith("GDP"))).toBe(false);
     for (const mode of ["nominal", "real"] as const) {
       const table = container.querySelector(
         `#data-table-section-consumption-${mode}`,
       ) as HTMLElement;
       const section = matrix[mode];
       const rows = [...table.querySelectorAll("tbody tr")].map((row) =>
-        [...row.querySelectorAll("th,td")].map((cell) =>
-          normalizeMissingCell(cell.textContent?.trim() ?? ""),
-        ),
+        [...row.querySelectorAll("th,td")].map(tableValueText),
       );
       expect(rows).toEqual(publicQuarterly(section).expected);
       expect(rows.map((row) => row[0])).toEqual(["2017Q4", "2018Q1"]);
+      const ctiMetadata = [
+        ...table.querySelectorAll(`[data-measurement-metadata="${SUPPORT_SERIES_KEY_NOMINAL}"]`),
+      ];
+      if (mode === "nominal") {
+        expect(ctiMetadata).toHaveLength(2);
+        expect(ctiMetadata[0]?.textContent).toContain("状態: valid");
+        expect(ctiMetadata[1]?.textContent).toContain("状態: invalid");
+        expect(ctiMetadata[1]?.textContent).toContain("理由: unavailable");
+      } else {
+        expect(ctiMetadata).toHaveLength(0);
+      }
     }
   });
 
@@ -363,7 +546,7 @@ describe("Phase 4-4 real chart/table/CSV parity", () => {
     rendered = await renderChart();
     for (let i = 0; i < modes.length; i++) {
       const current = surface(rendered.container, modes[i]);
-      const fixture = matrix[modes[i]];
+      const fixture = modes[i] === "nominal" ? plan38Nominal(matrix[modes[i]]) : matrix[modes[i]];
       expect(current.contract).toEqual(regular[modes[i]].contract);
       expect(current.table.map((row) => row.map(normalizeMissingCell))).toEqual(
         regular[modes[i]].table.map((row) => row.map(normalizeMissingCell)),

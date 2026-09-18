@@ -3,24 +3,23 @@ import { CHART_INFO } from "@/lib/chartInfoContent";
 
 /**
  * 3種比較（new-graph）の info 説明文が、実際のデータソースと一致していることを検証する。
- * Plan37の消費支出（参考）は、二人以上の世帯のCTI基本系列を
- * 12か月移動平均し、2025年の12MA平均=100に再基準化するもの。
+ * Plan38の名目CTIは固定artifactを四半期平均した公開系列である。
  */
 describe("new-graph chart info (3種比較)", () => {
   const info = CHART_INFO["new-graph"];
 
-  it("source に CTI基本系列を記載している", () => {
-    expect(info.source).toContain("消費動向指数（CTIミクロ基本系列）");
+  it("source に CTIの出典を記載している", () => {
+    expect(info.source).toContain("消費動向指数");
   });
 
-  it("CTI基本系列の説明が実際のデータソースと一致している", () => {
+  it("CTI名目四半期系列の説明が現行契約と一致している", () => {
     const items = info.sections.flatMap((s) => s.items);
     const text = items.map((item) => item.text).join("\n");
-    const ctiItem = items.find((i) => i.text.startsWith("CTIミクロ基本系列（名目・総合）"));
+    const ctiItem = items.find((i) => i.text.startsWith("CTIミクロ名目四半期系列"));
     expect(ctiItem).toBeDefined();
-    expect(ctiItem!.text).toContain("二人以上世帯");
-    expect(text).toContain("2005年1月");
-    expect(text).toContain("公表最新月");
+    expect(ctiItem!.text).toContain("3か月単純平均");
+    expect(text).toContain("2005Q1〜2017Q4");
+    expect(ctiItem!.text).not.toContain("12か月移動平均");
   });
 });
 
@@ -31,17 +30,17 @@ describe("CTI chart info data-source state", () => {
       baseYear: 2025,
       sourceMode: "official-connected",
       seriesLabel: "基本系列（原数値）",
-      supportLabel: "GDP参考系列は名目・実質を別々の比較指数として表示します。",
+      supportLabel: "CTIミクロ名目四半期系列を公開します。",
       comparisonNormalization: "2025-annual-average",
     });
     const text = [info.source, ...info.sections.flatMap((s) => s.items.map((i) => i.text))].join(
       "\n",
     );
 
-    expect(text).toContain("二人以上の世帯の2025年基準CTIミクロ基本系列");
+    expect(text).toContain("公式CTI名目原数値");
     expect(text).toContain("基本系列（原数値）");
     expect(text).not.toContain("総世帯");
-    expect(text).toContain("GDP参考系列は名目・実質を別々の比較指数として表示します。");
+    expect(text).toContain("CTIミクロ名目四半期系列を公開します。");
   });
 
   it("GDP比較の利用不可状態と理由はCTIが利用不可でも表示する", async () => {
@@ -70,7 +69,7 @@ describe("CTI chart info data-source state", () => {
     });
     const text = info.sections.flatMap((s) => s.items.map((i) => i.text)).join("\n");
 
-    expect(text).toContain("CTIミクロ基本系列は現在利用できません");
+    expect(text).toContain("CTIミクロ名目四半期系列は現在利用できません");
     expect(text).toContain(
       "GDP比較線は、名目・実質の元データを2025年平均=100の比較指数として表示します。",
     );
@@ -143,7 +142,7 @@ describe("new-graph and residual chart info wording", () => {
     expect(text).toContain("給与：月次系列の12か月移動平均");
     expect(text).toContain("物価：月次系列の12か月移動平均");
     expect(text).toContain(
-      "CTIミクロ基本系列：二人以上の世帯の名目原数値を2005年1月から公表最新月まで使用し、12か月移動平均",
+      "CTIミクロ名目四半期系列：対象期間は2005Q1〜2017Q4で、3か月がそろわない四半期は欠測として表示。",
     );
     expect(text).not.toContain("GDP参考値：四半期値を月次化");
     expect(text).toContain("2018年以降の延長系列は、このinfo下部の切替で表示できます。");

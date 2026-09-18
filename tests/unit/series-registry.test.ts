@@ -37,30 +37,17 @@ const projectMetadata = (series: readonly SeriesMetadata[]) =>
   );
 
 describe("series registry contracts", () => {
-  it("projects CTI status and reason into both normal and extension entries", () => {
-    const invalid = createComparisonSeriesRegistry({ status: "invalid", reason: "基準不成立" });
-    expect(
-      invalid
-        .filter(({ key }) => key.startsWith("CTI"))
-        .map(({ status, reason, descriptor }) => ({ status, reason, descriptor })),
-    ).toEqual([
-      expect.objectContaining({
-        status: "invalid",
-        reason: "基準不成立",
-        descriptor: expect.objectContaining({ status: "invalid", reason: "基準不成立" }),
-      }),
-      expect.objectContaining({
-        status: "invalid",
-        reason: "基準不成立",
-        descriptor: expect.objectContaining({ status: "invalid", reason: "基準不成立" }),
-      }),
-    ]);
-    const valid = createComparisonSeriesRegistry({ status: "valid", reason: null });
-    expect(
-      valid
-        .filter(({ key }) => key.startsWith("CTI"))
-        .every(({ status, reason }) => status === "valid" && reason === null),
-    ).toBe(true);
+  it("does not retain legacy CTI micro series in comparison registries", () => {
+    const keys = [...EARNINGS_SERIES_REGISTRY, ...createComparisonSeriesRegistry()].map(
+      ({ key }) => key,
+    );
+    expect(keys).not.toEqual(
+      expect.arrayContaining([
+        "CTIミクロ基本系列（名目・原数値）",
+        "CTIミクロ基本系列（名目・参考）",
+        "CTIミクロ基本系列（名目・参考・延長）",
+      ]),
+    );
   });
 
   it("keeps compatibility aliases as the same array identity", () => {
@@ -118,14 +105,6 @@ describe("series registry contracts", () => {
         type: "line",
         kind: "line",
       },
-      {
-        key: "CTIミクロ基本系列（名目・原数値）",
-        label: "CTIミクロ基本系列（名目・原数値）",
-        displayName: "CTIミクロ基本系列（名目・原数値）",
-        color: "#0f766e",
-        type: "line",
-        kind: "line",
-      },
     ]);
   });
 
@@ -138,20 +117,6 @@ describe("series registry contracts", () => {
         color: "#65a30d",
       },
       { key: "総合(12MA)", label: "給与(総合)", displayName: "給与(総合)", color: "#e11d48" },
-      {
-        key: "CTIミクロ基本系列（名目・参考）",
-        label: "CTIミクロ基本系列(名目・総合)",
-        displayName: "CTIミクロ基本系列(名目・総合)",
-        color: "#2563eb",
-      },
-      {
-        key: "CTIミクロ基本系列（名目・参考・延長）",
-        label: "CTIミクロ基本系列(名目・延長)",
-        displayName: "CTIミクロ基本系列(名目・延長)",
-        color: "#7dd3fc",
-        advanced: true,
-        strokeDasharray: "6 3",
-      },
     ]);
   });
 
@@ -170,15 +135,14 @@ describe("series registry contracts", () => {
     }
   });
 
-  it("keeps advanced comparison series opt-in", () => {
+  it("does not expose a legacy advanced CTI comparison series", () => {
     const normalSeries = COMPARISON_SERIES_REGISTRY.filter(({ advanced }) => !advanced);
-    expect(normalSeries.some(({ key }) => key === "CTIミクロ基本系列（名目・参考・延長）")).toBe(
-      false,
+    expect(normalSeries).toHaveLength(2);
+    expect(COMPARISON_SERIES_REGISTRY).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: "CTIミクロ基本系列（名目・参考・延長）" }),
+      ]),
     );
-    expect(
-      COMPARISON_SERIES_REGISTRY.find(({ key }) => key === "CTIミクロ基本系列（名目・参考・延長）")
-        ?.advanced,
-    ).toBe(true);
   });
 
   it("exposes stable tooltip/legend labels and unique numeric order", () => {
@@ -191,7 +155,7 @@ describe("series registry contracts", () => {
     expect(new Set(COMPARISON_SERIES_REGISTRY.map((series) => series.order)).size).toBe(
       COMPARISON_SERIES_REGISTRY.length,
     );
-    expect(COMPARISON_SERIES_REGISTRY.map(({ order }) => order)).toEqual([0, 1, 2, 3]);
+    expect(COMPARISON_SERIES_REGISTRY.map(({ order }) => order)).toEqual([0, 1]);
   });
 
   it("keeps comparison tooltip labels, colors, order, and advanced visibility synchronized", () => {
@@ -222,22 +186,6 @@ describe("series registry contracts", () => {
         color: "#e11d48",
         order: 1,
         advanced: false,
-      },
-      {
-        key: "CTIミクロ基本系列（名目・参考）",
-        tooltipLabel: "CTIミクロ基本系列(名目・総合)",
-        legendLabel: "CTIミクロ基本系列(名目・総合)",
-        color: "#2563eb",
-        order: 2,
-        advanced: false,
-      },
-      {
-        key: "CTIミクロ基本系列（名目・参考・延長）",
-        tooltipLabel: "CTIミクロ基本系列(名目・延長)",
-        legendLabel: "CTIミクロ基本系列(名目・延長)",
-        color: "#7dd3fc",
-        order: 3,
-        advanced: true,
       },
     ]);
   });

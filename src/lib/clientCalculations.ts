@@ -1,16 +1,8 @@
 import type { CpiData } from "@/types";
-import {
-  SUPPORT_SERIES_KEY_NOMINAL,
-  SUPPORT_SERIES_KEY_REAL,
-  CPI_CATEGORIES,
-  CONSUMPTION_NOMINAL_KEYS,
-  CONSUMPTION_REAL_KEYS,
-} from "./chartConstants";
-import { scaleSupportSeriesLegacy } from "./math/supportSeries";
+import { CPI_CATEGORIES } from "./chartConstants";
 import * as math from "./math/clientCalculations";
-import type { ClientCalculationResult, QuarterlyAggregationRow } from "./math/clientCalculations";
+import type { ClientCalculationResult } from "./math/clientCalculations";
 
-const CTI_CATEGORY_KEYS = new Set([...CONSUMPTION_NOMINAL_KEYS, ...CONSUMPTION_REAL_KEYS]);
 export { CPI_CATEGORIES };
 export const sumCategoryValues = math.sumCategoryValues;
 export const calculateCAGRValue = math.calculateCAGRValue;
@@ -29,22 +21,16 @@ export interface UseCpiChartDataProps {
   nominalKeys?: string[];
   realKeys?: string[];
   maxCpiDate: { year: number; month: number };
+  quarterlyNominalData?: ClientCalculationResult["quarterlyNominalData"];
+  quarterlyRealData?: ClientCalculationResult["quarterlyRealData"];
 }
 export const computeChartData = (
   props: UseCpiChartDataProps,
   hiddenQuarters: number[],
 ): ClientCalculationResult => {
-  const result = math.computeChartData(props, hiddenQuarters, {
-    nominalKeys: props.nominalKeys || CONSUMPTION_NOMINAL_KEYS,
-    realKeys: props.realKeys || CONSUMPTION_REAL_KEYS,
-    ctiKeys: CTI_CATEGORY_KEYS,
-    supportNominalKey: SUPPORT_SERIES_KEY_NOMINAL,
-    supportRealKey: SUPPORT_SERIES_KEY_REAL,
-  });
-  const scale = (rows: QuarterlyAggregationRow[], key: string): QuarterlyAggregationRow[] =>
-    scaleSupportSeriesLegacy(rows, key) as QuarterlyAggregationRow[];
+  const result = math.computeChartData(props, hiddenQuarters);
   return {
-    quarterlyNominalData: scale(result.quarterlyNominalData, SUPPORT_SERIES_KEY_NOMINAL),
-    quarterlyRealData: scale(result.quarterlyRealData, SUPPORT_SERIES_KEY_REAL),
+    quarterlyNominalData: result.quarterlyNominalData,
+    quarterlyRealData: result.quarterlyRealData,
   };
 };

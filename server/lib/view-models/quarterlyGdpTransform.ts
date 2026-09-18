@@ -1,4 +1,4 @@
-import { SUPPORT_SERIES_KEY_NOMINAL, SUPPORT_SERIES_KEY_REAL } from "@/lib/chartConstants";
+import { SUPPORT_SERIES_KEY_REAL } from "@/lib/chartConstants";
 import type { QuarterlyRow } from "@/types/chart";
 
 export interface QuarterlyGdpComparisonRow {
@@ -105,29 +105,18 @@ export function joinQuarterlyGdpRows(
 ): { nominal: QuarterlyRow[]; real: QuarterlyRow[] } {
   const nominal = nominalRows.map((row) => ({ ...row }));
   const real = realRows.map((row) => ({ ...row }));
-  const nominalByPeriod = new Map<string, QuarterlyRow>();
   const realByPeriod = new Map<string, QuarterlyRow>();
-  for (const row of nominal) {
-    const period = quarterlyRowPeriod(row);
-    if (period && !nominalByPeriod.has(period)) nominalByPeriod.set(period, row);
-    delete row[SUPPORT_SERIES_KEY_NOMINAL];
-    delete row[SUPPORT_SERIES_KEY_REAL];
-  }
+  for (const row of nominal) delete row[SUPPORT_SERIES_KEY_REAL];
   for (const row of real) {
     const period = quarterlyRowPeriod(row);
     if (period && !realByPeriod.has(period)) realByPeriod.set(period, row);
-    delete row[SUPPORT_SERIES_KEY_NOMINAL];
     delete row[SUPPORT_SERIES_KEY_REAL];
   }
   if (!gdp.comparisonReady) return { nominal, real };
   for (const gdpRow of gdp.rows) {
     if (!isQuarterlyPeriod(gdpRow.period)) continue;
-    const nominalValue = convertQuarterlyRawToComparison(gdpRow.nominalComparison, 1);
     const realValue = convertQuarterlyRawToComparison(gdpRow.realComparison, 1);
-    const nominalRow = nominalByPeriod.get(gdpRow.period);
     const realRow = realByPeriod.get(gdpRow.period);
-    if (nominalRow && nominalValue !== undefined)
-      nominalRow[SUPPORT_SERIES_KEY_NOMINAL] = nominalValue;
     if (realRow && realValue !== undefined) realRow[SUPPORT_SERIES_KEY_REAL] = realValue;
   }
   return { nominal, real };

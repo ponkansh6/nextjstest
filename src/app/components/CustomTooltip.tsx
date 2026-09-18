@@ -2,11 +2,36 @@
 
 import React from "react";
 import type { CustomTooltipProps } from "@/types/chart";
+import type { SeriesMeasurement } from "@/types/chart";
 import styles from "./CpiChart.module.css";
 
 type TooltipDisplayPayload = NonNullable<CustomTooltipProps["payload"]>[number] & {
   order?: number;
+  unit?: string;
+  source?: string;
+  valueType?: "raw" | "comparison";
+  frequency?: string;
+  aggregation?: string;
+  status?: string;
+  reason?: string | null;
 };
+
+const unavailableMeasurement = {
+  unit: "",
+  source: "",
+  valueType: "raw",
+  frequency: undefined,
+  aggregation: "",
+  status: "invalid",
+  reason: "unavailable",
+} as const;
+
+type TooltipMeasurement = Partial<
+  Pick<
+    SeriesMeasurement,
+    "unit" | "source" | "valueType" | "frequency" | "aggregation" | "status" | "reason"
+  >
+>;
 
 export const formatCpiTooltipValue = (value: number | null | undefined): string =>
   typeof value === "number" && Number.isFinite(value) ? value.toFixed(2) : "—";
@@ -69,12 +94,31 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
               const entry = payload.find(
                 (candidate) => (candidate.dataKey ?? candidate.name) === meta.key,
               );
+              const row = entry?.payload;
+              const rowMeasurements = row?.["measurements"];
+              const rowMeasurement =
+                rowMeasurements && typeof rowMeasurements === "object"
+                  ? (rowMeasurements as Record<string, unknown>)[meta.key]
+                  : undefined;
+              const measurement: TooltipMeasurement =
+                row && typeof row === "object"
+                  ? rowMeasurement && typeof rowMeasurement === "object"
+                    ? (rowMeasurement as Partial<TooltipMeasurement>)
+                    : unavailableMeasurement
+                  : (meta as TooltipMeasurement);
               return {
                 name: meta.label,
                 value: entry?.value,
                 color: meta.color ?? entry?.color,
                 dataKey: meta.key,
                 order: meta.order,
+                unit: measurement.unit,
+                source: measurement.source,
+                valueType: measurement.valueType as "raw" | "comparison" | undefined,
+                frequency: measurement.frequency,
+                aggregation: measurement.aggregation,
+                status: measurement.status,
+                reason: measurement.reason,
               };
             }),
           ...(canIncludeUnmappedPayload
@@ -255,6 +299,13 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
             data-tooltip-row="true"
             data-tooltip-key={entry.dataKey}
             data-tooltip-label={entry.name}
+            data-tooltip-unit={entry.unit}
+            data-tooltip-source={entry.source}
+            data-tooltip-value-type={entry.valueType}
+            data-tooltip-frequency={entry.frequency ?? ""}
+            data-tooltip-aggregation={entry.aggregation}
+            data-tooltip-status={entry.status}
+            data-tooltip-reason={entry.reason ?? ""}
             data-tooltip-color={entry.color}
             data-tooltip-order={entry.order ?? index}
             data-tooltip-group-separator={index === separatorIndex ? "true" : undefined}

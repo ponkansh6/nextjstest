@@ -1,337 +1,58 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import {
   calculateCategorySum,
-  computeChartData,
   calculateCAGRValue,
+  computeChartData,
 } from "../../src/lib/clientCalculations";
-import {
-  CONSUMPTION_NOMINAL_KEYS,
-  CONSUMPTION_REAL_KEYS,
-  SUPPORT_SERIES_KEY_NOMINAL,
-  SUPPORT_SERIES_KEY_REAL,
-} from "../../src/lib/chartConstants";
-import { loadCtiData } from "../../server/lib/dataLoader";
-
-import type { CpiData } from "../../src/types";
-import { createCpiData } from "../factories/cpiDataFactory";
-import { readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import { scaleSupportSeriesLegacy } from "../../src/lib/math/supportSeries";
-
-const completeCtiRow = (month: number, overrides: Partial<CpiData> = {}): CpiData =>
-  ({
-    年月: `2020年${month}月`,
-    ...Object.fromEntries(
-      [...CONSUMPTION_NOMINAL_KEYS, ...CONSUMPTION_REAL_KEYS].map((key) => [key, 0]),
-    ),
-    ...overrides,
-  }) as CpiData;
+import type { QuarterlyView } from "../../src/types/chart";
 
 describe("src/lib/clientCalculations", () => {
-  it("does not import server-only support-series math", () => {
-    const clientCalculationsPath = resolve("src/lib/clientCalculations.ts");
-    const source = readFileSync(clientCalculationsPath, "utf8");
-    const importSources = [
-      ...source.matchAll(
-        /^\s*import\s+(?:(?:type\s+)?[\s\S]*?\s+from\s+)?["']([^"']+)["']\s*;?\s*$/gm,
-      ),
-    ].map((match) => match[1]);
-    const resolvedSources = importSources
-      .map((importSource) => {
-        if (importSource.startsWith(".")) {
-          return resolve(dirname(clientCalculationsPath), importSource);
-        }
-        if (importSource.startsWith("@server/")) {
-          return resolve("server", importSource.slice("@server/".length));
-        }
-        return undefined;
-      })
-      .filter((path): path is string => path !== undefined)
-      .map((path) => path.replace(/\.(?:[cm]?[jt]sx?)$/, ""));
-
-    expect(resolvedSources).not.toContain(resolve("server/lib/math/supportSeries"));
+  it("has no CTI support-series or server-only calculation dependency", () => {
+    const source = readFileSync(resolve("src/lib/clientCalculations.ts"), "utf8");
+    expect(source).not.toContain("SUPPORT_SERIES_KEY_NOMINAL");
+    expect(source).not.toContain("SUPPORT_SERIES_KEY_REAL");
+    expect(source).not.toContain("scaleSupportSeries");
+    expect(source).not.toContain('from "./math/supportSeries"');
+    expect(source).not.toContain('from "@server/');
   });
 
-  it("keeps the client support-series compatibility matrix", () => {
-    const key = SUPPORT_SERIES_KEY_REAL;
-    const rows = [
-      { 年: 2020, [key]: 100 },
-      { 年: 2004, [key]: 10 },
-      { 年: 2005, [key]: null },
-      { 年: 2010, [key]: Number.NaN },
-      { 年: 2016, [key]: Number.POSITIVE_INFINITY },
-      { 年: 2017, [key]: -10 },
-    ];
-
-    expect(scaleSupportSeriesLegacy(rows, key).map((row) => row[key])).toEqual([
-      0,
-      0,
-      0,
-      0,
-      Number.POSITIVE_INFINITY,
-      0,
-    ]);
-  });
-
-  describe("calculateCategorySum", () => {
-    it("データが見つかる場合、正常に合計を計算する", () => {
-      const mockCpiData = [{ 年月: "2020年1月", 食料: 100, 外食: 50 }];
-      const sum = calculateCategorySum(mockCpiData as any, 2020, 1, [], ["食料", "外食"]);
-      expect(sum).toBe(150);
-    });
-
-    it("指定された年月にデータがない場合、エラーを投げる", () => {
-      const mockCpiData = [{ 年月: "2020年1月", 食料: 100 }];
-      expect(() => {
-        calculateCategorySum(mockCpiData as any, 2021, 1);
-      }).toThrow();
-    });
-  });
-
-  describe("calculateCAGRValue", () => {
-    it("正しい成長率を算出すること", () => {
-      // 100 -> 121 (2年で10%複利: 100 * 1.1 * 1.1 = 121)
-      const result = calculateCAGRValue(100, 121, 2);
-      expect(result).toBeCloseTo(0.1, 5); // 0.1 (10%)
-    });
-
-    it("開始値が0の場合は0を返すこと", () => {
-      expect(calculateCAGRValue(0, 100, 2)).toBe(0);
-    });
-
-    it("経過年数が0の場合は0を返すこと", () => {
-      expect(calculateCAGRValue(100, 121, 0)).toBe(0);
-    });
-  });
-
-  describe("computeChartData", () => {
-    const baseProps = {
-      data: [],
-      endYear: 2020,
-      maxCpiDate: { month: 1, year: 2020 },
-      nominalData: [] as CpiData[],
-      CONSUMPTION_NOMINAL_KEYS: CONSUMPTION_NOMINAL_KEYS,
-      realKeys: CONSUMPTION_REAL_KEYS,
-      startYear: 2020,
-    };
-
-    it("should calculate and aggregate values correctly for a full quarter", () => {
-      const mockData = [
-        completeCtiRow(1, {
-          "住居（名目）": 10,
-          "食料（名目）": 20,
-          "その他の消費支出（名目）": 5,
-        }),
-        completeCtiRow(2, {
-          "住居（名目）": 10,
-          "食料（名目）": 20,
-          "その他の消費支出（名目）": 5,
-        }),
-        completeCtiRow(3, {
-          "住居（名目）": 10,
-          "食料（名目）": 20,
-          "その他の消費支出（名目）": 5,
-        }),
-      ];
-      const testProps = {
-        ...baseProps,
-        nominalData: mockData as any,
-      };
-
-      const result = computeChartData(testProps, []);
-      const row = result.quarterlyNominalData[0];
-
-      CONSUMPTION_NOMINAL_KEYS.forEach((key) => {
-        expect(row, `Key ${key} missing or undefined in render data`).toHaveProperty(key);
-        expect(typeof row[key]).toBe("number");
-      });
-
-      const total = CONSUMPTION_NOMINAL_KEYS.reduce((acc, k) => acc + ((row[k] as number) || 0), 0);
-      expect(total).toBeGreaterThan(0);
-      expect(total).toBeCloseTo(35, 5);
-    });
-
-    it("should compute quarterly nominal data correctly using real data", async () => {
-      const realData = await loadCtiData();
-      const q1Data: CpiData[] = realData.filter(
-        (d: CpiData) => d.年月 === "2020年1月" || d.年月 === "2020年2月" || d.年月 === "2020年3月",
-      );
-
-      const props = {
-        data: realData,
-        nominalData: q1Data,
-        startYear: 2020,
-        endYear: 2020,
-        CONSUMPTION_NOMINAL_KEYS: CONSUMPTION_NOMINAL_KEYS,
-        realKeys: [],
-        maxCpiDate: { year: 2020, month: 3 },
-      };
-
-      const { quarterlyNominalData } = computeChartData(props as any, []);
-
-      expect(quarterlyNominalData.length).toBe(1);
-      expect(quarterlyNominalData[0].label).toBe("2020Q1");
-      expect(typeof quarterlyNominalData[0]["食料（名目）"]).toBe("number");
-      expect(quarterlyNominalData[0]["食料（名目）"]).toBeGreaterThan(0);
-    });
-
-    it("should compute scaled support series correctly for 2005-2017", async () => {
-      const mockNominalData = [
-        createCpiData({ 年月: "2005年1月", [SUPPORT_SERIES_KEY_NOMINAL]: 100 }),
-        createCpiData({ 年月: "2005年2月", [SUPPORT_SERIES_KEY_NOMINAL]: 100 }),
-        createCpiData({ 年月: "2005年3月", [SUPPORT_SERIES_KEY_NOMINAL]: 100 }),
-        completeCtiRow(1, { [SUPPORT_SERIES_KEY_NOMINAL]: 100 }),
-        completeCtiRow(2, { [SUPPORT_SERIES_KEY_NOMINAL]: 100 }),
-        completeCtiRow(3, { [SUPPORT_SERIES_KEY_NOMINAL]: 100 }),
-      ];
-
-      const props = {
+  it("forwards the server public projection, preserving null and valid zero", () => {
+    const nominal = [
+      {
+        label: "2005Q1",
+        quarter: 1,
+        年: 2005,
+        年月: "2005Q1",
+        "CTIミクロ四半期系列（名目）": null,
+      },
+      { label: "2005Q2", quarter: 2, 年: 2005, 年月: "2005Q2", "CTIミクロ四半期系列（名目）": 0 },
+    ] as QuarterlyView[];
+    const result = computeChartData(
+      {
         data: [],
-        nominalData: mockNominalData,
+        nominalData: [],
         startYear: 2005,
-        endYear: 2020,
-        CONSUMPTION_NOMINAL_KEYS: CONSUMPTION_NOMINAL_KEYS,
-        realKeys: [],
-        maxCpiDate: { year: 2020, month: 3 },
-      };
+        endYear: 2005,
+        maxCpiDate: { year: 2005, month: 6 },
+        quarterlyNominalData: nominal,
+      },
+      [],
+    );
+    expect(result.quarterlyNominalData).toEqual(nominal);
+  });
 
-      const { quarterlyNominalData } = computeChartData(props as any, []);
-
-      const q12005 = quarterlyNominalData.find((r) => r.label === "2005Q1");
-      expect(q12005).toBeDefined();
-      expect(q12005![SUPPORT_SERIES_KEY_NOMINAL]).toBeCloseTo(100);
-
-      const q12020 = quarterlyNominalData.find((r) => r.label === "2020Q1");
-      expect(q12020).toBeDefined();
-      expect(q12020![SUPPORT_SERIES_KEY_NOMINAL]).toBe(0);
-    });
-
-    it("should aggregate '民間最終消費支出' strictly using raw objects to mimic CTI data structure", () => {
-      // ファクトリを使わず、データローダーが返す形式を完全に模倣
-      const mockData = [
-        { 年月: "2010年1月", [SUPPORT_SERIES_KEY_NOMINAL]: 100, "消費支出（名目）": 1000 },
-        { 年月: "2010年2月", [SUPPORT_SERIES_KEY_NOMINAL]: 200, "消費支出（名目）": 1000 },
-        { 年月: "2010年3月", [SUPPORT_SERIES_KEY_NOMINAL]: 300, "消費支出（名目）": 1000 },
-      ];
-
-      const props = {
-        data: [],
-        nominalData: mockData as any,
-        startYear: 2010,
-        endYear: 2010,
-        CONSUMPTION_NOMINAL_KEYS: ["消費支出（名目）", SUPPORT_SERIES_KEY_NOMINAL],
-        realKeys: [],
-        maxCpiDate: { year: 2010, month: 3 },
-      };
-
-      const { quarterlyNominalData } = computeChartData(props, []);
-
-      const q12010 = quarterlyNominalData.find((r) => r.label === "2010Q1");
-
-      // 四半期データなので、各月の値を合計せず、存在する値（例えば100）を期待する
-      expect(q12010![SUPPORT_SERIES_KEY_NOMINAL], "民間最終消費支出 should be 100").toBe(100);
-    });
-
-    it("should verify filteredNominalData and its structure", () => {
-      const mockData: Record<string, any>[] = [{ 年月: "2010年1月", 民間最終消費支出: 100 }];
-      const props = {
-        data: [],
-        nominalData: mockData as any,
-        startYear: 2010,
-        endYear: 2010,
-        CONSUMPTION_NOMINAL_KEYS: [],
-        realKeys: [],
-        maxCpiDate: { year: 2010, month: 1 },
-      };
-
-      const { quarterlyNominalData } = computeChartData(props, []);
-
-      const nominalMap = new Map(props.nominalData.map((d: any) => [d.年月, d]));
-      const existingData = nominalMap.get("2010年1月");
-
-      expect(existingData).toBeDefined();
-      expect(existingData).toHaveProperty("民間最終消費支出");
-      expect((existingData as any)["民間最終消費支出"]).toBe(100);
-    });
-
-    it("should aggregate '民間最終消費支出' regardless of CONSUMPTION_NOMINAL_KEYS inclusion", () => {
-      // 3ヶ月分のデータを用意して、四半期の集計要件（3ヶ月分必要）を満たすようにする
-      const mockData = [
-        { 年月: "2010年1月", [SUPPORT_SERIES_KEY_NOMINAL]: 100 },
-        { 年月: "2010年2月", [SUPPORT_SERIES_KEY_NOMINAL]: 100 },
-        { 年月: "2010年3月", [SUPPORT_SERIES_KEY_NOMINAL]: 100 },
-      ];
-
-      const runTest = (keys: string[]) => {
-        const props = {
-          data: [],
-          nominalData: mockData as any,
-          startYear: 2010,
-          endYear: 2010,
-          CONSUMPTION_NOMINAL_KEYS: keys,
-          realKeys: [],
-          maxCpiDate: { year: 2010, month: 3 }, // 3月まで必要
-        };
-        const { quarterlyNominalData } = computeChartData(props, []);
-        // quarterlyNominalData[0] は 2010Q1 となる
-        return quarterlyNominalData[0][SUPPORT_SERIES_KEY_NOMINAL];
-      };
-
-      // 1. CONSUMPTION_NOMINAL_KEYS に含まれていない場合
-      const valWithoutKey = runTest([]);
-
-      // 2. CONSUMPTION_NOMINAL_KEYS に含まれている場合
-      const valWithKey = runTest([SUPPORT_SERIES_KEY_NOMINAL]);
-
-      // バグ修正の検証:
-      // 四半期データなので合計せず、100（または存在する値）となることを期待
-      expect(valWithoutKey, "Value should be 100 even if not in CONSUMPTION_NOMINAL_KEYS").toBe(
-        100,
-      );
-      expect(valWithKey, "Value should be 100 if in CONSUMPTION_NOMINAL_KEYS").toBe(100);
-    });
-
-    it("should verify '民間最終消費支出' exists in the nominalData used for nominalMap", () => {
-      const mockData = [{ 年月: "2010年1月", 民間最終消費支出: 100 }];
-
-      // computeChartData の処理の一部を再現して検証
-      const normalizeYm = (ym?: string | number) => String(ym || "").trim();
-      const normalizedNominalData = mockData.map((d) => ({
-        ...d,
-        年月: normalizeYm(String(d.年月)),
-      }));
-
-      // nominalMap を作る
-      const nominalMap = new Map(normalizedNominalData.map((d: any) => [d.年月, d]));
-      const existingData = nominalMap.get("2010年1月");
-
-      // この段階でプロパティが存在するかを物理的に証明する
-      expect(existingData, "Data for 2010年1月 should exist in nominalMap").toBeDefined();
-      expect(existingData, "Data in nominalMap should have '民間最終消費支出'").toHaveProperty(
-        "民間最終消費支出",
-      );
-      expect(existingData!["民間最終消費支出"]).toBe(100);
-    });
-    it("should verify nominalMap content directly", () => {
-      const mockData = [{ 年月: "2010年1月", 民間最終消費支出: 100 }];
-      const normalizeYm = (ym?: string | number) => String(ym || "").trim();
-      const normalizedNominalData = mockData.map((d) => ({
-        ...d,
-        年月: normalizeYm(String(d.年月)),
-      }));
-      const nominalMap = new Map(normalizedNominalData.map((d: any) => [d.年月, d]));
-      const existingData = nominalMap.get("2010年1月");
-
-      // Check if it exists here
-      expect(existingData).toHaveProperty("民間最終消費支出");
-      expect(existingData!["民間最終消費支出"]).toBe(100);
-
-      // Now check if it persists after filteredNominalData is created
-      const allMonths = ["2010年1月"];
-      const filteredNominalData = allMonths.map((ym) => nominalMap.get(ym)!);
-
-      expect(filteredNominalData[0]).toHaveProperty("民間最終消費支出");
-      expect(filteredNominalData[0]["民間最終消費支出"]).toBe(100);
-    });
+  it("keeps unrelated category and CAGR helpers available", () => {
+    expect(
+      calculateCategorySum(
+        [{ 年月: "2020年1月", 食料: 10, 外食: 5 }] as any,
+        2020,
+        1,
+        [],
+        ["食料", "外食"],
+      ),
+    ).toBe(15);
+    expect(calculateCAGRValue(100, 121, 2)).toBeCloseTo(0.1);
   });
 });

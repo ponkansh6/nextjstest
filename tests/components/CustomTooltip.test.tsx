@@ -120,12 +120,12 @@ describe("CustomTooltip", () => {
         isTouch={false}
         payload={[
           { dataKey: "CPI総合", name: "CPI総合", value: 100 },
-          { dataKey: "CTI消費支出（参考）", name: "CTI消費支出（参考）", value: 101 },
+          { dataKey: SUPPORT_SERIES_KEY_NOMINAL, name: "CTIミクロ名目四半期", value: 101 },
           { dataKey: "総合(12MA)", name: "給与(総合)", value: 102 },
         ]}
         seriesMeta={[
           { key: "CPI総合", label: "CPI総合", order: 0 },
-          { key: "CTI消費支出（参考）", label: "CTI消費支出（参考）", order: 1 },
+          { key: SUPPORT_SERIES_KEY_NOMINAL, label: "CTIミクロ名目四半期", order: 1 },
           { key: "総合(12MA)", label: "給与(総合)", order: 2 },
         ]}
         showAllPayload
@@ -201,9 +201,8 @@ describe("CustomTooltip", () => {
         screen.getByText("給与区分合計（所定内＋所定外＋特別）").parentElement as HTMLElement,
       ).getByText("2.50"),
     ).toBeDefined();
-    // CTI raw is an independent registered series and remains visible as null
-    // when the fixture omits it; it must not be replaced by the comparison line.
-    expect(screen.getAllByText("—")).toHaveLength(4);
+    // Missing and invalid registered values remain visible as placeholders.
+    expect(screen.getAllByText("—")).toHaveLength(3);
     expect(
       within(screen.getByText("所定内給与").parentElement as HTMLElement).getByText("0.00"),
     ).toBeDefined();
@@ -272,18 +271,18 @@ describe("CustomTooltip", () => {
     ).toBeDefined();
   });
 
-  it("uses only GDP before 2018Q1 and only CTI after it for detail and total", () => {
-    const gdpKey = "民間最終消費支出（参考）";
-    const ctiKey = "CTI消費支出（参考）";
+  it("uses the nominal CTI projection before 2018Q1 and legacy categories after it", () => {
+    const ctiKey = SUPPORT_SERIES_KEY_NOMINAL;
+    const legacyKey = "食料（名目）";
     const hiddenKey = "給与(12MA)";
     const payload = [
-      { name: "旧GDPラベル", dataKey: gdpKey, value: 100 },
-      { name: "旧CTIラベル", dataKey: ctiKey, value: 10 },
+      { name: "CTI名目四半期", dataKey: ctiKey, value: 100 },
+      { name: "legacy費目", dataKey: legacyKey, value: 10 },
       { name: "境界外", dataKey: "outside", value: 50 },
       { name: "非表示系列", dataKey: hiddenKey, value: 25 },
     ];
     const allowedKeys = (label?: string) =>
-      label === "2017Q4" ? [gdpKey, hiddenKey] : [ctiKey, hiddenKey];
+      label === "2017Q4" ? [ctiKey, hiddenKey] : [legacyKey, hiddenKey];
     const renderBoundary = (label: string) =>
       render(
         <CustomTooltip
@@ -293,8 +292,8 @@ describe("CustomTooltip", () => {
           label={label}
           payload={payload}
           seriesMeta={[
-            { key: gdpKey, label: "民間最終消費(総合)", color: "#38bdf8", order: 0 },
-            { key: ctiKey, label: "CTI消費(総合)", color: "#2563eb", order: 1 },
+            { key: ctiKey, label: "CTIミクロ（名目・四半期平均）", color: "#38bdf8", order: 0 },
+            { key: legacyKey, label: "legacy費目", color: "#2563eb", order: 1 },
           ]}
           allowedKeys={allowedKeys}
           includeUnmappedPayload
@@ -306,8 +305,8 @@ describe("CustomTooltip", () => {
       );
 
     const legacy = renderBoundary("2017Q4");
-    expect(screen.getByText("民間最終消費(総合)")).toBeDefined();
-    expect(screen.queryByText("CTI消費(総合)")).toBeNull();
+    expect(screen.getByText("CTIミクロ（名目・四半期平均）")).toBeDefined();
+    expect(screen.queryByText("legacy費目")).toBeNull();
     expect(screen.queryByText("境界外")).toBeNull();
     expect(screen.queryByText("非表示系列")).toBeNull();
     expect(
@@ -316,8 +315,8 @@ describe("CustomTooltip", () => {
     legacy.unmount();
 
     renderBoundary("2018Q1");
-    expect(screen.getByText("CTI消費(総合)")).toBeDefined();
-    expect(screen.queryByText("民間最終消費(総合)")).toBeNull();
+    expect(screen.getByText("legacy費目")).toBeDefined();
+    expect(screen.queryByText("CTIミクロ（名目・四半期平均）")).toBeNull();
     expect(screen.queryByText("境界外")).toBeNull();
     expect(screen.queryByText("非表示系列")).toBeNull();
     expect(
@@ -716,7 +715,7 @@ describe("CustomTooltip", () => {
   it.each(["2017Q4", "2018Q1"] as const)(
     "applies the Spending detail boundary at %s without changing the legend contract",
     (label) => {
-      const gdpKey = "民間最終消費支出（名目）";
+      const gdpKey = SUPPORT_SERIES_KEY_NOMINAL;
       const ctiKey = "食料（名目）";
       const allowedKeys = label === "2017Q4" ? [gdpKey] : [ctiKey];
       render(
@@ -726,11 +725,11 @@ describe("CustomTooltip", () => {
           isTouch={false}
           label={label}
           payload={[
-            { name: "誤表示GDP", dataKey: gdpKey, value: 100 },
+            { name: "CTI名目", dataKey: gdpKey, value: 100 },
             { name: "誤表示CTI", dataKey: ctiKey, value: 25 },
           ]}
           seriesMeta={[
-            { key: gdpKey, label: "民間最終消費", color: "#aaa", order: 0 },
+            { key: gdpKey, label: "CTIミクロ（名目・四半期平均）", color: "#aaa", order: 0 },
             { key: ctiKey, label: "食料", color: "#bbb", order: 1 },
           ]}
           allowedKeys={allowedKeys}
@@ -742,11 +741,11 @@ describe("CustomTooltip", () => {
       );
       expect(screen.getByText(label)).toBeDefined();
       if (label === "2017Q4") {
-        expect(screen.getByText("民間最終消費")).toBeDefined();
+        expect(screen.getByText("CTIミクロ（名目・四半期平均）")).toBeDefined();
         expect(screen.queryByText("食料")).toBeNull();
       } else {
         expect(screen.getByText("食料")).toBeDefined();
-        expect(screen.queryByText("民間最終消費")).toBeNull();
+        expect(screen.queryByText("CTIミクロ（名目・四半期平均）")).toBeNull();
       }
       expect(
         within(screen.getByText("合計").parentElement as HTMLElement).getByText(

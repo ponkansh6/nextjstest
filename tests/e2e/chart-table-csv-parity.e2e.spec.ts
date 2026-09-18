@@ -56,7 +56,6 @@ const CONTRACT: readonly Section[] = [
       "時間当たり給与",
       "15歳以上国民当たり給与",
       "CPI総合(参考)",
-      "CTIミクロ基本系列（名目・原数値）",
     ],
   },
   {
@@ -71,58 +70,12 @@ const CONTRACT: readonly Section[] = [
     tableId: "data-table-section-new-graph",
     chartName: "給与・消費・物価の推移比較（12MA）グラフ",
     period: "2025年1月",
-    keys: ["CPI総合(12MA)", "総合(12MA)", "CTIミクロ基本系列（名目・参考）"],
+    keys: ["CPI総合(12MA)", "総合(12MA)"],
   },
 ];
 const INTERNAL = /GDP名目原値|GDP名目比較指数|GDP実質原値|GDP実質比較指数|四半期raw|原値|比較指数/;
-const ADVANCED = {
-  key: "CTIミクロ基本系列（名目・参考・延長）",
-  header: "CTIミクロ基本系列(名目・延長)",
-} as const;
-const CTI_RAW_KEY = "CTIミクロ基本系列（名目・原数値）";
-
-async function fixedAdvancedAnchors() {
-  const source = await readFile(
-    "data/source/official-cti-2025-long-term/000040499070.normalized.csv",
-    "utf8",
-  );
-  const rows = source
-    .trim()
-    .split(/\r?\n/)
-    .slice(1)
-    .map((line) => line.split(","));
-  const values = new Map(
-    rows
-      .filter((row) => row[0] === "nominal" && row[1] === "1")
-      .map((row) => [row[4], +row[5]] as const),
-  );
-  const ma = (month: string) => {
-    const [year, monthNumber] = month.split("-").map(Number);
-    return (
-      Array.from({ length: 12 }, (_, offset) => {
-        const date = new Date(Date.UTC(year, monthNumber - 1 - offset, 1));
-        return values.get(
-          `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`,
-        )!;
-      }).reduce((sum, value) => sum + value, 0) / 12
-    );
-  };
-  const baseline =
-    Array.from({ length: 12 }, (_, index) =>
-      ma(`2025-${String(index + 1).padStart(2, "0")}`),
-    ).reduce((sum, value) => sum + value, 0) / 12;
-  const anchors = ["2018-01", "2025-12"].map((month) => ({
-    month: (() => {
-      const [year, monthNumber] = month.split("-");
-      return `${year}年${Number(monthNumber)}月`;
-    })(),
-    knownNormalized: (ma(month) / baseline) * 100,
-  }));
-  expect(anchors.map(({ month }) => month)).toEqual(["2018年1月", "2025年12月"]);
-  expect(anchors[0].knownNormalized).toBeCloseTo(93.97529477821448, 10);
-  expect(anchors[1].knownNormalized).toBeCloseTo(101.07523862998316, 10);
-  return anchors;
-}
+const LEGACY_CTI = /CTIミクロ基本系列[（(]名目/;
+const RETIRED_CTI_RAW_KEY = `CTIミクロ基本系列（名目・原数値）`;
 
 function parseCsv(input: string): string[][] {
   const source = input.replace(/^\uFEFF/, "");
@@ -180,8 +133,7 @@ function parseCsv(input: string): string[][] {
     else cell += c;
   }
   if (quoted) throw new Error("CSV ended inside a quoted field");
-  if (rows.some((r) => r.length === 0 || r.every((v) => v === "")))
-    throw new Error("extra empty row");
+  if (rows.some((r) => r.every((v) => v === ""))) throw new Error("extra empty row");
   const columns = rows[0]?.length ?? 0;
   if (columns === 0 || rows.some((r) => r.length !== columns))
     throw new Error("CSV column count mismatch");
@@ -252,9 +204,7 @@ async function assertTableCsv(table: import("@playwright/test").Locator) {
   expect(
     snapshot.values.every((r) => r.length === snapshot.headers.length && r.every((v) => v !== "")),
   ).toBe(true);
-  expect(
-    csv.some((r) => r.length === 0 || r.every((v) => v === "") || r.some((v) => v === "")),
-  ).toBe(false);
+  expect(csv.some((r) => r.every((v) => v === "") || r.some((v) => v === ""))).toBe(false);
   expect(csv.length).toBe(snapshot.values.length + 1);
   expect(csv.every((r) => r.length >= snapshot.headers.length)).toBe(true);
   expect(csv[0].slice(0, snapshot.headers.length)).toEqual(snapshot.headers);
@@ -312,17 +262,26 @@ function assertTypedCsvMetadata(
   csv: string[][],
   snapshot: Awaited<ReturnType<typeof tableSnapshot>>,
   contract: Awaited<ReturnType<typeof chartContractSnapshot>>,
+  typedKey?: string,
 ) {
+  expect(snapshot.headers).not.toContain(RETIRED_CTI_RAW_KEY);
+  expect(csv[0]).not.toContain(`${RETIRED_CTI_RAW_KEY}__valueType`);
+  expect(contract.keys).not.toContain(RETIRED_CTI_RAW_KEY);
+  expect(contract.descriptors.some(({ key }) => key === RETIRED_CTI_RAW_KEY)).toBe(false);
+
   const metadataKeys = csv[0]
     .filter((header) => header.endsWith("__valueType"))
     .map((header) => header.slice(0, -"__valueType".length));
-  if (metadataKeys.length === 0) return;
+  if (metadataKeys.length === 0 && !typedKey) return;
 
   const expectedMetadataHeaders = metadataKeys.flatMap((key) => [
+    `${key}__label`,
     `${key}__valueType`,
     `${key}__value`,
     `${key}__unit`,
     `${key}__source`,
+    `${key}__frequency`,
+    `${key}__aggregation`,
     `${key}__status`,
     `${key}__reason`,
   ]);
@@ -331,39 +290,42 @@ function assertTypedCsvMetadata(
     csv.every((row) => row.length === snapshot.headers.length + expectedMetadataHeaders.length),
   ).toBe(true);
 
-  const typed = contract.descriptors.find(({ key }) => key === CTI_RAW_KEY);
+  if (!typedKey) return;
+
+  const typed = contract.descriptors.find(({ key }) => key === typedKey);
   expect(typed).toEqual(
     expect.objectContaining({
-      key: CTI_RAW_KEY,
+      key: typedKey,
       valueType: "raw",
       unit: "指数",
       status: "valid",
       reason: null,
     }),
   );
-  const typedKeyOffset = expectedMetadataHeaders.indexOf(`${CTI_RAW_KEY}__valueType`);
+  const typedKeyOffset = expectedMetadataHeaders.indexOf(`${typedKey}__valueType`);
   expect(typedKeyOffset).toBeGreaterThanOrEqual(0);
-  const visibleValueIndex = snapshot.headers.indexOf(CTI_RAW_KEY);
+  const visibleValueIndex = snapshot.headers.indexOf(typedKey);
 
   for (let rowIndex = 1; rowIndex < csv.length; rowIndex += 1) {
     const row = csv[rowIndex];
     for (let metadataIndex = 0; metadataIndex < metadataKeys.length; metadataIndex += 1) {
-      const offset = snapshot.headers.length + metadataIndex * 6;
-      expect(row[offset]).toMatch(/^(raw|comparison|-|valid)$/);
-      expect(row[offset + 4]).toMatch(/^(valid|invalid)$/);
-      if (row[offset + 4] === "invalid") expect(row[offset + 5]).not.toBe("-");
+      const offset = snapshot.headers.length + metadataIndex * 9;
+      expect(row[offset + 1]).toMatch(/^(raw|comparison|-|valid)$/);
+      expect(row[offset + 7]).toMatch(/^(valid|invalid)$/);
+      if (row[offset + 7] === "invalid") expect(row[offset + 8]).not.toBe("-");
     }
 
     const offset = snapshot.headers.length + typedKeyOffset;
-    const typedValue = row[offset + 1];
+    const typedValue = row[offset + 2];
     const visibleValue = visibleValueIndex >= 0 ? row[visibleValueIndex] : undefined;
-    const contractValue = contract.rows[rowIndex - 1].values.find(({ key }) => key === CTI_RAW_KEY);
+    const contractValue = contract.rows[rowIndex - 1].values.find(({ key }) => key === typedKey);
     if (visibleValueIndex >= 0) expect(contractValue).toBeDefined();
-    expect(row[offset]).toBe("raw");
-    expect(row[offset + 2]).toBe("指数");
-    expect(row[offset + 3]).toBe(typed?.source);
-    expect(row[offset + 4]).toBe("valid");
-    expect(row[offset + 5]).toBe("-");
+    expect(row[offset]).toBe(typedKey);
+    expect(row[offset + 1]).toBe("raw");
+    expect(row[offset + 3]).toBe("指数");
+    expect(row[offset + 4]).toBe(typed?.source);
+    expect(row[offset + 7]).toBe("valid");
+    expect(row[offset + 8]).toBe("-");
     if (visibleValueIndex >= 0) {
       if (visibleValue === "-") {
         expect(typedValue).toBe("-");
@@ -436,34 +398,21 @@ test.describe("Phase 4-4 production chart/table/CSV parity", () => {
       regular,
       regularCsv,
     );
-    const expectedAdvanced = await fixedAdvancedAnchors();
     await page.goto("/?adv=1");
     await waitForChartRender(page.locator("#section-new-graph"));
-    const root = page.getByRole("img", {
-      name: "給与・消費・物価の推移比較（12MA）グラフ",
-      exact: true,
-    });
     const sectionRoot = page.locator("#section-new-graph");
     const table = await openTable(page, "data-table-section-new-graph");
     const advanced = await assertTableCsv(table);
     const advancedCsv = await csvSnapshot(table);
     const advancedContract = await assertPublicContract(sectionRoot, table, advanced, advancedCsv);
-    expect(advanced.headers).toContain(ADVANCED.header);
+    expect(advanced.headers).toEqual(regular.headers);
     expect(advanced.values.length).toBe(regular.values.length);
     expect(advanced.values.map((r) => r[0])).toEqual(regular.values.map((r) => r[0]));
-    expect(advanced.headers.filter((h) => h !== ADVANCED.header)).toEqual(regular.headers);
-    expect(
-      advancedCsv.map((r) => r.filter((_, i) => i !== advanced.headers.indexOf(ADVANCED.header))),
-    ).toEqual(regularCsv);
-    const col = advanced.headers.indexOf(ADVANCED.header);
-    // Full monthly row/column parity above is the contract; only the two
-    // independent fixture anchors are value expectations here. Coverage and
-    // branching for every period belong to advanced-series.e2e.spec.ts.
-    const actualAdvanced = new Map(advanced.values.map((r) => [r[0], r[col]]));
-    for (const { month, knownNormalized } of expectedAdvanced) {
-      expect(actualAdvanced.get(month)).toBe(knownNormalized.toFixed(2));
-    }
-    expect(advancedContract.keys).toContain(ADVANCED.key);
+    expect(advancedCsv).toEqual(regularCsv);
+    expect(advanced.headers).not.toContain("CTIミクロ基本系列(名目・延長)");
+    expect(advanced.headers.join(" ")).not.toMatch(LEGACY_CTI);
+    expect(advancedContract.keys.join(" ")).not.toMatch(LEGACY_CTI);
+    expect(advancedContract.keys).toEqual(["CPI総合(12MA)", "総合(12MA)"]);
   });
 
   test("CSV parser enforces CRLF-terminated RFC4180 records and rejects malformed CSV", () => {

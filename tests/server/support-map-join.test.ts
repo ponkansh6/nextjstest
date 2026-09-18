@@ -3,7 +3,7 @@ import * as fs from "node:fs";
 import Papa from "papaparse";
 import { buildCtiRollback2020FilePaths } from "../../server/lib/dataIo";
 import { calculateQuarterLabel } from "@/lib/math/quarter";
-import { SUPPORT_SERIES_KEY_REAL, SUPPORT_SERIES_KEY_NOMINAL } from "@/lib/chartConstants";
+import { SUPPORT_SERIES_KEY_REAL } from "@/lib/chartConstants";
 import type { CpiData } from "@/types";
 import { loadCti2020RollbackFixture } from "../utils/cti-2020-rollback-fixture";
 
@@ -66,10 +66,8 @@ describe("Legacy 2020 rollback support-series join contract (loadSupportMap / cp
     return map;
   };
 
-  const targets = [
-    { label: "real", path: paths.supportReal },
-    { label: "nominal", path: paths.supportNominal },
-  ];
+  // Plan38 nominal CTI no longer consumes this legacy GDP support map.
+  const targets = [{ label: "real", path: paths.supportReal }];
 
   describe.each(targets)("$label support CSV", ({ label, path: filePath }) => {
     it("ファイルが存在する（欠損時 cpi.ts:52-54 は ENOENT で throw する）", () => {
@@ -163,27 +161,24 @@ describe("Legacy 2020 rollback support-series join contract (loadSupportMap / cp
       ctiData = await loadCti2020RollbackFixture();
     });
 
-    it.each([SUPPORT_SERIES_KEY_REAL, SUPPORT_SERIES_KEY_NOMINAL])(
-      "'%s' が 2005-2016 の月次行で非ゼロ",
-      (key) => {
-        const rows = ctiData.filter((d) => {
-          const m = String(d.年月).match(/^(\d{4})年/);
-          if (!m) return false;
-          const y = parseInt(m[1], 10);
-          return y >= 2005 && y <= 2016;
-        });
-        expect(rows.length, "2005-2016 の月次行が存在しません").toBe(12 * 12);
+    it.each([SUPPORT_SERIES_KEY_REAL])("'%s' が 2005-2016 の月次行で非ゼロ", (key) => {
+      const rows = ctiData.filter((d) => {
+        const m = String(d.年月).match(/^(\d{4})年/);
+        if (!m) return false;
+        const y = parseInt(m[1], 10);
+        return y >= 2005 && y <= 2016;
+      });
+      expect(rows.length, "2005-2016 の月次行が存在しません").toBe(12 * 12);
 
-        const zeroRows = rows.filter((d) => !((d[key] as number) > 0));
-        expect(
-          zeroRows.length,
-          `${key} が 0 の月次行が ${zeroRows.length}/${rows.length} 件あります。` +
-            `例: ${zeroRows
-              .slice(0, 5)
-              .map((d) => `${d.年月}=${d[key]}`)
-              .join(", ")}`,
-        ).toBe(0);
-      },
-    );
+      const zeroRows = rows.filter((d) => !((d[key] as number) > 0));
+      expect(
+        zeroRows.length,
+        `${key} が 0 の月次行が ${zeroRows.length}/${rows.length} 件あります。` +
+          `例: ${zeroRows
+            .slice(0, 5)
+            .map((d) => `${d.年月}=${d[key]}`)
+            .join(", ")}`,
+      ).toBe(0);
+    });
   });
 });

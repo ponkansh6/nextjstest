@@ -16,7 +16,10 @@ import {
   EARNINGS_TOTAL_KEYS,
   EARNINGS_AUXILIARY_KEYS,
   type SeriesMetadata,
+  type TooltipSeriesProjection,
   projectTooltipMetadata,
+  SUPPORT_SERIES_KEY_NOMINAL,
+  SUPPORT_SERIES_KEY_REAL,
 } from "../../lib/chartConstants";
 import { formatCpiTooltipTotal, formatCpiTooltipValue } from "./CustomTooltip";
 import { useChartTooltipController } from "./charts/useChartTooltipProps";
@@ -157,23 +160,18 @@ export function CpiChartSections({
   const comparisonTooltipAllowedKeys = (label?: string) => {
     const period = typeof label === "string" ? label.match(/^(\d{4})Q([1-4])$/) : null;
     if (!period) return comparisonVisibleKeys;
-    return comparisonVisibleKeys.filter(
-      (key) =>
-        key === "CPI総合(12MA)" ||
-        key === "総合(12MA)" ||
-        key === "CTIミクロ基本系列（名目・参考）" ||
-        key === "CTIミクロ基本系列（名目・参考・延長）",
-    );
+    return comparisonVisibleKeys.filter((key) => key === "CPI総合(12MA)" || key === "総合(12MA)");
   };
   const spendingTooltipMeta = (keys: string[], chartColorsForSeries: string[]) =>
-    keys.map((key, order) => ({
+    keys.map((key, order): TooltipSeriesProjection => ({
       key,
       label: getLegendLabel(key),
       color:
-        key === "民間最終消費支出（名目）" || key === "民間最終消費支出（実質）"
+        key === SUPPORT_SERIES_KEY_NOMINAL || key === SUPPORT_SERIES_KEY_REAL
           ? chartColors.barFill
           : chartColorsForSeries[order],
       order,
+      ...ctiMetadata.find((metadata) => metadata.key === key),
     }));
   const spendingAllowedKeys = (keys: string[], hidden: string[]) => (label?: string) => {
     const period = typeof label === "string" ? label.match(/^(\d{4})Q[1-4]$/) : null;
@@ -282,6 +280,7 @@ export function CpiChartSections({
           )}
           legendMode={isMobile ? "collapsible" : "expanded"}
           testId="spending-chart-nominal"
+          descriptors={ctiMetadata}
         />
       </LazyMount>
       <LazyMount sectionId="section-consumption-real">
@@ -391,7 +390,7 @@ export function CpiChartSections({
                   checked={showAdvanced}
                   onChange={(e) => setShowAdvanced(e.target.checked)}
                 />
-                <span>参考・延長系列（CTIミクロ基本系列（名目・参考・延長））を表示する</span>
+                <span>参考・延長系列を表示する</span>
               </label>
             </div>
           }

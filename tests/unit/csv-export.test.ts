@@ -70,10 +70,13 @@ describe("buildCsv", () => {
     const metadata = [
       {
         key: "CTI",
-        valueType: "comparison" as const,
+        label: "CTIミクロ（名目・四半期平均）",
+        valueType: "raw" as const,
         value: null,
         unit: "指数",
         source: "CTI",
+        frequency: "quarterly" as const,
+        aggregation: "simple_mean_of_three_calendar_months",
         status: "valid" as const,
         reason: null,
       },
@@ -93,8 +96,65 @@ describe("buildCsv", () => {
       undefined,
       { metadata },
     );
-    expect(csv.split("\r\n")[1]).toContain("comparison,101,指数,CTI,valid,");
-    expect(csv.split("\r\n")[2]).toContain("comparison,,指数,CTI,invalid,欠測月");
+    expect(csv.split("\r\n")[0]).toContain(
+      "CTI__label,CTI__valueType,CTI__value,CTI__unit,CTI__source,CTI__frequency,CTI__aggregation,CTI__status,CTI__reason",
+    );
+    expect(csv.split("\r\n")[1]).toContain(
+      "CTIミクロ（名目・四半期平均）,raw,101,指数,CTI,quarterly,simple_mean_of_three_calendar_months,valid,",
+    );
+    expect(csv.split("\r\n")[2]).toContain(
+      "CTIミクロ（名目・四半期平均）,raw,,指数,CTI,quarterly,simple_mean_of_three_calendar_months,invalid,欠測月",
+    );
+  });
+
+  it("2017Q4/2018Q1境界とmeasurementなし行で先頭行metadataを流用しない", () => {
+    const metadata = [
+      {
+        key: "CTI",
+        label: "CTIミクロ（名目・四半期平均）",
+        valueType: "raw" as const,
+        value: null,
+        unit: "指数",
+        source: "2005 source",
+        frequency: "quarterly" as const,
+        aggregation: "simple_mean_of_three_calendar_months",
+        status: "valid" as const,
+        reason: null,
+      },
+    ];
+    const csv = buildCsv(
+      [
+        { label: "2017Q4", CTI: 100, measurements: { CTI: { ...metadata[0], value: 100 } } },
+        { label: "2018Q1", CTI: null },
+        {
+          label: "invalidQ",
+          CTI: null,
+          measurements: {
+            CTI: {
+              ...metadata[0],
+              value: null,
+              source: "2018 source",
+              status: "invalid",
+              reason: "missing",
+            },
+          },
+        },
+      ],
+      ["CTI"],
+      undefined,
+      { metadata },
+    );
+    const lines = csv.split("\r\n");
+    expect(lines[1]).toContain(
+      "CTIミクロ（名目・四半期平均）,raw,100,指数,2005 source,quarterly,simple_mean_of_three_calendar_months,valid,",
+    );
+    expect(lines[2]).toContain(
+      "CTIミクロ（名目・四半期平均）,raw,,,,quarterly,,invalid,unavailable",
+    );
+    expect(lines[2]).not.toContain("2005 source");
+    expect(lines[3]).toContain(
+      "CTIミクロ（名目・四半期平均）,raw,,指数,2018 source,quarterly,simple_mean_of_three_calendar_months,invalid,missing",
+    );
   });
 });
 

@@ -1,19 +1,74 @@
 import type { CpiData } from "@/types";
 import {
   SUPPORT_SERIES_KEY_NOMINAL,
-  SUPPORT_SERIES_KEY_REAL,
   CONSUMPTION_NOMINAL_KEYS,
   CONSUMPTION_REAL_KEYS,
 } from "@/lib/chartConstants";
-import { applySupportSeriesScaling } from "@server/lib/math/supportSeries";
 import { normalizeYearMonth } from "@/lib/yearMonth";
 import { calculateQuarter } from "@/lib/math/quarter";
 import type { QuarterlyRow } from "@/types/chart";
 import type { QuarterlyGdpData } from "@server/lib/data-loader/cpi";
 import { joinQuarterlyGdpRows } from "./quarterlyGdpTransform";
 import { isCompleteCtiQuarter } from "@/lib/math/quarterlyCompleteness";
+import {
+  aggregateCtiBasicNominalQuarterly,
+  loadCtiBasicSeries2025,
+  type CtiBasicRecord,
+  type CtiQuarterlyAggregation,
+} from "../ctiBasicSeries2025LongTerm";
 
 export type { QuarterlyRow } from "@/types/chart";
+
+const PLAN38_START_YEAR = 2005;
+const PLAN38_END_YEAR = 2017;
+
+function unavailableCtiQuarterly(): CtiQuarterlyAggregation {
+  const measurements = new Map<string, NonNullable<QuarterlyRow["measurements"]>[string]>();
+  for (let year = PLAN38_START_YEAR; year <= PLAN38_END_YEAR; year += 1) {
+    for (let quarter = 1; quarter <= 4; quarter += 1) {
+      const label = `${year}Q${quarter}`;
+      measurements.set(label, {
+        key: SUPPORT_SERIES_KEY_NOMINAL,
+        label: "CTIミクロ（名目・四半期平均）",
+        unit: "指数",
+        source: "e-Stat 公式CTI長期artifact 000040499070",
+        valueType: "raw",
+        value: null,
+        status: "invalid",
+        reason: "unavailable",
+        frequency: "quarterly",
+        aggregation: "simple_mean_of_three_calendar_months",
+      });
+    }
+  }
+  return { values: new Map(), measurements, status: "invalid", reason: "unavailable" };
+}
+
+/** Build the fixed 52-row Plan38 nominal support projection without GDP or zero-fill. */
+export function buildPlan38CtiNominalRows(quarterly: CtiQuarterlyAggregation): QuarterlyRow[] {
+  const rows: QuarterlyRow[] = [];
+  for (let year = PLAN38_START_YEAR; year <= PLAN38_END_YEAR; year += 1) {
+    for (let quarter = 1; quarter <= 4; quarter += 1) {
+      const label = `${year}Q${quarter}`;
+      const measurement = quarterly.measurements.get(label)!;
+      rows.push({
+        label,
+        quarter,
+        年: year,
+        年月: `${year}年${(quarter - 1) * 3 + 1}月`,
+        [SUPPORT_SERIES_KEY_NOMINAL]: measurement.value,
+        measurements: { [SUPPORT_SERIES_KEY_NOMINAL]: measurement },
+      } as QuarterlyRow);
+    }
+  }
+  return rows;
+}
+
+export function buildPlan38CtiNominalRowsFromRecords(
+  records: readonly CtiBasicRecord[],
+): QuarterlyRow[] {
+  return buildPlan38CtiNominalRows(aggregateCtiBasicNominalQuarterly(records));
+}
 
 /** Existing adapter name retained for callers of the aggregation module. */
 export function mergeQuarterlyGdpRows(
@@ -66,17 +121,17 @@ export function computeQuarterlyAggregates(
     }
   }
 
-  // Fill in missing months with zero-filled entries
+  // Fill missing monthly category values for the legacy expense stack only.
+  // The pre-2018 CTI nominal support line is built from the dedicated artifact
+  // below and must never pass through this compatibility path.
   const filledData: CpiData[] = allMonths.map((yearMonth) => {
     if (dataMap.has(yearMonth)) {
       return dataMap.get(yearMonth)!;
     }
     const emptyItem: CpiData = { 年月: yearMonth } as CpiData;
-    [...nominalKeys, ...realKeys, SUPPORT_SERIES_KEY_NOMINAL, SUPPORT_SERIES_KEY_REAL].forEach(
-      (key) => {
-        (emptyItem as Record<string, unknown>)[key] = 0;
-      },
-    );
+    [...nominalKeys, ...realKeys].forEach((key) => {
+      (emptyItem as Record<string, unknown>)[key] = 0;
+    });
     return emptyItem;
   });
 
@@ -101,21 +156,10 @@ export function computeQuarterlyAggregates(
           const monthStr = `${y}年${m}月`;
           const row = dataMapFilled.get(monthStr);
           if (row) {
-            const allKeys = [
-              ...new Set([...keys, SUPPORT_SERIES_KEY_NOMINAL, SUPPORT_SERIES_KEY_REAL]),
-            ];
-            allKeys.forEach((k) => {
-              if (k === SUPPORT_SERIES_KEY_NOMINAL || k === SUPPORT_SERIES_KEY_REAL) {
-                if (typeof item[k] === "number" && (item[k] as number) > 0) return;
-                const v = row[k as keyof CpiData];
-                if (typeof v === "number") {
-                  item[k] = v;
-                }
-              } else if (keys.includes(k)) {
-                const v = row[k as keyof CpiData];
-                if (typeof v === "number") {
-                  item[k] = ((item[k] as number) || 0) + v;
-                }
+            keys.forEach((k) => {
+              const v = row[k as keyof CpiData];
+              if (typeof v === "number") {
+                item[k] = ((item[k] as number) || 0) + v;
               }
             });
           }
@@ -133,11 +177,19 @@ export function computeQuarterlyAggregates(
     return rows;
   };
 
-  const nominalRows = getQuarterlyData(nominalKeys);
+  const legacyNominalRows = getQuarterlyData(nominalKeys);
+  const nominalRows = legacyNominalRows.filter(
+    (row) => row.年 < PLAN38_START_YEAR || row.年 > PLAN38_END_YEAR,
+  );
   const realRows = getQuarterlyData(realKeys);
 
-  applySupportSeriesScaling(nominalRows, SUPPORT_SERIES_KEY_NOMINAL);
-  applySupportSeriesScaling(realRows, SUPPORT_SERIES_KEY_REAL);
+  try {
+    const records = loadCtiBasicSeries2025("nominal").filter((record) => record.seriesIndex === 1);
+    nominalRows.push(...buildPlan38CtiNominalRowsFromRecords(records));
+  } catch {
+    nominalRows.push(...buildPlan38CtiNominalRows(unavailableCtiQuarterly()));
+  }
+  nominalRows.sort((left, right) => left.年 - right.年 || left.quarter - right.quarter);
 
   return {
     nominal: nominalRows,

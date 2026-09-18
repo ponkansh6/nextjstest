@@ -5,35 +5,21 @@ import {
   computeChartData,
   sumCategoryValues,
   type ChartCalculationProps,
-  type ClientCalculationConfig,
 } from "../../../src/lib/math/clientCalculations";
+import type { QuarterlyView } from "../../../src/types/chart";
 import { createCpiData } from "../../factories/cpiDataFactory";
 
-const config: ClientCalculationConfig = {
-  nominalKeys: ["食料（名目）", "住居（名目）"],
-  realKeys: ["食料（実質）"],
-  ctiKeys: new Set(["食料（名目）", "住居（名目）", "食料（実質）"]),
-  supportNominalKey: "支出（名目）",
-  supportRealKey: "支出（実質）",
-};
-
 const props = (
-  nominalData: ChartCalculationProps["nominalData"],
-  overrides: Partial<ChartCalculationProps> = {},
+  quarterlyNominalData: QuarterlyView[] = [],
+  quarterlyRealData: QuarterlyView[] = [],
 ): ChartCalculationProps => ({
-  nominalData,
-  startYear: 2020,
-  endYear: 2020,
-  maxCpiDate: { year: 2020, month: 12 },
-  ...overrides,
+  nominalData: [],
+  startYear: 2005,
+  endYear: 2018,
+  maxCpiDate: { year: 2018, month: 12 },
+  quarterlyNominalData,
+  quarterlyRealData,
 });
-
-const completeRow = (month: number, overrides: Partial<ReturnType<typeof createCpiData>> = {}) =>
-  createCpiData({
-    年月: `2020年${month}月`,
-    ...Object.fromEntries([...config.nominalKeys, ...config.realKeys].map((key) => [key, 0])),
-    ...overrides,
-  });
 
 describe("src/lib/math/clientCalculations", () => {
   it("sums only numeric, visible category values", () => {
@@ -54,63 +40,35 @@ describe("src/lib/math/clientCalculations", () => {
     expect(calculateCAGRValue(100, 121, 2)).toBeCloseTo(0.1);
   });
 
-  it("normalizes months and averages a complete quarter, retaining valid zeroes", () => {
-    const data = [
-      completeRow(1, { "食料（名目）": 9, "支出（名目）": 90 }),
-      completeRow(2, { "食料（名目）": 0 }),
-      completeRow(3, { "食料（名目）": 15, "支出（名目）": 150 }),
-    ];
-    const result = computeChartData(props(data), [], {
-      ...config,
-      ctiKeys: new Set([...config.ctiKeys, "食料（名目）"]),
-    });
-    expect(result.quarterlyNominalData[0]).toMatchObject({ label: "2020Q1", "食料（名目）": 8 });
-    expect(result.quarterlyNominalData[0]["支出（名目）"]).toBe(90);
+  it("forwards server quarterly projections without CTI aggregation or zero fill", () => {
+    const nominal = [
+      {
+        label: "2005Q1",
+        quarter: 1,
+        年: 2005,
+        年月: "2005Q1",
+        "CTIミクロ四半期系列（名目）": null,
+      },
+      { label: "2018Q1", quarter: 1, 年: 2018, 年月: "2018Q1", "食料（名目）": 10 },
+    ] as QuarterlyView[];
+    const result = computeChartData(props(nominal), []);
+    expect(result.quarterlyNominalData).toEqual(nominal);
+    expect(result.quarterlyNominalData[0]["CTIミクロ四半期系列（名目）"]).toBeNull();
   });
 
-  it("omits incomplete quarters and still omits hidden complete quarters", () => {
-    const data = [
-      completeRow(1, { "食料（名目）": 9 }),
-      completeRow(2, { "食料（名目）": 12 }),
-      completeRow(4, { "食料（名目）": 30 }),
-      completeRow(5, { "食料（名目）": 30 }),
-      completeRow(6, { "食料（名目）": 30 }),
-    ];
-    const result = computeChartData(props(data), [2], config);
-    expect(result.quarterlyNominalData).toHaveLength(0);
-    expect(result.quarterlyNominalData.some((row) => row.label === "2020Q1")).toBe(false);
-    expect(result.quarterlyNominalData.some((row) => row.label === "2020Q2")).toBe(false);
-  });
-
-  it("omits a partial latest quarter", () => {
-    const data = [completeRow(1, { "食料（名目）": 9 }), completeRow(2, { "食料（名目）": 12 })];
-    const result = computeChartData(
-      props(data, { maxCpiDate: { year: 2020, month: 2 } }),
-      [],
-      config,
-    );
-    expect(result.quarterlyNominalData).toEqual([]);
-  });
-
-  it("uses custom nominal and real keys and is deterministic", () => {
-    const custom = props(
-      [
-        createCpiData({ 年月: "2020年1月", customNominal: 3, customReal: 6 }),
-        createCpiData({ 年月: "2020年2月", customNominal: 6, customReal: 9 }),
-        createCpiData({ 年月: "2020年3月", customNominal: 9, customReal: 12 }),
-      ],
-      { nominalKeys: ["customNominal"], realKeys: ["customReal"] },
-    );
-    const first = computeChartData(custom, [], {
-      ...config,
-      ctiKeys: new Set(["customNominal", "customReal"]),
-    });
-    const second = computeChartData(custom, [], {
-      ...config,
-      ctiKeys: new Set(["customNominal", "customReal"]),
-    });
-    expect(first.quarterlyNominalData[0].customNominal).toBe(6);
-    expect(first.quarterlyRealData[0].customReal).toBe(9);
-    expect(first).toEqual(second);
+  it("filters already-projected rows without deleting incomplete CTI rows", () => {
+    const nominal = [
+      {
+        label: "2005Q1",
+        quarter: 1,
+        年: 2005,
+        年月: "2005Q1",
+        "CTIミクロ四半期系列（名目）": null,
+      },
+      { label: "2005Q2", quarter: 2, 年: 2005, 年月: "2005Q2", "CTIミクロ四半期系列（名目）": 0 },
+    ] as QuarterlyView[];
+    const result = computeChartData(props(nominal), [2]);
+    expect(result.quarterlyNominalData.map((row) => row.label)).toEqual(["2005Q1"]);
+    expect(result.quarterlyNominalData[0]["CTIミクロ四半期系列（名目）"]).toBeNull();
   });
 });

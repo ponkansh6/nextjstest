@@ -3,6 +3,8 @@
 import React from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { CpiData } from "@/types";
+import type { SeriesMeasurement } from "@/types/chart";
+import type { SeriesMetadata } from "../../lib/chartConstants";
 import styles from "./CpiChart.module.css";
 import {
   getLegendLabel,
@@ -39,7 +41,8 @@ interface QuarterlyDataPoint {
   年: number;
   quarter: number;
   年月: string;
-  [key: string]: string | number | null;
+  measurements?: Record<string, SeriesMeasurement>;
+  [key: string]: string | number | null | Record<string, SeriesMeasurement> | undefined;
 }
 
 interface SpendingBarChartProps {
@@ -62,6 +65,7 @@ interface SpendingBarChartProps {
   linkedSectionId?: string;
   testId?: string;
   isMobile?: boolean;
+  descriptors?: readonly SeriesMetadata[];
 }
 
 export function normalizeSpendingChartData(
@@ -103,6 +107,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
     linkedSectionId,
     testId,
     isMobile = false,
+    descriptors = [],
   } = props;
   const supportKey = keys.includes(SUPPORT_SERIES_KEY_REAL)
     ? SUPPORT_SERIES_KEY_REAL
@@ -110,19 +115,24 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
       ? SUPPORT_SERIES_KEY_NOMINAL
       : undefined;
   const ctiKeys = keys.filter((key) => key !== supportKey);
-  const hasLegacyGdp = data.some(
+  const hasPreBoundarySupport = data.some(
     (row) => row.年 < 2018 && supportKey && typeof row[supportKey] === "number",
   );
-  const legendKeys = hasLegacyGdp ? keys : ctiKeys;
+  const legendKeys = hasPreBoundarySupport ? keys : ctiKeys;
   const selectedLegendCount = legendKeys.filter((key) => !hiddenKeys.includes(key)).length;
   const visibleCtiKeyCount = ctiKeys.filter((key) => !hiddenKeys.includes(key)).length;
   const hasVisibleExpenseSeries = visibleCtiKeyCount > 0;
   const hasVisibleSupportSeries =
-    supportKey !== undefined && hasLegacyGdp && !hiddenKeys.includes(supportKey);
+    supportKey !== undefined && hasPreBoundarySupport && !hiddenKeys.includes(supportKey);
   const shouldShowEmptyState = !hasVisibleExpenseSeries && !hasVisibleSupportSeries;
   const selectedQuarterCount = [1, 2, 3, 4].filter((q) => !hiddenQuarters.includes(q)).length;
   const hasActiveLegendFilter = selectedLegendCount < legendKeys.length || selectedQuarterCount < 4;
-  // Plan24: GDP is a standalone bar before 2018Q1; CTI is the only stack afterwards.
+  const supportReason = supportKey
+    ? data.find((row) => row.measurements?.[supportKey]?.status === "invalid")?.measurements?.[
+        supportKey
+      ]?.reason
+    : undefined;
+  // CTI is the standalone nominal support before 2018Q1; expense items stack afterwards.
   const chartData = normalizeSpendingChartData(data, keys);
   const publicKeys = getPublicSpendingKeys(keys);
   const maxHeight = chartData.reduce((max, row) => {
@@ -188,7 +198,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
       className={`${styles.chartSection} ${styles.spendingChartSection}`}
       style={{ scrollMarginTop: "5rem" }}
       data-testid={testId}
-      data-gdp-periods={chartData
+      data-support-periods={chartData
         .filter((row) => supportKey && typeof row[supportKey] === "number")
         .map((row) => row.label)
         .join(",")}
@@ -207,7 +217,12 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
           />
         )}
       </h2>
-      <ChartDataContract data={chartData} keys={publicKeys} />
+      {supportKey === SUPPORT_SERIES_KEY_NOMINAL && !hasPreBoundarySupport && (
+        <p role="status" className={styles.chartNote}>
+          CTIミクロ名目四半期系列は利用できません（{supportReason ?? "unavailable"}）。
+        </p>
+      )}
+      <ChartDataContract data={chartData} keys={publicKeys} descriptors={descriptors} />
 
       {legendMode === "collapsible" && (
         <>
@@ -299,7 +314,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
               dx={-10}
             />
             <Tooltip {...tooltipProps} />
-            {supportKey && hasLegacyGdp && !hiddenKeys.includes(supportKey) && (
+            {supportKey && hasPreBoundarySupport && !hiddenKeys.includes(supportKey) && (
               <Bar
                 dataKey={supportKey}
                 data-key={supportKey}

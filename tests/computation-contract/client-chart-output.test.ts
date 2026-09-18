@@ -1,255 +1,54 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { computeChartData } from "../../src/lib/clientCalculations";
-import { createCpiDataList } from "../factories/cpiDataFactory";
-import {
-  CONSUMPTION_NOMINAL_KEYS,
-  CONSUMPTION_REAL_KEYS,
-  SUPPORT_SERIES_KEY_NOMINAL,
-  SUPPORT_SERIES_KEY_REAL,
-} from "../../src/lib/chartConstants";
-import { loadCtiData } from "../../server/lib/dataLoader";
-import type { CpiData } from "../../src/types";
+import { SUPPORT_SERIES_KEY_NOMINAL } from "../../src/lib/chartConstants";
 
-const completeCtiRow = (month: number, overrides: Partial<CpiData> = {}): CpiData =>
-  ({
-    年月: `2020年${month}月`,
-    ...Object.fromEntries(
-      [...CONSUMPTION_NOMINAL_KEYS, ...CONSUMPTION_REAL_KEYS].map((key) => [key, 0]),
-    ),
-    ...overrides,
-  }) as CpiData;
-
-// データから最新の年月を計算するヘルパー関数
-const calculateMaxCpiDate = (data: CpiData[]) => {
-  let maxYear = 0;
-  let maxMonth = 0;
-  data.forEach((item) => {
-    const m = item.年月.match(/^(\d{4})年(\d{1,2})月/);
-    if (m) {
-      const y = parseInt(m[1], 10);
-      const mo = parseInt(m[2], 10);
-      if (y > maxYear || (y === maxYear && mo > maxMonth)) {
-        maxYear = y;
-        maxMonth = mo;
-      }
-    }
-  });
-  return { month: maxMonth, year: maxYear };
-};
-
-describe("Client Data Structure Integrity", () => {
-  const mockNominalData: CpiData[] = [completeCtiRow(1), completeCtiRow(2), completeCtiRow(3)];
-  const props = {
-    data: [],
-    endYear: 2020,
-    maxCpiDate: { month: 3, year: 2020 },
-    nominalData: mockNominalData,
-    CONSUMPTION_NOMINAL_KEYS: CONSUMPTION_NOMINAL_KEYS,
-    realKeys: CONSUMPTION_REAL_KEYS,
-    startYear: 2020,
+describe("client chart output contract", () => {
+  const nominal = {
+    label: "2005Q1",
+    quarter: 1,
+    年: 2005,
+    年月: "2005Q1",
+    [SUPPORT_SERIES_KEY_NOMINAL]: 101.25,
+    "民間最終消費支出（名目）": 999,
+    "民間最終消費支出（名目・原値）": 888,
+    "民間最終消費支出（名目・比較指数）": 777,
   };
 
-  it("should have keys ending with '（名目）' to match CSV data structure", () => {
-    CONSUMPTION_NOMINAL_KEYS.forEach((key) => {
-      expect(key).toMatch(/（名目）$/);
-    });
+  const props = (quarterlyNominalData: any[], quarterlyRealData: any[] = []) => ({
+    data: [],
+    nominalData: [],
+    startYear: 2005,
+    endYear: 2018,
+    maxCpiDate: { year: 2018, month: 3 },
+    quarterlyNominalData,
+    quarterlyRealData,
   });
 
-  it("quarterlyNominalData should contain all keys from CONSUMPTION_NOMINAL_KEYS", () => {
-    const result = computeChartData(props, []);
-    expect(result.quarterlyNominalData).toHaveLength(1);
-    const sampleData = result.quarterlyNominalData[0];
-
-    CONSUMPTION_NOMINAL_KEYS.forEach((key) => {
-      expect(sampleData).toHaveProperty(key);
-      expect(typeof sampleData[key]).toBe("number");
-    });
+  it("forwards the server-projected nominal CTI row without recomputing it", () => {
+    const result = computeChartData(props([nominal]), []);
+    expect(result.quarterlyNominalData).toEqual([nominal]);
+    expect(result.quarterlyNominalData[0][SUPPORT_SERIES_KEY_NOMINAL]).toBe(101.25);
+    expect(result.quarterlyNominalData[0]).toHaveProperty("民間最終消費支出（名目）", 999);
+    expect(result.quarterlyNominalData[0]).toHaveProperty("民間最終消費支出（名目・原値）", 888);
   });
 
-  it("should correctly calculate quarterly average", () => {
-    // 2020年1月, 2月, 3月 のデータを作成
-    const mockNominalData: CpiData[] = createCpiDataList([
-      completeCtiRow(1, { "食料（名目）": 30, [SUPPORT_SERIES_KEY_NOMINAL]: 100 }),
-      completeCtiRow(2, { "食料（名目）": 60, [SUPPORT_SERIES_KEY_NOMINAL]: 100 }),
-      completeCtiRow(3, { "食料（名目）": 90, [SUPPORT_SERIES_KEY_NOMINAL]: 100 }),
+  it("preserves null and zero values from the public projection", () => {
+    const rows = [
+      { ...nominal, label: "2005Q1", [SUPPORT_SERIES_KEY_NOMINAL]: null },
+      { ...nominal, label: "2005Q2", [SUPPORT_SERIES_KEY_NOMINAL]: 0 },
+    ];
+    const result = computeChartData(props(rows), []);
+    expect(result.quarterlyNominalData.map((row) => row[SUPPORT_SERIES_KEY_NOMINAL])).toEqual([
+      null,
+      0,
     ]);
-    const props = {
-      data: [],
-      endYear: 2020,
-      maxCpiDate: { month: 3, year: 2020 },
-      nominalData: mockNominalData,
-      CONSUMPTION_NOMINAL_KEYS: CONSUMPTION_NOMINAL_KEYS,
-      realKeys: CONSUMPTION_REAL_KEYS,
-      startYear: 2020,
-    };
-    const result = computeChartData(props, []);
-    // 2020Q1の食料（名目）は (30+60+90)/3 = 60
-    const q1Data = result.quarterlyNominalData.find((d) => d.label === "2020Q1");
-    expect(q1Data?.["食料（名目）"]).toBe(60);
   });
 
-  it("keeps GDP raw and normalized values out of quarterly CTI rows", () => {
-    const nominalData = createCpiDataList([
-      {
-        ...completeCtiRow(1, { "食料（名目）": 30 }),
-        "民間最終消費支出（名目）": 400,
-        "民間最終消費支出（実質）": 380,
-        "民間最終消費支出（名目・原値）": 400,
-        "民間最終消費支出（実質・原値）": 380,
-        "民間最終消費支出（名目・比較指数）": 101,
-        "民間最終消費支出（実質・比較指数）": null,
-      },
-      completeCtiRow(2, { "食料（名目）": 60 }),
-      completeCtiRow(3, { "食料（名目）": 90 }),
-    ]);
-    const result = computeChartData(
-      {
-        data: [],
-        endYear: 2020,
-        maxCpiDate: { month: 3, year: 2020 },
-        nominalData,
-        nominalKeys: CONSUMPTION_NOMINAL_KEYS,
-        realKeys: CONSUMPTION_REAL_KEYS,
-        startYear: 2020,
-      },
-      [],
-    );
-    const q1 = result.quarterlyNominalData[0];
-
-    expect(q1["食料（名目）"]).toBe(60);
-    expect(typeof q1["食料（名目）"]).toBe("number");
-    expect(q1).not.toHaveProperty("民間最終消費支出（名目・原値）");
-    expect(q1).not.toHaveProperty("民間最終消費支出（実質・原値）");
-    expect(q1).not.toHaveProperty("民間最終消費支出（名目・比較指数）");
-    expect(q1).not.toHaveProperty("民間最終消費支出（実質・比較指数）");
-  });
-
-  it("should correctly calculate quarterly average with real data", async () => {
-    const realData = await loadCtiData();
-    const props = {
-      data: realData,
-      endYear: 2026,
-      maxCpiDate: calculateMaxCpiDate(realData),
-      nominalData: realData,
-      CONSUMPTION_NOMINAL_KEYS: CONSUMPTION_NOMINAL_KEYS,
-      realKeys: CONSUMPTION_REAL_KEYS,
-      startYear: 2005,
-    };
-    const result = computeChartData(props, []);
-    expect(result.quarterlyNominalData.length).toBeGreaterThan(0);
-    // データの妥当性をチェックする（例：すべての値が0以上であること）
-    result.quarterlyNominalData.forEach((row) => {
-      CONSUMPTION_NOMINAL_KEYS.forEach((key) => {
-        expect(row[key]).toBeGreaterThanOrEqual(0);
-      });
-    });
-  });
-
-  it("should verify all consumption categories (except support) have positive values for 2017 onwards in quarterly data", async () => {
-    const realData = await loadCtiData();
-    const props = {
-      data: realData,
-      endYear: 2026,
-      maxCpiDate: calculateMaxCpiDate(realData),
-      nominalData: realData,
-      CONSUMPTION_NOMINAL_KEYS: CONSUMPTION_NOMINAL_KEYS,
-      realKeys: CONSUMPTION_REAL_KEYS,
-      startYear: 2005,
-    };
-    const result = computeChartData(props, []);
-
-    const allQuarterlyData = [...result.quarterlyNominalData, ...result.quarterlyRealData];
-
-    // 2017年以降のデータをフィルタリング
-    const recentData = allQuarterlyData.filter((d) => d.年 >= 2017);
-
-    expect(recentData.length).toBeGreaterThan(0);
-
-    // 最新の年に属する最後の四半期は3ヶ月未満の可能性があるため除外
-    const maxYear = Math.max(...recentData.map((d) => d.年 as number));
-    const lastQuarter = Math.max(
-      ...recentData.filter((d) => d.年 === maxYear).map((d) => d.quarter as number),
-    );
-    const completeData = recentData.filter((d) => !(d.年 === maxYear && d.quarter === lastQuarter));
-
-    completeData.forEach((row) => {
-      // CTI費目だけを検証する。GDPのraw/normalized値や状態オブジェクトは
-      // 四半期CTI積み上げの契約外であり、Object.keys()から推測しない。
-      const keysToCheck = [...CONSUMPTION_NOMINAL_KEYS, ...CONSUMPTION_REAL_KEYS].filter(
-        (key) => key in row,
-      );
-
-      keysToCheck.forEach((key) => {
-        const val = row[key] as number;
-        expect(val, `${key} in ${row.label} should be > 0 (2017 onwards)`).toBeGreaterThan(0);
-      });
-    });
-  });
-
-  it("should have zero consumption categories for pre-2017 quarters (no category breakdown data)", async () => {
-    // 2005-2016年は個別費目内訳が存在しないため、9分類の消費カテゴリは全て0
-    // 総額はサポート系列（民間最終消費支出）のみで表現される
-    const realData = await loadCtiData();
-    const props = {
-      data: realData,
-      endYear: 2026,
-      maxCpiDate: calculateMaxCpiDate(realData),
-      nominalData: realData,
-      CONSUMPTION_NOMINAL_KEYS: CONSUMPTION_NOMINAL_KEYS,
-      realKeys: CONSUMPTION_REAL_KEYS,
-      startYear: 2005,
-    };
-    const result = computeChartData(props, []);
-
-    const pre2017Nominal = result.quarterlyNominalData.filter((d) => d.年 <= 2016);
-    const pre2017Real = result.quarterlyRealData.filter((d) => d.年 <= 2016);
-
-    expect(pre2017Nominal.length).toBeGreaterThan(0);
-    expect(pre2017Real.length).toBeGreaterThan(0);
-
-    pre2017Nominal.forEach((d) => {
-      CONSUMPTION_NOMINAL_KEYS.forEach((key) => {
-        expect(d[key], `${d.label} ${key} should be 0 (pre-2017)`).toBe(0);
-      });
-    });
-    pre2017Real.forEach((d) => {
-      CONSUMPTION_REAL_KEYS.forEach((key) => {
-        expect(d[key], `${d.label} ${key} should be 0 (pre-2017)`).toBe(0);
-      });
-    });
-  });
-
-  it("should have zero support series for 2017+ quarters (only CTI categories are used for stacking)", async () => {
-    // 2017年以降はCTIデータに個別費目内訳が存在するため、
-    // サポート系列（民間最終消費支出）は積み上げに使用されない
-    const realData = await loadCtiData();
-    const props = {
-      data: realData,
-      endYear: 2026,
-      maxCpiDate: calculateMaxCpiDate(realData),
-      nominalData: realData,
-      CONSUMPTION_NOMINAL_KEYS: CONSUMPTION_NOMINAL_KEYS,
-      realKeys: CONSUMPTION_REAL_KEYS,
-      startYear: 2005,
-    };
-    const result = computeChartData(props, []);
-
-    const post2016Nominal = result.quarterlyNominalData.filter((d) => d.年 >= 2017);
-    const post2016Real = result.quarterlyRealData.filter((d) => d.年 >= 2017);
-
-    expect(post2016Nominal.length).toBeGreaterThan(0);
-    expect(post2016Real.length).toBeGreaterThan(0);
-
-    post2016Nominal.forEach((d) => {
-      expect(
-        d[SUPPORT_SERIES_KEY_NOMINAL],
-        `${d.label} should have zero nominal support (2017+)`,
-      ).toBe(0);
-    });
-    post2016Real.forEach((d) => {
-      expect(d[SUPPORT_SERIES_KEY_REAL], `${d.label} should have zero real support (2017+)`).toBe(
-        0,
-      );
-    });
+  it("filters hidden quarters and keeps nominal CTI out of real output", () => {
+    const real = { label: "2018Q1", quarter: 1, 年: 2018, 年月: "2018Q1" };
+    const hiddenNominal = { ...nominal, label: "2005Q2", quarter: 2, 年月: "2005Q2" };
+    const result = computeChartData(props([hiddenNominal], [real]), [2]);
+    expect(result.quarterlyNominalData).toHaveLength(0);
+    expect(result.quarterlyRealData).toEqual([real]);
   });
 });

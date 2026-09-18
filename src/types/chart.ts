@@ -1,6 +1,12 @@
 export interface CustomTooltipProps {
   active?: boolean;
-  payload?: { name: string; value: number | null | undefined; color?: string; dataKey?: string }[];
+  payload?: {
+    name: string;
+    value: number | null | undefined;
+    color?: string;
+    dataKey?: string;
+    payload?: Record<string, unknown>;
+  }[];
   seriesMeta?: TooltipSeriesMetadata[];
   label?: string;
   isMobile: boolean;
@@ -41,6 +47,8 @@ export interface TooltipSeriesMetadata {
   valueType?: "raw" | "comparison";
   status?: "valid" | "invalid";
   reason?: string | null;
+  frequency?: "monthly" | "quarterly" | "annual";
+  aggregation?: string;
 }
 
 /** Public measurement metadata shared by chart, table, tooltip and CSV. */
@@ -53,6 +61,8 @@ export interface SeriesMeasurement {
   value: number | null;
   status: "valid" | "invalid";
   reason: string | null;
+  frequency: "monthly" | "quarterly" | "annual";
+  aggregation: string;
 }
 
 /** Descriptor and row measurement intentionally share the complete public shape. */
@@ -67,14 +77,17 @@ export interface QuarterlyRow {
   quarter: number;
   label: string;
   年月: string;
-  [key: string]: number | string;
+  measurements?: Record<string, SeriesMeasurement>;
+  [key: string]: number | string | null | Record<string, SeriesMeasurement> | undefined;
 }
 
-export interface QuarterlyView extends Record<string, number | string | null> {
+export interface QuarterlyView {
   label: string;
   quarter: number;
   年: number;
   年月: string;
+  measurements?: Record<string, SeriesMeasurement>;
+  [key: string]: number | string | null | Record<string, SeriesMeasurement> | undefined;
 }
 
 export interface EarningsView extends Record<string, string | number | null> {

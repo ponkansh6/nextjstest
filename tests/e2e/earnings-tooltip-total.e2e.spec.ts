@@ -4,13 +4,7 @@ import type { Locator, Page } from "@playwright/test";
 const EARNINGS_SECTION = "#section-earnings";
 const TOTAL_LABEL = "給与区分合計（所定内＋所定外＋特別）";
 const INCLUDED_KEYS = ["所定内給与", "所定外給与", "特別給与"] as const;
-const AUXILIARY_KEYS = [
-  "時間当たり給与",
-  "15歳以上国民当たり給与",
-  "CPI総合(参考)",
-  "CTIミクロ基本系列（名目・原数値）",
-] as const;
-const RAW_KEY = "CTIミクロ基本系列（名目・原数値）";
+const AUXILIARY_KEYS = ["時間当たり給与", "15歳以上国民当たり給与", "CPI総合(参考)"] as const;
 const EXPECTED_LABELS = [
   "所定内給与",
   "所定外給与",
@@ -18,7 +12,6 @@ const EXPECTED_LABELS = [
   "時間当たり給与",
   "15歳以上国民当たり給与",
   "物価指数総合(参考)",
-  "CTIミクロ基本系列（名目・原数値）",
 ] as const;
 
 type TooltipRow = {
@@ -98,38 +91,6 @@ async function readTooltip(tooltip: Locator) {
   };
 }
 
-async function assertRawSeriesContract(
-  section: Locator,
-  evidence: Awaited<ReturnType<typeof readTooltip>>,
-) {
-  const rawRow = evidence.rows.find((row) => row.key === RAW_KEY);
-  expect(rawRow?.label).toBe(RAW_KEY);
-  expect(rawRow?.value).toMatch(/^\d+\.\d{2}$/);
-
-  const descriptors = JSON.parse(
-    (await section
-      .locator('[data-testid="chart-data-contract"]')
-      .getAttribute("data-descriptors")) ?? "[]",
-  ) as Array<Record<string, unknown>>;
-  expect(descriptors.find((descriptor) => descriptor.key === RAW_KEY)).toMatchObject({
-    key: RAW_KEY,
-    label: RAW_KEY,
-    unit: "指数",
-    source: "Plan37 official CSV",
-    valueType: "raw",
-    status: "valid",
-    reason: null,
-  });
-
-  const contractValue = await section
-    .locator(
-      `[data-testid="chart-data-contract"] [data-chart-data-row][data-period="${evidence.period}"] [data-series-key="${RAW_KEY}"]`,
-    )
-    .getAttribute("data-value");
-  expect(contractValue).not.toBeNull();
-  expect(Number(rawRow?.value)).toBeCloseTo(Number(contractValue), 2);
-}
-
 function displayedSum(rows: TooltipRow[], keys: readonly string[]) {
   return Number(
     rows
@@ -147,7 +108,7 @@ test.describe("給与tooltipの区分合計 desktop E2E", () => {
     await page.waitForLoadState("networkidle");
   });
 
-  test("6系列とdesktop合計を表示し、補助系列を合計から除外する", async ({ page }) => {
+  test("6系列とdesktop合計を表示し、旧CTI給与系列を含めない", async ({ page }) => {
     const section = earningsSection(page);
     await expect(section).toBeVisible({ timeout: 15000 });
     const tooltip = await hoverFreshEarningsPlot(page, section);
@@ -155,7 +116,7 @@ test.describe("給与tooltipの区分合計 desktop E2E", () => {
 
     expect(evidence.rows.map((row) => row.key)).toEqual([...INCLUDED_KEYS, ...AUXILIARY_KEYS]);
     expect(evidence.rows.map((row) => row.label)).toEqual([...EXPECTED_LABELS]);
-    expect(evidence.rows).toHaveLength(7);
+    expect(evidence.rows).toHaveLength(6);
     expect(evidence.rows.filter((row) => row.separator)).toHaveLength(1);
     expect(evidence.rows.find((row) => row.separator)?.key).toBe("時間当たり給与");
     expect(evidence.rows.find((row) => row.separator)?.borderTop).not.toBe("0px");
@@ -164,7 +125,10 @@ test.describe("給与tooltipの区分合計 desktop E2E", () => {
     expect(Number(evidence.total.value)).not.toBe(
       displayedSum(evidence.rows, [...INCLUDED_KEYS, ...AUXILIARY_KEYS]),
     );
-    await assertRawSeriesContract(section, evidence);
+    expect(evidence.rows.map((row) => row.key).join(" ")).not.toMatch(/CTIミクロ基本系列/);
+    await expect(section.locator('[data-testid="chart-data-contract"]')).not.toContainText(
+      "CTIミクロ基本系列",
+    );
   });
 
   test("対象系列をlegendでhiddenにした後も再hoverでき、合計を残り2系列で再計算する", async ({
@@ -186,7 +150,7 @@ test.describe("給与tooltipの区分合計 desktop E2E", () => {
       ...INCLUDED_KEYS.slice(1),
       ...AUXILIARY_KEYS,
     ]);
-    expect(freshEvidence.rows).toHaveLength(6);
+    expect(freshEvidence.rows).toHaveLength(5);
     expect(freshEvidence.rows.filter((row) => row.separator)).toHaveLength(1);
     expect(freshEvidence.rows.find((row) => row.separator)?.key).toBe("時間当たり給与");
     expect(freshEvidence.rows.find((row) => row.separator)?.borderTop).not.toBe("0px");
@@ -199,6 +163,6 @@ test.describe("給与tooltipの区分合計 desktop E2E", () => {
       displayedSum(freshEvidence.rows, [...INCLUDED_KEYS.slice(1), ...AUXILIARY_KEYS]),
     );
     expect(Number(initialEvidence.total.value)).not.toBe(Number(freshEvidence.total.value));
-    await assertRawSeriesContract(section, freshEvidence);
+    expect(freshEvidence.rows.map((row) => row.key).join(" ")).not.toMatch(/CTIミクロ基本系列/);
   });
 });

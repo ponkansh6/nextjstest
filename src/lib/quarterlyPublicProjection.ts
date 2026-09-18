@@ -21,6 +21,7 @@ export const QUARTERLY_PUBLIC_KEYS = [
 ] as const;
 
 export type QuarterlyPublicKey = (typeof QUARTERLY_PUBLIC_KEYS)[number];
+export type QuarterlyPublicMode = "nominal" | "real";
 
 function publicQuarterLabel(row: QuarterlyRow): string {
   return `${row.年}Q${row.quarter}`;
@@ -36,7 +37,13 @@ function isQuarterlyRow(row: QuarterlyRow): boolean {
   );
 }
 
-export function projectQuarterlyPublicView(rows: QuarterlyRow[]): QuarterlyView[] {
+export function projectQuarterlyPublicView(
+  rows: QuarterlyRow[],
+  mode: QuarterlyPublicMode = "nominal",
+): QuarterlyView[] {
+  const publicKeys =
+    mode === "nominal" ? QUARTERLY_PUBLIC_NOMINAL_KEYS : QUARTERLY_PUBLIC_REAL_KEYS;
+  const publicKeySet = new Set<string>(publicKeys);
   return rows.filter(isQuarterlyRow).map((row) => {
     const out: QuarterlyView = {
       label: row.label,
@@ -45,7 +52,18 @@ export function projectQuarterlyPublicView(rows: QuarterlyRow[]): QuarterlyView[
       // The established public period contract is YYYYQn on every surface.
       年月: publicQuarterLabel(row),
     };
-    for (const key of QUARTERLY_PUBLIC_KEYS) {
+    const measurements = row.measurements
+      ? Object.fromEntries(
+          Object.entries(row.measurements).filter(([key]) => publicKeySet.has(key)),
+        )
+      : undefined;
+    if (measurements && Object.keys(measurements).length > 0) out.measurements = measurements;
+    for (const key of publicKeys) {
+      const measurement = row.measurements?.[key];
+      if (measurement) {
+        out[key] = measurement.value;
+        continue;
+      }
       const value = row[key];
       out[key] = typeof value === "number" ? Math.round(value * 100) / 100 : null;
     }

@@ -8,16 +8,16 @@ import {
 import { projectQuarterlyPublicView } from "../../../src/lib/quarterlyPublicProjection";
 import type { QuarterlyView } from "@/types/chart";
 
-/** Join validated GDP comparisons and expose only the public quarterly views. */
+/** Join GDP only into the independent real support path before public projection. */
 export function buildQuarterlyPublicViews(
   nominalRows: QuarterlyRow[],
   realRows: QuarterlyRow[],
   gdp: QuarterlyGdpData,
 ): { nominal: QuarterlyView[]; real: QuarterlyView[] } {
-  const joined = mergeQuarterlyGdpRows(nominalRows, realRows, gdp);
+  const joined = mergeQuarterlyGdpRows([], realRows, gdp);
   return {
-    nominal: projectQuarterlyPublicView(joined.nominal),
-    real: projectQuarterlyPublicView(joined.real),
+    nominal: projectQuarterlyPublicView(nominalRows, "nominal"),
+    real: projectQuarterlyPublicView(joined.real, "real"),
   };
 }
 
@@ -27,11 +27,7 @@ export async function loadQuarterlyPublicData(): Promise<{
   real: QuarterlyView[];
   maxCpiDate: { year: number; month: number };
 }> {
-  const [cpiData, ctiData, quarterlyGdpData] = await Promise.all([
-    loadCpiData(),
-    loadCtiData(),
-    loadQuarterlyGdpData(),
-  ]);
+  const [cpiData, ctiData] = await Promise.all([loadCpiData(), loadCtiData()]);
   let maxCpiYear = 1994;
   let maxCpiMonth = 1;
   for (const row of cpiData) {
@@ -48,6 +44,7 @@ export async function loadQuarterlyPublicData(): Promise<{
     year: maxCpiYear,
     month: maxCpiMonth,
   });
+  const quarterlyGdpData = await loadQuarterlyGdpData();
   return {
     ...buildQuarterlyPublicViews(aggregated.nominal, aggregated.real, quarterlyGdpData),
     maxCpiDate: { year: maxCpiYear, month: maxCpiMonth },

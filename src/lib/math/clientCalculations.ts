@@ -1,14 +1,9 @@
 import type { CpiData } from "@/types";
-import { parseYearMonth, normalizeYearMonth } from "../yearMonth";
-import type { SupportSeriesRow } from "./supportSeries";
-import { isCompleteCtiQuarter } from "./quarterlyCompleteness";
+import { parseYearMonth } from "../yearMonth";
 
 export interface ClientCalculationConfig {
   nominalKeys: string[];
   realKeys: string[];
-  ctiKeys: Set<string>;
-  supportNominalKey: string;
-  supportRealKey: string;
 }
 
 export interface ChartCalculationProps {
@@ -18,10 +13,13 @@ export interface ChartCalculationProps {
   nominalKeys?: string[];
   realKeys?: string[];
   maxCpiDate: { year: number; month: number };
+  /** Quarterly rows are already projected by the server; the client only filters them for display. */
+  quarterlyNominalData?: QuarterlyAggregationRow[];
+  quarterlyRealData?: QuarterlyAggregationRow[];
 }
 
-export interface QuarterlyAggregationRow extends SupportSeriesRow {
-  [key: string]: string | number | null | undefined;
+export interface QuarterlyAggregationRow {
+  [key: string]: string | number | null | Record<string, unknown> | undefined;
   label: string;
   quarter: number;
 }
@@ -70,81 +68,16 @@ export const calculateCAGRValue = (startValue: number, endValue: number, years: 
 export function computeChartData(
   props: ChartCalculationProps,
   hiddenQuarters: number[],
-  config: ClientCalculationConfig,
+  _config?: ClientCalculationConfig,
 ): ClientCalculationResult {
-  const nominalKeys = props.nominalKeys || config.nominalKeys;
-  const realKeys = props.realKeys || config.realKeys;
-  const normalized = props.nominalData.map((d) => ({
-    ...d,
-    年月: normalizeYearMonth(String(d.年月)),
-  }));
-  const allMonths: string[] = [];
-  for (let y = props.startYear; y <= props.endYear; y++)
-    for (let m = 1; m <= 12; m++) allMonths.push(`${y}年${m}月`);
-  const sourceMap = new Map(normalized.map((d) => [d.年月, d]));
-  const filled = allMonths.map((period) => {
-    const existing = sourceMap.get(period);
-    if (existing)
-      return {
-        ...existing,
-        [config.supportNominalKey]: readNumericValue(existing, config.supportNominalKey),
-      };
-    const empty = { 年月: period } as CpiData;
-    [...nominalKeys, ...realKeys, config.supportNominalKey].forEach((key) => {
-      empty[key as keyof CpiData] = 0;
-    });
-    return empty;
-  });
-  const endYear = Math.min(props.endYear, props.maxCpiDate.year);
-  const map = new Map(filled.map((d) => [d.年月, d]));
-  const quarterly = (keys: string[]) => {
-    const categoryKeys = keys.filter((key) => config.ctiKeys.has(key));
-    const completenessKeys = [...new Set([...nominalKeys, ...realKeys])].filter((key) =>
-      config.ctiKeys.has(key),
-    );
-    const rows: QuarterlyAggregationRow[] = [];
-    for (let y = props.startYear; y <= endYear; y++) {
-      const maxQ = y === props.maxCpiDate.year ? Math.ceil(props.maxCpiDate.month / 3) : 4;
-      for (let q = 1; q <= maxQ; q++) {
-        const months = [
-          [1, 2, 3],
-          [4, 5, 6],
-          [7, 8, 9],
-          [10, 11, 12],
-        ][q - 1];
-        const item: QuarterlyAggregationRow = {
-          label: `${y}Q${q}`,
-          quarter: q,
-          年: y,
-          [config.supportNominalKey]: 0,
-          [config.supportRealKey]: 0,
-        };
-        categoryKeys.forEach((key) => {
-          item[key] = 0;
-        });
-        months.forEach((m) => {
-          const row = map.get(`${y}年${m}月`);
-          if (!row) return;
-          [...new Set([...categoryKeys, config.supportNominalKey, config.supportRealKey])].forEach(
-            (key) => {
-              const value = readNumericValue(row, key);
-              if (value === undefined) return;
-              if (key === config.supportNominalKey || key === config.supportRealKey) {
-                if (!(item[key] as number)) item[key] = value;
-              } else item[key] = (item[key] as number) + value;
-            },
-          );
-        });
-        if (categoryKeys.length && !isCompleteCtiQuarter(sourceMap, y, q, completenessKeys))
-          continue;
-        if (hiddenQuarters.includes(q)) continue;
-        categoryKeys.forEach((key) => {
-          item[key] = (item[key] as number) / 3;
-        });
-        rows.push(item);
-      }
-    }
-    return rows;
+  const filterHidden = (rows: QuarterlyAggregationRow[] = []) =>
+    rows.filter((row) => !hiddenQuarters.includes(row.quarter));
+
+  // CTI quarterly aggregation, zero filling, first-value selection, and row
+  // deletion are server responsibilities. This API only forwards the public
+  // projection supplied by the server for rendering.
+  return {
+    quarterlyNominalData: filterHidden(props.quarterlyNominalData),
+    quarterlyRealData: filterHidden(props.quarterlyRealData),
   };
-  return { quarterlyNominalData: quarterly(nominalKeys), quarterlyRealData: quarterly(realKeys) };
 }

@@ -243,6 +243,15 @@ describe("Integrated UI Chart Tests", () => {
         nominalKeys: ["その他の消費支出（名目）"],
         realKeys: [],
         maxCpiDate: { year: 2023, month: 3 },
+        quarterlyNominalData: [
+          {
+            label: "2023Q1",
+            quarter: 1,
+            年: 2023,
+            年月: "2023Q1",
+            "その他の消費支出（名目）": 100,
+          },
+        ],
       };
 
       const { quarterlyNominalData } = computeChartData(props, []);
@@ -270,45 +279,14 @@ describe("Integrated UI Chart Tests", () => {
       expect(screen.getAllByText("諸雑費・CPI外").length).toBeGreaterThan(0);
     });
 
-    it("should verify 民間最終消費支出（参考） and CTI消費支出（参考） range", () => {
-      mockMergedData.forEach((d) => {
-        const minkan = Number(d["民間最終消費支出（参考）" as keyof CpiData] || 0);
-        const cti = Number(d["CTI消費支出（参考）" as keyof CpiData] || 0);
-        if (minkan > 0) {
-          expect(minkan, `民間最終消費支出（参考） should be 50-150`).toBeGreaterThanOrEqual(50);
-          expect(minkan, `民間最終消費支出（参考） should be 50-150`).toBeLessThanOrEqual(150);
-        }
-        if (cti > 0) {
-          expect(cti, `CTI消費支出（参考） should be 50-150`).toBeGreaterThanOrEqual(50);
-          expect(cti, `CTI消費支出（参考） should be 50-150`).toBeLessThanOrEqual(150);
-        }
-      });
-    });
-
-    it("should verify 民間最終消費支出 (nominal and real) is within 50-150 range", () => {
-      mockMergedData.forEach((d) => {
-        // 名目
-        const nominalVal = Number(d[SUPPORT_SERIES_KEY_NOMINAL] || 0);
-        expect(
-          nominalVal,
-          `${SUPPORT_SERIES_KEY_NOMINAL} at ${d.年月} should be 50-150`,
-        ).toBeGreaterThanOrEqual(50);
-        expect(
-          nominalVal,
-          `${SUPPORT_SERIES_KEY_NOMINAL} at ${d.年月} should be 50-150`,
-        ).toBeLessThanOrEqual(150);
-
-        // 実質
-        const realVal = Number(d[SUPPORT_SERIES_KEY_REAL] || 0);
-        expect(
-          realVal,
-          `${SUPPORT_SERIES_KEY_REAL} at ${d.年月} should be 50-150`,
-        ).toBeGreaterThanOrEqual(50);
-        expect(
-          realVal,
-          `${SUPPORT_SERIES_KEY_REAL} at ${d.年月} should be 50-150`,
-        ).toBeLessThanOrEqual(150);
-      });
+    it("keeps the retired reference and salary CTI fields out of the client fixture contract", () => {
+      for (const row of mockMergedData) {
+        expect(row).not.toHaveProperty("CTI消費支出（参考）");
+        expect(row).not.toHaveProperty("民間最終消費支出（参考）");
+        expect(row).not.toHaveProperty("CTIミクロ基本系列（名目・原数値）");
+        expect(row).not.toHaveProperty("CTIミクロ基本系列（名目・参考）");
+        expect(row).not.toHaveProperty("CTIミクロ基本系列（名目・参考・延長）");
+      }
     });
   });
 });
@@ -465,24 +443,18 @@ describe("NewGraph", () => {
     {
       年月: "2023年1月",
       総合: 100,
-      "民間最終消費支出（参考）": 100,
-      "CTI消費支出（参考）": 100,
       "CPI総合(12MA)": 100,
       "総合(12MA)": 100,
     } as any,
     {
       年月: "2023年2月",
       総合: 101,
-      "民間最終消費支出（参考）": 101,
-      "CTI消費支出（参考）": 101,
       "CPI総合(12MA)": 101,
       "総合(12MA)": 101,
     } as any,
     {
       年月: "2023年3月",
       総合: 102,
-      "民間最終消費支出（参考）": 102,
-      "CTI消費支出（参考）": 102,
       "CPI総合(12MA)": 102,
       "総合(12MA)": 102,
     } as any,
@@ -523,7 +495,6 @@ describe("NewGraph", () => {
       />,
     );
     expect(screen.getAllByText("給与(総合)").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("CTIミクロ基本系列(名目・総合)").length).toBeGreaterThan(0);
     expect(screen.getAllByText("物価指数(総合)").length).toBeGreaterThan(0);
   });
 
@@ -549,7 +520,7 @@ describe("NewGraph", () => {
     render(
       <NewGraph
         data={mockNewGraphData}
-        hiddenKeys={["CTIミクロ基本系列（名目・参考）"]}
+        hiddenKeys={["総合(12MA)"]}
         onToggle={mockOnToggle}
         chartColors={mockNewGraphColors}
         isMobile={false}
@@ -557,7 +528,6 @@ describe("NewGraph", () => {
       />,
     );
     // The hidden legend item should still be rendered
-    expect(screen.getAllByText("CTIミクロ基本系列(名目・総合)").length).toBeGreaterThan(0);
     // The visible ones should be there too
     expect(screen.getAllByText("給与(総合)").length).toBeGreaterThan(0);
     expect(screen.getAllByText("物価指数(総合)").length).toBeGreaterThan(0);
@@ -577,43 +547,6 @@ describe("NewGraph", () => {
     expect(screen.getByText("給与・消費・物価の推移比較(12MA)")).toBeDefined();
   });
 
-  it("keeps CTI legend labels when comparison values are unavailable", () => {
-    render(
-      <NewGraph
-        data={mockNewGraphData.map((row) => ({
-          ...row,
-          "CTIミクロ基本系列（名目・参考）": null,
-        }))}
-        hiddenKeys={[]}
-        onToggle={mockOnToggle}
-        chartColors={mockNewGraphColors}
-        isMobile={false}
-        tooltipProps={tooltipProps}
-      />,
-    );
-
-    expect(screen.getByRole("button", { name: "CTIミクロ基本系列(名目・総合)" })).toBeDefined();
-  });
-
-  it("keeps the advanced reference legend when its values are unavailable", () => {
-    render(
-      <NewGraph
-        data={mockNewGraphData.map((row) => ({
-          ...row,
-          "CTIミクロ基本系列（名目・参考・延長）": null,
-        }))}
-        hiddenKeys={[]}
-        onToggle={mockOnToggle}
-        chartColors={mockNewGraphColors}
-        isMobile={false}
-        tooltipProps={tooltipProps}
-        showAdvanced
-      />,
-    );
-
-    expect(screen.getByRole("button", { name: "CTIミクロ基本系列(名目・延長)" })).toBeDefined();
-  });
-
   it("does not render advanced series legend when showAdvanced is false/undefined", () => {
     render(
       <NewGraph
@@ -626,10 +559,10 @@ describe("NewGraph", () => {
         showAdvanced={false}
       />,
     );
-    expect(screen.queryByText("CTIミクロ基本系列(名目・延長)")).toBeNull();
+    expect(screen.queryByText(/CTIミクロ基本系列/)).toBeNull();
   });
 
-  it("renders advanced series legend when showAdvanced is true", () => {
+  it("does not reintroduce a retired CTI legend when showAdvanced is true", () => {
     render(
       <NewGraph
         data={mockNewGraphData}
@@ -641,6 +574,6 @@ describe("NewGraph", () => {
         showAdvanced={true}
       />,
     );
-    expect(screen.getAllByText("CTIミクロ基本系列(名目・延長)").length).toBeGreaterThan(0);
+    expect(screen.queryByText(/CTIミクロ基本系列/)).toBeNull();
   });
 });

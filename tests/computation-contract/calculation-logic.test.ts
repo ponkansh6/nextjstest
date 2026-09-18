@@ -19,8 +19,6 @@ describe("Calculation Logic Tests", () => {
     const startYear = 2020;
     const endYear = 2025;
     const maxCpiDate = { year: 2025, month: 3 };
-    const realKeys_ = CONSUMPTION_REAL_KEYS;
-
     const processed = computeChartData(
       {
         data: rawCpiData,
@@ -30,11 +28,22 @@ describe("Calculation Logic Tests", () => {
         nominalKeys: CONSUMPTION_NOMINAL_KEYS,
         realKeys: CONSUMPTION_REAL_KEYS,
         maxCpiDate,
+        quarterlyNominalData: [
+          { label: "2020Q1", quarter: 1, 年: 2020, 年月: "2020Q1", "食料（名目）": 12 },
+        ],
+        quarterlyRealData: [
+          { label: "2020Q1", quarter: 1, 年: 2020, 年月: "2020Q1", "食料（実質）": 11 },
+        ],
       },
       [],
     );
 
     expect(processed.quarterlyNominalData.length).toBeGreaterThan(0);
+    expect(processed.quarterlyNominalData[0]).toMatchObject({
+      label: "2020Q1",
+      "食料（名目）": 12,
+    });
+    expect(processed.quarterlyRealData[0]).toMatchObject({ label: "2020Q1", "食料（実質）": 11 });
   });
 
   it("should filter data by year correctly", () => {
