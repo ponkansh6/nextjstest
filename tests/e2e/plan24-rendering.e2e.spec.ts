@@ -111,7 +111,9 @@ test.describe("Plan24 rendering contract", () => {
       const supportPeriods = (await chart.getAttribute("data-support-periods"))?.split(",") ?? [];
       expect(await contract.getAttribute("data-series")).not.toMatch(/GDP(?:名目|実質)/);
       if (id === "spending-chart-nominal") {
-        expect(await chart.getAttribute("data-support-periods")).toBe("");
+        expect(supportPeriods).toHaveLength(52);
+        expect(supportPeriods[0]).toBe("2005Q1");
+        expect(supportPeriods.at(-1)).toBe("2017Q4");
         const periods = await contract
           .locator("[data-chart-data-row]")
           .evaluateAll((rows) => rows.map((row) => row.getAttribute("data-period") ?? ""));
