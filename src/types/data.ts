@@ -13,6 +13,9 @@ export interface CpiData {
   "民間最終消費支出（参考）"?: number | null;
   "民間最終消費支出（参考・延長）"?: number | null;
   "CTI消費支出（参考）"?: number | null;
+  "CTIミクロ基本系列（名目・参考）"?: number | null;
+  "CTIミクロ基本系列（名目・参考・延長）"?: number | null;
+  "CTIミクロ基本系列（名目・原数値）"?: number | null;
   "CPI総合(参考)": number | null;
   "民間最終消費支出（名目）"?: LegacyConsumptionComparisonValue;
   "民間最終消費支出（実質）"?: LegacyConsumptionComparisonValue;

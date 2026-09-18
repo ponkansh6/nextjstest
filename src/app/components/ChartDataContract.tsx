@@ -1,9 +1,11 @@
 import React from "react";
+import type { SeriesMetadata } from "../../lib/chartConstants";
 
 export interface ChartDataContractProps {
   data: Record<string, unknown>[];
   keys: string[];
   labelKeys?: string[];
+  descriptors?: readonly SeriesMetadata[];
 }
 
 export type PublicChartRow = Record<string, unknown>;
@@ -34,6 +36,7 @@ export function ChartDataContract({
   data,
   keys,
   labelKeys = ["年月", "label"],
+  descriptors = [],
 }: ChartDataContractProps) {
   const publicData = normalizePublicChartData(data, keys);
   return (
@@ -41,6 +44,7 @@ export function ChartDataContract({
       data-testid="chart-data-contract"
       data-series={JSON.stringify(keys)}
       data-points={String(publicData.length)}
+      data-descriptors={JSON.stringify(descriptors)}
       hidden
     >
       {publicData.map((row, rowIndex) => {
@@ -58,6 +62,12 @@ export function ChartDataContract({
                   data-value={isNumber || typeof value === "string" ? String(value) : "null"}
                   data-value-type={
                     isNumber ? "number" : typeof value === "string" ? "string" : "null"
+                  }
+                  data-unit={descriptors.find((descriptor) => descriptor.key === key)?.unit}
+                  data-source={descriptors.find((descriptor) => descriptor.key === key)?.source}
+                  data-status={descriptors.find((descriptor) => descriptor.key === key)?.status}
+                  data-reason={
+                    descriptors.find((descriptor) => descriptor.key === key)?.reason ?? ""
                   }
                 />
               );

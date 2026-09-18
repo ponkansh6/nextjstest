@@ -148,6 +148,8 @@ export const DISPLAY_LABEL_OVERRIDES: Record<string, string> = {
   [CANONICAL_REAL_KEY]: "諸雑費・CPI外",
   [SUPPORT_SERIES_KEY_NOMINAL]: "民間最終消費",
   [SUPPORT_SERIES_KEY_REAL]: "民間最終消費",
+  "CTIミクロ基本系列（名目・参考）": "CTIミクロ基本系列（名目・参考）",
+  "CTIミクロ基本系列（名目・参考・延長）": "CTIミクロ基本系列（名目・参考・延長）",
   [QUARTERLY_GDP_RAW_NOMINAL_KEY]: "GDP名目原値",
   [QUARTERLY_GDP_RAW_REAL_KEY]: "GDP実質原値",
   [QUARTERLY_GDP_COMPARISON_NOMINAL_KEY]: "GDP名目比較指数（2025Q1-Q4平均=100）",
@@ -171,6 +173,54 @@ export const DISPLAY_LABEL_OVERRIDES: Record<string, string> = {
 
 export const getLegendLabel = (key: string) => {
   return DISPLAY_LABEL_OVERRIDES[key] || getDisplayLabel(key);
+};
+
+export const CTI_BASIC_SOURCE = "Plan37 official CSV";
+export const CTI_BASIC_UNIT = "指数";
+export const CTI_BASIC_SERIES_DESCRIPTORS = [
+  {
+    key: "CTIミクロ基本系列（名目・原数値）",
+    label: "CTIミクロ基本系列（名目・原数値）",
+    unit: CTI_BASIC_UNIT,
+    source: CTI_BASIC_SOURCE,
+    valueType: "raw" as const,
+    value: null,
+  },
+  {
+    key: "CTIミクロ基本系列（名目・参考）",
+    label: "CTIミクロ基本系列(名目・総合)",
+    unit: CTI_BASIC_UNIT,
+    source: CTI_BASIC_SOURCE,
+    valueType: "comparison" as const,
+    value: null,
+  },
+  {
+    key: "CTIミクロ基本系列（名目・参考・延長）",
+    label: "CTIミクロ基本系列(名目・延長)",
+    unit: CTI_BASIC_UNIT,
+    source: CTI_BASIC_SOURCE,
+    valueType: "comparison" as const,
+    value: null,
+  },
+] as const;
+export type CtiBasicSeriesDescriptor = (typeof CTI_BASIC_SERIES_DESCRIPTORS)[number] & {
+  status: "valid" | "invalid";
+  reason: string | null;
+  value: number | null;
+};
+
+export function ctiBasicDescriptors(status: "valid" | "invalid", reason: string | null) {
+  return CTI_BASIC_SERIES_DESCRIPTORS.map((descriptor) => ({
+    ...descriptor,
+    status,
+    reason,
+    value: null,
+  }));
+}
+
+export type CtiComparisonRegistryState = {
+  status: "valid" | "invalid";
+  reason: string | null;
 };
 
 export const keyPairs = CONSUMPTION_NOMINAL_KEYS.map((key, index) => ({
@@ -201,6 +251,22 @@ export interface SeriesMetadata {
   legendLabel?: string;
   /** Stable display order shared by legend and tooltip. */
   order?: number;
+  unit?: string;
+  source?: string;
+  valueType?: "raw" | "comparison";
+  status?: "valid" | "invalid";
+  reason?: string | null;
+  value?: number | null;
+  descriptor?: {
+    key: string;
+    label: string;
+    unit: string;
+    source: string;
+    valueType: "raw" | "comparison";
+    status: "valid" | "invalid";
+    reason: string | null;
+    value: number | null;
+  };
 }
 
 export interface TooltipSeriesProjection {
@@ -209,6 +275,12 @@ export interface TooltipSeriesProjection {
   color: string;
   order: number;
   advanced?: boolean;
+  unit?: string;
+  source?: string;
+  valueType?: "raw" | "comparison";
+  status?: "valid" | "invalid";
+  reason?: string | null;
+  value?: number | null;
 }
 
 /** Project one display contract into the metadata consumed by CustomTooltip. */
@@ -224,12 +296,36 @@ export const projectTooltipMetadata = (
   return series
     .filter(({ key }) => !visible || visible.has(key))
     .map(
-      ({ key, tooltipLabel, legendLabel, displayName, label, color, order, advanced }, index) => ({
+      (
+        {
+          key,
+          tooltipLabel,
+          legendLabel,
+          displayName,
+          label,
+          color,
+          order,
+          advanced,
+          unit,
+          source,
+          valueType,
+          status,
+          reason,
+          value,
+        },
+        index,
+      ) => ({
         key,
         label: tooltipLabel ?? legendLabel ?? displayName ?? label ?? key,
         color,
         order: order ?? index,
         ...(advanced === undefined ? {} : { advanced }),
+        ...(unit === undefined ? {} : { unit }),
+        ...(source === undefined ? {} : { source }),
+        ...(valueType === undefined ? {} : { valueType }),
+        ...(status === undefined ? {} : { status }),
+        ...(reason === undefined ? {} : { reason }),
+        ...(value === undefined ? {} : { value }),
       }),
     );
 };
@@ -292,7 +388,7 @@ export const EARNINGS_SERIES_REGISTRY = [
     kind: "line",
     tooltipLabel: "15歳以上国民当たり給与",
     legendLabel: "15歳以上国民当たり給与",
-    order: 4,
+    order: 3,
   },
   {
     color: "#eab308",
@@ -304,6 +400,23 @@ export const EARNINGS_SERIES_REGISTRY = [
     tooltipLabel: "物価指数総合(参考)",
     legendLabel: "物価指数総合(参考)",
     order: 5,
+  },
+  {
+    color: "#0f766e",
+    key: "CTIミクロ基本系列（名目・原数値）",
+    label: "CTIミクロ基本系列（名目・原数値）",
+    displayName: "CTIミクロ基本系列（名目・原数値）",
+    type: "line",
+    kind: "line",
+    tooltipLabel: "CTIミクロ基本系列（名目・原数値）",
+    legendLabel: "CTIミクロ基本系列（名目・原数値）",
+    unit: "指数",
+    source: CTI_BASIC_SOURCE,
+    valueType: "raw",
+    status: "valid",
+    reason: null,
+    descriptor: { ...CTI_BASIC_SERIES_DESCRIPTORS[0], status: "valid", reason: null },
+    order: 6,
   },
 ] satisfies SeriesMetadata[];
 
@@ -323,54 +436,71 @@ export const EARNINGS_TABLE_CONFIGS = EARNINGS_SERIES_REGISTRY;
 // NewGraph の系列設定(理由はEARNINGS_TABLE_CONFIGSと同様)
 export type LineConfig = SeriesMetadata & { displayName: string };
 
-export const COMPARISON_SERIES_REGISTRY = [
-  {
-    key: "CPI総合(12MA)",
-    color: "#65a30d",
-    label: "物価指数(総合)",
-    displayName: "物価指数(総合)",
-    tooltipLabel: "物価指数(総合)",
-    legendLabel: "物価指数(総合)",
-    order: 0,
+export function createComparisonSeriesRegistry(
+  ctiState: CtiComparisonRegistryState = {
+    status: "invalid",
+    reason: "CTI基本系列の状態が未提供です",
   },
-  {
-    key: "総合(12MA)",
-    color: "#e11d48",
-    label: "給与(総合)",
-    displayName: "給与(総合)",
-    tooltipLabel: "給与(総合)",
-    legendLabel: "給与(総合)",
-    order: 1,
-  },
-  {
-    key: "CTI消費支出（参考）",
-    color: "#2563eb",
-    label: "CTI消費(総合)",
-    displayName: "CTI消費(総合)",
-    tooltipLabel: "CTI消費(総合)",
-    legendLabel: "CTI消費(総合)",
-    order: 2,
-  },
-  {
-    key: "民間最終消費支出（参考）",
-    color: "#38bdf8",
-    label: "民間最終消費(総合)",
-    displayName: "民間最終消費(総合)",
-    tooltipLabel: "民間最終消費(総合)",
-    legendLabel: "民間最終消費(総合)",
-    order: 3,
-  },
-  {
-    key: "民間最終消費支出（参考・延長）",
-    color: "#7dd3fc",
-    label: "民間最終消費(延長・参考)",
-    displayName: "民間最終消費(延長・参考)",
-    advanced: true,
-    tooltipLabel: "民間最終消費(延長・参考)",
-    legendLabel: "民間最終消費(延長・参考)",
-    order: 4,
-    strokeDasharray: "6 3",
-  },
-] satisfies SeriesMetadata[];
+) {
+  const ctiDescriptors = ctiBasicDescriptors(ctiState.status, ctiState.reason);
+  return [
+    {
+      key: "CPI総合(12MA)",
+      color: "#65a30d",
+      label: "物価指数(総合)",
+      displayName: "物価指数(総合)",
+      tooltipLabel: "物価指数(総合)",
+      legendLabel: "物価指数(総合)",
+      order: 0,
+    },
+    {
+      key: "総合(12MA)",
+      color: "#e11d48",
+      label: "給与(総合)",
+      displayName: "給与(総合)",
+      tooltipLabel: "給与(総合)",
+      legendLabel: "給与(総合)",
+      order: 1,
+    },
+    {
+      key: "CTIミクロ基本系列（名目・参考）",
+      color: "#2563eb",
+      label: "CTIミクロ基本系列(名目・総合)",
+      displayName: "CTIミクロ基本系列(名目・総合)",
+      tooltipLabel: "CTIミクロ基本系列(名目・総合)",
+      legendLabel: "CTIミクロ基本系列(名目・総合)",
+      order: 2,
+      unit: "指数",
+      source: CTI_BASIC_SOURCE,
+      valueType: "comparison",
+      status: ctiDescriptors[1].status,
+      reason: ctiDescriptors[1].reason,
+      descriptor: ctiDescriptors[1],
+    },
+    {
+      key: "CTIミクロ基本系列（名目・参考・延長）",
+      color: "#7dd3fc",
+      label: "CTIミクロ基本系列(名目・延長)",
+      displayName: "CTIミクロ基本系列(名目・延長)",
+      advanced: true,
+      tooltipLabel: "CTIミクロ基本系列(名目・延長)",
+      legendLabel: "CTIミクロ基本系列(名目・延長)",
+      order: 3,
+      strokeDasharray: "6 3",
+      unit: "指数",
+      source: CTI_BASIC_SOURCE,
+      valueType: "comparison",
+      status: ctiDescriptors[2].status,
+      reason: ctiDescriptors[2].reason,
+      descriptor: ctiDescriptors[2],
+    },
+  ] satisfies SeriesMetadata[];
+}
+
+/**
+ * Compatibility export for consumers that do not own the request state.
+ * It fails closed; request-scoped UI code must use createComparisonSeriesRegistry.
+ */
+export const COMPARISON_SERIES_REGISTRY = createComparisonSeriesRegistry();
 
 export const LINE_CONFIGS: LineConfig[] = COMPARISON_SERIES_REGISTRY as LineConfig[];

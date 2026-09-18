@@ -10,45 +10,22 @@ import {
   rebaseResidualToYearAverage,
 } from "../serverCalculations";
 import { loadPopulationDataInternal } from "./population";
-import {
-  getCtiDataStatus,
-  loadCpiDataInternal,
-  loadCtiDataInternal,
-  type CtiLoadOptions,
-} from "./cpi";
-import { compareYearMonth, parseYearMonth } from "@/lib/yearMonth";
+import { loadCpiDataInternal, loadCtiDataInternal, type CtiLoadOptions } from "./cpi";
+import { compareYearMonth, parseYearMonth, toCanonicalYearMonth } from "@/lib/yearMonth";
 import { trailingMovingAverage } from "../math/movingAverage";
+import { loadCtiBasicConsumptionOutput } from "../ctiBasicSeries2025LongTerm";
+import { ctiBasicDescriptors } from "@/lib/chartConstants";
+import type { SeriesMeasurement } from "@/types/chart";
 
-/** エントリー配列の12か月移動平均マップを計算（有限値のみ対象） */
 function computeTrailingMA12(entries: [string, number][]): Map<string, number> {
   const sorted = entries
-    .filter(([_, value]) => Number.isFinite(value))
+    .filter(([, value]) => Number.isFinite(value))
     .sort(([a], [b]) => compareYearMonth(a, b));
-  const values = sorted.map(([_, v]) => v);
-  const maValues = trailingMovingAverage(values, 12);
-  const maMap = new Map<string, number>();
-  sorted.forEach((entry, i) => {
-    maMap.set(entry[0], maValues[i]);
-  });
-  return maMap;
-}
-
-/** 民間最終は欠測を詰めず、暦月連続の12か月窓だけを平均する。 */
-function computeCalendarTrailingMA12(
-  entries: [string, number][],
-  calendar: readonly string[],
-): Map<string, number> {
-  const values = new Map(entries);
-  const result = new Map<string, number>();
-  for (let index = 11; index < calendar.length; index++) {
-    const window = calendar.slice(index - 11, index + 1);
-    if (!hasCompleteWindow(index, calendar, [values])) continue;
-    result.set(
-      window[window.length - 1],
-      window.reduce((sum, ym) => sum + values.get(ym)!, 0) / 12,
-    );
-  }
-  return result;
+  const values = trailingMovingAverage(
+    sorted.map(([, value]) => value),
+    12,
+  );
+  return new Map(sorted.map(([month], index) => [month, values[index]]));
 }
 
 /** Comparison rebasing is only valid for a complete calendar year of raw values. */
@@ -109,41 +86,25 @@ function computeMovingAverageToField(
 
 /**
  * CTIデータから民間最終消費支出MapおよびCTI消費支出Mapを構築する。
- * 民間最終消費支出（参考）: 2005〜2017年、GDPベース
- * CTI消費支出（参考）: 2018年以降、CTIベース（12か月移動平均の計算には2017年のデータも使用）
+ * Plan37: 2005年1月以降の公式CTI基本系列（名目消費支出）を通常/延長ともに使用する。
  */
-function buildConsumptionMaps(
-  ctiData: CpiData[],
-  useGdpComparison: boolean,
-  legacyGdpDisplayScale: number | undefined,
-): {
+function buildConsumptionMaps(ctiData: CpiData[]): {
   minkanMap: Map<string, number>;
   minkanNominalRawMap: Map<string, number>;
   minkanNominalComparisonMap: Map<string, number>;
-  ctiConsumptionMap: Map<string, number>;
-  ctiRawMap: Map<string, number>;
+  ctiBasicRawMap: Map<string, number>;
+  ctiBasicStatus: "valid" | "invalid";
+  ctiBasicReason: string | null;
 } {
-  const minkanRawMap = new Map<string, number>();
+  const ctiBasic = loadCtiBasicConsumptionOutput();
   const minkanNominalRawMap = new Map<string, number>();
   const minkanNominalComparisonMap = new Map<string, number>();
-  const ctiRawMap = new Map<string, number>();
-
   ctiData.forEach((d) => {
-    const ym = d.年月 as string | undefined;
+    const sourceYearMonth = d.年月 as string | undefined;
+    const ym = sourceYearMonth ? toCanonicalYearMonth(sourceYearMonth) : null;
     if (!ym) return;
-    const match = ym.match(/^(\d{4})年(\d+)月$/);
-    if (!match) return;
-    const year = parseInt(match[1], 10);
-
-    // The 2020 rollback path is a compatibility-only scale. It must never
-    // transform or replace the independently validated 2025 GDP values.
-    const nominalValue = d["民間最終消費支出（名目）"];
-    const supportValue =
-      typeof nominalValue === "number" &&
-      Number.isFinite(nominalValue) &&
-      legacyGdpDisplayScale !== undefined
-        ? nominalValue * legacyGdpDisplayScale
-        : undefined;
+    // GDP raw/comparison fields remain available for their independent contract;
+    // neither is used by the Plan37 CTI comparison line.
     const nominalRawValue = d["民間最終消費支出（名目・原値）"];
     const nominalComparisonValue = d["民間最終消費支出（名目・比較指数）"];
     if (typeof nominalRawValue === "number" && Number.isFinite(nominalRawValue)) {
@@ -152,31 +113,17 @@ function buildConsumptionMaps(
     if (typeof nominalComparisonValue === "number" && Number.isFinite(nominalComparisonValue)) {
       minkanNominalComparisonMap.set(ym, nominalComparisonValue);
     }
-    // Prefer the validated GDP comparison key; use the 2020 rollback scale
-    // only when the GDP comparison path is not active.
-    const minkanValue = useGdpComparison ? nominalComparisonValue : supportValue;
-    if (typeof minkanValue === "number" && Number.isFinite(minkanValue)) {
-      minkanRawMap.set(ym, minkanValue);
-    }
-    if (year >= 2017) {
-      const value = d["消費支出（名目）"];
-      if (typeof value === "number" && Number.isFinite(value)) ctiRawMap.set(ym, value);
-    }
   });
 
-  const calendar = ctiData
-    .map((d) => d.年月)
-    .filter((ym): ym is string => typeof ym === "string")
-    .sort(compareYearMonth);
-  const minkanMAMap = computeCalendarTrailingMA12([...minkanRawMap.entries()], calendar);
-  const ctiMAMap = computeTrailingMA12([...ctiRawMap.entries()]);
+  const minkanMAMap = ctiBasic.comparison;
 
   return {
     minkanMap: minkanMAMap,
     minkanNominalRawMap,
     minkanNominalComparisonMap,
-    ctiConsumptionMap: ctiMAMap,
-    ctiRawMap,
+    ctiBasicRawMap: ctiBasic.raw,
+    ctiBasicStatus: ctiBasic.status,
+    ctiBasicReason: ctiBasic.reason,
   };
 }
 
@@ -244,11 +191,9 @@ export async function loadTotalEarningDataInternal(
   cpiData.forEach((d) => {
     if (typeof d.総合 === "number") cpiMap.set(d.年月, d.総合);
   });
-  const ctiStatus = await getCtiDataStatus(ctiOptions);
   // Salary indices have an explicit, independent base year. This must not
   // follow CTI/CPI/GDP availability or their compatibility rollback year.
   const salaryComparisonYear = 2025;
-  const isLegacy2020 = ctiStatus.valid && ctiStatus.baseYear === 2020;
   // The GDP display set is independently validated by the loader before it
   // emits this normalized key. Do not infer validity from CTI availability.
   const hasGdpComparison = ctiData.some(
@@ -256,29 +201,14 @@ export async function loadTotalEarningDataInternal(
       typeof item["民間最終消費支出（名目・比較指数）"] === "number" &&
       Number.isFinite(item["民間最終消費支出（名目・比較指数）"]),
   );
-  // Keep 2020 compatibility raw values unchanged, but use the 2025 calendar
-  // year as the display base for the GDP support series.
-  const legacyGdp2025Average = isLegacy2020
-    ? comparisonAverageForYear(
-        new Map(
-          ctiData.flatMap((item) => {
-            const value = item["民間最終消費支出（名目）"];
-            return typeof value === "number" && Number.isFinite(value)
-              ? [[String(item.年月), value] as const]
-              : [];
-          }),
-        ),
-        "2025年",
-      )
-    : undefined;
-  const legacyGdpDisplayScale = legacyGdp2025Average ? 100 / legacyGdp2025Average : undefined;
   const {
     minkanMap,
     minkanNominalRawMap,
     minkanNominalComparisonMap,
-    ctiConsumptionMap,
-    ctiRawMap,
-  } = buildConsumptionMaps(ctiData, hasGdpComparison, legacyGdpDisplayScale);
+    ctiBasicRawMap,
+    ctiBasicStatus,
+    ctiBasicReason,
+  } = buildConsumptionMaps(ctiData);
 
   const comparisonYearKeys = [...keys]
     .filter((ym) => ym.startsWith(`${salaryComparisonYear}年`))
@@ -343,12 +273,6 @@ export async function loadTotalEarningDataInternal(
   const popFactor =
     perCapitaBase2025 !== undefined && perCapitaBase2025 > 0 ? 100 / perCapitaBase2025 : undefined;
 
-  // Comparison values use the selected set's complete calendar year and raw
-  // observations. Moving averages never serve as normalization denominators.
-  const avgCtiComparison = comparisonAverageForYear(ctiRawMap, "2025年");
-  const ctiFactor = avgCtiComparison ? 100 / avgCtiComparison : undefined;
-  const minkanFactor = 1;
-
   // Earnings' CPI reference is independent from the CPI dashboard base year,
   // while still using the fixed salary comparison year.
   // 12MAは基準変更前の生値から既存どおり計算し、出力時に同じ係数を適用する。
@@ -376,6 +300,7 @@ export async function loadTotalEarningDataInternal(
           ? null
           : Math.max(0, totalVal - finalContractual),
       総合: null,
+      measurements: {},
     } as unknown as CpiData;
   });
 
@@ -482,42 +407,52 @@ export async function loadTotalEarningDataInternal(
     const cpiMa = cpiMAMap.get(item.年月);
     item["CPI総合(12MA)"] =
       cpiFactor !== undefined && cpiMa !== undefined ? cpiMa * cpiFactor : null;
-    // 民間最終消費支出（参考）およびCTI消費支出（参考）の計算（12か月移動平均）
+    // Plan37 CTI基本系列の12MA比較指数（通常/延長の境界だけ表示を分ける）。
     // 各系列は自身の期間のみ値を持ち、期間外は null（欠測）としてゼロ方向への誤った線引きを防ぐ。
-    const maMinkan = minkanMap.get(item.年月);
-    const minkanNominalRaw = minkanNominalRawMap.get(item.年月);
-    const minkanNominalComparison = minkanNominalComparisonMap.get(item.年月);
-    const maCti = ctiConsumptionMap.get(item.年月);
-    const parsedYear = parseInt(item.年月.substring(0, 4), 10);
+    const ctiMonth = toCanonicalYearMonth(item.年月);
+    const ctiMa = ctiMonth ? minkanMap.get(ctiMonth) : undefined;
+    const ctiBasicRaw = ctiMonth ? ctiBasicRawMap.get(ctiMonth) : undefined;
+    const minkanNominalRaw = ctiMonth ? minkanNominalRawMap.get(ctiMonth) : undefined;
+    const minkanNominalComparison = ctiMonth ? minkanNominalComparisonMap.get(ctiMonth) : undefined;
+    const parsedYear = parseYearMonth(item.年月)?.year;
     if (minkanNominalRaw !== undefined) item["民間最終消費支出（名目・原値）"] = minkanNominalRaw;
+    if (ctiBasicRaw !== undefined) item["CTIミクロ基本系列（名目・原数値）"] = ctiBasicRaw;
     item["民間最終消費支出（名目・比較指数）"] =
       hasGdpComparison && minkanNominalComparison !== undefined ? minkanNominalComparison : null;
-    item["民間最終消費支出（参考）"] =
+    item["CTIミクロ基本系列（名目・参考）"] =
+      parsedYear !== undefined &&
       parsedYear <= 2017 &&
-      maMinkan !== undefined &&
-      minkanFactor !== undefined &&
-      Number.isFinite(maMinkan)
-        ? maMinkan * minkanFactor
+      ctiMa !== undefined &&
+      Number.isFinite(ctiMa)
+        ? ctiMa
         : null;
-    item["民間最終消費支出（参考・延長）"] =
+    item["CTIミクロ基本系列（名目・参考・延長）"] =
+      parsedYear !== undefined &&
       parsedYear >= 2018 &&
-      maMinkan !== undefined &&
-      minkanFactor !== undefined &&
-      Number.isFinite(maMinkan)
-        ? maMinkan * minkanFactor
+      ctiMa !== undefined &&
+      Number.isFinite(ctiMa)
+        ? ctiMa
         : null;
-    item["CTI消費支出（参考）"] =
-      parsedYear >= 2018 && maCti !== undefined && ctiFactor !== undefined && Number.isFinite(maCti)
-        ? maCti * ctiFactor
-        : null;
-    // 既存の「消費支出（参考）」も互換性・他箇所への影響を考慮して維持（2017年前後で統合したもの）
-    const combinedConsumption =
-      maMinkan !== undefined && Number.isFinite(maMinkan) && minkanFactor !== undefined
-        ? maMinkan * minkanFactor
-        : maCti !== undefined && Number.isFinite(maCti) && ctiFactor !== undefined
-          ? maCti * ctiFactor
-          : null;
-    item["消費支出（参考）"] = combinedConsumption;
+    const measurements: Record<string, SeriesMeasurement> = Object.fromEntries(
+      ctiBasicDescriptors(ctiBasicStatus, ctiBasicReason).map((descriptor) => {
+        const value =
+          descriptor.valueType === "raw"
+            ? (ctiBasicRaw ?? null)
+            : (item[descriptor.key] as number | null);
+        const isRawPresent = descriptor.valueType === "raw" && value !== null;
+        return [
+          descriptor.key,
+          {
+            ...descriptor,
+            status: isRawPresent ? "valid" : descriptor.status,
+            reason: isRawPresent ? null : descriptor.reason,
+            value,
+          },
+        ];
+      }),
+    );
+    (item as unknown as { measurements: Record<string, SeriesMeasurement> }).measurements =
+      measurements;
   });
 
   // Normalize each salary output independently to the same fixed 2025

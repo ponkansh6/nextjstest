@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import {
   getCpiDataStatus,
-  getCtiDataStatus,
+  getCtiBasicConsumptionStatus,
   getGdpSupportStatus,
   getQuarterlyGdpSupportStatus,
   loadCpiData,
@@ -28,14 +28,14 @@ export default async function Page() {
     cleanData,
     totalEarningData,
     cpiDataStatus,
-    ctiDataStatus,
+    ctiBasicStatus,
     gdpSupportStatus,
     quarterlyGdpSupportStatus,
   ] = await Promise.all([
     loadCpiData(),
     loadTotalEarningData(),
     getCpiDataStatus(),
-    getCtiDataStatus(),
+    getCtiBasicConsumptionStatus(),
     getGdpSupportStatus(),
     getQuarterlyGdpSupportStatus(),
   ]);
@@ -62,21 +62,70 @@ export default async function Page() {
     cpiInfoState.baseYear === null
       ? "CPIデータは現在利用できません。"
       : "各指標は2025年平均=100の指数で表示しています。凡例クリックで系列を切替可能。";
-  const ctiInfoState =
-    ctiDataStatus.valid && ctiDataStatus.baseYear === 2025
-      ? {
-          baseYear: 2025 as const,
-          sourceMode: "official-connected" as const,
-        }
-      : ctiDataStatus.valid && ctiDataStatus.baseYear === 2020
-        ? {
-            baseYear: 2020 as const,
-            sourceMode: "rollback" as const,
-          }
-        : {
-            baseYear: null,
-            sourceMode: "unavailable" as const,
-          };
+  const ctiInfoState = ctiBasicStatus.valid
+    ? {
+        baseYear: 2025 as const,
+        sourceMode: "official-connected" as const,
+        seriesLabel: "二人以上の世帯「消費支出（名目）」原数値",
+        comparisonNormalization: "2025-annual-average" as const,
+        status: "valid" as const,
+        reason: null,
+        baseline: ctiBasicStatus.baseline,
+        artifactRoot: ctiBasicStatus.artifactRoot,
+        artifactStatus: ctiBasicStatus.artifactStatus,
+        artifactReason: ctiBasicStatus.artifactReason,
+        source: "Plan37 official CSV" as const,
+        unit: "指数" as const,
+        series: {
+          raw: {
+            key: "CTIミクロ基本系列（名目・原数値）",
+            valueType: "raw" as const,
+            unit: "指数",
+            source: "Plan37 official CSV",
+            status: "valid" as const,
+            reason: null,
+          },
+          comparison: {
+            key: "CTIミクロ基本系列（名目・参考）",
+            valueType: "comparison" as const,
+            unit: "指数",
+            source: "Plan37 official CSV",
+            status: "valid" as const,
+            reason: null,
+          },
+        },
+      }
+    : {
+        baseYear: null,
+        sourceMode: "unavailable" as const,
+        unavailableReason: ctiBasicStatus.reason ?? "CTI長期系列を利用できません。",
+        status: "invalid" as const,
+        reason: ctiBasicStatus.reason ?? "CTI長期系列を利用できません。",
+        baseline: ctiBasicStatus.baseline,
+        artifactRoot: ctiBasicStatus.artifactRoot,
+        artifactStatus: ctiBasicStatus.artifactStatus,
+        artifactReason: ctiBasicStatus.artifactReason,
+        source: "Plan37 official CSV" as const,
+        unit: "指数" as const,
+        series: {
+          raw: {
+            key: "CTIミクロ基本系列（名目・原数値）",
+            valueType: "raw" as const,
+            unit: "指数",
+            source: "Plan37 official CSV",
+            status: "invalid" as const,
+            reason: ctiBasicStatus.reason ?? "CTI長期系列を利用できません。",
+          },
+          comparison: {
+            key: "CTIミクロ基本系列（名目・参考）",
+            valueType: "comparison" as const,
+            unit: "指数",
+            source: "Plan37 official CSV",
+            status: "invalid" as const,
+            reason: ctiBasicStatus.reason ?? "CTI長期系列を利用できません。",
+          },
+        },
+      };
   const gdpInfoState = gdpSupportStatus.valid
     ? {
         availability: "available" as const,
@@ -131,10 +180,9 @@ export default async function Page() {
     "総合(12MA)",
     "CPI総合(参考)",
     "CPI総合(12MA)",
-    "消費支出（参考）",
-    "民間最終消費支出（参考）",
-    "民間最終消費支出（参考・延長）",
-    "CTI消費支出（参考）",
+    "CTIミクロ基本系列（名目・原数値）",
+    "CTIミクロ基本系列（名目・参考）",
+    "CTIミクロ基本系列（名目・参考・延長）",
   ];
 
   const projectedCpiData = toCpiView(cleanData, cpiKeys);

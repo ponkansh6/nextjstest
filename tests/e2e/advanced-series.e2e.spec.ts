@@ -61,8 +61,27 @@ async function saveEvidence(
   return evidence;
 }
 
-const REGULAR_KEY = "民間最終消費支出（参考）";
-const EXTENDED_KEY = "民間最終消費支出（参考・延長）";
+const REGULAR_KEY = "CTIミクロ基本系列（名目・参考）";
+const EXTENDED_KEY = "CTIミクロ基本系列（名目・参考・延長）";
+
+async function waitForChartRender(
+  page: import("@playwright/test").Page,
+  section: import("@playwright/test").Locator,
+) {
+  await expect(section).toBeVisible();
+  const wrapper = section.locator(".recharts-wrapper").first();
+  await expect(wrapper).toHaveCount(1);
+  await expect(wrapper).toBeVisible();
+  const surface = wrapper.locator("svg.recharts-surface");
+  await expect(surface).toHaveCount(1);
+  await expect(surface).toBeVisible();
+  const contract = section.locator('[data-testid="chart-data-contract"]');
+  await expect(contract).toHaveCount(1);
+  await expect(contract.locator("[data-chart-data-row]")).not.toHaveCount(0);
+  const allGeometry = surface.locator("path, line");
+  await expect(allGeometry).not.toHaveCount(0);
+  return { page, wrapper, surface };
+}
 
 type PathSegment = { min: number; max: number; type?: string; subpath?: number };
 
@@ -93,29 +112,29 @@ function expectPathSchema(paths: unknown): void {
 }
 
 /**
- * E2E テスト: 3種比較チャートにおける上級者向け隠し系列（民間最終消費支出・2018年以降）の表示切り替え
+ * E2E テスト: 3種比較チャートにおける上級者向けCTI基本系列（2018年以降）の表示切り替え
  */
 test.describe("3種比較チャートの上級者向け隠し系列 (adv=1)", () => {
   test("既定では延長系列の凡例チップが表示されない", async ({ page }) => {
     await page.goto("/");
     const newGraphSection = page.locator("#section-new-graph");
-    await expect(newGraphSection).toBeVisible();
+    await waitForChartRender(page, newGraphSection);
 
     // 既定の凡例ボタンが存在することを確認
     await expect(
-      newGraphSection.getByRole("button", { name: "民間最終消費(総合)", exact: true }),
+      newGraphSection.getByRole("button", { name: "CTIミクロ基本系列(名目・総合)", exact: true }),
     ).toBeVisible();
     await expect(
-      newGraphSection.getByRole("button", { name: "CTI消費(総合)", exact: true }),
+      newGraphSection.getByRole("button", { name: "CTIミクロ基本系列(名目・総合)", exact: true }),
     ).toBeVisible();
 
     // 延長・参考系列の凡例ボタンが存在しないことを確認
     const extendedLegend = newGraphSection.getByRole("button", {
-      name: "民間最終消費(延長・参考)",
+      name: "CTIミクロ基本系列(名目・延長)",
       exact: true,
     });
     await expect(extendedLegend).toHaveCount(0);
-    await expect(newGraphSection.locator("svg path")).not.toHaveCount(0);
+    await expect(newGraphSection.locator("svg path, svg line")).not.toHaveCount(0);
     const defaultEvidence = await newGraphSection.evaluate((section) => ({
       axisTicks: [...section.querySelectorAll<SVGTextElement>(".recharts-xAxis-tick-labels text")]
         .map((tick) => ({
@@ -269,25 +288,26 @@ test.describe("3種比較チャートの上級者向け隠し系列 (adv=1)", ()
   test("?adv=1 付きで開くと延長系列の凡例チップが追加で表示される", async ({ page }) => {
     await page.goto("/?adv=1");
     const newGraphSection = page.locator("#section-new-graph");
-    await expect(newGraphSection).toBeVisible();
+    await waitForChartRender(page, newGraphSection);
 
     // 延長・参考系列の凡例ボタンが存在することを確認
     const extendedLegend = newGraphSection.getByRole("button", {
-      name: "民間最終消費(延長・参考)",
+      name: "CTIミクロ基本系列(名目・延長)",
       exact: true,
     });
     await expect(extendedLegend).toBeVisible();
-    await expect(extendedLegend).toHaveAttribute("data-key", "民間最終消費支出（参考・延長）");
-    await expect(
-      newGraphSection.getByTestId("new-graph-legend-民間最終消費支出（参考）"),
-    ).toHaveAttribute("data-key", "民間最終消費支出（参考）");
+    await expect(extendedLegend).toHaveAttribute("data-key", EXTENDED_KEY);
+    await expect(newGraphSection.getByTestId(`new-graph-legend-${REGULAR_KEY}`)).toHaveAttribute(
+      "data-key",
+      REGULAR_KEY,
+    );
     const regularLine = newGraphSection.getByTestId(`new-graph-line-${REGULAR_KEY}`);
     const extendedLine = newGraphSection.getByTestId(`new-graph-line-${EXTENDED_KEY}`);
     await expect(regularLine).toHaveCount(1);
     await expect(extendedLine).toHaveCount(1);
     await expect(regularLine).toHaveAttribute("data-key", REGULAR_KEY);
     await expect(extendedLine).toHaveAttribute("data-key", EXTENDED_KEY);
-    await expect(regularLine).toHaveAttribute("stroke", "#38bdf8");
+    await expect(regularLine).toHaveAttribute("stroke", "#2563eb");
     await expect(extendedLine).toHaveAttribute("stroke", "#7dd3fc");
 
     const coverage = await newGraphSection.evaluate(
@@ -554,13 +574,11 @@ test("比較3種の凡例とtooltipがラベル・色・順序を共有する", 
   await page.goto("/?adv=1");
   await page.waitForLoadState("networkidle");
   const section = page.locator("#section-new-graph");
-  await expect(section).toBeVisible();
+  const { surface } = await waitForChartRender(page, section);
   const chart = section.locator(".recharts-wrapper").first();
 
   const readContract = async () => {
     await chart.scrollIntoViewIfNeeded();
-    const surface = chart.locator("svg.recharts-surface");
-    await expect(surface).toBeVisible();
     const box = await surface.boundingBox();
     expect(box).not.toBeNull();
     if (!box) return null;
@@ -591,20 +609,18 @@ test("比較3種の凡例とtooltipがラベル・色・順序を共有する", 
     }));
   };
 
-  // 前提: ?adv=1 は既存のadvanced toggle状態を使い、実在する線をhoverして
-  // 2018Q1以降のCPI/給与/CTI(および延長) tooltipを取得する。
+  // 前提: ?adv=1 は現行Series RegistryのCTI extensionを有効にする。
   const advanced = await readContract();
   expect(advanced).not.toBeNull();
   if (!advanced) return;
   expect(advanced.legends.map((item) => item.label)).toEqual([
     "物価指数(総合)",
     "給与(総合)",
-    "CTI消費(総合)",
-    "民間最終消費(総合)",
-    "民間最終消費(延長・参考)",
+    "CTIミクロ基本系列(名目・総合)",
+    "CTIミクロ基本系列(名目・延長)",
   ]);
   expect(advanced.rows.map((item) => item.label)).toEqual(
-    expect.arrayContaining(["物価指数(総合)", "給与(総合)", "CTI消費(総合)"]),
+    expect.arrayContaining(["物価指数(総合)", "給与(総合)", "CTIミクロ基本系列(名目・総合)"]),
   );
   expect(advanced.rows.map((item) => item.order)).toEqual(
     [...advanced.rows.map((item) => item.order)].sort((a, b) => a - b),
@@ -613,9 +629,8 @@ test("比較3種の凡例とtooltipがラベル・色・順序を共有する", 
   const expectedColors: Record<string, { hex: string; rgb: string }> = {
     "物価指数(総合)": { hex: "#65a30d", rgb: "rgb(101, 163, 13)" },
     "給与(総合)": { hex: "#e11d48", rgb: "rgb(225, 29, 72)" },
-    "CTI消費(総合)": { hex: "#2563eb", rgb: "rgb(37, 99, 235)" },
-    "民間最終消費(総合)": { hex: "#38bdf8", rgb: "rgb(56, 189, 248)" },
-    "民間最終消費(延長・参考)": { hex: "#7dd3fc", rgb: "rgb(125, 211, 252)" },
+    "CTIミクロ基本系列(名目・総合)": { hex: "#2563eb", rgb: "rgb(37, 99, 235)" },
+    "CTIミクロ基本系列(名目・延長)": { hex: "#7dd3fc", rgb: "rgb(125, 211, 252)" },
   };
   for (const row of advanced.rows) {
     expect(row.color?.toLowerCase()).toBe(expectedColors[row.label!].hex);
@@ -625,12 +640,13 @@ test("比較3種の凡例とtooltipがラベル・色・順序を共有する", 
 
   await page.goto("/");
   await page.waitForLoadState("networkidle");
+  await waitForChartRender(page, section);
   const normal = await readContract();
   expect(normal).not.toBeNull();
   if (!normal) return;
-  expect(normal.legends.map((item) => item.label)).not.toContain("民間最終消費(延長・参考)");
-  expect(normal.rows.map((item) => item.label)).not.toContain("民間最終消費(延長・参考)");
+  expect(normal.legends.map((item) => item.label)).not.toContain("CTIミクロ基本系列(名目・延長)");
+  expect(normal.rows.map((item) => item.label)).not.toContain("CTIミクロ基本系列(名目・延長)");
   expect(normal.rows.map((item) => item.label)).toEqual(
-    expect.arrayContaining(["物価指数(総合)", "給与(総合)", "CTI消費(総合)"]),
+    expect.arrayContaining(["物価指数(総合)", "給与(総合)", "CTIミクロ基本系列(名目・総合)"]),
   );
 });

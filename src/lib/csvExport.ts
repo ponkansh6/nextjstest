@@ -19,6 +19,35 @@ export interface BuildCsvOptions {
   labelHeader?: string;
   /** 数値の小数桁数 */
   digits?: number;
+  /** Optional machine-readable metadata columns for measurement-aware exports. */
+  metadata?: ReadonlyArray<{
+    key: string;
+    valueType?: "raw" | "comparison";
+    value?: number | null;
+    unit: string;
+    source: string;
+    status: "valid" | "invalid";
+    reason: string | null;
+  }>;
+}
+
+type CsvMeasurement = NonNullable<BuildCsvOptions["metadata"]>[number];
+
+function rowMeasurement(row: Record<string, unknown>, metadata: CsvMeasurement): CsvMeasurement {
+  const measurements = row.measurements;
+  if (!measurements || typeof measurements !== "object") return metadata;
+  const measurement = (measurements as Record<string, unknown>)[metadata.key];
+  if (!measurement || typeof measurement !== "object") return metadata;
+  const current = measurement as Partial<CsvMeasurement>;
+  return {
+    ...metadata,
+    valueType: current.valueType ?? metadata.valueType,
+    value: current.value ?? null,
+    unit: current.unit ?? metadata.unit,
+    source: current.source ?? metadata.source,
+    status: current.status ?? metadata.status,
+    reason: current.reason ?? metadata.reason,
+  };
 }
 
 /**
@@ -36,7 +65,18 @@ export const buildCsv = (
 ): string => {
   const { labelKeys = ["年月", "label"], labelHeader = "年月", digits = 2 } = options;
 
-  const headerRow = [labelHeader, ...(headers ?? keys)].map(escapeCsvCell).join(",");
+  const metadata = options.metadata ?? [];
+  const metadataHeaders = metadata.flatMap(({ key }) => [
+    `${key}__valueType`,
+    `${key}__value`,
+    `${key}__unit`,
+    `${key}__source`,
+    `${key}__status`,
+    `${key}__reason`,
+  ]);
+  const headerRow = [labelHeader, ...(headers ?? keys), ...metadataHeaders]
+    .map(escapeCsvCell)
+    .join(",");
 
   const bodyRows = rows.map((row) => {
     const labelKey = labelKeys.find((k) => row[k] !== undefined && row[k] !== null);
@@ -45,7 +85,11 @@ export const buildCsv = (
       const v = row[k];
       return typeof v === "number" && Number.isFinite(v) ? v.toFixed(digits) : "";
     });
-    return [escapeCsvCell(label), ...cells].join(",");
+    const metadataCells = metadata.flatMap((entry) => {
+      const { valueType, value, unit, source, status, reason } = rowMeasurement(row, entry);
+      return [valueType ?? "", value ?? "", unit, source, status, reason ?? ""].map(escapeCsvCell);
+    });
+    return [escapeCsvCell(label), ...cells, ...metadataCells].join(",");
   });
 
   // RFC 4180 records are CRLF terminated, including the final record.

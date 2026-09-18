@@ -42,6 +42,7 @@ const expectedRuntimeExports = [
   "getCpiDataStatus",
   "getCpiMajorWeightTotal",
   "getCtiDataStatus",
+  "getCtiBasicConsumptionStatus",
   "getGdpSupportStatus",
   "getQuarterlyGdpSupportStatus",
   "loadCpiData",
@@ -66,6 +67,7 @@ describe("server/lib/dataLoader public facade", () => {
     expect(facade.getCpiDataStatus).toBe(cpi.getCpiDataStatus);
     expect(facade.getCpiMajorWeightTotal).toBe(cpi.getCpiMajorWeightTotal);
     expect(facade.getCtiDataStatus).toBe(cpi.getCtiDataStatus);
+    expect(facade.getCtiBasicConsumptionStatus).toBeDefined();
     expect(facade.getGdpSupportStatus).toBe(cpi.getGdpSupportStatus);
     expect(facade.getQuarterlyGdpSupportStatus).toBe(cpi.getQuarterlyGdpSupportStatus);
     expect(facade.loadQuarterlyGdpData).toBe(cpi.loadQuarterlyGdpData);

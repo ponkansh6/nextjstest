@@ -201,7 +201,9 @@ describe("CustomTooltip", () => {
         screen.getByText("給与区分合計（所定内＋所定外＋特別）").parentElement as HTMLElement,
       ).getByText("2.50"),
     ).toBeDefined();
-    expect(screen.getAllByText("—")).toHaveLength(3);
+    // CTI raw is an independent registered series and remains visible as null
+    // when the fixture omits it; it must not be replaced by the comparison line.
+    expect(screen.getAllByText("—")).toHaveLength(4);
     expect(
       within(screen.getByText("所定内給与").parentElement as HTMLElement).getByText("0.00"),
     ).toBeDefined();
@@ -595,7 +597,7 @@ describe("CustomTooltip", () => {
     );
     const tooltip = container.firstElementChild as HTMLElement;
     expect(tooltip.style.overflowY).toBe("auto");
-    expect(tooltip.style.maxHeight).toContain("40dvh");
+    expect(tooltip.style.maxHeight).toContain("50dvh");
     expect(tooltip.style.maxHeight).toContain("env(safe-area-inset-top");
     expect(tooltip.style.maxHeight).toContain("env(safe-area-inset-bottom");
     // CSS environment variables are serialized differently across browsers.

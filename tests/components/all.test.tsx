@@ -523,8 +523,7 @@ describe("NewGraph", () => {
       />,
     );
     expect(screen.getAllByText("給与(総合)").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("民間最終消費(総合)").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("CTI消費(総合)").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("CTIミクロ基本系列(名目・総合)").length).toBeGreaterThan(0);
     expect(screen.getAllByText("物価指数(総合)").length).toBeGreaterThan(0);
   });
 
@@ -550,7 +549,7 @@ describe("NewGraph", () => {
     render(
       <NewGraph
         data={mockNewGraphData}
-        hiddenKeys={["CTI消費支出（参考）"]}
+        hiddenKeys={["CTIミクロ基本系列（名目・参考）"]}
         onToggle={mockOnToggle}
         chartColors={mockNewGraphColors}
         isMobile={false}
@@ -558,7 +557,7 @@ describe("NewGraph", () => {
       />,
     );
     // The hidden legend item should still be rendered
-    expect(screen.getAllByText("CTI消費(総合)").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("CTIミクロ基本系列(名目・総合)").length).toBeGreaterThan(0);
     // The visible ones should be there too
     expect(screen.getAllByText("給与(総合)").length).toBeGreaterThan(0);
     expect(screen.getAllByText("物価指数(総合)").length).toBeGreaterThan(0);
@@ -578,12 +577,12 @@ describe("NewGraph", () => {
     expect(screen.getByText("給与・消費・物価の推移比較(12MA)")).toBeDefined();
   });
 
-  it("keeps GDP legend labels when its comparison values are unavailable", () => {
+  it("keeps CTI legend labels when comparison values are unavailable", () => {
     render(
       <NewGraph
         data={mockNewGraphData.map((row) => ({
           ...row,
-          "民間最終消費支出（参考）": null,
+          "CTIミクロ基本系列（名目・参考）": null,
         }))}
         hiddenKeys={[]}
         onToggle={mockOnToggle}
@@ -593,7 +592,7 @@ describe("NewGraph", () => {
       />,
     );
 
-    expect(screen.getByRole("button", { name: "民間最終消費(総合)" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "CTIミクロ基本系列(名目・総合)" })).toBeDefined();
   });
 
   it("keeps the advanced reference legend when its values are unavailable", () => {
@@ -601,7 +600,7 @@ describe("NewGraph", () => {
       <NewGraph
         data={mockNewGraphData.map((row) => ({
           ...row,
-          "民間最終消費支出（参考・延長）": null,
+          "CTIミクロ基本系列（名目・参考・延長）": null,
         }))}
         hiddenKeys={[]}
         onToggle={mockOnToggle}
@@ -612,7 +611,7 @@ describe("NewGraph", () => {
       />,
     );
 
-    expect(screen.getByRole("button", { name: "民間最終消費(延長・参考)" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "CTIミクロ基本系列(名目・延長)" })).toBeDefined();
   });
 
   it("does not render advanced series legend when showAdvanced is false/undefined", () => {
@@ -627,7 +626,7 @@ describe("NewGraph", () => {
         showAdvanced={false}
       />,
     );
-    expect(screen.queryByText("民間最終消費(延長・参考)")).toBeNull();
+    expect(screen.queryByText("CTIミクロ基本系列(名目・延長)")).toBeNull();
   });
 
   it("renders advanced series legend when showAdvanced is true", () => {
@@ -642,6 +641,6 @@ describe("NewGraph", () => {
         showAdvanced={true}
       />,
     );
-    expect(screen.getAllByText("民間最終消費(延長・参考)").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("CTIミクロ基本系列(名目・延長)").length).toBeGreaterThan(0);
   });
 });

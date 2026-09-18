@@ -20,7 +20,7 @@ export interface XAxisTickOptions {
 }
 
 function monthIndex(yearMonth: string): number | null {
-  const match = yearMonth.match(/^(\d+)年(\d+)月$/);
+  const match = String(yearMonth ?? "").match(/^(\d+)年(\d+)月$/);
   if (!match) return null;
   return parseInt(match[1], 10) * 12 + parseInt(match[2], 10);
 }
@@ -53,7 +53,7 @@ export function computePeriodXAxisTicks(
     .filter(
       options.milestonePredicate ??
         ((d) => {
-          const match = d.年月.match(/^(\d+)年1月$/);
+          const match = String(d.年月 ?? "").match(/^(\d+)年1月$/);
           return (
             match !== null &&
             (MILESTONE_YEARS as readonly number[]).includes(parseInt(match[1], 10))

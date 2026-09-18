@@ -17,6 +17,7 @@ export const YearReferenceLines: React.FC<YearReferenceLinesProps> = ({ data, st
     () =>
       data.filter(
         (d) =>
+          typeof d.年月 === "string" &&
           d.年月.endsWith("年1月") &&
           (MILESTONE_YEARS as readonly number[]).includes(parseInt(d.年月.split("年")[0])),
       ),

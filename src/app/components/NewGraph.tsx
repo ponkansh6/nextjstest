@@ -6,7 +6,7 @@ import type { ChartTooltipProps } from "./charts/useChartTooltipProps";
 import { YearReferenceLines } from "./charts/YearReferenceLines";
 import { TimeSeriesXAxis } from "./charts/TimeSeriesXAxis";
 import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
-import { COMPARISON_SERIES_REGISTRY } from "../../lib/chartConstants";
+import { createComparisonSeriesRegistry, type SeriesMetadata } from "../../lib/chartConstants";
 import type { ChartInfoContent } from "@/lib/chartInfoContent";
 import { ChartDataContract } from "./ChartDataContract";
 
@@ -26,6 +26,8 @@ interface NewGraphProps {
   showAdvanced?: boolean;
   advancedToggle?: React.ReactNode;
   chartInfoContent?: ChartInfoContent;
+  comparisonSeriesRegistry?: readonly SeriesMetadata[];
+  ctiMetadata?: readonly SeriesMetadata[];
 }
 
 export const NewGraph: React.FC<NewGraphProps> = ({
@@ -44,9 +46,11 @@ export const NewGraph: React.FC<NewGraphProps> = ({
   showAdvanced,
   advancedToggle,
   chartInfoContent,
+  comparisonSeriesRegistry = createComparisonSeriesRegistry(),
+  ctiMetadata = [],
 }) => {
   const isAdvanced = showAdvanced ?? false;
-  const visibleLineConfigs = COMPARISON_SERIES_REGISTRY.filter(
+  const visibleLineConfigs = comparisonSeriesRegistry.filter(
     (config) => !config.advanced || isAdvanced,
   );
   // Keep the established legend and line contracts even when a series is
@@ -65,7 +69,11 @@ export const NewGraph: React.FC<NewGraphProps> = ({
           />
         )}
       </div>
-      <ChartDataContract data={data} keys={visibleLineConfigs.map(({ key }) => key)} />
+      <ChartDataContract
+        data={data}
+        keys={visibleLineConfigs.map(({ key }) => key)}
+        descriptors={[...ctiMetadata, ...visibleLineConfigs]}
+      />
       <div className={styles.legendContainer}>
         <div className={styles.legendSection}>
           <div className={styles.legendItems}>

@@ -5,18 +5,24 @@ const round2 = (v: number): number => Math.round(v * 100) / 100;
 
 export interface CpiView {
   年月: string;
-  [key: string]: string | number;
+  [key: string]: string | number | null;
 }
 
 export interface CtiView {
   年月: string;
-  [key: string]: string | number;
+  [key: string]: string | number | null;
 }
 
 export interface EarningsView {
   年月: string;
-  [key: string]: string | number;
+  [key: string]: string | number | null;
 }
+
+const PLAN37_FORBIDDEN_KEYS = new Set([
+  "民間最終消費支出（名目・原値）",
+  "民間最終消費支出（名目・比較指数）",
+  "消費支出（参考）",
+]);
 
 export interface QuarterlyView {
   label: string;
@@ -31,9 +37,7 @@ export function toCpiView(rows: CpiData[], selectedKeys: string[]): CpiView[] {
     const out: CpiView = { 年月: r.年月 };
     for (const k of selectedKeys) {
       const v = r[k];
-      if (typeof v === "number") {
-        out[k] = round2(v);
-      }
+      out[k] = typeof v === "number" && Number.isFinite(v) ? round2(v) : null;
     }
     return out;
   });
@@ -44,22 +48,39 @@ export function toCtiView(rows: CpiData[], selectedKeys: string[]): CtiView[] {
     const out: CtiView = { 年月: r.年月 };
     for (const k of selectedKeys) {
       const v = r[k];
-      if (typeof v === "number") {
-        out[k] = round2(v);
-      }
+      out[k] = typeof v === "number" && Number.isFinite(v) ? round2(v) : null;
     }
     return out;
   });
 }
 
 export function toEarningsView(rows: CpiData[], selectedKeys: string[]): EarningsView[] {
+  const forbidden = selectedKeys.filter((key) => PLAN37_FORBIDDEN_KEYS.has(key));
+  if (forbidden.length > 0) {
+    throw new Error(`Plan37 public projection contains legacy keys: ${forbidden.join(", ")}`);
+  }
   return rows.map((r) => {
     const out: EarningsView = { 年月: r.年月 };
+    Object.defineProperty(out, "measurements", {
+      value: (r as CpiData & { measurements?: unknown }).measurements,
+      enumerable: true,
+    });
     for (const k of selectedKeys) {
+      if (k === "年月") continue;
       const v = r[k];
-      if (typeof v === "number") {
-        out[k] = round2(v);
-      }
+      out[k] = typeof v === "number" && Number.isFinite(v) ? round2(v) : null;
+    }
+    return out;
+  });
+}
+
+/** Explicit compatibility projection for GDP/2020 rollback consumers. */
+export function toLegacyEarningsView(rows: CpiData[], selectedKeys: string[]): EarningsView[] {
+  return rows.map((r) => {
+    const out: EarningsView = { 年月: r.年月 };
+    for (const key of selectedKeys) {
+      const value = r[key];
+      out[key] = typeof value === "number" && Number.isFinite(value) ? round2(value) : null;
     }
     return out;
   });

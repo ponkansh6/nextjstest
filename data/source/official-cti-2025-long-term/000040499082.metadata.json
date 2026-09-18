@@ -1,0 +1,168 @@
+{
+  "status": "ready",
+  "statisticName": "2025年基準 消費動向指数",
+  "governmentStatisticsCode": "00200567",
+  "baseYear": 2025,
+  "unit": "指数",
+  "statInfId": "000040499082",
+  "seriesKind": "seasonallyAdjusted",
+  "seriesLabel": "季節調整値",
+  "householdScope": "二人以上の世帯",
+  "valueType": "季節調整値",
+  "sourceTitle": "10大費目別　世帯消費動向指数（季節調整値）",
+  "frequency": "monthly",
+  "sourceStart": "2002-01",
+  "requestedStart": "2005-01",
+  "availabilityStart": "2002-01",
+  "retrieval": {
+    "retrievedAt": "2026-09-17T16:11:50.864Z",
+    "updatedAt": null
+  },
+  "officialUrl": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499082",
+  "encoding": "binary/official",
+  "rawFile": "000040499082.raw",
+  "normalizedFile": "000040499082.normalized.csv",
+  "metadataFile": "000040499082.metadata.json",
+  "rawBytes": 110345,
+  "normalizedBytes": 381449,
+  "parserVersion": "xlsx-0.20.3",
+  "transformVersion": "cti-basic-2025-long-term-v2",
+  "sourceHeaders": {
+    "contentType": "application/octet-stream",
+    "contentDisposition": "attachment; filename*=UTF-8''cti0121_2.xlsx",
+    "lastModified": null
+  },
+  "rawSha256": "97b54de7905460abc2099a3ac804c17e8c7b61e82d7d1fa02a9e723f7056d53e",
+  "normalizedSha256": "fcb422019bfcc78f4451e95afc344d9eaaa4d15605673f965c5230ee35a54408",
+  "latestPublishedMonth": "2026-07",
+  "rowCount": 5698,
+  "seriesCount": 22,
+  "series": [
+    {
+      "seriesIndex": 1,
+      "officialSeriesCode": null,
+      "seriesName": "消費支出（名目）"
+    },
+    {
+      "seriesIndex": 2,
+      "officialSeriesCode": null,
+      "seriesName": "食料（名目）"
+    },
+    {
+      "seriesIndex": 3,
+      "officialSeriesCode": null,
+      "seriesName": "住居（名目）"
+    },
+    {
+      "seriesIndex": 4,
+      "officialSeriesCode": null,
+      "seriesName": "光熱・水道（名目）"
+    },
+    {
+      "seriesIndex": 5,
+      "officialSeriesCode": null,
+      "seriesName": "家具・家事用品（名目）"
+    },
+    {
+      "seriesIndex": 6,
+      "officialSeriesCode": null,
+      "seriesName": "被服及び履物（名目）"
+    },
+    {
+      "seriesIndex": 7,
+      "officialSeriesCode": null,
+      "seriesName": "保健医療（名目）"
+    },
+    {
+      "seriesIndex": 8,
+      "officialSeriesCode": null,
+      "seriesName": "交通・通信（名目）"
+    },
+    {
+      "seriesIndex": 9,
+      "officialSeriesCode": null,
+      "seriesName": "教育（名目）"
+    },
+    {
+      "seriesIndex": 10,
+      "officialSeriesCode": null,
+      "seriesName": "教養娯楽（名目）"
+    },
+    {
+      "seriesIndex": 11,
+      "officialSeriesCode": null,
+      "seriesName": "その他の消費支出（名目）"
+    },
+    {
+      "seriesIndex": 12,
+      "officialSeriesCode": null,
+      "seriesName": "消費支出（実質）"
+    },
+    {
+      "seriesIndex": 13,
+      "officialSeriesCode": null,
+      "seriesName": "食料（実質）"
+    },
+    {
+      "seriesIndex": 14,
+      "officialSeriesCode": null,
+      "seriesName": "住居（実質）"
+    },
+    {
+      "seriesIndex": 15,
+      "officialSeriesCode": null,
+      "seriesName": "光熱・水道（実質）"
+    },
+    {
+      "seriesIndex": 16,
+      "officialSeriesCode": null,
+      "seriesName": "家具・家事用品（実質）"
+    },
+    {
+      "seriesIndex": 17,
+      "officialSeriesCode": null,
+      "seriesName": "被服及び履物（実質）"
+    },
+    {
+      "seriesIndex": 18,
+      "officialSeriesCode": null,
+      "seriesName": "保健医療（実質）"
+    },
+    {
+      "seriesIndex": 19,
+      "officialSeriesCode": null,
+      "seriesName": "交通・通信（実質）"
+    },
+    {
+      "seriesIndex": 20,
+      "officialSeriesCode": null,
+      "seriesName": "教育（実質）"
+    },
+    {
+      "seriesIndex": 21,
+      "officialSeriesCode": null,
+      "seriesName": "教養娯楽（実質）"
+    },
+    {
+      "seriesIndex": 22,
+      "officialSeriesCode": null,
+      "seriesName": "その他の消費支出（実質）"
+    }
+  ],
+  "validation": {
+    "ok": true,
+    "checks": [
+      "identity",
+      "format",
+      "schema",
+      "period",
+      "continuity",
+      "duplicates",
+      "sha256"
+    ]
+  },
+  "unavailable": {
+    "periods": [],
+    "reason": null
+  }
+}

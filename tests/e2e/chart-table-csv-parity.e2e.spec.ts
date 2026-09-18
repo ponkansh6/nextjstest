@@ -1,7 +1,5 @@
 import { readFile } from "node:fs/promises";
 import { test, expect } from "./fixtures";
-import advancedFixture from "../fixtures/chart-parity-advanced.json";
-import boundaryFixture from "../fixtures/chart-parity-independent.json";
 
 type Section = {
   id: string;
@@ -47,44 +45,6 @@ const CONTRACT: readonly Section[] = [
     ],
   },
   {
-    id: "section-consumption-nominal",
-    tableId: "data-table-section-consumption-nominal",
-    chartName: "消費支出（名目）の推移グラフ",
-    period: "2017Q4",
-    keys: [
-      "住居（名目）",
-      "家具・家事用品（名目）",
-      "被服及び履物（名目）",
-      "保健医療（名目）",
-      "教育（名目）",
-      "光熱・水道（名目）",
-      "教養娯楽（名目）",
-      "交通・通信（名目）",
-      "食料（名目）",
-      "その他の消費支出（名目）",
-      "民間最終消費支出（名目）",
-    ],
-  },
-  {
-    id: "section-consumption-real",
-    tableId: "data-table-section-consumption-real",
-    chartName: "消費支出（実質）の推移グラフ",
-    period: "2017Q4",
-    keys: [
-      "住居（実質）",
-      "家具・家事用品（実質）",
-      "被服及び履物（実質）",
-      "保健医療（実質）",
-      "教育（実質）",
-      "光熱・水道（実質）",
-      "教養娯楽（実質）",
-      "交通・通信（実質）",
-      "食料（実質）",
-      "その他の消費支出（実質）",
-      "民間最終消費支出（実質）",
-    ],
-  },
-  {
     id: "section-earnings",
     tableId: "data-table-section-earnings",
     chartName: "給与指標と関連指標の推移グラフ",
@@ -96,6 +56,7 @@ const CONTRACT: readonly Section[] = [
       "時間当たり給与",
       "15歳以上国民当たり給与",
       "CPI総合(参考)",
+      "CTIミクロ基本系列（名目・原数値）",
     ],
   },
   {
@@ -110,49 +71,57 @@ const CONTRACT: readonly Section[] = [
     tableId: "data-table-section-new-graph",
     chartName: "給与・消費・物価の推移比較（12MA）グラフ",
     period: "2025年1月",
-    keys: ["CPI総合(12MA)", "総合(12MA)", "CTI消費支出（参考）", "民間最終消費支出（参考）"],
+    keys: ["CPI総合(12MA)", "総合(12MA)", "CTIミクロ基本系列（名目・参考）"],
   },
 ];
 const INTERNAL = /GDP名目原値|GDP名目比較指数|GDP実質原値|GDP実質比較指数|四半期raw|原値|比較指数/;
-// Independent boundary labels are kept in tests/fixtures/chart-parity-independent.json.
-// The raw YYYY-Qn source keys intentionally stay separate from public labels;
-// only the fixed public boundary values below are asserted here.
 const ADVANCED = {
-  key: "民間最終消費支出（参考・延長）",
-  header: "民間最終消費(延長・参考)",
+  key: "CTIミクロ基本系列（名目・参考・延長）",
+  header: "CTIミクロ基本系列(名目・延長)",
 } as const;
+const CTI_RAW_KEY = "CTIミクロ基本系列（名目・原数値）";
 
 async function fixedAdvancedAnchors() {
-  const fixture = advancedFixture as {
-    normalization: { value2025: number };
-    annual: { year: number; raw: number }[];
-    anchors: { month: string; windowYears: number[] }[];
+  const source = await readFile(
+    "data/source/official-cti-2025-long-term/000040499070.normalized.csv",
+    "utf8",
+  );
+  const rows = source
+    .trim()
+    .split(/\r?\n/)
+    .slice(1)
+    .map((line) => line.split(","));
+  const values = new Map(
+    rows
+      .filter((row) => row[0] === "nominal" && row[1] === "1")
+      .map((row) => [row[4], +row[5]] as const),
+  );
+  const ma = (month: string) => {
+    const [year, monthNumber] = month.split("-").map(Number);
+    return (
+      Array.from({ length: 12 }, (_, offset) => {
+        const date = new Date(Date.UTC(year, monthNumber - 1 - offset, 1));
+        return values.get(
+          `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`,
+        )!;
+      }).reduce((sum, value) => sum + value, 0) / 12
+    );
   };
-  const annualByYear = new Map(fixture.annual.map(({ year, raw }) => [year, raw] as const));
-  const comparison = (year: number) =>
-    (annualByYear.get(year)! / fixture.normalization.value2025) * 100;
-  const anchors = fixture.anchors.map(({ month, windowYears }) => ({
-    month,
-    knownNormalized:
-      windowYears.reduce((sum, year) => sum + comparison(year), 0) / windowYears.length,
+  const baseline =
+    Array.from({ length: 12 }, (_, index) =>
+      ma(`2025-${String(index + 1).padStart(2, "0")}`),
+    ).reduce((sum, value) => sum + value, 0) / 12;
+  const anchors = ["2018-01", "2025-12"].map((month) => ({
+    month: (() => {
+      const [year, monthNumber] = month.split("-");
+      return `${year}年${Number(monthNumber)}月`;
+    })(),
+    knownNormalized: (ma(month) / baseline) * 100,
   }));
   expect(anchors.map(({ month }) => month)).toEqual(["2018年1月", "2025年12月"]);
-  expect(anchors[0].knownNormalized).toBeCloseTo(86.440840456941, 10);
-  expect(anchors[1].knownNormalized).toBeCloseTo(100, 10);
+  expect(anchors[0].knownNormalized).toBeCloseTo(93.97529477821448, 10);
+  expect(anchors[1].knownNormalized).toBeCloseTo(101.07523862998316, 10);
   return anchors;
-}
-
-async function fixedBoundaryLabels() {
-  const fixture = boundaryFixture as {
-    cases: { "gdp-boundary": { before: string; after: string } };
-  };
-  return fixture.cases["gdp-boundary"];
-}
-
-type GdpBoundaryExpected = Readonly<Record<"nominal" | "real", Readonly<Record<string, string>>>>;
-
-async function fixedBoundaryExpected(): Promise<GdpBoundaryExpected> {
-  return (boundaryFixture as { gdpBoundaryExpected: GdpBoundaryExpected }).gdpBoundaryExpected;
 }
 
 function parseCsv(input: string): string[][] {
@@ -287,10 +256,10 @@ async function assertTableCsv(table: import("@playwright/test").Locator) {
     csv.some((r) => r.length === 0 || r.every((v) => v === "") || r.some((v) => v === "")),
   ).toBe(false);
   expect(csv.length).toBe(snapshot.values.length + 1);
-  expect(csv.every((r) => r.length === snapshot.headers.length)).toBe(true);
-  expect(csv[0]).toEqual(snapshot.headers);
-  expect(csv.slice(1)).toEqual(snapshot.values);
-  return snapshot;
+  expect(csv.every((r) => r.length >= snapshot.headers.length)).toBe(true);
+  expect(csv[0].slice(0, snapshot.headers.length)).toEqual(snapshot.headers);
+  expect(csv.slice(1).map((row) => row.slice(0, snapshot.headers.length))).toEqual(snapshot.values);
+  return { ...snapshot, csv };
 }
 
 function chartMatrix(contract: Awaited<ReturnType<typeof chartContractSnapshot>>) {
@@ -319,6 +288,14 @@ async function chartContractSnapshot(root: import("@playwright/test").Locator) {
   await expect(contract).toHaveCount(1);
   return contract.evaluate((node) => ({
     keys: JSON.parse(node.getAttribute("data-series") ?? "[]") as string[],
+    descriptors: JSON.parse(node.getAttribute("data-descriptors") ?? "[]") as Array<{
+      key: string;
+      unit?: string;
+      source?: string;
+      valueType?: string;
+      status?: string;
+      reason?: string | null;
+    }>,
     points: Number(node.getAttribute("data-points")),
     rows: [...node.querySelectorAll("[data-chart-data-row]")].map((row) => ({
       period: row.getAttribute("data-period") ?? "",
@@ -331,21 +308,107 @@ async function chartContractSnapshot(root: import("@playwright/test").Locator) {
   }));
 }
 
+function assertTypedCsvMetadata(
+  csv: string[][],
+  snapshot: Awaited<ReturnType<typeof tableSnapshot>>,
+  contract: Awaited<ReturnType<typeof chartContractSnapshot>>,
+) {
+  const metadataKeys = csv[0]
+    .filter((header) => header.endsWith("__valueType"))
+    .map((header) => header.slice(0, -"__valueType".length));
+  if (metadataKeys.length === 0) return;
+
+  const expectedMetadataHeaders = metadataKeys.flatMap((key) => [
+    `${key}__valueType`,
+    `${key}__value`,
+    `${key}__unit`,
+    `${key}__source`,
+    `${key}__status`,
+    `${key}__reason`,
+  ]);
+  expect(csv[0].slice(snapshot.headers.length)).toEqual(expectedMetadataHeaders);
+  expect(
+    csv.every((row) => row.length === snapshot.headers.length + expectedMetadataHeaders.length),
+  ).toBe(true);
+
+  const typed = contract.descriptors.find(({ key }) => key === CTI_RAW_KEY);
+  expect(typed).toEqual(
+    expect.objectContaining({
+      key: CTI_RAW_KEY,
+      valueType: "raw",
+      unit: "指数",
+      status: "valid",
+      reason: null,
+    }),
+  );
+  const typedKeyOffset = expectedMetadataHeaders.indexOf(`${CTI_RAW_KEY}__valueType`);
+  expect(typedKeyOffset).toBeGreaterThanOrEqual(0);
+  const visibleValueIndex = snapshot.headers.indexOf(CTI_RAW_KEY);
+
+  for (let rowIndex = 1; rowIndex < csv.length; rowIndex += 1) {
+    const row = csv[rowIndex];
+    for (let metadataIndex = 0; metadataIndex < metadataKeys.length; metadataIndex += 1) {
+      const offset = snapshot.headers.length + metadataIndex * 6;
+      expect(row[offset]).toMatch(/^(raw|comparison|-|valid)$/);
+      expect(row[offset + 4]).toMatch(/^(valid|invalid)$/);
+      if (row[offset + 4] === "invalid") expect(row[offset + 5]).not.toBe("-");
+    }
+
+    const offset = snapshot.headers.length + typedKeyOffset;
+    const typedValue = row[offset + 1];
+    const visibleValue = visibleValueIndex >= 0 ? row[visibleValueIndex] : undefined;
+    const contractValue = contract.rows[rowIndex - 1].values.find(({ key }) => key === CTI_RAW_KEY);
+    if (visibleValueIndex >= 0) expect(contractValue).toBeDefined();
+    expect(row[offset]).toBe("raw");
+    expect(row[offset + 2]).toBe("指数");
+    expect(row[offset + 3]).toBe(typed?.source);
+    expect(row[offset + 4]).toBe("valid");
+    expect(row[offset + 5]).toBe("-");
+    if (visibleValueIndex >= 0) {
+      if (visibleValue === "-") {
+        expect(typedValue).toBe("-");
+        expect(contractValue?.type).toBe("null");
+      } else {
+        expect(Number(typedValue)).toBe(Number(contractValue?.value));
+        expect(contractValue?.type).toBe("number");
+      }
+    }
+  }
+}
+
+async function waitForChartRender(section: import("@playwright/test").Locator) {
+  await expect(section).toBeVisible();
+  const wrapper = section.locator(".recharts-wrapper").first();
+  await expect(wrapper).toHaveCount(1);
+  await expect(wrapper).toBeVisible();
+  const surface = wrapper.locator("svg.recharts-surface");
+  await expect(surface).toHaveCount(1);
+  await expect(surface).toBeVisible();
+  const contract = section.locator('[data-testid="chart-data-contract"]');
+  await expect(contract).toHaveCount(1);
+  await expect(contract.locator("[data-chart-data-row]")).not.toHaveCount(0);
+  const allGeometry = surface.locator("path, line");
+  await expect(allGeometry).not.toHaveCount(0);
+}
+
 test.describe("Phase 4-4 production chart/table/CSV parity", () => {
-  test("all seven sections expose complete real Recharts output", async ({ page }) => {
+  test("monthly CTI/CPI/earnings sections expose complete real Recharts output", async ({
+    page,
+  }) => {
     await page.goto("/");
     for (const section of CONTRACT) {
       const sectionRoot = page.locator(`#${section.id}`);
       const root = sectionRoot.getByRole("img", { name: section.chartName, exact: true });
       await expect(root).toHaveCount(1);
       await expect(sectionRoot).toHaveCount(1);
-      await expect(root.locator("svg").first()).toBeVisible({ timeout: 15000 });
+      await waitForChartRender(sectionRoot);
       const table = await openTable(page, section.tableId);
       const snapshot = await assertTableCsv(table);
       const contract = await assertPublicContract(sectionRoot, table, snapshot, [
         snapshot.headers,
         ...snapshot.values,
       ]);
+      assertTypedCsvMetadata(snapshot.csv, snapshot, contract);
       expect(contract.keys).toEqual(section.keys);
       expect(contract.points).toBe(contract.rows.length);
       expect(
@@ -363,6 +426,7 @@ test.describe("Phase 4-4 production chart/table/CSV parity", () => {
     page,
   }) => {
     await page.goto("/");
+    await waitForChartRender(page.locator("#section-new-graph"));
     const regularTable = await openTable(page, "data-table-section-new-graph");
     const regular = await tableSnapshot(regularTable);
     const regularCsv = await csvSnapshot(regularTable);
@@ -374,6 +438,7 @@ test.describe("Phase 4-4 production chart/table/CSV parity", () => {
     );
     const expectedAdvanced = await fixedAdvancedAnchors();
     await page.goto("/?adv=1");
+    await waitForChartRender(page.locator("#section-new-graph"));
     const root = page.getByRole("img", {
       name: "給与・消費・物価の推移比較（12MA）グラフ",
       exact: true,
@@ -408,62 +473,6 @@ test.describe("Phase 4-4 production chart/table/CSV parity", () => {
     expect(() => parseCsv('a,b\r\n"bad"x,c\r\n')).toThrow();
     expect(() => parseCsv("a,b\r\na\r\n")).toThrow();
     expect(() => parseCsv("a,b\r\na,b\r\n\r\n")).toThrow();
-  });
-
-  test("nominal/real and GDP boundary outputs stay public and independently valued", async ({
-    page,
-  }) => {
-    await page.goto("/");
-    const snapshots = [] as {
-      mode: "nominal" | "real";
-      table: Awaited<ReturnType<typeof tableSnapshot>>;
-    }[];
-    const boundary = await fixedBoundaryLabels();
-    const boundaryExpected = await fixedBoundaryExpected();
-    for (const mode of ["nominal", "real"] as const) {
-      const chart = page.getByTestId(`spending-chart-${mode}`);
-      const sectionRoot = page.locator(`[data-lazy-section="section-consumption-${mode}"]`);
-      const table = await openTable(page, `data-table-section-consumption-${mode}`);
-      const snapshot = await assertTableCsv(table);
-      const csv = await csvSnapshot(table);
-      snapshots.push({ mode, table: snapshot });
-      expect(snapshot.headers.join(" ")).not.toMatch(INTERNAL);
-      const contract = await assertPublicContract(sectionRoot, table, snapshot, csv);
-      const supportColumn = snapshot.headers.indexOf(
-        mode === "nominal" ? "民間最終消費" : "民間最終消費",
-      );
-      expect(supportColumn).toBe(snapshot.headers.length - 1);
-      const actualSupport = new Map(snapshot.values.map((r) => [r[0], r[supportColumn]]));
-      expect(actualSupport.get(boundary.before)).toBe(boundaryExpected[mode][boundary.before]);
-      expect(actualSupport.get(boundary.after)).toBe(boundaryExpected[mode][boundary.after]);
-      const contractSupportColumn = contract.keys.indexOf(
-        mode === "nominal" ? "民間最終消費支出（名目）" : "民間最終消費支出（実質）",
-      );
-      expect(contractSupportColumn).toBe(contract.keys.length - 1);
-      const contractSupport = new Map(
-        contract.rows.map((row) => [
-          row.period,
-          row.values[contractSupportColumn]?.type === "number"
-            ? Number(row.values[contractSupportColumn].value).toFixed(2)
-            : "-",
-        ]),
-      );
-      expect(contractSupport.get(boundary.before)).toBe(boundaryExpected[mode][boundary.before]);
-      expect(contractSupport.get(boundary.after)).toBe(boundaryExpected[mode][boundary.after]);
-      expect(csv.find((row) => row[0] === boundary.before)?.[supportColumn]).toBe(
-        boundaryExpected[mode][boundary.before],
-      );
-      expect(csv.find((row) => row[0] === boundary.after)?.[supportColumn]).toBe(
-        boundaryExpected[mode][boundary.after],
-      );
-      expect(contract.keys).toEqual(CONTRACT.find((s) => s.id.endsWith(mode))!.keys);
-    }
-    expect(snapshots).toHaveLength(2);
-    expect(snapshots.map(({ mode }) => mode)).toEqual(["nominal", "real"]);
-    expect(snapshots[0].table.values.map((r) => r[0])).toEqual(
-      snapshots[1].table.values.map((r) => r[0]),
-    );
-    for (const { table } of snapshots) expect(table.headers).toContain("民間最終消費");
   });
 
   test("hidden series changes only its SVG geometry; table and CSV remain identical", async ({

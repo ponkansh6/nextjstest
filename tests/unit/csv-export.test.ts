@@ -65,6 +65,37 @@ describe("buildCsv", () => {
   it("行が空でもヘッダ行は出力する", () => {
     expect(buildCsv([], ["総合"])).toBe("年月,総合\r\n");
   });
+
+  it("各行のmeasurement metadataを使い、invalid月も保持する", () => {
+    const metadata = [
+      {
+        key: "CTI",
+        valueType: "comparison" as const,
+        value: null,
+        unit: "指数",
+        source: "CTI",
+        status: "valid" as const,
+        reason: null,
+      },
+    ];
+    const csv = buildCsv(
+      [
+        { 年月: "2025年1月", CTI: 101, measurements: { CTI: { ...metadata[0], value: 101 } } },
+        {
+          年月: "2025年2月",
+          CTI: null,
+          measurements: {
+            CTI: { ...metadata[0], value: null, status: "invalid", reason: "欠測月" },
+          },
+        },
+      ],
+      ["CTI"],
+      undefined,
+      { metadata },
+    );
+    expect(csv.split("\r\n")[1]).toContain("comparison,101,指数,CTI,valid,");
+    expect(csv.split("\r\n")[2]).toContain("comparison,,指数,CTI,invalid,欠測月");
+  });
 });
 
 describe("withBom / toFileName", () => {

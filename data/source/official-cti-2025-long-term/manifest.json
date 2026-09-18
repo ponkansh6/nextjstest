@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-17T16:11:50.864Z",
+  "files": [
+    {
+      "statInfId": "000040499070",
+      "seriesKind": "nominal",
+      "rawFile": "000040499070.raw",
+      "normalizedFile": "000040499070.normalized.csv",
+      "metadataFile": "000040499070.metadata.json",
+      "rawSha256": "5377332d3fe5460382a65091d2efa788c6bc62c113cd80d863a1085d47bd7a6e",
+      "normalizedSha256": "6a4d72fbf1bbf5df1b6e1e43af33c7fb39ea95d46d9f12d93590e6fd73a7b0b2",
+      "metadataSha256": "e774b412979fc3614e57f782caea792c6f272f87097e98bda988919ca97d783f"
+    },
+    {
+      "statInfId": "000040499082",
+      "seriesKind": "seasonallyAdjusted",
+      "rawFile": "000040499082.raw",
+      "normalizedFile": "000040499082.normalized.csv",
+      "metadataFile": "000040499082.metadata.json",
+      "rawSha256": "97b54de7905460abc2099a3ac804c17e8c7b61e82d7d1fa02a9e723f7056d53e",
+      "normalizedSha256": "fcb422019bfcc78f4451e95afc344d9eaaa4d15605673f965c5230ee35a54408",
+      "metadataSha256": "7ae3a93eace4efbc313d7cbb010265119280654b7c2d4ab9ed171652d970a347"
+    }
+  ],
+  "derivedFiles": [
+    {
+      "file": "series-map.csv",
+      "sha256": "9085483a4e4248a724754875b74c95f7cfab72819dcb121e74cfd5b8bc38cba7"
+    },
+    {
+      "file": "representative-snapshot.csv",
+      "sha256": "6acdf4070ab9e60344896cd93ad1e2a56cdc3437808c7017bfc0afce1c9bb6f8"
+    }
+  ]
+}

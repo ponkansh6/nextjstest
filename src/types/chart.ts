@@ -36,9 +36,29 @@ export interface TooltipSeriesMetadata {
   color?: string;
   order?: number;
   advanced?: boolean;
+  unit?: string;
+  source?: string;
+  valueType?: "raw" | "comparison";
+  status?: "valid" | "invalid";
+  reason?: string | null;
 }
 
-export interface CpiView extends Record<string, string | number> {
+/** Public measurement metadata shared by chart, table, tooltip and CSV. */
+export interface SeriesMeasurement {
+  key: string;
+  label: string;
+  unit: string;
+  source: string;
+  valueType: "raw" | "comparison";
+  value: number | null;
+  status: "valid" | "invalid";
+  reason: string | null;
+}
+
+/** Descriptor and row measurement intentionally share the complete public shape. */
+export type SeriesDescriptor = SeriesMeasurement;
+
+export interface CpiView extends Record<string, string | number | null> {
   年月: string;
 }
 
@@ -57,6 +77,10 @@ export interface QuarterlyView extends Record<string, number | string | null> {
   年月: string;
 }
 
-export interface EarningsView extends Record<string, string | number> {
+export interface EarningsView extends Record<string, string | number | null> {
   年月: string;
 }
+
+export type EarningsViewWithMeasurements = EarningsView & {
+  measurements?: Record<string, SeriesMeasurement>;
+};

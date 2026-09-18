@@ -25,27 +25,39 @@ the existing DOM contract or chart props.
 
 The shared data type with an index signature `[key: string]: string | number` for extensibility. Below are the explicitly defined fields; additional fields are added at runtime by each data loader.
 
-| Field                                                   | Type           | Description                                                                                                                                                                                                                                        |
-| ------------------------------------------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 年月                                                    | string         | Public period label; quarterly views use `label` such as `2025Q1` (and `年月` is the same `YYYYQn` label), while monthly views use `YYYY年M月`                                                                                                     |
-| 総合                                                    | number         | Displayed all-items index: CPI and earnings both use the 2025 calendar-year average = 100 display basis; any source or compatibility basis is normalized separately                                                                                |
-| 生鮮食品を除く総合                                      | number         | CPI excluding Fresh Food                                                                                                                                                                                                                           |
-| 持家の帰属家賃を除く総合                                | number         | CPI excluding Imputed Rent                                                                                                                                                                                                                         |
-| 民間最終消費支出（名目・原値） / （実質・原値）         | number \| null | GDP private final consumption official raw amount. The loader emits these only when the complete nominal-and-real GDP comparison set validates; nominal is current prices and real is previous-year chain-linked with its recorded reference year. |
-| 民間最終消費支出（名目・比較指数） / （実質・比較指数） | number \| null | GDP comparison-only normalized value; separate from official raw values and omitted when either verified 2025 annual value is absent or invalid.                                                                                                   |
-| 民間最終消費支出（四半期raw）                           | number \| null | Plan21 original-series quarterly official amount, keyed by `YYYY-Qn`; nominal and real remain separate.                                                                                                                                            |
-| 民間最終消費支出（四半期比較指数）                      | number \| null | Quarterly GDP reference index on the 2025 calendar-year average = 100 basis (the 2025Q1–Q4 average), emitted only when independent confirmation is `ready`; pending status is fail-closed.                                                         |
-| CTI消費支出（参考）                                     | number \| null | Displayed all-household CTI consumption expenditure index on the 2025 calendar-year average = 100 basis (12MA; official availability begins in 2017; no legacy CTI connection)                                                                     |
-| 消費支出（参考）                                        | number         | Compatibility consumption-expenditure series, displayed on the 2025 calendar-year average = 100 basis after normalization; its possible 2020 source basis is not the display basis                                                                 |
-| CPI総合(参考)                                           | number         | CPI All Items reference index on the 2025 calendar-year average = 100 display basis                                                                                                                                                                |
+| Field                                                                     | Type           | Description                                                                                                                                                                                                                                                                |
+| ------------------------------------------------------------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 年月                                                                      | string         | Public period label; quarterly views use `label` such as `2025Q1` (and `年月` is the same `YYYYQn` label), while monthly views use `YYYY年M月`                                                                                                                             |
+| 総合                                                                      | number         | Displayed all-items index: CPI and earnings both use the 2025 calendar-year average = 100 display basis; any source or compatibility basis is normalized separately                                                                                                        |
+| 生鮮食品を除く総合                                                        | number         | CPI excluding Fresh Food                                                                                                                                                                                                                                                   |
+| 持家の帰属家賃を除く総合                                                  | number         | CPI excluding Imputed Rent                                                                                                                                                                                                                                                 |
+| 民間最終消費支出（名目・原値） / （実質・原値）                           | number \| null | GDP private final consumption official raw amount. The loader emits these only when the complete nominal-and-real GDP comparison set validates; nominal is current prices and real is previous-year chain-linked with its recorded reference year.                         |
+| 民間最終消費支出（名目・比較指数） / （実質・比較指数）                   | number \| null | GDP comparison-only normalized value; separate from official raw values and omitted when either verified 2025 annual value is absent or invalid.                                                                                                                           |
+| 民間最終消費支出（四半期raw）                                             | number \| null | Plan21 original-series quarterly official amount, keyed by `YYYY-Qn`; nominal and real remain separate.                                                                                                                                                                    |
+| 民間最終消費支出（四半期比較指数）                                        | number \| null | Quarterly GDP reference index on the 2025 calendar-year average = 100 basis (the 2025Q1–Q4 average), emitted only when independent confirmation is `ready`; pending status is fail-closed.                                                                                 |
+| CTIミクロ基本系列（名目・原数値） / （名目・参考） / （名目・参考・延長） | number \| null | Plan37 fixed two-or-more-person-household nominal basic CTI series 1 raw value and its 12MA comparison index on the 2025 12MA annual-average = 100 basis; normal/extension keys share the source and boundary. The raw value is never substituted by the comparison value. |
+| 消費支出（参考）                                                          | number \| null | Legacy row-shape field retained only for historical loader compatibility; Plan37 never populates or projects this key.                                                                                                                                                     |
+| CPI総合(参考)                                                             | number         | CPI All Items reference index on the 2025 calendar-year average = 100 display basis                                                                                                                                                                                        |
+
+### Plan37 public measurement contract
+
+`SeriesMeasurement`/`SeriesDescriptor` (`src/types/chart.ts`) are the typed public
+metadata contract for the CTI basic raw series and both normal/extension 12MA
+comparison keys. Every measurement and descriptor has `key`, `label`, `unit`,
+`source`, `valueType`, `status`, `reason`, and `value` (`number | null`); no
+`Record<string, unknown>` is allowed at the Plan37 public boundary. The registry,
+chart contract, public projection, tooltip, legend, table, and CSV refer to the
+same descriptor identity. Failed baselines emit null comparison values,
+`status: invalid`, and a non-empty reason; valid values emit `reason: null`.
 
 **Major runtime-added fields per data loader:**
 
-| Loader                        | Example fields                                                                                                                                                                          |
-| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| CPI (`loadCpiData`)           | 生鮮食品及びエネルギーを除く総合, 食料（酒類を除く）及びエネルギーを除く総合, 外食以外食料, 交通・自動車等関係費, 選択済みCPIペアの固定ウェイト加重費目 (住居, 家具・家事用品, 教育, …) |
-| CTI (`loadCtiData`)           | 消費支出（名目/実質）, 食料/住居/光熱・水道/…（名目/実質）, その他の消費支出（名目/実質）, 民間最終消費支出（名目/実質）                                                                |
-| 賃金 (`loadTotalEarningData`) | 所定内給与, 所定外給与, 特別給与, 時間当たり給与, 15歳以上国民当たり給与, 残差, \*(12MA) 系列                                                                                           |
+| Loader                                      | Example fields                                                                                                                                                                          |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CPI (`loadCpiData`)                         | 生鮮食品及びエネルギーを除く総合, 食料（酒類を除く）及びエネルギーを除く総合, 外食以外食料, 交通・自動車等関係費, 選択済みCPIペアの固定ウェイト加重費目 (住居, 家具・家事用品, 教育, …) |
+| CTI (`loadCtiData`)                         | 消費支出（名目/実質）, 食料/住居/光熱・水道/…（名目/実質）, その他の消費支出（名目/実質）, 民間最終消費支出（名目/実質）                                                                |
+| CTI basic (`loadCtiBasicConsumptionOutput`) | 二人以上の世帯「消費支出（名目）」原数値、12MA、2025年12MA平均=100比較値、`valid`/`reason`状態                                                                                          |
+| 賃金 (`loadTotalEarningData`)               | 所定内給与, 所定外給与, 特別給与, 時間当たり給与, 15歳以上国民当たり給与, 残差, \*(12MA) 系列                                                                                           |
 
 All displayed salary, CPI, CTI-consumption, and GDP-reference index series use
 the 2025 calendar-year average = 100. A 2020-base source or compatibility set
@@ -63,6 +75,8 @@ moving average, and then sets the 2025 calendar-year average to 0.
 | ma    | number | Moving average   |
 
 ### Data Sources
+
+Plan37's public CTI state is explicit: `status` is `valid` or `invalid`, `reason` is null/empty when valid and required when invalid, `source` is the e-Stat CTI basic-series source, and `unit` is `指数`. Every projected CTI row contains both raw and comparison keys as a finite number or null, so missing raw observations remain observable in public state, chart data contracts, tables, and CSV output. The request-scoped comparison registry is created from the actual typed descriptor status/reason; the raw descriptor and normal/extension 12MA descriptors retain the same source, unit, valueType, value, status, and reason metadata through every public surface. Artifact absence or baseline failure is never represented as fixed `valid`/null metadata.
 
 Browser state sources are explicit and remain separate from server data
 sources: `from`, `to`, `hidden`, and `adv` are read from the URL by
@@ -99,9 +113,11 @@ Static CSV files (not publicly served) stored in `data/source/`:
 - `data/source/cpi_data.csv` / `data/source/contribution.csv` — Compatible 2020-base fallback pair. They are selected together only when the complete 2025 pair cannot be validated; the 2020 source basis is normalized to the 2025 display basis and is never presented as the display base year.
 - `data/source/cpi_data2025.csv` — Saved 2025-base raw monthly data beginning in 2025; it is not a long connected series and MUST NOT be selected as the dashboard CPI input.
 - `data/source/cti_data2025.csv` / `cti_data2025_distribution_adjusted.csv` — 2025-base CTI candidate CSVs, each covering 2017年1月〜2026年7月. They are not selected until the adopted variant, official map, and snapshot are complete.
+- Plan36専用長期成果物: `data/source/official-cti-2025-long-term/` のe-Stat current 2025年基準 CTIミクロ基本系列（二人以上世帯）。原数値 `statInfId=000040499070`、季節調整値 `statInfId=000040499082`、公式 `fileKind=0` URL、raw 2002-01〜2026-07、normalized adopted 2005-01〜2026-07、2 variant各22系列×259月=5698 rows。raw XLSX 2、normalized CSV 2、metadata 2、manifest、series-map 44 rows、representative-snapshot 132 rowsを保存し、SHA-256/manifest相互参照を検証する。normalized columnsは `variant,series_index,official_series_code,series_name,month,raw_value,is_missing`。季節調整のofficial_series_codeは公式コード行がないためnull、`-`と数値0は区別し、補間・丸め・異基準接続は行わない。既存loader採用経路とは分離し、既存2025 loader dataは変更しない。
+- Plan37の公開対象はこの長期成果物の公表済み最新月を動的に採用する。2026-07は計算対象、2026-08は成果物にないため行・値を生成せず、将来の更新月を実装やテストに固定しない。
 - `data/source/cti_data2025.metadata.json` / `cti_data2025_distribution_adjusted.metadata.json` — Candidate provenance and integrity metadata; they do not by themselves make a 2025 CTI set selectable.
 - `data/source/cti-2025-series-map.csv` / `cti-2025-official-series.csv` — Official-code map and independent snapshot required to verify the adopted CTI candidate; every mapped official row is matched against the snapshot by code, name, and representative values.
-- `data/source/cti_support_nominal2025.csv` / `cti_support_real2025.csv` — Official annual GDP artifacts for 1994–2025, each containing e-Stat series code 12 (`民間最終消費支出`) in 10億円. The nominal source is 0003109786 and the real source is 0003109751.
+- `data/source/official-cti-2025-long-term/000040499070.normalized.csv` and `series-map.csv` — Plan37's official 2025-base monthly CTI basic-series input. The output line selects only nominal `series_index=1`, `official_series_code=1`, `消費支出（名目）`, for 二人以上の世帯 from 2005-01 through the published latest month. The seasonally adjusted artifact and nominal file's real series are not selected.
 - `data/source/cti_support_nominal2025.metadata.json` / `cti_support_real2025.metadata.json` / `cti-gdp-display-normalization2025.json` — Provenance, hash, annual-period, and independent 2025 annual-value normalization records. Metadata, source CSV, and normalization JSON hashes must agree before use. Nominal remains current prices; real remains previous-year chain-linked at its recorded 2020 reference year.
 - `data/source/cti_support_nominal_quarterly2025.csv` / `cti_support_real_quarterly2025.csv` — Plan21 official Cabinet Office original-series long data, 2005Q1–2025Q4 (84 rows), nominal current prices and real previous-year chain-linked values.
 - Matching `.metadata.json`, `.official.csv`, and e-Stat snapshots record source URL, retrieval/revision state, CSV SHA-256, and ready independent confirmation. `gdpSupport.ts` calculates separate nominal/real average=100 factors from the quarterly CSV observations for 2025 Q1–Q4, and verifies the metadata, CSV, official, and e-Stat artifact SHA-256 consistency before comparison values are available. Invalid or unavailable confirmation disables comparison values and never silently falls back to annual data.
@@ -109,7 +125,7 @@ Static CSV files (not publicly served) stored in `data/source/`:
 - `tests/fixtures/loader-comparison/golden.json` — fixed fixture-comparison contract for the validated CPI/CTI loaders, annual GDP, and quarterly GDP. The observation golden digests are CPI `d6490cfbb88a94eef4c6bc150a6b5698acbfa30c3e2bf8a5fae68648663f9f5e`, CTI `e44939cc5f6afeab444a69f3e499d30b1333f05d7d1d5c0357cd23c86869e3dd`, annual GDP `0c13f58a050723be8bafe6cd2fe13f42825f8d48749703d15535aa7613ad748c`, and quarterly GDP `147a57a94678246f9f697a9bda1c7f7f6e8ec39f23b6bb8e456fe4955a1b9b3b`. Volatile metadata timestamps are excluded from the digest contract; array ordering remains significant.
 - The annual GDP golden source-artifact SHA-256 contract is: nominal CSV `9a6331e1cc0ff0f4acb8da67dbdf5ed0c2b1457122b1a1b8c990911dbce2038f`, real CSV `0c6973e2b4a2686b94a7954a5a55058a5101de05ebed316066f7d0b517e6e744`, nominal metadata `8e482d34a253360918e0acdd1c2c054e969cc3ff278761b4df9263bebed24d2f`, real metadata `b01785b1f7dc7022baddf1628b2fd16e985ef95e308a1bb1c7bb9775b537cb69`, and annual normalization JSON `359e02b2ac1b46e80de9234ac965f2d41cf915cd039a872baf1713887ad836a9`.
 - The quarterly GDP golden source-artifact SHA-256 contract is: nominal CSV `0b5b4b21fcc03071973c96e4c7dfffba02eb63ee600c19de023aef1c345a49a7` and real CSV `4454cc36abdd556210e0bdea1f32055c1716d799d69368e883a39f445f1ef855`. Quarterly comparison factors are calculated from the validated 2025 Q1–Q4 CSV observations; no quarterly normalization JSON is an input artifact.
-- `data/source/cti_data.csv` / `cti_support_nominal.csv` / `cti_support_real.csv` — Complete compatible 2020-base CTI rollback set; never mixed with a 2025 CTI input. If selected, its CTI consumption values are normalized for display to the 2025 calendar-year average = 100; 2020 is source/compatibility provenance only.
+- `data/source/cti_data.csv` / `cti_support_nominal.csv` / `cti_support_real.csv` — Complete compatible 2020-base CTI rollback set for the historical CTI loader contract. It remains separately testable and is never selected, displayed, or used as fallback by the Plan37 long-term target line; if its legacy consumer path is selected, 2020 is source/compatibility provenance only and is normalized to the 2025 display basis.
 - CTI monthly observations are the source of truth for quarterly consumption completeness: from 2018Q1, all three normalized `YYYY年M月` records and every nominal/real consumption key must contain finite numeric values. A valid zero is retained; a missing or non-finite observation is not converted to zero.
 - `data/source/total_earning.csv` — Total earnings
 - `data/source/contractual_earnings.csv` — Contractual earnings
@@ -143,9 +159,9 @@ emitting `NaN`/`Infinity`. The applicable expense list is the keys passed to
 合計はloaderの生値ではなく、給与独自の2025年平均=100基準化および特別給与の
 12か月移動平均を経た表示値を使用し、補助系列3種は含めない。
 
-Chart info は `src/lib/chartInfoContent.ts` の指標別説明を表示する。消費支出の
-説明は GDP参考値、CTI合計、諸雑費・CPI外支出の関係を簡潔に示し、3種比較では
-給与・GDP・CTI・CPIそれぞれの12か月移動平均を説明する。実装用のPlan22、raw値、
+Chart info は `src/lib/chartInfoContent.ts` の指標別説明を表示する。Plan37対象線の
+説明は二人以上の世帯、2005年1月〜公表最新月、名目原数値、12MA、2025年12MA平均=100を示し、
+給与・CTI・CPIそれぞれの12か月移動平均を説明する。実装用のPlan22、raw値、
 内部検証保持、四半期の月範囲、9大費目の列挙はユーザー向け説明に含めない。
 
 ### Data Flow
@@ -157,6 +173,9 @@ acquisition or compatibility and is not a display basis. The salary-minus-CPI
 comparison uses those same-basis indices, then 2MA, then 2025-calendar-year
 average = 0 rebasing.
 
+Plan36の取得フローは、公式fileKind=0 URLのXLSX取得（retry/timeout、appId値をログへ出さない）→同一filesystem上のstaging→target sheet/title/header/order/identity/period/duplicate/continuity検証→raw/normalized/metadata/manifest/map/snapshotのSHA-256相互検証→atomic publishとする。HTML/404/空/未知形式は拒否し、失敗時は既存成果物を保持する。raw 2002-01〜2026-07を検証後、normalizedは2005-01〜2026-07のみとし、未提供期間は補完せず明示する。Plan37はこの成果物を専用loaderで公開earnings projectionへ接続する。
+Plan37の専用loaderはこのnormalized成果物から名目系列1だけを読み、raw/12MA/normal/extensionを同じ型付きdescriptor/measurementへ投影する。artifact rootはimport時のcwdに依存せず、モジュールdirnameからrepo rootを上方向へ探索し、`CTI_BASIC_ARTIFACT_ROOT`で明示overrideできる。公開statusは絶対pathを漏らさず、resolved rootの公開ラベル、artifact status/reason、baselineを保持する。公開projectionは旧 `消費支出（参考）` を選択せず、2026-07を含む公表済み行だけを返し、2026-08のような未提供月は生成しない。既存loaderが持つ2020 rollback契約は別経路として存続し得るが、Plan37線へ流入しない。
+
 For quarterly consumption, `loadCtiData()` normalizes monthly keys before
 quarterly aggregation builds a completeness set from the original monthly
 records and nominal/real CTI keys. The server aggregation and the legacy
@@ -165,16 +184,24 @@ quarters before public projection, so `SpendingBarChart`, data tables, and CSV
 share the same nominal/real row set. GDP support rows before 2018Q1 remain an
 independent exact-quarter join and are not filtered by CTI completeness.
 
-`CpiChartSections` projects CPI, salary, and comparison entries through the
-shared `projectTooltipMetadata` helper. `useChartTooltipProps` passes that
+`CpiChart` creates one request-scoped CTI comparison registry from `ctiInfoState`
+and passes it to `CpiChartSections`, `NewGraph`, tooltip projection, and the
+`section-new-graph` `DataTableSpec`. The raw/12MA/normal/extension descriptors
+are the same metadata objects used by `DataTablesSection` and
+`ChartExportButton`, so CSV metadata cannot diverge from the chart contract.
+`CpiChartSections` projects CPI, salary, and CTI-basic comparison entries through
+the shared `projectTooltipMetadata` helper. `useChartTooltipProps` passes that
 projection through `useChartTooltipController` to `CustomTooltip`, which
 resolves rows by `dataKey` and takes label, color, and order from the same key.
 Missing registered payload values are complemented as `—`; Spending's explicit
-`allowedKeys` function enforces the GDP-before-2018Q1 / CTI-from-2018Q1 boundary.
-Comparison tooltip visibility uses the same advanced/hidden registry projection
-as NewGraph drawing and legend, then applies the 2017Q4/2018Q1 boundary to
-GDP/CTI detail rows; registered null values remain in the tooltip as `—`, so the
+`allowedKeys` function enforces the quarterly spending boundary. Comparison tooltip visibility uses the same advanced/hidden registry projection
+as NewGraph drawing and legend; registered null values remain in the tooltip as `—`, so the
 three surfaces have the same visible registered-series set for each period.
+
+Plan37's raw CTI line is independently rendered by `EarningsBreakdownChart` and
+never substitutes a comparison value when raw data is null. Normal/extension
+selection remains controlled by the existing `adv` boundary; measurement unit,
+source, status, and reason are retained in the public projection and CSV metadata.
 
 `allowedKeys` is applied before totals and registered metadata rows. Spending,
 CPI, salary, and comparison paths retain strict filtering: when `allowedKeys` is
@@ -207,8 +234,13 @@ metadata順で維持し、`EARNINGS_TOTAL_KEYS` に含まれる可視行の有�
 those charts through `useChartTooltipProps`. `ChartLegend` and each inline
 legend preserve registry/key order, label, color, hidden state, and advanced
 state; NewGraph additionally retains defined legend entries for all-null data.
-Drawing, legend, and tooltip bind to the same metadata keys while retaining
+Drawing, legend, tooltip, table, and CSV bind to the same metadata keys while retaining
 each chart's existing renderer.
+Plan37のraw/normal/extension chart, legend, tooltip, table, and CSV consumers all
+read the same typed `SeriesDescriptor`/`SeriesMeasurement`; artifact absence,
+baseline failure, and invalid input retain their status/reason in every surface;
+the legacy
+`消費支出（参考）` row field is neither selected nor rendered.
 
 `SpendingBarChart` receives only complete quarterly consumption rows from the
 public projection (or the synchronized legacy calculation path). The table and
@@ -223,6 +255,8 @@ independent and may still be null at the existing 2017Q4/2018Q1 boundary.
 - `data/source/earnings_method_b_202606.metadata.json` — 方式Bの取得元URL、統計表ID、シート、表頭、対象区分、単位、確報状態、SHA-256、系列対応表を記録する。
 - 方式Bの断面抽出は公式履歴CSVと単位・期間が互換でないため、履歴入力へ自動連結せず、5月・6月など未取得月を補完しない。履歴ファイルが対象系列・対象区分・単位・改訂状態を満たすまで、既存の検証済み履歴と表示範囲を維持する。
 - `data/source/cti_support_nominal.csv` / `data/source/cti_support_real.csv` — CTI supporting series
+
+Plan36取得基盤による追加なし。成果物は既存loader/API、公開データモデル、画面へ接続しない。
 
 Tooltip group separators use no additional source data: the salary-only boundary is derived from
 the visible metadata projection and does not change source values or accessible row content.
@@ -285,6 +319,45 @@ unless given exactly one positive finite value. Public JSON shape and SSR bounda
 - **AND** the established 2025 display basis and rounding are preserved; a 2020 source or compatibility basis remains provenance and is not treated as the display basis
 
 ## Requirements
+
+### R-Plan37: CTI basic series public contract
+
+- **WHEN** the official CTI long-term input is valid
+- **THEN** raw, 12MA normal, and 12MA extension measurements use the same typed
+  descriptor fields and source/unit, while raw remains independent of comparison
+  across chart, legend, tooltip, table, and CSV
+- **WHEN** the 12MA baseline is incomplete, non-finite, or `B <= 0`
+- **THEN** comparison values are null and machine-readable invalid status plus a
+  non-empty reason propagate through row measurements, public state, and CSV;
+  no GDP or rollback fallback is used
+- **WHEN** `adv` is off/on or the period crosses 2017-12/2018-01
+- **THEN** only the established normal/extension key is visible and no legacy
+  GDP/CTI compatibility key is used by the target CTI line
+- **WHEN** the artifact latest month is 2026-07 and the requested period reaches 2026-08
+- **THEN** 2026-07 is calculated and 2026-08 is absent/null; the implementation derives the boundary from artifact metadata rather than a fixed future month
+- **WHEN** the Plan37 path is invoked with a 2020 rollback-capable loader state
+- **THEN** the Plan37 raw/12MA/normal/extension measurements still come only from the fixed 2025 long-term nominal artifact; the historical rollback contract remains isolated to its own loader tests
+- **WHEN** CTI artifact loading or baseline validation returns `invalid`
+- **THEN** the request-scoped normal and extension comparison registry entries, legend, chart tooltip, public projection, table, and CSV expose the same non-empty reason and never a fixed `valid`/null state
+- **WHEN** the NewGraph table or CSV is produced
+- **THEN** its `DataTableSpec.metadata`, `DataTablesSection`, `ChartExportButton`, and CSV columns use the same raw/12MA/normal/extension typed CTI descriptors as the chart and tooltip
+
+#### Plan37 skip classification
+
+The measured classification is Plan37対象skip=0 and legacy skip=4. Two
+Plan37-relevant checks are active: the current CTI-key NewGraph/public-projection
+check and the 2016-12/2017-01 CTI continuity check. The remaining four are
+explicitly named `legacy:` skips:
+the GDP-backed NewGraph check, annual GDP normalization, the legacy display-base
+compatibility check, and the 2020 rollback-only assertion. They remain outside
+the Plan37 test contract because their GDP/legacy keys must not be re-enabled
+against the CTI public line. Active Plan37 coverage separately verifies raw and
+measurement parity, latest-month handling, normal/extension periods, and
+rollback isolation. The four legacy test names are `legacy: verifies the regular
+2025 GDP-backed NewGraph series independently`, `legacy: 年次GDP値に基づく2025基準の表示値を検証`,
+`legacy: should base displayed index series on the 2025 calendar-year average`,
+and `legacy: should keep 2020 fixed scaling rollback-only and leave GDP 2025 comparison keys unset`.
+The Plan37 target skip count is therefore zero in both the audit log and this specification.
 
 ### R-Hooks: Commit and Push Validation Architecture
 
@@ -433,13 +506,13 @@ The system SHALL display economic indicators as interactive Recharts-based chart
     - Uses the difference between the 2025 calendar-year average = 100 salary index and the same-basis CPI index; it is a comparison-only field and does not rewrite CPI, CTI, earnings, or GDP source values.
     - The index difference is smoothed with a 2-month moving average (2MA), then rebased so that its 2025 calendar-year average is 0 when every required series has 12 valid months.
   - NewGraph (supplementary view, 3種比較):
-    - Displays four main series in legend order: 物価指数(総合), 給与(総合), CTI消費(総合), 民間最終消費(総合); all four are displayed as indices with the 2025 calendar-year average = 100.
-    - GDP reference and CTI consumption are shown as separate series with `null` outside their validated active periods so lines correctly truncate instead of dropping to zero.
-    - CTI begins in its official 2017 availability range and is not connected to a legacy CTI series. GDP and CTI remain separate lines.
-    - NewGraph receives GDP comparison indices normalized to the 2025 annual average; a GDP line is omitted when the required GDP data is unavailable, regardless of the CTI state.
-    - Also includes an advanced reference-only series "民間最終消費支出（参考・延長）" (2018-) which is hidden by default and can be enabled via `?adv=1` URL query parameter or the lower toggle in the ⓘ info panel; the regular "民間最終消費支出（参考）" covers through 2017, and both boundary series derive from the same `maMinkan * minkanFactor` values.
-    - When `adv=1` is enabled, only the NewGraph renders the 2018年以降の「民間最終消費支出（参考・延長）」 series; nominal and real quarterly Spending charts keep the regular public key set and the default GDP-before-2018Q1 / CTI-from-2018Q1 boundary. Quarterly public labels remain `YYYYQn`.
-    - When validated GDP comparison is available, it is preferred as the `minkanMap` input for the advanced series; that map is expanded to monthly values and then smoothed with a 12-month moving average.
+    - Displays three main series in legend order: 物価指数(総合), 給与(総合), CTIミクロ基本系列(名目・総合); all are displayed as indices with the 2025 basis contract.
+- The regular and advanced private-consumption comparison lines are the same official CTI basic nominal series, with `null` outside the existing 2017/2018 display boundary. They use a strict 12-month moving average and 2025 12MA annual-average = 100 comparison index; the official raw value remains separate.
+- Missing, duplicate, non-finite, incomplete-baseline, and non-positive-baseline CTI inputs fail closed with a retained reason. No interpolation, zero-fill, partial window, GDP fallback, seasonal-adjusted mix, or 2020 rollback path is used by this comparison line.
+  - NewGraph does not use GDP for the Plan37 CTI basic line; GDP comparison remains an independent quarterly/annual contract elsewhere.
+  - Also includes an advanced reference-only series "CTIミクロ基本系列（名目・参考・延長）" (2018-) which is hidden by default and can be enabled via `?adv=1` URL query parameter or the lower toggle in the ⓘ info panel; the regular "CTIミクロ基本系列（名目・参考）" covers through 2017, and both boundary series derive from the same official CTI 12MA comparison map.
+  - When `adv=1` is enabled, only the NewGraph renders the 2018年以降のCTIミクロ基本系列（名目・参考・延長）; nominal and real quarterly Spending charts keep their existing public key set and boundary. Quarterly public labels remain `YYYYQn`.
+- The advanced CTI series uses the same validated official monthly CTI source as the regular series and only changes visibility according to the existing `adv` contract.
   - Time-series charts render the first/last (start year / end year) tick label in `--foreground` via the shared `XAxisEdgeTick` component (`src/app/components/charts/XAxisEdgeTick.tsx`), while other tick labels use the default `--chart-text` color. MajorIndicesChart, ResidualAreaChart, NewGraph, EarningsBreakdownChart, and StackedAreaChart delegate their XAxis configuration to `TimeSeriesXAxis`.
   - Time-series charts use the shared period-based tick policy for their year/month axis. MajorIndicesChart, ResidualAreaChart, NewGraph, EarningsBreakdownChart, and StackedAreaChart use `TimeSeriesXAxis`; its boundary-tick policy is equivalent to `includeBoundaryTicks: false` for these charts. The axis displays only the start/end labels and data-present round-number milestones (2010/1, 2015/1, 2020/1, 2025/1); non-round series-boundary labels such as 2017/12・2018/1 are omitted because the hand-off remains visible through reference lines. The shared selector preserves endpoints, de-duplicates label values, and suppresses milestone candidates within the configured period distance of either endpoint; endpoint labels retain the existing centered `text-anchor="middle"` behavior. On mobile, `XAxisEdgeTick` avoids rendering an interior tick close enough to overlap an endpoint label.
 
@@ -598,31 +671,48 @@ The system SHALL load and process CSV data on the server before rendering.
 - **AND** annual GDP validation, normalization, raw/comparison separation, and its public status contract remain unchanged and independent of CPI/CTI selection
 - **AND** quarterly GDP validation, status propagation, public projection, and fail-closed behavior remain unchanged and do not fall back to annual GDP
 
-#### Scenario R3b: CTI / Earnings / Consumption Data Loading
+#### Scenario R3b: Legacy CTI / Earnings / Consumption Data Loading
 
-- **WHEN** `loadCtiData()` / `loadTotalEarningData()` / consumption map builder is called
-- **THEN** it selects a complete, verified 2025 CTI set only when the adopted CTI CSV, metadata, official map, and official snapshot validate; otherwise it selects the complete compatible 2020 rollback set
+- **WHEN** the historical `loadCtiData()` / consumption map builder contract is called
+- **THEN** it selects a complete, verified 2025 CTI candidate only when its candidate CSV, metadata, official map, and snapshot validate; otherwise it may select the complete compatible 2020 rollback set
 - **AND** it validates the CTI set and the nominal/real GDP comparison set independently and never treats GDP availability or a CTI base year as a condition for CTI selection
 - **AND** it matches every adopted CTI map row to the official snapshot row-by-row, including official code, name, and representative values
 - **AND** it returns an explicit unavailable state when neither complete set is valid
 - **AND** missing CTI inputs remain missing; they are not converted to zero, and a derived residual is missing when any required component is missing.
 
-When the CTI map/snapshot or any other candidate input fails validation, the complete 2020 CTI rollback is selected. When the annual nominal/real GDP pair passes its independent validation, `getGdpSupportStatus()` reports available GDP comparison normalization without affecting CTI selection.
+When the legacy CTI map/snapshot or another candidate input fails validation, the complete 2020 CTI rollback may be selected for that legacy contract. This rule does not govern Plan37: its dedicated long-term line always uses only the fixed 2025 nominal series and fails closed without GDP, seasonal-adjusted, real, or rollback fallback. When the annual nominal/real GDP pair passes its independent validation, `getGdpSupportStatus()` reports available GDP comparison normalization without affecting either CTI contract.
 
-#### Scenario R3d: CTI Source Basis, 12MA, and Comparison Rebase
+#### Scenario R3b-plan36: Long-Term CTI Acquisition Foundation
 
-- **WHEN** a validated selected CTI series (2025 candidate or complete compatible 2020 rollback) is used for the consumption charts
-- **THEN** the chart and data table retain its official source basis; the source basis is not overwritten by comparison normalization
-- **AND** CTI consumption expenditure is displayed as an index rebased to the 2025 calendar-year average = 100; a selected 2020-compatible source is normalized to that display basis and is not identified as a 2020 display base
-- **AND WHEN** a 3種比較 or wage-price-difference field is generated
-- **THEN** its component series use the 2025 calendar-year average = 100 display basis, its 12MA is calculated from continuous raw values first, and its display factor is derived only from the corresponding raw calendar-year average
-- **AND** the comparison field is omitted when the 2025 average cannot be verified from 12 valid months.
+- **WHEN** plan36 retrieves the official current 2025-base CTI micro basic-series XLSX for two-or-more-person households from the official `fileKind=0` URLs
+- **THEN** raw `statInfId=000040499070` is recorded as original values and raw `statInfId=000040499082` as seasonally adjusted values, each covering 2002-01 through 2026-07; each variant has 22 series × 259 months = 5698 normalized rows for the adopted 2005-01 through 2026-07 range
+- **AND** normalized columns are `variant,series_index,official_series_code,series_name,month,raw_value,is_missing`; seasonal-adjusted `official_series_code` is null when the source has no code row, and `-` remains distinct from numeric zero
+- **AND** no interpolation, rounding, or cross-base linking is performed
+- **WHEN** an HTML/404/empty/unknown response, target-sheet/title/header/order/identity/period/duplicate/continuity mismatch, or invalid schema is encountered
+- **THEN** acquisition and publication are rejected closed, and an unavailable period is stated rather than inferred or filled
+- **WHEN** any raw/normalized/metadata/manifest/series-map/representative-snapshot SHA-256 or manifest cross-reference is altered
+- **THEN** integrity validation rejects the set and does not select it
+- **WHEN** staging or atomic publication fails
+- **THEN** existing plan36 artifacts remain unchanged
+- **WHEN** appId configuration is absent or an acquisition error is reported
+- **THEN** secrets/appId values are never emitted, and periods not provided by the official source are explicitly identified
+- **AND** this plan36 long-term artifact remains separate from the existing 2025 candidate/2020 rollback loader adoption path; it does not connect a loader, UI, API, or component tree
 
-#### Scenario R3d-advanced: GDP comparison priority for monthly extension
+#### Scenario R3d: Plan37 CTI Basic Source Basis, 12MA, and Comparison Rebase
 
-- **WHEN** a validated annual GDP comparison set is available while the advanced reference series is generated
-- **THEN** the production path SHALL prefer the GDP comparison values for `minkanMap`, expand them to monthly values, and calculate the 12-month moving average before display
-- **AND** a raw normalization fixture used for data-quality evidence SHALL remain separate from this production-path expectation
+- **WHEN** the Plan37 long-term CTI basic line is used for the comparison chart
+- **THEN** only `series_index=1`, `official_series_code=1`, nominal raw `消費支出（名目）` from the 2025 long-term artifact is selected; raw values remain separate from the 12MA comparison value
+- **AND** the Plan37 CTI line uses only the official 2025 long-term input: it has no GDP, seasonal-adjusted, real, 2020 rollback, or other fallback, and adopts the artifact's published latest month dynamically
+- **AND** the Plan37 public projection emits only the CTI raw/12MA normal/extension keys and typed measurements; it does not emit `民間最終消費支出（名目・原値）`, `民間最終消費支出（名目・比較指数）`, or `消費支出（参考）` even as null placeholders
+- **AND** CTI 12MA is calculated from continuous raw values first, then rebased only by the 2025 12MA annual average; the comparison field is invalid/null with a reason when that baseline cannot be verified from 12 finite months or is non-positive
+- **AND** the independent GDP/legacy loader and projection may retain their own raw/comparison/rollback keys, but they are separate contracts and cannot flow into the Plan37 projection.
+
+#### Scenario R3d-advanced: Plan37 monthly extension boundary
+
+- **WHEN** the Plan37 advanced reference series is generated
+- **THEN** it uses the same official CTI raw/12MA maps as the normal series, with 2018-01 onward exposed only under the extension key; GDP availability never changes the values
+- **AND** when a following month is absent from the artifact it is absent/null and never synthesized
+- **AND** the normal/extension measurement metadata is taken from the same period row; CSV export must not reuse the first row's metadata for later or invalid months
 
 #### Scenario R3i: GDP Raw and Comparison Values
 
@@ -644,14 +734,15 @@ When the CTI map/snapshot or any other candidate input fails validation, the com
 - **THEN** chart info reports the pending state and the quarterly comparison line is not rendered
 - **AND** the status propagation does not imply that quarterly raw or comparison values are connected to the chart, table, or CSV output
 
-#### Scenario R3l: Fixture Comparison Gate
+#### Scenario R3l: Legacy Fixture Comparison Gate
 
+- **AND** this is a legacy-only loader/projection contract: its GDP raw/comparison and 2020 rollback keys are not part of the Plan37 CTI public output, which is guarded separately at the `toEarningsView` boundary
 - **WHEN** the fixture comparison gate observes the normal loader path
 - **THEN** CPI, CTI, annual GDP, and quarterly GDP observations match the fixed golden digests recorded in `tests/fixtures/loader-comparison/golden.json`
 - **AND** the annual GDP nominal/real CSVs, metadata files, and annual normalization JSON, and the quarterly nominal/real CSVs plus their metadata, official snapshots, and e-Stat snapshots match their recorded source artifact SHA-256 values
 - **AND** value, status, and load/status-error observations are compared independently, with normal observations reporting the expected valid/ready state
-- **WHEN** the 2025 CPI or CTI candidate is unavailable or invalid
-- **THEN** the complete validated 2020 pair/set is selected, without mixing base years, and the rollback remains covered by the fixture gate
+- **WHEN** the 2025 CPI or legacy CTI candidate is unavailable or invalid
+- **THEN** the complete validated 2020 pair/set is selected only for that legacy loader contract, without mixing base years; the rollback remains covered by the fixture gate and is not a Plan37 line input
 - **WHEN** any annual GDP source artifact is missing or invalid, or annual coverage is not continuous for every year 1994–2025
 - **THEN** GDP validation fails closed and none of `民間最終消費支出（名目）`, `民間最終消費支出（実質）`, `民間最終消費支出（名目・原値）`, `民間最終消費支出（実質・原値）`, `民間最終消費支出（名目・比較指数）`, or `民間最終消費支出（実質・比較指数）` is emitted
 - **WHEN** quarterly GDP artifacts are missing, contain duplicate/non-continuous periods, or contain non-finite values
@@ -824,9 +915,9 @@ The system SHALL provide explanatory info for each chart/metric.
 
 - **WHEN** a user opens the consumption-expenditure or 3種比較 information panel
 - **THEN** it identifies the CTI compatibility set selected by the loader without inferring a series variant from a filename
-- **AND** a validated 2025 set explains the all-household official connected CTI series, its selected variant, the three household surveys combined in CTI micro, and the GDP reference series
+  - **AND** a validated 2025 set explains the two-or-more-person-household nominal CTI basic series, its 2005-01〜latest range, raw/12MA distinction, and 2025 12MA average = 100 basis
 - **AND** it explains GDP reference values, the CTI total, and the miscellaneous/CPI-external difference in concise user-facing language
-- **AND** for the 3種比較 panel, it describes the 12-month moving average separately as: 給与（総合） from the salary series, 民間最終消費（総合） from the GDP reference series, CTI消費（総合） from CTI consumption, and 物価指数（総合） from CPI
+  - **AND** for the 3種比較 panel, it describes the 12-month moving average separately as: 給与（総合） from salary, CTIミクロ基本系列（名目・総合） from nominal raw CTI, and 物価指数（総合） from CPI
 - **AND** it explains in the lower part of the info panel that the 2018年以降のGDP reference extension can be switched on
 - **AND WHEN** the 2025 set is unavailable, invalid, or no complete compatible set exists
 - **THEN** the panel uses user-facing language to identify the 2020 rollback data or that consumption data cannot currently be displayed, without exposing internal file or validation terminology.
@@ -836,7 +927,7 @@ The system SHALL provide explanatory info for each chart/metric.
 - **WHEN** a user opens the spending or 3種比較 information panel
 - **THEN** it identifies GDP reference values as separate nominal and real comparison indices, distinguishing current-price and chain-linked concepts
 - **AND** it explains that GDP reference values are comparison indices, that the CTI total is the displayed CTI expense total, and that 諸雑費・CPI外支出 is the residual difference from the total
-- **AND** it states that CTI begins in 2017 and is not statistically connected to GDP or a legacy CTI series.
+  - **AND** it states that the Plan37 CTI basic series covers 2005-01〜公表最新月 and is not connected to GDP, seasonal-adjusted, or 2020 rollback values.
 - **AND** it does not expose Plan22, raw値, 内部検証保持, 四半期の月範囲, or 9大費目の列挙などの実装詳細をユーザー向け文言に含めない
 
 ### R7: Responsive Layout
@@ -1313,7 +1404,7 @@ Page (RSC)
     │   ├── SpendingBarChart (real) — mobile-specific spacing/ticks, bar width, and all-value tooltip/details; closed-by-default legend; legacy GDP before 2018Q1 and CTI expense fields from 2018Q1
     │   ├── EarningsBreakdownChart → CustomTooltip — 2025年平均=100 salary indices; complete registry labels with natural wrapping and stable value column; six rows plus `給与区分合計（所定内＋所定外＋特別）` from visible `EARNINGS_TOTAL_KEYS` (`showTotal`, `totalLabel`, and `totalIncludedKeys=EARNINGS_TOTAL_KEYS`); hidden included rows are removed and the total is recalculated from the remaining visible included rows; salary-only `separatorBetweenGroups` is placed on the first visible auxiliary row
     │   ├── ResidualAreaChart → CustomTooltip
-    │   └── NewGraph → ChartInfoContentRenderer → CustomTooltip — comparison visualization receives 2025年平均=100 CPI, salary, CTI-consumption, and GDP-reference indices; unavailable registered lines remain as null-compatible line contracts
+    │   └── NewGraph → ChartInfoContentRenderer → CustomTooltip — comparison visualization receives 2025年平均=100 CPI, salary, and CTI basic nominal 12MA indices; unavailable registered lines remain as null-compatible line contracts
     ├── ChartInfoButton → ChartInfoContentRenderer — Indicator explanations (uses `chartKey` plus loader-resolved state in `src/lib/chartInfoContent.ts`)
     ├── ChartDataContract — stable normalized chart data attributes for each of the seven targets
     ├── ChartExportButton — CSV download of the displayed rows (inside each chart's <details>)
@@ -1456,7 +1547,7 @@ adapter entry point; `quarterlyGdpTransform.ts` joins validated GDP comparisons 
 - Phase 4-4 parity evidence is intentionally split: unit tests own CSV serializer edge cases, integration tests use the independent hand-written `tests/fixtures/chart-parity-independent.json` at the real component boundary, and Playwright E2E compares all rows and columns for all seven targets against production data/source, including `hidden`, `adv=1`, nominal/real, and the GDP boundary labels `2017Q4` / `2018Q1`. The fixture is not generated from app constants or the DOM.
 - Tooltip aggregation follows the display contract: before 2018Q1 it receives only the standalone GDP comparison field; from 2018Q1 it receives only visible CTI expense fields. GDP comparison values are never included in the post-2018 CTI total.
 - Tooltip display flow is metadata-first: chart-side registry projections resolve the label, color, order, and advanced state before `CustomTooltip` renders rows; Recharts `payload.name` is only a legacy fallback for unregistered/direct callers. CPI rows are completed from the applicable visible category list, preserving zero and null/missing values independently of payload presence.
-- Chart-info flow is `page.tsx` loader state → `CpiChart` → `ChartInfoButton`/`ChartInfoContentRenderer`; the info panel keeps implementation and validation terminology out of its user-facing descriptions, places the 2018年以降GDP reference-extension switch at the lower part of the panel, and uses the page-wide 2025年平均=100 header wording with legend visibility guidance.
+- Chart-info flow is `page.tsx` long-term CTI status (including `unavailableReason`) → `CpiChart` → `ChartInfoButton`/`ChartInfoContentRenderer`; the info panel describes the two-or-more-person-household nominal CTI basic series from 2005-01 through latest, its 12MA and 2025 basis, and keeps the 2020 rollback boundary out of the Plan37 target line.
 - The concrete client flow is `CpiChartSections → useChartTooltipProps → CustomTooltip`: category/registry metadata and period-specific `allowedKeys` are projected in `CpiChartSections`, forwarded by the existing controller, and used by `CustomTooltip` to complete missing payload rows. Hidden and GDP/CTI boundary-inapplicable keys are removed before detail rendering and totals.
 - Legend/rendering and tooltip collections use the same advanced/hidden registry projection even when data is unavailable: legends and comparison tooltips retain defined all-null series, while registered missing values render as `—`.
 - Missing, ended, unready, or failed-validation GDP comparison values remain `null` in the public projection and are hidden at the chart boundary; GDP is never zero-filled, copied, interpolated, or rescaled at the boundary.
@@ -1877,7 +1968,9 @@ These regression requirements do not add requirements for a new `popstate` liste
     `:focus-visible` rings (P4-1), keyboard-only operation (P4-1), `prefers-reduced-motion` (P4-2),
     and modal focus management — scroll preservation on dismiss & `Tab` containment (R8e)
 - `cagr-sheet.e2e.spec.ts` — CAGR コンパクトシートの開閉・計算導線・グラフ可視性（R18）
-- `plan27-private-consumption.e2e.spec.ts` — NewGraphの民間最終消費支出について、全期間/2014範囲の実SVG・tooltip・表・CSV導線、adv=1延長系列、情報パネル、375px表示を検証する。
+- `plan27-private-consumption.e2e.spec.ts` — Plan37のCTIミクロ基本系列（名目・参考）について、2005-01〜公表最新月の実SVG・tooltip・表・CSV導線、adv=1延長系列、情報パネル、375px表示を検証する。旧GDP年次CSV・旧normalization・旧民間最終消費支出ラベルは参照しない。
+- `advanced-series.e2e.spec.ts` と `chart-table-csv-parity.e2e.spec.ts` — 現行Series RegistryのCTI raw/12MA normal/extensionキー、凡例・tooltip・ChartDataContract・表・CSVの同一キー/行/列を検証する。Plan37の公式nominal series 1/code 1を入力根拠にし、公開最新月以降を生成しない。
+- `plan24-rendering.e2e.spec.ts` — Plan24の独立した四半期GDP/CTI棒グラフ契約。Plan37実行プロファイルの対象外とし、GDP期待値をPlan37の比較線へ移管しない。旧契約の回帰として通常のPlan24実行でのみ検証する。
   - `fixtures.ts` — shared `test` that sets `window.__MOUNT_ALL__` (R12b); specs verifying
     deferral itself must use the plain `@playwright/test` `test`
 
@@ -1893,7 +1986,7 @@ These regression requirements do not add requirements for a new `popstate` liste
   - Ensures legend `:hover` background doesn't degenerate to white-on-white contrast
 
 - **Private-consumption series identification**:
-  - NewGraph uses `民間最終消費支出（参考）` / `民間最終消費(総合)` for the regular line and `民間最終消費支出（参考・延長）` / `民間最終消費(延長・参考)` for the advanced line.
+  - NewGraph uses `CTIミクロ基本系列（名目・参考）` / `CTIミクロ基本系列(名目・総合)` for the regular line and `CTIミクロ基本系列（名目・参考・延長）` / `CTIミクロ基本系列(名目・延長)` for the advanced line.
 - Legend and line nodes expose stable `data-key` and `data-testid` attributes.
 - The advanced-series browser regression MUST identify the regular and extended
   lines through those attributes, associate each node's `stroke` with its
@@ -1929,3 +2022,13 @@ These regression requirements do not add requirements for a new `popstate` liste
 
 - **WHEN** the Playwright web server cannot bind its configured loopback port because the environment returns `listen EPERM`
 - **THEN** the sandbox failure is recorded as not-run and the same targeted command is retried with approved normal host permissions; its actual pass/fail result and command are recorded in Plan26.
+
+#### Scenario Plan37: CTI basic nominal consumption replacement
+
+- **WHEN** the long-term CTI artifact is loaded for the private-consumption comparison line
+- **THEN** only `series_index=1`, `official_series_code=1`, and `消費支出（名目）` from the 2025-base nominal normalized CSV is used, with the official raw value retained separately.
+- **AND** each 12MA is emitted only for a complete finite 12-calendar-month window; 2005-01 through 2005-11 are null, and the 2025-01 through 2025-12 12MA average is the sole positive baseline for `100*M/B`.
+- **AND** duplicate, missing, non-finite, incomplete-baseline, or non-positive-baseline input fails closed with a reason and never interpolates, zero-fills, mixes seasonal/real values, or falls back to GDP/2020 rollback.
+- **AND** the normal and advanced public keys, chart, tooltip, legend, table, CSV, and source text use the same CTI basic nominal series and preserve the existing `adv` boundary: normal through 2017 and extension from 2018.
+- **AND** Plan37 E2E waits for the target section, `LazyMount` chart wrapper, Recharts surface, and visible SVG geometry by count/visibility after navigation; tooltip interaction obtains the rendered surface bounding box before hovering. It does not rely on `__MOUNT_ALL__` as the readiness contract.
+- **AND** Plan37 table/CSV parity covers the monthly CTI/CPI/earnings sections only. The Plan24 quarterly GDP/CTI projection contract, including a permitted empty projection in environments without quarterly data, is excluded from this monthly failure domain and remains covered by `plan24-rendering.e2e.spec.ts` and its legacy/unit contracts.

@@ -34,7 +34,8 @@ import {
   MIN_DISPLAY_YEAR,
   getLegendLabel,
   EARNINGS_SERIES_REGISTRY,
-  COMPARISON_SERIES_REGISTRY,
+  createComparisonSeriesRegistry,
+  ctiBasicDescriptors,
 } from "../../lib/chartConstants";
 import {
   QUARTERLY_PUBLIC_NOMINAL_KEYS,
@@ -251,9 +252,48 @@ export default function CpiChart({
   const { isTouch } = useChartTheme();
   const chartTooltip = useChartTooltipController({ suppressed: isProgrammaticScroll, isTouch });
 
+  const comparisonSeriesRegistry = useMemo(
+    () =>
+      createComparisonSeriesRegistry({
+        status: ctiInfoState?.series?.comparison?.status ?? ctiInfoState?.status ?? "invalid",
+        reason:
+          ctiInfoState?.series?.comparison?.reason ??
+          ctiInfoState?.reason ??
+          ctiInfoState?.unavailableReason ??
+          "CTI基本系列の状態が未提供です",
+      }),
+    [ctiInfoState],
+  );
+  const ctiMetadata = useMemo(() => {
+    const fallbackMeasurement = mergedData.find((row) => {
+      const measurements = (
+        row as unknown as {
+          measurements?: Record<string, { status?: "valid" | "invalid"; reason?: string | null }>;
+        }
+      ).measurements;
+      return measurements?.["CTIミクロ基本系列（名目・原数値）"];
+    }) as unknown as
+      | { measurements?: Record<string, { status?: "valid" | "invalid"; reason?: string | null }> }
+      | undefined;
+    const fallback = fallbackMeasurement?.measurements?.["CTIミクロ基本系列（名目・原数値）"];
+    const status = ctiInfoState?.status ?? fallback?.status ?? "invalid";
+    const reason =
+      status === "valid"
+        ? null
+        : (ctiInfoState?.reason ??
+          fallback?.reason ??
+          ctiInfoState?.unavailableReason ??
+          "CTI基本系列の状態が未提供です");
+    return ctiBasicDescriptors(status, reason).map((descriptor, index) => ({
+      ...descriptor,
+      color: index === 0 ? "#0f766e" : index === 1 ? "#2563eb" : "#7dd3fc",
+      displayName: descriptor.label,
+    }));
+  }, [ctiInfoState, mergedData]);
+
   const visibleLineConfigs = useMemo(
-    () => COMPARISON_SERIES_REGISTRY.filter((c) => !c.advanced || showAdvanced),
-    [showAdvanced],
+    () => comparisonSeriesRegistry.filter((c) => !c.advanced || showAdvanced),
+    [comparisonSeriesRegistry, showAdvanced],
   );
 
   const dataTables: DataTableSpec[] = [
@@ -291,6 +331,7 @@ export default function CpiChart({
       data: earningsData as unknown as Record<string, unknown>[],
       keys: EARNINGS_SERIES_REGISTRY.map((c) => c.key),
       headers: EARNINGS_SERIES_REGISTRY.map((c) => c.displayName ?? c.label ?? c.key),
+      metadata: EARNINGS_SERIES_REGISTRY,
     },
     {
       chartSectionId: "section-residual",
@@ -305,6 +346,7 @@ export default function CpiChart({
       data: mergedData as unknown as Record<string, unknown>[],
       keys: visibleLineConfigs.map((c) => c.key),
       headers: visibleLineConfigs.map((c) => c.displayName),
+      metadata: ctiMetadata,
     },
   ];
 
@@ -375,6 +417,8 @@ export default function CpiChart({
         consumptionInfo={consumptionInfo}
         newGraphInfo={newGraphInfo}
         chartTooltip={chartTooltip}
+        comparisonSeriesRegistry={comparisonSeriesRegistry}
+        ctiMetadata={ctiMetadata}
       />
       <DataTablesSection tables={dataTables} />
     </div>

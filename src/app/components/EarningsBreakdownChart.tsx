@@ -27,6 +27,7 @@ interface EarningsBreakdownChartProps {
   tooltipProps: ChartTooltipProps;
   onClick?: () => void;
   activeDot?: boolean;
+  publicExtraKeys?: string[];
 }
 
 export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
@@ -39,6 +40,7 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
   tooltipProps,
   onClick,
   activeDot,
+  publicExtraKeys = [],
 }) => {
   const configs = EARNINGS_SERIES_REGISTRY;
 
@@ -65,7 +67,11 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
         給与指標と関連指標
         <ChartInfoContentRenderer chartKey="earnings" ariaLabel="給与指標のデータソースを表示" />
       </h2>
-      <ChartDataContract data={data} keys={configs.map(({ key }) => key)} />
+      <ChartDataContract
+        data={data}
+        keys={[...configs.map(({ key }) => key), ...publicExtraKeys]}
+        descriptors={configs}
+      />
       <div className={styles.legendContainer}>
         <div className={styles.legendSection}>
           <div className={styles.legendItems}>

@@ -3,6 +3,7 @@
 import React from "react";
 import styles from "./CpiChart.module.css";
 import { buildCsv, toFileName, withBom } from "../../lib/csvExport";
+import type { SeriesMetadata } from "../../lib/chartConstants";
 
 interface ChartExportButtonProps {
   /** ダウンロードファイル名の元になるグラフ名 */
@@ -13,6 +14,7 @@ interface ChartExportButtonProps {
   keys: string[];
   /** keys に対応する表示名（凡例ラベル） */
   headers?: string[];
+  metadata?: readonly SeriesMetadata[];
 }
 
 /**
@@ -25,9 +27,22 @@ export const ChartExportButton: React.FC<ChartExportButtonProps> = ({
   data,
   keys,
   headers,
+  metadata,
 }) => {
   const handleExport = () => {
-    const csv = withBom(buildCsv(data, keys, headers));
+    const csv = withBom(
+      buildCsv(data, keys, headers, {
+        metadata: metadata?.map(({ key, unit, source, valueType, status, reason }) => ({
+          key,
+          valueType,
+          value: null,
+          unit: unit ?? "",
+          source: source ?? "",
+          status: status ?? "valid",
+          reason: reason ?? null,
+        })),
+      }),
+    );
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");

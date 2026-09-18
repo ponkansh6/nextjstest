@@ -1,4 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
+import path from "node:path";
 
 /**
  * page.tsx の実ビルド・実サーバー・実ブラウザ検証。
@@ -17,6 +18,7 @@ import { defineConfig, devices } from "@playwright/test";
  */
 const E2E_PORT = Number(process.env.E2E_PORT ?? 3100);
 const BASE_URL = `http://127.0.0.1:${E2E_PORT}`;
+const REPO_ROOT = path.resolve(__dirname);
 
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -87,6 +89,11 @@ export default defineConfig({
 
   webServer: {
     command: `pnpm start --port ${E2E_PORT} --hostname 127.0.0.1`,
+    cwd: REPO_ROOT,
+    env: {
+      ...process.env,
+      CTI_BASIC_ARTIFACT_ROOT: path.join(REPO_ROOT, "data/source/official-cti-2025-long-term"),
+    },
     // url が無いと Playwright は起動完了を待たず、初回 goto が
     // ERR_CONNECTION_REFUSED になる（特にテストを絞って実行したとき）
     url: BASE_URL,

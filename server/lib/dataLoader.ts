@@ -13,6 +13,8 @@ export {
   loadQuarterlyGdpData,
   validateQuarterlyGdpSupport,
 } from "./data-loader/cpi";
+export { getCtiBasicConsumptionStatus } from "./ctiBasicSeries2025LongTerm";
+export type { CtiBasicConsumptionStatus } from "./ctiBasicSeries2025LongTerm";
 export type {
   CpiDataStatus,
   CtiDataStatus,

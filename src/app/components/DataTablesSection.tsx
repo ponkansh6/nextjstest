@@ -2,6 +2,7 @@ import React from "react";
 import styles from "./CpiChart.module.css";
 import { ChartExportButton } from "./ChartExportButton";
 import { normalizePublicChartData } from "./ChartDataContract";
+import type { SeriesMetadata } from "../../lib/chartConstants";
 
 export interface DataTableSpec {
   /** ジャンプ元グラフの sectionId(例: "section-cpi-major") */
@@ -11,6 +12,7 @@ export interface DataTableSpec {
   data: Record<string, unknown>[];
   keys: string[];
   headers?: string[];
+  metadata?: readonly SeriesMetadata[];
 }
 
 interface DataTablesSectionProps {
@@ -44,6 +46,7 @@ export function DataTablesSection({ tables }: DataTablesSectionProps) {
               data={normalizePublicChartData(t.data, t.keys)}
               keys={t.keys}
               headers={t.headers}
+              metadata={t.metadata}
             />
           </div>
           <table>

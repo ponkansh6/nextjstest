@@ -1,18 +1,29 @@
 import { test, expect } from "./fixtures";
 import { readFile } from "node:fs/promises";
 import expected from "../fixtures/plan27-private-consumption.json";
-import anchors from "../fixtures/minkan-extension-anchors.json";
 
 const section = (page: import("@playwright/test").Page) => page.locator("#section-new-graph");
-const regularKey = "民間最終消費支出（参考）";
-const regularLabel = "民間最終消費(総合)";
-const extendedKey = "民間最終消費支出（参考・延長）";
-const extendedLabel = "民間最終消費(延長・参考)";
+const regularKey = "CTIミクロ基本系列（名目・参考）";
+const regularLabel = "CTIミクロ基本系列(名目・総合)";
+const extendedKey = "CTIミクロ基本系列（名目・参考・延長）";
+const extendedLabel = "CTIミクロ基本系列(名目・延長)";
 
 async function ready(page: import("@playwright/test").Page) {
   await page.goto("/");
   const graph = section(page);
   await expect(graph).toBeVisible({ timeout: 15000 });
+  await graph.scrollIntoViewIfNeeded();
+  const wrapper = graph.locator(".recharts-wrapper").first();
+  await expect(wrapper).toHaveCount(1);
+  await expect(wrapper).toBeVisible();
+  const surface = wrapper.locator("svg.recharts-surface");
+  await expect(surface).toHaveCount(1);
+  await expect(surface).toBeVisible();
+  await expect(graph.locator('[data-testid="chart-data-contract"]')).toHaveCount(1);
+  await expect(
+    graph.locator('[data-testid="chart-data-contract"] [data-chart-data-row]'),
+  ).not.toHaveCount(0);
+  await expect(surface.locator("path, line")).not.toHaveCount(0);
   await expect(graph.getByTestId(`new-graph-line-${regularKey}`)).toBeAttached();
   return graph;
 }
@@ -31,32 +42,44 @@ const exactNumberFromTooltip = async (
 };
 
 async function independentValues() {
-  const csv = await readFile("data/source/cti_support_nominal2025.csv", "utf8");
-  const normalization = JSON.parse(
-    await readFile("data/source/cti-gdp-display-normalization2025.json", "utf8"),
-  ) as { nominal: { factor: number } };
+  const csv = await readFile(
+    "data/source/official-cti-2025-long-term/000040499070.normalized.csv",
+    "utf8",
+  );
   const rows = csv
+    .trim()
     .split(/\r?\n/)
-    .map((line) => line.split(",").map((cell) => cell.replace(/^"|"$/g, "")));
-  const header = rows.findIndex((row) => row.includes("時間軸（暦年）"));
-  const year = rows[header].indexOf("時間軸（暦年）");
-  const value = rows[header].indexOf("民間最終消費支出");
-  const annual = new Map<number, number>();
-  for (const row of rows.slice(header + 1)) {
-    const y = Number(row[year]?.replace("年", ""));
-    const v = Number(row[value]?.replace(/,/g, ""));
-    if (Number.isFinite(y) && Number.isFinite(v)) annual.set(y, v);
-  }
+    .slice(1)
+    .map((line) => line.split(","));
+  const monthly = new Map(
+    rows
+      .filter((row) => row[0] === "nominal" && row[1] === "1" && row[2] === "1")
+      .map((row) => [row[4], Number(row[5])] as const),
+  );
+  expect(monthly.size).toBe(259);
+  const movingAverage = (month: string) => {
+    const [year, monthNumber] = month.split("-").map(Number);
+    const values = Array.from({ length: 12 }, (_, offset) => {
+      const date = new Date(Date.UTC(year, monthNumber - 1 - offset, 1));
+      return monthly.get(
+        `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`,
+      );
+    });
+    expect(values.every((value) => Number.isFinite(value))).toBe(true);
+    return (values as number[]).reduce((sum, value) => sum + value, 0) / values.length;
+  };
+  const baseline =
+    Array.from({ length: 12 }, (_, index) =>
+      movingAverage(`2025-${String(index + 1).padStart(2, "0")}`),
+    ).reduce((sum, value) => sum + value, 0) / 12;
   const result: Record<string, number> = {};
   for (let y = 2014; y <= 2017; y++) {
-    const raw = annual.get(y)!;
-    const prior = annual.get(y - 1)!;
     for (let month = 1; month <= 12; month++) {
-      const window = month === 1 ? prior * 11 + raw : raw * 12;
-      result[`${y}年${month}月`] = (window / 12) * normalization.nominal.factor;
+      const iso = `${y}-${String(month).padStart(2, "0")}`;
+      result[`${y}年${month}月`] = (movingAverage(iso) / baseline) * 100;
     }
   }
-  return { result, factor: normalization.nominal.factor, annual };
+  return { result, baseline, latest: "2026年7月" };
 }
 
 function pathRanges(d: string) {
@@ -96,7 +119,7 @@ async function assertTableCsvValue(
   page: import("@playwright/test").Page,
   period: string,
   expectedValue: number,
-  headerNeedle = "民間最終消費(総合)",
+  headerNeedle = "CTIミクロ基本系列(名目・総合)",
 ) {
   const table = page.locator("#data-table-section-new-graph");
   await table.locator("summary").click();
@@ -178,15 +201,15 @@ test.describe("Plan27 民間最終消費支出の実ブラウザー回帰", () =
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto("/?adv=1");
     const graph = section(page);
+    await graph.scrollIntoViewIfNeeded();
+    await expect(graph.locator("svg.recharts-surface")).toBeVisible();
     await expect(graph.getByTestId(`new-graph-line-${regularKey}`)).toBeAttached();
     await expect(graph.getByTestId(`new-graph-line-${extendedKey}`)).toBeAttached();
     await expect(graph.getByTestId(`new-graph-legend-${regularKey}`)).toContainText(regularLabel);
     await expect(graph.getByTestId(`new-graph-legend-${extendedKey}`)).toContainText(extendedLabel);
     await expect(graph.getByRole("img")).toBeVisible();
-    const rawAnchor = anchors.anchors.find((anchor) => anchor.month === "2018年1月")!;
-    const extendedExpected =
-      (rawAnchor.raw / anchors.normalization.baseRaw) * anchors.normalization.scale;
-    expect(extendedExpected).toBeCloseTo(rawAnchor.knownNormalized, 10);
+    const normalized = await independentValues();
+    expect(normalized.latest).toBe("2026年7月");
     const extendedPath = graph.locator(`path[data-key="${extendedKey}"]`);
     const extendedD = await extendedPath.getAttribute("d");
     expect(pathRanges(extendedD!)).toEqual(
@@ -196,7 +219,7 @@ test.describe("Plan27 民間最終消費支出の実ブラウザー回帰", () =
     await info.click();
     await expect(
       page.getByText(
-        /GDP参考値（総合）：民間最終消費支出の四半期値を月次化したうえで12か月移動平均を算出し、2025年平均=100で表示。/,
+        /CTIミクロ基本系列（名目・総合）：二人以上世帯の公式「消費支出（名目）」原数値を12か月移動平均し、2025年12MA平均=100で表示。/,
       ),
     ).toBeVisible();
     await expect(graph.getByTestId(`new-graph-line-${regularKey}`)).toHaveAttribute(
@@ -210,7 +233,7 @@ test.describe("Plan27 民間最終消費支出の実ブラウザー回帰", () =
     await page.keyboard.press("Escape");
     await expect(
       page.getByText(
-        /GDP参考値（総合）：民間最終消費支出の四半期値を月次化したうえで12か月移動平均を算出し、2025年平均=100で表示。/,
+        /CTIミクロ基本系列（名目・総合）：二人以上世帯の公式「消費支出（名目）」原数値を12か月移動平均し、2025年12MA平均=100で表示。/,
       ),
     ).toBeHidden();
     await page.goto("/?adv=1&from=2014&to=2014");

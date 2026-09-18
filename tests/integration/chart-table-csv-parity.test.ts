@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import independentFixture from "../fixtures/chart-parity-independent.json";
 import CpiChart from "@/app/components/CpiChart";
 import { ChartExportButton } from "@/app/components/ChartExportButton";
+import { EARNINGS_SERIES_REGISTRY } from "@/lib/chartConstants";
 import { setupUiMocks } from "../utils/ui-mocks";
 import "../utils/recharts-mock";
 
@@ -75,7 +76,13 @@ const input = () => {
     // Spending quarterly props expose only the regular public keys.
     quarterlyNominalData: quarterly(matrix.nominal.rows),
     quarterlyRealData: quarterly(matrix.real.rows),
-    totalEarningData: matrix.earnings.rows,
+    totalEarningData: matrix.earnings.rows.map((row) => ({
+      ...row,
+      ["CTIミクロ基本系列（名目・参考）"]:
+        matrix.comparison.rows.find((comparisonRow) => comparisonRow.年月 === row.年月)?.[
+          "CTIミクロ基本系列（名目・参考）"
+        ] ?? null,
+    })),
   };
 };
 
@@ -229,9 +236,31 @@ describe("Phase 4-4 real chart/table/CSV parity", () => {
       expect([...raw.matchAll(/\r\n|\r|\n/g)].every(([ending]) => ending === "\r\n")).toBe(true);
       const rows = parseCsv(raw);
       const section = CONTRACT.sections[i];
-      expect(rows[0]).toEqual(["年月", ...section.headers]);
-      expect(rows.slice(1)).toEqual(section.expected);
-      expect(rows.every((r) => r.length === section.keys.length + 1)).toBe(true);
+      const metadataHeaders =
+        i === 4 || i === 6
+          ? (i === 4
+              ? EARNINGS_SERIES_REGISTRY
+              : [
+                  { key: "CTIミクロ基本系列（名目・原数値）" },
+                  { key: "CTIミクロ基本系列（名目・参考）" },
+                  { key: "CTIミクロ基本系列（名目・参考・延長）" },
+                ]
+            ).flatMap(({ key }) => [
+              `${key}__valueType`,
+              `${key}__value`,
+              `${key}__unit`,
+              `${key}__source`,
+              `${key}__status`,
+              `${key}__reason`,
+            ])
+          : [];
+      expect(rows[0]).toEqual(["年月", ...section.headers, ...metadataHeaders]);
+      expect(rows.slice(1).map((row) => row.slice(0, section.keys.length + 1))).toEqual(
+        section.expected,
+      );
+      expect(rows.every((r) => r.length === section.keys.length + 1 + metadataHeaders.length)).toBe(
+        true,
+      );
     }
   });
   it("keeps raw quarterly keys private and publishes YYYYQn boundary labels", async () => {

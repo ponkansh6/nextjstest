@@ -1,10 +1,22 @@
-/** Parse year-month string (e.g., "2020年1月" or "2020年01月") to { year, month } */
-export function parseYearMonth(ym: string): { year: number; month: number } | null {
-  const match = ym.match(/^(\d{4})年0?(\d{1,2})月$/);
+/** Convert supported public year-month spellings to the canonical YYYY-MM key. */
+export function toCanonicalYearMonth(ym: string): string | null {
+  const match = String(ym ?? "")
+    .trim()
+    .match(/^(\d{4})(?:年0?(\d{1,2})月|[-/](\d{1,2}))$/);
   if (!match) return null;
+  const month = Number(match[2] ?? match[3]);
+  if (month < 1 || month > 12) return null;
+  return `${match[1]}-${String(month).padStart(2, "0")}`;
+}
+
+/** Parse year-month strings used by public CSVs and dashboard rows. */
+export function parseYearMonth(ym: string): { year: number; month: number } | null {
+  const canonical = toCanonicalYearMonth(ym);
+  if (!canonical) return null;
+  const [year, month] = canonical.split("-").map(Number);
   return {
-    year: parseInt(match[1], 10),
-    month: parseInt(match[2], 10),
+    year,
+    month,
   };
 }
 
@@ -26,7 +38,7 @@ export function normalizeYearMonth(ym: string): string {
 
 /** Extract year from year-month string */
 export function extractYear(ym: string): number | null {
-  const quarterMatch = ym.match(/^(\d{4})Q[1-4]$/);
+  const quarterMatch = String(ym ?? "").match(/^(\d{4})Q[1-4]$/);
   if (quarterMatch) return parseInt(quarterMatch[1], 10);
 
   const parsed = parseYearMonth(ym);

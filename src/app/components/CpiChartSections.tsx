@@ -15,7 +15,7 @@ import {
   EARNINGS_SERIES_REGISTRY,
   EARNINGS_TOTAL_KEYS,
   EARNINGS_AUXILIARY_KEYS,
-  COMPARISON_SERIES_REGISTRY,
+  type SeriesMetadata,
   projectTooltipMetadata,
 } from "../../lib/chartConstants";
 import { formatCpiTooltipTotal, formatCpiTooltipValue } from "./CustomTooltip";
@@ -89,6 +89,8 @@ interface CpiChartSectionsProps {
   consumptionInfo?: ChartInfoContent;
   newGraphInfo?: ChartInfoContent;
   chartTooltip: ChartTooltipController;
+  comparisonSeriesRegistry: readonly SeriesMetadata[];
+  ctiMetadata: readonly SeriesMetadata[];
 }
 
 export function CpiChartSections({
@@ -134,6 +136,8 @@ export function CpiChartSections({
   consumptionInfo,
   newGraphInfo,
   chartTooltip,
+  comparisonSeriesRegistry,
+  ctiMetadata,
 }: CpiChartSectionsProps) {
   const stackedTooltipMeta = buildCpiTooltipMetadata(
     stackedKeys.filter((key) => !stackedHiddenKeys.includes(key)),
@@ -142,26 +146,23 @@ export function CpiChartSections({
     EARNINGS_SERIES_REGISTRY,
     EARNINGS_SERIES_REGISTRY.filter(({ key }) => !hiddenKeys.includes(key)).map(({ key }) => key),
   );
-  const comparisonVisibleKeys = COMPARISON_SERIES_REGISTRY.filter(
-    ({ advanced }) => !advanced || showAdvanced,
-  )
+  const comparisonVisibleKeys = comparisonSeriesRegistry
+    .filter(({ advanced }) => !advanced || showAdvanced)
     .filter(({ key }) => !maHiddenKeys.includes(key))
     .map(({ key }) => key);
   const comparisonProjectedTooltipMeta = projectTooltipMetadata(
-    COMPARISON_SERIES_REGISTRY,
+    comparisonSeriesRegistry,
     comparisonVisibleKeys,
   );
   const comparisonTooltipAllowedKeys = (label?: string) => {
-    const period = label?.match(/^(\d{4})Q([1-4])$/);
+    const period = typeof label === "string" ? label.match(/^(\d{4})Q([1-4])$/) : null;
     if (!period) return comparisonVisibleKeys;
-    const isLegacyGdp = Number(period[1]) < 2018;
     return comparisonVisibleKeys.filter(
       (key) =>
         key === "CPI総合(12MA)" ||
         key === "総合(12MA)" ||
-        (isLegacyGdp
-          ? key === "民間最終消費支出（参考）"
-          : key === "CTI消費支出（参考）" || key === "民間最終消費支出（参考・延長）"),
+        key === "CTIミクロ基本系列（名目・参考）" ||
+        key === "CTIミクロ基本系列（名目・参考・延長）",
     );
   };
   const spendingTooltipMeta = (keys: string[], chartColorsForSeries: string[]) =>
@@ -175,15 +176,9 @@ export function CpiChartSections({
       order,
     }));
   const spendingAllowedKeys = (keys: string[], hidden: string[]) => (label?: string) => {
-    const period = label?.match(/^(\d{4})Q[1-4]$/);
+    const period = typeof label === "string" ? label.match(/^(\d{4})Q[1-4]$/) : null;
     if (!period) return [];
-    const isLegacyGdp = Number(period[1]) < 2018;
-    const supportKey = keys.find(
-      (key) => key === "民間最終消費支出（名目）" || key === "民間最終消費支出（実質）",
-    );
-    return keys.filter(
-      (key) => !hidden.includes(key) && (isLegacyGdp ? key === supportKey : key !== supportKey),
-    );
+    return keys.filter((key) => !hidden.includes(key));
   };
   return (
     <>
@@ -359,6 +354,8 @@ export function CpiChartSections({
       <LazyMount sectionId="section-new-graph">
         <NewGraph
           sectionId="section-new-graph"
+          comparisonSeriesRegistry={comparisonSeriesRegistry}
+          ctiMetadata={ctiMetadata}
           data={mergedData}
           hiddenKeys={maHiddenKeys}
           onToggle={handleMaLegendClick}
@@ -394,7 +391,7 @@ export function CpiChartSections({
                   checked={showAdvanced}
                   onChange={(e) => setShowAdvanced(e.target.checked)}
                 />
-                <span>参考・延長系列（民間最終消費支出（参考・延長））を表示する</span>
+                <span>参考・延長系列（CTIミクロ基本系列（名目・参考・延長））を表示する</span>
               </label>
             </div>
           }

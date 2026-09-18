@@ -149,7 +149,7 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
                 width: "100%",
                 zIndex: 1000,
                 maxHeight:
-                  "min(40dvh, calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 8px))",
+                  "min(50dvh, calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 8px))",
                 overflowY: "auto",
                 boxSizing: "border-box",
                 overscrollBehavior: "contain",

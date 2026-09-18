@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   COMPARISON_SERIES_REGISTRY,
+  createComparisonSeriesRegistry,
   EARNINGS_SERIES_REGISTRY,
   EARNINGS_TABLE_CONFIGS,
   LINE_CONFIGS,
@@ -36,6 +37,32 @@ const projectMetadata = (series: readonly SeriesMetadata[]) =>
   );
 
 describe("series registry contracts", () => {
+  it("projects CTI status and reason into both normal and extension entries", () => {
+    const invalid = createComparisonSeriesRegistry({ status: "invalid", reason: "基準不成立" });
+    expect(
+      invalid
+        .filter(({ key }) => key.startsWith("CTI"))
+        .map(({ status, reason, descriptor }) => ({ status, reason, descriptor })),
+    ).toEqual([
+      expect.objectContaining({
+        status: "invalid",
+        reason: "基準不成立",
+        descriptor: expect.objectContaining({ status: "invalid", reason: "基準不成立" }),
+      }),
+      expect.objectContaining({
+        status: "invalid",
+        reason: "基準不成立",
+        descriptor: expect.objectContaining({ status: "invalid", reason: "基準不成立" }),
+      }),
+    ]);
+    const valid = createComparisonSeriesRegistry({ status: "valid", reason: null });
+    expect(
+      valid
+        .filter(({ key }) => key.startsWith("CTI"))
+        .every(({ status, reason }) => status === "valid" && reason === null),
+    ).toBe(true);
+  });
+
   it("keeps compatibility aliases as the same array identity", () => {
     expect(EARNINGS_TABLE_CONFIGS).toBe(EARNINGS_SERIES_REGISTRY);
     expect(LINE_CONFIGS).toBe(COMPARISON_SERIES_REGISTRY);
@@ -91,6 +118,14 @@ describe("series registry contracts", () => {
         type: "line",
         kind: "line",
       },
+      {
+        key: "CTIミクロ基本系列（名目・原数値）",
+        label: "CTIミクロ基本系列（名目・原数値）",
+        displayName: "CTIミクロ基本系列（名目・原数値）",
+        color: "#0f766e",
+        type: "line",
+        kind: "line",
+      },
     ]);
   });
 
@@ -104,21 +139,15 @@ describe("series registry contracts", () => {
       },
       { key: "総合(12MA)", label: "給与(総合)", displayName: "給与(総合)", color: "#e11d48" },
       {
-        key: "CTI消費支出（参考）",
-        label: "CTI消費(総合)",
-        displayName: "CTI消費(総合)",
+        key: "CTIミクロ基本系列（名目・参考）",
+        label: "CTIミクロ基本系列(名目・総合)",
+        displayName: "CTIミクロ基本系列(名目・総合)",
         color: "#2563eb",
       },
       {
-        key: SUPPORT_SERIES_KEY_NOMINAL.replace("（名目）", "（参考）"),
-        label: "民間最終消費(総合)",
-        displayName: "民間最終消費(総合)",
-        color: "#38bdf8",
-      },
-      {
-        key: SUPPORT_SERIES_KEY_NOMINAL.replace("（名目）", "（参考・延長）"),
-        label: "民間最終消費(延長・参考)",
-        displayName: "民間最終消費(延長・参考)",
+        key: "CTIミクロ基本系列（名目・参考・延長）",
+        label: "CTIミクロ基本系列(名目・延長)",
+        displayName: "CTIミクロ基本系列(名目・延長)",
         color: "#7dd3fc",
         advanced: true,
         strokeDasharray: "6 3",
@@ -143,9 +172,11 @@ describe("series registry contracts", () => {
 
   it("keeps advanced comparison series opt-in", () => {
     const normalSeries = COMPARISON_SERIES_REGISTRY.filter(({ advanced }) => !advanced);
-    expect(normalSeries.some(({ key }) => key === "民間最終消費支出（参考・延長）")).toBe(false);
+    expect(normalSeries.some(({ key }) => key === "CTIミクロ基本系列（名目・参考・延長）")).toBe(
+      false,
+    );
     expect(
-      COMPARISON_SERIES_REGISTRY.find(({ key }) => key === "民間最終消費支出（参考・延長）")
+      COMPARISON_SERIES_REGISTRY.find(({ key }) => key === "CTIミクロ基本系列（名目・参考・延長）")
         ?.advanced,
     ).toBe(true);
   });
@@ -160,7 +191,7 @@ describe("series registry contracts", () => {
     expect(new Set(COMPARISON_SERIES_REGISTRY.map((series) => series.order)).size).toBe(
       COMPARISON_SERIES_REGISTRY.length,
     );
-    expect(COMPARISON_SERIES_REGISTRY.map(({ order }) => order)).toEqual([0, 1, 2, 3, 4]);
+    expect(COMPARISON_SERIES_REGISTRY.map(({ order }) => order)).toEqual([0, 1, 2, 3]);
   });
 
   it("keeps comparison tooltip labels, colors, order, and advanced visibility synchronized", () => {
@@ -193,27 +224,19 @@ describe("series registry contracts", () => {
         advanced: false,
       },
       {
-        key: "CTI消費支出（参考）",
-        tooltipLabel: "CTI消費(総合)",
-        legendLabel: "CTI消費(総合)",
+        key: "CTIミクロ基本系列（名目・参考）",
+        tooltipLabel: "CTIミクロ基本系列(名目・総合)",
+        legendLabel: "CTIミクロ基本系列(名目・総合)",
         color: "#2563eb",
         order: 2,
         advanced: false,
       },
       {
-        key: "民間最終消費支出（参考）",
-        tooltipLabel: "民間最終消費(総合)",
-        legendLabel: "民間最終消費(総合)",
-        color: "#38bdf8",
-        order: 3,
-        advanced: false,
-      },
-      {
-        key: "民間最終消費支出（参考・延長）",
-        tooltipLabel: "民間最終消費(延長・参考)",
-        legendLabel: "民間最終消費(延長・参考)",
+        key: "CTIミクロ基本系列（名目・参考・延長）",
+        tooltipLabel: "CTIミクロ基本系列(名目・延長)",
+        legendLabel: "CTIミクロ基本系列(名目・延長)",
         color: "#7dd3fc",
-        order: 4,
+        order: 3,
         advanced: true,
       },
     ]);
@@ -221,13 +244,31 @@ describe("series registry contracts", () => {
 
   it("projects tooltip labels by key and preserves registry order/color", () => {
     expect(projectTooltipMetadata(COMPARISON_SERIES_REGISTRY)).toEqual(
-      COMPARISON_SERIES_REGISTRY.map(({ key, tooltipLabel, color, order, advanced }) => ({
-        key,
-        label: tooltipLabel,
-        color,
-        order,
-        ...(advanced === undefined ? {} : { advanced }),
-      })),
+      COMPARISON_SERIES_REGISTRY.map(
+        ({
+          key,
+          tooltipLabel,
+          color,
+          order,
+          advanced,
+          unit,
+          source,
+          valueType,
+          status,
+          reason,
+        }) => ({
+          key,
+          label: tooltipLabel,
+          color,
+          order,
+          ...(advanced === undefined ? {} : { advanced }),
+          ...(unit === undefined ? {} : { unit }),
+          ...(source === undefined ? {} : { source }),
+          ...(valueType === undefined ? {} : { valueType }),
+          ...(status === undefined ? {} : { status }),
+          ...(reason === undefined ? {} : { reason }),
+        }),
+      ),
     );
     expect(projectTooltipMetadata(EARNINGS_SERIES_REGISTRY, ["CPI総合(参考)"])[0]).toMatchObject({
       key: "CPI総合(参考)",
