@@ -1,5 +1,5 @@
 import { readFileSync, readdirSync } from "node:fs";
-import { dirname, join, relative } from "node:path";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
@@ -89,8 +89,18 @@ describe("shared math dependency boundaries", () => {
     }
   });
 
-  it("keeps client and server on the shared support-series module", () => {
-    expect(source("src/lib/clientCalculations.ts")).toContain('from "./math/supportSeries"');
+  it("keeps client and server on their allowed shared math boundaries", () => {
+    const clientCalculations = source("src/lib/clientCalculations.ts");
+    expect(clientCalculations).toMatch(/from\s+["']\.\/math\/clientCalculations["']/);
+    expect(clientCalculations).not.toMatch(/from\s+["'][^"']*supportSeries[^"']*["']/);
+
+    for (const file of filesUnder("src/lib/math")) {
+      const content = source(file);
+      expect(content, file).not.toMatch(
+        /from\s+["'][^"']*(?:clientCalculations|server\/)[^"']*["']|import\s+["'][^"']*(?:clientCalculations|server\/)[^"']*["']/,
+      );
+    }
+
     for (const file of [
       "server/lib/data-loader/gdpSupport.ts",
       "server/lib/math/supportSeries.ts",
