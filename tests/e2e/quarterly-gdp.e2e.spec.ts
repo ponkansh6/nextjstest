@@ -2,10 +2,10 @@ import { test, expect } from "./fixtures";
 import { readFile } from "node:fs/promises";
 
 const INTERNAL_SERIES = /GDP名目原値|GDP名目比較指数|GDP実質原値|GDP実質比較指数/;
-
-function normalizeMissingCell(value: string): string {
-  return value === "-" ? "" : value;
-}
+const PUBLIC_NOMINAL_KEY = "CTIミクロ四半期系列（名目）";
+const PUBLIC_NOMINAL_LABEL = "CTIミクロ（名目・四半期平均）";
+const PUBLIC_REAL_KEY = "民間最終消費支出（実質）";
+const PUBLIC_REAL_LABEL = "民間最終消費";
 
 async function hoverQuarterActionableMark(
   page: import("@playwright/test").Page,
@@ -40,19 +40,38 @@ test.describe("Plan23 quarterly public projection", () => {
     await expect(realLegend).toContainText("全選択");
     await realLegend.click();
 
-    for (const section of [nominal, real]) {
-      await expect(section.getByText("民間最終消費", { exact: true })).toBeVisible();
-      await expect(section).not.toContainText(INTERNAL_SERIES);
+    for (const section of [nominal, real]) await expect(section).not.toContainText(INTERNAL_SERIES);
+    for (const [section, publicKey] of [
+      [nominal, PUBLIC_NOMINAL_KEY],
+      [real, PUBLIC_REAL_KEY],
+    ] as const) {
+      const contract = section.locator('[data-testid="chart-data-contract"]');
+      const keys = JSON.parse((await contract.getAttribute("data-series")) ?? "[]") as string[];
+      const rowKeys = await contract
+        .locator("[data-series-key]")
+        .evaluateAll((cells) => [
+          ...new Set(cells.map((cell) => cell.getAttribute("data-series-key") ?? "")),
+        ]);
+      expect(keys).toContain(publicKey);
+      expect(rowKeys).toContain(publicKey);
+      expect(keys).not.toContain(expect.stringMatching(INTERNAL_SERIES));
+      expect(rowKeys).not.toContain(expect.stringMatching(INTERNAL_SERIES));
+      expect(keys).not.toContain(expect.stringMatching(/GDP/));
+      expect(rowKeys).not.toContain(expect.stringMatching(/GDP/));
     }
 
     const tableChecks = [
-      ["#data-table-section-consumption-nominal", "民間最終消費", "GDP名目"] as const,
-      ["#data-table-section-consumption-real", "民間最終消費", "GDP実質"] as const,
+      [
+        "#data-table-section-consumption-nominal",
+        PUBLIC_NOMINAL_LABEL,
+        PUBLIC_NOMINAL_KEY,
+      ] as const,
+      ["#data-table-section-consumption-real", PUBLIC_REAL_LABEL, PUBLIC_REAL_KEY] as const,
     ];
     await page.getByRole("button", { name: "表示期間を変更" }).click();
     await page.locator("#startYear").selectOption("2025");
 
-    for (const [selector, rawHeader, comparisonHeader] of tableChecks) {
+    for (const [selector, publicHeader, publicKey] of tableChecks) {
       const table = page.locator(selector);
       await table.getByText(/データテーブルを表示/).click();
       // 選択した表示期間の全件を表示していることを、実在する期間ラベルの件数で検証する。
@@ -64,11 +83,11 @@ test.describe("Plan23 quarterly public projection", () => {
         "選択期間に実在する全期間ラベルに対応する行を表示する",
       ).toHaveCount(periodLabels.length);
       const headers = await table.locator("thead th").allTextContents();
-      expect(headers.filter((header) => header.includes(rawHeader))).toHaveLength(1);
-      expect(headers.some((header) => header.includes(comparisonHeader))).toBe(false);
+      expect(headers.filter((header) => header.includes(publicHeader))).toHaveLength(1);
+      expect(headers.some((header) => header.includes("GDP"))).toBe(false);
       expect(headers.some((header) => INTERNAL_SERIES.test(header))).toBe(false);
 
-      const supportIndex = headers.findIndex((header) => header.includes(rawHeader));
+      const supportIndex = headers.findIndex((header) => header.includes(publicHeader));
       const csvDownload = page.waitForEvent("download", { timeout: 15000 });
       await table.getByRole("button", { name: /CSVでダウンロード/ }).click();
       const csvPath = await (await csvDownload).path();
@@ -82,15 +101,31 @@ test.describe("Plan23 quarterly public projection", () => {
       for (const period of ["2025Q1", "2025Q2", "2025Q3", "2025Q4"]) {
         const cells = table.locator("tbody tr").filter({ hasText: period }).locator("td");
         await expect(cells.first()).toHaveText(period);
-        const tableValue = await cells.nth(supportIndex).innerText();
-        expect(tableValue).not.toBe("");
+        const supportCell = cells.nth(supportIndex);
+        const tableValue = await supportCell.evaluate((cell) => {
+          const textNode = [...cell.childNodes].find((node) => node.nodeType === Node.TEXT_NODE);
+          return textNode?.textContent?.trim() ?? "";
+        });
         const csvRow = csvRows.find(([rowPeriod]) => rowPeriod === period);
         expect(csvRow).toBeDefined();
-        expect(csvRow?.[supportIndex]).toBe(normalizeMissingCell(tableValue));
+        if (/^[—-]$/.test(tableValue)) {
+          expect(csvRow?.[supportIndex]).toBe("");
+          if (publicKey === PUBLIC_NOMINAL_KEY) {
+            const metadata = supportCell.locator(`[data-measurement-metadata="${publicKey}"]`);
+            await expect(metadata).toHaveCount(1);
+            await expect(metadata).toContainText("単位: -");
+            await expect(metadata).toContainText("出典: -");
+            await expect(metadata).toContainText("頻度: quarterly");
+            await expect(metadata).toContainText("状態: invalid");
+            await expect(metadata).toContainText("理由: unavailable");
+          }
+        } else {
+          expect(csvRow?.[supportIndex]).toBe(tableValue);
+        }
       }
     }
 
-    for (const [kind, testId, selector, ctiLabel] of [
+    for (const [, testId, selector, ctiLabel] of [
       ["nominal", "spending-chart-nominal", "#data-table-section-consumption-nominal", "食料"],
       ["real", "spending-chart-real", "#data-table-section-consumption-real", "食料"],
     ] as const) {

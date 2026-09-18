@@ -180,7 +180,7 @@ test.describe("消費支出グラフ モバイル可読性の証跡", () => {
   }
 
   for (const width of [375, 430] as const) {
-    test(`${width}px: 給与tooltipの7系列行＋合計・値列がviewport内`, async ({ page }) => {
+    test(`${width}px: 給与tooltipの6系列行＋合計・値列がviewport内`, async ({ page }) => {
       await page.setViewportSize({ width, height: 667 });
       await page.goto("/");
       await page.waitForLoadState("networkidle");
@@ -246,7 +246,7 @@ test.describe("消費支出グラフ モバイル可読性の証跡", () => {
         };
       });
       expect(evidence.labels.map((row) => row.label)).toEqual([...earningsTooltipLabels]);
-      expect(evidence.labels).toHaveLength(7);
+      expect(evidence.labels).toHaveLength(6);
       expect(evidence.labels.filter((row) => row.separator)).toHaveLength(1);
       expect(evidence.labels.find((row) => row.separator)?.label).toBe("時間当たり給与");
       expect(evidence.labels.find((row) => row.separator)?.borderTop).not.toBe("0px");

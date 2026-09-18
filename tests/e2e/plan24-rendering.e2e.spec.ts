@@ -1,41 +1,18 @@
 import { test, expect } from "./fixtures";
 import type { Page } from "@playwright/test";
-import { mkdir, readFile } from "node:fs/promises";
+import { mkdir } from "node:fs/promises";
 
-const GDP_FACTORS = { nominal: 0.0011398911460950036, real: 0.001298186239096047 };
 const chartIds = ["spending-chart-nominal", "spending-chart-real"] as const;
-const supportKeys = {
-  "spending-chart-nominal": "民間最終消費支出（名目）",
+const publicKeys = {
+  "spending-chart-nominal": "CTIミクロ四半期系列（名目）",
   "spending-chart-real": "民間最終消費支出（実質）",
-} as const;
-const supportLabels = {
-  "spending-chart-nominal": "民間最終消費",
-  "spending-chart-real": "民間最終消費",
 } as const;
 const ACTION_TIMEOUT = 5_000;
 const ASSERTION_TIMEOUT = 5_000;
 const NAVIGATION_TIMEOUT = 10_000;
 const SCREENSHOT_TIMEOUT = 15_000;
 
-async function expectedGdpValue(kind: keyof typeof GDP_FACTORS, period: string) {
-  const file =
-    kind === "nominal"
-      ? "data/source/cti_support_nominal_quarterly2025.csv"
-      : "data/source/cti_support_real_quarterly2025.csv";
-  const row = (await readFile(file, "utf8"))
-    .trim()
-    .split("\n")
-    .slice(1)
-    .map((line) => line.split(","))
-    .find(([candidate]) => candidate === period.replace("Q", "-Q"));
-  if (!row) throw new Error(`Missing GDP fixture row: ${period}`);
-  return (Number(row[1]) * GDP_FACTORS[kind]).toFixed(2);
-}
-
 const bars = (page: Page, id: string) => page.getByTestId(id).locator(".recharts-bar-rectangle");
-const series = (page: Page, id: string, key: string) =>
-  page.getByTestId(id).getByTestId(`spending-series-${key}`);
-
 async function setRange(page: Page, start: number, end: number) {
   const open = async () => {
     if (
@@ -63,6 +40,16 @@ async function setRange(page: Page, start: number, end: number) {
     await page.waitForTimeout(100);
     await open();
     await page.locator("#startYear").selectOption(String(start), { timeout: ACTION_TIMEOUT });
+  }
+}
+
+async function selectAllQuarters(page: Page, id: string) {
+  const chart = page.getByTestId(id);
+  for (const quarter of ["Q1", "Q2", "Q3", "Q4"]) {
+    const button = chart.getByRole("button", { name: quarter, exact: true });
+    if ((await button.getAttribute("aria-pressed")) !== "true") {
+      await button.click({ timeout: ACTION_TIMEOUT });
+    }
   }
 }
 
@@ -109,26 +96,31 @@ test.describe("Plan24 rendering contract", () => {
     }
   });
 
-  test("2017Q4以前はGDP単独棒、2018Q1以降はCTI棒でGDP線を描画しない", async ({ page }) => {
+  test("名目CTIは2005〜2017専用、2018以降はlegacy費目でGDPを公開しない", async ({ page }) => {
     for (const id of chartIds) {
       expect(await page.getByTestId(id).locator(".recharts-line-curve").count()).toBe(0);
     }
-    await setRange(page, 2017, 2018);
+    await setRange(page, 2005, 2017);
+    await selectAllQuarters(page, "spending-chart-nominal");
     await saveChartScreenshots(page, "2017q4-boundary", 1280);
     await saveChartScreenshots(page, "2017q4-boundary", 375);
     for (const id of chartIds) {
       const chart = page.getByTestId(id);
-      await expect(chart).toHaveAttribute("data-gdp-periods", /^2017Q1,2017Q2,2017Q3,2017Q4$/);
-      await expect(chart).toHaveAttribute("data-cti-periods", /^2018Q1,2018Q2,2018Q3,2018Q4$/);
-      await expect(series(page, id, supportKeys[id]).first()).toBeVisible();
-      await page.setViewportSize({ width: 1280, height: 812 });
-      await expect(bars(page, id).first()).toBeVisible({ timeout: ASSERTION_TIMEOUT });
-      const kind = id === "spending-chart-nominal" ? "nominal" : "real";
-      const expected = await expectedGdpValue(kind, "2017Q4");
-      const tooltip = await hoverBar(page, id, 3);
-      await expect(tooltip).toContainText(`合計${expected}`);
-      const gdpRow = tooltip.getByText(supportLabels[id], { exact: true }).locator("..");
-      await expect(gdpRow.getByText(expected, { exact: true })).toBeVisible();
+      const contract = chart.locator('[data-testid="chart-data-contract"]');
+      expect(await contract.getAttribute("data-series")).toContain(publicKeys[id]);
+      const supportPeriods = (await chart.getAttribute("data-support-periods"))?.split(",") ?? [];
+      expect(await contract.getAttribute("data-series")).not.toMatch(/GDP(?:名目|実質)/);
+      if (id === "spending-chart-nominal") {
+        expect(await chart.getAttribute("data-support-periods")).toBe("");
+        const periods = await contract
+          .locator("[data-chart-data-row]")
+          .evaluateAll((rows) => rows.map((row) => row.getAttribute("data-period") ?? ""));
+        expect(periods).toHaveLength(52);
+        expect(periods[0]).toBe("2005Q1");
+        expect(periods.at(-1)).toBe("2017Q4");
+      } else {
+        expect(supportPeriods).toContain("2017Q4");
+      }
     }
     await page.setViewportSize({ width: 1280, height: 812 });
     await setRange(page, 2018, 2018);
@@ -136,8 +128,11 @@ test.describe("Plan24 rendering contract", () => {
     await saveChartScreenshots(page, "2018q1-boundary", 375);
     for (const id of chartIds) {
       const chart = page.getByTestId(id);
-      await expect(chart).toHaveAttribute("data-gdp-periods", "");
       await expect(chart).toHaveAttribute("data-cti-periods", /2018Q1/);
+      await expect(chart).toHaveAttribute("data-support-periods", "");
+      expect(
+        await chart.locator('[data-testid="chart-data-contract"]').getAttribute("data-series"),
+      ).not.toMatch(/GDP(?:名目|実質)/);
     }
   });
 
@@ -170,7 +165,7 @@ test.describe("Plan24 rendering contract", () => {
       [
         "spending-chart-nominal",
         "#data-table-section-consumption-nominal",
-        "民間最終消費",
+        "CTIミクロ（名目・四半期平均）",
       ] as const,
       ["spending-chart-real", "#data-table-section-consumption-real", "民間最終消費"] as const,
     ]) {
@@ -178,6 +173,10 @@ test.describe("Plan24 rendering contract", () => {
       await table.getByText(/データテーブルを表示/).click({ timeout: ACTION_TIMEOUT });
       await expect(table).toContainText("2025Q4", { timeout: ASSERTION_TIMEOUT });
       const headers = await table.locator("thead th").allTextContents();
+      expect(headers.some((header) => /GDP|民間最終消費支出/.test(header))).toBe(false);
+      if (id === "spending-chart-nominal") {
+        expect(headers.some((header) => header.includes("民間最終消費"))).toBe(false);
+      }
       const supportIndex = headers.findIndex((header) => header.includes(label));
       expect(supportIndex).toBeGreaterThanOrEqual(0);
       const valueIndex = headers.findIndex((header) => header.includes("食料"));

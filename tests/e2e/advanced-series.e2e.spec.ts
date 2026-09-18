@@ -6,12 +6,11 @@ test.describe("比較グラフの現行系列契約", () => {
     const section = page.locator("#section-new-graph");
     await expect(section).toBeVisible({ timeout: 15000 });
     await section.scrollIntoViewIfNeeded();
-    await expect(section.getByTestId("chart-data-contract")).toBeVisible();
-    const contract = await section
-      .getByTestId("chart-data-contract")
-      .getAttribute("data-descriptors");
-    expect(contract ?? "").not.toMatch(/CTIミクロ基本系列/);
-    expect(await section.locator("svg").innerText()).not.toMatch(/CTIミクロ基本系列/);
+    const contract = section.getByTestId("chart-data-contract");
+    const descriptors = await contract.getAttribute("data-descriptors");
+    const series = await contract.getAttribute("data-series");
+    expect(descriptors ?? "").not.toMatch(/CTIミクロ基本系列/);
+    expect(series ?? "").not.toMatch(/CTIミクロ基本系列/);
     await expect(section.getByRole("button", { name: "給与(総合)" })).toBeVisible();
     await expect(section.getByRole("button", { name: "物価指数(総合)" })).toBeVisible();
   });
@@ -20,7 +19,11 @@ test.describe("比較グラフの現行系列契約", () => {
     await page.goto("/?adv=1");
     const section = page.locator("#section-new-graph");
     await expect(section).toBeVisible({ timeout: 15000 });
-    await expect(section.getByTestId("chart-data-contract")).toBeVisible();
+    const contract = section.getByTestId("chart-data-contract");
+    expect((await contract.getAttribute("data-descriptors")) ?? "").not.toMatch(
+      /CTIミクロ基本系列/,
+    );
+    expect((await contract.getAttribute("data-series")) ?? "").not.toMatch(/CTIミクロ基本系列/);
     expect(await section.innerText()).not.toMatch(/CTIミクロ基本系列/);
     const table = page.locator("#data-table-section-new-graph");
     await table.locator("summary").click();

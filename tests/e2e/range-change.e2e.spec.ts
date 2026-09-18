@@ -13,7 +13,7 @@ import type { Page } from "@playwright/test";
  *
  * ✅ 採用パターン:
  * - `.recharts-xAxis .recharts-cartesian-axis-tick-value` で年テキストを抽出
- * - `.recharts-bar-rectangle` の本数で四半期×表示系列の増減を検証
+ * - ChartDataContract の data-period 行数で対象期間の増減を検証
  * - `data-testid` で特定グラフをスコープ限定
  *
  * 注意: 開始年/終了年のいずれかを変更すると、ボトムシートは自動的に閉じる
@@ -29,6 +29,27 @@ const REAL = "spending-chart-real";
 // Helper: 指定テスト ID のグラフ内 .recharts-bar-rectangle locator
 const bars = (page: Page, testId: string) =>
   page.getByTestId(testId).locator(".recharts-bar-rectangle");
+
+const contractRenderableCount = async (page: Page, testId: string) => {
+  const contract = page.getByTestId(testId).getByTestId("chart-data-contract");
+  const keys = JSON.parse((await contract.getAttribute("data-series")) ?? "[]") as string[];
+  const rows = contract.locator("[data-chart-data-row]");
+  let count = 0;
+  for (const row of await rows.all()) {
+    for (const key of keys) {
+      const value = await row.locator(`[data-series-key="${key}"]`).getAttribute("data-value");
+      if (value !== null && Number.isFinite(Number(value))) count += 1;
+    }
+  }
+  return count;
+};
+
+const contractPeriodCount = async (page: Page, testId: string) =>
+  page
+    .getByTestId(testId)
+    .getByTestId("chart-data-contract")
+    .locator("[data-chart-data-row]")
+    .count();
 
 // Helper: 開始年/終了年のいずれかを変更するとボトムシートが自動的に閉じるため、
 // シートが閉じていれば「表示期間を変更」ボタンを再クリックして開き直す
@@ -88,14 +109,13 @@ test.describe("描画範囲変更 E2E", () => {
 
     // チャート全体の長期表示範囲（MIN 2005）を対象とするため、
     // CTIの公式データ有効期間（2017年以降）だけを前提にしない。
-    // 初期状態はフルレンジなので、かなりの本数が期待できる
-    expect(nominalBarCount).toBeGreaterThan(20);
-    expect(realBarCount).toBeGreaterThan(20);
+    // 固定公開projectionの対象期間と、数値を持つ表示可能系列だけを棒として数える。
+    expect(nominalBarCount).toBe(await contractRenderableCount(page, NOMINAL));
+    expect(realBarCount).toBe(await contractRenderableCount(page, REAL));
   });
 
   test("開始年を上げるとグラフが狭まる（名目）", async ({ page }) => {
-    // 初期棒本数を記録
-    const initialCount = await bars(page, NOMINAL).count();
+    const initialPeriodCount = await contractPeriodCount(page, NOMINAL);
 
     // オプション取得＆現在の終了年を取得、開始年を変更
     const startOptions = await page.locator("#startYear").locator("option").allTextContents();
@@ -110,14 +130,12 @@ test.describe("描画範囲変更 E2E", () => {
 
     await setRange(page, newStartYear, currentEndYear);
 
-    // 棒本数が減少していることで「フィルタが効いている」ことを検証
-    const newCount = await bars(page, NOMINAL).count();
-    expect(newCount).toBeLessThan(initialCount);
+    const newPeriodCount = await contractPeriodCount(page, NOMINAL);
+    expect(newPeriodCount).toBeLessThan(initialPeriodCount);
   });
 
   test("開始年を上げるとグラフが狭まる（実質）", async ({ page }) => {
-    // 初期棒本数を記録
-    const initialCount = await bars(page, REAL).count();
+    const initialPeriodCount = await contractPeriodCount(page, REAL);
 
     // オプション取得＆現在の終了年を取得、開始年を変更
     const startOptions = await page.locator("#startYear").locator("option").allTextContents();
@@ -132,14 +150,12 @@ test.describe("描画範囲変更 E2E", () => {
 
     await setRange(page, newStartYear, currentEndYear);
 
-    // 棒本数が減少していること
-    const newCount = await bars(page, REAL).count();
-    expect(newCount).toBeLessThan(initialCount);
+    const newPeriodCount = await contractPeriodCount(page, REAL);
+    expect(newPeriodCount).toBeLessThan(initialPeriodCount);
   });
 
   test("終了年を下げるとグラフが狭まる（名目）", async ({ page }) => {
-    // 初期棒本数を記録
-    const initialCount = await bars(page, NOMINAL).count();
+    const initialPeriodCount = await contractPeriodCount(page, NOMINAL);
 
     // オプション取得＆現在の開始年を取得、終了年を変更
     const endOptions = await page.locator("#endYear").locator("option").allTextContents();
@@ -154,14 +170,12 @@ test.describe("描画範囲変更 E2E", () => {
 
     await setRange(page, currentStartYear, newEndYear);
 
-    // 棒本数が減少していること
-    const newCount = await bars(page, NOMINAL).count();
-    expect(newCount).toBeLessThan(initialCount);
+    const newPeriodCount = await contractPeriodCount(page, NOMINAL);
+    expect(newPeriodCount).toBeLessThan(initialPeriodCount);
   });
 
   test("終了年を下げるとグラフが狭まる（実質）", async ({ page }) => {
-    // 初期棒本数を記録
-    const initialCount = await bars(page, REAL).count();
+    const initialPeriodCount = await contractPeriodCount(page, REAL);
 
     // オプション取得＆現在の開始年を取得、終了年を変更
     const endOptions = await page.locator("#endYear").locator("option").allTextContents();
@@ -176,37 +190,36 @@ test.describe("描画範囲変更 E2E", () => {
 
     await setRange(page, currentStartYear, newEndYear);
 
-    // 棒本数が減少していること
-    const newCount = await bars(page, REAL).count();
-    expect(newCount).toBeLessThan(initialCount);
+    const newPeriodCount = await contractPeriodCount(page, REAL);
+    expect(newPeriodCount).toBeLessThan(initialPeriodCount);
   });
 
   test("【境界値】開始年=終了年でグラフが1年に狭まる", async ({ page }) => {
-    // CTIの公式データ有効期間内で1年に固定
+    // 公開projectionの1年分に固定。欠損/null行は棒として数えない。
     await setRange(page, 2017, 2017);
+    expect(await contractPeriodCount(page, NOMINAL)).toBe(4);
+    expect(await contractPeriodCount(page, REAL)).toBe(4);
 
-    // 棒本数が4の倍数（4 quarters × 表示系列数）
-    // 1年 = 4四半期なので、表示系列数に応じた4の倍数になるはず
     const nominalBarCount = await bars(page, NOMINAL).count();
     const realBarCount = await bars(page, REAL).count();
 
-    expect(nominalBarCount).toBeGreaterThan(0);
-    expect(nominalBarCount % 4).toBe(0); // 4四半期 × N系列
-    expect(realBarCount).toBeGreaterThan(0);
-    expect(realBarCount % 4).toBe(0);
+    expect(nominalBarCount).toBe(await contractRenderableCount(page, NOMINAL));
+    expect(realBarCount).toBe(await contractRenderableCount(page, REAL));
   });
 
   test("【比例検証】範囲が2倍になると棒本数が増加", async ({ page }) => {
     // 2017年のみ
     await setRange(page, 2017, 2017);
-    const bars2017Only = await bars(page, NOMINAL).count();
+    const periods2017Only = await contractPeriodCount(page, NOMINAL);
+    expect(periods2017Only).toBe(4);
 
     // 2017–2018年
     await setRange(page, 2017, 2018);
-    const bars2017to2018 = await bars(page, NOMINAL).count();
+    const periods2017to2018 = await contractPeriodCount(page, NOMINAL);
+    expect(periods2017to2018).toBe(8);
 
     // 2年分が1年分より多いこと
-    expect(bars2017to2018).toBeGreaterThan(bars2017Only);
+    expect(periods2017to2018).toBeGreaterThan(periods2017Only);
   });
 
   test("開始年または終了年を変更するとボトムシートが自動的に閉じる", async ({ page }) => {
