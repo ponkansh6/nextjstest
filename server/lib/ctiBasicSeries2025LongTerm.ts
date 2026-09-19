@@ -606,7 +606,7 @@ export function buildCtiBasicConsumptionOutput(records: CtiBasicRecord[]): CtiCo
       }
     }
     const baselineValues = Array.from({ length: 12 }, (_, index) =>
-      movingAverage.get(`2025-${String(index + 1).padStart(2, "0")}`),
+      raw.get(`2025-${String(index + 1).padStart(2, "0")}`),
     );
     if (
       !baselineValues.every(
@@ -620,7 +620,7 @@ export function buildCtiBasicConsumptionOutput(records: CtiBasicRecord[]): CtiCo
         baseline: null,
         valid: false,
         status: "invalid",
-        reason: "2025年12MA基準の12か月がそろっていません",
+        reason: "2025年raw基準の12か月がそろっていません",
         artifactRoot: null,
         artifactStatus: "unavailable",
         artifactReason: null,
@@ -635,7 +635,7 @@ export function buildCtiBasicConsumptionOutput(records: CtiBasicRecord[]): CtiCo
         baseline: null,
         valid: false,
         status: "invalid",
-        reason: "2025年12MA基準が0以下です",
+        reason: "2025年raw基準が0以下です",
         artifactRoot: null,
         artifactStatus: "unavailable",
         artifactReason: null,

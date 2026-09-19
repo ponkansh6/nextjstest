@@ -229,11 +229,13 @@ Plan38 quarterly key remains outside it.
 | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | CPI (`loadCpiData`)                         | 生鮮食品及びエネルギーを除く総合, 食料（酒類を除く）及びエネルギーを除く総合, 外食以外食料, 交通・自動車等関係費, 選択済みCPIペアの固定ウェイト加重費目 (住居, 家具・家事用品, 教育, …)                    |
 | CTI (`loadCtiData`)                         | 消費支出（名目/実質）, 食料/住居/光熱・水道/…（名目/実質）, その他の消費支出（名目/実質）。GDP support fields are an independent compatibility input and never enter the Plan38 nominal CTI artifact rows. |
-| CTI basic (`loadCtiBasicConsumptionOutput`) | 二人以上の世帯「消費支出（名目）」原数値、12MA、2025年12MA平均=100比較値、`valid`/`reason`状態                                                                                                             |
+| CTI basic (`loadCtiBasicConsumptionOutput`) | 二人以上の世帯「消費支出（名目）」原数値、raw値の完全12か月単純平均による12MA、2025年raw値平均=100比較値、`valid`/`reason`状態                                                                             |
 | 賃金 (`loadTotalEarningData`)               | 所定内給与, 所定外給与, 特別給与, 時間当たり給与, 15歳以上国民当たり給与, 残差, \*(12MA) 系列                                                                                                              |
 
-All displayed salary, CPI, CTI-consumption, and GDP-reference index series use
-the 2025 calendar-year average = 100. A 2020-base source or compatibility set
+Displayed salary, CPI, and GDP-reference index series use the 2025
+calendar-year average = 100. CTI comparison lines use their explicit raw-value
+baseline contracts (including the Plan37 basic line's 2025 raw monthly average).
+A 2020-base source or compatibility set
 describes acquisition/compatibility provenance only and MUST be normalized to
 the 2025 display basis; it MUST NOT be treated as the display base year. The
 給与物価差 uses the same-basis salary index minus CPI index, applies a 2-month
@@ -334,7 +336,7 @@ existing real support path.
 12か月移動平均を経た表示値を使用し、補助系列3種は含めない。
 
 Chart info は `src/lib/chartInfoContent.ts` の指標別説明を表示する。Plan37対象線の
-説明は二人以上の世帯、2005年1月〜公表最新月、名目原数値、12MA、2025年12MA平均=100を示し、
+説明は二人以上の世帯、2005年1月〜公表最新月、名目原数値、raw値の完全12か月単純平均による12MA、2025年raw値平均=100を示し、
 給与・CTI・CPIそれぞれの12か月移動平均を説明する。実装用のPlan22、raw値、
 内部検証保持、四半期の月範囲、9大費目の列挙はユーザー向け説明に含めない。
 
@@ -903,7 +905,7 @@ When the legacy CTI map/snapshot or another candidate input fails validation, th
 - **AND** the Plan37 CTI line uses only the official 2025 long-term input: it has no GDP, seasonal-adjusted, real, 2020 rollback, or other fallback, and adopts the artifact's published latest month dynamically
 - **AND** the Plan38 nominal quarterly public projection emits only the fixed CTI nominal key and row measurements; it does not emit GDP raw/comparison keys or earnings CTI micro keys even as null placeholders
 - **AND** each fixed Plan38 nominal quarterly row measurement carries `valueType=raw`; its artifact index is not a comparison value
-- **AND** CTI 12MA is calculated from continuous raw values first, then rebased only by the 2025 12MA annual average; the comparison field is invalid/null with a reason when that baseline cannot be verified from 12 finite months or is non-positive
+- **AND** CTI 12MA is calculated as a complete 12-calendar-month simple average of raw values first, then rebased by the average of the 12 finite 2025 raw monthly values; the comparison field is invalid/null with a reason when that raw baseline cannot be verified from 12 finite months or is non-positive
 - **AND** the independent GDP/legacy loader and projection may retain their own raw/comparison/rollback keys, but they are separate contracts and cannot flow into the Plan37 projection.
 
 #### Scenario R3d-advanced: Plan37 monthly extension boundary
@@ -1114,7 +1116,7 @@ The system SHALL provide explanatory info for each chart/metric.
 
 - **WHEN** a user opens the consumption-expenditure or 3種比較 information panel
 - **THEN** it identifies the CTI compatibility set selected by the loader without inferring a series variant from a filename
-  - **AND** a validated 2025 set explains the two-or-more-person-household nominal CTI basic series, its 2005-01〜latest range, raw/12MA distinction, and 2025 12MA average = 100 basis
+  - **AND** a validated 2025 set explains the two-or-more-person-household nominal CTI basic series, its 2005-01〜latest range, raw/12MA distinction, and 2025 raw monthly average = 100 basis
   - **AND** it explains the independent GDP reference contract separately from the CTI total and miscellaneous/CPI-external difference in concise user-facing language
   - **AND** for the 3種比較 panel, it describes the 12-month moving average separately as: 給与（総合） from salary, CTIミクロ基本系列（名目・総合） from nominal raw CTI, and 物価指数（総合） from CPI
 - **AND** it explains in the lower part of the info panel that the 2018年以降の CTI expense-item continuation is separate from the independent GDP reference contract
@@ -1613,7 +1615,7 @@ Page (RSC)
     │   ├── SpendingBarChart (real) — mobile-specific spacing/ticks, bar width, and all-value tooltip/details; closed-by-default legend; existing real support path and CTI expense fields from 2018Q1
     │   ├── EarningsBreakdownChart → CustomTooltip — 2025年平均=100 salary indices; complete registry labels with natural wrapping and stable value column; six rows plus `給与区分合計（所定内＋所定外＋特別）` from visible `EARNINGS_TOTAL_KEYS` (`showTotal`, `totalLabel`, and `totalIncludedKeys=EARNINGS_TOTAL_KEYS`); hidden included rows are removed and the total is recalculated from the remaining visible included rows; salary-only `separatorBetweenGroups` is placed on the first visible auxiliary row
     │   ├── ResidualAreaChart → CustomTooltip
-    │   └── NewGraph → ChartInfoContentRenderer → CustomTooltip — comparison visualization receives 2025年平均=100 CPI, salary, and Plan37 CTI basic nominal 12MA indices; the normal CTI key and opt-in advanced extension key share one registry, while Plan38 quarterly CTI remains a separate nominal spending contract
+    │   └── NewGraph → ChartInfoContentRenderer → CustomTooltip — comparison visualization receives 2025年平均=100 CPI, salary, and Plan37 CTI basic nominal 12MA indices rebased to the 2025 raw monthly average; the normal CTI key and opt-in advanced extension key share one registry, while Plan38 quarterly CTI remains a separate nominal spending contract
     ├── ChartInfoButton → ChartInfoContentRenderer — Indicator explanations (uses `chartKey` plus loader-resolved state in `src/lib/chartInfoContent.ts`)
     ├── ChartDataContract — stable normalized chart data attributes for each of the seven targets
     ├── ChartExportButton — CSV download of the displayed rows (inside each chart's <details>)
@@ -1759,7 +1761,7 @@ Plan38 rows bypass the GDP join entirely.
 - Tooltip aggregation follows the display contract: before 2018Q1 nominal receives only the CTI artifact field; from 2018Q1 it receives only visible CTI expense fields. GDP comparison values are never included in the nominal CTI total.
 - Tooltip display flow is metadata-first: chart-side registry projections resolve the label, color, order, and advanced state before `CustomTooltip` renders rows; Recharts `payload.name` is only a legacy fallback for unregistered/direct callers. CPI rows are completed from the applicable visible category list, preserving zero and null/missing values independently of payload presence.
 - Plan37 NewGraph comparison flow is `COMPARISON_SERIES_REGISTRY` → visible-key projection → graph/legend/tooltip/table/CSV; the ordered CTI entries are `CTIミクロ基本系列（名目・参考）` (normal) and `CTIミクロ基本系列（名目・参考・延長）` (`advanced: true`). The registry owns their labels, colors, order, and metadata. The Plan38 public key `CTIミクロ四半期系列（名目）` is excluded from this registry and remains only in the quarterly nominal spending path.
-- Chart-info flow is `page.tsx` long-term CTI status (including `unavailableReason`) → `CpiChart` → `ChartInfoButton`/`ChartInfoContentRenderer`; the info panel describes the two-or-more-person-household nominal CTI basic series from 2005-01 through latest, its 12MA and 2025 basis, and keeps the 2020 rollback boundary out of the Plan37 target line.
+- Chart-info flow is `page.tsx` long-term CTI status (including `unavailableReason`) → `CpiChart` → `ChartInfoButton`/`ChartInfoContentRenderer`; the info panel describes the two-or-more-person-household nominal CTI basic series from 2005-01 through latest, its raw-based complete-window 12MA and 2025 raw-average basis, and keeps the 2020 rollback boundary out of the Plan37 target line.
 - The concrete client flow is `CpiChartSections → useChartTooltipProps → CustomTooltip`: category/registry metadata and period-specific `allowedKeys` are projected in `CpiChartSections`, forwarded by the existing controller, and used by `CustomTooltip` to complete missing payload rows. Hidden and GDP/CTI boundary-inapplicable keys are removed before detail rendering and totals.
 - Legend/rendering and tooltip collections use the same advanced/hidden registry projection even when data is unavailable: legends and comparison tooltips retain defined all-null series, while registered missing values render as `—`.
 - Missing, ended, unready, or failed-validation GDP comparison values remain `null` only in the real/legacy compatibility projection and are hidden at the chart boundary; the Plan38 nominal public projection emits no GDP key, name, value, measurement, or placeholder. GDP is never zero-filled, copied, interpolated, or rescaled at the boundary.
@@ -2256,7 +2258,7 @@ These regression requirements do not add requirements for a new `popstate` liste
 
 - **WHEN** the long-term CTI artifact is loaded for the private-consumption comparison line
 - **THEN** only `series_index=1`, `official_series_code=1`, and `消費支出（名目）` from the 2025-base nominal normalized CSV is used, with the official raw value retained separately.
-- **AND** each 12MA is emitted only for a complete finite 12-calendar-month window; 2005-01 through 2005-11 are null, and the 2025-01 through 2025-12 12MA average is the sole positive baseline for `100*M/B`.
+- **AND** each 12MA is emitted only for a complete finite 12-calendar-month window; 2005-01 through 2005-11 are null, and the average of the 2025-01 through 2025-12 raw values is the sole positive baseline for `100*M/B`.
 - **AND** duplicate, missing, non-finite, incomplete-baseline, or non-positive-baseline input fails closed with a reason and never interpolates, zero-fills, mixes seasonal/real values, or falls back to GDP/2020 rollback.
 - **AND** the monthly raw and 12MA values are retained only in the internal merged chart data; the monthly 12MA values are emitted by the separate Plan37 comparison registry, while none of these keys are emitted by the Plan38 quarterly nominal public projection.
 - **AND** Plan37 E2E waits for the target section, `LazyMount` chart wrapper, Recharts surface, and visible SVG geometry by count/visibility after navigation; tooltip interaction obtains the rendered surface bounding box before hovering. It does not rely on `__MOUNT_ALL__` as the readiness contract.

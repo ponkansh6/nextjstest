@@ -163,7 +163,7 @@ export const CTI_BASIC_SERIES_DESCRIPTORS = [
     source: CTI_BASIC_SOURCE,
     valueType: "comparison" as const,
     frequency: "monthly" as const,
-    aggregation: "12_month_moving_average_rebased_to_2025_average",
+    aggregation: "12_month_moving_average_rebased_to_2025_raw_average",
   },
   {
     key: CTI_BASIC_EXTENSION_KEY,
@@ -172,7 +172,7 @@ export const CTI_BASIC_SERIES_DESCRIPTORS = [
     source: CTI_BASIC_SOURCE,
     valueType: "comparison" as const,
     frequency: "monthly" as const,
-    aggregation: "12_month_moving_average_rebased_to_2025_average",
+    aggregation: "12_month_moving_average_rebased_to_2025_raw_average",
   },
 ] satisfies readonly Omit<SeriesMetadata, "color">[];
 

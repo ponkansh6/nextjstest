@@ -201,9 +201,17 @@ describe("2025 CTI long-term artifact", () => {
       ).reduce((a, b) => a + b, 0) / 12,
     );
     expect(output.baseline).toBeGreaterThan(0);
+    const raw2025Average =
+      Array.from({ length: 12 }, (_, index) =>
+        output.raw.get(`2025-${String(index + 1).padStart(2, "0")}`)!,
+      ).reduce((sum, value) => sum + value, 0) / 12;
+    expect(output.baseline).toBeCloseTo(raw2025Average);
+    expect(output.comparison.get("2017-12")).toBeCloseTo(92.8589284226, 8);
+    expect(output.comparison.get("2018-01")).toBeCloseTo(92.9755853679, 8);
     expect(output.comparison.get("2025-12")).toBeCloseTo(
       (100 * output.movingAverage.get("2025-12")!) / output.baseline!,
     );
+    expect(output.comparison.get("2025-12")).toBeCloseTo(100, 8);
   });
   it("uses fileKind=0 and exact monthly sheets", () => {
     expect(endpoint).toBe("https://www.e-stat.go.jp/stat-search/file-download?fileKind=0");

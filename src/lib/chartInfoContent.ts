@@ -394,7 +394,7 @@ function resolveCtiChartInfo(
 
   return {
     ...content,
-    source: `${content.source}（${isOfficial ? "2025年基準・名目原数値／12MA、2025年12MA平均=100" : "利用不可"}）`,
+    source: `${content.source}（${isOfficial ? "2025年基準・名目原数値／12MA、2025年raw平均=100" : "利用不可"}）`,
     sections: [{ heading: "データ状態", items: stateItems }, ...content.sections],
   };
 }
