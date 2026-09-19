@@ -50,7 +50,12 @@ async function findViewportBar(
           point.y >= 0 &&
           point.y <= viewport.height
         ) {
-          return point;
+          const hitsBar = await page.evaluate(
+            ({ x, y }) =>
+              document.elementFromPoint(x, y)?.closest(".recharts-bar-rectangle") != null,
+            point,
+          );
+          if (hitsBar) return point;
         }
       }
     } catch (error) {

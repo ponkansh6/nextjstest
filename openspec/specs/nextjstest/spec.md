@@ -1294,6 +1294,16 @@ The system SHALL ensure that chart tooltips on touch devices open only on explic
 
 - **WHEN** the device has fine pointer (`pointer: fine`)
 - **THEN** chart tooltip trigger remains `"hover"`.
+- **AND** desktop mouse movement within a spending chart wrapper selects the
+  corresponding tooltip index through the same controller path as pointer
+  movement, including after Escape dismissal only when the pointer has first
+  left the wrapper and then returned.
+- **AND** DOM re-rendering that emits only mouse-entry events does not clear
+  Escape dismissal.
+- **AND** leaving the chart wrapper clears the controlled active chart unless
+  the related target is inside `[data-custom-tooltip]`; after Escape dismissal,
+  leaving the chart records the exit so the next chart move can clear that
+  dismissal state.
 
 #### Scenario R15c: Re-taping Dismissed Tooltip
 

@@ -58,6 +58,11 @@ interface SpendingBarChartProps {
   chartColors: Record<string, string>;
   tooltipProps: ChartTooltipProps;
   onClick?: () => void;
+  onPointerDown?: React.PointerEventHandler<HTMLDivElement>;
+  onPointerMove?: React.PointerEventHandler<HTMLDivElement>;
+  onMouseMove?: React.MouseEventHandler<HTMLDivElement>;
+  onPointerLeave?: React.PointerEventHandler<HTMLDivElement>;
+  onMouseLeave?: React.MouseEventHandler<HTMLDivElement>;
   hiddenQuarters: number[];
   onToggleQuarter: (q: number) => void;
   onReset: () => void;
@@ -100,6 +105,11 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
     chartColors,
     tooltipProps,
     onClick,
+    onPointerDown,
+    onPointerMove,
+    onMouseMove,
+    onPointerLeave,
+    onMouseLeave,
     hiddenQuarters,
     onToggleQuarter,
     onReset,
@@ -274,6 +284,11 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
         role="img"
         aria-label={`${title}の推移グラフ`}
         onClick={onClick}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onMouseMove={onMouseMove}
+        onPointerLeave={onPointerLeave}
+        onMouseLeave={onMouseLeave}
       >
         <ResponsiveContainer width="100%" height="100%">
           <BarChart

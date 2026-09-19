@@ -258,6 +258,7 @@ export function CpiChartSections({
           onToggle={handleLegendToggle}
           chartColors={chartColors}
           {...chartTooltip.bind("section-consumption-nominal", {
+            dataLength: nominalPublicData.length,
             showTotal: true,
             showAllPayload: true,
             seriesMeta: spendingTooltipMeta(nominalKeysWithSupport, nominalColorsWithSupport),
@@ -297,6 +298,7 @@ export function CpiChartSections({
           onToggle={handleLegendToggle}
           chartColors={chartColors}
           {...chartTooltip.bind("section-consumption-real", {
+            dataLength: realPublicData.length,
             showTotal: true,
             showAllPayload: true,
             seriesMeta: spendingTooltipMeta(realKeysWithSupport, [...realColors, "#94a3b8"]),

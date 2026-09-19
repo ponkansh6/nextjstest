@@ -1,7 +1,12 @@
 "use client";
 
-import type { CSSProperties, ReactElement, PointerEvent as ReactPointerEvent } from "react";
-import { useState, useEffect, useCallback } from "react";
+import type {
+  CSSProperties,
+  MouseEvent as ReactMouseEvent,
+  ReactElement,
+  PointerEvent as ReactPointerEvent,
+} from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useChartTheme } from "@/hooks/useChartTheme";
 import { CustomTooltip } from "../CustomTooltip";
 import type { TooltipSeriesMetadata } from "@/types/chart";
@@ -33,6 +38,8 @@ export interface ChartTooltipBindOptions {
   totalFormatter?: (value: number) => string;
 }
 
+type ChartTooltipInteractionEvent = ReactPointerEvent<HTMLElement> | ReactMouseEvent<HTMLElement>;
+
 export const useChartTooltipController = ({
   suppressed,
   isTouch,
@@ -49,11 +56,15 @@ export const useChartTooltipController = ({
     activeDot?: boolean;
     onPointerDown: (event: ReactPointerEvent<HTMLElement>) => void;
     onPointerMove: (event: ReactPointerEvent<HTMLElement>) => void;
+    onMouseMove: (event: ReactMouseEvent<HTMLElement>) => void;
+    onPointerLeave: (event: ReactPointerEvent<HTMLElement>) => void;
+    onMouseLeave: (event: ReactMouseEvent<HTMLElement>) => void;
   };
 } => {
   const { isMobile, chartColors } = useChartTheme();
   const [activeChartId, setActiveChartId] = useState<string | null>(null);
   const [escapeDismissed, setEscapeDismissed] = useState(false);
+  const leftChartAfterEscapeRef = useRef(false);
   // Each chart owns its selected row.  A single index is incorrect because
   // charts can have different filtered lengths (and NewGraph is range-filtered).
   const [activeIndices, setActiveIndices] = useState<Record<string, number | undefined>>({});
@@ -110,6 +121,7 @@ export const useChartTooltipController = ({
       if (e.key !== "Escape") return;
       e.preventDefault();
       e.stopPropagation();
+      leftChartAfterEscapeRef.current = false;
       setEscapeDismissed(true);
       dismiss();
     };
@@ -138,17 +150,15 @@ export const useChartTooltipController = ({
   const bind = useCallback(
     (chartId: string, options?: ChartTooltipBindOptions & { dataLength?: number }) => {
       const isThisActive = activeChartId === chartId;
-      const selectIndex = (event: ReactPointerEvent<HTMLElement>) => {
+      const selectIndex = (event: ChartTooltipInteractionEvent) => {
         const length = options?.dataLength ?? 0;
         if (suppressed || length < 1) return;
-        // The chart wrapper also receives events from its background, axes,
-        // and reference lines. Only a real data shape is a new interaction
-        // after Escape/scroll dismissal.
-        const target = event.target as Element | null;
-        const isDataShape =
-          target?.closest?.(".recharts-bar-rectangle, .recharts-line-curve, .recharts-dot") != null;
-        const clearsEscapeDismissal = escapeDismissed && isDataShape;
+        // A chart-internal move while the pointer never left must not undo
+        // Escape dismissal. The wrapper leave handlers mark a real exit.
+        const clearsEscapeDismissal = escapeDismissed && leftChartAfterEscapeRef.current;
+        if (escapeDismissed && !clearsEscapeDismissal) return;
         if (clearsEscapeDismissal) setEscapeDismissed(false);
+        if (clearsEscapeDismissal) leftChartAfterEscapeRef.current = false;
         const svg = event.currentTarget.querySelector("svg");
         const surface = svg?.getBoundingClientRect() ?? event.currentTarget.getBoundingClientRect();
         const viewBoxWidth = svg?.viewBox.baseVal.width || surface.width;
@@ -163,6 +173,16 @@ export const useChartTooltipController = ({
           [chartId]: Math.max(0, Math.min(length - 1, Math.round((x / plotRight) * (length - 1)))),
         }));
       };
+      const handleChartLeave = (event: ChartTooltipInteractionEvent) => {
+        const relatedTarget = event.relatedTarget;
+        const isTooltipTarget =
+          relatedTarget instanceof Element &&
+          relatedTarget.closest("[data-custom-tooltip]") != null;
+        if (isTooltipTarget) return;
+
+        setActiveChartId(null);
+        if (escapeDismissed) leftChartAfterEscapeRef.current = true;
+      };
       return {
         tooltipProps: {
           cursor: { stroke: chartColors.gridStroke, strokeWidth: 1, strokeOpacity: 0.6 },
@@ -173,7 +193,9 @@ export const useChartTooltipController = ({
               : false
             : suppressed || escapeDismissed
               ? false
-              : undefined,
+              : isThisActive
+                ? true
+                : undefined,
           defaultIndex: isThisActive ? activeIndices[chartId] : undefined,
           position: isTouch && isThisActive ? { x: 0, y: 0 } : undefined,
           wrapperStyle:
@@ -222,6 +244,9 @@ export const useChartTooltipController = ({
         },
         onPointerDown: selectIndex,
         onPointerMove: selectIndex,
+        onMouseMove: selectIndex,
+        onPointerLeave: handleChartLeave,
+        onMouseLeave: handleChartLeave,
         activeDot: isTouch ? (isThisActive ? undefined : false) : undefined,
       };
     },
