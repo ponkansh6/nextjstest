@@ -40,6 +40,27 @@ export interface ChartTooltipBindOptions {
 
 type ChartTooltipInteractionEvent = ReactPointerEvent<HTMLElement> | ReactMouseEvent<HTMLElement>;
 
+const isInsideVisibleTooltip = (clientX: number, clientY: number) =>
+  Array.from(document.querySelectorAll<HTMLElement>("[data-custom-tooltip]")).some((element) => {
+    const style = window.getComputedStyle(element);
+    if (
+      style.display === "none" ||
+      style.visibility === "hidden" ||
+      Number.parseFloat(style.opacity) === 0
+    ) {
+      return false;
+    }
+    const rect = element.getBoundingClientRect();
+    return (
+      rect.width > 0 &&
+      rect.height > 0 &&
+      clientX >= rect.left &&
+      clientX <= rect.right &&
+      clientY >= rect.top &&
+      clientY <= rect.bottom
+    );
+  });
+
 export const useChartTooltipController = ({
   suppressed,
   isTouch,
@@ -79,28 +100,18 @@ export const useChartTooltipController = ({
     if (activeChartId == null) return;
     const handlePointerDown = (e: PointerEvent) => {
       const target = e.target as Element | null;
-      const tooltip = document.querySelector<HTMLElement>("[data-custom-tooltip]");
-      const tooltipRect = tooltip?.getBoundingClientRect();
-      const isTooltipTarget = target?.closest?.("[data-custom-tooltip]") != null;
-      const isInsideVisibleTooltip =
-        tooltipRect != null &&
-        tooltipRect.width > 0 &&
-        tooltipRect.height > 0 &&
-        e.clientX >= tooltipRect.left &&
-        e.clientX <= tooltipRect.right &&
-        e.clientY >= tooltipRect.top &&
-        e.clientY <= tooltipRect.bottom;
 
       // The tooltip is visually above the page, but Recharts' wrapper can be
-      // pointer-transparent. Block only the back element covered by the
-      // visible tooltip; tooltip controls must keep receiving the event.
-      if (isTooltipTarget) return;
-
-      if (isInsideVisibleTooltip) {
+      // pointer-transparent. Block the back element covered by the visible
+      // tooltip so the tooltip remains open.
+      if (isInsideVisibleTooltip(e.clientX, e.clientY)) {
         e.preventDefault();
         e.stopPropagation();
         return;
       }
+
+      const isTooltipTarget = target?.closest?.("[data-custom-tooltip]") != null;
+      if (isTooltipTarget) return;
 
       const isDataTableLink = target?.closest?.('a[href^="#data-table-"]') != null;
       const isChartNoteLink = target?.closest?.("a[data-chart-note-link]") != null;
@@ -179,6 +190,8 @@ export const useChartTooltipController = ({
           relatedTarget instanceof Element &&
           relatedTarget.closest("[data-custom-tooltip]") != null;
         if (isTooltipTarget) return;
+
+        if (isInsideVisibleTooltip(event.clientX, event.clientY)) return;
 
         setActiveChartId(null);
         if (escapeDismissed) leftChartAfterEscapeRef.current = true;

@@ -1,4 +1,5 @@
 import { renderHook, act } from "@testing-library/react";
+import type { PointerEvent as ReactPointerEvent } from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 // Mock useChartTheme to avoid useSyncExternalStore SSR/hydration issues in test environment
@@ -116,6 +117,119 @@ describe("useChartTooltipController", () => {
     });
 
     expect(result.current.bind("A").tooltipProps.active).toBeUndefined();
+  });
+
+  it("keeps the tooltip open when a chartNote link overlaps the visible tooltip among multiple tooltips", () => {
+    const staleTooltip = document.createElement("div");
+    staleTooltip.dataset.customTooltip = "true";
+    vi.spyOn(staleTooltip, "getBoundingClientRect").mockReturnValue(new DOMRect(10, 10, 100, 100));
+
+    const hiddenTooltip = document.createElement("div");
+    hiddenTooltip.dataset.customTooltip = "true";
+    hiddenTooltip.style.display = "none";
+    vi.spyOn(hiddenTooltip, "getBoundingClientRect").mockReturnValue(
+      new DOMRect(200, 10, 100, 100),
+    );
+
+    const visibleTooltip = document.createElement("div");
+    visibleTooltip.dataset.customTooltip = "true";
+    vi.spyOn(visibleTooltip, "getBoundingClientRect").mockReturnValue(
+      new DOMRect(200, 10, 100, 100),
+    );
+
+    const chartNoteLink = document.createElement("a");
+    chartNoteLink.dataset.chartNoteLink = "true";
+    document.body.append(staleTooltip, hiddenTooltip, visibleTooltip, chartNoteLink);
+
+    try {
+      const { result } = renderHook(() =>
+        useChartTooltipController({ isTouch: true, suppressed: false }),
+      );
+
+      act(() => {
+        result.current.bind("A").onClick();
+      });
+
+      act(() => {
+        const event = new PointerEvent("pointerdown", {
+          bubbles: true,
+          cancelable: true,
+          clientX: 250,
+          clientY: 50,
+        });
+        Object.defineProperty(event, "target", { value: chartNoteLink });
+        document.dispatchEvent(event);
+
+        expect(event.defaultPrevented).toBe(true);
+      });
+
+      expect(result.current.bind("A").tooltipProps.active).toBeUndefined();
+    } finally {
+      staleTooltip.remove();
+      hiddenTooltip.remove();
+      visibleTooltip.remove();
+      chartNoteLink.remove();
+    }
+  });
+
+  it("keeps the tooltip open when chart leave coordinates are inside a visible tooltip", () => {
+    const tooltip = document.createElement("div");
+    tooltip.dataset.customTooltip = "true";
+    vi.spyOn(tooltip, "getBoundingClientRect").mockReturnValue(new DOMRect(200, 10, 100, 100));
+    document.body.append(tooltip);
+
+    try {
+      const { result } = renderHook(() =>
+        useChartTooltipController({ isTouch: true, suppressed: false }),
+      );
+
+      act(() => {
+        result.current.bind("A").onClick();
+      });
+
+      act(() => {
+        result.current.bind("A").onPointerLeave(
+          new PointerEvent("pointerleave", {
+            clientX: 250,
+            clientY: 50,
+          }) as unknown as ReactPointerEvent<HTMLElement>,
+        );
+      });
+
+      expect(result.current.bind("A").tooltipProps.active).toBeUndefined();
+    } finally {
+      tooltip.remove();
+    }
+  });
+
+  it("dismisses the tooltip when chart leave coordinates are outside visible tooltips", () => {
+    const tooltip = document.createElement("div");
+    tooltip.dataset.customTooltip = "true";
+    vi.spyOn(tooltip, "getBoundingClientRect").mockReturnValue(new DOMRect(200, 10, 100, 100));
+    document.body.append(tooltip);
+
+    try {
+      const { result } = renderHook(() =>
+        useChartTooltipController({ isTouch: true, suppressed: false }),
+      );
+
+      act(() => {
+        result.current.bind("A").onClick();
+      });
+
+      act(() => {
+        result.current.bind("A").onPointerLeave(
+          new PointerEvent("pointerleave", {
+            clientX: 100,
+            clientY: 50,
+          }) as unknown as ReactPointerEvent<HTMLElement>,
+        );
+      });
+
+      expect(result.current.bind("A").tooltipProps.active).toBeFalsy();
+    } finally {
+      tooltip.remove();
+    }
   });
 
   it("dismisses active charts when window scrollY changes by more than 40px", () => {
