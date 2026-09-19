@@ -59,10 +59,16 @@ export function toEarningsView(rows: CpiData[], selectedKeys: string[]): Earning
   if (forbidden.length > 0) {
     throw new Error(`Plan37 public projection contains legacy keys: ${forbidden.join(", ")}`);
   }
+  const selectedKeySet = new Set(selectedKeys);
   return rows.map((r) => {
     const out: EarningsView = { 年月: r.年月 };
+    const measurements = (r as CpiData & { measurements?: Record<string, unknown> }).measurements;
     Object.defineProperty(out, "measurements", {
-      value: (r as CpiData & { measurements?: unknown }).measurements,
+      value: measurements
+        ? Object.fromEntries(
+            Object.entries(measurements).filter(([key]) => selectedKeySet.has(key)),
+          )
+        : undefined,
       enumerable: true,
     });
     for (const k of selectedKeys) {

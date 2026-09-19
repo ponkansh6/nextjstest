@@ -12,6 +12,7 @@ import { loadTotalEarningDataInternal } from "../../server/lib/data-loader/earni
 import { buildCtiFilePaths } from "../../server/lib/dataIo";
 import { projectQuarterlyPublicView } from "../../src/lib/quarterlyPublicProjection";
 import { SUPPORT_SERIES_KEY_NOMINAL } from "../../src/lib/chartConstants";
+import { toEarningsView } from "../../server/lib/view-models/dashboard";
 import type { SeriesMeasurement } from "../../src/types/chart";
 import Papa from "papaparse";
 
@@ -582,6 +583,12 @@ describe("Earnings Data Integrity", () => {
     expect(readLegacyCtiAggregation(rows.find((row) => row.年月 === "2025年1月"))).toBe(
       "12_month_moving_average_rebased_to_2025_raw_average",
     );
+    const publicRows = toEarningsView(rows, ["年月", "CTIミクロ基本系列（名目・参考）"]);
+    expect(publicRows[0]).not.toHaveProperty("CTI消費支出（参考）");
+    expect(publicRows[0]).not.toHaveProperty("measurements.CTI消費支出（参考）");
+    expect(
+      (publicRows[0] as CpiDataWithMeasurements).measurements?.["CTI消費支出（参考）"],
+    ).toBeUndefined();
     expect(
       rows.every(
         (row) =>

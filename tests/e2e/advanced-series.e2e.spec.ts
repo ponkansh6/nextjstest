@@ -11,7 +11,7 @@ test.describe("比較グラフのCTI通常・advanced系列契約", () => {
     const series = await contract.getAttribute("data-series");
     expect(descriptors ?? "").toContain("CTIミクロ基本系列（名目・参考）");
     expect(series ?? "").toContain("CTIミクロ基本系列（名目・参考）");
-    expect(series ?? "").toContain("CTI消費支出（参考）");
+    expect(series ?? "").not.toContain("CTI消費支出（参考）");
     expect(series ?? "").not.toContain("CTIミクロ基本系列（名目・参考・延長）");
     await expect(
       section.getByRole("button", { name: "CTIミクロ基本系列(名目・総合)", exact: true }),
@@ -23,7 +23,7 @@ test.describe("比較グラフのCTI通常・advanced系列契約", () => {
     await expect(section.getByRole("button", { name: "物価指数(総合)" })).toBeVisible();
     await expect(
       section.getByRole("button", { name: "CTI消費支出(参考)", exact: true }),
-    ).toBeVisible();
+    ).toHaveCount(0);
   });
 
   test("adv=1はCTI通常・延長系列を同じregistryから公開する", async ({ page }) => {
@@ -34,7 +34,7 @@ test.describe("比較グラフのCTI通常・advanced系列契約", () => {
     expect((await contract.getAttribute("data-descriptors")) ?? "").toContain(
       "CTIミクロ基本系列（名目・参考）",
     );
-    expect((await contract.getAttribute("data-series")) ?? "").toContain("CTI消費支出（参考）");
+    expect((await contract.getAttribute("data-series")) ?? "").not.toContain("CTI消費支出（参考）");
     expect((await contract.getAttribute("data-series")) ?? "").toContain(
       "CTIミクロ基本系列（名目・参考・延長）",
     );
@@ -44,6 +44,6 @@ test.describe("比較グラフのCTI通常・advanced系列契約", () => {
     const table = page.locator("#data-table-section-new-graph");
     await table.locator("summary").click();
     expect(await table.innerText()).toContain("CTIミクロ基本系列(名目・延長)");
-    expect(await table.innerText()).toContain("CTI消費支出(参考)");
+    expect(await table.innerText()).not.toContain("CTI消費支出(参考)");
   });
 });
