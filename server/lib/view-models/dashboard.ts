@@ -21,7 +21,6 @@ export interface EarningsView {
 const PLAN37_FORBIDDEN_KEYS = new Set([
   "民間最終消費支出（名目・原値）",
   "民間最終消費支出（名目・比較指数）",
-  "消費支出（参考）",
 ]);
 
 export interface QuarterlyView {

@@ -45,6 +45,7 @@ describe("series registry contracts", () => {
       expect.arrayContaining([
         "CTIミクロ基本系列（名目・参考）",
         "CTIミクロ基本系列（名目・参考・延長）",
+        "CTI消費支出（参考）",
       ]),
     );
     expect(comparisonKeys).not.toContain(SUPPORT_SERIES_KEY_NOMINAL);
@@ -120,6 +121,12 @@ describe("series registry contracts", () => {
       },
       { key: "総合(12MA)", label: "給与(総合)", displayName: "給与(総合)", color: "#e11d48" },
       {
+        key: "CTI消費支出（参考）",
+        label: "CTI消費支出(参考)",
+        displayName: "CTI消費支出(参考)",
+        color: "#0f766e",
+      },
+      {
         key: "CTIミクロ基本系列（名目・参考）",
         label: "CTIミクロ基本系列(名目・総合)",
         displayName: "CTIミクロ基本系列(名目・総合)",
@@ -153,7 +160,8 @@ describe("series registry contracts", () => {
 
   it("keeps the CTI extension opt-in while retaining the normal CTI series", () => {
     const normalSeries = COMPARISON_SERIES_REGISTRY.filter(({ advanced }) => !advanced);
-    expect(normalSeries).toHaveLength(3);
+    expect(normalSeries).toHaveLength(4);
+    expect(normalSeries.map(({ key }) => key)).toContain("CTI消費支出（参考）");
     expect(normalSeries.map(({ key }) => key)).toContain("CTIミクロ基本系列（名目・参考）");
     expect(
       COMPARISON_SERIES_REGISTRY.find(({ key }) => key === "CTIミクロ基本系列（名目・参考・延長）")
@@ -171,7 +179,7 @@ describe("series registry contracts", () => {
     expect(new Set(COMPARISON_SERIES_REGISTRY.map((series) => series.order)).size).toBe(
       COMPARISON_SERIES_REGISTRY.length,
     );
-    expect(COMPARISON_SERIES_REGISTRY.map(({ order }) => order)).toEqual([0, 1, 2, 3]);
+    expect(COMPARISON_SERIES_REGISTRY.map(({ order }) => order)).toEqual([0, 1, 2, 3, 4]);
   });
 
   it("keeps comparison tooltip labels, colors, order, and advanced visibility synchronized", () => {
@@ -204,11 +212,19 @@ describe("series registry contracts", () => {
         advanced: false,
       },
       {
+        key: "CTI消費支出（参考）",
+        tooltipLabel: "CTI消費支出(参考)",
+        legendLabel: "CTI消費支出(参考)",
+        color: "#0f766e",
+        order: 2,
+        advanced: false,
+      },
+      {
         key: "CTIミクロ基本系列（名目・参考）",
         tooltipLabel: "CTIミクロ基本系列(名目・総合)",
         legendLabel: "CTIミクロ基本系列(名目・総合)",
         color: "#2563eb",
-        order: 2,
+        order: 3,
         advanced: false,
       },
       {
@@ -216,7 +232,7 @@ describe("series registry contracts", () => {
         tooltipLabel: "CTIミクロ基本系列(名目・延長)",
         legendLabel: "CTIミクロ基本系列(名目・延長)",
         color: "#7dd3fc",
-        order: 3,
+        order: 4,
         advanced: true,
       },
     ]);

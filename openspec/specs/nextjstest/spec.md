@@ -4,30 +4,30 @@
 
 ### Data Sources
 
-The legacy field `CTI消費支出（参考）` is retained only as an internal monthly
-loader/measurement compatibility field. It is not a CTI micro basic series and
-is not part of the three-series comparison contract. Its source is the official
-2025-base long-term artifact `data/source/official-cti-2025-long-term/000040499070.normalized.csv`,
-series 1 (`消費支出（名目）`). It does not consume the old CTI loader raw field
-or the Plan38 quarterly projection.
+The legacy field `CTI消費支出（参考）` is a monthly adjustment series, distinct
+from the Plan37 CTI micro basic series. Its source is the old
+`loadCtiDataInternal()` path and its raw `消費支出（名目）` field; it does not
+consume the Plan37 long-term artifact or the Plan38 quarterly projection.
 
 ### Data Flow
 
-`ctiBasicSeries2025LongTerm.ts` validates the artifact and provides the series-1
-raw map and its 2017-01-starting trailing 12-month average. The loader emits
-the legacy key only from 2018-01 onward; 2017 and earlier are `null`. The value
-is normalized as `12MA(raw) * 100 / average(raw 2025 months)`.
+The legacy adjustment map computes a trailing 12-month average from the old CTI
+loader raw values, including the preceding 11 months needed for the 2018-01
+boundary. The loader emits the legacy key only from 2018-01 onward; 2017 and
+earlier are `null`. The value is normalized as
+`12MA(old CTI raw) * 100 / average(old CTI raw 2025 months)` and fails closed if
+the old loader does not provide all twelve 2025 raw months.
 The value field is carried at the top level of each loader row, with the same
 value and metadata retained under `measurements["CTI消費支出（参考）"]`; the
 scalar field is assigned after the measurement map is complete so the
-same-name metadata object cannot overwrite it. The public three-series
-comparison projection, legend, tooltip, table, and CSV explicitly exclude both
-the scalar field and its measurement. The salary registry and Plan38 quarterly
-view also do not include the key.
+same-name metadata object cannot overwrite it. The public comparison-display contract
+projection, legend, tooltip, table, and CSV include the adjustment alongside
+the two Plan37 basic entries. The salary registry and Plan38 quarterly view do
+not include the key.
 
 ### Component Tree
 
-`loadTotalEarningDataInternal` → internal legacy field/measurement retention →
+`loadTotalEarningDataInternal` → old-loader adjustment field/measurement →
 `toEarningsView` (selected public keys only) → `CpiChart`/`NewGraph` → shared
 `createComparisonSeriesRegistry()` metadata → ChartDataContract, comparison
 table, and comparison CSV. The salary registry and Plan38 projection remain
@@ -41,26 +41,23 @@ does not create an additional bar in either interval.
 
 ### Requirements
 
-- **WHEN** the official 2025-base artifact has a finite positive series-1 raw
-  `消費支出（名目）` value, **THEN** the legacy calculation uses the
-  2017-01-starting 12-month trailing window and does not use the old CTI raw
-  loader field, Plan37 derived values, or Plan38 derived values.
+- **WHEN** the old CTI loader has finite raw `消費支出（名目）` values, **THEN**
+  the legacy adjustment uses its 12-month trailing window and does not use
+  Plan37 derived values or Plan38 derived values.
 - **WHEN** a monthly row is before 2018-01, **THEN**
   `CTI消費支出（参考）` is `null`/not displayable; **WHEN** it is 2018-01 or
   later and the 12-month window is complete, **THEN** it is
   `12MA(raw) * 100 / average(raw CTI 2025 months)`, and the 2025 monthly
   comparison average is 100.
 - **WHEN** the comparison registry or its public projection is created, **THEN**
-  `CTI消費支出（参考）` is absent, while the normal
-  `CTIミクロ基本系列（名目・参考）` and advanced
-  `CTIミクロ基本系列（名目・参考・延長）` retain their normalized order,
-  keys, and values.
+  the adjustment key is present before the normal and advanced Plan37 basic
+  keys, and those basic keys retain their normalized values.
 - **WHEN** the comparison graph, legend, tooltip, table, or CSV renders,
-  **THEN** the legacy key and its label/metadata are absent from every public
-  surface, and the normal/advanced CTI series have parity across those surfaces.
+  **THEN** the adjustment label/metadata and value have parity across every
+  public surface, while the basic entries remain unchanged.
 - **WHEN** a legacy loader row is inspected for compatibility or data-quality
-  validation, **THEN** its scalar value and measurement may still be retained
-  internally without entering the three-series comparison projection.
+  validation, **THEN** its scalar value and adjustment measurement are retained
+  internally, and the selected public projection controls whether they are shown.
 - **WHEN** the salary graph/table/CSV or Plan38 quarterly view renders,
   **THEN** the legacy key is absent and existing Plan37 normal/extension and
   Plan38 quarterly contracts remain unchanged.
@@ -1255,7 +1252,7 @@ The system SHALL resolve tooltip display rows from chart-side series metadata wh
 
 #### Scenario R21c: Comparison registry synchronization
 
-- **WHEN** the three-series comparison is rendered before/at the `2017Q4`/`2018Q1` boundary or with advanced on/off and hidden keys
+- **WHEN** the comparison-display contract is rendered before/at the `2017Q4`/`2018Q1` boundary or with advanced on/off and hidden keys
   **THEN** drawing, tooltip, and legend use the same visible registry keys, complete tooltip/legend labels, colors, numeric order, and advanced state, while nominal tooltip detail/total includes CTI artifact values before 2018Q1 and CTI (including the opt-in extension) from 2018Q1.
 - **WHEN** an unregistered comparison key reaches the tooltip
   **THEN** the comparison tooltip excludes it whenever `allowedKeys` is present, including when the key is hidden or outside the GDP/CTI boundary; the original payload-key fallback is available only through an explicit opt-in path with no `allowedKeys`.

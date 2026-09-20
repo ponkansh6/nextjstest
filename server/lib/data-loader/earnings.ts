@@ -90,12 +90,22 @@ function computeMovingAverageToField(
 
 function buildConsumptionMaps(ctiData: CpiData[]) {
   const ctiBasic = loadCtiBasicConsumptionOutput();
-  const legacyCtiRawAverage2025 = comparisonAverageForYear(ctiBasic.raw, "2025-");
+  const legacyCtiRawMap = new Map<string, number>();
+  for (const row of ctiData) {
+    const month = toCanonicalYearMonth(row.年月);
+    const value = row["消費支出（名目）"];
+    if (month && typeof value === "number" && Number.isFinite(value)) {
+      legacyCtiRawMap.set(month, value);
+    }
+  }
+  // This is deliberately separate from the Plan37 artifact. It restores the
+  // historical adjustment series' old loader/data path.
+  const legacyCtiRawAverage2025 = comparisonAverageForYear(legacyCtiRawMap, "2025-");
   const legacyCtiFactor =
     legacyCtiRawAverage2025 !== undefined ? 100 / legacyCtiRawAverage2025 : undefined;
   const legacyCtiMap = new Map<string, number>();
   if (legacyCtiFactor !== undefined) {
-    ctiBasic.movingAverage.forEach((value, month) => {
+    computeTrailingMA12([...legacyCtiRawMap.entries()]).forEach((value, month) => {
       if (Number.isFinite(value)) legacyCtiMap.set(month, value * legacyCtiFactor);
     });
   }
@@ -453,7 +463,7 @@ export async function loadTotalEarningDataInternal(
       status: typeof legacyCtiValue === "number" ? "valid" : "invalid",
       reason: typeof legacyCtiValue === "number" ? null : "unavailable",
       frequency: "monthly",
-      aggregation: "12_month_moving_average_rebased_to_2025_raw_average",
+      aggregation: "adjustment_12_month_moving_average_rebased_to_2025_raw_average",
     };
     // Keep the scalar row field separate from its metadata object.  This is
     // the final assignment because both contracts intentionally share a key.

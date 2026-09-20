@@ -9,9 +9,11 @@ import type { CpiData } from "../../src/types";
 import minkanFixture from "../fixtures/minkan-extension-anchors.json";
 import { parseCsvWithHeader } from "../../server/lib/dataIo";
 import { loadTotalEarningDataInternal } from "../../server/lib/data-loader/earnings";
+import { loadCtiDataInternal } from "../../server/lib/data-loader/cpi";
 import { buildCtiFilePaths } from "../../server/lib/dataIo";
 import { projectQuarterlyPublicView } from "../../src/lib/quarterlyPublicProjection";
 import { SUPPORT_SERIES_KEY_NOMINAL } from "../../src/lib/chartConstants";
+import { toCanonicalYearMonth } from "../../src/lib/yearMonth";
 import { toEarningsView } from "../../server/lib/view-models/dashboard";
 import type { SeriesMeasurement } from "../../src/types/chart";
 import Papa from "papaparse";
@@ -561,27 +563,47 @@ describe("Earnings Data Integrity", () => {
     expect(row2017?.["CTI消費支出（参考）"] ?? null).toBeNull();
     expect(Number.isFinite(row2018?.["CTI消費支出（参考）"] ?? Number.NaN)).toBe(true);
 
-    const cti = loadCtiBasicConsumptionOutput();
-    expect(cti.status).toBe("valid");
+    const ctiRows = await loadCtiDataInternal();
+    const raw2025 = ctiRows
+      .filter((row) => row.年月.startsWith("2025年"))
+      .map((row) => row["消費支出（名目）"])
+      .filter((value): value is number => typeof value === "number" && Number.isFinite(value));
+    expect(raw2025).toHaveLength(12);
+    const raw2025Average = raw2025.reduce((sum, value) => sum + value, 0) / raw2025.length;
+    const legacyCtiRawMap = new Map(
+      ctiRows.flatMap((row) => {
+        const month = toCanonicalYearMonth(row.年月);
+        const value = row["消費支出（名目）"];
+        return month && typeof value === "number" && Number.isFinite(value)
+          ? [[month, value] as const]
+          : [];
+      }),
+    );
+    const rawWindow = [...legacyCtiRawMap.entries()]
+      .filter(([month]) => month >= "2017-02" && month <= "2018-01")
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([, value]) => value);
+    expect(rawWindow).toHaveLength(12);
     const output2025 = rows
       .filter((row) => row.年月.startsWith("2025年"))
       .map((row) => row["CTI消費支出（参考）"])
       .filter((value): value is number => typeof value === "number");
     expect(output2025).toHaveLength(12);
-    const raw2025 = [...cti.raw.entries()]
-      .filter(([month]) => month.startsWith("2025-"))
-      .map(([, value]) => value);
-    const raw2025Average = raw2025.reduce((sum, value) => sum + value, 0) / raw2025.length;
-    expect(raw2025).toHaveLength(12);
     expect(
       raw2025.reduce((sum, value) => sum + (value * 100) / raw2025Average, 0) / raw2025.length,
     ).toBeCloseTo(100, 6);
     expect(rows.find((row) => row.年月 === "2018年1月")?.["CTI消費支出（参考）"]).toBeCloseTo(
-      ((cti.movingAverage.get("2018-01") ?? Number.NaN) * 100) / raw2025Average,
+      (rawWindow.reduce((sum, value) => sum + value, 0) / rawWindow.length) *
+        (100 / raw2025Average),
+      6,
+    );
+    expect(rows.find((row) => row.年月 === "2018年1月")?.["CTI消費支出（参考）"]).not.toBeCloseTo(
+      rows.find((row) => row.年月 === "2018年1月")?.["CTIミクロ基本系列（名目・参考・延長）"] ??
+        Number.NaN,
       6,
     );
     expect(readLegacyCtiAggregation(rows.find((row) => row.年月 === "2025年1月"))).toBe(
-      "12_month_moving_average_rebased_to_2025_raw_average",
+      "adjustment_12_month_moving_average_rebased_to_2025_raw_average",
     );
     const publicRows = toEarningsView(rows, ["年月", "CTIミクロ基本系列（名目・参考）"]);
     expect(publicRows[0]).not.toHaveProperty("CTI消費支出（参考）");
