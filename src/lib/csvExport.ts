@@ -19,6 +19,8 @@ export interface BuildCsvOptions {
   labelHeader?: string;
   /** 数値の小数桁数 */
   digits?: number;
+  /** Include Plan39 provenance columns even when metadata descriptors omit them. */
+  includeProvenanceMetadata?: boolean;
   /** Optional machine-readable metadata columns for measurement-aware exports. */
   metadata?: ReadonlyArray<{
     key: string;
@@ -105,11 +107,19 @@ export const buildCsv = (
           : undefined;
       return entry && typeof entry === "object" ? [entry as CsvMeasurement] : [];
     });
+  const includeProvenanceMetadata =
+    options.includeProvenanceMetadata ??
+    (Boolean(options.metadata) ||
+      rows.some((row) =>
+        keys.some((key) => {
+          const measurement = rowMeasurementValue(row, key);
+          return measurement?.seriesType !== undefined || measurement?.official !== undefined;
+        }),
+      ));
   const metadataHeaders = metadata.flatMap(({ key }) => [
     `${key}__label`,
     `${key}__valueType`,
-    `${key}__seriesType`,
-    `${key}__official`,
+    ...(includeProvenanceMetadata ? [`${key}__seriesType`, `${key}__official`] : []),
     `${key}__value`,
     `${key}__unit`,
     `${key}__source`,
@@ -155,8 +165,9 @@ export const buildCsv = (
       return [
         label ?? "",
         valueType ?? "",
-        seriesType ?? "",
-        official === undefined ? "" : String(official),
+        ...(includeProvenanceMetadata
+          ? [seriesType ?? "", official === undefined ? "" : String(official)]
+          : []),
         unavailable ? "" : (value ?? ""),
         unit ?? "",
         source ?? "",

@@ -39,17 +39,33 @@ export function LazyMount({
     if (forceMount) return;
     const el = ref.current;
     if (!el) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          setIntersected(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "200px 0px" },
-    );
+    let observer: IntersectionObserver | undefined;
+    let resizeObserver: ResizeObserver | undefined;
+    const cleanup = () => {
+      observer?.disconnect();
+      resizeObserver?.disconnect();
+      window.removeEventListener("scroll", checkReach);
+      window.removeEventListener("resize", checkReach);
+    };
+    const checkReach = () => {
+      if (el.getBoundingClientRect().top <= window.innerHeight + 200) {
+        setIntersected(true);
+        cleanup();
+      }
+    };
+    observer = new IntersectionObserver(() => checkReach(), { rootMargin: "200px 0px" });
     observer.observe(el);
-    return () => observer.disconnect();
+    if (typeof ResizeObserver !== "undefined") {
+      resizeObserver = new ResizeObserver(checkReach);
+      resizeObserver.observe(document.body);
+      resizeObserver.observe(el);
+    }
+    window.addEventListener("scroll", checkReach, { passive: true });
+    window.addEventListener("resize", checkReach);
+    checkReach();
+    return () => {
+      cleanup();
+    };
   }, [forceMount]);
 
   const visible = forceMount || intersected;

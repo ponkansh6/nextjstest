@@ -123,7 +123,11 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
                 : row && typeof row === "object"
                   ? unavailableMeasurement
                   : (meta as TooltipMeasurement);
+              const hasProvenance =
+                measurement !== unavailableMeasurement &&
+                (measurement.seriesType !== undefined || measurement.official !== undefined);
               const unavailable =
+                hasProvenance &&
                 hasRowMeasurements &&
                 (measurement.seriesType === "unavailable" ||
                   measurement.status === "invalid" ||
@@ -141,8 +145,8 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
                 aggregation: measurement.aggregation,
                 status: measurement.status,
                 reason: measurement.reason,
-                seriesType: measurement.seriesType,
-                official: measurement.official,
+                seriesType: hasProvenance ? measurement.seriesType : undefined,
+                official: hasProvenance ? measurement.official : undefined,
               };
             }),
           ...(canIncludeUnmappedPayload
@@ -317,12 +321,15 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
           </div>
         )}
         {topPayload.map((entry, index) => {
-          const measurementNote = getMeasurementNote({
-            seriesType: entry.seriesType,
-            official: entry.official,
-            status: entry.status ?? "valid",
-            reason: entry.reason,
-          });
+          const hasProvenance = entry.seriesType !== undefined || entry.official !== undefined;
+          const measurementNote = hasProvenance
+            ? getMeasurementNote({
+                seriesType: entry.seriesType,
+                official: entry.official,
+                status: entry.status ?? "valid",
+                reason: entry.reason,
+              })
+            : null;
           return (
             <div
               key={`item-${index}`}
@@ -341,7 +348,7 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
               data-tooltip-official={
                 entry.official === undefined ? undefined : String(entry.official)
               }
-              data-tooltip-note={measurementNote ?? ""}
+              data-tooltip-note={measurementNote ?? undefined}
               data-tooltip-color={entry.color}
               data-tooltip-order={entry.order ?? index}
               data-tooltip-group-separator={index === separatorIndex ? "true" : undefined}
