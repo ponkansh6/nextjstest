@@ -33,7 +33,8 @@ export function DataTablesSection({ tables }: DataTablesSectionProps) {
         : undefined;
     if (rowMeasurement && typeof rowMeasurement === "object")
       return rowMeasurement as SeriesMeasurement;
-    return key === SUPPORT_SERIES_KEY_NOMINAL && metadata?.some((entry) => entry.key === key)
+    const descriptor = metadata?.find((entry) => entry.key === key);
+    return descriptor && key === SUPPORT_SERIES_KEY_NOMINAL
       ? ({
           key,
           label: key,

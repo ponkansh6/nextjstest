@@ -45,11 +45,16 @@ export interface TooltipSeriesMetadata {
   unit?: string;
   source?: string;
   valueType?: "raw" | "comparison";
-  status?: "valid" | "invalid";
+  status?: MeasurementStatus;
   reason?: string | null;
   frequency?: "monthly" | "quarterly" | "annual";
   aggregation?: string;
+  seriesType?: SeriesType;
+  official?: boolean;
 }
+
+export type SeriesType = "estimated_adjusted" | "official_adjusted" | "unavailable";
+export type MeasurementStatus = "valid" | "invalid" | "unavailable" | "available";
 
 /** Public measurement metadata shared by chart, table, tooltip and CSV. */
 export interface SeriesMeasurement {
@@ -59,11 +64,33 @@ export interface SeriesMeasurement {
   source: string;
   valueType: "raw" | "comparison";
   value: number | null;
-  status: "valid" | "invalid";
+  status: MeasurementStatus;
   reason: string | null;
   frequency: "monthly" | "quarterly" | "annual";
   aggregation: string;
+  /** Plan39 annual adjusted-series provenance. Optional for legacy series. */
+  seriesType?: SeriesType;
+  /** Whether the value is an official adjusted observation. */
+  official?: boolean;
+  /** Plan39-v2 provenance, retained across all public surfaces. */
+  model?: "v2-bottom-up";
+  estimateVersion?: "plan39-v2";
 }
+
+export const getMeasurementNote = (
+  measurement: Partial<Pick<SeriesMeasurement, "seriesType" | "official" | "status" | "reason">>,
+): string | null => {
+  if (measurement.seriesType === "estimated_adjusted") {
+    return "2016年以前は接続推計。公式遡及値ではない";
+  }
+  if (measurement.seriesType === "official_adjusted" || measurement.official === true) {
+    return "公式調整値";
+  }
+  if (measurement.seriesType === "unavailable" || measurement.status === "unavailable") {
+    return measurement.reason ? `利用不可: ${measurement.reason}` : "利用不可";
+  }
+  return null;
+};
 
 /** Descriptor and row measurement intentionally share the complete public shape. */
 export type SeriesDescriptor = SeriesMeasurement;

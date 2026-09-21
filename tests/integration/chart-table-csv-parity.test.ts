@@ -401,6 +401,8 @@ describe("Phase 4-4 real chart/table/CSV parity", () => {
         .flatMap(({ key }) => [
           `${key}__label`,
           `${key}__valueType`,
+          `${key}__seriesType`,
+          `${key}__official`,
           `${key}__value`,
           `${key}__unit`,
           `${key}__source`,
@@ -424,6 +426,8 @@ describe("Phase 4-4 real chart/table/CSV parity", () => {
         expect(rows[1]!.slice(metadataStart)).toEqual([
           ctiNominalLabel,
           "raw",
+          "",
+          "",
           "61",
           "指数",
           "e-Stat 公式CTI長期artifact 000040499070",
@@ -435,6 +439,8 @@ describe("Phase 4-4 real chart/table/CSV parity", () => {
         expect(rows[2]!.slice(metadataStart)).toEqual([
           ctiNominalLabel,
           "raw",
+          "",
+          "",
           "",
           "",
           "",

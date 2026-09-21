@@ -25,6 +25,12 @@ export type {
   QuarterlyGdpRow,
   QuarterlyGdpSupportStatus,
 } from "./data-loader/cpi";
+export {
+  loadCtiAdjustedConnectionEstimate,
+  loadCtiAdjustedV2Estimate,
+  loadCtiAdjustedData,
+} from "./data-loader/ctiAdjusted";
+export type { CtiAdjustedArtifactPaths, CtiAdjustedLoaderOptions } from "./data-loader/ctiAdjusted";
 
 export async function loadPopulationData() {
   const { loadPopulationDataInternal } = await import("./data-loader/population");

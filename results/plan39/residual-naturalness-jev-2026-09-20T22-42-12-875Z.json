@@ -1,0 +1,3246 @@
+{
+  "schemaVersion": "plan39-residual-naturalness-jev-v1",
+  "generatedAt": "2026-09-20T22:42:14.054Z",
+  "request": {
+    "background": {
+      "formula": "residual = total - major 9 categories sum",
+      "formulaVersion": "ratio-log-beta-v1",
+      "artifacts": {
+        "B": {
+          "source": {
+            "source": "総務省統計局 e-Stat CTI",
+            "artifactIdentifier": "000040499069",
+            "officialPageUrl": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499069",
+            "downloadUrl": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499069",
+            "statInfId": "000040499069",
+            "statisticalCode": "00200567",
+            "revision": "2026-09-20"
+          },
+          "metadata": {
+            "schemaVersion": "plan39-annual-v1",
+            "revision": "2026-09-20",
+            "statisticalCode": "00200567",
+            "source": "総務省統計局 e-Stat CTI",
+            "artifact": "B.json",
+            "artifactIdentifier": "000040499069",
+            "officialPageUrl": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499069",
+            "downloadUrl": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499069",
+            "statInfId": "000040499069",
+            "retrievedAt": "2026-09-20T10:23:35.365Z",
+            "baseYear": 2025,
+            "unit": "指数",
+            "valueType": "原数値（指数）",
+            "householdScope": "総世帯",
+            "frequency": "annual",
+            "rawRange": {
+              "startYear": 2002,
+              "endYear": 2025
+            },
+            "adoptedRange": {
+              "startYear": 2002,
+              "endYear": 2025
+            },
+            "yearization": null,
+            "missingRepresentation": "- は null。補完・補間なし。",
+            "sha256": "5e99cf3c61e26ba90bcde12b3311eb553458f97e5624258712d7414bed53197b",
+            "sourceSha256": "5e99cf3c61e26ba90bcde12b3311eb553458f97e5624258712d7414bed53197b",
+            "sourceFormat": "xlsx"
+          },
+          "fingerprint": {
+            "sha256": "11236b7a7a7f38476b1185d461a9c21aa748e52bc01ba82b28851bdac7a2c227",
+            "metadataFingerprint": "sha256:e8f402661825ccd4aa1b9da172f91c0cd2d9499873c2a3e69df7d9d8aea52251",
+            "manifestSha256": "11236b7a7a7f38476b1185d461a9c21aa748e52bc01ba82b28851bdac7a2c227"
+          }
+        },
+        "A": {
+          "source": {
+            "source": "総務省統計局 e-Stat CTI",
+            "artifactIdentifier": "000040499087",
+            "officialPageUrl": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499087",
+            "downloadUrl": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499087",
+            "statInfId": "000040499087",
+            "statisticalCode": "00200567",
+            "revision": "2026-09-20"
+          },
+          "metadata": {
+            "schemaVersion": "plan39-annual-v1",
+            "revision": "2026-09-20",
+            "statisticalCode": "00200567",
+            "source": "総務省統計局 e-Stat CTI",
+            "artifact": "A.json",
+            "artifactIdentifier": "000040499087",
+            "officialPageUrl": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499087",
+            "downloadUrl": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499087",
+            "statInfId": "000040499087",
+            "retrievedAt": "2026-09-20T10:23:35.472Z",
+            "baseYear": 2025,
+            "unit": "指数",
+            "valueType": "原数値（指数）",
+            "householdScope": "総世帯",
+            "frequency": "annual",
+            "rawRange": {
+              "startYear": 2017,
+              "endYear": 2025
+            },
+            "adoptedRange": {
+              "startYear": 2017,
+              "endYear": 2025
+            },
+            "yearization": null,
+            "missingRepresentation": "- は null。補完・補間なし。",
+            "sha256": "7224e5eb424c94d90402502f665a4953cfe16377f65f1040a939696ac948ef41",
+            "sourceSha256": "7224e5eb424c94d90402502f665a4953cfe16377f65f1040a939696ac948ef41",
+            "sourceFormat": "xlsx"
+          },
+          "fingerprint": {
+            "sha256": "5c0979126fbf2de34745d366d1b9872b9b48c3024237b5405972dedaf618daff",
+            "metadataFingerprint": "sha256:03dcf4dbd346f04e7045cfbed3a1feef56e2056f4dc2d5035d9609488ac55772",
+            "manifestSha256": "5c0979126fbf2de34745d366d1b9872b9b48c3024237b5405972dedaf618daff"
+          }
+        },
+        "L": {
+          "source": {
+            "source": "総務省統計局 家計調査 長期時系列",
+            "artifactIdentifier": "lev-jnb.xls",
+            "officialPageUrl": "https://www.stat.go.jp/data/kakei/longtime/zuhyou/lev-jnb.xls",
+            "downloadUrl": "https://www.stat.go.jp/data/kakei/longtime/zuhyou/lev-jnb.xls",
+            "statInfId": null,
+            "statisticalCode": "00200567",
+            "revision": "2026-09-20"
+          },
+          "metadata": {
+            "schemaVersion": "plan39-annual-v1",
+            "revision": "2026-09-20",
+            "statisticalCode": "00200567",
+            "source": "総務省統計局 家計調査 長期時系列",
+            "artifact": "L.json",
+            "artifactIdentifier": "lev-jnb.xls",
+            "officialPageUrl": "https://www.stat.go.jp/data/kakei/longtime/zuhyou/lev-jnb.xls",
+            "downloadUrl": "https://www.stat.go.jp/data/kakei/longtime/zuhyou/lev-jnb.xls",
+            "statInfId": null,
+            "retrievedAt": "2026-09-20T10:23:35.737Z",
+            "baseYear": 2025,
+            "unit": "指数",
+            "valueType": "原指数",
+            "householdScope": "二人以上の世帯（世帯人員及び世帯主の年齢分布調整済）",
+            "frequency": "annual",
+            "rawRange": {
+              "startYear": 1981,
+              "endYear": 2018
+            },
+            "adoptedRange": {
+              "startYear": 1981,
+              "endYear": 2018
+            },
+            "yearization": null,
+            "missingRepresentation": "- は null。補完・補間なし。",
+            "sha256": "9e98ca7b379bbce9d2354b8aa97014dbcfdff570e96ef0f62fef66b5e0f53c42",
+            "sourceSha256": "9e98ca7b379bbce9d2354b8aa97014dbcfdff570e96ef0f62fef66b5e0f53c42",
+            "sourceFormat": "xls"
+          },
+          "fingerprint": {
+            "sha256": "26902849c7d835a1dcf3db130384600d0f853907fac927e7942fb806e2eec076",
+            "metadataFingerprint": "sha256:8f0894385b5f7935c683c2a4736f14ba9bfef1866e076b5943756cb8c528e346",
+            "manifestSha256": "26902849c7d835a1dcf3db130384600d0f853907fac927e7942fb806e2eec076"
+          }
+        }
+      },
+      "artifactDataSummary": {
+        "2006": {
+          "officialAdditivity": null,
+          "residualJumps": {
+            "previousYear": 2005,
+            "value": 7.180192440490771,
+            "previousValue": 5.998914565291614,
+            "absoluteDifference": 1.1812778751991573,
+            "relativeChange": 0.19691526897778616,
+            "yearOverYearRatio": 1.1969152689777862,
+            "exceeded": false,
+            "reason": null
+          },
+          "residualValidation": {
+            "value": 7.180192440490771,
+            "status": "available",
+            "reason": null
+          },
+          "stacking": {
+            "total": 98.02725688476757,
+            "majorSum": 90.8470644442768,
+            "residual": 7.180192440490771,
+            "status": "available",
+            "reason": null
+          }
+        },
+        "2007": {
+          "officialAdditivity": null,
+          "residualJumps": {
+            "previousYear": 2006,
+            "value": 7.188979274029194,
+            "previousValue": 7.180192440490771,
+            "absoluteDifference": 0.008786833538422911,
+            "relativeChange": 0.0012237601723418885,
+            "yearOverYearRatio": 1.001223760172342,
+            "exceeded": false,
+            "reason": null
+          },
+          "residualValidation": {
+            "value": 7.188979274029194,
+            "status": "available",
+            "reason": null
+          },
+          "stacking": {
+            "total": 98.9033694090604,
+            "majorSum": 91.71439013503121,
+            "residual": 7.188979274029194,
+            "status": "available",
+            "reason": null
+          }
+        },
+        "2008": {
+          "officialAdditivity": null,
+          "residualJumps": {
+            "previousYear": 2007,
+            "value": 8.4328705448345,
+            "previousValue": 7.188979274029194,
+            "absoluteDifference": 1.2438912708053067,
+            "relativeChange": 0.17302752218231746,
+            "yearOverYearRatio": 1.1730275221823174,
+            "exceeded": false,
+            "reason": null
+          },
+          "residualValidation": {
+            "value": 8.4328705448345,
+            "status": "available",
+            "reason": null
+          },
+          "stacking": {
+            "total": 98.72160144359138,
+            "majorSum": 90.28873089875688,
+            "residual": 8.4328705448345,
+            "status": "available",
+            "reason": null
+          }
+        },
+        "2009": {
+          "officialAdditivity": null,
+          "residualJumps": {
+            "previousYear": 2008,
+            "value": 9.109638854114678,
+            "previousValue": 8.4328705448345,
+            "absoluteDifference": 0.6767683092801775,
+            "relativeChange": 0.08025361063970411,
+            "yearOverYearRatio": 1.080253610639704,
+            "exceeded": false,
+            "reason": null
+          },
+          "residualValidation": {
+            "value": 9.109638854114678,
+            "status": "available",
+            "reason": null
+          },
+          "stacking": {
+            "total": 100.29252312670592,
+            "majorSum": 91.18288427259124,
+            "residual": 9.109638854114678,
+            "status": "available",
+            "reason": null
+          }
+        },
+        "2010": {
+          "officialAdditivity": null,
+          "residualJumps": {
+            "previousYear": 2009,
+            "value": 8.525911169853188,
+            "previousValue": 9.109638854114678,
+            "absoluteDifference": 0.5837276842614898,
+            "relativeChange": -0.06407802697884443,
+            "yearOverYearRatio": 0.9359219730211555,
+            "exceeded": false,
+            "reason": null
+          },
+          "residualValidation": {
+            "value": 8.525911169853188,
+            "status": "available",
+            "reason": null
+          },
+          "stacking": {
+            "total": 100.1259863300024,
+            "majorSum": 91.60007516014922,
+            "residual": 8.525911169853188,
+            "status": "available",
+            "reason": null
+          }
+        },
+        "2018": {
+          "officialAdditivity": {
+            "total": 106.1,
+            "majorSum": 89.10000000000001,
+            "residual": 16.999999999999986,
+            "difference": 0,
+            "additive": true,
+            "reason": "derived_from_total_minus_major_categories"
+          },
+          "residualJumps": {
+            "previousYear": 2017,
+            "value": 16.999999999999986,
+            "previousValue": 17.299999999999997,
+            "absoluteDifference": 0.30000000000001137,
+            "relativeChange": -0.017341040462428407,
+            "yearOverYearRatio": 0.9826589595375715,
+            "exceeded": false,
+            "reason": null
+          },
+          "residualValidation": {
+            "value": 16.999999999999986,
+            "status": "available",
+            "reason": "derived_from_total_minus_major_categories"
+          },
+          "stacking": null
+        },
+        "2019": {
+          "officialAdditivity": {
+            "total": 106.8,
+            "majorSum": 89.70000000000002,
+            "residual": 17.09999999999998,
+            "difference": 0,
+            "additive": true,
+            "reason": "derived_from_total_minus_major_categories"
+          },
+          "residualJumps": {
+            "previousYear": 2018,
+            "value": 17.09999999999998,
+            "previousValue": 16.999999999999986,
+            "absoluteDifference": 0.09999999999999432,
+            "relativeChange": 0.005882352941176141,
+            "yearOverYearRatio": 1.0058823529411762,
+            "exceeded": false,
+            "reason": null
+          },
+          "residualValidation": {
+            "value": 17.09999999999998,
+            "status": "available",
+            "reason": "derived_from_total_minus_major_categories"
+          },
+          "stacking": null
+        },
+        "2020": {
+          "officialAdditivity": {
+            "total": 101.3,
+            "majorSum": 85.6,
+            "residual": 15.700000000000003,
+            "difference": 0,
+            "additive": true,
+            "reason": "derived_from_total_minus_major_categories"
+          },
+          "residualJumps": {
+            "previousYear": 2019,
+            "value": 15.700000000000003,
+            "previousValue": 17.09999999999998,
+            "absoluteDifference": 1.3999999999999773,
+            "relativeChange": -0.08187134502923853,
+            "yearOverYearRatio": 0.9181286549707615,
+            "exceeded": false,
+            "reason": null
+          },
+          "residualValidation": {
+            "value": 15.700000000000003,
+            "status": "available",
+            "reason": "derived_from_total_minus_major_categories"
+          },
+          "stacking": null
+        },
+        "2021": {
+          "officialAdditivity": {
+            "total": 102.5,
+            "majorSum": 86.50000000000001,
+            "residual": 15.999999999999986,
+            "difference": 0,
+            "additive": true,
+            "reason": "derived_from_total_minus_major_categories"
+          },
+          "residualJumps": {
+            "previousYear": 2020,
+            "value": 15.999999999999986,
+            "previousValue": 15.700000000000003,
+            "absoluteDifference": 0.29999999999998295,
+            "relativeChange": 0.01910828025477598,
+            "yearOverYearRatio": 1.019108280254776,
+            "exceeded": false,
+            "reason": null
+          },
+          "residualValidation": {
+            "value": 15.999999999999986,
+            "status": "available",
+            "reason": "derived_from_total_minus_major_categories"
+          },
+          "stacking": null
+        },
+        "2022": {
+          "officialAdditivity": {
+            "total": 102.7,
+            "majorSum": 87.2,
+            "residual": 15.5,
+            "difference": 0,
+            "additive": true,
+            "reason": "derived_from_total_minus_major_categories"
+          },
+          "residualJumps": {
+            "previousYear": 2021,
+            "value": 15.5,
+            "previousValue": 15.999999999999986,
+            "absoluteDifference": 0.4999999999999858,
+            "relativeChange": -0.03124999999999914,
+            "yearOverYearRatio": 0.9687500000000009,
+            "exceeded": false,
+            "reason": null
+          },
+          "residualValidation": {
+            "value": 15.5,
+            "status": "available",
+            "reason": "derived_from_total_minus_major_categories"
+          },
+          "stacking": null
+        },
+        "2023": {
+          "officialAdditivity": {
+            "total": 101.8,
+            "majorSum": 87.19999999999999,
+            "residual": 14.600000000000009,
+            "difference": 0,
+            "additive": true,
+            "reason": "derived_from_total_minus_major_categories"
+          },
+          "residualJumps": {
+            "previousYear": 2022,
+            "value": 14.600000000000009,
+            "previousValue": 15.5,
+            "absoluteDifference": 0.8999999999999915,
+            "relativeChange": -0.058064516129031706,
+            "yearOverYearRatio": 0.9419354838709683,
+            "exceeded": false,
+            "reason": null
+          },
+          "residualValidation": {
+            "value": 14.600000000000009,
+            "status": "available",
+            "reason": "derived_from_total_minus_major_categories"
+          },
+          "stacking": null
+        },
+        "2024": {
+          "officialAdditivity": {
+            "total": 101.1,
+            "majorSum": 86.3,
+            "residual": 14.799999999999997,
+            "difference": 0,
+            "additive": true,
+            "reason": "derived_from_total_minus_major_categories"
+          },
+          "residualJumps": {
+            "previousYear": 2023,
+            "value": 14.799999999999997,
+            "previousValue": 14.600000000000009,
+            "absoluteDifference": 0.19999999999998863,
+            "relativeChange": 0.013698630136985515,
+            "yearOverYearRatio": 1.0136986301369855,
+            "exceeded": false,
+            "reason": null
+          },
+          "residualValidation": {
+            "value": 14.799999999999997,
+            "status": "available",
+            "reason": "derived_from_total_minus_major_categories"
+          },
+          "stacking": null
+        },
+        "2025": {
+          "officialAdditivity": {
+            "total": 100,
+            "majorSum": 85.7,
+            "residual": 14.299999999999997,
+            "difference": 0,
+            "additive": true,
+            "reason": "derived_from_total_minus_major_categories"
+          },
+          "residualJumps": {
+            "previousYear": 2024,
+            "value": 14.299999999999997,
+            "previousValue": 14.799999999999997,
+            "absoluteDifference": 0.5,
+            "relativeChange": -0.03378378378378379,
+            "yearOverYearRatio": 0.9662162162162162,
+            "exceeded": false,
+            "reason": null
+          },
+          "residualValidation": {
+            "value": 14.299999999999997,
+            "status": "available",
+            "reason": "derived_from_total_minus_major_categories"
+          },
+          "stacking": null
+        }
+      },
+      "sourceFingerprints": {
+        "inputFingerprint": "sha256:20c80ddac60344d0a07eb7334d016b8ebf7c5d795f4c38fb60ea32941edc8030",
+        "analysisFingerprint": "sha256:d036e3fb1188eb8051da7ab099da28c3ee8369c39fe065f11a7f00943694c867",
+        "inputMetadataFingerprint": {
+          "B": "fnv1a32:fc1aa256",
+          "A": "fnv1a32:ad6276f7",
+          "L": "fnv1a32:d7a5a88b"
+        }
+      },
+      "periods": {
+        "productionCalibration": [
+          2018,
+          2019,
+          2020,
+          2021,
+          2022,
+          2023,
+          2024,
+          2025
+        ],
+        "sensitivity": [
+          {
+            "name": "baseline_2018_2025",
+            "calibrationYears": [
+              2018,
+              2019,
+              2020,
+              2021,
+              2022,
+              2023,
+              2024,
+              2025
+            ],
+            "holdoutYears": [
+              2017
+            ],
+            "lAnnualizationRule": "official_annual"
+          },
+          {
+            "name": "alternative_2018_2024",
+            "calibrationYears": [
+              2018,
+              2019,
+              2020,
+              2021,
+              2022,
+              2023,
+              2024
+            ],
+            "holdoutYears": [
+              2017
+            ],
+            "lAnnualizationRule": "official_annual"
+          }
+        ],
+        "targetYear": 2017,
+        "holdoutYears": [
+          2017
+        ]
+      },
+      "sensitivity": {
+        "baseline": {
+          "name": "baseline_2018_2025",
+          "calibrationYears": [
+            2018,
+            2019,
+            2020,
+            2021,
+            2022,
+            2023,
+            2024,
+            2025
+          ],
+          "holdoutYears": [
+            2017
+          ],
+          "targetYear": 2017,
+          "lAnnualizationRule": "official_annual",
+          "status": "available",
+          "reason": null,
+          "beta": {
+            "食料": 0.913147824636763,
+            "住居": 1.5160194083914782,
+            "光熱・水道": 0.9779452840028358,
+            "家具・家事用品": 0.8690568458628622,
+            "被服及び履物": 0.7903390127989806,
+            "保健医療": 1.103778314887988,
+            "交通・通信": 0.8215116805475486,
+            "教育": 0.063215241774382,
+            "教養娯楽": 1.0109820516482384
+          },
+          "d": {
+            "1981": null,
+            "1982": null,
+            "1983": null,
+            "1984": null,
+            "1985": null,
+            "1986": null,
+            "1987": null,
+            "1988": null,
+            "1989": null,
+            "1990": null,
+            "1991": null,
+            "1992": null,
+            "1993": null,
+            "1994": null,
+            "1995": null,
+            "1996": null,
+            "1997": null,
+            "1998": null,
+            "1999": null,
+            "2000": null,
+            "2001": null,
+            "2002": 0.9163428438065232,
+            "2003": 0.9212176454872625,
+            "2004": 0.92326473611122,
+            "2005": 0.9225517903690492,
+            "2006": 0.9239138254926256,
+            "2007": 0.9321712479647541,
+            "2008": 0.9304580720413892,
+            "2009": 0.945264119950103,
+            "2010": 0.9436944988690142,
+            "2011": 0.9502403825984813,
+            "2012": 0.953078427855799,
+            "2013": 0.9543707107010674,
+            "2014": 0.9641903574645757,
+            "2015": 0.9797928792267964,
+            "2016": 0.9891469627219391
+          },
+          "estimates": {
+            "2005": 97.88274495815611,
+            "2006": 98.02725688476757,
+            "2007": 98.9033694090604,
+            "2008": 98.72160144359138,
+            "2009": 100.29252312670592,
+            "2010": 100.1259863300024,
+            "2012": 101.12162119550027
+          },
+          "evaluationYears": [
+            2005,
+            2006,
+            2007,
+            2008,
+            2009,
+            2010,
+            2012
+          ],
+          "omittedYears": [
+            2011,
+            2013,
+            2014,
+            2015,
+            2016
+          ],
+          "omittedReasons": {
+            "2011": "residual_jump_threshold_exceeded",
+            "2013": "residual_jump_threshold_exceeded",
+            "2014": "residual_jump_threshold_exceeded",
+            "2015": "residual_jump_threshold_exceeded",
+            "2016": "residual_jump_threshold_exceeded"
+          },
+          "coverage": {
+            "startYear": 2005,
+            "endYear": 2016,
+            "evaluatedYears": [
+              2005,
+              2006,
+              2007,
+              2008,
+              2009,
+              2010,
+              2012
+            ],
+            "omittedYears": [
+              2011,
+              2013,
+              2014,
+              2015,
+              2016
+            ],
+            "omittedReasons": {
+              "2011": "residual_jump_threshold_exceeded",
+              "2013": "residual_jump_threshold_exceeded",
+              "2014": "residual_jump_threshold_exceeded",
+              "2015": "residual_jump_threshold_exceeded",
+              "2016": "residual_jump_threshold_exceeded"
+            }
+          }
+        },
+        "alternative": {
+          "name": "alternative_2018_2024",
+          "calibrationYears": [
+            2018,
+            2019,
+            2020,
+            2021,
+            2022,
+            2023,
+            2024
+          ],
+          "holdoutYears": [
+            2017
+          ],
+          "targetYear": 2017,
+          "lAnnualizationRule": "official_annual",
+          "status": "available",
+          "reason": null,
+          "beta": {
+            "食料": 0.913147824636763,
+            "住居": 1.5160194083914782,
+            "光熱・水道": 0.9779452840028358,
+            "家具・家事用品": 0.8690568458628622,
+            "被服及び履物": 0.7903390127989806,
+            "保健医療": 1.103778314887988,
+            "交通・通信": 0.8215116805475486,
+            "教育": 0.063215241774382,
+            "教養娯楽": 1.0109820516482384
+          },
+          "d": {
+            "1981": null,
+            "1982": null,
+            "1983": null,
+            "1984": null,
+            "1985": null,
+            "1986": null,
+            "1987": null,
+            "1988": null,
+            "1989": null,
+            "1990": null,
+            "1991": null,
+            "1992": null,
+            "1993": null,
+            "1994": null,
+            "1995": null,
+            "1996": null,
+            "1997": null,
+            "1998": null,
+            "1999": null,
+            "2000": null,
+            "2001": null,
+            "2002": 0.9163428438065232,
+            "2003": 0.9212176454872625,
+            "2004": 0.92326473611122,
+            "2005": 0.9225517903690492,
+            "2006": 0.9239138254926256,
+            "2007": 0.9321712479647541,
+            "2008": 0.9304580720413892,
+            "2009": 0.945264119950103,
+            "2010": 0.9436944988690142,
+            "2011": 0.9502403825984813,
+            "2012": 0.953078427855799,
+            "2013": 0.9543707107010674,
+            "2014": 0.9641903574645757,
+            "2015": 0.9797928792267964,
+            "2016": 0.9891469627219391
+          },
+          "estimates": {
+            "2005": 97.88274495815611,
+            "2006": 98.02725688476757,
+            "2007": 98.9033694090604,
+            "2008": 98.72160144359138,
+            "2009": 100.29252312670592,
+            "2010": 100.1259863300024,
+            "2012": 101.12162119550027
+          },
+          "evaluationYears": [
+            2005,
+            2006,
+            2007,
+            2008,
+            2009,
+            2010,
+            2012
+          ],
+          "omittedYears": [
+            2011,
+            2013,
+            2014,
+            2015,
+            2016
+          ],
+          "omittedReasons": {
+            "2011": "residual_jump_threshold_exceeded",
+            "2013": "residual_jump_threshold_exceeded",
+            "2014": "residual_jump_threshold_exceeded",
+            "2015": "residual_jump_threshold_exceeded",
+            "2016": "residual_jump_threshold_exceeded"
+          },
+          "coverage": {
+            "startYear": 2005,
+            "endYear": 2016,
+            "evaluatedYears": [
+              2005,
+              2006,
+              2007,
+              2008,
+              2009,
+              2010,
+              2012
+            ],
+            "omittedYears": [
+              2011,
+              2013,
+              2014,
+              2015,
+              2016
+            ],
+            "omittedReasons": {
+              "2011": "residual_jump_threshold_exceeded",
+              "2013": "residual_jump_threshold_exceeded",
+              "2014": "residual_jump_threshold_exceeded",
+              "2015": "residual_jump_threshold_exceeded",
+              "2016": "residual_jump_threshold_exceeded"
+            }
+          }
+        }
+      },
+      "threshold": {
+        "residualJump": 1.4,
+        "interpretation": "mechanical audit gate; not a CPI naturalness label"
+      },
+      "candidateYears": [
+        2005,
+        2006,
+        2007,
+        2008,
+        2009,
+        2010,
+        2012
+      ],
+      "omittedYears": [
+        2011,
+        2013,
+        2014,
+        2015,
+        2016
+      ],
+      "classification": {
+        "official": [
+          2017,
+          2018,
+          2019,
+          2020,
+          2021,
+          2022,
+          2023,
+          2024,
+          2025
+        ],
+        "derived": [
+          2017,
+          2018,
+          2019,
+          2020,
+          2021,
+          2022,
+          2023,
+          2024,
+          2025
+        ],
+        "estimated": [
+          2005,
+          2006,
+          2007,
+          2008,
+          2009,
+          2010,
+          2012
+        ]
+      }
+    },
+    "model": "jev-latest",
+    "questions": {
+      "residual-naturalness-2006": {
+        "id": "residual-naturalness-2006",
+        "type": "choice",
+        "instructions": "2006年のresidualジャンプを、CPI関連系列として自然か評価する。前年residual=5.998914565291614, 当年residual=7.180192440490771, delta=1.1812778751991573, absoluteDifference=1.1812778751991573, relativeChange=0.19691526897778616, sourceType=estimated, status=available。JEVにはthresholdを機械的に追認せず、背景から独立に判断させる。",
+        "criteria": {
+          "natural_cpi_jump": "CPI関連系列として通常の経済・物価変動として自然",
+          "likely_break_or_artifact": "定義変更・集計差・データ不整合・推計境界の断絶が疑われる",
+          "indeterminate": "背景だけでは自然／断絶を信頼して決められない"
+        }
+      },
+      "residual-naturalness-2007": {
+        "id": "residual-naturalness-2007",
+        "type": "choice",
+        "instructions": "2007年のresidualジャンプを、CPI関連系列として自然か評価する。前年residual=7.180192440490771, 当年residual=7.188979274029194, delta=0.008786833538422911, absoluteDifference=0.008786833538422911, relativeChange=0.0012237601723418885, sourceType=estimated, status=available。JEVにはthresholdを機械的に追認せず、背景から独立に判断させる。",
+        "criteria": {
+          "natural_cpi_jump": "CPI関連系列として通常の経済・物価変動として自然",
+          "likely_break_or_artifact": "定義変更・集計差・データ不整合・推計境界の断絶が疑われる",
+          "indeterminate": "背景だけでは自然／断絶を信頼して決められない"
+        }
+      },
+      "residual-naturalness-2008": {
+        "id": "residual-naturalness-2008",
+        "type": "choice",
+        "instructions": "2008年のresidualジャンプを、CPI関連系列として自然か評価する。前年residual=7.188979274029194, 当年residual=8.4328705448345, delta=1.2438912708053067, absoluteDifference=1.2438912708053067, relativeChange=0.17302752218231746, sourceType=estimated, status=available。JEVにはthresholdを機械的に追認せず、背景から独立に判断させる。",
+        "criteria": {
+          "natural_cpi_jump": "CPI関連系列として通常の経済・物価変動として自然",
+          "likely_break_or_artifact": "定義変更・集計差・データ不整合・推計境界の断絶が疑われる",
+          "indeterminate": "背景だけでは自然／断絶を信頼して決められない"
+        }
+      },
+      "residual-naturalness-2009": {
+        "id": "residual-naturalness-2009",
+        "type": "choice",
+        "instructions": "2009年のresidualジャンプを、CPI関連系列として自然か評価する。前年residual=8.4328705448345, 当年residual=9.109638854114678, delta=0.6767683092801775, absoluteDifference=0.6767683092801775, relativeChange=0.08025361063970411, sourceType=estimated, status=available。JEVにはthresholdを機械的に追認せず、背景から独立に判断させる。",
+        "criteria": {
+          "natural_cpi_jump": "CPI関連系列として通常の経済・物価変動として自然",
+          "likely_break_or_artifact": "定義変更・集計差・データ不整合・推計境界の断絶が疑われる",
+          "indeterminate": "背景だけでは自然／断絶を信頼して決められない"
+        }
+      },
+      "residual-naturalness-2010": {
+        "id": "residual-naturalness-2010",
+        "type": "choice",
+        "instructions": "2010年のresidualジャンプを、CPI関連系列として自然か評価する。前年residual=9.109638854114678, 当年residual=8.525911169853188, delta=-0.5837276842614898, absoluteDifference=0.5837276842614898, relativeChange=-0.06407802697884443, sourceType=estimated, status=available。JEVにはthresholdを機械的に追認せず、背景から独立に判断させる。",
+        "criteria": {
+          "natural_cpi_jump": "CPI関連系列として通常の経済・物価変動として自然",
+          "likely_break_or_artifact": "定義変更・集計差・データ不整合・推計境界の断絶が疑われる",
+          "indeterminate": "背景だけでは自然／断絶を信頼して決められない"
+        }
+      },
+      "residual-naturalness-2018": {
+        "id": "residual-naturalness-2018",
+        "type": "choice",
+        "instructions": "2018年のresidualジャンプを、CPI関連系列として自然か評価する。前年residual=17.299999999999997, 当年residual=16.999999999999986, delta=-0.30000000000001137, absoluteDifference=0.30000000000001137, relativeChange=-0.017341040462428407, sourceType=derived, status=available。JEVにはthresholdを機械的に追認せず、背景から独立に判断させる。",
+        "criteria": {
+          "natural_cpi_jump": "CPI関連系列として通常の経済・物価変動として自然",
+          "likely_break_or_artifact": "定義変更・集計差・データ不整合・推計境界の断絶が疑われる",
+          "indeterminate": "背景だけでは自然／断絶を信頼して決められない"
+        }
+      },
+      "residual-naturalness-2019": {
+        "id": "residual-naturalness-2019",
+        "type": "choice",
+        "instructions": "2019年のresidualジャンプを、CPI関連系列として自然か評価する。前年residual=16.999999999999986, 当年residual=17.09999999999998, delta=0.09999999999999432, absoluteDifference=0.09999999999999432, relativeChange=0.005882352941176141, sourceType=derived, status=available。JEVにはthresholdを機械的に追認せず、背景から独立に判断させる。",
+        "criteria": {
+          "natural_cpi_jump": "CPI関連系列として通常の経済・物価変動として自然",
+          "likely_break_or_artifact": "定義変更・集計差・データ不整合・推計境界の断絶が疑われる",
+          "indeterminate": "背景だけでは自然／断絶を信頼して決められない"
+        }
+      },
+      "residual-naturalness-2020": {
+        "id": "residual-naturalness-2020",
+        "type": "choice",
+        "instructions": "2020年のresidualジャンプを、CPI関連系列として自然か評価する。前年residual=17.09999999999998, 当年residual=15.700000000000003, delta=-1.3999999999999773, absoluteDifference=1.3999999999999773, relativeChange=-0.08187134502923853, sourceType=derived, status=available。JEVにはthresholdを機械的に追認せず、背景から独立に判断させる。",
+        "criteria": {
+          "natural_cpi_jump": "CPI関連系列として通常の経済・物価変動として自然",
+          "likely_break_or_artifact": "定義変更・集計差・データ不整合・推計境界の断絶が疑われる",
+          "indeterminate": "背景だけでは自然／断絶を信頼して決められない"
+        }
+      },
+      "residual-naturalness-2021": {
+        "id": "residual-naturalness-2021",
+        "type": "choice",
+        "instructions": "2021年のresidualジャンプを、CPI関連系列として自然か評価する。前年residual=15.700000000000003, 当年residual=15.999999999999986, delta=0.29999999999998295, absoluteDifference=0.29999999999998295, relativeChange=0.01910828025477598, sourceType=derived, status=available。JEVにはthresholdを機械的に追認せず、背景から独立に判断させる。",
+        "criteria": {
+          "natural_cpi_jump": "CPI関連系列として通常の経済・物価変動として自然",
+          "likely_break_or_artifact": "定義変更・集計差・データ不整合・推計境界の断絶が疑われる",
+          "indeterminate": "背景だけでは自然／断絶を信頼して決められない"
+        }
+      },
+      "residual-naturalness-2022": {
+        "id": "residual-naturalness-2022",
+        "type": "choice",
+        "instructions": "2022年のresidualジャンプを、CPI関連系列として自然か評価する。前年residual=15.999999999999986, 当年residual=15.5, delta=-0.4999999999999858, absoluteDifference=0.4999999999999858, relativeChange=-0.03124999999999914, sourceType=derived, status=available。JEVにはthresholdを機械的に追認せず、背景から独立に判断させる。",
+        "criteria": {
+          "natural_cpi_jump": "CPI関連系列として通常の経済・物価変動として自然",
+          "likely_break_or_artifact": "定義変更・集計差・データ不整合・推計境界の断絶が疑われる",
+          "indeterminate": "背景だけでは自然／断絶を信頼して決められない"
+        }
+      },
+      "residual-naturalness-2023": {
+        "id": "residual-naturalness-2023",
+        "type": "choice",
+        "instructions": "2023年のresidualジャンプを、CPI関連系列として自然か評価する。前年residual=15.5, 当年residual=14.600000000000009, delta=-0.8999999999999915, absoluteDifference=0.8999999999999915, relativeChange=-0.058064516129031706, sourceType=derived, status=available。JEVにはthresholdを機械的に追認せず、背景から独立に判断させる。",
+        "criteria": {
+          "natural_cpi_jump": "CPI関連系列として通常の経済・物価変動として自然",
+          "likely_break_or_artifact": "定義変更・集計差・データ不整合・推計境界の断絶が疑われる",
+          "indeterminate": "背景だけでは自然／断絶を信頼して決められない"
+        }
+      },
+      "residual-naturalness-2024": {
+        "id": "residual-naturalness-2024",
+        "type": "choice",
+        "instructions": "2024年のresidualジャンプを、CPI関連系列として自然か評価する。前年residual=14.600000000000009, 当年residual=14.799999999999997, delta=0.19999999999998863, absoluteDifference=0.19999999999998863, relativeChange=0.013698630136985515, sourceType=derived, status=available。JEVにはthresholdを機械的に追認せず、背景から独立に判断させる。",
+        "criteria": {
+          "natural_cpi_jump": "CPI関連系列として通常の経済・物価変動として自然",
+          "likely_break_or_artifact": "定義変更・集計差・データ不整合・推計境界の断絶が疑われる",
+          "indeterminate": "背景だけでは自然／断絶を信頼して決められない"
+        }
+      },
+      "residual-naturalness-2025": {
+        "id": "residual-naturalness-2025",
+        "type": "choice",
+        "instructions": "2025年のresidualジャンプを、CPI関連系列として自然か評価する。前年residual=14.799999999999997, 当年residual=14.299999999999997, delta=-0.5, absoluteDifference=0.5, relativeChange=-0.03378378378378379, sourceType=derived, status=available。JEVにはthresholdを機械的に追認せず、背景から独立に判断させる。",
+        "criteria": {
+          "natural_cpi_jump": "CPI関連系列として通常の経済・物価変動として自然",
+          "likely_break_or_artifact": "定義変更・集計差・データ不整合・推計境界の断絶が疑われる",
+          "indeterminate": "背景だけでは自然／断絶を信頼して決められない"
+        }
+      }
+    },
+    "analysisFile": "results/plan39/plan39-analysis-20c80ddac60344d0.json",
+    "targetYears": [
+      2006,
+      2007,
+      2008,
+      2009,
+      2010,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
+    ],
+    "allResiduals": [
+      {
+        "year": 1981,
+        "residual": null,
+        "previousYear": 1980,
+        "previousResidual": null,
+        "delta": null,
+        "absoluteDifference": null,
+        "threshold": 1.4,
+        "relativeChange": null,
+        "yearOverYearRatio": null,
+        "exceeded": null,
+        "source": {
+          "absoluteDifference": null,
+          "relativeChange": null,
+          "yearOverYearRatio": null,
+          "exceeded": null
+        },
+        "official": false,
+        "estimated": false,
+        "officialSource": null,
+        "officialStatus": null,
+        "estimatedSource": null,
+        "estimatedStatus": null,
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": null
+          },
+          "estimated": {
+            "source": null,
+            "status": null
+          }
+        },
+        "status": "unavailable",
+        "available": false,
+        "unavailable": true,
+        "seriesType": "unavailable",
+        "jumpReason": null,
+        "validationReason": "invalid_l_or_b_baseline",
+        "reason": "invalid_l_or_b_baseline",
+        "validationIssues": []
+      },
+      {
+        "year": 1982,
+        "residual": null,
+        "previousYear": 1981,
+        "previousResidual": null,
+        "delta": null,
+        "absoluteDifference": null,
+        "threshold": 1.4,
+        "relativeChange": null,
+        "yearOverYearRatio": null,
+        "exceeded": null,
+        "source": {
+          "absoluteDifference": null,
+          "relativeChange": null,
+          "yearOverYearRatio": null,
+          "exceeded": null
+        },
+        "official": false,
+        "estimated": false,
+        "officialSource": null,
+        "officialStatus": null,
+        "estimatedSource": null,
+        "estimatedStatus": null,
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": null
+          },
+          "estimated": {
+            "source": null,
+            "status": null
+          }
+        },
+        "status": "unavailable",
+        "available": false,
+        "unavailable": true,
+        "seriesType": "unavailable",
+        "jumpReason": null,
+        "validationReason": "invalid_l_or_b_baseline",
+        "reason": "invalid_l_or_b_baseline",
+        "validationIssues": []
+      },
+      {
+        "year": 1983,
+        "residual": null,
+        "previousYear": 1982,
+        "previousResidual": null,
+        "delta": null,
+        "absoluteDifference": null,
+        "threshold": 1.4,
+        "relativeChange": null,
+        "yearOverYearRatio": null,
+        "exceeded": null,
+        "source": {
+          "absoluteDifference": null,
+          "relativeChange": null,
+          "yearOverYearRatio": null,
+          "exceeded": null
+        },
+        "official": false,
+        "estimated": false,
+        "officialSource": null,
+        "officialStatus": null,
+        "estimatedSource": null,
+        "estimatedStatus": null,
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": null
+          },
+          "estimated": {
+            "source": null,
+            "status": null
+          }
+        },
+        "status": "unavailable",
+        "available": false,
+        "unavailable": true,
+        "seriesType": "unavailable",
+        "jumpReason": null,
+        "validationReason": "invalid_l_or_b_baseline",
+        "reason": "invalid_l_or_b_baseline",
+        "validationIssues": []
+      },
+      {
+        "year": 1984,
+        "residual": null,
+        "previousYear": 1983,
+        "previousResidual": null,
+        "delta": null,
+        "absoluteDifference": null,
+        "threshold": 1.4,
+        "relativeChange": null,
+        "yearOverYearRatio": null,
+        "exceeded": null,
+        "source": {
+          "absoluteDifference": null,
+          "relativeChange": null,
+          "yearOverYearRatio": null,
+          "exceeded": null
+        },
+        "official": false,
+        "estimated": false,
+        "officialSource": null,
+        "officialStatus": null,
+        "estimatedSource": null,
+        "estimatedStatus": null,
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": null
+          },
+          "estimated": {
+            "source": null,
+            "status": null
+          }
+        },
+        "status": "unavailable",
+        "available": false,
+        "unavailable": true,
+        "seriesType": "unavailable",
+        "jumpReason": null,
+        "validationReason": "invalid_l_or_b_baseline",
+        "reason": "invalid_l_or_b_baseline",
+        "validationIssues": []
+      },
+      {
+        "year": 1985,
+        "residual": null,
+        "previousYear": 1984,
+        "previousResidual": null,
+        "delta": null,
+        "absoluteDifference": null,
+        "threshold": 1.4,
+        "relativeChange": null,
+        "yearOverYearRatio": null,
+        "exceeded": null,
+        "source": {
+          "absoluteDifference": null,
+          "relativeChange": null,
+          "yearOverYearRatio": null,
+          "exceeded": null
+        },
+        "official": false,
+        "estimated": false,
+        "officialSource": null,
+        "officialStatus": null,
+        "estimatedSource": null,
+        "estimatedStatus": null,
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": null
+          },
+          "estimated": {
+            "source": null,
+            "status": null
+          }
+        },
+        "status": "unavailable",
+        "available": false,
+        "unavailable": true,
+        "seriesType": "unavailable",
+        "jumpReason": null,
+        "validationReason": "invalid_l_or_b_baseline",
+        "reason": "invalid_l_or_b_baseline",
+        "validationIssues": []
+      },
+      {
+        "year": 1986,
+        "residual": null,
+        "previousYear": 1985,
+        "previousResidual": null,
+        "delta": null,
+        "absoluteDifference": null,
+        "threshold": 1.4,
+        "relativeChange": null,
+        "yearOverYearRatio": null,
+        "exceeded": null,
+        "source": {
+          "absoluteDifference": null,
+          "relativeChange": null,
+          "yearOverYearRatio": null,
+          "exceeded": null
+        },
+        "official": false,
+        "estimated": false,
+        "officialSource": null,
+        "officialStatus": null,
+        "estimatedSource": null,
+        "estimatedStatus": null,
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": null
+          },
+          "estimated": {
+            "source": null,
+            "status": null
+          }
+        },
+        "status": "unavailable",
+        "available": false,
+        "unavailable": true,
+        "seriesType": "unavailable",
+        "jumpReason": null,
+        "validationReason": "invalid_l_or_b_baseline",
+        "reason": "invalid_l_or_b_baseline",
+        "validationIssues": []
+      },
+      {
+        "year": 1987,
+        "residual": null,
+        "previousYear": 1986,
+        "previousResidual": null,
+        "delta": null,
+        "absoluteDifference": null,
+        "threshold": 1.4,
+        "relativeChange": null,
+        "yearOverYearRatio": null,
+        "exceeded": null,
+        "source": {
+          "absoluteDifference": null,
+          "relativeChange": null,
+          "yearOverYearRatio": null,
+          "exceeded": null
+        },
+        "official": false,
+        "estimated": false,
+        "officialSource": null,
+        "officialStatus": null,
+        "estimatedSource": null,
+        "estimatedStatus": null,
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": null
+          },
+          "estimated": {
+            "source": null,
+            "status": null
+          }
+        },
+        "status": "unavailable",
+        "available": false,
+        "unavailable": true,
+        "seriesType": "unavailable",
+        "jumpReason": null,
+        "validationReason": "invalid_l_or_b_baseline",
+        "reason": "invalid_l_or_b_baseline",
+        "validationIssues": []
+      },
+      {
+        "year": 1988,
+        "residual": null,
+        "previousYear": 1987,
+        "previousResidual": null,
+        "delta": null,
+        "absoluteDifference": null,
+        "threshold": 1.4,
+        "relativeChange": null,
+        "yearOverYearRatio": null,
+        "exceeded": null,
+        "source": {
+          "absoluteDifference": null,
+          "relativeChange": null,
+          "yearOverYearRatio": null,
+          "exceeded": null
+        },
+        "official": false,
+        "estimated": false,
+        "officialSource": null,
+        "officialStatus": null,
+        "estimatedSource": null,
+        "estimatedStatus": null,
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": null
+          },
+          "estimated": {
+            "source": null,
+            "status": null
+          }
+        },
+        "status": "unavailable",
+        "available": false,
+        "unavailable": true,
+        "seriesType": "unavailable",
+        "jumpReason": null,
+        "validationReason": "invalid_l_or_b_baseline",
+        "reason": "invalid_l_or_b_baseline",
+        "validationIssues": []
+      },
+      {
+        "year": 1989,
+        "residual": null,
+        "previousYear": 1988,
+        "previousResidual": null,
+        "delta": null,
+        "absoluteDifference": null,
+        "threshold": 1.4,
+        "relativeChange": null,
+        "yearOverYearRatio": null,
+        "exceeded": null,
+        "source": {
+          "absoluteDifference": null,
+          "relativeChange": null,
+          "yearOverYearRatio": null,
+          "exceeded": null
+        },
+        "official": false,
+        "estimated": false,
+        "officialSource": null,
+        "officialStatus": null,
+        "estimatedSource": null,
+        "estimatedStatus": null,
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": null
+          },
+          "estimated": {
+            "source": null,
+            "status": null
+          }
+        },
+        "status": "unavailable",
+        "available": false,
+        "unavailable": true,
+        "seriesType": "unavailable",
+        "jumpReason": null,
+        "validationReason": "invalid_l_or_b_baseline",
+        "reason": "invalid_l_or_b_baseline",
+        "validationIssues": []
+      },
+      {
+        "year": 1990,
+        "residual": null,
+        "previousYear": 1989,
+        "previousResidual": null,
+        "delta": null,
+        "absoluteDifference": null,
+        "threshold": 1.4,
+        "relativeChange": null,
+        "yearOverYearRatio": null,
+        "exceeded": null,
+        "source": {
+          "absoluteDifference": null,
+          "relativeChange": null,
+          "yearOverYearRatio": null,
+          "exceeded": null
+        },
+        "official": false,
+        "estimated": false,
+        "officialSource": null,
+        "officialStatus": null,
+        "estimatedSource": null,
+        "estimatedStatus": null,
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": null
+          },
+          "estimated": {
+            "source": null,
+            "status": null
+          }
+        },
+        "status": "unavailable",
+        "available": false,
+        "unavailable": true,
+        "seriesType": "unavailable",
+        "jumpReason": null,
+        "validationReason": "invalid_l_or_b_baseline",
+        "reason": "invalid_l_or_b_baseline",
+        "validationIssues": []
+      },
+      {
+        "year": 1991,
+        "residual": null,
+        "previousYear": 1990,
+        "previousResidual": null,
+        "delta": null,
+        "absoluteDifference": null,
+        "threshold": 1.4,
+        "relativeChange": null,
+        "yearOverYearRatio": null,
+        "exceeded": null,
+        "source": {
+          "absoluteDifference": null,
+          "relativeChange": null,
+          "yearOverYearRatio": null,
+          "exceeded": null
+        },
+        "official": false,
+        "estimated": false,
+        "officialSource": null,
+        "officialStatus": null,
+        "estimatedSource": null,
+        "estimatedStatus": null,
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": null
+          },
+          "estimated": {
+            "source": null,
+            "status": null
+          }
+        },
+        "status": "unavailable",
+        "available": false,
+        "unavailable": true,
+        "seriesType": "unavailable",
+        "jumpReason": null,
+        "validationReason": "invalid_l_or_b_baseline",
+        "reason": "invalid_l_or_b_baseline",
+        "validationIssues": []
+      },
+      {
+        "year": 1992,
+        "residual": null,
+        "previousYear": 1991,
+        "previousResidual": null,
+        "delta": null,
+        "absoluteDifference": null,
+        "threshold": 1.4,
+        "relativeChange": null,
+        "yearOverYearRatio": null,
+        "exceeded": null,
+        "source": {
+          "absoluteDifference": null,
+          "relativeChange": null,
+          "yearOverYearRatio": null,
+          "exceeded": null
+        },
+        "official": false,
+        "estimated": false,
+        "officialSource": null,
+        "officialStatus": null,
+        "estimatedSource": null,
+        "estimatedStatus": null,
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": null
+          },
+          "estimated": {
+            "source": null,
+            "status": null
+          }
+        },
+        "status": "unavailable",
+        "available": false,
+        "unavailable": true,
+        "seriesType": "unavailable",
+        "jumpReason": null,
+        "validationReason": "invalid_l_or_b_baseline",
+        "reason": "invalid_l_or_b_baseline",
+        "validationIssues": []
+      },
+      {
+        "year": 1993,
+        "residual": null,
+        "previousYear": 1992,
+        "previousResidual": null,
+        "delta": null,
+        "absoluteDifference": null,
+        "threshold": 1.4,
+        "relativeChange": null,
+        "yearOverYearRatio": null,
+        "exceeded": null,
+        "source": {
+          "absoluteDifference": null,
+          "relativeChange": null,
+          "yearOverYearRatio": null,
+          "exceeded": null
+        },
+        "official": false,
+        "estimated": false,
+        "officialSource": null,
+        "officialStatus": null,
+        "estimatedSource": null,
+        "estimatedStatus": null,
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": null
+          },
+          "estimated": {
+            "source": null,
+            "status": null
+          }
+        },
+        "status": "unavailable",
+        "available": false,
+        "unavailable": true,
+        "seriesType": "unavailable",
+        "jumpReason": null,
+        "validationReason": "invalid_l_or_b_baseline",
+        "reason": "invalid_l_or_b_baseline",
+        "validationIssues": []
+      },
+      {
+        "year": 1994,
+        "residual": null,
+        "previousYear": 1993,
+        "previousResidual": null,
+        "delta": null,
+        "absoluteDifference": null,
+        "threshold": 1.4,
+        "relativeChange": null,
+        "yearOverYearRatio": null,
+        "exceeded": null,
+        "source": {
+          "absoluteDifference": null,
+          "relativeChange": null,
+          "yearOverYearRatio": null,
+          "exceeded": null
+        },
+        "official": false,
+        "estimated": false,
+        "officialSource": null,
+        "officialStatus": null,
+        "estimatedSource": null,
+        "estimatedStatus": null,
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": null
+          },
+          "estimated": {
+            "source": null,
+            "status": null
+          }
+        },
+        "status": "unavailable",
+        "available": false,
+        "unavailable": true,
+        "seriesType": "unavailable",
+        "jumpReason": null,
+        "validationReason": "invalid_l_or_b_baseline",
+        "reason": "invalid_l_or_b_baseline",
+        "validationIssues": []
+      },
+      {
+        "year": 1995,
+        "residual": null,
+        "previousYear": 1994,
+        "previousResidual": null,
+        "delta": null,
+        "absoluteDifference": null,
+        "threshold": 1.4,
+        "relativeChange": null,
+        "yearOverYearRatio": null,
+        "exceeded": null,
+        "source": {
+          "absoluteDifference": null,
+          "relativeChange": null,
+          "yearOverYearRatio": null,
+          "exceeded": null
+        },
+        "official": false,
+        "estimated": false,
+        "officialSource": null,
+        "officialStatus": null,
+        "estimatedSource": null,
+        "estimatedStatus": null,
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": null
+          },
+          "estimated": {
+            "source": null,
+            "status": null
+          }
+        },
+        "status": "unavailable",
+        "available": false,
+        "unavailable": true,
+        "seriesType": "unavailable",
+        "jumpReason": null,
+        "validationReason": "invalid_l_or_b_baseline",
+        "reason": "invalid_l_or_b_baseline",
+        "validationIssues": []
+      },
+      {
+        "year": 1996,
+        "residual": null,
+        "previousYear": 1995,
+        "previousResidual": null,
+        "delta": null,
+        "absoluteDifference": null,
+        "threshold": 1.4,
+        "relativeChange": null,
+        "yearOverYearRatio": null,
+        "exceeded": null,
+        "source": {
+          "absoluteDifference": null,
+          "relativeChange": null,
+          "yearOverYearRatio": null,
+          "exceeded": null
+        },
+        "official": false,
+        "estimated": false,
+        "officialSource": null,
+        "officialStatus": null,
+        "estimatedSource": null,
+        "estimatedStatus": null,
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": null
+          },
+          "estimated": {
+            "source": null,
+            "status": null
+          }
+        },
+        "status": "unavailable",
+        "available": false,
+        "unavailable": true,
+        "seriesType": "unavailable",
+        "jumpReason": null,
+        "validationReason": "invalid_l_or_b_baseline",
+        "reason": "invalid_l_or_b_baseline",
+        "validationIssues": []
+      },
+      {
+        "year": 1997,
+        "residual": null,
+        "previousYear": 1996,
+        "previousResidual": null,
+        "delta": null,
+        "absoluteDifference": null,
+        "threshold": 1.4,
+        "relativeChange": null,
+        "yearOverYearRatio": null,
+        "exceeded": null,
+        "source": {
+          "absoluteDifference": null,
+          "relativeChange": null,
+          "yearOverYearRatio": null,
+          "exceeded": null
+        },
+        "official": false,
+        "estimated": false,
+        "officialSource": null,
+        "officialStatus": null,
+        "estimatedSource": null,
+        "estimatedStatus": null,
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": null
+          },
+          "estimated": {
+            "source": null,
+            "status": null
+          }
+        },
+        "status": "unavailable",
+        "available": false,
+        "unavailable": true,
+        "seriesType": "unavailable",
+        "jumpReason": null,
+        "validationReason": "invalid_l_or_b_baseline",
+        "reason": "invalid_l_or_b_baseline",
+        "validationIssues": []
+      },
+      {
+        "year": 1998,
+        "residual": null,
+        "previousYear": 1997,
+        "previousResidual": null,
+        "delta": null,
+        "absoluteDifference": null,
+        "threshold": 1.4,
+        "relativeChange": null,
+        "yearOverYearRatio": null,
+        "exceeded": null,
+        "source": {
+          "absoluteDifference": null,
+          "relativeChange": null,
+          "yearOverYearRatio": null,
+          "exceeded": null
+        },
+        "official": false,
+        "estimated": false,
+        "officialSource": null,
+        "officialStatus": null,
+        "estimatedSource": null,
+        "estimatedStatus": null,
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": null
+          },
+          "estimated": {
+            "source": null,
+            "status": null
+          }
+        },
+        "status": "unavailable",
+        "available": false,
+        "unavailable": true,
+        "seriesType": "unavailable",
+        "jumpReason": null,
+        "validationReason": "invalid_l_or_b_baseline",
+        "reason": "invalid_l_or_b_baseline",
+        "validationIssues": []
+      },
+      {
+        "year": 1999,
+        "residual": null,
+        "previousYear": 1998,
+        "previousResidual": null,
+        "delta": null,
+        "absoluteDifference": null,
+        "threshold": 1.4,
+        "relativeChange": null,
+        "yearOverYearRatio": null,
+        "exceeded": null,
+        "source": {
+          "absoluteDifference": null,
+          "relativeChange": null,
+          "yearOverYearRatio": null,
+          "exceeded": null
+        },
+        "official": false,
+        "estimated": false,
+        "officialSource": null,
+        "officialStatus": null,
+        "estimatedSource": null,
+        "estimatedStatus": null,
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": null
+          },
+          "estimated": {
+            "source": null,
+            "status": null
+          }
+        },
+        "status": "unavailable",
+        "available": false,
+        "unavailable": true,
+        "seriesType": "unavailable",
+        "jumpReason": null,
+        "validationReason": "invalid_l_or_b_baseline",
+        "reason": "invalid_l_or_b_baseline",
+        "validationIssues": []
+      },
+      {
+        "year": 2000,
+        "residual": null,
+        "previousYear": 1999,
+        "previousResidual": null,
+        "delta": null,
+        "absoluteDifference": null,
+        "threshold": 1.4,
+        "relativeChange": null,
+        "yearOverYearRatio": null,
+        "exceeded": null,
+        "source": {
+          "absoluteDifference": null,
+          "relativeChange": null,
+          "yearOverYearRatio": null,
+          "exceeded": null
+        },
+        "official": false,
+        "estimated": false,
+        "officialSource": null,
+        "officialStatus": null,
+        "estimatedSource": null,
+        "estimatedStatus": null,
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": null
+          },
+          "estimated": {
+            "source": null,
+            "status": null
+          }
+        },
+        "status": "unavailable",
+        "available": false,
+        "unavailable": true,
+        "seriesType": "unavailable",
+        "jumpReason": null,
+        "validationReason": "invalid_l_or_b_baseline",
+        "reason": "invalid_l_or_b_baseline",
+        "validationIssues": []
+      },
+      {
+        "year": 2001,
+        "residual": null,
+        "previousYear": 2000,
+        "previousResidual": null,
+        "delta": null,
+        "absoluteDifference": null,
+        "threshold": 1.4,
+        "relativeChange": null,
+        "yearOverYearRatio": null,
+        "exceeded": null,
+        "source": {
+          "absoluteDifference": null,
+          "relativeChange": null,
+          "yearOverYearRatio": null,
+          "exceeded": null
+        },
+        "official": false,
+        "estimated": false,
+        "officialSource": null,
+        "officialStatus": null,
+        "estimatedSource": null,
+        "estimatedStatus": null,
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": null
+          },
+          "estimated": {
+            "source": null,
+            "status": null
+          }
+        },
+        "status": "unavailable",
+        "available": false,
+        "unavailable": true,
+        "seriesType": "unavailable",
+        "jumpReason": null,
+        "validationReason": "invalid_l_or_b_baseline",
+        "reason": "invalid_l_or_b_baseline",
+        "validationIssues": []
+      },
+      {
+        "year": 2002,
+        "residual": null,
+        "previousYear": 2001,
+        "previousResidual": null,
+        "delta": null,
+        "absoluteDifference": null,
+        "threshold": 1.4,
+        "relativeChange": null,
+        "yearOverYearRatio": null,
+        "exceeded": null,
+        "source": {
+          "absoluteDifference": null,
+          "relativeChange": null,
+          "yearOverYearRatio": null,
+          "exceeded": null
+        },
+        "official": false,
+        "estimated": false,
+        "officialSource": null,
+        "officialStatus": null,
+        "estimatedSource": null,
+        "estimatedStatus": null,
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": null
+          },
+          "estimated": {
+            "source": null,
+            "status": null
+          }
+        },
+        "status": "unavailable",
+        "available": false,
+        "unavailable": true,
+        "seriesType": "unavailable",
+        "jumpReason": null,
+        "validationReason": "unavailable",
+        "reason": "unavailable",
+        "validationIssues": []
+      },
+      {
+        "year": 2003,
+        "residual": null,
+        "previousYear": 2002,
+        "previousResidual": null,
+        "delta": null,
+        "absoluteDifference": null,
+        "threshold": 1.4,
+        "relativeChange": null,
+        "yearOverYearRatio": null,
+        "exceeded": null,
+        "source": {
+          "absoluteDifference": null,
+          "relativeChange": null,
+          "yearOverYearRatio": null,
+          "exceeded": null
+        },
+        "official": false,
+        "estimated": false,
+        "officialSource": null,
+        "officialStatus": null,
+        "estimatedSource": null,
+        "estimatedStatus": null,
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": null
+          },
+          "estimated": {
+            "source": null,
+            "status": null
+          }
+        },
+        "status": "unavailable",
+        "available": false,
+        "unavailable": true,
+        "seriesType": "unavailable",
+        "jumpReason": null,
+        "validationReason": "unavailable",
+        "reason": "unavailable",
+        "validationIssues": []
+      },
+      {
+        "year": 2004,
+        "residual": null,
+        "previousYear": 2003,
+        "previousResidual": null,
+        "delta": null,
+        "absoluteDifference": null,
+        "threshold": 1.4,
+        "relativeChange": null,
+        "yearOverYearRatio": null,
+        "exceeded": null,
+        "source": {
+          "absoluteDifference": null,
+          "relativeChange": null,
+          "yearOverYearRatio": null,
+          "exceeded": null
+        },
+        "official": false,
+        "estimated": false,
+        "officialSource": null,
+        "officialStatus": null,
+        "estimatedSource": null,
+        "estimatedStatus": null,
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": null
+          },
+          "estimated": {
+            "source": null,
+            "status": null
+          }
+        },
+        "status": "unavailable",
+        "available": false,
+        "unavailable": true,
+        "seriesType": "unavailable",
+        "jumpReason": null,
+        "validationReason": "unavailable",
+        "reason": "unavailable",
+        "validationIssues": []
+      },
+      {
+        "year": 2005,
+        "residual": 5.998914565291614,
+        "previousYear": 2004,
+        "previousResidual": null,
+        "delta": null,
+        "absoluteDifference": null,
+        "threshold": 1.4,
+        "relativeChange": null,
+        "yearOverYearRatio": null,
+        "exceeded": null,
+        "source": {
+          "absoluteDifference": null,
+          "relativeChange": null,
+          "yearOverYearRatio": null,
+          "exceeded": null
+        },
+        "official": false,
+        "estimated": true,
+        "officialSource": null,
+        "officialStatus": null,
+        "estimatedSource": null,
+        "estimatedStatus": "available",
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": null
+          },
+          "estimated": {
+            "source": null,
+            "status": "available"
+          }
+        },
+        "status": "available",
+        "available": true,
+        "unavailable": false,
+        "seriesType": "estimated_adjusted",
+        "jumpReason": null,
+        "validationReason": null,
+        "reason": null,
+        "validationIssues": []
+      },
+      {
+        "year": 2006,
+        "residual": 7.180192440490771,
+        "previousYear": 2005,
+        "previousResidual": 5.998914565291614,
+        "delta": 1.1812778751991573,
+        "absoluteDifference": 1.1812778751991573,
+        "threshold": 1.4,
+        "relativeChange": 0.19691526897778616,
+        "yearOverYearRatio": 1.1969152689777862,
+        "exceeded": false,
+        "source": {
+          "absoluteDifference": 1.1812778751991573,
+          "relativeChange": 0.19691526897778616,
+          "yearOverYearRatio": 1.1969152689777862,
+          "exceeded": false
+        },
+        "official": false,
+        "estimated": true,
+        "officialSource": null,
+        "officialStatus": null,
+        "estimatedSource": null,
+        "estimatedStatus": "available",
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": null
+          },
+          "estimated": {
+            "source": null,
+            "status": "available"
+          }
+        },
+        "status": "available",
+        "available": true,
+        "unavailable": false,
+        "seriesType": "estimated_adjusted",
+        "jumpReason": null,
+        "validationReason": null,
+        "reason": null,
+        "validationIssues": []
+      },
+      {
+        "year": 2007,
+        "residual": 7.188979274029194,
+        "previousYear": 2006,
+        "previousResidual": 7.180192440490771,
+        "delta": 0.008786833538422911,
+        "absoluteDifference": 0.008786833538422911,
+        "threshold": 1.4,
+        "relativeChange": 0.0012237601723418885,
+        "yearOverYearRatio": 1.001223760172342,
+        "exceeded": false,
+        "source": {
+          "absoluteDifference": 0.008786833538422911,
+          "relativeChange": 0.0012237601723418885,
+          "yearOverYearRatio": 1.001223760172342,
+          "exceeded": false
+        },
+        "official": false,
+        "estimated": true,
+        "officialSource": null,
+        "officialStatus": null,
+        "estimatedSource": null,
+        "estimatedStatus": "available",
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": null
+          },
+          "estimated": {
+            "source": null,
+            "status": "available"
+          }
+        },
+        "status": "available",
+        "available": true,
+        "unavailable": false,
+        "seriesType": "estimated_adjusted",
+        "jumpReason": null,
+        "validationReason": null,
+        "reason": null,
+        "validationIssues": []
+      },
+      {
+        "year": 2008,
+        "residual": 8.4328705448345,
+        "previousYear": 2007,
+        "previousResidual": 7.188979274029194,
+        "delta": 1.2438912708053067,
+        "absoluteDifference": 1.2438912708053067,
+        "threshold": 1.4,
+        "relativeChange": 0.17302752218231746,
+        "yearOverYearRatio": 1.1730275221823174,
+        "exceeded": false,
+        "source": {
+          "absoluteDifference": 1.2438912708053067,
+          "relativeChange": 0.17302752218231746,
+          "yearOverYearRatio": 1.1730275221823174,
+          "exceeded": false
+        },
+        "official": false,
+        "estimated": true,
+        "officialSource": null,
+        "officialStatus": null,
+        "estimatedSource": null,
+        "estimatedStatus": "available",
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": null
+          },
+          "estimated": {
+            "source": null,
+            "status": "available"
+          }
+        },
+        "status": "available",
+        "available": true,
+        "unavailable": false,
+        "seriesType": "estimated_adjusted",
+        "jumpReason": null,
+        "validationReason": null,
+        "reason": null,
+        "validationIssues": []
+      },
+      {
+        "year": 2009,
+        "residual": 9.109638854114678,
+        "previousYear": 2008,
+        "previousResidual": 8.4328705448345,
+        "delta": 0.6767683092801775,
+        "absoluteDifference": 0.6767683092801775,
+        "threshold": 1.4,
+        "relativeChange": 0.08025361063970411,
+        "yearOverYearRatio": 1.080253610639704,
+        "exceeded": false,
+        "source": {
+          "absoluteDifference": 0.6767683092801775,
+          "relativeChange": 0.08025361063970411,
+          "yearOverYearRatio": 1.080253610639704,
+          "exceeded": false
+        },
+        "official": false,
+        "estimated": true,
+        "officialSource": null,
+        "officialStatus": null,
+        "estimatedSource": null,
+        "estimatedStatus": "available",
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": null
+          },
+          "estimated": {
+            "source": null,
+            "status": "available"
+          }
+        },
+        "status": "available",
+        "available": true,
+        "unavailable": false,
+        "seriesType": "estimated_adjusted",
+        "jumpReason": null,
+        "validationReason": null,
+        "reason": null,
+        "validationIssues": []
+      },
+      {
+        "year": 2010,
+        "residual": 8.525911169853188,
+        "previousYear": 2009,
+        "previousResidual": 9.109638854114678,
+        "delta": -0.5837276842614898,
+        "absoluteDifference": 0.5837276842614898,
+        "threshold": 1.4,
+        "relativeChange": -0.06407802697884443,
+        "yearOverYearRatio": 0.9359219730211555,
+        "exceeded": false,
+        "source": {
+          "absoluteDifference": 0.5837276842614898,
+          "relativeChange": -0.06407802697884443,
+          "yearOverYearRatio": 0.9359219730211555,
+          "exceeded": false
+        },
+        "official": false,
+        "estimated": true,
+        "officialSource": null,
+        "officialStatus": null,
+        "estimatedSource": null,
+        "estimatedStatus": "available",
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": null
+          },
+          "estimated": {
+            "source": null,
+            "status": "available"
+          }
+        },
+        "status": "available",
+        "available": true,
+        "unavailable": false,
+        "seriesType": "estimated_adjusted",
+        "jumpReason": null,
+        "validationReason": null,
+        "reason": null,
+        "validationIssues": []
+      },
+      {
+        "year": 2011,
+        "residual": 10.465712587816242,
+        "previousYear": 2010,
+        "previousResidual": 8.525911169853188,
+        "delta": 1.9398014179630536,
+        "absoluteDifference": 1.9398014179630536,
+        "threshold": 1.4,
+        "relativeChange": 0.2275183706841806,
+        "yearOverYearRatio": 1.2275183706841806,
+        "exceeded": true,
+        "source": {
+          "absoluteDifference": 1.9398014179630536,
+          "relativeChange": 0.2275183706841806,
+          "yearOverYearRatio": 1.2275183706841806,
+          "exceeded": true
+        },
+        "official": false,
+        "estimated": false,
+        "officialSource": null,
+        "officialStatus": null,
+        "estimatedSource": null,
+        "estimatedStatus": null,
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": null
+          },
+          "estimated": {
+            "source": null,
+            "status": null
+          }
+        },
+        "status": "unavailable",
+        "available": false,
+        "unavailable": true,
+        "seriesType": "unavailable",
+        "jumpReason": "residual_jump_threshold_exceeded",
+        "validationReason": "residual_jump_threshold_exceeded",
+        "reason": "residual_jump_threshold_exceeded",
+        "validationIssues": [
+          {
+            "field": "value",
+            "row": null,
+            "validation": null,
+            "jump": 10.465712587816242
+          }
+        ]
+      },
+      {
+        "year": 2012,
+        "residual": 9.833964087126958,
+        "previousYear": 2011,
+        "previousResidual": 10.465712587816242,
+        "delta": -0.6317485006892838,
+        "absoluteDifference": 0.6317485006892838,
+        "threshold": 1.4,
+        "relativeChange": -0.06036363939754468,
+        "yearOverYearRatio": 0.9396363606024554,
+        "exceeded": false,
+        "source": {
+          "absoluteDifference": 0.6317485006892838,
+          "relativeChange": -0.06036363939754468,
+          "yearOverYearRatio": 0.9396363606024554,
+          "exceeded": false
+        },
+        "official": false,
+        "estimated": true,
+        "officialSource": null,
+        "officialStatus": null,
+        "estimatedSource": null,
+        "estimatedStatus": "available",
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": null
+          },
+          "estimated": {
+            "source": null,
+            "status": "available"
+          }
+        },
+        "status": "available",
+        "available": true,
+        "unavailable": false,
+        "seriesType": "estimated_adjusted",
+        "jumpReason": null,
+        "validationReason": null,
+        "reason": null,
+        "validationIssues": []
+      },
+      {
+        "year": 2013,
+        "residual": 8.032321713747507,
+        "previousYear": 2012,
+        "previousResidual": 9.833964087126958,
+        "delta": -1.801642373379451,
+        "absoluteDifference": 1.801642373379451,
+        "threshold": 1.4,
+        "relativeChange": -0.18320611682300844,
+        "yearOverYearRatio": 0.8167938831769915,
+        "exceeded": true,
+        "source": {
+          "absoluteDifference": 1.801642373379451,
+          "relativeChange": -0.18320611682300844,
+          "yearOverYearRatio": 0.8167938831769915,
+          "exceeded": true
+        },
+        "official": false,
+        "estimated": false,
+        "officialSource": null,
+        "officialStatus": null,
+        "estimatedSource": null,
+        "estimatedStatus": null,
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": null
+          },
+          "estimated": {
+            "source": null,
+            "status": null
+          }
+        },
+        "status": "unavailable",
+        "available": false,
+        "unavailable": true,
+        "seriesType": "unavailable",
+        "jumpReason": "residual_jump_threshold_exceeded",
+        "validationReason": "residual_jump_threshold_exceeded",
+        "reason": "residual_jump_threshold_exceeded",
+        "validationIssues": [
+          {
+            "field": "value",
+            "row": null,
+            "validation": null,
+            "jump": 8.032321713747507
+          }
+        ]
+      },
+      {
+        "year": 2014,
+        "residual": 10.691755169979729,
+        "previousYear": 2013,
+        "previousResidual": 8.032321713747507,
+        "delta": 2.6594334562322217,
+        "absoluteDifference": 2.6594334562322217,
+        "threshold": 1.4,
+        "relativeChange": 0.3310915014373166,
+        "yearOverYearRatio": 1.3310915014373166,
+        "exceeded": true,
+        "source": {
+          "absoluteDifference": 2.6594334562322217,
+          "relativeChange": 0.3310915014373166,
+          "yearOverYearRatio": 1.3310915014373166,
+          "exceeded": true
+        },
+        "official": false,
+        "estimated": false,
+        "officialSource": null,
+        "officialStatus": null,
+        "estimatedSource": null,
+        "estimatedStatus": null,
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": null
+          },
+          "estimated": {
+            "source": null,
+            "status": null
+          }
+        },
+        "status": "unavailable",
+        "available": false,
+        "unavailable": true,
+        "seriesType": "unavailable",
+        "jumpReason": "residual_jump_threshold_exceeded",
+        "validationReason": "residual_jump_threshold_exceeded",
+        "reason": "residual_jump_threshold_exceeded",
+        "validationIssues": [
+          {
+            "field": "value",
+            "row": null,
+            "validation": null,
+            "jump": 10.691755169979729
+          }
+        ]
+      },
+      {
+        "year": 2015,
+        "residual": 14.321020194614462,
+        "previousYear": 2014,
+        "previousResidual": 10.691755169979729,
+        "delta": 3.6292650246347335,
+        "absoluteDifference": 3.6292650246347335,
+        "threshold": 1.4,
+        "relativeChange": 0.3394452049206075,
+        "yearOverYearRatio": 1.3394452049206076,
+        "exceeded": true,
+        "source": {
+          "absoluteDifference": 3.6292650246347335,
+          "relativeChange": 0.3394452049206075,
+          "yearOverYearRatio": 1.3394452049206076,
+          "exceeded": true
+        },
+        "official": false,
+        "estimated": false,
+        "officialSource": null,
+        "officialStatus": null,
+        "estimatedSource": null,
+        "estimatedStatus": null,
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": null
+          },
+          "estimated": {
+            "source": null,
+            "status": null
+          }
+        },
+        "status": "unavailable",
+        "available": false,
+        "unavailable": true,
+        "seriesType": "unavailable",
+        "jumpReason": "residual_jump_threshold_exceeded",
+        "validationReason": "residual_jump_threshold_exceeded",
+        "reason": "residual_jump_threshold_exceeded",
+        "validationIssues": [
+          {
+            "field": "value",
+            "row": null,
+            "validation": null,
+            "jump": 14.321020194614462
+          }
+        ]
+      },
+      {
+        "year": 2016,
+        "residual": 16.58779956332876,
+        "previousYear": 2015,
+        "previousResidual": 14.321020194614462,
+        "delta": 2.266779368714296,
+        "absoluteDifference": 2.266779368714296,
+        "threshold": 1.4,
+        "relativeChange": 0.15828337212782767,
+        "yearOverYearRatio": 1.1582833721278276,
+        "exceeded": true,
+        "source": {
+          "absoluteDifference": 2.266779368714296,
+          "relativeChange": 0.15828337212782767,
+          "yearOverYearRatio": 1.1582833721278276,
+          "exceeded": true
+        },
+        "official": false,
+        "estimated": false,
+        "officialSource": null,
+        "officialStatus": null,
+        "estimatedSource": null,
+        "estimatedStatus": null,
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": null
+          },
+          "estimated": {
+            "source": null,
+            "status": null
+          }
+        },
+        "status": "unavailable",
+        "available": false,
+        "unavailable": true,
+        "seriesType": "unavailable",
+        "jumpReason": "residual_jump_threshold_exceeded",
+        "validationReason": "residual_jump_threshold_exceeded",
+        "reason": "residual_jump_threshold_exceeded",
+        "validationIssues": [
+          {
+            "field": "value",
+            "row": null,
+            "validation": null,
+            "jump": 16.58779956332876
+          }
+        ]
+      },
+      {
+        "year": 2017,
+        "residual": 17.299999999999997,
+        "previousYear": 2016,
+        "previousResidual": 16.58779956332876,
+        "delta": 0.7122004366712389,
+        "absoluteDifference": 0.7122004366712389,
+        "threshold": 1.4,
+        "relativeChange": 0.042935196675858434,
+        "yearOverYearRatio": 1.0429351966758584,
+        "exceeded": false,
+        "source": {
+          "absoluteDifference": 0.7122004366712389,
+          "relativeChange": 0.042935196675858434,
+          "yearOverYearRatio": 1.0429351966758584,
+          "exceeded": false
+        },
+        "official": true,
+        "estimated": false,
+        "officialSource": null,
+        "officialStatus": "available",
+        "estimatedSource": null,
+        "estimatedStatus": null,
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": "available"
+          },
+          "estimated": {
+            "source": null,
+            "status": null
+          }
+        },
+        "status": "available",
+        "available": true,
+        "unavailable": false,
+        "seriesType": "official_adjusted",
+        "jumpReason": null,
+        "validationReason": "derived_from_total_minus_major_categories",
+        "reason": "derived_from_total_minus_major_categories",
+        "validationIssues": []
+      },
+      {
+        "year": 2018,
+        "residual": 16.999999999999986,
+        "previousYear": 2017,
+        "previousResidual": 17.299999999999997,
+        "delta": -0.30000000000001137,
+        "absoluteDifference": 0.30000000000001137,
+        "threshold": 1.4,
+        "relativeChange": -0.017341040462428407,
+        "yearOverYearRatio": 0.9826589595375715,
+        "exceeded": false,
+        "source": {
+          "absoluteDifference": 0.30000000000001137,
+          "relativeChange": -0.017341040462428407,
+          "yearOverYearRatio": 0.9826589595375715,
+          "exceeded": false
+        },
+        "official": true,
+        "estimated": false,
+        "officialSource": null,
+        "officialStatus": "available",
+        "estimatedSource": null,
+        "estimatedStatus": null,
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": "available"
+          },
+          "estimated": {
+            "source": null,
+            "status": null
+          }
+        },
+        "status": "available",
+        "available": true,
+        "unavailable": false,
+        "seriesType": "official_adjusted",
+        "jumpReason": null,
+        "validationReason": "derived_from_total_minus_major_categories",
+        "reason": "derived_from_total_minus_major_categories",
+        "validationIssues": []
+      },
+      {
+        "year": 2019,
+        "residual": 17.09999999999998,
+        "previousYear": 2018,
+        "previousResidual": 16.999999999999986,
+        "delta": 0.09999999999999432,
+        "absoluteDifference": 0.09999999999999432,
+        "threshold": 1.4,
+        "relativeChange": 0.005882352941176141,
+        "yearOverYearRatio": 1.0058823529411762,
+        "exceeded": false,
+        "source": {
+          "absoluteDifference": 0.09999999999999432,
+          "relativeChange": 0.005882352941176141,
+          "yearOverYearRatio": 1.0058823529411762,
+          "exceeded": false
+        },
+        "official": true,
+        "estimated": false,
+        "officialSource": null,
+        "officialStatus": "available",
+        "estimatedSource": null,
+        "estimatedStatus": null,
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": "available"
+          },
+          "estimated": {
+            "source": null,
+            "status": null
+          }
+        },
+        "status": "available",
+        "available": true,
+        "unavailable": false,
+        "seriesType": "official_adjusted",
+        "jumpReason": null,
+        "validationReason": "derived_from_total_minus_major_categories",
+        "reason": "derived_from_total_minus_major_categories",
+        "validationIssues": []
+      },
+      {
+        "year": 2020,
+        "residual": 15.700000000000003,
+        "previousYear": 2019,
+        "previousResidual": 17.09999999999998,
+        "delta": -1.3999999999999773,
+        "absoluteDifference": 1.3999999999999773,
+        "threshold": 1.4,
+        "relativeChange": -0.08187134502923853,
+        "yearOverYearRatio": 0.9181286549707615,
+        "exceeded": false,
+        "source": {
+          "absoluteDifference": 1.3999999999999773,
+          "relativeChange": -0.08187134502923853,
+          "yearOverYearRatio": 0.9181286549707615,
+          "exceeded": false
+        },
+        "official": true,
+        "estimated": false,
+        "officialSource": null,
+        "officialStatus": "available",
+        "estimatedSource": null,
+        "estimatedStatus": null,
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": "available"
+          },
+          "estimated": {
+            "source": null,
+            "status": null
+          }
+        },
+        "status": "available",
+        "available": true,
+        "unavailable": false,
+        "seriesType": "official_adjusted",
+        "jumpReason": null,
+        "validationReason": "derived_from_total_minus_major_categories",
+        "reason": "derived_from_total_minus_major_categories",
+        "validationIssues": []
+      },
+      {
+        "year": 2021,
+        "residual": 15.999999999999986,
+        "previousYear": 2020,
+        "previousResidual": 15.700000000000003,
+        "delta": 0.29999999999998295,
+        "absoluteDifference": 0.29999999999998295,
+        "threshold": 1.4,
+        "relativeChange": 0.01910828025477598,
+        "yearOverYearRatio": 1.019108280254776,
+        "exceeded": false,
+        "source": {
+          "absoluteDifference": 0.29999999999998295,
+          "relativeChange": 0.01910828025477598,
+          "yearOverYearRatio": 1.019108280254776,
+          "exceeded": false
+        },
+        "official": true,
+        "estimated": false,
+        "officialSource": null,
+        "officialStatus": "available",
+        "estimatedSource": null,
+        "estimatedStatus": null,
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": "available"
+          },
+          "estimated": {
+            "source": null,
+            "status": null
+          }
+        },
+        "status": "available",
+        "available": true,
+        "unavailable": false,
+        "seriesType": "official_adjusted",
+        "jumpReason": null,
+        "validationReason": "derived_from_total_minus_major_categories",
+        "reason": "derived_from_total_minus_major_categories",
+        "validationIssues": []
+      },
+      {
+        "year": 2022,
+        "residual": 15.5,
+        "previousYear": 2021,
+        "previousResidual": 15.999999999999986,
+        "delta": -0.4999999999999858,
+        "absoluteDifference": 0.4999999999999858,
+        "threshold": 1.4,
+        "relativeChange": -0.03124999999999914,
+        "yearOverYearRatio": 0.9687500000000009,
+        "exceeded": false,
+        "source": {
+          "absoluteDifference": 0.4999999999999858,
+          "relativeChange": -0.03124999999999914,
+          "yearOverYearRatio": 0.9687500000000009,
+          "exceeded": false
+        },
+        "official": true,
+        "estimated": false,
+        "officialSource": null,
+        "officialStatus": "available",
+        "estimatedSource": null,
+        "estimatedStatus": null,
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": "available"
+          },
+          "estimated": {
+            "source": null,
+            "status": null
+          }
+        },
+        "status": "available",
+        "available": true,
+        "unavailable": false,
+        "seriesType": "official_adjusted",
+        "jumpReason": null,
+        "validationReason": "derived_from_total_minus_major_categories",
+        "reason": "derived_from_total_minus_major_categories",
+        "validationIssues": []
+      },
+      {
+        "year": 2023,
+        "residual": 14.600000000000009,
+        "previousYear": 2022,
+        "previousResidual": 15.5,
+        "delta": -0.8999999999999915,
+        "absoluteDifference": 0.8999999999999915,
+        "threshold": 1.4,
+        "relativeChange": -0.058064516129031706,
+        "yearOverYearRatio": 0.9419354838709683,
+        "exceeded": false,
+        "source": {
+          "absoluteDifference": 0.8999999999999915,
+          "relativeChange": -0.058064516129031706,
+          "yearOverYearRatio": 0.9419354838709683,
+          "exceeded": false
+        },
+        "official": true,
+        "estimated": false,
+        "officialSource": null,
+        "officialStatus": "available",
+        "estimatedSource": null,
+        "estimatedStatus": null,
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": "available"
+          },
+          "estimated": {
+            "source": null,
+            "status": null
+          }
+        },
+        "status": "available",
+        "available": true,
+        "unavailable": false,
+        "seriesType": "official_adjusted",
+        "jumpReason": null,
+        "validationReason": "derived_from_total_minus_major_categories",
+        "reason": "derived_from_total_minus_major_categories",
+        "validationIssues": []
+      },
+      {
+        "year": 2024,
+        "residual": 14.799999999999997,
+        "previousYear": 2023,
+        "previousResidual": 14.600000000000009,
+        "delta": 0.19999999999998863,
+        "absoluteDifference": 0.19999999999998863,
+        "threshold": 1.4,
+        "relativeChange": 0.013698630136985515,
+        "yearOverYearRatio": 1.0136986301369855,
+        "exceeded": false,
+        "source": {
+          "absoluteDifference": 0.19999999999998863,
+          "relativeChange": 0.013698630136985515,
+          "yearOverYearRatio": 1.0136986301369855,
+          "exceeded": false
+        },
+        "official": true,
+        "estimated": false,
+        "officialSource": null,
+        "officialStatus": "available",
+        "estimatedSource": null,
+        "estimatedStatus": null,
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": "available"
+          },
+          "estimated": {
+            "source": null,
+            "status": null
+          }
+        },
+        "status": "available",
+        "available": true,
+        "unavailable": false,
+        "seriesType": "official_adjusted",
+        "jumpReason": null,
+        "validationReason": "derived_from_total_minus_major_categories",
+        "reason": "derived_from_total_minus_major_categories",
+        "validationIssues": []
+      },
+      {
+        "year": 2025,
+        "residual": 14.299999999999997,
+        "previousYear": 2024,
+        "previousResidual": 14.799999999999997,
+        "delta": -0.5,
+        "absoluteDifference": 0.5,
+        "threshold": 1.4,
+        "relativeChange": -0.03378378378378379,
+        "yearOverYearRatio": 0.9662162162162162,
+        "exceeded": false,
+        "source": {
+          "absoluteDifference": 0.5,
+          "relativeChange": -0.03378378378378379,
+          "yearOverYearRatio": 0.9662162162162162,
+          "exceeded": false
+        },
+        "official": true,
+        "estimated": false,
+        "officialSource": null,
+        "officialStatus": "available",
+        "estimatedSource": null,
+        "estimatedStatus": null,
+        "provenance": {
+          "official": {
+            "source": null,
+            "status": "available"
+          },
+          "estimated": {
+            "source": null,
+            "status": null
+          }
+        },
+        "status": "available",
+        "available": true,
+        "unavailable": false,
+        "seriesType": "official_adjusted",
+        "jumpReason": null,
+        "validationReason": "derived_from_total_minus_major_categories",
+        "reason": "derived_from_total_minus_major_categories",
+        "validationIssues": []
+      }
+    ]
+  },
+  "sanitizedResponse": {
+    "model": "jev-1.13.0",
+    "answers": [
+      {
+        "questionId": "residual-naturalness-2006",
+        "choice": "likely_break_or_artifact",
+        "probabilities": {
+          "likely_break_or_artifact": 0.48,
+          "indeterminate": 0.34,
+          "natural_cpi_jump": 0.18
+        },
+        "confidence": 0.21
+      },
+      {
+        "questionId": "residual-naturalness-2007",
+        "choice": "natural_cpi_jump",
+        "probabilities": {
+          "likely_break_or_artifact": 0,
+          "indeterminate": 0.02,
+          "natural_cpi_jump": 0.98
+        },
+        "confidence": 0.97
+      },
+      {
+        "questionId": "residual-naturalness-2008",
+        "choice": "likely_break_or_artifact",
+        "probabilities": {
+          "likely_break_or_artifact": 0.36,
+          "indeterminate": 0.33,
+          "natural_cpi_jump": 0.31
+        },
+        "confidence": 0.04
+      },
+      {
+        "questionId": "residual-naturalness-2009",
+        "choice": "natural_cpi_jump",
+        "probabilities": {
+          "likely_break_or_artifact": 0.04,
+          "indeterminate": 0.12,
+          "natural_cpi_jump": 0.84
+        },
+        "confidence": 0.76
+      },
+      {
+        "questionId": "residual-naturalness-2010",
+        "choice": "natural_cpi_jump",
+        "probabilities": {
+          "likely_break_or_artifact": 0.04,
+          "indeterminate": 0.07,
+          "natural_cpi_jump": 0.89
+        },
+        "confidence": 0.83
+      },
+      {
+        "questionId": "residual-naturalness-2018",
+        "choice": "natural_cpi_jump",
+        "probabilities": {
+          "likely_break_or_artifact": 0.3,
+          "indeterminate": 0.06,
+          "natural_cpi_jump": 0.64
+        },
+        "confidence": 0.47
+      },
+      {
+        "questionId": "residual-naturalness-2019",
+        "choice": "natural_cpi_jump",
+        "probabilities": {
+          "likely_break_or_artifact": 0.1,
+          "indeterminate": 0.03,
+          "natural_cpi_jump": 0.87
+        },
+        "confidence": 0.8
+      },
+      {
+        "questionId": "residual-naturalness-2020",
+        "choice": "likely_break_or_artifact",
+        "probabilities": {
+          "likely_break_or_artifact": 0.48,
+          "indeterminate": 0.16,
+          "natural_cpi_jump": 0.36
+        },
+        "confidence": 0.22
+      },
+      {
+        "questionId": "residual-naturalness-2021",
+        "choice": "natural_cpi_jump",
+        "probabilities": {
+          "likely_break_or_artifact": 0.03,
+          "indeterminate": 0.03,
+          "natural_cpi_jump": 0.94
+        },
+        "confidence": 0.91
+      },
+      {
+        "questionId": "residual-naturalness-2022",
+        "choice": "natural_cpi_jump",
+        "probabilities": {
+          "likely_break_or_artifact": 0.05,
+          "indeterminate": 0.05,
+          "natural_cpi_jump": 0.9
+        },
+        "confidence": 0.85
+      },
+      {
+        "questionId": "residual-naturalness-2023",
+        "choice": "natural_cpi_jump",
+        "probabilities": {
+          "likely_break_or_artifact": 0.1,
+          "indeterminate": 0.1,
+          "natural_cpi_jump": 0.8
+        },
+        "confidence": 0.71
+      },
+      {
+        "questionId": "residual-naturalness-2024",
+        "choice": "natural_cpi_jump",
+        "probabilities": {
+          "likely_break_or_artifact": 0.04,
+          "indeterminate": 0.04,
+          "natural_cpi_jump": 0.92
+        },
+        "confidence": 0.89
+      },
+      {
+        "questionId": "residual-naturalness-2025",
+        "choice": "natural_cpi_jump",
+        "probabilities": {
+          "likely_break_or_artifact": 0.04,
+          "indeterminate": 0.05,
+          "natural_cpi_jump": 0.91
+        },
+        "confidence": 0.86
+      }
+    ],
+    "usage": {
+      "input_tokens": 33601,
+      "output_tokens": 763
+    }
+  },
+  "results": [
+    {
+      "year": 2006,
+      "choice": "likely_break_or_artifact",
+      "probabilities": {
+        "likely_break_or_artifact": 0.48,
+        "indeterminate": 0.34,
+        "natural_cpi_jump": 0.18
+      },
+      "confidence": 0.21
+    },
+    {
+      "year": 2007,
+      "choice": "natural_cpi_jump",
+      "probabilities": {
+        "likely_break_or_artifact": 0,
+        "indeterminate": 0.02,
+        "natural_cpi_jump": 0.98
+      },
+      "confidence": 0.97
+    },
+    {
+      "year": 2008,
+      "choice": "likely_break_or_artifact",
+      "probabilities": {
+        "likely_break_or_artifact": 0.36,
+        "indeterminate": 0.33,
+        "natural_cpi_jump": 0.31
+      },
+      "confidence": 0.04
+    },
+    {
+      "year": 2009,
+      "choice": "natural_cpi_jump",
+      "probabilities": {
+        "likely_break_or_artifact": 0.04,
+        "indeterminate": 0.12,
+        "natural_cpi_jump": 0.84
+      },
+      "confidence": 0.76
+    },
+    {
+      "year": 2010,
+      "choice": "natural_cpi_jump",
+      "probabilities": {
+        "likely_break_or_artifact": 0.04,
+        "indeterminate": 0.07,
+        "natural_cpi_jump": 0.89
+      },
+      "confidence": 0.83
+    },
+    {
+      "year": 2018,
+      "choice": "natural_cpi_jump",
+      "probabilities": {
+        "likely_break_or_artifact": 0.3,
+        "indeterminate": 0.06,
+        "natural_cpi_jump": 0.64
+      },
+      "confidence": 0.47
+    },
+    {
+      "year": 2019,
+      "choice": "natural_cpi_jump",
+      "probabilities": {
+        "likely_break_or_artifact": 0.1,
+        "indeterminate": 0.03,
+        "natural_cpi_jump": 0.87
+      },
+      "confidence": 0.8
+    },
+    {
+      "year": 2020,
+      "choice": "likely_break_or_artifact",
+      "probabilities": {
+        "likely_break_or_artifact": 0.48,
+        "indeterminate": 0.16,
+        "natural_cpi_jump": 0.36
+      },
+      "confidence": 0.22
+    },
+    {
+      "year": 2021,
+      "choice": "natural_cpi_jump",
+      "probabilities": {
+        "likely_break_or_artifact": 0.03,
+        "indeterminate": 0.03,
+        "natural_cpi_jump": 0.94
+      },
+      "confidence": 0.91
+    },
+    {
+      "year": 2022,
+      "choice": "natural_cpi_jump",
+      "probabilities": {
+        "likely_break_or_artifact": 0.05,
+        "indeterminate": 0.05,
+        "natural_cpi_jump": 0.9
+      },
+      "confidence": 0.85
+    },
+    {
+      "year": 2023,
+      "choice": "natural_cpi_jump",
+      "probabilities": {
+        "likely_break_or_artifact": 0.1,
+        "indeterminate": 0.1,
+        "natural_cpi_jump": 0.8
+      },
+      "confidence": 0.71
+    },
+    {
+      "year": 2024,
+      "choice": "natural_cpi_jump",
+      "probabilities": {
+        "likely_break_or_artifact": 0.04,
+        "indeterminate": 0.04,
+        "natural_cpi_jump": 0.92
+      },
+      "confidence": 0.89
+    },
+    {
+      "year": 2025,
+      "choice": "natural_cpi_jump",
+      "probabilities": {
+        "likely_break_or_artifact": 0.04,
+        "indeterminate": 0.05,
+        "natural_cpi_jump": 0.91
+      },
+      "confidence": 0.86
+    }
+  ],
+  "summary": {
+    "classifiedNaturalRate": 0.7692307692307693,
+    "probabilityWeightedNaturalRate": 0.7338461538461539,
+    "indeterminateRate": 0,
+    "breakRate": 0.23076923076923078,
+    "denominator": 13,
+    "answeredCount": 13,
+    "answerRate": 1,
+    "evaluationErrors": [],
+    "excludedYears": [
+      1981,
+      1982,
+      1983,
+      1984,
+      1985,
+      1986,
+      1987,
+      1988,
+      1989,
+      1990,
+      1991,
+      1992,
+      1993,
+      1994,
+      1995,
+      1996,
+      1997,
+      1998,
+      1999,
+      2000,
+      2001,
+      2002,
+      2003,
+      2004,
+      2005,
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017
+    ]
+  }
+}

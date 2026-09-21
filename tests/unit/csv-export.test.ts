@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { normalizePublicChartData } from "@/app/components/ChartDataContract";
 import { buildCsv, escapeCsvCell, toFileName, withBom } from "@/lib/csvExport";
 
 describe("escapeCsvCell", () => {
@@ -97,17 +98,17 @@ describe("buildCsv", () => {
       { metadata },
     );
     expect(csv.split("\r\n")[0]).toContain(
-      "CTI__label,CTI__valueType,CTI__value,CTI__unit,CTI__source,CTI__frequency,CTI__aggregation,CTI__status,CTI__reason",
+      "CTI__label,CTI__valueType,CTI__seriesType,CTI__official,CTI__value,CTI__unit,CTI__source,CTI__frequency,CTI__aggregation,CTI__status,CTI__reason",
     );
     expect(csv.split("\r\n")[1]).toContain(
-      "CTIミクロ（名目・四半期平均）,raw,101,指数,CTI,quarterly,simple_mean_of_three_calendar_months,valid,",
+      "CTIミクロ（名目・四半期平均）,raw,,,101,指数,CTI,quarterly,simple_mean_of_three_calendar_months,valid,",
     );
     expect(csv.split("\r\n")[2]).toContain(
-      "CTIミクロ（名目・四半期平均）,raw,,指数,CTI,quarterly,simple_mean_of_three_calendar_months,invalid,欠測月",
+      "CTIミクロ（名目・四半期平均）,raw,,,,指数,CTI,quarterly,simple_mean_of_three_calendar_months,invalid,欠測月",
     );
   });
 
-  it("2017Q4/2018Q1境界とmeasurementなし行で先頭行metadataを流用しない", () => {
+  it("2017年12月/2018年1月境界でmeasurementなしのlegacy数値を保持する", () => {
     const metadata = [
       {
         key: "CTI",
@@ -124,8 +125,8 @@ describe("buildCsv", () => {
     ];
     const csv = buildCsv(
       [
-        { label: "2017Q4", CTI: 100, measurements: { CTI: { ...metadata[0], value: 100 } } },
-        { label: "2018Q1", CTI: null },
+        { label: "2017年12月", CTI: 100, measurements: { CTI: { ...metadata[0], value: 100 } } },
+        { label: "2018年1月", CTI: 42 },
         {
           label: "invalidQ",
           CTI: null,
@@ -146,15 +147,115 @@ describe("buildCsv", () => {
     );
     const lines = csv.split("\r\n");
     expect(lines[1]).toContain(
-      "CTIミクロ（名目・四半期平均）,raw,100,指数,2005 source,quarterly,simple_mean_of_three_calendar_months,valid,",
+      "CTIミクロ（名目・四半期平均）,raw,,,100,指数,2005 source,quarterly,simple_mean_of_three_calendar_months,valid,",
     );
     expect(lines[2]).toContain(
-      "CTIミクロ（名目・四半期平均）,raw,,,,quarterly,,invalid,unavailable",
+      "CTIミクロ（名目・四半期平均）,raw,unavailable,false,,,,quarterly,,invalid,unavailable",
     );
+    expect(lines[2]).toMatch(/^2018年1月,42\.00,/);
     expect(lines[2]).not.toContain("2005 source");
     expect(lines[3]).toContain(
-      "CTIミクロ（名目・四半期平均）,raw,,指数,2018 source,quarterly,simple_mean_of_three_calendar_months,invalid,missing",
+      "CTIミクロ（名目・四半期平均）,raw,,,,指数,2018 source,quarterly,simple_mean_of_three_calendar_months,invalid,missing",
     );
+  });
+
+  it("invalidのlegacy数値を保持し、明示的unavailableだけを空欄にする", () => {
+    const metadata = [
+      {
+        key: "CTI",
+        label: "CTI",
+        valueType: "raw" as const,
+        value: null,
+        unit: "指数",
+        source: "Plan39",
+        frequency: "annual" as const,
+        aggregation: "annual_adjusted",
+        status: "available" as const,
+        reason: null,
+      },
+    ];
+    const rows = [
+      {
+        年月: "2017年12月",
+        CTI: 31,
+        measurements: {
+          CTI: { ...metadata[0], value: 31, status: "invalid" as const, reason: "unavailable" },
+        },
+      },
+      {
+        年月: "2018年1月",
+        CTI: 42,
+        measurements: {
+          CTI: {
+            ...metadata[0],
+            value: 42,
+            status: "available" as const,
+            reason: null,
+            seriesType: "estimated_adjusted" as const,
+            official: false,
+          },
+        },
+      },
+      {
+        年月: "2018年2月",
+        CTI: 99,
+        measurements: {
+          CTI: {
+            ...metadata[0],
+            value: 99,
+            status: "available" as const,
+            seriesType: "unavailable" as const,
+            official: false,
+          },
+        },
+      },
+      {
+        年月: "2018年3月",
+        CTI: 44,
+        measurements: {
+          CTI: {
+            ...metadata[0],
+            value: 44,
+            status: "available" as const,
+            seriesType: "official_adjusted" as const,
+            official: true,
+          },
+        },
+      },
+      {
+        年月: "2018年4月",
+        CTI: null,
+        measurements: {
+          CTI: {
+            ...metadata[0],
+            value: null,
+            status: "invalid" as const,
+            reason: "missing_input",
+            seriesType: "estimated_adjusted" as const,
+            official: false,
+          },
+        },
+      },
+    ];
+    const csvRows = buildCsv(rows, ["CTI"], undefined, { metadata }).split("\r\n");
+    expect(csvRows.slice(1, 6).map((row) => row.split(",")[1])).toEqual([
+      "31.00",
+      "42.00",
+      "",
+      "44.00",
+      "",
+    ]);
+    expect(normalizePublicChartData(rows, ["CTI"]).map((row) => row.CTI)).toEqual([
+      31,
+      42,
+      null,
+      44,
+      null,
+    ]);
+    expect(csvRows[1]).toContain(",invalid,unavailable");
+    expect(csvRows[5]).toContain(",invalid,missing_input");
+    expect(csvRows[3]).not.toContain(",99,");
+    expect(csvRows[4]).toContain("official_adjusted,true,44");
   });
 });
 

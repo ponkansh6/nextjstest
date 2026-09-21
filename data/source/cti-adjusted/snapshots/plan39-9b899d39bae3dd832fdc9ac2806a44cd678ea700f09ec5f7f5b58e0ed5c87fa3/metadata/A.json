@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "plan39-annual-v1",
+  "revision": "2026-09-20",
+  "statisticalCode": "00200567",
+  "source": "総務省統計局 e-Stat CTI",
+  "artifact": "A.json",
+  "artifactIdentifier": "000040499087",
+  "officialPageUrl": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499087",
+  "downloadUrl": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499087",
+  "statInfId": "000040499087",
+  "retrievedAt": "2026-09-20T10:23:35.472Z",
+  "baseYear": 2025,
+  "unit": "指数",
+  "valueType": "原数値（指数）",
+  "householdScope": "総世帯",
+  "frequency": "annual",
+  "rawRange": {
+    "startYear": 2017,
+    "endYear": 2025
+  },
+  "adoptedRange": {
+    "startYear": 2017,
+    "endYear": 2025
+  },
+  "yearization": null,
+  "missingRepresentation": "- は null。補完・補間なし。",
+  "sha256": "7224e5eb424c94d90402502f665a4953cfe16377f65f1040a939696ac948ef41",
+  "sourceSha256": "7224e5eb424c94d90402502f665a4953cfe16377f65f1040a939696ac948ef41",
+  "sourceFormat": "xlsx"
+}

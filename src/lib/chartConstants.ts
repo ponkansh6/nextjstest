@@ -141,6 +141,91 @@ export const SUPPORT_SERIES_KEY_REAL = "民間最終消費支出（実質）";
 export const CTI_BASIC_RAW_KEY = "CTIミクロ基本系列（名目・原数値）";
 export const CTI_BASIC_COMPARISON_KEY = "CTIミクロ基本系列（名目・参考）";
 export const CTI_BASIC_EXTENSION_KEY = "CTIミクロ基本系列（名目・参考・延長）";
+/** Plan39 public annual adjusted-connection series. */
+export const CTI_ADJUSTED_PUBLIC_KEY = "CTIミクロ調整系列（総合）";
+export const CTI_ADJUSTED_PUBLIC_CATEGORIES = [
+  "総合",
+  "食料",
+  "住居",
+  "光熱・水道",
+  "家具・家事用品",
+  "被服及び履物",
+  "保健医療",
+  "交通・通信",
+  "教育",
+  "教養娯楽",
+  "残差",
+] as const;
+export type CtiAdjustedPublicCategory = (typeof CTI_ADJUSTED_PUBLIC_CATEGORIES)[number];
+export const CTI_ADJUSTED_PUBLIC_KEY_BY_CATEGORY = {
+  総合: CTI_ADJUSTED_PUBLIC_KEY,
+  食料: "CTIミクロ調整系列（食料）",
+  住居: "CTIミクロ調整系列（住居）",
+  "光熱・水道": "CTIミクロ調整系列（光熱・水道）",
+  "家具・家事用品": "CTIミクロ調整系列（家具・家事用品）",
+  被服及び履物: "CTIミクロ調整系列（被服及び履物）",
+  保健医療: "CTIミクロ調整系列（保健医療）",
+  "交通・通信": "CTIミクロ調整系列（交通・通信）",
+  教育: "CTIミクロ調整系列（教育）",
+  教養娯楽: "CTIミクロ調整系列（教養娯楽）",
+  残差: "CTIミクロ調整系列（残差）",
+} as const satisfies Record<CtiAdjustedPublicCategory, string>;
+export const CTI_ADJUSTED_PUBLIC_KEYS = CTI_ADJUSTED_PUBLIC_CATEGORIES.map(
+  (category) => CTI_ADJUSTED_PUBLIC_KEY_BY_CATEGORY[category],
+);
+export type CtiAdjustedPublicKey =
+  (typeof CTI_ADJUSTED_PUBLIC_KEY_BY_CATEGORY)[CtiAdjustedPublicCategory];
+
+/** Plan39-v2 public categories. This registry is intentionally separate from v1. */
+export const CTI_ADJUSTED_V2_PUBLIC_CATEGORIES = [
+  "総合",
+  "食料",
+  "住居",
+  "光熱・水道",
+  "家具・家事用品",
+  "被服及び履物",
+  "保健医療",
+  "交通・通信",
+  "教育",
+  "教養娯楽",
+  "その他の消費支出",
+] as const;
+export type CtiAdjustedV2PublicCategory = (typeof CTI_ADJUSTED_V2_PUBLIC_CATEGORIES)[number];
+export const CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY = {
+  総合: CTI_ADJUSTED_PUBLIC_KEY,
+  食料: "CTIミクロ調整系列（食料）",
+  住居: "CTIミクロ調整系列（住居）",
+  "光熱・水道": "CTIミクロ調整系列（光熱・水道）",
+  "家具・家事用品": "CTIミクロ調整系列（家具・家事用品）",
+  被服及び履物: "CTIミクロ調整系列（被服及び履物）",
+  保健医療: "CTIミクロ調整系列（保健医療）",
+  "交通・通信": "CTIミクロ調整系列（交通・通信）",
+  教育: "CTIミクロ調整系列（教育）",
+  教養娯楽: "CTIミクロ調整系列（教養娯楽）",
+  その他の消費支出: "CTIミクロ調整系列（その他の消費支出）",
+} as const satisfies Record<CtiAdjustedV2PublicCategory, string>;
+export type CtiAdjustedV2PublicKey =
+  (typeof CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY)[CtiAdjustedV2PublicCategory];
+export const CTI_ADJUSTED_V2_PUBLIC_KEYS = CTI_ADJUSTED_V2_PUBLIC_CATEGORIES.map(
+  (category) => CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY[category],
+);
+
+/** Public-surface mapping; v1 and v2 must never share a category list. */
+export const CTI_ADJUSTED_PUBLIC_MAPPING_BY_VERSION = {
+  v1: CTI_ADJUSTED_PUBLIC_KEY_BY_CATEGORY,
+  v2: CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY,
+} as const;
+
+export const CTI_ADJUSTED_V2_PUBLIC_REGISTRY = CTI_ADJUSTED_V2_PUBLIC_CATEGORIES.map(
+  (category, order) => ({
+    key: CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY[category],
+    category,
+    label: `CTIミクロ調整系列（${category}）`,
+    legendLabel: category,
+    tooltipLabel: `CTIミクロ調整系列（${category}）`,
+    order,
+  }),
+);
 export const LEGACY_CTI_COMPARISON_KEY = "CTI消費支出（参考）";
 export const CTI_BASIC_SOURCE = "e-Stat 公式CTI長期artifact 000040499070";
 export const CTI_BASIC_UNIT = "指数";
@@ -174,6 +259,44 @@ export const CTI_BASIC_SERIES_DESCRIPTORS = [
     aggregation: "12_month_moving_average_rebased_to_2025_raw_average",
   },
 ] satisfies readonly Omit<SeriesMetadata, "color">[];
+
+export type CtiAdjustedPublicSeriesDescriptor = SeriesMetadata &
+  Required<Pick<SeriesMetadata, "status" | "reason" | "value" | "valueType">>;
+
+export const CTI_ADJUSTED_PUBLIC_SERIES_DESCRIPTOR = {
+  key: CTI_ADJUSTED_PUBLIC_KEY,
+  label: CTI_ADJUSTED_PUBLIC_KEY,
+  displayName: CTI_ADJUSTED_PUBLIC_KEY,
+  tooltipLabel: CTI_ADJUSTED_PUBLIC_KEY,
+  legendLabel: CTI_ADJUSTED_PUBLIC_KEY,
+  color: "#0f766e",
+  type: "line",
+  kind: "line",
+  order: 0,
+  unit: "指数",
+  source: "CTIミクロ調整接続推計 / 公式CTIミクロ調整系列",
+  valueType: "comparison",
+  frequency: "annual",
+  aggregation: "cti_adjusted_connection_estimate",
+  status: "valid",
+  reason: null,
+  value: null,
+} satisfies CtiAdjustedPublicSeriesDescriptor;
+
+export const CTI_ADJUSTED_PUBLIC_SERIES_DESCRIPTORS = CTI_ADJUSTED_PUBLIC_CATEGORIES.map(
+  (category, order) => ({
+    ...CTI_ADJUSTED_PUBLIC_SERIES_DESCRIPTOR,
+    key: CTI_ADJUSTED_PUBLIC_KEY_BY_CATEGORY[category],
+    label: `CTIミクロ調整系列（${category}）`,
+    displayName: `CTIミクロ調整系列（${category}）`,
+    tooltipLabel: `CTIミクロ調整系列（${category}）`,
+    legendLabel: category,
+    // Reuse the established chart palette so each CTI category remains
+    // identifiable in the graph, tooltip, and exported metadata.
+    color: stackedColors[order],
+    order,
+  }),
+);
 
 export function ctiBasicDescriptors(status: "valid" | "invalid", reason: string | null) {
   return CTI_BASIC_SERIES_DESCRIPTORS.map((descriptor) => ({
@@ -252,22 +375,26 @@ export interface SeriesMetadata {
   unit?: string;
   source?: string;
   valueType?: "raw" | "comparison";
-  status?: "valid" | "invalid";
+  status?: "valid" | "invalid" | "unavailable" | "available";
   reason?: string | null;
   value?: number | null;
   frequency?: "monthly" | "quarterly" | "annual";
   aggregation?: string;
+  seriesType?: "estimated_adjusted" | "official_adjusted" | "unavailable";
+  official?: boolean;
   descriptor?: {
     key: string;
     label: string;
     unit: string;
     source: string;
     valueType: "raw" | "comparison";
-    status: "valid" | "invalid";
+    status: "valid" | "invalid" | "unavailable" | "available";
     reason: string | null;
     value: number | null;
     frequency?: "monthly" | "quarterly" | "annual";
     aggregation?: string;
+    seriesType?: "estimated_adjusted" | "official_adjusted" | "unavailable";
+    official?: boolean;
   };
 }
 
@@ -280,11 +407,13 @@ export interface TooltipSeriesProjection {
   unit?: string;
   source?: string;
   valueType?: "raw" | "comparison";
-  status?: "valid" | "invalid";
+  status?: "valid" | "invalid" | "unavailable" | "available";
   reason?: string | null;
   value?: number | null;
   frequency?: "monthly" | "quarterly" | "annual";
   aggregation?: string;
+  seriesType?: "estimated_adjusted" | "official_adjusted" | "unavailable";
+  official?: boolean;
 }
 
 /** Project one display contract into the metadata consumed by CustomTooltip. */
@@ -318,6 +447,9 @@ export const projectTooltipMetadata = (
           value,
           frequency,
           aggregation,
+          seriesType,
+          official,
+          descriptor,
         },
         index,
       ) => ({
@@ -334,6 +466,12 @@ export const projectTooltipMetadata = (
         ...(value === undefined ? {} : { value }),
         ...(frequency === undefined ? {} : { frequency }),
         ...(aggregation === undefined ? {} : { aggregation }),
+        ...((seriesType ?? descriptor?.seriesType) === undefined
+          ? {}
+          : { seriesType: seriesType ?? descriptor?.seriesType }),
+        ...((official ?? descriptor?.official) === undefined
+          ? {}
+          : { official: official ?? descriptor?.official }),
       }),
     );
 };

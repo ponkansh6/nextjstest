@@ -29,23 +29,35 @@ export interface BuildCsvOptions {
     source: string;
     frequency?: "monthly" | "quarterly" | "annual";
     aggregation?: string;
-    status: "valid" | "invalid";
+    status: "valid" | "invalid" | "unavailable" | "available";
     reason: string | null;
+    seriesType?: "estimated_adjusted" | "official_adjusted" | "unavailable";
+    official?: boolean;
   }>;
 }
 
 type CsvMeasurement = NonNullable<BuildCsvOptions["metadata"]>[number];
 
+function rowMeasurementValue(
+  row: Record<string, unknown>,
+  key: string,
+): (Partial<CsvMeasurement> & Pick<CsvMeasurement, "key">) | undefined {
+  const measurements = row.measurements;
+  const measurement =
+    measurements && typeof measurements === "object"
+      ? (measurements as Record<string, unknown>)[key]
+      : undefined;
+  return measurement && typeof measurement === "object"
+    ? (measurement as Partial<CsvMeasurement> & Pick<CsvMeasurement, "key">)
+    : undefined;
+}
+
 function rowMeasurement(
   row: Record<string, unknown>,
   metadata: CsvMeasurement,
 ): Partial<CsvMeasurement> & Pick<CsvMeasurement, "key"> {
-  const measurements = row.measurements;
-  const measurement =
-    measurements && typeof measurements === "object"
-      ? (measurements as Record<string, unknown>)[metadata.key]
-      : undefined;
-  if (!measurement || typeof measurement !== "object") {
+  const measurement = rowMeasurementValue(row, metadata.key);
+  if (!measurement) {
     return {
       key: metadata.key,
       label: metadata.label,
@@ -57,9 +69,11 @@ function rowMeasurement(
       aggregation: "",
       status: "invalid",
       reason: "unavailable",
+      seriesType: "unavailable",
+      official: false,
     };
   }
-  return measurement as Partial<CsvMeasurement> & Pick<CsvMeasurement, "key">;
+  return measurement;
 }
 
 /**
@@ -94,6 +108,8 @@ export const buildCsv = (
   const metadataHeaders = metadata.flatMap(({ key }) => [
     `${key}__label`,
     `${key}__valueType`,
+    `${key}__seriesType`,
+    `${key}__official`,
     `${key}__value`,
     `${key}__unit`,
     `${key}__source`,
@@ -110,16 +126,38 @@ export const buildCsv = (
     const labelKey = labelKeys.find((k) => row[k] !== undefined && row[k] !== null);
     const label = labelKey ? row[labelKey] : "";
     const cells = keys.map((k) => {
-      const v = row[k];
+      const metadataEntry = metadata.find((entry) => entry.key === k);
+      const actualMeasurement = metadataEntry ? rowMeasurementValue(row, k) : undefined;
+      const unavailable =
+        actualMeasurement?.seriesType === "unavailable" ||
+        actualMeasurement?.status === "unavailable" ||
+        actualMeasurement?.value === null;
+      const v = unavailable ? null : row[k];
       return typeof v === "number" && Number.isFinite(v) ? v.toFixed(digits) : "";
     });
     const metadataCells = metadata.flatMap((entry) => {
-      const { label, valueType, value, unit, source, frequency, aggregation, status, reason } =
-        rowMeasurement(row, entry);
+      const measurement = rowMeasurement(row, entry);
+      const {
+        label,
+        valueType,
+        seriesType,
+        official,
+        value,
+        unit,
+        source,
+        frequency,
+        aggregation,
+        status,
+        reason,
+      } = measurement;
+      const unavailable =
+        measurement.seriesType === "unavailable" || measurement.status === "unavailable";
       return [
         label ?? "",
         valueType ?? "",
-        value ?? "",
+        seriesType ?? "",
+        official === undefined ? "" : String(official),
+        unavailable ? "" : (value ?? ""),
         unit ?? "",
         source ?? "",
         frequency ?? "",

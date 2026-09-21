@@ -1,0 +1,292 @@
+{
+  "schemaVersion": "plan39-revised-total-formula-validity-jev-v1",
+  "generatedAt": "2026-09-21T03:11:10.957Z",
+  "evaluationScope": "plan39_revised_total_formula_validity",
+  "request": {
+    "model": "jev-latest",
+    "background": {
+      "purpose": "γ=1に固定した修整後総合式の代数的、統計的、推計上の妥当性を、現行式との比較を含めて判定する。算術的同値性と統計的妥当性、因果解釈を区別する。",
+      "revisedFormula": "T_revised(t)=B_total(t)*(A_total(2017)/B_total(2017))*D(t), D(t)=(L_total(t)/L_total(2017))/(B_total(t)/B_total(2017))",
+      "revisedIdentity": "γ=1ならT_revised(t)=A_total(2017)*(L_total(t)/L_total(2017))であり、B_total(t)は相殺される。",
+      "currentFormula": "T_current(t)=A_total(2017)*D(t)。B_total(t)はDの分母だけに残り、B低下がTを押し上げ得る。",
+      "itemFormula": "費目 iはC_i(t)=B_i(t)*(A_i(2017)/B_i(2017))*D(t)^β_i。",
+      "background": [
+        "Bは基本系列、Aは2017-2025の公式調整系列、Lは総務省家計調査長期時系列の公式年次原指数（世帯人員・世帯主年齢分布調整済み、1981-2018、総合のみ）。",
+        "A/Bのβキャリブレーションは2018-2025で行い、Lはβ推定に使わない。2014/2015は閾値1.4超過前の推計。"
+      ],
+      "observedValues": {
+        "total2014": {
+          "B": 118.9,
+          "L": 102.1,
+          "D": 0.9641903575,
+          "currentTotal": 102.3006,
+          "revisedTotal": 109.9778,
+          "currentNineCategories": 91.6096,
+          "currentResidual": 10.6918,
+          "rawNineCategoriesB": 98.8
+        },
+        "total2015": {
+          "B": 114.6,
+          "L": 100,
+          "D": 0.9797928792,
+          "currentTotal": 103.956,
+          "revisedTotal": 107.7157,
+          "currentNineCategories": 89.635,
+          "currentResidual": 14.321,
+          "rawNineCategoriesB": 95.2
+        }
+      },
+      "requiredFocus": [
+        "(1)代数的妥当性、(2)2017年のA接続、(3)B当年値の扱い、(4)Lへの依存とB相殺の意味、(5)費目式との整合性、(6)残差・バックテスト・識別性、(7)γ=1固定の妥当性を個別に判定する。"
+      ]
+    },
+    "questions": {
+      "algebra": {
+        "type": "choice",
+        "instructions": "修整式とDの定義から、γ=1のときB_total(t)が正確に相殺され、T_revised(t)=A_total(2017)*(L_total(t)/L_total(2017))となる代数的主張は妥当か。2014→2015の提示値（修整案約109.9778→107.7157）とも整合するか。丸め誤差と式の誤りを区別せよ。",
+        "criteria": {
+          "valid_as_defined": "提示された前提と対象範囲では、式の定義・算術・推論の接続が妥当",
+          "valid_but_limited": "算術または記述上は妥当だが、統計的妥当性・因果解釈・適用範囲に重要な限定がある",
+          "not_valid": "式、データ接続、推計手順のいずれかに重大な論理的または統計的問題がある",
+          "indeterminate": "提示情報だけでは主要な妥当性を信頼して判定できない"
+        }
+      },
+      "anchor2017": {
+        "type": "choice",
+        "instructions": "修整式がt=2017でA_total(2017)に接続するかを判定せよ。L_total(2017)の基準化、B_total(2017)の分子分母、A/B系列の定義差と、2017年接続に必要な前提・未提示情報を評価せよ。",
+        "criteria": {
+          "valid_as_defined": "提示された前提と対象範囲では、式の定義・算術・推論の接続が妥当",
+          "valid_but_limited": "算術または記述上は妥当だが、統計的妥当性・因果解釈・適用範囲に重要な限定がある",
+          "not_valid": "式、データ接続、推計手順のいずれかに重大な論理的または統計的問題がある",
+          "indeterminate": "提示情報だけでは主要な妥当性を信頼して判定できない"
+        }
+      },
+      "currentB": {
+        "type": "choice",
+        "instructions": "修整案でB_total(t)を当年のスケール要因として使いながら代数的に相殺する扱いは妥当か。現行式ではB_total(t)がDの分母に残り、B低下がTを押し上げ得るという比較を踏まえ、B当年値の情報を捨てる意味、系列不整合や二重計上の可能性を評価せよ。",
+        "criteria": {
+          "valid_as_defined": "提示された前提と対象範囲では、式の定義・算術・推論の接続が妥当",
+          "valid_but_limited": "算術または記述上は妥当だが、統計的妥当性・因果解釈・適用範囲に重要な限定がある",
+          "not_valid": "式、データ接続、推計手順のいずれかに重大な論理的または統計的問題がある",
+          "indeterminate": "提示情報だけでは主要な妥当性を信頼して判定できない"
+        }
+      },
+      "lCancellation": {
+        "type": "choice",
+        "instructions": "Lは総務省家計調査長期時系列の公式年次原指数（総合のみ、1981-2018、世帯人員・世帯主年齢分布調整済み）で、β推定には使っていない。Lへの依存とB相殺は、何を識別・補正しているのか。Lの期間制約、概念差、観察指数を因果要因と解釈できない限界を含めて判定せよ。",
+        "criteria": {
+          "valid_as_defined": "提示された前提と対象範囲では、式の定義・算術・推論の接続が妥当",
+          "valid_but_limited": "算術または記述上は妥当だが、統計的妥当性・因果解釈・適用範囲に重要な限定がある",
+          "not_valid": "式、データ接続、推計手順のいずれかに重大な論理的または統計的問題がある",
+          "indeterminate": "提示情報だけでは主要な妥当性を信頼して判定できない"
+        }
+      },
+      "itemConsistency": {
+        "type": "choice",
+        "instructions": "総合だけγ=1でBが相殺される修整式と、費目C_i(t)=B_i(t)*(A_i(2017)/B_i(2017))*D(t)^β_i（βは2018-2025のA/Bからキャリブレーション）の組み合わせは整合的か。総合と費目の非対称性、β_i、総合の集計性、残差定義への影響を評価せよ。",
+        "criteria": {
+          "valid_as_defined": "提示された前提と対象範囲では、式の定義・算術・推論の接続が妥当",
+          "valid_but_limited": "算術または記述上は妥当だが、統計的妥当性・因果解釈・適用範囲に重要な限定がある",
+          "not_valid": "式、データ接続、推計手順のいずれかに重大な論理的または統計的問題がある",
+          "indeterminate": "提示情報だけでは主要な妥当性を信頼して判定できない"
+        }
+      },
+      "validation": {
+        "type": "choice",
+        "instructions": "現行値（調整後総合102.3006→103.9560、9費目合計91.6096→89.6350、残差10.6918→14.3210、B加工前9費目98.8→95.2）と修整案総合約109.9778→107.7157を踏まえ、残差、バックテスト、閾値1.4超過前推計、反実仮想、識別性をどう検証すべきか。情報だけでの判定を含めて評価せよ。",
+        "criteria": {
+          "valid_as_defined": "提示された前提と対象範囲では、式の定義・算術・推論の接続が妥当",
+          "valid_but_limited": "算術または記述上は妥当だが、統計的妥当性・因果解釈・適用範囲に重要な限定がある",
+          "not_valid": "式、データ接続、推計手順のいずれかに重大な論理的または統計的問題がある",
+          "indeterminate": "提示情報だけでは主要な妥当性を信頼して判定できない"
+        }
+      },
+      "gamma": {
+        "type": "choice",
+        "instructions": "γ=1固定（一般化すればB_total(t)の効き方をγで制御する想定）の妥当性を判定せよ。γをデータから推定しない理由、過学習・識別不能・外部妥当性、事前に固定した規約としての正当化、感度分析の必要性を評価せよ。",
+        "criteria": {
+          "valid_as_defined": "提示された前提と対象範囲では、式の定義・算術・推論の接続が妥当",
+          "valid_but_limited": "算術または記述上は妥当だが、統計的妥当性・因果解釈・適用範囲に重要な限定がある",
+          "not_valid": "式、データ接続、推計手順のいずれかに重大な論理的または統計的問題がある",
+          "indeterminate": "提示情報だけでは主要な妥当性を信頼して判定できない"
+        }
+      }
+    }
+  },
+  "sanitizedResponse": {
+    "model": "jev-1.13.0",
+    "answers": [
+      {
+        "questionId": "algebra",
+        "choice": "valid_as_defined",
+        "probabilities": {
+          "indeterminate": 0.02,
+          "not_valid": 0.22,
+          "valid_as_defined": 0.43,
+          "valid_but_limited": 0.33
+        },
+        "confidence": 0.24
+      },
+      {
+        "questionId": "anchor2017",
+        "choice": "valid_but_limited",
+        "probabilities": {
+          "indeterminate": 0.05,
+          "valid_as_defined": 0.44,
+          "not_valid": 0.01,
+          "valid_but_limited": 0.5
+        },
+        "confidence": 0.33
+      },
+      {
+        "questionId": "currentB",
+        "choice": "valid_but_limited",
+        "probabilities": {
+          "indeterminate": 0.01,
+          "valid_as_defined": 0.05,
+          "not_valid": 0.12,
+          "valid_but_limited": 0.82
+        },
+        "confidence": 0.77
+      },
+      {
+        "questionId": "lCancellation",
+        "choice": "valid_but_limited",
+        "probabilities": {
+          "indeterminate": 0.01,
+          "valid_as_defined": 0,
+          "not_valid": 0.01,
+          "valid_but_limited": 0.98
+        },
+        "confidence": 0.97
+      },
+      {
+        "questionId": "itemConsistency",
+        "choice": "valid_but_limited",
+        "probabilities": {
+          "indeterminate": 0.02,
+          "valid_as_defined": 0,
+          "not_valid": 0.21,
+          "valid_but_limited": 0.77
+        },
+        "confidence": 0.68
+      },
+      {
+        "questionId": "validation",
+        "choice": "valid_but_limited",
+        "probabilities": {
+          "indeterminate": 0.39,
+          "not_valid": 0.04,
+          "valid_as_defined": 0,
+          "valid_but_limited": 0.57
+        },
+        "confidence": 0.42
+      },
+      {
+        "questionId": "gamma",
+        "choice": "valid_but_limited",
+        "probabilities": {
+          "indeterminate": 0.08,
+          "valid_as_defined": 0.01,
+          "not_valid": 0.04,
+          "valid_but_limited": 0.87
+        },
+        "confidence": 0.84
+      }
+    ],
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "results": [
+    {
+      "questionId": "algebra",
+      "choice": "valid_as_defined",
+      "probabilities": {
+        "indeterminate": 0.02,
+        "not_valid": 0.22,
+        "valid_as_defined": 0.43,
+        "valid_but_limited": 0.33
+      },
+      "confidence": 0.24
+    },
+    {
+      "questionId": "anchor2017",
+      "choice": "valid_but_limited",
+      "probabilities": {
+        "indeterminate": 0.05,
+        "valid_as_defined": 0.44,
+        "not_valid": 0.01,
+        "valid_but_limited": 0.5
+      },
+      "confidence": 0.33
+    },
+    {
+      "questionId": "currentB",
+      "choice": "valid_but_limited",
+      "probabilities": {
+        "indeterminate": 0.01,
+        "valid_as_defined": 0.05,
+        "not_valid": 0.12,
+        "valid_but_limited": 0.82
+      },
+      "confidence": 0.77
+    },
+    {
+      "questionId": "lCancellation",
+      "choice": "valid_but_limited",
+      "probabilities": {
+        "indeterminate": 0.01,
+        "valid_as_defined": 0,
+        "not_valid": 0.01,
+        "valid_but_limited": 0.98
+      },
+      "confidence": 0.97
+    },
+    {
+      "questionId": "itemConsistency",
+      "choice": "valid_but_limited",
+      "probabilities": {
+        "indeterminate": 0.02,
+        "valid_as_defined": 0,
+        "not_valid": 0.21,
+        "valid_but_limited": 0.77
+      },
+      "confidence": 0.68
+    },
+    {
+      "questionId": "validation",
+      "choice": "valid_but_limited",
+      "probabilities": {
+        "indeterminate": 0.39,
+        "not_valid": 0.04,
+        "valid_as_defined": 0,
+        "valid_but_limited": 0.57
+      },
+      "confidence": 0.42
+    },
+    {
+      "questionId": "gamma",
+      "choice": "valid_but_limited",
+      "probabilities": {
+        "indeterminate": 0.08,
+        "valid_as_defined": 0.01,
+        "not_valid": 0.04,
+        "valid_but_limited": 0.87
+      },
+      "confidence": 0.84
+    }
+  ],
+  "summary": {
+    "counts": {
+      "valid_as_defined": 1,
+      "valid_but_limited": 6,
+      "not_valid": 0,
+      "indeterminate": 0
+    },
+    "answeredCount": 7,
+    "expectedCount": 7,
+    "valid": true
+  }
+}

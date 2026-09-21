@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "plan39-annual-v1",
+  "revision": "2026-09-20",
+  "statisticalCode": "00200567",
+  "source": "総務省統計局 家計調査 長期時系列",
+  "artifact": "L.json",
+  "artifactIdentifier": "lev-jnb.xls",
+  "officialPageUrl": "https://www.stat.go.jp/data/kakei/longtime/zuhyou/lev-jnb.xls",
+  "downloadUrl": "https://www.stat.go.jp/data/kakei/longtime/zuhyou/lev-jnb.xls",
+  "statInfId": null,
+  "retrievedAt": "2026-09-20T10:23:35.737Z",
+  "baseYear": 2025,
+  "unit": "指数",
+  "valueType": "原指数",
+  "householdScope": "二人以上の世帯（世帯人員及び世帯主の年齢分布調整済）",
+  "frequency": "annual",
+  "rawRange": {
+    "startYear": 1981,
+    "endYear": 2018
+  },
+  "adoptedRange": {
+    "startYear": 1981,
+    "endYear": 2018
+  },
+  "yearization": null,
+  "missingRepresentation": "- は null。補完・補間なし。",
+  "sha256": "9e98ca7b379bbce9d2354b8aa97014dbcfdff570e96ef0f62fef66b5e0f53c42",
+  "sourceSha256": "9e98ca7b379bbce9d2354b8aa97014dbcfdff570e96ef0f62fef66b5e0f53c42",
+  "sourceFormat": "xls"
+}

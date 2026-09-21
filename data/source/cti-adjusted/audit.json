@@ -1,0 +1,46 @@
+{
+  "revision": "2026-09-20",
+  "retrievedAt": "2026-09-20T10:23:35.161Z",
+  "sources": {
+    "B": {
+      "sourceUrl": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499069",
+      "sourceFormat": "xlsx",
+      "sourceSha256": "5e99cf3c61e26ba90bcde12b3311eb553458f97e5624258712d7414bed53197b",
+      "artifactSha256": "11236b7a7a7f38476b1185d461a9c21aa748e52bc01ba82b28851bdac7a2c227",
+      "rawRange": {
+        "startYear": 2002,
+        "endYear": 2025
+      },
+      "rows": 24,
+      "missingValues": 0
+    },
+    "A": {
+      "sourceUrl": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499087",
+      "sourceFormat": "xlsx",
+      "sourceSha256": "7224e5eb424c94d90402502f665a4953cfe16377f65f1040a939696ac948ef41",
+      "artifactSha256": "5c0979126fbf2de34745d366d1b9872b9b48c3024237b5405972dedaf618daff",
+      "rawRange": {
+        "startYear": 2017,
+        "endYear": 2025
+      },
+      "rows": 9,
+      "missingValues": 0
+    },
+    "L": {
+      "sourceUrl": "https://www.stat.go.jp/data/kakei/longtime/zuhyou/lev-jnb.xls",
+      "sourceFormat": "xls",
+      "sourceSha256": "9e98ca7b379bbce9d2354b8aa97014dbcfdff570e96ef0f62fef66b5e0f53c42",
+      "artifactSha256": "26902849c7d835a1dcf3db130384600d0f853907fac927e7942fb806e2eec076",
+      "rawRange": {
+        "startYear": 1981,
+        "endYear": 2018
+      },
+      "rows": 38,
+      "missingValues": 0
+    }
+  },
+  "validation": {
+    "status": "ready",
+    "reasons": []
+  }
+}

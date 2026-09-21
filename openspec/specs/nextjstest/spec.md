@@ -178,6 +178,375 @@ series.
   `duplicate`, `insufficient_months`, or `unavailable`), with no fixed valid
   legend state.
 
+## SharedPlan 39: annual adjusted public contract
+
+SharedPlan 39 defines the core calculation contract and the planned
+fail-closed public route for the adjusted annual series. It is independent of
+the Plan37 monthly CTI comparison lines and the Plan38 quarterly nominal CTI
+support line. The public route may be enabled only after the artifact and
+validation contracts below pass; an unavailable route must not fabricate a
+replacement value or silently expose an internal estimate.
+
+### Data Sources
+
+The route requires a valid versioned artifact manifest before it may consume the
+versioned B, A, and L annual artifacts and their
+metadata. Each artifact metadata record identifies its source, definition,
+unit, covered years, revision state, schema/version, and the SHA-256 hash of
+the exact source artifact. The annual contract covers every required year in
+the public range, with official A observations complete from 2017 onward.
+The 2005–2016 A values are estimated values produced by the validated core
+model; they are not presented as official observations.
+
+The legacy consumption-level index is a separate contract. It may consume only
+an official annual artifact that explicitly defines that index and its annual
+basis. Monthly aggregation, monthly interpolation, or a monthly index derived
+without an official annual source is not a permitted input or fallback.
+
+The current Plan39 artifact set is saved under `data/source/cti-adjusted/`:
+`B.json` covers the official basic real-index annual table (2002–2025, with the
+public required range beginning in 2005), `A.json` covers the official adjusted
+real-index annual table (2017–2025), and `L.json` is the official annual
+`lev-jnb.xls` original index (1981–2018, two-or-more-person households adjusted
+for household-size and household-head-age distributions). The B/A real columns
+are consumed directly; L is consumed only from its official annual overall-index
+sheet, so no monthly yearization is used. Each manifest-declared artifact
+retains its `sourceUrl`, `downloadUrl`, and exact SHA-256; source and
+saved-artifact hashes plus format/range/missing-value inspection results are
+retained in the calculation audit artifact.
+
+The public v2 source is the validated annual A/B/L contract and its projection
+metadata; display provenance is not inferred from a year or from the raw
+category key. Official A is the source only when the projected measurement is
+`official_adjusted`; an unavailable measurement remains unavailable regardless
+of which artifact supplied the attempted row.
+
+At runtime, the Plan39 artifact root is resolved from the absolute
+`CTI_ADJUSTED_ARTIFACT_ROOT` environment value when it is set. When it is not
+set, the production page loader resolves `cwd/data/source/cti-adjusted` before
+any bundle-relative path, including `.next/package.json`; the selected root
+must contain the manifest that passes the normal artifact validation contract.
+
+### Superseded/旧状態: initial Plan39 diagnostic history
+
+The earlier Plan39 calculation audit at
+`results/plan39/plan39-analysis-20c80ddac60344d0.json` recorded a fixed
+`auditSummary`, `verdict.status=insufficient-data`, and `accepted=false`.
+Input validation passes, and the backtest passes for calibration 2018..2025
+and target 2017 across nine categories with `leakage=false`. Sensitivity
+compares 2018..2025 with 2018..2024 using `official_annual` L; beta/D pass,
+but seven of twelve 2005–2016 years have estimate coverage (2005, 2006, 2007,
+2008, 2009, 2010, 2012) and the other five (2011, 2013, 2014, 2015, 2016)
+are `residual_jump_threshold_exceeded`. The sensitivity reason is
+`insufficient_estimate_difference`. This sensitivity result is retained as
+non-blocking audit information. The 2016→2017 boundary passes with the
+provisional threshold=1.4. Therefore 2017 onward remains official A, while
+2005–2016 is null/unavailable and not publicly estimated because the mandatory
+threshold redesign, rolling/leave-one-year-out backtest, Other/beta stability,
+2017 connection, and comprehensive re-audit remain incomplete. This is
+superseded historical diagnostic state, separate from the current Plan39-v2
+publication decision; it does not make current v2 rows unavailable.
+
+The adopted Plan39 rollback snapshot is fixed under
+`data/source/cti-adjusted/snapshots/plan39-9b899d39bae3dd832fdc9ac2806a44cd678ea700f09ec5f7f5b58e0ed5c87fa3/`.
+Its snapshot ID is the SHA-256 of deterministic `B:<artifact hash>`,
+`A:<artifact hash>`, and `L:<artifact hash>` lines; current time, randomness,
+and filesystem timestamps are excluded. The snapshot stores the exact B/A/L
+JSON, extracted metadata, manifest, audit, and `hashes.json`. It is a rollback
+record only and does not change the public Plan39 route.
+
+### Data Flow
+
+`B/A/L annual artifacts + metadata` → artifact/schema/hash validation →
+annual contract validation → core adjusted calculation using `R`, `beta`,
+`D`, and residual terms → status-preserving annual projection → explicit
+public A-only projection → graph/table/tooltip/CSV. The calculation retains
+official A values for 2017 onward and uses the estimated A path only for
+2005–2016. A missing L input makes only the affected estimate unavailable; it
+does not erase, replace, or recalculate an official A value.
+
+The Plan39-v2 adapter preserves, for each projected category, the same
+`value`, `seriesType`, `status`, `reason`, `official`, `model`, and
+`estimateVersion` in the measurement consumed by the graph, display note,
+table, tooltip, and CSV. A row whose value is unavailable is projected as
+`seriesType: unavailable` and cannot inherit the official source label or the
+official display note, even when the row belongs to the official-year range.
+
+For publication evidence, the flow is
+`CTI_ADJUSTED_ANALYSIS_FILE` → explicit analysis artifact, or
+`CTI_ADJUSTED_ANALYSIS_ROOT`/`results/plan39` → matching analysis artifact →
+schema and input-fingerprint validation → the shared runtime/analysis gate.
+Failure at artifact discovery or evidence validation leaves estimated rows
+`unavailable`.
+
+The superseded audit verdict made the public flow fail-closed for estimated
+2005–2016 values and preserved only official A from 2017 onward. The current
+Plan39-v2 route is governed by its accepted publication gate below. Rollback
+restoration is a separate operational flow:
+`rollback snapshot` → snapshot/hash/metadata validation → exact B/A/L,
+manifest, and audit restore → loader-compatible manifest SHA-256 verification.
+It must not fetch, synthesize, interpolate, or silently replace an artifact.
+
+The model and validation partition observations chronologically: production and
+backtest calibration use 2018–2025, while target/holdout is 2017 and is
+excluded from calibration. No target value or forbidden derived parameter may
+leak into calibration. The public route exposes A only;
+B/L inputs, R, beta, D, residuals, intermediate parameters, and diagnostic
+series remain internal or audit-only.
+
+The public status vocabulary is `estimated_adjusted`, `official_adjusted`,
+and `unavailable`. A missing or invalid manifest, invalid artifact, failed
+metadata/hash/annual validation, non-finite calculation input, or missing
+required estimate input fails closed to `unavailable` with a machine-readable
+reason. Candidate CSV/JSON files are not discovered without a valid manifest.
+A valid official A value is `official_adjusted`; a validated 2005–2016 model
+output may be `estimated_adjusted` only after the overall verdict is accepted.
+The old `insufficient-data` verdict is historical diagnostic state; current v2
+publication uses the accepted gate in the Plan39-v2 section.
+
+### Data Model
+
+Each annual measurement carries the period, value (`number | null`), status,
+reason, unit, source, frequency, and aggregation, together with the artifact
+identity/version and validated hash references needed for audit. The public
+measurement key is the adjusted A key; B, L, R, beta, D, residual, and
+intermediate model fields are not public measurement keys. Audit records are
+JSON-safe: they contain only finite numbers, strings, booleans, nulls, arrays,
+and plain objects, with no `undefined`, `NaN`, `Infinity`, functions, class
+instances, or circular references. Categories excluded from the calculation
+are retained as auditable `ignored_category` records rather than silently
+dropped.
+
+For Plan39-v2, `CtiAdjustedV2PublicMeasurement` extends the shared
+`SeriesMeasurement` contract with `model: "v2-bottom-up"`,
+`estimateVersion: "plan39-v2"`, `year`, and the public category. Its
+`seriesType` is `estimated_adjusted`, `official_adjusted`, or `unavailable`;
+its `status` is `valid`, `invalid`, or `unavailable`; and an unavailable
+measurement always has `value: null` and a non-empty machine-readable
+`reason`. The adapted display row uses the existing row vocabulary
+`available`, `invalid`, or `unavailable`; internal `insufficient-data` is not
+exposed by the adapter. The display note and CSV metadata are derived from
+this same measurement object rather than from the raw row or year.
+
+### Component Tree
+
+`B/A/L artifact loader` → `metadata/hash/annual validator` →
+`SharedPlan39 core (R/beta/D/residual)` → `status-preserving A-only public
+projection` → `CpiChart`/annual graph → shared descriptor and measurement map
+→ tooltip/table/CSV. Every public surface reads the same projected
+measurement; none recomputes the adjusted value or derives display metadata
+from the raw payload key. The v2 page adapter retains the measurement
+provenance and maps only the compatibility category names; it does not turn an
+unavailable row into an official row.
+
+### Requirements
+
+- **WHEN** the B, A, and L artifacts have valid schema, metadata, SHA-256
+  references, source identity, units, and complete required annual coverage,
+  **THEN** the annual contract is eligible for calculation and retains the
+  artifact identity and hash references in the audit record.
+- **WHEN** the artifact manifest is missing or invalid, **THEN** the loader does
+  not discover candidate CSV/JSON files and the public route fails closed with
+  `invalid_manifest` and `unavailable` status.
+- **WHEN** `CTI_ADJUSTED_ARTIFACT_ROOT` is unset and a Next production bundle
+  invokes the page loader, **THEN** the loader uses
+  `cwd/data/source/cti-adjusted` before bundle-relative candidates, does not
+  mistake `.next/package.json` for the artifact root, and proceeds only when
+  that root's manifest validates; otherwise the public route is
+  `unavailable` with the existing machine-readable reason.
+- **WHEN** `CTI_ADJUSTED_ARTIFACT_ROOT` is set, **THEN** its absolute root is
+  preferred for manifest and artifact resolution, and the same validation
+  failure remains `unavailable` rather than falling back to another root.
+- **WHEN** a valid manifest declares B/A/L artifacts as missing, **THEN** the
+  corresponding `missing_b_artifact`, `missing_a_artifact`, or
+  `missing_l_artifact` reason is retained and no candidate artifact replaces
+  the declared missing input; an unresolved L artifact therefore remains
+  fail-closed.
+- **WHEN** any B/A/L artifact, metadata record, hash, annual period, or required
+  value is missing, malformed, duplicated, non-finite, or inconsistent,
+  **THEN** the public adjusted measurement is `null` with status
+  `unavailable` and a machine-readable reason; no fallback or partial public
+  estimate is emitted.
+- **WHEN** the annual contract is validated, **THEN** official A observations
+  are complete and authoritative for every year from 2017 onward, while
+  2005–2016 is eligible for an estimated path only after the overall verdict
+  is accepted and is never labeled official.
+- **WHEN** the core calculation runs, **THEN** its declared R, beta, D, and
+  residual terms are preserved as internal/audit data, and the public route
+  exposes only the adjusted A measurement and its status metadata.
+- **WHEN** fitting or validating the model for the 2017 boundary, **THEN**
+  2018–2025 observations are used for calibration/training, 2017 is the
+  holdout/target and is excluded from calibration, and the audit verifies
+  `leakage=false`; backtest pass alone does not authorize publication.
+- **WHEN** a 2005–2016 estimate has finite validated inputs including L,
+  **THEN** the public status is `estimated_adjusted` only when the overall
+  audit verdict is accepted; **WHEN** the verdict is `insufficient-data` or
+  `accepted=false`, **THEN** 2005–2016 is `null`/`unavailable`.
+  **WHEN** a required L input is missing or invalid, **THEN** only that
+  estimate is `unavailable`, while official A values remain retained and
+  `official_adjusted`.
+- **WHEN** a valid official A observation is available from 2017 onward,
+  **THEN** the public projection preserves that official value and status even
+  if the estimate path or L input is unavailable; estimation MUST NOT
+  overwrite official A.
+- **WHEN** backtest passes but sensitivity or another adoption gate is not
+  evaluable or fails, **THEN** backtest success alone does not permit public
+  estimated values.
+- **WHEN** residual boundary validation is evaluated, **THEN** provisional threshold `1.4` is recorded pending threshold redesign; the maximum observed absolute residual jump in confirmed 2018–2025 is `1.4` in 2020, and 2017 holdout is excluded from threshold calculation. Its absolute/relative values and exceeded flag remain
+  in the audit result; a passing boundary does not publish estimates when the
+  overall sensitivity verdict is not accepted.
+- **WHEN** the loader reads Plan39 artifacts, **THEN** it consumes only
+  manifest-declared B/A/L artifacts, validates `sourceUrl`/`downloadUrl` and
+  SHA-256 hashes, and fails closed without candidate discovery on any mismatch.
+- **WHEN** the public projection is created, **THEN** B and L inputs, R,
+  beta, D, residuals, and intermediate diagnostics are absent from the public
+  A-only payload; they remain available only to the permitted audit contract.
+- **WHEN** graph, table, tooltip, or CSV output renders the same annual
+  measurement, **THEN** value, label, unit, source, frequency, aggregation,
+  status, reason, and period are identical across all four surfaces, including
+  `estimated_adjusted`, `official_adjusted`, and `unavailable` states.
+- **WHEN** the Plan39-v2 projection produces a public annual measurement,
+  **THEN** graph, table, tooltip, display note, and CSV metadata use the same
+  `seriesType`, `status`, `reason`, `value`, `official`, `model`, and
+  `estimateVersion`; the display note is `2016年以前は接続推計。公式遡及値ではない`
+  only for `estimated_adjusted`, `公式調整値` only for
+  `official_adjusted`/official values, and `利用不可: <reason>` for
+  `unavailable`.
+- **WHEN** a Plan39-v2 row is `unavailable` or has a non-available status,
+  **THEN** every public category measurement has `value: null`,
+  `seriesType: unavailable`, a non-empty reason, and `official: false`; it is
+  never labeled or annotated as an official adjusted value, and CSV value cells
+  remain empty while the status/seriesType/reason metadata columns are kept.
+- **WHEN** the legacy consumption-level index is requested, **THEN** it is
+  sourced only from the validated official annual artifact and its declared
+  annual basis; unsupported monthly aggregation or an otherwise ungrounded
+  monthly fallback is rejected and fails closed.
+- **WHEN** an audit artifact is serialized, **THEN** the result is JSON-safe
+  and preserves validation outcome, source metadata, hashes, status, reasons,
+  holdout boundaries, and model diagnostics without exposing non-serializable
+  values or secrets.
+- **WHEN** rollback is requested, **THEN** snapshot, metadata, manifest, and
+  hash validation is read-only by default; restoration requires an explicit
+  force condition and never fetches, synthesizes, interpolates, or silently
+  replaces an artifact.
+
+### Final Plan39 audit synchronization (period-unified)
+
+The initial verdict and publication result recorded in this subsection are
+`superseded/旧状態` diagnostic history. They are retained for audit traceability
+and are separate from the current Plan39-v2 publication decision below.
+
+The final audit artifact is
+`results/plan39/plan39-analysis-20c80ddac60344d0.json` with
+`analysisFingerprint=sha256:d036e3fb1188eb8051da7ab099da28c3ee8369c39fe065f11a7f00943694c867`
+and `inputFingerprint=sha256:20c80ddac60344d0a07eb7334d016b8ebf7c5d795f4c38fb60ea32941edc8030`.
+Production/backtest calibration is `2018..2025`; target/holdout is `2017`,
+which is excluded from calibration. Beta has nine categories and eight finite
+observations per category; backtest passes with no leakage.
+
+Sensitivity compares `baseline_2018_2025` with `alternative_2018_2024`, both
+using `L=official_annual`; `calendar_average` is not adopted. Beta/D difference
+checks pass, but estimate coverage is 7/12 years (2005, 2006, 2007, 2008, 2009,
+2010, 2012). The other five years (2011, 2013, 2014, 2015, 2016) are
+`residual_jump_threshold_exceeded`; this is retained as non-blocking
+sensitivity information. The 2016→2017 residual boundary passes:
+absolute `0.7122004367`, relative `0.0429351967`, threshold `1.4`,
+`exceeded=false`. The superseded overall verdict was `insufficient-data` and
+`accepted=false` because the mandatory threshold redesign,
+rolling/leave-one-year-out backtest, Other/beta stability, 2017 connection,
+and comprehensive re-audit are not complete.
+
+In that superseded state, publication was a fail-closed gate on the overall verdict. The result was
+`publication.globallyPublishable=false` with
+`blockingReason=overall_verdict_not_accepted`. Audit-only `candidateRows` (7)
+are separate from the public estimated rows; `estimatedRows=0`. Only the
+estimated rows for 2005–2016 are `null`/`unavailable` under this unaccepted
+overall verdict, while the official 2017–2025 publication rows are retained
+with official A as `official_adjusted`/`available`.
+
+The residual jump threshold MUST NOT be changed merely to hide an exceeded
+year; threshold redesign was a mandatory audit task in that superseded state
+and is complete for the current v2 route.
+Inputs, category mapping, units, and definitions must be rechecked instead.
+The old overall verdict was `insufficient-data` and `accepted=false` until
+the mandatory Other/bottom-up stability, 2017 connection,
+rolling/leave-one-year-out backtests, input reconciliation, threshold
+redesign, and accepted publication conditions were complete. The 7/12
+sensitivity coverage is retained as non-blocking audit information; it is not
+by itself a publication gate. G is an external audit benchmark and is not a
+standalone stop condition. L remains limited to official 1981–2018 data with
+no 2019+ extrapolation or interpolation. Optional audit strengthening may
+expand gamma comparisons and design G thresholds.
+
+#### Final Plan39 scenarios
+
+### Plan39-v2 public route
+
+The Plan39 section displayed by `src/app/page.tsx` uses the server-only
+`loadCtiAdjustedV2Estimate` loader and `projectCtiAdjustedV2PublicView`. The
+loader consumes the manifest-validated B/A/L inputs and builds the v2 result;
+the legacy loader and `projectCtiAdjustedPublicView` remain available for v1
+consumers. The v2 result is adapted to the existing
+`CtiAdjustedDisplayRow`/measurement keys before it reaches the client chart.
+
+Runtime publication and analysis use the same publication gate. The runtime
+may adopt rolling/leave-one-out evidence only when the analysis artifact has
+the required gate schema and its input fingerprint matches the runtime
+inputs. `CTI_ADJUSTED_ANALYSIS_FILE` selects one explicit analysis artifact;
+otherwise `CTI_ADJUSTED_ANALYSIS_ROOT` selects the analysis directory, whose
+matching `plan39-analysis-*.json` artifact is resolved under the normal
+`results/plan39` default. An old schema, missing evidence, or a fingerprint
+mismatch fails closed and preserves `unavailable` estimated rows.
+
+#### Requirements
+
+- **WHEN** the v2 publication gate is rejected, **THEN** all twelve
+  2005–2016 estimated rows are `null`/`unavailable` with the gate reason, and
+  official A rows from 2017 onward remain available.
+- **WHEN** the v2 publication gate is accepted, **THEN** all twelve
+  2005–2016 rows are available and marked `estimated_adjusted`, while 2017+
+  rows remain `official_adjusted` and official.
+- **WHEN** the page adapter maps v2 rows, **THEN** chart, table, tooltip, and
+  CSV use the same adapted measurement value and metadata, including
+  `model=v2-bottom-up`, `estimateVersion=plan39-v2`, status, reason, and
+  official/estimated provenance; an unavailable measurement remains
+  `unavailable` and does not receive an official note or source.
+- **WHEN** a v1 consumer requests the legacy route, **THEN** its loader,
+  projection, and public API remain unchanged.
+
+- **WHEN** production, backtest, or training calibration is recorded,
+  **THEN** its period is 2018–2025; sensitivity baseline calibration is also
+  2018–2025, while sensitivity alternative calibration is 2018–2024. The
+  target/holdout is 2017, excluded from calibration, and `leakage=false`.
+- **WHEN** a mandatory Other/bottom-up, 2017 connection, rolling/LOO
+  backtest, input-reconciliation, or threshold audit is incomplete or fails,
+  **THEN** a future evaluation is `insufficient-data`, `accepted=false`, and
+  no estimated row is public. Sensitivity coverage and G are retained for
+  audit and do not independently determine the gate; the current mandatory
+  checks all pass.
+- **WHEN** the residual boundary has `exceeded=false` under threshold `1.4`,
+  **THEN** it is retained as a passing audit result and remains non-blocking
+  alongside the current gamma, L, G, and residual warnings.
+- **WHEN** the current v2 publication gate is evaluated, **THEN** it has
+  `accepted=true`, `blocking=[]`, `publication.globallyPublishable=true`,
+  and `estimatedRows=12`; all 2005–2016 estimates are available while
+  official 2017–2025 rows remain official.
+- **WHEN** the v2 loader and UI projection are connected, **THEN** chart,
+  table, tooltip, and CSV use the same projected values and metadata.
+- **WHEN** runtime publication evaluates rolling/LOO evidence from an analysis
+  artifact, **THEN** it uses the same publication gate as analysis and requires
+  the current evidence schema plus an identical input fingerprint; old schema,
+  missing evidence, or mismatch yields `unavailable` estimated rows and does
+  not publish estimates.
+- **WHEN** `CTI_ADJUSTED_ANALYSIS_FILE` is set, **THEN** that explicit file is
+  resolved first; **WHEN** it is unset and `CTI_ADJUSTED_ANALYSIS_ROOT` is set,
+  **THEN** matching analysis artifacts are resolved from that root; otherwise
+  the default root is `results/plan39`. Any selected artifact that fails the
+  schema or fingerprint contract keeps the public gate closed.
+- **WHEN** optional audit strengthening is considered, **THEN** it may expand
+  gamma comparisons, G thresholds, or warning wording only; no mandatory task
+  remains, and L has no 2019+ extrapolation.
+
 ## Purpose
 
 A dashboard application to visualize and track Japanese economic indicators — CPI (Consumer Price Index), CTI (Consumption Trend Index micro), wage statistics, and population trends. CPI selects its complete validated 2025-base set when available. CTI 2025 candidates are selectable only after the official map and snapshot pass official-row-level matching. GDP comparison readiness is assessed independently from CTI: verified nominal and real annual artifacts must cover every year from 1994 through 2025 and pass metadata, CSV, and normalization-JSON hash checks. Successful validation generates separate raw and comparison values; comparison-only normalization never overwrites official source values, and incomplete validation fails closed.
@@ -2280,3 +2649,158 @@ These regression requirements do not add requirements for a new `popstate` liste
   **THEN** graph lines, legend entries, tooltip rows, table columns, CSV columns, labels, colors, and numeric order are projected from the same ordered registry; advanced off exposes the normal CTI key and advanced on additionally exposes the extension key.
 - **AND** the extension entry remains `advanced: true`, while the normal CTI entry remains visible without the advanced flag.
 - **AND** the registry contains neither `CTIミクロ四半期系列（名目）` nor GDP raw/comparison keys; the quarterly CTI key is verified only by the Plan38 nominal spending contract.
+
+## 期間統一方針（Plan39同期）
+
+## Plan39-v2 公開層
+
+### Data Sources
+
+Plan39-v2 consumes the validated B/A/L annual artifacts and the
+`CtiAdjustedV2Result` produced by `server/lib/ctiAdjustedConnectionEstimateV2.ts`
+(model `v2-bottom-up`, estimateVersion `plan39-v2`). Major categories are
+calculated first and `その他の消費支出` is derived as the explicit Other
+category; the v1 diagnostic `残差` key is not an input to the v2 public
+registry. The external L annual benchmark is retained as a validation and
+diagnostic input only through its official 1981–2018 annual coverage. L is not
+extrapolated or interpolated after 2018; 2019 onward remains missing.
+Calibration is fixed to 2018–2025, with 2017 as the holdout/connection year;
+2017 is never used for learning. Rolling validation has 5 folds and
+leave-one-year-out (LOO) validation has 8 folds; every fold is finite and
+leakage-free, with model MAE `0.2272221271` versus baseline MAE
+`1.1815238095` for rolling and model MAE `0.2260979458` versus baseline MAE
+`0.9428571429` for LOO.
+
+The implemented v2 core includes Other derivation and `β_other`, 2005–2016
+bottom-up estimation, official A retention from 2017 onward, residual
+diagnostics, G and boundary diagnostics, the five fixed γ comparison cases,
+and input validation. The v2 sensitivity path is connected to
+`scripts/plan39/run-analysis.mjs`, and the latest analysis artifact contains a
+v2 section. In that artifact, Other/bottom-up coverage is 12/12 for
+2005–2016, `β_other=1.3004657346511044`, γ has five evaluated cases, G
+coverage is 2/3 for 2005–2018, and the 2016→2017 boundary is available with
+`absoluteDifference=0.7122004366712389`. The threshold is the maximum
+official-A 2017–2025 Other year-over-year difference, `1.4`; the generated
+bottom-up path covers 2005–2016, connects through 2016→2017, and all official
+A years from 2017 onward pass. These results satisfy the publication audit;
+γ, L, G, and residual outputs remain warning-level diagnostics.
+
+### Data Flow
+
+`CtiAdjustedV2Result` → model/version-aware v2 public projection → separate
+v2 key registry → chart/tooltip/table/CSV. The v1 registry and projection keep
+`CTIミクロ調整系列（残差）` and its existing category/display contract.
+The v2 registry maps the same `その他の消費支出` measurement to the public
+key `CTIミクロ調整系列（その他の消費支出）` on every public surface.
+When `publicationGate.status === "pass" && accepted === true`, finite bottom-up
+estimates are published. Otherwise estimated rows are `unavailable`, null,
+and reasoned (`overall_verdict_not_accepted`); `accepted=false` means the
+estimated publication is incomplete. The current gate is `status="pass"`,
+`accepted=true`, with `blockingReasonCodes=[]`, so finite generated
+2005–2016 estimates are publishable. Official A observations from 2017 onward
+remain official and are never overwritten by the gate.
+
+### Data Model
+
+Each v2 public row carries `year`, `model`, `estimateVersion`, `status`, and
+`reason`. Each v2 measurement carries `year`, `category`, `value`, `source`,
+`status`, `reason`, `model`, and `estimateVersion`, with the public key and
+official/estimated provenance. The v2 category set contains Other and does not
+contain the v1 residual diagnostic category. Residual diagnostics remain
+internal/audit-only and are not mixed into the v2 public measurement map.
+`CtiAdjustedV2Result.publicationGate` uses `status: CtiAdjustedV2Status | "pass"`
+and `accepted: boolean`. The current implementation has `status="pass"`,
+`accepted=true`, and `blockingReasonCodes=[]`; the type continues to represent
+the fail-closed state for future invalid or incomplete audits.
+
+### Component Tree
+
+`B/A/L artifacts` → `v2 bottom-up calculation` → `CtiAdjustedV2Result` →
+`projectCtiAdjustedV2PublicView` → v2 registry → chart/tooltip/table/CSV.
+The v1 `projectCtiAdjustedPublicView` and registry remain a separate branch.
+
+The current artifact has `publicationGate.accepted=true`,
+`blockingReasonCodes=[]`, and no mandatory remaining tasks. Threshold,
+rolling/LOO, Other/β stability, and the 2017 connection audit are complete.
+Residual remains a warning-only diagnostic; G remains an external audit
+benchmark and is not a standalone publication stop condition. The five γ cases
+are sensitivity analysis only and non-blocking. L is missing from 2019 onward
+and is not extrapolated or interpolated. The v1 contract remains unchanged,
+including its residual key; v2 Other uses a separate key and is not treated as
+v1 residual.
+
+There are no mandatory remaining tasks. Optional audit strengthening is limited
+to expanded γ comparison, G threshold consideration, and warning wording;
+none may independently authorize or block publication.
+
+### Requirements
+
+- **WHEN** the v2 public registry is created, **THEN** it contains
+  `CTIミクロ調整系列（その他の消費支出）`, while the v1 registry retains
+  `CTIミクロ調整系列（残差）` and its category/display array is unchanged.
+- **WHEN** v2 Other is derived, **THEN** the derivation is bottom-up from total
+  minus the major categories and is published as Other, never as v1 residual.
+- **WHEN** the external L benchmark is used, **THEN** it is an external
+  validation/diagnostic benchmark through 2018 only; it is not extrapolated
+  or interpolated for 2019 onward and cannot by itself authorize publication.
+- **WHEN** γ cases are compared, **THEN** they are recorded as non-blocking
+  sensitivity analysis and γ is not fixed as a production parameter.
+- **WHEN** G is evaluated, **THEN** it is recorded as an external audit
+  benchmark and is not used as a standalone public stop condition.
+- **WHEN** model calibration is performed, **THEN** calibration is fixed to
+  2018–2025, 2017 is a holdout/connection year, and residual diagnostics are
+  separate from public measurements.
+- **WHEN** `publicationGate.status === "pass" && accepted === true`, **THEN**
+  finite v2 estimates may be `estimated_adjusted`; **WHEN** either condition
+  fails, **THEN** estimated values are null/unavailable with a reason and are
+  not publicly emitted.
+- **WHEN** an official A value from 2017 onward exists, **THEN** its value and
+  official status are retained regardless of the estimated publication gate.
+- **WHEN** chart, tooltip, table, or CSV renders v2 Other, **THEN** all surfaces
+  resolve the same v2 key, measurement, model/version, source, year, value,
+  status, and reason; v1 mapping is not reused.
+- **WHEN** the Plan39 annual table renders a measurement, **THEN** the cell
+  displays `推計`, `公式`, or `利用不可` from that measurement's
+  `seriesType`/provenance, without deriving the label from a hard-coded year.
+- **WHEN** Plan39 public data contains an official measurement, **THEN** the
+  chart/table context displays the first official year detected from the data
+  as the estimate-to-official boundary; **WHEN** no official measurement is
+  present, **THEN** it states that no official adjusted value is available.
+- **WHEN** the Plan39 CSV is offered for download, **THEN** the surrounding
+  UI states that per-series value-type metadata is included, and the CSV
+  retains the machine-readable `seriesType` columns for each series.
+- **WHEN** the latest v2 artifact is inspected, **THEN** its 12/12 Other and
+  bottom-up estimate coverage for 2005–2016, five γ cases, β_other,
+  2005–2018 G coverage, boundary result, publication gate, reason codes, and
+  finite published estimate rows are retained as audit evidence; **THEN** the
+  pass gate has `accepted=true`, `blockingReasonCodes=[]`, and the estimate is
+  publicly publishable.
+- **WHEN** v2 publication is evaluated, **THEN** threshold redesign,
+  rolling/leave-one-year-out backtests, Other/β stability, and the 2017
+  connection re-audit are the primary mandatory gate and all pass. γ
+  full-period sensitivity, G threshold design, and warning wording are optional
+  audit strengthening; neither they nor L/residual warnings are standalone
+  publication stop conditions.
+
+### Data Flow
+
+production/base calibration は 2018–2025 とし、target/holdout 2017 は calibration から除外する。sensitivity は baseline（2018–2025）と alternative（2018–2024）を、target/holdout 2017・同一 L ルール（`official_annual`）で期間だけ比較する。月次 L artifact がないため `calendar_year_average` は使用しない。期間、対象年、除外年、入力 coverage、leakage 判定を audit に保存し、必須項目の不足時は `insufficient-data` として fail-closed にする。
+
+### Requirements
+
+- production/base calibration は 2018–2025 でなければならない。
+- sensitivity の calibration は baseline 2018–2025 と alternative 2018–2024 に分け、target/holdout 2017 をいずれの calibration にも含めてはならない。
+- sensitivity の比較は baseline 2018–2025 と alternative 2018–2024 を、target/holdout 2017・同一 L ルールで行わなければならない。
+- L は `official_annual` のみを使用し、`calendar_year_average` を採用してはならない。
+- audit には期間、対象年、除外年、入力 coverage、leakage 判定を保存し、不足時は `insufficient-data` として fail-closed にしなければならない。
+- threshold、rolling／leave-one-year-out backtest、Other/β安定性、2017接続再監査はpass済みである。gamma比較の拡張、G閾値検討、warning文言は任意監査強化であり、単独の公開停止条件にしない。
+- threshold指標は公式A 2017–2025のOther前年差最大値 `1.4` とし、判定は `abs(delta)>1.4`、epsilonは `1e-9` とする。2017年は学習に使わないholdout／接続年である。
+
+### WHEN-THEN
+
+- WHEN production/base または backtest を実行する THEN calibration は 2018–2025、target/holdout は 2017 とし、2017 を calibration から除外する。
+- WHEN sensitivity の比較を実行する THEN baseline 2018–2025 と alternative 2018–2024 を、target/holdout 2017・同一 L ルールで比較する。
+- WHEN L を解決する THEN `official_annual` のみを使用し、月次 L artifact がないため `calendar_year_average` は選択しない。
+- WHEN audit を確定する THEN 期間、対象年、除外年、入力 coverage、leakage 判定を保存し、いずれかが不足していれば `insufficient-data` として fail-closed にする。
+- WHEN threshold再設計、rolling／leave-one-year-out backtest、Other/β安定性、2017接続再監査のいずれかが未監査または不合格である THEN 公開を拒否し、`accepted=false` の理由は当該必須課題に限定する。現行実装ではこれらはすべてpass済みである。
+- WHEN 必須監査がすべてpassし、`accepted=true` の公開条件を満たす THEN 公開可能状態へ進める。gamma全期間sensitivityまたはG閾値監査の未実施・結果だけでは公開可否を決めない。

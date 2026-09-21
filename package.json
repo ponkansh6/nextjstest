@@ -25,6 +25,8 @@
     "test:e2e:fresh": "pnpm build && pnpm test:e2e",
     "test:hook-smoke": "node scripts/hook-smoke.mjs",
     "audit:validation-detection": "node scripts/audit-validation-detection.mjs",
+    "plan39:analysis": "tsx scripts/plan39/run-analysis.mjs",
+    "plan39:evaluate-residual-naturalness": "node scripts/plan39/evaluate-residual-naturalness.mjs",
     "test:all": "vitest run",
     "lighthouse:mobile": "node scripts/lighthouse-mobile.js",
     "lint": "eslint --cache",

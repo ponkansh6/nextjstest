@@ -2,6 +2,7 @@
 
 import React from "react";
 import type { CustomTooltipProps } from "@/types/chart";
+import { getMeasurementNote } from "@/types/chart";
 import type { SeriesMeasurement } from "@/types/chart";
 import styles from "./CpiChart.module.css";
 
@@ -12,8 +13,10 @@ type TooltipDisplayPayload = NonNullable<CustomTooltipProps["payload"]>[number] 
   valueType?: "raw" | "comparison";
   frequency?: string;
   aggregation?: string;
-  status?: string;
+  status?: "valid" | "invalid" | "unavailable" | "available";
   reason?: string | null;
+  seriesType?: "estimated_adjusted" | "official_adjusted" | "unavailable";
+  official?: boolean;
 };
 
 const unavailableMeasurement = {
@@ -24,12 +27,22 @@ const unavailableMeasurement = {
   aggregation: "",
   status: "invalid",
   reason: "unavailable",
+  seriesType: "unavailable",
+  official: false,
 } as const;
 
 type TooltipMeasurement = Partial<
   Pick<
     SeriesMeasurement,
-    "unit" | "source" | "valueType" | "frequency" | "aggregation" | "status" | "reason"
+    | "unit"
+    | "source"
+    | "valueType"
+    | "frequency"
+    | "aggregation"
+    | "status"
+    | "reason"
+    | "seriesType"
+    | "official"
   >
 >;
 
@@ -100,15 +113,24 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
                 rowMeasurements && typeof rowMeasurements === "object"
                   ? (rowMeasurements as Record<string, unknown>)[meta.key]
                   : undefined;
-              const measurement: TooltipMeasurement =
-                row && typeof row === "object"
-                  ? rowMeasurement && typeof rowMeasurement === "object"
-                    ? (rowMeasurement as Partial<TooltipMeasurement>)
-                    : unavailableMeasurement
+              const hasRowMeasurements = Boolean(
+                rowMeasurements && typeof rowMeasurements === "object",
+              );
+              const measurement: TooltipMeasurement = hasRowMeasurements
+                ? rowMeasurement && typeof rowMeasurement === "object"
+                  ? (rowMeasurement as Partial<TooltipMeasurement>)
+                  : unavailableMeasurement
+                : row && typeof row === "object"
+                  ? unavailableMeasurement
                   : (meta as TooltipMeasurement);
+              const unavailable =
+                hasRowMeasurements &&
+                (measurement.seriesType === "unavailable" ||
+                  measurement.status === "invalid" ||
+                  measurement.status === "unavailable");
               return {
                 name: meta.label,
-                value: entry?.value,
+                value: unavailable ? null : entry?.value,
                 color: meta.color ?? entry?.color,
                 dataKey: meta.key,
                 order: meta.order,
@@ -119,6 +141,8 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
                 aggregation: measurement.aggregation,
                 status: measurement.status,
                 reason: measurement.reason,
+                seriesType: measurement.seriesType,
+                official: measurement.official,
               };
             }),
           ...(canIncludeUnmappedPayload
@@ -292,76 +316,97 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
             <span>{totalFormatter ? totalFormatter(total) : total.toFixed(2)}</span>
           </div>
         )}
-        {topPayload.map((entry, index) => (
-          <div
-            key={`item-${index}`}
-            className={index === separatorIndex ? styles.tooltipGroupSeparator : undefined}
-            data-tooltip-row="true"
-            data-tooltip-key={entry.dataKey}
-            data-tooltip-label={entry.name}
-            data-tooltip-unit={entry.unit}
-            data-tooltip-source={entry.source}
-            data-tooltip-value-type={entry.valueType}
-            data-tooltip-frequency={entry.frequency ?? ""}
-            data-tooltip-aggregation={entry.aggregation}
-            data-tooltip-status={entry.status}
-            data-tooltip-reason={entry.reason ?? ""}
-            data-tooltip-color={entry.color}
-            data-tooltip-order={entry.order ?? index}
-            data-tooltip-group-separator={index === separatorIndex ? "true" : undefined}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              fontSize: fontSize,
-              margin: "1px 0",
-              color: tooltipText,
-              justifyContent: "space-between",
-            }}
-          >
-            {entry.color && (
+        {topPayload.map((entry, index) => {
+          const measurementNote = getMeasurementNote({
+            seriesType: entry.seriesType,
+            official: entry.official,
+            status: entry.status ?? "valid",
+            reason: entry.reason,
+          });
+          return (
+            <div
+              key={`item-${index}`}
+              className={index === separatorIndex ? styles.tooltipGroupSeparator : undefined}
+              data-tooltip-row="true"
+              data-tooltip-key={entry.dataKey}
+              data-tooltip-label={entry.name}
+              data-tooltip-unit={entry.unit}
+              data-tooltip-source={entry.source}
+              data-tooltip-value-type={entry.valueType}
+              data-tooltip-frequency={entry.frequency ?? ""}
+              data-tooltip-aggregation={entry.aggregation}
+              data-tooltip-status={entry.status}
+              data-tooltip-reason={entry.reason ?? ""}
+              data-tooltip-series-type={entry.seriesType}
+              data-tooltip-official={
+                entry.official === undefined ? undefined : String(entry.official)
+              }
+              data-tooltip-note={measurementNote ?? ""}
+              data-tooltip-color={entry.color}
+              data-tooltip-order={entry.order ?? index}
+              data-tooltip-group-separator={index === separatorIndex ? "true" : undefined}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                fontSize: fontSize,
+                margin: "1px 0",
+                color: tooltipText,
+                justifyContent: "space-between",
+              }}
+            >
+              {entry.color && (
+                <span
+                  data-tooltip-color={entry.color}
+                  style={{
+                    display: "inline-block",
+                    width: "8px",
+                    height: "8px",
+                    borderRadius: "50%",
+                    backgroundColor: entry.color,
+                    flexShrink: 0,
+                  }}
+                />
+              )}
               <span
-                data-tooltip-color={entry.color}
                 style={{
-                  display: "inline-block",
-                  width: "8px",
-                  height: "8px",
-                  borderRadius: "50%",
-                  backgroundColor: entry.color,
-                  flexShrink: 0,
+                  minWidth: 0,
+                  flex: "1 1 auto",
+                  overflowWrap: "anywhere",
+                  wordBreak: "normal",
                 }}
-              />
-            )}
-            <span
-              style={{
-                minWidth: 0,
-                flex: "1 1 auto",
-                overflowWrap: "anywhere",
-                wordBreak: "normal",
-              }}
-            >
-              {entry.name}
-            </span>
-            <span
-              style={{
-                flexShrink: 0,
-                marginLeft: "auto",
-                textAlign: "right",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {valueFormatter
-                ? valueFormatter(entry.value)
-                : entry.value == null
-                  ? "—"
-                  : typeof entry.value === "number"
-                    ? Number.isFinite(entry.value)
-                      ? entry.value.toFixed(2)
-                      : "—"
-                    : entry.value}
-            </span>
-          </div>
-        ))}
+              >
+                {entry.name}
+                {measurementNote && (
+                  <small
+                    data-tooltip-measurement-note="true"
+                    style={{ display: "block", opacity: 0.78, fontSize: "0.82em" }}
+                  >
+                    {measurementNote}
+                  </small>
+                )}
+              </span>
+              <span
+                style={{
+                  flexShrink: 0,
+                  marginLeft: "auto",
+                  textAlign: "right",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {valueFormatter
+                  ? valueFormatter(entry.value)
+                  : entry.value == null
+                    ? "—"
+                    : typeof entry.value === "number"
+                      ? Number.isFinite(entry.value)
+                        ? entry.value.toFixed(2)
+                        : "—"
+                      : entry.value}
+              </span>
+            </div>
+          );
+        })}
         {remainingPayloadCount > 0 && (
           <div
             aria-label="その他の項目を省略"

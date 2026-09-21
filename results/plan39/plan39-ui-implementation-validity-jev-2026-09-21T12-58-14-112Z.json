@@ -1,0 +1,169 @@
+{
+  "request": {
+    "model": "jev-latest",
+    "state": {
+      "background": {
+        "target": "Final Plan39 UI implementation after additional audit and regression fixes",
+        "evaluationScope": "plan39_ui_implementation_validity",
+        "implementation": {
+          "files": [
+            "src/app/components/CtiAdjustedSeriesSection.tsx",
+            "src/app/components/CustomTooltip.tsx",
+            "src/app/components/ChartDataContract.tsx",
+            "src/app/components/DataTablesSection.tsx",
+            "src/lib/chartConstants.ts",
+            "src/lib/csvExport.ts",
+            "server/lib/dataLoader.ts",
+            "openspec/specs/nextjstest/spec.md"
+          ],
+          "changes": [
+            "11 CTI series use distinct established palette colors.",
+            "Table cells render measurement-derived 推計/公式/利用不可 labels.",
+            "First official year is detected from provenance and shown as the boundary.",
+            "CSV context documents and export retains __seriesType and __official metadata.",
+            "Tooltip/table/chart/CSV keep shared measurements; legacy rows preserve prior values and metadata semantics.",
+            "Plan39 loader exports and facade test expectation are synchronized."
+          ]
+        },
+        "evidence": {
+          "analysis": "Plan39 analysis and --check passed; rolling/LOO, 2017 holdout, 2016→2017 absoluteDifference=0.7122004366712389 below threshold 1.4, five gamma cases, input/hash checks, publicationGate.accepted=true.",
+          "build": "pnpm build passed: webpack compile, TypeScript, static generation.",
+          "tests": "Full Vitest suite passed: 73 files, 682 tests passed, 4 skipped.",
+          "browser": {
+            "uniqueStrokes": 11,
+            "boundary": "データ上の公式調整値は2017年から（推計から公式への境界）。",
+            "hasEstimated": true,
+            "hasOfficial": true,
+            "csvHasSeriesType": true,
+            "csvHasOfficial": true,
+            "csvRows": 22,
+            "pageErrors": []
+          }
+        },
+        "constraints": [
+          "2016 and earlier are connection estimates, not official retroactive values.",
+          "2017 onward official A values are retained; L benchmark is diagnostic only and missing after 2018.",
+          "The UI does not split a single line into different dash patterns; provenance is explicit in table, boundary note, tooltip metadata, and CSV."
+        ]
+      },
+      "evaluationScope": "plan39_ui_implementation_validity",
+      "outputRequirement": "For every question return a valid choice, probabilities for all four choices, confidence, concise rationale, evidence references, limitations, and concrete follow-up if limited."
+    },
+    "questions": {
+      "dataProvenance": {
+        "type": "choice",
+        "instructions": "Does the implementation correctly present 2005–2016 as estimates and 2017 onward as official based on measurement provenance, with a data-detected boundary and no hard-coded provenance inference?",
+        "criteria": {
+          "valid_as_defined": "The implementation, specification, full test suite, build, browser evidence, and CSV evidence establish that the stated Plan39 UI contract is correctly implemented and consistent across chart/table/tooltip/CSV.",
+          "valid_but_limited": "The implementation is substantially correct but a disclosed non-blocking limitation or residual visual/accessibility issue remains.",
+          "not_valid": "The implementation contradicts the stated provenance contract, loses or changes values/metadata between surfaces, or has a blocking runtime/build/test failure in the changed path.",
+          "indeterminate": "The evidence is insufficient to judge the changed behavior."
+        }
+      },
+      "surfaceConsistency": {
+        "type": "choice",
+        "instructions": "Are chart colors, table labels, tooltip metadata, and CSV values/type metadata consistent with the same public measurements?",
+        "criteria": {
+          "valid_as_defined": "The implementation, specification, full test suite, build, browser evidence, and CSV evidence establish that the stated Plan39 UI contract is correctly implemented and consistent across chart/table/tooltip/CSV.",
+          "valid_but_limited": "The implementation is substantially correct but a disclosed non-blocking limitation or residual visual/accessibility issue remains.",
+          "not_valid": "The implementation contradicts the stated provenance contract, loses or changes values/metadata between surfaces, or has a blocking runtime/build/test failure in the changed path.",
+          "indeterminate": "The evidence is insufficient to judge the changed behavior."
+        }
+      },
+      "userFlow": {
+        "type": "choice",
+        "instructions": "Can a user view the graph, understand the estimate/official boundary, open the table, distinguish values, and download a CSV with type metadata?",
+        "criteria": {
+          "valid_as_defined": "The implementation, specification, full test suite, build, browser evidence, and CSV evidence establish that the stated Plan39 UI contract is correctly implemented and consistent across chart/table/tooltip/CSV.",
+          "valid_but_limited": "The implementation is substantially correct but a disclosed non-blocking limitation or residual visual/accessibility issue remains.",
+          "not_valid": "The implementation contradicts the stated provenance contract, loses or changes values/metadata between surfaces, or has a blocking runtime/build/test failure in the changed path.",
+          "indeterminate": "The evidence is insufficient to judge the changed behavior."
+        }
+      },
+      "implementationEvidence": {
+        "type": "choice",
+        "instructions": "Do the changed files, full build, full test suite, browser evidence, and analysis audit sufficiently prove the implementation is correct?",
+        "criteria": {
+          "valid_as_defined": "The implementation, specification, full test suite, build, browser evidence, and CSV evidence establish that the stated Plan39 UI contract is correctly implemented and consistent across chart/table/tooltip/CSV.",
+          "valid_but_limited": "The implementation is substantially correct but a disclosed non-blocking limitation or residual visual/accessibility issue remains.",
+          "not_valid": "The implementation contradicts the stated provenance contract, loses or changes values/metadata between surfaces, or has a blocking runtime/build/test failure in the changed path.",
+          "indeterminate": "The evidence is insufficient to judge the changed behavior."
+        }
+      },
+      "regressionSafety": {
+        "type": "choice",
+        "instructions": "Does the full build and full test suite provide evidence that the implementation is safe for the existing application, with no blocking regression?",
+        "criteria": {
+          "valid_as_defined": "The implementation, specification, full test suite, build, browser evidence, and CSV evidence establish that the stated Plan39 UI contract is correctly implemented and consistent across chart/table/tooltip/CSV.",
+          "valid_but_limited": "The implementation is substantially correct but a disclosed non-blocking limitation or residual visual/accessibility issue remains.",
+          "not_valid": "The implementation contradicts the stated provenance contract, loses or changes values/metadata between surfaces, or has a blocking runtime/build/test failure in the changed path.",
+          "indeterminate": "The evidence is insufficient to judge the changed behavior."
+        }
+      }
+    }
+  },
+  "response": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "dataProvenance": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.92,
+        "probabilities": {
+          "not_valid": 0,
+          "valid_but_limited": 0.06,
+          "indeterminate": 0,
+          "valid_as_defined": 0.94
+        }
+      },
+      "surfaceConsistency": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.97,
+        "probabilities": {
+          "not_valid": 0,
+          "valid_but_limited": 0.02,
+          "indeterminate": 0,
+          "valid_as_defined": 0.98
+        }
+      },
+      "userFlow": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.98,
+        "probabilities": {
+          "not_valid": 0,
+          "valid_but_limited": 0.02,
+          "indeterminate": 0,
+          "valid_as_defined": 0.98
+        }
+      },
+      "implementationEvidence": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.57,
+        "probabilities": {
+          "not_valid": 0,
+          "valid_but_limited": 0.31,
+          "indeterminate": 0.01,
+          "valid_as_defined": 0.68
+        }
+      },
+      "regressionSafety": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.89,
+        "probabilities": {
+          "not_valid": 0,
+          "valid_but_limited": 0.08,
+          "indeterminate": 0,
+          "valid_as_defined": 0.92
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": 1960,
+      "output_tokens": 285
+    }
+  }
+}

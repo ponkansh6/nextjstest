@@ -1,5 +1,6 @@
 import React from "react";
 import type { SeriesMetadata } from "../../lib/chartConstants";
+import { getMeasurementNote } from "../../types/chart";
 import type { SeriesMeasurement } from "../../types/chart";
 
 export interface ChartDataContractProps {
@@ -21,10 +22,17 @@ export function normalizePublicChartData(data: PublicChartRow[], keys: string[])
     const normalized = { ...row };
     for (const key of keys) {
       const value = row[key];
+      const measurements = row.measurements;
+      const measurement =
+        measurements && typeof measurements === "object"
+          ? asMeasurement((measurements as Record<string, unknown>)[key])
+          : undefined;
+      const isUnavailable =
+        measurement?.seriesType === "unavailable" || measurement?.status === "unavailable";
       normalized[key] =
-        typeof value === "number" && Number.isFinite(value)
+        !isUnavailable && typeof value === "number" && Number.isFinite(value)
           ? value
-          : typeof value === "string"
+          : !isUnavailable && typeof value === "string"
             ? value
             : null;
     }
@@ -84,6 +92,7 @@ export function ChartDataContract({
                   : descriptor
                     ? fallbackMeasurement
                     : undefined;
+              const note = measurement ? getMeasurementNote(measurement) : null;
               return (
                 <span
                   key={key}
@@ -99,6 +108,11 @@ export function ChartDataContract({
                   data-aggregation={measurement?.aggregation}
                   data-status={measurement?.status}
                   data-reason={measurement?.reason ?? ""}
+                  data-series-type={measurement?.seriesType}
+                  data-official={
+                    measurement?.official === undefined ? undefined : String(measurement.official)
+                  }
+                  data-measurement-note={note ?? ""}
                 />
               );
             })}

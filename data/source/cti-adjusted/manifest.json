@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "plan39-annual-v1",
+  "revision": "2026-09-20",
+  "statisticalCode": "00200567",
+  "artifacts": {
+    "B": {
+      "path": "B.json",
+      "sha256": "11236b7a7a7f38476b1185d461a9c21aa748e52bc01ba82b28851bdac7a2c227",
+      "statInfId": "000040499069",
+      "sourceUrl": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499069",
+      "status": "ready"
+    },
+    "A": {
+      "path": "A.json",
+      "sha256": "5c0979126fbf2de34745d366d1b9872b9b48c3024237b5405972dedaf618daff",
+      "statInfId": "000040499087",
+      "sourceUrl": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499087",
+      "status": "ready"
+    },
+    "L": {
+      "path": "L.json",
+      "sha256": "26902849c7d835a1dcf3db130384600d0f853907fac927e7942fb806e2eec076",
+      "statInfId": null,
+      "sourceUrl": "https://www.stat.go.jp/data/kakei/longtime/zuhyou/lev-jnb.xls",
+      "status": "ready"
+    }
+  },
+  "definitions": {
+    "B": "表1-1-1 基本系列 年平均・総世帯・2025年消費支出平均月額=100",
+    "A": "表2-1-1 調整系列 年平均・総世帯・2025年消費支出平均月額=100",
+    "L": "消費水準指数（世帯人員及び世帯主の年齢分布調整済）二人以上の世帯・原指数年平均"
+  }
+}
