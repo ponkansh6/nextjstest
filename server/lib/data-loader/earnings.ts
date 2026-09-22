@@ -39,7 +39,7 @@ function comparisonAverageForYear(
 ): number | undefined {
   const values = [...map.entries()]
     .filter(([ym]) => ym.startsWith(yearPrefix))
-    .map(([_, value]) => value);
+    .map(([, value]) => value);
   return values.length === 12 && values.every((value) => Number.isFinite(value) && value !== 0)
     ? values.reduce((sum, value) => sum + value, 0) / 12
     : undefined;

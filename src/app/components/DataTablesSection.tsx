@@ -3,7 +3,11 @@ import styles from "./CpiChart.module.css";
 import { ChartExportButton } from "./ChartExportButton";
 import { normalizePublicChartData } from "./ChartDataContract";
 import { SUPPORT_SERIES_KEY_NOMINAL, type SeriesMetadata } from "../../lib/chartConstants";
-import type { SeriesMeasurement } from "../../types/chart";
+import {
+  createMissingSeriesMeasurement,
+  getMeasurementNote,
+  type SeriesMeasurement,
+} from "../../types/chart";
 
 export interface DataTableSpec {
   /** ジャンプ元グラフの sectionId(例: "section-cpi-major") */
@@ -34,19 +38,11 @@ export function DataTablesSection({ tables }: DataTablesSectionProps) {
     if (rowMeasurement && typeof rowMeasurement === "object")
       return rowMeasurement as SeriesMeasurement;
     const descriptor = metadata?.find((entry) => entry.key === key);
-    return descriptor && key === SUPPORT_SERIES_KEY_NOMINAL
-      ? ({
-          key,
-          label: key,
-          unit: "",
-          source: "",
-          valueType: "raw",
-          value: null,
-          status: "invalid",
-          reason: "unavailable",
-          frequency: "quarterly",
-          aggregation: "",
-        } satisfies SeriesMeasurement)
+    return descriptor &&
+      (key === SUPPORT_SERIES_KEY_NOMINAL ||
+        descriptor.estimateVersion === "plan39-v2" ||
+        key.startsWith("CTIミクロ調整系列（"))
+      ? createMissingSeriesMeasurement(key, descriptor)
       : undefined;
   };
 
@@ -96,14 +92,34 @@ export function DataTablesSection({ tables }: DataTablesSectionProps) {
                     <td>{rowLabel}</td>
                     {t.keys.map((k) => (
                       <td key={k} data-series-key={k}>
-                        {typeof d[k] === "number" ? (d[k] as number).toFixed(2) : "-"}
+                        {(() => {
+                          const measurement = getMeasurement(d, k, t.metadata);
+                          return measurement?.reason === "outside_period"
+                            ? "対象期間外"
+                            : typeof d[k] === "number"
+                              ? (d[k] as number).toFixed(2)
+                              : "-";
+                        })()}
                         {(() => {
                           const measurement = getMeasurement(d, k, t.metadata);
                           if (!measurement) return null;
                           return (
-                            <small data-measurement-metadata={k}>
+                            <small
+                              data-measurement-metadata={k}
+                              data-measurement-series-type={measurement.seriesType}
+                              data-measurement-official={
+                                measurement.official === undefined
+                                  ? undefined
+                                  : String(measurement.official)
+                              }
+                            >
                               <span data-measurement-value-type={measurement.valueType} />
-                              <br />
+                              {getMeasurementNote(measurement) && (
+                                <>
+                                  区分: {getMeasurementNote(measurement)}
+                                  <br />
+                                </>
+                              )}
                               単位: {measurement.unit || "-"}
                               <br />
                               出典: {measurement.source || "-"}

@@ -22,6 +22,8 @@ export type CtiAdjustedArtifactPaths = Partial<Record<"B" | "A" | "L", string>>;
 export type CtiAdjustedLoaderOptions = {
   artifactRoot?: string;
   paths?: CtiAdjustedArtifactPaths;
+  /** Select the annual estimate contract used by the caller. */
+  contract?: "plan39" | "plan40";
 };
 
 type CtiAdjustedArtifactMetadata = CtiAdjustedInputMetadata & {
@@ -360,7 +362,13 @@ export function loadCtiAdjustedV2Estimate(
   options: CtiAdjustedLoaderOptions = {},
 ): CtiAdjustedV2Result {
   const inputs = loadCtiAdjustedInputs(options);
-  const result = buildCtiAdjustedV2Estimate(inputs.B, inputs.A, inputs.L);
+  const result = buildCtiAdjustedV2Estimate(inputs.B, inputs.A, inputs.L, {
+    contract: options.contract ?? "plan39",
+  });
+  // Plan40 owns its input validation and annual/publication state. Its result
+  // must not be replaced by the Plan39 evidence gate, which is only a Plan39
+  // publication contract.
+  if (options.contract === "plan40") return result;
   const analysis = loadMatchingPlan39Analysis(inputs.artifactRoot);
   if (!analysis) return result;
   const gate = evaluateCtiAdjustedPublicationGate({

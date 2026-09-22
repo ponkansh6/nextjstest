@@ -26,6 +26,97 @@ const expectAttribute = (element: Element | null, name: string, value: string) =
 };
 
 describe("Plan38 public measurement metadata", () => {
+  it("renders Plan40 v2 boundary fallback as 対象期間外", () => {
+    const key = "CTIミクロ調整系列（食料）";
+    render(
+      <DataTablesSection
+        tables={[
+          {
+            chartSectionId: "plan40-boundary",
+            title: "Plan40",
+            data: [{ 年月: "2018Q1", [key]: null }],
+            keys: [key],
+            metadata: [
+              {
+                key,
+                label: "食料",
+                color: "#000",
+                unit: "指数",
+                source: "Plan40",
+                valueType: "comparison",
+                status: "available",
+                reason: null,
+                frequency: "quarterly",
+                aggregation: "derived",
+                estimateVersion: "plan39-v2",
+              },
+            ],
+          },
+        ]}
+      />,
+    );
+    const cell = screen
+      .getByTestId("data-table-plan40-boundary")
+      .querySelector("td[data-series-key]");
+    expect(cell?.textContent).toContain("対象期間外");
+    expect(cell?.textContent).toContain("状態: unavailable");
+    expect(cell?.textContent).toContain("理由: outside_period");
+  });
+
+  it("uses the same Plan40 v2 boundary fallback in the tooltip", () => {
+    const key = "CTIミクロ調整系列（食料）";
+    render(
+      <CustomTooltip
+        active
+        isMobile={false}
+        isTouch={false}
+        label="2018Q1"
+        payload={[
+          {
+            name: key,
+            dataKey: key,
+            value: null,
+            payload: {
+              [key]: null,
+              measurements: {
+                [key]: {
+                  key,
+                  label: "食料",
+                  value: null,
+                  unit: "指数",
+                  source: "Plan39",
+                  valueType: "comparison",
+                  status: "available",
+                  reason: null,
+                  frequency: "quarterly",
+                  aggregation: "derived",
+                  seriesType: "official_adjusted",
+                  estimateVersion: "plan39-v2",
+                },
+              },
+            },
+          },
+        ]}
+        seriesMeta={[
+          {
+            key,
+            label: "食料",
+            color: "#000",
+            estimateVersion: "plan39-v2",
+          },
+        ]}
+        showAllPayload
+        tooltipBg="#fff"
+        tooltipText="#000"
+      />,
+    );
+    const row = screen.getByText("食料").closest("[data-tooltip-row]");
+    expect(row?.getAttribute("data-tooltip-status")).toBe("unavailable");
+    expect(row?.getAttribute("data-tooltip-reason")).toBe("outside_period");
+    expect(row?.getAttribute("data-tooltip-source")).toBe("");
+    expect(row?.getAttribute("data-tooltip-note")).toBe("対象期間外");
+  });
+
   it("renders the row measurement metadata and invalid reason in the table", () => {
     render(
       <DataTablesSection

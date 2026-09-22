@@ -483,7 +483,7 @@ describe("Plan39 annual adjusted measurement parity", () => {
       undefined,
       { metadata: [estimatedMeasurement] },
     );
-    expect(csv).toContain("CTI調整系列__seriesType,CTI調整系列__official");
+    expect(csv).toContain("CTI調整系列__seriesType,CTI調整系列__official,CTI調整系列__value");
     expect(csv).toContain("estimated_adjusted,false,101.25");
     expect(csv).toContain("unavailable,false,,万円");
     expect(csv).not.toContain("2015,999");

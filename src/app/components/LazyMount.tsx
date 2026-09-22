@@ -39,7 +39,6 @@ export function LazyMount({
     if (forceMount) return;
     const el = ref.current;
     if (!el) return;
-    let observer: IntersectionObserver | undefined;
     let resizeObserver: ResizeObserver | undefined;
     const cleanup = () => {
       observer?.disconnect();
@@ -53,7 +52,7 @@ export function LazyMount({
         cleanup();
       }
     };
-    observer = new IntersectionObserver(() => checkReach(), { rootMargin: "200px 0px" });
+    const observer = new IntersectionObserver(() => checkReach(), { rootMargin: "200px 0px" });
     observer.observe(el);
     if (typeof ResizeObserver !== "undefined") {
       resizeObserver = new ResizeObserver(checkReach);

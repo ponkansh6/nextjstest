@@ -3,16 +3,11 @@ import {
   getCpiDataStatus,
   getCtiBasicConsumptionStatus,
   loadCpiData,
-  loadCtiAdjustedV2Estimate,
   loadTotalEarningData,
 } from "../../server/lib/dataLoader";
 import { toCpiView, toEarningsView } from "../../server/lib/view-models/dashboard";
 import { loadQuarterlyPublicData } from "../../server/lib/view-models/quarterlyProjection";
 import CpiChart from "./components/CpiChart";
-import {
-  CtiAdjustedSeriesSection,
-  type CtiAdjustedDisplayRow,
-} from "./components/CtiAdjustedSeriesSection";
 import styles from "./page.module.css";
 import {
   targetKeys,
@@ -20,13 +15,7 @@ import {
   CTI_BASIC_RAW_KEY,
   CTI_BASIC_COMPARISON_KEY,
   LEGACY_CTI_COMPARISON_KEY,
-  CTI_ADJUSTED_PUBLIC_CATEGORIES,
-  CTI_ADJUSTED_PUBLIC_KEY_BY_CATEGORY,
 } from "@/lib/chartConstants";
-import {
-  adaptCtiAdjustedV2PublicView,
-  projectCtiAdjustedV2PublicView,
-} from "@/lib/ctiAdjustedV2PublicProjection";
 
 export const revalidate = false;
 
@@ -131,24 +120,6 @@ export default async function Page() {
     maxCpiDate,
   } = await loadQuarterlyPublicData();
 
-  const ctiAdjustedRows = adaptCtiAdjustedV2PublicView(
-    projectCtiAdjustedV2PublicView(loadCtiAdjustedV2Estimate()),
-  );
-  const ctiAdjustedData: CtiAdjustedDisplayRow[] = ctiAdjustedRows.map((row) => {
-    return {
-      年: row.year,
-      年月: `${row.year}年`,
-      label: `${row.year}年`,
-      ...Object.fromEntries(
-        CTI_ADJUSTED_PUBLIC_CATEGORIES.map((category) => {
-          const key = CTI_ADJUSTED_PUBLIC_KEY_BY_CATEGORY[category];
-          return [key, row.measurements[key].value];
-        }),
-      ),
-      measurements: row.measurements,
-    };
-  });
-
   const cpiKeys = [...targetKeys, ...stackedKeys];
   const earningsKeys = [
     "年月",
@@ -214,7 +185,6 @@ export default async function Page() {
           )}
         </div>
       )}
-      {ctiAdjustedData.length > 0 && <CtiAdjustedSeriesSection data={ctiAdjustedData} />}
     </div>
   );
 }

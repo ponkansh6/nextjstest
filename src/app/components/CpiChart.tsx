@@ -37,10 +37,11 @@ import {
   createComparisonSeriesRegistry,
   type SeriesMetadata,
 } from "../../lib/chartConstants";
-import type { SeriesMeasurement } from "@/types/chart";
 import {
   QUARTERLY_PUBLIC_NOMINAL_KEYS,
   QUARTERLY_PUBLIC_REAL_KEYS,
+  QUARTERLY_PLAN40_V2_EXPENSE_KEYS,
+  QUARTERLY_PLAN40_V2_NOMINAL_KEYS,
 } from "../../lib/quarterlyPublicProjection";
 import { DataTablesSection, type DataTableSpec } from "./DataTablesSection";
 import { normalizeSpendingChartData } from "./SpendingBarChart";
@@ -63,7 +64,6 @@ export default function CpiChart({
   quarterlyNominalData,
   quarterlyRealData,
   totalEarningData,
-  maxCpiDate: _maxCpiDate,
   cpiInfoState,
   ctiInfoState,
 }: CpiChartProps) {
@@ -145,7 +145,18 @@ export default function CpiChart({
   const nominalKeys = CONSUMPTION_NOMINAL_KEYS;
   const realKeys = CONSUMPTION_REAL_KEYS;
   const nominalColors = nominalKeys.map(getColorForNominalKey);
-  const nominalKeysWithSupport = [...QUARTERLY_PUBLIC_NOMINAL_KEYS];
+  // Plan40 rows carry the v2 ten-category registry explicitly. Keep the
+  // legacy contract in the same surface for 2018Q1+, where those fields are
+  // intentionally absent. The union is required by Recharts/table/CSV, while
+  // row measurements remain the source of truth for availability.
+  const hasPlan40Rows = filteredQuarterlyNominalData.some(
+    (row) =>
+      row.measurements !== undefined &&
+      QUARTERLY_PLAN40_V2_EXPENSE_KEYS.some((key) => row.measurements?.[key] !== undefined),
+  );
+  const nominalKeysWithSupport = [
+    ...(hasPlan40Rows ? QUARTERLY_PLAN40_V2_NOMINAL_KEYS : QUARTERLY_PUBLIC_NOMINAL_KEYS),
+  ];
   const realKeysWithSupport = [...QUARTERLY_PUBLIC_REAL_KEYS];
   const nominalTableKeys = getPublicSpendingKeys(nominalKeysWithSupport);
   const realTableKeys = getPublicSpendingKeys(realKeysWithSupport);
@@ -167,7 +178,16 @@ export default function CpiChart({
   // selected quarterly projection.
   const nominalTableData = nominalPublicData;
   const realTableData = realPublicData;
-  const nominalColorsWithSupport = [...nominalColors, "#94a3b8", "#475569", "#0f766e"];
+  const nominalColorsWithSupport = [
+    ...(hasPlan40Rows
+      ? nominalKeysWithSupport
+          .filter((key) => key !== SUPPORT_SERIES_KEY_NOMINAL)
+          .map(getColorForNominalKey)
+      : nominalColors),
+    "#94a3b8",
+    "#475569",
+    "#0f766e",
+  ];
   const realColors = realKeys.map((key) => {
     const nominalKey = key.replace("（実質）", "（名目）");
     return getColorForNominalKey(nominalKey);
@@ -261,34 +281,56 @@ export default function CpiChart({
       }),
     [ctiInfoState],
   );
-  const ctiMetadata: readonly SeriesMetadata[] = useMemo(() => {
+  const ctiMetadata: readonly SeriesMetadata[] = (() => {
     const state = ctiInfoState?.series?.raw;
-    if (!state) return [];
-    const measurement: SeriesMeasurement = {
-      key: SUPPORT_SERIES_KEY_NOMINAL,
-      label: getLegendLabel(SUPPORT_SERIES_KEY_NOMINAL),
-      unit: state.unit,
-      source: state.source,
-      valueType: state.valueType,
-      value: null,
-      status: state.status,
-      reason: state.reason ?? null,
-      frequency: "quarterly",
-      aggregation: "simple_mean_of_three_calendar_months",
-    };
-    return [
-      {
-        ...measurement,
-        color: chartColors.barFill,
-        displayName: measurement.label,
-        tooltipLabel: measurement.label,
-        legendLabel: measurement.label,
-        kind: "line",
-        type: "line",
-        order: 0,
-      },
-    ];
-  }, [ctiInfoState, chartColors.barFill]);
+    const support: SeriesMetadata[] = state
+      ? [
+          {
+            key: SUPPORT_SERIES_KEY_NOMINAL,
+            label: getLegendLabel(SUPPORT_SERIES_KEY_NOMINAL),
+            unit: state.unit,
+            source: state.source,
+            valueType: state.valueType,
+            value: null,
+            status: state.status,
+            reason: state.reason ?? null,
+            frequency: "quarterly",
+            aggregation: "simple_mean_of_three_calendar_months",
+            color: chartColors.barFill,
+            displayName: getLegendLabel(SUPPORT_SERIES_KEY_NOMINAL),
+            tooltipLabel: getLegendLabel(SUPPORT_SERIES_KEY_NOMINAL),
+            legendLabel: getLegendLabel(SUPPORT_SERIES_KEY_NOMINAL),
+            kind: "line",
+            type: "line",
+            order: CONSUMPTION_NOMINAL_KEYS.length,
+          },
+        ]
+      : [];
+    const expense = nominalKeysWithSupport
+      .filter((key) => key !== SUPPORT_SERIES_KEY_NOMINAL)
+      .flatMap((key, order) => {
+        const row = nominalPublicData.find(
+          (candidate) =>
+            candidate.measurements !== undefined && candidate.measurements[key] !== undefined,
+        );
+        const measurement = row && row.measurements ? row.measurements[key] : undefined;
+        if (!measurement) return [];
+        return [
+          {
+            ...measurement,
+            label: getLegendLabel(key),
+            color: getColorForNominalKey(key),
+            displayName: getLegendLabel(key),
+            tooltipLabel: getLegendLabel(key),
+            legendLabel: getLegendLabel(key),
+            kind: "line",
+            type: "line",
+            order,
+          } satisfies SeriesMetadata,
+        ];
+      });
+    return [...expense, ...support];
+  })();
 
   const visibleLineConfigs = useMemo(
     () => comparisonSeriesRegistry.filter((c) => !c.advanced || showAdvanced),

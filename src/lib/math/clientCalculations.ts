@@ -70,6 +70,7 @@ export function computeChartData(
   hiddenQuarters: number[],
   _config?: ClientCalculationConfig,
 ): ClientCalculationResult {
+  void _config;
   const filterHidden = (rows: QuarterlyAggregationRow[] = []) =>
     rows.filter((row) => !hiddenQuarters.includes(row.quarter));
 

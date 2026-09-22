@@ -6,6 +6,7 @@ import {
   CTI_ADJUSTED_PUBLIC_MAPPING_BY_VERSION,
   CTI_ADJUSTED_PUBLIC_KEY_BY_CATEGORY,
   CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY,
+  getColorForNominalKey,
 } from "../../src/lib/chartConstants";
 
 describe("Chart Constants Integrity", () => {
@@ -57,6 +58,18 @@ describe("Chart Constants Integrity", () => {
     );
     expect(Object.values(CTI_ADJUSTED_PUBLIC_MAPPING_BY_VERSION.v2)).not.toContain(
       CTI_ADJUSTED_PUBLIC_MAPPING_BY_VERSION.v1.残差,
+    );
+  });
+
+  it("assigns the same stable color to v1/v2 keys for each expense category", () => {
+    expect(getColorForNominalKey("CTIミクロ調整系列（食料）")).toBe(
+      getColorForNominalKey("食料（名目）"),
+    );
+    expect(getColorForNominalKey("CTIミクロ調整系列（食料）")).not.toBe(
+      getColorForNominalKey("CTIミクロ調整系列（住居）"),
+    );
+    expect(getColorForNominalKey("CTIミクロ調整系列（その他の消費支出）")).toBe(
+      getColorForNominalKey("その他の消費支出（名目）"),
     );
   });
 });

@@ -108,6 +108,8 @@ export type CtiAdjustedV2GammaCase = {
   reasons: readonly string[];
 };
 export type CtiAdjustedV2Options = {
+  /** Selects the input contract owned by the caller. Runtime Plan39 artifacts do not satisfy Plan40's wider annual-anchor contract. */
+  contract?: "plan39" | "plan40";
   calibrationYears?: readonly number[];
   estimateStartYear?: number;
   estimateEndYear?: number;
@@ -122,6 +124,20 @@ export type CtiAdjustedV2PublicationGate = {
   blockingReasonCodes: readonly string[];
   warningReasonCodes: readonly string[];
   diagnostics: readonly string[];
+};
+export type CtiAdjustedV2Plan40InputValidation = {
+  valid: boolean;
+  status: "available" | "invalid";
+  reasonCodes: readonly string[];
+  diagnostics: readonly string[];
+  targetYears: readonly number[];
+  inputCategories: readonly string[];
+  normalizedBaseYear: 2025 | null;
+};
+export type CtiAdjustedV2Plan40InputMetadata = {
+  baseYear: number;
+  rawRange: { startYear: number; endYear: number };
+  adoptedRange: { startYear: number; endYear: number };
 };
 export type CtiAdjustedV2Result = {
   model: "v2-bottom-up";
@@ -158,6 +174,9 @@ export type CtiAdjustedV2Result = {
       observedYears: readonly number[];
     }
   >;
+  /** Present for results produced by the Plan40-aware builder; optional for legacy fixtures. */
+  plan40InputValidation?: CtiAdjustedV2Plan40InputValidation;
+  plan40InputMetadata?: Partial<Record<"B" | "A" | "L", CtiAdjustedV2Plan40InputMetadata>>;
   publicationGate: CtiAdjustedV2PublicationGate;
 };
 
@@ -180,6 +199,7 @@ const same = (a: readonly unknown[] | undefined, b: readonly unknown[]) =>
 const validateArtifact = (
   name: "B" | "A" | "L",
   input: CtiAdjustedAnnualInput | null | undefined,
+  strictPlan40 = false,
 ) => {
   const reasons: string[] = [],
     diagnostics: string[] = [],
@@ -217,6 +237,8 @@ const validateArtifact = (
       if (!Object.prototype.hasOwnProperty.call(row.values, c))
         reasons.push(`${name}:missing_category:${row.year}:${c}`);
       else if (!finite(row.values[c])) reasons.push(`${name}:non_finite_value:${row.year}:${c}`);
+      else if (!positive(row.values[c]))
+        reasons.push(`${name}:non_positive_value:${row.year}:${c}`);
     for (const c of Object.keys(row.values))
       if (!required.includes(c as never))
         diagnostics.push(`${name}:extra_category:${row.year}:${c}`);
@@ -224,21 +246,38 @@ const validateArtifact = (
   if (duplicateYears.length) reasons.push(`${name}:duplicate_year:${duplicateYears.join(",")}`);
   const raw = input.metadata?.rawRange,
     adopted = input.metadata?.adoptedRange;
-  if (
-    !raw ||
-    !adopted ||
-    !finite(raw.startYear) ||
-    !finite(raw.endYear) ||
-    raw.startYear > raw.endYear ||
-    !finite(adopted.startYear) ||
-    !finite(adopted.endYear) ||
-    adopted.startYear > adopted.endYear
-  )
-    reasons.push(`${name}:invalid_metadata_range`);
-  else
+  const strictPlan40RangeYears =
+    name === "A" ? [2017, 2025] : name === "B" ? [2005, 2017, 2025] : [2005, 2017];
+  if (!raw) reasons.push(`${name}:missing_raw_range`);
+  else if (!finite(raw.startYear) || !finite(raw.endYear))
+    reasons.push(`${name}:non_finite_raw_range`);
+  else if (raw.startYear > raw.endYear) reasons.push(`${name}:reversed_raw_range`);
+  else {
     for (const year of observedYears)
       if (year < raw.startYear || year > raw.endYear)
-        reasons.push(`${name}:metadata_data_range_mismatch:${year}`);
+        reasons.push(`${name}:raw_range_data_mismatch:${year}`);
+    if (strictPlan40)
+      for (const year of strictPlan40RangeYears)
+        if (year < raw.startYear || year > raw.endYear)
+          reasons.push(`${name}:raw_range_excludes_target:${year}`);
+  }
+  if (!adopted) reasons.push(`${name}:missing_adopted_range`);
+  else if (!finite(adopted.startYear) || !finite(adopted.endYear))
+    reasons.push(`${name}:non_finite_adopted_range`);
+  else if (adopted.startYear > adopted.endYear) reasons.push(`${name}:reversed_adopted_range`);
+  else {
+    for (const year of observedYears)
+      if (year < adopted.startYear || year > adopted.endYear)
+        reasons.push(`${name}:adopted_range_data_mismatch:${year}`);
+    if (strictPlan40)
+      for (const year of strictPlan40RangeYears)
+        if (year < adopted.startYear || year > adopted.endYear)
+          reasons.push(`${name}:adopted_range_excludes_target:${year}`);
+    if (raw && finite(raw.startYear) && finite(raw.endYear) && raw.startYear <= raw.endYear) {
+      if (adopted.startYear < raw.startYear || adopted.endYear > raw.endYear)
+        reasons.push(`${name}:adopted_range_outside_raw`);
+    }
+  }
   for (const year of requiredYears)
     if (!seen.has(year)) reasons.push(`${name}:missing_required_year:${year}`);
   return {
@@ -247,6 +286,84 @@ const validateArtifact = (
     diagnostics: [...new Set(diagnostics)],
     duplicateYears,
     observedYears,
+  };
+};
+const requiredPlan40Metadata = [
+  "source",
+  "artifact",
+  "retrievedAt",
+  "unit",
+  "valueType",
+  "householdScope",
+  "frequency",
+  "missingRepresentation",
+] as const;
+
+/**
+ * Plan40's annual-anchor contract.  This is intentionally fail-closed: the
+ * quarterly layer must not manufacture a category when provenance or an
+ * annual anchor is incomplete.
+ */
+export const validateCtiAdjustedV2Plan40Inputs = (
+  B: CtiAdjustedAnnualInput | null | undefined,
+  A: CtiAdjustedAnnualInput | null | undefined,
+  L: CtiAdjustedAnnualInput | null | undefined,
+): CtiAdjustedV2Plan40InputValidation => {
+  const targetYears = Array.from({ length: 13 }, (_, index) => 2005 + index);
+  const inputCategories = [...CTI_ADJUSTED_INPUT_CATEGORIES];
+  const validation = {
+    B: validateArtifact("B", B, true),
+    A: validateArtifact("A", A, true),
+    L: validateArtifact("L", L, true),
+  };
+  const reasons = new Set<string>();
+  const diagnostics: string[] = [];
+  for (const [name, input] of Object.entries({ B, A, L }) as [
+    "B" | "A" | "L",
+    CtiAdjustedAnnualInput | null | undefined,
+  ][]) {
+    for (const reason of validation[name].reasons) reasons.add(reason);
+    if (!input) continue;
+    for (const field of requiredPlan40Metadata) {
+      const value = input.metadata?.[field];
+      if (typeof value !== "string" || value.trim() === "")
+        reasons.add(`${name}:missing_metadata:${field}`);
+    }
+    if (input.metadata?.baseYear === undefined) reasons.add(`${name}:missing_base_year`);
+    else if (!finite(input.metadata.baseYear)) reasons.add(`${name}:non_finite_base_year`);
+    else if (input.metadata.baseYear !== 2025) reasons.add(`${name}:base_year_not_2025`);
+    if (input.metadata?.frequency !== "annual") reasons.add(`${name}:frequency_not_annual`);
+    const adopted = input.metadata?.adoptedRange;
+    const metadataTargetYears =
+      name === "A" ? [2017, 2025] : name === "B" ? [...targetYears, 2025] : targetYears;
+    if (
+      adopted &&
+      finite(adopted.startYear) &&
+      finite(adopted.endYear) &&
+      adopted.startYear <= adopted.endYear
+    )
+      for (const year of metadataTargetYears)
+        if (year < adopted.startYear || year > adopted.endYear)
+          reasons.add(`${name}:adopted_range_excludes_target:${year}`);
+    const raw = input.metadata?.rawRange;
+    if (raw && finite(raw.startYear) && finite(raw.endYear) && raw.startYear <= raw.endYear)
+      for (const year of metadataTargetYears)
+        if (year < raw.startYear || year > raw.endYear)
+          reasons.add(`${name}:raw_range_excludes_target:${year}`);
+    diagnostics.push(...validation[name].diagnostics);
+  }
+  const a2025 = A?.rows.find((row) => row.year === 2025)?.values[CTI_ADJUSTED_TOTAL_CATEGORY];
+  if (!positive(a2025)) reasons.add("A:missing_or_non_positive_2025_anchor");
+  const normalizedBaseYear =
+    A?.metadata?.baseYear === 2025 && positive(a2025) ? (2025 as const) : null;
+  return {
+    valid: reasons.size === 0,
+    status: reasons.size === 0 ? "available" : "invalid",
+    reasonCodes: [...reasons],
+    diagnostics: [...new Set(diagnostics)],
+    targetYears,
+    inputCategories,
+    normalizedBaseYear,
   };
 };
 const deriveOther = (row: CtiAdjustedAnnualRow | undefined) => {
@@ -347,6 +464,7 @@ export function buildCtiAdjustedV2Estimate(
   L: CtiAdjustedAnnualInput | null | undefined,
   options: CtiAdjustedV2Options = {},
 ): CtiAdjustedV2Result {
+  const contract = options.contract ?? "plan39";
   const fixed: string[] = [];
   if (options.connectionYear !== undefined && options.connectionYear !== 2017)
     fixed.push("plan39_connection_year_override_rejected");
@@ -362,14 +480,19 @@ export function buildCtiAdjustedV2Estimate(
   )
     fixed.push("plan39_calibration_years_override_rejected");
   const validation = {
-      B: validateArtifact("B", B),
-      A: validateArtifact("A", A),
-      L: validateArtifact("L", L),
+      B: validateArtifact("B", B, contract === "plan40"),
+      A: validateArtifact("A", A, contract === "plan40"),
+      L: validateArtifact("L", L, contract === "plan40"),
     },
+    plan40InputValidation =
+      contract === "plan40" ? validateCtiAdjustedV2Plan40Inputs(B, A, L) : undefined,
     diagnostics = [
       ...fixed,
       ...Object.values(validation).flatMap((v) => [...v.reasons, ...v.diagnostics]),
+      ...(plan40InputValidation?.reasonCodes ?? []),
+      ...(plan40InputValidation?.diagnostics ?? []),
     ],
+    plan40EstimateInputsUsable = !plan40InputValidation || plan40InputValidation.valid,
     bRows = rowMap(B),
     aRows = rowMap(A),
     lRows = rowMap(L),
@@ -433,7 +556,7 @@ export function buildCtiAdjustedV2Estimate(
     const values = emptyValues();
     let valid = false;
     let reason: string | null = null;
-    if (y >= 2017) {
+    if (plan40EstimateInputsUsable && y >= 2017) {
       for (const c of CTI_ADJUSTED_INPUT_CATEGORIES)
         values[c] = finite(aRows.get(y)?.values[c]) ? aRows.get(y)!.values[c]! : null;
       values[CTI_ADJUSTED_V2_OTHER_CATEGORY] = officialOther[y];
@@ -443,6 +566,7 @@ export function buildCtiAdjustedV2Estimate(
         positive(values[CTI_ADJUSTED_V2_OTHER_CATEGORY]);
       reason = valid ? null : "official_a_or_official_other_unavailable";
     } else if (
+      plan40EstimateInputsUsable &&
       d[y] !== null &&
       ratio2017 !== null &&
       otherBeta.status === "available" &&
@@ -474,7 +598,10 @@ export function buildCtiAdjustedV2Estimate(
         CTI_ADJUSTED_MAJOR_CATEGORIES.every((c) => positive(values[c])) &&
         positive(values[CTI_ADJUSTED_V2_OTHER_CATEGORY]);
       reason = valid ? null : "insufficient_data_for_bottom_up_estimate";
-    } else reason = "insufficient_data_for_bottom_up_estimate";
+    } else
+      reason = plan40EstimateInputsUsable
+        ? "insufficient_data_for_bottom_up_estimate"
+        : "plan40_input_contract_invalid";
     const row = {
       year: y,
       seriesType: valid ? (y >= 2017 ? "official_adjusted" : "estimated_bottom_up") : "unavailable",
@@ -643,7 +770,7 @@ export function buildCtiAdjustedV2Estimate(
   if (!finiteG) diagnostics.push("benchmark_g_invalid");
   const invalidInput = Object.values(validation).some((v) => !v.valid),
     status =
-      fixed.length || invalidInput
+      fixed.length || invalidInput || plan40InputValidation?.valid === false
         ? "invalid"
         : diagnostics.some((item) => item === "benchmark_g_invalid")
           ? "invalid"
@@ -676,14 +803,23 @@ export function buildCtiAdjustedV2Estimate(
     if (/duplicate_category/.test(diagnostic)) blockingReasonCodes.add("duplicate_category");
     if (/missing_category/.test(diagnostic)) blockingReasonCodes.add("missing_category");
     if (/missing_required_year/.test(diagnostic)) blockingReasonCodes.add("missing_required_year");
-    if (/metadata_data_range_mismatch/.test(diagnostic))
+    if (/(?:raw|adopted)_range_data_mismatch/.test(diagnostic))
       blockingReasonCodes.add("metadata_data_range_mismatch");
+    if (/(?:missing|non_finite|reversed)_(?:raw|adopted)_range/.test(diagnostic))
+      blockingReasonCodes.add("invalid_metadata_range");
+    if (/(?:raw|adopted)_range_(?:excludes_target|outside_raw)/.test(diagnostic))
+      blockingReasonCodes.add("invalid_metadata_range");
+    if (/(?:missing|non_finite)_base_year/.test(diagnostic))
+      blockingReasonCodes.add("invalid_base_year");
+    if (/base_year_not_2025/.test(diagnostic)) blockingReasonCodes.add("invalid_base_year");
     if (/missing_l_artifact/.test(diagnostic)) blockingReasonCodes.add("missing_l_artifact");
     if (/invalid_metadata_range/.test(diagnostic))
       blockingReasonCodes.add("invalid_metadata_range");
   }
   if (!validMinObs) blockingReasonCodes.add("invalid_min_beta_observations");
   if (invalidInput) blockingReasonCodes.add("invalid_observed_artifact");
+  if (plan40InputValidation?.valid === false)
+    blockingReasonCodes.add("plan40_input_contract_invalid");
   const targetRows = rows.filter((row) => row.year < CTI_ADJUSTED_V2_CONNECTION_YEAR);
   const otherBetaIncomplete =
     otherBeta.status !== "available" ||
@@ -721,6 +857,8 @@ export function buildCtiAdjustedV2Estimate(
   const gateDiagnostics = [
     ...fixed,
     ...Object.values(validation).flatMap((v) => [...v.reasons, ...v.diagnostics]),
+    ...(plan40InputValidation?.reasonCodes ?? []),
+    ...(plan40InputValidation?.diagnostics ?? []),
     ...warningDiagnostics,
     ...(gStatus === "invalid" ? ["benchmark_g_invalid"] : []),
     ...(accepted ? [] : ["publication_gate_closed"]),
@@ -732,6 +870,28 @@ export function buildCtiAdjustedV2Estimate(
     rows,
     categories: series,
     artifactValidation: validation,
+    ...(plan40InputValidation ? { plan40InputValidation } : {}),
+    ...(contract === "plan40"
+      ? {
+          plan40InputMetadata: Object.fromEntries(
+            (["B", "A", "L"] as const).flatMap((name) => {
+              const metadata = { B, A, L }[name]?.metadata;
+              return metadata
+                ? [
+                    [
+                      name,
+                      {
+                        baseYear: metadata.baseYear,
+                        rawRange: metadata.rawRange,
+                        adoptedRange: metadata.adoptedRange,
+                      },
+                    ],
+                  ]
+                : [];
+            }),
+          ) as CtiAdjustedV2Result["plan40InputMetadata"],
+        }
+      : {}),
     other: {
       derived: otherDerived,
       officialOther,

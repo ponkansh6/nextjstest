@@ -2,7 +2,7 @@
 
 import React from "react";
 import type { CustomTooltipProps } from "@/types/chart";
-import { getMeasurementNote } from "@/types/chart";
+import { createMissingSeriesMeasurement, getMeasurementNote } from "@/types/chart";
 import type { SeriesMeasurement } from "@/types/chart";
 import styles from "./CpiChart.module.css";
 
@@ -17,19 +17,9 @@ type TooltipDisplayPayload = NonNullable<CustomTooltipProps["payload"]>[number] 
   reason?: string | null;
   seriesType?: "estimated_adjusted" | "official_adjusted" | "unavailable";
   official?: boolean;
+  annualAnchorType?: "estimated" | "official";
+  quarterlyDerived?: boolean;
 };
-
-const unavailableMeasurement = {
-  unit: "",
-  source: "",
-  valueType: "raw",
-  frequency: undefined,
-  aggregation: "",
-  status: "invalid",
-  reason: "unavailable",
-  seriesType: "unavailable",
-  official: false,
-} as const;
 
 type TooltipMeasurement = Partial<
   Pick<
@@ -43,6 +33,8 @@ type TooltipMeasurement = Partial<
     | "reason"
     | "seriesType"
     | "official"
+    | "annualAnchorType"
+    | "quarterlyDerived"
   >
 >;
 
@@ -113,25 +105,33 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
                 rowMeasurements && typeof rowMeasurements === "object"
                   ? (rowMeasurements as Record<string, unknown>)[meta.key]
                   : undefined;
-              const hasRowMeasurements = Boolean(
-                rowMeasurements && typeof rowMeasurements === "object",
+              const fallbackMeasurement = createMissingSeriesMeasurement(
+                meta.key,
+                meta as Partial<SeriesMeasurement>,
               );
-              const measurement: TooltipMeasurement = hasRowMeasurements
-                ? rowMeasurement && typeof rowMeasurement === "object"
+              const period = row?.["年月"] ?? row?.["label"] ?? label;
+              const periodYear =
+                typeof period === "string" ? Number(period.match(/^(\d{4})/)?.[1]) : NaN;
+              const isPlan40Key =
+                meta.estimateVersion === "plan39-v2" || meta.key.startsWith("CTIミクロ調整系列（");
+              const isPlan40BoundaryMissing =
+                isPlan40Key && periodYear >= 2018 && entry?.value == null;
+              const measurement: TooltipMeasurement = isPlan40BoundaryMissing
+                ? fallbackMeasurement
+                : row &&
+                    typeof row === "object" &&
+                    rowMeasurement &&
+                    typeof rowMeasurement === "object"
                   ? (rowMeasurement as Partial<TooltipMeasurement>)
-                  : unavailableMeasurement
-                : row && typeof row === "object"
-                  ? unavailableMeasurement
-                  : (meta as TooltipMeasurement);
+                  : row && typeof row === "object"
+                    ? fallbackMeasurement
+                    : (meta as TooltipMeasurement);
               const hasProvenance =
-                measurement !== unavailableMeasurement &&
-                (measurement.seriesType !== undefined || measurement.official !== undefined);
+                measurement.seriesType !== undefined || measurement.official !== undefined;
               const unavailable =
-                hasProvenance &&
-                hasRowMeasurements &&
-                (measurement.seriesType === "unavailable" ||
-                  measurement.status === "invalid" ||
-                  measurement.status === "unavailable");
+                measurement.seriesType === "unavailable" ||
+                measurement.status === "invalid" ||
+                measurement.status === "unavailable";
               return {
                 name: meta.label,
                 value: unavailable ? null : entry?.value,
@@ -147,6 +147,8 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
                 reason: measurement.reason,
                 seriesType: hasProvenance ? measurement.seriesType : undefined,
                 official: hasProvenance ? measurement.official : undefined,
+                annualAnchorType: measurement.annualAnchorType,
+                quarterlyDerived: measurement.quarterlyDerived,
               };
             }),
           ...(canIncludeUnmappedPayload
@@ -326,6 +328,8 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
             ? getMeasurementNote({
                 seriesType: entry.seriesType,
                 official: entry.official,
+                annualAnchorType: entry.annualAnchorType,
+                quarterlyDerived: entry.quarterlyDerived,
                 status: entry.status ?? "valid",
                 reason: entry.reason,
               })

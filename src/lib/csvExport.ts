@@ -5,6 +5,8 @@
  * 呼び出し側のコンポーネントに置く。こうすると CSV の中身だけを単体テストできる。
  */
 
+import { createMissingSeriesMeasurement } from "../types/chart";
+
 /** CSV の 1 セルをエスケープする。カンマ・引用符・改行を含む場合のみ引用符で囲む。 */
 export const escapeCsvCell = (value: unknown): string => {
   if (value === null || value === undefined) return "";
@@ -35,6 +37,10 @@ export interface BuildCsvOptions {
     reason: string | null;
     seriesType?: "estimated_adjusted" | "official_adjusted" | "unavailable";
     official?: boolean;
+    annualAnchorType?: "estimated" | "official";
+    quarterlyDerived?: boolean;
+    model?: "v2-bottom-up";
+    estimateVersion?: "plan39-v2";
   }>;
 }
 
@@ -60,20 +66,7 @@ function rowMeasurement(
 ): Partial<CsvMeasurement> & Pick<CsvMeasurement, "key"> {
   const measurement = rowMeasurementValue(row, metadata.key);
   if (!measurement) {
-    return {
-      key: metadata.key,
-      label: metadata.label,
-      valueType: metadata.valueType ?? "raw",
-      value: null,
-      unit: "",
-      source: "",
-      frequency: metadata.frequency,
-      aggregation: "",
-      status: "invalid",
-      reason: "unavailable",
-      seriesType: "unavailable",
-      official: false,
-    };
+    return createMissingSeriesMeasurement(metadata.key, metadata);
   }
   return measurement;
 }
@@ -116,10 +109,31 @@ export const buildCsv = (
           return measurement?.seriesType !== undefined || measurement?.official !== undefined;
         }),
       ));
+  const includeDerivedAxisMetadata =
+    metadata.some(
+      ({ annualAnchorType, quarterlyDerived }) =>
+        annualAnchorType !== undefined || quarterlyDerived !== undefined,
+    ) ||
+    rows.some((row) =>
+      keys.some((key) => {
+        const measurement = rowMeasurementValue(row, key);
+        return (
+          measurement?.annualAnchorType !== undefined || measurement?.quarterlyDerived !== undefined
+        );
+      }),
+    );
   const metadataHeaders = metadata.flatMap(({ key }) => [
     `${key}__label`,
     `${key}__valueType`,
-    ...(includeProvenanceMetadata ? [`${key}__seriesType`, `${key}__official`] : []),
+    ...(includeProvenanceMetadata
+      ? [
+          `${key}__seriesType`,
+          `${key}__official`,
+          ...(includeDerivedAxisMetadata
+            ? [`${key}__annualAnchorType`, `${key}__quarterlyDerived`]
+            : []),
+        ]
+      : []),
     `${key}__value`,
     `${key}__unit`,
     `${key}__source`,
@@ -152,6 +166,8 @@ export const buildCsv = (
         valueType,
         seriesType,
         official,
+        annualAnchorType,
+        quarterlyDerived,
         value,
         unit,
         source,
@@ -166,7 +182,14 @@ export const buildCsv = (
         label ?? "",
         valueType ?? "",
         ...(includeProvenanceMetadata
-          ? [seriesType ?? "", official === undefined ? "" : String(official)]
+          ? [seriesType ?? "", official === undefined ? "" : String(official)].concat(
+              includeDerivedAxisMetadata
+                ? [
+                    annualAnchorType ?? "",
+                    quarterlyDerived === undefined ? "" : String(quarterlyDerived),
+                  ]
+                : [],
+            )
           : []),
         unavailable ? "" : (value ?? ""),
         unit ?? "",

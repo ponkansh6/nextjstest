@@ -2692,6 +2692,11 @@ v2 key registry → chart/tooltip/table/CSV. The v1 registry and projection keep
 `CTIミクロ調整系列（残差）` and its existing category/display contract.
 The v2 registry maps the same `その他の消費支出` measurement to the public
 key `CTIミクロ調整系列（その他の消費支出）` on every public surface.
+The saved Plan39 artifact remains on the legacy `pass` / `insufficient-data`
+contract: its A input may cover 2017–2025 and its L input 2005–2018. The
+Plan40 runtime-evidence path is a separate strict contract that requires the
+2005–2017 target years, `baseYear=2025`, compatible `adoptedRange`, and the
+positive 2025 A anchor; those checks must not be applied to the Plan39 path.
 When `publicationGate.status === "pass" && accepted === true`, finite bottom-up
 estimates are published. Otherwise estimated rows are `unavailable`, null,
 and reasoned (`overall_verdict_not_accepted`); `accepted=false` means the
@@ -2804,3 +2809,545 @@ production/base calibration は 2018–2025 とし、target/holdout 2017 は cal
 - WHEN audit を確定する THEN 期間、対象年、除外年、入力 coverage、leakage 判定を保存し、いずれかが不足していれば `insufficient-data` として fail-closed にする。
 - WHEN threshold再設計、rolling／leave-one-year-out backtest、Other/β安定性、2017接続再監査のいずれかが未監査または不合格である THEN 公開を拒否し、`accepted=false` の理由は当該必須課題に限定する。現行実装ではこれらはすべてpass済みである。
 - WHEN 必須監査がすべてpassし、`accepted=true` の公開条件を満たす THEN 公開可能状態へ進める。gamma全期間sensitivityまたはG閾値監査の未実施・結果だけでは公開可否を決めない。
+
+## JEV 開発チェックポイントレビュー
+
+### Data Sources
+
+プラン生成後と実装チェックポイント後のレビューは、リポジトリ内の
+`skills/jev-review/SKILL.md` と同ディレクトリの汎用クライアントを入力契約とする。
+クライアントは `TYPESAFE_API_KEY`、`TYPESAFE_MODEL`、`TYPESAFE_BASE_URL` を使って TypeSafe API に
+レビュー依頼を送り、対象のプラン、差分、検証結果、制約を渡す。JEV の返答は
+開発記録に保存するが、実在を確認していないレスポンスの verdict enum は契約として
+固定しない。認証には明示指定された `TYPESAFE_API_KEY` を優先し、未指定時は
+リポジトリの `.env.local` にある `TYPESAFE_API_KEY` を既定値として読み込む。
+`TYPESAFE_ENV_FILE` が指定されている場合は、その env ファイルを優先して読み込む。
+認証情報はレビュー本文にも結果記録にも送らず、キーが得られない場合は送信を
+fail-closed にする。今回のユーザー明示依頼により、レビュー文脈・計画・差分要約・
+受入条件・検証結果など認証情報以外のデータは JEV への送信を承認済みとする。
+この承認には、初回の JEV 応答、選択した更問理由、および更問応答も含まれる。
+認証情報は初回・更問のいずれにも含めず、過去の別実行記録を現在のレビューへ混ぜない。
+generic follow-up が未解決の場合の第三段は、呼び出し元が渡す実装固有 choices file を
+入力とする。choices file は質問文と選択肢の表示情報だけを含み、認証情報を含めない。
+
+### Data Flow
+
+`plan/checkpoint context` → `skills/jev-review/SKILL.md` の明示読込 → 汎用 TypeSafe
+API クライアント → JEV 結果の妥当性・修正点・未確定点の記録 → 必要な修正と再レビュー。
+API エラー、タイムアウト、認証失敗、または HTTP 成功だけでは妥当と判定せず、結果が
+得られない場合は未確定として扱う。JEV 判定は既存テスト・型チェック・lint の代替にしない。
+送信時は `.env.local` の `TYPESAFE_API_KEY` を認証専用に使用し、レビュー本文へ
+認証情報を含めない。初回判定が `not_valid`、`valid_but_limited`、`indeterminate`、
+または不明な形式の場合は、既定の `evidence_insufficient`、`acceptance_gap`、
+`implementation_mismatch`、`constraint_conflict`、`other` から理由を選択して更問を
+送信できる。理由未指定時は選択肢を提示し、`--reasons-file` により選択肢を差し替える。
+更問には初回 request/response を `priorReview` として保持し、初回とは別の
+`rawResponse` と出力へ保存する。更問の回答だけで初回判定を合格へ変更しない。
+更問の結果が `needs_evidence`、`indeterminate`、または未知の文字列形式でなお解決しない
+場合は、実装固有の選択肢ファイルを使う第三段の質問へ進める。選択肢ファイルは
+`version=1`、空でない `question`、`selectionMode=single|multiple`、2件以上の一意な
+文字列 `choices`（各要素は空でない `id`、`label`、`description`）を持つ。
+`single` では選択を1件、`multiple` では1件以上選択し、選択肢外のIDや重複IDは拒否する。
+第三段は generic follow-up の結果を redacted な `state.priorReview` として保持し、
+実装固有の質問・全選択肢・選択IDを別の記録へ保存する。第三段の回答による
+`effectiveVerdict` は `requires_revalidation` とし、回答だけで合格へ変更せず、追加証拠や
+修正後に通常の初回 JEV 再判定を要求する。
+
+### Component Tree
+
+`AGENTS.md のチェックポイント手順` → `skills/jev-review/SKILL.md` → `skills/jev-review/scripts`
+汎用クライアント → JEV → review record →（非肯定・不明時は理由選択 → 更問 record）→ 修正対応。
+初回 record と更問 record は分離し、現在の実行に属する文脈だけを渡す。これは開発補助の経路であり、
+アプリケーションの runtime コンポーネントツリーには含めない。
+generic follow-up が未解決の場合は、実装固有 choices の提示 → 選択検証 → clarification
+record（redacted `priorReview`、質問、選択肢、選択ID、`requires_revalidation`）→ 通常の
+初回 JEV 再判定を追加する。
+
+### Plan40 JEV checkpoint record
+
+Plan40 の計画レビューでは、公式クライアントの送信前入力検証を通過し、続く本判定も成功した。
+`rawResponse.answers.overall` は `choice=valid_but_limited`、`confidence=0.53`、確率は
+`valid_as_defined=0.02`、`valid_but_limited=0.64`、`not_valid=0.26`、
+`indeterminate=0.08` だった。`rawResponse` に `evidence` と `limitations` の明示はなく、
+そのため計画の妥当性には未確定点が残る。結果は `/tmp/jev-plan40-review-live.json` に保存し、
+この判定は既存テスト・型チェック・lintの代替、または無条件の妥当性承認とは扱わない。
+
+初回判定に対する follow-up は理由 `evidence_insufficient` で実行した。初回レビューは
+`priorReview` として保持して送信し、follow-up の送信前入力検証と本送信はともに成功した。
+結果は `/tmp/jev-plan40-follow-up.json` に保存し、`rawResponse.answers.follow_up` は
+`choice=needs_evidence`、`confidence=0.79`、確率は `needs_evidence=0.84`、
+`clarified=0.14`、`needs_fix=0.01`、`indeterminate=0.01` だった。応答上、
+`evidence` と `limitations` の明示はなかった。この判定は実装の否定ではなく、追加の
+根拠提示が必要という意味であり、受入条件に対応する検証証拠が揃うまで未確定点を保持する。
+JEVは既存テスト・型チェック・lintその他の検証の代替とは扱わない。
+
+証拠付き implementation checkpoint review では、verification state に受入条件、具体的な
+テストアサーション、`type-check`、変更コードの `oxlint`、production `build`、
+`git diff --check` を明示した。初回・更問では `needs_evidence` だったが、これらの証拠を
+独立した verification として提示して最終判定に到達した。最終の
+`rawResponse.answers.implementation` は `choice=valid_as_defined`、
+`confidence=0.35`、確率は `valid_as_defined=0.51`、`valid_but_limited=0.44`、
+`not_valid=0.01`、`indeterminate=0.04` だった。`rawResponse` に `evidence` と
+`limitations` の明示はなかった。JEVは既存テスト・型チェック・lint・buildその他の
+検証の代替とは扱わない。
+
+### Requirements
+
+- **WHEN** プラン生成が完了する、または実装チェックポイントに到達する、**THEN**
+  `skills/jev-review/SKILL.md` を明示的に読み込み、同スキルの汎用クライアントで
+  JEV レビューを依頼する。
+- **WHEN** `TYPESAFE_API_KEY` がプロセス環境にない、**THEN** `.env.local` の
+  `TYPESAFE_API_KEY` を認証専用の既定値として読み込み、キーが得られなければ
+  リクエストを送信せず fail-closed にする。
+- **WHEN** JEV へレビューを送信する、**THEN** 今回のユーザー明示依頼で承認済みの
+  計画、レビュー文脈、差分要約、受入条件、検証結果など認証情報以外のデータだけを
+  送信し、API キーその他の認証情報は本文に含めない。この承認は今回の明示依頼の
+  範囲に限る。
+- **WHEN** JEV の結果を受け取る、**THEN** 妥当性、修正点、未確定点を記録し、修正点が
+  あれば対応して必要に応じて再レビューする。未確認のレスポンス enum を前提にしない。
+- **WHEN** 初回 JEV 判定が `not_valid`、`valid_but_limited`、`indeterminate`、または
+  不明な形式である、**THEN** 合格扱いにせず、更問理由の選択肢を提示して一つ以上を
+  選択できる。理由未指定時は既定の `evidence_insufficient`、`acceptance_gap`、
+  `implementation_mismatch`、`constraint_conflict`、`other` を提示し、`--reasons-file`
+  の非空 JSON オブジェクトで差し替えられる。
+- **WHEN** 選択した理由で更問を送信する、**THEN** 初回 request/response と選択理由を
+  `priorReview` として更問コンテキストへ含め、初回とは別の `rawResponse` と出力へ保存する。
+  認証情報および過去の別実行記録は含めない。
+- **WHEN** 更問の回答を受け取る、**THEN** 初回の非肯定・不明判定を合格へ変更せず、
+  理由の説明、修正要否、追加検証、未確定点として記録する。
+- **WHEN** generic follow-up の回答が `needs_evidence`、`indeterminate`、または未知の
+  文字列形式である、**THEN** 実装固有の choices file による第三段質問を提示できる。
+  choices file は `version=1`、空でない `question`、`selectionMode` が `single` または
+  `multiple`、2件以上の一意な文字列 IDを持つ空でない `choices`（`id`、`label`、
+  `description`）を満たさなければならず、選択数とIDをそのモードに従って検証する。
+- **WHEN** 実装固有の第三段質問を作成または送信する、**THEN** generic follow-up の
+  結果を redacted な `priorReview` として保持し、質問、全選択肢、選択IDを別記録へ保存する。
+  `effectiveVerdict` は `requires_revalidation` とし、第三段回答だけで合格へ変更せず、
+  追加証拠または修正後に通常の初回 JEV 再判定を行う。
+- **WHEN** 初回または更問を JEV へ送信する、**THEN** 初回応答・選択理由・更問応答を
+  含む認証情報以外の今回のレビュー文脈は送信承認済みとして扱い、API キーその他の
+  認証情報は本文・ログ・結果記録へ含めない。
+- **WHEN** API が失敗する、応答が得られない、または HTTP 成功だけが確認できる、
+  **THEN** 妥当とは判定せず、レビュー未確定または失敗として記録する。
+- **WHEN** JEV レビューを行う、**THEN** その判定を既存テスト・型チェック・lint の代替にせず、
+  アプリケーション runtime のデータソースやコンポーネントとして組み込まない。
+
+## Plan38 historical/legacy contract and Plan40 replacement contract
+
+Plan38 remains the historical/legacy contract for the dedicated support-series
+surface: its `CTIミクロ四半期系列（名目）` key, loader, aggregation, and
+standalone contract tests remain valid for callers that use that API. Plan40
+replaces only the normal page presentation and quarterly public projection: the
+Plan39-v2 ten-category stack is integrated into the existing nominal section and
+the dedicated Plan39 annual section is not rendered. The legacy API and the
+Plan40 page contract are therefore intentionally tested separately.
+
+- **WHEN** a legacy caller omits `QuarterlyRow.kind`, **THEN** projection uses
+  the `legacy-cti` fallback and emits the established legacy keys only.
+- **WHEN** a row has `kind=legacy-cti`, **THEN** the row is projected with the
+  legacy contract regardless of its year; v2 keys are absent rather than
+  synthesized as null fields.
+- **WHEN** a row has `kind=plan40-v2-cost-stack`, **THEN** projection adds the
+  registry-owned Plan40 v2 expense keys to the existing nominal public surface
+  without inferring the kind from the year.
+- **WHEN** the normal page is rendered under Plan40, **THEN** the existing
+  active chart sections, table, tooltip, and CSV surfaces remain, the dedicated
+  Plan39 annual section is hidden, and the legacy annual component API remains
+  available to its unit/legacy contract tests.
+
+## SharedPlan 40: CTI adjusted quarterly nominal graph (current integrated contract)
+
+本節は、Plan38 の専用サポート系列および Plan39-v2 の専用年次表示に関する
+表示契約を、既存の名目消費グラフへ統合する現行仕様である。過去の監査記録や
+計算式の説明は保持するが、本節と競合する専用グラフ・専用年次セクションの
+表示要件は本節を優先する。
+
+### Data Sources
+
+名目消費支出指数は e-Stat 統計表 `000040499070` の月次元データから取得し、
+2025 年を 100 とする。2005Q1–2017Q4 は月次の3か月を暦四半期へ集計して派生する
+値であり、e-Stat の公式四半期値とは表示しない。欠損月、重複月、非有限値、
+3か月未満の四半期は値を生成しない。
+
+Plan39-v2 の B（基本系列）、A（調整系列）、L（長期ベンチマーク）、費目別 β、
+D の bottom-up 契約を維持する。2005–2016 は `B_i,t * R_i,2017 * D_t^β_i`
+で10大費目を推計し、2017 は公式年次Aをアンカーにする。ただし2017年の四半期値は
+公式四半期値ではない。Other はv2専用の年次anchorから導出し、e-Stat同名月次は
+季節プロファイルとして使う。v1のResidualをそのまま代用せず、専用の B/A、
+`R_other`、`β_other` から導出する。
+
+各 B/A/L artifact は source、artifact、取得時刻、単位、値種別、世帯範囲、年次頻度、
+基準年、欠損表現を含む metadata を入力契約として保持する。A は `baseYear=2025` と
+2025年公式A総合アンカー（有限かつ正）を 2025=100 契約の検証可能な不変条件とする。
+
+### Data Flow
+
+`e-Stat monthly 000040499070` → 対象年全体の月重複・欠損・有限性検証 →
+2005Q1–2017Q4 の四半期平均 → 2025=100 の指数化 →
+Plan39-v2 の B/A/L・β・D bottom-up（2005–2016）／公式 A（2017） →
+全10カテゴリの積み上げ → 既存名目グラフの共通 registry／measurement →
+chart、注記、tooltip、data table、CSV。
+
+各年の四半期値は同じ年の12か月平均を分母に使うため、対象年のいずれかの月に
+重複が見つかった場合は、その年の全Plan40四半期行・全10カテゴリを
+`duplicate_month`、`value=null`、`status=unavailable` として一括fail-closedにする。
+別四半期の月重複が年次meanを汚染し得る状態で、正常な四半期だけを残さない。
+
+2005–2017 は対象四半期の全10カテゴリを積み上げる。2018Q1以降は既存の
+費目別 CTI を継続し、2017Q4 と2018Q1の間で入力経路を切り替える。Plan39専用
+年次セクションは表示せず、既存の名目消費グラフに統合する。推計／公式、
+四半期派生／既存継続、切替境界は注記、tooltip、表、CSVの measurement metadata
+から同じ値を参照して表示する。
+
+公開投影は行の内部 `kind` を明示的に受け取る。`legacy-cti`（kind省略時の後方互換を
+含む）は既存の22キー（名目11＋実質11）のみを投影し、`plan40-v2-cost-stack` は
+名目の既存11キーにregistry由来のv2 10費目キーを加える。2018Q1以降とPlan39は
+`legacy-cti`、Plan40の2005–2017行だけがv2 kindを持ち、年だけから推測しない。
+投影結果の公開JSONには内部kindを出さない。
+
+Plan39の月次 `seriesIndex` 対応はartifact固有契約として `PLAN39_CATEGORY_SERIES` に
+保持する一方、公開キーの対応は共通 `CTI_ADJUSTED_V2_PUBLIC_REGISTRY` から導出する。
+seriesIndexをregistryへ無理に混在させず、キーの二重管理だけを避ける。
+
+年次入力契約が閉じた場合、計算結果の全対象行を既存の status/reason 体系で
+`seriesType=unavailable`、`value=null` とし、四半期層が別系列フォールバック、
+0補完、補間を実行しない。
+
+### Data Model
+
+各行は既存の `SeriesMeasurement` / `SeriesDescriptor`（`src/types/chart.ts`）を
+用い、`value`、`status`、`reason`、`unit`、`source`、`frequency`、
+`aggregation`、`seriesType`、`official`、`annualAnchorType`（`estimated`/`official`）、
+`quarterlyDerived=true`、note、計測期間を同一 measurement に保持する。2005–2016 は
+`annualAnchorType=estimated`、2017 は `annualAnchorType=official` とし、2017も
+`quarterlyDerived=true` により公式年次Aアンカーと公式四半期値を区別する。
+`official` はアンカーの公式性を示す軸であり、`quarterlyDerived=true` は四半期値自体を
+公式四半期値として扱わないことを示す。
+`QuarterlyRow.kind` は共有型上のoptional/internal metadataであり、aggregationが
+差し替え境界で設定する。表示側はkindや値を再計算しない。
+2005–2016 は `estimated_adjusted`、2017 は `official_adjusted`、月次不備または
+計算不能は `unavailable` とし、unavailable の `value` は必ず `null` とする。
+この状態は publication gate の結果を含む。合成 Plan40 runtime-evidence fixture は
+annual input validation 自体は valid だが、監査ゲート未完了のため `accepted=false` であり、
+実際の 2005 row は `unavailable`/`null`、`annualAnchorType=estimated`、
+`quarterlyDerived=true`、`official=false` を返す。publication gate が accepted の
+入力では 2005–2016 の有効値が `estimated_adjusted` となる。2017 は gate の状態に
+かかわらず公式年次 A をアンカーとするため、四半期 measurement は
+`official_adjusted`、`annualAnchorType=official`、`quarterlyDerived=true`、
+`official=false` とする。
+chart/table/tooltip/CSV はこの measurement と同じ数値・metadata を使用し、
+表示側で再計算しない。凡例は既存名目グラフと共通にする。
+
+Phase 1 の runtime evidence は実データ入力から共有 projection、`ChartDataContract`、tooltip、
+data table、CSV の契約境界を検証する。Recharts の実ブラウザ描画そのものはこのテストの対象外であり、
+チャート側は `ChartDataContract` の key/status/reason 属性を比較する。
+
+入力契約の判定結果は `valid`、`status`、`reasonCodes`、診断、対象年、10入力カテゴリ、
+検証済み `normalizedBaseYear` を持つ。年次アンカーが invalid の場合も公開 API の
+既存 result 形状を維持し、対象10カテゴリの値だけを null にする。
+
+### Component Tree
+
+`e-Stat 000040499070 loader` → `monthly completeness/duplicate validator` →
+`quarterly nominal adapter` → `Plan39-v2 bottom-up adapter` →
+`existing nominal series registry` → `CpiChart` / nominal graph →
+shared tooltip・data table・CSV projection。
+
+Plan40 の年次アンカー入力は `validateCtiAdjustedV2Plan40Inputs` で、2005–2017 の対象年、
+10入力カテゴリ、有限かつ正の値、各 B/A/L の source/artifact metadata、`adoptedRange` が
+Plan40対象年と実データ行および `rawRange` に整合することを先に検証する。
+検証失敗は既存の `unavailable` / reason 経路へ渡し、四半期表示層で別系列、0補完、補間を
+選択しない。
+Plan39 の実 artifact/runtime は `buildCtiAdjustedV2Estimate` の typed `contract: "plan39"`
+を明示して既存の B/A/L 公開契約を使用し、Plan40 の対象年・metadata 厳格検証を適用しない。
+Plan40 runtime evidence は `contract: "plan40"` を明示するため、両契約の検証結果を
+混同しない。指定がない既存 builder 呼び出しは後方互換の Plan39 契約として扱う。
+
+### Requirements
+
+- **WHEN** e-Stat `000040499070` の対象月が3か月とも一意で有限である、
+  **THEN** その四半期は月次3値の平均から導出し、2025年の基準化後平均を100とする。
+- **WHEN** 対象月が欠損、重複、非有限、または3か月未満である、**THEN**
+  その四半期の全10カテゴリを一括して `value=null`、`status=unavailable`、非空の
+  機械可読 `reason` とし、不完全なstackを表示せず、補間、0補完、重複マージ、
+  別系列フォールバックを行わない。
+- **WHEN** 年次meanに使う2005–2017の対象年の月次入力に1件でも重複月がある、
+  **THEN** その対象年の全Plan40四半期行・全10カテゴリを同じ
+  `duplicate_month`、`value=null`、`status=unavailable` とし、重複が存在しない別四半期を
+  正常値として公開しない。2018Q1以降のlegacy経路とPlan39契約にはこの判定を適用しない。
+- **WHEN** 年次契約が有効で対象月だけが不備である、**THEN** 月次 failure matrix の
+  `insufficient_months` または `duplicate_month` などを reason とし、年次アンカー不備の
+  reason に置き換えない。**WHEN** Plan40 の入力契約自体が不備である、**THEN** 別ケースとして
+  全10カテゴリを同一の機械可読年次契約 reason、`value=null`、`status=unavailable` とする。
+- **WHEN** B/A/L、費目別β、D、またはOtherの年次anchorが欠損・重複・不正である、
+  **THEN** その対象四半期の全10カテゴリを一括fail-closedにし、不完全なstackを表示しない。
+- **WHEN** 2005Q1–2017Q4を表示する、**THEN** 月次から派生した四半期値であることを
+  `quarterlyDerived=true`、`annualAnchorType`、metadata、noteに示し、公式四半期値とは
+  表示しない。2017は公式年次Aアンカーでも四半期値は公式ではない。
+- **WHEN** Plan39-v2 を計算する、**THEN** B/A/L、費目別β、D、2005–2016推計、
+  2017公式A、Other専用導出、bottom-up式を維持し、ResidualをOtherの代替にしない。
+- **WHEN** 2005–2017の名目グラフを描画する、**THEN** 全10カテゴリを積み上げ、
+  2018Q1以降は既存の費目別CTIを継続する。
+- **WHEN** 名目グラフを描画する、**THEN** Plan39専用年次セクションを表示せず、
+  既存名目グラフの共通凡例とregistryへ統合する。
+- **WHEN** 2017Q4から2018Q1へ遷移する、**THEN** 2017Q4以前の月次派生／bottom-up
+  と2018Q1以降の既存費目別CTIの切替を注記で明示する。
+- **WHEN** chart、tooltip、data table、CSVの同一行を出力する、**THEN**
+  measurement metadata（source、unit、frequency、aggregation、status、reason、
+  `seriesType`、`official`、`annualAnchorType`、`quarterlyDerived`、note）と数値が
+  一致し、推計／公式の状態も全て同じである。
+- **WHEN** 推計値、公式値、または unavailable 値を表示する、**THEN** 注記、tooltip、
+  表、CSVで同一の状態を示し、unavailable の数値セルは空欄とする。
+- **WHEN** 月次検証または bottom-up の必須入力／anchor検証が失敗する、**THEN**
+  対象四半期の全10カテゴリを一括fail-closedにし、不完全なstackを表示せず、公式Aや
+  別期間の既存CTIを推計値へ置換しない。
+- **WHEN** Plan40 の B/A/L 入力に 2005–2017 の対象年、10入力カテゴリ、source/artifact
+  metadata のいずれかが欠落する、または値が非有限・非正値である、**THEN**
+  年次アンカー契約を invalid とし、四半期計算層は対象期間の全10カテゴリを
+  `value=null`、`status=unavailable`、非空の reason 付きで扱う。欠損年を別系列、0、補間で
+  埋めない。失敗measurementも正常measurementと同じ `model=v2-bottom-up`、
+  `estimateVersion=plan39-v2`、source、unit、frequency、aggregation、
+  `annualAnchorType`、`quarterlyDerived` を保持する。
+- **WHEN** Plan40 の `baseYear`、`adoptedRange`、または A の2025 anchor のいずれかが不備である、
+  **THEN** 対象四半期の全10カテゴリを同一の年次契約 reason で
+  `value=null`、`status=unavailable` とし、カテゴリごとに正常値や別の failure reason を混在させない。
+- **WHEN** Plan39 の既存 artifact/runtime publication gate を評価する、**THEN** `contract: "plan39"`
+  の通常検証と publication gate を維持し、Plan40 の厳格な対象年検証を Plan39 の正常契約へ
+  適用しない。
+- **WHEN** B/A/L の `adoptedRange` が Plan40対象年を包含しない、実データ行を包含しない、
+  または `rawRange` の外側にある、**THEN** 同じ fail-closed reason体系で年次アンカー契約を
+  invalid とし、対象measurementを `value=null`、`status=unavailable` とする。
+- **WHEN** L の実データ行だけが特定年に欠損する、**THEN** その年の推計だけを
+  `insufficient-data` とし、Lが実在する他年の推計や公式A年を不要に unavailable にしない。
+- **WHEN** A の metadata が `baseYear=2025` を宣言し、2025年の公式A総合アンカーが
+  有限かつ正である、**THEN** Plan40 は 2025年基準化契約を満たすものとして扱い、
+  四半期値を2025年四半期平均で再正規化しない。**WHEN** この不変条件を検証できない、
+  **THEN** 契約は fail-closed となり、理由 `A:base_year_not_2025` または
+  `A:missing_or_non_positive_2025_anchor` を返す。
+- **WHEN** 年次アンカー検証に成功する、**THEN** 2005–2016 は bottom-up、2017 は公式Aを
+  年次アンカーとして選び、いずれも月次から派生した四半期値として扱う。2005–2016 は
+  `estimated_adjusted`／`annualAnchorType=estimated`、2017 は
+  `official_adjusted`／`annualAnchorType=official`、かつ全て
+  `quarterlyDerived=true` を保証する。2017のOtherはv2専用の年次anchorから導出し、
+  v1 Residualや同名月次系列を年次anchorとして代用しない。
+- **WHEN** 実 runtime の月次検証または Plan40 年次入力契約が失敗する、**THEN** 対象四半期の
+  10費目すべてを同じ reason の `value=null`、`status=unavailable` とし、正常経路と同じ
+  measurement 契約（source、unit、frequency、aggregation、seriesType、official、
+  annualAnchorType、quarterlyDerived、model、estimateVersion、note）を保持する。
+- **WHEN** unavailable measurement が公開 projection に渡される、**THEN** chart、tooltip、
+  table、CSV は同じ registry/measurement の値と metadata を参照し、表示側で値や metadataを
+  再計算しない。Plan40 の `baseYear`、`rawRange`、`adoptedRange` は対象年と整合する provenance
+  として追跡可能である。
+- **WHEN** 欠損、重複、非有限値、3か月未満、または anchor 不備を runtime 入力へ与える、
+  **THEN** それぞれを fail-closed failure matrix として固定し、別系列、0補完、補間を行わない。
+- **WHEN** Plan40 の `2017Q4` v2 行を公開する、**THEN** 10費目すべてを既存の名目四半期
+  グラフへ同じ measurement 契約で渡し、専用年次セクションへ分岐しない。
+- **WHEN** 公開期間が `2018Q1` に進む、**THEN** v2 の月次派生／bottom-up 経路から
+  既存 CTI 費目積み上げ経路へ切り替え、既存の費目値を変更しない。
+- **WHEN** `projectQuarterlyPublicView()` が `legacy-cti` 行を受け取る、**THEN**
+  年に関係なく既存22キーだけを投影し、v2 10キーを出力しない。
+- **WHEN** `projectQuarterlyPublicView()` が `plan40-v2-cost-stack` 行を受け取る、
+  **THEN** 年を推測せず、既存名目キーとregistry由来v2 10キーを投影する。
+- **WHEN** 2017Q4から2018Q1へ行を差し替える、**THEN** aggregationは2017Q4側へ
+  `plan40-v2-cost-stack`、2018Q1側へ `legacy-cti` を設定し、projectionはkind以外の
+  表示側ロジックで境界を再計算しない。
+- **WHEN** `2017` の Plan40 四半期 measurement を公開する、**THEN** 年次アンカーは
+  `annualAnchorType=official`、四半期 measurement 自体は `official=false`、四半期値は
+  `quarterlyDerived=true` として保持し、公式四半期値とは表示しない。
+- **WHEN** Plan40 の同一行を chart、tooltip、data table、CSV に投影する、**THEN**
+  数値と全 measurement metadata の状態を同一 registry から参照し、全 surface で parity を保つ。
+- **WHEN** 同一の Plan40 `2017Q4` official annual-anchor fixture を各 surface adapter へ渡す、
+  **THEN** registry の全10 v2カテゴリで key 集合、value、status、reason、source、unit、frequency、
+  aggregation、seriesType、official、annualAnchorType、quarterlyDerived、note、model、
+  estimateVersion、baseYear、rawRange、adoptedRange が measurement 基準と一致し、table の状態・理由・注記、
+  tooltip payload/metadata、CSV の `key__status`、`key__reason`、`key__annualAnchorType`、
+  `key__quarterlyDerived` 等も同じ値を示す。Recharts の実 DOM 描画はこの adapter-contract parity の対象外とする。
+- **WHEN** 同じ fixture を unavailable にした場合、**THEN** 全10カテゴリを `value=null`、
+  `status=unavailable`、同一の非空 reason とし、全 surface の数値セル／CSV 数値セルを空欄にする。
+- **WHEN** legacy `2018Q1` fixture を同じ公開投影へ渡す、**THEN** v2 10キーとその metadata は
+  chart、table、CSV のいずれにも出力しない。
+- **WHEN** Plan40 の通常表示経路を描画する、**THEN** `CtiAdjustedSeriesSection` は
+  表示せず、Plan39 の年次 measurement 契約、loader、projection、旧契約テストは存続させる。
+
+## SharedPlan 40 続編: ユーザー視点の最小操作評価（履歴・後続記録により更新済み）
+
+> **履歴上の中間評価。** 以下の「2005–2017 が `unavailable`/`null`」という記述は、修正前の観測結果を保存したものであり、後続の「完了時のユーザー視点検証」および「実装完了チェックポイント」により superseded されている。現在の判定には使用しない。
+
+Plan40 の続編評価では、実装内部の fixture や adapter ではなく、利用者が画面で行う最小限の操作を判定根拠とする。評価時点では、名目消費を選択してデータ表を展開し、CSVをダウンロードした。その結果、2005–2017 の全行は数値を持たず `unavailable`/`null` で、画面上の文言は「利用できません」だった。一方、2018Q1以降は数値を表示し、データ表の展開、CSVダウンロード、期間ごとの出所注記は操作できた。この観測は、2005Q1–2017Q4の表示可能な値と欠損理由の利用者向け説明を満たした証拠にはならない。
+
+### User-perspective acceptance criteria
+
+- **WHEN** 利用者が名目消費を開き、2005Q1–2017Q4を確認する、**THEN** 各対象行は数値と月次派生／年次アンカーの注記を表示し、全期間が一律に `unavailable`/`null` にならない。
+- **WHEN** 対象行が本当に利用不能である、**THEN** グラフ、tooltip、データ表、CSVで空値と同じ機械可読理由を示し、画面文言「利用できません」だけで原因を隠さない。
+- **WHEN** 利用者が2017Q4から2018Q1へ移動する、**THEN** 2017Q4以前のPlan40経路と2018Q1以降の既存CTI経路の切替、およびそれぞれの出所が画面上で判別できる。
+- **WHEN** 利用者がデータ表を展開してCSVをダウンロードする、**THEN** 画面の値、空値、状態、理由、出所がCSVにも同じ行単位で反映される。
+
+### Minimum re-evaluation operation
+
+同じ環境で名目消費を選択し、2005Q1、2017Q4、2018Q1の表示を順に確認する。次にデータ表を展開し、同じ3期間の値・状態・理由・出所を確認してCSVを1回ダウンロードする。2005Q1–2017Q4に数値があり、2018Q1で既存経路へ切り替わること、また画面とCSVのmetadataが一致することを記録する。対象期間の全行が `unavailable`/`null` のまま、または原因が「利用できません」だけの場合は、操作可能であっても受入不可と判定する。
+
+### Current evaluation result（修正前の履歴）
+
+最小操作で確認できたのは、2018Q1以降の数値表示、出所注記、データ表展開、CSV出力である。2005–2017は全行 `unavailable`/`null` で画面文言も「利用できません」だったため、2005Q1–2017Q4の値表示と原因説明に関する受入条件は未達である。これはユーザー視点の評価結果であり、原因調査や実装完了を意味しない。
+
+### 続編で確認した実装上の阻害要因と最小修正方針（修正前の履歴）
+
+診断では、`server/lib/data-loader/ctiAdjusted.ts` が常に `contract: "plan39"` を使用しており、Plan40 の対象年・metadata検証結果を生成していない。また、Plan39 の evidence gate が `accepted=false` のため、`quarterlyAggregation` の2005–2016行が `unavailable` になっている。これが画面で2005–2017を数値化できない現状の実装上の阻害要因である。
+
+最小修正方針は、既存Plan39契約を変更せず、Plan40専用のロード経路を追加して `contract: "plan40"` と対象年・10カテゴリ・source/artifact metadataの厳格な検証を通すことである。Plan40経路では、検証成功時に2005–2016のbottom-up値と2017の公式Aアンカーから月次派生四半期値を生成し、失敗時は対象10カテゴリを同一reasonの `value=null`/`unavailable` とする。四半期層でPlan39 gateを迂回して値を補完すること、既存2018Q1以降の経路を変更することは受入条件に含めない。
+
+### Plan40 runtime 検証の続編（修正前の中間記録）
+
+Plan40 loader の接続修正は完了した。`contract: "plan40"` のロード経路は Plan39 の analysis/evidence gate を適用せず、builder の Plan40 input validation と annual/publication 状態を保持する。Plan39 の既存経路と既定呼び出しは維持する。
+
+実 artifact の Plan40 契約検証はなお invalid であり、`A:raw_range_excludes_target:2005`、`A:adopted_range_excludes_target:2005..2016`、`L:ignored_category`、`L:extra_category` 等を確認した。fail-closed のため、ブラウザ上の2005–2017は引き続き `null` / `unavailable` である。したがって loader 接続修正は必要条件を満たしたが、表示可能な Plan40 数値の完了条件は未達である。
+
+次の完了条件は、Plan40 用 B/A/L artifact を2005–2017、10カテゴリ、source/artifact metadata 契約に整備し、Plan40 関連テスト、type-check、対象2ファイルの oxlint、ブラウザ最小操作、JEVレビューを再実施して通過させることである。Plan39 既存経路は維持する。
+
+検証記録では、Plan40 関連41件、type-check、対象2ファイルの oxlint は通過した。全体 lint は `jev-request.mjs` の既存 `no-unsafe-finally` により失敗した。この既存失敗は Plan40 runtime の fail-closed 検証結果と別に記録する。
+
+### Plan40 実装完了チェックポイント（現行の権威ある判定）
+
+続編JEVの中間 follow-up は `choice=needs_fix`、`confidence=0.47`（`needs_fix=0.60`、
+`clarified=0.34`、`needs_evidence=0.06`）だった。これは実装前の中間判定として保持し、完了判定とは扱わない。
+
+- runtime は `loadCtiAdjustedV2Estimate({ contract: "plan40" })` を明示し、既存の
+  `contract: "plan39"` と publication gate を維持する。
+- Plan40 の A/B/L 検証範囲を役割別に整合させた（A: 2017–2025、B: 2005–2025、L: 2005–2017）。
+  Other は series 11 の直接値を互換入力として扱い、production の年次値は total から
+  series 2–10 を差し引いて導出する。
+- L の `missing_required_year` を入力契約違反として検証失敗にし、対象値を
+  fail-closed で公開しないことを回帰確認した。実 artifact を使う integration regression test も追加した。
+- v2 registry を chart・tooltip・data table・CSV 経路へ統合した。legacy 22キー契約は維持し、
+  Plan40 行にだけ v2 10費目を追加する。
+
+Plan40 targeted tests 43件（実 artifact integration regression test を含む）、`type-check`、対象変更の
+oxlint、`git diff --check` は通過した。
+全体 lint は既存 `skills/jev-review/scripts/jev-request.mjs` の `no-unsafe-finally` で失敗した。
+
+### 完了時のユーザー視点検証（現行の権威ある証拠）
+
+名目消費を選択し、データ表を展開し、CSVを1回ダウンロードする最小操作を再実施した。
+画面に「利用できません」の表示はなく、2005Q1 と 2017Q4 は v2 数値、2018Q1 は既存
+legacy CTI 数値を確認した。CSV は87行で、同じ3期間と対応する metadata を含み、画面とCSVの
+値・状態・出所が一致した。ユーザー視点の最小操作に関するPlan40受入条件を満たす。
+
+### 実装後JEVレビュー（前回チェックポイント・最新判定により更新済み）
+
+実装後の通常の初回判定は `choice=valid_but_limited`、`confidence=0.39` だった。
+確率は `valid_but_limited=0.54`、`valid_as_defined=0.44`、`not_valid=0.01`、
+`indeterminate=0.01`。follow-up は `choice=clarified`、`confidence=0.44` で、
+確率は `clarified=0.58`、`needs_evidence=0.35`、`needs_fix=0.06`、
+`indeterminate=0.01` だった。いずれの raw response にも `evidence` と `limitations` の
+明示はなかったため、JEV判定にはこの記録上の制約がある。受入の根拠は、43件の targeted
+tests、type-check、対象oxlint、git diff check、およびブラウザとCSVのユーザー視点証拠とする。
+
+## Plan40 現行の完了判定（権威ある最終記録）
+
+本仕様書のPlan40続編に関する現在の判定は、直前の「実装完了チェックポイント」「完了時のユーザー視点検証」および最新JEVレビューに基づき、完了とする。L の `missing_required_year` は入力検証失敗として fail-closed になることを実 artifact integration regression test で確認済みである。修正前の `unavailable`/`null` 観測、Plan39契約経由、Plan40入力範囲不整合、および過去のJEV判定は履歴として保持するが、現行判定を上書きしない。最小操作では名目消費の選択、データ表の展開、CSVのダウンロードを行い、2005Q1・2017Q4のv2数値、2018Q1のlegacy CTI数値、画面とCSVの値・状態・出所の対応を確認済みである。
+最新の実装後JEVレビューは HTTP 成功し、`choice=valid_as_defined`、`confidence=0.50`、確率は `valid_as_defined=0.63`、`valid_but_limited=0.37`、`not_valid=0`、`indeterminate=0` だった。`rawResponse` に `evidence` と `limitations` の明示はなかったため、この制約は保持する。これは直前の `valid_but_limited` / `clarified` 判定を supersede する最新結果であり、既存のテスト・型チェック・lintの代替とは扱わない。
+
+## 続編: 実装完了チェックポイント
+
+前回のユーザー視点評価で判明した境界表示と費目色の課題に対し、公開表示契約を次のように固定する。既存のPlan39契約、legacy 22キー、過去の評価履歴は変更しない。
+
+### 境界行の共通metadata契約
+
+- **WHEN** 2018Q1以降の行に旧Plan40 v2費目キーが存在せず、表またはCSVが宣言済みv2 descriptorを解決する、**THEN** 共通fallbackは `value=null`、`status=unavailable`、`reason=outside_period`、`seriesType=unavailable`、空の `source` を返す。
+- **WHEN** 同じ旧Plan40 v2境界行をデータ表へ表示する、**THEN** 数値セルは空欄相当で、利用者向け表示は「対象期間外」とし、状態と理由は `unavailable` / `outside_period` と表示する。
+- **WHEN** 同じ旧Plan40 v2境界行をCSVへ出力する、**THEN** メイン数値列とmetadata value列は空欄で、系列ごとの `__status=unavailable`、`__reason=outside_period`、`__source=` を出力する。
+- **WHEN** legacy SUPPORT系列またはその他の非Plan40 descriptorに行measurementが存在しない、**THEN** 従来契約どおり `status=invalid`、`reason=unavailable`、`seriesType=unavailable`、空の `source` を出力し、行にあるlegacy数値はメインデータ列で保持する。
+- **WHEN** 同じ行を表とCSVへ渡す、**THEN** 表とCSVは同じ数値空欄、status、reason、sourceを参照し、fallbackの実装を各surfaceで再定義しない。
+
+### Plan40 v2費目色契約
+
+- **WHEN** Plan40 v2の10費目キーを棒グラフまたは凡例へ描画する、**THEN** 費目名から共通color resolverで既存の費目パレットを引き、同じ費目のlegacy系列とv2系列は安定して同色になる。
+- **WHEN** 利用者が費目凡例を確認する、**THEN** 凡例アイコンと棒のfillは同じresolver結果を使い、系列位置に依存した色ずれを起こさない。
+- **WHEN** Plan40 v2の費目キーが既存の色定義にない、**THEN** 既存のcategory mappingに従って解決し、未解決時だけ既定色へfallbackする。
+
+### 実装後の検証記録と未確定事項
+
+今回の実装完了チェックポイントでは、targeted tests 49件、Plan40 runtime tests 40件、`type-check`、対象変更のoxlint、`git diff --check` を証拠として記録する。これらは既存のテスト・型チェック・lintの代替ではなく、今回の境界metadata parityと費目色契約を確認する証拠である。
+
+追加証拠を反映したJEVの通常再判定は未実施であり、JEVは追加証拠後の再判定待ちとする。今回のユーザー視点評価では表とCSVの値・状態・出所を確認したが、tooltipの同一境界fallbackとのparityは未確認である。
+
+### 実装完了チェックポイント補遺: tooltip境界parity
+
+- **WHEN** 2018Q1以降のPlan40 v2費目キーについて、Rechartsのrow payloadに既存の
+  `available` measurementや`source`が残っていても値がnull/undefinedである、**THEN** tooltipは
+  表・CSVと同じ共通fallbackを優先し、`status=unavailable`、`reason=outside_period`、
+  `seriesType=unavailable`、空の`source`、表示「対象期間外」を示す。
+- **WHEN** Rechartsのrow payloadに`年月`または`label`が含まれない、**THEN** tooltipの
+  props `label`（例: `2018Q1`）を期間判定に使い、2018Q1以降のPlan40 v2境界fallbackを
+  適用する。
+- **WHEN** 2005Q1–2017Q4のPlan40 v2数値行をtooltipへ渡す、**THEN** 既存row measurementを
+  優先し、推計／公式区分、source、数値を境界fallbackで上書きしない。
+
+tooltip fallback修正後の証拠は targeted tests 80件、runtime tests 29件、`type-check`、対象変更の
+oxlint、`git diff --check`、および実DOM tooltipの10キーmetadata parityである。実DOMでは2018Q1の
+10キーすべてが `unavailable / outside_period / 対象期間外 / source空` と一致し、Plan40 v2の10費目は
+色が一意で、対応するlegacy費目と同色であることを確認した。
+
+tooltipの全viewport・全interaction状態での網羅的な手動確認と、追加証拠を反映したJEV通常再判定は
+未実施であり、引き続き未確定事項として記録する。
+
+### 実装完了チェックポイント補遺: JEV再判定
+
+追加証拠後のJEV再判定を `/tmp/plan40-continuation-jev-revalidation.json` に記録した。HTTPは成功し、
+判定は `choice=valid_as_defined`、`confidence=0.33`、確率は
+`valid_as_defined=0.49`、`valid_but_limited=0.49`、`not_valid=0.01`、`indeterminate=0.01` だった。
+これにより、直前の「通常再判定未実施」「JEV再判定待ち」という記録は本補遺でsupersedeする。
+
+今回の変更については、Plan40 v2境界のtable・CSV・tooltip parity、payloadに期間列がない場合のtooltip
+label fallback、v2費目10色の一意性とlegacy同色を受入条件達成として完了と記録する。ただしJEVの
+confidenceが低く、`valid_but_limited` と同率であるため、実DOMでの証拠範囲、console warningの確認、
+全viewport・全interaction状態の手動確認が制約として残る。
+
+全体lintは既存のLazyMount `prefer-const`で失敗しており、今回のPlan40変更に起因する失敗とは分離して
+記録する。既存テスト、type-check、対象oxlint、runtime evidence、ユーザー操作証拠は引き続き完了判定の
+根拠とし、JEVはそれらの代替とは扱わない。
+
+### production最終証拠
+
+`pnpm build` は成功し、production server `http://127.0.0.1:3102` でユーザー視点の最小操作を再確認した。
+2005Q1・2017Q4はPlan40 v2数値、2018Q1は「対象期間外」となり、データ表の展開とCSV downloadも成功した。
+ブラウザエラーは発生しなかった。
+
+production tooltipは10行すべてで `status=unavailable`、`reason=outside_period`、表示「対象期間外」、
+空の`source`を示した。Plan40 v2色は10色が一意で、対応するlegacy同費目10組は全て同色だった。
+追加証拠後JEVの `valid_as_defined`（confidence `0.33`）は完了根拠として維持する。全体lintの既存
+LazyMount `prefer-const`失敗は制約として残る。
+
+### 既存問題の解消と最終検証
+
+Plan40 続編で判明した既存問題を解消し、既存のPlan40受入条件および履歴を維持した。
+
+- **WHEN** `LazyMount` の遅延描画実装をlintする、**THEN** 再代入されないローカル束縛は
+  `const` として宣言され、`prefer-const` によるlintエラーを出さない。
+- **WHEN** `XAxisEdgeTick` がRechartsから受け取ったtick propsをSVG要素へ渡す、**THEN**
+  `verticalAnchor`、`tickFormatter` などRecharts内部用propsをDOMへ漏出さず、React console warningを
+  発生させない。
+- **WHEN** lint対象の設定・ローダー・コンポーネント・計算関数を検査する、**THEN** anonymous
+  default export、未使用の分割代入、未使用の公開オプション引数を整理し、挙動と既存APIを保ったまま
+  残存4 warningを解消する。
+- **WHEN** リポジトリ全体の検証を実行する、**THEN** `pnpm lint` は0 error/0 warning、type-check、
+  関連114 tests、production buildが成功する。
+- **WHEN** production環境で利用者が名目消費を選択し、2005Q1・2017Q4・2018Q1を確認して表とCSVを
+  操作する、**THEN** 3境界の値・状態・出所が一致し、console errorsは空配列である。
+- **WHEN** productionでtooltipの10行を確認する、**THEN** 表・CSVと同じ10行のmetadata parityを
+  示し、既存問題の解消後もPlan40 v2の境界fallbackおよび費目色契約を維持する。
+
+最終検証では、`pnpm lint` が0 error/0 warning、type-check、関連114 tests、production buildが成功した。
+productionの最小操作（表展開、CSVダウンロード、2005Q1・2017Q4・2018Q1の3境界確認）も成功し、
+tooltip 10行のparityと `console errors=[]` を確認した。これにより、前項で制約として残していた
+LazyMountのlint失敗およびproduction上のReact console warningを解消済みとして記録する。
+
+### 最終JEVレビュー補遺
+
+既存問題修正後の最終JEVレビューを `/tmp/jev-plan40-checkpoint-review.json` に記録した。判定は
+`choice=valid_but_limited`、`confidence=0.8`、確率は `valid_but_limited=0.84`、
+`indeterminate=0.13`、`not_valid=0.01`、`valid_as_defined=0.02` だった。
+
+JEVは、全体lint 0 error/0 warning、React console warning解消、およびPlan40の既存証拠を受容可能と
+評価し、追加の修正要求は出していない。一方、全viewport・全interaction状態の網羅的確認は未実施のため、
+判定は限定付きである。この制約を残したまま、既存のPlan40受入条件、完了判定、検証履歴は維持する。

@@ -8,6 +8,7 @@ import type { SeriesMetadata } from "../../lib/chartConstants";
 import styles from "./CpiChart.module.css";
 import {
   getLegendLabel,
+  getSpendingSeriesColor,
   SUPPORT_SERIES_KEY_NOMINAL,
   SUPPORT_SERIES_KEY_REAL,
 } from "../../lib/chartConstants";
@@ -85,8 +86,18 @@ export function normalizeSpendingChartData(
   const ctiKeys = keys.filter((key) => key !== supportKey);
   return data.map((row) => {
     const next = { ...row };
-    if (row.年 < 2018) ctiKeys.forEach((key) => (next[key] = null));
-    else if (supportKey) next[supportKey] = null;
+    const hasPlan39Expense = ctiKeys.some(
+      (key) =>
+        typeof row[key] === "number" &&
+        Number.isFinite(row[key]) &&
+        row.measurements?.[key] !== undefined,
+    );
+    if (row.年 < 2018) {
+      // Plan39-v2 supplies the pre-2018 expense stack. Keep the legacy support
+      // bar unless both expense values and their measurement metadata are present.
+      if (hasPlan39Expense && supportKey) next[supportKey] = null;
+      else if (!hasPlan39Expense) ctiKeys.forEach((key) => (next[key] = null));
+    } else if (supportKey) next[supportKey] = null;
     return next;
   });
 }
@@ -127,6 +138,9 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
   const ctiKeys = keys.filter((key) => key !== supportKey);
   const hasPreBoundarySupport = data.some(
     (row) => row.年 < 2018 && supportKey && typeof row[supportKey] === "number",
+  );
+  const hasPlan39Measurements = data.some(
+    (row) => row.年 < 2018 && ctiKeys.some((key) => row.measurements?.[key] !== undefined),
   );
   const legendKeys = hasPreBoundarySupport ? keys : ctiKeys;
   const selectedLegendCount = legendKeys.filter((key) => !hiddenKeys.includes(key)).length;
@@ -190,7 +204,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
                   backgroundColor:
                     key === SUPPORT_SERIES_KEY_NOMINAL
                       ? chartColors.barFill || "#94a3b8"
-                      : colors[keys.indexOf(key)],
+                      : getSpendingSeriesColor(key, keys, colors),
                 }}
               />
 
@@ -227,9 +241,20 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
           />
         )}
       </h2>
-      {supportKey === SUPPORT_SERIES_KEY_NOMINAL && !hasPreBoundarySupport && (
-        <p role="status" className={styles.chartNote}>
-          CTIミクロ名目四半期系列は利用できません（{supportReason ?? "unavailable"}）。
+      {supportKey === SUPPORT_SERIES_KEY_NOMINAL &&
+        !hasPreBoundarySupport &&
+        !hasPlan39Measurements && (
+          <p role="status" className={styles.chartNote}>
+            CTIミクロ名目四半期系列は利用できません（{supportReason ?? "unavailable"}）。
+          </p>
+        )}
+      {supportKey === SUPPORT_SERIES_KEY_NOMINAL && (
+        <p
+          className={styles.chartNote}
+          data-testid="spending-series-switch-note"
+          data-series-switch="plan39-v2-bottom-up-to-cti-categories"
+        >
+          2005Q1〜2016Q4：接続推計の年次値を月次系列から四半期化。2017Q1〜2017Q4：公式年次値を月次系列から四半期化。2018Q1以降：既存CTI名目費目系列。
         </p>
       )}
       <ChartDataContract data={chartData} keys={publicKeys} descriptors={descriptors} />
@@ -350,7 +375,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
                   fill={
                     key === SUPPORT_SERIES_KEY_NOMINAL
                       ? chartColors.barFill || "#94a3b8"
-                      : colors[keys.indexOf(key)]
+                      : getSpendingSeriesColor(key, keys, colors)
                   }
                   fillOpacity={0.8}
                   isAnimationActive={false}

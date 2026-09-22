@@ -65,13 +65,49 @@ export const ChartExportButton: React.FC<ChartExportButtonProps> = ({
               ? current.frequency
               : undefined,
           aggregation: typeof current.aggregation === "string" ? current.aggregation : "",
-          status: current.status === "invalid" ? "invalid" : "valid",
+          status:
+            current.status === "invalid" ||
+            current.status === "unavailable" ||
+            current.status === "available"
+              ? current.status
+              : "valid",
           reason: typeof current.reason === "string" ? current.reason : null,
+          seriesType:
+            current.seriesType === "estimated_adjusted" ||
+            current.seriesType === "official_adjusted" ||
+            current.seriesType === "unavailable"
+              ? current.seriesType
+              : undefined,
+          official: typeof current.official === "boolean" ? current.official : undefined,
+          annualAnchorType:
+            current.annualAnchorType === "estimated" || current.annualAnchorType === "official"
+              ? current.annualAnchorType
+              : undefined,
+          quarterlyDerived:
+            typeof current.quarterlyDerived === "boolean" ? current.quarterlyDerived : undefined,
+          model: current.model === "v2-bottom-up" ? "v2-bottom-up" : undefined,
+          estimateVersion: current.estimateVersion === "plan39-v2" ? "plan39-v2" : undefined,
         } satisfies NonNullable<BuildCsvOptions["metadata"]>[number],
       ];
     });
     const csvMetadataRows: NonNullable<BuildCsvOptions["metadata"]> = csvMetadata.map(
-      ({ key, label, unit, source, valueType, frequency, aggregation, status, reason }) => ({
+      ({
+        key,
+        label,
+        unit,
+        source,
+        valueType,
+        frequency,
+        aggregation,
+        status,
+        reason,
+        seriesType,
+        official,
+        annualAnchorType,
+        quarterlyDerived,
+        model,
+        estimateVersion,
+      }) => ({
         key,
         label,
         value: null,
@@ -82,6 +118,12 @@ export const ChartExportButton: React.FC<ChartExportButtonProps> = ({
         aggregation: aggregation ?? "",
         status: status ?? "valid",
         reason: reason ?? null,
+        seriesType,
+        official,
+        annualAnchorType,
+        quarterlyDerived,
+        model,
+        estimateVersion,
       }),
     );
     const csv = withBom(

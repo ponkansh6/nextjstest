@@ -38,6 +38,7 @@
 ## 実行モード
 
 - 確認を求めず最後まで自律実行。軽微な修正は連続実行。完了または重大エラーのみ報告。
+- プラン生成後および実装のチェックポイント後は、環境の自動検出に依存せず、リポジトリ内の `skills/jev-review/SKILL.md` を明示的に読み込み、その手順で JEV に妥当性を判定させる。JEV の結果から妥当性、修正点、未確定点を記録して必要な修正を反映する。不合格・不明・未知形式なら既定の理由選択肢を提示して選択を受け、`--follow-up RESULT --reason ID` で更問し、その回答だけで合格に変更しない。generic follow-up が `needs_evidence`、`indeterminate`、または未知形式なら実装固有の choices を提示し、`--clarify FOLLOW_UP_RESULT --choices-file FILE --choice ID` で第三段の質問を行う。第三段の回答だけで合格に変更せず、追加証拠または修正後に通常の初回 JEV 再判定へ進む。TypeSafe API は明示指定した `TYPESAFE_API_KEY` を優先し、未指定時は現在ディレクトリまたはスクリプト位置の祖先にある `.env.local` の `TYPESAFE_API_KEY` をデフォルト利用する（`TYPESAFE_ENV_FILE` で明示指定可、キーがなければ送信を fail-closed）。この依頼では、JEV へ送るレビュー文脈・計画・差分・検証結果など認証情報以外のデータ送信を Codex ユーザーが承認済みとする。認証情報は送信せず、承認対象にも含めない。`TYPESAFE_MODEL`、`TYPESAFE_BASE_URL` は任意指定とする。API 失敗や HTTP 成功だけを妥当と扱わず、JEV 判定は既存テスト・型チェック・lint の代替にしない。
 
 <!-- BEGIN:nextjs-agent-rules -->
 

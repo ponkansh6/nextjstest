@@ -74,7 +74,30 @@ const NOMINAL_COLOR_OVERRIDES: Record<string, string> = {
   "食料（実質）": "var(--nominal-food)",
 };
 
+const PLAN40_CATEGORY_COLOR: Record<string, string> = {
+  食料: "外食以外食料",
+  住居: "住居",
+  "光熱・水道": "光熱・水道",
+  "家具・家事用品": "家具・家事用品",
+  被服及び履物: "被服及び履物",
+  保健医療: "保健医療",
+  "交通・通信": "交通・自動車等関係費",
+  教育: "教育",
+  教養娯楽: "教養娯楽",
+  その他の消費支出: "諸雑費",
+};
+
+function getPlan40Color(key: string): string | undefined {
+  const category = key.match(/^CTIミクロ調整系列（(.+)）$/)?.[1];
+  if (category === "食料") return NOMINAL_COLOR_OVERRIDES["食料（名目）"];
+  const target = category ? PLAN40_CATEGORY_COLOR[category] : undefined;
+  const index = target ? CPI_CATEGORIES.indexOf(target) : -1;
+  return index >= 0 ? stackedColors[index] : undefined;
+}
+
 export const getColorForNominalKey = (key: string): string => {
+  const plan40Color = getPlan40Color(key);
+  if (plan40Color) return plan40Color;
   if (NOMINAL_COLOR_OVERRIDES[key]) {
     return NOMINAL_COLOR_OVERRIDES[key];
   }
@@ -82,6 +105,12 @@ export const getColorForNominalKey = (key: string): string => {
   const index = CPI_CATEGORIES.indexOf(targetStackedKey || "");
   return index !== -1 ? stackedColors[index] : "var(--series-1)";
 };
+
+export const getSpendingSeriesColor = (
+  key: string,
+  keys: readonly string[],
+  colors: readonly string[],
+): string => getPlan40Color(key) ?? colors[keys.indexOf(key)] ?? "var(--series-1)";
 
 // --- 以下、既存の定数とユーティリティ ---
 
@@ -382,6 +411,10 @@ export interface SeriesMetadata {
   aggregation?: string;
   seriesType?: "estimated_adjusted" | "official_adjusted" | "unavailable";
   official?: boolean;
+  annualAnchorType?: "estimated" | "official";
+  quarterlyDerived?: boolean;
+  model?: "v2-bottom-up";
+  estimateVersion?: "plan39-v2";
   descriptor?: {
     key: string;
     label: string;
@@ -395,6 +428,8 @@ export interface SeriesMetadata {
     aggregation?: string;
     seriesType?: "estimated_adjusted" | "official_adjusted" | "unavailable";
     official?: boolean;
+    annualAnchorType?: "estimated" | "official";
+    quarterlyDerived?: boolean;
   };
 }
 
@@ -414,6 +449,8 @@ export interface TooltipSeriesProjection {
   aggregation?: string;
   seriesType?: "estimated_adjusted" | "official_adjusted" | "unavailable";
   official?: boolean;
+  annualAnchorType?: "estimated" | "official";
+  quarterlyDerived?: boolean;
 }
 
 /** Project one display contract into the metadata consumed by CustomTooltip. */
@@ -449,6 +486,8 @@ export const projectTooltipMetadata = (
           aggregation,
           seriesType,
           official,
+          annualAnchorType,
+          quarterlyDerived,
           descriptor,
         },
         index,
@@ -472,6 +511,12 @@ export const projectTooltipMetadata = (
         ...((official ?? descriptor?.official) === undefined
           ? {}
           : { official: official ?? descriptor?.official }),
+        ...((annualAnchorType ?? descriptor?.annualAnchorType) === undefined
+          ? {}
+          : { annualAnchorType: annualAnchorType ?? descriptor?.annualAnchorType }),
+        ...((quarterlyDerived ?? descriptor?.quarterlyDerived) === undefined
+          ? {}
+          : { quarterlyDerived: quarterlyDerived ?? descriptor?.quarterlyDerived }),
       }),
     );
 };

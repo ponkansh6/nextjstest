@@ -25,6 +25,15 @@ function formatTickLabel(value: string | number | undefined): string | number | 
   return `${match[1]}/${match[2]}`;
 }
 
+const RECHARTS_TICK_LAYOUT_PROPS = new Set([
+  "angle",
+  "name",
+  "orientation",
+  "padding",
+  "tickFormatter",
+  "verticalAnchor",
+]);
+
 // カスタム tick 関数を使う場合、recharts の tickFormatter は適用されないため
 // (TickItem が custom tick に渡すのは未整形の payload.value のみ)、
 // 表示用のフォーマットはここで行う。
@@ -64,9 +73,14 @@ export const XAxisEdgeTick = ({
     (tickCoordinate - axisBox.x < endpointHalfWidth + estimatedLabelWidth / 2 ||
       axisBox.x + axisBox.width - tickCoordinate < endpointHalfWidth + estimatedLabelWidth / 2);
   if (isNearEndpoint) return null;
+  // Recharts passes these values to custom ticks for its own layout. They
+  // are not SVG attributes and must not be forwarded to <text>.
+  const svgProps = Object.fromEntries(
+    Object.entries(rest).filter(([key]) => !RECHARTS_TICK_LAYOUT_PROPS.has(key)),
+  );
   return (
     <text
-      {...rest}
+      {...svgProps}
       x={x}
       className={className}
       fill={isEdge ? emphasisFill : fill}

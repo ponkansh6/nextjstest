@@ -19,7 +19,7 @@ vi.mock("recharts", () => ({
     barSize,
   }: {
     children: React.ReactNode;
-    data: any[];
+    data: unknown[];
     margin?: Record<string, number>;
     barCategoryGap?: string;
     barSize?: number;
@@ -114,6 +114,68 @@ describe("SpendingBarChart component legendMode tests", () => {
       SUPPORT_SERIES_KEY_NOMINAL,
     ]);
     expect(screen.queryAllByTestId("line-mock")).toHaveLength(0);
+  });
+
+  it("annotates the Plan39 quarterly nominal series boundary", () => {
+    renderChart({
+      data: [
+        {
+          label: "2017Q4",
+          年: 2017,
+          quarter: 4,
+          年月: "2017Q4",
+          [SUPPORT_SERIES_KEY_NOMINAL]: 100,
+        },
+        {
+          label: "2018Q1",
+          年: 2018,
+          quarter: 1,
+          年月: "2018Q1",
+          食料: 30,
+        },
+      ],
+    });
+
+    const note = screen.getByTestId("spending-series-switch-note");
+    expect(note.getAttribute("data-series-switch")).toBe("plan39-v2-bottom-up-to-cti-categories");
+    expect(note.textContent).toContain("2005Q1〜2016Q4：接続推計の年次値を月次系列から四半期化。");
+    expect(note.textContent).toContain("2017Q1〜2017Q4：公式年次値を月次系列から四半期化。");
+    expect(note.textContent).toContain("2018Q1以降");
+    expect(note.textContent).toContain("既存CTI名目費目系列");
+  });
+
+  it("does not show the legacy missing-support message when Plan39 measurements exist", () => {
+    renderChart({
+      data: [
+        {
+          label: "2005Q1",
+          年: 2005,
+          quarter: 1,
+          年月: "2005Q1",
+          食料: 30,
+          measurements: {
+            食料: {
+              key: "食料",
+              label: "食料",
+              unit: "指数",
+              source: "Plan39-v2",
+              valueType: "comparison",
+              value: 30,
+              status: "available",
+              reason: null,
+              frequency: "quarterly",
+              aggregation: "derived",
+              seriesType: "estimated_adjusted",
+              official: false,
+              annualAnchorType: "estimated",
+              quarterlyDerived: true,
+            },
+          },
+        },
+      ],
+    });
+
+    expect(screen.queryByText(/CTIミクロ名目四半期系列は利用できません/)).toBeNull();
   });
 
   it("keeps the regular GDP series public contract unchanged with or without the advanced flag", () => {

@@ -108,6 +108,37 @@ describe("buildCsv", () => {
     );
   });
 
+  it("Plan40 v2 descriptorの行欠測を対象期間外として機械可読化する", () => {
+    const key = "CTIミクロ調整系列（食料）";
+    const csv = buildCsv([{ 年月: "2018Q1", [key]: null }], [key], undefined, {
+      metadata: [
+        {
+          key,
+          label: "食料",
+          valueType: "comparison",
+          value: null,
+          unit: "指数",
+          source: "Plan40",
+          frequency: "quarterly",
+          aggregation: "derived",
+          status: "available",
+          reason: null,
+          seriesType: "official_adjusted",
+          estimateVersion: "plan39-v2",
+        },
+      ],
+    });
+    const [header, row] = csv
+      .trimEnd()
+      .split("\r\n")
+      .map((line) => line.split(","));
+    const valueAt = (name: string) => row[header.indexOf(name)];
+    expect(valueAt(`${key}__value`)).toBe("");
+    expect(valueAt(`${key}__source`)).toBe("");
+    expect(valueAt(`${key}__status`)).toBe("unavailable");
+    expect(valueAt(`${key}__reason`)).toBe("outside_period");
+  });
+
   it("2017年12月/2018年1月境界でmeasurementなしのlegacy数値を保持する", () => {
     const metadata = [
       {
@@ -149,14 +180,60 @@ describe("buildCsv", () => {
     expect(lines[1]).toContain(
       "CTIミクロ（名目・四半期平均）,raw,,,100,指数,2005 source,quarterly,simple_mean_of_three_calendar_months,valid,",
     );
-    expect(lines[2]).toContain(
-      "CTIミクロ（名目・四半期平均）,raw,unavailable,false,,,,quarterly,,invalid,unavailable",
-    );
+    const boundaryHeader = lines[0].split(",");
+    const boundaryRow = lines[2].split(",");
+    const boundaryValueAt = (name: string) => boundaryRow[boundaryHeader.indexOf(name)];
+    expect(boundaryValueAt("CTI__value")).toBe("");
+    expect(boundaryValueAt("CTI__source")).toBe("");
+    expect(boundaryValueAt("CTI__status")).toBe("invalid");
+    expect(boundaryValueAt("CTI__reason")).toBe("unavailable");
+    expect(boundaryValueAt("CTI__seriesType")).toBe("unavailable");
     expect(lines[2]).toMatch(/^2018年1月,42\.00,/);
-    expect(lines[2]).not.toContain("2005 source");
     expect(lines[3]).toContain(
       "CTIミクロ（名目・四半期平均）,raw,,,,指数,2018 source,quarterly,simple_mean_of_three_calendar_months,invalid,missing",
     );
+  });
+
+  it("四半期派生measurementの二軸列は行ごとの値を出力する", () => {
+    const metadata = {
+      key: "CTI",
+      label: "CTI",
+      valueType: "raw" as const,
+      value: null,
+      unit: "指数",
+      source: "Plan39",
+      frequency: "quarterly" as const,
+      aggregation: "derived_quarterly",
+      status: "valid" as const,
+      reason: null,
+      seriesType: "estimated_adjusted" as const,
+      official: false,
+      annualAnchorType: "estimated" as const,
+      quarterlyDerived: true,
+    };
+    const csv = buildCsv(
+      [
+        {
+          label: "2016Q1",
+          CTI: 10,
+          measurements: { CTI: { ...metadata, value: 10, annualAnchorType: "estimated" as const } },
+        },
+        {
+          label: "2017Q1",
+          CTI: 20,
+          measurements: { CTI: { ...metadata, value: 20, annualAnchorType: "official" as const } },
+        },
+      ],
+      ["CTI"],
+      undefined,
+      { metadata: [metadata] },
+    );
+    const lines = csv.split("\r\n");
+    expect(lines[0]).toContain(
+      "CTI__seriesType,CTI__official,CTI__annualAnchorType,CTI__quarterlyDerived,CTI__value",
+    );
+    expect(lines[1]).toContain("estimated_adjusted,false,estimated,true,10");
+    expect(lines[2]).toContain("estimated_adjusted,false,official,true,20");
   });
 
   it("invalidのlegacy数値を保持し、明示的unavailableだけを空欄にする", () => {
