@@ -32,16 +32,18 @@ const bars = (page: Page, testId: string) =>
 
 const contractRenderableCount = async (page: Page, testId: string) => {
   const contract = page.getByTestId(testId).getByTestId("chart-data-contract");
-  const keys = JSON.parse((await contract.getAttribute("data-series")) ?? "[]") as string[];
   const rows = contract.locator("[data-chart-data-row]");
-  let count = 0;
-  for (const row of await rows.all()) {
-    for (const key of keys) {
-      const value = await row.locator(`[data-series-key="${key}"]`).getAttribute("data-value");
-      if (value !== null && Number.isFinite(Number(value))) count += 1;
-    }
-  }
-  return count;
+  return rows.evaluateAll((rowElements) =>
+    rowElements.reduce(
+      (count, row) =>
+        count +
+        [...row.querySelectorAll<HTMLElement>("[data-series-key]")].filter((cell) => {
+          const value = cell.getAttribute("data-value");
+          return value !== null && Number.isFinite(Number(value));
+        }).length,
+      0,
+    ),
+  );
 };
 
 const contractPeriodCount = async (page: Page, testId: string) =>

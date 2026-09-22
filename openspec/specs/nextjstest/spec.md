@@ -3351,3 +3351,9 @@ LazyMountのlint失敗およびproduction上のReact console warningを解消済
 JEVは、全体lint 0 error/0 warning、React console warning解消、およびPlan40の既存証拠を受容可能と
 評価し、追加の修正要求は出していない。一方、全viewport・全interaction状態の網羅的確認は未実施のため、
 判定は限定付きである。この制約を残したまま、既存のPlan40受入条件、完了判定、検証履歴は維持する。
+
+### 最終実装チェックポイント補遺: 操作契約と行単位の公開系列
+
+- **WHEN** 利用者がPlan40 v2の費目凡例をクリックする、**THEN** 対応するlegacy名目キーとクリックされたv2キーを同時にhiddenへ反映し、表示中の棒と凡例の状態を一致させる。実質側は対応するlegacy実質キーを切り替える。
+- **WHEN** モバイル利用者が棒を短くタップして停止する、**THEN** tooltipを表示したままにし、縦方向のスワイプとして判定された操作ではtooltipを閉じる。
+- **WHEN** 範囲変更E2EがChartDataContractの系列セルを数える、**THEN** Plan40 v2系列が存在しない行を待機失敗にせず、その行に実在する数値セルだけを描画本数との比較対象にする。

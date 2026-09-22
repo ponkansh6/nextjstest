@@ -61,6 +61,9 @@ const isInsideVisibleTooltip = (clientX: number, clientY: number) =>
     );
   });
 
+const TOUCH_MOVE_THRESHOLD = 8;
+const TOUCH_LEAVE_GRACE_MS = 1000;
+
 export const useChartTooltipController = ({
   suppressed,
   isTouch,
@@ -86,6 +89,12 @@ export const useChartTooltipController = ({
   const [activeChartId, setActiveChartId] = useState<string | null>(null);
   const [escapeDismissed, setEscapeDismissed] = useState(false);
   const leftChartAfterEscapeRef = useRef(false);
+  const touchGestureRef = useRef<{
+    startX: number;
+    startY: number;
+    moved: boolean;
+    startedAt: number;
+  } | null>(null);
   // Each chart owns its selected row.  A single index is incorrect because
   // charts can have different filtered lengths (and NewGraph is range-filtered).
   const [activeIndices, setActiveIndices] = useState<Record<string, number | undefined>>({});
@@ -185,6 +194,19 @@ export const useChartTooltipController = ({
         }));
       };
       const handleChartLeave = (event: ChartTooltipInteractionEvent) => {
+        const pointerType = "pointerType" in event ? event.pointerType : undefined;
+        const gesture = touchGestureRef.current;
+        if (pointerType === "touch") {
+          if (!gesture?.moved) return;
+        } else if (
+          pointerType == null &&
+          gesture &&
+          !gesture.moved &&
+          Date.now() - gesture.startedAt < TOUCH_LEAVE_GRACE_MS
+        ) {
+          return;
+        }
+
         const relatedTarget = event.relatedTarget;
         const isTooltipTarget =
           relatedTarget instanceof Element &&
@@ -195,6 +217,36 @@ export const useChartTooltipController = ({
 
         setActiveChartId(null);
         if (escapeDismissed) leftChartAfterEscapeRef.current = true;
+      };
+      const handlePointerDown = (event: ReactPointerEvent<HTMLElement>) => {
+        if (event.pointerType === "touch") {
+          touchGestureRef.current = {
+            startX: event.clientX,
+            startY: event.clientY,
+            moved: false,
+            startedAt: Date.now(),
+          };
+        } else {
+          touchGestureRef.current = null;
+        }
+        selectIndex(event);
+      };
+      const handlePointerMove = (event: ReactPointerEvent<HTMLElement>) => {
+        if (event.pointerType === "touch") {
+          const gesture = touchGestureRef.current;
+          if (gesture && !gesture.moved) {
+            const movedX = Math.abs(event.clientX - gesture.startX);
+            const movedY = Math.abs(event.clientY - gesture.startY);
+            if (Math.max(movedX, movedY) > TOUCH_MOVE_THRESHOLD) {
+              gesture.moved = true;
+              if (movedY > movedX) {
+                dismiss();
+                return;
+              }
+            }
+          }
+        }
+        selectIndex(event);
       };
       return {
         tooltipProps: {
@@ -255,8 +307,8 @@ export const useChartTooltipController = ({
             setActiveChartId(chartId);
           }
         },
-        onPointerDown: selectIndex,
-        onPointerMove: selectIndex,
+        onPointerDown: handlePointerDown,
+        onPointerMove: handlePointerMove,
         onMouseMove: selectIndex,
         onPointerLeave: handleChartLeave,
         onMouseLeave: handleChartLeave,
