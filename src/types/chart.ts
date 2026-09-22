@@ -99,14 +99,16 @@ export function createMissingSeriesMeasurement(
   return {
     key,
     label: descriptor?.label ?? key,
-    unit: descriptor?.unit ?? "",
+    // Legacy missing rows retain the established blank unit/source metadata;
+    // only the Plan39-v2 descriptor carries its explicit provenance fields.
+    unit: isPlan39V2 ? (descriptor?.unit ?? "") : "",
     source: "",
     valueType: descriptor?.valueType ?? "raw",
     value: null,
     status: isPlan39V2 ? "unavailable" : "invalid",
     reason: isPlan39V2 ? "outside_period" : "unavailable",
     frequency: descriptor?.frequency ?? "quarterly",
-    aggregation: descriptor?.aggregation ?? "",
+    aggregation: isPlan39V2 ? (descriptor?.aggregation ?? "") : "",
     seriesType: "unavailable",
   };
 }

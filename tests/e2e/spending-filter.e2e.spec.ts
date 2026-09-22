@@ -52,7 +52,9 @@ test.describe("消費支出絞り込み E2E", () => {
 
     // 四半期(Q1〜Q4)ボタンではなく費目の凡例ボタンを選ぶ
     // 「全選択解除」の直後、費目リストの先頭ボタンを対象にする
-    const categoryButton = page.getByTestId(NOMINAL).locator("[aria-pressed]").nth(4);
+    const categoryButton = page
+      .getByTestId(NOMINAL)
+      .locator('button[data-testid="legend-CTIミクロ調整系列（食料）"]');
     const label = await categoryButton.textContent();
 
     await categoryButton.click();

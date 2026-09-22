@@ -124,7 +124,9 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
                     typeof rowMeasurement === "object"
                   ? (rowMeasurement as Partial<TooltipMeasurement>)
                   : row && typeof row === "object"
-                    ? fallbackMeasurement
+                    ? typeof entry?.value === "number" && Number.isFinite(entry.value)
+                      ? (meta as TooltipMeasurement)
+                      : fallbackMeasurement
                     : (meta as TooltipMeasurement);
               const hasProvenance =
                 measurement.seriesType !== undefined || measurement.official !== undefined;

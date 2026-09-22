@@ -225,21 +225,35 @@ export default function CpiChart({
       real: SUPPORT_SERIES_KEY_REAL,
       label: "民間最終消費支出",
     };
-    const allPairs = [...keyPairs, supportPair];
+    const adjustedCategory = dataKey.match(/^CTIミクロ調整系列（(.+)）$/)?.[1];
+    const legacyNominalKey = adjustedCategory
+      ? `${adjustedCategory === "その他の消費支出" ? "その他の消費支出" : adjustedCategory}（名目）`
+      : undefined;
+    const legacyRealKey = legacyNominalKey?.replace("（名目）", "（実質）");
+    const allPairs = [
+      ...keyPairs,
+      ...(legacyNominalKey && legacyRealKey
+        ? [{ nominal: legacyNominalKey, real: legacyRealKey, label: adjustedCategory ?? dataKey }]
+        : []),
+      supportPair,
+    ];
 
-    const pair = allPairs.find((p) => p.nominal === dataKey || p.real === dataKey);
+    const pair = adjustedCategory
+      ? allPairs.find((p) => p.nominal === legacyNominalKey)
+      : allPairs.find((p) => p.nominal === dataKey || p.real === dataKey);
     if (!pair) return;
 
     const nominalKey = pair.nominal;
     const realKey = pair.real;
 
+    const nominalToggleKeys =
+      adjustedCategory && !nominalKey.includes("CTIミクロ調整系列")
+        ? [nominalKey, dataKey]
+        : [nominalKey];
     setNominalHiddenKeys((prev) => {
       const next = new Set(prev);
-      if (next.has(nominalKey)) {
-        next.delete(nominalKey);
-      } else {
-        next.add(nominalKey);
-      }
+      const shouldHide = nominalToggleKeys.some((key) => !next.has(key));
+      nominalToggleKeys.forEach((key) => (shouldHide ? next.add(key) : next.delete(key)));
       return Array.from(next);
     });
 
