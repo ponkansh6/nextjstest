@@ -62,7 +62,7 @@ const isInsideVisibleTooltip = (clientX: number, clientY: number) =>
   });
 
 const TOUCH_MOVE_THRESHOLD = 8;
-const TOUCH_LEAVE_GRACE_MS = 1000;
+const TOUCH_LEAVE_GRACE_MS = 2000;
 
 export const useChartTooltipController = ({
   suppressed,
