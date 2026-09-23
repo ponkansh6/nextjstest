@@ -16,6 +16,10 @@ function asMeasurement(value: unknown): Partial<SeriesMeasurement> | undefined {
   return value && typeof value === "object" ? (value as Partial<SeriesMeasurement>) : undefined;
 }
 
+function formatBridgeRange(range?: { startYear: number; endYear: number }): string | undefined {
+  return range ? `${range.startYear}-${range.endYear}` : undefined;
+}
+
 /** The one public row model consumed by chart, table, and CSV surfaces. */
 export function normalizePublicChartData(data: PublicChartRow[], keys: string[]): PublicChartRow[] {
   return data.map((row) => {
@@ -104,6 +108,18 @@ export function ChartDataContract({
                   data-measurement-value-type={measurement?.valueType}
                   data-unit={measurement?.unit}
                   data-source={measurement?.source}
+                  data-source-id={measurement?.sourceId}
+                  data-stat-inf-id={measurement?.statInfId}
+                  data-household-scope={measurement?.householdScope}
+                  data-seasonality-source-id={measurement?.seasonalitySourceId}
+                  data-target-source-id={measurement?.targetSourceId}
+                  data-target-household-scope={measurement?.targetHouseholdScope}
+                  data-bridge-applied-range={formatBridgeRange(measurement?.bridgeAppliedRange)}
+                  data-bridge-coefficient={
+                    measurement?.bridgeCoefficient === undefined
+                      ? undefined
+                      : String(measurement.bridgeCoefficient)
+                  }
                   data-frequency={measurement?.frequency}
                   data-aggregation={measurement?.aggregation}
                   data-status={measurement?.status}

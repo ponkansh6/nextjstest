@@ -10,6 +10,14 @@ type TooltipDisplayPayload = NonNullable<CustomTooltipProps["payload"]>[number] 
   order?: number;
   unit?: string;
   source?: string;
+  sourceId?: string;
+  statInfId?: string;
+  householdScope?: string;
+  seasonalitySourceId?: string;
+  targetSourceId?: string;
+  targetHouseholdScope?: string;
+  bridgeAppliedRange?: { startYear: number; endYear: number };
+  bridgeCoefficient?: number;
   valueType?: "raw" | "comparison";
   frequency?: string;
   aggregation?: string;
@@ -26,6 +34,14 @@ type TooltipMeasurement = Partial<
     SeriesMeasurement,
     | "unit"
     | "source"
+    | "sourceId"
+    | "statInfId"
+    | "householdScope"
+    | "seasonalitySourceId"
+    | "targetSourceId"
+    | "targetHouseholdScope"
+    | "bridgeAppliedRange"
+    | "bridgeCoefficient"
     | "valueType"
     | "frequency"
     | "aggregation"
@@ -142,6 +158,14 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
                 order: meta.order,
                 unit: measurement.unit,
                 source: measurement.source,
+                sourceId: measurement.sourceId,
+                statInfId: measurement.statInfId,
+                householdScope: measurement.householdScope,
+                seasonalitySourceId: measurement.seasonalitySourceId,
+                targetSourceId: measurement.targetSourceId,
+                targetHouseholdScope: measurement.targetHouseholdScope,
+                bridgeAppliedRange: measurement.bridgeAppliedRange,
+                bridgeCoefficient: measurement.bridgeCoefficient,
                 valueType: measurement.valueType as "raw" | "comparison" | undefined,
                 frequency: measurement.frequency,
                 aggregation: measurement.aggregation,
@@ -332,6 +356,7 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
                 official: entry.official,
                 annualAnchorType: entry.annualAnchorType,
                 quarterlyDerived: entry.quarterlyDerived,
+                bridgeCoefficient: entry.bridgeCoefficient,
                 status: entry.status ?? "valid",
                 reason: entry.reason,
               })
@@ -345,6 +370,20 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
               data-tooltip-label={entry.name}
               data-tooltip-unit={entry.unit}
               data-tooltip-source={entry.source}
+              data-tooltip-source-id={entry.sourceId}
+              data-tooltip-stat-inf-id={entry.statInfId}
+              data-tooltip-household-scope={entry.householdScope}
+              data-tooltip-seasonality-source-id={entry.seasonalitySourceId}
+              data-tooltip-target-source-id={entry.targetSourceId}
+              data-tooltip-target-household-scope={entry.targetHouseholdScope}
+              data-tooltip-bridge-applied-range={
+                entry.bridgeAppliedRange
+                  ? `${entry.bridgeAppliedRange.startYear}-${entry.bridgeAppliedRange.endYear}`
+                  : undefined
+              }
+              data-tooltip-bridge-coefficient={
+                entry.bridgeCoefficient === undefined ? undefined : String(entry.bridgeCoefficient)
+              }
               data-tooltip-value-type={entry.valueType}
               data-tooltip-frequency={entry.frequency ?? ""}
               data-tooltip-aggregation={entry.aggregation}

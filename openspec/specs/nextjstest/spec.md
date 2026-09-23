@@ -3169,6 +3169,124 @@ Plan40 runtime evidence は `contract: "plan40"` を明示するため、両契�
 - **WHEN** Plan40 の通常表示経路を描画する、**THEN** `CtiAdjustedSeriesSection` は
   表示せず、Plan39 の年次 measurement 契約、loader、projection、旧契約テストは存続させる。
 
+## SharedPlan 41: 正式調整済みCTIへの名目四半期接続
+
+Plan41 は Plan39 の年次原本・年次契約を保持し、Plan40 の2005–2017表示アンカーと
+2017年季節比契約を本節の方式で上書きする。2018Q1以降の既存値・選択経路は不変とする。
+したがって本節は、同じ期間を扱うPlan40の旧入力source・旧季節比式に優先する。Plan39の
+原本、年次モデル、公式2017年アンカーは読み取り専用で保持する。
+
+### Data Sources / Data Flow
+
+Plan39-v2 の年次アンカー H（2005–2016 はC、2017はA）、`loadCtiDataInternal` が選択した
+`CpiData[]` の T（`data/source/cti_data2025.csv`、`statInfId=000040499069`、2025年基準、
+総世帯、2017年12か月を含む）および過去季節比専用の M（`statInfId=000040499070`、
+二人以上の世帯、2005–2016）を入力とする。四半期計算は選択済みTを受け取り、別loaderで
+再選択したり固定ファイルを再読したりしない。
+
+費目 i ごとに `s_i = mean(T_i,2017) / H_i,2017` を一度だけ求める。2005–2016 は
+`Q_i,y,q = s_i H_i,y × mean(M_i,y,q) / mean(M_i,y,1..12)`、2017 は
+`Q_i,2017,q = s_i H_i,2017 × mean(T_i,2017,q) / mean(T_i,2017) = mean(T_i,2017,q)`
+とする。2018年以降は既存のT経路をそのまま利用する。2016→2017のMからTへの季節source
+切替は残余仮定として provenance に記録し、連続性を推定しない。
+
+主要9費目は公式年次値を対応させる。HのOtherは、2017年だけAの公式総合から主要9費目を
+引いた残差（`17.3`）を使い、2005–2016年はPlan39の既存 `result.other` 推計値を保持する。
+一方、T/Mの月次Otherだけは各月の総合から主要9費目を引いた残差とする。独立した公式
+series 11は入力に使わず、総合は10費目の合算から生成する。`quarterlyAggregation` から既存の公開projection、グラフ、
+tooltip、データ表、CSVまで同一のmeasurementとprovenanceを渡す。T/Mの月次Other残差は総合から主要9費目を直接減算し、
+丸めやゼロ下限を適用せず恒等式を保つ。ただしR4に従い、負または非正の季節性入力は表示値として通さず、
+measurementを`status=unavailable`、`reason=invalid_seasonal_input`としてfail-closedにする。負残差の検証では
+入力の`total−Σmajor`恒等式と、このunavailable理由を検証し、負のquarter outputは期待しない。非enumerableな`ctiMetadata`は
+選択済みTから明示引数として四半期aggregationへ渡し、そこからUI・CSVの公開projectionへ伝播する。
+
+### Data Model
+
+既存の `SeriesMeasurement` / `SeriesDescriptor`（`src/types/chart.ts`）に、`sourceId`、`statInfId`、
+`householdScope`、`seasonalitySourceId`、`targetSourceId`、`targetHouseholdScope`、
+`bridgeAppliedRange`、`bridgeCoefficient` を保持する。元source・接続先source・基準年・適用範囲・
+単位・対象世帯・固定係数 `s_i`・季節sourceはこれらのフィールドと既存の `source`、`aggregation`、
+`baseYear`、`rawRange`、`adoptedRange` で同一measurementへ公開する。さらに
+`official=false`、`quarterlyDerived=true`、および fail-closed の `status`/`reason` を保持する。Plan41で補正した
+2005–2017の四半期値は公式四半期値として扱わず、Plan39の2017年次A直接値は従来どおり
+公式として保持する。既存の公開surfaceは同一measurementを参照し、表示側で再計算しない。
+
+### Component Tree
+
+`loadCtiDataInternal (selected T + non-enumerable ctiMetadata)` + `historical seasonal M loader` →
+Plan39 H と source/費目対応の検証 → `s_i`／表示アンカー／四半期値 builder →
+`server/lib/view-models/quarterlyAggregation.ts`（`aggregation=plan41_bridge`）→
+`src/lib/quarterlyPublicProjection.ts` → 名目グラフ、tooltip、データ表、CSV。
+
+### Requirements
+
+- **WHEN** H、選択済みTの2017年12か月、Mの対象年12か月、および10費目の対応が検証済みである、
+  **THEN** 費目ごとに固定 `s_i` を一度だけ計算し、2005–2017の四半期表示アンカーへ適用する。
+- **WHEN** 2005–2016を四半期化する、**THEN** Mの同年12か月平均を季節比分母に用い、年次平均は
+  `s_i H_i,y` と一致させる。Mを2017年の水準または季節性に使わない。
+- **WHEN** 2017年を四半期化する、**THEN** Tの同年四半期平均へ一致させ、4四半期平均がTの
+  2017年平均になることをraw値で検証する。公開丸め後の一致は別に検証する。
+- **WHEN** 2018Q1以降を表示する、**THEN** 既存の正式T経路、値、metadataを変更せず、
+  2017Q4以前だけにPlan41の補正を適用する。
+- **WHEN** 10費目を構築する、**THEN** 2017年HのOtherはAの公式総合−主要9費目、2005–2016年Hの
+  Otherは既存 `result.other` 推計値、T/M月次のOtherは各々の総合−主要9費目とする。総合は10費目の
+  合算とし、残差には丸めやゼロ下限を適用せず恒等式を保つ。ただし負または非正の季節性入力は
+  `invalid_seasonal_input`でfail-closedにし、負のquarter outputを表示しない。独立した総合係数やseries 11を生成・使用しない。
+- **WHEN** 補正値を投影する、**THEN** 元source、先source、seasonal source、係数、基準年、単位、
+  世帯範囲、適用期間をprovenanceへ記録し、2005–2017の四半期measurementは `official=false` とする。
+- **WHEN** T/M/Hのmetadata、費目対応、単位、基準年、頻度、月キー、12か月完全性、値の有限性・正値を
+  検証できない、**THEN** 対象費目または対象年を `value=null`、`status=unavailable` とし、機械可読な
+  reasonを全projectionへ伝播する。0補完、補間、重複マージ、別loader選択、旧supportへのfallbackをしない。
+- **WHEN** runtime Tの検証に失敗する、**THEN** 欠損月は `runtime_t_insufficient_months`、重複月は
+  `duplicate_month`、値の不正は `runtime_t_invalid`、metadata不一致は
+  `runtime_t_metadata_mismatch` として対象期間をfail-closedにする。Hの年次アンカー不正は
+  `v2_annual_anchor_unavailable` とする。
+- **WHEN** 選択済みTへ付与された `ctiMetadata` を伝播する、**THEN** 同じTのsourceId、statInfId、
+  householdScope、seasonalitySourceId、targetSourceId、targetHouseholdScope、bridgeAppliedRange、
+  bridgeCoefficientをchart、tooltip、data table、CSVへ保持し、loaderで別sourceを再選択しない。
+- **WHEN** 2017Q4と2018Q1を比較する、**THEN** 両者の境界変化率がTのraw値から算出した変化率と
+  一致することを検証する。MからTへの2016→2017季節source切替の値連続性は要求しない。
+- **WHEN** chart、tooltip、data table、CSVへ同じ行を投影する、**THEN** 数値、状態、理由、出所、
+  `official`、季節source、係数、注記が同一measurementと一致する。
+
+### Non-goals
+
+- Plan39のC/A/L、係数、Other、年次artifactを再計算・改変しない。
+- 2018年以降のCTI値、source選択、系列定義、表示経路を変更しない。
+- TとMの世帯範囲差や2016→2017の季節source切替から母集団差・因果効果を推定しない。
+
+### Plan41 implementation checkpoint（2026-09-23）
+
+選択済みTへの `ctiMetadata` 付与・注入、Tの2017年水準／季節性、Mの2005–2016年季節比、
+Other残差、fail-closed理由、および `plan41_bridge` のmeasurement伝播を実装へ反映した。
+実データ検証では年次130件の最大誤差が `7.1e-15`、2017年四半期40値がTと一致し、
+2018年以降34四半期が深い比較で不変だった。2017Q4の総合は旧値109.8598505から
+T raw 98.2431333へ接続され、2018Q1はraw 95.5640667（公開値95.56）だった。
+これは実装チェックポイントの証拠であり、JEV通常checkpointの合格判定を意味しない。
+関連テスト、type-check、lintの最終結果とJEV再判定はOrchestratorの検証記録に従う。
+
+### Plan41 最終検証記録（2026-09-23）
+
+公開面の実runtime provenanceは証跡JSONの29/29を確認した。最終実測の`pnpm test`は78 files、
+750 passed、4 skippedであり、hookのfocused runはsandbox外で2 files / 32 passedだった。`pnpm test`には
+hookテストも含まれるため、hookの別実行は補助確認として記録する。type-check、lint、buildはいずれもexit 0だった。
+旧記録のfocused tests 85/131は対象コマンドと実行ログがなく再現不能なため、確定値から除外する。これらは
+Plan41の実装・公開面検証の証拠であり、JEV判定の代替とは扱わない。
+
+JEV再判定は親エージェントが結果を確定して追記する。再判定ファイルは
+`<JEV再判定ファイルのパス>`、最終choiceは`<未確定：親が追記>`と記録し、ここでは最終choiceを断定しない。
+現状の既存判定を併記する必要がある場合は`valid_but_limited`として保持する。
+
+### Plan41 JEV v2最終再判定
+
+訂正版JEV v2を`.tmp/plan41-jev-final-revalidated-v2-result.json`へ記録した歴史的証跡では、判定は
+`choice=valid_but_limited`、`confidence=0.56`、確率は`valid_but_limited=0.67`、
+`valid_as_defined=0.32`、`not_valid=0.01`、`indeterminate=0`。公開証拠は
+`hasBridgeCoefficient=true`、29/29だった。これは旧JEV v2の結果であり、今回の最終実測（78 files、750 passed、4 skipped、hook 2 files / 32 passed）と混同しない。follow-upは`reason=constraint_conflict`、
+`choice=clarified`、`confidence=0.70`、確率は`clarified=0.77`、`needs_fix=0.19`、
+`needs_evidence=0.03`、`indeterminate=0.01`である。CSV列偽陰性は修正済みで、残る限定は
+M→T seasonal source切替等の既知データ契約である。これは完了報告であり、テストは親が実行済みである。
+
 ## SharedPlan 40 続編: ユーザー視点の最小操作評価（履歴・後続記録により更新済み）
 
 > **履歴上の中間評価。** 以下の「2005–2017 が `unavailable`/`null`」という記述は、修正前の観測結果を保存したものであり、後続の「完了時のユーザー視点検証」および「実装完了チェックポイント」により superseded されている。現在の判定には使用しない。

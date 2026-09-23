@@ -15,6 +15,18 @@ import { selectCtiPair, type CtiDataStatus, type CtiLoadOptions } from "./ctiVal
 
 export type { CpiDataStatus } from "./cpiSource";
 export type { CtiDataStatus, CtiLoadOptions } from "./ctiValidation";
+export type CtiRuntimeMetadata = {
+  statInfId: string;
+  baseYear: number;
+  householdScope: string;
+  unit?: string;
+  frequency?: string;
+  sourceFile?: string;
+  rawRange?: { startYear: number; endYear: number };
+  adoptedRange?: { startYear: number; endYear: number };
+  valueType?: string;
+};
+export type CtiDataWithMetadata = CpiData[] & { ctiMetadata?: CtiRuntimeMetadata };
 export type {
   GdpMetadata,
   GdpSupportStatus,
@@ -71,7 +83,9 @@ export async function loadCpiDataInternal(): Promise<CpiData[]> {
   return transformCpiData(selected.validated);
 }
 
-export async function loadCtiDataInternal(options: CtiLoadOptions = {}): Promise<CpiData[]> {
+export async function loadCtiDataInternal(
+  options: CtiLoadOptions = {},
+): Promise<CtiDataWithMetadata> {
   const paths = buildCtiFilePaths();
   const selected = selectCtiPair(options);
   if ("baseYear" in selected) {
@@ -290,5 +304,40 @@ export async function loadCtiDataInternal(options: CtiLoadOptions = {}): Promise
     }
   }
   mapped.sort((a, b) => compareYearMonth(String(a.年月), String(b.年月)));
-  return mapped;
+  let ctiMetadata: CtiRuntimeMetadata | undefined;
+  if (pair.baseYear === 2025 && fs.existsSync(paths.metadata)) {
+    try {
+      const metadata = JSON.parse(fs.readFileSync(paths.metadata, "utf8")) as Record<
+        string,
+        unknown
+      >;
+      const period = metadata.period as Record<string, unknown> | undefined;
+      const sourceStart =
+        typeof period?.start === "string" ? Number(period.start.slice(0, 4)) : undefined;
+      const sourceEnd =
+        typeof period?.end === "string" ? Number(period.end.slice(0, 4)) : undefined;
+      ctiMetadata = {
+        statInfId: typeof metadata.statInfId === "string" ? metadata.statInfId : "",
+        baseYear: pair.baseYear,
+        householdScope: typeof metadata.householdScope === "string" ? metadata.householdScope : "",
+        unit:
+          typeof metadata.unit === "string"
+            ? metadata.unit
+            : typeof metadata.valueType === "string"
+              ? metadata.valueType
+              : undefined,
+        frequency: typeof metadata.frequency === "string" ? metadata.frequency : undefined,
+        sourceFile: typeof metadata.sourceFile === "string" ? metadata.sourceFile : undefined,
+        valueType: typeof metadata.valueType === "string" ? metadata.valueType : undefined,
+        rawRange:
+          sourceStart && sourceEnd ? { startYear: sourceStart, endYear: sourceEnd } : undefined,
+        adoptedRange:
+          sourceStart && sourceEnd ? { startYear: sourceStart, endYear: sourceEnd } : undefined,
+      };
+    } catch {
+      ctiMetadata = undefined;
+    }
+  }
+  Object.defineProperty(mapped, "ctiMetadata", { value: ctiMetadata, enumerable: false });
+  return mapped as CtiDataWithMetadata;
 }

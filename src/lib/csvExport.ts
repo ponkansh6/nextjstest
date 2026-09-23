@@ -41,6 +41,14 @@ export interface BuildCsvOptions {
     quarterlyDerived?: boolean;
     model?: "v2-bottom-up";
     estimateVersion?: "plan39-v2";
+    sourceId?: string;
+    statInfId?: string;
+    householdScope?: string;
+    seasonalitySourceId?: string;
+    targetSourceId?: string;
+    targetHouseholdScope?: string;
+    bridgeAppliedRange?: { startYear: number; endYear: number };
+    bridgeCoefficient?: number;
   }>;
 }
 
@@ -122,6 +130,16 @@ export const buildCsv = (
         );
       }),
     );
+  const hasBridgeMetadata = (measurement: Partial<CsvMeasurement> | undefined) =>
+    measurement?.sourceId !== undefined ||
+    measurement?.statInfId !== undefined ||
+    measurement?.seasonalitySourceId !== undefined ||
+    measurement?.targetSourceId !== undefined ||
+    measurement?.bridgeAppliedRange !== undefined ||
+    measurement?.bridgeCoefficient !== undefined;
+  const includeBridgeMetadata =
+    metadata.some(hasBridgeMetadata) ||
+    rows.some((row) => keys.some((key) => hasBridgeMetadata(rowMeasurementValue(row, key))));
   const metadataHeaders = metadata.flatMap(({ key }) => [
     `${key}__label`,
     `${key}__valueType`,
@@ -141,6 +159,18 @@ export const buildCsv = (
     `${key}__aggregation`,
     `${key}__status`,
     `${key}__reason`,
+    ...(includeBridgeMetadata
+      ? [
+          `${key}__sourceId`,
+          `${key}__statInfId`,
+          `${key}__householdScope`,
+          `${key}__seasonalitySourceId`,
+          `${key}__targetSourceId`,
+          `${key}__targetHouseholdScope`,
+          `${key}__bridgeAppliedRange`,
+          `${key}__bridgeCoefficient`,
+        ]
+      : []),
   ]);
   const headerRow = [labelHeader, ...(headers ?? keys), ...metadataHeaders]
     .map(escapeCsvCell)
@@ -175,6 +205,14 @@ export const buildCsv = (
         aggregation,
         status,
         reason,
+        sourceId,
+        statInfId,
+        householdScope,
+        seasonalitySourceId,
+        targetSourceId,
+        targetHouseholdScope,
+        bridgeAppliedRange,
+        bridgeCoefficient,
       } = measurement;
       const unavailable =
         measurement.seriesType === "unavailable" || measurement.status === "unavailable";
@@ -198,6 +236,20 @@ export const buildCsv = (
         aggregation ?? "",
         status ?? "",
         reason ?? "",
+        ...(includeBridgeMetadata
+          ? [
+              sourceId ?? "",
+              statInfId ?? "",
+              householdScope ?? "",
+              seasonalitySourceId ?? "",
+              targetSourceId ?? "",
+              targetHouseholdScope ?? "",
+              bridgeAppliedRange
+                ? `${bridgeAppliedRange.startYear}-${bridgeAppliedRange.endYear}`
+                : "",
+              bridgeCoefficient ?? "",
+            ]
+          : []),
       ].map(escapeCsvCell);
     });
     return [escapeCsvCell(label), ...cells, ...metadataCells].join(",");

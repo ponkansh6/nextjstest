@@ -44,6 +44,14 @@ export interface TooltipSeriesMetadata {
   advanced?: boolean;
   unit?: string;
   source?: string;
+  sourceId?: string;
+  statInfId?: string;
+  householdScope?: string;
+  seasonalitySourceId?: string;
+  targetSourceId?: string;
+  targetHouseholdScope?: string;
+  bridgeAppliedRange?: { startYear: number; endYear: number };
+  bridgeCoefficient?: number;
   valueType?: "raw" | "comparison";
   status?: MeasurementStatus;
   reason?: string | null;
@@ -66,6 +74,16 @@ export interface SeriesMeasurement {
   label: string;
   unit: string;
   source: string;
+  /** Machine-readable source identifiers for Plan41 bridge provenance. */
+  sourceId?: string;
+  statInfId?: string;
+  householdScope?: string;
+  seasonalitySourceId?: string;
+  /** Plan41 target T and fixed-bridge coverage for derived historical values. */
+  targetSourceId?: string;
+  targetHouseholdScope?: string;
+  bridgeAppliedRange?: { startYear: number; endYear: number };
+  bridgeCoefficient?: number;
   valueType: "raw" | "comparison";
   value: number | null;
   status: MeasurementStatus;
@@ -117,7 +135,13 @@ export const getMeasurementNote = (
   measurement: Partial<
     Pick<
       SeriesMeasurement,
-      "seriesType" | "official" | "status" | "reason" | "annualAnchorType" | "quarterlyDerived"
+      | "seriesType"
+      | "official"
+      | "status"
+      | "reason"
+      | "annualAnchorType"
+      | "quarterlyDerived"
+      | "bridgeCoefficient"
     >
   >,
 ): string | null => {
@@ -130,6 +154,14 @@ export const getMeasurementNote = (
     return measurement.reason ? `利用不可: ${measurement.reason}` : "利用不可";
   }
   if (measurement.quarterlyDerived) {
+    if (
+      typeof measurement.bridgeCoefficient === "number" &&
+      Number.isFinite(measurement.bridgeCoefficient)
+    ) {
+      return measurement.annualAnchorType === "official"
+        ? "公式Tへ接続補正した年次値を月次系列から四半期化（公式四半期値ではない）"
+        : "接続補正済み年次値を月次系列から四半期化（公式四半期値ではない）";
+    }
     return measurement.annualAnchorType === "official"
       ? "公式年次値を月次系列から四半期化（公式四半期値ではない）"
       : "接続推計の年次値を月次系列から四半期化（公式四半期値ではない）";

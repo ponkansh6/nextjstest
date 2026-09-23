@@ -1,5 +1,7 @@
 // @bun-environment happy-dom
 import { createElement } from "react";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { ChartDataContract, normalizePublicChartData } from "@/app/components/ChartDataContract";
@@ -26,6 +28,8 @@ import {
 } from "@server/lib/ctiAdjustedConnectionEstimate";
 import { buildPlan39V2CtiNominalRows } from "@server/lib/view-models/quarterlyAggregation";
 import type { CtiBasicRecord } from "@server/lib/ctiBasicSeries2025LongTerm";
+import type { CpiData } from "@/types/data";
+import type { CtiRuntimeMetadata } from "@server/lib/data-loader/cpi";
 
 function defined<T>(value: T | null | undefined): T {
   if (value == null) throw new Error("expected fixture value");
@@ -91,6 +95,17 @@ function records(year = 2017, mutator?: (records: CtiBasicRecord[]) => void): Ct
     categories.map((category, index) => [category, index + 2]),
   );
   for (let month = 1; month <= 12; month += 1) {
+    const componentValue = month <= 3 ? 20 : 10;
+    const otherValue = month <= 3 ? 5 : 2.5;
+    result.push({
+      variant: "nominal",
+      seriesIndex: 1,
+      officialSeriesCode: "1",
+      seriesName: "総合（名目）",
+      month: `${year}-${String(month).padStart(2, "0")}` as `${number}-${number}`,
+      rawValue: componentValue * 9 + otherValue,
+      isMissing: false,
+    });
     for (const category of categories) {
       result.push({
         variant: "nominal",
@@ -98,7 +113,7 @@ function records(year = 2017, mutator?: (records: CtiBasicRecord[]) => void): Ct
         officialSeriesCode: String(indexByCategory[category]),
         seriesName: `${category}（名目）`,
         month: `${year}-${String(month).padStart(2, "0")}` as `${number}-${number}`,
-        rawValue: month <= 3 ? 20 : 10,
+        rawValue: componentValue,
         isMissing: false,
       });
     }
@@ -107,19 +122,55 @@ function records(year = 2017, mutator?: (records: CtiBasicRecord[]) => void): Ct
   return result;
 }
 
+function runtimeT(mutator?: (rows: CpiData[]) => void): CpiData[] {
+  const keys = categories
+    .filter((category) => category !== "その他の消費支出")
+    .map((category) => `${category}（名目）`);
+  const rows = Array.from({ length: 12 }, (_, index) => {
+    const month = index + 1;
+    const value = month <= 3 ? 30 : 15;
+    return {
+      年月: `2017年${month}月`,
+      ["消費支出（名目）"]: month <= 3 ? 400 : 250,
+      ...Object.fromEntries(keys.map((key) => [key, value])),
+    } as unknown as CpiData;
+  });
+  mutator?.(rows);
+  return rows;
+}
+
 function runtimeRows(
   annualMutator?: (inputs: ReturnType<typeof makeAnnualInputs>) => void,
   monthlyMutator?: (records: CtiBasicRecord[]) => void,
   year = 2017,
+  runtimeMutator?: (rows: CpiData[]) => void,
+  runtimeMetadataOverrides?: Partial<CtiRuntimeMetadata>,
+  publicationAccepted = false,
 ) {
   const inputs = makeAnnualInputs();
   if (annualMutator) annualMutator(inputs);
   const result = buildCtiAdjustedV2Estimate(inputs.B, inputs.A, inputs.L, {
     contract: "plan40",
   });
+  if (publicationAccepted) result.publicationGate.accepted = true;
   return {
     result,
-    rows: buildPlan39V2CtiNominalRows({ records: records(year, monthlyMutator), result }),
+    rows: buildPlan39V2CtiNominalRows({
+      records: records(year, monthlyMutator),
+      result,
+      runtimeCtiData: runtimeT(runtimeMutator),
+      runtimeMetadata: {
+        statInfId: "000040499069",
+        baseYear: 2025,
+        householdScope: "総世帯",
+        unit: "指数",
+        frequency: "monthly",
+        sourceFile: "cti_data2025.csv",
+        rawRange: { startYear: 2017, endYear: 2026 },
+        adoptedRange: { startYear: 2017, endYear: 2026 },
+        ...runtimeMetadataOverrides,
+      },
+    }),
   };
 }
 
@@ -158,6 +209,14 @@ function metadataSnapshot(measurement: ReturnType<typeof measurementFor>) {
     baseYear: measurement.baseYear,
     rawRange: measurement.rawRange,
     adoptedRange: measurement.adoptedRange,
+    sourceId: measurement.sourceId,
+    statInfId: measurement.statInfId,
+    householdScope: measurement.householdScope,
+    seasonalitySourceId: measurement.seasonalitySourceId,
+    targetSourceId: measurement.targetSourceId,
+    targetHouseholdScope: measurement.targetHouseholdScope,
+    bridgeAppliedRange: measurement.bridgeAppliedRange,
+    bridgeCoefficient: measurement.bridgeCoefficient,
   };
 }
 
@@ -239,6 +298,14 @@ function assertPlan40SurfaceParity(row: ReturnType<typeof rowForYear>) {
       frequency: chartCell.getAttribute("data-frequency"),
       aggregation: chartCell.getAttribute("data-aggregation"),
       seriesType: chartCell.getAttribute("data-series-type"),
+      sourceId: chartCell.getAttribute("data-source-id"),
+      statInfId: chartCell.getAttribute("data-stat-inf-id"),
+      householdScope: chartCell.getAttribute("data-household-scope"),
+      seasonalitySourceId: chartCell.getAttribute("data-seasonality-source-id"),
+      targetSourceId: chartCell.getAttribute("data-target-source-id"),
+      targetHouseholdScope: chartCell.getAttribute("data-target-household-scope"),
+      bridgeAppliedRange: chartCell.getAttribute("data-bridge-applied-range"),
+      bridgeCoefficient: chartCell.getAttribute("data-bridge-coefficient"),
       official:
         chartCell.getAttribute("data-official") === null
           ? undefined
@@ -253,6 +320,17 @@ function assertPlan40SurfaceParity(row: ReturnType<typeof rowForYear>) {
       frequency: expected.frequency,
       aggregation: expected.aggregation,
       seriesType: expected.seriesType,
+      sourceId: expected.sourceId ?? null,
+      statInfId: expected.statInfId ?? null,
+      householdScope: expected.householdScope ?? null,
+      seasonalitySourceId: expected.seasonalitySourceId ?? null,
+      targetSourceId: expected.targetSourceId ?? null,
+      targetHouseholdScope: expected.targetHouseholdScope ?? null,
+      bridgeAppliedRange: expected.bridgeAppliedRange
+        ? `${expected.bridgeAppliedRange.startYear}-${expected.bridgeAppliedRange.endYear}`
+        : null,
+      bridgeCoefficient:
+        expected.bridgeCoefficient === undefined ? null : String(expected.bridgeCoefficient),
       official: expected.official,
       note: expected.note,
     });
@@ -263,6 +341,28 @@ function assertPlan40SurfaceParity(row: ReturnType<typeof rowForYear>) {
     expect(tableCell.textContent).toContain(`状態: ${expected.status}`);
     expect(tableCell.textContent).toContain(`理由: ${expected.reason ?? "-"}`);
     expect(tableCell.textContent).toContain(`区分: ${expected.note}`);
+    expect(tableCell.getAttribute("data-measurement-source-id")).toBe(expected.sourceId ?? null);
+    expect(tableCell.getAttribute("data-measurement-stat-inf-id")).toBe(expected.statInfId ?? null);
+    expect(tableCell.getAttribute("data-measurement-household-scope")).toBe(
+      expected.householdScope ?? null,
+    );
+    expect(tableCell.getAttribute("data-measurement-seasonality-source-id")).toBe(
+      expected.seasonalitySourceId ?? null,
+    );
+    expect(tableCell.getAttribute("data-measurement-target-source-id")).toBe(
+      expected.targetSourceId ?? null,
+    );
+    expect(tableCell.getAttribute("data-measurement-target-household-scope")).toBe(
+      expected.targetHouseholdScope ?? null,
+    );
+    expect(tableCell.getAttribute("data-measurement-bridge-applied-range")).toBe(
+      expected.bridgeAppliedRange
+        ? `${expected.bridgeAppliedRange.startYear}-${expected.bridgeAppliedRange.endYear}`
+        : null,
+    );
+    expect(tableCell.getAttribute("data-measurement-bridge-coefficient")).toBe(
+      expected.bridgeCoefficient === undefined ? null : String(expected.bridgeCoefficient),
+    );
 
     const tooltipRow = defined(tooltip.container.querySelector(`[data-tooltip-key="${key}"]`));
     expect({
@@ -276,6 +376,14 @@ function assertPlan40SurfaceParity(row: ReturnType<typeof rowForYear>) {
       status: tooltipRow.getAttribute("data-tooltip-status"),
       reason: tooltipRow.getAttribute("data-tooltip-reason") || null,
       seriesType: tooltipRow.getAttribute("data-tooltip-series-type"),
+      sourceId: tooltipRow.getAttribute("data-tooltip-source-id"),
+      statInfId: tooltipRow.getAttribute("data-tooltip-stat-inf-id"),
+      householdScope: tooltipRow.getAttribute("data-tooltip-household-scope"),
+      seasonalitySourceId: tooltipRow.getAttribute("data-tooltip-seasonality-source-id"),
+      targetSourceId: tooltipRow.getAttribute("data-tooltip-target-source-id"),
+      targetHouseholdScope: tooltipRow.getAttribute("data-tooltip-target-household-scope"),
+      bridgeAppliedRange: tooltipRow.getAttribute("data-tooltip-bridge-applied-range"),
+      bridgeCoefficient: tooltipRow.getAttribute("data-tooltip-bridge-coefficient"),
       official:
         tooltipRow.getAttribute("data-tooltip-official") === null
           ? undefined
@@ -290,6 +398,17 @@ function assertPlan40SurfaceParity(row: ReturnType<typeof rowForYear>) {
       status: expected.status,
       reason: expected.reason,
       seriesType: expected.seriesType,
+      sourceId: expected.sourceId ?? null,
+      statInfId: expected.statInfId ?? null,
+      householdScope: expected.householdScope ?? null,
+      seasonalitySourceId: expected.seasonalitySourceId ?? null,
+      targetSourceId: expected.targetSourceId ?? null,
+      targetHouseholdScope: expected.targetHouseholdScope ?? null,
+      bridgeAppliedRange: expected.bridgeAppliedRange
+        ? `${expected.bridgeAppliedRange.startYear}-${expected.bridgeAppliedRange.endYear}`
+        : null,
+      bridgeCoefficient:
+        expected.bridgeCoefficient === undefined ? null : String(expected.bridgeCoefficient),
       official: expected.official,
       note: expected.note,
     });
@@ -311,11 +430,34 @@ function assertPlan40SurfaceParity(row: ReturnType<typeof rowForYear>) {
     }
     const valueIndex = csvHeaders.indexOf(`${key}__value`);
     expect(csvValues[valueIndex]).toBe(expected.value === null ? "" : String(expected.value));
+    const provenance = {
+      sourceId: expected.sourceId,
+      statInfId: expected.statInfId,
+      householdScope: expected.householdScope,
+      seasonalitySourceId: expected.seasonalitySourceId,
+      targetSourceId: expected.targetSourceId,
+      targetHouseholdScope: expected.targetHouseholdScope,
+      bridgeAppliedRange: expected.bridgeAppliedRange
+        ? `${expected.bridgeAppliedRange.startYear}-${expected.bridgeAppliedRange.endYear}`
+        : undefined,
+      bridgeCoefficient:
+        expected.bridgeCoefficient === undefined ? undefined : String(expected.bridgeCoefficient),
+    };
+    const bridgeMetadataPresent = Object.values(provenance).some((value) => value !== undefined);
+    for (const [suffix, value] of Object.entries(provenance)) {
+      const index = csvHeaders.indexOf(`${key}__${suffix}`);
+      if (!bridgeMetadataPresent) {
+        expect(index).toBe(-1);
+        continue;
+      }
+      expect(index).toBeGreaterThan(-1);
+      expect(csvValues[index]).toBe(value ?? "");
+    }
   }
 }
 
 type AnnualMutation = (data: ReturnType<typeof makeAnnualInputs>) => void;
-type MonthlyMutation = (records: CtiBasicRecord[]) => void;
+type RuntimeMutation = (rows: CpiData[]) => void;
 
 const annualFailureCases: ReadonlyArray<[string, AnnualMutation, string]> = [
   [
@@ -431,17 +573,21 @@ const annualFailureCases: ReadonlyArray<[string, AnnualMutation, string]> = [
   ],
 ];
 
-const monthlyFailureCases: ReadonlyArray<[string, MonthlyMutation, string]> = [
-  ["missing", (rows) => rows.splice(1, 1), "insufficient_months"],
+const runtimeFailureCases: ReadonlyArray<[string, RuntimeMutation, string]> = [
+  ["missing", (rows) => rows.splice(1, 1), "runtime_t_insufficient_months"],
   ["duplicate", (rows) => rows.push({ ...defined(rows[0]) }), "duplicate_month"],
   [
     "non-finite",
     (rows) => {
-      defined(rows[0]).rawValue = Number.NaN;
+      (rows[0] as Record<string, unknown>)["食料（名目）"] = Number.NaN;
     },
-    "insufficient_months",
+    "runtime_t_invalid",
   ],
-  ["less than three months", (rows) => rows.splice(0, 2), "insufficient_months"],
+  [
+    "negative",
+    (rows) => ((rows[0] as Record<string, unknown>)["食料（名目）"] = -1),
+    "runtime_t_invalid",
+  ],
 ];
 
 describe("Plan40 phase-1 runtime evidence", () => {
@@ -496,8 +642,8 @@ describe("Plan40 phase-1 runtime evidence", () => {
         expect(rawRanges.every((range) => range !== undefined)).toBe(true);
         for (const range of rawRanges) {
           if (!range) throw new Error("expected raw range");
-          expect(range.startYear).toBe(2005);
-          expect(range.endYear).toBe(2025);
+          expect(range.startYear).toBe(2017);
+          expect(range.endYear).toBe(2026);
         }
         const adoptedRanges = measurements.map((measurement) => measurement.adoptedRange);
         expect(adoptedRanges.every((range) => range !== undefined)).toBe(true);
@@ -510,10 +656,10 @@ describe("Plan40 phase-1 runtime evidence", () => {
     },
   );
 
-  it.each(monthlyFailureCases)(
-    "fails closed for monthly %s input across all ten quarterly expenses",
+  it.each(runtimeFailureCases)(
+    "fails closed for runtime T %s input across all ten quarterly expenses",
     (_label, mutate, reason) => {
-      const { result, rows } = runtimeRows(undefined, mutate);
+      const { result, rows } = runtimeRows(undefined, undefined, 2017, mutate);
       const row = targetRow(rows);
       const measurements = keys.map((key) => measurementFor(row, key));
       expect(plan40Validation(result).valid).toBe(true);
@@ -529,10 +675,16 @@ describe("Plan40 phase-1 runtime evidence", () => {
     },
   );
 
+  it("fails closed when the selected T metadata declares an incompatible base year", () => {
+    const { rows } = runtimeRows(undefined, undefined, 2017, undefined, { baseYear: 2020 });
+    const row = targetRow(rows);
+    expect(keys.every((key) => row[key] === null)).toBe(true);
+    expect(keys.every((key) => measurementFor(row, key).status === "unavailable")).toBe(true);
+  });
+
   it("fails closed for every quarter in a year when a different quarter has a duplicate month", () => {
-    const { rows } = runtimeRows(undefined, (monthlyRecords) => {
-      const april = defined(monthlyRecords.find((record) => record.month === "2017-04"));
-      monthlyRecords.push({ ...april });
+    const { rows } = runtimeRows(undefined, undefined, 2017, (runtimeRows) => {
+      runtimeRows.push({ ...defined(runtimeRows.find((record) => record.年月 === "2017年4月")) });
     });
 
     for (const quarter of [1, 2, 3, 4]) {
@@ -543,6 +695,14 @@ describe("Plan40 phase-1 runtime evidence", () => {
       );
       expect(keys.every((key) => measurementFor(row, key).status === "unavailable")).toBe(true);
     }
+  });
+
+  it("keeps 2017 T available when the historical M input is missing", () => {
+    const { rows } = runtimeRows(undefined, (monthlyRecords) => monthlyRecords.splice(1, 1));
+    const row = rowForYear(rows, 2017, 1);
+    const foodKey = CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY.食料;
+    expect(measurementFor(row, foodKey).status).toBe("available");
+    expect(measurementFor(row, foodKey).source).toContain("000040499069");
   });
 
   it("keeps 2005 Plan40 rows unavailable when the publication gate is closed", () => {
@@ -665,7 +825,7 @@ describe("Plan40 phase-1 runtime evidence", () => {
   });
 
   it("projects one runtime measurement unchanged through the chart contract, tooltip, table, and CSV", () => {
-    const { rows } = runtimeRows(undefined, (records) => records.splice(1, 1));
+    const { rows } = runtimeRows(undefined, undefined, 2017, (runtime) => runtime.splice(1, 1));
     const source = targetRow(rows);
     expect(source.kind).toBe("plan40-v2-cost-stack");
     const key = defined(keys[0]);
@@ -734,5 +894,130 @@ describe("Plan40 phase-1 runtime evidence", () => {
     expect(csv).toContain(`${key}__status`);
     expect(csv).toContain(`${key}__reason`);
     expect(csv).toContain(measurement.reason);
+  });
+
+  it("writes a runtime provenance evidence artifact for the public surfaces", () => {
+    const { rows } = runtimeRows();
+    const source = rowForYear(rows, 2017, 4);
+    const key = defined(keys[0]);
+    const measurement = measurementFor(source, key);
+    const historicalRows = runtimeRows(undefined, undefined, 2005, undefined, undefined, true).rows;
+    const historical = rowForYear(historicalRows, 2005, 4);
+    const historicalMeasurement = measurementFor(historical, key);
+    assertPlan40SurfaceParity(historical);
+    const publicRow = defined(projectQuarterlyPublicView([source])[0]);
+    const chart = render(
+      createElement(ChartDataContract, {
+        data: [publicRow],
+        keys: [key],
+        descriptors: CTI_ADJUSTED_V2_PUBLIC_REGISTRY.filter((entry) => entry.key === key).map(
+          (entry) => ({ ...entry, color: "#0f766e" }),
+        ),
+      }),
+    );
+    const table = render(
+      createElement(DataTablesSection, {
+        tables: [{ chartSectionId: "evidence", title: "evidence", data: [publicRow], keys: [key] }],
+      }),
+    );
+    const tooltip = render(
+      createElement(CustomTooltip, {
+        active: true,
+        isMobile: false,
+        isTouch: false,
+        tooltipBg: "white",
+        tooltipText: "black",
+        label: source.label,
+        payload: [
+          {
+            name: key,
+            value: publicRow[key] as number,
+            dataKey: key,
+            payload: publicRow as Record<string, unknown>,
+          },
+        ],
+        seriesMeta: [{ key, label: key, color: "#000", order: 0 }],
+      }),
+    );
+    const chartCell = defined(chart.container.querySelector(`[data-series-key="${key}"]`));
+    const tableCell = defined(
+      table.container.querySelector(`[data-measurement-metadata="${key}"]`),
+    );
+    const tooltipCell = defined(tooltip.container.querySelector(`[data-tooltip-key="${key}"]`));
+    const csv = buildCsv([publicRow as unknown as Record<string, unknown>], [key], [key]);
+    const csvHeader =
+      csv
+        .replace(/^\uFEFF/, "")
+        .split("\r\n")[0]
+        ?.split(",") ?? [];
+    const evidence = {
+      schemaVersion: "plan41-public-surface-runtime-evidence-v1",
+      period: source.label,
+      key,
+      runtimeSource: "000040499069",
+      historicalSeasonalitySource: "000040499070",
+      measurement: {
+        value: measurement.value,
+        status: measurement.status,
+        reason: measurement.reason,
+        official: measurement.official,
+        sourceId: measurement.sourceId,
+        seasonalitySourceId: measurement.seasonalitySourceId,
+        bridgeCoefficient: measurement.bridgeCoefficient,
+      },
+      historicalMeasurement: {
+        period: historical.label,
+        value: historicalMeasurement.value,
+        status: historicalMeasurement.status,
+        reason: historicalMeasurement.reason,
+        official: historicalMeasurement.official,
+        sourceId: historicalMeasurement.sourceId,
+        seasonalitySourceId: historicalMeasurement.seasonalitySourceId,
+        targetSourceId: historicalMeasurement.targetSourceId,
+        bridgeCoefficient: historicalMeasurement.bridgeCoefficient,
+      },
+      publicProjectionIdentity: measurementFor(publicRow, key) === measurement,
+      surfaces: {
+        chart: {
+          status: chartCell.getAttribute("data-status"),
+          reason: chartCell.getAttribute("data-reason"),
+          sourceId: chartCell.getAttribute("data-source-id"),
+          seasonalitySourceId: chartCell.getAttribute("data-seasonality-source-id"),
+          bridgeCoefficient: chartCell.getAttribute("data-bridge-coefficient"),
+        },
+        tooltip: {
+          status: tooltipCell.getAttribute("data-tooltip-status"),
+          reason: tooltipCell.getAttribute("data-tooltip-reason"),
+          sourceId: tooltipCell.getAttribute("data-tooltip-source-id"),
+          seasonalitySourceId: tooltipCell.getAttribute("data-tooltip-seasonality-source-id"),
+          bridgeCoefficient: tooltipCell.getAttribute("data-tooltip-bridge-coefficient"),
+        },
+        table: {
+          status: tableCell.textContent?.match(/状態:\s*(.*?)\s*理由:/)?.[1] ?? null,
+          reason: tableCell.textContent?.match(/理由: ([^\s]+)/)?.[1] ?? null,
+          sourceId: tableCell.getAttribute("data-measurement-source-id"),
+          seasonalitySourceId: tableCell.getAttribute("data-measurement-seasonality-source-id"),
+          bridgeCoefficient: tableCell.getAttribute("data-measurement-bridge-coefficient"),
+        },
+        csv: {
+          hasStatus: csv.includes(`${key}__status,`),
+          hasReason: csv.includes(`${key}__reason,`),
+          hasSourceId: csv.includes(`${key}__sourceId,`),
+          hasSeasonalitySourceId: csv.includes(`${key}__seasonalitySourceId,`),
+          hasBridgeCoefficient: csvHeader.includes(`${key}__bridgeCoefficient`),
+          containsReason: measurement.reason === null || csv.includes(measurement.reason),
+        },
+      },
+    };
+    expect(evidence.publicProjectionIdentity).toBe(true);
+    expect(evidence.surfaces.chart.status).toBe(measurement.status);
+    expect(evidence.surfaces.tooltip.status).toBe(measurement.status);
+    expect(evidence.surfaces.table.status).toBe(measurement.status);
+    mkdirSync(join(process.cwd(), ".tmp"), { recursive: true });
+    writeFileSync(
+      join(process.cwd(), ".tmp/plan41-public-surface-runtime-evidence.json"),
+      `${JSON.stringify(evidence, null, 2)}\n`,
+      "utf8",
+    );
   });
 });

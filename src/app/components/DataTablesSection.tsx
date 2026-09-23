@@ -107,6 +107,26 @@ export function DataTablesSection({ tables }: DataTablesSectionProps) {
                             <small
                               data-measurement-metadata={k}
                               data-measurement-series-type={measurement.seriesType}
+                              data-measurement-source-id={measurement.sourceId}
+                              data-measurement-stat-inf-id={measurement.statInfId}
+                              data-measurement-household-scope={measurement.householdScope}
+                              data-measurement-seasonality-source-id={
+                                measurement.seasonalitySourceId
+                              }
+                              data-measurement-target-source-id={measurement.targetSourceId}
+                              data-measurement-target-household-scope={
+                                measurement.targetHouseholdScope
+                              }
+                              data-measurement-bridge-applied-range={
+                                measurement.bridgeAppliedRange
+                                  ? `${measurement.bridgeAppliedRange.startYear}-${measurement.bridgeAppliedRange.endYear}`
+                                  : undefined
+                              }
+                              data-measurement-bridge-coefficient={
+                                measurement.bridgeCoefficient === undefined
+                                  ? undefined
+                                  : String(measurement.bridgeCoefficient)
+                              }
                               data-measurement-official={
                                 measurement.official === undefined
                                   ? undefined

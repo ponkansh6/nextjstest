@@ -236,6 +236,58 @@ describe("buildCsv", () => {
     expect(lines[2]).toContain("estimated_adjusted,false,official,true,20");
   });
 
+  it("混在行でも後続行のPlan41 provenance列を保持する", () => {
+    const metadata = {
+      key: "CTI",
+      label: "CTI",
+      valueType: "comparison" as const,
+      value: null,
+      unit: "指数",
+      source: "legacy",
+      frequency: "quarterly" as const,
+      aggregation: "derived_quarterly",
+      status: "available" as const,
+      reason: null,
+    };
+    const csv = buildCsv(
+      [
+        { label: "2016Q4", CTI: 10, measurements: { CTI: { ...metadata, value: 10 } } },
+        {
+          label: "2017Q1",
+          CTI: 20,
+          measurements: {
+            CTI: {
+              ...metadata,
+              value: 20,
+              source: "runtime T",
+              sourceId: "000040499069",
+              statInfId: "000040499069",
+              householdScope: "総世帯",
+              seasonalitySourceId: "000040499070",
+              targetSourceId: "000040499069",
+              targetHouseholdScope: "総世帯",
+              bridgeAppliedRange: { startYear: 2005, endYear: 2017 },
+              bridgeCoefficient: 0.8,
+            },
+          },
+        },
+      ],
+      ["CTI"],
+      undefined,
+      { metadata: [metadata] },
+    );
+    const lines = csv.trimEnd().split("\r\n");
+    expect(lines[0]).toContain("CTI__sourceId");
+    expect(lines[0]).toContain("CTI__bridgeAppliedRange");
+    const header = lines[0].split(",");
+    const first = lines[1].split(",");
+    const second = lines[2].split(",");
+    expect(first[header.indexOf("CTI__sourceId")]).toBe("");
+    expect(second[header.indexOf("CTI__sourceId")]).toBe("000040499069");
+    expect(second[header.indexOf("CTI__bridgeAppliedRange")]).toBe("2005-2017");
+    expect(second[header.indexOf("CTI__bridgeCoefficient")]).toBe("0.8");
+  });
+
   it("invalidのlegacy数値を保持し、明示的unavailableだけを空欄にする", () => {
     const metadata = [
       {
