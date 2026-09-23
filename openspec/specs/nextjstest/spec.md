@@ -2569,6 +2569,7 @@ These regression requirements do not add requirements for a new `popstate` liste
 - E2E against a real build/server (`tests/e2e/`, Playwright) across three projects:
   `chromium` (Desktop Chrome), `chromium-dark` (dark mode), `mobile-pixel` (Pixel 7 / Chromium)
   - `range-change.e2e.spec.ts` — year-range filtering changes the rendered bars
+  - `spending-filter.e2e.spec.ts` — quarter and category filters change the rendered bars; the quarter case covers hiding and restoring all Q1–Q4 buttons and their `aria-pressed` state
   - `real-consumption.e2e.spec.ts` — Flight payload integrity for the real-consumption series
   - `mobile-ux.e2e.spec.ts` — 44px tap targets (R8b), 375px horizontal overflow (R7d),
     horizontal layout for start year, end year, and max-range button on mobile viewports,
@@ -2579,9 +2580,9 @@ These regression requirements do not add requirements for a new `popstate` liste
 - `cagr-sheet.e2e.spec.ts` — CAGR コンパクトシートの開閉・計算導線・グラフ可視性（R18）
 - `plan27-private-consumption.e2e.spec.ts` — Plan38のCTIミクロ名目四半期系列について、2005Q1〜2017Q4の52期の実SVG・tooltip・表・CSV導線、行metadata parity、nominal-only境界を検証する。GDP専用keyや旧月次CTI wage registryは参照しない。
 - `advanced-series.e2e.spec.ts` と `chart-table-csv-parity.e2e.spec.ts` — Plan37のCTI通常12MA/advanced延長を含む比較registryのgraph/table/CSV parity、順序・ラベル・advanced状態を検証する。Plan38の四半期CTI専用keyは名目消費支出契約でのみ検証し、比較registryへ混入させない。
-- `plan24-rendering.e2e.spec.ts` — Plan24の独立した四半期GDP/CTI棒グラフ契約。Plan37実行プロファイルの対象外とし、GDP期待値をPlan37の比較線へ移管しない。旧契約の回帰として通常のPlan24実行でのみ検証する。
-  - `fixtures.ts` — shared `test` that sets `window.__MOUNT_ALL__` (R12b); specs verifying
-    deferral itself must use the plain `@playwright/test` `test`
+- `plan24-rendering.e2e.spec.ts` — Plan24の独立した四半期GDP/CTI棒グラフ契約。CTI/GDP境界、52期の期間契約、表・CSV・tooltipの値を検証する。Plan37実行プロファイルの対象外とし、GDP期待値をPlan37の比較線へ移管しない。旧契約の回帰として通常のPlan24実行でのみ検証する。
+- `fixtures.ts` — shared `test` that sets `window.__MOUNT_ALL__` (R12b); specs verifying
+  deferral itself must use the plain `@playwright/test` `test`
 
 - **Performance baseline & regression detection** (`scripts/lighthouse-mobile.js`):
   - Lighthouse CLI with mobile preset (Pixel 5 throttling, 4G)

@@ -35,7 +35,8 @@ test.describe("消費支出絞り込み E2E", () => {
   test("Q1 を非表示にするとグラフの棒本数が減る（名目）", async ({ page }) => {
     const initialCount = await bars(page, NOMINAL).count();
 
-    const q1Button = page.getByRole("button", { name: "Q1", exact: true });
+    const chart = page.getByTestId(NOMINAL);
+    const q1Button = chart.getByRole("button", { name: "Q1", exact: true });
     await q1Button.click();
     await page.waitForTimeout(300);
 
@@ -45,6 +46,21 @@ test.describe("消費支出絞り込み E2E", () => {
     expect(newCount, "Q1 非表示後は Q1 に該当する棒が描画から除外されるべき").toBeLessThan(
       initialCount,
     );
+
+    // Plan24 で確認していた全四半期の切替を、この四半期絞り込みの責務に集約する。
+    await q1Button.click();
+    for (const quarter of ["Q1", "Q2", "Q3", "Q4"]) {
+      const button = chart.getByRole("button", { name: quarter, exact: true });
+      await button.click();
+      await expect(button).toHaveAttribute("aria-pressed", "false");
+    }
+    expect(await bars(page, NOMINAL).count()).toBeLessThan(initialCount);
+    for (const quarter of ["Q1", "Q2", "Q3", "Q4"]) {
+      const button = chart.getByRole("button", { name: quarter, exact: true });
+      await button.click();
+      await expect(button).toHaveAttribute("aria-pressed", "true");
+    }
+    expect(await bars(page, NOMINAL).count()).toBe(initialCount);
   });
 
   test("費目を非表示にするとグラフの棒本数が減る（名目）", async ({ page }) => {
