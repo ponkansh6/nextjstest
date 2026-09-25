@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "jev-review-initial-distribution-v3",
+  "state": {
+    "evaluationScope": "plan_validity",
+    "background": "This is a fresh regular v3 plan review after a bounded documentation correction to SharedPlan45. The Phase 0 record still says incomplete and Phase 1 unstarted. The canonical E2E baseline remains unavailable: `pnpm run test:e2e` exited before test execution because 127.0.0.1:3100 is in use; a second read-only check confirmed the port is still listening but ownership cannot be identified, so it was left untouched. The first JEV review of this Phase 0 record returned valid_as_defined, confidence 0.32, passProbability 0.41, and no clarification. A separate arithmetic inconsistency was found in the historical baseline prose: 222.48 seconds is about 3m42s, not 3m36s. The plan now consistently records about 3m42s at the original historical reference and a later cross-reference. No implementation or test/config changes were made.",
+    "acceptanceCriteria": [
+      "Historical timing in the plan agrees arithmetically with the recorded 222.48 seconds.",
+      "The current revision, worktree, environment, inventory, skips, project variants, and full-suite baseline are captured before Phase 1.",
+      "A failed-to-start command is never reported as a successful baseline.",
+      "A, E, and M use the plan's logical-scenario definitions and preserve the >0.50 target and primary failure boundaries.",
+      "Phase 1 remains unstarted until Phase 0 acceptance evidence is complete."
+    ],
+    "verification": [
+      "Plan line 11 now describes 222.48 seconds as about 3m42s; the remaining historical cross-reference was corrected from 3m36s to 3m42s.",
+      "Independent read-only review confirmed the JEV record/artifact links and distribution, and found the second historical timing occurrence as the only remaining arithmetic mismatch.",
+      "Port 3100 remains LISTEN with no identifiable owner; no process was stopped and no E2E retry occurred.",
+      "Phase 0 remains incomplete; Phase 1 remains unstarted; no fresh full-suite pass/fail/skip baseline exists."
+    ],
+    "knownConstraints": [
+      "The owner of port 3100 cannot be identified from the current environment; stopping it could disrupt an unrelated service.",
+      "The logical A count remains provisional until all current source declarations, conditional skips, and project variants are reconciled.",
+      "The earlier valid_as_defined result is retained as a separate review artifact; this request is a new regular initial review after the correction."
+    ],
+    "outputRequirement": "Return one selected choice with confidence and a probability for every choice. For any reason choice, provide a case-specific finding, affected location or requirement, observed evidence, and a concrete correction or exact additional evidence needed. Do not treat HTTP success as approval."
+  },
+  "questions": {
+    "updated_plan": {
+      "type": "choice",
+      "instructions": "Does the corrected current SharedPlan45 record satisfy the stated acceptance criteria, including honestly stopping before Phase 1 while the baseline is unavailable?",
+      "criteria": {
+        "valid_as_defined": "The corrected plan and execution record meet the criteria as written.",
+        "requirements_mismatch": "A requirement conflicts with intended behavior; identify it and the evidence.",
+        "missing_prerequisites_info": "Prerequisite evidence is missing; identify exactly what is needed.",
+        "incomplete_implementation_info": "The plan record is insufficient; identify what is missing.",
+        "implementation_issue": "A concrete record or decision error exists; provide evidence and a correction.",
+        "scope_violation": "The action exceeds or changes agreed scope; identify where.",
+        "other": "Another material concern exists; give its finding, evidence, and fix or needed evidence.",
+        "indeterminate": "There is insufficient context to judge; identify the exact missing information."
+      }
+    }
+  }
+}

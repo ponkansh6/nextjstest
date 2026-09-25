@@ -1,0 +1,141 @@
+Listing tests:
+  [chromium] › accessibility.e2e.spec.ts:22:7 › アクセシビリティ - ダークモード › 凡例をタップ後、他の場所をクリックすると hover が解除される
+  [chromium] › accessibility.e2e.spec.ts:53:7 › アクセシビリティ - ダークモード › 凡例のコントラスト比が WCAG AA 以上
+  [chromium] › accessibility.e2e.spec.ts:81:7 › CAGR トリガーのコントラスト比 › T-A11Y-1: CAGR トリガーのコントラスト比が WCAG AA（4.5:1）以上 @dark
+  [chromium] › accessibility.e2e.spec.ts:103:7 › 凡例ヘッダーのコントラスト比 › T-A11Y-2: 実質消費凡例ヘッダーのコントラスト比が WCAG AA（4.5:1）以上 @dark
+  [chromium] › accessibility.e2e.spec.ts:128:14 › アクセシビリティ - キーボード操作 › キーボードのみで凡例のチェックボックスを操作できる
+  [chromium] › accessibility.e2e.spec.ts:147:14 › アクセシビリティ - キーボード操作 › フォーカスリングが表示される（:focus-visible）
+  [chromium] › accessibility.e2e.spec.ts:171:14 › アクセシビリティ - キーボード操作 › 年範囲フィルタをキーボードのみで操作できる
+  [chromium] › accessibility.e2e.spec.ts:189:7 › アクセシビリティ - アニメーション › prefers-reduced-motion が有効なとき animation が無効になる
+  [chromium] › accessibility.e2e.spec.ts:220:14 › アクセシビリティ - フォーカス管理 › info ポップアップを外側クリックで閉じてもスクロール位置が保持される
+  [chromium] › accessibility.e2e.spec.ts:243:14 › アクセシビリティ - フォーカス管理 › info ポップアップを Esc で閉じてエラーが発生しない
+  [chromium] › accessibility.e2e.spec.ts:259:14 › アクセシビリティ - フォーカス管理 › ボトムシートを開いた状態で Tab がシート内に留まる
+  [chromium] › advanced-series.e2e.spec.ts:4:7 › 比較グラフのCTI通常・advanced系列契約 › 通常表示はCTI通常系列を含み、延長系列だけを非表示にする
+  [chromium] › advanced-series.e2e.spec.ts:29:7 › 比較グラフのCTI通常・advanced系列契約 › adv=1はCTI通常・延長系列を同じregistryから公開する
+  [chromium] › cagr-sheet.e2e.spec.ts:23:7 › CAGR コンパクトシート › T-E2E-1: #section-stacked 内の実ページ trigger からダイアログが開く
+  [chromium] › cagr-sheet.e2e.spec.ts:39:7 › CAGR コンパクトシート › T-E2E-2: シート内で開始年変更 → 計算 → 結果がシート内に表示
+  [chromium] › cagr-sheet.e2e.spec.ts:63:7 › CAGR コンパクトシート › T-E2E-3: 背景タップでシートが閉じる
+  [chromium] › cagr-sheet.e2e.spec.ts:78:7 › CAGR コンパクトシート › T-E2E-4: モバイル幅で横スクロールが発生しない
+  [chromium] › cagr-sheet.e2e.spec.ts:94:7 › CAGR コンパクトシート › T-E2E-5: 375x667 でシートを開いた状態で、グラフ描画領域の可視高さが 120px 以上
+  [chromium] › cagr-sheet.e2e.spec.ts:123:7 › CAGR コンパクトシート › T-E2E-6: section-cagr が DOM に存在せず、タブバーに「CPI年率」ボタンが無い
+  [chromium] › cagr-sheet.e2e.spec.ts:137:7 › CAGR コンパクトシート › T-E2E-7: 375x667 で結果表示時、シートが内部スクロールを要しないこと（L-1 回帰）
+  [chromium] › cagr-sheet.e2e.spec.ts:166:7 › CAGR コンパクトシート › T-E2E-8: 結果の詳細行と注記がビューポート内に収まること（L-1 回帰）
+  [chromium] › cagr-sheet.e2e.spec.ts:196:7 › CAGR コンパクトシート › T-E2E-9: 667x375 横向きで結果の詳細行がビューポート内に収まること（L-2 回帰）
+  [chromium] › chart-table-csv-parity.e2e.spec.ts:294:7 › Phase 4-4 production chart/table/CSV parity › monthly CTI/CPI/earnings sections expose complete real Recharts output
+  [chromium] › chart-table-csv-parity.e2e.spec.ts:324:7 › Phase 4-4 production chart/table/CSV parity › adv=1 preserves full parity and exposes the independent advanced anchors
+  [chromium] › chart-table-csv-parity.e2e.spec.ts:374:7 › Phase 4-4 production chart/table/CSV parity › hidden series changes only its SVG geometry; table and CSV remain identical
+  [chromium] › consumption-boundary.e2e.spec.ts:85:9 › 消費支出グラフ 768px境界（Desktop Chromium） › 768px: 実viewportのレイアウト・矩形・overflow
+  [chromium] › consumption-boundary.e2e.spec.ts:85:9 › 消費支出グラフ 768px境界（Desktop Chromium） › 769px: 実viewportのレイアウト・矩形・overflow
+  [chromium] › cpi-chart-categories.e2e.spec.ts:9:5 › 物価指数チャート - セクションとプロットが表示される
+  [chromium] › cpi-chart-categories.e2e.spec.ts:20:5 › 費目凡例をクリックして系列を絞ってもスクロール位置が維持される
+  [chromium] › cpi-chart-categories.e2e.spec.ts:49:5 › CPI tooltipは12費目と合計を同じroot/row契約で表示する
+  [chromium] › earnings-tooltip-total.e2e.spec.ts:63:7 › 給与tooltipの区分合計 desktop E2E › 給与plotへの実hoverでtooltipを表示する
+  [chromium] › earnings-tooltip-total.e2e.spec.ts:70:7 › 給与tooltipの区分合計 desktop E2E › 系列をlegendでhiddenにした後も実chartをhoverしてtooltipを表示できる
+  [chromium] › legend-color-sync.e2e.spec.ts:21:5 › 凡例スウォッチの色が globals.css の最新値と一致する（教養娯楽 / --series-9）
+  [chromium] › legend-color-sync.e2e.spec.ts:54:5 › 凡例スウォッチの色が globals.css の最新値と一致する（食料 / --nominal-food）
+  [chromium] › legend-color-sync.e2e.spec.ts:85:5 › 凡例スウォッチの色が globals.css の最新値と一致する（ダークモード / 全12系列）
+  [chromium] › monthly-boundary-axis.e2e.spec.ts:21:9 › 月次チャートの系列境界ラベル › CPI費目別: 2017年12月・2018年1月を最終SVGに表示しない
+  [chromium] › monthly-boundary-axis.e2e.spec.ts:21:9 › 月次チャートの系列境界ラベル › 給与: 2017年12月・2018年1月を最終SVGに表示しない
+  [chromium] › plan24-rendering.e2e.spec.ts:71:7 › Plan24 rendering contract › 名目CTIは2005〜2017専用、2018以降はlegacy費目でGDPを公開しない
+  [chromium] › plan24-rendering.e2e.spec.ts:88:7 › Plan24 rendering contract › 2025Q1/Q4の表・CSV・tooltipの表示値を再確認
+  [chromium] › quarterly-gdp.e2e.spec.ts:26:7 › Plan23 quarterly public projection › ready state renders only the two public quarterly consumption series
+  [chromium] › range-change.e2e.spec.ts:107:7 › 描画範囲変更 E2E › 【サニティ】初期状態でグラフが表示される
+  [chromium] › range-change.e2e.spec.ts:119:7 › 描画範囲変更 E2E › 開始年を上げるとグラフが狭まる（名目）
+  [chromium] › range-change.e2e.spec.ts:136:7 › 描画範囲変更 E2E › 開始年を上げるとグラフが狭まる（実質）
+  [chromium] › range-change.e2e.spec.ts:153:7 › 描画範囲変更 E2E › 終了年を下げるとグラフが狭まる（名目）
+  [chromium] › range-change.e2e.spec.ts:170:7 › 描画範囲変更 E2E › 終了年を下げるとグラフが狭まる（実質）
+  [chromium] › range-change.e2e.spec.ts:187:7 › 描画範囲変更 E2E › 【境界値】開始年=終了年でグラフが1年に狭まる
+  [chromium] › range-change.e2e.spec.ts:200:7 › 描画範囲変更 E2E › 【比例検証】範囲が2倍になると棒本数が増加
+  [chromium] › range-change.e2e.spec.ts:215:7 › 描画範囲変更 E2E › 開始年または終了年を変更するとボトムシートが自動的に閉じる
+  [chromium] › range-change.e2e.spec.ts:242:7 › 描画範囲変更 E2E › 操作中にコンソール/ページエラーが発生しない
+  [chromium] › range-change.e2e.spec.ts:273:7 › 描画範囲変更 E2E › 年範囲変更後もスクロール位置が維持されるべき
+  [chromium] › range-change.e2e.spec.ts:303:7 › 描画範囲変更 E2E › 最大期間ボタンで2005年から最新年に一括設定され、シートが閉じ、URLに反映される
+  [chromium] › real-consumption.e2e.spec.ts:21:7 › page.tsx E2E: real consumption chart with actual browser › should render page and extract quarterlyRealData from Flight payload
+  [chromium] › real-consumption.e2e.spec.ts:60:7 › page.tsx E2E: real consumption chart with actual browser › should render without hydration or console errors
+  [chromium] › real-consumption.e2e.spec.ts:82:7 › page.tsx E2E: real consumption chart with actual browser › should render UI components in real consumption chart
+  [chromium] › real-consumption.e2e.spec.ts:99:7 › page.tsx E2E: real consumption chart with actual browser › should handle legend toggle and update chart visibility
+  [chromium] › real-consumption.e2e.spec.ts:128:9 › page.tsx E2E: real consumption chart with actual browser › 実質消費凡例アコーディオン › T-E2E-A1: 初期表示で実質セクションの凡例ボタンが見えない（アコーディオンが閉じている）
+  [chromium] › real-consumption.e2e.spec.ts:156:9 › page.tsx E2E: real consumption chart with actual browser › 実質消費凡例アコーディオン › T-E2E-A2: <summary> をクリックすると凡例が現れ、費目ボタンが可視になる
+  [chromium] › real-consumption.e2e.spec.ts:174:9 › page.tsx E2E: real consumption chart with actual browser › 実質消費凡例アコーディオン › T-E2E-A3: summary ヘッダーがトナルピル装飾で、矢印SVGが含まれる
+  [chromium] › section-tabs-scroll.e2e.spec.ts:47:9 › タブバー押下時のスクロール › 「消費(名目)」タブを押すと該当セクションが表示領域に入る
+  [chromium] › section-tabs-scroll.e2e.spec.ts:47:9 › タブバー押下時のスクロール › 「給与」タブを押すと該当セクションが表示領域に入る
+  [chromium] › section-tabs-scroll.e2e.spec.ts:47:9 › タブバー押下時のスクロール › 「3種比較」タブを押すと該当セクションが表示領域に入る
+  [chromium] › section-tabs-scroll.e2e.spec.ts:82:9 › タブバー押下時のスクロール(初回読み込み・未マウント状態) › 未マウント状態から「消費(名目)」タブを押しても該当セクションへ到達する
+  [chromium] › section-tabs-scroll.e2e.spec.ts:82:9 › タブバー押下時のスクロール(初回読み込み・未マウント状態) › 未マウント状態から「給与」タブを押しても該当セクションへ到達する
+  [chromium] › section-tabs-scroll.e2e.spec.ts:82:9 › タブバー押下時のスクロール(初回読み込み・未マウント状態) › 未マウント状態から「3種比較」タブを押しても該当セクションへ到達する
+  [chromium] › section-tabs-scroll.e2e.spec.ts:120:7 › タブバーのスクロールバー非表示と右端フェード › リロード直後(タブ未操作)にネイティブスクロールバーが非表示である
+  [chromium] › section-tabs-scroll.e2e.spec.ts:127:7 › タブバーのスクロールバー非表示と右端フェード › スクロールバー非表示でも横スクロールが機能する
+  [chromium] › section-tabs-scroll.e2e.spec.ts:142:7 › タブバーのスクロールバー非表示と右端フェード › 右端フェード(mask-image)が適用されている
+  [chromium] › spending-filter.e2e.spec.ts:35:7 › 消費支出絞り込み E2E › Q1 を非表示にするとグラフの棒本数が減る（名目）
+  [chromium] › spending-filter.e2e.spec.ts:64:7 › 消費支出絞り込み E2E › 費目を非表示にするとグラフの棒本数が減る（名目）
+  [chromium] › tooltip-dismiss.e2e.spec.ts:138:7 › モバイル ツールチップの閉じるボタンとインタラクション › グラフをタップするとツールチップが表示され、✕ボタンとガイド線で閉じられる
+  [chromium] › tooltip-dismiss.e2e.spec.ts:159:7 › モバイル ツールチップの閉じるボタンとインタラクション › mobile-pixel: タップで表示したTooltipをEscapeで閉じ、Tooltipと閉じるボタンが消える
+  [chromium] › tooltip-dismiss.e2e.spec.ts:188:7 › モバイル ツールチップの閉じるボタンとインタラクション › グラフ外をタップすると閉じるボタンとガイド線の両方が消える
+  [chromium] › tooltip-dismiss.e2e.spec.ts:207:7 › モバイル ツールチップの閉じるボタンとインタラクション › 別グラフをタップすると既存のガイド線が消え、新しいガイド線が1本だけになる
+  [chromium] › tooltip-dismiss.e2e.spec.ts:231:7 › モバイル ツールチップの閉じるボタンとインタラクション › スクロールするとガイド線とツールチップが自動で消える
+  [chromium] › tooltip-dismiss.e2e.spec.ts:249:7 › モバイル ツールチップの閉じるボタンとインタラクション › グラフ上を縦にスワイプしてもツールチップが表示されないこと（ネガティブテスト）
+  [chromium] › tooltip-dismiss.e2e.spec.ts:284:7 › モバイル ツールチップの閉じるボタンとインタラクション › ✕で閉じた後、同じバーをもう一度タップして再表示されること
+  [chromium] › tooltip-dismiss.e2e.spec.ts:307:9 › モバイル ツールチップの閉じるボタンとインタラクション › 固定viewportでのchartNote/Tooltip重なり › tooltipと実質chartNoteリンクが重なる座標ではリンク遷移を遮蔽しtooltipを維持する
+  [chromium] › tooltip-dismiss.e2e.spec.ts:430:7 › モバイル ツールチップの閉じるボタンとインタラクション › tooltip外の実質chartNoteリンクはtooltipを閉じて名目セクションへ遷移する
+  [chromium] › tooltip-dismiss.e2e.spec.ts:473:7 › モバイル ツールチップの閉じるボタンとインタラクション › エリアチャートをグラフ外タップで閉じるとアクティブドットも消える
+  [chromium] › tooltip-dismiss.e2e.spec.ts:508:7 › モバイル ツールチップの閉じるボタンとインタラクション › エリアチャートを✕で閉じるとアクティブドットも消える
+  [chromium] › tooltip-dismiss.e2e.spec.ts:535:7 › モバイル ツールチップの閉じるボタンとインタラクション › タブジャンプ中（プログラム的スクロール中）にグラフへ触れてもツールチップが出ないこと
+  [chromium] › tooltip-dismiss.e2e.spec.ts:578:7 › デスクトップ ツールチップのホバー回帰テスト › chromium: ホバー表示後Escapeで閉じ、外部クリックでもdismissされること
+  [chromium] › tooltip-stack-total.e2e.spec.ts:65:7 › ツールチップ積み上げ合計表示 E2E › T7: 消費支出（名目）の2022年以降の棒をホバーするとツールチップに「合計」が出る
+  [chromium] › tooltip-stack-total.e2e.spec.ts:81:7 › ツールチップ積み上げ合計表示 E2E › T8: 凡例で系列を非表示にするとTooltipから費目行が消える
+  [chromium] › tooltip-stack-total.e2e.spec.ts:108:7 › ツールチップ積み上げ合計表示 E2E › T9: CPI費目別（section-stacked）のツールチップに12費目と「合計」が出る
+  [chromium-dark] › accessibility.e2e.spec.ts:81:7 › CAGR トリガーのコントラスト比 › T-A11Y-1: CAGR トリガーのコントラスト比が WCAG AA（4.5:1）以上 @dark
+  [chromium-dark] › accessibility.e2e.spec.ts:103:7 › 凡例ヘッダーのコントラスト比 › T-A11Y-2: 実質消費凡例ヘッダーのコントラスト比が WCAG AA（4.5:1）以上 @dark
+  [mobile-pixel] › consumption-mobile-acceptance.e2e.spec.ts:37:7 › 消費支出 mobile-pixel acceptance (Plan25/OpenSpec) › 名目・実質の凡例ボタンは実DOMで32px以上の幅・高さを持つ
+  [mobile-pixel] › consumption-mobile-acceptance.e2e.spec.ts:63:7 › 消費支出 mobile-pixel acceptance (Plan25/OpenSpec) › 名目・実質tooltipの費目名は14px以上、合計は16px以上、数値セルは右揃え
+  [mobile-pixel] › consumption-mobile-acceptance.e2e.spec.ts:122:7 › 消費支出 mobile-pixel acceptance (Plan25/OpenSpec) › 名目・実質の初期summaryは閉じ、1行の状態要約を示す
+  [mobile-pixel] › consumption-mobile-acceptance.e2e.spec.ts:139:7 › 消費支出 mobile-pixel acceptance (Plan25/OpenSpec) › 凡例で全系列を非表示にすると空状態を示し、1系列の再選択でチャートが復帰する
+  [mobile-pixel] › consumption-mobile-acceptance.e2e.spec.ts:161:7 › 消費支出 mobile-pixel acceptance (Plan25/OpenSpec) › dark modeと文字拡大後もtooltipを閉じられ、費目名と値が可視である
+  [mobile-pixel] › consumption-mobile-acceptance.e2e.spec.ts:187:7 › 消費支出 mobile-pixel acceptance (Plan25/OpenSpec) › 375x667でtooltip最下部までスクロール後も閉じるbuttonがviewport内に表示される
+  [mobile-pixel] › consumption-mobile-readability.e2e.spec.ts:52:9 › 消費支出グラフ モバイル可読性の証跡 › 320px: 名目・実質の専用余白、Y軸、棒、X軸ラベルが欠けない
+  [mobile-pixel] › consumption-mobile-readability.e2e.spec.ts:52:9 › 消費支出グラフ モバイル可読性の証跡 › 375px: 名目・実質の専用余白、Y軸、棒、X軸ラベルが欠けない
+  [mobile-pixel] › consumption-mobile-readability.e2e.spec.ts:52:9 › 消費支出グラフ モバイル可読性の証跡 › 390px: 名目・実質の専用余白、Y軸、棒、X軸ラベルが欠けない
+  [mobile-pixel] › consumption-mobile-readability.e2e.spec.ts:52:9 › 消費支出グラフ モバイル可読性の証跡 › 430px: 名目・実質の専用余白、Y軸、棒、X軸ラベルが欠けない
+  [mobile-pixel] › consumption-mobile-readability.e2e.spec.ts:191:9 › 消費支出グラフ モバイル可読性の証跡 › 375px: 給与tooltipの6系列行＋合計・値列がviewport内
+  [mobile-pixel] › consumption-mobile-readability.e2e.spec.ts:191:9 › 消費支出グラフ モバイル可読性の証跡 › 430px: 給与tooltipの6系列行＋合計・値列がviewport内
+  [mobile-pixel] › consumption-mobile-readability.e2e.spec.ts:297:9 › 消費支出グラフ モバイル可読性の証跡 › 375x667: 名目・実質tooltipが全費目を内部スクロール表示し、閉じる操作が機能する
+  [mobile-pixel] › consumption-mobile-readability.e2e.spec.ts:297:9 › 消費支出グラフ モバイル可読性の証跡 › 320x480: 名目・実質tooltipが全費目を内部スクロール表示し、閉じる操作が機能する
+  [mobile-pixel] › consumption-mobile-readability.e2e.spec.ts:297:9 › 消費支出グラフ モバイル可読性の証跡 › landscape: 名目・実質tooltipが全費目を内部スクロール表示し、閉じる操作が機能する
+  [mobile-pixel] › mobile-ux.e2e.spec.ts:19:7 › モバイル UX ルール › 表示中のボタンはすべて基準のタップターゲット以上
+  [mobile-pixel] › mobile-ux.e2e.spec.ts:47:7 › モバイル UX ルール › 375px 幅で横方向にはみ出さない
+  [mobile-pixel] › mobile-ux.e2e.spec.ts:65:9 › モバイル UX ルール › 320px 幅でページに横 overflow がない
+  [mobile-pixel] › mobile-ux.e2e.spec.ts:65:9 › モバイル UX ルール › 375px 幅でページに横 overflow がない
+  [mobile-pixel] › mobile-ux.e2e.spec.ts:65:9 › モバイル UX ルール › 390px 幅でページに横 overflow がない
+  [mobile-pixel] › mobile-ux.e2e.spec.ts:65:9 › モバイル UX ルール › 430px 幅でページに横 overflow がない
+  [mobile-pixel] › mobile-ux.e2e.spec.ts:79:7 › モバイル UX ルール › モバイル幅（375px）でも最大期間ボタンが終了年 select の右側に配置されること
+  [mobile-pixel] › mobile-ux.e2e.spec.ts:112:7 › モバイル UX ルール › モバイル幅（375px）で開始年と終了年の select 幅がほぼ一致すること
+  [mobile-pixel] › mobile-ux.e2e.spec.ts:140:7 › モバイル UX ルール › モバイル幅（375px）で開始年・終了年・最大期間の3要素すべてが同一行（横並び）に配置されること
+  [mobile-pixel] › mobile-ux.e2e.spec.ts:192:7 › LazyMount 遅延マウント (P5-1) › 初期表示では下部のチャートがマウントされていない
+  [mobile-pixel] › mobile-ux.e2e.spec.ts:201:7 › LazyMount 遅延マウント (P5-1) › スクロールするとチャートがマウントされる
+  [mobile-pixel] › mobile-ux.e2e.spec.ts:211:7 › LazyMount 遅延マウント (P5-1) › __MOUNT_ALL__ を立てると初期表示で全チャートがマウントされる
+  [mobile-pixel] › mobile-ux.e2e.spec.ts:243:7 › タブバー(SectionTabs)の sticky ちらつき対策 › タブバーが独立した合成レイヤーに昇格している(Android Chrome のアドレスバー競合対策)
+  [mobile-pixel] › plan27-private-consumption.e2e.spec.ts:9:7 › Plan27/38 名目CTI四半期消費支出回帰 › 2005Q1〜2017Q4の52四半期をgraph/table/CSVで公開し、給与CTI registryを混入しない
+  [mobile-pixel] › plan27-private-consumption.e2e.spec.ts:79:7 › Plan27/38 名目CTI四半期消費支出回帰 › nominal CTI key is distinct from the real chart boundary
+  [mobile-pixel] › tooltip-dismiss.e2e.spec.ts:138:7 › モバイル ツールチップの閉じるボタンとインタラクション › グラフをタップするとツールチップが表示され、✕ボタンとガイド線で閉じられる
+  [mobile-pixel] › tooltip-dismiss.e2e.spec.ts:159:7 › モバイル ツールチップの閉じるボタンとインタラクション › mobile-pixel: タップで表示したTooltipをEscapeで閉じ、Tooltipと閉じるボタンが消える
+  [mobile-pixel] › tooltip-dismiss.e2e.spec.ts:188:7 › モバイル ツールチップの閉じるボタンとインタラクション › グラフ外をタップすると閉じるボタンとガイド線の両方が消える
+  [mobile-pixel] › tooltip-dismiss.e2e.spec.ts:207:7 › モバイル ツールチップの閉じるボタンとインタラクション › 別グラフをタップすると既存のガイド線が消え、新しいガイド線が1本だけになる
+  [mobile-pixel] › tooltip-dismiss.e2e.spec.ts:231:7 › モバイル ツールチップの閉じるボタンとインタラクション › スクロールするとガイド線とツールチップが自動で消える
+  [mobile-pixel] › tooltip-dismiss.e2e.spec.ts:249:7 › モバイル ツールチップの閉じるボタンとインタラクション › グラフ上を縦にスワイプしてもツールチップが表示されないこと（ネガティブテスト）
+  [mobile-pixel] › tooltip-dismiss.e2e.spec.ts:284:7 › モバイル ツールチップの閉じるボタンとインタラクション › ✕で閉じた後、同じバーをもう一度タップして再表示されること
+  [mobile-pixel] › tooltip-dismiss.e2e.spec.ts:307:9 › モバイル ツールチップの閉じるボタンとインタラクション › 固定viewportでのchartNote/Tooltip重なり › tooltipと実質chartNoteリンクが重なる座標ではリンク遷移を遮蔽しtooltipを維持する
+  [mobile-pixel] › tooltip-dismiss.e2e.spec.ts:430:7 › モバイル ツールチップの閉じるボタンとインタラクション › tooltip外の実質chartNoteリンクはtooltipを閉じて名目セクションへ遷移する
+  [mobile-pixel] › tooltip-dismiss.e2e.spec.ts:473:7 › モバイル ツールチップの閉じるボタンとインタラクション › エリアチャートをグラフ外タップで閉じるとアクティブドットも消える
+  [mobile-pixel] › tooltip-dismiss.e2e.spec.ts:508:7 › モバイル ツールチップの閉じるボタンとインタラクション › エリアチャートを✕で閉じるとアクティブドットも消える
+  [mobile-pixel] › tooltip-dismiss.e2e.spec.ts:535:7 › モバイル ツールチップの閉じるボタンとインタラクション › タブジャンプ中（プログラム的スクロール中）にグラフへ触れてもツールチップが出ないこと
+  [mobile-pixel] › tooltip-dismiss.e2e.spec.ts:578:7 › デスクトップ ツールチップのホバー回帰テスト › chromium: ホバー表示後Escapeで閉じ、外部クリックでもdismissされること
+  [webkit-tabs-regression] › section-tabs-scroll.e2e.spec.ts:47:9 › タブバー押下時のスクロール › 「消費(名目)」タブを押すと該当セクションが表示領域に入る
+  [webkit-tabs-regression] › section-tabs-scroll.e2e.spec.ts:47:9 › タブバー押下時のスクロール › 「給与」タブを押すと該当セクションが表示領域に入る
+  [webkit-tabs-regression] › section-tabs-scroll.e2e.spec.ts:47:9 › タブバー押下時のスクロール › 「3種比較」タブを押すと該当セクションが表示領域に入る
+  [webkit-tabs-regression] › section-tabs-scroll.e2e.spec.ts:82:9 › タブバー押下時のスクロール(初回読み込み・未マウント状態) › 未マウント状態から「消費(名目)」タブを押しても該当セクションへ到達する
+  [webkit-tabs-regression] › section-tabs-scroll.e2e.spec.ts:82:9 › タブバー押下時のスクロール(初回読み込み・未マウント状態) › 未マウント状態から「給与」タブを押しても該当セクションへ到達する
+  [webkit-tabs-regression] › section-tabs-scroll.e2e.spec.ts:82:9 › タブバー押下時のスクロール(初回読み込み・未マウント状態) › 未マウント状態から「3種比較」タブを押しても該当セクションへ到達する
+  [webkit-tabs-regression] › section-tabs-scroll.e2e.spec.ts:120:7 › タブバーのスクロールバー非表示と右端フェード › リロード直後(タブ未操作)にネイティブスクロールバーが非表示である
+  [webkit-tabs-regression] › section-tabs-scroll.e2e.spec.ts:127:7 › タブバーのスクロールバー非表示と右端フェード › スクロールバー非表示でも横スクロールが機能する
+  [webkit-tabs-regression] › section-tabs-scroll.e2e.spec.ts:142:7 › タブバーのスクロールバー非表示と右端フェード › 右端フェード(mask-image)が適用されている
+Total: 139 tests in 21 files

@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "jev-review-initial-distribution-v3",
+  "state": {
+    "evaluationScope": "plan_validity",
+    "background": "SharedPlan 45 migrates selected Playwright E2E scenarios to Vitest Browser Mode in gated phases. Phase 0 requires a revision and environment baseline, a current-source logical scenario inventory with active/skipped/project variants reconciled, reviewer-approved eligibility E, and migration count M. The plan forbids weakening primary failure boundaries and says not to proceed through gates on guessed counts. The Phase 0 execution record is now appended to shared_plan/45-vitest-browser-mode-e2e-migration-plan.md. It records: HEAD 6296bac317f5f2899aec8df34c5d1bbb6b37dc24; worktree had a preexisting deleted Plan42 status artifact and the Plan45 file was untracked; Node 24.19.0, pnpm 11.9.0, Ubuntu 26.04.1 x86_64, Playwright 1.62.1; fresh list-only discovery exited 0 with 139 project executions across 21 specs (chromium 85, chromium-dark 2, mobile-pixel 43, WebKit 9). A canonical `pnpm run test:e2e` attempt exited 1 after 2.60 seconds before tests because port 3100 was already in use. The owner cannot be identified in this environment, so the process was left untouched. The existing Plan42 result of 120 pass / 19 skipped is historical, not a fresh baseline. Source review provisionally accounts for 112 logical scenarios (batch A 33, batch B 79); E has 1 confirmed eligible scenario and 4 unresolved, M=0. Exact A reconciliation, dynamic skip census, mobile-readability loop expansion, and WebKit/Chromium section-tabs deduplication remain unresolved. Phase 0 is explicitly incomplete and Phase 1 has not started.",
+    "acceptanceCriteria": [
+      "The current revision, dirty-worktree state, environment, Playwright projects, scenario inventory, skip conditions, and project-variant deduplication are reproducibly recorded.",
+      "A fresh full pnpm run test:e2e baseline and raw output are captured before Phase 1; a command that fails before test execution is not a baseline.",
+      "A, E, and M use the plan's logical-scenario definitions without dropping ineligible contracts or changing the >0.50 target.",
+      "Phase 1 does not start until Phase 0 acceptance evidence is complete and its gate result is recorded.",
+      "Playwright assertions remain responsible for production route, Flight/hydration, download, live chart, viewport geometry, hit-testing, scroll, and WebKit-specific boundaries."
+    ],
+    "verification": [
+      "Fresh discovery-only command `pnpm exec playwright test --list` exited 0; its raw output is archived at results/plan45/phase0/fresh-playwright-list-20260925.txt, SHA-256 60594fd13fdbc10b6e8029de53b099827cc3ffad987e0c8b213b6b58c9906b06.",
+      "Canonical baseline attempt `pnpm run test:e2e` exited 1 in 2.60 seconds before test execution because 127.0.0.1:3100 was already in use; raw output is archived at results/plan45/phase0/test-e2e-baseline-20260925.log, SHA-256 32a2d54ff42049e99d2f528a99cdd4851b24e0babc199b6eb5e9a73339ec45b4.",
+      "The earlier malformed `pnpm test:e2e -- --list` command briefly started E2E tests and was terminated; it is incomplete and is not counted as a baseline.",
+      "A read-only owner diagnosis could not identify the listener on port 3100; Playwright config uses reuseExistingServer:false, and no process was stopped.",
+      "An independent scenario review found 33 scenarios in batch A and 79 in batch B after excluding the no-assertion mobile-ux declaration; one scenario is E=yes, four are unresolved, others are E=no, and M=0. The exact full-suite A denominator is still provisional."
+    ],
+    "knownConstraints": [
+      "The port owner/PID cannot be identified, so stopping the listener would risk disrupting an unrelated user service.",
+      "The baseline worktree contains a preexisting deleted file `results/plan42/current-worktree-status-20260925.txt`; it was not restored or included in the new evidence.",
+      "The 139 fresh Playwright entries are project executions, not yet a fully reconciled logical-scenario denominator.",
+      "No application, dependency, Playwright, or Vitest source/configuration was changed; no Phase 1 spike or migration batch has begun."
+    ],
+    "outputRequirement": "Return one selected choice with confidence and probabilities for every choice. For any reason choice, provide a case-specific finding, affected location or requirement, observed evidence, and a concrete correction or exact additional evidence needed. Do not treat HTTP success as approval."
+  },
+  "questions": {
+    "phase0_record": {
+      "type": "choice",
+      "instructions": "Does the current Phase 0 execution record and decision to stop before Phase 1 satisfy SharedPlan 45's acceptance gates? Judge only from the supplied evidence; do not treat the failed baseline attempt as a successful test baseline.",
+      "criteria": {
+        "valid_as_defined": "The Phase 0 record is accurate and bounded; remaining blockers are correctly represented, and no further change is needed before the baseline/inventory gates are completed.",
+        "requirements_mismatch": "A requirement conflicts with the intended plan behavior; identify the conflicting requirement and evidence.",
+        "missing_prerequisites_info": "Prerequisite evidence is missing; identify the exact evidence needed.",
+        "incomplete_implementation_info": "The execution record or gate details are insufficient; identify what is missing.",
+        "implementation_issue": "The record or next-step decision has a concrete error; cite evidence and a fix.",
+        "scope_violation": "The recorded action exceeds or changes the agreed scope; identify where.",
+        "other": "Another material issue exists; identify the finding, evidence, and fix or needed evidence.",
+        "indeterminate": "The supplied context is insufficient to judge; identify the exact information needed."
+      }
+    }
+  }
+}

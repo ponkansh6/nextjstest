@@ -1,0 +1,7 @@
+$ playwright test
+Error: http://127.0.0.1:3100 is already used, make sure that nothing is running on the port/url or set reuseExistingServer:true in config.webServer.
+
+[ELIFECYCLE] Command failed with exit code 1.
+Command exited with non-zero status 1
+
+PLAN45_ELAPSED_SECONDS=2.60
