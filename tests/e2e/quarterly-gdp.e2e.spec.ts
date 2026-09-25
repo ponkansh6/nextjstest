@@ -24,6 +24,7 @@ async function hoverQuarterActionableMark(
 
 test.describe("Plan23 quarterly public projection", () => {
   test("ready state renders only the two public quarterly consumption series", async ({ page }) => {
+    // 公開データ投影は既存のユニットテストで検証し、このケースでは本番ルートの連携を確認する。
     await page.goto("/");
 
     const nominal = page.getByTestId("spending-chart-nominal");

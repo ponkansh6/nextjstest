@@ -67,7 +67,8 @@ function isQuarterlyRow(row: QuarterlyRow): boolean {
     Number.isInteger(row.quarter) &&
     row.quarter >= 1 &&
     row.quarter <= 4 &&
-    /^\d{4}Q[1-4]$/.test(row.label)
+    /^\d{4}Q[1-4]$/.test(row.label) &&
+    row.label === publicQuarterLabel(row)
   );
 }
 

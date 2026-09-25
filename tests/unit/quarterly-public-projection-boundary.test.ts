@@ -127,4 +127,15 @@ describe("quarterly client/server type boundary", () => {
     expect(row[foodKey]).toBeUndefined();
     expect(row[QUARTERLY_PUBLIC_NOMINAL_KEYS[0]]).toBeNull();
   });
+
+  it("excludes rows whose quarter is outside 1–4 or whose label disagrees with its period", () => {
+    const rows = projectQuarterlyPublicView([
+      { 年: 2017, quarter: 4, label: "2017Q4", 年月: "2017年10月" },
+      { 年: 2017, quarter: 0, label: "2017Q0", 年月: "2017年1月" },
+      { 年: 2017, quarter: 5, label: "2017Q5", 年月: "2018年1月" },
+      { 年: 2017, quarter: 4, label: "2017Q3", 年月: "2017年10月" },
+    ]);
+
+    expect(rows.map((row) => row.label)).toEqual(["2017Q4"]);
+  });
 });

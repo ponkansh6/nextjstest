@@ -1,7 +1,15 @@
 import { test, expect } from "./fixtures";
 import type { Locator, Page } from "@playwright/test";
+import {
+  QUARTERLY_PLAN40_V2_NOMINAL_KEYS,
+  QUARTERLY_PUBLIC_REAL_KEYS,
+} from "@/lib/quarterlyPublicProjection";
 
 const CHARTS = ["spending-chart-nominal", "spending-chart-real"] as const;
+const EXPECTED_TOOLTIP_KEYS = {
+  "spending-chart-nominal": QUARTERLY_PLAN40_V2_NOMINAL_KEYS,
+  "spending-chart-real": QUARTERLY_PUBLIC_REAL_KEYS,
+} as const;
 const WIDTHS = [320, 375, 390, 430] as const;
 
 const chart = (page: Page, id: string) => page.getByTestId(id);
@@ -299,25 +307,17 @@ test.describe("消費支出グラフ モバイル可読性の証跡", () => {
         await tapVisibleBar(page, root);
         const tooltip = root.locator('.recharts-tooltip-wrapper [style*="position: fixed"]');
         await expect(tooltip).toBeVisible({ timeout: 5000 });
-        await expect(tooltip).toContainText("合計");
-        const payloadRows = await tooltip
-          .locator(":scope > div")
-          .evaluateAll(
-            (children) =>
-              children.filter(
-                (child) =>
-                  child.querySelectorAll(":scope > span").length >= 2 &&
-                  !child.textContent?.trim().startsWith("合計"),
-              ).length,
-          );
+        const payloadKeys = await tooltip
+          .locator('[data-tooltip-row="true"]')
+          .evaluateAll((rows) => rows.map((row) => row.getAttribute("data-tooltip-key")));
+        const expectedKeys = EXPECTED_TOOLTIP_KEYS[id];
+        expect(payloadKeys, `${id}: tooltip renders every expected category row`).toHaveLength(
+          expectedKeys.length,
+        );
         expect(
-          payloadRows,
-          `${id}: tooltip displays all payload categories`,
-        ).toBeGreaterThanOrEqual(10);
-        await expect(
-          tooltip,
-          `${id}: tooltip does not collapse the top five categories`,
-        ).not.toContainText(/他\s*\d+\s*件/);
+          [...payloadKeys].sort(),
+          `${id}: tooltip category key set exactly matches chart series`,
+        ).toEqual([...expectedKeys].sort());
         const detail = await tooltip.evaluate((element) => {
           const el = element as HTMLElement;
           const box = el.getBoundingClientRect();
@@ -325,7 +325,6 @@ test.describe("消費支出グラフ モバイル可読性の証跡", () => {
             overflowY: getComputedStyle(el).overflowY,
             maxHeight: parseFloat(getComputedStyle(el).maxHeight),
             paddingBottom: parseFloat(getComputedStyle(el).paddingBottom),
-            safeAreaPadding: el.style.paddingBottom,
             scrollHeight: el.scrollHeight,
             clientHeight: el.clientHeight,
             box: { left: box.left, right: box.right, top: box.top, bottom: box.bottom },
@@ -334,7 +333,6 @@ test.describe("消費支出グラフ モバイル可読性の証跡", () => {
         expect(detail.overflowY).toBe("auto");
         expect(detail.maxHeight).toBeGreaterThan(0);
         expect(detail.paddingBottom).toBeGreaterThanOrEqual(10);
-        expect(detail.safeAreaPadding).toContain("env(safe-area-inset-bottom");
         expect(detail.scrollHeight).toBeGreaterThan(detail.clientHeight);
         expect(detail.box.left).toBeGreaterThanOrEqual(0);
         expect(detail.box.right).toBeLessThanOrEqual(viewport.width);

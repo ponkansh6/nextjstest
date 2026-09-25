@@ -144,6 +144,12 @@ series.
 - **WHEN** a nominal consumption quarter is between 2005Q1 and 2017Q4 and its
   three official CTI months are finite (including zero), **THEN** the dedicated
   CTI nominal key is the simple three-month average.
+- **WHEN** `projectQuarterlyPublicView()` receives a quarterly row, **THEN** it
+  includes the row only when `年` and `quarter` are integers, `quarter` is from
+  1 through 4, and `label` is a valid `YYYYQn` that exactly equals
+  `${年}Q${quarter}`; an invalid quarter or label mismatch is omitted. For each
+  accepted row, the projected public `年月` is `${年}Q${quarter}` regardless of
+  the source row's `年月` value.
 - **WHEN** any required month inside the Plan38 window is missing, non-finite,
   duplicated, or the quarter has fewer than three months, **THEN** the shared
   quarter remains and the CTI value is `null` with status/reason exposed;
@@ -572,19 +578,19 @@ the existing DOM contract or chart props.
 
 The shared data type with an index signature `[key: string]: string | number` for extensibility. Below are the explicitly defined fields; additional fields are added at runtime by each data loader.
 
-| Field                                                   | Type           | Description                                                                                                                                                                                                 |
-| ------------------------------------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 年月                                                    | string         | Public period label; quarterly views use `label` such as `2025Q1` (and `年月` is the same `YYYYQn` label), while monthly views use `YYYY年M月`                                                              |
-| 総合                                                    | number         | Displayed all-items index: CPI and earnings both use the 2025 calendar-year average = 100 display basis; any source or compatibility basis is normalized separately                                         |
-| 生鮮食品を除く総合                                      | number         | CPI excluding Fresh Food                                                                                                                                                                                    |
-| 持家の帰属家賃を除く総合                                | number         | CPI excluding Imputed Rent                                                                                                                                                                                  |
-| 民間最終消費支出（名目・原値） / （実質・原値）         | number \| null | GDP raw amount for the independent annual/real compatibility contract only; never an input or output column of the earnings projection or Plan38 nominal CTI public rows.                                   |
-| 民間最終消費支出（名目・比較指数） / （実質・比較指数） | number \| null | GDP comparison-only value for the independent annual/real compatibility contract; never a CTI nominal fallback and omitted when validation is absent.                                                       |
-| 民間最終消費支出（四半期raw）                           | number \| null | Plan21 original-series quarterly official amount, keyed by `YYYY-Qn`; nominal and real remain separate.                                                                                                     |
-| 民間最終消費支出（四半期比較指数）                      | number \| null | Quarterly GDP reference index on the 2025 calendar-year average = 100 basis (the 2025Q1–Q4 average), emitted only when independent confirmation is `ready`; pending status is fail-closed.                  |
-| CTIミクロ四半期系列（名目）                             | number \| null | Plan38 fixed artifact 000040499070 series 1 nominal raw index, averaged over exactly three calendar months for 2005Q1〜2017Q4; the row measurement carries status/reason/source/unit/frequency/aggregation. |
-| 消費支出（参考）                                        | number \| null | Legacy row-shape field retained only for historical loader compatibility; Plan37 never populates or projects this key.                                                                                      |
-| CPI総合(参考)                                           | number         | CPI All Items reference index on the 2025 calendar-year average = 100 display basis                                                                                                                         |
+| Field                                                   | Type           | Description                                                                                                                                                                                                                                                              |
+| ------------------------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 年月                                                    | string         | Source rows may use `YYYY年M月` (including quarter-start month labels); a quarterly public projection accepts integer `年` and `quarter` 1–4 with an exact valid `YYYYQn` label, then sets projected `年月` to `${年}Q${quarter}`. Monthly public views use `YYYY年M月`. |
+| 総合                                                    | number         | Displayed all-items index: CPI and earnings both use the 2025 calendar-year average = 100 display basis; any source or compatibility basis is normalized separately                                                                                                      |
+| 生鮮食品を除く総合                                      | number         | CPI excluding Fresh Food                                                                                                                                                                                                                                                 |
+| 持家の帰属家賃を除く総合                                | number         | CPI excluding Imputed Rent                                                                                                                                                                                                                                               |
+| 民間最終消費支出（名目・原値） / （実質・原値）         | number \| null | GDP raw amount for the independent annual/real compatibility contract only; never an input or output column of the earnings projection or Plan38 nominal CTI public rows.                                                                                                |
+| 民間最終消費支出（名目・比較指数） / （実質・比較指数） | number \| null | GDP comparison-only value for the independent annual/real compatibility contract; never a CTI nominal fallback and omitted when validation is absent.                                                                                                                    |
+| 民間最終消費支出（四半期raw）                           | number \| null | Plan21 original-series quarterly official amount, keyed by `YYYY-Qn`; nominal and real remain separate.                                                                                                                                                                  |
+| 民間最終消費支出（四半期比較指数）                      | number \| null | Quarterly GDP reference index on the 2025 calendar-year average = 100 basis (the 2025Q1–Q4 average), emitted only when independent confirmation is `ready`; pending status is fail-closed.                                                                               |
+| CTIミクロ四半期系列（名目）                             | number \| null | Plan38 fixed artifact 000040499070 series 1 nominal raw index, averaged over exactly three calendar months for 2005Q1〜2017Q4; the row measurement carries status/reason/source/unit/frequency/aggregation.                                                              |
+| 消費支出（参考）                                        | number \| null | Legacy row-shape field retained only for historical loader compatibility; Plan37 never populates or projects this key.                                                                                                                                                   |
+| CPI総合(参考)                                           | number         | CPI All Items reference index on the 2025 calendar-year average = 100 display basis                                                                                                                                                                                      |
 
 ### Plan38 quarterly public measurement contract
 
@@ -2826,10 +2832,9 @@ production/base calibration は 2018–2025 とし、target/holdout 2017 は cal
 認証情報はレビュー本文にも結果記録にも送らず、キーが得られない場合は送信を
 fail-closed にする。今回のユーザー明示依頼により、レビュー文脈・計画・差分要約・
 受入条件・検証結果など認証情報以外のデータは JEV への送信を承認済みとする。
-この承認には、初回の JEV 応答、選択した更問理由、および更問応答も含まれる。
-認証情報は初回・更問のいずれにも含めず、過去の別実行記録を現在のレビューへ混ぜない。
-generic follow-up が未解決の場合の第三段は、呼び出し元が渡す実装固有 choices file を
-入力とする。choices file は質問文と選択肢の表示情報だけを含み、認証情報を含めない。
+この承認には、初回の JEV 応答と、ユーザーが選択した実装固有 clarification の質問・回答も含まれる。
+認証情報は初回・clarification のいずれにも含めず、過去の別実行記録を現在のレビューへ混ぜない。
+標準の再問い合わせ choices file は実装固有の質問文と選択肢の表示情報だけを含み、認証情報を含めない。
 
 ### Data Flow
 
@@ -2838,31 +2843,31 @@ API クライアント → JEV 結果の妥当性・修正点・未確定点の�
 API エラー、タイムアウト、認証失敗、または HTTP 成功だけでは妥当と判定せず、結果が
 得られない場合は未確定として扱う。JEV 判定は既存テスト・型チェック・lint の代替にしない。
 送信時は `.env.local` の `TYPESAFE_API_KEY` を認証専用に使用し、レビュー本文へ
-認証情報を含めない。初回判定が `not_valid`、`valid_but_limited`、`indeterminate`、
-または不明な形式の場合は、既定の `evidence_insufficient`、`acceptance_gap`、
-`implementation_mismatch`、`constraint_conflict`、`other` から理由を選択して更問を
-送信できる。理由未指定時は選択肢を提示し、`--reasons-file` により選択肢を差し替える。
-更問には初回 request/response を `priorReview` として保持し、初回とは別の
-`rawResponse` と出力へ保存する。更問の回答だけで初回判定を合格へ変更しない。
-更問の結果が `needs_evidence`、`indeterminate`、または未知の文字列形式でなお解決しない
-場合は、実装固有の選択肢ファイルを使う第三段の質問へ進める。選択肢ファイルは
-`version=1`、空でない `question`、`selectionMode=single|multiple`、2件以上の一意な
-文字列 `choices`（各要素は空でない `id`、`label`、`description`）を持つ。
-`single` では選択を1件、`multiple` では1件以上選択し、選択肢外のIDや重複IDは拒否する。
-第三段は generic follow-up の結果を redacted な `state.priorReview` として保持し、
-実装固有の質問・全選択肢・選択IDを別の記録へ保存する。第三段の回答による
-`effectiveVerdict` は `requires_revalidation` とし、回答だけで合格へ変更せず、追加証拠や
-修正後に通常の初回 JEV 再判定を要求する。
+認証情報を含めない。標準フローでは、正常に検証されたサポート対象の初回結果が
+`indeterminate`、または診断情報が不完全・曖昧な場合に限り、実装固有の質問と2件以上の
+選択肢を準備してユーザーに提示し、`--clarify INITIAL_RESULT --choices-file FILE --choice ID`
+で初回結果から直接 clarification を送る。single-distribution schema では `indeterminate`
+または case-specific finding、affected location/requirement、observed evidence、fix/needed evidence
+の欠落が対象となる。既存の three-question schema では main choice が `valid_as_defined` 以外で、
+main choice が `indeterminate` または診断 choice が indeterminate/missing/unknown/duplicated/
+contradictory のときが対象となる。初回の通信失敗、応答検証失敗、未対応 schema、主回答や
+summary の欠落・曖昧・不一致では clarification を送らず、初回レビューを再送する。
+choices file は `version=1`、空でない `question`、`selectionMode=single|multiple`、2件以上の
+一意な文字列 choices（各要素に空でない `id`、`label`、`description`）を持つ。`single` は
+1件、`multiple` は1件以上を選び、選択肢外 ID と重複 ID は拒否する。Clarification は初回
+結果を redacted な `state.priorReview` として保持し、`sourceStage=initial` および
+`effectiveVerdict=requires_revalidation` を記録する。回答だけで初回判定を合格にせず、未解決でも
+clarification を連鎖させない。追加証拠または修正後に通常の初回 JEV 再判定を行う。
+CLI の generic `--follow-up` と固定理由 ID は互換用ユーティリティとして残すが、標準フローでは使わない。
 
 ### Component Tree
 
 `AGENTS.md のチェックポイント手順` → `skills/jev-review/SKILL.md` → `skills/jev-review/scripts`
-汎用クライアント → JEV → review record →（非肯定・不明時は理由選択 → 更問 record）→ 修正対応。
-初回 record と更問 record は分離し、現在の実行に属する文脈だけを渡す。これは開発補助の経路であり、
-アプリケーションの runtime コンポーネントツリーには含めない。
-generic follow-up が未解決の場合は、実装固有 choices の提示 → 選択検証 → clarification
-record（redacted `priorReview`、質問、選択肢、選択ID、`requires_revalidation`）→ 通常の
-初回 JEV 再判定を追加する。
+汎用クライアント → JEV → 初回 review record →（適格な未確定/不完全診断時は実装固有 choices 提示 →
+ユーザー選択 → 初回結果から直接 clarification record）→ 修正対応 → 通常の初回 JEV 再判定。
+初回 record と clarification record は分離し、現在の実行に属する文脈だけを渡す。これは開発補助の経路であり、
+アプリケーションの runtime コンポーネントツリーには含めない。標準フローに generic follow-up の段階は設けず、
+未解決の clarification も連鎖させない。
 
 ### Plan40 JEV checkpoint record
 
@@ -2906,28 +2911,27 @@ JEVは既存テスト・型チェック・lintその他の検証の代替とは�
   範囲に限る。
 - **WHEN** JEV の結果を受け取る、**THEN** 妥当性、修正点、未確定点を記録し、修正点が
   あれば対応して必要に応じて再レビューする。未確認のレスポンス enum を前提にしない。
-- **WHEN** 初回 JEV 判定が `not_valid`、`valid_but_limited`、`indeterminate`、または
-  不明な形式である、**THEN** 合格扱いにせず、更問理由の選択肢を提示して一つ以上を
-  選択できる。理由未指定時は既定の `evidence_insufficient`、`acceptance_gap`、
-  `implementation_mismatch`、`constraint_conflict`、`other` を提示し、`--reasons-file`
-  の非空 JSON オブジェクトで差し替えられる。
-- **WHEN** 選択した理由で更問を送信する、**THEN** 初回 request/response と選択理由を
-  `priorReview` として更問コンテキストへ含め、初回とは別の `rawResponse` と出力へ保存する。
-  認証情報および過去の別実行記録は含めない。
-- **WHEN** 更問の回答を受け取る、**THEN** 初回の非肯定・不明判定を合格へ変更せず、
-  理由の説明、修正要否、追加検証、未確定点として記録する。
-- **WHEN** generic follow-up の回答が `needs_evidence`、`indeterminate`、または未知の
-  文字列形式である、**THEN** 実装固有の choices file による第三段質問を提示できる。
-  choices file は `version=1`、空でない `question`、`selectionMode` が `single` または
-  `multiple`、2件以上の一意な文字列 IDを持つ空でない `choices`（`id`、`label`、
-  `description`）を満たさなければならず、選択数とIDをそのモードに従って検証する。
-- **WHEN** 実装固有の第三段質問を作成または送信する、**THEN** generic follow-up の
-  結果を redacted な `priorReview` として保持し、質問、全選択肢、選択IDを別記録へ保存する。
-  `effectiveVerdict` は `requires_revalidation` とし、第三段回答だけで合格へ変更せず、
-  追加証拠または修正後に通常の初回 JEV 再判定を行う。
-- **WHEN** 初回または更問を JEV へ送信する、**THEN** 初回応答・選択理由・更問応答を
-  含む認証情報以外の今回のレビュー文脈は送信承認済みとして扱い、API キーその他の
-  認証情報は本文・ログ・結果記録へ含めない。
+- **WHEN** 初回結果が `http-success`、`responseValidation.valid=true`、サポート対象の
+  versioned schema、かつ summary と一致する一意な主回答を持ち、その診断が `indeterminate` または
+  不完全・曖昧である、**THEN** 固定理由 ID ではなく実装固有の質問と2件以上の choices を作り、
+  ユーザーに選択肢を提示して `--clarify INITIAL_RESULT --choices-file FILE --choice ID` で
+  初回結果から直接問い合わせる。single-distribution では indeterminate または必須診断詳細の欠落、
+  three-question schema では非 `valid_as_defined` の主判定と indeterminate/missing/unknown/duplicated/
+  contradictory な診断が対象となる。choices file は `version=1`、空でない `question`、
+  `selectionMode=single|multiple`、2件以上の一意な空でない `id`/`label`/`description` を持つ。
+- **WHEN** 初回応答が通信失敗・検証失敗・未対応 schema である、または主回答/summary が
+  欠落・曖昧・不一致である、**THEN** 更問を送らず、初回 JEV リクエストを再送する。
+- **WHEN** 標準フローで再問い合わせを行う、**THEN** `--follow-up` や固定理由 ID 選択を介さず、
+  実装固有 choices による初回結果への直接 clarification のみを行う。汎用 `--follow-up` と固定理由 ID は
+  CLI の互換用ユーティリティとして保持し、標準手順からは除外する。
+- **WHEN** 初回結果から clarification を送信する、**THEN** 初回結果を redacted な
+  `priorReview` として保持し、質問・全 choices・選択 ID を別記録へ保存する。`sourceStage` は
+  `initial`、`effectiveVerdict` は `requires_revalidation` とし、回答だけで元判定を合格にしない。
+- **WHEN** clarification の回答が未解決である、**THEN** clarification を連鎖させず、必要な追加証拠または
+  修正後に通常の初回 JEV 再判定を行う。
+- **WHEN** 初回または実装固有 clarification を JEV へ送信する、**THEN** 初回応答・ユーザーが
+  選択した clarification の質問・選択肢・回答を含む今回のレビュー文脈は送信承認済みとして扱い、
+  API キーその他の認証情報は本文・ログ・結果記録へ含めない。
 - **WHEN** API が失敗する、応答が得られない、または HTTP 成功だけが確認できる、
   **THEN** 妥当とは判定せず、レビュー未確定または失敗として記録する。
 - **WHEN** JEV レビューを行う、**THEN** その判定を既存テスト・型チェック・lint の代替にせず、
@@ -3149,6 +3153,9 @@ Plan40 runtime evidence は `contract: "plan40"` を明示するため、両契�
   年に関係なく既存22キーだけを投影し、v2 10キーを出力しない。
 - **WHEN** `projectQuarterlyPublicView()` が `plan40-v2-cost-stack` 行を受け取る、
   **THEN** 年を推測せず、既存名目キーとregistry由来v2 10キーを投影する。
+- **WHEN** `projectQuarterlyPublicView()` が `quarter` が1〜4の整数ではない行、または
+  `label` が `${row.年}Q${row.quarter}` と一致しない行を受け取る、**THEN** その行を公開projection
+  の結果から除外し、他の有効な四半期行は返す。正規データ生成と有効行の投影結果は変更しない。
 - **WHEN** 2017Q4から2018Q1へ行を差し替える、**THEN** aggregationは2017Q4側へ
   `plan40-v2-cost-stack`、2018Q1側へ `legacy-cti` を設定し、projectionはkind以外の
   表示側ロジックで境界を再計算しない。
