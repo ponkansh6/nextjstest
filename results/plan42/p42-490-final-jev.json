@@ -1,0 +1,107 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-25T07:22:05.575Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "state": {
+      "evaluationScope": "implementation_checkpoint_validity",
+      "background": "Final P42-490 implementation review. A new controlled unit case in tests/components/SpendingBarChart.test.tsx uses the actual component/render helper with hiddenKeys=['食料'], hiddenQuarters=[2] and asserts exact filtered summary `費目・四半期を変更（費目 1/2・四半期 3/4）・絞り込み中`. Existing U4 all-selected `2/2`, `4/4` assertion remains. In real-consumption A1, the state-derived text matcher has been replaced with `expect(summary).toBeVisible()` after section visibility, preserving real-route summary delivery evidence while the controlled component test covers calculated content. P42-491/492 hidden legend visibility/count checks and other browser interactions remain. Plan JEV was valid_as_defined (confidence .83, passProbability .86). Final test evidence: `pnpm exec vitest run tests/components/SpendingBarChart.test.tsx` exit 0, 26/26; `pnpm test:e2e --project=chromium tests/e2e/real-consumption.e2e.spec.ts` exit 0, 7/7. First `--project=mobile-pixel` attempt matched 0 tests and exited 1 because project testMatch excludes this spec; corrected chromium run passed. Independent audit says intended scope and docs align. The working tree contains other separately reviewed changes; this review judges P42-490 delta only.",
+      "acceptanceCriteria": [
+        "The controlled component test exercises filtered category and quarter counts/status with exact expected summary text, while U4 still covers default state.",
+        "The E2E A1 content matcher is replaced by summary visibility so real-route delivery is preserved.",
+        "P42-491/492 and the remainder of browser interactions stay in E2E.",
+        "Reported focused unit and Chromium E2E verification pass, and corrected project selection is transparently recorded.",
+        "The plan, callsite ledger and responsibility matrix align with final source changes."
+      ],
+      "verification": [
+        "Current SpendingBarChart.test.tsx adds P42-490 controlled-props case with food hidden and quarter 2 hidden; exact counts become 1/2 and 3/4 and status is filtered.",
+        "Current A1 in real-consumption.e2e.spec.ts asserts summary visibility after visible real section; the old state-derived content matcher is gone.",
+        "Current A1 continues checking hidden legend items and zero count; neighboring E2E interactions remain.",
+        "Focused Vitest command `pnpm exec vitest run tests/components/SpendingBarChart.test.tsx`: exit 0, 26/26 passed.",
+        "Focused Chromium E2E `pnpm test:e2e --project=chromium tests/e2e/real-consumption.e2e.spec.ts`: exit 0, 7/7 passed.",
+        "Earlier mobile-pixel invocation selected no tests (0 tests, exit 1 due project testMatch); corrected chromium run passed.",
+        "Three plan artifacts record implementation, scope and test evidence; independent diff audit agrees."
+      ],
+      "knownConstraints": [
+        "Do not rerun tests; use the reported final results.",
+        "Controlled unit props verify component derivation, not application route wiring; retained E2E visibility covers route delivery.",
+        "Do not imply the full working tree contains only this slice; judge the P42-490 delta and its independently audited scope.",
+        "Do not include credentials or authentication material."
+      ],
+      "outputRequirement": "Return exactly one selected choice with confidence and probabilities for every choice. valid_as_defined means this final implementation checkpoint satisfies criteria. For a non-pass, state specific finding, affected location/requirement, observed evidence, and concrete proposed fix or exact neededEvidence. Do not infer severity or invent evidence."
+    },
+    "questions": {
+      "implementation": {
+        "type": "choice",
+        "instructions": "Does the final P42-490 migration satisfy the requirements, keep the route-level evidence and maintain the stated scope? Return complete probability distribution.",
+        "criteria": {
+          "valid_as_defined": "The unit covers filtered text derivation, route summary visibility and closed-state browser evidence remain, and final verification passes.",
+          "requirements_mismatch": "The implementation conflicts with an explicit requirement; identify it and correction.",
+          "missing_prerequisites_info": "An exact prerequisite or evidence item is missing; identify it.",
+          "incomplete_implementation_info": "Evidence does not establish the required behavior; specify exactly what is missing.",
+          "implementation_issue": "A concrete coverage/implementation flaw exists; identify location, evidence, and smallest fix.",
+          "scope_violation": "Changes remove or reassign behavior outside P42-490; identify scope and adjustment.",
+          "other": "A material issue does not fit these categories; provide exact finding and remedy/evidence needed.",
+          "indeterminate": "The available context cannot support a judgment; identify remaining uncertainty."
+        }
+      }
+    },
+    "model": "jev-latest"
+  },
+  "questionIds": [
+    "implementation"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "implementation": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 1,
+        "probabilities": {
+          "indeterminate": 0,
+          "valid_as_defined": 1,
+          "incomplete_implementation_info": 0,
+          "scope_violation": 0,
+          "other": 0,
+          "missing_prerequisites_info": 0,
+          "implementation_issue": 0,
+          "requirements_mismatch": 0
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 1,
+    "probabilities": {
+      "indeterminate": 0,
+      "valid_as_defined": 1,
+      "incomplete_implementation_info": 0,
+      "scope_violation": 0,
+      "other": 0,
+      "missing_prerequisites_info": 0,
+      "implementation_issue": 0,
+      "requirements_mismatch": 0
+    },
+    "passProbability": 1,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

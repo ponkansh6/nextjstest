@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import { CagrPanel } from "../../src/app/components/CagrPanel";
 
 vi.mock("../../src/app/components/CpiChart.module.css", () => ({
@@ -98,7 +98,8 @@ describe("CagrPanel", () => {
     // シートを開く
     fireEvent.click(screen.getByRole("button", { name: /年率上昇率（CAGR）を計算/ }));
     // シート内に結果がある
-    expect(screen.getByText("5.23%")).not.toBeNull();
+    const dialog = screen.getByRole("dialog", { name: "年率上昇率（CAGR）" });
+    expect(within(dialog).getByText("5.23%")).not.toBeNull();
   });
 
   it("T16: cagrError が非 null のときシート内にエラーが表示される", () => {

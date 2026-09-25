@@ -1,0 +1,108 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-25T07:02:42.002Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "state": {
+      "evaluationScope": "implementation_checkpoint_validity",
+      "background": "Fresh final implementation checkpoint for P42-599. The P42-599 slice removes only the T9 assertion that the live tooltip has 12 `[data-tooltip-row=true]` rows. P42-593..598 remain: real chart visibility, area paths, viewport, positive in-viewport path bounding box, real hover, live tooltip visibility, and live total DOM visibility. The existing CustomTooltip CPI unit case receives supplied props and asserts 12 rows via CPI_CATEGORIES length, category keys/order metadata/palette colors, zero and missing/NaN dashes, and total 1.25; a separate existing test pins CPI_CATEGORIES length to 12. It does not prove route/Recharts payload wiring, which remains browser-side. Current plan, ledger and responsibility matrix document this narrow move and caveat. Evidence: `pnpm exec vitest run tests/components/CustomTooltip.test.tsx` exit 0, 32 passed. `pnpm test:e2e --project=chromium tests/e2e/tooltip-stack-total.e2e.spec.ts` exit 0, 3 passed (T7/T8/T9). An initial E2E attempt with `--project=mobile-pixel` selected zero tests and exited 1 because this spec is not matched by that project; corrected Chromium run passed. Independent diff audit confirms intended P42-599 change and T9 neighboring assertions remain. The broader working tree includes other previously reviewed tooltip work; this request judges only P42-599 scope. Prior plan review `results/plan42/p42-599-plan-jev.json` is valid_as_defined, confidence .92, passProbability .93.",
+      "acceptanceCriteria": [
+        "The existing unit component test is sufficient for the pure supplied-props 12-row count contract, with a separate explicit category-count pin.",
+        "The migration does not claim the component unit test proves actual route or Recharts payload wiring.",
+        "Only the T9 P42-599 row count is removed in this slice; visible total and other P42-593..598 route interactions remain in E2E.",
+        "Final unit and E2E verification passed, with the initial wrong-project no-tests attempt transparently noted and corrected.",
+        "Plan, ledger and responsibility matrix align with the final test boundary."
+      ],
+      "verification": [
+        "T9 currently still checks chart visibility, actual area paths, viewport, positive in-viewport bbox, live mouse hover, tooltip visibility, and live total visibility; row-count assertion is gone.",
+        "P42-593..598 remain, specifically including P42-598 total visibility.",
+        "CustomTooltip CPI test checks row count equals CPI_CATEGORIES.length; another test pins CPI_CATEGORIES.length=12; keys/order/colors/zero/missing values/total 1.25 are checked.",
+        "Vitest `pnpm exec vitest run tests/components/CustomTooltip.test.tsx` exit 0, 32 passed.",
+        "Chromium E2E `pnpm test:e2e --project=chromium tests/e2e/tooltip-stack-total.e2e.spec.ts` exit 0, 3 passed including T9.",
+        "Earlier `--project=mobile-pixel` attempt matched zero tests and exited 1 because of project testMatch; corrected chromium invocation passed.",
+        "Three updated plan artifacts record the row-count-only migration and retain live route/Recharts caveat; independent diff audit agrees.",
+        "Prior plan JEV result is valid_as_defined (confidence .92, passProbability .93)."
+      ],
+      "knownConstraints": [
+        "Do not rerun tests; rely on supplied final results.",
+        "No source application behavior changes are part of P42-599.",
+        "The supplied-props unit test cannot substitute for live route/Recharts payload evidence.",
+        "Do not include credentials or authentication material."
+      ],
+      "outputRequirement": "Return exactly one selected choice with confidence and probabilities for every choice. valid_as_defined means the final P42-599 implementation meets criteria. For a non-pass, provide a case-specific finding, affected location/requirement, observed evidence, and concrete proposed fix or exact neededEvidence. Do not infer severity or invent facts."
+    },
+    "questions": {
+      "implementation": {
+        "type": "choice",
+        "instructions": "Does the final P42-599 implementation satisfy the stated requirements and preserve all necessary live browser evidence? Return the full probability distribution.",
+        "criteria": {
+          "valid_as_defined": "The row count has equivalent component-level contract coverage; all route/payload/hover/total checks remain and verification passes.",
+          "requirements_mismatch": "A stated requirement is contradicted; identify it and propose correction.",
+          "missing_prerequisites_info": "An exact prerequisite/evidence requirement is absent; identify it.",
+          "incomplete_implementation_info": "The supplied implementation or evidence cannot establish a required behavior; state exactly what is missing.",
+          "implementation_issue": "A concrete coverage or implementation flaw remains; identify location, evidence, and smallest fix.",
+          "scope_violation": "The change removes or reassigns behavior beyond P42-599; identify scope boundary and adjustment.",
+          "other": "A material concern does not fit other categories; provide exact finding and remedy/evidence needed.",
+          "indeterminate": "The context cannot support a judgment; identify remaining uncertainty."
+        }
+      }
+    },
+    "model": "jev-latest"
+  },
+  "questionIds": [
+    "implementation"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "implementation": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.95,
+        "probabilities": {
+          "requirements_mismatch": 0.02,
+          "indeterminate": 0,
+          "valid_as_defined": 0.95,
+          "other": 0,
+          "missing_prerequisites_info": 0,
+          "implementation_issue": 0.01,
+          "scope_violation": 0.01,
+          "incomplete_implementation_info": 0.01
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.95,
+    "probabilities": {
+      "requirements_mismatch": 0.02,
+      "indeterminate": 0,
+      "valid_as_defined": 0.95,
+      "other": 0,
+      "missing_prerequisites_info": 0,
+      "implementation_issue": 0.01,
+      "scope_violation": 0.01,
+      "incomplete_implementation_info": 0.01
+    },
+    "passProbability": 0.95,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

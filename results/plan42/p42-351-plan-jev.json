@@ -1,0 +1,364 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-25T06:28:54.643Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "state": {
+      "evaluationScope": "plan_validity",
+      "background": "Review the pre-implementation proposal P42-351 to move only the browser assertion that #section-new-graph has count 1 on initial render when __MOUNT_ALL__ is enabled. Proposed unit test file: tests/components/LazyMount.test.tsx; set window.__MOUNT_ALL__=true before rendering the actual LazyMount component and assert a child marker appears immediately. The E2E assertion stays until implementation and JEV approval. P42-349 (initially unmounted on the real route) and P42-350 (real scroll/IntersectionObserver causes mount) remain browser E2E. LazyMount synchronously computes forceMount as window.__MOUNT_ALL__ === true OR typeof IntersectionObserver === 'undefined'; visible is forceMount || intersected. OpenSpec R12b says if __MOUNT_ALL__ is set before page scripts, every LazyMount mounts immediately so E2E can address charts. CpiChartSections has no app-specific suppression condition. Potential evidence gap to assess: Vitest is configured with happy-dom, and the supplied setup does not install an IntersectionObserver mock; package source search did not identify an IntersectionObserver implementation. In that environment the fallback `typeof IntersectionObserver === 'undefined'` may independently make the marker render even if the __MOUNT_ALL__ flag branch regresses. The proposal as written does not explicitly arrange a defined IntersectionObserver in the unit test to isolate the flag branch. Do not infer the environment runtime value as verified; identify this as an uncertainty if material. The three plan docs list P42-351 as proposed/JEV pending and agree on keeping the E2E until implementation plus JEV approval.",
+      "acceptanceCriteria": [
+        "The proposed LazyMount component test meaningfully covers R12b's test override behavior before removing the matching E2E assertion.",
+        "P42-349 real-route initial absence and P42-350 real scroll/IntersectionObserver remain browser checks.",
+        "The test targets actual LazyMount behavior rather than a synthetic replacement, and documentation remains aligned.",
+        "Any environment fallback that could make the proposed assertion pass independently of __MOUNT_ALL__ is either controlled or explicitly treated as needed evidence/residual uncertainty."
+      ],
+      "verification": [
+        "Plan shared_plan/42-happy-dom-e2e-migration-plan.md marks P42-351 proposed and says retain its E2E assertion until migration implementation and JEV approval; P42-349/350 remain browser scope.",
+        "Ledger shared_plan/42-assertion-callsite-ledger.md P42-351 identifies mobile-ux.e2e.spec.ts:219 and the proposed actual-component child-marker test.",
+        "Responsibility matrix shared_plan/42-assertion-case-responsibility-matrix.md L211 has the same proposal, pending status, retained E2E, and preserved P42-349/350 browser behavior.",
+        "Exact browser test sets __MOUNT_ALL__ in addInitScript before navigation and asserts #section-new-graph count 1 after route load.",
+        "src/app/components/LazyMount.tsx reads window.__MOUNT_ALL__ synchronously in getForceMount and bypasses intersection state when true; it also treats missing IntersectionObserver as force mount.",
+        "Vitest config uses happy-dom; tests/utils/happy-dom-setup.ts creates a GlobalWindow but does not install an explicit IntersectionObserver mock. No IntersectionObserver test shim was found in tests."
+      ],
+      "knownConstraints": [
+        "This is a plan review before implementation; no unit test exists yet and no tests were run for this review.",
+        "Do not remove the E2E assertion now. The proposed sequencing retains it until implementation and JEV approval.",
+        "The immediate child marker is a component DOM contract; it does not establish browser route integration, which remains covered by P42-349/350.",
+        "Do not invent runtime behavior not demonstrated by supplied evidence."
+      ],
+      "outputRequirement": "Return exactly one selected choice with confidence and probabilities for every choice. valid_as_defined means the proposal meets the criteria. Select one mutually exclusive reason category for any concern, or indeterminate if evidence is insufficient. Do not infer severity from category. For a reason, provide a case-specific finding, affected requirement/location, observed evidence, and a concrete proposed fix or exact needed evidence. Do not invent details."
+    },
+    "questions": {
+      "implementation": {
+        "type": "choice",
+        "instructions": "Is the pre-implementation P42-351 migration proposal valid as defined, considering whether its future component test will discriminate the __MOUNT_ALL__ branch in the configured unit environment? Return the complete probability distribution.",
+        "criteria": {
+          "valid_as_defined": "The proposed actual-LazyMount child-marker test is sufficient for P42-351, while P42-349/350 remain in E2E and the E2E assertion is retained until implementation and approval.",
+          "requirements_mismatch": "The proposed migration conflicts with R12b or another explicit requirement; identify the conflict and correction.",
+          "missing_prerequisites_info": "An exact prerequisite/evidence item needed to safely plan or implement the test is absent; identify it.",
+          "incomplete_implementation_info": "The proposed test's ability to isolate the flag behavior or its implementation boundary cannot be assessed from supplied information; specify the exact missing evidence.",
+          "implementation_issue": "The proposal has a concrete test-design or coverage flaw; identify the evidence and the smallest fix.",
+          "scope_violation": "Moving P42-351 would exceed agreed scope or remove browser evidence that must remain; identify and correct the scope.",
+          "other": "A material concern does not fit the categories; give a case-specific finding and remedy or needed evidence.",
+          "indeterminate": "The available context cannot support a judgment; state the exact uncertainty."
+        }
+      }
+    },
+    "model": "jev-latest"
+  },
+  "questionIds": [
+    "implementation"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "implementation": {
+        "type": "choice",
+        "choice": "implementation_issue",
+        "confidence": 0.9,
+        "probabilities": {
+          "other": 0,
+          "indeterminate": 0.01,
+          "missing_prerequisites_info": 0.06,
+          "implementation_issue": 0.91,
+          "scope_violation": 0,
+          "incomplete_implementation_info": 0.02,
+          "requirements_mismatch": 0,
+          "valid_as_defined": 0
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "implementation_issue",
+    "outcome": "fail",
+    "label": "不合格",
+    "reason": null,
+    "failureReason": "JEV selected implementation_issue but did not provide a case-specific reason.",
+    "reasonSource": "generic",
+    "jevReason": null,
+    "affected": null,
+    "evidence": null,
+    "proposedFix": null,
+    "neededEvidence": null,
+    "confidence": 0.9,
+    "probabilities": {
+      "other": 0,
+      "indeterminate": 0.01,
+      "missing_prerequisites_info": 0.06,
+      "implementation_issue": 0.91,
+      "scope_violation": 0,
+      "incomplete_implementation_info": 0.02,
+      "requirements_mismatch": 0,
+      "valid_as_defined": 0
+    },
+    "passProbability": 0,
+    "diagnosisComplete": false,
+    "diagnosisStatus": "incomplete",
+    "followUpRecommended": true
+  },
+  "automaticClarification": {
+    "schemaVersion": "jev-review-result-v1",
+    "reviewSchemaVersion": "jev-review-automatic-clarification-v1",
+    "generatedAt": "2026-09-25T06:28:55.211Z",
+    "request": {
+      "schemaVersion": "jev-review-automatic-clarification-v1",
+      "model": "jev-latest",
+      "state": {
+        "evaluationScope": "jev_clarification",
+        "sourceStage": "initial",
+        "effectiveVerdict": "requires_revalidation",
+        "initialJudgment": "implementation_issue",
+        "initialDecisionSummary": {
+          "choice": "implementation_issue",
+          "outcome": "fail",
+          "label": "不合格",
+          "reason": null,
+          "failureReason": "JEV selected implementation_issue but did not provide a case-specific reason.",
+          "reasonSource": "generic",
+          "jevReason": null,
+          "affected": null,
+          "evidence": null,
+          "proposedFix": null,
+          "neededEvidence": null,
+          "confidence": 0.9,
+          "probabilities": {
+            "other": 0,
+            "indeterminate": 0.01,
+            "missing_prerequisites_info": 0.06,
+            "implementation_issue": 0.91,
+            "scope_violation": 0,
+            "incomplete_implementation_info": 0.02,
+            "requirements_mismatch": 0,
+            "valid_as_defined": 0
+          },
+          "passProbability": 0,
+          "diagnosisComplete": false,
+          "diagnosisStatus": "incomplete",
+          "followUpRecommended": true
+        },
+        "implementationQuestion": "Which single next action best resolves or validates the JEV finding “JEV selected implementation_issue but did not provide a case-specific reason.”?",
+        "availableChoices": [
+          {
+            "id": "apply_or_define_fix",
+            "label": "Inspect the affected requirement or implementation",
+            "description": "Inspect the affected requirement or implementation and identify a concrete correction if one is needed."
+          },
+          {
+            "id": "collect_or_verify_evidence",
+            "label": "Collect or verify evidence",
+            "description": "Verify the reported basis and collect the smallest missing evidence needed to assess the finding."
+          },
+          {
+            "id": "confirm_requirement_and_scope",
+            "label": "Confirm the requirement and scope",
+            "description": "Check whether the affected requirement expresses the intended behavior and remains within the agreed scope; record any correction needed."
+          }
+        ],
+        "priorReview": {
+          "schemaVersion": "jev-review-result-v1",
+          "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+          "request": {
+            "schemaVersion": "jev-review-initial-distribution-v3",
+            "state": {
+              "evaluationScope": "plan_validity",
+              "background": "Review the pre-implementation proposal P42-351 to move only the browser assertion that #section-new-graph has count 1 on initial render when __MOUNT_ALL__ is enabled. Proposed unit test file: tests/components/LazyMount.test.tsx; set window.__MOUNT_ALL__=true before rendering the actual LazyMount component and assert a child marker appears immediately. The E2E assertion stays until implementation and JEV approval. P42-349 (initially unmounted on the real route) and P42-350 (real scroll/IntersectionObserver causes mount) remain browser E2E. LazyMount synchronously computes forceMount as window.__MOUNT_ALL__ === true OR typeof IntersectionObserver === 'undefined'; visible is forceMount || intersected. OpenSpec R12b says if __MOUNT_ALL__ is set before page scripts, every LazyMount mounts immediately so E2E can address charts. CpiChartSections has no app-specific suppression condition. Potential evidence gap to assess: Vitest is configured with happy-dom, and the supplied setup does not install an IntersectionObserver mock; package source search did not identify an IntersectionObserver implementation. In that environment the fallback `typeof IntersectionObserver === 'undefined'` may independently make the marker render even if the __MOUNT_ALL__ flag branch regresses. The proposal as written does not explicitly arrange a defined IntersectionObserver in the unit test to isolate the flag branch. Do not infer the environment runtime value as verified; identify this as an uncertainty if material. The three plan docs list P42-351 as proposed/JEV pending and agree on keeping the E2E until implementation plus JEV approval.",
+              "acceptanceCriteria": [
+                "The proposed LazyMount component test meaningfully covers R12b's test override behavior before removing the matching E2E assertion.",
+                "P42-349 real-route initial absence and P42-350 real scroll/IntersectionObserver remain browser checks.",
+                "The test targets actual LazyMount behavior rather than a synthetic replacement, and documentation remains aligned.",
+                "Any environment fallback that could make the proposed assertion pass independently of __MOUNT_ALL__ is either controlled or explicitly treated as needed evidence/residual uncertainty."
+              ],
+              "verification": [
+                "Plan shared_plan/42-happy-dom-e2e-migration-plan.md marks P42-351 proposed and says retain its E2E assertion until migration implementation and JEV approval; P42-349/350 remain browser scope.",
+                "Ledger shared_plan/42-assertion-callsite-ledger.md P42-351 identifies mobile-ux.e2e.spec.ts:219 and the proposed actual-component child-marker test.",
+                "Responsibility matrix shared_plan/42-assertion-case-responsibility-matrix.md L211 has the same proposal, pending status, retained E2E, and preserved P42-349/350 browser behavior.",
+                "Exact browser test sets __MOUNT_ALL__ in addInitScript before navigation and asserts #section-new-graph count 1 after route load.",
+                "src/app/components/LazyMount.tsx reads window.__MOUNT_ALL__ synchronously in getForceMount and bypasses intersection state when true; it also treats missing IntersectionObserver as force mount.",
+                "Vitest config uses happy-dom; tests/utils/happy-dom-setup.ts creates a GlobalWindow but does not install an explicit IntersectionObserver mock. No IntersectionObserver test shim was found in tests."
+              ],
+              "knownConstraints": [
+                "This is a plan review before implementation; no unit test exists yet and no tests were run for this review.",
+                "Do not remove the E2E assertion now. The proposed sequencing retains it until implementation and JEV approval.",
+                "The immediate child marker is a component DOM contract; it does not establish browser route integration, which remains covered by P42-349/350.",
+                "Do not invent runtime behavior not demonstrated by supplied evidence."
+              ],
+              "outputRequirement": "Return exactly one selected choice with confidence and probabilities for every choice. valid_as_defined means the proposal meets the criteria. Select one mutually exclusive reason category for any concern, or indeterminate if evidence is insufficient. Do not infer severity from category. For a reason, provide a case-specific finding, affected requirement/location, observed evidence, and a concrete proposed fix or exact needed evidence. Do not invent details."
+            },
+            "questions": {
+              "implementation": {
+                "type": "choice",
+                "instructions": "Is the pre-implementation P42-351 migration proposal valid as defined, considering whether its future component test will discriminate the __MOUNT_ALL__ branch in the configured unit environment? Return the complete probability distribution.",
+                "criteria": {
+                  "valid_as_defined": "The proposed actual-LazyMount child-marker test is sufficient for P42-351, while P42-349/350 remain in E2E and the E2E assertion is retained until implementation and approval.",
+                  "requirements_mismatch": "The proposed migration conflicts with R12b or another explicit requirement; identify the conflict and correction.",
+                  "missing_prerequisites_info": "An exact prerequisite/evidence item needed to safely plan or implement the test is absent; identify it.",
+                  "incomplete_implementation_info": "The proposed test's ability to isolate the flag behavior or its implementation boundary cannot be assessed from supplied information; specify the exact missing evidence.",
+                  "implementation_issue": "The proposal has a concrete test-design or coverage flaw; identify the evidence and the smallest fix.",
+                  "scope_violation": "Moving P42-351 would exceed agreed scope or remove browser evidence that must remain; identify and correct the scope.",
+                  "other": "A material concern does not fit the categories; give a case-specific finding and remedy or needed evidence.",
+                  "indeterminate": "The available context cannot support a judgment; state the exact uncertainty."
+                }
+              }
+            },
+            "model": "jev-latest"
+          },
+          "questionIds": [
+            "implementation"
+          ],
+          "status": "http-success",
+          "rawResponse": {
+            "model": "jev-1.13.0",
+            "answers": {
+              "implementation": {
+                "type": "choice",
+                "choice": "implementation_issue",
+                "confidence": 0.9,
+                "probabilities": {
+                  "other": 0,
+                  "indeterminate": 0.01,
+                  "missing_prerequisites_info": 0.06,
+                  "implementation_issue": 0.91,
+                  "scope_violation": 0,
+                  "incomplete_implementation_info": 0.02,
+                  "requirements_mismatch": 0,
+                  "valid_as_defined": 0
+                }
+              }
+            },
+            "usage": {
+              "input_tokens": "[REDACTED]",
+              "output_tokens": "[REDACTED]"
+            }
+          },
+          "responseValidation": {
+            "valid": true
+          },
+          "decisionSummary": {
+            "choice": "implementation_issue",
+            "outcome": "fail",
+            "label": "不合格",
+            "reason": null,
+            "failureReason": "JEV selected implementation_issue but did not provide a case-specific reason.",
+            "reasonSource": "generic",
+            "jevReason": null,
+            "affected": null,
+            "evidence": null,
+            "proposedFix": null,
+            "neededEvidence": null,
+            "confidence": 0.9,
+            "probabilities": {
+              "other": 0,
+              "indeterminate": 0.01,
+              "missing_prerequisites_info": 0.06,
+              "implementation_issue": 0.91,
+              "scope_violation": 0,
+              "incomplete_implementation_info": 0.02,
+              "requirements_mismatch": 0,
+              "valid_as_defined": 0
+            },
+            "passProbability": 0,
+            "diagnosisComplete": false,
+            "diagnosisStatus": "incomplete",
+            "followUpRecommended": true
+          }
+        },
+        "outputRequirement": "Return the selected choice ID and a complete case-specific diagnosis: finding, affected location or requirement, observed evidence or exact neededEvidence, concrete nextAction or proposedFix, and remainingUncertainty (write 'none' explicitly when resolved). Repeat the affected/evidence detail in this answer and tie it to the selected action. If a required detail cannot be established, say so explicitly; do not omit the field or invent evidence.",
+        "instruction": "Select exactly one available choice as the best next action for resolving or validating the initial non-pass judgment. Treat the choices and their descriptions as the complete allowed option set; do not invent another choice. Return the selected option ID together with every field required by outputRequirement: a case-specific finding, affected location or requirement, observed evidence or exact neededEvidence, concrete nextAction or proposedFix, and remaining uncertainty (explicitly state 'none' if resolved). Repeat the affected/evidence detail and tie it to the selected action. Explain the evidence and why the selected action is the best next step. This clarification cannot approve or alter the initial verdict. A normal initial JEV review is required after the action; do not issue another clarification."
+      },
+      "questions": {
+        "implementation_clarification": {
+          "type": "choice",
+          "instructions": "Which single next action best resolves or validates the JEV finding “JEV selected implementation_issue but did not provide a case-specific reason.”? Select exactly one offered choice and return the required diagnostic details from state.outputRequirement.",
+          "selectionMode": "single",
+          "choices": [
+            {
+              "id": "apply_or_define_fix",
+              "label": "Inspect the affected requirement or implementation",
+              "description": "Inspect the affected requirement or implementation and identify a concrete correction if one is needed."
+            },
+            {
+              "id": "collect_or_verify_evidence",
+              "label": "Collect or verify evidence",
+              "description": "Verify the reported basis and collect the smallest missing evidence needed to assess the finding."
+            },
+            {
+              "id": "confirm_requirement_and_scope",
+              "label": "Confirm the requirement and scope",
+              "description": "Check whether the affected requirement expresses the intended behavior and remains within the agreed scope; record any correction needed."
+            }
+          ],
+          "criteria": {
+            "apply_or_define_fix": "Inspect the affected requirement or implementation and identify a concrete correction if one is needed.",
+            "collect_or_verify_evidence": "Verify the reported basis and collect the smallest missing evidence needed to assess the finding.",
+            "confirm_requirement_and_scope": "Check whether the affected requirement expresses the intended behavior and remains within the agreed scope; record any correction needed."
+          }
+        }
+      }
+    },
+    "questionIds": [
+      "implementation_clarification"
+    ],
+    "effectiveVerdict": "requires_revalidation",
+    "status": "http-success",
+    "rawResponse": {
+      "model": "jev-1.13.0",
+      "answers": {
+        "implementation_clarification": {
+          "type": "choice",
+          "choice": "collect_or_verify_evidence",
+          "confidence": 0.26,
+          "probabilities": {
+            "apply_or_define_fix": 0.49,
+            "collect_or_verify_evidence": 0.51,
+            "confirm_requirement_and_scope": 0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": "[REDACTED]",
+        "output_tokens": "[REDACTED]"
+      }
+    },
+    "responseValidation": {
+      "valid": true
+    },
+    "selectedChoice": "collect_or_verify_evidence",
+    "clarification": {
+      "type": "choice",
+      "choice": "collect_or_verify_evidence",
+      "confidence": 0.26,
+      "probabilities": {
+        "apply_or_define_fix": 0.49,
+        "collect_or_verify_evidence": 0.51,
+        "confirm_requirement_and_scope": 0
+      }
+    },
+    "diagnosis": {
+      "finding": null,
+      "affected": null,
+      "evidence": null,
+      "neededEvidence": null,
+      "nextAction": null,
+      "remainingUncertainty": null
+    },
+    "diagnosisStatus": "incomplete",
+    "unresolvedReasons": [
+      "The clarification lacks a case-specific finding.",
+      "The clarification lacks an affected location or requirement.",
+      "The clarification lacks observed evidence or exact neededEvidence.",
+      "The clarification lacks a concrete nextAction or proposedFix.",
+      "The clarification does not state remaining uncertainty or explicitly say none."
+    ],
+    "resolution": "unresolved"
+  }
+}

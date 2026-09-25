@@ -1,0 +1,190 @@
+$ playwright test
+[WebServer] (node:105) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] $ next start --port 3100 --hostname 127.0.0.1
+[WebServer] (node:118) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 141 tests using 3 workers
+
+(node:143) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:144) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  -    1 [chromium] › tests/e2e/accessibility.e2e.spec.ts:22:7 › アクセシビリティ - ダークモード › 凡例をタップ後、他の場所をクリックすると hover が解除される
+  -    2 [chromium] › tests/e2e/accessibility.e2e.spec.ts:53:7 › アクセシビリティ - ダークモード › 凡例のコントラスト比が WCAG AA 以上
+(node:150) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓    3 [chromium] › tests/e2e/accessibility.e2e.spec.ts:81:7 › CAGR トリガーのコントラスト比 › T-A11Y-1: CAGR トリガーのコントラスト比が WCAG AA（4.5:1）以上 @dark (2.1s)
+  ✓    5 [chromium] › tests/e2e/cagr-sheet.e2e.spec.ts:23:7 › CAGR コンパクトシート › T-E2E-1: #section-stacked 内のリンクからシートが開き、3 select と「計算する」がシート内に見える (3.8s)
+  ✓    4 [chromium] › tests/e2e/advanced-series.e2e.spec.ts:4:7 › 比較グラフのCTI通常・advanced系列契約 › 通常表示はCTI通常系列を含み、延長系列だけを非表示にする (4.0s)
+  ✓    6 [chromium] › tests/e2e/accessibility.e2e.spec.ts:103:7 › 凡例ヘッダーのコントラスト比 › T-A11Y-2: 実質消費凡例ヘッダーのコントラスト比が WCAG AA（4.5:1）以上 @dark (3.3s)
+  -    9 [chromium] › tests/e2e/accessibility.e2e.spec.ts:128:14 › アクセシビリティ - キーボード操作 › キーボードのみで凡例のチェックボックスを操作できる
+  -   10 [chromium] › tests/e2e/accessibility.e2e.spec.ts:147:14 › アクセシビリティ - キーボード操作 › フォーカスリングが表示される（:focus-visible）
+  -   11 [chromium] › tests/e2e/accessibility.e2e.spec.ts:171:14 › アクセシビリティ - キーボード操作 › 年範囲フィルタをキーボードのみで操作できる
+  -   12 [chromium] › tests/e2e/accessibility.e2e.spec.ts:189:7 › アクセシビリティ - アニメーション › prefers-reduced-motion が有効なとき animation が無効になる
+  ✓    8 [chromium] › tests/e2e/advanced-series.e2e.spec.ts:29:7 › 比較グラフのCTI通常・advanced系列契約 › adv=1はCTI通常・延長系列を同じregistryから公開する (3.5s)
+  ✓   13 [chromium] › tests/e2e/accessibility.e2e.spec.ts:220:14 › アクセシビリティ - フォーカス管理 › info ポップアップを外側クリックで閉じてもスクロール位置が保持される (2.4s)
+  ✓    7 [chromium] › tests/e2e/cagr-sheet.e2e.spec.ts:47:7 › CAGR コンパクトシート › T-E2E-2: シート内で開始年変更 → 計算 → 結果がシート内に表示 (4.7s)
+  ✓   15 [chromium] › tests/e2e/accessibility.e2e.spec.ts:243:14 › アクセシビリティ - フォーカス管理 › info ポップアップを Esc で閉じてエラーが発生しない (3.0s)
+  ✓   16 [chromium] › tests/e2e/cagr-sheet.e2e.spec.ts:71:7 › CAGR コンパクトシート › T-E2E-3: 背景タップでシートが閉じる (3.2s)
+  ✓   17 [chromium] › tests/e2e/accessibility.e2e.spec.ts:260:14 › アクセシビリティ - フォーカス管理 › ボトムシートを開いた状態で Tab がシート内に留まる (2.9s)
+  ✓   18 [chromium] › tests/e2e/cagr-sheet.e2e.spec.ts:86:7 › CAGR コンパクトシート › T-E2E-4: モバイル幅で横スクロールが発生しない (3.6s)
+  ✓   14 [chromium] › tests/e2e/chart-table-csv-parity.e2e.spec.ts:356:7 › Phase 4-4 production chart/table/CSV parity › monthly CTI/CPI/earnings sections expose complete real Recharts output (8.5s)
+  ✓   20 [chromium] › tests/e2e/cagr-sheet.e2e.spec.ts:102:7 › CAGR コンパクトシート › T-E2E-5: 375x667 でシートを開いた状態で、グラフ描画領域の可視高さが 120px 以上 (4.4s)
+  ✓   19 [chromium] › tests/e2e/consumption-boundary.e2e.spec.ts:85:9 › 消費支出グラフ 768px境界（Desktop Chromium） › 768px: 実viewportのレイアウト・矩形・overflow (6.3s)
+  ✓   22 [chromium] › tests/e2e/cagr-sheet.e2e.spec.ts:131:7 › CAGR コンパクトシート › T-E2E-6: section-cagr が DOM に存在せず、タブバーに「CPI年率」ボタンが無い (1.7s)
+  ✓   21 [chromium] › tests/e2e/chart-table-csv-parity.e2e.spec.ts:386:7 › Phase 4-4 production chart/table/CSV parity › adv=1 preserves full parity and exposes the independent advanced anchors (7.2s)
+  ✓   25 [chromium] › tests/e2e/chart-table-csv-parity.e2e.spec.ts:436:7 › Phase 4-4 production chart/table/CSV parity › CSV parser enforces CRLF-terminated RFC4180 records and rejects malformed CSV (10ms)
+  ✓   23 [chromium] › tests/e2e/consumption-boundary.e2e.spec.ts:85:9 › 消費支出グラフ 768px境界（Desktop Chromium） › 769px: 実viewportのレイアウト・矩形・overflow (6.3s)
+  ✓   24 [chromium] › tests/e2e/cagr-sheet.e2e.spec.ts:145:7 › CAGR コンパクトシート › T-E2E-7: 375x667 で結果表示時、シートが内部スクロールを要しないこと（L-1 回帰） (5.3s)
+  ✓   27 [chromium] › tests/e2e/cpi-chart-categories.e2e.spec.ts:10:5 › 物価指数チャート - 全費目が凡例に表示される (2.0s)
+  ✓   26 [chromium] › tests/e2e/chart-table-csv-parity.e2e.spec.ts:445:7 › Phase 4-4 production chart/table/CSV parity › hidden series changes only its SVG geometry; table and CSV remain identical (6.4s)
+  ✓   28 [chromium] › tests/e2e/cagr-sheet.e2e.spec.ts:175:7 › CAGR コンパクトシート › T-E2E-8: 結果の詳細行と注記がビューポート内に収まること（L-1 回帰） (5.1s)
+  ✓   29 [chromium] › tests/e2e/cpi-chart-categories.e2e.spec.ts:39:5 › 費目凡例をクリックして系列を絞ってもスクロール位置が維持される (4.3s)
+  ✓   30 [chromium] › tests/e2e/earnings-tooltip-total.e2e.spec.ts:111:7 › 給与tooltipの区分合計 desktop E2E › 6系列とdesktop合計を表示し、旧CTI給与系列を含めない (3.7s)
+  ✓   31 [chromium] › tests/e2e/cagr-sheet.e2e.spec.ts:205:7 › CAGR コンパクトシート › T-E2E-9: 667x375 横向きで結果の詳細行がビューポート内に収まること（L-2 回帰） (5.5s)
+  ✓   33 [chromium] › tests/e2e/earnings-tooltip-total.e2e.spec.ts:134:7 › 給与tooltipの区分合計 desktop E2E › 対象系列をlegendでhiddenにした後も再hoverでき、合計を残り2系列で再計算する (5.6s)
+  ✓   34 [chromium] › tests/e2e/legend-color-sync.e2e.spec.ts:21:5 › 凡例スウォッチの色が globals.css の最新値と一致する（教養娯楽 / --series-9） (1.6s)
+  ✓   32 [chromium] › tests/e2e/cpi-chart-categories.e2e.spec.ts:68:5 › CPI tooltipは12費目と合計を同じroot/row契約で表示する (7.5s)
+  ✓   36 [chromium] › tests/e2e/legend-color-sync.e2e.spec.ts:54:5 › 凡例スウォッチの色が globals.css の最新値と一致する（食料 / --nominal-food） (2.8s)
+  ✓   35 [chromium] › tests/e2e/monthly-boundary-axis.e2e.spec.ts:21:9 › 月次チャートの系列境界ラベル › CPI費目別: 2017年12月・2018年1月を最終SVGに表示しない (3.1s)
+  ✓   38 [chromium] › tests/e2e/legend-color-sync.e2e.spec.ts:85:5 › 凡例スウォッチの色が globals.css の最新値と一致する（ダークモード / 全12系列） (3.1s)
+  ✓   39 [chromium] › tests/e2e/monthly-boundary-axis.e2e.spec.ts:21:9 › 月次チャートの系列境界ラベル › 給与: 2017年12月・2018年1月を最終SVGに表示しない (3.0s)
+  ✓   41 [chromium] › tests/e2e/range-change.e2e.spec.ts:107:7 › 描画範囲変更 E2E › 【サニティ】初期状態でグラフが表示される (3.6s)
+  ✓   37 [chromium] › tests/e2e/plan24-rendering.e2e.spec.ts:75:7 › Plan24 rendering contract › 名目CTIは2005〜2017専用、2018以降はlegacy費目でGDPを公開しない (8.6s)
+  ✓   40 [chromium] › tests/e2e/quarterly-gdp.e2e.spec.ts:26:7 › Plan23 quarterly public projection › ready state renders only the two public quarterly consumption series (7.5s)
+  ✓   44 [chromium] › tests/e2e/real-consumption.e2e.spec.ts:22:7 › page.tsx E2E: real consumption chart with actual browser › should render page and extract quarterlyRealData from Flight payload (691ms)
+
+[E2E: Real Consumption Data]
+=== 民間最終消費支出（実質） 分布 (2005-2016) ===
+Year | Q1      | Q2      | Q3      | Q4      | zeros
+-----|---------|---------|---------|---------|------
+2005 | 93.73   | 92.51   | 95.06   | 97.18   | 0
+2006 | 95.5    | 93.76   | 94.72   | 98.38   | 0
+2007 | 96.3    | 94.88   | 95.69   | 98.37   | 0
+2008 | 96.65   | 93.33   | 95.19   | 95.96   | 0
+2009 | 94.54   | 91.96   | 93.89   | 97.06   | 0
+2010 | 95.66   | 94.24   | 98.11   | 98.59   | 0
+2011 | 94.39   | 93.53   | 96.68   | 99.63   | 0
+2012 | 97.61   | 95.98   | 98.22   | 100.75  | 0
+2013 | 100.2   | 98.83   | 101.3   | 103.31  | 0
+2014 | 103.42  | 96.59   | 99.16   | 101.71  | 0
+2015 | 100.15  | 98.3    | 100.33  | 102.19  | 0
+2016 | 100.11  | 97.57   | 99.6    | 102.25  | 0
+合計ゼロ件数: 0 / 48
+  ✓   45 [chromium] › tests/e2e/real-consumption.e2e.spec.ts:50:7 › page.tsx E2E: real consumption chart with actual browser › should have non-zero 民間最終消費支出（実質） for 2005-2016 (683ms)
+  ✓   46 [chromium] › tests/e2e/real-consumption.e2e.spec.ts:73:7 › page.tsx E2E: real consumption chart with actual browser › should render without hydration or console errors (497ms)
+  ✓   42 [chromium] › tests/e2e/range-change.e2e.spec.ts:119:7 › 描画範囲変更 E2E › 開始年を上げるとグラフが狭まる（名目） (6.7s)
+  ✓   47 [chromium] › tests/e2e/real-consumption.e2e.spec.ts:95:7 › page.tsx E2E: real consumption chart with actual browser › should render UI components in real consumption chart (2.2s)
+  ✓   43 [chromium] › tests/e2e/plan24-rendering.e2e.spec.ts:117:7 › Plan24 rendering contract › 2025Q1/Q4の表・CSV・tooltipの表示値を再確認 (8.7s)
+✓ Found visible legend items
+✓ Legend item is clickable
+  ✓   49 [chromium] › tests/e2e/real-consumption.e2e.spec.ts:112:7 › page.tsx E2E: real consumption chart with actual browser › should handle legend toggle and update chart visibility (3.2s)
+  ✓   50 [chromium] › tests/e2e/section-tabs-scroll.e2e.spec.ts:47:9 › タブバー押下時のスクロール › 「消費(名目)」タブを押すと該当セクションが表示領域に入る (3.3s)
+  ✓   48 [chromium] › tests/e2e/range-change.e2e.spec.ts:139:7 › 描画範囲変更 E2E › 開始年を上げるとグラフが狭まる（実質） (5.7s)
+  ✓   51 [chromium] › tests/e2e/real-consumption.e2e.spec.ts:141:9 › page.tsx E2E: real consumption chart with actual browser › 実質消費凡例アコーディオン › T-E2E-A1: 初期表示で実質セクションの凡例ボタンが見えない（アコーディオンが閉じている） (3.7s)
+  ✓   52 [chromium] › tests/e2e/section-tabs-scroll.e2e.spec.ts:47:9 › タブバー押下時のスクロール › 「給与」タブを押すと該当セクションが表示領域に入る (3.9s)
+  ✓   54 [chromium] › tests/e2e/real-consumption.e2e.spec.ts:172:9 › page.tsx E2E: real consumption chart with actual browser › 実質消費凡例アコーディオン › T-E2E-A2: <summary> をクリックすると凡例が現れ、費目ボタンが可視になる (3.0s)
+  ✓   53 [chromium] › tests/e2e/range-change.e2e.spec.ts:159:7 › 描画範囲変更 E2E › 終了年を下げるとグラフが狭まる（名目） (6.6s)
+  ✓   55 [chromium] › tests/e2e/section-tabs-scroll.e2e.spec.ts:47:9 › タブバー押下時のスクロール › 「3種比較」タブを押すと該当セクションが表示領域に入る (3.9s)
+  ✓   56 [chromium] › tests/e2e/real-consumption.e2e.spec.ts:191:9 › page.tsx E2E: real consumption chart with actual browser › 実質消費凡例アコーディオン › T-E2E-A3: summary ヘッダーがトナルピル装飾で、矢印SVGが含まれる (3.2s)
+  ✓   58 [chromium] › tests/e2e/section-tabs-scroll.e2e.spec.ts:82:9 › タブバー押下時のスクロール(初回読み込み・未マウント状態) › 未マウント状態から「消費(名目)」タブを押しても該当セクションへ到達する (3.1s)
+  ✓   57 [chromium] › tests/e2e/range-change.e2e.spec.ts:179:7 › 描画範囲変更 E2E › 終了年を下げるとグラフが狭まる（実質） (6.2s)
+  ✓   60 [chromium] › tests/e2e/section-tabs-scroll.e2e.spec.ts:82:9 › タブバー押下時のスクロール(初回読み込み・未マウント状態) › 未マウント状態から「給与」タブを押しても該当セクションへ到達する (3.2s)
+  ✓   62 [chromium] › tests/e2e/section-tabs-scroll.e2e.spec.ts:82:9 › タブバー押下時のスクロール(初回読み込み・未マウント状態) › 未マウント状態から「3種比較」タブを押しても該当セクションへ到達する (3.1s)
+  ✓   61 [chromium] › tests/e2e/range-change.e2e.spec.ts:199:7 › 描画範囲変更 E2E › 【境界値】開始年=終了年でグラフが1年に狭まる (5.0s)
+  ✓   63 [chromium] › tests/e2e/section-tabs-scroll.e2e.spec.ts:120:7 › タブバーのスクロールバー非表示と右端フェード › リロード直後(タブ未操作)にネイティブスクロールバーが非表示である (1.3s)
+  ✓   59 [chromium] › tests/e2e/spending-filter.e2e.spec.ts:35:7 › 消費支出絞り込み E2E › Q1 を非表示にするとグラフの棒本数が減る（名目） (10.8s)
+  ✓   65 [chromium] › tests/e2e/section-tabs-scroll.e2e.spec.ts:127:7 › タブバーのスクロールバー非表示と右端フェード › スクロールバー非表示でも横スクロールが機能する (1.4s)
+  ✓   67 [chromium] › tests/e2e/section-tabs-scroll.e2e.spec.ts:142:7 › タブバーのスクロールバー非表示と右端フェード › 右端フェード(mask-image)が適用されている (1.4s)
+  -   68 [chromium] › tests/e2e/tooltip-dismiss.e2e.spec.ts:138:7 › モバイル ツールチップの閉じるボタンとインタラクション › グラフをタップするとツールチップが表示され、✕ボタンとガイド線で閉じられる
+  -   69 [chromium] › tests/e2e/tooltip-dismiss.e2e.spec.ts:162:7 › モバイル ツールチップの閉じるボタンとインタラクション › mobile-pixel: タップで表示したTooltipをEscapeで閉じ、Tooltipと閉じるボタンが消える
+  -   70 [chromium] › tests/e2e/tooltip-dismiss.e2e.spec.ts:192:7 › モバイル ツールチップの閉じるボタンとインタラクション › グラフ外をタップすると閉じるボタンとガイド線の両方が消える
+  -   71 [chromium] › tests/e2e/tooltip-dismiss.e2e.spec.ts:211:7 › モバイル ツールチップの閉じるボタンとインタラクション › 別グラフをタップすると既存のガイド線が消え、新しいガイド線が1本だけになる
+  -   72 [chromium] › tests/e2e/tooltip-dismiss.e2e.spec.ts:235:7 › モバイル ツールチップの閉じるボタンとインタラクション › スクロールするとガイド線とツールチップが自動で消える
+  -   73 [chromium] › tests/e2e/tooltip-dismiss.e2e.spec.ts:253:7 › モバイル ツールチップの閉じるボタンとインタラクション › グラフ上を縦にスワイプしてもツールチップが表示されないこと（ネガティブテスト）
+  -   74 [chromium] › tests/e2e/tooltip-dismiss.e2e.spec.ts:288:7 › モバイル ツールチップの閉じるボタンとインタラクション › ✕で閉じた後、同じバーをもう一度タップして再表示されること
+  -   75 [chromium] › tests/e2e/tooltip-dismiss.e2e.spec.ts:311:9 › モバイル ツールチップの閉じるボタンとインタラクション › 固定viewportでのchartNote/Tooltip重なり › tooltipと実質chartNoteリンクが重なる座標ではリンク遷移を遮蔽しtooltipを維持する
+  -   76 [chromium] › tests/e2e/tooltip-dismiss.e2e.spec.ts:434:7 › モバイル ツールチップの閉じるボタンとインタラクション › tooltip外の実質chartNoteリンクはtooltipを閉じて名目セクションへ遷移する
+  -   77 [chromium] › tests/e2e/tooltip-dismiss.e2e.spec.ts:477:7 › モバイル ツールチップの閉じるボタンとインタラクション › エリアチャートをグラフ外タップで閉じるとアクティブドットも消える
+  -   78 [chromium] › tests/e2e/tooltip-dismiss.e2e.spec.ts:512:7 › モバイル ツールチップの閉じるボタンとインタラクション › エリアチャートを✕で閉じるとアクティブドットも消える
+  -   79 [chromium] › tests/e2e/tooltip-dismiss.e2e.spec.ts:539:7 › モバイル ツールチップの閉じるボタンとインタラクション › タブジャンプ中（プログラム的スクロール中）にグラフへ触れてもツールチップが出ないこと
+  ✓   64 [chromium] › tests/e2e/range-change.e2e.spec.ts:212:7 › 描画範囲変更 E2E › 【比例検証】範囲が2倍になると棒本数が増加 (5.5s)
+  ✓   66 [chromium] › tests/e2e/spending-filter.e2e.spec.ts:66:7 › 消費支出絞り込み E2E › 費目を非表示にするとグラフの棒本数が減る（名目） (4.5s)
+  ✓   81 [chromium] › tests/e2e/range-change.e2e.spec.ts:227:7 › 描画範囲変更 E2E › 開始年または終了年を変更するとボトムシートが自動的に閉じる (6.8s)
+  ✓   82 [chromium] › tests/e2e/tooltip-stack-total.e2e.spec.ts:65:7 › ツールチップ積み上げ合計表示 E2E › T7: 消費支出（名目）の2022年以降の棒をホバーするとツールチップに「合計」が出る (6.5s)
+  ✓   80 [chromium] › tests/e2e/tooltip-dismiss.e2e.spec.ts:582:7 › デスクトップ ツールチップのホバー回帰テスト › chromium: ホバー表示後Escapeで閉じ、外部クリックでもdismissされること (12.9s)
+(node:1121) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   85 [chromium-dark] › tests/e2e/accessibility.e2e.spec.ts:81:7 › CAGR トリガーのコントラスト比 › T-A11Y-1: CAGR トリガーのコントラスト比が WCAG AA（4.5:1）以上 @dark (1.8s)
+  ✓   84 [chromium] › tests/e2e/tooltip-stack-total.e2e.spec.ts:82:7 › ツールチップ積み上げ合計表示 E2E › T8: 凡例で系列を非表示にすると合計値が減る (9.3s)
+  ✓   86 [chromium-dark] › tests/e2e/accessibility.e2e.spec.ts:103:7 › 凡例ヘッダーのコントラスト比 › T-A11Y-2: 実質消費凡例ヘッダーのコントラスト比が WCAG AA（4.5:1）以上 @dark (3.0s)
+  ✓   83 [chromium] › tests/e2e/range-change.e2e.spec.ts:254:7 › 描画範囲変更 E2E › 操作中にコンソール/ページエラーが発生しない (10.5s)
+(node:1214) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   87 [chromium] › tests/e2e/tooltip-stack-total.e2e.spec.ts:112:7 › ツールチップ積み上げ合計表示 E2E › T9: CPI費目別（section-stacked）のツールチップに12費目と「合計」が出る (4.2s)
+(node:1299) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   89 [mobile-pixel] › tests/e2e/consumption-mobile-acceptance.e2e.spec.ts:37:7 › 消費支出 mobile-pixel acceptance (Plan25/OpenSpec) › 名目・実質の凡例ボタンは実DOMで32px以上の幅・高さを持つ (4.8s)
+  ✓   88 [chromium] › tests/e2e/range-change.e2e.spec.ts:285:7 › 描画範囲変更 E2E › 年範囲変更後もスクロール位置が維持されるべき (6.8s)
+  ✓   90 [mobile-pixel] › tests/e2e/consumption-mobile-readability.e2e.spec.ts:44:9 › 消費支出グラフ モバイル可読性の証跡 › 320px: 名目・実質の専用余白、Y軸、棒、X軸ラベルが欠けない (2.9s)
+  ✓   93 [mobile-pixel] › tests/e2e/consumption-mobile-readability.e2e.spec.ts:44:9 › 消費支出グラフ モバイル可読性の証跡 › 375px: 名目・実質の専用余白、Y軸、棒、X軸ラベルが欠けない (2.8s)
+  ✓   91 [mobile-pixel] › tests/e2e/consumption-mobile-acceptance.e2e.spec.ts:63:7 › 消費支出 mobile-pixel acceptance (Plan25/OpenSpec) › 名目・実質tooltipの費目名は14px以上、合計は16px以上、数値セルは右揃え (6.7s)
+  ✓   94 [mobile-pixel] › tests/e2e/consumption-mobile-readability.e2e.spec.ts:44:9 › 消費支出グラフ モバイル可読性の証跡 › 390px: 名目・実質の専用余白、Y軸、棒、X軸ラベルが欠けない (2.7s)
+  ✓   95 [mobile-pixel] › tests/e2e/consumption-mobile-acceptance.e2e.spec.ts:122:7 › 消費支出 mobile-pixel acceptance (Plan25/OpenSpec) › 名目・実質の初期summaryは閉じ、1行の状態要約を示す (2.3s)
+  ✓   96 [mobile-pixel] › tests/e2e/consumption-mobile-readability.e2e.spec.ts:44:9 › 消費支出グラフ モバイル可読性の証跡 › 430px: 名目・実質の専用余白、Y軸、棒、X軸ラベルが欠けない (2.5s)
+  ✓   92 [chromium] › tests/e2e/range-change.e2e.spec.ts:315:7 › 描画範囲変更 E2E › 最大期間ボタンで2005年から最新年に一括設定され、シートが閉じ、URLに反映される (9.6s)
+(node:1464) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   97 [mobile-pixel] › tests/e2e/consumption-mobile-acceptance.e2e.spec.ts:138:7 › 消費支出 mobile-pixel acceptance (Plan25/OpenSpec) › 凡例で全系列を非表示にすると空状態を示し、1系列の再選択でチャートが復帰する (4.1s)
+  ✓   98 [mobile-pixel] › tests/e2e/consumption-mobile-readability.e2e.spec.ts:183:9 › 消費支出グラフ モバイル可読性の証跡 › 375px: 給与tooltipの6系列行＋合計・値列がviewport内 (3.9s)
+  ✓  101 [mobile-pixel] › tests/e2e/consumption-mobile-readability.e2e.spec.ts:183:9 › 消費支出グラフ モバイル可読性の証跡 › 430px: 給与tooltipの6系列行＋合計・値列がviewport内 (3.9s)
+  ✓  100 [mobile-pixel] › tests/e2e/consumption-mobile-acceptance.e2e.spec.ts:163:7 › 消費支出 mobile-pixel acceptance (Plan25/OpenSpec) › dark modeと文字拡大後もtooltipを閉じられ、費目名と値が可視である (5.7s)
+  ✓  102 [mobile-pixel] › tests/e2e/consumption-mobile-readability.e2e.spec.ts:289:9 › 消費支出グラフ モバイル可読性の証跡 › 375x667: 名目・実質tooltipが全費目を内部スクロール表示し、閉じる操作が機能する (6.6s)
+  ✓  103 [mobile-pixel] › tests/e2e/consumption-mobile-acceptance.e2e.spec.ts:185:7 › 消費支出 mobile-pixel acceptance (Plan25/OpenSpec) › 375x667でtooltip最下部までスクロール後も閉じるbuttonがviewport内に表示される (8.0s)
+  ✓   99 [mobile-pixel] › tests/e2e/mobile-ux.e2e.spec.ts:19:7 › モバイル UX ルール › 表示中のボタンはすべて基準のタップターゲット以上 (18.0s)
+  ✓  105 [mobile-pixel] › tests/e2e/plan27-private-consumption.e2e.spec.ts:9:7 › Plan27/38 名目CTI四半期消費支出回帰 › 2005Q1〜2017Q4の52四半期をgraph/table/CSVで公開し、給与CTI registryを混入しない (4.0s)
+  ✓  104 [mobile-pixel] › tests/e2e/consumption-mobile-readability.e2e.spec.ts:289:9 › 消費支出グラフ モバイル可読性の証跡 › 320x480: 名目・実質tooltipが全費目を内部スクロール表示し、閉じる操作が機能する (6.6s)
+  ✓  106 [mobile-pixel] › tests/e2e/mobile-ux.e2e.spec.ts:47:7 › モバイル UX ルール › 375px 幅で横方向にはみ出さない (1.3s)
+  ✓  109 [mobile-pixel] › tests/e2e/mobile-ux.e2e.spec.ts:65:9 › モバイル UX ルール › 320px 幅でページに横 overflow がない (1.0s)
+  ✓  107 [mobile-pixel] › tests/e2e/plan27-private-consumption.e2e.spec.ts:88:7 › Plan27/38 名目CTI四半期消費支出回帰 › nominal CTI key is distinct from the real chart boundary (2.8s)
+  ✓  110 [mobile-pixel] › tests/e2e/mobile-ux.e2e.spec.ts:65:9 › モバイル UX ルール › 375px 幅でページに横 overflow がない (1.4s)
+  ✓  112 [mobile-pixel] › tests/e2e/mobile-ux.e2e.spec.ts:65:9 › モバイル UX ルール › 390px 幅でページに横 overflow がない (1.1s)
+  ✓  113 [mobile-pixel] › tests/e2e/mobile-ux.e2e.spec.ts:65:9 › モバイル UX ルール › 430px 幅でページに横 overflow がない (1.4s)
+  ✓  108 [mobile-pixel] › tests/e2e/consumption-mobile-readability.e2e.spec.ts:289:9 › 消費支出グラフ モバイル可読性の証跡 › landscape: 名目・実質tooltipが全費目を内部スクロール表示し、閉じる操作が機能する (7.9s)
+  ✓  114 [mobile-pixel] › tests/e2e/mobile-ux.e2e.spec.ts:79:7 › モバイル UX ルール › モバイル幅（375px）でも最大期間ボタンが終了年 select の右側に配置されること (3.1s)
+  ✓  111 [mobile-pixel] › tests/e2e/tooltip-dismiss.e2e.spec.ts:138:7 › モバイル ツールチップの閉じるボタンとインタラクション › グラフをタップするとツールチップが表示され、✕ボタンとガイド線で閉じられる (5.9s)
+(node:1722) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[MEASURE] startYear width: 75.5, endYear width: 75.5, diff: 0
+  ✓  115 [mobile-pixel] › tests/e2e/mobile-ux.e2e.spec.ts:112:7 › モバイル UX ルール › モバイル幅（375px）で開始年と終了年の select 幅がほぼ一致すること (3.0s)
+  ✓  116 [mobile-pixel] › tests/e2e/tooltip-dismiss.e2e.spec.ts:162:7 › モバイル ツールチップの閉じるボタンとインタラクション › mobile-pixel: タップで表示したTooltipをEscapeで閉じ、Tooltipと閉じるボタンが消える (6.5s)
+  ✓  118 [mobile-pixel] › tests/e2e/mobile-ux.e2e.spec.ts:140:7 › モバイル UX ルール › モバイル幅（375px）で開始年・終了年・最大期間の3要素すべてが同一行（横並び）に配置されること (4.5s)
+  ✓  120 [mobile-pixel] › tests/e2e/mobile-ux.e2e.spec.ts:192:7 › LazyMount 遅延マウント (P5-1) › 初期表示では下部のチャートがマウントされていない (1.7s)
+  ✓  121 [mobile-pixel] › tests/e2e/mobile-ux.e2e.spec.ts:201:7 › LazyMount 遅延マウント (P5-1) › スクロールするとチャートがマウントされる (2.5s)
+  ✓  119 [mobile-pixel] › tests/e2e/tooltip-dismiss.e2e.spec.ts:192:7 › モバイル ツールチップの閉じるボタンとインタラクション › グラフ外をタップすると閉じるボタンとガイド線の両方が消える (6.6s)
+  ✓  122 [mobile-pixel] › tests/e2e/mobile-ux.e2e.spec.ts:211:7 › LazyMount 遅延マウント (P5-1) › __MOUNT_ALL__ を立てると初期表示で全チャートがマウントされる (2.2s)
+  ✓  117 [webkit-tabs-regression] › tests/e2e/section-tabs-scroll.e2e.spec.ts:47:9 › タブバー押下時のスクロール › 「消費(名目)」タブを押すと該当セクションが表示領域に入る (12.5s)
+  ✓  124 [mobile-pixel] › tests/e2e/mobile-ux.e2e.spec.ts:245:7 › タブバー(SectionTabs)の sticky ちらつき対策 › タブバーが独立した合成レイヤーに昇格している(Android Chrome のアドレスバー競合対策) (1.2s)
+  ✓  123 [mobile-pixel] › tests/e2e/tooltip-dismiss.e2e.spec.ts:211:7 › モバイル ツールチップの閉じるボタンとインタラクション › 別グラフをタップすると既存のガイド線が消え、新しいガイド線が1本だけになる (7.2s)
+  ✓  125 [webkit-tabs-regression] › tests/e2e/section-tabs-scroll.e2e.spec.ts:47:9 › タブバー押下時のスクロール › 「給与」タブを押すと該当セクションが表示領域に入る (9.5s)
+  ✓  126 [mobile-pixel] › tests/e2e/tooltip-dismiss.e2e.spec.ts:235:7 › モバイル ツールチップの閉じるボタンとインタラクション › スクロールするとガイド線とツールチップが自動で消える (4.7s)
+  ✓  128 [mobile-pixel] › tests/e2e/tooltip-dismiss.e2e.spec.ts:253:7 › モバイル ツールチップの閉じるボタンとインタラクション › グラフ上を縦にスワイプしてもツールチップが表示されないこと（ネガティブテスト） (5.0s)
+  ✓  127 [webkit-tabs-regression] › tests/e2e/section-tabs-scroll.e2e.spec.ts:47:9 › タブバー押下時のスクロール › 「3種比較」タブを押すと該当セクションが表示領域に入る (9.3s)
+  ✓  129 [mobile-pixel] › tests/e2e/tooltip-dismiss.e2e.spec.ts:288:7 › モバイル ツールチップの閉じるボタンとインタラクション › ✕で閉じた後、同じバーをもう一度タップして再表示されること (5.8s)
+  ✓  131 [mobile-pixel] › tests/e2e/tooltip-dismiss.e2e.spec.ts:311:9 › モバイル ツールチップの閉じるボタンとインタラクション › 固定viewportでのchartNote/Tooltip重なり › tooltipと実質chartNoteリンクが重なる座標ではリンク遷移を遮蔽しtooltipを維持する (3.1s)
+  ✓  130 [webkit-tabs-regression] › tests/e2e/section-tabs-scroll.e2e.spec.ts:82:9 › タブバー押下時のスクロール(初回読み込み・未マウント状態) › 未マウント状態から「消費(名目)」タブを押しても該当セクションへ到達する (9.7s)
+  ✓  132 [mobile-pixel] › tests/e2e/tooltip-dismiss.e2e.spec.ts:434:7 › モバイル ツールチップの閉じるボタンとインタラクション › tooltip外の実質chartNoteリンクはtooltipを閉じて名目セクションへ遷移する (5.2s)
+  ✓  134 [mobile-pixel] › tests/e2e/tooltip-dismiss.e2e.spec.ts:477:7 › モバイル ツールチップの閉じるボタンとインタラクション › エリアチャートをグラフ外タップで閉じるとアクティブドットも消える (3.8s)
+  ✓  135 [mobile-pixel] › tests/e2e/tooltip-dismiss.e2e.spec.ts:512:7 › モバイル ツールチップの閉じるボタンとインタラクション › エリアチャートを✕で閉じるとアクティブドットも消える (4.0s)
+  ✓  133 [webkit-tabs-regression] › tests/e2e/section-tabs-scroll.e2e.spec.ts:82:9 › タブバー押下時のスクロール(初回読み込み・未マウント状態) › 未マウント状態から「給与」タブを押しても該当セクションへ到達する (10.6s)
+  ✓  136 [mobile-pixel] › tests/e2e/tooltip-dismiss.e2e.spec.ts:539:7 › モバイル ツールチップの閉じるボタンとインタラクション › タブジャンプ中（プログラム的スクロール中）にグラフへ触れてもツールチップが出ないこと (3.5s)
+  -  138 [mobile-pixel] › tests/e2e/tooltip-dismiss.e2e.spec.ts:582:7 › デスクトップ ツールチップのホバー回帰テスト › chromium: ホバー表示後Escapeで閉じ、外部クリックでもdismissされること
+  ✓  137 [webkit-tabs-regression] › tests/e2e/section-tabs-scroll.e2e.spec.ts:82:9 › タブバー押下時のスクロール(初回読み込み・未マウント状態) › 未マウント状態から「3種比較」タブを押しても該当セクションへ到達する (7.9s)
+  ✓  139 [webkit-tabs-regression] › tests/e2e/section-tabs-scroll.e2e.spec.ts:120:7 › タブバーのスクロールバー非表示と右端フェード › リロード直後(タブ未操作)にネイティブスクロールバーが非表示である (2.2s)
+  ✓  140 [webkit-tabs-regression] › tests/e2e/section-tabs-scroll.e2e.spec.ts:127:7 › タブバーのスクロールバー非表示と右端フェード › スクロールバー非表示でも横スクロールが機能する (2.8s)
+  ✓  141 [webkit-tabs-regression] › tests/e2e/section-tabs-scroll.e2e.spec.ts:142:7 › タブバーのスクロールバー非表示と右端フェード › 右端フェード(mask-image)が適用されている (3.2s)
+
+  19 skipped
+  122 passed (3.7m)

@@ -1,0 +1,104 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-25T04:29:04.728Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "model": "jev-latest",
+    "state": {
+      "evaluationScope": "implementation_checkpoint_validity",
+      "background": "Review implementation checkpoint P42-243 in plan42: remove one redundant static total-label assertion from tests/e2e/consumption-mobile-readability.e2e.spec.ts while retaining the mobile browser integration guarantees. The assertion ledger identifies P42-243 as the `expect(tooltip).toContainText(\"合計\")` callsite at line 302. The exact source diff deletes only that line. Adjacent P42-242 `expect(tooltip).toBeVisible({ timeout: 5000 })` remains; real taps, mobile viewport variants, payload row/scroll behavior, and layout/safe-area checks remain. The equivalent static label and total contract is already covered by CustomTooltip.test.tsx T2 (showTotal renders 合計 and value 150.75) and T3 mobile/full payload (renders 合計, total 210.00, all payload rows regardless of touch state). No production code, OpenSpec requirement, or component test changed in this slice. The ledger row is updated with these counterparts and retained browser behaviors.",
+      "acceptanceCriteria": [
+        "Only the redundant static `合計` text assertion identified as P42-243 is removed; no adjacent tooltip visibility check or unrelated behavior is removed.",
+        "The total label/value rendering contract remains protected by existing focused component tests: T2 covers showTotal label and calculated value; T3 covers mobile/full-payload total and all item rows.",
+        "Real-browser integration coverage remains: mobile-pixel test still taps visible chart bars, asserts the tooltip becomes visible, checks payload categories and non-collapsing behavior, and retains viewport/layout/scroll/safe-area geometry assertions.",
+        "The assertion ledger accurately records the P42-243 migration counterpart and the browser-only guarantees retained in E2E.",
+        "Verification succeeds: focused CustomTooltip Vitest 32/32; build exit 0; focused mobile-pixel E2E file 9/9. This slice makes no production API or product-spec change."
+      ],
+      "verification": [
+        "pnpm exec vitest run tests/components/CustomTooltip.test.tsx: exit 0, 32 tests passed.",
+        "pnpm build: exit 0; Next.js 16.3.5 build, TypeScript, and static generation completed.",
+        "pnpm test:e2e --project=mobile-pixel tests/e2e/consumption-mobile-readability.e2e.spec.ts: exit 0, 9 passed.",
+        "Actual diff deletes only P42-243 `expect(tooltip).toContainText(\"合計\")`; remaining test and ledger excerpts are supplied in context."
+      ],
+      "knownConstraints": [
+        "P42-243 source is tests/e2e/consumption-mobile-readability.e2e.spec.ts:302; ledger entry is shared_plan/42-assertion-callsite-ledger.md row P42-243.",
+        "Existing component test counterpart is tests/components/CustomTooltip.test.tsx T2 and mobile/full-payload T3. These tests were not changed in this slice; they were rerun and passed.",
+        "No source, production behavior, API, or OpenSpec requirement changed. Existing dirty root work was preserved; unrelated working-tree changes are outside this review.",
+        "No credentials or secrets are included. No tests or measurements are to be run as part of this review."
+      ],
+      "outputRequirement": "Return exactly one selected choice, its confidence, and the complete probability distribution. valid_as_defined means the supplied diff, ledger, and verification satisfy the criteria. For any reason category, include a case-specific finding, affected location or requirement, observed evidence, and either a concrete proposed fix or exact needed evidence. For indeterminate, name the missing context. Do not infer severity from a reason category or invent evidence."
+    },
+    "questions": {
+      "implementation": {
+        "type": "choice",
+        "instructions": "Does checkpoint P42-243 safely remove only a redundant static total-label assertion while preserving equivalent component coverage and all relevant mobile browser guarantees? Return the complete probability distribution over these choices.",
+        "criteria": {
+          "valid_as_defined": "The supplied diff and evidence support acceptance of this checkpoint.",
+          "requirements_mismatch": "The implementation conflicts with the intended migration behavior; identify the requirement and correction.",
+          "missing_prerequisites_info": "A prerequisite is missing; identify the exact information needed.",
+          "incomplete_implementation_info": "Information is incomplete for judgment; identify the missing detail or evidence.",
+          "implementation_issue": "The change has a defect; identify the affected code, evidence, and concrete fix.",
+          "scope_violation": "The change exceeds or falls outside scope; identify the boundary and adjustment.",
+          "other": "A material issue does not fit the categories; identify location, evidence, and fix or needed evidence.",
+          "indeterminate": "The supplied context cannot support a judgment; identify missing context if possible."
+        }
+      }
+    }
+  },
+  "questionIds": [
+    "implementation"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "implementation": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.97,
+        "probabilities": {
+          "valid_as_defined": 0.96,
+          "other": 0,
+          "implementation_issue": 0,
+          "missing_prerequisites_info": 0.01,
+          "requirements_mismatch": 0,
+          "scope_violation": 0,
+          "indeterminate": 0.01,
+          "incomplete_implementation_info": 0.02
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.97,
+    "probabilities": {
+      "valid_as_defined": 0.96,
+      "other": 0,
+      "implementation_issue": 0,
+      "missing_prerequisites_info": 0.01,
+      "requirements_mismatch": 0,
+      "scope_violation": 0,
+      "indeterminate": 0.01,
+      "incomplete_implementation_info": 0.02
+    },
+    "passProbability": 0.96,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

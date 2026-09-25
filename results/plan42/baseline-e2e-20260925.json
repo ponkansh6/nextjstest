@@ -1,0 +1,61 @@
+{
+  "measurement": "plan42 baseline full Playwright E2E",
+  "status": "passed",
+  "revision": "baseline",
+  "commit": "3a5c16d467a994b5c168afec5265c0fa8b7257b0",
+  "checkout": "/tmp/plan42-baseline-clean-20260925",
+  "host": "shunki-20u4s1j300",
+  "platform": "Linux-7.0.0-34-generic-x86_64-with-glibc2.43",
+  "node": "v24.19.0",
+  "pnpm": "11.9.0",
+  "lockfile": "pnpm-lock.yaml",
+  "lockfileSha256": "e10ab5f3ec885be4d31cf777f24d7b1038dbd77b4ad32597ce9afcb8941738e9",
+  "command": "pnpm run test:e2e",
+  "commandArgv": [
+    "pnpm",
+    "run",
+    "test:e2e"
+  ],
+  "environmentPolicy": "inherited environment with variable names matching TOKEN|KEY|SECRET|PASSWORD|CREDENTIAL|AUTH removed",
+  "timerBoundary": "immediately before launching the test command through subprocess exit; build, dependency install, preflight excluded",
+  "startUtc": "2026-09-25T02:29:37.321118+00:00",
+  "startEpochNs": 1790303377321125629,
+  "startMonotonicNs": 5220361498687,
+  "endUtc": "2026-09-25T02:33:19.805776+00:00",
+  "endEpochNs": 1790303599805523637,
+  "endMonotonicNs": 5442844154791,
+  "elapsedSeconds": 222.482656104,
+  "processId": 74,
+  "exitCode": 0,
+  "expectedTests": 141,
+  "executedTests": 141,
+  "expectedProjectFilePairs": 24,
+  "projectTestCounts": {
+    "chromium": 87,
+    "chromium-dark": 2,
+    "mobile-pixel": 43,
+    "webkit-tabs-regression": 9
+  },
+  "rawLog": "/tmp/plan42-baseline-clean-20260925/results/plan42/baseline-e2e-20260925.log",
+  "preflight": {
+    "cleanTrackedCheckout": true,
+    "e2eSpecFiles": 21,
+    "playwrightListTotal": "141 tests in 21 files",
+    "nodeModulesInstall": "pnpm install --offline --frozen-lockfile; succeeded; no packages downloaded",
+    "playwrightBrowserCache": [
+      "chromium-1234",
+      "chromium_headless_shell-1234",
+      "webkit-2336"
+    ],
+    "port3100": "free immediately before run",
+    "buildCommand": "pnpm run build",
+    "buildExitCode": 0,
+    "buildId": "FX52v_PCut14B6GcBy1nm",
+    "trackedSourceTestsConfigLockfileDiff": "none",
+    "buildStatus": "passed"
+  },
+  "passedTests": 122,
+  "skippedTests": 19,
+  "failedTests": 0,
+  "resultSummary": "122 passed, 19 skipped, 0 failed; 141 planned cases listed"
+}

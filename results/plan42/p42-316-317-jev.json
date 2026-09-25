@@ -1,0 +1,364 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-25T05:57:32.529Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "model": "jev-latest",
+    "state": {
+      "evaluationScope": "plan_validity",
+      "background": "Review the current Plan42 scope decision for P42-316/P42-317 after reading the exact checkpoint text, ledger rows, broader plan matrix references, and relevant E2E implementation. The decision is to retain P42-316 `expect(legendButton).toBeVisible()` and P42-317 computed swatch color comparison in Playwright. The test parses the current `--series-9` hex from globals.css, converts it to RGB, navigates the app, selects the exact `教養娯楽` legend, reads its rendered swatch `getComputedStyle(...).backgroundColor`, and compares it to the live source token value. This exercises runtime CSS variable resolution/cascade/theme and current compiled styling; a static unit contract or hardcoded `#7e4a00` would not prove those browser behaviors and would duplicate source-literal mapping without making the E2E assertions removable. P42-320+ dark-mode full palette stays later scope. There are no source/test edits requested; this is a plan/ledger decision only. One broader plan matrix entry still says token/source mapping `can move to proposed tests/components/LegendColorContract.test.tsx`; the new checkpoint and P42-316/317 ledger rows say not to add that unit test. Assess whether this is compatible as a candidate possibility or is a contradictory active instruction that needs reconciliation.",
+      "acceptanceCriteria": [
+        "The plan justifies keeping P42-316 legend visibility and P42-317 computed color parity in Playwright because the relevant contract includes rendered, theme/cascade-resolved styling that a unit test cannot establish.",
+        "The E2E derives expected color dynamically from current CSS `--series-9` rather than hardcoding `#7e4a00`, so valid token changes do not require updating a test literal and stale built CSS is detected.",
+        "No proposed `LegendColorContract` test is added when it would only duplicate static source/token mapping and could not replace P42-317's browser computed-style evidence.",
+        "P42-320+ dark mode remains explicitly outside this decision's current scope.",
+        "The implementation checkpoint and exact ledger rows P42-316/P42-317 clearly state the retention decision and browser rationale.",
+        "All active summaries/appendices in the plan agree with the new decision; specifically evaluate the broader legend-color-sync matrix entry that says token/source mapping can move to a proposed LegendColorContract test. If it is merely a future candidate, that distinction should be unambiguous; if not, identify required correction."
+      ],
+      "verification": [
+        "Code evidence: tests/e2e/legend-color-sync.e2e.spec.ts reads `--series-9` from src/app/globals.css, derives RGB, checks exact-name legend visibility and computed swatch color.",
+        "Plan checkpoint section says retain P42-316/317, no redundant LegendColorContract unit test/hardcoded color, and keep dark-mode P42-320+ as future scope.",
+        "Ledger P42-316/P42-317 explains the browser rationale. Broader plan matrix still mentions a proposed LegendColorContract as a possible token mapping destination.",
+        "No test/build was requested or run for this plan-only review."
+      ],
+      "knownConstraints": [
+        "Implementation: tests/e2e/legend-color-sync.e2e.spec.ts around lines 21-47. No source/test edits are in scope.",
+        "Decision text: shared_plan/42-happy-dom-e2e-migration-plan.md implementation checkpoint around line 103. Ledger rows are shared_plan/42-assertion-callsite-ledger.md P42-316 and P42-317.",
+        "Potential stale competing wording: plan file-level inventory table for legend-color-sync around line 44 and Appendix A around line 516 mention moving token/source mapping to a proposed LegendColorContract unit test.",
+        "No spec requirement for the literal `#7e4a00` was identified; no requirement change is intended. No credentials or secrets are included."
+      ],
+      "outputRequirement": "Return exactly one choice, confidence, and complete probability distribution. valid_as_defined means the scope decision is sound and the plan/ledger are coherent. For any non-pass, include a case-specific finding, affected location/requirement, observed evidence, and concrete correction or exact additional evidence needed. If no material inconsistency exists, choose valid_as_defined. Do not invent evidence or infer severity from a reason category."
+    },
+    "questions": {
+      "plan": {
+        "type": "choice",
+        "instructions": "Is the current P42-316/P42-317 decision to keep visible legend and computed swatch/source-token parity in Playwright, omit a redundant token-only unit test, and defer dark mode a coherent and appropriately scoped plan? Include any issue created by conflicting broader matrix wording.",
+        "criteria": {
+          "valid_as_defined": "The decision is justified and the current plan references are coherent.",
+          "requirements_mismatch": "A plan statement conflicts with the intended scope decision; identify it and needed correction.",
+          "missing_prerequisites_info": "A prerequisite is missing; identify exact information needed.",
+          "incomplete_implementation_info": "The plan lacks information needed to judge; identify exact missing detail/evidence.",
+          "implementation_issue": "The proposed approach has an operational issue; identify location, evidence, correction.",
+          "scope_violation": "The decision exceeds or falls outside scope; identify boundary and adjustment.",
+          "other": "A material concern does not fit; provide location, evidence, and fix or needed evidence.",
+          "indeterminate": "The supplied context cannot support judgment; identify missing context."
+        }
+      }
+    }
+  },
+  "questionIds": [
+    "plan"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "plan": {
+        "type": "choice",
+        "choice": "requirements_mismatch",
+        "confidence": 0.89,
+        "probabilities": {
+          "implementation_issue": 0,
+          "incomplete_implementation_info": 0,
+          "indeterminate": 0,
+          "missing_prerequisites_info": 0,
+          "other": 0.01,
+          "requirements_mismatch": 0.91,
+          "valid_as_defined": 0.08,
+          "scope_violation": 0
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "requirements_mismatch",
+    "outcome": "fail",
+    "label": "不合格",
+    "reason": null,
+    "failureReason": "JEV selected requirements_mismatch but did not provide a case-specific reason.",
+    "reasonSource": "generic",
+    "jevReason": null,
+    "affected": null,
+    "evidence": null,
+    "proposedFix": null,
+    "neededEvidence": null,
+    "confidence": 0.89,
+    "probabilities": {
+      "implementation_issue": 0,
+      "incomplete_implementation_info": 0,
+      "indeterminate": 0,
+      "missing_prerequisites_info": 0,
+      "other": 0.01,
+      "requirements_mismatch": 0.91,
+      "valid_as_defined": 0.08,
+      "scope_violation": 0
+    },
+    "passProbability": 0.08,
+    "diagnosisComplete": false,
+    "diagnosisStatus": "incomplete",
+    "followUpRecommended": true
+  },
+  "automaticClarification": {
+    "schemaVersion": "jev-review-result-v1",
+    "reviewSchemaVersion": "jev-review-automatic-clarification-v1",
+    "generatedAt": "2026-09-25T05:57:33.228Z",
+    "request": {
+      "schemaVersion": "jev-review-automatic-clarification-v1",
+      "model": "jev-latest",
+      "state": {
+        "evaluationScope": "jev_clarification",
+        "sourceStage": "initial",
+        "effectiveVerdict": "requires_revalidation",
+        "initialJudgment": "requirements_mismatch",
+        "initialDecisionSummary": {
+          "choice": "requirements_mismatch",
+          "outcome": "fail",
+          "label": "不合格",
+          "reason": null,
+          "failureReason": "JEV selected requirements_mismatch but did not provide a case-specific reason.",
+          "reasonSource": "generic",
+          "jevReason": null,
+          "affected": null,
+          "evidence": null,
+          "proposedFix": null,
+          "neededEvidence": null,
+          "confidence": 0.89,
+          "probabilities": {
+            "implementation_issue": 0,
+            "incomplete_implementation_info": 0,
+            "indeterminate": 0,
+            "missing_prerequisites_info": 0,
+            "other": 0.01,
+            "requirements_mismatch": 0.91,
+            "valid_as_defined": 0.08,
+            "scope_violation": 0
+          },
+          "passProbability": 0.08,
+          "diagnosisComplete": false,
+          "diagnosisStatus": "incomplete",
+          "followUpRecommended": true
+        },
+        "implementationQuestion": "Which single next action best resolves or validates the JEV finding “JEV selected requirements_mismatch but did not provide a case-specific reason.”?",
+        "availableChoices": [
+          {
+            "id": "apply_or_define_fix",
+            "label": "Inspect the affected requirement or implementation",
+            "description": "Inspect the affected requirement or implementation and identify a concrete correction if one is needed."
+          },
+          {
+            "id": "collect_or_verify_evidence",
+            "label": "Collect or verify evidence",
+            "description": "Verify the reported basis and collect the smallest missing evidence needed to assess the finding."
+          },
+          {
+            "id": "confirm_requirement_and_scope",
+            "label": "Confirm the requirement and scope",
+            "description": "Check whether the affected requirement expresses the intended behavior and remains within the agreed scope; record any correction needed."
+          }
+        ],
+        "priorReview": {
+          "schemaVersion": "jev-review-result-v1",
+          "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+          "request": {
+            "schemaVersion": "jev-review-initial-distribution-v3",
+            "model": "jev-latest",
+            "state": {
+              "evaluationScope": "plan_validity",
+              "background": "Review the current Plan42 scope decision for P42-316/P42-317 after reading the exact checkpoint text, ledger rows, broader plan matrix references, and relevant E2E implementation. The decision is to retain P42-316 `expect(legendButton).toBeVisible()` and P42-317 computed swatch color comparison in Playwright. The test parses the current `--series-9` hex from globals.css, converts it to RGB, navigates the app, selects the exact `教養娯楽` legend, reads its rendered swatch `getComputedStyle(...).backgroundColor`, and compares it to the live source token value. This exercises runtime CSS variable resolution/cascade/theme and current compiled styling; a static unit contract or hardcoded `#7e4a00` would not prove those browser behaviors and would duplicate source-literal mapping without making the E2E assertions removable. P42-320+ dark-mode full palette stays later scope. There are no source/test edits requested; this is a plan/ledger decision only. One broader plan matrix entry still says token/source mapping `can move to proposed tests/components/LegendColorContract.test.tsx`; the new checkpoint and P42-316/317 ledger rows say not to add that unit test. Assess whether this is compatible as a candidate possibility or is a contradictory active instruction that needs reconciliation.",
+              "acceptanceCriteria": [
+                "The plan justifies keeping P42-316 legend visibility and P42-317 computed color parity in Playwright because the relevant contract includes rendered, theme/cascade-resolved styling that a unit test cannot establish.",
+                "The E2E derives expected color dynamically from current CSS `--series-9` rather than hardcoding `#7e4a00`, so valid token changes do not require updating a test literal and stale built CSS is detected.",
+                "No proposed `LegendColorContract` test is added when it would only duplicate static source/token mapping and could not replace P42-317's browser computed-style evidence.",
+                "P42-320+ dark mode remains explicitly outside this decision's current scope.",
+                "The implementation checkpoint and exact ledger rows P42-316/P42-317 clearly state the retention decision and browser rationale.",
+                "All active summaries/appendices in the plan agree with the new decision; specifically evaluate the broader legend-color-sync matrix entry that says token/source mapping can move to a proposed LegendColorContract test. If it is merely a future candidate, that distinction should be unambiguous; if not, identify required correction."
+              ],
+              "verification": [
+                "Code evidence: tests/e2e/legend-color-sync.e2e.spec.ts reads `--series-9` from src/app/globals.css, derives RGB, checks exact-name legend visibility and computed swatch color.",
+                "Plan checkpoint section says retain P42-316/317, no redundant LegendColorContract unit test/hardcoded color, and keep dark-mode P42-320+ as future scope.",
+                "Ledger P42-316/P42-317 explains the browser rationale. Broader plan matrix still mentions a proposed LegendColorContract as a possible token mapping destination.",
+                "No test/build was requested or run for this plan-only review."
+              ],
+              "knownConstraints": [
+                "Implementation: tests/e2e/legend-color-sync.e2e.spec.ts around lines 21-47. No source/test edits are in scope.",
+                "Decision text: shared_plan/42-happy-dom-e2e-migration-plan.md implementation checkpoint around line 103. Ledger rows are shared_plan/42-assertion-callsite-ledger.md P42-316 and P42-317.",
+                "Potential stale competing wording: plan file-level inventory table for legend-color-sync around line 44 and Appendix A around line 516 mention moving token/source mapping to a proposed LegendColorContract unit test.",
+                "No spec requirement for the literal `#7e4a00` was identified; no requirement change is intended. No credentials or secrets are included."
+              ],
+              "outputRequirement": "Return exactly one choice, confidence, and complete probability distribution. valid_as_defined means the scope decision is sound and the plan/ledger are coherent. For any non-pass, include a case-specific finding, affected location/requirement, observed evidence, and concrete correction or exact additional evidence needed. If no material inconsistency exists, choose valid_as_defined. Do not invent evidence or infer severity from a reason category."
+            },
+            "questions": {
+              "plan": {
+                "type": "choice",
+                "instructions": "Is the current P42-316/P42-317 decision to keep visible legend and computed swatch/source-token parity in Playwright, omit a redundant token-only unit test, and defer dark mode a coherent and appropriately scoped plan? Include any issue created by conflicting broader matrix wording.",
+                "criteria": {
+                  "valid_as_defined": "The decision is justified and the current plan references are coherent.",
+                  "requirements_mismatch": "A plan statement conflicts with the intended scope decision; identify it and needed correction.",
+                  "missing_prerequisites_info": "A prerequisite is missing; identify exact information needed.",
+                  "incomplete_implementation_info": "The plan lacks information needed to judge; identify exact missing detail/evidence.",
+                  "implementation_issue": "The proposed approach has an operational issue; identify location, evidence, correction.",
+                  "scope_violation": "The decision exceeds or falls outside scope; identify boundary and adjustment.",
+                  "other": "A material concern does not fit; provide location, evidence, and fix or needed evidence.",
+                  "indeterminate": "The supplied context cannot support judgment; identify missing context."
+                }
+              }
+            }
+          },
+          "questionIds": [
+            "plan"
+          ],
+          "status": "http-success",
+          "rawResponse": {
+            "model": "jev-1.13.0",
+            "answers": {
+              "plan": {
+                "type": "choice",
+                "choice": "requirements_mismatch",
+                "confidence": 0.89,
+                "probabilities": {
+                  "implementation_issue": 0,
+                  "incomplete_implementation_info": 0,
+                  "indeterminate": 0,
+                  "missing_prerequisites_info": 0,
+                  "other": 0.01,
+                  "requirements_mismatch": 0.91,
+                  "valid_as_defined": 0.08,
+                  "scope_violation": 0
+                }
+              }
+            },
+            "usage": {
+              "input_tokens": "[REDACTED]",
+              "output_tokens": "[REDACTED]"
+            }
+          },
+          "responseValidation": {
+            "valid": true
+          },
+          "decisionSummary": {
+            "choice": "requirements_mismatch",
+            "outcome": "fail",
+            "label": "不合格",
+            "reason": null,
+            "failureReason": "JEV selected requirements_mismatch but did not provide a case-specific reason.",
+            "reasonSource": "generic",
+            "jevReason": null,
+            "affected": null,
+            "evidence": null,
+            "proposedFix": null,
+            "neededEvidence": null,
+            "confidence": 0.89,
+            "probabilities": {
+              "implementation_issue": 0,
+              "incomplete_implementation_info": 0,
+              "indeterminate": 0,
+              "missing_prerequisites_info": 0,
+              "other": 0.01,
+              "requirements_mismatch": 0.91,
+              "valid_as_defined": 0.08,
+              "scope_violation": 0
+            },
+            "passProbability": 0.08,
+            "diagnosisComplete": false,
+            "diagnosisStatus": "incomplete",
+            "followUpRecommended": true
+          }
+        },
+        "outputRequirement": "Return the selected choice ID and a complete case-specific diagnosis: finding, affected location or requirement, observed evidence or exact neededEvidence, concrete nextAction or proposedFix, and remainingUncertainty (write 'none' explicitly when resolved). Repeat the affected/evidence detail in this answer and tie it to the selected action. If a required detail cannot be established, say so explicitly; do not omit the field or invent evidence.",
+        "instruction": "Select exactly one available choice as the best next action for resolving or validating the initial non-pass judgment. Treat the choices and their descriptions as the complete allowed option set; do not invent another choice. Return the selected option ID together with every field required by outputRequirement: a case-specific finding, affected location or requirement, observed evidence or exact neededEvidence, concrete nextAction or proposedFix, and remaining uncertainty (explicitly state 'none' if resolved). Repeat the affected/evidence detail and tie it to the selected action. Explain the evidence and why the selected action is the best next step. This clarification cannot approve or alter the initial verdict. A normal initial JEV review is required after the action; do not issue another clarification."
+      },
+      "questions": {
+        "implementation_clarification": {
+          "type": "choice",
+          "instructions": "Which single next action best resolves or validates the JEV finding “JEV selected requirements_mismatch but did not provide a case-specific reason.”? Select exactly one offered choice and return the required diagnostic details from state.outputRequirement.",
+          "selectionMode": "single",
+          "choices": [
+            {
+              "id": "apply_or_define_fix",
+              "label": "Inspect the affected requirement or implementation",
+              "description": "Inspect the affected requirement or implementation and identify a concrete correction if one is needed."
+            },
+            {
+              "id": "collect_or_verify_evidence",
+              "label": "Collect or verify evidence",
+              "description": "Verify the reported basis and collect the smallest missing evidence needed to assess the finding."
+            },
+            {
+              "id": "confirm_requirement_and_scope",
+              "label": "Confirm the requirement and scope",
+              "description": "Check whether the affected requirement expresses the intended behavior and remains within the agreed scope; record any correction needed."
+            }
+          ],
+          "criteria": {
+            "apply_or_define_fix": "Inspect the affected requirement or implementation and identify a concrete correction if one is needed.",
+            "collect_or_verify_evidence": "Verify the reported basis and collect the smallest missing evidence needed to assess the finding.",
+            "confirm_requirement_and_scope": "Check whether the affected requirement expresses the intended behavior and remains within the agreed scope; record any correction needed."
+          }
+        }
+      }
+    },
+    "questionIds": [
+      "implementation_clarification"
+    ],
+    "effectiveVerdict": "requires_revalidation",
+    "status": "http-success",
+    "rawResponse": {
+      "model": "jev-1.13.0",
+      "answers": {
+        "implementation_clarification": {
+          "type": "choice",
+          "choice": "collect_or_verify_evidence",
+          "confidence": 0.46,
+          "probabilities": {
+            "collect_or_verify_evidence": 0.64,
+            "confirm_requirement_and_scope": 0.3,
+            "apply_or_define_fix": 0.06
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": "[REDACTED]",
+        "output_tokens": "[REDACTED]"
+      }
+    },
+    "responseValidation": {
+      "valid": true
+    },
+    "selectedChoice": "collect_or_verify_evidence",
+    "clarification": {
+      "type": "choice",
+      "choice": "collect_or_verify_evidence",
+      "confidence": 0.46,
+      "probabilities": {
+        "collect_or_verify_evidence": 0.64,
+        "confirm_requirement_and_scope": 0.3,
+        "apply_or_define_fix": 0.06
+      }
+    },
+    "diagnosis": {
+      "finding": null,
+      "affected": null,
+      "evidence": null,
+      "neededEvidence": null,
+      "nextAction": null,
+      "remainingUncertainty": null
+    },
+    "diagnosisStatus": "incomplete",
+    "unresolvedReasons": [
+      "The clarification lacks a case-specific finding.",
+      "The clarification lacks an affected location or requirement.",
+      "The clarification lacks observed evidence or exact neededEvidence.",
+      "The clarification lacks a concrete nextAction or proposedFix.",
+      "The clarification does not state remaining uncertainty or explicitly say none."
+    ],
+    "resolution": "unresolved"
+  }
+}

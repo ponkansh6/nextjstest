@@ -1,0 +1,105 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-25T06:56:37.474Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "state": {
+      "evaluationScope": "plan_validity",
+      "background": "Review proposed P42-599 migration before implementation. In tests/e2e/tooltip-stack-total.e2e.spec.ts T9, proposed removal is only `expect(tooltip.locator('data-tooltip-row true')).toHaveCount(12)` at approximately line 149. The existing tests/components/CustomTooltip.test.tsx case `renders all CPI categories in category/color/order contract and sums finite values only` tests supplied CustomTooltip props and asserts rows length equals CPI_CATEGORIES.length; keys, order metadata, palette colors, zero and missing/NaN dash handling, and total containing 1.25. A separate existing test pins CPI_CATEGORIES.length to 12 and stackedColors same length. This is a component data contract and does not establish real app route/Recharts payload wiring. Retain P42-593..598 in Playwright: visible chart, actual area paths, viewport, positive in-viewport path bounding box, real hover, live tooltip visible, and live total DOM visibility. In particular keep P42-598 total visible because the component fixture does not prove the route renders that total. The three plan docs propose removing only the row count after JEV approval, map it to the existing test, and preserve live chart/hit/payload evidence. No test/source implementation change has occurred yet; this is a plan decision only.",
+      "acceptanceCriteria": [
+        "The 12-row count is equivalently covered at the CustomTooltip supplied-props component boundary, including explicit pin that CPI category count is 12.",
+        "The unit test is not misrepresented as proving live route or Recharts payload wiring.",
+        "Only P42-599 is proposed for removal; P42-593..598 remain browser-side including visible total.",
+        "The plan, callsite ledger, and responsibility matrix consistently express scope and test ownership."
+      ],
+      "verification": [
+        "Plan shared_plan/42-happy-dom-e2e-migration-plan.md lines around 78-83 and T9 appendix describe P42-599, existing CustomTooltip row-count/category contract, and retained P42-593..598 route assertions.",
+        "Callsite ledger shared_plan/42-assertion-callsite-ledger.md P42-599 identifies exact E2E callsite, existing unit counterpart, limit, and narrow removal boundary.",
+        "Responsibility matrix shared_plan/42-assertion-case-responsibility-matrix.md T9 row gives same proposed move and preserves P42-593..598.",
+        "Exact T9 shows chart visible, area paths present, valid viewport and positive in-viewport bbox, real mouse hover, tooltip visible, total visible, then row count 12.",
+        "Existing CustomTooltip test asserts rows length equals CPI_CATEGORIES.length, category key/order/color per row, zero and missing-value dashes, and total 1.25; separate palette contract asserts CPI_CATEGORIES length 12.",
+        "No CSS Modules or style assertion is involved in the moved count; no unit implementation changes are required."
+      ],
+      "knownConstraints": [
+        "This is pre-implementation plan review. Do not infer tests have run for the proposed migration or that the E2E assertion has already been removed.",
+        "The component test receives supplied props and does not verify app-route/Recharts data wiring.",
+        "Preserve P42-598 live total visibility as a route-level rendered DOM check.",
+        "Do not include credentials or authentication data."
+      ],
+      "outputRequirement": "Return exactly one selected choice with confidence and probabilities for every choice. valid_as_defined means the proposed migration meets the criteria. For a non-pass, provide a case-specific finding, affected requirement/location, observed evidence, and concrete fix or exact neededEvidence. Do not infer severity or invent facts."
+    },
+    "questions": {
+      "implementation": {
+        "type": "choice",
+        "instructions": "Is the P42-599 migration plan valid as defined, given the existing component contract and the preserved browser-owned route assertions? Return the complete probability distribution.",
+        "criteria": {
+          "valid_as_defined": "The existing CustomTooltip contract adequately covers row count 12, while route/Recharts wiring, hover, tooltip and live total remain in E2E; docs align.",
+          "requirements_mismatch": "The migration conflicts with an explicit requirement; identify the conflicting requirement and correction.",
+          "missing_prerequisites_info": "An exact prerequisite/evidence requirement is missing; identify it.",
+          "incomplete_implementation_info": "Evidence is insufficient to assess equivalence or scope; identify exact needed details.",
+          "implementation_issue": "A concrete coverage gap remains; identify location, evidence, and smallest fix.",
+          "scope_violation": "The proposal removes or reassigns behavior beyond P42-599; identify boundary and correction.",
+          "other": "A material concern outside other categories; state a concrete finding and fix/evidence needed.",
+          "indeterminate": "The supplied plan context cannot support a judgment; identify remaining uncertainty."
+        }
+      }
+    },
+    "model": "jev-latest"
+  },
+  "questionIds": [
+    "implementation"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "implementation": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.92,
+        "probabilities": {
+          "valid_as_defined": 0.93,
+          "incomplete_implementation_info": 0.01,
+          "scope_violation": 0,
+          "missing_prerequisites_info": 0.03,
+          "requirements_mismatch": 0,
+          "implementation_issue": 0.02,
+          "other": 0,
+          "indeterminate": 0
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.92,
+    "probabilities": {
+      "valid_as_defined": 0.93,
+      "incomplete_implementation_info": 0.01,
+      "scope_violation": 0,
+      "missing_prerequisites_info": 0.03,
+      "requirements_mismatch": 0,
+      "implementation_issue": 0.02,
+      "other": 0,
+      "indeterminate": 0
+    },
+    "passProbability": 0.93,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

@@ -90,6 +90,83 @@ describe("useChartTooltipController", () => {
     expect(result.current.bind("A").tooltipProps.active).toBeFalsy();
   });
 
+  it("only intercepts Escape while a chart tooltip is active", () => {
+    const { result } = renderHook(() =>
+      useChartTooltipController({ isTouch: true, suppressed: false }),
+    );
+
+    act(() => {
+      result.current.bind("A").onClick();
+    });
+    expect(result.current.bind("A").tooltipProps.active).toBeUndefined();
+
+    const otherKey = new KeyboardEvent("keydown", {
+      key: "Enter",
+      bubbles: true,
+      cancelable: true,
+    });
+    act(() => {
+      document.dispatchEvent(otherKey);
+    });
+    expect(otherKey.defaultPrevented).toBe(false);
+    expect(result.current.bind("A").tooltipProps.active).toBeUndefined();
+
+    const escape = new KeyboardEvent("keydown", {
+      key: "Escape",
+      bubbles: true,
+      cancelable: true,
+    });
+    act(() => {
+      document.dispatchEvent(escape);
+    });
+    expect(escape.defaultPrevented).toBe(true);
+    expect(result.current.bind("A").tooltipProps.active).toBeFalsy();
+
+    const inactiveEscape = new KeyboardEvent("keydown", {
+      key: "Escape",
+      bubbles: true,
+      cancelable: true,
+    });
+    act(() => {
+      document.dispatchEvent(inactiveEscape);
+    });
+    expect(inactiveEscape.defaultPrevented).toBe(false);
+    expect(result.current.bind("A").tooltipProps.active).toBeFalsy();
+  });
+
+  it("keeps same-position mouse movement suppressed after Escape", () => {
+    const { result } = renderHook(() =>
+      useChartTooltipController({ isTouch: false, suppressed: false }),
+    );
+    const bound = result.current.bind("A", { dataLength: 5 });
+    const interaction = {
+      clientX: 100,
+      clientY: 50,
+      pointerType: "mouse",
+      currentTarget: {
+        querySelector: () => null,
+        getBoundingClientRect: () => new DOMRect(0, 0, 200, 100),
+      },
+      relatedTarget: null,
+    } as unknown as ReactPointerEvent<HTMLElement>;
+    act(() => {
+      bound.onMouseMove(interaction);
+    });
+    expect(result.current.bind("A").tooltipProps.active).toBe(true);
+
+    act(() => {
+      document.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }),
+      );
+    });
+    expect(result.current.bind("A").tooltipProps.active).toBe(false);
+
+    act(() => {
+      result.current.bind("A").onMouseMove(interaction);
+    });
+    expect(result.current.bind("A").tooltipProps.active).toBe(false);
+  });
+
   it("does not dismiss active charts on pointerdown inside recharts-wrapper", () => {
     const { result } = renderHook(() =>
       useChartTooltipController({ isTouch: true, suppressed: false }),

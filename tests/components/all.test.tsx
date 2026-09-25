@@ -1,5 +1,7 @@
 // @bun-environment happy-dom
 import { render, screen, fireEvent, renderHook } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { useState } from "react";
 import { ChartFilters } from "../../src/app/components/ChartFilters";
 import { ChartLegend } from "../../src/app/components/ChartLegend";
 import { SpendingBarChart } from "../../src/app/components/SpendingBarChart";
@@ -419,6 +421,84 @@ describe("StackedAreaChart", () => {
     expect(screen.getByText("Test Stacked Chart")).toBeDefined();
     expect(screen.getAllByText("キー1").length).toBeGreaterThan(0);
     expect(screen.getAllByText("キー2").length).toBeGreaterThan(0);
+  });
+
+  it("P42-262: renders CPI legend labels and toggles an aliased legend by data key", async () => {
+    const user = userEvent.setup();
+    const onToggle = vi.fn();
+    const cpiKeys = [
+      "住居",
+      "家具・家事用品",
+      "被服及び履物",
+      "保健医療",
+      "教育",
+      "光熱・水道",
+      "教養娯楽",
+      "交通・自動車等関係費",
+      "通信",
+      "外食以外食料",
+      "外食",
+      "諸雑費",
+    ];
+    const expectedLegendLabels = [
+      "住居",
+      "家具・家事用品",
+      "被服履物",
+      "保健医療",
+      "教育",
+      "光熱水道",
+      "教養娯楽",
+      "交通自動車等",
+      "通信",
+      "外食以外食料",
+      "外食",
+      "諸雑費",
+    ];
+
+    const ControlledStackedAreaChart = () => {
+      const [hiddenKeys, setHiddenKeys] = useState<string[]>([]);
+      const handleToggle = (key: string) => {
+        onToggle(key);
+        setHiddenKeys((current) =>
+          current.includes(key) ? current.filter((item) => item !== key) : [...current, key],
+        );
+      };
+
+      return (
+        <StackedAreaChart
+          title="物価指数費目別積み上げ"
+          data={[
+            {
+              年月: "2023年1月",
+              ...Object.fromEntries(cpiKeys.map((key) => [key, 100])),
+            } as unknown as CpiData,
+          ]}
+          keys={cpiKeys}
+          colors={stackedColors}
+          hiddenKeys={hiddenKeys}
+          onToggle={handleToggle}
+          chartColors={chartColors}
+          tooltipProps={tooltipProps}
+          onReset={vi.fn()}
+        />
+      );
+    };
+
+    render(<ControlledStackedAreaChart />);
+
+    const legendButtons = screen
+      .getAllByRole("button")
+      .filter((button) => button.hasAttribute("aria-pressed"));
+    expect(legendButtons.map((button) => button.textContent?.trim())).toEqual(expectedLegendLabels);
+    expect(legendButtons.map((button) => button.getAttribute("aria-pressed"))).toEqual(
+      expectedLegendLabels.map(() => "true"),
+    );
+
+    const clothingButton = screen.getByRole("button", { name: /^被服履物$/ });
+    await user.click(clothingButton);
+
+    expect(clothingButton.getAttribute("aria-pressed")).toBe("false");
+    expect(onToggle).toHaveBeenCalledWith("被服及び履物");
   });
 
   it("calls onToggle when a legend item is clicked", () => {

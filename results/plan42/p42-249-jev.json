@@ -1,0 +1,105 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-25T04:35:27.011Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "model": "jev-latest",
+    "state": {
+      "evaluationScope": "implementation_checkpoint_validity",
+      "background": "Review the combined plan42 implementation checkpoint for completed P42-243 and P42-249. The current diff in tests/e2e/consumption-mobile-readability.e2e.spec.ts removes only two static assertions/observations from the mobile E2E test: P42-243's tooltip text contains 合計 assertion, and P42-249's capture/assertion of the inline CSS literal env(safe-area-inset-bottom). The same browser tests retain P42-242 tooltip visibility after real taps; computed paddingBottom >=10; internal scrolling and scroll-to-end behavior; viewport geometry; and close/tap interactions. Existing tests/components/CustomTooltip.test.tsx T2/T3 continue to verify total label plus amount and full mobile payload; T15 verifies mobile tooltip internal scrolling and safe-area-aware bottom padding, including env(safe-area-inset-bottom) in maxHeight. Ledger rows P42-243/P42-249 now explicitly cross-reference the component counterparts and state the browser guarantees retained. OpenSpec R2c/R20c require safe-area behavior, not a specific serialized CSS spelling. There are no production changes or OpenSpec edits in this slice.",
+      "acceptanceCriteria": [
+        "P42-243 removes only the redundant static total-label assertion; total label and amount remain covered by CustomTooltip T2/T3, and real browser tooltip visibility, interaction, geometry and scrolling remain in E2E.",
+        "P42-249 removes only inspection/assertion of the exact inline CSS env(safe-area-inset-bottom) literal from E2E; mobile safe-area behavior remains covered by component T15 and actual browser computed padding/layout/viewport checks.",
+        "The remaining E2E checks still verify computed bottom padding is at least 10px, internal tooltip scrolling including reaching the bottom, viewport containment/geometry, close control, and tap interaction across portrait/landscape mobile viewports.",
+        "OpenSpec R2c/R20c are behavior requirements and do not require matching a specific CSS serialization literal; there is no requirement change in this implementation slice.",
+        "Ledger rows for P42-243 and P42-249 accurately map their migrated assertions to T2/T3/T15 and identify the browser guarantees retained.",
+        "Verification succeeds: focused CustomTooltip Vitest 32/32 and focused mobile-pixel E2E file 9/9. The preceding build completed with exit 0 and application source has not changed since it."
+      ],
+      "verification": [
+        "pnpm exec vitest run tests/components/CustomTooltip.test.tsx: exit 0, 32/32.",
+        "pnpm test:e2e --project=mobile-pixel tests/e2e/consumption-mobile-readability.e2e.spec.ts: exit 0, 9/9.",
+        "Build from immediately prior checkpoint: exit 0; application source unchanged in this slice.",
+        "Diff removes P42-243's `toContainText(\"合計\")` and P42-249's `safeAreaPadding` capture/exact env() assertion. Other listed E2E checks remain."
+      ],
+      "knownConstraints": [
+        "P42-243/P42-249 ledger entries are in shared_plan/42-assertion-callsite-ledger.md; test diff is in tests/e2e/consumption-mobile-readability.e2e.spec.ts.",
+        "Component counterparts are tests/components/CustomTooltip.test.tsx T2/T3 and T15; these tests are unchanged and pass.",
+        "OpenSpec behavior scenarios are R2c in openspec/specs/nextjstest/spec.md around lines 1113-1122, and R20c around lines 1563-1569. They require mobile safe-area behavior and internal scrolling/reachable close control, not checking literal CSS spelling.",
+        "No production code, public contract, or OpenSpec requirement changed. Existing dirty root work was preserved. No credentials or secrets are included. No tests/build are to be run for this review."
+      ],
+      "outputRequirement": "Return exactly one selected choice, confidence, and complete probability distribution. valid_as_defined means the supplied diff, behavioral requirement, retained browser checks, component coverage, and verification evidence support acceptance. For any reason category, provide a case-specific finding, affected location/requirement, observed evidence, and a concrete proposed fix or exact needed evidence. If indeterminate, identify missing evidence. Do not invent evidence or infer severity from the reason category."
+    },
+    "questions": {
+      "implementation": {
+        "type": "choice",
+        "instructions": "Does the combined P42-243/P42-249 checkpoint remove only redundant static/literal assertions while maintaining coverage of total rendering, safe-area behavior, and actual mobile browser interactions/layout? Return the complete probability distribution over these mutually exclusive choices.",
+        "criteria": {
+          "valid_as_defined": "The supplied implementation and evidence support acceptance.",
+          "requirements_mismatch": "The change conflicts with the intended behavior; identify the requirement and correction.",
+          "missing_prerequisites_info": "A prerequisite is missing; identify exact information needed.",
+          "incomplete_implementation_info": "Information is insufficient; identify exact missing details/evidence.",
+          "implementation_issue": "The change has an issue; identify location, evidence, and concrete fix.",
+          "scope_violation": "The change exceeds or falls outside scope; identify boundary and adjustment.",
+          "other": "A material concern does not fit; provide location, evidence, and fix or needed evidence.",
+          "indeterminate": "The supplied context cannot support judgment; identify missing context if possible."
+        }
+      }
+    }
+  },
+  "questionIds": [
+    "implementation"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "implementation": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.98,
+        "probabilities": {
+          "missing_prerequisites_info": 0,
+          "other": 0,
+          "requirements_mismatch": 0,
+          "indeterminate": 0,
+          "valid_as_defined": 1,
+          "scope_violation": 0,
+          "implementation_issue": 0,
+          "incomplete_implementation_info": 0
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.98,
+    "probabilities": {
+      "missing_prerequisites_info": 0,
+      "other": 0,
+      "requirements_mismatch": 0,
+      "indeterminate": 0,
+      "valid_as_defined": 1,
+      "scope_violation": 0,
+      "implementation_issue": 0,
+      "incomplete_implementation_info": 0
+    },
+    "passProbability": 1,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

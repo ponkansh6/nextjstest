@@ -1,0 +1,104 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-25T05:33:11.202Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "model": "jev-latest",
+    "state": {
+      "evaluationScope": "implementation_checkpoint_validity",
+      "background": "Review the corrected current implementation checkpoint for P42-189/P42-190. In the dark-mode/text-zoom mobile E2E test, the previous `tooltip.locator(\":scope > div\").nth(1)` could target the total row when showTotal is enabled. The corrected code defines one locator `categoryRow = tooltip.locator('[data-tooltip-row=\"true\"]').first()` and uses it for both P42-189 visibility and P42-190 nonempty text. P42-190 replaces a weak regex accepting any of three hard-coded labels with a non-whitespace check on the actual selected chart's first category row. Do not claim that unit tests establish selected-chart-to-category mapping: the ledger explicitly says they cover generic payload content only. Browser test still checks tooltip visible after a real mobile tap, close button visible, the actual category row visible/nonempty, a digit is present, and close hides the tooltip; the other P42-191 numeric/dark-mode/zoom/tap/close behavior remains. The false-target locator attempt was audited and corrected; only the final corrected test run is evidence. Ledger rows P42-189 and P42-190 map the exact source assertions and this boundary. No production/OpenSpec changes.",
+      "acceptanceCriteria": [
+        "Both P42-189 and P42-190 target the same actual category row identified by `[data-tooltip-row=\"true\"]`, not a generic child div that could select the total row.",
+        "P42-189 checks that the category row is browser-visible after actual mobile tap and tooltip visibility.",
+        "P42-190 checks that the selected chart's actual category row has nonempty text without pretending a generic regex proves the exact chart/category mapping.",
+        "The browser assertions for tooltip visibility, close button, numeric digit, close click/hide, theme and text zoom remain. Unit tests may support generic tooltip row rendering but are not treated as proof of selected-chart mapping.",
+        "The ledger mapping agrees with the corrected source lines: 176 visibility (P42-189), 177 nonempty text (P42-190), 178 digit (P42-191), 180 close/hide (P42-192).",
+        "Final verification passes: CustomTooltip Vitest 32/32, exit 0; corrected mobile-pixel acceptance E2E 6 passed, 0 failed/skipped, exit 0. The earlier false-target run is explicitly superseded and excluded as passing evidence."
+      ],
+      "verification": [
+        "pnpm exec vitest run tests/components/CustomTooltip.test.tsx: exit 0, 32 passed.",
+        "pnpm test:e2e --project=mobile-pixel tests/e2e/consumption-mobile-acceptance.e2e.spec.ts: corrected final locator run exit 0, 6 passed, 0 failed, 0 skipped.",
+        "Independent audit confirmed the earlier generic-child locator could select the total row and that final shared `categoryRow` locator selects actual tooltip category rows.",
+        "No test/build run as part of this review."
+      ],
+      "knownConstraints": [
+        "Current E2E source: tests/e2e/consumption-mobile-acceptance.e2e.spec.ts dark-mode/text-zoom case around lines 163-184.",
+        "Current source callsite mappings: shared_plan/42-assertion-callsite-ledger.md P42-189 and P42-190. Checkpoint note: shared_plan/42-happy-dom-e2e-migration-plan.md entry near line 138.",
+        "CustomTooltip.test.tsx 32/32 is component rendering evidence only; it does not establish which category the selected live chart produces. No product/spec text changed. No credentials/secrets included."
+      ],
+      "outputRequirement": "Return exactly one selected choice with confidence and a complete probability distribution. valid_as_defined means the corrected implementation, mapping, and verification satisfy the criteria. For any non-pass, provide a case-specific finding, affected location/requirement, observed evidence, and concrete fix or exact needed evidence. State remaining uncertainty where relevant; do not invent evidence or overstate unit coverage."
+    },
+    "questions": {
+      "implementation": {
+        "type": "choice",
+        "instructions": "Do the corrected P42-189/P42-190 browser assertions verify visibility and nonempty text on an actual category row while preserving the relevant mobile interaction checks? Return full probabilities across these mutually exclusive choices.",
+        "criteria": {
+          "valid_as_defined": "The corrected implementation and evidence support acceptance.",
+          "requirements_mismatch": "The change conflicts with intended behavior; identify requirement and correction.",
+          "missing_prerequisites_info": "A prerequisite is missing; identify exact information needed.",
+          "incomplete_implementation_info": "Information is insufficient; identify exact missing evidence/details.",
+          "implementation_issue": "A defect exists; identify affected code, observed evidence, and concrete fix.",
+          "scope_violation": "The change exceeds scope; identify the boundary and adjustment.",
+          "other": "A material concern does not fit; provide affected location, evidence, and remedy/needed evidence.",
+          "indeterminate": "The supplied context cannot support judgment; identify missing context."
+        }
+      }
+    }
+  },
+  "questionIds": [
+    "implementation"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "implementation": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.96,
+        "probabilities": {
+          "other": 0,
+          "requirements_mismatch": 0,
+          "valid_as_defined": 0.97,
+          "implementation_issue": 0,
+          "scope_violation": 0,
+          "missing_prerequisites_info": 0.01,
+          "indeterminate": 0,
+          "incomplete_implementation_info": 0.02
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.96,
+    "probabilities": {
+      "other": 0,
+      "requirements_mismatch": 0,
+      "valid_as_defined": 0.97,
+      "implementation_issue": 0,
+      "scope_violation": 0,
+      "missing_prerequisites_info": 0.01,
+      "indeterminate": 0,
+      "incomplete_implementation_info": 0.02
+    },
+    "passProbability": 0.97,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

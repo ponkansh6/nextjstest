@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import React from "react";
 import { SpendingBarChart } from "@/app/components/SpendingBarChart";
 import { SUPPORT_SERIES_KEY_NOMINAL } from "@/lib/chartConstants";
@@ -391,6 +392,138 @@ describe("SpendingBarChart component legendMode tests", () => {
     expect(onToggle).toHaveBeenCalledWith("食料");
   });
 
+  it("P42-011/P42-012: Space toggles the focused expense legend button state", async () => {
+    const user = userEvent.setup();
+    const onToggle = vi.fn();
+
+    const ControlledChart = () => {
+      const [hiddenKeys, setHiddenKeys] = React.useState<string[]>([]);
+      const handleToggle = (key: string) => {
+        onToggle(key);
+        setHiddenKeys((current) =>
+          current.includes(key) ? current.filter((item) => item !== key) : [...current, key],
+        );
+      };
+
+      return (
+        <SpendingBarChart
+          title="実質消費"
+          data={mockData}
+          keys={mockKeys}
+          colors={mockColors}
+          hiddenKeys={hiddenKeys}
+          onToggle={handleToggle}
+          chartColors={mockChartColors}
+          tooltipProps={mockTooltipProps}
+          hiddenQuarters={[]}
+          onToggleQuarter={vi.fn()}
+          onReset={vi.fn()}
+        />
+      );
+    };
+
+    render(<ControlledChart />);
+
+    const foodButton = screen.getByRole("button", { name: /食料/ });
+    expect(foodButton.getAttribute("aria-pressed")).toBe("true");
+    foodButton.focus();
+    expect(document.activeElement).toBe(foodButton);
+
+    await user.keyboard(" ");
+
+    expect(foodButton.getAttribute("aria-pressed")).toBe("false");
+    expect(onToggle).toHaveBeenCalledWith("食料");
+  });
+
+  it("P42-517: clicking a category button toggles aria-pressed and reports its key each time", async () => {
+    const user = userEvent.setup();
+    const onToggle = vi.fn();
+
+    const ControlledChart = () => {
+      const [hiddenKeys, setHiddenKeys] = React.useState<string[]>([]);
+      const handleToggle = (key: string) => {
+        onToggle(key);
+        setHiddenKeys((current) =>
+          current.includes(key) ? current.filter((item) => item !== key) : [...current, key],
+        );
+      };
+
+      return (
+        <SpendingBarChart
+          title="実質消費"
+          data={mockData}
+          keys={mockKeys}
+          colors={mockColors}
+          hiddenKeys={hiddenKeys}
+          onToggle={handleToggle}
+          chartColors={mockChartColors}
+          tooltipProps={mockTooltipProps}
+          hiddenQuarters={[]}
+          onToggleQuarter={vi.fn()}
+          onReset={vi.fn()}
+        />
+      );
+    };
+
+    render(<ControlledChart />);
+
+    const foodButton = screen.getByRole("button", { name: /食料/ });
+    expect(foodButton.getAttribute("aria-pressed")).toBe("true");
+    await user.click(foodButton);
+    expect(foodButton.getAttribute("aria-pressed")).toBe("false");
+    expect(onToggle).toHaveBeenNthCalledWith(1, mockKeys[0]);
+
+    await user.click(foodButton);
+    expect(foodButton.getAttribute("aria-pressed")).toBe("true");
+    expect(onToggle).toHaveBeenNthCalledWith(2, mockKeys[0]);
+  });
+
+  it("P42 quarter toggle: controlled quarter buttons reflect each callback state", async () => {
+    const user = userEvent.setup();
+    const onToggleQuarter = vi.fn();
+
+    const ControlledChart = () => {
+      const [hiddenQuarters, setHiddenQuarters] = React.useState<number[]>([]);
+      const handleToggleQuarter = (quarter: number) => {
+        onToggleQuarter(quarter);
+        setHiddenQuarters((current) =>
+          current.includes(quarter)
+            ? current.filter((item) => item !== quarter)
+            : [...current, quarter],
+        );
+      };
+
+      return (
+        <SpendingBarChart
+          title="実質消費"
+          data={mockData}
+          keys={mockKeys}
+          colors={mockColors}
+          hiddenKeys={[]}
+          onToggle={vi.fn()}
+          chartColors={mockChartColors}
+          tooltipProps={mockTooltipProps}
+          hiddenQuarters={hiddenQuarters}
+          onToggleQuarter={handleToggleQuarter}
+          onReset={vi.fn()}
+        />
+      );
+    };
+
+    render(<ControlledChart />);
+
+    for (const quarter of [1, 2, 3, 4]) {
+      const button = screen.getByRole("button", { name: `Q${quarter}` });
+      expect(button.getAttribute("aria-pressed")).toBe("true");
+      await user.click(button);
+      expect(button.getAttribute("aria-pressed")).toBe("false");
+      await user.click(button);
+      expect(button.getAttribute("aria-pressed")).toBe("true");
+    }
+
+    expect(onToggleQuarter.mock.calls).toEqual([[1], [1], [2], [2], [3], [3], [4], [4]]);
+  });
+
   // U4: legendMode="collapsible" の <summary> に費目・四半期の変更方法と状態要約が出る
   it("U4: summary element describes category and quarter selection state", () => {
     const { container } = render(
@@ -413,6 +546,18 @@ describe("SpendingBarChart component legendMode tests", () => {
     const summary = container.querySelector("summary");
     expect(summary).not.toBeNull();
     expect(summary?.textContent).toBe("費目・四半期を変更（費目 2/2・四半期 4/4）・全選択");
+  });
+
+  it("P42-490: summary describes filtered category and quarter selection state", () => {
+    const { container } = renderChart({
+      keys: mockKeys,
+      hiddenKeys: ["食料"],
+      hiddenQuarters: [2],
+      legendMode: "collapsible",
+    });
+
+    const summary = container.querySelector("summary");
+    expect(summary?.textContent).toBe("費目・四半期を変更（費目 1/2・四半期 3/4）・絞り込み中");
   });
 
   // U5: <summary> にトナルピルヘッダー用の className が適用され、矢印SVGが含まれる

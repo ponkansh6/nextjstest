@@ -1,0 +1,105 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-25T04:59:01.285Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "model": "jev-latest",
+    "state": {
+      "evaluationScope": "implementation_checkpoint_validity",
+      "background": "Review the combined P42-244/P42-245 implementation checkpoint in Plan42. In tests/e2e/consumption-mobile-readability.e2e.spec.ts, P42-244 replaces a loose payload-row lower-bound check with an exact browser assertion: collect only `[data-tooltip-row=\"true\"]` rows, require the expected count, and compare the sorted `data-tooltip-key` multiset against keys for the active chart. The nominal chart uses QUARTERLY_PLAN40_V2_NOMINAL_KEYS (21), the real chart QUARTERLY_PUBLIC_REAL_KEYS (11). P42-245 removes the generic text assertion against the collapsed-remainder phrase `他 N 件`; existing CustomTooltip showAllPayload unit coverage already asserts all supplied mobile values and no collapsed remainder. In the browser the new exact active key set/count directly detects missing, extra, or duplicate keys for both real chart variants. The tooltip remains visible after real taps, with internal scrolling, computed safe-area padding, viewport geometry, and close/tap behavior tested. Ledger rows P42-244/P42-245 are updated. OpenSpec R20e requires every applicable category value on mobile and desktop when showAllPayload is true; no spec text changed.",
+      "acceptanceCriteria": [
+        "P42-244 browser verification checks the complete active chart payload key multiset and count, using the nominal and real public key arrays for the corresponding chart. It detects missing, extra, or duplicate category rows; no arbitrary order requirement is introduced.",
+        "The E2E still exercises actual mobile browser chart taps and visible tooltip rendering, and keeps scrolling, safe-area padding, viewport bounds, and close/tap behavior checks.",
+        "P42-245's removed generic collapsed-remainder text assertion remains covered at component level by CustomTooltip showAllPayload mobile test: every payload item renders and the collapsed-remainder label is absent. Browser-level full payload is strengthened by P42-244 exact keys/count for both active charts.",
+        "The changed implementation satisfies OpenSpec R20e: when showAllPayload=true, every applicable mobile category value is rendered; the E2E now verifies the actual nominal and real chart category sets. No requirement text change is needed.",
+        "Ledger entries accurately describe the new split between component rendering coverage and browser series-key parity.",
+        "Current verification passes: CustomTooltip Vitest 32/32; final mobile-pixel E2E file 9/9; build from the immediately preceding checkpoint passed and application source has not changed since. Earlier E2E attempts failed on an incorrect expected count (10 versus 21) and then order comparison; expected count now comes from the active public key array and the comparison sorts sets because order is not required. The final run passed."
+      ],
+      "verification": [
+        "pnpm exec vitest run tests/components/CustomTooltip.test.tsx: exit 0, 32/32 passed.",
+        "pnpm test:e2e --project=mobile-pixel tests/e2e/consumption-mobile-readability.e2e.spec.ts: final attempt exit 0, 9/9 passed.",
+        "Build from preceding checkpoint: exit 0; application source unchanged during this slice.",
+        "Final E2E diff uses expectedKeys.length and sorted key equality; P42-245 generic text check is removed. Earlier failed verification attempts were corrected; they are disclosed rather than counted as final success."
+      ],
+      "knownConstraints": [
+        "Source diff: tests/e2e/consumption-mobile-readability.e2e.spec.ts. Ledger: shared_plan/42-assertion-callsite-ledger.md rows P42-244 and P42-245.",
+        "Expected key arrays are exported from src/lib/quarterlyPublicProjection.ts. Actual app source was unchanged in this slice.",
+        "Component counterpart is tests/components/CustomTooltip.test.tsx showAllPayload mobile test. Spec scenario R20e is in openspec/specs/nextjstest/spec.md near lines 1571-1575.",
+        "No credentials/secrets are included. Existing dirty root work was preserved. Do not edit code or rerun tests as part of this review."
+      ],
+      "outputRequirement": "Return exactly one choice with confidence and a complete probability distribution. valid_as_defined means the supplied final diff and evidence satisfy the criteria. For any non-pass reason include a case-specific finding, affected location or requirement, observed evidence, and concrete proposed fix or exact evidence needed; state remaining uncertainty if any. Do not invent evidence or infer severity from the category."
+    },
+    "questions": {
+      "implementation": {
+        "type": "choice",
+        "instructions": "Does P42-244/P42-245 preserve complete applicable payload coverage and mobile browser integration while replacing the generic collapsed-text check with exact chart-key parity? Return full probability distribution over these mutually exclusive choices.",
+        "criteria": {
+          "valid_as_defined": "The supplied implementation and verification support acceptance.",
+          "requirements_mismatch": "The change conflicts with intended behavior; identify the requirement and correction.",
+          "missing_prerequisites_info": "A prerequisite is missing; identify exact information needed.",
+          "incomplete_implementation_info": "Information is insufficient; identify exact missing evidence/details.",
+          "implementation_issue": "The change has a defect; identify location, evidence, and concrete fix.",
+          "scope_violation": "The change exceeds scope; identify boundary and adjustment.",
+          "other": "A material concern does not fit; provide location, evidence, and fix or needed evidence.",
+          "indeterminate": "The supplied context cannot support judgment; identify missing context if possible."
+        }
+      }
+    }
+  },
+  "questionIds": [
+    "implementation"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "implementation": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.98,
+        "probabilities": {
+          "incomplete_implementation_info": 0.01,
+          "missing_prerequisites_info": 0,
+          "valid_as_defined": 0.99,
+          "requirements_mismatch": 0,
+          "other": 0,
+          "scope_violation": 0,
+          "indeterminate": 0,
+          "implementation_issue": 0
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.98,
+    "probabilities": {
+      "incomplete_implementation_info": 0.01,
+      "missing_prerequisites_info": 0,
+      "valid_as_defined": 0.99,
+      "requirements_mismatch": 0,
+      "other": 0,
+      "scope_violation": 0,
+      "indeterminate": 0,
+      "implementation_issue": 0
+    },
+    "passProbability": 0.99,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

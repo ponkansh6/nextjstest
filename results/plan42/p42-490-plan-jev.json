@@ -1,0 +1,107 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-25T07:14:45.955Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "state": {
+      "evaluationScope": "plan_validity",
+      "background": "Review only the proposed P42-490 plan. Current A1 in tests/e2e/real-consumption.e2e.spec.ts has summary.toContainText(/費目・四半期を変更（費目 \\d+\\/\\d+・四半期 \\d+\\/4）・(全選択|絞り込み中)/). This state-derived content/count contract is proposed for one controlled test in tests/components/SpendingBarChart.test.tsx using the actual component with hiddenKeys=['食料'], hiddenQuarters=[2], and exact expected text `費目・四半期を変更（費目 1/2・四半期 3/4）・絞り込み中`; optionally clear filters and assert all-selected restoration. Existing U4 already pins default all-selected `費目 2/2・四半期 4/4・全選択`, so it is complementary but not filtered-state coverage. SpendingBarChart computes selectedLegendCount from legendKeys excluding hiddenKeys, selectedQuarterCount from quarters 1..4 excluding hiddenQuarters, and filtering state from either count being below total. The move tests this supplied-props component contract, not route wiring. In E2E replace only the content matcher with `expect(summary).toBeVisible()` after section visibility, adding real-route summary visibility evidence (the current matcher is not a visibility assertion). Keep P42-491/492 hidden legend visibility/count conditions and all other user interactions. Three plan artifacts mark plan pending, implementation not started, and agree on boundary. No tests have been run for P42-490.",
+      "acceptanceCriteria": [
+        "The state-derived selected category/quarter counts and filtered status are covered by a real SpendingBarChart controlled-props test.",
+        "The existing default all-selected U4 is not mistaken for filtered-state coverage.",
+        "E2E retains summary visibility on the real route after removing state-derived text matching.",
+        "P42-491/492 closed details legend DOM/visibility/count and all route interactions remain browser-owned.",
+        "The plan, callsite ledger and responsibility matrix align and disclose that component props do not prove route wiring."
+      ],
+      "verification": [
+        "Main plan checkpoint around line 144 and A1 plan row describe exact controlled test values and retain route visibility and P42-491/492.",
+        "Callsite ledger P42-490 identifies exact A1 matcher, U4 complementary default state, filtered expected string, route visibility replacement and scope boundary.",
+        "Responsibility matrix P42-490 records the same proposed unit test and retained browser evidence.",
+        "Source SpendingBarChart.tsx derives selectedLegendCount, selectedQuarterCount, and hasActiveLegendFilter from controlled props.",
+        "Existing U4 in SpendingBarChart.test.tsx checks only all-selected 2/2 and 4/4 state.",
+        "OpenSpec scenario states closed summary is one line and reports selected expense item/quarter counts and filter state.",
+        "A1 currently uses toContainText for summary content; replacing it with toBeVisible will add route-level visibility coverage, while section visibility already exists above it."
+      ],
+      "knownConstraints": [
+        "This is plan review only; no unit implementation or tests for P42-490 exist yet.",
+        "The proposed unit test receives controlled props and must not be described as proof of real route wiring.",
+        "Do not move closed-state legend visibility/count conditions or actual interactions.",
+        "Do not include credentials or authentication data."
+      ],
+      "outputRequirement": "Return exactly one selected choice with confidence and probabilities for every choice. valid_as_defined means this proposed migration meets the criteria. For any non-pass, state a specific finding, affected requirement/location, observed evidence, and a concrete proposed fix or exact neededEvidence. Do not infer severity or invent details."
+    },
+    "questions": {
+      "implementation": {
+        "type": "choice",
+        "instructions": "Is the proposed P42-490 migration plan valid as defined? Assess the unit/E2E responsibility split, summary visibility preservation and documentation alignment. Return the complete probability distribution.",
+        "criteria": {
+          "valid_as_defined": "The unit test equivalently covers filtered summary content, E2E preserves real-route visibility and closed-state browser checks, and docs align.",
+          "requirements_mismatch": "The proposed coverage conflicts with an explicit requirement; identify it and correction.",
+          "missing_prerequisites_info": "An exact prerequisite needed to decide/implement the plan is absent; identify it.",
+          "incomplete_implementation_info": "Evidence is insufficient to assess the coverage split; state exactly what is needed.",
+          "implementation_issue": "A concrete testing or coverage issue exists; identify location, evidence and smallest fix.",
+          "scope_violation": "The plan removes browser-owned behavior beyond P42-490; identify scope and correction.",
+          "other": "A material issue does not fit the categories; provide finding and remedy or evidence needed.",
+          "indeterminate": "The supplied context cannot support a judgment; identify remaining uncertainty."
+        }
+      }
+    },
+    "model": "jev-latest"
+  },
+  "questionIds": [
+    "implementation"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "implementation": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.83,
+        "probabilities": {
+          "implementation_issue": 0.08,
+          "other": 0.01,
+          "requirements_mismatch": 0.01,
+          "valid_as_defined": 0.86,
+          "scope_violation": 0,
+          "indeterminate": 0,
+          "missing_prerequisites_info": 0.02,
+          "incomplete_implementation_info": 0.02
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.83,
+    "probabilities": {
+      "implementation_issue": 0.08,
+      "other": 0.01,
+      "requirements_mismatch": 0.01,
+      "valid_as_defined": 0.86,
+      "scope_violation": 0,
+      "indeterminate": 0,
+      "missing_prerequisites_info": 0.02,
+      "incomplete_implementation_info": 0.02
+    },
+    "passProbability": 0.86,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

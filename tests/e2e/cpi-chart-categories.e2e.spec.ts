@@ -1,39 +1,20 @@
 import { test, expect } from "./fixtures";
 
 /**
- * E2E テスト: CPI チャートに全費目が表示されている
+ * E2E テスト: CPI セクションと実際の積み上げ Area plot が表示される
  *
- * 目的: CPI_CATEGORIES の全12費目（含む被服履物・交通自動車等）がグラフ凡例に表示されることを検証。
- * 特に CPI_CATEGORIES の順序変更後に、全費目が正しく描画されていることを確認する。
+ * 12費目の表示名と data key の対応は tests/components/all.test.tsx で検証する。
  */
 
-test("物価指数チャート - 全費目が凡例に表示される", async ({ page }) => {
+test("物価指数チャート - セクションとプロットが表示される", async ({ page }) => {
   await page.goto("/");
 
-  // section-stacked セクション内の凡例を確認
   const stackedSection = page.locator("#section-stacked");
-
-  // 期待される全費目
-  const expectedCategories = [
-    "住居",
-    "家具・家事用品",
-    "被服履物",
-    "保健医療",
-    "教育",
-    "光熱水道",
-    "教養娯楽",
-    "交通自動車等",
-    "通信",
-    "外食以外食料",
-    "外食",
-    "諸雑費",
-  ];
-
-  // 各費目がセクション内に存在するか確認
-  for (const category of expectedCategories) {
-    const element = stackedSection.getByRole("button", { name: category, exact: true });
-    await expect(element).toBeVisible();
-  }
+  await expect(stackedSection).toBeVisible();
+  const areaPath = stackedSection
+    .locator(".recharts-wrapper path.recharts-area-area:visible")
+    .first();
+  await expect(areaPath).toBeVisible();
 });
 
 test("費目凡例をクリックして系列を絞ってもスクロール位置が維持される", async ({ page }) => {
@@ -116,10 +97,9 @@ test("CPI tooltipは12費目と合計を同じroot/row契約で表示する", as
   expect(contract.total).toBe(true);
   expect(contract.rows.every((row) => row.key && row.order !== null && row.text)).toBe(true);
 
-  // 欠損値が含まれる実データ点では CustomTooltip の「—」表示も証跡化する。
-  // 欠損のない点では、12行をDOMへ残す契約（row数とkey/order）を検証する。
-  const missingRows = contract.rows.filter((row) => row.text?.includes("—"));
-  expect(missingRows.length).toBeGreaterThanOrEqual(0);
+  // 欠損値の「—」表示（inactive/missing payload rows）は
+  // tests/components/CustomTooltip.test.tsx で検証する。このE2Eでは実際のhoverと
+  // 12行のcategory/key/order契約、hidden後の再描画を検証する。
 
   // 初期tooltipのhover stateを持ち込まないため、hidden検証はfresh pageで行う。
   await page.goto("/");

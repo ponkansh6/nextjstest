@@ -13,28 +13,41 @@ const payload = [{ name: "総合", value: 112.5, color: "#1d4ed8" }];
 
 describe("CustomTooltip", () => {
   it("renders all six registered earnings series without an omitted-payload summary", () => {
-    const earnings = [
+    const expectedLabels = [
       "所定内給与",
       "所定外給与",
       "特別給与",
       "時間当たり給与",
       "15歳以上国民当たり給与",
-      "CPI総合(参考)",
+      "物価指数総合(参考)",
     ];
+    const seriesMeta = EARNINGS_SERIES_REGISTRY.map(({ key, tooltipLabel, order }) => ({
+      key,
+      label: tooltipLabel ?? key,
+      order,
+    }));
     render(
       <CustomTooltip
         active
         isMobile={false}
         isTouch={false}
         label="2024年1月"
-        payload={earnings.map((name, value) => ({ name, dataKey: name, value }))}
-        seriesMeta={earnings.map((key, order) => ({ key, label: key, order }))}
+        payload={EARNINGS_SERIES_REGISTRY.map(({ key }, value) => ({
+          name: key,
+          dataKey: key,
+          value,
+        }))}
+        seriesMeta={seriesMeta}
         showAllPayload
         tooltipBg="#000"
         tooltipText="#fff"
       />,
     );
-    for (const name of earnings) expect(screen.getByText(name)).toBeDefined();
+    const renderedLabels = [...document.querySelectorAll('[data-tooltip-row="true"]')].map((row) =>
+      row.getAttribute("data-tooltip-label"),
+    );
+    expect(renderedLabels).toEqual(expectedLabels);
+    for (const label of expectedLabels) expect(screen.getByText(label)).toBeDefined();
     expect(screen.queryByText(/他 \d+ 件/)).toBeNull();
   });
 
@@ -205,6 +218,82 @@ describe("CustomTooltip", () => {
     expect(screen.getAllByText("—")).toHaveLength(3);
     expect(
       within(screen.getByText("所定内給与").parentElement as HTMLElement).getByText("0.00"),
+    ).toBeDefined();
+  });
+
+  it("omits a hidden earnings row and recalculates the total from visible included rows", () => {
+    const hiddenKey = EARNINGS_TOTAL_KEYS[0];
+    const values = new Map<string, number>([
+      [EARNINGS_TOTAL_KEYS[0], 100],
+      [EARNINGS_TOTAL_KEYS[1], 2],
+      [EARNINGS_TOTAL_KEYS[2], 3],
+      ["時間当たり給与", 1_000],
+    ]);
+    const payload = [...values].map(([dataKey, value]) => ({ dataKey, name: "raw", value }));
+    const seriesMeta = [...values.keys()].map((key, order) => ({ key, label: key, order }));
+    const renderTooltip = (allowedKeys: string[]) => (
+      <CustomTooltip
+        active
+        isMobile={false}
+        isTouch={false}
+        label="2025年1月"
+        payload={payload}
+        seriesMeta={seriesMeta}
+        allowedKeys={allowedKeys}
+        showTotal
+        totalLabel="給与区分合計（所定内＋所定外＋特別）"
+        totalIncludedKeys={EARNINGS_TOTAL_KEYS}
+        showAllPayload
+        tooltipBg="#000"
+        tooltipText="#fff"
+      />
+    );
+    const view = render(renderTooltip([...values.keys()]));
+    expect(screen.getByText(hiddenKey)).toBeDefined();
+    view.rerender(renderTooltip([...values.keys()].filter((key) => key !== hiddenKey)));
+
+    expect(screen.queryByText(hiddenKey)).toBeNull();
+    expect(
+      within(
+        screen.getByText("給与区分合計（所定内＋所定外＋特別）").parentElement as HTMLElement,
+      ).getByText("5.00"),
+    ).toBeDefined();
+  });
+
+  it("recalculates the spending total when allowed keys hide a series", () => {
+    const series = [
+      { key: "食料（名目）", label: "食料", value: 100 },
+      { key: "住居（名目）", label: "住居", value: 50 },
+      { key: "光熱・水道（名目）", label: "光熱・水道", value: 25 },
+    ];
+    const keys = series.map(({ key }) => key);
+    const renderTooltip = (allowedKeys: string[]) => (
+      <CustomTooltip
+        active
+        isMobile={false}
+        isTouch={false}
+        label="2024Q1"
+        payload={series.map(({ key, label, value }) => ({ dataKey: key, name: label, value }))}
+        seriesMeta={series.map(({ key, label }, order) => ({ key, label, order }))}
+        allowedKeys={allowedKeys}
+        showTotal
+        showAllPayload
+        tooltipBg="#000"
+        tooltipText="#fff"
+      />
+    );
+
+    const view = render(renderTooltip(keys));
+    expect(
+      within(screen.getByText("合計").parentElement as HTMLElement).getByText("175.00"),
+    ).toBeDefined();
+    expect(screen.getByText("食料")).toBeDefined();
+
+    view.rerender(renderTooltip(keys.filter((key) => key !== "食料（名目）")));
+
+    expect(screen.queryByText("食料")).toBeNull();
+    expect(
+      within(screen.getByText("合計").parentElement as HTMLElement).getByText("75.00"),
     ).toBeDefined();
   });
 

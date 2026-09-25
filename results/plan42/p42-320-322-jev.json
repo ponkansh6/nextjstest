@@ -1,0 +1,104 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-25T06:21:07.649Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "state": {
+      "evaluationScope": "plan_validity",
+      "background": "Review the Plan42 decision for P42-320..322. It retains the existing Playwright dark palette case as browser-owned, with no unit destination: P42-320 confirms the actual route's html[data-theme=dark] after setting localStorage before navigation; P42-321 checks all 12 CPI legend buttons are visible; P42-322 compares each rendered legend swatch's computed RGB with its matching --series-N value parsed from the :root[data-theme=dark] block in globals.css. The test iterates CPI_CATEGORIES and stackedColors from application chartConstants. Existing tests/unit/globals-css-palette.test.ts validates that source CSS scopes contain the validated light/dark palette values and mapping; it cannot prove real-route theme application, loaded stylesheet/cascade, or rendered computed swatches. Keep explicit residual uncertainty: these legend swatches do not directly prove StackedAreaChart SVG area fills follow the dark theme. No source or test changes are proposed; this is an ownership decision only.",
+      "acceptanceCriteria": [
+        "The retained browser assertions cover actual theme application and rendered legend state/color in the real route.",
+        "Existing palette unit tests are treated as complementary source palette validation, not equivalent browser evidence.",
+        "The residual uncertainty about SVG area fill theme tracking remains explicit rather than overstating coverage.",
+        "The plan, callsite ledger, and responsibility matrix align on P42-320..322 browser ownership and no unit destination."
+      ],
+      "verification": [
+        "Plan shared_plan/42-happy-dom-e2e-migration-plan.md identifies the dark case as browser-owned at file inventory, checkpoint, appendix row, and residual-risk statement.",
+        "Ledger shared_plan/42-assertion-callsite-ledger.md rows P42-320, P42-321, and P42-322 enumerate actual theme attribute, 12 legend visibility checks, and computed RGB checks against dark CSS values.",
+        "Responsibility matrix shared_plan/42-assertion-case-responsibility-matrix.md says dark test applies theme on real route and compares all 12 swatches; it explicitly preserves residual SVG-fill uncertainty.",
+        "The exact E2E sets localStorage theme=dark before page.goto('/'), asserts html[data-theme=dark], parses the dark CSS block, iterates CPI_CATEGORIES, requires each legend visible, and compares getComputedStyle(span).backgroundColor against parsed dark RGB.",
+        "OpenSpec Scenario R14b requires --series-1..12 variables from globals.css and StackedAreaChart colors to adapt via var(--series-N), plus palette scope consistency.",
+        "tests/unit/globals-css-palette.test.ts validates source CSS light/media-dark/dataThemeDark values against validated palettes; it does not render the app or inspect computed swatches or SVG fills."
+      ],
+      "knownConstraints": [
+        "Do not claim that the swatch test proves StackedAreaChart SVG fill theme behavior; that remains an explicit residual uncertainty.",
+        "P42-320..322 are limited to dark-theme application, legend visibility, and legend swatch computed colors.",
+        "No new unit test or source/test edits are proposed. Do not invent test-run results."
+      ],
+      "outputRequirement": "Return exactly one selected choice with confidence and probabilities for every choice in this question. valid_as_defined means this plan decision meets the criteria. Select one mutually exclusive reason category for a material concern, or indeterminate if evidence is insufficient. Do not infer severity from category. For any reason choice, provide a case-specific finding, affected location or requirement, observed evidence, and concrete proposed fix or exact additional evidence needed. Do not invent evidence."
+    },
+    "questions": {
+      "implementation": {
+        "type": "choice",
+        "instructions": "Is the P42-320..322 ownership decision valid as defined, based on the supplied acceptance requirements, test behavior, unit-test boundary, and explicit residual uncertainty? Return a probability distribution across all choices.",
+        "criteria": {
+          "valid_as_defined": "Evidence supports keeping dark theme application, all 12 visible legends, and computed swatch palette comparison in browser E2E, while documenting SVG-fill residual uncertainty.",
+          "requirements_mismatch": "The proposed ownership conflicts with an explicit requirement; identify the conflict and correction.",
+          "missing_prerequisites_info": "A prerequisite or requirement needed to decide ownership is missing; specify exactly what is needed.",
+          "incomplete_implementation_info": "Evidence is insufficient to assess browser/unit coverage; identify the exact missing evidence.",
+          "implementation_issue": "A concrete coverage or ownership issue exists; identify location, evidence, and fix.",
+          "scope_violation": "The decision exceeds or misassigns scope; identify the boundary and adjustment.",
+          "other": "A material concern does not fit these categories; give exact finding and remedy or evidence needed.",
+          "indeterminate": "The context cannot support a judgment; identify missing context if possible."
+        }
+      }
+    },
+    "model": "jev-latest"
+  },
+  "questionIds": [
+    "implementation"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "implementation": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.99,
+        "probabilities": {
+          "missing_prerequisites_info": 0,
+          "requirements_mismatch": 0,
+          "valid_as_defined": 1,
+          "other": 0,
+          "incomplete_implementation_info": 0,
+          "scope_violation": 0,
+          "indeterminate": 0,
+          "implementation_issue": 0
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.99,
+    "probabilities": {
+      "missing_prerequisites_info": 0,
+      "requirements_mismatch": 0,
+      "valid_as_defined": 1,
+      "other": 0,
+      "incomplete_implementation_info": 0,
+      "scope_violation": 0,
+      "indeterminate": 0,
+      "implementation_issue": 0
+    },
+    "passProbability": 1,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

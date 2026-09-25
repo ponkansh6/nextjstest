@@ -1,0 +1,107 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-25T06:48:24.554Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "state": {
+      "evaluationScope": "implementation_checkpoint_validity",
+      "background": "Fresh final P42-351 implementation checkpoint review. Actual LazyMount test in tests/components/LazyMount.test.tsx defines a no-callback/no-intersection IntersectionObserver mock, puts wrapper geometry beyond viewport+200, verifies __MOUNT_ALL__=true immediately renders child marker, verifies false control remains unmounted, checks observer/cleanup, and restores flag/observer/geometry. E2E test tests/e2e/mobile-ux.e2e.spec.ts has removed only the P42-351 #section-new-graph count assertion. P42-349 initial-unmounted count assertion remains at line 198; P42-350 actual scroll mount remains at line 208. Three docs now record migration, proof, exact prior artifacts, and retained browser boundaries. R12b requires every LazyMount to mount immediately when __MOUNT_ALL__ is set before scripts run. Final verification: `pnpm exec vitest run tests/components/LazyMount.test.tsx` exit 0, 2/2; `pnpm test:e2e --project=mobile-pixel tests/e2e/mobile-ux.e2e.spec.ts` exit 0, 13/13. Independent diff audit agrees scope matches request. Earlier final-in-unit implementation review (`p42-351-unit-revalidation.json`) selected valid_as_defined but confidence .24 and passProbability .34; the current review judges the complete final checkpoint including removal and full E2E verification. Preserve history: initial plan artifact `p42-351-plan-jev.json` is implementation_issue plus unresolved clarification; plan revalidation `p42-351-plan-revalidation.json` is valid_as_defined; unit implementation review remains `p42-351-unit-revalidation.json`. Do not alter these artifacts.",
+      "acceptanceCriteria": [
+        "The unit test discriminates __MOUNT_ALL__ from missing IntersectionObserver and geometry auto-mount fallbacks using actual LazyMount and a true/false control.",
+        "Only the duplicate P42-351 browser count assertion is removed; P42-349 initial absence and P42-350 real scroll-to-mount remain in Playwright.",
+        "Final unit and mobile-pixel E2E evidence passes as reported.",
+        "The plan, callsite ledger, and responsibility matrix match the final code and accurately preserve JEV history.",
+        "No broader OpenSpec behavior is removed or left without suitable evidence."
+      ],
+      "verification": [
+        "tests/components/LazyMount.test.tsx: two actual-component tests; one no-callback IntersectionObserver mock with disconnect, viewport+200 distant geometry, true flag immediate child marker, and false control unmounted; cleanup restores mutated properties.",
+        "Focused unit verification: `pnpm exec vitest run tests/components/LazyMount.test.tsx`, exit 0, 2/2 passed.",
+        "Focused browser verification: `pnpm test:e2e --project=mobile-pixel tests/e2e/mobile-ux.e2e.spec.ts`, exit 0, 13/13 passed.",
+        "Final diff removes only expect(page.locator('#section-new-graph')).toHaveCount(1) from the __MOUNT_ALL__ E2E case; count 0 at line 198 and scroll-mount count 1 at line 208 remain.",
+        "Current plan, ledger, and responsibility matrix mark P42-351 migrated and document P42-349/350 retention plus historical artifacts.",
+        "OpenSpec R12b remains in place and requires immediate LazyMount mounting under the test override.",
+        "Independent diff audit confirms the change boundary; no source behavior changes."
+      ],
+      "knownConstraints": [
+        "Do not rerun tests; this review uses the stated final verification results.",
+        "JEV supplements these tests and is not a substitute for them.",
+        "Preserve all prior JEV artifacts; this is a new initial review for the final checkpoint.",
+        "Do not include credentials or authentication data."
+      ],
+      "outputRequirement": "Return exactly one selected choice with confidence and a probability for every choice. valid_as_defined means the final implementation checkpoint satisfies the criteria. For a non-pass, provide a case-specific finding, affected location/requirement, observed evidence, and either concrete proposedFix or exact neededEvidence. Do not infer severity from reason categories or invent evidence."
+    },
+    "questions": {
+      "implementation": {
+        "type": "choice",
+        "instructions": "Does the final P42-351 migration satisfy the requirements and acceptance criteria, considering the discriminating unit test, narrow E2E removal, retained P42-349/350 browser checks, and final evidence? Return the complete choice distribution.",
+        "criteria": {
+          "valid_as_defined": "The final implementation and evidence meet all criteria with the intended narrow scope.",
+          "requirements_mismatch": "A requirement is contradicted by the final migration; identify it and correction.",
+          "missing_prerequisites_info": "A prerequisite/evidence item is missing; specify exactly which.",
+          "incomplete_implementation_info": "The final code or evidence cannot establish required behavior; state exact missing evidence.",
+          "implementation_issue": "A concrete implementation/test defect remains; identify the affected location, evidence, and correction.",
+          "scope_violation": "The change removes or changes behavior beyond P42-351; identify boundary and remedy.",
+          "other": "A material issue does not fit another category; provide exact finding and fix/evidence need.",
+          "indeterminate": "The supplied final checkpoint cannot be judged; state remaining uncertainty."
+        }
+      }
+    },
+    "model": "jev-latest"
+  },
+  "questionIds": [
+    "implementation"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "implementation": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.96,
+        "probabilities": {
+          "scope_violation": 0,
+          "other": 0,
+          "implementation_issue": 0,
+          "valid_as_defined": 0.97,
+          "incomplete_implementation_info": 0.01,
+          "requirements_mismatch": 0,
+          "indeterminate": 0.01,
+          "missing_prerequisites_info": 0.01
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.96,
+    "probabilities": {
+      "scope_violation": 0,
+      "other": 0,
+      "implementation_issue": 0,
+      "valid_as_defined": 0.97,
+      "incomplete_implementation_info": 0.01,
+      "requirements_mismatch": 0,
+      "indeterminate": 0.01,
+      "missing_prerequisites_info": 0.01
+    },
+    "passProbability": 0.97,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

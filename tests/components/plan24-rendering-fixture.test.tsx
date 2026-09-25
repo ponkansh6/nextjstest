@@ -2,7 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import React from "react";
 import { SpendingBarChart } from "@/app/components/SpendingBarChart";
-import { SUPPORT_SERIES_KEY_NOMINAL } from "@/lib/chartConstants";
+import { SUPPORT_SERIES_KEY_NOMINAL, SUPPORT_SERIES_KEY_REAL } from "@/lib/chartConstants";
+import type { SeriesMeasurement } from "@/types/chart";
 
 vi.mock("recharts", () => ({
   ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -54,10 +55,15 @@ type FixtureRow = {
   年月: string;
   食料?: number | null;
   [SUPPORT_SERIES_KEY_NOMINAL]?: number | null;
+  [SUPPORT_SERIES_KEY_REAL]?: number | null;
+  measurements?: Record<string, SeriesMeasurement>;
 };
 
-const renderFixture = (data: FixtureRow[], keys: string[] = ["食料", SUPPORT_SERIES_KEY_NOMINAL]) =>
-  render(<SpendingBarChart {...chartProps} data={data} keys={keys} />);
+const renderFixture = (
+  data: FixtureRow[],
+  keys: string[] = ["食料", SUPPORT_SERIES_KEY_NOMINAL],
+  testId?: string,
+) => render(<SpendingBarChart {...chartProps} data={data} keys={keys} testId={testId} />);
 
 const renderedRows = () =>
   JSON.parse(screen.getByTestId("barchart").getAttribute("data-rows") ?? "[]") as FixtureRow[];
@@ -130,6 +136,99 @@ describe("Plan24 SpendingBarChart rendering fixtures", () => {
       null,
     ]);
     expect(renderedRows()[1].食料).toBe(20);
+  });
+
+  it("publishes the 52 pre-2018 CTI quarters without a legacy support value", () => {
+    const data: FixtureRow[] = Array.from({ length: 52 }, (_, index) => {
+      const year = 2005 + Math.floor(index / 4);
+      const quarter = (index % 4) + 1;
+      const period = `${year}Q${quarter}`;
+      return {
+        label: period,
+        年: year,
+        quarter,
+        年月: period,
+        食料: 100 + index,
+        [SUPPORT_SERIES_KEY_NOMINAL]: 200 + index,
+        measurements: {
+          食料: {
+            key: "食料",
+            label: "食料",
+            unit: "指数",
+            source: "Plan39-v2",
+            valueType: "comparison",
+            value: 100 + index,
+            status: "available",
+            reason: null,
+            frequency: "quarterly",
+            aggregation: "derived",
+            seriesType: "estimated_adjusted",
+            official: false,
+            annualAnchorType: "estimated",
+            quarterlyDerived: true,
+          },
+        },
+      };
+    });
+    renderFixture(data, ["食料", SUPPORT_SERIES_KEY_NOMINAL], "plan24-fixture");
+
+    const chart = screen.getByTestId("plan24-fixture");
+    const contract = screen.getByTestId("chart-data-contract");
+    const periods = Array.from(contract.querySelectorAll("[data-chart-data-row]"), (row) =>
+      row.getAttribute("data-period"),
+    );
+
+    expect(periods).toHaveLength(52);
+    expect(periods[0]).toBe("2005Q1");
+    expect(periods.at(-1)).toBe("2017Q4");
+    expect(JSON.parse(contract.getAttribute("data-series") ?? "[]")).toEqual([
+      "食料",
+      SUPPORT_SERIES_KEY_NOMINAL,
+    ]);
+    expect(contract.getAttribute("data-series")).not.toMatch(/GDP(?:名目|実質)/);
+    expect(chart?.getAttribute("data-support-periods")).toBe("");
+    expect(chart?.getAttribute("data-cti-periods")?.split(",")).toEqual(periods);
+  });
+
+  it("retains the real support value through 2017Q4 and clears it from 2018Q1", () => {
+    renderFixture(
+      [
+        {
+          label: "2017Q4",
+          年: 2017,
+          quarter: 4,
+          年月: "2017Q4",
+          [SUPPORT_SERIES_KEY_REAL]: 100,
+        },
+        {
+          label: "2018Q1",
+          年: 2018,
+          quarter: 1,
+          年月: "2018Q1",
+          [SUPPORT_SERIES_KEY_REAL]: 200,
+        },
+      ],
+      [SUPPORT_SERIES_KEY_REAL],
+      "plan24-real-fixture",
+    );
+
+    const chart = screen.getByTestId("plan24-real-fixture");
+    const contract = screen.getByTestId("chart-data-contract");
+    const periods = Array.from(contract.querySelectorAll("[data-chart-data-row]"), (row) =>
+      row.getAttribute("data-period"),
+    );
+    const values = Array.from(
+      contract.querySelectorAll(`[data-series-key="${SUPPORT_SERIES_KEY_REAL}"]`),
+      (node) => node.getAttribute("data-value"),
+    );
+
+    expect(JSON.parse(contract.getAttribute("data-series") ?? "[]")).toEqual([
+      SUPPORT_SERIES_KEY_REAL,
+    ]);
+    expect(periods).toEqual(["2017Q4", "2018Q1"]);
+    expect(values).toEqual(["100", "null"]);
+    expect(chart.getAttribute("data-support-periods")).toBe("2017Q4");
+    expect(chart.getAttribute("data-cti-periods")).toBe("");
   });
 
   it("hides GDP when it is unready/all-null while retaining CTI", () => {

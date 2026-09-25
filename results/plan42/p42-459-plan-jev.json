@@ -1,0 +1,106 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-25T07:32:55.101Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "state": {
+      "evaluationScope": "plan_validity",
+      "background": "Review only the P42-459 migration plan. Exact E2E case tests/e2e/range-change.e2e.spec.ts A1 at lines 119-137 raises the real page's start year through setRange while preserving end year. Its post-change metric is contractPeriodCount(page, NOMINAL), which counts data-chart-data-row entries emitted by ChartDataContract from the nominal chart data, and asserts the new count is less than the initial count. Proposed component-independent unit destination: a new renderHook test for useCpiChartDisplayData in tests/unit/useCpiChartDisplayData.test.ts. Use QuarterlyView rows 2005Q1-Q4 and 2006Q1-Q4 with hiddenQuarters=[] and endYear=2006; startYear=2005 should yield 8 filteredQuarterlyNominalData rows, while startYear=2006 yields exactly four 2006Q1-Q4 rows. Existing computeChartData unit tests do not test this year-range filtering and no dedicated hook test exists; useUrlState.test.ts establishes renderHook precedent. Data flow is CpiChart -> useCpiChartDisplayData.filteredQuarterlyNominalData (inclusive year bounds plus hidden-quarter filtering) -> normalizeSpendingChartData (mapping only) -> SpendingBarChart -> ChartDataContract (one row per chartData entry). Proposed E2E replacement is only the post-range-change period-count reduction assertion with visible first nominal SVG bar; preserve real route range selection and chart redraw evidence. Component/hook unit test does not prove route-to-chart wiring. P42-460..462 stay untouched. Main plan, callsite ledger and responsibility matrix record this scope and mark JEV pending; no implementation/test exists yet.",
+      "acceptanceCriteria": [
+        "The new hook-level unit test directly verifies inclusive start/end year filtering on nominal public QuarterlyView data, distinguishing 8 rows from 4 rows for the specified fixture.",
+        "Existing computeChartData tests are not misrepresented as covering this year filter.",
+        "E2E retains the actual route range selection and a rendered nominal SVG bar visibility assertion after the change.",
+        "The unit test is not described as proving route-to-chart wiring or SVG rendering.",
+        "Only P42-459 is proposed; P42-460..462 remain untouched and the three planning artifacts align."
+      ],
+      "verification": [
+        "Plan main plan range-change row describes the hook test fixture and retained first SVG bar assertion.",
+        "Callsite ledger P42-459 identifies current and proposed assertions plus the controlled fixture and known component-test boundary.",
+        "Responsibility matrix A1 describes the same unit test, E2E route operation, visible SVG bar and P42-460..462 boundary.",
+        "Exact E2E changes range through setRange preserving end-year; current metric counts ChartDataContract data rows.",
+        "useCpiChartDisplayData filters public quarterly rows by inclusive 年 >= startYear and 年 <= endYear and hiddenQuarters; normalizeSpendingChartData maps rows; ChartDataContract emits a row per input chartData entry.",
+        "No existing dedicated useCpiChartDisplayData test is present; existing computeChartData tests exercise a different transformation."
+      ],
+      "knownConstraints": [
+        "This is plan-only review; no hook test has been implemented and no tests have run for P42-459.",
+        "The replacement visible bar proves rendered chart presence after the real range change, not the exact row-count reduction; the new unit test owns that data-filtering contract.",
+        "The hook-level unit test does not prove CpiChart route wiring to the chart; the real route interaction remains in Playwright.",
+        "Do not include credentials or authentication information."
+      ],
+      "outputRequirement": "Return exactly one selected choice with confidence and probabilities for every choice. valid_as_defined means the plan meets criteria. For any non-pass, give a case-specific finding, affected requirement/location, observed evidence, and concrete fix or exact neededEvidence; do not infer severity or invent facts."
+    },
+    "questions": {
+      "implementation": {
+        "type": "choice",
+        "instructions": "Is the P42-459 migration plan valid as defined, including its ownership split between the display-data hook unit test and retained real-route SVG evidence? Return full probability distribution.",
+        "criteria": {
+          "valid_as_defined": "The hook test directly covers the inclusive range-filter contract, E2E retains actual range operation and rendered-bar evidence, and docs align.",
+          "requirements_mismatch": "The plan conflicts with an explicit requirement; identify the conflict and correction.",
+          "missing_prerequisites_info": "A prerequisite/evidence requirement is absent; identify it exactly.",
+          "incomplete_implementation_info": "The data/test coverage boundary cannot be assessed; state exact missing evidence.",
+          "implementation_issue": "A concrete coverage or test-design issue exists; identify affected location, evidence, and smallest fix.",
+          "scope_violation": "The plan removes or changes behavior beyond P42-459; identify boundary and adjustment.",
+          "other": "A material issue does not fit other categories; provide exact finding and remedy/evidence need.",
+          "indeterminate": "The supplied context cannot support a judgment; identify remaining uncertainty."
+        }
+      }
+    },
+    "model": "jev-latest"
+  },
+  "questionIds": [
+    "implementation"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "implementation": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.92,
+        "probabilities": {
+          "missing_prerequisites_info": 0.02,
+          "requirements_mismatch": 0,
+          "valid_as_defined": 0.93,
+          "indeterminate": 0,
+          "implementation_issue": 0.02,
+          "incomplete_implementation_info": 0.02,
+          "other": 0,
+          "scope_violation": 0
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.92,
+    "probabilities": {
+      "missing_prerequisites_info": 0.02,
+      "requirements_mismatch": 0,
+      "valid_as_defined": 0.93,
+      "indeterminate": 0,
+      "implementation_issue": 0.02,
+      "incomplete_implementation_info": 0.02,
+      "other": 0,
+      "scope_violation": 0
+    },
+    "passProbability": 0.93,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

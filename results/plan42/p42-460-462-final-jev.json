@@ -1,0 +1,107 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-25T07:51:54.649Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "state": {
+      "evaluationScope": "implementation_checkpoint_validity",
+      "background": "Final implementation checkpoint for P42-460..462. tests/unit/useCpiChartDisplayData.test.ts extends the real renderHook test to give the hook 2005Q1-Q4 and 2006Q1-Q4 rows in both nominal and real inputs, `hiddenQuarters=[]`. It asserts both filtered arrays have 8 rows for 2005–2006; rerender start=2006/end=2006 returns exact four 2006 labels in both arrays; rerender start=2005/end=2005 returns exact four 2005 labels in both. This covers the state-filter contract, not route-to-chart wiring. In range-change.e2e.spec.ts the actual route selector interaction remains; only the three count-decrease comparisons have become visible first matching SVG bar assertions (real for P42-460/462, nominal for P42-461). Existing insufficient-options skip and invalid-year early returns remain. P42-459 unit test and final-approved record are unchanged. Plan, ledger and matrix record the shared unit test, matching browser checks, and pending final review. Plan JEV is `results/plan42/p42-460-462-plan-jev.json`, valid_as_defined, confidence .81/passProbability .83. Final validation: `pnpm exec vitest run tests/unit/useCpiChartDisplayData.test.ts` exit0 2/2; `pnpm test:e2e --project=chromium tests/e2e/range-change.e2e.spec.ts` exit0 11/11. Independent diff audit passed. No tests were run for this review.",
+      "acceptanceCriteria": [
+        "The hook test covers both nominal and real arrays with inclusive start and end filtering in both directions and exact retained period labels.",
+        "The three E2E tests preserve actual route year selection and check visibility of the matching rendered SVG bar after each update.",
+        "Skip and invalid-year behavior remain intact, and P42-459 is unchanged.",
+        "The test boundary accurately states the hook test cannot establish route-to-chart wiring.",
+        "Focused final Vitest and Chromium E2E verification pass; all three documents align."
+      ],
+      "verification": [
+        "Current shared renderHook case supplies 8 nominal and 8 real rows over 2005Q1–2006Q4, then checks 2006-only and 2005-only exact labels for both arrays.",
+        "Current E2E P42-460/461/462 keeps setRange and tests first real/nominal/real bar visibility respectively.",
+        "The existing option-count test.skip and invalid-year returns remain in each case.",
+        "P42-459's preceding unit case and nominal E2E assertion remain untouched.",
+        "Vitest command `pnpm exec vitest run tests/unit/useCpiChartDisplayData.test.ts`: exit 0, 2/2.",
+        "Chromium E2E command `pnpm test:e2e --project=chromium tests/e2e/range-change.e2e.spec.ts`: exit 0, 11/11.",
+        "Independent diff audit and aligned documentation reported; plan approval artifact records valid_as_defined (.81 confidence/.83 pass probability)."
+      ],
+      "knownConstraints": [
+        "Do not rerun tests; rely on stated final evidence.",
+        "The unit case tests hook filtering only and cannot establish route-to-chart wiring; real selector/visible bar remain E2E.",
+        "P42-459 is already completed and must not be reconsidered in this slice.",
+        "Do not include credentials or authentication data."
+      ],
+      "outputRequirement": "Return exactly one selected choice with confidence and probabilities for every choice. valid_as_defined means the final implementation checkpoint meets the criteria. For non-pass, provide case-specific finding, affected location/requirement, observed evidence, and concrete proposed fix or exact neededEvidence. Do not infer severity or invent facts."
+    },
+    "questions": {
+      "implementation": {
+        "type": "choice",
+        "instructions": "Does the final P42-460..462 implementation meet requirements, preserve browser evidence, and verify both series' inclusive range filtering? Return the complete distribution.",
+        "criteria": {
+          "valid_as_defined": "The shared unit fixture accurately covers both filtering boundaries; all three real route/SVG browser assertions and required branches remain, with passing final evidence.",
+          "requirements_mismatch": "An explicit requirement is contradicted; identify it and a correction.",
+          "missing_prerequisites_info": "An exact prerequisite or evidence item is missing; specify it.",
+          "incomplete_implementation_info": "Evidence is insufficient to establish a required condition; state exactly what is needed.",
+          "implementation_issue": "A concrete test or coverage defect exists; identify location, evidence, and smallest correction.",
+          "scope_violation": "The change affects P42-459 or other behavior outside P42-460..462; identify the boundary and remedy.",
+          "other": "A material issue outside the listed categories; provide specific finding and fix/evidence need.",
+          "indeterminate": "The provided context cannot support a judgment; identify remaining uncertainty."
+        }
+      }
+    },
+    "model": "jev-latest"
+  },
+  "questionIds": [
+    "implementation"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "implementation": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.91,
+        "probabilities": {
+          "implementation_issue": 0.01,
+          "scope_violation": 0,
+          "missing_prerequisites_info": 0.02,
+          "other": 0,
+          "incomplete_implementation_info": 0.02,
+          "valid_as_defined": 0.92,
+          "indeterminate": 0.02,
+          "requirements_mismatch": 0.01
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.91,
+    "probabilities": {
+      "implementation_issue": 0.01,
+      "scope_violation": 0,
+      "missing_prerequisites_info": 0.02,
+      "other": 0,
+      "incomplete_implementation_info": 0.02,
+      "valid_as_defined": 0.92,
+      "indeterminate": 0.02,
+      "requirements_mismatch": 0.01
+    },
+    "passProbability": 0.92,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

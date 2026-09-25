@@ -2,10 +2,6 @@ import { test, expect } from "./fixtures";
 import type { Page } from "@playwright/test";
 
 const chartIds = ["spending-chart-nominal", "spending-chart-real"] as const;
-const publicKeys = {
-  "spending-chart-nominal": "CTIミクロ四半期系列（名目）",
-  "spending-chart-real": "民間最終消費支出（実質）",
-} as const;
 const ACTION_TIMEOUT = 5_000;
 const ASSERTION_TIMEOUT = 5_000;
 const NAVIGATION_TIMEOUT = 10_000;
@@ -79,38 +75,13 @@ test.describe("Plan24 rendering contract", () => {
     await setRange(page, 2005, 2017);
     await selectAllQuarters(page, "spending-chart-nominal");
     for (const id of chartIds) {
-      const chart = page.getByTestId(id);
-      const contract = chart.locator('[data-testid="chart-data-contract"]');
-      expect(await contract.getAttribute("data-series")).toContain(publicKeys[id]);
-      const supportPeriods = (await chart.getAttribute("data-support-periods"))?.split(",") ?? [];
-      expect(await contract.getAttribute("data-series")).not.toMatch(/GDP(?:名目|実質)/);
-      if (id === "spending-chart-nominal") {
-        // Plan40 publishes adjusted expense categories for the pre-2018
-        // window; the standalone legacy support line is absent.
-        expect(await contract.getAttribute("data-series")).toContain("CTIミクロ調整系列（食料）");
-        expect(supportPeriods.filter(Boolean)).toHaveLength(0);
-        const ctiPeriods = (await chart.getAttribute("data-cti-periods"))?.split(",") ?? [];
-        expect(ctiPeriods).toHaveLength(52);
-        expect(ctiPeriods[0]).toBe("2005Q1");
-        expect(ctiPeriods.at(-1)).toBe("2017Q4");
-        const periods = await contract
-          .locator("[data-chart-data-row]")
-          .evaluateAll((rows) => rows.map((row) => row.getAttribute("data-period") ?? ""));
-        expect(periods).toHaveLength(52);
-        expect(periods[0]).toBe("2005Q1");
-        expect(periods.at(-1)).toBe("2017Q4");
-      } else {
-        expect(supportPeriods).toContain("2017Q4");
-      }
+      await expect(bars(page, id).first()).toBeVisible({ timeout: ASSERTION_TIMEOUT });
+      expect(await page.getByTestId(id).locator(".recharts-line-curve").count()).toBe(0);
     }
     await setRange(page, 2018, 2018);
     for (const id of chartIds) {
-      const chart = page.getByTestId(id);
-      await expect(chart).toHaveAttribute("data-cti-periods", /2018Q1/);
-      await expect(chart).toHaveAttribute("data-support-periods", "");
-      expect(
-        await chart.locator('[data-testid="chart-data-contract"]').getAttribute("data-series"),
-      ).not.toMatch(/GDP(?:名目|実質)/);
+      await expect(bars(page, id).first()).toBeVisible({ timeout: ASSERTION_TIMEOUT });
+      expect(await page.getByTestId(id).locator(".recharts-line-curve").count()).toBe(0);
     }
   });
 

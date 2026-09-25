@@ -1,0 +1,102 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-25T06:16:05.256Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "state": {
+      "evaluationScope": "plan_validity",
+      "background": "Review the Plan42 decision for checkpoint P42-318/319. The decision retains both nominal-food legend checks in the real-browser Playwright case tests/e2e/legend-color-sync.e2e.spec.ts rather than moving them to a static unit test. P42-318 is visibility of the exact nominal 食料 legend button. P42-319 compares its rendered swatch computed backgroundColor with the RGB parsed from src/app/globals.css --nominal-food. Current test reads CSS source, derives RGB, navigates to /, finds #section-consumption-nominal button named exactly 食料, asserts visible, then reads computed style of first span and compares exact RGB. Existing chart mapping unit parity and food-versus-housing tests cover mapping/value selection, but not stylesheet loading/cascade onto the rendered app element. P42-320..322 (dark-mode checks) remain unassigned pending separate per-ID evidence. No code/test change is proposed.",
+      "acceptanceCriteria": [
+        "The retained P42-318/319 browser assertions cover a behavior not equivalently established by existing unit tests.",
+        "The plan, assertion callsite ledger, and responsibility matrix align on ownership and rationale.",
+        "The decision does not prematurely assign P42-320..322 or add duplicate static LegendColorContract coverage without evidence."
+      ],
+      "verification": [
+        "Plan shared_plan/42-happy-dom-e2e-migration-plan.md checkpoint and appendix state P42-318/319 are browser-owned because unit mapping tests do not establish CSS token load/cascade on the rendered app; P42-320+ remain pending.",
+        "Ledger shared_plan/42-assertion-callsite-ledger.md rows P42-318 and P42-319 name exact callsites 72 and 77 in legend-color-sync.e2e.spec.ts and record browser ownership/rationale; P42-320 remains unassigned.",
+        "Responsibility matrix shared_plan/42-assertion-case-responsibility-matrix.md specifies P42-318/319 browser ownership and no static unit destination, with dark-mode work separate.",
+        "Exact E2E uses parsed --nominal-food source value and compares it with computed style of the visible exact 食料 legend swatch after page.goto('/').",
+        "Existing mapping parity and food-vs-housing unit tests are complementary: they do not exercise stylesheet cascade/computed style in the application browser."
+      ],
+      "knownConstraints": [
+        "Review the supplied plan decision and evidence; do not infer unreported test results.",
+        "P42-320..322 are outside this decision and remain unassigned pending their own evidence.",
+        "No source, E2E, or test changes are included in this checkpoint."
+      ],
+      "outputRequirement": "Return exactly one selected choice with confidence and probabilities for every choice. valid_as_defined means the plan decision meets the stated criteria. Choose exactly one mutually exclusive reason category for any identified concern, or indeterminate if the supplied context cannot support a judgment. Do not infer valid_but_limited or not_valid severity from a reason category; describe scope/severity in finding details if useful. For any reason choice, include a case-specific finding, affected location or requirement, observed evidence, and either a concrete proposed fix or exact additional evidence needed. Do not invent evidence or details."
+    },
+    "questions": {
+      "implementation": {
+        "type": "choice",
+        "instructions": "Is the P42-318/319 plan decision valid as defined, based on the supplied plan, ledger, responsibility matrix, exact E2E behavior, and unit-test boundary? Return the probability distribution across all mutually exclusive choices.",
+        "criteria": {
+          "valid_as_defined": "The evidence supports retaining both checks in browser E2E, with aligned documentation and dark-mode scope left separate.",
+          "requirements_mismatch": "The plan decision conflicts with an explicit requirement or acceptance criterion; identify it and propose correction.",
+          "missing_prerequisites_info": "A necessary prerequisite or requirement is missing; specify exactly what is needed.",
+          "incomplete_implementation_info": "The supplied plan/evidence is insufficient to assess ownership or coverage; identify the exact missing evidence.",
+          "implementation_issue": "The decision has a concrete coverage or ownership issue; identify location, evidence, and fix.",
+          "scope_violation": "The decision exceeds or misassigns the approved scope; identify boundary and adjustment.",
+          "other": "A material concern does not fit other categories; provide exact finding and remedy or needed evidence.",
+          "indeterminate": "The supplied context cannot support a judgment; identify what additional context is needed."
+        }
+      }
+    },
+    "model": "jev-latest"
+  },
+  "questionIds": [
+    "implementation"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "implementation": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.96,
+        "probabilities": {
+          "incomplete_implementation_info": 0.01,
+          "missing_prerequisites_info": 0.01,
+          "indeterminate": 0.01,
+          "scope_violation": 0,
+          "valid_as_defined": 0.97,
+          "implementation_issue": 0,
+          "other": 0,
+          "requirements_mismatch": 0
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.96,
+    "probabilities": {
+      "incomplete_implementation_info": 0.01,
+      "missing_prerequisites_info": 0.01,
+      "indeterminate": 0.01,
+      "scope_violation": 0,
+      "valid_as_defined": 0.97,
+      "implementation_issue": 0,
+      "other": 0,
+      "requirements_mismatch": 0
+    },
+    "passProbability": 0.97,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

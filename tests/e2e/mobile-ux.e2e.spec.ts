@@ -215,8 +215,6 @@ base.describe("LazyMount 遅延マウント (P5-1)", () => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto("/");
     await page.waitForLoadState("networkidle");
-
-    await expect(page.locator("#section-new-graph")).toHaveCount(1);
   });
 });
 

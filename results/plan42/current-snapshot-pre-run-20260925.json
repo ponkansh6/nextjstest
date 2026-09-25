@@ -1,0 +1,28 @@
+{
+  "capturedAtUtc": "2026-09-25T08:20:56.566050+00:00",
+  "head": "3a5c16d467a994b5c168afec5265c0fa8b7257b0",
+  "hostname": "shunki-20u4s1j300",
+  "os": "Linux-7.0.0-34-generic-x86_64-with-glibc2.43",
+  "node": "v24.19.0",
+  "pnpm": "11.9.0",
+  "lockfileSha256": "e10ab5f3ec885be4d31cf777f24d7b1038dbd77b4ad32597ce9afcb8941738e9",
+  "trackedStatusPath": "current-worktree-status-20260925.txt",
+  "trackedBinaryDiffPath": "current-worktree.diff",
+  "trackedDiffSha256": "caf92ccba01478b8c888308a576b333bec4e62d3d35a304ca83426026b0a63d9",
+  "untrackedManifestPath": "current-untracked-manifest-20260925.jsonl",
+  "untrackedPathCount": 92396,
+  "snapshotDigestSha256": "55223a1278d84555bbc9346c6348b3d5981fa7e1ae842774b1ba3fe8cf7164ea",
+  "inventoryPath": "current-e2e-inventory-20260925.log",
+  "inventory": "139 tests / 21 files / 24 project-file pairs",
+  "projectCounts": {
+    "chromium": 85,
+    "chromium-dark": 2,
+    "mobile-pixel": 43,
+    "webkit-tabs-regression": 9
+  },
+  "buildExitCode": 0,
+  "buildElapsedSeconds": 28.35,
+  "buildId": "Yx98vqVUNs16PNbZIJLBH",
+  "port3100Free": true,
+  "playwrightCacheTopLevelDirectories": 7
+}

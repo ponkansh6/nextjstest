@@ -1,0 +1,107 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-25T07:44:40.080Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "state": {
+      "evaluationScope": "plan_validity",
+      "background": "Review P42-460..462 migration plan only; P42-459 is already implemented and final-JEV-approved and remains unchanged. Current E2E cases each change actual route year selectors with setRange and then compare ChartDataContract row count before/after: P42-460 real series after raising startYear; P42-461 nominal after lowering endYear; P42-462 real after lowering endYear. The hook useCpiChartDisplayData filters both filteredQuarterlyNominalData and filteredQuarterlyRealData by inclusive 年 >= startYear && 年 <= endYear and hiddenQuarters; normalizeSpendingChartData is mapping only and ChartDataContract produces one row per chartData entry. Existing hook unit test covers nominal start-year 8-to-4 only for P42-459; no real-series or end-year-specific hook test exists. Proposed shared renderHook fixture extends to both nominal and real QuarterlyView rows for 2005Q1-Q4 and 2006Q1-Q4, hiddenQuarters=[]. Verify both start 2005/end 2006 arrays have 8 rows. With start 2006/end 2006, each has only four 2006 rows (P42-460 real; nominal also exercises already-completed P42-459). With start 2005/end 2005, each has four 2005 rows (P42-461 nominal and P42-462 real). For each E2E, keep real route/select interaction and replace only period-count reduction metric with matching first SVG bar visibility after change: real test id for P42-460/462; nominal for P42-461. Keep each existing skip/invalid-year behavior. Hook test cannot prove route-to-chart wiring; E2E preserves that. Main plan, ledger and matrix align; P42-459 complete, these three plan items pending JEV.",
+      "acceptanceCriteria": [
+        "The shared controlled fixture directly covers inclusive start and end year filtering for both nominal and real quarterly arrays.",
+        "Each P42-460..462 maps to the right series and period direction; P42-459 remains complete and unchanged.",
+        "E2E retains real route/year selector interaction and rendered SVG bar presence after each change.",
+        "The hook unit test is not overstated as route wiring or rendered SVG proof.",
+        "Current skip and invalid-year behavior remains; docs align across all three files."
+      ],
+      "verification": [
+        "Plan main plan lines around 122 and range-change table rows for A1-A4 enumerate 8-to-4 fixtures, matching series, rendered bar visibility and browser boundary.",
+        "Assertion callsite ledger rows P42-460/P42-461/P42-462 specify real/nominal series, start/end direction, shared unit fixture and browser check.",
+        "Responsibility matrix A2-A4 specifies same test contract, retained range interaction and actual chart evidence.",
+        "Exact E2E cases P42-460..462 use setRange and currently compare helper-derived period counts; skip guards and invalid-year early returns are present.",
+        "Hook source filters both nominal and real arrays using inclusive start/end year and hidden-quarter rules.",
+        "Existing useCpiChartDisplayData test covers only nominal start-year transition (P42-459); existing computeChartData tests cover different transformations.",
+        "P42-459 final JEV artifact `results/plan42/p42-459-final-jev.json` is valid_as_defined (.97 confidence/pass probability); separate 460..462 remain pending."
+      ],
+      "knownConstraints": [
+        "This is plan-only review; the expanded shared fixture and tests are not implemented yet and no tests ran for P42-460..462.",
+        "The rendered-bar assertion proves visible chart output after route interaction, not exact row reduction; the hook test owns filtering arithmetic.",
+        "The unit test does not prove route-to-chart wiring; retain browser range interaction.",
+        "Do not broaden scope to P42-459 or modify its completed record. Do not include credentials."
+      ],
+      "outputRequirement": "Return exactly one selected choice with confidence and probabilities for every choice. valid_as_defined means the plan meets these criteria. For non-pass, include case-specific finding, affected requirement/location, observed evidence, and concrete fix or exact neededEvidence. Do not infer severity or invent facts."
+    },
+    "questions": {
+      "implementation": {
+        "type": "choice",
+        "instructions": "Is the P42-460..462 migration plan valid as defined, with a shared unit fixture covering both series and both year-bound directions while preserving real route/browser evidence? Return complete distribution.",
+        "criteria": {
+          "valid_as_defined": "The hook fixture covers exact inclusive filtering for nominal and real data, and all three E2E cases retain correct route interaction and SVG visibility.",
+          "requirements_mismatch": "The plan conflicts with an explicit requirement; identify the conflict and correction.",
+          "missing_prerequisites_info": "An exact prerequisite/evidence requirement is missing; specify it.",
+          "incomplete_implementation_info": "The coverage split cannot be judged from supplied context; identify exact missing evidence.",
+          "implementation_issue": "A concrete coverage/test-design issue exists; identify location, evidence, and smallest fix.",
+          "scope_violation": "The plan changes P42-459 or other browser behavior beyond 460..462; identify boundary and adjustment.",
+          "other": "A material concern outside these categories; state exact finding and remedy/evidence need.",
+          "indeterminate": "Evidence is insufficient for a judgment; identify remaining uncertainty."
+        }
+      }
+    },
+    "model": "jev-latest"
+  },
+  "questionIds": [
+    "implementation"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "implementation": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.81,
+        "probabilities": {
+          "indeterminate": 0.01,
+          "missing_prerequisites_info": 0.03,
+          "valid_as_defined": 0.83,
+          "incomplete_implementation_info": 0.02,
+          "other": 0,
+          "requirements_mismatch": 0.01,
+          "implementation_issue": 0.1,
+          "scope_violation": 0
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.81,
+    "probabilities": {
+      "indeterminate": 0.01,
+      "missing_prerequisites_info": 0.03,
+      "valid_as_defined": 0.83,
+      "incomplete_implementation_info": 0.02,
+      "other": 0,
+      "requirements_mismatch": 0.01,
+      "implementation_issue": 0.1,
+      "scope_violation": 0
+    },
+    "passProbability": 0.83,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

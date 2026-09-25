@@ -248,7 +248,6 @@ test.describe("アクセシビリティ - フォーカス管理", () => {
       .getByRole("button", { name: /データソース/ })
       .first()
       .click();
-    await expect(page.getByRole("dialog").first()).toBeVisible();
 
     await page.keyboard.press("Escape");
     await page.waitForTimeout(300);

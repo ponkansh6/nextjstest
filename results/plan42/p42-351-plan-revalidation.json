@@ -1,0 +1,108 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-25T06:33:47.452Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "state": {
+      "evaluationScope": "plan_validity",
+      "background": "Fresh initial revalidation of P42-351 after correcting the prior diagnosed test-design gap. The proposal moves only mobile-ux.e2e.spec.ts:219 (#section-new-graph count 1 on initial render with __MOUNT_ALL__) into a future actual-component test tests/components/LazyMount.test.tsx. New discriminating setup: define a no-callback/no-intersection IntersectionObserver mock with disconnect; before rendering, make the wrapper getBoundingClientRect().top exceed window.innerHeight + 200 so the geometry fallback cannot mount it; with window.__MOUNT_ALL__=true the child marker should render immediately, while an otherwise-identical false control should stay unmounted. Cleanup restores the flag, observer, and geometry. This isolates getForceMount's window flag branch in vitest's happy-dom environment, where IntersectionObserver is otherwise missing and the fallback returns true. The exact component source uses `window.__MOUNT_ALL__ === true || typeof IntersectionObserver === 'undefined'`, and when not forced, useEffect's checkReach also mounts if target top <= innerHeight+200. Plan, callsite ledger, and responsibility matrix now include both controls, IO mock and distant geometry, cleanup, and preservation of first-review artifact. P42-349 real-route initial absence and P42-350 actual scroll/IntersectionObserver remain in Playwright. Keep the P42-351 E2E assertion until the unit test is implemented, relevant verification passes, and this plan revalidation approves. OpenSpec R12b requires immediate mount when the flag is set before page scripts. Prior initial artifact results/plan42/p42-351-plan-jev.json remains unchanged: implementation_issue, passProbability 0, and an incomplete/unresolved automatic clarification; this fresh review does not erase or substitute for it.",
+      "acceptanceCriteria": [
+        "The refined unit test distinguishes __MOUNT_ALL__ from both the missing-IntersectionObserver fallback and geometry-based intersection fallback.",
+        "The child marker test uses the actual LazyMount component; true flag mounts immediately and false control remains unmounted under non-intersecting geometry.",
+        "Only P42-351 is proposed for movement; P42-349 real-route initial absence and P42-350 actual scroll/IntersectionObserver remain in browser E2E.",
+        "The browser assertion is removed only after unit implementation, relevant verification, and JEV approval.",
+        "Plan, callsite ledger, and responsibility matrix align, and the prior failed review plus unresolved clarification remain preserved."
+      ],
+      "verification": [
+        "Plan shared_plan/42-happy-dom-e2e-migration-plan.md P42-351 row and checkpoint specify a no-callback IntersectionObserver mock, distant target geometry, true case, false control, cleanup, E2E sequencing, and preservation of the prior review artifact.",
+        "Callsite ledger shared_plan/42-assertion-callsite-ledger.md P42-351 provides the same discriminating setup and retained-browser scope.",
+        "Responsibility matrix shared_plan/42-assertion-case-responsibility-matrix.md P42-351 provides the same discriminating setup and retained-browser scope.",
+        "src/app/components/LazyMount.tsx force-mounts when the flag is true OR IntersectionObserver is absent; absent IntersectionObserver alone makes a flag-only test nondiscriminating.",
+        "When not forced, LazyMount's checkReach sets intersected when wrapper top is at most innerHeight+200; distant geometry is needed to keep false control unmounted.",
+        "vitest.config.ts uses happy-dom; test setup has no IO mock by default.",
+        "OpenSpec R12b requires every LazyMount to mount immediately when __MOUNT_ALL__ is set before page scripts.",
+        "Prior artifact p42-351-plan-jev.json selected implementation_issue with confidence .90, passProbability 0, then unresolved clarification due absent diagnosis details; it remains preserved."
+      ],
+      "knownConstraints": [
+        "This is plan revalidation only; the proposed unit test has not yet been implemented, and no tests were run for this review.",
+        "Do not remove the E2E assertion at this stage; removal is contingent on implementation, verification, and a passing review.",
+        "P42-349 and P42-350 remain browser checks regardless of P42-351 disposition.",
+        "Do not overwrite the first JEV artifact or treat the prior clarification as approval."
+      ],
+      "outputRequirement": "Return exactly one selected choice with confidence and probabilities for every choice. valid_as_defined means the revised proposal meets the criteria. Select one mutually exclusive reason for any concern, or indeterminate if insufficient. Do not infer severity. For any reason, provide a specific finding, affected requirement/location, observed evidence, and concrete fix or exact needed evidence. Do not invent details."
+    },
+    "questions": {
+      "implementation": {
+        "type": "choice",
+        "instructions": "Does this fresh, refined P42-351 plan meet the stated criteria? Assess whether the added observer mock and distant geometry plus false control sufficiently isolate the R12b flag branch, and whether the migration boundary and sequencing are sound. Return the complete distribution.",
+        "criteria": {
+          "valid_as_defined": "The refined actual-LazyMount test discriminates the flag branch, documents a false control, preserves browser interaction checks, and has safe sequencing.",
+          "requirements_mismatch": "The proposal conflicts with R12b or another requirement; identify and correct it.",
+          "missing_prerequisites_info": "A prerequisite needed for the refined test is missing; name it exactly.",
+          "incomplete_implementation_info": "The revised setup or coverage remains insufficiently specified; state what exact information/evidence is needed.",
+          "implementation_issue": "The refined proposal still contains a concrete testing or coverage flaw; identify evidence and smallest fix.",
+          "scope_violation": "The migration removes or reallocates browser behavior outside P42-351; identify the scope correction.",
+          "other": "A material issue does not fit the other categories; explain with a concrete remedy/evidence request.",
+          "indeterminate": "The supplied context cannot support a judgment; state the remaining uncertainty."
+        }
+      }
+    },
+    "model": "jev-latest"
+  },
+  "questionIds": [
+    "implementation"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "implementation": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.71,
+        "probabilities": {
+          "valid_as_defined": 0.75,
+          "implementation_issue": 0.16,
+          "requirements_mismatch": 0.01,
+          "other": 0,
+          "missing_prerequisites_info": 0.02,
+          "incomplete_implementation_info": 0.04,
+          "scope_violation": 0,
+          "indeterminate": 0.02
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.71,
+    "probabilities": {
+      "valid_as_defined": 0.75,
+      "implementation_issue": 0.16,
+      "requirements_mismatch": 0.01,
+      "other": 0,
+      "missing_prerequisites_info": 0.02,
+      "incomplete_implementation_info": 0.04,
+      "scope_violation": 0,
+      "indeterminate": 0.02
+    },
+    "passProbability": 0.75,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

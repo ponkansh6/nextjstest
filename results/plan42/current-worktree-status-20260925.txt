@@ -1,0 +1,58 @@
+ M .depcheckrc
+ M .oxfmtrc.json
+ M .oxlintrc.json
+ M AGENTS.md
+ M eslint.config.mjs
+ M next-env.d.ts
+ M openspec/specs/nextjstest/spec.md
+ M package.json
+ M skills/jev-review/SKILL.md
+ M skills/jev-review/references/requests.md
+ M skills/jev-review/scripts/jev-request.mjs
+ M src/lib/quarterlyPublicProjection.ts
+ M tests/components/CagrPanel.test.tsx
+ M tests/components/CustomTooltip.test.tsx
+ M tests/components/SpendingBarChart.test.tsx
+ M tests/components/all.test.tsx
+ M tests/components/plan24-rendering-fixture.test.tsx
+ M tests/components/useChartTooltipController.test.tsx
+ M tests/e2e/accessibility.e2e.spec.ts
+ M tests/e2e/cagr-sheet.e2e.spec.ts
+ M tests/e2e/chart-table-csv-parity.e2e.spec.ts
+ M tests/e2e/consumption-mobile-acceptance.e2e.spec.ts
+ M tests/e2e/consumption-mobile-readability.e2e.spec.ts
+ M tests/e2e/cpi-chart-categories.e2e.spec.ts
+ M tests/e2e/earnings-tooltip-total.e2e.spec.ts
+ M tests/e2e/mobile-ux.e2e.spec.ts
+ M tests/e2e/monthly-boundary-axis.e2e.spec.ts
+ M tests/e2e/plan24-rendering.e2e.spec.ts
+ M tests/e2e/plan27-private-consumption.e2e.spec.ts
+ M tests/e2e/quarterly-gdp.e2e.spec.ts
+ M tests/e2e/range-change.e2e.spec.ts
+ M tests/e2e/real-consumption.e2e.spec.ts
+ M tests/e2e/spending-filter.e2e.spec.ts
+ M tests/e2e/tooltip-dismiss.e2e.spec.ts
+ M tests/e2e/tooltip-stack-total.e2e.spec.ts
+ M tests/unit/quarterly-public-projection-boundary.test.ts
+ M tsconfig.json
+ M vitest.config.ts
+?? .codex/
+?? .jev-plan-request.json
+?? .jev-plan-review.json
+?? .plan42-phase0/
+?? .secretlintignore
+?? .tmp/
+?? 9
+?? results/plan42/
+?? shared_plan/42-assertion-callsite-ledger.md
+?? shared_plan/42-assertion-case-responsibility-matrix.md
+?? shared_plan/42-happy-dom-e2e-migration-plan.md
+?? shared_plan/43-nominal-consumption-shared-legend-plan.md
+?? shared_plan/44-audit-log-2026-09-25.md
+?? tests/components/LazyMount.test.tsx
+?? tests/helpers/
+?? tests/unit/csv-parser.test.ts
+?? tests/unit/monthly-axis-boundary.test.ts
+?? tests/unit/plan27-private-consumption-contract.test.ts
+?? tests/unit/real-consumption-contract.test.ts
+?? tests/unit/useCpiChartDisplayData.test.ts

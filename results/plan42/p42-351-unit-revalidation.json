@@ -1,0 +1,107 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-25T06:43:24.446Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "state": {
+      "evaluationScope": "implementation_checkpoint_validity",
+      "background": "Review P42-351 unit implementation before deciding whether its matching browser assertion can be removed. tests/components/LazyMount.test.tsx renders the actual LazyMount. It defines a NeverIntersectingObserver that never invokes its callback and has disconnect; stubs getBoundingClientRect beyond innerHeight+200; true flag case asserts immediate child marker and that no observer was instantiated; false control asserts marker absent, observer observed target, and one observer exists. afterEach cleans rendered component, checks instantiated observer disconnect, and restores window flag, global IntersectionObserver, and geometry. Focused verification: `pnpm exec vitest run tests/components/LazyMount.test.tsx` passed 2/2, exit 0. An earlier first matcher run failed because toBeInTheDocument was unavailable; it was replaced by Chai truthy/null assertions and the later run passed. Current exact E2E P42-351 count assertion remains in tests/e2e/mobile-ux.e2e.spec.ts:219. P42-349 initial-unmounted and P42-350 actual scroll/IntersectionObserver E2E checks remain. Plan, ledger, and responsibility matrix all say unit is implemented/verified but removal/migration remains pending this JEV reapproval; they preserve first failure artifact and prior passing plan revalidation. Prior results: results/plan42/p42-351-plan-jev.json has initial implementation_issue (passProbability 0) and unresolved one-time clarification; results/plan42/p42-351-plan-revalidation.json is a plan-only valid_as_defined pass (confidence .71, passProbability .75). OpenSpec R12b requires immediate mount whenever __MOUNT_ALL__ is set before page scripts. In LazyMount source getForceMount is flag true OR missing IO, and checkReach separately mounts when target top <= innerHeight+200; new unit setup neutralizes both alternate conditions and includes false control. No test or E2E execution is requested for this review.",
+      "acceptanceCriteria": [
+        "The actual LazyMount unit test distinguishes the __MOUNT_ALL__ flag branch from missing-IntersectionObserver and geometry fallbacks.",
+        "True flag immediate mount and false flag non-mount behavior are both asserted under distant geometry.",
+        "The test cleans up global and geometry mutations, and its observer mock verifies cleanup.",
+        "The test verification passed, while the original browser count assertion is still present pending this review.",
+        "P42-349 initial absence and P42-350 real scroll/IntersectionObserver browser behaviors remain retained.",
+        "The aligned plan docs accurately preserve prior JEV history and do not claim migration complete prematurely."
+      ],
+      "verification": [
+        "Current source tests/components/LazyMount.test.tsx has no-callback IntersectionObserver mock, distant bounding-box stub, true-flag marker assertion, false-control no-marker assertion, observer disconnection, and cleanup restoration.",
+        "Reported focused Vitest command `pnpm exec vitest run tests/components/LazyMount.test.tsx`: 2 passed, exit code 0; initial unsupported matcher was replaced and final run passed.",
+        "Current E2E tests/e2e/mobile-ux.e2e.spec.ts P42-351 count assertion remains at line 219; P42-349/350 remain at 198/208.",
+        "Plan, assertion callsite ledger, responsibility matrix describe implementation, verification, and pending deletion consistently.",
+        "OpenSpec R12b describes immediate mount when flag set before page scripts; LazyMount source implements that branch and alternative conditions are controlled in unit test.",
+        "Prior first JEV fail/unresolved and plan-only pass artifacts are preserved and summarized without treating the plan pass as implementation approval."
+      ],
+      "knownConstraints": [
+        "This request reviews the unit migration implementation only; do not infer full browser route behavior from the component test.",
+        "No tests were rerun for this review; use the reported final test result only.",
+        "Do not remove the E2E assertion during this checkpoint; determine only whether migration is approved after this implementation review.",
+        "Do not overwrite or erase prior JEV artifacts."
+      ],
+      "outputRequirement": "Return exactly one selected choice with confidence and probabilities for every choice. valid_as_defined means this implementation checkpoint meets the criteria. For a non-pass, include a specific finding, affected location/requirement, observed evidence, and concrete fix or exact additional evidence. Do not infer severity. Do not invent test results."
+    },
+    "questions": {
+      "implementation": {
+        "type": "choice",
+        "instructions": "Does the implemented P42-351 unit test provide adequate evidence to approve removing only the matching E2E assertion after this review, while retaining P42-349/350 browser checks? Return the complete probability distribution.",
+        "criteria": {
+          "valid_as_defined": "The test discriminates the flag branch, verifies true and false behavior, cleans up global state, passes focused verification, and justifies moving only P42-351.",
+          "requirements_mismatch": "The implementation does not match OpenSpec R12b or a stated acceptance condition; identify the correction.",
+          "missing_prerequisites_info": "A required prerequisite or verification result is absent; identify it exactly.",
+          "incomplete_implementation_info": "The code or evidence does not sufficiently establish the behavior; state what exact detail/evidence is needed.",
+          "implementation_issue": "A concrete implementation or test issue exists; provide location, evidence, and smallest fix.",
+          "scope_violation": "The proposed removal would remove P42-349/350 or other browser behavior; identify the scope correction.",
+          "other": "A material concern outside the listed categories; state finding and remedy/evidence needed.",
+          "indeterminate": "Evidence is insufficient to judge; identify exact uncertainty."
+        }
+      }
+    },
+    "model": "jev-latest"
+  },
+  "questionIds": [
+    "implementation"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "implementation": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.24,
+        "probabilities": {
+          "incomplete_implementation_info": 0.19,
+          "implementation_issue": 0.09,
+          "requirements_mismatch": 0.03,
+          "valid_as_defined": 0.34,
+          "other": 0.03,
+          "missing_prerequisites_info": 0.17,
+          "scope_violation": 0.06,
+          "indeterminate": 0.09
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.24,
+    "probabilities": {
+      "incomplete_implementation_info": 0.19,
+      "implementation_issue": 0.09,
+      "requirements_mismatch": 0.03,
+      "valid_as_defined": 0.34,
+      "other": 0.03,
+      "missing_prerequisites_info": 0.17,
+      "scope_violation": 0.06,
+      "indeterminate": 0.09
+    },
+    "passProbability": 0.34,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

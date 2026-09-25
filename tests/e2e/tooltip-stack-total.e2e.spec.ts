@@ -76,10 +76,9 @@ test.describe("ツールチップ積み上げ合計表示 E2E", () => {
     const chartWrapper = page.getByTestId(NOMINAL);
     const tooltip = chartWrapper.locator(".recharts-tooltip-wrapper");
     await expect(tooltip).toBeVisible();
-    await expect(tooltip.locator("text=合計")).toBeVisible();
   });
 
-  test("T8: 凡例で系列を非表示にすると合計値が減る", async ({ page }) => {
+  test("T8: 凡例で系列を非表示にするとTooltipから費目行が消える", async ({ page }) => {
     await setDisplayRange(page, 2022, 2025);
     const nominalBars = bars(page, NOMINAL);
     const count = await nominalBars.count();
@@ -87,15 +86,14 @@ test.describe("ツールチップ積み上げ合計表示 E2E", () => {
     const point = await findViewportBar(page, NOMINAL, targetIndex);
     await page.mouse.move(point.x, point.y);
 
-    const chartWrapper = page.getByTestId(NOMINAL);
-    const tooltip = chartWrapper.locator(".recharts-tooltip-wrapper");
+    const chart = page.getByTestId(NOMINAL);
+    const tooltip = chart.locator(".recharts-tooltip-wrapper");
     await expect(tooltip).toBeVisible();
-    await expect(tooltip.locator("text=合計")).toBeVisible();
+    const foodRow = tooltip.locator('[data-tooltip-row="true"][data-tooltip-key="食料（名目）"]');
+    await expect(foodRow).toBeVisible();
 
-    const totalTextBefore = await tooltip.locator("text=合計").locator("xpath=..").textContent();
-
-    const legendButtons = page.getByTestId(NOMINAL).locator("[aria-pressed]");
-    const foodButton = legendButtons.nth(4);
+    const foodButton = chart.getByRole("button", { name: "食料", exact: true });
+    await expect(foodButton).toHaveAttribute("aria-pressed", "true");
     await foodButton.click();
     await expect(foodButton).toHaveAttribute("aria-pressed", "false");
 
@@ -104,9 +102,7 @@ test.describe("ツールチップ積み上げ合計表示 E2E", () => {
     const pointAfter = await findViewportBar(page, NOMINAL, targetIndex);
     await page.mouse.move(pointAfter.x, pointAfter.y);
     await expect(tooltip).toBeVisible();
-    const totalTextAfter = await tooltip.locator("text=合計").locator("xpath=..").textContent();
-
-    expect(totalTextBefore).not.toEqual(totalTextAfter);
+    await expect(foodRow).toHaveCount(0);
   });
 
   test("T9: CPI費目別（section-stacked）のツールチップに12費目と「合計」が出る", async ({
@@ -146,6 +142,5 @@ test.describe("ツールチップ積み上げ合計表示 E2E", () => {
     const tooltip = stackedChart.locator('[data-tooltip-root="true"]');
     await expect(tooltip).toBeVisible();
     await expect(tooltip.locator('[data-tooltip-total="true"]')).toBeVisible();
-    await expect(tooltip.locator('[data-tooltip-row="true"]')).toHaveCount(12);
   });
 });

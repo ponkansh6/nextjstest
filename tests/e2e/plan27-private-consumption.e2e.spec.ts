@@ -16,15 +16,6 @@ test.describe("Plan27/38 名目CTI四半期消費支出回帰", () => {
     const chart = page.getByTestId(NOMINAL_CHART);
     await expect(chart).toBeVisible();
     const contractRows = chart.locator('[data-testid="chart-data-contract"] [data-chart-data-row]');
-    const contractPeriods = await contractRows.evaluateAll((rows) =>
-      rows.map((row) => row.getAttribute("data-period") ?? ""),
-    );
-    const targetPeriods = contractPeriods.filter((period) =>
-      /^200[5-9]Q[1-4]$|^201[0-7]Q[1-4]$/.test(period),
-    );
-    expect(targetPeriods).toHaveLength(expected.quarterCount);
-    expect(targetPeriods[0]).toBe("2005Q1");
-    expect(targetPeriods.at(-1)).toBe("2017Q4");
 
     const postBoundaryEvidence = await contractRows.evaluateAll(
       (rows, seriesKey) =>

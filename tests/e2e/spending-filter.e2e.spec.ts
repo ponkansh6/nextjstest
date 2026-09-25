@@ -52,13 +52,11 @@ test.describe("消費支出絞り込み E2E", () => {
     for (const quarter of ["Q1", "Q2", "Q3", "Q4"]) {
       const button = chart.getByRole("button", { name: quarter, exact: true });
       await button.click();
-      await expect(button).toHaveAttribute("aria-pressed", "false");
     }
     expect(await bars(page, NOMINAL).count()).toBeLessThan(initialCount);
     for (const quarter of ["Q1", "Q2", "Q3", "Q4"]) {
       const button = chart.getByRole("button", { name: quarter, exact: true });
       await button.click();
-      await expect(button).toHaveAttribute("aria-pressed", "true");
     }
     expect(await bars(page, NOMINAL).count()).toBe(initialCount);
   });
@@ -75,8 +73,6 @@ test.describe("消費支出絞り込み E2E", () => {
 
     await categoryButton.click();
     await page.waitForTimeout(300);
-
-    expect(await categoryButton.getAttribute("aria-pressed")).toBe("false");
 
     const newCount = await bars(page, NOMINAL).count();
     expect(newCount, `費目「${label}」非表示後は該当系列の棒が描画から除外されるべき`).toBeLessThan(

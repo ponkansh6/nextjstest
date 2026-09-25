@@ -1,0 +1,102 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-25T05:11:28.987Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "model": "jev-latest",
+    "state": {
+      "evaluationScope": "implementation_checkpoint_validity",
+      "background": "Review the triage decision to retain P42-179 under Plan42 simplification principles. The exact callsite is tests/e2e/consumption-mobile-acceptance.e2e.spec.ts:147: `expect(chart).toBeVisible({ timeout: 15000 })`, in the test that first opens the nominal legend, hides all series, checks the empty state, then reselects one series and verifies the bar returns. P42-179 is only this initial chart-container visibility/readiness check; it is distinct from P42-180/181 (zero bars/empty-state assertions) and P42-182 (reselection/returning bar). The component tests can verify DOM/state but cannot establish actual browser layout, SVG rendering, or async route readiness. This line checks visibility of the chart wrapper, not the SVG itself. The subsequent `summary.click()` has Playwright actionability waits, but the later visible SVG bar assertion occurs only after the legend interaction/reselection, so it does not establish pre-interaction bar readiness. An independent architecture review recommends retaining unless evidence shows a preceding/subsequent visible SVG bar makes this 15-second check redundant. The assertion ledger currently describes the test's broader browser behavior and maps state/aria/empty DOM to component candidates while retaining rendered SVG disappearance/reappearance in Playwright. No code/test changes were made for this triage decision and no tests are to be rerun.",
+      "acceptanceCriteria": [
+        "Retain P42-179 only if it provides a useful browser-level pre-interaction readiness/visibility signal not supplied by component RTL or by later E2E assertions; judge the exact wrapper-visibility check rather than conflating it with the empty-state or reselect assertions.",
+        "Plan42 simplification removes redundant DOM-only assertions while retaining browser-specific rendered behavior and readiness evidence when the component tests cannot establish it.",
+        "The separate interaction and outcome contracts remain distinct: P42-180/181 check all-series-empty behavior; P42-182 checks actual reselect recovery; P42-179 checks the starting chart container before interaction.",
+        "A retain decision does not overclaim that chart-container visibility proves an SVG bar exists; the subsequent click's actionability behavior and SVG assertion timing are considered accurately.",
+        "The assertion ledger's destination/reason wording remains consistent with the retain decision or any needed evidence/correction is identified."
+      ],
+      "verification": [
+        "Source at lines 139-161 shows chart visibility before summary click and empty-state actions; first visible bar assertion is after series reselection.",
+        "Assertion ledger row P42-179 identifies the callsite and separates component DOM/state from browser SVG disappearance/reappearance.",
+        "No implementation changes or test runs are part of this review."
+      ],
+      "knownConstraints": [
+        "Current source: tests/e2e/consumption-mobile-acceptance.e2e.spec.ts:139-161; exact P42-179 line is 147.",
+        "Ledger row: shared_plan/42-assertion-callsite-ledger.md P42-179. Related component state and empty-state tests are in ChartFilters/SpendingBarChart; they do not exercise a real browser SVG/layout boundary.",
+        "P42-179 is an unchanged existing assertion and the current question is whether to retain it; no code/test edits or reruns are requested. No credentials or secrets are included."
+      ],
+      "outputRequirement": "Return exactly one selected choice, confidence, and complete probability distribution. valid_as_defined means the retain decision is justified as written by a distinct browser-level need under the supplied simplification principles. For any non-pass reason, give a case-specific finding, affected callsite/ledger requirement, observed evidence, and concrete proposed fix or exact additional evidence needed. If context is insufficient, select indeterminate and say exactly what is missing. Do not infer severity from reason category or invent evidence."
+    },
+    "questions": {
+      "implementation": {
+        "type": "choice",
+        "instructions": "Is retaining the exact P42-179 initial `chart.toBeVisible({ timeout: 15000 })` assertion justified under Plan42's simplification principles, given what it actually checks and the timing of later browser readiness checks? Return the full probability distribution over these mutually exclusive choices.",
+        "criteria": {
+          "valid_as_defined": "The retain decision is sufficiently justified and internally consistent.",
+          "requirements_mismatch": "The retention conflicts with intended simplification behavior; identify the rule and needed change.",
+          "missing_prerequisites_info": "Information needed for deciding is missing; specify it.",
+          "incomplete_implementation_info": "The decision/evidence lacks detail needed to judge; identify exact missing information.",
+          "implementation_issue": "The assertion or its mapping has an issue; identify exact callsite, evidence, and correction.",
+          "scope_violation": "The retention is outside stated scope; identify boundary and adjustment.",
+          "other": "A material concern does not fit the other categories; explain location/evidence/fix.",
+          "indeterminate": "The supplied evidence cannot support a judgment; name missing evidence."
+        }
+      }
+    }
+  },
+  "questionIds": [
+    "implementation"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "implementation": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.88,
+        "probabilities": {
+          "missing_prerequisites_info": 0.02,
+          "incomplete_implementation_info": 0.01,
+          "implementation_issue": 0.02,
+          "other": 0.01,
+          "scope_violation": 0,
+          "requirements_mismatch": 0.02,
+          "indeterminate": 0.03,
+          "valid_as_defined": 0.89
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.88,
+    "probabilities": {
+      "missing_prerequisites_info": 0.02,
+      "incomplete_implementation_info": 0.01,
+      "implementation_issue": 0.02,
+      "other": 0.01,
+      "scope_violation": 0,
+      "requirements_mismatch": 0.02,
+      "indeterminate": 0.03,
+      "valid_as_defined": 0.89
+    },
+    "passProbability": 0.89,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

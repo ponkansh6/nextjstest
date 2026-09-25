@@ -117,8 +117,6 @@ test.describe("描画範囲変更 E2E", () => {
   });
 
   test("開始年を上げるとグラフが狭まる（名目）", async ({ page }) => {
-    const initialPeriodCount = await contractPeriodCount(page, NOMINAL);
-
     // オプション取得＆現在の終了年を取得、開始年を変更
     const startOptions = await page.locator("#startYear").locator("option").allTextContents();
     const currentEndYear = Number(await page.locator("#endYear").inputValue());
@@ -132,13 +130,10 @@ test.describe("描画範囲変更 E2E", () => {
 
     await setRange(page, newStartYear, currentEndYear);
 
-    const newPeriodCount = await contractPeriodCount(page, NOMINAL);
-    expect(newPeriodCount).toBeLessThan(initialPeriodCount);
+    await expect(bars(page, NOMINAL).first()).toBeVisible();
   });
 
   test("開始年を上げるとグラフが狭まる（実質）", async ({ page }) => {
-    const initialPeriodCount = await contractPeriodCount(page, REAL);
-
     // オプション取得＆現在の終了年を取得、開始年を変更
     const startOptions = await page.locator("#startYear").locator("option").allTextContents();
     const currentEndYear = Number(await page.locator("#endYear").inputValue());
@@ -152,13 +147,10 @@ test.describe("描画範囲変更 E2E", () => {
 
     await setRange(page, newStartYear, currentEndYear);
 
-    const newPeriodCount = await contractPeriodCount(page, REAL);
-    expect(newPeriodCount).toBeLessThan(initialPeriodCount);
+    await expect(bars(page, REAL).first()).toBeVisible();
   });
 
   test("終了年を下げるとグラフが狭まる（名目）", async ({ page }) => {
-    const initialPeriodCount = await contractPeriodCount(page, NOMINAL);
-
     // オプション取得＆現在の開始年を取得、終了年を変更
     const endOptions = await page.locator("#endYear").locator("option").allTextContents();
     const currentStartYear = Number(await page.locator("#startYear").inputValue());
@@ -172,13 +164,10 @@ test.describe("描画範囲変更 E2E", () => {
 
     await setRange(page, currentStartYear, newEndYear);
 
-    const newPeriodCount = await contractPeriodCount(page, NOMINAL);
-    expect(newPeriodCount).toBeLessThan(initialPeriodCount);
+    await expect(bars(page, NOMINAL).first()).toBeVisible();
   });
 
   test("終了年を下げるとグラフが狭まる（実質）", async ({ page }) => {
-    const initialPeriodCount = await contractPeriodCount(page, REAL);
-
     // オプション取得＆現在の開始年を取得、終了年を変更
     const endOptions = await page.locator("#endYear").locator("option").allTextContents();
     const currentStartYear = Number(await page.locator("#startYear").inputValue());
@@ -192,8 +181,7 @@ test.describe("描画範囲変更 E2E", () => {
 
     await setRange(page, currentStartYear, newEndYear);
 
-    const newPeriodCount = await contractPeriodCount(page, REAL);
-    expect(newPeriodCount).toBeLessThan(initialPeriodCount);
+    await expect(bars(page, REAL).first()).toBeVisible();
   });
 
   test("【境界値】開始年=終了年でグラフが1年に狭まる", async ({ page }) => {

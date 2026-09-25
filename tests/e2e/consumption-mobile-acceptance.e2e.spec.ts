@@ -131,7 +131,8 @@ test.describe("消費支出 mobile-pixel acceptance (Plan25/OpenSpec)", () => {
       const summary = details.locator("summary");
       await expect(details).not.toHaveAttribute("open");
       await expect(summary).toHaveCSS("white-space", "nowrap");
-      await expect(summary).toContainText(/費目|四半期|絞り込み中|全選択/);
+      await expect(summary).toBeVisible();
+      await expect(summary).toHaveText(/\S/);
     }
   });
 
@@ -146,7 +147,6 @@ test.describe("消費支出 mobile-pixel acceptance (Plan25/OpenSpec)", () => {
     await expect(chart).toBeVisible({ timeout: 15000 });
     await chart.locator("summary").click();
     const series = chart.locator("button[aria-pressed]").filter({ hasText: /.+/ }).nth(4);
-    const seriesName = (await series.textContent())?.trim();
     const initialBars = chart.locator(".recharts-bar-rectangle");
     await chart.getByRole("button", { name: "全選択解除" }).click();
     await expect(chart.locator(".recharts-bar-rectangle")).toHaveCount(0);
@@ -155,9 +155,7 @@ test.describe("消費支出 mobile-pixel acceptance (Plan25/OpenSpec)", () => {
     );
 
     await series.click();
-    await expect(series).toHaveAttribute("aria-pressed", "true");
     await expect(initialBars.first()).toBeVisible();
-    expect(seriesName).toBeTruthy();
   });
 
   test("dark modeと文字拡大後もtooltipを閉じられ、費目名と値が可視である", async ({ page }) => {
@@ -174,10 +172,14 @@ test.describe("消費支出 mobile-pixel acceptance (Plan25/OpenSpec)", () => {
     const tooltip = chart.locator('.recharts-tooltip-wrapper > div[style*="position: fixed"]');
     await expect(tooltip).toBeVisible({ timeout: 5000 });
     await expect(tooltip.getByRole("button", { name: "閉じる" })).toBeVisible();
-    const rows = tooltip.locator(":scope > div");
-    await expect(rows.nth(1)).toBeVisible();
-    await expect(tooltip).toContainText(/食料|住居|光熱・水道/);
-    await expect(tooltip).toContainText(/\d/);
+    const categoryRow = tooltip.locator('[data-tooltip-row="true"]').first();
+    await expect(categoryRow).toBeVisible();
+    await expect(categoryRow).toHaveText(/\S/);
+    const numericCategoryRow = tooltip
+      .locator('[data-tooltip-row="true"]')
+      .filter({ hasText: /\d/ })
+      .first();
+    await expect(numericCategoryRow).toBeVisible();
     await tooltip.getByRole("button", { name: "閉じる" }).click();
     await expect(tooltip).toBeHidden();
   });

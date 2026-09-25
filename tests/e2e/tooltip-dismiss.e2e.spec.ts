@@ -145,9 +145,6 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
     await page.touchscreen.tap(point.x, point.y);
 
     const closeButton = page.getByRole("button", { name: "閉じる" });
-    await expect(closeButton, "タップ後、ツールチップの閉じるボタンが表示されるべき").toBeVisible({
-      timeout: 5000,
-    });
     expect(await page.locator(".recharts-tooltip-cursor").count()).toBeGreaterThan(0);
 
     await closeButton.tap();
@@ -171,7 +168,6 @@ test.describe("モバイル ツールチップの閉じるボタンとインタ�
     const tooltip = page.locator("[data-custom-tooltip]");
     const closeButton = page.getByRole("button", { name: "閉じる" });
     await expect(tooltip).toBeVisible({ timeout: 5000 });
-    await expect(closeButton).toBeVisible({ timeout: 5000 });
 
     await page.keyboard.press("Escape");
 

@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { test, expect } from "./fixtures";
+import { parseCsv } from "../helpers/csv-download-parser";
 
 type Section = {
   id: string;
@@ -75,69 +76,6 @@ const CONTRACT: readonly Section[] = [
 ];
 const INTERNAL = /GDP名目原値|GDP名目比較指数|GDP実質原値|GDP実質比較指数|四半期raw|原値|比較指数/;
 const LEGACY_CTI_RAW = /CTIミクロ基本系列（名目・原数値）/;
-
-function parseCsv(input: string): string[][] {
-  const source = input.replace(/^\uFEFF/, "");
-  if (!source.endsWith("\r\n")) throw new Error("CSV must end with CRLF");
-  const rows: string[][] = [];
-  let row: string[] = [],
-    cell = "",
-    quoted = false,
-    afterQuote = false;
-  const pushRow = () => {
-    if (row.length === 0 && cell === "") throw new Error("CSV contains an empty row");
-    row.push(cell);
-    rows.push(row);
-    row = [];
-    cell = "";
-    afterQuote = false;
-  };
-  for (let i = 0; i < source.length; i += 1) {
-    const c = source[i];
-    if (quoted) {
-      if (c === '"' && source[i + 1] === '"') {
-        cell += '"';
-        i += 1;
-      } else if (c === '"') {
-        quoted = false;
-        afterQuote = true;
-      } else if (c === "\r") {
-        if (source[i + 1] !== "\n") throw new Error("bare CR is not RFC4180-compatible");
-        cell += "\r\n";
-        i += 1;
-      } else if (c === "\n") throw new Error("bare LF is not RFC4180-compatible");
-      else cell += c;
-    } else if (afterQuote) {
-      if (c === ",") {
-        row.push(cell);
-        cell = "";
-        afterQuote = false;
-      } else if (c === "\r") {
-        if (source[i + 1] !== "\n") throw new Error("bare CR is not RFC4180-compatible");
-        i += 1;
-        pushRow();
-      } else if (c === "\n") throw new Error("bare LF is not RFC4180-compatible");
-      else throw new Error(`invalid CSV character after closing quote: ${c}`);
-    } else if (c === '"') {
-      if (cell !== "") throw new Error("quote in an unquoted CSV field");
-      quoted = true;
-    } else if (c === ",") {
-      row.push(cell);
-      cell = "";
-    } else if (c === "\r") {
-      if (source[i + 1] !== "\n") throw new Error("bare CR is not RFC4180-compatible");
-      i += 1;
-      pushRow();
-    } else if (c === "\n") throw new Error("bare LF is not RFC4180-compatible");
-    else cell += c;
-  }
-  if (quoted) throw new Error("CSV ended inside a quoted field");
-  if (rows.some((r) => r.every((v) => v === ""))) throw new Error("extra empty row");
-  const columns = rows[0]?.length ?? 0;
-  if (columns === 0 || rows.some((r) => r.length !== columns))
-    throw new Error("CSV column count mismatch");
-  return rows;
-}
 
 const normaliseCell = (value: string, dataCell: boolean) => {
   const clean = value.replace(/\s+/g, " ").trim();
@@ -431,15 +369,6 @@ test.describe("Phase 4-4 production chart/table/CSV parity", () => {
       "CTIミクロ基本系列（名目・参考）",
       "CTIミクロ基本系列（名目・参考・延長）",
     ]);
-  });
-
-  test("CSV parser enforces CRLF-terminated RFC4180 records and rejects malformed CSV", () => {
-    expect(() => parseCsv("a,b\na,b\n")).toThrow();
-    expect(() => parseCsv("a,b\r\na,b")).toThrow();
-    expect(() => parseCsv('a,b\r\n"unterminated,b\r\n')).toThrow();
-    expect(() => parseCsv('a,b\r\n"bad"x,c\r\n')).toThrow();
-    expect(() => parseCsv("a,b\r\na\r\n")).toThrow();
-    expect(() => parseCsv("a,b\r\na,b\r\n\r\n")).toThrow();
   });
 
   test("hidden series changes only its SVG geometry; table and CSV remain identical", async ({

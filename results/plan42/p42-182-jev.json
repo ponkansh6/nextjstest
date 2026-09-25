@@ -1,0 +1,104 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-25T05:16:47.342Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "model": "jev-latest",
+    "state": {
+      "evaluationScope": "implementation_checkpoint_validity",
+      "background": "Review current Plan42 implementation checkpoint P42-182. The exact mobile E2E callsite `tests/e2e/consumption-mobile-acceptance.e2e.spec.ts:158` previously asserted `expect(series).toHaveAttribute(\"aria-pressed\", \"true\")` after the user reselects one category following the all-hidden state. That one E2E aria assertion is removed. The actual browser flow remains: open the legend, clear all series, assert zero rendered Recharts bars and the empty-state message (P42-180/181), click a category again, and assert an actual `.recharts-bar-rectangle` is visible (P42-183). The initial chart visibility check P42-179 and other browser behavior are unchanged. New controlled RTL test P42-517 in tests/components/SpendingBarChart.test.tsx verifies the same category button starts `aria-pressed=true`, first click updates it to false and calls the callback with the category key, second click restores true and calls back with the same key. Ledger P42-182 now maps aria state to this unit test and retains rendered SVG disappearance/reappearance in browser. OpenSpec R20d requires understandable selected/focused states and recovery; it does not explicitly require browser-specific verification of aria-pressed. No production/OpenSpec change. Independent diff audit confirmed the requested scope.",
+      "acceptanceCriteria": [
+        "Only the E2E aria-pressed=true assertion for the reselected category (P42-182) is removed; no legend interaction or actual rendered chart recovery is removed.",
+        "The E2E continues to verify the browser interaction end to end: all-series clear, zero bars, empty-state message, reselect click, and an actual Recharts bar becoming visible again.",
+        "The component counterpart verifies both directions of the controlled aria state and that both callbacks carry the same category key, so the removed state assertion is not left uncovered.",
+        "P42-179 initial browser chart visibility and P42-180/181 empty-state checks remain distinct; P42-183 retains actual browser SVG bar restoration.",
+        "This change is consistent with R20d, which calls for selected/focused states and recovery to remain understandable but does not state that aria-pressed must be reasserted in the browser when covered by the controlled component test.",
+        "Verification passes: focused SpendingBarChart Vitest 25 passed, exit 0; mobile-pixel acceptance E2E 6 passed, 0 failures/skips, exit 0. Independent diff audit confirms scope."
+      ],
+      "verification": [
+        "pnpm exec vitest run tests/components/SpendingBarChart.test.tsx: exit 0, 25 passed.",
+        "pnpm test:e2e --project=mobile-pixel tests/e2e/consumption-mobile-acceptance.e2e.spec.ts: exit 0, 6 passed, 0 failed, 0 skipped.",
+        "Independent diff audit: only P42-182 aria assertion removed from the browser test; all-series empty and P42-183 rendered bar restoration remain."
+      ],
+      "knownConstraints": [
+        "Implementation diff: tests/e2e/consumption-mobile-acceptance.e2e.spec.ts removes only `expect(series).toHaveAttribute(\"aria-pressed\", \"true\")`; tests/components/SpendingBarChart.test.tsx adds controlled P42-517 click state test.",
+        "Exact ledger entries are P42-182 in shared_plan/42-assertion-callsite-ledger.md and matching checkpoint entry in shared_plan/42-happy-dom-e2e-migration-plan.md.",
+        "R20d in openspec/specs/nextjstest/spec.md covers mobile empty and accessibility states, recovery, and understandability of selected/focused states; there is no requirement change here.",
+        "No credentials/secrets are included. No code/ledger/test edits or test reruns are part of this review. Existing unrelated working-tree changes are out of scope."
+      ],
+      "outputRequirement": "Return exactly one selected choice, confidence, and full probability distribution. valid_as_defined means the implementation and evidence satisfy the stated criteria. Any non-pass must provide a case-specific finding, affected code/requirement, observed evidence, and concrete fix or exact needed evidence. If indeterminate, identify missing evidence. Do not invent details or infer severity from the reason category."
+    },
+    "questions": {
+      "implementation": {
+        "type": "choice",
+        "instructions": "Does this checkpoint safely move only the reselected category's aria-pressed state assertion to controlled component coverage while preserving actual browser empty/recovery/SVG behavior? Return complete probabilities over these mutually exclusive choices.",
+        "criteria": {
+          "valid_as_defined": "The diff and supplied verification support acceptance.",
+          "requirements_mismatch": "The implementation conflicts with intended requirements; identify requirement and correction.",
+          "missing_prerequisites_info": "A prerequisite is missing; identify exact information needed.",
+          "incomplete_implementation_info": "Information is incomplete; identify exact missing evidence/details.",
+          "implementation_issue": "The implementation has a defect; identify location, evidence, and concrete fix.",
+          "scope_violation": "The change exceeds scope; identify boundary and adjustment.",
+          "other": "A material concern does not fit the categories; provide location/evidence/fix or needed evidence.",
+          "indeterminate": "The supplied context cannot support judgment; identify missing context if possible."
+        }
+      }
+    }
+  },
+  "questionIds": [
+    "implementation"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "implementation": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.99,
+        "probabilities": {
+          "scope_violation": 0,
+          "indeterminate": 0,
+          "valid_as_defined": 1,
+          "implementation_issue": 0,
+          "requirements_mismatch": 0,
+          "missing_prerequisites_info": 0,
+          "other": 0,
+          "incomplete_implementation_info": 0
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.99,
+    "probabilities": {
+      "scope_violation": 0,
+      "indeterminate": 0,
+      "valid_as_defined": 1,
+      "implementation_issue": 0,
+      "requirements_mismatch": 0,
+      "missing_prerequisites_info": 0,
+      "other": 0,
+      "incomplete_implementation_info": 0
+    },
+    "passProbability": 1,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

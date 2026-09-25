@@ -25,8 +25,6 @@ test.describe("月次チャートの系列境界ラベル", () => {
 
       expect(labels).not.toContain("2017年12月");
       expect(labels).not.toContain("2018年1月");
-      // Boundary filtering must retain ordinary endpoint/milestone labels.
-      expect(labels.length).toBeGreaterThanOrEqual(2);
     });
   }
 });

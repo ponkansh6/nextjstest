@@ -1,0 +1,41 @@
+{
+  "command": [
+    "pnpm",
+    "run",
+    "test:e2e"
+  ],
+  "workingDirectory": "/home/shunki/working/nextjstest",
+  "startedAtUtc": "2026-09-25T08:21:16.948033+00:00",
+  "endedAtUtc": "2026-09-25T08:24:58.587495+00:00",
+  "monotonicElapsedSeconds": 221.638426491,
+  "exitCode": 0,
+  "listed": 139,
+  "passed": 120,
+  "skipped": 19,
+  "failed": 0,
+  "rawOutputPath": "current-e2e-20260925.log",
+  "filteredInheritedEnvironmentVariableNames": [
+    "GOOGLE_API_KEY",
+    "GOOGLE_APPLICATION_CREDENTIALS",
+    "NOTION_TOKEN"
+  ],
+  "filteredEnvironmentPattern": "TOKEN|KEY|SECRET|PASSWORD|CREDENTIAL|AUTH (case-insensitive)",
+  "baselineElapsedSeconds": 222.482656104,
+  "deltaSeconds": 0.8442296130000102,
+  "deltaPercent": 0.3794586183856836,
+  "interpretation": "descriptive only; n=1; dirty workspace; inventory differs from baseline",
+  "monotonicStartNanoseconds": null,
+  "monotonicEndNanoseconds": null,
+  "monotonicRawEndpointsCaptured": false,
+  "timerPrecisionNote": "Runner retained the computed monotonic duration (221.638426491 s) but did not persist raw monotonic start/end nanoseconds. Wallclock timestamps were sampled just outside the monotonic timer calls; their 221.639462 s difference is 0.001035509 s longer and is not used for delta arithmetic.",
+  "inventoryAcquiredAtUtc": null,
+  "inventoryAcquisitionTimestampNote": "The exact --list acquisition timestamp was not captured. The inventory file mtime is 2026-09-25 17:19:11.497143695 +0900, which is filesystem metadata and not asserted as the command acquisition timestamp.",
+  "inventoryProjectCounts": {
+    "chromium": 85,
+    "chromium-dark": 2,
+    "mobile-pixel": 43,
+    "webkit-tabs-regression": 9
+  },
+  "inventoryProjectFilePairs": 24,
+  "inventoryFiles": 21
+}
