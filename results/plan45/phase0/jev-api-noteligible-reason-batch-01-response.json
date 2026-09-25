@@ -1,0 +1,216 @@
+{
+  "httpStatus": 200,
+  "body": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "p45-a-a11y-cagr-trigger-default": {
+        "type": "choice",
+        "choice": "actually_eligible",
+        "confidence": 0.59,
+        "probabilities": {
+          "engine_specific_behavior": 0.01,
+          "duplicate_or_no_distinct_browser_contract": 0.01,
+          "multiple_independent_blockers": 0,
+          "insufficient_evidence": 0.2,
+          "pure_logic_or_data_only": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.01,
+          "actually_eligible": 0.63,
+          "other_scope_or_technical_blocker": 0.04,
+          "configured_browser_mode_capability_gap": 0.01,
+          "nextjs_or_production_integration": 0.09
+        }
+      },
+      "p45-a-a11y-cagr-trigger-dark": {
+        "type": "choice",
+        "choice": "actually_eligible",
+        "confidence": 0.71,
+        "probabilities": {
+          "engine_specific_behavior": 0.01,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "multiple_independent_blockers": 0,
+          "configured_browser_mode_capability_gap": 0.01,
+          "pure_logic_or_data_only": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.01,
+          "actually_eligible": 0.75,
+          "other_scope_or_technical_blocker": 0,
+          "insufficient_evidence": 0.16,
+          "nextjs_or_production_integration": 0.06
+        }
+      },
+      "p45-a-a11y-real-legend-header-default": {
+        "type": "choice",
+        "choice": "actually_eligible",
+        "confidence": 0.64,
+        "probabilities": {
+          "engine_specific_behavior": 0.01,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "multiple_independent_blockers": 0,
+          "configured_browser_mode_capability_gap": 0.01,
+          "pure_logic_or_data_only": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0,
+          "actually_eligible": 0.68,
+          "other_scope_or_technical_blocker": 0.01,
+          "insufficient_evidence": 0.19,
+          "nextjs_or_production_integration": 0.09
+        }
+      },
+      "p45-a-a11y-real-legend-header-dark": {
+        "type": "choice",
+        "choice": "actually_eligible",
+        "confidence": 0.76,
+        "probabilities": {
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "engine_specific_behavior": 0.01,
+          "multiple_independent_blockers": 0,
+          "configured_browser_mode_capability_gap": 0.01,
+          "pure_logic_or_data_only": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0,
+          "actually_eligible": 0.79,
+          "other_scope_or_technical_blocker": 0,
+          "insufficient_evidence": 0.12,
+          "nextjs_or_production_integration": 0.07
+        }
+      },
+      "p45-a-a11y-info-outside-click": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.73,
+        "probabilities": {
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "engine_specific_behavior": 0,
+          "multiple_independent_blockers": 0,
+          "insufficient_evidence": 0.01,
+          "pure_logic_or_data_only": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.76,
+          "actually_eligible": 0.22,
+          "other_scope_or_technical_blocker": 0,
+          "configured_browser_mode_capability_gap": 0,
+          "nextjs_or_production_integration": 0.01
+        }
+      },
+      "p45-a-advanced-series-normal": {
+        "type": "choice",
+        "choice": "actually_eligible",
+        "confidence": 0.78,
+        "probabilities": {
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "engine_specific_behavior": 0,
+          "multiple_independent_blockers": 0,
+          "insufficient_evidence": 0.07,
+          "pure_logic_or_data_only": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.1,
+          "actually_eligible": 0.8,
+          "other_scope_or_technical_blocker": 0,
+          "configured_browser_mode_capability_gap": 0.01,
+          "nextjs_or_production_integration": 0.01
+        }
+      },
+      "p45-a-cagr-sheet-01": {
+        "type": "choice",
+        "choice": "actually_eligible",
+        "confidence": 0.68,
+        "probabilities": {
+          "engine_specific_behavior": 0,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "multiple_independent_blockers": 0,
+          "configured_browser_mode_capability_gap": 0,
+          "pure_logic_or_data_only": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.02,
+          "actually_eligible": 0.72,
+          "other_scope_or_technical_blocker": 0.01,
+          "insufficient_evidence": 0.03,
+          "nextjs_or_production_integration": 0.22
+        }
+      },
+      "p45-a-cagr-sheet-04": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.66,
+        "probabilities": {
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "engine_specific_behavior": 0,
+          "multiple_independent_blockers": 0,
+          "insufficient_evidence": 0.13,
+          "pure_logic_or_data_only": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.7,
+          "actually_eligible": 0.17,
+          "other_scope_or_technical_blocker": 0,
+          "configured_browser_mode_capability_gap": 0,
+          "nextjs_or_production_integration": 0
+        }
+      },
+      "p45-a-cagr-sheet-05": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.74,
+        "probabilities": {
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "engine_specific_behavior": 0,
+          "multiple_independent_blockers": 0,
+          "configured_browser_mode_capability_gap": 0,
+          "pure_logic_or_data_only": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.77,
+          "actually_eligible": 0.22,
+          "other_scope_or_technical_blocker": 0,
+          "insufficient_evidence": 0,
+          "nextjs_or_production_integration": 0.01
+        }
+      },
+      "p45-a-cagr-sheet-07": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.72,
+        "probabilities": {
+          "engine_specific_behavior": 0,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "multiple_independent_blockers": 0,
+          "configured_browser_mode_capability_gap": 0,
+          "pure_logic_or_data_only": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.74,
+          "actually_eligible": 0.24,
+          "other_scope_or_technical_blocker": 0,
+          "insufficient_evidence": 0.01,
+          "nextjs_or_production_integration": 0.01
+        }
+      },
+      "p45-a-cagr-sheet-08": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.75,
+        "probabilities": {
+          "engine_specific_behavior": 0,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "multiple_independent_blockers": 0,
+          "configured_browser_mode_capability_gap": 0,
+          "pure_logic_or_data_only": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.78,
+          "actually_eligible": 0.22,
+          "other_scope_or_technical_blocker": 0,
+          "insufficient_evidence": 0,
+          "nextjs_or_production_integration": 0
+        }
+      },
+      "p45-a-cagr-sheet-09": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.79,
+        "probabilities": {
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "engine_specific_behavior": 0,
+          "multiple_independent_blockers": 0,
+          "insufficient_evidence": 0.01,
+          "pure_logic_or_data_only": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.81,
+          "actually_eligible": 0.18,
+          "other_scope_or_technical_blocker": 0,
+          "configured_browser_mode_capability_gap": 0,
+          "nextjs_or_production_integration": 0
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": 8759,
+      "output_tokens": 1845
+    }
+  }
+}

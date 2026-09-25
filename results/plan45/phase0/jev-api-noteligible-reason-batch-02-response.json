@@ -1,0 +1,216 @@
+{
+  "httpStatus": 200,
+  "body": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "p45-a-parity-section-cpi-major": {
+        "type": "choice",
+        "choice": "nextjs_or_production_integration",
+        "confidence": 0.39,
+        "probabilities": {
+          "configured_browser_mode_capability_gap": 0.01,
+          "pure_logic_or_data_only": 0.01,
+          "engine_specific_behavior": 0,
+          "insufficient_evidence": 0.05,
+          "actually_eligible": 0.37,
+          "multiple_independent_blockers": 0.01,
+          "nextjs_or_production_integration": 0.45,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.08,
+          "other_scope_or_technical_blocker": 0.02
+        }
+      },
+      "p45-a-parity-section-stacked": {
+        "type": "choice",
+        "choice": "nextjs_or_production_integration",
+        "confidence": 0.39,
+        "probabilities": {
+          "engine_specific_behavior": 0,
+          "pure_logic_or_data_only": 0.01,
+          "configured_browser_mode_capability_gap": 0.01,
+          "insufficient_evidence": 0.04,
+          "actually_eligible": 0.34,
+          "multiple_independent_blockers": 0.01,
+          "nextjs_or_production_integration": 0.46,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.11,
+          "other_scope_or_technical_blocker": 0.02
+        }
+      },
+      "p45-a-parity-section-earnings": {
+        "type": "choice",
+        "choice": "nextjs_or_production_integration",
+        "confidence": 0.44,
+        "probabilities": {
+          "engine_specific_behavior": 0,
+          "pure_logic_or_data_only": 0.01,
+          "configured_browser_mode_capability_gap": 0.01,
+          "insufficient_evidence": 0.04,
+          "actually_eligible": 0.32,
+          "multiple_independent_blockers": 0.01,
+          "nextjs_or_production_integration": 0.51,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.08,
+          "other_scope_or_technical_blocker": 0.02
+        }
+      },
+      "p45-a-parity-section-residual": {
+        "type": "choice",
+        "choice": "nextjs_or_production_integration",
+        "confidence": 0.42,
+        "probabilities": {
+          "configured_browser_mode_capability_gap": 0.01,
+          "pure_logic_or_data_only": 0.01,
+          "engine_specific_behavior": 0,
+          "insufficient_evidence": 0.04,
+          "actually_eligible": 0.34,
+          "multiple_independent_blockers": 0.01,
+          "nextjs_or_production_integration": 0.49,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.09,
+          "other_scope_or_technical_blocker": 0.01
+        }
+      },
+      "p45-a-parity-section-new-graph": {
+        "type": "choice",
+        "choice": "nextjs_or_production_integration",
+        "confidence": 0.46,
+        "probabilities": {
+          "configured_browser_mode_capability_gap": 0.01,
+          "pure_logic_or_data_only": 0.01,
+          "engine_specific_behavior": 0,
+          "insufficient_evidence": 0.04,
+          "actually_eligible": 0.31,
+          "multiple_independent_blockers": 0.01,
+          "nextjs_or_production_integration": 0.52,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.08,
+          "other_scope_or_technical_blocker": 0.02
+        }
+      },
+      "p45-a-parity-advanced-anchors": {
+        "type": "choice",
+        "choice": "nextjs_or_production_integration",
+        "confidence": 0.51,
+        "probabilities": {
+          "engine_specific_behavior": 0,
+          "pure_logic_or_data_only": 0,
+          "configured_browser_mode_capability_gap": 0.01,
+          "insufficient_evidence": 0.02,
+          "actually_eligible": 0.36,
+          "multiple_independent_blockers": 0.01,
+          "nextjs_or_production_integration": 0.56,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.03,
+          "other_scope_or_technical_blocker": 0.01
+        }
+      },
+      "p45-a-parity-hidden-series": {
+        "type": "choice",
+        "choice": "actually_eligible",
+        "confidence": 0.35,
+        "probabilities": {
+          "configured_browser_mode_capability_gap": 0,
+          "pure_logic_or_data_only": 0.01,
+          "engine_specific_behavior": 0,
+          "insufficient_evidence": 0.01,
+          "actually_eligible": 0.42,
+          "multiple_independent_blockers": 0.01,
+          "nextjs_or_production_integration": 0.37,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.18,
+          "other_scope_or_technical_blocker": 0
+        }
+      },
+      "p45-a-cpi-sections": {
+        "type": "choice",
+        "choice": "actually_eligible",
+        "confidence": 0.61,
+        "probabilities": {
+          "configured_browser_mode_capability_gap": 0,
+          "pure_logic_or_data_only": 0,
+          "engine_specific_behavior": 0,
+          "insufficient_evidence": 0.02,
+          "actually_eligible": 0.66,
+          "multiple_independent_blockers": 0,
+          "nextjs_or_production_integration": 0.01,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.31,
+          "other_scope_or_technical_blocker": 0
+        }
+      },
+      "p45-a-cpi-legend-scroll": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.8,
+        "probabilities": {
+          "configured_browser_mode_capability_gap": 0,
+          "pure_logic_or_data_only": 0,
+          "engine_specific_behavior": 0,
+          "insufficient_evidence": 0.04,
+          "actually_eligible": 0.13,
+          "multiple_independent_blockers": 0,
+          "nextjs_or_production_integration": 0,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.83,
+          "other_scope_or_technical_blocker": 0
+        }
+      },
+      "p45-a-cpi-tooltip-rows": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.75,
+        "probabilities": {
+          "engine_specific_behavior": 0,
+          "pure_logic_or_data_only": 0,
+          "configured_browser_mode_capability_gap": 0,
+          "insufficient_evidence": 0,
+          "actually_eligible": 0.2,
+          "multiple_independent_blockers": 0,
+          "nextjs_or_production_integration": 0.01,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.79,
+          "other_scope_or_technical_blocker": 0
+        }
+      },
+      "p45-a-earnings-hover": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.44,
+        "probabilities": {
+          "engine_specific_behavior": 0.01,
+          "pure_logic_or_data_only": 0,
+          "configured_browser_mode_capability_gap": 0.01,
+          "insufficient_evidence": 0.14,
+          "actually_eligible": 0.34,
+          "multiple_independent_blockers": 0,
+          "nextjs_or_production_integration": 0,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.5,
+          "other_scope_or_technical_blocker": 0
+        }
+      },
+      "p45-a-earnings-hidden-series-hover": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.38,
+        "probabilities": {
+          "configured_browser_mode_capability_gap": 0,
+          "pure_logic_or_data_only": 0,
+          "engine_specific_behavior": 0,
+          "insufficient_evidence": 0.16,
+          "actually_eligible": 0.38,
+          "multiple_independent_blockers": 0,
+          "nextjs_or_production_integration": 0.01,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.45,
+          "other_scope_or_technical_blocker": 0
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": 8950,
+      "output_tokens": 1859
+    }
+  }
+}

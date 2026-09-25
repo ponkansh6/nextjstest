@@ -1,0 +1,216 @@
+{
+  "httpStatus": 200,
+  "body": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "p45-b-mobile-ux-140-ux-375px-3": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.74,
+        "probabilities": {
+          "insufficient_evidence": 0.07,
+          "actually_eligible": 0.16,
+          "pure_logic_or_data_only": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.77,
+          "configured_browser_mode_capability_gap": 0,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "engine_specific_behavior": 0,
+          "other_scope_or_technical_blocker": 0,
+          "nextjs_or_production_integration": 0,
+          "multiple_independent_blockers": 0
+        }
+      },
+      "p45-b-mobile-ux-192-lazymount-p5-1": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.38,
+        "probabilities": {
+          "insufficient_evidence": 0.09,
+          "actually_eligible": 0.42,
+          "pure_logic_or_data_only": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.46,
+          "configured_browser_mode_capability_gap": 0,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "engine_specific_behavior": 0,
+          "multiple_independent_blockers": 0,
+          "nextjs_or_production_integration": 0.03,
+          "other_scope_or_technical_blocker": 0
+        }
+      },
+      "p45-b-mobile-ux-201-lazymount-p5-1": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.62,
+        "probabilities": {
+          "actually_eligible": 0.27,
+          "insufficient_evidence": 0.05,
+          "pure_logic_or_data_only": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.66,
+          "configured_browser_mode_capability_gap": 0,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "engine_specific_behavior": 0,
+          "other_scope_or_technical_blocker": 0,
+          "nextjs_or_production_integration": 0.01,
+          "multiple_independent_blockers": 0
+        }
+      },
+      "p45-b-mobile-ux-243-sectiontabs-sticky-android-chrome": {
+        "type": "choice",
+        "choice": "engine_specific_behavior",
+        "confidence": 0.27,
+        "probabilities": {
+          "actually_eligible": 0.25,
+          "insufficient_evidence": 0.13,
+          "pure_logic_or_data_only": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.25,
+          "configured_browser_mode_capability_gap": 0.02,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "engine_specific_behavior": 0.35000000000000003,
+          "other_scope_or_technical_blocker": 0,
+          "nextjs_or_production_integration": 0,
+          "multiple_independent_blockers": 0
+        }
+      },
+      "p45-b-plan27-private-consumption-9-plan27-38-cti-2005q1-2017q4-52-graph-table-csv-cti-regi": {
+        "type": "choice",
+        "choice": "actually_eligible",
+        "confidence": 0.52,
+        "probabilities": {
+          "actually_eligible": 0.58,
+          "insufficient_evidence": 0.08,
+          "pure_logic_or_data_only": 0.01,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "configured_browser_mode_capability_gap": 0.01,
+          "real_layout_geometry_or_coordinate_hit_test": 0.23,
+          "engine_specific_behavior": 0,
+          "multiple_independent_blockers": 0.01,
+          "nextjs_or_production_integration": 0.07,
+          "other_scope_or_technical_blocker": 0.01
+        }
+      },
+      "p45-b-plan27-private-consumption-79-plan27-38-cti-nominal-cti-key-is-distinct-from-the-real": {
+        "type": "choice",
+        "choice": "actually_eligible",
+        "confidence": 0.62,
+        "probabilities": {
+          "actually_eligible": 0.66,
+          "insufficient_evidence": 0.08,
+          "pure_logic_or_data_only": 0.01,
+          "real_layout_geometry_or_coordinate_hit_test": 0.18,
+          "configured_browser_mode_capability_gap": 0.01,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "engine_specific_behavior": 0,
+          "other_scope_or_technical_blocker": 0.01,
+          "nextjs_or_production_integration": 0.05,
+          "multiple_independent_blockers": 0
+        }
+      },
+      "p45-b-tooltip-dismiss-138-case01": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.8,
+        "probabilities": {
+          "insufficient_evidence": 0.01,
+          "actually_eligible": 0.14,
+          "pure_logic_or_data_only": 0,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "configured_browser_mode_capability_gap": 0.01,
+          "real_layout_geometry_or_coordinate_hit_test": 0.83,
+          "engine_specific_behavior": 0.01,
+          "multiple_independent_blockers": 0,
+          "nextjs_or_production_integration": 0,
+          "other_scope_or_technical_blocker": 0
+        }
+      },
+      "p45-b-tooltip-dismiss-188-case01": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.86,
+        "probabilities": {
+          "insufficient_evidence": 0.01,
+          "actually_eligible": 0.1,
+          "pure_logic_or_data_only": 0,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "configured_browser_mode_capability_gap": 0.01,
+          "real_layout_geometry_or_coordinate_hit_test": 0.87,
+          "engine_specific_behavior": 0.01,
+          "other_scope_or_technical_blocker": 0,
+          "nextjs_or_production_integration": 0,
+          "multiple_independent_blockers": 0
+        }
+      },
+      "p45-b-tooltip-dismiss-207-1": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.7,
+        "probabilities": {
+          "actually_eligible": 0.21000000000000002,
+          "insufficient_evidence": 0.02,
+          "pure_logic_or_data_only": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.74,
+          "configured_browser_mode_capability_gap": 0.01,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "engine_specific_behavior": 0.02,
+          "other_scope_or_technical_blocker": 0,
+          "nextjs_or_production_integration": 0,
+          "multiple_independent_blockers": 0
+        }
+      },
+      "p45-b-tooltip-dismiss-231-case01": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.69,
+        "probabilities": {
+          "insufficient_evidence": 0.01,
+          "actually_eligible": 0.24,
+          "pure_logic_or_data_only": 0,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "configured_browser_mode_capability_gap": 0.01,
+          "real_layout_geometry_or_coordinate_hit_test": 0.74,
+          "engine_specific_behavior": 0,
+          "multiple_independent_blockers": 0,
+          "nextjs_or_production_integration": 0,
+          "other_scope_or_technical_blocker": 0
+        }
+      },
+      "p45-b-tooltip-dismiss-249-case01": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.8,
+        "probabilities": {
+          "actually_eligible": 0.11,
+          "insufficient_evidence": 0.02,
+          "pure_logic_or_data_only": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.82,
+          "configured_browser_mode_capability_gap": 0.02,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "engine_specific_behavior": 0.02,
+          "multiple_independent_blockers": 0.01,
+          "nextjs_or_production_integration": 0,
+          "other_scope_or_technical_blocker": 0
+        }
+      },
+      "p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.93,
+        "probabilities": {
+          "insufficient_evidence": 0.01,
+          "actually_eligible": 0.05,
+          "pure_logic_or_data_only": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.94,
+          "configured_browser_mode_capability_gap": 0,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "engine_specific_behavior": 0,
+          "other_scope_or_technical_blocker": 0,
+          "nextjs_or_production_integration": 0,
+          "multiple_independent_blockers": 0
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": 10219,
+      "output_tokens": 1973
+    }
+  }
+}

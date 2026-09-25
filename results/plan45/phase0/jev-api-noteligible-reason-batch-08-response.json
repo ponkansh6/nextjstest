@@ -1,0 +1,216 @@
+{
+  "httpStatus": 200,
+  "body": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.88,
+        "probabilities": {
+          "real_layout_geometry_or_coordinate_hit_test": 0.9,
+          "engine_specific_behavior": 0,
+          "insufficient_evidence": 0.01,
+          "configured_browser_mode_capability_gap": 0,
+          "other_scope_or_technical_blocker": 0,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "actually_eligible": 0.09,
+          "pure_logic_or_data_only": 0,
+          "nextjs_or_production_integration": 0,
+          "multiple_independent_blockers": 0
+        }
+      },
+      "p45-b-tooltip-dismiss-473-case01": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.85,
+        "probabilities": {
+          "real_layout_geometry_or_coordinate_hit_test": 0.86,
+          "engine_specific_behavior": 0.02,
+          "insufficient_evidence": 0.01,
+          "configured_browser_mode_capability_gap": 0.01,
+          "other_scope_or_technical_blocker": 0,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "actually_eligible": 0.1,
+          "pure_logic_or_data_only": 0,
+          "nextjs_or_production_integration": 0,
+          "multiple_independent_blockers": 0
+        }
+      },
+      "p45-b-tooltip-dismiss-535-case01": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.83,
+        "probabilities": {
+          "real_layout_geometry_or_coordinate_hit_test": 0.86,
+          "engine_specific_behavior": 0.01,
+          "insufficient_evidence": 0.03,
+          "configured_browser_mode_capability_gap": 0.01,
+          "other_scope_or_technical_blocker": 0,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "actually_eligible": 0.09,
+          "pure_logic_or_data_only": 0,
+          "nextjs_or_production_integration": 0,
+          "multiple_independent_blockers": 0
+        }
+      },
+      "p45-b-section-tabs-scroll-47-case04-webkit": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.72,
+        "probabilities": {
+          "real_layout_geometry_or_coordinate_hit_test": 0.75,
+          "engine_specific_behavior": 0.07,
+          "insufficient_evidence": 0.01,
+          "configured_browser_mode_capability_gap": 0.01,
+          "other_scope_or_technical_blocker": 0,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "actually_eligible": 0.16,
+          "pure_logic_or_data_only": 0,
+          "nextjs_or_production_integration": 0,
+          "multiple_independent_blockers": 0
+        }
+      },
+      "p45-b-section-tabs-scroll-47-case05-webkit": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.79,
+        "probabilities": {
+          "real_layout_geometry_or_coordinate_hit_test": 0.81,
+          "engine_specific_behavior": 0.04,
+          "insufficient_evidence": 0.01,
+          "configured_browser_mode_capability_gap": 0.01,
+          "other_scope_or_technical_blocker": 0,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "actually_eligible": 0.13,
+          "pure_logic_or_data_only": 0,
+          "nextjs_or_production_integration": 0,
+          "multiple_independent_blockers": 0
+        }
+      },
+      "p45-b-section-tabs-scroll-47-3-webkit": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.73,
+        "probabilities": {
+          "real_layout_geometry_or_coordinate_hit_test": 0.76,
+          "engine_specific_behavior": 0.08,
+          "insufficient_evidence": 0.01,
+          "other_scope_or_technical_blocker": 0,
+          "configured_browser_mode_capability_gap": 0.01,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "actually_eligible": 0.14,
+          "pure_logic_or_data_only": 0,
+          "nextjs_or_production_integration": 0,
+          "multiple_independent_blockers": 0
+        }
+      },
+      "p45-b-section-tabs-scroll-82-case04-webkit": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.65,
+        "probabilities": {
+          "real_layout_geometry_or_coordinate_hit_test": 0.7,
+          "engine_specific_behavior": 0.09,
+          "insufficient_evidence": 0.01,
+          "other_scope_or_technical_blocker": 0,
+          "configured_browser_mode_capability_gap": 0.01,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "actually_eligible": 0.19,
+          "pure_logic_or_data_only": 0,
+          "nextjs_or_production_integration": 0,
+          "multiple_independent_blockers": 0
+        }
+      },
+      "p45-b-section-tabs-scroll-82-case05-webkit": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.64,
+        "probabilities": {
+          "real_layout_geometry_or_coordinate_hit_test": 0.68,
+          "engine_specific_behavior": 0.11,
+          "insufficient_evidence": 0.01,
+          "other_scope_or_technical_blocker": 0,
+          "configured_browser_mode_capability_gap": 0.01,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "actually_eligible": 0.19,
+          "pure_logic_or_data_only": 0,
+          "nextjs_or_production_integration": 0,
+          "multiple_independent_blockers": 0
+        }
+      },
+      "p45-b-section-tabs-scroll-82-3-webkit": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.65,
+        "probabilities": {
+          "real_layout_geometry_or_coordinate_hit_test": 0.7,
+          "engine_specific_behavior": 0.11,
+          "insufficient_evidence": 0.01,
+          "configured_browser_mode_capability_gap": 0.01,
+          "other_scope_or_technical_blocker": 0,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "actually_eligible": 0.17,
+          "pure_logic_or_data_only": 0,
+          "nextjs_or_production_integration": 0,
+          "multiple_independent_blockers": 0
+        }
+      },
+      "p45-b-section-tabs-scroll-120-case02-webkit": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.6,
+        "probabilities": {
+          "real_layout_geometry_or_coordinate_hit_test": 0.65,
+          "engine_specific_behavior": 0.13,
+          "insufficient_evidence": 0.03,
+          "configured_browser_mode_capability_gap": 0.02,
+          "other_scope_or_technical_blocker": 0,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "actually_eligible": 0.16,
+          "pure_logic_or_data_only": 0,
+          "nextjs_or_production_integration": 0,
+          "multiple_independent_blockers": 0.01
+        }
+      },
+      "p45-b-section-tabs-scroll-127-case02-webkit": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.69,
+        "probabilities": {
+          "real_layout_geometry_or_coordinate_hit_test": 0.73,
+          "engine_specific_behavior": 0.08,
+          "insufficient_evidence": 0.01,
+          "configured_browser_mode_capability_gap": 0.01,
+          "other_scope_or_technical_blocker": 0,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "actually_eligible": 0.17,
+          "pure_logic_or_data_only": 0,
+          "nextjs_or_production_integration": 0,
+          "multiple_independent_blockers": 0
+        }
+      },
+      "p45-b-section-tabs-scroll-142-mask-image-webkit": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.5,
+        "probabilities": {
+          "real_layout_geometry_or_coordinate_hit_test": 0.55,
+          "engine_specific_behavior": 0.19,
+          "insufficient_evidence": 0.03,
+          "configured_browser_mode_capability_gap": 0.02,
+          "other_scope_or_technical_blocker": 0,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "actually_eligible": 0.19,
+          "pure_logic_or_data_only": 0,
+          "nextjs_or_production_integration": 0,
+          "multiple_independent_blockers": 0.01
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": 10397,
+      "output_tokens": 1907
+    }
+  }
+}

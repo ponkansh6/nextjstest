@@ -1,0 +1,216 @@
+{
+  "httpStatus": 200,
+  "body": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "p45-b-consumption-mobile-readability-191-430px-tooltip-6-viewport": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.88,
+        "probabilities": {
+          "engine_specific_behavior": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.9,
+          "configured_browser_mode_capability_gap": 0,
+          "insufficient_evidence": 0,
+          "multiple_independent_blockers": 0,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "pure_logic_or_data_only": 0,
+          "actually_eligible": 0.1,
+          "other_scope_or_technical_blocker": 0,
+          "nextjs_or_production_integration": 0
+        }
+      },
+      "p45-b-consumption-mobile-readability-297-375x667-tooltip": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.7,
+        "probabilities": {
+          "engine_specific_behavior": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.74,
+          "multiple_independent_blockers": 0,
+          "insufficient_evidence": 0,
+          "actually_eligible": 0.25,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "pure_logic_or_data_only": 0,
+          "configured_browser_mode_capability_gap": 0,
+          "other_scope_or_technical_blocker": 0,
+          "nextjs_or_production_integration": 0.01
+        }
+      },
+      "p45-b-consumption-mobile-readability-297-320x480-tooltip": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.71,
+        "probabilities": {
+          "engine_specific_behavior": 0,
+          "configured_browser_mode_capability_gap": 0,
+          "multiple_independent_blockers": 0,
+          "actually_eligible": 0.24,
+          "insufficient_evidence": 0,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "pure_logic_or_data_only": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.75,
+          "other_scope_or_technical_blocker": 0,
+          "nextjs_or_production_integration": 0.01
+        }
+      },
+      "p45-b-consumption-mobile-readability-297-landscape-tooltip": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.72,
+        "probabilities": {
+          "engine_specific_behavior": 0,
+          "multiple_independent_blockers": 0,
+          "configured_browser_mode_capability_gap": 0,
+          "insufficient_evidence": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.76,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "pure_logic_or_data_only": 0,
+          "actually_eligible": 0.23,
+          "other_scope_or_technical_blocker": 0,
+          "nextjs_or_production_integration": 0.01
+        }
+      },
+      "p45-b-mobile-ux-19-ux": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.73,
+        "probabilities": {
+          "engine_specific_behavior": 0,
+          "multiple_independent_blockers": 0,
+          "configured_browser_mode_capability_gap": 0,
+          "actually_eligible": 0.2,
+          "insufficient_evidence": 0.03,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "pure_logic_or_data_only": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.77,
+          "other_scope_or_technical_blocker": 0,
+          "nextjs_or_production_integration": 0
+        }
+      },
+      "p45-b-mobile-ux-47-ux-375px": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.69,
+        "probabilities": {
+          "engine_specific_behavior": 0,
+          "multiple_independent_blockers": 0,
+          "configured_browser_mode_capability_gap": 0,
+          "actually_eligible": 0.12,
+          "real_layout_geometry_or_coordinate_hit_test": 0.73,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "pure_logic_or_data_only": 0,
+          "insufficient_evidence": 0.15,
+          "other_scope_or_technical_blocker": 0,
+          "nextjs_or_production_integration": 0
+        }
+      },
+      "p45-b-mobile-ux-65-ux-320px-overflow": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.75,
+        "probabilities": {
+          "engine_specific_behavior": 0,
+          "configured_browser_mode_capability_gap": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.78,
+          "actually_eligible": 0.22,
+          "multiple_independent_blockers": 0,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "pure_logic_or_data_only": 0,
+          "insufficient_evidence": 0,
+          "other_scope_or_technical_blocker": 0,
+          "nextjs_or_production_integration": 0
+        }
+      },
+      "p45-b-mobile-ux-65-ux-375px-overflow": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.75,
+        "probabilities": {
+          "engine_specific_behavior": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.79,
+          "multiple_independent_blockers": 0,
+          "insufficient_evidence": 0,
+          "actually_eligible": 0.21,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "pure_logic_or_data_only": 0,
+          "configured_browser_mode_capability_gap": 0,
+          "other_scope_or_technical_blocker": 0,
+          "nextjs_or_production_integration": 0
+        }
+      },
+      "p45-b-mobile-ux-65-ux-390px-overflow": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.75,
+        "probabilities": {
+          "engine_specific_behavior": 0,
+          "multiple_independent_blockers": 0,
+          "configured_browser_mode_capability_gap": 0,
+          "actually_eligible": 0.21,
+          "insufficient_evidence": 0,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "pure_logic_or_data_only": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.79,
+          "other_scope_or_technical_blocker": 0,
+          "nextjs_or_production_integration": 0
+        }
+      },
+      "p45-b-mobile-ux-65-ux-430px-overflow": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.76,
+        "probabilities": {
+          "engine_specific_behavior": 0,
+          "configured_browser_mode_capability_gap": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.8,
+          "insufficient_evidence": 0,
+          "actually_eligible": 0.2,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "pure_logic_or_data_only": 0,
+          "multiple_independent_blockers": 0,
+          "other_scope_or_technical_blocker": 0,
+          "nextjs_or_production_integration": 0
+        }
+      },
+      "p45-b-mobile-ux-79-ux-375px-select": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.8,
+        "probabilities": {
+          "engine_specific_behavior": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.82,
+          "multiple_independent_blockers": 0,
+          "insufficient_evidence": 0,
+          "actually_eligible": 0.18,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "pure_logic_or_data_only": 0,
+          "configured_browser_mode_capability_gap": 0,
+          "other_scope_or_technical_blocker": 0,
+          "nextjs_or_production_integration": 0
+        }
+      },
+      "p45-b-mobile-ux-112-ux-375px-select": {
+        "type": "choice",
+        "choice": "actually_eligible",
+        "confidence": 0.52,
+        "probabilities": {
+          "engine_specific_behavior": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.41,
+          "multiple_independent_blockers": 0,
+          "actually_eligible": 0.58,
+          "configured_browser_mode_capability_gap": 0,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "pure_logic_or_data_only": 0,
+          "insufficient_evidence": 0.01,
+          "other_scope_or_technical_blocker": 0,
+          "nextjs_or_production_integration": 0
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": 9681,
+      "output_tokens": 1976
+    }
+  }
+}

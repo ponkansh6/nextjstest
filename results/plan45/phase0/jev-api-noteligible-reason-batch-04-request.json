@@ -1,0 +1,213 @@
+{
+  "model": "jev-latest",
+  "state": {
+    "evaluationScope": "Primary reason audit for the prior not_eligible subset",
+    "background": "The 96 rows in this request are the scenarios whose top choice was `not_eligible` in an earlier direct TypeSafe classification. That selection is only a subset filter; it is not ground truth. Independently inspect each exact Playwright source assertion and its project/viewport/color-scheme/engine/input condition supplied in its question. Do not reuse or assume any prior eligibility rationale. Select the single primary reason that best explains why a scenario should stay outside Vitest Browser Mode, or choose actually_eligible if the earlier not_eligible classification appears wrong, or insufficient_evidence if evidence is inadequate. For multiple independent blockers choose that category only when at least two apply without one primary blocker. Category labels are not licenses to invent unsupported facts. The exact source declaration/assertion snippets are reproduced from the referenced tests/e2e source files; project and input variants remain separate logical rows. No user credentials are included.",
+    "acceptanceCriteria": [
+      "Each question ID is a stable scenario ID from the 96-row prior-not_eligible subset.",
+      "Choose exactly one primary reason category from each row question criteria; eligibility may be revised to actually_eligible or uncertainty to insufficient_evidence.",
+      "Do not infer engine limitations from project name alone, and do not infer geometry requirements from viewport style input alone.",
+      "Return only structured choice answers; no free-text diagnosis is requested."
+    ],
+    "knownConstraints": [
+      "The earlier not_eligible choice is not ground truth.",
+      "Only the supplied source code and condition evidence may support category assignment.",
+      "No plan or code modifications are part of this audit."
+    ],
+    "outputRequirement": "Return a choice answer for every question keyed by its exact question ID. Use only one listed category. Do not add free-text diagnosis."
+  },
+  "questions": {
+    "p45-b-real-consumption-60-page-tsx-e2e-real-consumption-chart-with-actual-browser": {
+      "type": "choice",
+      "instructions": "Stable scenario ID: p45-b-real-consumption-60-page-tsx-e2e-real-consumption-chart-with-actual-browser. Source: tests/e2e/real-consumption.e2e.spec.ts:60. Exact project/viewport/color/engine/input condition: chromium; page.tsx E2E: real consumption chart with actual browser › should render without hydration or console errors. Contract summary: Retain the full assertion contract: page.tsx E2E: real consumption chart with actual browser › should render without hydration or console errors.. Actual test declaration/action/assertion snippets:\n60: test(\"should render without hydration or console errors\", async ({ page }) => {\n77: await page.goto(\"/\");\n79: expect(errors, `Page should load without errors.\\nErrors:\\n${errors.join(\"\\n\")}`).toEqual([]);\nSelect the single primary reason under the common category definitions. Treat the prior choice solely as subset selection; independently reconsider whether it is actually eligible.",
+      "criteria": {
+        "nextjs_or_production_integration": "Requires Next build/start, Next route/server/Flight/hydration, URL/query-to-screen behavior, or production download/CSV parity.",
+        "real_layout_geometry_or_coordinate_hit_test": "Requires physical placement/containment/overflow/scroll, SVG/chart geometry, or pointer/touch coordinate hit-testing. Do not infer this from simple viewport style input alone.",
+        "engine_specific_behavior": "Requires actual engine-specific behavior outside current Vitest Browser Mode scope. Do not infer this from a Playwright project name alone.",
+        "pure_logic_or_data_only": "Has no meaningful browser-observable contract and belongs in unit/data testing.",
+        "duplicate_or_no_distinct_browser_contract": "Only an exact same contract is already owned elsewhere; partial overlap does not qualify.",
+        "configured_browser_mode_capability_gap": "A different specific current provider/Browser Mode limitation blocks a faithful replacement; choose only when the precise limitation is evidenced.",
+        "multiple_independent_blockers": "At least two independent blockers from categories 1–6 apply, with no single dominant reason.",
+        "other_scope_or_technical_blocker": "Another specific scope or technical blocker prevents faithful replacement.",
+        "actually_eligible": "The prior not_eligible choice appears wrong; Browser Mode can faithfully preserve the asserted contract and condition.",
+        "insufficient_evidence": "The source assertion/conditions do not support identifying a primary reason or deciding eligibility."
+      }
+    },
+    "p45-b-real-consumption-82-page-tsx-e2e-real-consumption-chart-with-actual-browser": {
+      "type": "choice",
+      "instructions": "Stable scenario ID: p45-b-real-consumption-82-page-tsx-e2e-real-consumption-chart-with-actual-browser. Source: tests/e2e/real-consumption.e2e.spec.ts:82. Exact project/viewport/color/engine/input condition: chromium; page.tsx E2E: real consumption chart with actual browser › should render UI components in real consumption chart. Contract summary: Retain the full assertion contract: page.tsx E2E: real consumption chart with actual browser › should render UI components in real consumption chart.. Actual test declaration/action/assertion snippets:\n82: test(\"should render UI components in real consumption chart\", async ({ page }) => {\n89: * SSR の HTML には存在しない。id で特定し、expect の自動待機で解決させる。\n91: await page.goto(\"/\");\n94: await expect(realChartSection, \"Real consumption chart section should be visible\").toBeVisible({\nSelect the single primary reason under the common category definitions. Treat the prior choice solely as subset selection; independently reconsider whether it is actually eligible.",
+      "criteria": {
+        "nextjs_or_production_integration": "Requires Next build/start, Next route/server/Flight/hydration, URL/query-to-screen behavior, or production download/CSV parity.",
+        "real_layout_geometry_or_coordinate_hit_test": "Requires physical placement/containment/overflow/scroll, SVG/chart geometry, or pointer/touch coordinate hit-testing. Do not infer this from simple viewport style input alone.",
+        "engine_specific_behavior": "Requires actual engine-specific behavior outside current Vitest Browser Mode scope. Do not infer this from a Playwright project name alone.",
+        "pure_logic_or_data_only": "Has no meaningful browser-observable contract and belongs in unit/data testing.",
+        "duplicate_or_no_distinct_browser_contract": "Only an exact same contract is already owned elsewhere; partial overlap does not qualify.",
+        "configured_browser_mode_capability_gap": "A different specific current provider/Browser Mode limitation blocks a faithful replacement; choose only when the precise limitation is evidenced.",
+        "multiple_independent_blockers": "At least two independent blockers from categories 1–6 apply, with no single dominant reason.",
+        "other_scope_or_technical_blocker": "Another specific scope or technical blocker prevents faithful replacement.",
+        "actually_eligible": "The prior not_eligible choice appears wrong; Browser Mode can faithfully preserve the asserted contract and condition.",
+        "insufficient_evidence": "The source assertion/conditions do not support identifying a primary reason or deciding eligibility."
+      }
+    },
+    "p45-b-real-consumption-99-page-tsx-e2e-real-consumption-chart-with-actual-browser": {
+      "type": "choice",
+      "instructions": "Stable scenario ID: p45-b-real-consumption-99-page-tsx-e2e-real-consumption-chart-with-actual-browser. Source: tests/e2e/real-consumption.e2e.spec.ts:99. Exact project/viewport/color/engine/input condition: chromium; page.tsx E2E: real consumption chart with actual browser › should handle legend toggle and update chart visibility. Contract summary: Retain the full assertion contract: page.tsx E2E: real consumption chart with actual browser › should handle legend toggle and update chart visibility.. Actual test declaration/action/assertion snippets:\n99: test(\"should handle legend toggle and update chart visibility\", async ({ page }) => {\n104: await page.goto(\"/\");\n111: expect(isVisible, \"Should have legend items visible\").toBe(true);\nSelect the single primary reason under the common category definitions. Treat the prior choice solely as subset selection; independently reconsider whether it is actually eligible.",
+      "criteria": {
+        "nextjs_or_production_integration": "Requires Next build/start, Next route/server/Flight/hydration, URL/query-to-screen behavior, or production download/CSV parity.",
+        "real_layout_geometry_or_coordinate_hit_test": "Requires physical placement/containment/overflow/scroll, SVG/chart geometry, or pointer/touch coordinate hit-testing. Do not infer this from simple viewport style input alone.",
+        "engine_specific_behavior": "Requires actual engine-specific behavior outside current Vitest Browser Mode scope. Do not infer this from a Playwright project name alone.",
+        "pure_logic_or_data_only": "Has no meaningful browser-observable contract and belongs in unit/data testing.",
+        "duplicate_or_no_distinct_browser_contract": "Only an exact same contract is already owned elsewhere; partial overlap does not qualify.",
+        "configured_browser_mode_capability_gap": "A different specific current provider/Browser Mode limitation blocks a faithful replacement; choose only when the precise limitation is evidenced.",
+        "multiple_independent_blockers": "At least two independent blockers from categories 1–6 apply, with no single dominant reason.",
+        "other_scope_or_technical_blocker": "Another specific scope or technical blocker prevents faithful replacement.",
+        "actually_eligible": "The prior not_eligible choice appears wrong; Browser Mode can faithfully preserve the asserted contract and condition.",
+        "insufficient_evidence": "The source assertion/conditions do not support identifying a primary reason or deciding eligibility."
+      }
+    },
+    "p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser": {
+      "type": "choice",
+      "instructions": "Stable scenario ID: p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser. Source: tests/e2e/real-consumption.e2e.spec.ts:128. Exact project/viewport/color/engine/input condition: chromium; page.tsx E2E: real consumption chart with actual browser › 実質消費凡例アコーディオン › T-E2E-A1: 初期表示で実質セクションの凡例ボタンが見えない（アコーディオンが閉じている）. Contract summary: Retain the full assertion contract: page.tsx E2E: real consumption chart with actual browser › 実質消費凡例アコーディオン › T-E2E-A1: 初期表示で実質セクションの凡例ボタンが見えない（アコーディオンが閉じている）.. Actual test declaration/action/assertion snippets:\n128: test(\"T-E2E-A1: 初期表示で実質セクションの凡例ボタンが見えない（アコーディオンが閉じている）\", async ({\n131: await page.goto(\"/\");\n137: await expect(realSection).toBeVisible({ timeout: 15000 });\n141: await expect(summary).toBeVisible();\n149: await expect(items.nth(i)).not.toBeVisible();\n152: expect(count).toBe(0);\nSelect the single primary reason under the common category definitions. Treat the prior choice solely as subset selection; independently reconsider whether it is actually eligible.",
+      "criteria": {
+        "nextjs_or_production_integration": "Requires Next build/start, Next route/server/Flight/hydration, URL/query-to-screen behavior, or production download/CSV parity.",
+        "real_layout_geometry_or_coordinate_hit_test": "Requires physical placement/containment/overflow/scroll, SVG/chart geometry, or pointer/touch coordinate hit-testing. Do not infer this from simple viewport style input alone.",
+        "engine_specific_behavior": "Requires actual engine-specific behavior outside current Vitest Browser Mode scope. Do not infer this from a Playwright project name alone.",
+        "pure_logic_or_data_only": "Has no meaningful browser-observable contract and belongs in unit/data testing.",
+        "duplicate_or_no_distinct_browser_contract": "Only an exact same contract is already owned elsewhere; partial overlap does not qualify.",
+        "configured_browser_mode_capability_gap": "A different specific current provider/Browser Mode limitation blocks a faithful replacement; choose only when the precise limitation is evidenced.",
+        "multiple_independent_blockers": "At least two independent blockers from categories 1–6 apply, with no single dominant reason.",
+        "other_scope_or_technical_blocker": "Another specific scope or technical blocker prevents faithful replacement.",
+        "actually_eligible": "The prior not_eligible choice appears wrong; Browser Mode can faithfully preserve the asserted contract and condition.",
+        "insufficient_evidence": "The source assertion/conditions do not support identifying a primary reason or deciding eligibility."
+      }
+    },
+    "p45-b-section-tabs-scroll-47-case01-chromium": {
+      "type": "choice",
+      "instructions": "Stable scenario ID: p45-b-section-tabs-scroll-47-case01-chromium. Source: tests/e2e/section-tabs-scroll.e2e.spec.ts:47. Exact project/viewport/color/engine/input condition: chromium; タブバー押下時のスクロール › 「消費(名目)」タブを押すと該当セクションが表示領域に入る; Chromium project. Contract summary: Retain the full assertion contract: タブバー押下時のスクロール › 「消費(名目)」タブを押すと該当セクションが表示領域に入る.. Actual test declaration/action/assertion snippets:\n47: test(`「${label}」タブを押すと該当セクションが表示領域に入る`, async ({ page }) => {\n57: expect(after, `「${label}」タブ押下後、ページがスクロールしているべき`).toBeGreaterThan(\n61: await expect(\n71: await page.goto(\"/\");\n86: await expect(\n97: await expect(\n113: await page.setViewportSize({ width: 375, height: 800 });\n114: await page.goto(\"/\");\n124: expect(scrollbarWidth).toBe(\"none\");\n138: expect(result.scrollWidth).toBeGreaterThan(result.clientWidth);\nSelect the single primary reason under the common category definitions. Treat the prior choice solely as subset selection; independently reconsider whether it is actually eligible.",
+      "criteria": {
+        "nextjs_or_production_integration": "Requires Next build/start, Next route/server/Flight/hydration, URL/query-to-screen behavior, or production download/CSV parity.",
+        "real_layout_geometry_or_coordinate_hit_test": "Requires physical placement/containment/overflow/scroll, SVG/chart geometry, or pointer/touch coordinate hit-testing. Do not infer this from simple viewport style input alone.",
+        "engine_specific_behavior": "Requires actual engine-specific behavior outside current Vitest Browser Mode scope. Do not infer this from a Playwright project name alone.",
+        "pure_logic_or_data_only": "Has no meaningful browser-observable contract and belongs in unit/data testing.",
+        "duplicate_or_no_distinct_browser_contract": "Only an exact same contract is already owned elsewhere; partial overlap does not qualify.",
+        "configured_browser_mode_capability_gap": "A different specific current provider/Browser Mode limitation blocks a faithful replacement; choose only when the precise limitation is evidenced.",
+        "multiple_independent_blockers": "At least two independent blockers from categories 1–6 apply, with no single dominant reason.",
+        "other_scope_or_technical_blocker": "Another specific scope or technical blocker prevents faithful replacement.",
+        "actually_eligible": "The prior not_eligible choice appears wrong; Browser Mode can faithfully preserve the asserted contract and condition.",
+        "insufficient_evidence": "The source assertion/conditions do not support identifying a primary reason or deciding eligibility."
+      }
+    },
+    "p45-b-section-tabs-scroll-47-case02-chromium": {
+      "type": "choice",
+      "instructions": "Stable scenario ID: p45-b-section-tabs-scroll-47-case02-chromium. Source: tests/e2e/section-tabs-scroll.e2e.spec.ts:47. Exact project/viewport/color/engine/input condition: chromium; タブバー押下時のスクロール › 「給与」タブを押すと該当セクションが表示領域に入る; Chromium project. Contract summary: Retain the full assertion contract: タブバー押下時のスクロール › 「給与」タブを押すと該当セクションが表示領域に入る.. Actual test declaration/action/assertion snippets:\n47: test(`「${label}」タブを押すと該当セクションが表示領域に入る`, async ({ page }) => {\n57: expect(after, `「${label}」タブ押下後、ページがスクロールしているべき`).toBeGreaterThan(\n61: await expect(\n71: await page.goto(\"/\");\n86: await expect(\n97: await expect(\n113: await page.setViewportSize({ width: 375, height: 800 });\n114: await page.goto(\"/\");\n124: expect(scrollbarWidth).toBe(\"none\");\n138: expect(result.scrollWidth).toBeGreaterThan(result.clientWidth);\nSelect the single primary reason under the common category definitions. Treat the prior choice solely as subset selection; independently reconsider whether it is actually eligible.",
+      "criteria": {
+        "nextjs_or_production_integration": "Requires Next build/start, Next route/server/Flight/hydration, URL/query-to-screen behavior, or production download/CSV parity.",
+        "real_layout_geometry_or_coordinate_hit_test": "Requires physical placement/containment/overflow/scroll, SVG/chart geometry, or pointer/touch coordinate hit-testing. Do not infer this from simple viewport style input alone.",
+        "engine_specific_behavior": "Requires actual engine-specific behavior outside current Vitest Browser Mode scope. Do not infer this from a Playwright project name alone.",
+        "pure_logic_or_data_only": "Has no meaningful browser-observable contract and belongs in unit/data testing.",
+        "duplicate_or_no_distinct_browser_contract": "Only an exact same contract is already owned elsewhere; partial overlap does not qualify.",
+        "configured_browser_mode_capability_gap": "A different specific current provider/Browser Mode limitation blocks a faithful replacement; choose only when the precise limitation is evidenced.",
+        "multiple_independent_blockers": "At least two independent blockers from categories 1–6 apply, with no single dominant reason.",
+        "other_scope_or_technical_blocker": "Another specific scope or technical blocker prevents faithful replacement.",
+        "actually_eligible": "The prior not_eligible choice appears wrong; Browser Mode can faithfully preserve the asserted contract and condition.",
+        "insufficient_evidence": "The source assertion/conditions do not support identifying a primary reason or deciding eligibility."
+      }
+    },
+    "p45-b-section-tabs-scroll-47-3-chromium": {
+      "type": "choice",
+      "instructions": "Stable scenario ID: p45-b-section-tabs-scroll-47-3-chromium. Source: tests/e2e/section-tabs-scroll.e2e.spec.ts:47. Exact project/viewport/color/engine/input condition: chromium; タブバー押下時のスクロール › 「3種比較」タブを押すと該当セクションが表示領域に入る; Chromium project. Contract summary: Retain the full assertion contract: タブバー押下時のスクロール › 「3種比較」タブを押すと該当セクションが表示領域に入る.. Actual test declaration/action/assertion snippets:\n47: test(`「${label}」タブを押すと該当セクションが表示領域に入る`, async ({ page }) => {\n57: expect(after, `「${label}」タブ押下後、ページがスクロールしているべき`).toBeGreaterThan(\n61: await expect(\n71: await page.goto(\"/\");\n86: await expect(\n97: await expect(\n113: await page.setViewportSize({ width: 375, height: 800 });\n114: await page.goto(\"/\");\n124: expect(scrollbarWidth).toBe(\"none\");\n138: expect(result.scrollWidth).toBeGreaterThan(result.clientWidth);\nSelect the single primary reason under the common category definitions. Treat the prior choice solely as subset selection; independently reconsider whether it is actually eligible.",
+      "criteria": {
+        "nextjs_or_production_integration": "Requires Next build/start, Next route/server/Flight/hydration, URL/query-to-screen behavior, or production download/CSV parity.",
+        "real_layout_geometry_or_coordinate_hit_test": "Requires physical placement/containment/overflow/scroll, SVG/chart geometry, or pointer/touch coordinate hit-testing. Do not infer this from simple viewport style input alone.",
+        "engine_specific_behavior": "Requires actual engine-specific behavior outside current Vitest Browser Mode scope. Do not infer this from a Playwright project name alone.",
+        "pure_logic_or_data_only": "Has no meaningful browser-observable contract and belongs in unit/data testing.",
+        "duplicate_or_no_distinct_browser_contract": "Only an exact same contract is already owned elsewhere; partial overlap does not qualify.",
+        "configured_browser_mode_capability_gap": "A different specific current provider/Browser Mode limitation blocks a faithful replacement; choose only when the precise limitation is evidenced.",
+        "multiple_independent_blockers": "At least two independent blockers from categories 1–6 apply, with no single dominant reason.",
+        "other_scope_or_technical_blocker": "Another specific scope or technical blocker prevents faithful replacement.",
+        "actually_eligible": "The prior not_eligible choice appears wrong; Browser Mode can faithfully preserve the asserted contract and condition.",
+        "insufficient_evidence": "The source assertion/conditions do not support identifying a primary reason or deciding eligibility."
+      }
+    },
+    "p45-b-section-tabs-scroll-82-case01-chromium": {
+      "type": "choice",
+      "instructions": "Stable scenario ID: p45-b-section-tabs-scroll-82-case01-chromium. Source: tests/e2e/section-tabs-scroll.e2e.spec.ts:82. Exact project/viewport/color/engine/input condition: chromium; タブバー押下時のスクロール(初回読み込み・未マウント状態) › 未マウント状態から「消費(名目)」タブを押しても該当セクションへ到達する; Chromium project. Contract summary: Retain the full assertion contract: タブバー押下時のスクロール(初回読み込み・未マウント状態) › 未マウント状態から「消費(名目)」タブを押しても該当セクションへ到達する.. Actual test declaration/action/assertion snippets:\n47: test(`「${label}」タブを押すと該当セクションが表示領域に入る`, async ({ page }) => {\n57: expect(after, `「${label}」タブ押下後、ページがスクロールしているべき`).toBeGreaterThan(\n61: await expect(\n71: await page.goto(\"/\");\n86: await expect(\n97: await expect(\n113: await page.setViewportSize({ width: 375, height: 800 });\n114: await page.goto(\"/\");\n124: expect(scrollbarWidth).toBe(\"none\");\n138: expect(result.scrollWidth).toBeGreaterThan(result.clientWidth);\nSelect the single primary reason under the common category definitions. Treat the prior choice solely as subset selection; independently reconsider whether it is actually eligible.",
+      "criteria": {
+        "nextjs_or_production_integration": "Requires Next build/start, Next route/server/Flight/hydration, URL/query-to-screen behavior, or production download/CSV parity.",
+        "real_layout_geometry_or_coordinate_hit_test": "Requires physical placement/containment/overflow/scroll, SVG/chart geometry, or pointer/touch coordinate hit-testing. Do not infer this from simple viewport style input alone.",
+        "engine_specific_behavior": "Requires actual engine-specific behavior outside current Vitest Browser Mode scope. Do not infer this from a Playwright project name alone.",
+        "pure_logic_or_data_only": "Has no meaningful browser-observable contract and belongs in unit/data testing.",
+        "duplicate_or_no_distinct_browser_contract": "Only an exact same contract is already owned elsewhere; partial overlap does not qualify.",
+        "configured_browser_mode_capability_gap": "A different specific current provider/Browser Mode limitation blocks a faithful replacement; choose only when the precise limitation is evidenced.",
+        "multiple_independent_blockers": "At least two independent blockers from categories 1–6 apply, with no single dominant reason.",
+        "other_scope_or_technical_blocker": "Another specific scope or technical blocker prevents faithful replacement.",
+        "actually_eligible": "The prior not_eligible choice appears wrong; Browser Mode can faithfully preserve the asserted contract and condition.",
+        "insufficient_evidence": "The source assertion/conditions do not support identifying a primary reason or deciding eligibility."
+      }
+    },
+    "p45-b-section-tabs-scroll-82-case02-chromium": {
+      "type": "choice",
+      "instructions": "Stable scenario ID: p45-b-section-tabs-scroll-82-case02-chromium. Source: tests/e2e/section-tabs-scroll.e2e.spec.ts:82. Exact project/viewport/color/engine/input condition: chromium; タブバー押下時のスクロール(初回読み込み・未マウント状態) › 未マウント状態から「給与」タブを押しても該当セクションへ到達する; Chromium project. Contract summary: Retain the full assertion contract: タブバー押下時のスクロール(初回読み込み・未マウント状態) › 未マウント状態から「給与」タブを押しても該当セクションへ到達する.. Actual test declaration/action/assertion snippets:\n47: test(`「${label}」タブを押すと該当セクションが表示領域に入る`, async ({ page }) => {\n57: expect(after, `「${label}」タブ押下後、ページがスクロールしているべき`).toBeGreaterThan(\n61: await expect(\n71: await page.goto(\"/\");\n86: await expect(\n97: await expect(\n113: await page.setViewportSize({ width: 375, height: 800 });\n114: await page.goto(\"/\");\n124: expect(scrollbarWidth).toBe(\"none\");\n138: expect(result.scrollWidth).toBeGreaterThan(result.clientWidth);\nSelect the single primary reason under the common category definitions. Treat the prior choice solely as subset selection; independently reconsider whether it is actually eligible.",
+      "criteria": {
+        "nextjs_or_production_integration": "Requires Next build/start, Next route/server/Flight/hydration, URL/query-to-screen behavior, or production download/CSV parity.",
+        "real_layout_geometry_or_coordinate_hit_test": "Requires physical placement/containment/overflow/scroll, SVG/chart geometry, or pointer/touch coordinate hit-testing. Do not infer this from simple viewport style input alone.",
+        "engine_specific_behavior": "Requires actual engine-specific behavior outside current Vitest Browser Mode scope. Do not infer this from a Playwright project name alone.",
+        "pure_logic_or_data_only": "Has no meaningful browser-observable contract and belongs in unit/data testing.",
+        "duplicate_or_no_distinct_browser_contract": "Only an exact same contract is already owned elsewhere; partial overlap does not qualify.",
+        "configured_browser_mode_capability_gap": "A different specific current provider/Browser Mode limitation blocks a faithful replacement; choose only when the precise limitation is evidenced.",
+        "multiple_independent_blockers": "At least two independent blockers from categories 1–6 apply, with no single dominant reason.",
+        "other_scope_or_technical_blocker": "Another specific scope or technical blocker prevents faithful replacement.",
+        "actually_eligible": "The prior not_eligible choice appears wrong; Browser Mode can faithfully preserve the asserted contract and condition.",
+        "insufficient_evidence": "The source assertion/conditions do not support identifying a primary reason or deciding eligibility."
+      }
+    },
+    "p45-b-section-tabs-scroll-82-3-chromium": {
+      "type": "choice",
+      "instructions": "Stable scenario ID: p45-b-section-tabs-scroll-82-3-chromium. Source: tests/e2e/section-tabs-scroll.e2e.spec.ts:82. Exact project/viewport/color/engine/input condition: chromium; タブバー押下時のスクロール(初回読み込み・未マウント状態) › 未マウント状態から「3種比較」タブを押しても該当セクションへ到達する; Chromium project. Contract summary: Retain the full assertion contract: タブバー押下時のスクロール(初回読み込み・未マウント状態) › 未マウント状態から「3種比較」タブを押しても該当セクションへ到達する.. Actual test declaration/action/assertion snippets:\n47: test(`「${label}」タブを押すと該当セクションが表示領域に入る`, async ({ page }) => {\n57: expect(after, `「${label}」タブ押下後、ページがスクロールしているべき`).toBeGreaterThan(\n61: await expect(\n71: await page.goto(\"/\");\n86: await expect(\n97: await expect(\n113: await page.setViewportSize({ width: 375, height: 800 });\n114: await page.goto(\"/\");\n124: expect(scrollbarWidth).toBe(\"none\");\n138: expect(result.scrollWidth).toBeGreaterThan(result.clientWidth);\nSelect the single primary reason under the common category definitions. Treat the prior choice solely as subset selection; independently reconsider whether it is actually eligible.",
+      "criteria": {
+        "nextjs_or_production_integration": "Requires Next build/start, Next route/server/Flight/hydration, URL/query-to-screen behavior, or production download/CSV parity.",
+        "real_layout_geometry_or_coordinate_hit_test": "Requires physical placement/containment/overflow/scroll, SVG/chart geometry, or pointer/touch coordinate hit-testing. Do not infer this from simple viewport style input alone.",
+        "engine_specific_behavior": "Requires actual engine-specific behavior outside current Vitest Browser Mode scope. Do not infer this from a Playwright project name alone.",
+        "pure_logic_or_data_only": "Has no meaningful browser-observable contract and belongs in unit/data testing.",
+        "duplicate_or_no_distinct_browser_contract": "Only an exact same contract is already owned elsewhere; partial overlap does not qualify.",
+        "configured_browser_mode_capability_gap": "A different specific current provider/Browser Mode limitation blocks a faithful replacement; choose only when the precise limitation is evidenced.",
+        "multiple_independent_blockers": "At least two independent blockers from categories 1–6 apply, with no single dominant reason.",
+        "other_scope_or_technical_blocker": "Another specific scope or technical blocker prevents faithful replacement.",
+        "actually_eligible": "The prior not_eligible choice appears wrong; Browser Mode can faithfully preserve the asserted contract and condition.",
+        "insufficient_evidence": "The source assertion/conditions do not support identifying a primary reason or deciding eligibility."
+      }
+    },
+    "p45-b-section-tabs-scroll-120-case01-chromium": {
+      "type": "choice",
+      "instructions": "Stable scenario ID: p45-b-section-tabs-scroll-120-case01-chromium. Source: tests/e2e/section-tabs-scroll.e2e.spec.ts:120. Exact project/viewport/color/engine/input condition: chromium; タブバーのスクロールバー非表示と右端フェード › リロード直後(タブ未操作)にネイティブスクロールバーが非表示である; Chromium project. Contract summary: Retain the full assertion contract: タブバーのスクロールバー非表示と右端フェード › リロード直後(タブ未操作)にネイティブスクロールバーが非表示である.. Actual test declaration/action/assertion snippets:\n47: test(`「${label}」タブを押すと該当セクションが表示領域に入る`, async ({ page }) => {\n57: expect(after, `「${label}」タブ押下後、ページがスクロールしているべき`).toBeGreaterThan(\n61: await expect(\n71: await page.goto(\"/\");\n86: await expect(\n97: await expect(\n113: await page.setViewportSize({ width: 375, height: 800 });\n114: await page.goto(\"/\");\n124: expect(scrollbarWidth).toBe(\"none\");\n138: expect(result.scrollWidth).toBeGreaterThan(result.clientWidth);\nSelect the single primary reason under the common category definitions. Treat the prior choice solely as subset selection; independently reconsider whether it is actually eligible.",
+      "criteria": {
+        "nextjs_or_production_integration": "Requires Next build/start, Next route/server/Flight/hydration, URL/query-to-screen behavior, or production download/CSV parity.",
+        "real_layout_geometry_or_coordinate_hit_test": "Requires physical placement/containment/overflow/scroll, SVG/chart geometry, or pointer/touch coordinate hit-testing. Do not infer this from simple viewport style input alone.",
+        "engine_specific_behavior": "Requires actual engine-specific behavior outside current Vitest Browser Mode scope. Do not infer this from a Playwright project name alone.",
+        "pure_logic_or_data_only": "Has no meaningful browser-observable contract and belongs in unit/data testing.",
+        "duplicate_or_no_distinct_browser_contract": "Only an exact same contract is already owned elsewhere; partial overlap does not qualify.",
+        "configured_browser_mode_capability_gap": "A different specific current provider/Browser Mode limitation blocks a faithful replacement; choose only when the precise limitation is evidenced.",
+        "multiple_independent_blockers": "At least two independent blockers from categories 1–6 apply, with no single dominant reason.",
+        "other_scope_or_technical_blocker": "Another specific scope or technical blocker prevents faithful replacement.",
+        "actually_eligible": "The prior not_eligible choice appears wrong; Browser Mode can faithfully preserve the asserted contract and condition.",
+        "insufficient_evidence": "The source assertion/conditions do not support identifying a primary reason or deciding eligibility."
+      }
+    },
+    "p45-b-section-tabs-scroll-127-case01-chromium": {
+      "type": "choice",
+      "instructions": "Stable scenario ID: p45-b-section-tabs-scroll-127-case01-chromium. Source: tests/e2e/section-tabs-scroll.e2e.spec.ts:127. Exact project/viewport/color/engine/input condition: chromium; タブバーのスクロールバー非表示と右端フェード › スクロールバー非表示でも横スクロールが機能する; Chromium project. Contract summary: Retain the full assertion contract: タブバーのスクロールバー非表示と右端フェード › スクロールバー非表示でも横スクロールが機能する.. Actual test declaration/action/assertion snippets:\n47: test(`「${label}」タブを押すと該当セクションが表示領域に入る`, async ({ page }) => {\n57: expect(after, `「${label}」タブ押下後、ページがスクロールしているべき`).toBeGreaterThan(\n61: await expect(\n71: await page.goto(\"/\");\n86: await expect(\n97: await expect(\n113: await page.setViewportSize({ width: 375, height: 800 });\n114: await page.goto(\"/\");\n124: expect(scrollbarWidth).toBe(\"none\");\n138: expect(result.scrollWidth).toBeGreaterThan(result.clientWidth);\nSelect the single primary reason under the common category definitions. Treat the prior choice solely as subset selection; independently reconsider whether it is actually eligible.",
+      "criteria": {
+        "nextjs_or_production_integration": "Requires Next build/start, Next route/server/Flight/hydration, URL/query-to-screen behavior, or production download/CSV parity.",
+        "real_layout_geometry_or_coordinate_hit_test": "Requires physical placement/containment/overflow/scroll, SVG/chart geometry, or pointer/touch coordinate hit-testing. Do not infer this from simple viewport style input alone.",
+        "engine_specific_behavior": "Requires actual engine-specific behavior outside current Vitest Browser Mode scope. Do not infer this from a Playwright project name alone.",
+        "pure_logic_or_data_only": "Has no meaningful browser-observable contract and belongs in unit/data testing.",
+        "duplicate_or_no_distinct_browser_contract": "Only an exact same contract is already owned elsewhere; partial overlap does not qualify.",
+        "configured_browser_mode_capability_gap": "A different specific current provider/Browser Mode limitation blocks a faithful replacement; choose only when the precise limitation is evidenced.",
+        "multiple_independent_blockers": "At least two independent blockers from categories 1–6 apply, with no single dominant reason.",
+        "other_scope_or_technical_blocker": "Another specific scope or technical blocker prevents faithful replacement.",
+        "actually_eligible": "The prior not_eligible choice appears wrong; Browser Mode can faithfully preserve the asserted contract and condition.",
+        "insufficient_evidence": "The source assertion/conditions do not support identifying a primary reason or deciding eligibility."
+      }
+    }
+  }
+}

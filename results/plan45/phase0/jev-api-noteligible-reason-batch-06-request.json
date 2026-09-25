@@ -1,0 +1,213 @@
+{
+  "model": "jev-latest",
+  "state": {
+    "evaluationScope": "Primary reason audit for the prior not_eligible subset",
+    "background": "The 96 rows in this request are the scenarios whose top choice was `not_eligible` in an earlier direct TypeSafe classification. That selection is only a subset filter; it is not ground truth. Independently inspect each exact Playwright source assertion and its project/viewport/color-scheme/engine/input condition supplied in its question. Do not reuse or assume any prior eligibility rationale. Select the single primary reason that best explains why a scenario should stay outside Vitest Browser Mode, or choose actually_eligible if the earlier not_eligible classification appears wrong, or insufficient_evidence if evidence is inadequate. For multiple independent blockers choose that category only when at least two apply without one primary blocker. Category labels are not licenses to invent unsupported facts. The exact source declaration/assertion snippets are reproduced from the referenced tests/e2e source files; project and input variants remain separate logical rows. No user credentials are included.",
+    "acceptanceCriteria": [
+      "Each question ID is a stable scenario ID from the 96-row prior-not_eligible subset.",
+      "Choose exactly one primary reason category from each row question criteria; eligibility may be revised to actually_eligible or uncertainty to insufficient_evidence.",
+      "Do not infer engine limitations from project name alone, and do not infer geometry requirements from viewport style input alone.",
+      "Return only structured choice answers; no free-text diagnosis is requested."
+    ],
+    "knownConstraints": [
+      "The earlier not_eligible choice is not ground truth.",
+      "Only the supplied source code and condition evidence may support category assignment.",
+      "No plan or code modifications are part of this audit."
+    ],
+    "outputRequirement": "Return a choice answer for every question keyed by its exact question ID. Use only one listed category. Do not add free-text diagnosis."
+  },
+  "questions": {
+    "p45-b-consumption-mobile-readability-191-430px-tooltip-6-viewport": {
+      "type": "choice",
+      "instructions": "Stable scenario ID: p45-b-consumption-mobile-readability-191-430px-tooltip-6-viewport. Source: tests/e2e/consumption-mobile-readability.e2e.spec.ts:191. Exact project/viewport/color/engine/input condition: mobile-pixel; 消費支出グラフ モバイル可読性の証跡 › 430px: 給与tooltipの6系列行＋合計・値列がviewport内; mobile-pixel viewport/input is an independent loop contract. Contract summary: Retain the full assertion contract: 消費支出グラフ モバイル可読性の証跡 › 430px: 給与tooltipの6系列行＋合計・値列がviewport内.. Actual test declaration/action/assertion snippets:\n191: test(`${width}px: 給与tooltipの6系列行＋合計・値列がviewport内`, async ({ page }) => {\n192: await page.setViewportSize({ width, height: 667 });\n193: await page.goto(\"/\");\n197: await expect(section).toBeVisible({ timeout: 15000 });\n200: await expect(chart).toBeVisible();\n202: expect(box).not.toBeNull();\n206: await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);\n209: await expect(tooltip).toBeVisible({ timeout: 5000 });\n256: expect(evidence.labels.map((row) => row.label)).toEqual([...earningsTooltipLabels]);\n257: expect(evidence.labels).toHaveLength(6);\nSelect the single primary reason under the common category definitions. Treat the prior choice solely as subset selection; independently reconsider whether it is actually eligible.",
+      "criteria": {
+        "nextjs_or_production_integration": "Requires Next build/start, Next route/server/Flight/hydration, URL/query-to-screen behavior, or production download/CSV parity.",
+        "real_layout_geometry_or_coordinate_hit_test": "Requires physical placement/containment/overflow/scroll, SVG/chart geometry, or pointer/touch coordinate hit-testing. Do not infer this from simple viewport style input alone.",
+        "engine_specific_behavior": "Requires actual engine-specific behavior outside current Vitest Browser Mode scope. Do not infer this from a Playwright project name alone.",
+        "pure_logic_or_data_only": "Has no meaningful browser-observable contract and belongs in unit/data testing.",
+        "duplicate_or_no_distinct_browser_contract": "Only an exact same contract is already owned elsewhere; partial overlap does not qualify.",
+        "configured_browser_mode_capability_gap": "A different specific current provider/Browser Mode limitation blocks a faithful replacement; choose only when the precise limitation is evidenced.",
+        "multiple_independent_blockers": "At least two independent blockers from categories 1–6 apply, with no single dominant reason.",
+        "other_scope_or_technical_blocker": "Another specific scope or technical blocker prevents faithful replacement.",
+        "actually_eligible": "The prior not_eligible choice appears wrong; Browser Mode can faithfully preserve the asserted contract and condition.",
+        "insufficient_evidence": "The source assertion/conditions do not support identifying a primary reason or deciding eligibility."
+      }
+    },
+    "p45-b-consumption-mobile-readability-297-375x667-tooltip": {
+      "type": "choice",
+      "instructions": "Stable scenario ID: p45-b-consumption-mobile-readability-297-375x667-tooltip. Source: tests/e2e/consumption-mobile-readability.e2e.spec.ts:297. Exact project/viewport/color/engine/input condition: mobile-pixel; 消費支出グラフ モバイル可読性の証跡 › 375x667: 名目・実質tooltipが全費目を内部スクロール表示し、閉じる操作が機能する; mobile-pixel viewport/input is an independent loop contract. Contract summary: Retain the full assertion contract: 消費支出グラフ モバイル可読性の証跡 › 375x667: 名目・実質tooltipが全費目を内部スクロール表示し、閉じる操作が機能する.. Actual test declaration/action/assertion snippets:\n297: test(`${viewport.name}: 名目・実質tooltipが全費目を内部スクロール表示し、閉じる操作が機能する`, async ({\n300: await page.setViewportSize(viewport);\n301: await page.goto(\"/\");\n306: await expect(root).toBeVisible({ timeout: 15000 });\n309: await expect(tooltip).toBeVisible({ timeout: 5000 });\n314: expect(payloadKeys, `${id}: tooltip renders every expected category row`).toHaveLength(\n317: expect(\n320: ).toEqual([...expectedKeys].sort());\n333: expect(detail.overflowY).toBe(\"auto\");\n334: expect(detail.maxHeight).toBeGreaterThan(0);\nSelect the single primary reason under the common category definitions. Treat the prior choice solely as subset selection; independently reconsider whether it is actually eligible.",
+      "criteria": {
+        "nextjs_or_production_integration": "Requires Next build/start, Next route/server/Flight/hydration, URL/query-to-screen behavior, or production download/CSV parity.",
+        "real_layout_geometry_or_coordinate_hit_test": "Requires physical placement/containment/overflow/scroll, SVG/chart geometry, or pointer/touch coordinate hit-testing. Do not infer this from simple viewport style input alone.",
+        "engine_specific_behavior": "Requires actual engine-specific behavior outside current Vitest Browser Mode scope. Do not infer this from a Playwright project name alone.",
+        "pure_logic_or_data_only": "Has no meaningful browser-observable contract and belongs in unit/data testing.",
+        "duplicate_or_no_distinct_browser_contract": "Only an exact same contract is already owned elsewhere; partial overlap does not qualify.",
+        "configured_browser_mode_capability_gap": "A different specific current provider/Browser Mode limitation blocks a faithful replacement; choose only when the precise limitation is evidenced.",
+        "multiple_independent_blockers": "At least two independent blockers from categories 1–6 apply, with no single dominant reason.",
+        "other_scope_or_technical_blocker": "Another specific scope or technical blocker prevents faithful replacement.",
+        "actually_eligible": "The prior not_eligible choice appears wrong; Browser Mode can faithfully preserve the asserted contract and condition.",
+        "insufficient_evidence": "The source assertion/conditions do not support identifying a primary reason or deciding eligibility."
+      }
+    },
+    "p45-b-consumption-mobile-readability-297-320x480-tooltip": {
+      "type": "choice",
+      "instructions": "Stable scenario ID: p45-b-consumption-mobile-readability-297-320x480-tooltip. Source: tests/e2e/consumption-mobile-readability.e2e.spec.ts:297. Exact project/viewport/color/engine/input condition: mobile-pixel; 消費支出グラフ モバイル可読性の証跡 › 320x480: 名目・実質tooltipが全費目を内部スクロール表示し、閉じる操作が機能する; mobile-pixel viewport/input is an independent loop contract. Contract summary: Retain the full assertion contract: 消費支出グラフ モバイル可読性の証跡 › 320x480: 名目・実質tooltipが全費目を内部スクロール表示し、閉じる操作が機能する.. Actual test declaration/action/assertion snippets:\n297: test(`${viewport.name}: 名目・実質tooltipが全費目を内部スクロール表示し、閉じる操作が機能する`, async ({\n300: await page.setViewportSize(viewport);\n301: await page.goto(\"/\");\n306: await expect(root).toBeVisible({ timeout: 15000 });\n309: await expect(tooltip).toBeVisible({ timeout: 5000 });\n314: expect(payloadKeys, `${id}: tooltip renders every expected category row`).toHaveLength(\n317: expect(\n320: ).toEqual([...expectedKeys].sort());\n333: expect(detail.overflowY).toBe(\"auto\");\n334: expect(detail.maxHeight).toBeGreaterThan(0);\nSelect the single primary reason under the common category definitions. Treat the prior choice solely as subset selection; independently reconsider whether it is actually eligible.",
+      "criteria": {
+        "nextjs_or_production_integration": "Requires Next build/start, Next route/server/Flight/hydration, URL/query-to-screen behavior, or production download/CSV parity.",
+        "real_layout_geometry_or_coordinate_hit_test": "Requires physical placement/containment/overflow/scroll, SVG/chart geometry, or pointer/touch coordinate hit-testing. Do not infer this from simple viewport style input alone.",
+        "engine_specific_behavior": "Requires actual engine-specific behavior outside current Vitest Browser Mode scope. Do not infer this from a Playwright project name alone.",
+        "pure_logic_or_data_only": "Has no meaningful browser-observable contract and belongs in unit/data testing.",
+        "duplicate_or_no_distinct_browser_contract": "Only an exact same contract is already owned elsewhere; partial overlap does not qualify.",
+        "configured_browser_mode_capability_gap": "A different specific current provider/Browser Mode limitation blocks a faithful replacement; choose only when the precise limitation is evidenced.",
+        "multiple_independent_blockers": "At least two independent blockers from categories 1–6 apply, with no single dominant reason.",
+        "other_scope_or_technical_blocker": "Another specific scope or technical blocker prevents faithful replacement.",
+        "actually_eligible": "The prior not_eligible choice appears wrong; Browser Mode can faithfully preserve the asserted contract and condition.",
+        "insufficient_evidence": "The source assertion/conditions do not support identifying a primary reason or deciding eligibility."
+      }
+    },
+    "p45-b-consumption-mobile-readability-297-landscape-tooltip": {
+      "type": "choice",
+      "instructions": "Stable scenario ID: p45-b-consumption-mobile-readability-297-landscape-tooltip. Source: tests/e2e/consumption-mobile-readability.e2e.spec.ts:297. Exact project/viewport/color/engine/input condition: mobile-pixel; 消費支出グラフ モバイル可読性の証跡 › landscape: 名目・実質tooltipが全費目を内部スクロール表示し、閉じる操作が機能する; mobile-pixel viewport/input is an independent loop contract. Contract summary: Retain the full assertion contract: 消費支出グラフ モバイル可読性の証跡 › landscape: 名目・実質tooltipが全費目を内部スクロール表示し、閉じる操作が機能する.. Actual test declaration/action/assertion snippets:\n297: test(`${viewport.name}: 名目・実質tooltipが全費目を内部スクロール表示し、閉じる操作が機能する`, async ({\n300: await page.setViewportSize(viewport);\n301: await page.goto(\"/\");\n306: await expect(root).toBeVisible({ timeout: 15000 });\n309: await expect(tooltip).toBeVisible({ timeout: 5000 });\n314: expect(payloadKeys, `${id}: tooltip renders every expected category row`).toHaveLength(\n317: expect(\n320: ).toEqual([...expectedKeys].sort());\n333: expect(detail.overflowY).toBe(\"auto\");\n334: expect(detail.maxHeight).toBeGreaterThan(0);\nSelect the single primary reason under the common category definitions. Treat the prior choice solely as subset selection; independently reconsider whether it is actually eligible.",
+      "criteria": {
+        "nextjs_or_production_integration": "Requires Next build/start, Next route/server/Flight/hydration, URL/query-to-screen behavior, or production download/CSV parity.",
+        "real_layout_geometry_or_coordinate_hit_test": "Requires physical placement/containment/overflow/scroll, SVG/chart geometry, or pointer/touch coordinate hit-testing. Do not infer this from simple viewport style input alone.",
+        "engine_specific_behavior": "Requires actual engine-specific behavior outside current Vitest Browser Mode scope. Do not infer this from a Playwright project name alone.",
+        "pure_logic_or_data_only": "Has no meaningful browser-observable contract and belongs in unit/data testing.",
+        "duplicate_or_no_distinct_browser_contract": "Only an exact same contract is already owned elsewhere; partial overlap does not qualify.",
+        "configured_browser_mode_capability_gap": "A different specific current provider/Browser Mode limitation blocks a faithful replacement; choose only when the precise limitation is evidenced.",
+        "multiple_independent_blockers": "At least two independent blockers from categories 1–6 apply, with no single dominant reason.",
+        "other_scope_or_technical_blocker": "Another specific scope or technical blocker prevents faithful replacement.",
+        "actually_eligible": "The prior not_eligible choice appears wrong; Browser Mode can faithfully preserve the asserted contract and condition.",
+        "insufficient_evidence": "The source assertion/conditions do not support identifying a primary reason or deciding eligibility."
+      }
+    },
+    "p45-b-mobile-ux-19-ux": {
+      "type": "choice",
+      "instructions": "Stable scenario ID: p45-b-mobile-ux-19-ux. Source: tests/e2e/mobile-ux.e2e.spec.ts:19. Exact project/viewport/color/engine/input condition: mobile-pixel; モバイル UX ルール › 表示中のボタンはすべて基準のタップターゲット以上. Contract summary: Retain the full assertion contract: モバイル UX ルール › 表示中のボタンはすべて基準のタップターゲット以上.. Actual test declaration/action/assertion snippets:\n19: test(\"表示中のボタンはすべて基準のタップターゲット以上\", async ({ page }) => {\n20: await page.goto(\"/\");\n24: expect(buttons.length, \"検証対象のボタンが取得できていること\").toBeGreaterThan(0);\n44: expect(tooSmall, `基準未満のタップターゲット:\\n${tooSmall.join(\"\\n\")}`).toEqual([]);\nSelect the single primary reason under the common category definitions. Treat the prior choice solely as subset selection; independently reconsider whether it is actually eligible.",
+      "criteria": {
+        "nextjs_or_production_integration": "Requires Next build/start, Next route/server/Flight/hydration, URL/query-to-screen behavior, or production download/CSV parity.",
+        "real_layout_geometry_or_coordinate_hit_test": "Requires physical placement/containment/overflow/scroll, SVG/chart geometry, or pointer/touch coordinate hit-testing. Do not infer this from simple viewport style input alone.",
+        "engine_specific_behavior": "Requires actual engine-specific behavior outside current Vitest Browser Mode scope. Do not infer this from a Playwright project name alone.",
+        "pure_logic_or_data_only": "Has no meaningful browser-observable contract and belongs in unit/data testing.",
+        "duplicate_or_no_distinct_browser_contract": "Only an exact same contract is already owned elsewhere; partial overlap does not qualify.",
+        "configured_browser_mode_capability_gap": "A different specific current provider/Browser Mode limitation blocks a faithful replacement; choose only when the precise limitation is evidenced.",
+        "multiple_independent_blockers": "At least two independent blockers from categories 1–6 apply, with no single dominant reason.",
+        "other_scope_or_technical_blocker": "Another specific scope or technical blocker prevents faithful replacement.",
+        "actually_eligible": "The prior not_eligible choice appears wrong; Browser Mode can faithfully preserve the asserted contract and condition.",
+        "insufficient_evidence": "The source assertion/conditions do not support identifying a primary reason or deciding eligibility."
+      }
+    },
+    "p45-b-mobile-ux-47-ux-375px": {
+      "type": "choice",
+      "instructions": "Stable scenario ID: p45-b-mobile-ux-47-ux-375px. Source: tests/e2e/mobile-ux.e2e.spec.ts:47. Exact project/viewport/color/engine/input condition: mobile-pixel; モバイル UX ルール › 375px 幅で横方向にはみ出さない. Contract summary: Retain the full assertion contract: モバイル UX ルール › 375px 幅で横方向にはみ出さない.. Actual test declaration/action/assertion snippets:\n47: test(\"375px 幅で横方向にはみ出さない\", async ({ page }) => {\n48: await page.setViewportSize({ width: 375, height: 667 });\n49: await page.goto(\"/\");\n58: expect(\nSelect the single primary reason under the common category definitions. Treat the prior choice solely as subset selection; independently reconsider whether it is actually eligible.",
+      "criteria": {
+        "nextjs_or_production_integration": "Requires Next build/start, Next route/server/Flight/hydration, URL/query-to-screen behavior, or production download/CSV parity.",
+        "real_layout_geometry_or_coordinate_hit_test": "Requires physical placement/containment/overflow/scroll, SVG/chart geometry, or pointer/touch coordinate hit-testing. Do not infer this from simple viewport style input alone.",
+        "engine_specific_behavior": "Requires actual engine-specific behavior outside current Vitest Browser Mode scope. Do not infer this from a Playwright project name alone.",
+        "pure_logic_or_data_only": "Has no meaningful browser-observable contract and belongs in unit/data testing.",
+        "duplicate_or_no_distinct_browser_contract": "Only an exact same contract is already owned elsewhere; partial overlap does not qualify.",
+        "configured_browser_mode_capability_gap": "A different specific current provider/Browser Mode limitation blocks a faithful replacement; choose only when the precise limitation is evidenced.",
+        "multiple_independent_blockers": "At least two independent blockers from categories 1–6 apply, with no single dominant reason.",
+        "other_scope_or_technical_blocker": "Another specific scope or technical blocker prevents faithful replacement.",
+        "actually_eligible": "The prior not_eligible choice appears wrong; Browser Mode can faithfully preserve the asserted contract and condition.",
+        "insufficient_evidence": "The source assertion/conditions do not support identifying a primary reason or deciding eligibility."
+      }
+    },
+    "p45-b-mobile-ux-65-ux-320px-overflow": {
+      "type": "choice",
+      "instructions": "Stable scenario ID: p45-b-mobile-ux-65-ux-320px-overflow. Source: tests/e2e/mobile-ux.e2e.spec.ts:65. Exact project/viewport/color/engine/input condition: mobile-pixel; モバイル UX ルール › 320px 幅でページに横 overflow がない. Contract summary: Retain the full assertion contract: モバイル UX ルール › 320px 幅でページに横 overflow がない.. Actual test declaration/action/assertion snippets:\n65: test(`${width}px 幅でページに横 overflow がない`, async ({ page }) => {\n66: await page.setViewportSize({ width, height: 667 });\n67: await page.goto(\"/\");\n73: expect(overflow.scrollWidth, `${width}px 幅で横 overflow`).toBeLessThanOrEqual(\nSelect the single primary reason under the common category definitions. Treat the prior choice solely as subset selection; independently reconsider whether it is actually eligible.",
+      "criteria": {
+        "nextjs_or_production_integration": "Requires Next build/start, Next route/server/Flight/hydration, URL/query-to-screen behavior, or production download/CSV parity.",
+        "real_layout_geometry_or_coordinate_hit_test": "Requires physical placement/containment/overflow/scroll, SVG/chart geometry, or pointer/touch coordinate hit-testing. Do not infer this from simple viewport style input alone.",
+        "engine_specific_behavior": "Requires actual engine-specific behavior outside current Vitest Browser Mode scope. Do not infer this from a Playwright project name alone.",
+        "pure_logic_or_data_only": "Has no meaningful browser-observable contract and belongs in unit/data testing.",
+        "duplicate_or_no_distinct_browser_contract": "Only an exact same contract is already owned elsewhere; partial overlap does not qualify.",
+        "configured_browser_mode_capability_gap": "A different specific current provider/Browser Mode limitation blocks a faithful replacement; choose only when the precise limitation is evidenced.",
+        "multiple_independent_blockers": "At least two independent blockers from categories 1–6 apply, with no single dominant reason.",
+        "other_scope_or_technical_blocker": "Another specific scope or technical blocker prevents faithful replacement.",
+        "actually_eligible": "The prior not_eligible choice appears wrong; Browser Mode can faithfully preserve the asserted contract and condition.",
+        "insufficient_evidence": "The source assertion/conditions do not support identifying a primary reason or deciding eligibility."
+      }
+    },
+    "p45-b-mobile-ux-65-ux-375px-overflow": {
+      "type": "choice",
+      "instructions": "Stable scenario ID: p45-b-mobile-ux-65-ux-375px-overflow. Source: tests/e2e/mobile-ux.e2e.spec.ts:65. Exact project/viewport/color/engine/input condition: mobile-pixel; モバイル UX ルール › 375px 幅でページに横 overflow がない. Contract summary: Retain the full assertion contract: モバイル UX ルール › 375px 幅でページに横 overflow がない.. Actual test declaration/action/assertion snippets:\n65: test(`${width}px 幅でページに横 overflow がない`, async ({ page }) => {\n66: await page.setViewportSize({ width, height: 667 });\n67: await page.goto(\"/\");\n73: expect(overflow.scrollWidth, `${width}px 幅で横 overflow`).toBeLessThanOrEqual(\nSelect the single primary reason under the common category definitions. Treat the prior choice solely as subset selection; independently reconsider whether it is actually eligible.",
+      "criteria": {
+        "nextjs_or_production_integration": "Requires Next build/start, Next route/server/Flight/hydration, URL/query-to-screen behavior, or production download/CSV parity.",
+        "real_layout_geometry_or_coordinate_hit_test": "Requires physical placement/containment/overflow/scroll, SVG/chart geometry, or pointer/touch coordinate hit-testing. Do not infer this from simple viewport style input alone.",
+        "engine_specific_behavior": "Requires actual engine-specific behavior outside current Vitest Browser Mode scope. Do not infer this from a Playwright project name alone.",
+        "pure_logic_or_data_only": "Has no meaningful browser-observable contract and belongs in unit/data testing.",
+        "duplicate_or_no_distinct_browser_contract": "Only an exact same contract is already owned elsewhere; partial overlap does not qualify.",
+        "configured_browser_mode_capability_gap": "A different specific current provider/Browser Mode limitation blocks a faithful replacement; choose only when the precise limitation is evidenced.",
+        "multiple_independent_blockers": "At least two independent blockers from categories 1–6 apply, with no single dominant reason.",
+        "other_scope_or_technical_blocker": "Another specific scope or technical blocker prevents faithful replacement.",
+        "actually_eligible": "The prior not_eligible choice appears wrong; Browser Mode can faithfully preserve the asserted contract and condition.",
+        "insufficient_evidence": "The source assertion/conditions do not support identifying a primary reason or deciding eligibility."
+      }
+    },
+    "p45-b-mobile-ux-65-ux-390px-overflow": {
+      "type": "choice",
+      "instructions": "Stable scenario ID: p45-b-mobile-ux-65-ux-390px-overflow. Source: tests/e2e/mobile-ux.e2e.spec.ts:65. Exact project/viewport/color/engine/input condition: mobile-pixel; モバイル UX ルール › 390px 幅でページに横 overflow がない. Contract summary: Retain the full assertion contract: モバイル UX ルール › 390px 幅でページに横 overflow がない.. Actual test declaration/action/assertion snippets:\n65: test(`${width}px 幅でページに横 overflow がない`, async ({ page }) => {\n66: await page.setViewportSize({ width, height: 667 });\n67: await page.goto(\"/\");\n73: expect(overflow.scrollWidth, `${width}px 幅で横 overflow`).toBeLessThanOrEqual(\nSelect the single primary reason under the common category definitions. Treat the prior choice solely as subset selection; independently reconsider whether it is actually eligible.",
+      "criteria": {
+        "nextjs_or_production_integration": "Requires Next build/start, Next route/server/Flight/hydration, URL/query-to-screen behavior, or production download/CSV parity.",
+        "real_layout_geometry_or_coordinate_hit_test": "Requires physical placement/containment/overflow/scroll, SVG/chart geometry, or pointer/touch coordinate hit-testing. Do not infer this from simple viewport style input alone.",
+        "engine_specific_behavior": "Requires actual engine-specific behavior outside current Vitest Browser Mode scope. Do not infer this from a Playwright project name alone.",
+        "pure_logic_or_data_only": "Has no meaningful browser-observable contract and belongs in unit/data testing.",
+        "duplicate_or_no_distinct_browser_contract": "Only an exact same contract is already owned elsewhere; partial overlap does not qualify.",
+        "configured_browser_mode_capability_gap": "A different specific current provider/Browser Mode limitation blocks a faithful replacement; choose only when the precise limitation is evidenced.",
+        "multiple_independent_blockers": "At least two independent blockers from categories 1–6 apply, with no single dominant reason.",
+        "other_scope_or_technical_blocker": "Another specific scope or technical blocker prevents faithful replacement.",
+        "actually_eligible": "The prior not_eligible choice appears wrong; Browser Mode can faithfully preserve the asserted contract and condition.",
+        "insufficient_evidence": "The source assertion/conditions do not support identifying a primary reason or deciding eligibility."
+      }
+    },
+    "p45-b-mobile-ux-65-ux-430px-overflow": {
+      "type": "choice",
+      "instructions": "Stable scenario ID: p45-b-mobile-ux-65-ux-430px-overflow. Source: tests/e2e/mobile-ux.e2e.spec.ts:65. Exact project/viewport/color/engine/input condition: mobile-pixel; モバイル UX ルール › 430px 幅でページに横 overflow がない. Contract summary: Retain the full assertion contract: モバイル UX ルール › 430px 幅でページに横 overflow がない.. Actual test declaration/action/assertion snippets:\n65: test(`${width}px 幅でページに横 overflow がない`, async ({ page }) => {\n66: await page.setViewportSize({ width, height: 667 });\n67: await page.goto(\"/\");\n73: expect(overflow.scrollWidth, `${width}px 幅で横 overflow`).toBeLessThanOrEqual(\nSelect the single primary reason under the common category definitions. Treat the prior choice solely as subset selection; independently reconsider whether it is actually eligible.",
+      "criteria": {
+        "nextjs_or_production_integration": "Requires Next build/start, Next route/server/Flight/hydration, URL/query-to-screen behavior, or production download/CSV parity.",
+        "real_layout_geometry_or_coordinate_hit_test": "Requires physical placement/containment/overflow/scroll, SVG/chart geometry, or pointer/touch coordinate hit-testing. Do not infer this from simple viewport style input alone.",
+        "engine_specific_behavior": "Requires actual engine-specific behavior outside current Vitest Browser Mode scope. Do not infer this from a Playwright project name alone.",
+        "pure_logic_or_data_only": "Has no meaningful browser-observable contract and belongs in unit/data testing.",
+        "duplicate_or_no_distinct_browser_contract": "Only an exact same contract is already owned elsewhere; partial overlap does not qualify.",
+        "configured_browser_mode_capability_gap": "A different specific current provider/Browser Mode limitation blocks a faithful replacement; choose only when the precise limitation is evidenced.",
+        "multiple_independent_blockers": "At least two independent blockers from categories 1–6 apply, with no single dominant reason.",
+        "other_scope_or_technical_blocker": "Another specific scope or technical blocker prevents faithful replacement.",
+        "actually_eligible": "The prior not_eligible choice appears wrong; Browser Mode can faithfully preserve the asserted contract and condition.",
+        "insufficient_evidence": "The source assertion/conditions do not support identifying a primary reason or deciding eligibility."
+      }
+    },
+    "p45-b-mobile-ux-79-ux-375px-select": {
+      "type": "choice",
+      "instructions": "Stable scenario ID: p45-b-mobile-ux-79-ux-375px-select. Source: tests/e2e/mobile-ux.e2e.spec.ts:79. Exact project/viewport/color/engine/input condition: mobile-pixel; モバイル UX ルール › モバイル幅（375px）でも最大期間ボタンが終了年 select の右側に配置されること. Contract summary: Retain the full assertion contract: モバイル UX ルール › モバイル幅（375px）でも最大期間ボタンが終了年 select の右側に配置されること.. Actual test declaration/action/assertion snippets:\n79: test(\"モバイル幅（375px）でも最大期間ボタンが終了年 select の右側に配置されること\", async ({\n82: await page.setViewportSize({ width: 375, height: 667 });\n83: await page.goto(\"/\");\n91: await expect(endYearSelect).toBeVisible();\n92: await expect(maxButton).toBeVisible();\n97: expect(selectBox, \"endYear select boundingBox\").not.toBeNull();\n98: expect(buttonBox, \"maxButton boundingBox\").not.toBeNull();\n102: expect(buttonBox.x).toBeGreaterThanOrEqual(selectBox.x + selectBox.width - 1); // 1px 許容\n106: expect(verticalDiff).toBeLessThan(maxAllowedVerticalDiff);\n108: expect(buttonBox.x + buttonBox.width).toBeGreaterThan(selectBox.x + selectBox.width);\nSelect the single primary reason under the common category definitions. Treat the prior choice solely as subset selection; independently reconsider whether it is actually eligible.",
+      "criteria": {
+        "nextjs_or_production_integration": "Requires Next build/start, Next route/server/Flight/hydration, URL/query-to-screen behavior, or production download/CSV parity.",
+        "real_layout_geometry_or_coordinate_hit_test": "Requires physical placement/containment/overflow/scroll, SVG/chart geometry, or pointer/touch coordinate hit-testing. Do not infer this from simple viewport style input alone.",
+        "engine_specific_behavior": "Requires actual engine-specific behavior outside current Vitest Browser Mode scope. Do not infer this from a Playwright project name alone.",
+        "pure_logic_or_data_only": "Has no meaningful browser-observable contract and belongs in unit/data testing.",
+        "duplicate_or_no_distinct_browser_contract": "Only an exact same contract is already owned elsewhere; partial overlap does not qualify.",
+        "configured_browser_mode_capability_gap": "A different specific current provider/Browser Mode limitation blocks a faithful replacement; choose only when the precise limitation is evidenced.",
+        "multiple_independent_blockers": "At least two independent blockers from categories 1–6 apply, with no single dominant reason.",
+        "other_scope_or_technical_blocker": "Another specific scope or technical blocker prevents faithful replacement.",
+        "actually_eligible": "The prior not_eligible choice appears wrong; Browser Mode can faithfully preserve the asserted contract and condition.",
+        "insufficient_evidence": "The source assertion/conditions do not support identifying a primary reason or deciding eligibility."
+      }
+    },
+    "p45-b-mobile-ux-112-ux-375px-select": {
+      "type": "choice",
+      "instructions": "Stable scenario ID: p45-b-mobile-ux-112-ux-375px-select. Source: tests/e2e/mobile-ux.e2e.spec.ts:112. Exact project/viewport/color/engine/input condition: mobile-pixel; モバイル UX ルール › モバイル幅（375px）で開始年と終了年の select 幅がほぼ一致すること. Contract summary: Retain the full assertion contract: モバイル UX ルール › モバイル幅（375px）で開始年と終了年の select 幅がほぼ一致すること.. Actual test declaration/action/assertion snippets:\n112: test(\"モバイル幅（375px）で開始年と終了年の select 幅がほぼ一致すること\", async ({ page }) => {\n113: await page.setViewportSize({ width: 375, height: 667 });\n114: await page.goto(\"/\");\n122: await expect(startYearSelect).toBeVisible();\n123: await expect(endYearSelect).toBeVisible();\n128: expect(startBox, \"startYear boundingBox\").not.toBeNull();\n129: expect(endBox, \"endYear boundingBox\").not.toBeNull();\n136: expect(Math.abs(startBox.width - endBox.width)).toBeLessThanOrEqual(4);\nSelect the single primary reason under the common category definitions. Treat the prior choice solely as subset selection; independently reconsider whether it is actually eligible.",
+      "criteria": {
+        "nextjs_or_production_integration": "Requires Next build/start, Next route/server/Flight/hydration, URL/query-to-screen behavior, or production download/CSV parity.",
+        "real_layout_geometry_or_coordinate_hit_test": "Requires physical placement/containment/overflow/scroll, SVG/chart geometry, or pointer/touch coordinate hit-testing. Do not infer this from simple viewport style input alone.",
+        "engine_specific_behavior": "Requires actual engine-specific behavior outside current Vitest Browser Mode scope. Do not infer this from a Playwright project name alone.",
+        "pure_logic_or_data_only": "Has no meaningful browser-observable contract and belongs in unit/data testing.",
+        "duplicate_or_no_distinct_browser_contract": "Only an exact same contract is already owned elsewhere; partial overlap does not qualify.",
+        "configured_browser_mode_capability_gap": "A different specific current provider/Browser Mode limitation blocks a faithful replacement; choose only when the precise limitation is evidenced.",
+        "multiple_independent_blockers": "At least two independent blockers from categories 1–6 apply, with no single dominant reason.",
+        "other_scope_or_technical_blocker": "Another specific scope or technical blocker prevents faithful replacement.",
+        "actually_eligible": "The prior not_eligible choice appears wrong; Browser Mode can faithfully preserve the asserted contract and condition.",
+        "insufficient_evidence": "The source assertion/conditions do not support identifying a primary reason or deciding eligibility."
+      }
+    }
+  }
+}

@@ -1,0 +1,213 @@
+{
+  "model": "jev-latest",
+  "state": {
+    "evaluationScope": "Primary reason audit for the prior not_eligible subset",
+    "background": "The 96 rows in this request are the scenarios whose top choice was `not_eligible` in an earlier direct TypeSafe classification. That selection is only a subset filter; it is not ground truth. Independently inspect each exact Playwright source assertion and its project/viewport/color-scheme/engine/input condition supplied in its question. Do not reuse or assume any prior eligibility rationale. Select the single primary reason that best explains why a scenario should stay outside Vitest Browser Mode, or choose actually_eligible if the earlier not_eligible classification appears wrong, or insufficient_evidence if evidence is inadequate. For multiple independent blockers choose that category only when at least two apply without one primary blocker. Category labels are not licenses to invent unsupported facts. The exact source declaration/assertion snippets are reproduced from the referenced tests/e2e source files; project and input variants remain separate logical rows. No user credentials are included.",
+    "acceptanceCriteria": [
+      "Each question ID is a stable scenario ID from the 96-row prior-not_eligible subset.",
+      "Choose exactly one primary reason category from each row question criteria; eligibility may be revised to actually_eligible or uncertainty to insufficient_evidence.",
+      "Do not infer engine limitations from project name alone, and do not infer geometry requirements from viewport style input alone.",
+      "Return only structured choice answers; no free-text diagnosis is requested."
+    ],
+    "knownConstraints": [
+      "The earlier not_eligible choice is not ground truth.",
+      "Only the supplied source code and condition evidence may support category assignment.",
+      "No plan or code modifications are part of this audit."
+    ],
+    "outputRequirement": "Return a choice answer for every question keyed by its exact question ID. Use only one listed category. Do not add free-text diagnosis."
+  },
+  "questions": {
+    "p45-a-parity-section-cpi-major": {
+      "type": "choice",
+      "instructions": "Stable scenario ID: p45-a-parity-section-cpi-major. Source: tests/e2e/chart-table-csv-parity.e2e.spec.ts:294. Exact project/viewport/color/engine/input condition: chromium; CONTRACT input=CPI major index; 2025-01 row; chart/table/CSV; each is a distinct chart/table/CSV contract. Contract summary: Retain the full assertion contract: Phase 4-4 production chart/table/CSV parity › monthly CTI/CPI/earnings sections expose complete real Recharts output.. Actual test declaration/action/assertion snippets:\n294: test(\"monthly CTI/CPI/earnings sections expose complete real Recharts output\", async ({\n297: await page.goto(\"/\");\n301: await expect(root).toHaveCount(1);\n302: await expect(sectionRoot).toHaveCount(1);\n311: expect(contract.keys).toEqual(section.keys);\n312: expect(contract.points).toBe(contract.rows.length);\n313: expect(\n317: ).toEqual(snapshot.values.map((row) => row.slice(1)));\n318: expect(snapshot.values.map((r) => r[0])).toContain(section.period);\n319: expect(snapshot.headers.slice(1)).toHaveLength(section.keys.length);\nSelect the single primary reason under the common category definitions. Treat the prior choice solely as subset selection; independently reconsider whether it is actually eligible.",
+      "criteria": {
+        "nextjs_or_production_integration": "Requires Next build/start, Next route/server/Flight/hydration, URL/query-to-screen behavior, or production download/CSV parity.",
+        "real_layout_geometry_or_coordinate_hit_test": "Requires physical placement/containment/overflow/scroll, SVG/chart geometry, or pointer/touch coordinate hit-testing. Do not infer this from simple viewport style input alone.",
+        "engine_specific_behavior": "Requires actual engine-specific behavior outside current Vitest Browser Mode scope. Do not infer this from a Playwright project name alone.",
+        "pure_logic_or_data_only": "Has no meaningful browser-observable contract and belongs in unit/data testing.",
+        "duplicate_or_no_distinct_browser_contract": "Only an exact same contract is already owned elsewhere; partial overlap does not qualify.",
+        "configured_browser_mode_capability_gap": "A different specific current provider/Browser Mode limitation blocks a faithful replacement; choose only when the precise limitation is evidenced.",
+        "multiple_independent_blockers": "At least two independent blockers from categories 1–6 apply, with no single dominant reason.",
+        "other_scope_or_technical_blocker": "Another specific scope or technical blocker prevents faithful replacement.",
+        "actually_eligible": "The prior not_eligible choice appears wrong; Browser Mode can faithfully preserve the asserted contract and condition.",
+        "insufficient_evidence": "The source assertion/conditions do not support identifying a primary reason or deciding eligibility."
+      }
+    },
+    "p45-a-parity-section-stacked": {
+      "type": "choice",
+      "instructions": "Stable scenario ID: p45-a-parity-section-stacked. Source: tests/e2e/chart-table-csv-parity.e2e.spec.ts:294. Exact project/viewport/color/engine/input condition: chromium; CONTRACT input=CPI stacked categories; 2025-01 row; chart/table/CSV; each is a distinct chart/table/CSV contract. Contract summary: Retain the full assertion contract: Phase 4-4 production chart/table/CSV parity › monthly CTI/CPI/earnings sections expose complete real Recharts output.. Actual test declaration/action/assertion snippets:\n294: test(\"monthly CTI/CPI/earnings sections expose complete real Recharts output\", async ({\n297: await page.goto(\"/\");\n301: await expect(root).toHaveCount(1);\n302: await expect(sectionRoot).toHaveCount(1);\n311: expect(contract.keys).toEqual(section.keys);\n312: expect(contract.points).toBe(contract.rows.length);\n313: expect(\n317: ).toEqual(snapshot.values.map((row) => row.slice(1)));\n318: expect(snapshot.values.map((r) => r[0])).toContain(section.period);\n319: expect(snapshot.headers.slice(1)).toHaveLength(section.keys.length);\nSelect the single primary reason under the common category definitions. Treat the prior choice solely as subset selection; independently reconsider whether it is actually eligible.",
+      "criteria": {
+        "nextjs_or_production_integration": "Requires Next build/start, Next route/server/Flight/hydration, URL/query-to-screen behavior, or production download/CSV parity.",
+        "real_layout_geometry_or_coordinate_hit_test": "Requires physical placement/containment/overflow/scroll, SVG/chart geometry, or pointer/touch coordinate hit-testing. Do not infer this from simple viewport style input alone.",
+        "engine_specific_behavior": "Requires actual engine-specific behavior outside current Vitest Browser Mode scope. Do not infer this from a Playwright project name alone.",
+        "pure_logic_or_data_only": "Has no meaningful browser-observable contract and belongs in unit/data testing.",
+        "duplicate_or_no_distinct_browser_contract": "Only an exact same contract is already owned elsewhere; partial overlap does not qualify.",
+        "configured_browser_mode_capability_gap": "A different specific current provider/Browser Mode limitation blocks a faithful replacement; choose only when the precise limitation is evidenced.",
+        "multiple_independent_blockers": "At least two independent blockers from categories 1–6 apply, with no single dominant reason.",
+        "other_scope_or_technical_blocker": "Another specific scope or technical blocker prevents faithful replacement.",
+        "actually_eligible": "The prior not_eligible choice appears wrong; Browser Mode can faithfully preserve the asserted contract and condition.",
+        "insufficient_evidence": "The source assertion/conditions do not support identifying a primary reason or deciding eligibility."
+      }
+    },
+    "p45-a-parity-section-earnings": {
+      "type": "choice",
+      "instructions": "Stable scenario ID: p45-a-parity-section-earnings. Source: tests/e2e/chart-table-csv-parity.e2e.spec.ts:294. Exact project/viewport/color/engine/input condition: chromium; CONTRACT input=earnings indicators; 2025-01 row; chart/table/CSV; each is a distinct chart/table/CSV contract. Contract summary: Retain the full assertion contract: Phase 4-4 production chart/table/CSV parity › monthly CTI/CPI/earnings sections expose complete real Recharts output.. Actual test declaration/action/assertion snippets:\n294: test(\"monthly CTI/CPI/earnings sections expose complete real Recharts output\", async ({\n297: await page.goto(\"/\");\n301: await expect(root).toHaveCount(1);\n302: await expect(sectionRoot).toHaveCount(1);\n311: expect(contract.keys).toEqual(section.keys);\n312: expect(contract.points).toBe(contract.rows.length);\n313: expect(\n317: ).toEqual(snapshot.values.map((row) => row.slice(1)));\n318: expect(snapshot.values.map((r) => r[0])).toContain(section.period);\n319: expect(snapshot.headers.slice(1)).toHaveLength(section.keys.length);\nSelect the single primary reason under the common category definitions. Treat the prior choice solely as subset selection; independently reconsider whether it is actually eligible.",
+      "criteria": {
+        "nextjs_or_production_integration": "Requires Next build/start, Next route/server/Flight/hydration, URL/query-to-screen behavior, or production download/CSV parity.",
+        "real_layout_geometry_or_coordinate_hit_test": "Requires physical placement/containment/overflow/scroll, SVG/chart geometry, or pointer/touch coordinate hit-testing. Do not infer this from simple viewport style input alone.",
+        "engine_specific_behavior": "Requires actual engine-specific behavior outside current Vitest Browser Mode scope. Do not infer this from a Playwright project name alone.",
+        "pure_logic_or_data_only": "Has no meaningful browser-observable contract and belongs in unit/data testing.",
+        "duplicate_or_no_distinct_browser_contract": "Only an exact same contract is already owned elsewhere; partial overlap does not qualify.",
+        "configured_browser_mode_capability_gap": "A different specific current provider/Browser Mode limitation blocks a faithful replacement; choose only when the precise limitation is evidenced.",
+        "multiple_independent_blockers": "At least two independent blockers from categories 1–6 apply, with no single dominant reason.",
+        "other_scope_or_technical_blocker": "Another specific scope or technical blocker prevents faithful replacement.",
+        "actually_eligible": "The prior not_eligible choice appears wrong; Browser Mode can faithfully preserve the asserted contract and condition.",
+        "insufficient_evidence": "The source assertion/conditions do not support identifying a primary reason or deciding eligibility."
+      }
+    },
+    "p45-a-parity-section-residual": {
+      "type": "choice",
+      "instructions": "Stable scenario ID: p45-a-parity-section-residual. Source: tests/e2e/chart-table-csv-parity.e2e.spec.ts:294. Exact project/viewport/color/engine/input condition: chromium; CONTRACT input=real-wage residual; 2025-01 row; chart/table/CSV; each is a distinct chart/table/CSV contract. Contract summary: Retain the full assertion contract: Phase 4-4 production chart/table/CSV parity › monthly CTI/CPI/earnings sections expose complete real Recharts output.. Actual test declaration/action/assertion snippets:\n294: test(\"monthly CTI/CPI/earnings sections expose complete real Recharts output\", async ({\n297: await page.goto(\"/\");\n301: await expect(root).toHaveCount(1);\n302: await expect(sectionRoot).toHaveCount(1);\n311: expect(contract.keys).toEqual(section.keys);\n312: expect(contract.points).toBe(contract.rows.length);\n313: expect(\n317: ).toEqual(snapshot.values.map((row) => row.slice(1)));\n318: expect(snapshot.values.map((r) => r[0])).toContain(section.period);\n319: expect(snapshot.headers.slice(1)).toHaveLength(section.keys.length);\nSelect the single primary reason under the common category definitions. Treat the prior choice solely as subset selection; independently reconsider whether it is actually eligible.",
+      "criteria": {
+        "nextjs_or_production_integration": "Requires Next build/start, Next route/server/Flight/hydration, URL/query-to-screen behavior, or production download/CSV parity.",
+        "real_layout_geometry_or_coordinate_hit_test": "Requires physical placement/containment/overflow/scroll, SVG/chart geometry, or pointer/touch coordinate hit-testing. Do not infer this from simple viewport style input alone.",
+        "engine_specific_behavior": "Requires actual engine-specific behavior outside current Vitest Browser Mode scope. Do not infer this from a Playwright project name alone.",
+        "pure_logic_or_data_only": "Has no meaningful browser-observable contract and belongs in unit/data testing.",
+        "duplicate_or_no_distinct_browser_contract": "Only an exact same contract is already owned elsewhere; partial overlap does not qualify.",
+        "configured_browser_mode_capability_gap": "A different specific current provider/Browser Mode limitation blocks a faithful replacement; choose only when the precise limitation is evidenced.",
+        "multiple_independent_blockers": "At least two independent blockers from categories 1–6 apply, with no single dominant reason.",
+        "other_scope_or_technical_blocker": "Another specific scope or technical blocker prevents faithful replacement.",
+        "actually_eligible": "The prior not_eligible choice appears wrong; Browser Mode can faithfully preserve the asserted contract and condition.",
+        "insufficient_evidence": "The source assertion/conditions do not support identifying a primary reason or deciding eligibility."
+      }
+    },
+    "p45-a-parity-section-new-graph": {
+      "type": "choice",
+      "instructions": "Stable scenario ID: p45-a-parity-section-new-graph. Source: tests/e2e/chart-table-csv-parity.e2e.spec.ts:294. Exact project/viewport/color/engine/input condition: chromium; CONTRACT input=12MA comparison; 2025-01 row; chart/table/CSV; each is a distinct chart/table/CSV contract. Contract summary: Retain the full assertion contract: Phase 4-4 production chart/table/CSV parity › monthly CTI/CPI/earnings sections expose complete real Recharts output.. Actual test declaration/action/assertion snippets:\n294: test(\"monthly CTI/CPI/earnings sections expose complete real Recharts output\", async ({\n297: await page.goto(\"/\");\n301: await expect(root).toHaveCount(1);\n302: await expect(sectionRoot).toHaveCount(1);\n311: expect(contract.keys).toEqual(section.keys);\n312: expect(contract.points).toBe(contract.rows.length);\n313: expect(\n317: ).toEqual(snapshot.values.map((row) => row.slice(1)));\n318: expect(snapshot.values.map((r) => r[0])).toContain(section.period);\n319: expect(snapshot.headers.slice(1)).toHaveLength(section.keys.length);\nSelect the single primary reason under the common category definitions. Treat the prior choice solely as subset selection; independently reconsider whether it is actually eligible.",
+      "criteria": {
+        "nextjs_or_production_integration": "Requires Next build/start, Next route/server/Flight/hydration, URL/query-to-screen behavior, or production download/CSV parity.",
+        "real_layout_geometry_or_coordinate_hit_test": "Requires physical placement/containment/overflow/scroll, SVG/chart geometry, or pointer/touch coordinate hit-testing. Do not infer this from simple viewport style input alone.",
+        "engine_specific_behavior": "Requires actual engine-specific behavior outside current Vitest Browser Mode scope. Do not infer this from a Playwright project name alone.",
+        "pure_logic_or_data_only": "Has no meaningful browser-observable contract and belongs in unit/data testing.",
+        "duplicate_or_no_distinct_browser_contract": "Only an exact same contract is already owned elsewhere; partial overlap does not qualify.",
+        "configured_browser_mode_capability_gap": "A different specific current provider/Browser Mode limitation blocks a faithful replacement; choose only when the precise limitation is evidenced.",
+        "multiple_independent_blockers": "At least two independent blockers from categories 1–6 apply, with no single dominant reason.",
+        "other_scope_or_technical_blocker": "Another specific scope or technical blocker prevents faithful replacement.",
+        "actually_eligible": "The prior not_eligible choice appears wrong; Browser Mode can faithfully preserve the asserted contract and condition.",
+        "insufficient_evidence": "The source assertion/conditions do not support identifying a primary reason or deciding eligibility."
+      }
+    },
+    "p45-a-parity-advanced-anchors": {
+      "type": "choice",
+      "instructions": "Stable scenario ID: p45-a-parity-advanced-anchors. Source: tests/e2e/chart-table-csv-parity.e2e.spec.ts:324. Exact project/viewport/color/engine/input condition: ?adv=1; full parity + independent advanced anchors. Contract summary: Retain the full assertion contract: Phase 4-4 production chart/table/CSV parity › adv=1 preserves full parity and exposes the independent advanced anchors.. Actual test declaration/action/assertion snippets:\n324: test(\"adv=1 preserves full parity and exposes the independent advanced anchors\", async ({\n327: await page.goto(\"/\");\n338: await page.goto(\"/?adv=1\");\n345: expect(advanced.headers.slice(0, regular.headers.length)).toEqual(regular.headers);\n346: expect(advanced.headers).toContain(\"CTIミクロ基本系列(名目・延長)\");\n347: expect(advanced.values.length).toBe(regular.values.length);\n348: expect(advanced.values.map((r) => r[0])).toEqual(regular.values.map((r) => r[0]));\n353: expect(advancedIndex).toBeGreaterThanOrEqual(0);\n356: expect(\n358: ).toEqual(regularCsv);\nSelect the single primary reason under the common category definitions. Treat the prior choice solely as subset selection; independently reconsider whether it is actually eligible.",
+      "criteria": {
+        "nextjs_or_production_integration": "Requires Next build/start, Next route/server/Flight/hydration, URL/query-to-screen behavior, or production download/CSV parity.",
+        "real_layout_geometry_or_coordinate_hit_test": "Requires physical placement/containment/overflow/scroll, SVG/chart geometry, or pointer/touch coordinate hit-testing. Do not infer this from simple viewport style input alone.",
+        "engine_specific_behavior": "Requires actual engine-specific behavior outside current Vitest Browser Mode scope. Do not infer this from a Playwright project name alone.",
+        "pure_logic_or_data_only": "Has no meaningful browser-observable contract and belongs in unit/data testing.",
+        "duplicate_or_no_distinct_browser_contract": "Only an exact same contract is already owned elsewhere; partial overlap does not qualify.",
+        "configured_browser_mode_capability_gap": "A different specific current provider/Browser Mode limitation blocks a faithful replacement; choose only when the precise limitation is evidenced.",
+        "multiple_independent_blockers": "At least two independent blockers from categories 1–6 apply, with no single dominant reason.",
+        "other_scope_or_technical_blocker": "Another specific scope or technical blocker prevents faithful replacement.",
+        "actually_eligible": "The prior not_eligible choice appears wrong; Browser Mode can faithfully preserve the asserted contract and condition.",
+        "insufficient_evidence": "The source assertion/conditions do not support identifying a primary reason or deciding eligibility."
+      }
+    },
+    "p45-a-parity-hidden-series": {
+      "type": "choice",
+      "instructions": "Stable scenario ID: p45-a-parity-hidden-series. Source: tests/e2e/chart-table-csv-parity.e2e.spec.ts:374. Exact project/viewport/color/engine/input condition: series hidden via legend; only SVG geometry changes; table/CSV invariant. Contract summary: Retain the full assertion contract: Phase 4-4 production chart/table/CSV parity › hidden series changes only its SVG geometry; table and CSV remain identical.. Actual test declaration/action/assertion snippets:\n374: test(\"hidden series changes only its SVG geometry; table and CSV remain identical\", async ({\n377: await page.goto(\"/\");\n389: expect(afterContract.keys).toEqual(beforeContract.keys);\n393: expect(after.headers).toEqual(before.headers);\n394: expect(after.values).toEqual(before.values);\n395: expect(afterContract.rows).toEqual(beforeContract.rows);\n396: await expect(root.locator(\"svg\").first()).toBeVisible();\n397: expect(afterCsv).toEqual([before.headers, ...before.values]);\nSelect the single primary reason under the common category definitions. Treat the prior choice solely as subset selection; independently reconsider whether it is actually eligible.",
+      "criteria": {
+        "nextjs_or_production_integration": "Requires Next build/start, Next route/server/Flight/hydration, URL/query-to-screen behavior, or production download/CSV parity.",
+        "real_layout_geometry_or_coordinate_hit_test": "Requires physical placement/containment/overflow/scroll, SVG/chart geometry, or pointer/touch coordinate hit-testing. Do not infer this from simple viewport style input alone.",
+        "engine_specific_behavior": "Requires actual engine-specific behavior outside current Vitest Browser Mode scope. Do not infer this from a Playwright project name alone.",
+        "pure_logic_or_data_only": "Has no meaningful browser-observable contract and belongs in unit/data testing.",
+        "duplicate_or_no_distinct_browser_contract": "Only an exact same contract is already owned elsewhere; partial overlap does not qualify.",
+        "configured_browser_mode_capability_gap": "A different specific current provider/Browser Mode limitation blocks a faithful replacement; choose only when the precise limitation is evidenced.",
+        "multiple_independent_blockers": "At least two independent blockers from categories 1–6 apply, with no single dominant reason.",
+        "other_scope_or_technical_blocker": "Another specific scope or technical blocker prevents faithful replacement.",
+        "actually_eligible": "The prior not_eligible choice appears wrong; Browser Mode can faithfully preserve the asserted contract and condition.",
+        "insufficient_evidence": "The source assertion/conditions do not support identifying a primary reason or deciding eligibility."
+      }
+    },
+    "p45-a-cpi-sections": {
+      "type": "choice",
+      "instructions": "Stable scenario ID: p45-a-cpi-sections. Source: tests/e2e/cpi-chart-categories.e2e.spec.ts:9. Exact project/viewport/color/engine/input condition: CPI chart section and plotted paths. Contract summary: Retain the full assertion contract: 物価指数チャート - セクションとプロットが表示される.. Actual test declaration/action/assertion snippets:\n9: test(\"物価指数チャート - セクションとプロットが表示される\", async ({ page }) => {\n10: await page.goto(\"/\");\n13: await expect(stackedSection).toBeVisible();\n17: await expect(areaPath).toBeVisible();\nSelect the single primary reason under the common category definitions. Treat the prior choice solely as subset selection; independently reconsider whether it is actually eligible.",
+      "criteria": {
+        "nextjs_or_production_integration": "Requires Next build/start, Next route/server/Flight/hydration, URL/query-to-screen behavior, or production download/CSV parity.",
+        "real_layout_geometry_or_coordinate_hit_test": "Requires physical placement/containment/overflow/scroll, SVG/chart geometry, or pointer/touch coordinate hit-testing. Do not infer this from simple viewport style input alone.",
+        "engine_specific_behavior": "Requires actual engine-specific behavior outside current Vitest Browser Mode scope. Do not infer this from a Playwright project name alone.",
+        "pure_logic_or_data_only": "Has no meaningful browser-observable contract and belongs in unit/data testing.",
+        "duplicate_or_no_distinct_browser_contract": "Only an exact same contract is already owned elsewhere; partial overlap does not qualify.",
+        "configured_browser_mode_capability_gap": "A different specific current provider/Browser Mode limitation blocks a faithful replacement; choose only when the precise limitation is evidenced.",
+        "multiple_independent_blockers": "At least two independent blockers from categories 1–6 apply, with no single dominant reason.",
+        "other_scope_or_technical_blocker": "Another specific scope or technical blocker prevents faithful replacement.",
+        "actually_eligible": "The prior not_eligible choice appears wrong; Browser Mode can faithfully preserve the asserted contract and condition.",
+        "insufficient_evidence": "The source assertion/conditions do not support identifying a primary reason or deciding eligibility."
+      }
+    },
+    "p45-a-cpi-legend-scroll": {
+      "type": "choice",
+      "instructions": "Stable scenario ID: p45-a-cpi-legend-scroll. Source: tests/e2e/cpi-chart-categories.e2e.spec.ts:20. Exact project/viewport/color/engine/input condition: filter CPI category via legend; preserve page scroll. Contract summary: Retain the full assertion contract: 費目凡例をクリックして系列を絞ってもスクロール位置が維持される.. Actual test declaration/action/assertion snippets:\n20: test(\"費目凡例をクリックして系列を絞ってもスクロール位置が維持される\", async ({ page }) => {\n21: await page.goto(\"/\");\n34: expect(before, \"前提: section-stacked はページ上部以外の位置にある\").toBeGreaterThan(100);\n43: expect(\nSelect the single primary reason under the common category definitions. Treat the prior choice solely as subset selection; independently reconsider whether it is actually eligible.",
+      "criteria": {
+        "nextjs_or_production_integration": "Requires Next build/start, Next route/server/Flight/hydration, URL/query-to-screen behavior, or production download/CSV parity.",
+        "real_layout_geometry_or_coordinate_hit_test": "Requires physical placement/containment/overflow/scroll, SVG/chart geometry, or pointer/touch coordinate hit-testing. Do not infer this from simple viewport style input alone.",
+        "engine_specific_behavior": "Requires actual engine-specific behavior outside current Vitest Browser Mode scope. Do not infer this from a Playwright project name alone.",
+        "pure_logic_or_data_only": "Has no meaningful browser-observable contract and belongs in unit/data testing.",
+        "duplicate_or_no_distinct_browser_contract": "Only an exact same contract is already owned elsewhere; partial overlap does not qualify.",
+        "configured_browser_mode_capability_gap": "A different specific current provider/Browser Mode limitation blocks a faithful replacement; choose only when the precise limitation is evidenced.",
+        "multiple_independent_blockers": "At least two independent blockers from categories 1–6 apply, with no single dominant reason.",
+        "other_scope_or_technical_blocker": "Another specific scope or technical blocker prevents faithful replacement.",
+        "actually_eligible": "The prior not_eligible choice appears wrong; Browser Mode can faithfully preserve the asserted contract and condition.",
+        "insufficient_evidence": "The source assertion/conditions do not support identifying a primary reason or deciding eligibility."
+      }
+    },
+    "p45-a-cpi-tooltip-rows": {
+      "type": "choice",
+      "instructions": "Stable scenario ID: p45-a-cpi-tooltip-rows. Source: tests/e2e/cpi-chart-categories.e2e.spec.ts:49. Exact project/viewport/color/engine/input condition: CPI tooltip has 12 categories plus total under shared root/row contract. Contract summary: Retain the full assertion contract: CPI tooltipは12費目と合計を同じroot/row契約で表示する.. Actual test declaration/action/assertion snippets:\n49: test(\"CPI tooltipは12費目と合計を同じroot/row契約で表示する\", async ({ page }) => {\n50: await page.goto(\"/\");\n54: await expect(section).toBeVisible();\n59: await expect(areaPaths, \"前提: 表示中のCPI積み上げArea pathがある\").not.toHaveCount(0);\n69: expect(box, \"前提: 表示中Area pathに有効なboundingBoxがある\").not.toBeNull();\n72: await page.mouse.move(box.x + box.width * 0.1, box.y + box.height * 0.1);\n73: await page.mouse.move(box.x + box.width * 0.5, box.y + box.height * 0.45, { steps: 8 });\n79: await expect(tooltip).toBeVisible({ timeout: 5000 });\n80: await expect(tooltip.locator('[data-tooltip-total=\"true\"]')).toBeVisible();\n82: await expect(rows).toHaveCount(12);\nSelect the single primary reason under the common category definitions. Treat the prior choice solely as subset selection; independently reconsider whether it is actually eligible.",
+      "criteria": {
+        "nextjs_or_production_integration": "Requires Next build/start, Next route/server/Flight/hydration, URL/query-to-screen behavior, or production download/CSV parity.",
+        "real_layout_geometry_or_coordinate_hit_test": "Requires physical placement/containment/overflow/scroll, SVG/chart geometry, or pointer/touch coordinate hit-testing. Do not infer this from simple viewport style input alone.",
+        "engine_specific_behavior": "Requires actual engine-specific behavior outside current Vitest Browser Mode scope. Do not infer this from a Playwright project name alone.",
+        "pure_logic_or_data_only": "Has no meaningful browser-observable contract and belongs in unit/data testing.",
+        "duplicate_or_no_distinct_browser_contract": "Only an exact same contract is already owned elsewhere; partial overlap does not qualify.",
+        "configured_browser_mode_capability_gap": "A different specific current provider/Browser Mode limitation blocks a faithful replacement; choose only when the precise limitation is evidenced.",
+        "multiple_independent_blockers": "At least two independent blockers from categories 1–6 apply, with no single dominant reason.",
+        "other_scope_or_technical_blocker": "Another specific scope or technical blocker prevents faithful replacement.",
+        "actually_eligible": "The prior not_eligible choice appears wrong; Browser Mode can faithfully preserve the asserted contract and condition.",
+        "insufficient_evidence": "The source assertion/conditions do not support identifying a primary reason or deciding eligibility."
+      }
+    },
+    "p45-a-earnings-hover": {
+      "type": "choice",
+      "instructions": "Stable scenario ID: p45-a-earnings-hover. Source: tests/e2e/earnings-tooltip-total.e2e.spec.ts:63. Exact project/viewport/color/engine/input condition: desktop real hover on earnings plot shows tooltip. Contract summary: Retain the full assertion contract: 給与tooltipの区分合計 desktop E2E › 給与plotへの実hoverでtooltipを表示する.. Actual test declaration/action/assertion snippets:\n63: test(\"給与plotへの実hoverでtooltipを表示する\", async ({ page }) => {\n65: await expect(section).toBeVisible({ timeout: 15000 });\nSelect the single primary reason under the common category definitions. Treat the prior choice solely as subset selection; independently reconsider whether it is actually eligible.",
+      "criteria": {
+        "nextjs_or_production_integration": "Requires Next build/start, Next route/server/Flight/hydration, URL/query-to-screen behavior, or production download/CSV parity.",
+        "real_layout_geometry_or_coordinate_hit_test": "Requires physical placement/containment/overflow/scroll, SVG/chart geometry, or pointer/touch coordinate hit-testing. Do not infer this from simple viewport style input alone.",
+        "engine_specific_behavior": "Requires actual engine-specific behavior outside current Vitest Browser Mode scope. Do not infer this from a Playwright project name alone.",
+        "pure_logic_or_data_only": "Has no meaningful browser-observable contract and belongs in unit/data testing.",
+        "duplicate_or_no_distinct_browser_contract": "Only an exact same contract is already owned elsewhere; partial overlap does not qualify.",
+        "configured_browser_mode_capability_gap": "A different specific current provider/Browser Mode limitation blocks a faithful replacement; choose only when the precise limitation is evidenced.",
+        "multiple_independent_blockers": "At least two independent blockers from categories 1–6 apply, with no single dominant reason.",
+        "other_scope_or_technical_blocker": "Another specific scope or technical blocker prevents faithful replacement.",
+        "actually_eligible": "The prior not_eligible choice appears wrong; Browser Mode can faithfully preserve the asserted contract and condition.",
+        "insufficient_evidence": "The source assertion/conditions do not support identifying a primary reason or deciding eligibility."
+      }
+    },
+    "p45-a-earnings-hidden-series-hover": {
+      "type": "choice",
+      "instructions": "Stable scenario ID: p45-a-earnings-hidden-series-hover. Source: tests/e2e/earnings-tooltip-total.e2e.spec.ts:70. Exact project/viewport/color/engine/input condition: after legend hides a series, hover on real chart still shows tooltip. Contract summary: Retain the full assertion contract: 給与tooltipの区分合計 desktop E2E › 系列をlegendでhiddenにした後も実chartをhoverしてtooltipを表示できる.. Actual test declaration/action/assertion snippets:\n70: test(\"系列をlegendでhiddenにした後も実chartをhoverしてtooltipを表示できる\", async ({ page }) => {\n72: await expect(section).toBeVisible({ timeout: 15000 });\n79: await expect(legendButton).toHaveAttribute(\"aria-pressed\", \"false\");\nSelect the single primary reason under the common category definitions. Treat the prior choice solely as subset selection; independently reconsider whether it is actually eligible.",
+      "criteria": {
+        "nextjs_or_production_integration": "Requires Next build/start, Next route/server/Flight/hydration, URL/query-to-screen behavior, or production download/CSV parity.",
+        "real_layout_geometry_or_coordinate_hit_test": "Requires physical placement/containment/overflow/scroll, SVG/chart geometry, or pointer/touch coordinate hit-testing. Do not infer this from simple viewport style input alone.",
+        "engine_specific_behavior": "Requires actual engine-specific behavior outside current Vitest Browser Mode scope. Do not infer this from a Playwright project name alone.",
+        "pure_logic_or_data_only": "Has no meaningful browser-observable contract and belongs in unit/data testing.",
+        "duplicate_or_no_distinct_browser_contract": "Only an exact same contract is already owned elsewhere; partial overlap does not qualify.",
+        "configured_browser_mode_capability_gap": "A different specific current provider/Browser Mode limitation blocks a faithful replacement; choose only when the precise limitation is evidenced.",
+        "multiple_independent_blockers": "At least two independent blockers from categories 1–6 apply, with no single dominant reason.",
+        "other_scope_or_technical_blocker": "Another specific scope or technical blocker prevents faithful replacement.",
+        "actually_eligible": "The prior not_eligible choice appears wrong; Browser Mode can faithfully preserve the asserted contract and condition.",
+        "insufficient_evidence": "The source assertion/conditions do not support identifying a primary reason or deciding eligibility."
+      }
+    }
+  }
+}

@@ -1,0 +1,216 @@
+{
+  "httpStatus": 200,
+  "body": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "p45-b-real-consumption-60-page-tsx-e2e-real-consumption-chart-with-actual-browser": {
+        "type": "choice",
+        "choice": "actually_eligible",
+        "confidence": 0.63,
+        "probabilities": {
+          "nextjs_or_production_integration": 0.29,
+          "other_scope_or_technical_blocker": 0,
+          "multiple_independent_blockers": 0,
+          "actually_eligible": 0.68,
+          "insufficient_evidence": 0.02,
+          "pure_logic_or_data_only": 0,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0,
+          "configured_browser_mode_capability_gap": 0.01,
+          "engine_specific_behavior": 0
+        }
+      },
+      "p45-b-real-consumption-82-page-tsx-e2e-real-consumption-chart-with-actual-browser": {
+        "type": "choice",
+        "choice": "actually_eligible",
+        "confidence": 0.75,
+        "probabilities": {
+          "nextjs_or_production_integration": 0.18,
+          "other_scope_or_technical_blocker": 0,
+          "multiple_independent_blockers": 0,
+          "actually_eligible": 0.78,
+          "insufficient_evidence": 0.04,
+          "pure_logic_or_data_only": 0,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0,
+          "configured_browser_mode_capability_gap": 0,
+          "engine_specific_behavior": 0
+        }
+      },
+      "p45-b-real-consumption-99-page-tsx-e2e-real-consumption-chart-with-actual-browser": {
+        "type": "choice",
+        "choice": "actually_eligible",
+        "confidence": 0.77,
+        "probabilities": {
+          "nextjs_or_production_integration": 0.07,
+          "other_scope_or_technical_blocker": 0,
+          "multiple_independent_blockers": 0,
+          "actually_eligible": 0.8,
+          "insufficient_evidence": 0.03,
+          "pure_logic_or_data_only": 0,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.09999999999999999,
+          "configured_browser_mode_capability_gap": 0,
+          "engine_specific_behavior": 0
+        }
+      },
+      "p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser": {
+        "type": "choice",
+        "choice": "actually_eligible",
+        "confidence": 0.78,
+        "probabilities": {
+          "nextjs_or_production_integration": 0.08,
+          "other_scope_or_technical_blocker": 0,
+          "multiple_independent_blockers": 0,
+          "actually_eligible": 0.8,
+          "insufficient_evidence": 0.02,
+          "pure_logic_or_data_only": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.08,
+          "configured_browser_mode_capability_gap": 0.01,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "engine_specific_behavior": 0
+        }
+      },
+      "p45-b-section-tabs-scroll-47-case01-chromium": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.78,
+        "probabilities": {
+          "nextjs_or_production_integration": 0,
+          "other_scope_or_technical_blocker": 0,
+          "multiple_independent_blockers": 0,
+          "actually_eligible": 0.19,
+          "insufficient_evidence": 0.01,
+          "pure_logic_or_data_only": 0,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.8,
+          "configured_browser_mode_capability_gap": 0,
+          "engine_specific_behavior": 0
+        }
+      },
+      "p45-b-section-tabs-scroll-47-case02-chromium": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.73,
+        "probabilities": {
+          "nextjs_or_production_integration": 0,
+          "other_scope_or_technical_blocker": 0,
+          "multiple_independent_blockers": 0,
+          "configured_browser_mode_capability_gap": 0,
+          "insufficient_evidence": 0.01,
+          "pure_logic_or_data_only": 0,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.76,
+          "actually_eligible": 0.23,
+          "engine_specific_behavior": 0
+        }
+      },
+      "p45-b-section-tabs-scroll-47-3-chromium": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.81,
+        "probabilities": {
+          "nextjs_or_production_integration": 0,
+          "other_scope_or_technical_blocker": 0,
+          "multiple_independent_blockers": 0,
+          "actually_eligible": 0.16,
+          "insufficient_evidence": 0,
+          "pure_logic_or_data_only": 0,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.84,
+          "configured_browser_mode_capability_gap": 0,
+          "engine_specific_behavior": 0
+        }
+      },
+      "p45-b-section-tabs-scroll-82-case01-chromium": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.63,
+        "probabilities": {
+          "nextjs_or_production_integration": 0.01,
+          "other_scope_or_technical_blocker": 0,
+          "multiple_independent_blockers": 0,
+          "actually_eligible": 0.31,
+          "insufficient_evidence": 0.01,
+          "pure_logic_or_data_only": 0,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.67,
+          "configured_browser_mode_capability_gap": 0,
+          "engine_specific_behavior": 0
+        }
+      },
+      "p45-b-section-tabs-scroll-82-case02-chromium": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.65,
+        "probabilities": {
+          "nextjs_or_production_integration": 0.01,
+          "other_scope_or_technical_blocker": 0,
+          "multiple_independent_blockers": 0,
+          "actually_eligible": 0.29,
+          "insufficient_evidence": 0.01,
+          "pure_logic_or_data_only": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.69,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "configured_browser_mode_capability_gap": 0,
+          "engine_specific_behavior": 0
+        }
+      },
+      "p45-b-section-tabs-scroll-82-3-chromium": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.63,
+        "probabilities": {
+          "nextjs_or_production_integration": 0.01,
+          "other_scope_or_technical_blocker": 0,
+          "multiple_independent_blockers": 0,
+          "actually_eligible": 0.31,
+          "insufficient_evidence": 0.01,
+          "pure_logic_or_data_only": 0,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.67,
+          "configured_browser_mode_capability_gap": 0,
+          "engine_specific_behavior": 0
+        }
+      },
+      "p45-b-section-tabs-scroll-120-case01-chromium": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.65,
+        "probabilities": {
+          "nextjs_or_production_integration": 0,
+          "other_scope_or_technical_blocker": 0,
+          "multiple_independent_blockers": 0,
+          "actually_eligible": 0.26,
+          "insufficient_evidence": 0.02,
+          "pure_logic_or_data_only": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.68,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "configured_browser_mode_capability_gap": 0.01,
+          "engine_specific_behavior": 0.02
+        }
+      },
+      "p45-b-section-tabs-scroll-127-case01-chromium": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.66,
+        "probabilities": {
+          "nextjs_or_production_integration": 0,
+          "other_scope_or_technical_blocker": 0,
+          "multiple_independent_blockers": 0,
+          "configured_browser_mode_capability_gap": 0,
+          "insufficient_evidence": 0.01,
+          "pure_logic_or_data_only": 0,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.7,
+          "actually_eligible": 0.29,
+          "engine_specific_behavior": 0
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": 9719,
+      "output_tokens": 1960
+    }
+  }
+}

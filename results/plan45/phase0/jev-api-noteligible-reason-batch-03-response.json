@@ -1,0 +1,216 @@
+{
+  "httpStatus": 200,
+  "body": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "p45-b-consumption-boundary-85-768px-desktop-chromium-768px-viewport-overflow": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.81,
+        "probabilities": {
+          "engine_specific_behavior": 0,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "multiple_independent_blockers": 0,
+          "configured_browser_mode_capability_gap": 0,
+          "pure_logic_or_data_only": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.84,
+          "actually_eligible": 0.16,
+          "other_scope_or_technical_blocker": 0,
+          "insufficient_evidence": 0,
+          "nextjs_or_production_integration": 0
+        }
+      },
+      "p45-b-consumption-boundary-85-768px-desktop-chromium-769px-viewport-overflow": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.8,
+        "probabilities": {
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "engine_specific_behavior": 0,
+          "multiple_independent_blockers": 0,
+          "configured_browser_mode_capability_gap": 0,
+          "pure_logic_or_data_only": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.83,
+          "actually_eligible": 0.17,
+          "other_scope_or_technical_blocker": 0,
+          "insufficient_evidence": 0,
+          "nextjs_or_production_integration": 0
+        }
+      },
+      "p45-b-monthly-boundary-axis-21-cpi-2017-12-2018-1-svg": {
+        "type": "choice",
+        "choice": "actually_eligible",
+        "confidence": 0.56,
+        "probabilities": {
+          "engine_specific_behavior": 0,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "multiple_independent_blockers": 0,
+          "insufficient_evidence": 0.02,
+          "pure_logic_or_data_only": 0.02,
+          "real_layout_geometry_or_coordinate_hit_test": 0.32,
+          "actually_eligible": 0.61,
+          "other_scope_or_technical_blocker": 0.01,
+          "configured_browser_mode_capability_gap": 0.01,
+          "nextjs_or_production_integration": 0.01
+        }
+      },
+      "p45-b-range-change-107-e2e": {
+        "type": "choice",
+        "choice": "actually_eligible",
+        "confidence": 0.68,
+        "probabilities": {
+          "engine_specific_behavior": 0,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "multiple_independent_blockers": 0,
+          "configured_browser_mode_capability_gap": 0,
+          "pure_logic_or_data_only": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.23,
+          "actually_eligible": 0.72,
+          "other_scope_or_technical_blocker": 0,
+          "insufficient_evidence": 0.05,
+          "nextjs_or_production_integration": 0
+        }
+      },
+      "p45-b-range-change-119-e2e": {
+        "type": "choice",
+        "choice": "actually_eligible",
+        "confidence": 0.77,
+        "probabilities": {
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "engine_specific_behavior": 0,
+          "multiple_independent_blockers": 0,
+          "configured_browser_mode_capability_gap": 0,
+          "pure_logic_or_data_only": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.19,
+          "actually_eligible": 0.8,
+          "other_scope_or_technical_blocker": 0,
+          "insufficient_evidence": 0.01,
+          "nextjs_or_production_integration": 0
+        }
+      },
+      "p45-b-range-change-136-e2e": {
+        "type": "choice",
+        "choice": "actually_eligible",
+        "confidence": 0.71,
+        "probabilities": {
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "engine_specific_behavior": 0,
+          "multiple_independent_blockers": 0,
+          "insufficient_evidence": 0.01,
+          "pure_logic_or_data_only": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.24,
+          "actually_eligible": 0.75,
+          "other_scope_or_technical_blocker": 0,
+          "configured_browser_mode_capability_gap": 0,
+          "nextjs_or_production_integration": 0
+        }
+      },
+      "p45-b-range-change-153-e2e": {
+        "type": "choice",
+        "choice": "actually_eligible",
+        "confidence": 0.77,
+        "probabilities": {
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "engine_specific_behavior": 0,
+          "multiple_independent_blockers": 0,
+          "configured_browser_mode_capability_gap": 0,
+          "pure_logic_or_data_only": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.19,
+          "actually_eligible": 0.8,
+          "other_scope_or_technical_blocker": 0,
+          "insufficient_evidence": 0.01,
+          "nextjs_or_production_integration": 0
+        }
+      },
+      "p45-b-range-change-170-e2e": {
+        "type": "choice",
+        "choice": "actually_eligible",
+        "confidence": 0.69,
+        "probabilities": {
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "engine_specific_behavior": 0,
+          "multiple_independent_blockers": 0,
+          "insufficient_evidence": 0.01,
+          "pure_logic_or_data_only": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.26,
+          "actually_eligible": 0.73,
+          "other_scope_or_technical_blocker": 0,
+          "configured_browser_mode_capability_gap": 0,
+          "nextjs_or_production_integration": 0
+        }
+      },
+      "p45-b-range-change-187-e2e-1": {
+        "type": "choice",
+        "choice": "actually_eligible",
+        "confidence": 0.5,
+        "probabilities": {
+          "engine_specific_behavior": 0,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "multiple_independent_blockers": 0,
+          "insufficient_evidence": 0.04,
+          "pure_logic_or_data_only": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.39,
+          "actually_eligible": 0.55,
+          "other_scope_or_technical_blocker": 0,
+          "configured_browser_mode_capability_gap": 0,
+          "nextjs_or_production_integration": 0.01
+        }
+      },
+      "p45-b-range-change-200-e2e-2": {
+        "type": "choice",
+        "choice": "actually_eligible",
+        "confidence": 0.58,
+        "probabilities": {
+          "engine_specific_behavior": 0,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "multiple_independent_blockers": 0,
+          "insufficient_evidence": 0.02,
+          "pure_logic_or_data_only": 0.01,
+          "real_layout_geometry_or_coordinate_hit_test": 0.33,
+          "actually_eligible": 0.63,
+          "other_scope_or_technical_blocker": 0,
+          "configured_browser_mode_capability_gap": 0,
+          "nextjs_or_production_integration": 0.01
+        }
+      },
+      "p45-b-range-change-273-e2e": {
+        "type": "choice",
+        "choice": "real_layout_geometry_or_coordinate_hit_test",
+        "confidence": 0.47,
+        "probabilities": {
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "engine_specific_behavior": 0,
+          "multiple_independent_blockers": 0,
+          "configured_browser_mode_capability_gap": 0,
+          "pure_logic_or_data_only": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0.53,
+          "actually_eligible": 0.47,
+          "other_scope_or_technical_blocker": 0,
+          "insufficient_evidence": 0,
+          "nextjs_or_production_integration": 0
+        }
+      },
+      "p45-b-real-consumption-21-page-tsx-e2e-real-consumption-chart-with-actual-browser": {
+        "type": "choice",
+        "choice": "nextjs_or_production_integration",
+        "confidence": 0.6,
+        "probabilities": {
+          "engine_specific_behavior": 0,
+          "duplicate_or_no_distinct_browser_contract": 0,
+          "multiple_independent_blockers": 0,
+          "configured_browser_mode_capability_gap": 0.01,
+          "pure_logic_or_data_only": 0,
+          "real_layout_geometry_or_coordinate_hit_test": 0,
+          "actually_eligible": 0.29,
+          "other_scope_or_technical_blocker": 0,
+          "insufficient_evidence": 0.05,
+          "nextjs_or_production_integration": 0.65
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": 9065,
+      "output_tokens": 1949
+    }
+  }
+}
