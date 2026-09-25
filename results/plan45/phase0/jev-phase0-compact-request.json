@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "jev-review-initial-distribution-v3",
+  "model": "jev-latest",
+  "state": {
+    "evaluationScope": "plan_validity",
+    "background": "Review only whether Plan45 Phase 0 may validly close and stop before Phase 1 under its written scope. Plan45 requires classifying every active logical Playwright scenario, retaining ineligible cases in denominator A, and stopping if even the eligible upper bound cannot exceed 50%. Plan42 Phase 1/2 are independently still incomplete; Plan45 does not claim otherwise. Earlier initial JEV attempts failed HTTP 400 max_tokens_exceeded and produced no valid judgment; the earlier census review was before complete baseline/inventory and is historical only.\n\nEvidence at source SHA 876880158d5a942926c192395edee7d9856a7e71: same-SHA production build succeeded, followed by canonical pnpm run test:e2e success; 139 listed executions, 120 passed, 19 skipped, 0 failed, 219.85s outer elapsed, 3 workers. Census formula: 139 − 6 fixed accessibility skips − 13 guarded tooltip-dismiss project-copy skips − 1 mobile-ux row without substantive assertion + 4 additional distinct parity loop inputs = A 123 (Batch A 33 + Batch B 90). All five range-change runtime skip guards passed; active identical-contract project duplicates=0. Eligibility inventory: yes=1, unresolved=5, no=117; M=0. Even treating every unresolved as eligible gives Emax=6 and Emax/A=6/123≈4.9%, below the written strict M/A>0.50 target. Thus Phase1 is not started and no denominator, scope, or quality boundary is altered. Six Phase0 checklist items and acceptance conditions are recorded complete. Independent inventory audit passed. Plan42 crosswalk uses immutable baseline 3a5c16d467a994b5c168afec5265c0fa8b7257b0; its IDs are assertion callsites, so loop inputs/project variants legitimately repeat IDs. P42-020 was removed before Plan45; Escape maps P42-021 only; other deltas are recorded per row. Plan42's broader phase1/2 completion remains outstanding.\n\nEvidence artifacts (local paths identify attached review evidence; hashes verify exact files): results/plan45/phase0/production-build-evidence-20260925.md SHA-256 b682d004f7768b2ac931cc18c882bc05951e759ed3edb2bc11809c51eb4c8440; scenario-inventory.md SHA-256 024c362ae24869ce646fbddf8c62bb5a4ca5e92263f2208e7cd60720c21f6639; fresh-playwright-list-20260925.txt SHA-256 60594fd13fdbc10b6e8029de53b099827cc3ffad987e0c8b213b6b58c9906b06; test-e2e-same-sha-20260925.log SHA-256 9b00520561a0b543c669dd66600256167d4f529e598acae2a680a13c67be9533; production-build-same-sha-20260925.log SHA-256 d50b4b83627e02dad844caec2727c36c5705b78d5c1fe97282666d394272e892; shared_plan/45-vitest-browser-mode-e2e-migration-plan.md SHA-256 4f4b657398bf8dc476c20835a91510250197898c3a65f722c1c22ce0106365c4. Plan42 crosswalk references shared_plan/42-assertion-callsite-ledger.md SHA-256 a21309777656baff3a968f3c75e42daee91e75dcdc08fdd2718dc1af9b8dda2a and shared_plan/42-assertion-case-responsibility-matrix.md SHA-256 d94b325df482b9a0ac8171e00ba66b50daac2058e809f3e4fc7788e72917d64c. Raw artifacts and inventory are preserved locally; their contents are summarized here. No credentials are review content.",
+    "acceptanceCriteria": [
+      "Phase0 inventory explains every Playwright spec, project, skip, and loop, with zero census mismatch and one owner per active contract.",
+      "Baseline, same-source build, execution conditions, raw outputs, and elapsed time are reproducibly recorded.",
+      "Eligibility and feasibility use A=123, retain ineligible contracts in the denominator, and apply M/A>0.50 without changing scope or quality boundaries.",
+      "Phase0 may close while Phase1 remains unstarted when the upper bound is below target; Plan42 incompletion is represented without claiming Plan42 completion."
+    ],
+    "verification": [
+      "Same-SHA production build exit 0 and canonical E2E exit 0; 120 passed, 19 skipped, 0 failed.",
+      "Inventory independently audited; skips/project repeats/loop expansions reconcile to A=123.",
+      "Emax/A=6/123≈4.9%, so target cannot be met under the fixed current boundary."
+    ],
+    "knownConstraints": [
+      "Five eligibility cases remain unresolved; upper-bound calculation treats all five as eligible.",
+      "Plan42 phase1/2 remain incomplete as a separate workstream.",
+      "JEV review supplements rather than replaces baseline evidence and the written gate."
+    ],
+    "outputRequirement": "Return exactly one selected choice with confidence and probabilities for every listed choice. Decide whether closing Plan45 Phase0 and stopping before Phase1 is valid under its written scope and evidence. valid_as_defined means this bounded Phase0 close/stop is valid. For a reason category, provide a case-specific finding, the affected Plan45 requirement or artifact location, observed evidence above, and a concrete proposed fix or exact additional evidence needed. Do not treat incomplete Plan42 work as completion claimed by Plan45. Do not invent evidence or details."
+  },
+  "questions": {
+    "phase0_close": {
+      "type": "choice",
+      "instructions": "Is the current Plan45 Phase0 close/stop valid under the written scope and supplied evidence? Return one probability distribution across the mutually exclusive choices.",
+      "criteria": {
+        "valid_as_defined": "The scoped Phase0 close and Phase1 stop are justified as written.",
+        "requirements_mismatch": "The stated Phase0/gate requirements conflict with the intended outcome; identify the conflict and correction.",
+        "missing_prerequisites_info": "A prerequisite or specific evidence required to close Phase0 is missing; identify it.",
+        "incomplete_implementation_info": "The supplied inventory, baseline, or close record lacks a concrete needed detail; identify it.",
+        "implementation_issue": "The recorded census, eligibility, calculation, or status has a demonstrable error; identify evidence and correction.",
+        "scope_violation": "The close/stop changes or exceeds the written Plan45 scope; identify the boundary and adjustment.",
+        "other": "A material validity concern outside these categories; specify finding, location, evidence, and remedy/evidence needed.",
+        "indeterminate": "The context cannot support a judgment; specify missing information if possible."
+      }
+    }
+  }
+}
