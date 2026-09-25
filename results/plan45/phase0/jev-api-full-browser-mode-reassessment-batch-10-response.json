@@ -1,0 +1,188 @@
+{
+  "httpStatus": 200,
+  "body": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "p45-b-mobile-ux-243-sectiontabs-sticky-android-chrome": {
+        "type": "choice",
+        "choice": "eligible_engine_specific_provider",
+        "confidence": 0.32,
+        "probabilities": {
+          "eligible_component_or_dom_interaction": 0.27,
+          "not_eligible_next_production_integration": 0.03,
+          "not_eligible_top_level_or_full_app_shell": 0.11,
+          "eligible_engine_specific_provider": 0.39,
+          "eligible_pointer_or_chart_hit_test": 0,
+          "not_eligible_other_specific_provider_gap": 0.04,
+          "not_eligible_unit_only_or_no_browser_contract": 0,
+          "eligible_viewport_layout_or_scroll": 0.12,
+          "unresolved_evidence_or_fidelity": 0.04
+        }
+      },
+      "p45-b-plan27-private-consumption-9-plan27-38-cti-2005q1-2017q4-52-graph-table-csv-cti-regi": {
+        "type": "choice",
+        "choice": "not_eligible_next_production_integration",
+        "confidence": 0.3,
+        "probabilities": {
+          "eligible_component_or_dom_interaction": 0.22,
+          "not_eligible_next_production_integration": 0.38,
+          "not_eligible_top_level_or_full_app_shell": 0.2,
+          "eligible_engine_specific_provider": 0.01,
+          "eligible_pointer_or_chart_hit_test": 0.04,
+          "not_eligible_other_specific_provider_gap": 0.01,
+          "not_eligible_unit_only_or_no_browser_contract": 0,
+          "eligible_viewport_layout_or_scroll": 0.06,
+          "unresolved_evidence_or_fidelity": 0.08
+        }
+      },
+      "p45-b-plan27-private-consumption-79-plan27-38-cti-nominal-cti-key-is-distinct-from-the-real": {
+        "type": "choice",
+        "choice": "not_eligible_next_production_integration",
+        "confidence": 0.25,
+        "probabilities": {
+          "eligible_component_or_dom_interaction": 0.27,
+          "not_eligible_next_production_integration": 0.33,
+          "not_eligible_top_level_or_full_app_shell": 0.18,
+          "eligible_engine_specific_provider": 0.01,
+          "eligible_pointer_or_chart_hit_test": 0.07,
+          "not_eligible_other_specific_provider_gap": 0.01,
+          "not_eligible_unit_only_or_no_browser_contract": 0.01,
+          "eligible_viewport_layout_or_scroll": 0.02,
+          "unresolved_evidence_or_fidelity": 0.1
+        }
+      },
+      "p45-b-tooltip-dismiss-138-case01": {
+        "type": "choice",
+        "choice": "not_eligible_other_specific_provider_gap",
+        "confidence": 0.55,
+        "probabilities": {
+          "eligible_component_or_dom_interaction": 0.04,
+          "not_eligible_next_production_integration": 0.06,
+          "not_eligible_top_level_or_full_app_shell": 0.03,
+          "eligible_engine_specific_provider": 0,
+          "eligible_pointer_or_chart_hit_test": 0.19,
+          "not_eligible_other_specific_provider_gap": 0.61,
+          "not_eligible_unit_only_or_no_browser_contract": 0,
+          "eligible_viewport_layout_or_scroll": 0,
+          "unresolved_evidence_or_fidelity": 0.07
+        }
+      },
+      "p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip": {
+        "type": "choice",
+        "choice": "not_eligible_other_specific_provider_gap",
+        "confidence": 0.6,
+        "probabilities": {
+          "eligible_component_or_dom_interaction": 0.13,
+          "not_eligible_next_production_integration": 0.02,
+          "not_eligible_top_level_or_full_app_shell": 0.01,
+          "eligible_engine_specific_provider": 0.01,
+          "eligible_pointer_or_chart_hit_test": 0.12,
+          "not_eligible_other_specific_provider_gap": 0.65,
+          "not_eligible_unit_only_or_no_browser_contract": 0,
+          "eligible_viewport_layout_or_scroll": 0,
+          "unresolved_evidence_or_fidelity": 0.06
+        }
+      },
+      "p45-b-tooltip-dismiss-188-case01": {
+        "type": "choice",
+        "choice": "not_eligible_other_specific_provider_gap",
+        "confidence": 0.57,
+        "probabilities": {
+          "eligible_component_or_dom_interaction": 0.05,
+          "not_eligible_next_production_integration": 0.04,
+          "not_eligible_top_level_or_full_app_shell": 0.02,
+          "eligible_engine_specific_provider": 0,
+          "eligible_pointer_or_chart_hit_test": 0.19,
+          "not_eligible_other_specific_provider_gap": 0.63,
+          "not_eligible_unit_only_or_no_browser_contract": 0,
+          "eligible_viewport_layout_or_scroll": 0.01,
+          "unresolved_evidence_or_fidelity": 0.06
+        }
+      },
+      "p45-b-tooltip-dismiss-207-1": {
+        "type": "choice",
+        "choice": "not_eligible_other_specific_provider_gap",
+        "confidence": 0.61,
+        "probabilities": {
+          "eligible_component_or_dom_interaction": 0.05,
+          "not_eligible_next_production_integration": 0.06,
+          "not_eligible_top_level_or_full_app_shell": 0.02,
+          "eligible_engine_specific_provider": 0,
+          "eligible_pointer_or_chart_hit_test": 0.15,
+          "not_eligible_other_specific_provider_gap": 0.66,
+          "not_eligible_unit_only_or_no_browser_contract": 0,
+          "eligible_viewport_layout_or_scroll": 0.01,
+          "unresolved_evidence_or_fidelity": 0.05
+        }
+      },
+      "p45-b-tooltip-dismiss-231-case01": {
+        "type": "choice",
+        "choice": "eligible_viewport_layout_or_scroll",
+        "confidence": 0.27,
+        "probabilities": {
+          "eligible_component_or_dom_interaction": 0.16,
+          "not_eligible_next_production_integration": 0.04,
+          "not_eligible_top_level_or_full_app_shell": 0.04,
+          "eligible_engine_specific_provider": 0.01,
+          "eligible_pointer_or_chart_hit_test": 0.16,
+          "not_eligible_other_specific_provider_gap": 0.17,
+          "not_eligible_unit_only_or_no_browser_contract": 0,
+          "eligible_viewport_layout_or_scroll": 0.35,
+          "unresolved_evidence_or_fidelity": 0.07
+        }
+      },
+      "p45-b-tooltip-dismiss-249-case01": {
+        "type": "choice",
+        "choice": "not_eligible_other_specific_provider_gap",
+        "confidence": 0.64,
+        "probabilities": {
+          "eligible_component_or_dom_interaction": 0.03,
+          "not_eligible_next_production_integration": 0.05,
+          "not_eligible_top_level_or_full_app_shell": 0.03,
+          "eligible_engine_specific_provider": 0,
+          "eligible_pointer_or_chart_hit_test": 0.11,
+          "not_eligible_other_specific_provider_gap": 0.68,
+          "not_eligible_unit_only_or_no_browser_contract": 0,
+          "eligible_viewport_layout_or_scroll": 0.02,
+          "unresolved_evidence_or_fidelity": 0.07
+        }
+      },
+      "p45-b-tooltip-dismiss-284-case01": {
+        "type": "choice",
+        "choice": "not_eligible_other_specific_provider_gap",
+        "confidence": 0.52,
+        "probabilities": {
+          "eligible_component_or_dom_interaction": 0.1,
+          "not_eligible_top_level_or_full_app_shell": 0.03,
+          "not_eligible_next_production_integration": 0.05,
+          "eligible_engine_specific_provider": 0.01,
+          "eligible_pointer_or_chart_hit_test": 0.15,
+          "not_eligible_other_specific_provider_gap": 0.5599999999999999,
+          "not_eligible_unit_only_or_no_browser_contract": 0,
+          "eligible_viewport_layout_or_scroll": 0.01,
+          "unresolved_evidence_or_fidelity": 0.09
+        }
+      },
+      "p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip": {
+        "type": "choice",
+        "choice": "not_eligible_other_specific_provider_gap",
+        "confidence": 0.38,
+        "probabilities": {
+          "eligible_component_or_dom_interaction": 0.04,
+          "not_eligible_top_level_or_full_app_shell": 0.05,
+          "not_eligible_next_production_integration": 0.12,
+          "eligible_engine_specific_provider": 0.01,
+          "eligible_pointer_or_chart_hit_test": 0.21,
+          "not_eligible_other_specific_provider_gap": 0.45,
+          "not_eligible_unit_only_or_no_browser_contract": 0,
+          "eligible_viewport_layout_or_scroll": 0.03,
+          "unresolved_evidence_or_fidelity": 0.09
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": 11461,
+      "output_tokens": 1868
+    }
+  }
+}

@@ -1,0 +1,188 @@
+{
+  "httpStatus": 200,
+  "body": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "p45-a-cagr-sheet-03": {
+        "type": "choice",
+        "choice": "eligible_pointer_or_chart_hit_test",
+        "confidence": 0.63,
+        "probabilities": {
+          "eligible_engine_specific_provider": 0,
+          "not_eligible_top_level_or_full_app_shell": 0.02,
+          "not_eligible_other_specific_provider_gap": 0.02,
+          "unresolved_evidence_or_fidelity": 0.01,
+          "eligible_component_or_dom_interaction": 0.26,
+          "not_eligible_unit_only_or_no_browser_contract": 0,
+          "eligible_pointer_or_chart_hit_test": 0.67,
+          "eligible_viewport_layout_or_scroll": 0,
+          "not_eligible_next_production_integration": 0.01
+        }
+      },
+      "p45-a-cagr-sheet-04": {
+        "type": "choice",
+        "choice": "eligible_viewport_layout_or_scroll",
+        "confidence": 0.7,
+        "probabilities": {
+          "eligible_engine_specific_provider": 0,
+          "not_eligible_other_specific_provider_gap": 0,
+          "not_eligible_top_level_or_full_app_shell": 0.14,
+          "unresolved_evidence_or_fidelity": 0.01,
+          "eligible_component_or_dom_interaction": 0.01,
+          "not_eligible_unit_only_or_no_browser_contract": 0,
+          "eligible_pointer_or_chart_hit_test": 0,
+          "eligible_viewport_layout_or_scroll": 0.73,
+          "not_eligible_next_production_integration": 0.11
+        }
+      },
+      "p45-a-cagr-sheet-05": {
+        "type": "choice",
+        "choice": "eligible_viewport_layout_or_scroll",
+        "confidence": 0.51,
+        "probabilities": {
+          "eligible_engine_specific_provider": 0,
+          "not_eligible_top_level_or_full_app_shell": 0.1,
+          "not_eligible_other_specific_provider_gap": 0,
+          "eligible_pointer_or_chart_hit_test": 0.01,
+          "eligible_component_or_dom_interaction": 0.16,
+          "not_eligible_unit_only_or_no_browser_contract": 0,
+          "unresolved_evidence_or_fidelity": 0.02,
+          "eligible_viewport_layout_or_scroll": 0.56,
+          "not_eligible_next_production_integration": 0.14
+        }
+      },
+      "p45-a-cagr-sheet-06": {
+        "type": "choice",
+        "choice": "eligible_component_or_dom_interaction",
+        "confidence": 0.81,
+        "probabilities": {
+          "eligible_engine_specific_provider": 0,
+          "not_eligible_top_level_or_full_app_shell": 0.04,
+          "not_eligible_other_specific_provider_gap": 0,
+          "eligible_pointer_or_chart_hit_test": 0,
+          "eligible_component_or_dom_interaction": 0.83,
+          "not_eligible_unit_only_or_no_browser_contract": 0,
+          "unresolved_evidence_or_fidelity": 0.04,
+          "eligible_viewport_layout_or_scroll": 0,
+          "not_eligible_next_production_integration": 0.09
+        }
+      },
+      "p45-a-cagr-sheet-07": {
+        "type": "choice",
+        "choice": "eligible_viewport_layout_or_scroll",
+        "confidence": 0.65,
+        "probabilities": {
+          "eligible_engine_specific_provider": 0,
+          "not_eligible_top_level_or_full_app_shell": 0.11,
+          "not_eligible_other_specific_provider_gap": 0,
+          "eligible_pointer_or_chart_hit_test": 0,
+          "eligible_component_or_dom_interaction": 0.01,
+          "not_eligible_unit_only_or_no_browser_contract": 0,
+          "unresolved_evidence_or_fidelity": 0.01,
+          "eligible_viewport_layout_or_scroll": 0.7,
+          "not_eligible_next_production_integration": 0.17
+        }
+      },
+      "p45-a-cagr-sheet-08": {
+        "type": "choice",
+        "choice": "eligible_viewport_layout_or_scroll",
+        "confidence": 0.67,
+        "probabilities": {
+          "eligible_engine_specific_provider": 0,
+          "not_eligible_other_specific_provider_gap": 0,
+          "not_eligible_top_level_or_full_app_shell": 0.1,
+          "unresolved_evidence_or_fidelity": 0.01,
+          "eligible_component_or_dom_interaction": 0.02,
+          "not_eligible_unit_only_or_no_browser_contract": 0,
+          "eligible_pointer_or_chart_hit_test": 0,
+          "eligible_viewport_layout_or_scroll": 0.71,
+          "not_eligible_next_production_integration": 0.16
+        }
+      },
+      "p45-a-cagr-sheet-09": {
+        "type": "choice",
+        "choice": "eligible_viewport_layout_or_scroll",
+        "confidence": 0.71,
+        "probabilities": {
+          "eligible_engine_specific_provider": 0,
+          "not_eligible_other_specific_provider_gap": 0,
+          "not_eligible_top_level_or_full_app_shell": 0.12,
+          "eligible_pointer_or_chart_hit_test": 0,
+          "eligible_component_or_dom_interaction": 0.02,
+          "not_eligible_unit_only_or_no_browser_contract": 0,
+          "unresolved_evidence_or_fidelity": 0.01,
+          "eligible_viewport_layout_or_scroll": 0.74,
+          "not_eligible_next_production_integration": 0.11
+        }
+      },
+      "p45-a-parity-section-cpi-major": {
+        "type": "choice",
+        "choice": "not_eligible_next_production_integration",
+        "confidence": 0.82,
+        "probabilities": {
+          "eligible_engine_specific_provider": 0,
+          "not_eligible_top_level_or_full_app_shell": 0.12,
+          "not_eligible_other_specific_provider_gap": 0,
+          "eligible_pointer_or_chart_hit_test": 0,
+          "eligible_component_or_dom_interaction": 0.02,
+          "not_eligible_unit_only_or_no_browser_contract": 0,
+          "unresolved_evidence_or_fidelity": 0.01,
+          "eligible_viewport_layout_or_scroll": 0,
+          "not_eligible_next_production_integration": 0.85
+        }
+      },
+      "p45-a-parity-section-stacked": {
+        "type": "choice",
+        "choice": "not_eligible_next_production_integration",
+        "confidence": 0.92,
+        "probabilities": {
+          "eligible_engine_specific_provider": 0,
+          "not_eligible_other_specific_provider_gap": 0,
+          "not_eligible_top_level_or_full_app_shell": 0.05,
+          "unresolved_evidence_or_fidelity": 0.01,
+          "eligible_component_or_dom_interaction": 0.01,
+          "not_eligible_unit_only_or_no_browser_contract": 0,
+          "eligible_pointer_or_chart_hit_test": 0,
+          "eligible_viewport_layout_or_scroll": 0,
+          "not_eligible_next_production_integration": 0.93
+        }
+      },
+      "p45-a-parity-section-earnings": {
+        "type": "choice",
+        "choice": "not_eligible_next_production_integration",
+        "confidence": 0.93,
+        "probabilities": {
+          "eligible_engine_specific_provider": 0,
+          "not_eligible_other_specific_provider_gap": 0,
+          "not_eligible_top_level_or_full_app_shell": 0.04,
+          "unresolved_evidence_or_fidelity": 0.01,
+          "eligible_component_or_dom_interaction": 0.01,
+          "not_eligible_unit_only_or_no_browser_contract": 0,
+          "eligible_pointer_or_chart_hit_test": 0,
+          "eligible_viewport_layout_or_scroll": 0,
+          "not_eligible_next_production_integration": 0.94
+        }
+      },
+      "p45-a-parity-section-residual": {
+        "type": "choice",
+        "choice": "not_eligible_next_production_integration",
+        "confidence": 0.9,
+        "probabilities": {
+          "eligible_engine_specific_provider": 0,
+          "not_eligible_other_specific_provider_gap": 0,
+          "not_eligible_top_level_or_full_app_shell": 0.07,
+          "eligible_pointer_or_chart_hit_test": 0,
+          "eligible_component_or_dom_interaction": 0.01,
+          "not_eligible_unit_only_or_no_browser_contract": 0,
+          "unresolved_evidence_or_fidelity": 0.01,
+          "eligible_viewport_layout_or_scroll": 0,
+          "not_eligible_next_production_integration": 0.91
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": 10620,
+      "output_tokens": 1761
+    }
+  }
+}

@@ -1,0 +1,188 @@
+{
+  "httpStatus": 200,
+  "body": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser": {
+        "type": "choice",
+        "choice": "not_eligible_next_production_integration",
+        "confidence": 0.32,
+        "probabilities": {
+          "not_eligible_unit_only_or_no_browser_contract": 0,
+          "eligible_viewport_layout_or_scroll": 0.01,
+          "eligible_pointer_or_chart_hit_test": 0.01,
+          "not_eligible_top_level_or_full_app_shell": 0.31,
+          "eligible_component_or_dom_interaction": 0.19,
+          "not_eligible_other_specific_provider_gap": 0,
+          "not_eligible_next_production_integration": 0.41000000000000003,
+          "eligible_engine_specific_provider": 0.04,
+          "unresolved_evidence_or_fidelity": 0.03
+        }
+      },
+      "p45-b-real-consumption-156-page-tsx-e2e-real-consumption-chart-with-actual-browser": {
+        "type": "choice",
+        "choice": "not_eligible_next_production_integration",
+        "confidence": 0.29,
+        "probabilities": {
+          "unresolved_evidence_or_fidelity": 0.03,
+          "eligible_viewport_layout_or_scroll": 0,
+          "eligible_pointer_or_chart_hit_test": 0.01,
+          "not_eligible_top_level_or_full_app_shell": 0.28,
+          "eligible_component_or_dom_interaction": 0.27,
+          "not_eligible_other_specific_provider_gap": 0,
+          "not_eligible_next_production_integration": 0.37,
+          "eligible_engine_specific_provider": 0.04,
+          "not_eligible_unit_only_or_no_browser_contract": 0
+        }
+      },
+      "p45-b-real-consumption-174-page-tsx-e2e-real-consumption-chart-with-actual-browser": {
+        "type": "choice",
+        "choice": "not_eligible_next_production_integration",
+        "confidence": 0.25,
+        "probabilities": {
+          "not_eligible_unit_only_or_no_browser_contract": 0,
+          "eligible_viewport_layout_or_scroll": 0.01,
+          "eligible_pointer_or_chart_hit_test": 0.01,
+          "not_eligible_top_level_or_full_app_shell": 0.28,
+          "eligible_component_or_dom_interaction": 0.26,
+          "not_eligible_next_production_integration": 0.33,
+          "not_eligible_other_specific_provider_gap": 0,
+          "eligible_engine_specific_provider": 0.07,
+          "unresolved_evidence_or_fidelity": 0.04
+        }
+      },
+      "p45-b-section-tabs-scroll-47-case01-chromium": {
+        "type": "choice",
+        "choice": "eligible_viewport_layout_or_scroll",
+        "confidence": 0.63,
+        "probabilities": {
+          "unresolved_evidence_or_fidelity": 0.02,
+          "eligible_viewport_layout_or_scroll": 0.67,
+          "eligible_pointer_or_chart_hit_test": 0,
+          "not_eligible_top_level_or_full_app_shell": 0.1,
+          "eligible_component_or_dom_interaction": 0.06,
+          "not_eligible_other_specific_provider_gap": 0.01,
+          "not_eligible_next_production_integration": 0.11,
+          "eligible_engine_specific_provider": 0.03,
+          "not_eligible_unit_only_or_no_browser_contract": 0
+        }
+      },
+      "p45-b-section-tabs-scroll-47-case02-chromium": {
+        "type": "choice",
+        "choice": "eligible_viewport_layout_or_scroll",
+        "confidence": 0.58,
+        "probabilities": {
+          "not_eligible_unit_only_or_no_browser_contract": 0,
+          "eligible_viewport_layout_or_scroll": 0.63,
+          "eligible_pointer_or_chart_hit_test": 0,
+          "not_eligible_top_level_or_full_app_shell": 0.09,
+          "eligible_component_or_dom_interaction": 0.06,
+          "not_eligible_other_specific_provider_gap": 0.01,
+          "not_eligible_next_production_integration": 0.16,
+          "eligible_engine_specific_provider": 0.04,
+          "unresolved_evidence_or_fidelity": 0.01
+        }
+      },
+      "p45-b-section-tabs-scroll-47-3-chromium": {
+        "type": "choice",
+        "choice": "eligible_viewport_layout_or_scroll",
+        "confidence": 0.62,
+        "probabilities": {
+          "unresolved_evidence_or_fidelity": 0.01,
+          "eligible_viewport_layout_or_scroll": 0.67,
+          "eligible_pointer_or_chart_hit_test": 0,
+          "not_eligible_top_level_or_full_app_shell": 0.08,
+          "eligible_component_or_dom_interaction": 0.06,
+          "not_eligible_other_specific_provider_gap": 0.01,
+          "not_eligible_next_production_integration": 0.12,
+          "eligible_engine_specific_provider": 0.05,
+          "not_eligible_unit_only_or_no_browser_contract": 0
+        }
+      },
+      "p45-b-section-tabs-scroll-82-case01-chromium": {
+        "type": "choice",
+        "choice": "eligible_viewport_layout_or_scroll",
+        "confidence": 0.48,
+        "probabilities": {
+          "not_eligible_unit_only_or_no_browser_contract": 0,
+          "eligible_viewport_layout_or_scroll": 0.53,
+          "eligible_pointer_or_chart_hit_test": 0,
+          "not_eligible_top_level_or_full_app_shell": 0.14,
+          "eligible_component_or_dom_interaction": 0.08,
+          "not_eligible_next_production_integration": 0.18,
+          "not_eligible_other_specific_provider_gap": 0.01,
+          "eligible_engine_specific_provider": 0.04,
+          "unresolved_evidence_or_fidelity": 0.02
+        }
+      },
+      "p45-b-section-tabs-scroll-82-case02-chromium": {
+        "type": "choice",
+        "choice": "eligible_viewport_layout_or_scroll",
+        "confidence": 0.44,
+        "probabilities": {
+          "not_eligible_unit_only_or_no_browser_contract": 0,
+          "eligible_viewport_layout_or_scroll": 0.49,
+          "eligible_pointer_or_chart_hit_test": 0.01,
+          "not_eligible_top_level_or_full_app_shell": 0.13,
+          "eligible_component_or_dom_interaction": 0.09,
+          "not_eligible_other_specific_provider_gap": 0.01,
+          "not_eligible_next_production_integration": 0.21,
+          "eligible_engine_specific_provider": 0.04,
+          "unresolved_evidence_or_fidelity": 0.02
+        }
+      },
+      "p45-b-section-tabs-scroll-82-3-chromium": {
+        "type": "choice",
+        "choice": "eligible_viewport_layout_or_scroll",
+        "confidence": 0.46,
+        "probabilities": {
+          "not_eligible_unit_only_or_no_browser_contract": 0,
+          "eligible_viewport_layout_or_scroll": 0.51,
+          "eligible_pointer_or_chart_hit_test": 0.01,
+          "not_eligible_top_level_or_full_app_shell": 0.15,
+          "eligible_component_or_dom_interaction": 0.07,
+          "not_eligible_other_specific_provider_gap": 0.01,
+          "not_eligible_next_production_integration": 0.19,
+          "eligible_engine_specific_provider": 0.04,
+          "unresolved_evidence_or_fidelity": 0.02
+        }
+      },
+      "p45-b-section-tabs-scroll-120-case01-chromium": {
+        "type": "choice",
+        "choice": "eligible_viewport_layout_or_scroll",
+        "confidence": 0.61,
+        "probabilities": {
+          "unresolved_evidence_or_fidelity": 0.01,
+          "eligible_viewport_layout_or_scroll": 0.65,
+          "eligible_pointer_or_chart_hit_test": 0,
+          "not_eligible_top_level_or_full_app_shell": 0.08,
+          "eligible_component_or_dom_interaction": 0.07,
+          "not_eligible_other_specific_provider_gap": 0.01,
+          "not_eligible_next_production_integration": 0.14,
+          "eligible_engine_specific_provider": 0.04,
+          "not_eligible_unit_only_or_no_browser_contract": 0
+        }
+      },
+      "p45-b-section-tabs-scroll-127-case01-chromium": {
+        "type": "choice",
+        "choice": "eligible_viewport_layout_or_scroll",
+        "confidence": 0.55,
+        "probabilities": {
+          "not_eligible_unit_only_or_no_browser_contract": 0,
+          "eligible_viewport_layout_or_scroll": 0.59,
+          "eligible_pointer_or_chart_hit_test": 0,
+          "not_eligible_top_level_or_full_app_shell": 0.09,
+          "eligible_component_or_dom_interaction": 0.08,
+          "not_eligible_other_specific_provider_gap": 0.01,
+          "not_eligible_next_production_integration": 0.18,
+          "eligible_engine_specific_provider": 0.04,
+          "unresolved_evidence_or_fidelity": 0.01
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": 11463,
+      "output_tokens": 1858
+    }
+  }
+}

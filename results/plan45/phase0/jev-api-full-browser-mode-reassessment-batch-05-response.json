@@ -1,0 +1,188 @@
+{
+  "httpStatus": 200,
+  "body": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "p45-b-range-change-170-e2e": {
+        "type": "choice",
+        "choice": "eligible_component_or_dom_interaction",
+        "confidence": 0.61,
+        "probabilities": {
+          "unresolved_evidence_or_fidelity": 0.04,
+          "eligible_pointer_or_chart_hit_test": 0.1,
+          "eligible_engine_specific_provider": 0.14,
+          "eligible_component_or_dom_interaction": 0.66,
+          "not_eligible_top_level_or_full_app_shell": 0.02,
+          "not_eligible_unit_only_or_no_browser_contract": 0,
+          "not_eligible_next_production_integration": 0.02,
+          "not_eligible_other_specific_provider_gap": 0.01,
+          "eligible_viewport_layout_or_scroll": 0.01
+        }
+      },
+      "p45-b-range-change-187-e2e-1": {
+        "type": "choice",
+        "choice": "eligible_component_or_dom_interaction",
+        "confidence": 0.43,
+        "probabilities": {
+          "unresolved_evidence_or_fidelity": 0.06,
+          "eligible_pointer_or_chart_hit_test": 0.07,
+          "eligible_engine_specific_provider": 0.28,
+          "eligible_component_or_dom_interaction": 0.5,
+          "not_eligible_top_level_or_full_app_shell": 0.03,
+          "not_eligible_unit_only_or_no_browser_contract": 0,
+          "not_eligible_next_production_integration": 0.03,
+          "not_eligible_other_specific_provider_gap": 0.01,
+          "eligible_viewport_layout_or_scroll": 0.02
+        }
+      },
+      "p45-b-range-change-200-e2e-2": {
+        "type": "choice",
+        "choice": "eligible_component_or_dom_interaction",
+        "confidence": 0.34,
+        "probabilities": {
+          "unresolved_evidence_or_fidelity": 0.04,
+          "eligible_pointer_or_chart_hit_test": 0.09,
+          "eligible_engine_specific_provider": 0.39,
+          "eligible_component_or_dom_interaction": 0.42,
+          "not_eligible_top_level_or_full_app_shell": 0.02,
+          "not_eligible_other_specific_provider_gap": 0.01,
+          "not_eligible_next_production_integration": 0.02,
+          "not_eligible_unit_only_or_no_browser_contract": 0,
+          "eligible_viewport_layout_or_scroll": 0.01
+        }
+      },
+      "p45-b-range-change-215-e2e": {
+        "type": "choice",
+        "choice": "eligible_component_or_dom_interaction",
+        "confidence": 0.64,
+        "probabilities": {
+          "unresolved_evidence_or_fidelity": 0.02,
+          "eligible_pointer_or_chart_hit_test": 0,
+          "eligible_engine_specific_provider": 0.24,
+          "eligible_component_or_dom_interaction": 0.68,
+          "not_eligible_top_level_or_full_app_shell": 0.03,
+          "not_eligible_other_specific_provider_gap": 0.01,
+          "not_eligible_next_production_integration": 0.02,
+          "not_eligible_unit_only_or_no_browser_contract": 0,
+          "eligible_viewport_layout_or_scroll": 0
+        }
+      },
+      "p45-b-range-change-242-e2e": {
+        "type": "choice",
+        "choice": "eligible_engine_specific_provider",
+        "confidence": 0.65,
+        "probabilities": {
+          "unresolved_evidence_or_fidelity": 0.03,
+          "eligible_pointer_or_chart_hit_test": 0.01,
+          "eligible_engine_specific_provider": 0.7,
+          "eligible_component_or_dom_interaction": 0.22,
+          "not_eligible_top_level_or_full_app_shell": 0.02,
+          "not_eligible_other_specific_provider_gap": 0.01,
+          "not_eligible_next_production_integration": 0.01,
+          "not_eligible_unit_only_or_no_browser_contract": 0,
+          "eligible_viewport_layout_or_scroll": 0
+        }
+      },
+      "p45-b-range-change-273-e2e": {
+        "type": "choice",
+        "choice": "eligible_viewport_layout_or_scroll",
+        "confidence": 0.83,
+        "probabilities": {
+          "unresolved_evidence_or_fidelity": 0.01,
+          "eligible_pointer_or_chart_hit_test": 0,
+          "eligible_engine_specific_provider": 0.04,
+          "eligible_component_or_dom_interaction": 0.03,
+          "not_eligible_top_level_or_full_app_shell": 0.04,
+          "not_eligible_unit_only_or_no_browser_contract": 0,
+          "not_eligible_next_production_integration": 0.02,
+          "not_eligible_other_specific_provider_gap": 0.01,
+          "eligible_viewport_layout_or_scroll": 0.85
+        }
+      },
+      "p45-b-range-change-303-e2e-2005-url": {
+        "type": "choice",
+        "choice": "eligible_component_or_dom_interaction",
+        "confidence": 0.39,
+        "probabilities": {
+          "unresolved_evidence_or_fidelity": 0.02,
+          "eligible_pointer_or_chart_hit_test": 0,
+          "eligible_engine_specific_provider": 0.11,
+          "eligible_component_or_dom_interaction": 0.46,
+          "not_eligible_top_level_or_full_app_shell": 0.1,
+          "not_eligible_unit_only_or_no_browser_contract": 0,
+          "not_eligible_next_production_integration": 0.3,
+          "not_eligible_other_specific_provider_gap": 0.01,
+          "eligible_viewport_layout_or_scroll": 0
+        }
+      },
+      "p45-b-real-consumption-21-page-tsx-e2e-real-consumption-chart-with-actual-browser": {
+        "type": "choice",
+        "choice": "not_eligible_next_production_integration",
+        "confidence": 0.97,
+        "probabilities": {
+          "unresolved_evidence_or_fidelity": 0,
+          "eligible_pointer_or_chart_hit_test": 0,
+          "eligible_engine_specific_provider": 0,
+          "eligible_component_or_dom_interaction": 0,
+          "not_eligible_top_level_or_full_app_shell": 0.02,
+          "not_eligible_unit_only_or_no_browser_contract": 0,
+          "not_eligible_next_production_integration": 0.98,
+          "not_eligible_other_specific_provider_gap": 0,
+          "eligible_viewport_layout_or_scroll": 0
+        }
+      },
+      "p45-b-real-consumption-60-page-tsx-e2e-real-consumption-chart-with-actual-browser": {
+        "type": "choice",
+        "choice": "not_eligible_next_production_integration",
+        "confidence": 0.58,
+        "probabilities": {
+          "unresolved_evidence_or_fidelity": 0.02,
+          "eligible_pointer_or_chart_hit_test": 0,
+          "eligible_engine_specific_provider": 0.02,
+          "eligible_component_or_dom_interaction": 0.03,
+          "not_eligible_top_level_or_full_app_shell": 0.31,
+          "not_eligible_unit_only_or_no_browser_contract": 0,
+          "not_eligible_next_production_integration": 0.62,
+          "not_eligible_other_specific_provider_gap": 0,
+          "eligible_viewport_layout_or_scroll": 0
+        }
+      },
+      "p45-b-real-consumption-82-page-tsx-e2e-real-consumption-chart-with-actual-browser": {
+        "type": "choice",
+        "choice": "not_eligible_next_production_integration",
+        "confidence": 0.52,
+        "probabilities": {
+          "unresolved_evidence_or_fidelity": 0.02,
+          "eligible_pointer_or_chart_hit_test": 0,
+          "eligible_engine_specific_provider": 0.02,
+          "eligible_component_or_dom_interaction": 0.11,
+          "not_eligible_top_level_or_full_app_shell": 0.27,
+          "not_eligible_other_specific_provider_gap": 0,
+          "not_eligible_next_production_integration": 0.58,
+          "not_eligible_unit_only_or_no_browser_contract": 0,
+          "eligible_viewport_layout_or_scroll": 0
+        }
+      },
+      "p45-b-real-consumption-99-page-tsx-e2e-real-consumption-chart-with-actual-browser": {
+        "type": "choice",
+        "choice": "not_eligible_next_production_integration",
+        "confidence": 0.21,
+        "probabilities": {
+          "unresolved_evidence_or_fidelity": 0.07,
+          "eligible_pointer_or_chart_hit_test": 0.06,
+          "eligible_engine_specific_provider": 0.06,
+          "eligible_component_or_dom_interaction": 0.26,
+          "not_eligible_top_level_or_full_app_shell": 0.23,
+          "not_eligible_unit_only_or_no_browser_contract": 0,
+          "not_eligible_next_production_integration": 0.31,
+          "not_eligible_other_specific_provider_gap": 0.01,
+          "eligible_viewport_layout_or_scroll": 0
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": 10150,
+      "output_tokens": 1862
+    }
+  }
+}

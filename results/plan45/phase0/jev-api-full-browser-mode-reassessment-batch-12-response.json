@@ -1,0 +1,44 @@
+{
+  "httpStatus": 200,
+  "body": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "p45-b-section-tabs-scroll-127-case02-webkit": {
+        "type": "choice",
+        "choice": "eligible_viewport_layout_or_scroll",
+        "confidence": 0.46,
+        "probabilities": {
+          "eligible_viewport_layout_or_scroll": 0.52,
+          "not_eligible_next_production_integration": 0.1,
+          "not_eligible_top_level_or_full_app_shell": 0.07,
+          "not_eligible_unit_only_or_no_browser_contract": 0,
+          "eligible_component_or_dom_interaction": 0.05,
+          "not_eligible_other_specific_provider_gap": 0.02,
+          "eligible_engine_specific_provider": 0.23,
+          "eligible_pointer_or_chart_hit_test": 0,
+          "unresolved_evidence_or_fidelity": 0.01
+        }
+      },
+      "p45-b-section-tabs-scroll-142-mask-image-webkit": {
+        "type": "choice",
+        "choice": "eligible_engine_specific_provider",
+        "confidence": 0.39,
+        "probabilities": {
+          "eligible_viewport_layout_or_scroll": 0.23,
+          "not_eligible_next_production_integration": 0.12,
+          "not_eligible_top_level_or_full_app_shell": 0.08,
+          "not_eligible_unit_only_or_no_browser_contract": 0,
+          "eligible_component_or_dom_interaction": 0.07,
+          "not_eligible_other_specific_provider_gap": 0.02,
+          "unresolved_evidence_or_fidelity": 0.02,
+          "eligible_pointer_or_chart_hit_test": 0,
+          "eligible_engine_specific_provider": 0.46
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": 3025,
+      "output_tokens": 327
+    }
+  }
+}

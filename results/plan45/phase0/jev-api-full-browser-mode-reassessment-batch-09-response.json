@@ -1,0 +1,188 @@
+{
+  "httpStatus": 200,
+  "body": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "p45-b-mobile-ux-19-ux": {
+        "type": "choice",
+        "choice": "eligible_component_or_dom_interaction",
+        "confidence": 0.36,
+        "probabilities": {
+          "eligible_pointer_or_chart_hit_test": 0.09,
+          "not_eligible_next_production_integration": 0.09,
+          "not_eligible_other_specific_provider_gap": 0.04,
+          "eligible_viewport_layout_or_scroll": 0.2,
+          "eligible_component_or_dom_interaction": 0.43,
+          "unresolved_evidence_or_fidelity": 0.06,
+          "eligible_engine_specific_provider": 0.01,
+          "not_eligible_top_level_or_full_app_shell": 0.08,
+          "not_eligible_unit_only_or_no_browser_contract": 0
+        }
+      },
+      "p45-b-mobile-ux-47-ux-375px": {
+        "type": "choice",
+        "choice": "eligible_viewport_layout_or_scroll",
+        "confidence": 0.74,
+        "probabilities": {
+          "not_eligible_next_production_integration": 0.08,
+          "eligible_pointer_or_chart_hit_test": 0,
+          "not_eligible_other_specific_provider_gap": 0,
+          "eligible_viewport_layout_or_scroll": 0.77,
+          "eligible_component_or_dom_interaction": 0,
+          "unresolved_evidence_or_fidelity": 0.02,
+          "not_eligible_top_level_or_full_app_shell": 0.13,
+          "eligible_engine_specific_provider": 0,
+          "not_eligible_unit_only_or_no_browser_contract": 0
+        }
+      },
+      "p45-b-mobile-ux-65-ux-320px-overflow": {
+        "type": "choice",
+        "choice": "eligible_viewport_layout_or_scroll",
+        "confidence": 0.73,
+        "probabilities": {
+          "not_eligible_next_production_integration": 0.08,
+          "eligible_pointer_or_chart_hit_test": 0,
+          "not_eligible_other_specific_provider_gap": 0,
+          "eligible_viewport_layout_or_scroll": 0.75,
+          "eligible_component_or_dom_interaction": 0.01,
+          "unresolved_evidence_or_fidelity": 0.01,
+          "eligible_engine_specific_provider": 0,
+          "not_eligible_top_level_or_full_app_shell": 0.15,
+          "not_eligible_unit_only_or_no_browser_contract": 0
+        }
+      },
+      "p45-b-mobile-ux-65-ux-375px-overflow": {
+        "type": "choice",
+        "choice": "eligible_viewport_layout_or_scroll",
+        "confidence": 0.75,
+        "probabilities": {
+          "not_eligible_next_production_integration": 0.09,
+          "eligible_pointer_or_chart_hit_test": 0,
+          "not_eligible_other_specific_provider_gap": 0,
+          "eligible_viewport_layout_or_scroll": 0.78,
+          "eligible_component_or_dom_interaction": 0.01,
+          "unresolved_evidence_or_fidelity": 0.01,
+          "eligible_engine_specific_provider": 0,
+          "not_eligible_top_level_or_full_app_shell": 0.11,
+          "not_eligible_unit_only_or_no_browser_contract": 0
+        }
+      },
+      "p45-b-mobile-ux-65-ux-390px-overflow": {
+        "type": "choice",
+        "choice": "eligible_viewport_layout_or_scroll",
+        "confidence": 0.68,
+        "probabilities": {
+          "not_eligible_next_production_integration": 0.07,
+          "eligible_pointer_or_chart_hit_test": 0,
+          "not_eligible_other_specific_provider_gap": 0,
+          "eligible_viewport_layout_or_scroll": 0.71,
+          "eligible_component_or_dom_interaction": 0.01,
+          "unresolved_evidence_or_fidelity": 0.01,
+          "not_eligible_top_level_or_full_app_shell": 0.2,
+          "eligible_engine_specific_provider": 0,
+          "not_eligible_unit_only_or_no_browser_contract": 0
+        }
+      },
+      "p45-b-mobile-ux-65-ux-430px-overflow": {
+        "type": "choice",
+        "choice": "eligible_viewport_layout_or_scroll",
+        "confidence": 0.79,
+        "probabilities": {
+          "not_eligible_next_production_integration": 0.06,
+          "eligible_pointer_or_chart_hit_test": 0,
+          "not_eligible_other_specific_provider_gap": 0,
+          "eligible_viewport_layout_or_scroll": 0.81,
+          "eligible_component_or_dom_interaction": 0.01,
+          "unresolved_evidence_or_fidelity": 0.01,
+          "not_eligible_top_level_or_full_app_shell": 0.1,
+          "eligible_engine_specific_provider": 0,
+          "not_eligible_unit_only_or_no_browser_contract": 0
+        }
+      },
+      "p45-b-mobile-ux-79-ux-375px-select": {
+        "type": "choice",
+        "choice": "eligible_viewport_layout_or_scroll",
+        "confidence": 0.54,
+        "probabilities": {
+          "eligible_pointer_or_chart_hit_test": 0.02,
+          "not_eligible_next_production_integration": 0.1,
+          "not_eligible_other_specific_provider_gap": 0,
+          "eligible_viewport_layout_or_scroll": 0.6,
+          "eligible_component_or_dom_interaction": 0.21,
+          "unresolved_evidence_or_fidelity": 0.01,
+          "not_eligible_top_level_or_full_app_shell": 0.06,
+          "eligible_engine_specific_provider": 0,
+          "not_eligible_unit_only_or_no_browser_contract": 0
+        }
+      },
+      "p45-b-mobile-ux-112-ux-375px-select": {
+        "type": "choice",
+        "choice": "eligible_viewport_layout_or_scroll",
+        "confidence": 0.64,
+        "probabilities": {
+          "not_eligible_next_production_integration": 0.11,
+          "eligible_pointer_or_chart_hit_test": 0,
+          "not_eligible_other_specific_provider_gap": 0,
+          "eligible_viewport_layout_or_scroll": 0.6900000000000001,
+          "eligible_component_or_dom_interaction": 0.13,
+          "unresolved_evidence_or_fidelity": 0.01,
+          "eligible_engine_specific_provider": 0,
+          "not_eligible_top_level_or_full_app_shell": 0.05,
+          "not_eligible_unit_only_or_no_browser_contract": 0
+        }
+      },
+      "p45-b-mobile-ux-140-ux-375px-3": {
+        "type": "choice",
+        "choice": "eligible_viewport_layout_or_scroll",
+        "confidence": 0.7,
+        "probabilities": {
+          "eligible_pointer_or_chart_hit_test": 0,
+          "not_eligible_next_production_integration": 0.11,
+          "not_eligible_other_specific_provider_gap": 0,
+          "eligible_viewport_layout_or_scroll": 0.74,
+          "eligible_component_or_dom_interaction": 0.05,
+          "unresolved_evidence_or_fidelity": 0.02,
+          "eligible_engine_specific_provider": 0,
+          "not_eligible_top_level_or_full_app_shell": 0.08,
+          "not_eligible_unit_only_or_no_browser_contract": 0
+        }
+      },
+      "p45-b-mobile-ux-192-lazymount-p5-1": {
+        "type": "choice",
+        "choice": "eligible_viewport_layout_or_scroll",
+        "confidence": 0.42,
+        "probabilities": {
+          "not_eligible_next_production_integration": 0.23,
+          "eligible_pointer_or_chart_hit_test": 0.01,
+          "not_eligible_other_specific_provider_gap": 0,
+          "eligible_viewport_layout_or_scroll": 0.47,
+          "eligible_component_or_dom_interaction": 0.13,
+          "unresolved_evidence_or_fidelity": 0.04,
+          "eligible_engine_specific_provider": 0,
+          "not_eligible_top_level_or_full_app_shell": 0.12,
+          "not_eligible_unit_only_or_no_browser_contract": 0
+        }
+      },
+      "p45-b-mobile-ux-201-lazymount-p5-1": {
+        "type": "choice",
+        "choice": "eligible_viewport_layout_or_scroll",
+        "confidence": 0.61,
+        "probabilities": {
+          "not_eligible_next_production_integration": 0.16,
+          "eligible_pointer_or_chart_hit_test": 0.01,
+          "not_eligible_other_specific_provider_gap": 0,
+          "eligible_viewport_layout_or_scroll": 0.66,
+          "eligible_component_or_dom_interaction": 0.06,
+          "unresolved_evidence_or_fidelity": 0.03,
+          "eligible_engine_specific_provider": 0,
+          "not_eligible_top_level_or_full_app_shell": 0.08,
+          "not_eligible_unit_only_or_no_browser_contract": 0
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": 10901,
+      "output_tokens": 1836
+    }
+  }
+}
