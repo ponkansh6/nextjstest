@@ -17,6 +17,13 @@ export default defineConfig({
     // - tests/production: 商用URL(PROD_URL)へのネットワークアクセスが必要 → `pnpm test:prod`
     // - tests/build:      先に `pnpm build` が必要             → `pnpm test:build-parity`
     // - tests/e2e:        Playwright E2E（playwright test で実行） → `pnpm test:e2e`
-    exclude: [...configDefaults.exclude, "tests/production/**", "tests/build/**", "tests/e2e/**"],
+    exclude: [
+      ...configDefaults.exclude,
+      "tests/production/**",
+      "tests/build/**",
+      "tests/e2e/**",
+      "**/.plan42*",
+      "**/.plan42*/**",
+    ],
   },
 });

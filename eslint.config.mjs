@@ -26,6 +26,8 @@ const eslintConfig = defineConfig([
     "coverage/**",
     "test-results/**",
     "playwright-report/**",
+    "**/.plan42*",
+    "**/.plan42*/**",
 
     // Project assets and data
     "public/**",

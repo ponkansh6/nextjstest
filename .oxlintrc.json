@@ -8,6 +8,10 @@
   "categories": {
     "correctness": "error"
   },
+  "ignorePatterns": [
+    "**/.plan42*",
+    "**/.plan42*/**"
+  ],
   "rules": {},
   "env": {
     "builtin": true

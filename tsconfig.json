@@ -51,6 +51,8 @@
     "scripts/convert_contractual.ts",
     "scripts/convert_scheduled.ts",
     "scripts/convert_total.ts",
-    "scripts/convert_worked.ts"
+    "scripts/convert_worked.ts",
+    "**/.plan42*",
+    "**/.plan42*/**"
   ]
 }
