@@ -1,0 +1,222 @@
+{
+  "httpStatus": 200,
+  "body": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "p45-a-parity-section-residual": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.84,
+        "probabilities": {
+          "not_eligible": 0.89,
+          "eligible": 0.08,
+          "unresolved": 0.03
+        }
+      },
+      "p45-a-parity-section-new-graph": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.84,
+        "probabilities": {
+          "not_eligible": 0.89,
+          "eligible": 0.08,
+          "unresolved": 0.03
+        }
+      },
+      "p45-a-parity-advanced-anchors": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.54,
+        "probabilities": {
+          "eligible": 0.13,
+          "not_eligible": 0.69,
+          "unresolved": 0.18
+        }
+      },
+      "p45-a-parity-hidden-series": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.71,
+        "probabilities": {
+          "not_eligible": 0.81,
+          "eligible": 0.17,
+          "unresolved": 0.02
+        }
+      },
+      "p45-a-cpi-sections": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.44,
+        "probabilities": {
+          "not_eligible": 0.62,
+          "eligible": 0.33,
+          "unresolved": 0.05
+        }
+      },
+      "p45-a-cpi-legend-scroll": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.84,
+        "probabilities": {
+          "not_eligible": 0.89,
+          "eligible": 0.07,
+          "unresolved": 0.04
+        }
+      },
+      "p45-a-cpi-tooltip-rows": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.82,
+        "probabilities": {
+          "not_eligible": 0.88,
+          "eligible": 0.1,
+          "unresolved": 0.02
+        }
+      },
+      "p45-a-earnings-hover": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.49,
+        "probabilities": {
+          "not_eligible": 0.66,
+          "eligible": 0.2,
+          "unresolved": 0.14
+        }
+      },
+      "p45-a-earnings-hidden-series-hover": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.36,
+        "probabilities": {
+          "not_eligible": 0.57,
+          "eligible": 0.21,
+          "unresolved": 0.22
+        }
+      },
+      "p45-a-legend-entertainment-series9": {
+        "type": "choice",
+        "choice": "eligible",
+        "confidence": 0.79,
+        "probabilities": {
+          "not_eligible": 0.05,
+          "eligible": 0.87,
+          "unresolved": 0.08
+        }
+      },
+      "p45-a-legend-food-nominal": {
+        "type": "choice",
+        "choice": "eligible",
+        "confidence": 0.83,
+        "probabilities": {
+          "not_eligible": 0.06,
+          "eligible": 0.89,
+          "unresolved": 0.05
+        }
+      },
+      "p45-a-legend-dark-all12": {
+        "type": "choice",
+        "choice": "eligible",
+        "confidence": 0.77,
+        "probabilities": {
+          "not_eligible": 0.08,
+          "eligible": 0.85,
+          "unresolved": 0.07
+        }
+      },
+      "p45-b-consumption-boundary-85-768px-desktop-chromium-768px-viewport-overflow": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.87,
+        "probabilities": {
+          "eligible": 0.08,
+          "not_eligible": 0.91,
+          "unresolved": 0.01
+        }
+      },
+      "p45-b-consumption-boundary-85-768px-desktop-chromium-769px-viewport-overflow": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.79,
+        "probabilities": {
+          "not_eligible": 0.86,
+          "eligible": 0.13,
+          "unresolved": 0.01
+        }
+      },
+      "p45-b-monthly-boundary-axis-21-cpi-2017-12-2018-1-svg": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.25,
+        "probabilities": {
+          "eligible": 0.37,
+          "not_eligible": 0.5,
+          "unresolved": 0.13
+        }
+      },
+      "p45-b-monthly-boundary-axis-21-2017-12-2018-1-svg": {
+        "type": "choice",
+        "choice": "eligible",
+        "confidence": 0.21,
+        "probabilities": {
+          "not_eligible": 0.42,
+          "eligible": 0.48,
+          "unresolved": 0.1
+        }
+      },
+      "p45-b-plan24-rendering-71-plan24-rendering-contract-cti-2005-2017-2018-legacy-gdp": {
+        "type": "choice",
+        "choice": "eligible",
+        "confidence": 0.23,
+        "probabilities": {
+          "not_eligible": 0.48,
+          "eligible": 0.49,
+          "unresolved": 0.03
+        }
+      },
+      "p45-b-plan24-rendering-88-plan24-rendering-contract-2025q1-q4-csv-tooltip": {
+        "type": "choice",
+        "choice": "eligible",
+        "confidence": 0.68,
+        "probabilities": {
+          "not_eligible": 0.11,
+          "eligible": 0.79,
+          "unresolved": 0.1
+        }
+      },
+      "p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders-": {
+        "type": "choice",
+        "choice": "eligible",
+        "confidence": 0.51,
+        "probabilities": {
+          "not_eligible": 0.26,
+          "eligible": 0.67,
+          "unresolved": 0.07
+        }
+      },
+      "p45-b-range-change-107-e2e": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.71,
+        "probabilities": {
+          "not_eligible": 0.81,
+          "eligible": 0.09,
+          "unresolved": 0.1
+        }
+      },
+      "p45-b-range-change-119-e2e": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.44,
+        "probabilities": {
+          "not_eligible": 0.63,
+          "eligible": 0.22,
+          "unresolved": 0.15
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": 10540,
+      "output_tokens": 1274
+    }
+  }
+}

@@ -1,0 +1,222 @@
+{
+  "httpStatus": 200,
+  "body": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "p45-b-range-change-136-e2e": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.68,
+        "probabilities": {
+          "not_eligible": 0.79,
+          "unresolved": 0.11,
+          "eligible": 0.1
+        }
+      },
+      "p45-b-range-change-153-e2e": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.35,
+        "probabilities": {
+          "not_eligible": 0.56,
+          "unresolved": 0.17,
+          "eligible": 0.27
+        }
+      },
+      "p45-b-range-change-170-e2e": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.63,
+        "probabilities": {
+          "not_eligible": 0.75,
+          "unresolved": 0.12,
+          "eligible": 0.13
+        }
+      },
+      "p45-b-range-change-187-e2e-1": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.49,
+        "probabilities": {
+          "not_eligible": 0.66,
+          "unresolved": 0.13,
+          "eligible": 0.21
+        }
+      },
+      "p45-b-range-change-200-e2e-2": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.3,
+        "probabilities": {
+          "not_eligible": 0.53,
+          "unresolved": 0.17,
+          "eligible": 0.3
+        }
+      },
+      "p45-b-range-change-215-e2e": {
+        "type": "choice",
+        "choice": "eligible",
+        "confidence": 0.7,
+        "probabilities": {
+          "not_eligible": 0.07,
+          "unresolved": 0.13,
+          "eligible": 0.8
+        }
+      },
+      "p45-b-range-change-242-e2e": {
+        "type": "choice",
+        "choice": "eligible",
+        "confidence": 0.61,
+        "probabilities": {
+          "not_eligible": 0.08,
+          "unresolved": 0.18,
+          "eligible": 0.74
+        }
+      },
+      "p45-b-range-change-273-e2e": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.75,
+        "probabilities": {
+          "not_eligible": 0.83,
+          "unresolved": 0.03,
+          "eligible": 0.14
+        }
+      },
+      "p45-b-range-change-303-e2e-2005-url": {
+        "type": "choice",
+        "choice": "eligible",
+        "confidence": 0.49,
+        "probabilities": {
+          "not_eligible": 0.3,
+          "unresolved": 0.04,
+          "eligible": 0.66
+        }
+      },
+      "p45-b-real-consumption-21-page-tsx-e2e-real-consumption-chart-with-actual-browser": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.93,
+        "probabilities": {
+          "not_eligible": 0.96,
+          "unresolved": 0.03,
+          "eligible": 0.01
+        }
+      },
+      "p45-b-real-consumption-60-page-tsx-e2e-real-consumption-chart-with-actual-browser": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.81,
+        "probabilities": {
+          "not_eligible": 0.87,
+          "unresolved": 0.03,
+          "eligible": 0.1
+        }
+      },
+      "p45-b-real-consumption-82-page-tsx-e2e-real-consumption-chart-with-actual-browser": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.14,
+        "probabilities": {
+          "not_eligible": 0.43,
+          "unresolved": 0.24,
+          "eligible": 0.33
+        }
+      },
+      "p45-b-real-consumption-99-page-tsx-e2e-real-consumption-chart-with-actual-browser": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.2,
+        "probabilities": {
+          "not_eligible": 0.45999999999999996,
+          "unresolved": 0.27,
+          "eligible": 0.27
+        }
+      },
+      "p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.23,
+        "probabilities": {
+          "not_eligible": 0.49,
+          "unresolved": 0.04,
+          "eligible": 0.47
+        }
+      },
+      "p45-b-real-consumption-156-page-tsx-e2e-real-consumption-chart-with-actual-browser": {
+        "type": "choice",
+        "choice": "eligible",
+        "confidence": 0.7,
+        "probabilities": {
+          "not_eligible": 0.12,
+          "unresolved": 0.08,
+          "eligible": 0.8
+        }
+      },
+      "p45-b-real-consumption-174-page-tsx-e2e-real-consumption-chart-with-actual-browser": {
+        "type": "choice",
+        "choice": "eligible",
+        "confidence": 0.21,
+        "probabilities": {
+          "not_eligible": 0.39,
+          "unresolved": 0.14,
+          "eligible": 0.47
+        }
+      },
+      "p45-b-section-tabs-scroll-47-case01-chromium": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.88,
+        "probabilities": {
+          "not_eligible": 0.92,
+          "unresolved": 0.01,
+          "eligible": 0.07
+        }
+      },
+      "p45-b-section-tabs-scroll-47-case02-chromium": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.93,
+        "probabilities": {
+          "not_eligible": 0.95,
+          "unresolved": 0.01,
+          "eligible": 0.04
+        }
+      },
+      "p45-b-section-tabs-scroll-47-3-chromium": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.9,
+        "probabilities": {
+          "not_eligible": 0.9299999999999999,
+          "unresolved": 0.01,
+          "eligible": 0.06
+        }
+      },
+      "p45-b-section-tabs-scroll-82-case01-chromium": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.85,
+        "probabilities": {
+          "not_eligible": 0.9,
+          "unresolved": 0.01,
+          "eligible": 0.09
+        }
+      },
+      "p45-b-section-tabs-scroll-82-case02-chromium": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.85,
+        "probabilities": {
+          "not_eligible": 0.9,
+          "unresolved": 0.01,
+          "eligible": 0.09
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": 10531,
+      "output_tokens": 1296
+    }
+  }
+}

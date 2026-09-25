@@ -1,0 +1,222 @@
+{
+  "httpStatus": 200,
+  "body": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "p45-b-consumption-mobile-readability-191-430px-tooltip-6-viewport": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.72,
+        "probabilities": {
+          "not_eligible": 0.81,
+          "eligible": 0.17,
+          "unresolved": 0.02
+        }
+      },
+      "p45-b-consumption-mobile-readability-297-375x667-tooltip": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.53,
+        "probabilities": {
+          "not_eligible": 0.69,
+          "eligible": 0.29,
+          "unresolved": 0.02
+        }
+      },
+      "p45-b-consumption-mobile-readability-297-320x480-tooltip": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.52,
+        "probabilities": {
+          "not_eligible": 0.68,
+          "eligible": 0.3,
+          "unresolved": 0.02
+        }
+      },
+      "p45-b-consumption-mobile-readability-297-landscape-tooltip": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.6,
+        "probabilities": {
+          "not_eligible": 0.73,
+          "eligible": 0.25,
+          "unresolved": 0.02
+        }
+      },
+      "p45-b-mobile-ux-19-ux": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.76,
+        "probabilities": {
+          "not_eligible": 0.84,
+          "eligible": 0.1,
+          "unresolved": 0.06
+        }
+      },
+      "p45-b-mobile-ux-47-ux-375px": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.6,
+        "probabilities": {
+          "not_eligible": 0.73,
+          "eligible": 0.06,
+          "unresolved": 0.21
+        }
+      },
+      "p45-b-mobile-ux-65-ux-320px-overflow": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.89,
+        "probabilities": {
+          "not_eligible": 0.92,
+          "eligible": 0.07,
+          "unresolved": 0.01
+        }
+      },
+      "p45-b-mobile-ux-65-ux-375px-overflow": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.89,
+        "probabilities": {
+          "not_eligible": 0.92,
+          "eligible": 0.07,
+          "unresolved": 0.01
+        }
+      },
+      "p45-b-mobile-ux-65-ux-390px-overflow": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.89,
+        "probabilities": {
+          "not_eligible": 0.93,
+          "eligible": 0.07,
+          "unresolved": 0
+        }
+      },
+      "p45-b-mobile-ux-65-ux-430px-overflow": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.9,
+        "probabilities": {
+          "not_eligible": 0.93,
+          "eligible": 0.06,
+          "unresolved": 0.01
+        }
+      },
+      "p45-b-mobile-ux-79-ux-375px-select": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.9,
+        "probabilities": {
+          "not_eligible": 0.93,
+          "eligible": 0.06,
+          "unresolved": 0.01
+        }
+      },
+      "p45-b-mobile-ux-112-ux-375px-select": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.54,
+        "probabilities": {
+          "not_eligible": 0.69,
+          "eligible": 0.3,
+          "unresolved": 0.01
+        }
+      },
+      "p45-b-mobile-ux-140-ux-375px-3": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.65,
+        "probabilities": {
+          "not_eligible": 0.76,
+          "eligible": 0.15,
+          "unresolved": 0.09
+        }
+      },
+      "p45-b-mobile-ux-192-lazymount-p5-1": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.47,
+        "probabilities": {
+          "not_eligible": 0.65,
+          "eligible": 0.24,
+          "unresolved": 0.11
+        }
+      },
+      "p45-b-mobile-ux-201-lazymount-p5-1": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.7,
+        "probabilities": {
+          "not_eligible": 0.8,
+          "eligible": 0.12,
+          "unresolved": 0.08
+        }
+      },
+      "p45-b-mobile-ux-243-sectiontabs-sticky-android-chrome": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.3,
+        "probabilities": {
+          "not_eligible": 0.53,
+          "eligible": 0.31,
+          "unresolved": 0.16
+        }
+      },
+      "p45-b-plan27-private-consumption-9-plan27-38-cti-2005q1-2017q4-52-graph-table-csv-cti-regi": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.38,
+        "probabilities": {
+          "not_eligible": 0.59,
+          "eligible": 0.26,
+          "unresolved": 0.15
+        }
+      },
+      "p45-b-plan27-private-consumption-79-plan27-38-cti-nominal-cti-key-is-distinct-from-the-real": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.27,
+        "probabilities": {
+          "not_eligible": 0.52,
+          "eligible": 0.35,
+          "unresolved": 0.13
+        }
+      },
+      "p45-b-tooltip-dismiss-138-case01": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.69,
+        "probabilities": {
+          "not_eligible": 0.8,
+          "eligible": 0.16,
+          "unresolved": 0.04
+        }
+      },
+      "p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip": {
+        "type": "choice",
+        "choice": "eligible",
+        "confidence": 0.7,
+        "probabilities": {
+          "not_eligible": 0.14,
+          "eligible": 0.8,
+          "unresolved": 0.06
+        }
+      },
+      "p45-b-tooltip-dismiss-188-case01": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.67,
+        "probabilities": {
+          "not_eligible": 0.78,
+          "unresolved": 0.04,
+          "eligible": 0.18
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": 11835,
+      "output_tokens": 1361
+    }
+  }
+}

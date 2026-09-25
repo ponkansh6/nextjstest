@@ -1,0 +1,222 @@
+{
+  "httpStatus": 200,
+  "body": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "p45-b-section-tabs-scroll-82-3-chromium": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.79,
+        "probabilities": {
+          "unresolved": 0.01,
+          "eligible": 0.13,
+          "not_eligible": 0.86
+        }
+      },
+      "p45-b-section-tabs-scroll-120-case01-chromium": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.68,
+        "probabilities": {
+          "unresolved": 0.03,
+          "eligible": 0.19,
+          "not_eligible": 0.78
+        }
+      },
+      "p45-b-section-tabs-scroll-127-case01-chromium": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.86,
+        "probabilities": {
+          "unresolved": 0.02,
+          "eligible": 0.08,
+          "not_eligible": 0.9
+        }
+      },
+      "p45-b-section-tabs-scroll-142-mask-image-chromium": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.72,
+        "probabilities": {
+          "unresolved": 0.03,
+          "eligible": 0.16,
+          "not_eligible": 0.81
+        }
+      },
+      "p45-b-spending-filter-35-e2e-q1": {
+        "type": "choice",
+        "choice": "eligible",
+        "confidence": 0.3,
+        "probabilities": {
+          "unresolved": 0.04,
+          "eligible": 0.54,
+          "not_eligible": 0.42
+        }
+      },
+      "p45-b-spending-filter-64-e2e": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.63,
+        "probabilities": {
+          "unresolved": 0.12,
+          "eligible": 0.12,
+          "not_eligible": 0.76
+        }
+      },
+      "p45-b-tooltip-dismiss-578-chromium-escape-dismiss": {
+        "type": "choice",
+        "choice": "eligible",
+        "confidence": 0.4,
+        "probabilities": {
+          "unresolved": 0.06,
+          "eligible": 0.6,
+          "not_eligible": 0.34
+        }
+      },
+      "p45-b-tooltip-stack-total-65-e2e-t7-2022": {
+        "type": "choice",
+        "choice": "eligible",
+        "confidence": 0.53,
+        "probabilities": {
+          "unresolved": 0.08,
+          "eligible": 0.69,
+          "not_eligible": 0.23
+        }
+      },
+      "p45-b-tooltip-stack-total-81-e2e-t8-tooltip": {
+        "type": "choice",
+        "choice": "eligible",
+        "confidence": 0.36,
+        "probabilities": {
+          "unresolved": 0.06,
+          "eligible": 0.57,
+          "not_eligible": 0.37
+        }
+      },
+      "p45-b-tooltip-stack-total-108-e2e-t9-cpi-section-stacked-tooltip-total": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.44,
+        "probabilities": {
+          "unresolved": 0.02,
+          "eligible": 0.35,
+          "not_eligible": 0.63
+        }
+      },
+      "p45-b-consumption-mobile-acceptance-37-mobile-pixel-acceptance-plan25-openspec-dom-32px": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.59,
+        "probabilities": {
+          "unresolved": 0.06,
+          "eligible": 0.22,
+          "not_eligible": 0.72
+        }
+      },
+      "p45-b-consumption-mobile-acceptance-63-mobile-pixel-acceptance-plan25-openspec-tooltip-14px-16": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.38,
+        "probabilities": {
+          "unresolved": 0.03,
+          "eligible": 0.38,
+          "not_eligible": 0.59
+        }
+      },
+      "p45-b-consumption-mobile-acceptance-122-mobile-pixel-acceptance-plan25-openspec-summary-1": {
+        "type": "choice",
+        "choice": "eligible",
+        "confidence": 0.73,
+        "probabilities": {
+          "unresolved": 0.03,
+          "eligible": 0.82,
+          "not_eligible": 0.15
+        }
+      },
+      "p45-b-consumption-mobile-acceptance-139-mobile-pixel-acceptance-plan25-openspec-1": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.34,
+        "probabilities": {
+          "unresolved": 0.03,
+          "eligible": 0.41,
+          "not_eligible": 0.56
+        }
+      },
+      "p45-b-consumption-mobile-acceptance-161-mobile-pixel-acceptance-plan25-openspec-dark-mode-toolt": {
+        "type": "choice",
+        "choice": "eligible",
+        "confidence": 0.21,
+        "probabilities": {
+          "unresolved": 0.05,
+          "eligible": 0.48,
+          "not_eligible": 0.47
+        }
+      },
+      "p45-b-consumption-mobile-acceptance-187-mobile-pixel-acceptance-plan25-openspec-375x667-tooltip": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.9,
+        "probabilities": {
+          "unresolved": 0.01,
+          "eligible": 0.06,
+          "not_eligible": 0.93
+        }
+      },
+      "p45-b-consumption-mobile-readability-52-320px-y-x": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.96,
+        "probabilities": {
+          "unresolved": 0,
+          "eligible": 0.02,
+          "not_eligible": 0.98
+        }
+      },
+      "p45-b-consumption-mobile-readability-52-375px-y-x": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.95,
+        "probabilities": {
+          "unresolved": 0,
+          "eligible": 0.03,
+          "not_eligible": 0.97
+        }
+      },
+      "p45-b-consumption-mobile-readability-52-390px-y-x": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.96,
+        "probabilities": {
+          "unresolved": 0,
+          "eligible": 0.02,
+          "not_eligible": 0.98
+        }
+      },
+      "p45-b-consumption-mobile-readability-52-430px-y-x": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.96,
+        "probabilities": {
+          "unresolved": 0,
+          "eligible": 0.02,
+          "not_eligible": 0.98
+        }
+      },
+      "p45-b-consumption-mobile-readability-191-375px-tooltip-6-viewport": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.75,
+        "probabilities": {
+          "unresolved": 0.03,
+          "eligible": 0.14,
+          "not_eligible": 0.83
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": 12677,
+      "output_tokens": 1377
+    }
+  }
+}

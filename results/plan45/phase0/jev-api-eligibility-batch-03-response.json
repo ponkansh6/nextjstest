@@ -1,0 +1,1190 @@
+{
+  "httpStatus": 422,
+  "body": {
+    "detail": [
+      {
+        "type": "missing",
+        "loc": [
+          "body",
+          "model"
+        ],
+        "msg": "Field required",
+        "input": {
+          "state": {
+            "evaluationScope": "Plan45 migration eligibility audit",
+            "background": "Independently judge the supplied logical scenarios for faithful replacement by Vitest Browser Mode, using the exact contract and source assertions per question. Plan45's fixed denominator A is every active logical E2E scenario; retain ineligible rows in A. E counts only faithful Browser Mode replacements without requiring the Next production integration boundary. Browser Mode DOM mounting can test component DOM, keyboard/focus behavior, and simple style or viewport-input behavior when assertions can be preserved. Actual component DOM/keyboard/focus and simple style/viewport-input cases may qualify. Cases whose required failure boundary is Next production build/start/route, Flight/hydration, production URL routing, production download, actual layout placement/overflow/scroll/SVG/chart geometry/coordinate hit-testing, or required WebKit-specific behavior remain Playwright (or another appropriate existing layer). Pure computation/unit-only contracts belong in unit/elsewhere, not Browser Mode. Viewport-only styling is case-by-case: classify eligible if only input/state and resulting computed style/DOM contract are asserted, but not eligible if actual rendered geometry/overflow/placement is measured. Distinguish project variants when the condition changes (color scheme, viewport, or engine); logical inputs remain separate as presented. Do not infer current eligibility labels: none are supplied. Choose unresolved only where this evidence is genuinely insufficient to judge the faithful boundary.",
+            "acceptanceCriteria": [
+              "Each question is one stable Plan45 logical scenario ID and has exact source assertion/action evidence and its project/viewport/color/engine/input condition.",
+              "Classify only as eligible, not_eligible, or unresolved under the fixed definition in common state.",
+              "All 123 distinct IDs are answered exactly once across deterministic batches; preserve each given project and loop/input variant.",
+              "A=123. For feasibility, M/A>0.50 is possible only if at least 62 of 123 could migrate; derive totals after all answers, counting unresolved separately and eligible upper bound as eligible+unresolved."
+            ],
+            "knownConstraints": [
+              "No application changes; no test/build execution requested.",
+              "No prior classifications are included or authoritative.",
+              "Plan42 phase1/2 remain incomplete independently; do not infer otherwise."
+            ],
+            "outputRequirement": "For each keyed scenario question, return exactly one of its three choices. Do not add free-text diagnosis. A response answer map should use the exact stable question IDs as keys."
+          },
+          "questions": {
+            "p45-b-range-change-136-e2e": {
+              "type": "choice",
+              "instructions": "Scenario p45-b-range-change-136-e2e (tests/e2e/range-change.e2e.spec.ts:136); condition: chromium; 描画範囲変更 E2E › 開始年を上げるとグラフが狭まる（実質）; runtime test.skip predicates were false; scenario passed; contract summary: Retain the full assertion contract: 描画範囲変更 E2E › 開始年を上げるとグラフが狭まる（実質）.; exact Playwright source assertion/action lines:\n136: test(\"開始年を上げるとグラフが狭まる（実質）\", async ({ page }) => {\n150: await expect(bars(page, REAL).first()).toBeVisible();\nChoose the faithful migration classification for this exact case only.",
+              "selectionMode": "single",
+              "choices": [
+                {
+                  "id": "eligible",
+                  "label": "Eligible",
+                  "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+                },
+                {
+                  "id": "not_eligible",
+                  "label": "Not eligible",
+                  "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+                },
+                {
+                  "id": "unresolved",
+                  "label": "Unresolved",
+                  "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+                }
+              ]
+            },
+            "p45-b-range-change-153-e2e": {
+              "type": "choice",
+              "instructions": "Scenario p45-b-range-change-153-e2e (tests/e2e/range-change.e2e.spec.ts:153); condition: chromium; 描画範囲変更 E2E › 終了年を下げるとグラフが狭まる（名目）; runtime test.skip predicates were false; scenario passed; contract summary: Retain the full assertion contract: 描画範囲変更 E2E › 終了年を下げるとグラフが狭まる（名目）.; exact Playwright source assertion/action lines:\n153: test(\"終了年を下げるとグラフが狭まる（名目）\", async ({ page }) => {\n167: await expect(bars(page, NOMINAL).first()).toBeVisible();\nChoose the faithful migration classification for this exact case only.",
+              "selectionMode": "single",
+              "choices": [
+                {
+                  "id": "eligible",
+                  "label": "Eligible",
+                  "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+                },
+                {
+                  "id": "not_eligible",
+                  "label": "Not eligible",
+                  "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+                },
+                {
+                  "id": "unresolved",
+                  "label": "Unresolved",
+                  "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+                }
+              ]
+            },
+            "p45-b-range-change-170-e2e": {
+              "type": "choice",
+              "instructions": "Scenario p45-b-range-change-170-e2e (tests/e2e/range-change.e2e.spec.ts:170); condition: chromium; 描画範囲変更 E2E › 終了年を下げるとグラフが狭まる（実質）; runtime test.skip predicates were false; scenario passed; contract summary: Retain the full assertion contract: 描画範囲変更 E2E › 終了年を下げるとグラフが狭まる（実質）.; exact Playwright source assertion/action lines:\n170: test(\"終了年を下げるとグラフが狭まる（実質）\", async ({ page }) => {\n184: await expect(bars(page, REAL).first()).toBeVisible();\nChoose the faithful migration classification for this exact case only.",
+              "selectionMode": "single",
+              "choices": [
+                {
+                  "id": "eligible",
+                  "label": "Eligible",
+                  "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+                },
+                {
+                  "id": "not_eligible",
+                  "label": "Not eligible",
+                  "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+                },
+                {
+                  "id": "unresolved",
+                  "label": "Unresolved",
+                  "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+                }
+              ]
+            },
+            "p45-b-range-change-187-e2e-1": {
+              "type": "choice",
+              "instructions": "Scenario p45-b-range-change-187-e2e-1 (tests/e2e/range-change.e2e.spec.ts:187); condition: chromium; 描画範囲変更 E2E › 【境界値】開始年=終了年でグラフが1年に狭まる; canonical interaction case; contract summary: Retain the full assertion contract: 描画範囲変更 E2E › 【境界値】開始年=終了年でグラフが1年に狭まる.; exact Playwright source assertion/action lines:\n187: test(\"【境界値】開始年=終了年でグラフが1年に狭まる\", async ({ page }) => {\n190: expect(await contractPeriodCount(page, NOMINAL)).toBe(4);\n191: expect(await contractPeriodCount(page, REAL)).toBe(4);\n196: expect(nominalBarCount).toBe(await contractRenderableCount(page, NOMINAL));\n197: expect(realBarCount).toBe(await contractRenderableCount(page, REAL));\nChoose the faithful migration classification for this exact case only.",
+              "selectionMode": "single",
+              "choices": [
+                {
+                  "id": "eligible",
+                  "label": "Eligible",
+                  "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+                },
+                {
+                  "id": "not_eligible",
+                  "label": "Not eligible",
+                  "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+                },
+                {
+                  "id": "unresolved",
+                  "label": "Unresolved",
+                  "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+                }
+              ]
+            },
+            "p45-b-range-change-200-e2e-2": {
+              "type": "choice",
+              "instructions": "Scenario p45-b-range-change-200-e2e-2 (tests/e2e/range-change.e2e.spec.ts:200); condition: chromium; 描画範囲変更 E2E › 【比例検証】範囲が2倍になると棒本数が増加; canonical interaction case; contract summary: Retain the full assertion contract: 描画範囲変更 E2E › 【比例検証】範囲が2倍になると棒本数が増加.; exact Playwright source assertion/action lines:\n200: test(\"【比例検証】範囲が2倍になると棒本数が増加\", async ({ page }) => {\n204: expect(periods2017Only).toBe(4);\n209: expect(periods2017to2018).toBe(8);\n212: expect(periods2017to2018).toBeGreaterThan(periods2017Only);\nChoose the faithful migration classification for this exact case only.",
+              "selectionMode": "single",
+              "choices": [
+                {
+                  "id": "eligible",
+                  "label": "Eligible",
+                  "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+                },
+                {
+                  "id": "not_eligible",
+                  "label": "Not eligible",
+                  "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+                },
+                {
+                  "id": "unresolved",
+                  "label": "Unresolved",
+                  "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+                }
+              ]
+            },
+            "p45-b-range-change-215-e2e": {
+              "type": "choice",
+              "instructions": "Scenario p45-b-range-change-215-e2e (tests/e2e/range-change.e2e.spec.ts:215); condition: chromium; 描画範囲変更 E2E › 開始年または終了年を変更するとボトムシートが自動的に閉じる; canonical interaction case; contract summary: Retain the full assertion contract: 描画範囲変更 E2E › 開始年または終了年を変更するとボトムシートが自動的に閉じる.; exact Playwright source assertion/action lines:\n215: test(\"開始年または終了年を変更するとボトムシートが自動的に閉じる\", async ({ page }) => {\n217: await expect(page.locator(\"#startYear\")).toBeVisible();\n227: await expect(page.locator(\"#startYear\")).toBeHidden();\n231: await expect(page.locator(\"#endYear\")).toBeVisible();\n239: await expect(page.locator(\"#endYear\")).toBeHidden();\nChoose the faithful migration classification for this exact case only.",
+              "selectionMode": "single",
+              "choices": [
+                {
+                  "id": "eligible",
+                  "label": "Eligible",
+                  "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+                },
+                {
+                  "id": "not_eligible",
+                  "label": "Not eligible",
+                  "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+                },
+                {
+                  "id": "unresolved",
+                  "label": "Unresolved",
+                  "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+                }
+              ]
+            },
+            "p45-b-range-change-242-e2e": {
+              "type": "choice",
+              "instructions": "Scenario p45-b-range-change-242-e2e (tests/e2e/range-change.e2e.spec.ts:242); condition: chromium; 描画範囲変更 E2E › 操作中にコンソール/ページエラーが発生しない; canonical interaction case; contract summary: Retain the full assertion contract: 描画範囲変更 E2E › 操作中にコンソール/ページエラーが発生しない.; exact Playwright source assertion/action lines:\n242: test(\"操作中にコンソール/ページエラーが発生しない\", async ({ page }) => {\n270: expect(errors).toEqual([]);\nChoose the faithful migration classification for this exact case only.",
+              "selectionMode": "single",
+              "choices": [
+                {
+                  "id": "eligible",
+                  "label": "Eligible",
+                  "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+                },
+                {
+                  "id": "not_eligible",
+                  "label": "Not eligible",
+                  "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+                },
+                {
+                  "id": "unresolved",
+                  "label": "Unresolved",
+                  "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+                }
+              ]
+            },
+            "p45-b-range-change-273-e2e": {
+              "type": "choice",
+              "instructions": "Scenario p45-b-range-change-273-e2e (tests/e2e/range-change.e2e.spec.ts:273); condition: chromium; 描画範囲変更 E2E › 年範囲変更後もスクロール位置が維持されるべき; runtime test.skip predicates were false; scenario passed; contract summary: Retain the full assertion contract: 描画範囲変更 E2E › 年範囲変更後もスクロール位置が維持されるべき.; exact Playwright source assertion/action lines:\n273: test(\"年範囲変更後もスクロール位置が維持されるべき\", async ({ page }) => {\n280: expect(before).toBeGreaterThan(50);\n300: expect(Math.abs(after - before)).toBeLessThan(50);\nChoose the faithful migration classification for this exact case only.",
+              "selectionMode": "single",
+              "choices": [
+                {
+                  "id": "eligible",
+                  "label": "Eligible",
+                  "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+                },
+                {
+                  "id": "not_eligible",
+                  "label": "Not eligible",
+                  "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+                },
+                {
+                  "id": "unresolved",
+                  "label": "Unresolved",
+                  "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+                }
+              ]
+            },
+            "p45-b-range-change-303-e2e-2005-url": {
+              "type": "choice",
+              "instructions": "Scenario p45-b-range-change-303-e2e-2005-url (tests/e2e/range-change.e2e.spec.ts:303); condition: chromium; 描画範囲変更 E2E › 最大期間ボタンで2005年から最新年に一括設定され、シートが閉じ、URLに反映される; canonical interaction case; contract summary: Retain the full assertion contract: 描画範囲変更 E2E › 最大期間ボタンで2005年から最新年に一括設定され、シートが閉じ、URLに反映される.; exact Playwright source assertion/action lines:\n303: test(\"最大期間ボタンで2005年から最新年に一括設定され、シートが閉じ、URLに反映される\", async ({\n313: await expect(maxButton).toBeVisible();\n322: expect(isOpen, \"最大期間ボタンクリック後はボトムシートが自動的に閉じるべき\").toBe(false);\n331: expect(startVal).toBe(\"2005\");\n332: expect(await endSelect.inputValue()).toBe(latestYear);\n336: expect(url).not.toContain(\"from=\");\n337: expect(url).not.toContain(\"to=\");\nChoose the faithful migration classification for this exact case only.",
+              "selectionMode": "single",
+              "choices": [
+                {
+                  "id": "eligible",
+                  "label": "Eligible",
+                  "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+                },
+                {
+                  "id": "not_eligible",
+                  "label": "Not eligible",
+                  "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+                },
+                {
+                  "id": "unresolved",
+                  "label": "Unresolved",
+                  "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+                }
+              ]
+            },
+            "p45-b-real-consumption-21-page-tsx-e2e-real-consumption-chart-with-actual-browser": {
+              "type": "choice",
+              "instructions": "Scenario p45-b-real-consumption-21-page-tsx-e2e-real-consumption-chart-with-actual-browser (tests/e2e/real-consumption.e2e.spec.ts:21); condition: chromium; page.tsx E2E: real consumption chart with actual browser › should render page and extract quarterlyRealData from Flight payload; contract summary: Retain the full assertion contract: page.tsx E2E: real consumption chart with actual browser › should render page and extract quarterlyRealData from Flight payload.; exact Playwright source assertion/action lines:\n21: test(\"should render page and extract quarterlyRealData from Flight payload\", async ({ page }) => {\n23: await page.goto(\"/\");\n46: expect(realRows.length, \"2005-2016 should have 48 quarters\").toBe(48);\n50: expect(row, `${supportKey} should be serialized on the endpoint rows`).toHaveProperty(\n53: expect(\nChoose the faithful migration classification for this exact case only.",
+              "selectionMode": "single",
+              "choices": [
+                {
+                  "id": "eligible",
+                  "label": "Eligible",
+                  "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+                },
+                {
+                  "id": "not_eligible",
+                  "label": "Not eligible",
+                  "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+                },
+                {
+                  "id": "unresolved",
+                  "label": "Unresolved",
+                  "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+                }
+              ]
+            },
+            "p45-b-real-consumption-60-page-tsx-e2e-real-consumption-chart-with-actual-browser": {
+              "type": "choice",
+              "instructions": "Scenario p45-b-real-consumption-60-page-tsx-e2e-real-consumption-chart-with-actual-browser (tests/e2e/real-consumption.e2e.spec.ts:60); condition: chromium; page.tsx E2E: real consumption chart with actual browser › should render without hydration or console errors; contract summary: Retain the full assertion contract: page.tsx E2E: real consumption chart with actual browser › should render without hydration or console errors.; exact Playwright source assertion/action lines:\n60: test(\"should render without hydration or console errors\", async ({ page }) => {\n77: await page.goto(\"/\");\n79: expect(errors, `Page should load without errors.\\nErrors:\\n${errors.join(\"\\n\")}`).toEqual([]);\nChoose the faithful migration classification for this exact case only.",
+              "selectionMode": "single",
+              "choices": [
+                {
+                  "id": "eligible",
+                  "label": "Eligible",
+                  "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+                },
+                {
+                  "id": "not_eligible",
+                  "label": "Not eligible",
+                  "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+                },
+                {
+                  "id": "unresolved",
+                  "label": "Unresolved",
+                  "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+                }
+              ]
+            },
+            "p45-b-real-consumption-82-page-tsx-e2e-real-consumption-chart-with-actual-browser": {
+              "type": "choice",
+              "instructions": "Scenario p45-b-real-consumption-82-page-tsx-e2e-real-consumption-chart-with-actual-browser (tests/e2e/real-consumption.e2e.spec.ts:82); condition: chromium; page.tsx E2E: real consumption chart with actual browser › should render UI components in real consumption chart; contract summary: Retain the full assertion contract: page.tsx E2E: real consumption chart with actual browser › should render UI components in real consumption chart.; exact Playwright source assertion/action lines:\n82: test(\"should render UI components in real consumption chart\", async ({ page }) => {\n89: * SSR の HTML には存在しない。id で特定し、expect の自動待機で解決させる。\n91: await page.goto(\"/\");\n94: await expect(realChartSection, \"Real consumption chart section should be visible\").toBeVisible({\nChoose the faithful migration classification for this exact case only.",
+              "selectionMode": "single",
+              "choices": [
+                {
+                  "id": "eligible",
+                  "label": "Eligible",
+                  "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+                },
+                {
+                  "id": "not_eligible",
+                  "label": "Not eligible",
+                  "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+                },
+                {
+                  "id": "unresolved",
+                  "label": "Unresolved",
+                  "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+                }
+              ]
+            },
+            "p45-b-real-consumption-99-page-tsx-e2e-real-consumption-chart-with-actual-browser": {
+              "type": "choice",
+              "instructions": "Scenario p45-b-real-consumption-99-page-tsx-e2e-real-consumption-chart-with-actual-browser (tests/e2e/real-consumption.e2e.spec.ts:99); condition: chromium; page.tsx E2E: real consumption chart with actual browser › should handle legend toggle and update chart visibility; contract summary: Retain the full assertion contract: page.tsx E2E: real consumption chart with actual browser › should handle legend toggle and update chart visibility.; exact Playwright source assertion/action lines:\n99: test(\"should handle legend toggle and update chart visibility\", async ({ page }) => {\n104: await page.goto(\"/\");\n111: expect(isVisible, \"Should have legend items visible\").toBe(true);\nChoose the faithful migration classification for this exact case only.",
+              "selectionMode": "single",
+              "choices": [
+                {
+                  "id": "eligible",
+                  "label": "Eligible",
+                  "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+                },
+                {
+                  "id": "not_eligible",
+                  "label": "Not eligible",
+                  "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+                },
+                {
+                  "id": "unresolved",
+                  "label": "Unresolved",
+                  "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+                }
+              ]
+            },
+            "p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser": {
+              "type": "choice",
+              "instructions": "Scenario p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser (tests/e2e/real-consumption.e2e.spec.ts:128); condition: chromium; page.tsx E2E: real consumption chart with actual browser › 実質消費凡例アコーディオン › T-E2E-A1: 初期表示で実質セクションの凡例ボタンが見えない（アコーディオンが閉じている）; contract summary: Retain the full assertion contract: page.tsx E2E: real consumption chart with actual browser › 実質消費凡例アコーディオン › T-E2E-A1: 初期表示で実質セクションの凡例ボタンが見えない（アコーディオンが閉じている）.; exact Playwright source assertion/action lines:\n128: test(\"T-E2E-A1: 初期表示で実質セクションの凡例ボタンが見えない（アコーディオンが閉じている）\", async ({\n131: await page.goto(\"/\");\n137: await expect(realSection).toBeVisible({ timeout: 15000 });\n141: await expect(summary).toBeVisible();\n149: await expect(items.nth(i)).not.toBeVisible();\n152: expect(count).toBe(0);\nChoose the faithful migration classification for this exact case only.",
+              "selectionMode": "single",
+              "choices": [
+                {
+                  "id": "eligible",
+                  "label": "Eligible",
+                  "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+                },
+                {
+                  "id": "not_eligible",
+                  "label": "Not eligible",
+                  "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+                },
+                {
+                  "id": "unresolved",
+                  "label": "Unresolved",
+                  "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+                }
+              ]
+            },
+            "p45-b-real-consumption-156-page-tsx-e2e-real-consumption-chart-with-actual-browser": {
+              "type": "choice",
+              "instructions": "Scenario p45-b-real-consumption-156-page-tsx-e2e-real-consumption-chart-with-actual-browser (tests/e2e/real-consumption.e2e.spec.ts:156); condition: chromium; page.tsx E2E: real consumption chart with actual browser › 実質消費凡例アコーディオン › T-E2E-A2: <summary> をクリックすると凡例が現れ、費目ボタンが可視になる; contract summary: Retain the full assertion contract: page.tsx E2E: real consumption chart with actual browser › 実質消費凡例アコーディオン › T-E2E-A2: <summary> をクリックすると凡例が現れ、費目ボタンが可視になる.; exact Playwright source assertion/action lines:\n156: test(\"T-E2E-A2: <summary> をクリックすると凡例が現れ、費目ボタンが可視になる\", async ({\n159: await page.goto(\"/\");\n165: await expect(realSection).toBeVisible({ timeout: 15000 });\n171: await expect(firstBtn).toBeVisible();\nChoose the faithful migration classification for this exact case only.",
+              "selectionMode": "single",
+              "choices": [
+                {
+                  "id": "eligible",
+                  "label": "Eligible",
+                  "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+                },
+                {
+                  "id": "not_eligible",
+                  "label": "Not eligible",
+                  "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+                },
+                {
+                  "id": "unresolved",
+                  "label": "Unresolved",
+                  "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+                }
+              ]
+            },
+            "p45-b-real-consumption-174-page-tsx-e2e-real-consumption-chart-with-actual-browser": {
+              "type": "choice",
+              "instructions": "Scenario p45-b-real-consumption-174-page-tsx-e2e-real-consumption-chart-with-actual-browser (tests/e2e/real-consumption.e2e.spec.ts:174); condition: chromium; page.tsx E2E: real consumption chart with actual browser › 実質消費凡例アコーディオン › T-E2E-A3: summary ヘッダーがトナルピル装飾で、矢印SVGが含まれる; contract summary: Retain the full assertion contract: page.tsx E2E: real consumption chart with actual browser › 実質消費凡例アコーディオン › T-E2E-A3: summary ヘッダーがトナルピル装飾で、矢印SVGが含まれる.; exact Playwright source assertion/action lines:\n174: test(\"T-E2E-A3: summary ヘッダーがトナルピル装飾で、矢印SVGが含まれる\", async ({ page }) => {\n175: await page.goto(\"/\");\n181: await expect(realSection).toBeVisible({ timeout: 15000 });\n184: await expect(summary).toBeVisible();\nChoose the faithful migration classification for this exact case only.",
+              "selectionMode": "single",
+              "choices": [
+                {
+                  "id": "eligible",
+                  "label": "Eligible",
+                  "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+                },
+                {
+                  "id": "not_eligible",
+                  "label": "Not eligible",
+                  "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+                },
+                {
+                  "id": "unresolved",
+                  "label": "Unresolved",
+                  "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+                }
+              ]
+            },
+            "p45-b-section-tabs-scroll-47-case01-chromium": {
+              "type": "choice",
+              "instructions": "Scenario p45-b-section-tabs-scroll-47-case01-chromium (tests/e2e/section-tabs-scroll.e2e.spec.ts:47); condition: chromium; タブバー押下時のスクロール › 「消費(名目)」タブを押すと該当セクションが表示領域に入る; Chromium project; contract summary: Retain the full assertion contract: タブバー押下時のスクロール › 「消費(名目)」タブを押すと該当セクションが表示領域に入る.; exact Playwright source assertion/action lines:\n47: test(`「${label}」タブを押すと該当セクションが表示領域に入る`, async ({ page }) => {\n57: expect(after, `「${label}」タブ押下後、ページがスクロールしているべき`).toBeGreaterThan(\n61: await expect(\n71: await page.goto(\"/\");\n86: await expect(\n97: await expect(\n113: await page.setViewportSize({ width: 375, height: 800 });\n114: await page.goto(\"/\");\n124: expect(scrollbarWidth).toBe(\"none\");\nChoose the faithful migration classification for this exact case only.",
+              "selectionMode": "single",
+              "choices": [
+                {
+                  "id": "eligible",
+                  "label": "Eligible",
+                  "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+                },
+                {
+                  "id": "not_eligible",
+                  "label": "Not eligible",
+                  "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+                },
+                {
+                  "id": "unresolved",
+                  "label": "Unresolved",
+                  "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+                }
+              ]
+            },
+            "p45-b-section-tabs-scroll-47-case02-chromium": {
+              "type": "choice",
+              "instructions": "Scenario p45-b-section-tabs-scroll-47-case02-chromium (tests/e2e/section-tabs-scroll.e2e.spec.ts:47); condition: chromium; タブバー押下時のスクロール › 「給与」タブを押すと該当セクションが表示領域に入る; Chromium project; contract summary: Retain the full assertion contract: タブバー押下時のスクロール › 「給与」タブを押すと該当セクションが表示領域に入る.; exact Playwright source assertion/action lines:\n47: test(`「${label}」タブを押すと該当セクションが表示領域に入る`, async ({ page }) => {\n57: expect(after, `「${label}」タブ押下後、ページがスクロールしているべき`).toBeGreaterThan(\n61: await expect(\n71: await page.goto(\"/\");\n86: await expect(\n97: await expect(\n113: await page.setViewportSize({ width: 375, height: 800 });\n114: await page.goto(\"/\");\n124: expect(scrollbarWidth).toBe(\"none\");\nChoose the faithful migration classification for this exact case only.",
+              "selectionMode": "single",
+              "choices": [
+                {
+                  "id": "eligible",
+                  "label": "Eligible",
+                  "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+                },
+                {
+                  "id": "not_eligible",
+                  "label": "Not eligible",
+                  "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+                },
+                {
+                  "id": "unresolved",
+                  "label": "Unresolved",
+                  "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+                }
+              ]
+            },
+            "p45-b-section-tabs-scroll-47-3-chromium": {
+              "type": "choice",
+              "instructions": "Scenario p45-b-section-tabs-scroll-47-3-chromium (tests/e2e/section-tabs-scroll.e2e.spec.ts:47); condition: chromium; タブバー押下時のスクロール › 「3種比較」タブを押すと該当セクションが表示領域に入る; Chromium project; contract summary: Retain the full assertion contract: タブバー押下時のスクロール › 「3種比較」タブを押すと該当セクションが表示領域に入る.; exact Playwright source assertion/action lines:\n47: test(`「${label}」タブを押すと該当セクションが表示領域に入る`, async ({ page }) => {\n57: expect(after, `「${label}」タブ押下後、ページがスクロールしているべき`).toBeGreaterThan(\n61: await expect(\n71: await page.goto(\"/\");\n86: await expect(\n97: await expect(\n113: await page.setViewportSize({ width: 375, height: 800 });\n114: await page.goto(\"/\");\n124: expect(scrollbarWidth).toBe(\"none\");\nChoose the faithful migration classification for this exact case only.",
+              "selectionMode": "single",
+              "choices": [
+                {
+                  "id": "eligible",
+                  "label": "Eligible",
+                  "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+                },
+                {
+                  "id": "not_eligible",
+                  "label": "Not eligible",
+                  "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+                },
+                {
+                  "id": "unresolved",
+                  "label": "Unresolved",
+                  "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+                }
+              ]
+            },
+            "p45-b-section-tabs-scroll-82-case01-chromium": {
+              "type": "choice",
+              "instructions": "Scenario p45-b-section-tabs-scroll-82-case01-chromium (tests/e2e/section-tabs-scroll.e2e.spec.ts:82); condition: chromium; タブバー押下時のスクロール(初回読み込み・未マウント状態) › 未マウント状態から「消費(名目)」タブを押しても該当セクションへ到達する; Chromium project; contract summary: Retain the full assertion contract: タブバー押下時のスクロール(初回読み込み・未マウント状態) › 未マウント状態から「消費(名目)」タブを押しても該当セクションへ到達する.; exact Playwright source assertion/action lines:\n47: test(`「${label}」タブを押すと該当セクションが表示領域に入る`, async ({ page }) => {\n57: expect(after, `「${label}」タブ押下後、ページがスクロールしているべき`).toBeGreaterThan(\n61: await expect(\n71: await page.goto(\"/\");\n86: await expect(\n97: await expect(\n113: await page.setViewportSize({ width: 375, height: 800 });\n114: await page.goto(\"/\");\n124: expect(scrollbarWidth).toBe(\"none\");\nChoose the faithful migration classification for this exact case only.",
+              "selectionMode": "single",
+              "choices": [
+                {
+                  "id": "eligible",
+                  "label": "Eligible",
+                  "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+                },
+                {
+                  "id": "not_eligible",
+                  "label": "Not eligible",
+                  "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+                },
+                {
+                  "id": "unresolved",
+                  "label": "Unresolved",
+                  "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+                }
+              ]
+            },
+            "p45-b-section-tabs-scroll-82-case02-chromium": {
+              "type": "choice",
+              "instructions": "Scenario p45-b-section-tabs-scroll-82-case02-chromium (tests/e2e/section-tabs-scroll.e2e.spec.ts:82); condition: chromium; タブバー押下時のスクロール(初回読み込み・未マウント状態) › 未マウント状態から「給与」タブを押しても該当セクションへ到達する; Chromium project; contract summary: Retain the full assertion contract: タブバー押下時のスクロール(初回読み込み・未マウント状態) › 未マウント状態から「給与」タブを押しても該当セクションへ到達する.; exact Playwright source assertion/action lines:\n47: test(`「${label}」タブを押すと該当セクションが表示領域に入る`, async ({ page }) => {\n57: expect(after, `「${label}」タブ押下後、ページがスクロールしているべき`).toBeGreaterThan(\n61: await expect(\n71: await page.goto(\"/\");\n86: await expect(\n97: await expect(\n113: await page.setViewportSize({ width: 375, height: 800 });\n114: await page.goto(\"/\");\n124: expect(scrollbarWidth).toBe(\"none\");\nChoose the faithful migration classification for this exact case only.",
+              "selectionMode": "single",
+              "choices": [
+                {
+                  "id": "eligible",
+                  "label": "Eligible",
+                  "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+                },
+                {
+                  "id": "not_eligible",
+                  "label": "Not eligible",
+                  "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+                },
+                {
+                  "id": "unresolved",
+                  "label": "Unresolved",
+                  "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "type": "missing",
+        "loc": [
+          "body",
+          "questions",
+          "p45-b-range-change-136-e2e",
+          "choice",
+          "criteria"
+        ],
+        "msg": "Field required",
+        "input": {
+          "type": "choice",
+          "instructions": "Scenario p45-b-range-change-136-e2e (tests/e2e/range-change.e2e.spec.ts:136); condition: chromium; 描画範囲変更 E2E › 開始年を上げるとグラフが狭まる（実質）; runtime test.skip predicates were false; scenario passed; contract summary: Retain the full assertion contract: 描画範囲変更 E2E › 開始年を上げるとグラフが狭まる（実質）.; exact Playwright source assertion/action lines:\n136: test(\"開始年を上げるとグラフが狭まる（実質）\", async ({ page }) => {\n150: await expect(bars(page, REAL).first()).toBeVisible();\nChoose the faithful migration classification for this exact case only.",
+          "selectionMode": "single",
+          "choices": [
+            {
+              "id": "eligible",
+              "label": "Eligible",
+              "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+            },
+            {
+              "id": "not_eligible",
+              "label": "Not eligible",
+              "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+            },
+            {
+              "id": "unresolved",
+              "label": "Unresolved",
+              "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+            }
+          ]
+        }
+      },
+      {
+        "type": "missing",
+        "loc": [
+          "body",
+          "questions",
+          "p45-b-range-change-153-e2e",
+          "choice",
+          "criteria"
+        ],
+        "msg": "Field required",
+        "input": {
+          "type": "choice",
+          "instructions": "Scenario p45-b-range-change-153-e2e (tests/e2e/range-change.e2e.spec.ts:153); condition: chromium; 描画範囲変更 E2E › 終了年を下げるとグラフが狭まる（名目）; runtime test.skip predicates were false; scenario passed; contract summary: Retain the full assertion contract: 描画範囲変更 E2E › 終了年を下げるとグラフが狭まる（名目）.; exact Playwright source assertion/action lines:\n153: test(\"終了年を下げるとグラフが狭まる（名目）\", async ({ page }) => {\n167: await expect(bars(page, NOMINAL).first()).toBeVisible();\nChoose the faithful migration classification for this exact case only.",
+          "selectionMode": "single",
+          "choices": [
+            {
+              "id": "eligible",
+              "label": "Eligible",
+              "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+            },
+            {
+              "id": "not_eligible",
+              "label": "Not eligible",
+              "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+            },
+            {
+              "id": "unresolved",
+              "label": "Unresolved",
+              "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+            }
+          ]
+        }
+      },
+      {
+        "type": "missing",
+        "loc": [
+          "body",
+          "questions",
+          "p45-b-range-change-170-e2e",
+          "choice",
+          "criteria"
+        ],
+        "msg": "Field required",
+        "input": {
+          "type": "choice",
+          "instructions": "Scenario p45-b-range-change-170-e2e (tests/e2e/range-change.e2e.spec.ts:170); condition: chromium; 描画範囲変更 E2E › 終了年を下げるとグラフが狭まる（実質）; runtime test.skip predicates were false; scenario passed; contract summary: Retain the full assertion contract: 描画範囲変更 E2E › 終了年を下げるとグラフが狭まる（実質）.; exact Playwright source assertion/action lines:\n170: test(\"終了年を下げるとグラフが狭まる（実質）\", async ({ page }) => {\n184: await expect(bars(page, REAL).first()).toBeVisible();\nChoose the faithful migration classification for this exact case only.",
+          "selectionMode": "single",
+          "choices": [
+            {
+              "id": "eligible",
+              "label": "Eligible",
+              "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+            },
+            {
+              "id": "not_eligible",
+              "label": "Not eligible",
+              "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+            },
+            {
+              "id": "unresolved",
+              "label": "Unresolved",
+              "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+            }
+          ]
+        }
+      },
+      {
+        "type": "missing",
+        "loc": [
+          "body",
+          "questions",
+          "p45-b-range-change-187-e2e-1",
+          "choice",
+          "criteria"
+        ],
+        "msg": "Field required",
+        "input": {
+          "type": "choice",
+          "instructions": "Scenario p45-b-range-change-187-e2e-1 (tests/e2e/range-change.e2e.spec.ts:187); condition: chromium; 描画範囲変更 E2E › 【境界値】開始年=終了年でグラフが1年に狭まる; canonical interaction case; contract summary: Retain the full assertion contract: 描画範囲変更 E2E › 【境界値】開始年=終了年でグラフが1年に狭まる.; exact Playwright source assertion/action lines:\n187: test(\"【境界値】開始年=終了年でグラフが1年に狭まる\", async ({ page }) => {\n190: expect(await contractPeriodCount(page, NOMINAL)).toBe(4);\n191: expect(await contractPeriodCount(page, REAL)).toBe(4);\n196: expect(nominalBarCount).toBe(await contractRenderableCount(page, NOMINAL));\n197: expect(realBarCount).toBe(await contractRenderableCount(page, REAL));\nChoose the faithful migration classification for this exact case only.",
+          "selectionMode": "single",
+          "choices": [
+            {
+              "id": "eligible",
+              "label": "Eligible",
+              "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+            },
+            {
+              "id": "not_eligible",
+              "label": "Not eligible",
+              "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+            },
+            {
+              "id": "unresolved",
+              "label": "Unresolved",
+              "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+            }
+          ]
+        }
+      },
+      {
+        "type": "missing",
+        "loc": [
+          "body",
+          "questions",
+          "p45-b-range-change-200-e2e-2",
+          "choice",
+          "criteria"
+        ],
+        "msg": "Field required",
+        "input": {
+          "type": "choice",
+          "instructions": "Scenario p45-b-range-change-200-e2e-2 (tests/e2e/range-change.e2e.spec.ts:200); condition: chromium; 描画範囲変更 E2E › 【比例検証】範囲が2倍になると棒本数が増加; canonical interaction case; contract summary: Retain the full assertion contract: 描画範囲変更 E2E › 【比例検証】範囲が2倍になると棒本数が増加.; exact Playwright source assertion/action lines:\n200: test(\"【比例検証】範囲が2倍になると棒本数が増加\", async ({ page }) => {\n204: expect(periods2017Only).toBe(4);\n209: expect(periods2017to2018).toBe(8);\n212: expect(periods2017to2018).toBeGreaterThan(periods2017Only);\nChoose the faithful migration classification for this exact case only.",
+          "selectionMode": "single",
+          "choices": [
+            {
+              "id": "eligible",
+              "label": "Eligible",
+              "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+            },
+            {
+              "id": "not_eligible",
+              "label": "Not eligible",
+              "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+            },
+            {
+              "id": "unresolved",
+              "label": "Unresolved",
+              "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+            }
+          ]
+        }
+      },
+      {
+        "type": "missing",
+        "loc": [
+          "body",
+          "questions",
+          "p45-b-range-change-215-e2e",
+          "choice",
+          "criteria"
+        ],
+        "msg": "Field required",
+        "input": {
+          "type": "choice",
+          "instructions": "Scenario p45-b-range-change-215-e2e (tests/e2e/range-change.e2e.spec.ts:215); condition: chromium; 描画範囲変更 E2E › 開始年または終了年を変更するとボトムシートが自動的に閉じる; canonical interaction case; contract summary: Retain the full assertion contract: 描画範囲変更 E2E › 開始年または終了年を変更するとボトムシートが自動的に閉じる.; exact Playwright source assertion/action lines:\n215: test(\"開始年または終了年を変更するとボトムシートが自動的に閉じる\", async ({ page }) => {\n217: await expect(page.locator(\"#startYear\")).toBeVisible();\n227: await expect(page.locator(\"#startYear\")).toBeHidden();\n231: await expect(page.locator(\"#endYear\")).toBeVisible();\n239: await expect(page.locator(\"#endYear\")).toBeHidden();\nChoose the faithful migration classification for this exact case only.",
+          "selectionMode": "single",
+          "choices": [
+            {
+              "id": "eligible",
+              "label": "Eligible",
+              "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+            },
+            {
+              "id": "not_eligible",
+              "label": "Not eligible",
+              "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+            },
+            {
+              "id": "unresolved",
+              "label": "Unresolved",
+              "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+            }
+          ]
+        }
+      },
+      {
+        "type": "missing",
+        "loc": [
+          "body",
+          "questions",
+          "p45-b-range-change-242-e2e",
+          "choice",
+          "criteria"
+        ],
+        "msg": "Field required",
+        "input": {
+          "type": "choice",
+          "instructions": "Scenario p45-b-range-change-242-e2e (tests/e2e/range-change.e2e.spec.ts:242); condition: chromium; 描画範囲変更 E2E › 操作中にコンソール/ページエラーが発生しない; canonical interaction case; contract summary: Retain the full assertion contract: 描画範囲変更 E2E › 操作中にコンソール/ページエラーが発生しない.; exact Playwright source assertion/action lines:\n242: test(\"操作中にコンソール/ページエラーが発生しない\", async ({ page }) => {\n270: expect(errors).toEqual([]);\nChoose the faithful migration classification for this exact case only.",
+          "selectionMode": "single",
+          "choices": [
+            {
+              "id": "eligible",
+              "label": "Eligible",
+              "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+            },
+            {
+              "id": "not_eligible",
+              "label": "Not eligible",
+              "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+            },
+            {
+              "id": "unresolved",
+              "label": "Unresolved",
+              "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+            }
+          ]
+        }
+      },
+      {
+        "type": "missing",
+        "loc": [
+          "body",
+          "questions",
+          "p45-b-range-change-273-e2e",
+          "choice",
+          "criteria"
+        ],
+        "msg": "Field required",
+        "input": {
+          "type": "choice",
+          "instructions": "Scenario p45-b-range-change-273-e2e (tests/e2e/range-change.e2e.spec.ts:273); condition: chromium; 描画範囲変更 E2E › 年範囲変更後もスクロール位置が維持されるべき; runtime test.skip predicates were false; scenario passed; contract summary: Retain the full assertion contract: 描画範囲変更 E2E › 年範囲変更後もスクロール位置が維持されるべき.; exact Playwright source assertion/action lines:\n273: test(\"年範囲変更後もスクロール位置が維持されるべき\", async ({ page }) => {\n280: expect(before).toBeGreaterThan(50);\n300: expect(Math.abs(after - before)).toBeLessThan(50);\nChoose the faithful migration classification for this exact case only.",
+          "selectionMode": "single",
+          "choices": [
+            {
+              "id": "eligible",
+              "label": "Eligible",
+              "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+            },
+            {
+              "id": "not_eligible",
+              "label": "Not eligible",
+              "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+            },
+            {
+              "id": "unresolved",
+              "label": "Unresolved",
+              "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+            }
+          ]
+        }
+      },
+      {
+        "type": "missing",
+        "loc": [
+          "body",
+          "questions",
+          "p45-b-range-change-303-e2e-2005-url",
+          "choice",
+          "criteria"
+        ],
+        "msg": "Field required",
+        "input": {
+          "type": "choice",
+          "instructions": "Scenario p45-b-range-change-303-e2e-2005-url (tests/e2e/range-change.e2e.spec.ts:303); condition: chromium; 描画範囲変更 E2E › 最大期間ボタンで2005年から最新年に一括設定され、シートが閉じ、URLに反映される; canonical interaction case; contract summary: Retain the full assertion contract: 描画範囲変更 E2E › 最大期間ボタンで2005年から最新年に一括設定され、シートが閉じ、URLに反映される.; exact Playwright source assertion/action lines:\n303: test(\"最大期間ボタンで2005年から最新年に一括設定され、シートが閉じ、URLに反映される\", async ({\n313: await expect(maxButton).toBeVisible();\n322: expect(isOpen, \"最大期間ボタンクリック後はボトムシートが自動的に閉じるべき\").toBe(false);\n331: expect(startVal).toBe(\"2005\");\n332: expect(await endSelect.inputValue()).toBe(latestYear);\n336: expect(url).not.toContain(\"from=\");\n337: expect(url).not.toContain(\"to=\");\nChoose the faithful migration classification for this exact case only.",
+          "selectionMode": "single",
+          "choices": [
+            {
+              "id": "eligible",
+              "label": "Eligible",
+              "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+            },
+            {
+              "id": "not_eligible",
+              "label": "Not eligible",
+              "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+            },
+            {
+              "id": "unresolved",
+              "label": "Unresolved",
+              "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+            }
+          ]
+        }
+      },
+      {
+        "type": "missing",
+        "loc": [
+          "body",
+          "questions",
+          "p45-b-real-consumption-21-page-tsx-e2e-real-consumption-chart-with-actual-browser",
+          "choice",
+          "criteria"
+        ],
+        "msg": "Field required",
+        "input": {
+          "type": "choice",
+          "instructions": "Scenario p45-b-real-consumption-21-page-tsx-e2e-real-consumption-chart-with-actual-browser (tests/e2e/real-consumption.e2e.spec.ts:21); condition: chromium; page.tsx E2E: real consumption chart with actual browser › should render page and extract quarterlyRealData from Flight payload; contract summary: Retain the full assertion contract: page.tsx E2E: real consumption chart with actual browser › should render page and extract quarterlyRealData from Flight payload.; exact Playwright source assertion/action lines:\n21: test(\"should render page and extract quarterlyRealData from Flight payload\", async ({ page }) => {\n23: await page.goto(\"/\");\n46: expect(realRows.length, \"2005-2016 should have 48 quarters\").toBe(48);\n50: expect(row, `${supportKey} should be serialized on the endpoint rows`).toHaveProperty(\n53: expect(\nChoose the faithful migration classification for this exact case only.",
+          "selectionMode": "single",
+          "choices": [
+            {
+              "id": "eligible",
+              "label": "Eligible",
+              "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+            },
+            {
+              "id": "not_eligible",
+              "label": "Not eligible",
+              "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+            },
+            {
+              "id": "unresolved",
+              "label": "Unresolved",
+              "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+            }
+          ]
+        }
+      },
+      {
+        "type": "missing",
+        "loc": [
+          "body",
+          "questions",
+          "p45-b-real-consumption-60-page-tsx-e2e-real-consumption-chart-with-actual-browser",
+          "choice",
+          "criteria"
+        ],
+        "msg": "Field required",
+        "input": {
+          "type": "choice",
+          "instructions": "Scenario p45-b-real-consumption-60-page-tsx-e2e-real-consumption-chart-with-actual-browser (tests/e2e/real-consumption.e2e.spec.ts:60); condition: chromium; page.tsx E2E: real consumption chart with actual browser › should render without hydration or console errors; contract summary: Retain the full assertion contract: page.tsx E2E: real consumption chart with actual browser › should render without hydration or console errors.; exact Playwright source assertion/action lines:\n60: test(\"should render without hydration or console errors\", async ({ page }) => {\n77: await page.goto(\"/\");\n79: expect(errors, `Page should load without errors.\\nErrors:\\n${errors.join(\"\\n\")}`).toEqual([]);\nChoose the faithful migration classification for this exact case only.",
+          "selectionMode": "single",
+          "choices": [
+            {
+              "id": "eligible",
+              "label": "Eligible",
+              "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+            },
+            {
+              "id": "not_eligible",
+              "label": "Not eligible",
+              "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+            },
+            {
+              "id": "unresolved",
+              "label": "Unresolved",
+              "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+            }
+          ]
+        }
+      },
+      {
+        "type": "missing",
+        "loc": [
+          "body",
+          "questions",
+          "p45-b-real-consumption-82-page-tsx-e2e-real-consumption-chart-with-actual-browser",
+          "choice",
+          "criteria"
+        ],
+        "msg": "Field required",
+        "input": {
+          "type": "choice",
+          "instructions": "Scenario p45-b-real-consumption-82-page-tsx-e2e-real-consumption-chart-with-actual-browser (tests/e2e/real-consumption.e2e.spec.ts:82); condition: chromium; page.tsx E2E: real consumption chart with actual browser › should render UI components in real consumption chart; contract summary: Retain the full assertion contract: page.tsx E2E: real consumption chart with actual browser › should render UI components in real consumption chart.; exact Playwright source assertion/action lines:\n82: test(\"should render UI components in real consumption chart\", async ({ page }) => {\n89: * SSR の HTML には存在しない。id で特定し、expect の自動待機で解決させる。\n91: await page.goto(\"/\");\n94: await expect(realChartSection, \"Real consumption chart section should be visible\").toBeVisible({\nChoose the faithful migration classification for this exact case only.",
+          "selectionMode": "single",
+          "choices": [
+            {
+              "id": "eligible",
+              "label": "Eligible",
+              "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+            },
+            {
+              "id": "not_eligible",
+              "label": "Not eligible",
+              "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+            },
+            {
+              "id": "unresolved",
+              "label": "Unresolved",
+              "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+            }
+          ]
+        }
+      },
+      {
+        "type": "missing",
+        "loc": [
+          "body",
+          "questions",
+          "p45-b-real-consumption-99-page-tsx-e2e-real-consumption-chart-with-actual-browser",
+          "choice",
+          "criteria"
+        ],
+        "msg": "Field required",
+        "input": {
+          "type": "choice",
+          "instructions": "Scenario p45-b-real-consumption-99-page-tsx-e2e-real-consumption-chart-with-actual-browser (tests/e2e/real-consumption.e2e.spec.ts:99); condition: chromium; page.tsx E2E: real consumption chart with actual browser › should handle legend toggle and update chart visibility; contract summary: Retain the full assertion contract: page.tsx E2E: real consumption chart with actual browser › should handle legend toggle and update chart visibility.; exact Playwright source assertion/action lines:\n99: test(\"should handle legend toggle and update chart visibility\", async ({ page }) => {\n104: await page.goto(\"/\");\n111: expect(isVisible, \"Should have legend items visible\").toBe(true);\nChoose the faithful migration classification for this exact case only.",
+          "selectionMode": "single",
+          "choices": [
+            {
+              "id": "eligible",
+              "label": "Eligible",
+              "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+            },
+            {
+              "id": "not_eligible",
+              "label": "Not eligible",
+              "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+            },
+            {
+              "id": "unresolved",
+              "label": "Unresolved",
+              "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+            }
+          ]
+        }
+      },
+      {
+        "type": "missing",
+        "loc": [
+          "body",
+          "questions",
+          "p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser",
+          "choice",
+          "criteria"
+        ],
+        "msg": "Field required",
+        "input": {
+          "type": "choice",
+          "instructions": "Scenario p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser (tests/e2e/real-consumption.e2e.spec.ts:128); condition: chromium; page.tsx E2E: real consumption chart with actual browser › 実質消費凡例アコーディオン › T-E2E-A1: 初期表示で実質セクションの凡例ボタンが見えない（アコーディオンが閉じている）; contract summary: Retain the full assertion contract: page.tsx E2E: real consumption chart with actual browser › 実質消費凡例アコーディオン › T-E2E-A1: 初期表示で実質セクションの凡例ボタンが見えない（アコーディオンが閉じている）.; exact Playwright source assertion/action lines:\n128: test(\"T-E2E-A1: 初期表示で実質セクションの凡例ボタンが見えない（アコーディオンが閉じている）\", async ({\n131: await page.goto(\"/\");\n137: await expect(realSection).toBeVisible({ timeout: 15000 });\n141: await expect(summary).toBeVisible();\n149: await expect(items.nth(i)).not.toBeVisible();\n152: expect(count).toBe(0);\nChoose the faithful migration classification for this exact case only.",
+          "selectionMode": "single",
+          "choices": [
+            {
+              "id": "eligible",
+              "label": "Eligible",
+              "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+            },
+            {
+              "id": "not_eligible",
+              "label": "Not eligible",
+              "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+            },
+            {
+              "id": "unresolved",
+              "label": "Unresolved",
+              "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+            }
+          ]
+        }
+      },
+      {
+        "type": "missing",
+        "loc": [
+          "body",
+          "questions",
+          "p45-b-real-consumption-156-page-tsx-e2e-real-consumption-chart-with-actual-browser",
+          "choice",
+          "criteria"
+        ],
+        "msg": "Field required",
+        "input": {
+          "type": "choice",
+          "instructions": "Scenario p45-b-real-consumption-156-page-tsx-e2e-real-consumption-chart-with-actual-browser (tests/e2e/real-consumption.e2e.spec.ts:156); condition: chromium; page.tsx E2E: real consumption chart with actual browser › 実質消費凡例アコーディオン › T-E2E-A2: <summary> をクリックすると凡例が現れ、費目ボタンが可視になる; contract summary: Retain the full assertion contract: page.tsx E2E: real consumption chart with actual browser › 実質消費凡例アコーディオン › T-E2E-A2: <summary> をクリックすると凡例が現れ、費目ボタンが可視になる.; exact Playwright source assertion/action lines:\n156: test(\"T-E2E-A2: <summary> をクリックすると凡例が現れ、費目ボタンが可視になる\", async ({\n159: await page.goto(\"/\");\n165: await expect(realSection).toBeVisible({ timeout: 15000 });\n171: await expect(firstBtn).toBeVisible();\nChoose the faithful migration classification for this exact case only.",
+          "selectionMode": "single",
+          "choices": [
+            {
+              "id": "eligible",
+              "label": "Eligible",
+              "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+            },
+            {
+              "id": "not_eligible",
+              "label": "Not eligible",
+              "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+            },
+            {
+              "id": "unresolved",
+              "label": "Unresolved",
+              "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+            }
+          ]
+        }
+      },
+      {
+        "type": "missing",
+        "loc": [
+          "body",
+          "questions",
+          "p45-b-real-consumption-174-page-tsx-e2e-real-consumption-chart-with-actual-browser",
+          "choice",
+          "criteria"
+        ],
+        "msg": "Field required",
+        "input": {
+          "type": "choice",
+          "instructions": "Scenario p45-b-real-consumption-174-page-tsx-e2e-real-consumption-chart-with-actual-browser (tests/e2e/real-consumption.e2e.spec.ts:174); condition: chromium; page.tsx E2E: real consumption chart with actual browser › 実質消費凡例アコーディオン › T-E2E-A3: summary ヘッダーがトナルピル装飾で、矢印SVGが含まれる; contract summary: Retain the full assertion contract: page.tsx E2E: real consumption chart with actual browser › 実質消費凡例アコーディオン › T-E2E-A3: summary ヘッダーがトナルピル装飾で、矢印SVGが含まれる.; exact Playwright source assertion/action lines:\n174: test(\"T-E2E-A3: summary ヘッダーがトナルピル装飾で、矢印SVGが含まれる\", async ({ page }) => {\n175: await page.goto(\"/\");\n181: await expect(realSection).toBeVisible({ timeout: 15000 });\n184: await expect(summary).toBeVisible();\nChoose the faithful migration classification for this exact case only.",
+          "selectionMode": "single",
+          "choices": [
+            {
+              "id": "eligible",
+              "label": "Eligible",
+              "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+            },
+            {
+              "id": "not_eligible",
+              "label": "Not eligible",
+              "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+            },
+            {
+              "id": "unresolved",
+              "label": "Unresolved",
+              "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+            }
+          ]
+        }
+      },
+      {
+        "type": "missing",
+        "loc": [
+          "body",
+          "questions",
+          "p45-b-section-tabs-scroll-47-case01-chromium",
+          "choice",
+          "criteria"
+        ],
+        "msg": "Field required",
+        "input": {
+          "type": "choice",
+          "instructions": "Scenario p45-b-section-tabs-scroll-47-case01-chromium (tests/e2e/section-tabs-scroll.e2e.spec.ts:47); condition: chromium; タブバー押下時のスクロール › 「消費(名目)」タブを押すと該当セクションが表示領域に入る; Chromium project; contract summary: Retain the full assertion contract: タブバー押下時のスクロール › 「消費(名目)」タブを押すと該当セクションが表示領域に入る.; exact Playwright source assertion/action lines:\n47: test(`「${label}」タブを押すと該当セクションが表示領域に入る`, async ({ page }) => {\n57: expect(after, `「${label}」タブ押下後、ページがスクロールしているべき`).toBeGreaterThan(\n61: await expect(\n71: await page.goto(\"/\");\n86: await expect(\n97: await expect(\n113: await page.setViewportSize({ width: 375, height: 800 });\n114: await page.goto(\"/\");\n124: expect(scrollbarWidth).toBe(\"none\");\nChoose the faithful migration classification for this exact case only.",
+          "selectionMode": "single",
+          "choices": [
+            {
+              "id": "eligible",
+              "label": "Eligible",
+              "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+            },
+            {
+              "id": "not_eligible",
+              "label": "Not eligible",
+              "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+            },
+            {
+              "id": "unresolved",
+              "label": "Unresolved",
+              "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+            }
+          ]
+        }
+      },
+      {
+        "type": "missing",
+        "loc": [
+          "body",
+          "questions",
+          "p45-b-section-tabs-scroll-47-case02-chromium",
+          "choice",
+          "criteria"
+        ],
+        "msg": "Field required",
+        "input": {
+          "type": "choice",
+          "instructions": "Scenario p45-b-section-tabs-scroll-47-case02-chromium (tests/e2e/section-tabs-scroll.e2e.spec.ts:47); condition: chromium; タブバー押下時のスクロール › 「給与」タブを押すと該当セクションが表示領域に入る; Chromium project; contract summary: Retain the full assertion contract: タブバー押下時のスクロール › 「給与」タブを押すと該当セクションが表示領域に入る.; exact Playwright source assertion/action lines:\n47: test(`「${label}」タブを押すと該当セクションが表示領域に入る`, async ({ page }) => {\n57: expect(after, `「${label}」タブ押下後、ページがスクロールしているべき`).toBeGreaterThan(\n61: await expect(\n71: await page.goto(\"/\");\n86: await expect(\n97: await expect(\n113: await page.setViewportSize({ width: 375, height: 800 });\n114: await page.goto(\"/\");\n124: expect(scrollbarWidth).toBe(\"none\");\nChoose the faithful migration classification for this exact case only.",
+          "selectionMode": "single",
+          "choices": [
+            {
+              "id": "eligible",
+              "label": "Eligible",
+              "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+            },
+            {
+              "id": "not_eligible",
+              "label": "Not eligible",
+              "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+            },
+            {
+              "id": "unresolved",
+              "label": "Unresolved",
+              "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+            }
+          ]
+        }
+      },
+      {
+        "type": "missing",
+        "loc": [
+          "body",
+          "questions",
+          "p45-b-section-tabs-scroll-47-3-chromium",
+          "choice",
+          "criteria"
+        ],
+        "msg": "Field required",
+        "input": {
+          "type": "choice",
+          "instructions": "Scenario p45-b-section-tabs-scroll-47-3-chromium (tests/e2e/section-tabs-scroll.e2e.spec.ts:47); condition: chromium; タブバー押下時のスクロール › 「3種比較」タブを押すと該当セクションが表示領域に入る; Chromium project; contract summary: Retain the full assertion contract: タブバー押下時のスクロール › 「3種比較」タブを押すと該当セクションが表示領域に入る.; exact Playwright source assertion/action lines:\n47: test(`「${label}」タブを押すと該当セクションが表示領域に入る`, async ({ page }) => {\n57: expect(after, `「${label}」タブ押下後、ページがスクロールしているべき`).toBeGreaterThan(\n61: await expect(\n71: await page.goto(\"/\");\n86: await expect(\n97: await expect(\n113: await page.setViewportSize({ width: 375, height: 800 });\n114: await page.goto(\"/\");\n124: expect(scrollbarWidth).toBe(\"none\");\nChoose the faithful migration classification for this exact case only.",
+          "selectionMode": "single",
+          "choices": [
+            {
+              "id": "eligible",
+              "label": "Eligible",
+              "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+            },
+            {
+              "id": "not_eligible",
+              "label": "Not eligible",
+              "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+            },
+            {
+              "id": "unresolved",
+              "label": "Unresolved",
+              "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+            }
+          ]
+        }
+      },
+      {
+        "type": "missing",
+        "loc": [
+          "body",
+          "questions",
+          "p45-b-section-tabs-scroll-82-case01-chromium",
+          "choice",
+          "criteria"
+        ],
+        "msg": "Field required",
+        "input": {
+          "type": "choice",
+          "instructions": "Scenario p45-b-section-tabs-scroll-82-case01-chromium (tests/e2e/section-tabs-scroll.e2e.spec.ts:82); condition: chromium; タブバー押下時のスクロール(初回読み込み・未マウント状態) › 未マウント状態から「消費(名目)」タブを押しても該当セクションへ到達する; Chromium project; contract summary: Retain the full assertion contract: タブバー押下時のスクロール(初回読み込み・未マウント状態) › 未マウント状態から「消費(名目)」タブを押しても該当セクションへ到達する.; exact Playwright source assertion/action lines:\n47: test(`「${label}」タブを押すと該当セクションが表示領域に入る`, async ({ page }) => {\n57: expect(after, `「${label}」タブ押下後、ページがスクロールしているべき`).toBeGreaterThan(\n61: await expect(\n71: await page.goto(\"/\");\n86: await expect(\n97: await expect(\n113: await page.setViewportSize({ width: 375, height: 800 });\n114: await page.goto(\"/\");\n124: expect(scrollbarWidth).toBe(\"none\");\nChoose the faithful migration classification for this exact case only.",
+          "selectionMode": "single",
+          "choices": [
+            {
+              "id": "eligible",
+              "label": "Eligible",
+              "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+            },
+            {
+              "id": "not_eligible",
+              "label": "Not eligible",
+              "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+            },
+            {
+              "id": "unresolved",
+              "label": "Unresolved",
+              "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+            }
+          ]
+        }
+      },
+      {
+        "type": "missing",
+        "loc": [
+          "body",
+          "questions",
+          "p45-b-section-tabs-scroll-82-case02-chromium",
+          "choice",
+          "criteria"
+        ],
+        "msg": "Field required",
+        "input": {
+          "type": "choice",
+          "instructions": "Scenario p45-b-section-tabs-scroll-82-case02-chromium (tests/e2e/section-tabs-scroll.e2e.spec.ts:82); condition: chromium; タブバー押下時のスクロール(初回読み込み・未マウント状態) › 未マウント状態から「給与」タブを押しても該当セクションへ到達する; Chromium project; contract summary: Retain the full assertion contract: タブバー押下時のスクロール(初回読み込み・未マウント状態) › 未マウント状態から「給与」タブを押しても該当セクションへ到達する.; exact Playwright source assertion/action lines:\n47: test(`「${label}」タブを押すと該当セクションが表示領域に入る`, async ({ page }) => {\n57: expect(after, `「${label}」タブ押下後、ページがスクロールしているべき`).toBeGreaterThan(\n61: await expect(\n71: await page.goto(\"/\");\n86: await expect(\n97: await expect(\n113: await page.setViewportSize({ width: 375, height: 800 });\n114: await page.goto(\"/\");\n124: expect(scrollbarWidth).toBe(\"none\");\nChoose the faithful migration classification for this exact case only.",
+          "selectionMode": "single",
+          "choices": [
+            {
+              "id": "eligible",
+              "label": "Eligible",
+              "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+            },
+            {
+              "id": "not_eligible",
+              "label": "Not eligible",
+              "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+            },
+            {
+              "id": "unresolved",
+              "label": "Unresolved",
+              "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

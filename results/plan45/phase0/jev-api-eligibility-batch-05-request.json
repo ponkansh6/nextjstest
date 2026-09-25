@@ -1,0 +1,482 @@
+{
+  "state": {
+    "evaluationScope": "Plan45 migration eligibility audit",
+    "background": "Independently judge the supplied logical scenarios for faithful replacement by Vitest Browser Mode, using the exact contract and source assertions per question. Plan45's fixed denominator A is every active logical E2E scenario; retain ineligible rows in A. E counts only faithful Browser Mode replacements without requiring the Next production integration boundary. Browser Mode DOM mounting can test component DOM, keyboard/focus behavior, and simple style or viewport-input behavior when assertions can be preserved. Actual component DOM/keyboard/focus and simple style/viewport-input cases may qualify. Cases whose required failure boundary is Next production build/start/route, Flight/hydration, production URL routing, production download, actual layout placement/overflow/scroll/SVG/chart geometry/coordinate hit-testing, or required WebKit-specific behavior remain Playwright (or another appropriate existing layer). Pure computation/unit-only contracts belong in unit/elsewhere, not Browser Mode. Viewport-only styling is case-by-case: classify eligible if only input/state and resulting computed style/DOM contract are asserted, but not eligible if actual rendered geometry/overflow/placement is measured. Distinguish project variants when the condition changes (color scheme, viewport, or engine); logical inputs remain separate as presented. Do not infer current eligibility labels: none are supplied. Choose unresolved only where this evidence is genuinely insufficient to judge the faithful boundary.",
+    "acceptanceCriteria": [
+      "Each question is one stable Plan45 logical scenario ID and has exact source assertion/action evidence and its project/viewport/color/engine/input condition.",
+      "Classify only as eligible, not_eligible, or unresolved under the fixed definition in common state.",
+      "All 123 distinct IDs are answered exactly once across deterministic batches; preserve each given project and loop/input variant.",
+      "A=123. For feasibility, M/A>0.50 is possible only if at least 62 of 123 could migrate; derive totals after all answers, counting unresolved separately and eligible upper bound as eligible+unresolved."
+    ],
+    "knownConstraints": [
+      "No application changes; no test/build execution requested.",
+      "No prior classifications are included or authoritative.",
+      "Plan42 phase1/2 remain incomplete independently; do not infer otherwise."
+    ],
+    "outputRequirement": "For each keyed scenario question, return exactly one of its three choices. Do not add free-text diagnosis. A response answer map should use the exact stable question IDs as keys."
+  },
+  "questions": {
+    "p45-b-consumption-mobile-readability-191-430px-tooltip-6-viewport": {
+      "type": "choice",
+      "instructions": "Scenario p45-b-consumption-mobile-readability-191-430px-tooltip-6-viewport (tests/e2e/consumption-mobile-readability.e2e.spec.ts:191); condition: mobile-pixel; 消費支出グラフ モバイル可読性の証跡 › 430px: 給与tooltipの6系列行＋合計・値列がviewport内; mobile-pixel viewport/input is an independent loop contract; contract summary: Retain the full assertion contract: 消費支出グラフ モバイル可読性の証跡 › 430px: 給与tooltipの6系列行＋合計・値列がviewport内.; exact Playwright source assertion/action lines:\n191: test(`${width}px: 給与tooltipの6系列行＋合計・値列がviewport内`, async ({ page }) => {\n192: await page.setViewportSize({ width, height: 667 });\n193: await page.goto(\"/\");\n197: await expect(section).toBeVisible({ timeout: 15000 });\n200: await expect(chart).toBeVisible();\n202: expect(box).not.toBeNull();\n206: await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);\n209: await expect(tooltip).toBeVisible({ timeout: 5000 });\n256: expect(evidence.labels.map((row) => row.label)).toEqual([...earningsTooltipLabels]);\nChoose the faithful migration classification for this exact case only.",
+      "selectionMode": "single",
+      "choices": [
+        {
+          "id": "eligible",
+          "label": "Eligible",
+          "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+        },
+        {
+          "id": "not_eligible",
+          "label": "Not eligible",
+          "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+        },
+        {
+          "id": "unresolved",
+          "label": "Unresolved",
+          "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+        }
+      ]
+    },
+    "p45-b-consumption-mobile-readability-297-375x667-tooltip": {
+      "type": "choice",
+      "instructions": "Scenario p45-b-consumption-mobile-readability-297-375x667-tooltip (tests/e2e/consumption-mobile-readability.e2e.spec.ts:297); condition: mobile-pixel; 消費支出グラフ モバイル可読性の証跡 › 375x667: 名目・実質tooltipが全費目を内部スクロール表示し、閉じる操作が機能する; mobile-pixel viewport/input is an independent loop contract; contract summary: Retain the full assertion contract: 消費支出グラフ モバイル可読性の証跡 › 375x667: 名目・実質tooltipが全費目を内部スクロール表示し、閉じる操作が機能する.; exact Playwright source assertion/action lines:\n297: test(`${viewport.name}: 名目・実質tooltipが全費目を内部スクロール表示し、閉じる操作が機能する`, async ({\n300: await page.setViewportSize(viewport);\n301: await page.goto(\"/\");\n306: await expect(root).toBeVisible({ timeout: 15000 });\n309: await expect(tooltip).toBeVisible({ timeout: 5000 });\n314: expect(payloadKeys, `${id}: tooltip renders every expected category row`).toHaveLength(\n317: expect(\n320: ).toEqual([...expectedKeys].sort());\n333: expect(detail.overflowY).toBe(\"auto\");\nChoose the faithful migration classification for this exact case only.",
+      "selectionMode": "single",
+      "choices": [
+        {
+          "id": "eligible",
+          "label": "Eligible",
+          "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+        },
+        {
+          "id": "not_eligible",
+          "label": "Not eligible",
+          "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+        },
+        {
+          "id": "unresolved",
+          "label": "Unresolved",
+          "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+        }
+      ]
+    },
+    "p45-b-consumption-mobile-readability-297-320x480-tooltip": {
+      "type": "choice",
+      "instructions": "Scenario p45-b-consumption-mobile-readability-297-320x480-tooltip (tests/e2e/consumption-mobile-readability.e2e.spec.ts:297); condition: mobile-pixel; 消費支出グラフ モバイル可読性の証跡 › 320x480: 名目・実質tooltipが全費目を内部スクロール表示し、閉じる操作が機能する; mobile-pixel viewport/input is an independent loop contract; contract summary: Retain the full assertion contract: 消費支出グラフ モバイル可読性の証跡 › 320x480: 名目・実質tooltipが全費目を内部スクロール表示し、閉じる操作が機能する.; exact Playwright source assertion/action lines:\n297: test(`${viewport.name}: 名目・実質tooltipが全費目を内部スクロール表示し、閉じる操作が機能する`, async ({\n300: await page.setViewportSize(viewport);\n301: await page.goto(\"/\");\n306: await expect(root).toBeVisible({ timeout: 15000 });\n309: await expect(tooltip).toBeVisible({ timeout: 5000 });\n314: expect(payloadKeys, `${id}: tooltip renders every expected category row`).toHaveLength(\n317: expect(\n320: ).toEqual([...expectedKeys].sort());\n333: expect(detail.overflowY).toBe(\"auto\");\nChoose the faithful migration classification for this exact case only.",
+      "selectionMode": "single",
+      "choices": [
+        {
+          "id": "eligible",
+          "label": "Eligible",
+          "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+        },
+        {
+          "id": "not_eligible",
+          "label": "Not eligible",
+          "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+        },
+        {
+          "id": "unresolved",
+          "label": "Unresolved",
+          "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+        }
+      ]
+    },
+    "p45-b-consumption-mobile-readability-297-landscape-tooltip": {
+      "type": "choice",
+      "instructions": "Scenario p45-b-consumption-mobile-readability-297-landscape-tooltip (tests/e2e/consumption-mobile-readability.e2e.spec.ts:297); condition: mobile-pixel; 消費支出グラフ モバイル可読性の証跡 › landscape: 名目・実質tooltipが全費目を内部スクロール表示し、閉じる操作が機能する; mobile-pixel viewport/input is an independent loop contract; contract summary: Retain the full assertion contract: 消費支出グラフ モバイル可読性の証跡 › landscape: 名目・実質tooltipが全費目を内部スクロール表示し、閉じる操作が機能する.; exact Playwright source assertion/action lines:\n297: test(`${viewport.name}: 名目・実質tooltipが全費目を内部スクロール表示し、閉じる操作が機能する`, async ({\n300: await page.setViewportSize(viewport);\n301: await page.goto(\"/\");\n306: await expect(root).toBeVisible({ timeout: 15000 });\n309: await expect(tooltip).toBeVisible({ timeout: 5000 });\n314: expect(payloadKeys, `${id}: tooltip renders every expected category row`).toHaveLength(\n317: expect(\n320: ).toEqual([...expectedKeys].sort());\n333: expect(detail.overflowY).toBe(\"auto\");\nChoose the faithful migration classification for this exact case only.",
+      "selectionMode": "single",
+      "choices": [
+        {
+          "id": "eligible",
+          "label": "Eligible",
+          "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+        },
+        {
+          "id": "not_eligible",
+          "label": "Not eligible",
+          "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+        },
+        {
+          "id": "unresolved",
+          "label": "Unresolved",
+          "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+        }
+      ]
+    },
+    "p45-b-mobile-ux-19-ux": {
+      "type": "choice",
+      "instructions": "Scenario p45-b-mobile-ux-19-ux (tests/e2e/mobile-ux.e2e.spec.ts:19); condition: mobile-pixel; モバイル UX ルール › 表示中のボタンはすべて基準のタップターゲット以上; contract summary: Retain the full assertion contract: モバイル UX ルール › 表示中のボタンはすべて基準のタップターゲット以上.; exact Playwright source assertion/action lines:\n19: test(\"表示中のボタンはすべて基準のタップターゲット以上\", async ({ page }) => {\n20: await page.goto(\"/\");\n24: expect(buttons.length, \"検証対象のボタンが取得できていること\").toBeGreaterThan(0);\n44: expect(tooSmall, `基準未満のタップターゲット:\\n${tooSmall.join(\"\\n\")}`).toEqual([]);\nChoose the faithful migration classification for this exact case only.",
+      "selectionMode": "single",
+      "choices": [
+        {
+          "id": "eligible",
+          "label": "Eligible",
+          "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+        },
+        {
+          "id": "not_eligible",
+          "label": "Not eligible",
+          "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+        },
+        {
+          "id": "unresolved",
+          "label": "Unresolved",
+          "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+        }
+      ]
+    },
+    "p45-b-mobile-ux-47-ux-375px": {
+      "type": "choice",
+      "instructions": "Scenario p45-b-mobile-ux-47-ux-375px (tests/e2e/mobile-ux.e2e.spec.ts:47); condition: mobile-pixel; モバイル UX ルール › 375px 幅で横方向にはみ出さない; contract summary: Retain the full assertion contract: モバイル UX ルール › 375px 幅で横方向にはみ出さない.; exact Playwright source assertion/action lines:\n47: test(\"375px 幅で横方向にはみ出さない\", async ({ page }) => {\n48: await page.setViewportSize({ width: 375, height: 667 });\n49: await page.goto(\"/\");\n58: expect(\nChoose the faithful migration classification for this exact case only.",
+      "selectionMode": "single",
+      "choices": [
+        {
+          "id": "eligible",
+          "label": "Eligible",
+          "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+        },
+        {
+          "id": "not_eligible",
+          "label": "Not eligible",
+          "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+        },
+        {
+          "id": "unresolved",
+          "label": "Unresolved",
+          "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+        }
+      ]
+    },
+    "p45-b-mobile-ux-65-ux-320px-overflow": {
+      "type": "choice",
+      "instructions": "Scenario p45-b-mobile-ux-65-ux-320px-overflow (tests/e2e/mobile-ux.e2e.spec.ts:65); condition: mobile-pixel; モバイル UX ルール › 320px 幅でページに横 overflow がない; contract summary: Retain the full assertion contract: モバイル UX ルール › 320px 幅でページに横 overflow がない.; exact Playwright source assertion/action lines:\n65: test(`${width}px 幅でページに横 overflow がない`, async ({ page }) => {\n66: await page.setViewportSize({ width, height: 667 });\n67: await page.goto(\"/\");\n73: expect(overflow.scrollWidth, `${width}px 幅で横 overflow`).toBeLessThanOrEqual(\nChoose the faithful migration classification for this exact case only.",
+      "selectionMode": "single",
+      "choices": [
+        {
+          "id": "eligible",
+          "label": "Eligible",
+          "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+        },
+        {
+          "id": "not_eligible",
+          "label": "Not eligible",
+          "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+        },
+        {
+          "id": "unresolved",
+          "label": "Unresolved",
+          "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+        }
+      ]
+    },
+    "p45-b-mobile-ux-65-ux-375px-overflow": {
+      "type": "choice",
+      "instructions": "Scenario p45-b-mobile-ux-65-ux-375px-overflow (tests/e2e/mobile-ux.e2e.spec.ts:65); condition: mobile-pixel; モバイル UX ルール › 375px 幅でページに横 overflow がない; contract summary: Retain the full assertion contract: モバイル UX ルール › 375px 幅でページに横 overflow がない.; exact Playwright source assertion/action lines:\n65: test(`${width}px 幅でページに横 overflow がない`, async ({ page }) => {\n66: await page.setViewportSize({ width, height: 667 });\n67: await page.goto(\"/\");\n73: expect(overflow.scrollWidth, `${width}px 幅で横 overflow`).toBeLessThanOrEqual(\nChoose the faithful migration classification for this exact case only.",
+      "selectionMode": "single",
+      "choices": [
+        {
+          "id": "eligible",
+          "label": "Eligible",
+          "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+        },
+        {
+          "id": "not_eligible",
+          "label": "Not eligible",
+          "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+        },
+        {
+          "id": "unresolved",
+          "label": "Unresolved",
+          "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+        }
+      ]
+    },
+    "p45-b-mobile-ux-65-ux-390px-overflow": {
+      "type": "choice",
+      "instructions": "Scenario p45-b-mobile-ux-65-ux-390px-overflow (tests/e2e/mobile-ux.e2e.spec.ts:65); condition: mobile-pixel; モバイル UX ルール › 390px 幅でページに横 overflow がない; contract summary: Retain the full assertion contract: モバイル UX ルール › 390px 幅でページに横 overflow がない.; exact Playwright source assertion/action lines:\n65: test(`${width}px 幅でページに横 overflow がない`, async ({ page }) => {\n66: await page.setViewportSize({ width, height: 667 });\n67: await page.goto(\"/\");\n73: expect(overflow.scrollWidth, `${width}px 幅で横 overflow`).toBeLessThanOrEqual(\nChoose the faithful migration classification for this exact case only.",
+      "selectionMode": "single",
+      "choices": [
+        {
+          "id": "eligible",
+          "label": "Eligible",
+          "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+        },
+        {
+          "id": "not_eligible",
+          "label": "Not eligible",
+          "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+        },
+        {
+          "id": "unresolved",
+          "label": "Unresolved",
+          "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+        }
+      ]
+    },
+    "p45-b-mobile-ux-65-ux-430px-overflow": {
+      "type": "choice",
+      "instructions": "Scenario p45-b-mobile-ux-65-ux-430px-overflow (tests/e2e/mobile-ux.e2e.spec.ts:65); condition: mobile-pixel; モバイル UX ルール › 430px 幅でページに横 overflow がない; contract summary: Retain the full assertion contract: モバイル UX ルール › 430px 幅でページに横 overflow がない.; exact Playwright source assertion/action lines:\n65: test(`${width}px 幅でページに横 overflow がない`, async ({ page }) => {\n66: await page.setViewportSize({ width, height: 667 });\n67: await page.goto(\"/\");\n73: expect(overflow.scrollWidth, `${width}px 幅で横 overflow`).toBeLessThanOrEqual(\nChoose the faithful migration classification for this exact case only.",
+      "selectionMode": "single",
+      "choices": [
+        {
+          "id": "eligible",
+          "label": "Eligible",
+          "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+        },
+        {
+          "id": "not_eligible",
+          "label": "Not eligible",
+          "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+        },
+        {
+          "id": "unresolved",
+          "label": "Unresolved",
+          "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+        }
+      ]
+    },
+    "p45-b-mobile-ux-79-ux-375px-select": {
+      "type": "choice",
+      "instructions": "Scenario p45-b-mobile-ux-79-ux-375px-select (tests/e2e/mobile-ux.e2e.spec.ts:79); condition: mobile-pixel; モバイル UX ルール › モバイル幅（375px）でも最大期間ボタンが終了年 select の右側に配置されること; contract summary: Retain the full assertion contract: モバイル UX ルール › モバイル幅（375px）でも最大期間ボタンが終了年 select の右側に配置されること.; exact Playwright source assertion/action lines:\n79: test(\"モバイル幅（375px）でも最大期間ボタンが終了年 select の右側に配置されること\", async ({\n82: await page.setViewportSize({ width: 375, height: 667 });\n83: await page.goto(\"/\");\n91: await expect(endYearSelect).toBeVisible();\n92: await expect(maxButton).toBeVisible();\n97: expect(selectBox, \"endYear select boundingBox\").not.toBeNull();\n98: expect(buttonBox, \"maxButton boundingBox\").not.toBeNull();\n102: expect(buttonBox.x).toBeGreaterThanOrEqual(selectBox.x + selectBox.width - 1); // 1px 許容\n106: expect(verticalDiff).toBeLessThan(maxAllowedVerticalDiff);\nChoose the faithful migration classification for this exact case only.",
+      "selectionMode": "single",
+      "choices": [
+        {
+          "id": "eligible",
+          "label": "Eligible",
+          "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+        },
+        {
+          "id": "not_eligible",
+          "label": "Not eligible",
+          "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+        },
+        {
+          "id": "unresolved",
+          "label": "Unresolved",
+          "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+        }
+      ]
+    },
+    "p45-b-mobile-ux-112-ux-375px-select": {
+      "type": "choice",
+      "instructions": "Scenario p45-b-mobile-ux-112-ux-375px-select (tests/e2e/mobile-ux.e2e.spec.ts:112); condition: mobile-pixel; モバイル UX ルール › モバイル幅（375px）で開始年と終了年の select 幅がほぼ一致すること; contract summary: Retain the full assertion contract: モバイル UX ルール › モバイル幅（375px）で開始年と終了年の select 幅がほぼ一致すること.; exact Playwright source assertion/action lines:\n112: test(\"モバイル幅（375px）で開始年と終了年の select 幅がほぼ一致すること\", async ({ page }) => {\n113: await page.setViewportSize({ width: 375, height: 667 });\n114: await page.goto(\"/\");\n122: await expect(startYearSelect).toBeVisible();\n123: await expect(endYearSelect).toBeVisible();\n128: expect(startBox, \"startYear boundingBox\").not.toBeNull();\n129: expect(endBox, \"endYear boundingBox\").not.toBeNull();\n136: expect(Math.abs(startBox.width - endBox.width)).toBeLessThanOrEqual(4);\nChoose the faithful migration classification for this exact case only.",
+      "selectionMode": "single",
+      "choices": [
+        {
+          "id": "eligible",
+          "label": "Eligible",
+          "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+        },
+        {
+          "id": "not_eligible",
+          "label": "Not eligible",
+          "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+        },
+        {
+          "id": "unresolved",
+          "label": "Unresolved",
+          "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+        }
+      ]
+    },
+    "p45-b-mobile-ux-140-ux-375px-3": {
+      "type": "choice",
+      "instructions": "Scenario p45-b-mobile-ux-140-ux-375px-3 (tests/e2e/mobile-ux.e2e.spec.ts:140); condition: mobile-pixel; モバイル UX ルール › モバイル幅（375px）で開始年・終了年・最大期間の3要素すべてが同一行（横並び）に配置されること; contract summary: Retain the full assertion contract: モバイル UX ルール › モバイル幅（375px）で開始年・終了年・最大期間の3要素すべてが同一行（横並び）に配置されること.; exact Playwright source assertion/action lines:\n140: test(\"モバイル幅（375px）で開始年・終了年・最大期間の3要素すべてが同一行（横並び）に配置されること\", async ({\n143: await page.setViewportSize({ width: 375, height: 667 });\n144: await page.goto(\"/\");\n153: await expect(startYearSelect).toBeVisible();\n154: await expect(endYearSelect).toBeVisible();\n155: await expect(maxButton).toBeVisible();\n161: expect(startBox, \"startYear boundingBox\").not.toBeNull();\n162: expect(endBox, \"endYear boundingBox\").not.toBeNull();\n163: expect(buttonBox, \"maxButton boundingBox\").not.toBeNull();\nChoose the faithful migration classification for this exact case only.",
+      "selectionMode": "single",
+      "choices": [
+        {
+          "id": "eligible",
+          "label": "Eligible",
+          "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+        },
+        {
+          "id": "not_eligible",
+          "label": "Not eligible",
+          "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+        },
+        {
+          "id": "unresolved",
+          "label": "Unresolved",
+          "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+        }
+      ]
+    },
+    "p45-b-mobile-ux-192-lazymount-p5-1": {
+      "type": "choice",
+      "instructions": "Scenario p45-b-mobile-ux-192-lazymount-p5-1 (tests/e2e/mobile-ux.e2e.spec.ts:192); condition: mobile-pixel; LazyMount 遅延マウント (P5-1) › 初期表示では下部のチャートがマウントされていない; contract summary: Retain the full assertion contract: LazyMount 遅延マウント (P5-1) › 初期表示では下部のチャートがマウントされていない.; exact Playwright source assertion/action lines:\n140: test(\"モバイル幅（375px）で開始年・終了年・最大期間の3要素すべてが同一行（横並び）に配置されること\", async ({\n143: await page.setViewportSize({ width: 375, height: 667 });\n144: await page.goto(\"/\");\n153: await expect(startYearSelect).toBeVisible();\n154: await expect(endYearSelect).toBeVisible();\n155: await expect(maxButton).toBeVisible();\n161: expect(startBox, \"startYear boundingBox\").not.toBeNull();\n162: expect(endBox, \"endYear boundingBox\").not.toBeNull();\n163: expect(buttonBox, \"maxButton boundingBox\").not.toBeNull();\nChoose the faithful migration classification for this exact case only.",
+      "selectionMode": "single",
+      "choices": [
+        {
+          "id": "eligible",
+          "label": "Eligible",
+          "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+        },
+        {
+          "id": "not_eligible",
+          "label": "Not eligible",
+          "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+        },
+        {
+          "id": "unresolved",
+          "label": "Unresolved",
+          "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+        }
+      ]
+    },
+    "p45-b-mobile-ux-201-lazymount-p5-1": {
+      "type": "choice",
+      "instructions": "Scenario p45-b-mobile-ux-201-lazymount-p5-1 (tests/e2e/mobile-ux.e2e.spec.ts:201); condition: mobile-pixel; LazyMount 遅延マウント (P5-1) › スクロールするとチャートがマウントされる; contract summary: Retain the full assertion contract: LazyMount 遅延マウント (P5-1) › スクロールするとチャートがマウントされる.; exact Playwright source assertion/action lines:\n140: test(\"モバイル幅（375px）で開始年・終了年・最大期間の3要素すべてが同一行（横並び）に配置されること\", async ({\n143: await page.setViewportSize({ width: 375, height: 667 });\n144: await page.goto(\"/\");\n153: await expect(startYearSelect).toBeVisible();\n154: await expect(endYearSelect).toBeVisible();\n155: await expect(maxButton).toBeVisible();\n161: expect(startBox, \"startYear boundingBox\").not.toBeNull();\n162: expect(endBox, \"endYear boundingBox\").not.toBeNull();\n163: expect(buttonBox, \"maxButton boundingBox\").not.toBeNull();\nChoose the faithful migration classification for this exact case only.",
+      "selectionMode": "single",
+      "choices": [
+        {
+          "id": "eligible",
+          "label": "Eligible",
+          "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+        },
+        {
+          "id": "not_eligible",
+          "label": "Not eligible",
+          "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+        },
+        {
+          "id": "unresolved",
+          "label": "Unresolved",
+          "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+        }
+      ]
+    },
+    "p45-b-mobile-ux-243-sectiontabs-sticky-android-chrome": {
+      "type": "choice",
+      "instructions": "Scenario p45-b-mobile-ux-243-sectiontabs-sticky-android-chrome (tests/e2e/mobile-ux.e2e.spec.ts:243); condition: mobile-pixel; タブバー(SectionTabs)の sticky ちらつき対策 › タブバーが独立した合成レイヤーに昇格している(Android Chrome のアドレスバー競合対策); contract summary: Retain the full assertion contract: タブバー(SectionTabs)の sticky ちらつき対策 › タブバーが独立した合成レイヤーに昇格している(Android Chrome のアドレスバー競合対策).; exact Playwright source assertion/action lines:\n243: test(\"タブバーが独立した合成レイヤーに昇格している(Android Chrome のアドレスバー競合対策)\", async ({\n246: await page.setViewportSize({ width: 375, height: 667 });\n247: await page.goto(\"/\");\n257: expect(\n262: ).not.toBe(\"none\");\nChoose the faithful migration classification for this exact case only.",
+      "selectionMode": "single",
+      "choices": [
+        {
+          "id": "eligible",
+          "label": "Eligible",
+          "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+        },
+        {
+          "id": "not_eligible",
+          "label": "Not eligible",
+          "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+        },
+        {
+          "id": "unresolved",
+          "label": "Unresolved",
+          "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+        }
+      ]
+    },
+    "p45-b-plan27-private-consumption-9-plan27-38-cti-2005q1-2017q4-52-graph-table-csv-cti-regi": {
+      "type": "choice",
+      "instructions": "Scenario p45-b-plan27-private-consumption-9-plan27-38-cti-2005q1-2017q4-52-graph-table-csv-cti-regi (tests/e2e/plan27-private-consumption.e2e.spec.ts:9); condition: mobile-pixel; Plan27/38 名目CTI四半期消費支出回帰 › 2005Q1〜2017Q4の52四半期をgraph/table/CSVで公開し、給与CTI registryを混入しない; contract summary: Retain the full assertion contract: Plan27/38 名目CTI四半期消費支出回帰 › 2005Q1〜2017Q4の52四半期をgraph/table/CSVで公開し、給与CTI registryを混入しない.; exact Playwright source assertion/action lines:\n9: test(\"2005Q1〜2017Q4の52四半期をgraph/table/CSVで公開し、給与CTI registryを混入しない\", async ({\n12: await page.goto(\"/\");\n14: await expect(section).toBeVisible({ timeout: 15000 });\n17: await expect(chart).toBeVisible();\n39: expect(postBoundaryEvidence.length).toBeGreaterThan(0);\n40: expect(postBoundaryEvidence.every((row) => row.value === \"null\")).toBe(true);\n41: expect(postBoundaryEvidence.every((row) => row.status === \"invalid\")).toBe(true);\n42: expect(postBoundaryEvidence.every((row) => row.reason === \"unavailable\")).toBe(true);\n43: expect(postBoundaryEvidence.every((row) => row.hasStackedValue)).toBe(true);\nChoose the faithful migration classification for this exact case only.",
+      "selectionMode": "single",
+      "choices": [
+        {
+          "id": "eligible",
+          "label": "Eligible",
+          "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+        },
+        {
+          "id": "not_eligible",
+          "label": "Not eligible",
+          "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+        },
+        {
+          "id": "unresolved",
+          "label": "Unresolved",
+          "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+        }
+      ]
+    },
+    "p45-b-plan27-private-consumption-79-plan27-38-cti-nominal-cti-key-is-distinct-from-the-real": {
+      "type": "choice",
+      "instructions": "Scenario p45-b-plan27-private-consumption-79-plan27-38-cti-nominal-cti-key-is-distinct-from-the-real (tests/e2e/plan27-private-consumption.e2e.spec.ts:79); condition: mobile-pixel; Plan27/38 名目CTI四半期消費支出回帰 › nominal CTI key is distinct from the real chart boundary; contract summary: Retain the full assertion contract: Plan27/38 名目CTI四半期消費支出回帰 › nominal CTI key is distinct from the real chart boundary.; exact Playwright source assertion/action lines:\n79: test(\"nominal CTI key is distinct from the real chart boundary\", async ({ page }) => {\n80: await page.goto(\"/\");\n81: await expect(page.getByTestId(\"spending-chart-real\")).toBeVisible({ timeout: 15000 });\n84: expect(await realTable.locator(\"thead\").innerText()).not.toContain(expected.label);\nChoose the faithful migration classification for this exact case only.",
+      "selectionMode": "single",
+      "choices": [
+        {
+          "id": "eligible",
+          "label": "Eligible",
+          "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+        },
+        {
+          "id": "not_eligible",
+          "label": "Not eligible",
+          "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+        },
+        {
+          "id": "unresolved",
+          "label": "Unresolved",
+          "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+        }
+      ]
+    },
+    "p45-b-tooltip-dismiss-138-case01": {
+      "type": "choice",
+      "instructions": "Scenario p45-b-tooltip-dismiss-138-case01 (tests/e2e/tooltip-dismiss.e2e.spec.ts:138); condition: mobile-pixel; モバイル ツールチップの閉じるボタンとインタラクション › グラフをタップするとツールチップが表示され、✕ボタンとガイド線で閉じられる; mobile-pixel real touch, except final desktop hover row; contract summary: Retain the full assertion contract: モバイル ツールチップの閉じるボタンとインタラクション › グラフをタップするとツールチップが表示され、✕ボタンとガイド線で閉じられる.; exact Playwright source assertion/action lines:\n138: test(\"グラフをタップするとツールチップが表示され、✕ボタンとガイド線で閉じられる\", async ({\n141: await page.goto(\"/\");\n148: expect(await page.locator(\".recharts-tooltip-cursor\").count()).toBeGreaterThan(0);\n152: await expect(\n156: await expect(page.locator(\".recharts-tooltip-cursor\")).toHaveCount(0);\nChoose the faithful migration classification for this exact case only.",
+      "selectionMode": "single",
+      "choices": [
+        {
+          "id": "eligible",
+          "label": "Eligible",
+          "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+        },
+        {
+          "id": "not_eligible",
+          "label": "Not eligible",
+          "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+        },
+        {
+          "id": "unresolved",
+          "label": "Unresolved",
+          "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+        }
+      ]
+    },
+    "p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip": {
+      "type": "choice",
+      "instructions": "Scenario p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip (tests/e2e/tooltip-dismiss.e2e.spec.ts:159); condition: mobile-pixel; モバイル ツールチップの閉じるボタンとインタラクション › mobile-pixel: タップで表示したTooltipをEscapeで閉じ、Tooltipと閉じるボタンが消える; mobile-pixel real touch, except final desktop hover row; contract summary: Retain the full assertion contract: モバイル ツールチップの閉じるボタンとインタラクション › mobile-pixel: タップで表示したTooltipをEscapeで閉じ、Tooltipと閉じるボタンが消える.; exact Playwright source assertion/action lines:\n159: test(\"mobile-pixel: タップで表示したTooltipをEscapeで閉じ、Tooltipと閉じるボタンが消える\", async ({\n162: await page.goto(\"/\");\n170: await expect(tooltip).toBeVisible({ timeout: 5000 });\n174: await expect(tooltip, \"Escape後、Tooltipが非表示になるべき\").not.toBeVisible({\n177: await expect(closeButton, \"Escape後、Tooltipの閉じるボタンも非表示になるべき\").not.toBeVisible({\n183: await expect(tooltip, \"Escape後の次の正当なpointerdownでTooltipを再表示できるべき\").toBeVisible(\nChoose the faithful migration classification for this exact case only.",
+      "selectionMode": "single",
+      "choices": [
+        {
+          "id": "eligible",
+          "label": "Eligible",
+          "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+        },
+        {
+          "id": "not_eligible",
+          "label": "Not eligible",
+          "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+        },
+        {
+          "id": "unresolved",
+          "label": "Unresolved",
+          "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+        }
+      ]
+    },
+    "p45-b-tooltip-dismiss-188-case01": {
+      "type": "choice",
+      "instructions": "Scenario p45-b-tooltip-dismiss-188-case01 (tests/e2e/tooltip-dismiss.e2e.spec.ts:188); condition: mobile-pixel; モバイル ツールチップの閉じるボタンとインタラクション › グラフ外をタップすると閉じるボタンとガイド線の両方が消える; mobile-pixel real touch, except final desktop hover row; contract summary: Retain the full assertion contract: モバイル ツールチップの閉じるボタンとインタラクション › グラフ外をタップすると閉じるボタンとガイド線の両方が消える.; exact Playwright source assertion/action lines:\n188: test(\"グラフ外をタップすると閉じるボタンとガイド線の両方が消える\", async ({ page }) => {\n189: await page.goto(\"/\");\n196: await expect(closeButton).toBeVisible({ timeout: 5000 });\n197: expect(await page.locator(\".recharts-tooltip-cursor\").count()).toBeGreaterThan(0);\n203: await expect(closeButton).not.toBeVisible({ timeout: 5000 });\n204: await expect(page.locator(\".recharts-tooltip-cursor\")).toHaveCount(0);\nChoose the faithful migration classification for this exact case only.",
+      "selectionMode": "single",
+      "choices": [
+        {
+          "id": "eligible",
+          "label": "Eligible",
+          "description": "A faithful Browser Mode replacement can preserve this exact scenario contract and condition without production Next/route/Flight/hydration/download integration, actual geometry or coordinate hit-testing, or a required WebKit guarantee; this also includes suitable component DOM/keyboard/focus and simple style/viewport-input contracts."
+        },
+        {
+          "id": "not_eligible",
+          "label": "Not eligible",
+          "description": "The stated assertion contract requires a production integration boundary, actual geometry/overflow/scroll/placement/hit-test, required WebKit-specific behavior, or pure unit-only behavior not faithfully improved by Browser Mode."
+        },
+        {
+          "id": "unresolved",
+          "label": "Unresolved",
+          "description": "The supplied exact source/contract and condition do not establish whether Browser Mode can preserve the required failure boundary; evidence genuinely needed is not available."
+        }
+      ]
+    }
+  }
+}

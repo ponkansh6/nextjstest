@@ -1,0 +1,222 @@
+{
+  "httpStatus": 200,
+  "body": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "p45-a-a11y-cagr-trigger-default": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.31,
+        "probabilities": {
+          "eligible": 0.24,
+          "not_eligible": 0.54,
+          "unresolved": 0.22
+        }
+      },
+      "p45-a-a11y-cagr-trigger-dark": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.16,
+        "probabilities": {
+          "eligible": 0.33,
+          "not_eligible": 0.44,
+          "unresolved": 0.23
+        }
+      },
+      "p45-a-a11y-real-legend-header-default": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.62,
+        "probabilities": {
+          "eligible": 0.14,
+          "not_eligible": 0.74,
+          "unresolved": 0.12
+        }
+      },
+      "p45-a-a11y-real-legend-header-dark": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.41,
+        "probabilities": {
+          "eligible": 0.26,
+          "not_eligible": 0.61,
+          "unresolved": 0.13
+        }
+      },
+      "p45-a-a11y-info-outside-click": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.49,
+        "probabilities": {
+          "unresolved": 0.04,
+          "not_eligible": 0.66,
+          "eligible": 0.3
+        }
+      },
+      "p45-a-a11y-info-escape": {
+        "type": "choice",
+        "choice": "eligible",
+        "confidence": 0.58,
+        "probabilities": {
+          "unresolved": 0.07,
+          "not_eligible": 0.21,
+          "eligible": 0.72
+        }
+      },
+      "p45-a-a11y-sheet-tab-trap": {
+        "type": "choice",
+        "choice": "eligible",
+        "confidence": 0.55,
+        "probabilities": {
+          "eligible": 0.7,
+          "not_eligible": 0.2,
+          "unresolved": 0.1
+        }
+      },
+      "p45-a-advanced-series-normal": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.22,
+        "probabilities": {
+          "eligible": 0.34,
+          "not_eligible": 0.48,
+          "unresolved": 0.18
+        }
+      },
+      "p45-a-advanced-series-adv-query": {
+        "type": "choice",
+        "choice": "eligible",
+        "confidence": 0.22,
+        "probabilities": {
+          "eligible": 0.48,
+          "not_eligible": 0.45,
+          "unresolved": 0.07
+        }
+      },
+      "p45-a-cagr-sheet-01": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.34,
+        "probabilities": {
+          "eligible": 0.33,
+          "not_eligible": 0.56,
+          "unresolved": 0.1
+        }
+      },
+      "p45-a-cagr-sheet-02": {
+        "type": "choice",
+        "choice": "eligible",
+        "confidence": 0.81,
+        "probabilities": {
+          "eligible": 0.87,
+          "not_eligible": 0.03,
+          "unresolved": 0.1
+        }
+      },
+      "p45-a-cagr-sheet-03": {
+        "type": "choice",
+        "choice": "eligible",
+        "confidence": 0.82,
+        "probabilities": {
+          "eligible": 0.88,
+          "not_eligible": 0.09,
+          "unresolved": 0.03
+        }
+      },
+      "p45-a-cagr-sheet-04": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.74,
+        "probabilities": {
+          "eligible": 0.06,
+          "not_eligible": 0.83,
+          "unresolved": 0.11
+        }
+      },
+      "p45-a-cagr-sheet-05": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.8,
+        "probabilities": {
+          "eligible": 0.12,
+          "not_eligible": 0.87,
+          "unresolved": 0.01
+        }
+      },
+      "p45-a-cagr-sheet-06": {
+        "type": "choice",
+        "choice": "eligible",
+        "confidence": 0.87,
+        "probabilities": {
+          "eligible": 0.91,
+          "not_eligible": 0.02,
+          "unresolved": 0.07
+        }
+      },
+      "p45-a-cagr-sheet-07": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.81,
+        "probabilities": {
+          "eligible": 0.11,
+          "not_eligible": 0.87,
+          "unresolved": 0.02
+        }
+      },
+      "p45-a-cagr-sheet-08": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.84,
+        "probabilities": {
+          "eligible": 0.1,
+          "not_eligible": 0.89,
+          "unresolved": 0.01
+        }
+      },
+      "p45-a-cagr-sheet-09": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.84,
+        "probabilities": {
+          "eligible": 0.08,
+          "not_eligible": 0.9,
+          "unresolved": 0.02
+        }
+      },
+      "p45-a-parity-section-cpi-major": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.88,
+        "probabilities": {
+          "eligible": 0.05,
+          "not_eligible": 0.93,
+          "unresolved": 0.02
+        }
+      },
+      "p45-a-parity-section-stacked": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.85,
+        "probabilities": {
+          "eligible": 0.08,
+          "not_eligible": 0.9,
+          "unresolved": 0.02
+        }
+      },
+      "p45-a-parity-section-earnings": {
+        "type": "choice",
+        "choice": "not_eligible",
+        "confidence": 0.85,
+        "probabilities": {
+          "eligible": 0.08,
+          "not_eligible": 0.9,
+          "unresolved": 0.02
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": 9798,
+      "output_tokens": 1118
+    }
+  }
+}
