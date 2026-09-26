@@ -14,6 +14,7 @@ export default defineConfig({
   test: {
     include: ["tests/browser-mode/**/*.browser.test.tsx"],
     exclude: [...configDefaults.exclude, "tests/e2e/**"],
+    setupFiles: ["tests/browser-mode/setup.ts"],
     fileParallelism: true,
     maxWorkers: 2,
     browser: {

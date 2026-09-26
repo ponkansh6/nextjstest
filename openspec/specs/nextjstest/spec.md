@@ -2451,6 +2451,42 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, `hid
 - **AND** Browser Mode verifies a real client component in a browser, but does
   not verify Next.js production routing, SSR, Flight, or hydration
 
+#### Scenario Browser Mode per-file cleanup and sequential isolation
+
+- **WHEN** tests run sequentially in one Browser Mode spec file
+- **THEN** they share that file's page/context, and the shared setup cleans up
+  React mounts and resets the document body, `data-theme`, `localStorage`,
+  JavaScript-visible cookies, mock call history, and spies before and after
+  each test
+- **AND** teardown restores spies before browser-state resets; clearing mock
+  history does not reset mock implementations
+- **AND** the harness isolation spec proves that a later test does not retain
+  those states from an earlier test
+- **AND** each test explicitly resets state rather than assuming a new
+  page/context for every test
+
+#### Scenario Browser Mode shared render and interaction helpers
+
+- **WHEN** a current Browser Mode spec renders a client component or performs
+  an interaction
+- **THEN** it may use the shared render helper for current render behavior,
+  the supported `userEvent` API from `vitest/browser`, and Playwright locators
+- **AND** asynchronous locator assertions use `expect.element(...)`
+- **AND** the shared helper does not add a provider-wrapper abstraction until
+  multiple current components need one
+- **AND** native ESM namespace exports are not passed to `vi.spyOn`; use
+  dependency injection or `vi.mock(..., { spy: true })` when module spying is
+  needed
+- **AND** blocking `alert`, `confirm`, or `print` behavior remains in
+  Playwright E2E or is explicitly mocked
+
+#### Scenario Browser Mode chart mock boundary
+
+- **WHEN** a future Browser Mode spec requires a Recharts mock
+- **THEN** the mock's guarantee is limited to props and rendered DOM and does
+  not claim to validate actual chart layout or rendering
+- **AND** no Recharts mock is part of the current Browser Mode harness
+
 #### Scenario PRE-PUSH Browser Mode validation
 
 - **WHEN** `pnpm run test:full` or the full pre-push profile runs

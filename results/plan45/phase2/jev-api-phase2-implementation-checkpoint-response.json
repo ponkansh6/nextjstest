@@ -1,0 +1,103 @@
+{
+  "httpStatus": 200,
+  "body": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "implementation_verdict": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.81,
+        "probabilities": {
+          "other": 0.0,
+          "missing_prerequisites_info": 0.03,
+          "scope_violation": 0.0,
+          "valid_as_defined": 0.83,
+          "indeterminate": 0.03,
+          "incomplete_implementation_info": 0.01,
+          "requirements_mismatch": 0.08,
+          "implementation_issue": 0.02
+        }
+      },
+      "case_finding": {
+        "type": "choice",
+        "choice": "prior_setup_cleanup_concern_resolved",
+        "confidence": 0.71,
+        "probabilities": {
+          "no_material_issue": 0.15000000000000002,
+          "prior_setup_cleanup_concern_unresolved": 0.07,
+          "scope_violation": 0.0,
+          "plan_spec_mismatch": 0.0,
+          "unverified_claim": 0.03,
+          "test_suite_regression": 0.0,
+          "prior_setup_cleanup_concern_resolved": 0.75,
+          "other_concrete_finding": 0.0,
+          "browser_mode_runtime_issue": 0.0
+        }
+      },
+      "affected_location": {
+        "type": "choice",
+        "choice": "none",
+        "confidence": 0.47,
+        "probabilities": {
+          "openspec": 0.01,
+          "phase5_boundary": 0.01,
+          "default_suite": 0.0,
+          "isolation_spec": 0.01,
+          "other_location": 0.09,
+          "shared_helper": 0.0,
+          "phase2_plan": 0.09,
+          "none": 0.52,
+          "theme_specs": 0.0,
+          "browser_setup": 0.27,
+          "prepush_boundary": 0.0
+        }
+      },
+      "evidence_assessment": {
+        "type": "choice",
+        "choice": "final_results_support_acceptance",
+        "confidence": 0.51,
+        "probabilities": {
+          "specific_evidence_missing": 0.1,
+          "same_file_isolation_proven": 0.11,
+          "phase5_not_done_by_design": 0.03,
+          "user_event_version_proven": 0.15,
+          "final_results_support_acceptance": 0.57,
+          "insufficient_to_decide": 0.02,
+          "external_push_only_missing": 0.01,
+          "result_conflict": 0.01
+        }
+      },
+      "proposed_next_action": {
+        "type": "choice",
+        "choice": "accept_phase2_and_continue",
+        "confidence": 0.92,
+        "probabilities": {
+          "accept_phase2_and_continue": 0.93,
+          "revise_openspec_only": 0.0,
+          "fix_code_only": 0.0,
+          "hold_for_scope_decision": 0.03,
+          "revise_plan_only": 0.01,
+          "collect_evidence_only": 0.03
+        }
+      },
+      "remaining_uncertainty": {
+        "type": "choice",
+        "choice": "none_for_phase2_acceptance",
+        "confidence": 0.74,
+        "probabilities": {
+          "trace_diagnostic_value": 0.0,
+          "other_specific_uncertainty": 0.11,
+          "phase5_scope": 0.0,
+          "external_push": 0.0,
+          "none_for_phase2_acceptance": 0.78,
+          "browser_cache_precondition": 0.01,
+          "vitest_411_behavior_remains_unknown": 0.1
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": 4028,
+      "output_tokens": 638
+    }
+  }
+}

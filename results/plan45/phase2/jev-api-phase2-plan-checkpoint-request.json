@@ -1,0 +1,130 @@
+{
+  "model": "jev-latest",
+  "state": {
+    "reviewType": "JEV v3 initial plan_validity checkpoint; plan-only review before Phase 2 implementation.",
+    "planText": "Phase 2 — Browser Mode harness / runtime operations (pre-implementation; no CI/GitHub Actions workflow changes). Preserve all Phase1 paths: `pnpm test` remains happy-dom and excludes browser specs; `pnpm test:browser` uses `vitest.browser.config.ts`; `test:full`/full pre-push run test:all then test:browser; changed pre-push runs Browser Mode after valid non-empty related tests, uses one full fallback for empty/invalid/indeterminate selection, and skips related tests plus Browser Mode for docs/assets-only changes. The hook does not install browsers automatically. Add `tests/browser-mode/setup.ts` for shared per-test React cleanup and reset of DOM/theme attributes, localStorage, JavaScript-visible cookies, and mock call/spy state; add a focused same-file sequential isolation spec. Add only a small shared render/fixture helper for currently used capabilities, deferring provider-wrapper abstraction until needed. Demonstrate `userEvent` from `vitest/browser` alongside locator interaction and async `expect.element`; avoid native ESM namespace `vi.spyOn`; keep real blocking dialogs in Playwright or explicitly mock only the API. Treat isolation as per file and reset state each test. Record manually installed Chromium / Linux dependencies, preserve `fileParallelism=true`, two workers, 5s action timeout, no retry, failure trace/screenshots/DOM snapshots, and invocation-to-exit cold/warm timings including startup. Update OpenSpec WHEN/THEN scenarios in parallel. Accept when shared helper, same-file sequential isolation for DOM/theme/storage/cookie/mock state, userEvent plus locator/async assertions, runtime settings/artifacts/timing, existing happy-dom/test:full/pre-push paths intact, and OpenSpec synced. All 33 current MAP-ineligible IDs remain deferred for individual Phase 5 investigation.",
+    "existingProjectFacts": [
+      "Phase 1 was accepted by a direct TypeSafe checkpoint as valid_as_defined after final local verification; its report is under results/plan45/phase1/. Phase 1 did not perform an external push and bounds its claim to local/pre-push gates.",
+      "Current vitest.browser.config.ts uses @vitest/browser-playwright, Vitest Browser Mode, Chromium headless at 1280x800, browser specs under tests/browser-mode, fileParallelism=true and maxWorkers=2; package.json and lockfile pin Vitest/provider 4.1.11.",
+      "Current vitest.config.ts defaults to happy-dom and excludes tests/browser-mode/**. package.json defines test:browser and test:full; pre-push retains changed/full test selection and Browser Mode gating.",
+      "Current ThemeToggle browser tests provide existing component-render/locator and computed CSS examples. Phase2 harness items are not implemented yet."
+    ],
+    "existingSpecEvidence": [
+      "openspec/specs/nextjstest/spec.md has operational scenarios for default Vitest suite isolation; Browser Mode scope; pre-push validation; manual install; empty/invalid/indeterminate fallback exactly once; failure stop; and hook smoke validation.",
+      "OpenSpec explicitly states Browser Mode does not establish Next production route/SSR/Flight/hydration; local pre-push is the enforcement path. User says no GitHub Actions workflow changes."
+    ],
+    "officialVitestEvidence": [
+      "https://vitest.dev/guide/browser/ : native browser execution with window/document; provider required and Playwright provider setup documented.",
+      "https://vitest.dev/config/browser/playwright : one page for all tests in a file and a fresh Playwright context per file, not per test; grounds same-file state reset work.",
+      "https://vitest.dev/api/browser/interactivity : userEvent is provider-backed CDP/WebDriver interaction; keyboard state resets but pointer/hover state may persist within a file.",
+      "https://vitest.dev/api/browser/context : browser context APIs and userEvent export documented.",
+      "https://v4.vitest.dev/config/setupfiles and https://v4.vitest.dev/guide/learn/setup-teardown : v4 setup/teardown docs.",
+      "Version caveat: repository pins Vitest/provider 4.1.11. Current vitest.dev pages are rolling docs and v4.vitest.dev identifies the major version, not exact 4.1.11 patch. Treat exact compatibility as a Phase2 implementation verification item; do not claim moving docs alone proves patch-specific behavior."
+    ],
+    "explicitBoundaries": [
+      "User confirmed local pre-push enforcement is sufficient; do not require or add GitHub Actions/CI workflow changes.",
+      "Phase2 is pre-implementation; its planned harness/runtime tasks are not implemented or accepted yet.",
+      "Phase5 must investigate all 33 current MAP-ineligible stable IDs individually. Do not treat them as final exclusions, change denominator, or expand Phase2 scope."
+    ],
+    "acceptanceCriteria": [
+      "Phase2 deliverables are specific, testable, internally consistent with current Browser Mode provider lifecycle and package version caveat.",
+      "Shared cleanup/helper and same-file isolation acceptance reflects one page/context per file and only promises reset of JS-accessible state.",
+      "userEvent, locator and expect.element requirements are supported by official cited API.",
+      "Runtime/install/artifact/timing requirements, pre-push preservation, OpenSpec synchronization and Phase5 deferral are consistent.",
+      "Only valid_as_defined passes."
+    ],
+    "outputProtocol": {
+      "requiredVerdict": "Choose exactly one of the eight labels in questions.plan_validity.criteria; only valid_as_defined passes.",
+      "diagnosis": "Also choose a finding, affected location/requirement, evidence assessment, immediate next action and remaining uncertainty. If valid, choose no_case_specific_finding and none rather than inventing a defect.",
+      "conditionalClarification": "If initial valid API response selects any verdict other than valid_as_defined, including indeterminate, preserve initial choice and complete probability distribution; create at least two mutually exclusive case-specific immediate action options. Each must target exactly one of code, plan, OpenSpec, or evidence-only; all must carry the same initial finding, affected location, evidence/neededEvidence. Send exactly one follow-up requiring selected choice ID, concrete finding, affected path/requirement, observed evidence or exact neededEvidence, specific nextAction/proposedFix, and remainingUncertainty (state none explicitly if none). Preserve initial decision summary/distribution and set effectiveVerdict=require_revalidation. If any required diagnostic details are missing, record resolution=unresolved, diagnosisStatus=incomplete, unresolvedReasons. Do not chain. Initial transport/schema failure: no follow-up; record error/unresolved."
+    }
+  },
+  "questions": {
+    "plan_validity": {
+      "type": "choice",
+      "instructions": "Is the pre-implementation Phase 2 plan valid as defined? Only valid_as_defined is passing.",
+      "criteria": {
+        "valid_as_defined": "The pre-implementation Phase 2 plan is valid and internally consistent as defined; its deliverables, acceptance criteria, dependencies, and boundaries are sufficiently concrete and compatible with existing specs and official Vitest capabilities.",
+        "requirements_mismatch": "The Phase 2 requirements conflict with each other, an existing OpenSpec requirement, or the user-approved project boundary; identify the concrete conflict.",
+        "missing_prerequisites_info": "A material prerequisite or decision is missing from the plan and prevents Phase 2 from being safely/reproducibly started; state the specific missing fact.",
+        "incomplete_implementation_info": "The review cannot be completed because information about the existing Phase 1 implementation/configuration is missing. Do not select this merely because Phase 2 has not yet been implemented; this is explicitly a plan checkpoint.",
+        "implementation_issue": "Existing Phase 1 code/configuration evidence exposes a concrete implementation issue that blocks the Phase 2 plan as written.",
+        "scope_violation": "The Phase 2 plan violates explicit boundaries: local pre-push is sufficient, no GitHub Actions/CI workflow changes, and all 33 current MAP-ineligible IDs must be investigated individually in Phase 5 rather than excluded conclusively here.",
+        "other": "A different, concrete plan blocker exists; identify the affected requirement and evidence.",
+        "indeterminate": "The supplied plan and evidence do not support either acceptance or a concrete rejection."
+      }
+    },
+    "case_finding": {
+      "type": "choice",
+      "instructions": "Select the strongest case-specific diagnosis supported by the plan and evidence. A valid plan selects no_case_specific_finding.",
+      "criteria": {
+        "no_case_specific_finding": "No material Phase 2 plan defect; it can proceed as described.",
+        "setup_cleanup_contract": "The proposed per-test DOM/theme/storage/cookie/mock reset is underspecified or incorrect for Vitest Browser Mode lifecycle.",
+        "shared_helper_scope": "Shared render helper scope is too broad, premature, or unclear.",
+        "user_event_contract": "Supported Vitest Browser Mode userEvent/locator/expect.element behavior or a state-persistence caveat is misrepresented.",
+        "runtime_artifact_contract": "Runtime, retries, browser install, trace/screenshot, cold/warm timing acceptance is missing, contradictory, or not measurable.",
+        "prepush_or_ci_scope": "The plan improperly changes or weakens established local pre-push paths or requests CI/GitHub Actions contrary to user instruction.",
+        "phase5_scope": "The plan treats the 33 MAP-ineligible scenarios as final exclusions or pulls their per-ID investigation into Phase 2.",
+        "spec_sync": "The OpenSpec update deliverable does not accurately reflect Phase 2 acceptance/boundaries.",
+        "version_evidence": "The plan relies on current unversioned Vitest docs as exact 4.1.11 proof without a compatibility caveat or verification requirement.",
+        "other_concrete_finding": "Another evidenced, concrete defect."
+      }
+    },
+    "affected_requirement": {
+      "type": "choice",
+      "instructions": "Which exact path, Phase2 item or user boundary is affected? Select none only when there is no material finding.",
+      "criteria": {
+        "none": "No specific location/requirement is affected.",
+        "plan_phase2_tasks": "shared_plan/45-vitest-browser-mode-e2e-migration-plan.md, Phase 2 bullets and acceptance criteria.",
+        "plan_phase2_lifecycle": "Plan Phase 2 same-file isolation and tests/browser-mode/setup.ts requirements.",
+        "plan_phase2_interaction": "Plan Phase 2 userEvent, locator interaction and expect.element requirements.",
+        "plan_phase2_operations": "Plan Phase 2 runtime, timeout/retry, browser prerequisite, artifact and timing requirements.",
+        "openspec_browser_requirements": "openspec/specs/nextjstest/spec.md Browser Mode/pre-push WHEN/THEN requirements.",
+        "phase1_existing_config": "vitest.browser.config.ts, vitest.config.ts, package.json and existing Browser Mode specs.",
+        "user_boundary": "User-confirmed local pre-push-only enforcement; no GitHub Actions/CI workflow modification.",
+        "phase5_inventory": "Explicit requirement to investigate each of the 33 current MAP-ineligible stable IDs in Phase 5.",
+        "other_location": "Another exact file/requirement identified from supplied facts."
+      }
+    },
+    "evidence_assessment": {
+      "type": "choice",
+      "instructions": "Do the plan and cited evidence support acceptance, or is there a concrete evidentiary gap/conflict?",
+      "criteria": {
+        "evidence_sufficient_and_consistent": "Plan and existing code/spec facts support the Phase 2 scope; relevant current official Vitest docs are linked and any version mismatch is expressly treated as a verification caveat.",
+        "isolation_lifecycle_not_grounded": "The requirement to reset page/context state is not sufficiently grounded in the provider lifecycle evidence.",
+        "user_event_capability_not_grounded": "The planned userEvent demonstration or locator/async assertions are not supported by the cited provider/API facts.",
+        "version_compatibility_unknown": "The official pages are current/unversioned and do not prove exact Vitest 4.1.11 behavior; this is a blocking evidence gap rather than an implementation conclusion.",
+        "prepush_scope_conflict": "Plan text conflicts with the stated pre-push-only/no-GitHub-Actions boundary.",
+        "phase5_deferral_conflict": "Plan text conflicts with the Phase5 per-ID investigation of all 33 current ineligible IDs.",
+        "specific_requirement_conflict": "A specific Phase 2 requirement conflicts with another cited requirement.",
+        "evidence_insufficient": "The supplied evidence cannot resolve a material question."
+      }
+    },
+    "immediate_next_action": {
+      "type": "choice",
+      "instructions": "Choose the immediate next action. If valid, continue Phase2 as planned; preserve pre-push and Phase5 boundaries.",
+      "criteria": {
+        "continue_phase2_as_planned": "Proceed with the Phase 2 plan as written; implement only its harness/runtime deliverables, keep local pre-push paths intact, and leave all 33 IDs for Phase 5.",
+        "change_phase2_plan_only": "Revise only the Phase 2 plan text to fix the identified requirement/prerequisite issue; do not change code/spec or collect additional evidence in this action.",
+        "change_openspec_only": "Revise only the relevant OpenSpec WHEN/THEN text to fix the identified mismatch; do not change implementation/plan or collect additional evidence in this action.",
+        "implement_existing_phase1_only": "Change only existing Phase 1 implementation/configuration to fix the concrete blocker; do not revise plan/spec or collect other evidence in this action.",
+        "collect_versioned_evidence_only": "Collect only the exact version-pinned/provider lifecycle evidence required; do not change code, plan, or spec in this action.",
+        "hold_for_scope_decision": "Hold only because a concrete conflict in explicit user/project scope requires a decision."
+      }
+    },
+    "remaining_uncertainty": {
+      "type": "choice",
+      "instructions": "What uncertainty remains for this plan-only checkpoint? Operational checks explicitly scheduled for Phase2 are not blockers unless they prevent the plan from being started.",
+      "criteria": {
+        "none_for_plan_checkpoint": "No remaining blocking uncertainty for starting Phase 2 as a plan; unresolved operational checks remain explicitly Phase 2 acceptance work.",
+        "vitest_411_compatibility": "Exact compatibility of one or more cited current docs statements with pinned Vitest 4.1.11 is unresolved.",
+        "state_reset_mechanics": "Exact same-file/browser-context reset mechanism or cookie/state persistence is unresolved.",
+        "runtime_trace_value": "Trace Viewer diagnostic value/artifact behavior is not yet demonstrated; determine whether the plan treats it as required vs follow-up.",
+        "external_push": "No external push was performed; determine whether this affects a pre-implementation Phase 2 plan (not Phase 1 local gate).",
+        "plan_acceptance_detail": "A specific acceptance item remains too ambiguous to implement or verify.",
+        "phase5_deferral": "The Phase 5 deferral or 33-ID scope remains unclear.",
+        "other_specific_uncertainty": "Another precise uncertainty remains."
+      }
+    }
+  }
+}

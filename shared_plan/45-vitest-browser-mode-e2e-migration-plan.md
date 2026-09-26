@@ -107,15 +107,126 @@ Phase 0 では、現行 baseline revision の全 Playwright spec と project 設
 - **診断・分離:** Browser configはlocator action timeout 5秒、失敗screenshot、失敗時traceを指定。最初の操作テストは`TypeError: button.getAttribute is not a function`でclick前に失敗した。Vitest 4.1.11 `expect.element(locator).toHaveAttribute()` / `toHaveTextContent()`へ修正後、実click、localStorage/data-theme/icon/aria-labelの切替とCSS computed size / bounding boxがpassした。最初の失敗screenshotは全面白だった。一時diagnostic probeでは表示marker付き158×99 screenshotを生成し、trace ZIPには`trace.trace` / network / html / jsonl / sourceと18 JPEG framesが含まれたため、screenshot・trace artifactが内容付きで生成されることを確認した。Trace Viewerでの診断価値とCI retentionは未確認。一時probeと専用artifactは確認後削除し、ThemeToggle失敗時のartifactは保持した。2 specは各自`localStorage` / `data-theme`を初期化しmount/unmount cleanupを行った。`fileParallelism: true` / `maxWorkers: 2`の実行で別ファイル並列を確認した。console / page errorの追加診断粒度は未評価。
 - **所要時間・最終tree検証:** lockfile反映後のBrowser Mode cold first runは4.17s（Vite re-optimizationを含む）、immediate warm rerunは3.78s。いずれも2 files / 2 testsのローカルsmoke suiteであり、E2E suiteとの速度比較やCI性能を示さない。既定`pnpm test`は84 files / 772 passed / 4 skipped、28.55s。`pnpm lint`、`pnpm type-check`、`git diff --check`もpassした（pnpm dlxのcache path制限を避けるためXDG_CACHE_HOMEを/tmp配下に指定）。`CI=1 pnpm test:browser`は2/2 pass。`pnpm run test:hook-smoke`もpassし、expanded fixture coverageは上記に記録した。実際のexternal pushではない。Trace Viewerの診断価値とartifact retentionは未確認だが、GitHub Actions workflowの変更・統合は本計画の要件ではない。
 
-### Phase 2 — test harness / CI 基盤
+### Phase 2 — Browser Mode harness / runtime operations
 
-- [ ] React コンポーネントの共通 render / cleanup / fixture helper を用意し、各シナリオが独立に mount して後片付けする。Recharts mock 使用時は保証が props / DOM に限定されることを test 名と台帳に明示する。
-- [ ] Browser Mode テストでは `userEvent`、`page` / locator、`expect.element(...)` を `vitest/browser` から使う方針と async assertion 規約を整備する。既存 `@testing-library/user-event` の simulator をそのまま持ち込まず、locator / `userEvent` が対象 provider 上で実際に動くことを spike で確かめる。
-- [x] Browser Modeの明示的な`pnpm test:browser`実行経路を`test:full`とpre-push changed/full profilesへ組み込む。`test:full`とfull pre-pushでは`test:all`後に1回実行し、changed profileではvalid non-empty related selection後に実行する。full fallbackは1回実行、docs/assets-onlyはskipする。通常の`pnpm test`はhappy-domを維持する。GitHub Actions workflow変更は不要。
-- [ ] Browser binaryの取得/cacheとOS依存関係、headless launch、worker数・file parallelism、timeout、artifact、retryの運用を継続確認する。Browser binaryは自動downloadされないため、local prerequisiteは`pnpm exec playwright install chromium`。LinuxではPlaywright OS dependenciesも必要になる場合がある。
-- [ ] テスト間隔離は**テストファイル単位**であり、Playwright Test のように各 test ごとに新しい page/context が作られる前提を置かない。各 test は reset / rerender / cleanup を明示し、cookie / localStorage / mock state を共有しない。
-- [ ] Browser Mode は native ESM を使うため、import namespace に直接 `vi.spyOn` を適用できない。必要時は対応可能な `vi.mock(..., { spy: true })`、依存注入、公開関数などを使う。blocking `alert` / `confirm` / `print` はネイティブに待ち受けられないため、契約に必要な場合は Playwright 側に残すか API を明示 mock する。
-- **受け入れ条件:** `pnpm test`でhappy-dom、`test:full`とpre-push changed/full profilesでBrowser Modeを明示選択できる。テストファイル間の環境 / 状態漏れがなく、起動費用を含む時間を測れる。GitHub Actions workflow変更は受け入れ条件に含めない。
+**Status (2026-09-26): Phase 1 and Phase 2 are complete. Phase 2
+implementation, verification, and the final implementation JEV checkpoint
+passed; Phase 3 is ready. This phase does not include GitHub Actions or other
+CI workflow changes.**
+
+**Existing execution paths to preserve:** `pnpm test` remains the default
+happy-dom suite and excludes Browser Mode specs. `pnpm test:browser` selects
+`vitest.browser.config.ts` and only `tests/browser-mode/**/*.browser.test.tsx`.
+`test:full` and full pre-push run `test:all` followed by `test:browser`; changed
+pre-push runs Browser Mode after a valid, non-empty related selection, uses one
+full fallback for empty/invalid/indeterminate selection, and skips related
+tests plus Browser Mode for docs/assets-only changes. The hook does not install
+browsers automatically. These paths were added and verified during Phase 1 and
+were preserved through Phase 2.
+
+- [x] Add `tests/browser-mode/setup.ts` for shared per-test React cleanup and
+      reset of DOM/theme attributes, `localStorage`, JavaScript-visible cookies,
+      mock call history, and spies. Teardown restores spies before browser-state
+      resets; clearing call history does not reset mock implementations. Cookie
+      cleanup is limited to JavaScript-visible cookies. Add a focused Browser Mode
+      harness spec proving that two successive tests in the same file do not
+      retain these states.
+- [x] Add a small shared React render/fixture helper limited to capabilities
+      used by current Browser Mode specs. Defer a provider-wrapper abstraction
+      until multiple providers actually need it.
+- [x] Demonstrate the supported `userEvent` API from `vitest/browser` in one
+      test while retaining locator interaction coverage. Use `expect.element(...)`
+      for async locator assertions. There is currently no Recharts mock; if a
+      future mock is needed, state that it checks props/DOM only, not actual chart
+      layout or rendering. Avoid `vi.spyOn` on native ESM namespace exports; use
+      dependency injection or `vi.mock(..., { spy: true })`. Keep blocking
+      `alert` / `confirm` / `print` behavior in Playwright E2E or explicitly mock
+      the relevant API.
+- [x] Treat isolation as per test file: tests in one file share the Browser
+      Mode page/context, so every test must explicitly reset state rather than
+      assume a new page/context per test.
+- [x] Record the runtime contract: Chromium is installed manually once with
+      `pnpm exec playwright install chromium`; Linux may also require Playwright OS
+      dependencies. Preserve `fileParallelism: true`, 2 workers, a 5-second
+      action timeout, and the default no-retry behavior. Record/retain
+      `trace.mode=retain-on-failure`, trace screenshots and DOM snapshots, and
+      `screenshotFailures=true`. Successful `pnpm test:browser` elapsed samples
+      were 5.58s and 6.82s; `test:full`'s embedded Browser Mode step took 4.63s.
+      These samples vary and do not establish that a warm run is faster. Timings
+      include command startup. The Phase 1 reference is 4.17 seconds cold
+      (including Vite re-optimization) and 3.78 seconds warm for the two-spec local
+      smoke suite; it is not a Phase 2 harness result or a CI performance claim.
+- [x] Update the OpenSpec WHEN/THEN scenarios alongside implementation so they
+      describe the actual setup, isolation, supported interactions, and
+      operational boundaries.
+
+**Phase 2 acceptance (complete):** the shared helper exists; a sequential same-file
+isolation spec proves DOM/theme, storage, cookie, and mock reset; one test
+demonstrates Browser Mode `userEvent` alongside locator coverage and async
+`expect.element` assertions; runtime settings, failure artifacts, and
+startup-inclusive cold/warm timing are recorded. The existing happy-dom,
+`test:full`, and pre-push selection paths remain intact, with OpenSpec updated
+to match. The Phase 5 investigation of the 33 MAP-ineligible stable IDs is
+deferred to Phase 5 and does not expand Phase 2 scope.
+
+**Phase 2 verification record (2026-09-26):** Browser runs used Vitest 4.1.11
+and `PLAYWRIGHT_BROWSERS_PATH=/home/shunki/.cache/ms-playwright`; without this
+override, the temporary `XDG_CACHE_HOME` selected a separate Playwright browser
+cache. `pnpm test:browser` passed 3 files / 4 tests, exercising the supported
+`vitest/browser` `userEvent` API and sequential cleanup/isolation within one
+test file. `pnpm test` passed 84 files (772 passed, 4 skipped). The full
+`pnpm test:full` command completed successfully, including `lint:fast`,
+type-check, unit tests, Browser Mode, webpack build, build-parity (3 tests),
+pnpm audit, secretlint, and E2E (120 passed, 19 skipped); elapsed time was
+4m58.99s. `pnpm run test:hook-smoke`, `pnpm lint`, and `git diff --check` also
+passed. No GitHub Actions workflow changes were made. The final JEV
+implementation checkpoint is recorded below. Examination of all 33
+MAP-ineligible IDs remains deferred to Phase 5. Diagnostic artifacts remain
+outside the committed changes.
+
+**Final implementation JEV checkpoint (2026-09-26):** the validated initial
+verdict was `valid_as_defined` (confidence `0.81`, selected-choice probability
+`0.83`); no follow-up was sent because the initial verdict passed. The
+checkpoint accepts Phase 2 and recommends continuing to Phase 3. It resolves
+the tested setup/cleanup, `vitest/browser` `userEvent`, async
+`expect.element`, and Vitest 4.1.11 exercised-behavior uncertainty based on the
+final runtime evidence. It does not claim a blanket guarantee for every
+statement on rolling documentation pages.
+
+The initial **plan-only** JEV result remains preserved as historical: its raw
+verdict was `valid_as_defined`, but the structured `setup_cleanup_contract`
+finding conflicted with `affected_requirement=none`, lacked case-specific
+evidence, and selected `vitest_411_compatibility` without a specific
+uncertainty. Its overall resolution remains `unresolved` with
+`diagnosisStatus=incomplete`; the later implementation checkpoint resolves
+only the behavior exercised by the implementation tests and does not rewrite
+that earlier response. The earlier contradictory diagnostics remain in the
+original artifacts: [plan-only request](../results/plan45/phase2/jev-api-phase2-plan-checkpoint-request.json)
+(SHA-256 `bd76ddd2cc55bdf3d657a545cf9d468d522314648acabfe31f81f940664559b9`),
+[response](../results/plan45/phase2/jev-api-phase2-plan-checkpoint-response.json)
+(`2acdfbfa863c72f4dc842f73e0ee500f1586abdef06316c9517afaed3bf6a827`),
+[derived report](../results/plan45/phase2/jev-api-phase2-plan-checkpoint-derived.md)
+(`d291608377e14606f940f56080744a68020a4889cd4aebcaaf9485715f5b5b82`), and
+[manifest](../results/plan45/phase2/jev-api-phase2-plan-checkpoint-sha256.txt)
+(`8bd89ebc42757801d535c7f56473bf791c9b9e9636f95d110c07e7e02d078d46`).
+
+Implementation checkpoint artifacts and exact SHA-256 values:
+
+- Request: [`jev-api-phase2-implementation-checkpoint-request.json`](../results/plan45/phase2/jev-api-phase2-implementation-checkpoint-request.json),
+  `f9ba040fd34d38bd53f9181ae931ff9850cee0987c250077ae37cf3c3d2995a8`.
+- Response: [`jev-api-phase2-implementation-checkpoint-response.json`](../results/plan45/phase2/jev-api-phase2-implementation-checkpoint-response.json),
+  `812e3f258b7b70680d8dc649d55b21b87bee5cb4ac0bb6f525e1c4d1c515e603`.
+- Derived report: [`jev-api-phase2-implementation-checkpoint-derived.md`](../results/plan45/phase2/jev-api-phase2-implementation-checkpoint-derived.md),
+  `4082ab8e98cfbb1e030eb92e1959f3926718eea810b5b66c5a70ac7d9ce83d64`.
+- Manifest file: [`jev-api-phase2-implementation-checkpoint-sha256.txt`](../results/plan45/phase2/jev-api-phase2-implementation-checkpoint-sha256.txt),
+  file SHA-256 `03d2eec2409411757c4e229145605598e4991cbfe71321fd11f3a48decf8a091`.
+  The manifest covers the four unchanged plan-checkpoint artifacts and the
+  three implementation-checkpoint artifacts listed above; all seven entries
+  were independently verified.
+
+The final checkpoint marks Phase 3 ready. No GitHub Actions workflow changes
+were made, and all 33 MAP-ineligible IDs remain deferred for individual
+investigation in Phase 5.
 
 ### Phase 3 — 小さな移管 batch
 

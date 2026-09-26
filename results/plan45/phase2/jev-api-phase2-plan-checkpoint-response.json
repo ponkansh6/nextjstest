@@ -1,0 +1,104 @@
+{
+  "httpStatus": 200,
+  "body": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "plan_validity": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.69,
+        "probabilities": {
+          "indeterminate": 0.01,
+          "other": 0.03,
+          "scope_violation": 0.0,
+          "valid_as_defined": 0.73,
+          "incomplete_implementation_info": 0.0,
+          "implementation_issue": 0.01,
+          "requirements_mismatch": 0.21,
+          "missing_prerequisites_info": 0.01
+        }
+      },
+      "case_finding": {
+        "type": "choice",
+        "choice": "setup_cleanup_contract",
+        "confidence": 0.54,
+        "probabilities": {
+          "prepush_or_ci_scope": 0.0,
+          "other_concrete_finding": 0.0,
+          "no_case_specific_finding": 0.38,
+          "phase5_scope": 0.0,
+          "shared_helper_scope": 0.0,
+          "user_event_contract": 0.02,
+          "version_evidence": 0.0,
+          "runtime_artifact_contract": 0.0,
+          "spec_sync": 0.0,
+          "setup_cleanup_contract": 0.6
+        }
+      },
+      "affected_requirement": {
+        "type": "choice",
+        "choice": "none",
+        "confidence": 0.64,
+        "probabilities": {
+          "plan_phase2_tasks": 0.03,
+          "plan_phase2_operations": 0.02,
+          "user_boundary": 0.01,
+          "plan_phase2_interaction": 0.01,
+          "phase5_inventory": 0.0,
+          "other_location": 0.01,
+          "plan_phase2_lifecycle": 0.23,
+          "none": 0.68,
+          "phase1_existing_config": 0.0,
+          "openspec_browser_requirements": 0.0
+        }
+      },
+      "evidence_assessment": {
+        "type": "choice",
+        "choice": "evidence_sufficient_and_consistent",
+        "confidence": 0.91,
+        "probabilities": {
+          "phase5_deferral_conflict": 0.0,
+          "version_compatibility_unknown": 0.02,
+          "isolation_lifecycle_not_grounded": 0.03,
+          "specific_requirement_conflict": 0.02,
+          "evidence_sufficient_and_consistent": 0.93,
+          "evidence_insufficient": 0.0,
+          "prepush_scope_conflict": 0.0,
+          "user_event_capability_not_grounded": 0.0
+        }
+      },
+      "immediate_next_action": {
+        "type": "choice",
+        "choice": "continue_phase2_as_planned",
+        "confidence": 0.85,
+        "probabilities": {
+          "change_phase2_plan_only": 0.02,
+          "continue_phase2_as_planned": 0.89,
+          "change_openspec_only": 0.0,
+          "collect_versioned_evidence_only": 0.09,
+          "hold_for_scope_decision": 0.0,
+          "implement_existing_phase1_only": 0.0
+        }
+      },
+      "remaining_uncertainty": {
+        "type": "choice",
+        "choice": "vitest_411_compatibility",
+        "confidence": 0.64,
+        "probabilities": {
+          "runtime_trace_value": 0.0,
+          "phase5_deferral": 0.0,
+          "state_reset_mechanics": 0.0,
+          "vitest_411_compatibility": 0.69,
+          "other_specific_uncertainty": 0.0,
+          "external_push": 0.0,
+          "none_for_plan_checkpoint": 0.31,
+          "plan_acceptance_detail": 0.0
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": 3955,
+      "output_tokens": 685
+    }
+  }
+}

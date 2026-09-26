@@ -1,21 +1,11 @@
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
 import { ThemeToggle } from "../../src/app/components/ThemeToggle";
+import { renderBrowserComponent } from "./renderBrowserComponent";
 
 describe("ThemeToggle Chromium CSS layout", () => {
-  beforeEach(() => {
-    window.localStorage.clear();
-    document.documentElement.removeAttribute("data-theme");
-  });
-
-  afterEach(() => {
-    cleanup();
-    window.localStorage.clear();
-    document.documentElement.removeAttribute("data-theme");
-  });
-
   it("loads the component CSS module into Chromium's computed style", () => {
-    render(<ThemeToggle />);
+    renderBrowserComponent(<ThemeToggle />);
 
     const button = screen.getByRole("button");
     const styles = window.getComputedStyle(button);

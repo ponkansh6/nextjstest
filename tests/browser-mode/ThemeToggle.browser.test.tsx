@@ -1,22 +1,11 @@
-import { cleanup, render } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { page } from "vitest/browser";
 import { ThemeToggle } from "../../src/app/components/ThemeToggle";
+import { renderBrowserComponent } from "./renderBrowserComponent";
 
 describe("ThemeToggle in a real Chromium page", () => {
-  beforeEach(() => {
-    window.localStorage.clear();
-    document.documentElement.removeAttribute("data-theme");
-  });
-
-  afterEach(() => {
-    cleanup();
-    window.localStorage.clear();
-    document.documentElement.removeAttribute("data-theme");
-  });
-
   it("cycles themes through a real browser click and persists each state", async () => {
-    render(<ThemeToggle />);
+    renderBrowserComponent(<ThemeToggle />);
 
     const button = page.getByRole("button", { name: /テーマ:/ });
     await expect
