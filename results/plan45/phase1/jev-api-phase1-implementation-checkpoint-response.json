@@ -1,0 +1,63 @@
+{
+  "httpStatus": 200,
+  "body": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "phase1_verdict": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.75,
+        "probabilities": {
+          "evidence_gap_requires_hold": 0.16,
+          "plan_or_spec_change_needed": 0.0,
+          "valid_as_defined": 0.81,
+          "implementation_change_needed": 0.02
+        }
+      },
+      "primary_finding": {
+        "type": "choice",
+        "choice": "no_material_issue",
+        "confidence": 0.93,
+        "probabilities": {
+          "browser_runner_config": 0.01,
+          "plan_spec_mismatch": 0.0,
+          "evidence_scope_gap": 0.03,
+          "prepush_routing": 0.02,
+          "standard_test_regression": 0.0,
+          "hook_smoke_coverage": 0.0,
+          "other_concrete_issue": 0.01,
+          "no_material_issue": 0.9299999999999999
+        }
+      },
+      "next_action": {
+        "type": "choice",
+        "choice": "accept_phase1_and_continue",
+        "confidence": 0.93,
+        "probabilities": {
+          "revise_plan_spec": 0.0,
+          "fix_implementation": 0.01,
+          "hold_for_scope_decision": 0.0,
+          "collect_evidence_only": 0.04,
+          "accept_phase1_and_continue": 0.95
+        }
+      },
+      "remaining_uncertainty": {
+        "type": "choice",
+        "choice": "none_for_phase1_scope",
+        "confidence": 0.66,
+        "probabilities": {
+          "none_for_phase1_scope": 0.71,
+          "chromium_install_precondition": 0.03,
+          "external_push_unverified": 0.2,
+          "next_production_boundary": 0.0,
+          "other_specific_uncertainty": 0.03,
+          "test_result_indeterminate": 0.03
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": 1971,
+      "output_tokens": 331
+    }
+  }
+}

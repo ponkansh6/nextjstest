@@ -1,0 +1,93 @@
+{
+  "httpStatus": 200,
+  "body": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "phase1_verdict": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.89,
+        "probabilities": {
+          "valid_as_defined": 0.92,
+          "implementation_change_needed": 0.02,
+          "plan_or_spec_change_needed": 0.0,
+          "evidence_gap_requires_hold": 0.06
+        }
+      },
+      "finding": {
+        "type": "choice",
+        "choice": "no_material_issue",
+        "confidence": 0.96,
+        "probabilities": {
+          "no_material_issue": 0.97,
+          "hook_smoke_coverage": 0.0,
+          "evidence_gap": 0.03,
+          "other_concrete_issue": 0.0,
+          "plan_spec_conflict": 0.0,
+          "happy_dom_separation": 0.0,
+          "browser_mode_setup": 0.0,
+          "browser_fail_stop": 0.0,
+          "test_full_order": 0.0,
+          "changed_full_routing": 0.0
+        }
+      },
+      "affected_location_or_requirement": {
+        "type": "choice",
+        "choice": "none",
+        "confidence": 0.4,
+        "probabilities": {
+          "plan_spec": 0.01,
+          "hook_smoke": 0.38,
+          "none": 0.47,
+          "evidence_only": 0.01,
+          "default_test_config": 0.01,
+          "prepush_changed_full": 0.02,
+          "full_script": 0.0,
+          "other": 0.03,
+          "browser_config_and_tests": 0.07
+        }
+      },
+      "evidence_assessment": {
+        "type": "choice",
+        "choice": "evidence_supports_acceptance",
+        "confidence": 0.9,
+        "probabilities": {
+          "insufficient_to_decide": 0.01,
+          "evidence_supports_acceptance": 0.91,
+          "scope_conflict": 0.0,
+          "reported_results_not_verifiable": 0.07,
+          "specific_failed_or_missing_case": 0.01
+        }
+      },
+      "proposed_next_action": {
+        "type": "choice",
+        "choice": "accept_phase1_and_continue",
+        "confidence": 0.98,
+        "probabilities": {
+          "collect_evidence_only": 0.0,
+          "hold_for_scope_decision": 0.01,
+          "change_code_only": 0.0,
+          "revise_plan_spec_only": 0.0,
+          "accept_phase1_and_continue": 0.99
+        }
+      },
+      "remaining_uncertainty": {
+        "type": "choice",
+        "choice": "none_for_defined_local_gate",
+        "confidence": 0.77,
+        "probabilities": {
+          "some_reported_checks_missing": 0.01,
+          "chromium_manual_precondition": 0.06,
+          "production_runtime_unverified": 0.01,
+          "actual_push_unverified": 0.09,
+          "none_for_defined_local_gate": 0.81,
+          "other_specific_uncertainty": 0.01
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": 2846,
+      "output_tokens": 527
+    }
+  }
+}

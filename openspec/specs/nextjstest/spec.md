@@ -2438,6 +2438,55 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, `hid
 
 ## Operational validation contracts
 
+#### Scenario Default Vitest suite isolation
+
+- **WHEN** `pnpm test` runs the default Vitest profile
+- **THEN** it runs the existing happy-dom suite without collecting Browser Mode specs
+
+#### Scenario Browser Mode test scope
+
+- **WHEN** `pnpm test:browser` runs the browser profile
+- **THEN** it uses `vitest.browser.config.ts` to run only
+  `tests/browser-mode/**/*.browser.test.tsx` in headless Chromium
+- **AND** Browser Mode verifies a real client component in a browser, but does
+  not verify Next.js production routing, SSR, Flight, or hydration
+
+#### Scenario PRE-PUSH Browser Mode validation
+
+- **WHEN** `pnpm run test:full` or the full pre-push profile runs
+- **THEN** it runs `pnpm run test:all` followed by `pnpm run test:browser`
+- **WHEN** the changed pre-push profile selects a non-empty related code/test
+  set
+- **THEN** it runs those related tests followed by `pnpm run test:browser`
+- **WHEN** a changed-profile push contains only documentation and/or asset
+  paths
+- **THEN** it skips related code-test selection, `pnpm run test:all`, and
+  `pnpm run test:browser`
+
+#### Scenario PRE-PUSH Browser install prerequisite
+
+- **WHEN** a pre-push profile invokes Browser Mode
+- **THEN** Chromium is installed once beforehand with
+  `pnpm exec playwright install chromium`; the hook does not download browsers
+  automatically
+- **AND** Linux operating-system dependencies are installed separately when
+  required
+
+#### Scenario PRE-PUSH related-test fallback
+
+- **WHEN** related-test selection in the changed profile is empty, invalid, or
+  indeterminate
+- **THEN** it falls back to the full profile, running `pnpm run test:all`
+  followed by `pnpm run test:browser` exactly once
+
+#### Scenario PRE-PUSH Browser Mode failure stop
+
+- **WHEN** the Browser Mode gate fails in either full or changed pre-push
+  profile
+- **THEN** the hook exits nonzero and rejects the push without updating the
+  remote ref
+- **AND** it skips every later gate in that profile
+
 #### Scenario Hook smoke validation
 
 - **WHEN** `pnpm run test:hook-smoke` is invoked

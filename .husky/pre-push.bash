@@ -11,10 +11,10 @@ source "$HOOK_DIR/lib/prepush-profile.sh"
 
 # Do not let local-only fixes make validation pass when they are not part of
 # the commit snapshot sent to the remote build.
-hook_gate "clean worktree check" bash "$HOOK_DIR/check-clean-worktree.sh"
+hook_gate "clean worktree check" bash "$HOOK_DIR/check-clean-worktree.sh" || exit $?
 
 # --- Detached HEAD leftover check ---
-hook_gate "detached HEAD leftover check" bash "$HOOK_DIR/check-detached-leftover.sh"
+hook_gate "detached HEAD leftover check" bash "$HOOK_DIR/check-detached-leftover.sh" || exit $?
 
 # Git sends one line per ref: local-ref local-oid remote-ref remote-oid.
 # Consume that protocol directly; never substitute origin/main...HEAD.
@@ -61,8 +61,8 @@ run_changed_tests() {
   echo "[hook] gate: changed integration tests"
   if ((${#PUSH_IMPACT_RELATED_PATHS[@]} == 0)); then
     echo "[hook] fallback reason: related test candidates were empty or unsafe"
-    echo "[hook] fallback profile: full (lint:fast → type-check → test:all → build → build-parity → security → E2E)"
-    run_full_profile
+    echo "[hook] fallback profile: full (lint:fast → type-check → test:all → test:browser → build → build-parity → security → E2E)"
+    run_full_profile || return $?
     return
   fi
   if pnpm exec vitest related --run --passWithNoTests --reporter=json --outputFile="$result" "${PUSH_IMPACT_RELATED_PATHS[@]}" >"$log" 2>&1; then
@@ -79,41 +79,43 @@ NODE
     ); then
       if [[ "$related_files" == 0 ]]; then
         echo "[hook] fallback reason: related test set was empty (Vitest JSON testResults=0)"
-        echo "[hook] fallback profile: full (lint:fast → type-check → test:all → build → build-parity → security → E2E)"
-        run_full_profile
+        echo "[hook] fallback profile: full (lint:fast → type-check → test:all → test:browser → build → build-parity → security → E2E)"
+        run_full_profile || return $?
       else
         echo "[hook] related test files: $related_files"
         echo "[hook] gate passed: changed integration tests"
+        hook_gate "test:browser" pnpm run test:browser || return $?
       fi
     else
       echo "[hook] fallback reason: related test result was indeterminate (missing, invalid, or incompatible Vitest JSON)"
-      echo "[hook] fallback profile: full (lint:fast → type-check → test:all → build → build-parity → security → E2E)"
-      run_full_profile
+      echo "[hook] fallback profile: full (lint:fast → type-check → test:all → test:browser → build → build-parity → security → E2E)"
+      run_full_profile || return $?
     fi
   else
     status=$?
     cat -- "$log"
     echo "[hook] fallback reason: related tests failed (exit $status)"
-    echo "[hook] fallback profile: full (lint:fast → type-check → test:all → build → build-parity → security → E2E)"
-    run_full_profile
+    echo "[hook] fallback profile: full (lint:fast → type-check → test:all → test:browser → build → build-parity → security → E2E)"
+    run_full_profile || return $?
   fi
 }
 
 run_e2e() {
-  hook_gate "test:e2e:clean" pnpm run test:e2e:clean
-  hook_gate "test:e2e" pnpm run test:e2e
+  hook_gate "test:e2e:clean" pnpm run test:e2e:clean || return $?
+  hook_gate "test:e2e" pnpm run test:e2e || return $?
 }
 
 run_full_profile() {
   FULL_PROFILE_RAN=1
   # Keep this order in sync with test:full. Every gate must stop the hook.
-  hook_gate "lint:fast" pnpm run lint:fast
-  hook_gate "type-check" pnpm run type-check
-  hook_gate "test:all" pnpm run test:all
-  hook_gate "build" pnpm run build
-  hook_gate "test:build-parity" pnpm run test:build-parity
-  hook_gate "security-check" pnpm run security-check
-  run_e2e
+  hook_gate "lint:fast" pnpm run lint:fast || return $?
+  hook_gate "type-check" pnpm run type-check || return $?
+  hook_gate "test:all" pnpm run test:all || return $?
+  hook_gate "test:browser" pnpm run test:browser || return $?
+  hook_gate "build" pnpm run build || return $?
+  hook_gate "test:build-parity" pnpm run test:build-parity || return $?
+  hook_gate "security-check" pnpm run security-check || return $?
+  run_e2e || return $?
   echo "[hook] production validation: not run (separate gate; PROD_URL/network availability is not established)"
 }
 
@@ -121,16 +123,16 @@ if [[ "$PREPUSH_PROFILE_NORMALIZED" == full || "${PUSH_IMPACT_FULL}" == 1 ]]; th
   if [[ -v PREPUSH_PROFILE ]] && [[ "$PREPUSH_PROFILE" == full ]]; then
     echo "[hook] explicit full profile requested"
   fi
-  run_full_profile
+  run_full_profile || exit $?
 else
   if ((PUSH_IMPACT_HAS_RELATED_INPUT)); then
-    run_changed_tests
+    run_changed_tests || exit $?
   else
     echo "[hook] changed integration tests: not applicable for docs/assets-only change"
   fi
   if ((FULL_PROFILE_RAN == 0)); then
-    hook_gate "build" pnpm run build
-    run_e2e
+    hook_gate "build" pnpm run build || exit $?
+    run_e2e || exit $?
     echo "[hook] production validation: not run (separate gate; PROD_URL/network availability is not established)"
   fi
 fi

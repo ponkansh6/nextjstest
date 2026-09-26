@@ -1,0 +1,73 @@
+{
+  "model": "jev-latest",
+  "state": {
+    "evaluationScope": "Plan45 Phase1 implementation checkpoint: separate Vitest Browser Mode setup and required pre-push validation gate.",
+    "background": "Judge only the stated Phase1 objective: add a dedicated real-browser Vitest Browser Mode path and ensure pre-push invokes it in changed/full profiles with reliable failure-stop semantics. User clarified that pre-push is sufficient; a separate CI requirement should not be invented. The current phase does NOT claim full migration or that the 33 current MAP-ineligible scenarios are truly ineligible. Phase5 must investigate each of those 33 stable IDs in detail and may revise those eligibility decisions.",
+    "implementationEvidence": [
+      "vitest.browser.config.ts is a separate Vitest 4 Browser Mode config using @vitest/browser-playwright 4.1.11, Chromium headless, 1280x800 viewport, tests/browser-mode/**/*.browser.test.tsx, excludes tests/e2e, keeps failure screenshots/traces.",
+      "package.json exposes test:browser and test:full; default pnpm test continues using the happy-dom config and excludes Browser Mode through separate config selection.",
+      "Real ThemeToggle client component browser tests cover browser click and persisted theme state plus style/color assertions; tests are self-contained browser contracts.",
+      "Pre-push changed profile runs related tests and then test:browser; empty, failed, unsafe or indeterminate related selection falls back to full profile. Full profile runs lint:fast, type-check, test:all, test:browser, build, build parity, security, E2E. Both profiles stop on gate failure.",
+      "Hook smoke coverage exercises full and changed profile gate ordering/failure stops, including Browser Mode failure rejection; fixture remote refs are checked unchanged on rejected push and later gates are skipped.",
+      "Reported verification: pnpm test:browser 2/2 pass; CI=1 pnpm test:browser 2/2 pass when the local Playwright browser path is explicitly configured because sandbox cache redirection otherwise affects browser cache lookup; pnpm test 84 files, 772 passed, 4 skipped; pnpm lint and pnpm type-check pass with XDG_CACHE_HOME=/tmp because default pnpm dlx cache path is sandbox read-only; pnpm run test:hook-smoke passes full and changed failure cases.",
+      "No actual external push was performed. Chromium installation is a one-time manual precondition. No Next production route, SSR, Flight, hydration or full app shell claim is made by this Phase1 checkpoint."
+    ],
+    "acceptanceCriteria": [
+      "Dedicated real browser Vitest execution exists and can be invoked independently of the happy-dom suite.",
+      "The standard test command retains its happy-dom suite, while Browser Mode runs via its separate explicit config.",
+      "Pre-push is the agreed required local gate; it invokes Browser Mode for changed and full profiles, and conservatively fails closed/falls back when changed-test selection is unsafe or indeterminate.",
+      "Hook smoke evidence covers failure-stop behavior so a failed required gate blocks the push and later gates do not run.",
+      "Acceptance is limited to Phase1 setup/pre-push wiring; it does not claim external push verification, Next production integration, or final eligibility for the 33 MAP-ineligible scenarios. Phase5 must individually investigate all 33."
+    ],
+    "outputRequirement": "Select one choice for each keyed question. Treat reported test/check outputs as supplied evidence. Select valid_as_defined only if it is supported by this evidence and the stated scope. For any defect/evidence gap, select the most specific diagnosis categories and action/uncertainty categories."
+  },
+  "questions": {
+    "phase1_verdict": {
+      "type": "choice",
+      "instructions": "Does the supplied implementation meet the Phase1 acceptance criteria within its stated scope? Select exactly one verdict.",
+      "criteria": {
+        "valid_as_defined": "Phase1 is implemented correctly and is ready as the dedicated Vitest Browser Mode setup plus required pre-push gate, within the explicitly stated scope and evidence limits.",
+        "implementation_change_needed": "A specific implementation or pre-push defect blocks Phase1 acceptance; identify the exact defect from the supplied evidence.",
+        "plan_or_spec_change_needed": "The implementation is sound but the Plan45 phase boundary or OpenSpec requirement is inconsistent with the agreed Phase1 scope; identify exact wording to revise.",
+        "evidence_gap_requires_hold": "No concrete code or plan defect is established, but existing evidence is insufficient to mark Phase1 complete; identify the exact missing evidence."
+      }
+    },
+    "primary_finding": {
+      "type": "choice",
+      "instructions": "Which best describes the primary finding supported by the supplied implementation and evidence?",
+      "criteria": {
+        "no_material_issue": "No material Phase1 issue found.",
+        "browser_runner_config": "Browser Mode config, provider, script, or browser test integration defect.",
+        "standard_test_regression": "Happy-dom/default test routing or standard test suite regression.",
+        "prepush_routing": "Pre-push changed/full profile routing, fallback, ordering, or gate failure-stop defect.",
+        "hook_smoke_coverage": "Hook smoke scenarios fail to demonstrate required failure-stop behavior.",
+        "plan_spec_mismatch": "Phase1 implementation and plan/spec wording materially disagree.",
+        "evidence_scope_gap": "Evidence is insufficient to verify a Phase1 contract.",
+        "other_concrete_issue": "A different specific issue is evidenced in the provided context."
+      }
+    },
+    "next_action": {
+      "type": "choice",
+      "instructions": "What should happen immediately after this checkpoint? Select one action, keeping change targets separated.",
+      "criteria": {
+        "accept_phase1_and_continue": "Accept Phase1 setup/pre-push gate and proceed to the next planned phase; Phase5 remains responsible for detailed per-ID investigation of all 33 MAP-ineligible scenarios.",
+        "fix_implementation": "Change implementation only to fix a concrete defect; leave plan/spec text unchanged.",
+        "revise_plan_spec": "Revise plan/spec text only to align requirements to the agreed Phase1 scope; leave implementation unchanged.",
+        "collect_evidence_only": "Collect the specific missing evidence only; do not change implementation or plan/spec.",
+        "hold_for_scope_decision": "Hold because the supplied evidence exposes an ambiguity about the agreed Phase1 boundary."
+      }
+    },
+    "remaining_uncertainty": {
+      "type": "choice",
+      "instructions": "Which remaining uncertainty applies to the Phase1 acceptance claim? Choose none only if the stated limitations are fully bounded and nonblocking.",
+      "criteria": {
+        "none_for_phase1_scope": "No remaining uncertainty for the defined Phase1 setup/pre-push objective; listed caveats are explicitly outside the acceptance claim.",
+        "chromium_install_precondition": "Whether the documented one-time Chromium installation precondition is acceptable remains unclear.",
+        "external_push_unverified": "An actual external push was not performed, so production remote interaction is not evidenced.",
+        "next_production_boundary": "Next production routes, SSR, Flight, hydration or full app shell behavior was not verified and is outside Phase1.",
+        "test_result_indeterminate": "Some required local test/lint/type-check/hook-smoke result is missing or indeterminate.",
+        "other_specific_uncertainty": "Another exact uncertainty remains; use only if supported by the supplied context."
+      }
+    }
+  }
+}

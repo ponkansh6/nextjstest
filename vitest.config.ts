@@ -22,6 +22,7 @@ export default defineConfig({
       "tests/production/**",
       "tests/build/**",
       "tests/e2e/**",
+      "tests/browser-mode/**",
       "**/.plan42*",
       "**/.plan42*/**",
     ],
