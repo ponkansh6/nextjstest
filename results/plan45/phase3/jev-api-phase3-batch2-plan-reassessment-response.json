@@ -1,0 +1,108 @@
+{
+  "httpStatus": 200,
+  "body": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "plan_validity": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.97,
+        "probabilities": {
+          "incomplete_implementation_info": 0.0,
+          "valid_as_defined": 0.97,
+          "scope_violation": 0.0,
+          "other": 0.0,
+          "indeterminate": 0.01,
+          "requirements_mismatch": 0.01,
+          "missing_prerequisites_info": 0.0,
+          "implementation_issue": 0.01
+        }
+      },
+      "case_finding": {
+        "type": "choice",
+        "choice": "no_case_specific_finding",
+        "confidence": 0.84,
+        "probabilities": {
+          "no_case_specific_finding": 0.87,
+          "empty_status_contract": 0.08,
+          "map_signal_overreach": 0.0,
+          "baseline_id_mapping": 0.01,
+          "user_boundary_violation": 0.0,
+          "migration_count_error": 0.0,
+          "other_concrete_finding": 0.04,
+          "duplicate_or_wrong_owner": 0.0,
+          "partial_transfer_boundary": 0.0,
+          "openspec_semantics": 0.0
+        }
+      },
+      "affected_requirement": {
+        "type": "choice",
+        "choice": "inventory_row94",
+        "confidence": 0.34,
+        "probabilities": {
+          "existing_unit_coverage": 0.0,
+          "spending_chart_source": 0.01,
+          "inventory_row94": 0.4,
+          "other": 0.05,
+          "p42_181_source": 0.15,
+          "p42_remainder": 0.0,
+          "batch2_plan": 0.34,
+          "a_e_m_accounting": 0.0,
+          "phase5_scope": 0.0,
+          "crosswalks": 0.01,
+          "openspec_r20d": 0.03,
+          "none": 0.01
+        }
+      },
+      "evidence_assessment": {
+        "type": "choice",
+        "choice": "source_contains_status_role",
+        "confidence": 0.55,
+        "probabilities": {
+          "inventory_id_omission": 0.0,
+          "insufficient": 0.01,
+          "bounded_plan_supported": 0.39,
+          "mixed_case_not_transferable_whole": 0.0,
+          "source_contains_status_role": 0.6,
+          "evidence_conflict": 0.0,
+          "a_e_m_unchanged": 0.0,
+          "component_fixture_needs_support_handling": 0.0,
+          "raw_map_is_weak_signal": 0.0,
+          "no_duplicate_unit_owner": 0.0
+        }
+      },
+      "proposed_next_action": {
+        "type": "choice",
+        "choice": "approve_partial_transfer_plan",
+        "confidence": 0.99,
+        "probabilities": {
+          "hold_for_scope_decision": 0.0,
+          "collect_fixture_evidence_only": 0.0,
+          "retain_p42_181_only": 0.0,
+          "approve_partial_transfer_plan": 1.0,
+          "change_batch2_plan_only": 0.0,
+          "change_openspec_only": 0.0
+        }
+      },
+      "remaining_uncertainty": {
+        "type": "choice",
+        "choice": "none_for_plan_checkpoint",
+        "confidence": 0.86,
+        "probabilities": {
+          "p42_retained_case": 0.0,
+          "other_specific_uncertainty": 0.03,
+          "support_series_fixture": 0.04,
+          "raw_map_low_confidence": 0.0,
+          "crosswalk_update_pending": 0.01,
+          "phase5_33_pending": 0.01,
+          "exact_status_semantics": 0.03,
+          "none_for_plan_checkpoint": 0.88
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": 5446,
+      "output_tokens": 707
+    }
+  }
+}

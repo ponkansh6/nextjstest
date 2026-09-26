@@ -240,22 +240,6 @@ test.describe("アクセシビリティ - フォーカス管理", () => {
     },
   );
 
-  fixtureTest("info ポップアップを Esc で閉じてエラーが発生しない", async ({ page }) => {
-    await page.goto("/");
-    await page.waitForLoadState("networkidle");
-
-    await page
-      .getByRole("button", { name: /データソース/ })
-      .first()
-      .click();
-
-    await page.keyboard.press("Escape");
-    await page.waitForTimeout(300);
-
-    // ダイアログが閉じられている
-    await expect(page.getByRole("dialog").first()).not.toBeVisible();
-  });
-
   fixtureTest("ボトムシートを開いた状態で Tab がシート内に留まる", async ({ page }) => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");

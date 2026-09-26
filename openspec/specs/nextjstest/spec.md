@@ -1583,7 +1583,8 @@ The system SHALL make the nominal and real consumption charts readable and opera
 #### Scenario R20d: Mobile Empty and Accessibility States
 
 - **WHEN** the user clears every category or enlarges text/uses landscape/dark mode
-- **THEN** the chart explains the empty state and permits recovery without displaying nonexistent bars or values
+- **THEN** when every supplied expense series is hidden and no support series is available, the chart exposes its empty-state message in a `role="status"` region: `表示する系列がありません。凡例から費目を1つ以上選択してください。`
+- **AND** the chart permits recovery without displaying nonexistent bars or values
 - **AND** category names, selected/focused states, and close/reopen actions remain understandable without relying on color alone
 - **AND** the page has no horizontal overflow at 375px
 
@@ -2486,6 +2487,18 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, `hid
 - **THEN** the mock's guarantee is limited to props and rendered DOM and does
   not claim to validate actual chart layout or rendering
 - **AND** no Recharts mock is part of the current Browser Mode harness
+
+#### Scenario ChartInfoButton Escape dismissal in Browser Mode
+
+- **WHEN** the Browser Mode test mounts the real `ChartInfoButton` with static
+  children, opens its accessible trigger, and sends Escape in Chromium
+- **THEN** the dialog becomes visible with `aria-expanded="true"`, then becomes
+  hidden with `aria-expanded="false"` after Escape
+- **AND** this verifies the component's Escape dismissal only; it does not
+  verify the production route, focus integration, or page errors
+- **AND** after this Browser Mode replacement passed, Playwright P42-021 is
+  removed; the separate P42-018 outside-click / scroll integration case
+  remains in Playwright
 
 #### Scenario PRE-PUSH Browser Mode validation
 

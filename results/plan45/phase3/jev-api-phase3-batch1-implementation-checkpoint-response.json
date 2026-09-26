@@ -1,0 +1,105 @@
+{
+  "httpStatus": 200,
+  "body": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "implementation_verdict": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.87,
+        "probabilities": {
+          "requirements_mismatch": 0.01,
+          "incomplete_implementation_info": 0.03,
+          "other": 0.01,
+          "missing_prerequisites_info": 0.05,
+          "indeterminate": 0.02,
+          "implementation_issue": 0.0,
+          "valid_as_defined": 0.88,
+          "scope_violation": 0.0
+        }
+      },
+      "case_finding": {
+        "type": "choice",
+        "choice": "prepush_output_ambiguous",
+        "confidence": 0.47,
+        "probabilities": {
+          "assertion_transfer_mismatch": 0.0,
+          "browser_keyboard_issue": 0.0,
+          "no_material_issue": 0.35,
+          "production_boundary_misrepresented": 0.0,
+          "prepush_output_ambiguous": 0.53,
+          "retained_case_regression": 0.0,
+          "other_concrete_finding": 0.01,
+          "verification_scope_gap": 0.11,
+          "crosswalk_or_accounting_error": 0.0,
+          "scope_violation": 0.0
+        }
+      },
+      "affected_location": {
+        "type": "choice",
+        "choice": "prepush_diagnostics",
+        "confidence": 0.76,
+        "probabilities": {
+          "openspec": 0.0,
+          "other": 0.0,
+          "p42_018": 0.0,
+          "inventory": 0.0,
+          "prepush_diagnostics": 0.79,
+          "e2e_removal": 0.03,
+          "user_boundary": 0.0,
+          "ledger_matrix": 0.0,
+          "plan45": 0.0,
+          "none": 0.14,
+          "browser_mode_test": 0.04
+        }
+      },
+      "evidence_assessment": {
+        "type": "choice",
+        "choice": "prepush_diagnostic_nonfailure",
+        "confidence": 0.35,
+        "probabilities": {
+          "exact_assertion_preserved": 0.01,
+          "route_and_focus_limitation_explicit": 0.09,
+          "final_evidence_supports_acceptance": 0.32,
+          "prepush_diagnostic_nonfailure": 0.42,
+          "prepush_diagnostic_needs_followup": 0.05,
+          "evidence_conflict": 0.0,
+          "all_required_final_checks_passed": 0.08,
+          "insufficient": 0.01,
+          "crosswalks_and_m_counts_match": 0.02
+        }
+      },
+      "proposed_next_action": {
+        "type": "choice",
+        "choice": "accept_batch1_and_continue",
+        "confidence": 0.92,
+        "probabilities": {
+          "change_openspec_only": 0.0,
+          "collect_diagnostic_evidence_only": 0.06,
+          "change_plan_only": 0.0,
+          "change_code_only": 0.0,
+          "accept_batch1_and_continue": 0.9400000000000001,
+          "hold_for_scope_decision": 0.0
+        }
+      },
+      "remaining_uncertainty": {
+        "type": "choice",
+        "choice": "prepush_diagnostics_unexplained",
+        "confidence": 0.86,
+        "probabilities": {
+          "other_specific_uncertainty": 0.01,
+          "external_push_not_run": 0.0,
+          "prepush_diagnostics_unexplained": 0.89,
+          "none_for_batch1_scope": 0.06999999999999999,
+          "phase5_33_pending": 0.0,
+          "m_independent_review_pending": 0.03,
+          "production_route_escape_not_retained": 0.0
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": 3955,
+      "output_tokens": 701
+    }
+  }
+}

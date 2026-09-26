@@ -1,0 +1,124 @@
+{
+  "model": "jev-latest",
+  "state": {
+    "reviewType": "JEV v3 initial plan_validity review for Phase3 Batch1 before scenario implementation.",
+    "planExcerpt": "Phase3 Batch1 selects one stable eligible scenario `p45-a-a11y-info-escape`, mapped to immutable P42-021. Phase0 eligibility is `eligible_component_or_dom_interaction`; planned counts A=123, E=90, M=1 are not a fresh census/recalculation. Retain current Playwright P42-021 until the Browser Mode replacement is implemented and green, then remove only that test and update scenario inventory, Plan42 responsibility matrix, assertion ledger, and OpenSpec. The replacement mounts the real ChartInfoButton with static children through existing renderBrowserComponent, opens using the real trigger, confirms dialog visible, sends Chromium Escape with `await userEvent.keyboard('{Escape}')`, and asserts hidden; it may also assert aria-expanded true then false with expect.element. Component mount does not verify production route Escape/focus integration. Preserve P42-018 outside-click/scroll unchanged. P42-020 was already removed; do not reintroduce. No pageerror assertion or claim. No GitHub Actions changes. Defer all 33 MAP-ineligible individual investigations to Phase5.",
+    "sourceFacts": [
+      "Stable ID p45-a-a11y-info-escape maps to immutable baseline P42-021; Phase0 MAP eligibility is eligible_component_or_dom_interaction, and it is not among the 33 ineligible IDs.",
+      "Current tests/e2e/accessibility.e2e.spec.ts:243-256 navigates to production route, waits networkidle, clicks data-source trigger, presses Escape, waits 300ms, and only asserts first dialog not visible. It has no explicit pageerror assertion and no pre-Escape dialog-visible assertion.",
+      "P42-020 was a base-revision pre-Escape visible assertion and is already removed. Existing tests/components/ChartInfoButton.test.tsx uses simulated fireEvent.keyDown(document,{key:\"Escape\"}) and asserts dialog removal.",
+      "ChartInfoButton is a client component; trigger click opens role=dialog; aria-expanded reflects open state; document keydown Escape closes it. Component-level DOM/key interaction has no Next route dependency.",
+      "P42-018 is separate actual-page outside-click/scroll behavior and stays unchanged. Plan explicitly keeps P42-021 until the replacement is green then requires inventory, matrix, ledger and OpenSpec updates."
+    ],
+    "officialVitestEvidence": [
+      "https://vitest.dev/api/browser/interactivity documents provider-backed userEvent via CDP/WebDriver and userEvent.keyboard with Escape.",
+      "https://vitest.dev/guide/browser/ documents native browser execution/provider setup; https://vitest.dev/api/browser/locators documents browser locators/assertions.",
+      "Repo pins Vitest/@vitest/browser-playwright 4.1.11. Current official documentation pages are rolling rather than a tag-pinned 4.1.11 snapshot. Exact userEvent.keyboard Escape execution is not yet done for this scenario; plan requires implementation, green browser verification, and only then E2E removal."
+    ],
+    "scope": [
+      "One eligible scenario only. A=123/E=90/M=1 are presented as planned values, not fresh recalculation; Phase0 current M was 0.",
+      "After P42-021 removal, production-route Escape/focus integration for that case is not retained; this residual boundary is explicit. No Next route or pageerror guarantee is claimed.",
+      "Preserve P42-018; never reintroduce removed P42-020. No GitHub Actions changes; use local pre-push. Phase5 individually investigates all 33 MAP-ineligible rows."
+    ],
+    "priorPhases": "Phase1 and Phase2 have completed direct TypeSafe checkpoints and Phase2 exact Vitest 4.1.11 browser runtime work. Batch1 plan is pre-implementation; its exact scenario has not yet run.",
+    "acceptanceCriteria": [
+      "Correct stable ID/P42 mapping and explicit distinction from P42-018/P42-020.",
+      "Browser Mode contract is actual ChartInfoButton open + provider-backed Escape + dialog hidden, without asserting pageerror or production route.",
+      "E2E removal only after Browser Mode green and all crosswalks updated.",
+      "Rolling-doc/version caveat is acknowledged; exact 4.1.11 keyboard run is a later implementation gate, not falsely claimed already done.",
+      "No Actions; Phase5 33-ID work remains deferred.",
+      "Only valid_as_defined passes."
+    ],
+    "conditionalProtocol": "If initial valid API response verdict is any non-pass including indeterminate, preserve initial choice/distribution and create >=2 mutually exclusive case-specific actions, each targeting exactly one of plan, OpenSpec, code/test ownership, or evidence-only, all with same finding, affected requirement, evidence/neededEvidence. Send exactly one follow-up requiring choice ID, finding, affected location/requirement, observed evidence or exact neededEvidence, concrete nextAction/proposedFix, and remainingUncertainty (explicit none). Preserve initial decision/distribution and set effectiveVerdict exactly requires_revalidation; incomplete details => resolution unresolved, diagnosisStatus incomplete, unresolvedReasons; no chaining. Initial valid_as_defined => no follow-up. API/schema failure => no follow-up and record error."
+  },
+  "questions": {
+    "plan_validity": {
+      "type": "choice",
+      "instructions": "Is this single-scenario pre-implementation Batch1 plan valid as defined? Only valid_as_defined passes.",
+      "criteria": {
+        "valid_as_defined": "The pre-implementation Batch 1 plan is valid as defined: the selected active stable scenario and source contract are correctly bounded, Browser Mode is an appropriate primary owner, removal is gated on a green replacement and crosswalk updates, and production-route / no-Actions / Phase5 boundaries are clear.",
+        "requirements_mismatch": "A concrete contradiction exists between the Batch 1 plan, source assertions, immutable Plan42 baseline, OpenSpec, or the user-approved boundaries; identify it.",
+        "missing_prerequisites_info": "A material prerequisite necessary to begin implementation is missing.",
+        "incomplete_implementation_info": "The plan checkpoint lacks information about existing code/test state. Do not select only because the planned Browser Mode scenario is not yet implemented or run.",
+        "implementation_issue": "Existing implementation/source creates a concrete blocker to the plan.",
+        "scope_violation": "The plan violates scope: migrate only the named eligible scenario, no GitHub Actions changes, preserve P42-018, do not reintroduce P42-020, make no pageerror claim, defer all 33 MAP-ineligible IDs to Phase5.",
+        "other": "Another specific evidence-supported blocker exists.",
+        "indeterminate": "The evidence does not establish validity or a concrete blocker."
+      }
+    },
+    "case_finding": {
+      "type": "choice",
+      "instructions": "What concrete plan finding, if any, is supported?",
+      "criteria": {
+        "no_case_specific_finding": "No material plan defect; Batch 1 can proceed to implementation under its gates.",
+        "scope_or_baseline_mapping": "Stable ID, immutable baseline assertion, eligibility, or planned M accounting is wrong or unclear.",
+        "e2e_contract_mischaracterized": "Current P42-021 source assertions are misdescribed or a pageerror/open assertion is claimed that is not present.",
+        "component_browser_mode_mismatch": "Real ChartInfoButton with static children and provider-backed Escape does not preserve intended component contract.",
+        "user_event_keyboard_gap": "Official/provider behavior does not establish userEvent.keyboard Escape support sufficiently for the plan.",
+        "removal_gate_inadequate": "P42-021 can be removed before Browser Mode replacement is green and crosswalk updated.",
+        "retained_case_scope": "Plan changes P42-018 or reintroduces P42-020 or omits production-route limitation.",
+        "spec_update_gap": "Required inventory, ledger, matrix, or OpenSpec updates are omitted.",
+        "user_boundary_violation": "Plan requires GitHub Actions or fails to defer the 33 IDs to Phase5.",
+        "other_concrete_finding": "Another specific issue is shown by evidence."
+      }
+    },
+    "affected_requirement": {
+      "type": "choice",
+      "instructions": "Which exact source/plan/crosswalk location is affected? Choose none only if no material finding.",
+      "criteria": {
+        "none": "No affected location; no material finding.",
+        "batch1_plan": "shared_plan/45-vitest-browser-mode-e2e-migration-plan.md Phase3 Batch1 section.",
+        "current_e2e": "tests/e2e/accessibility.e2e.spec.ts:243-256, current P42-021 assertion.",
+        "scenario_inventory": "results/plan45/phase0/scenario-inventory.md row p45-a-a11y-info-escape.",
+        "p42_ledger_matrix": "shared_plan/42-assertion-callsite-ledger.md and shared_plan/42-assertion-case-responsibility-matrix.md.",
+        "component_source_unit": "src/app/components/ChartInfoButton.tsx and tests/components/ChartInfoButton.test.tsx.",
+        "vitest_keyboard_api": "Vitest 4.1.11 and official userEvent.keyboard docs/version evidence.",
+        "openspec": "openspec/specs/nextjstest/spec.md Browser Mode scenarios.",
+        "phase5_boundary": "Plan45 Phase5 list and the 33-ID review deferral.",
+        "no_actions_boundary": "User-confirmed local pre-push only; no GitHub Actions changes.",
+        "other": "Another exact source/requirement."
+      }
+    },
+    "evidence_assessment": {
+      "type": "choice",
+      "instructions": "Which supplied source facts support or challenge this plan?",
+      "criteria": {
+        "facts_support_plan": "Current source, ledger/matrix, eligibility row, component behavior, existing unit test and official docs support the bounded plan; exact Browser Mode run is a planned implementation gate.",
+        "current_e2e_only_hidden": "Current E2E lines 243-256 navigate to production route, click trigger, press Escape, wait, then assert dialog hidden; no explicit pageerror assertion and no pre-Escape visible assertion.",
+        "unit_escape_is_simulated": "Existing component unit test uses fireEvent.keyDown(document,{key:\"Escape\"}) and asserts dialog removed; it is not real-browser keyboard evidence.",
+        "official_api_supports_escape": "Official current Vitest docs document userEvent.keyboard and Escape; provider-backed via CDP/WebDriver, but docs are rolling and not exact patch-pinned.",
+        "removal_gate_correct": "Plan keeps P42-021 until replacement is implemented and green, then removes only it and updates inventory/matrix/ledger/OpenSpec.",
+        "preserved_boundaries": "P42-018 remains; P42-020 is already removed; no pageerror claim; no Actions; all 33 MAP-ineligible rows deferred to Phase5.",
+        "m_accounting_ambiguous": "Current Phase0 says M=0; Batch1 plan lists planned A=123/E=90/M=1 without naming explicitly that M=1 is the post-batch target.",
+        "specific_missing_evidence": "A concrete required fact is missing.",
+        "evidence_conflict": "Supplied assertion or immutable ledger contradicts plan.",
+        "insufficient": "Facts do not support a specific conclusion."
+      }
+    },
+    "proposed_next_action": {
+      "type": "choice",
+      "instructions": "What immediate next action is appropriate? If valid, approve and implement under the stated gates.",
+      "criteria": {
+        "approve_batch1_and_implement": "Approve the single-scenario plan and implement it. Retain P42-021 until replacement is green and crosswalks updated; preserve P42-018; do not reintroduce P42-020; do not alter Actions; Phase5 remains deferred.",
+        "revise_batch_plan_only": "Change only Phase3 Batch1 plan wording for the finding; do not change code/spec/inventory or gather evidence in this action.",
+        "revise_openspec_only": "Change only OpenSpec for the finding; do not change code/plan/inventory or gather evidence in this action.",
+        "collect_exact_api_evidence_only": "Collect only exact 4.1.11 provider evidence for Escape keyboard behavior; do not change plan/code/spec/inventory in this action.",
+        "retain_p42_021_in_playwright_only": "Change only current test ownership/code so P42-021 remains in Playwright; do not edit plan/spec or collect evidence in this action.",
+        "hold_for_scope_decision": "Hold only for a concrete conflict with an explicit user boundary or immutable baseline."
+      }
+    },
+    "remaining_uncertainty": {
+      "type": "choice",
+      "instructions": "What uncertainty remains at this pre-implementation plan checkpoint?",
+      "criteria": {
+        "none_for_preimplementation_plan": "No blocking uncertainty for plan approval; exact-scenario runtime verification is an implementation gate.",
+        "vitest_411_escape_unverified": "Exact userEvent.keyboard Escape behavior on installed 4.1.11 still needs its planned Browser Mode run.",
+        "m_temporal_point": "Whether planned M=1 is post-Batch1 rather than current migrated count needs clarification.",
+        "route_escape_not_retained": "After P42-021 removal, production-route Escape/focus is not tested; this is explicitly disclosed.",
+        "crosswalk_pending": "Inventory, matrix, ledger, and OpenSpec updates are pending implementation.",
+        "phase5_scope": "Phase5 deferral of all 33 IDs remains unclear.",
+        "other_specific_uncertainty": "Another exact uncertainty remains."
+      }
+    }
+  }
+}

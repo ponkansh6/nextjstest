@@ -1,0 +1,112 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-26T02:21:44.602Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "model": "jev-latest",
+    "state": {
+      "evaluationScope": "implementation_checkpoint_validity",
+      "background": "Review the implemented Plan45 Phase3 Batch2 assertion-level partial transfer for stable scenario p45-b-consumption-mobile-acceptance-139-mobile-pixel-acceptance-plan25-openspec-1. The agreed slice is exactly P42-181, the empty-state message/status assertion, not the mixed E2E scenario or whole stable scenario. The actual SpendingBarChart Browser Mode test supplies only expense keys 食料 and 住居, one data row for those keys, no special nominal/real support keys or support-series rows, and sets hiddenKeys to every supplied expense key. It mounts the actual component and asserts only the visible role=status empty-state message. vitest.browser.config.ts adds optimizeDeps.include=[\"recharts\"] after the initial focused run hit an invalid hook call in ResponsiveContainer following late Recharts optimization/reload. The mobile Playwright case now has a truthful title about actual bar removal/restoration and retains production route, mobile viewport, accordion/hide-all action, actual SVG/bar absence P42-180, aria state P42-182, and bar restoration P42-183; only P42-181's broad empty-message assertion was removed after the replacement passed. The accessibility Playwright case removed only P42-021 after its focused ChartInfoButton Browser Mode replacement passed; this was Batch1 and remains a separate component-level assertion, not production-route/focus coverage. Crosswalks and OpenSpec were updated for the relevant assertion owners and boundaries.",
+      "acceptanceCriteria": [
+        "The new actual-component Browser Mode test checks exactly the rendered role=status empty-state message when all supplied expense keys are hidden and no support keys or rows exist; it does not claim to test an action, bars, production route, or error-free console.",
+        "Only P42-181 is transferred from the mixed mobile E2E case; P42-179/180/182/183 and the route, mobile, hide/recover, SVG/bar and aria-state assertions remain Playwright-owned.",
+        "The accessibility P42-021 transfer remains limited to component Escape behavior; no production route, focus integration, or pageerror/no-error claim is made. P42-018 remains and P42-020 is not reintroduced.",
+        "OpenSpec R20d, Phase0 inventory mapping, Plan42 ledger/matrix and Plan45 records agree with the exact partial transfer while preserving immutable baseline facts and scenario row count. A=123, E=90, M=1; do not count the partial mixed scenario toward M.",
+        "Verification evidence supports acceptance and records the one unrelated initial E2E failure, isolated rerun, successful second full run, unsuppressed Recharts console warnings, and unresolved malformed-JSON/exit23-looking diagnostics accurately.",
+        "No GitHub Actions/workflow change, no Phase5 investigation, and no broader transfer claim is introduced."
+      ],
+      "verification": [
+        "Focused SpendingBarChart Browser Mode: 1/1 passed.",
+        "Full Browser Mode: 5 files / 6 tests passed.",
+        "Target retained mobile Playwright case: 1/1 passed.",
+        "First pnpm test:full had one unrelated tests/e2e/tooltip-dismiss.e2e.spec.ts:207 failure (118 pass / 1 fail / 19 skipped); the exact test rerun passed 1/1.",
+        "Second pnpm test:full passed: lint:fast, typecheck, unit 84 files / 772 passed / 4 skipped, Browser Mode 5 files / 6 passed, webpack build, parity 3 passed, security checks, E2E 119 passed / 19 skipped.",
+        "pnpm lint, pnpm run test:hook-smoke, and git diff --check passed.",
+        "Recharts emitted unsuppressed React unknown-prop console.error warnings during dev render. They were audited as warnings from the chart subtree, separate from the asserted role=status node; no zero-console-error claim is made.",
+        "The existing production E2E console/pageerror check passed for its route test only; it does not cover the empty-state interaction.",
+        "Both full runs displayed malformed Vitest JSON / exit23-looking pre-push diagnostics. Provenance remains unresolved/non-blocking; each full command returned 0 and the actual production build succeeded."
+      ],
+      "knownConstraints": [
+        "Batch2 is a one-assertion partial transfer. Keep A/E/M=123/90/1; do not increment M.",
+        "Do not claim mobile route, hide/recover action, actual SVG/no-bars proof, production integration, or zero-console-error for the Browser Mode test.",
+        "P42-179/180/182/183 and actions remain E2E. P42-018 remains; P42-020 stays removed.",
+        "No GitHub Actions/CI workflow changes; the established local pre-push path is the requested enforcement.",
+        "The 33 Phase5 individual MAP-ineligible investigations remain deferred.",
+        "Prior Batch1 completed work is context only; this checkpoint reviews Batch2 and must not revise Batch1 accounting."
+      ],
+      "outputRequirement": "Choose exactly one listed primary verdict. For a non-pass choice, provide a case-specific finding, affected path/requirement, observed evidence, and a concrete proposed fix or exact needed evidence. Also identify relevant evidence and next step. Do not infer a failure from test fixture-looking output that returned success, and do not claim absent route/console guarantees."
+    },
+    "questions": {
+      "implementation": {
+        "type": "choice",
+        "instructions": "Does the supplied implementation and validation evidence support acceptance against the exact scoped criteria? Return a probability distribution over all listed choices. Only valid_as_defined passes.",
+        "criteria": {
+          "valid_as_defined": "The exact P42-181 status-message partial transfer is implemented and verified; the mixed mobile E2E remainder and all crosswalk/accounting boundaries are truthful; Batch1 context remains separately scoped; and observed diagnostics are not misrepresented. Only this choice passes.",
+          "requirements_mismatch": "A concrete conflict remains between the agreed scope, OpenSpec, Plan45, or retained E2E contract; identify the exact clause and correction.",
+          "missing_prerequisites_info": "A specific source fact or required validation needed to decide this exact assertion transfer is absent; identify it precisely.",
+          "incomplete_implementation_info": "A required part of the P42-181 transfer or its verification is incomplete; identify the missing proof without demanding excluded route/action/SVG guarantees.",
+          "implementation_issue": "A concrete defect exists in the component test, expense-only fixture, optimizeDeps change, Playwright remainder, or ownership records; identify location, evidence, and correction.",
+          "scope_violation": "The work exceeds the one assertion slice, claims unsupported mobile/production/action/SVG/console guarantees, changes Actions/CI, changes A/E/M, disturbs P42-018/P42-020, or starts Phase5 investigation; identify evidence and correction.",
+          "other": "Another material concern is supported by specific evidence; identify the affected path and fix or exact needed evidence.",
+          "indeterminate": "The supplied evidence cannot support a judgment; identify the missing context if possible."
+        }
+      }
+    }
+  },
+  "questionIds": [
+    "implementation"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "implementation": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.91,
+        "probabilities": {
+          "other": 0,
+          "missing_prerequisites_info": 0.02,
+          "indeterminate": 0,
+          "scope_violation": 0.01,
+          "incomplete_implementation_info": 0.01,
+          "requirements_mismatch": 0.02,
+          "valid_as_defined": 0.93,
+          "implementation_issue": 0.01
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.91,
+    "probabilities": {
+      "other": 0,
+      "missing_prerequisites_info": 0.02,
+      "indeterminate": 0,
+      "scope_violation": 0.01,
+      "incomplete_implementation_info": 0.01,
+      "requirements_mismatch": 0.02,
+      "valid_as_defined": 0.93,
+      "implementation_issue": 0.01
+    },
+    "passProbability": 0.93,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

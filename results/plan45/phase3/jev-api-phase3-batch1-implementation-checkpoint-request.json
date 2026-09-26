@@ -1,0 +1,134 @@
+{
+  "model": "jev-latest",
+  "state": {
+    "reviewType": "JEV v3 final implementation-checkpoint review for Plan45 Phase3 Batch1 stable scenario p45-a-a11y-info-escape.",
+    "changedScope": [
+      "Added tests/browser-mode/ChartInfoButton.browser.test.tsx. It mounts the real ChartInfoButton with static child content through renderBrowserComponent; opens accessible trigger; asserts dialog visible and aria-expanded true; uses actual provider-backed `await userEvent.keyboard(\"{Escape}\")`; asserts dialog is absent and aria-expanded false.",
+      "Removed only current Playwright P42-021 test from tests/e2e/accessibility.e2e.spec.ts after the Browser Mode test passed 1/1. P42-018 separate actual-page outside-click/scroll case remains unchanged. P42-020 was previously removed and is not reintroduced.",
+      "Updated openspec/specs/nextjstest/spec.md, results/plan45/phase0/scenario-inventory.md, shared_plan/42-assertion-callsite-ledger.md, shared_plan/42-assertion-case-responsibility-matrix.md, and shared_plan/45-vitest-browser-mode-e2e-migration-plan.md with current ownership and limitations.",
+      "Current A=123, E=90, M=0 until independent review is complete. MAP classes remain eligible 90 / not eligible 33 / unresolved 0. The 33 ineligible IDs stay deferred for individual Phase5 investigation; they are not finally excluded.",
+      "No GitHub Actions changes. Enforcement remains local pre-push."
+    ],
+    "originalAssertionFacts": [
+      "Stable ID p45-a-a11y-info-escape maps to baseline P42-021; the row is MAP eligible and is not one of the 33 deferred IDs.",
+      "Original current E2E lines 243-256 opened the production route, clicked the info trigger, pressed Escape, waited 300ms, and asserted dialog not visible. The test title mentions no errors, but no explicit pageerror/no-error assertion existed, and no pre-Escape visible assertion existed in those lines.",
+      "P42-020 was a separate removed base-revision pre-Escape visibility assertion; do not reintroduce it. P42-018 is separate outside-click/scroll integration and remains unchanged.",
+      "Replacement proves component-level Escape dismissal only; it does not validate production route, production focus integration, or page errors. Updated records state this plainly."
+    ],
+    "actualVerification": [
+      "Focused Browser Mode ChartInfoButton test: 1/1 passed.",
+      "All Browser Mode: 4 files / 5 tests passed.",
+      "ChartInfoButton unit suite: 20/20 passed.",
+      "P42-018 outside-click E2E: 1/1 passed.",
+      "pnpm run test:hook-smoke passed.",
+      "pnpm test:full exited 0: lint:fast, typecheck, Vitest 84 files / 772 passed / 4 skipped, Browser Mode 5 passed, Next webpack build succeeded, build parity 3 passed, security checks passed, E2E 119 passed / 19 skipped.",
+      "Full pnpm lint and git diff --check exited 0.",
+      "During pnpm test:full, malformed-JSON/exit-23-looking pre-push diagnostic output appeared. The full command exited 0 and later actual Next build passed. tests/unit/husky-push-impact.test.ts contains invalid related JSON input and a mocked gate exit 23; expected subprocess output should be captured. This observation is not evidence that the real build failed; JEV should state if it creates a material remaining uncertainty."
+    ],
+    "priorPlanCheckpoint": [
+      "Phase3 Batch1 pre-implementation direct review selected valid_as_defined, confidence .93 / selected probability .95, no_case_specific_finding, approve_batch1_and_implement; remaining uncertainty was vitest_411_escape_unverified (.50 / P=.58).",
+      "That plan checkpoint explicitly noted current official docs are rolling, not exact patch-pinned. It remains preserved in results/plan45/phase3/jev-api-phase3-batch1-plan-checkpoint-*; this final implementation review does not overwrite it."
+    ],
+    "officialDocsAndVersion": [
+      "Current official Vitest Interactivity API https://vitest.dev/api/browser/interactivity documents userEvent.keyboard and Escape; it describes provider-backed CDP/WebDriver events.",
+      "Repo uses pinned Vitest and @vitest/browser-playwright 4.1.11. The exact Browser Mode test ran successfully on that version, resolving the practical behavior for this tested Escape path. The current official docs remain rolling and do not establish unrelated version-specific behavior."
+    ],
+    "boundaries": [
+      "No GitHub Actions changes; pre-push is sufficient per user.",
+      "No actual external push is claimed.",
+      "Production route/focus integration is no longer covered by P42-021 after transfer and is explicitly acknowledged.",
+      "The 33 current MAP-ineligible IDs remain scheduled for individual Phase5 review; do not change eligibility/denominator here.",
+      "Current M=0 pending focused/full gate plus independent review as recorded in Plan45."
+    ],
+    "conditionalProtocol": "Only valid_as_defined passes. If initial valid API response verdict is non-pass or indeterminate, preserve the exact initial decision summary and probability distribution, construct at least two mutually exclusive case-specific immediate actions each targeting exactly one of code, plan, OpenSpec, or evidence-only and carrying the same finding/location/evidence or neededEvidence; call one follow-up only. Require choice ID, case finding, affected requirement/path, evidence or exact neededEvidence, concrete action/fix, remainingUncertainty (explicit none if none); effectiveVerdict=require_revalidation. Incomplete diagnostic detail => resolution=unresolved, diagnosisStatus=incomplete, unresolvedReasons. No chaining. Initial valid verdict gets no follow-up. Transport/schema errors get no follow-up and remain errors."
+  },
+  "questions": {
+    "implementation_verdict": {
+      "type": "choice",
+      "instructions": "Does completed Batch1 implementation satisfy its exact scoped acceptance criteria?",
+      "criteria": {
+        "valid_as_defined": "The completed Batch 1 implementation meets its defined acceptance criteria: exact scenario/contract transferred, replacement green, P42-021 removed only after green, required ownership/crosswalk/spec/accounting updated, and boundaries accurately described. Only this choice passes.",
+        "requirements_mismatch": "A concrete conflict remains between implementation, updated plan/spec/crosswalk, immutable P42 baseline, or agreed boundaries.",
+        "missing_prerequisites_info": "A specific required validation or source fact is missing for this implementation acceptance.",
+        "incomplete_implementation_info": "The batch implementation or required verification is materially incomplete; name the missing proof. Do not require an external push or Next route assertion that was explicitly excluded.",
+        "implementation_issue": "A concrete failure exists in Browser Mode replacement, removed Playwright contract, source, or updated ownership record.",
+        "scope_violation": "The change alters P42-018, reintroduces P42-020, claims an unsupported pageerror/production route guarantee, changes GitHub Actions, or prematurely resolves the 33 Phase5 cases.",
+        "other": "Another specific blocker is supported by the supplied evidence.",
+        "indeterminate": "The evidence cannot decide acceptance or identify a concrete blocker."
+      }
+    },
+    "case_finding": {
+      "type": "choice",
+      "instructions": "What concrete material finding, if any, remains after final implementation and verification?",
+      "criteria": {
+        "no_material_issue": "No material defect remains; Batch 1 contract and verification are acceptable.",
+        "assertion_transfer_mismatch": "The new test does not preserve the original P42-021 dialog-hidden Escape assertion, or removes assertions beyond P42-021.",
+        "production_boundary_misrepresented": "The component-level test or records claim production-route Escape/focus, pageerror, or no-error assurance that it does not provide.",
+        "crosswalk_or_accounting_error": "Scenario inventory, Plan42 ledger/matrix, Plan45 counts, or OpenSpec ownership/count does not match actual transfer.",
+        "retained_case_regression": "P42-018 outside-click/scroll Playwright contract changed or P42-020 reintroduced.",
+        "browser_keyboard_issue": "The real Chromium Browser Mode test does not prove Escape closes the dialog/aria state.",
+        "prepush_output_ambiguous": "Malformed-json/exit-23-looking diagnostics during pnpm test:full indicate a material uninvestigated failure despite final command exit 0 and later actual build success.",
+        "verification_scope_gap": "A required focused/full validation result is missing or incomplete.",
+        "scope_violation": "A user/project boundary was violated.",
+        "other_concrete_finding": "Another precise implementation issue."
+      }
+    },
+    "affected_location": {
+      "type": "choice",
+      "instructions": "Which exact path/requirement is affected by the finding? Choose none only if no issue.",
+      "criteria": {
+        "none": "No affected file or requirement; no material issue.",
+        "browser_mode_test": "tests/browser-mode/ChartInfoButton.browser.test.tsx; component Escape interaction and dialog/aria assertion.",
+        "e2e_removal": "tests/e2e/accessibility.e2e.spec.ts P42-021 removal; original E2E contract.",
+        "p42_018": "tests/e2e/accessibility.e2e.spec.ts P42-018 outside-click/scroll case, which should remain unchanged.",
+        "inventory": "results/plan45/phase0/scenario-inventory.md row p45-a-a11y-info-escape and totals.",
+        "plan45": "shared_plan/45-vitest-browser-mode-e2e-migration-plan.md Batch1/current A/E/M accounting.",
+        "ledger_matrix": "shared_plan/42-assertion-callsite-ledger.md P42-021 and shared_plan/42-assertion-case-responsibility-matrix.md.",
+        "openspec": "openspec/specs/nextjstest/spec.md ChartInfoButton Escape scenario.",
+        "prepush_diagnostics": "tests/unit/husky-push-impact.test.ts expected malformed selection/mocked exit 23 output during test:full; observed command output is not evidence of an actual failed build.",
+        "user_boundary": "No GitHub Actions; Phase5 keeps all 33 MAP-ineligible IDs for individual review.",
+        "other": "Another exact path/requirement shown by evidence."
+      }
+    },
+    "evidence_assessment": {
+      "type": "choice",
+      "instructions": "What do the supplied source, crosswalk and final verification results establish, including the pre-push diagnostic observation?",
+      "criteria": {
+        "final_evidence_supports_acceptance": "Focused/full test evidence plus source/crosswalk review supports the exact migrated assertion and scoped acceptance.",
+        "exact_assertion_preserved": "Original P42-021 only asserted dialog not visible after Escape; replacement opens dialog, sends real browser Escape, and asserts no dialog plus aria-expanded false.",
+        "route_and_focus_limitation_explicit": "Replacement is component-level and does not cover production route or focus integration; updated plan/spec/inventory say so. No pageerror/no-error assertion is claimed.",
+        "crosswalks_and_m_counts_match": "Inventory, ledger, matrix, OpenSpec and Plan45 agree; A=123, E=90, current M=0 pending independent review; P42-018 remains, P42-020 remains removed.",
+        "all_required_final_checks_passed": "Reported focused/full validation passes: browser 4 files/5 tests, unit 84 files/772 passed/4 skipped, hook smoke, test:full, lint and diff-check.",
+        "prepush_diagnostic_nonfailure": "During test:full, unit-test fixture output resembled malformed JSON/exit23 failure diagnostics; command exited 0 and later actual Next build succeeded. Test file contains invalid-input/mocked exit23 coverage; no real build failure is demonstrated.",
+        "prepush_diagnostic_needs_followup": "The reported output is not explained sufficiently and materially affects acceptance despite final exit 0; specify exact needed evidence.",
+        "evidence_conflict": "Implementation/report/source/crosswalk facts conflict.",
+        "insufficient": "Evidence does not establish acceptance."
+      }
+    },
+    "proposed_next_action": {
+      "type": "choice",
+      "instructions": "What immediate action is appropriate? If valid, accept Batch1 and continue while preserving M=0 and Phase5 scope.",
+      "criteria": {
+        "accept_batch1_and_continue": "Accept the single-scenario transfer and continue to the next planned migration step. Preserve P42-018; P42-020 stays removed; Phase5 investigates all 33 ineligible IDs individually; M remains 0 until the plan-defined independent review/accounting gate.",
+        "change_code_only": "Modify source/test ownership only to fix the concrete implementation defect; leave plan/spec/crosswalk unchanged in this action.",
+        "change_plan_only": "Revise only Plan45 text to correct the concrete description/accounting defect; leave code/spec/crosswalk unchanged in this action.",
+        "change_openspec_only": "Revise only OpenSpec requirement text; leave code/plan/crosswalk unchanged in this action.",
+        "collect_diagnostic_evidence_only": "Collect only the exact missing pre-push/build diagnostic evidence; make no code or documentation change in this action.",
+        "hold_for_scope_decision": "Hold only for a concrete conflict with explicit user/project boundaries."
+      }
+    },
+    "remaining_uncertainty": {
+      "type": "choice",
+      "instructions": "What uncertainty remains after the final checks? Distinguish explicit accepted boundary, deferred Phase5/M accounting, and the test:full diagnostic output.",
+      "criteria": {
+        "none_for_batch1_scope": "No blocking uncertainty for the defined component-level Batch1 transfer. Route-level Escape/focus is explicitly outside the replacement contract.",
+        "external_push_not_run": "No actual external push was performed; local hook smoke and test:full do not claim one.",
+        "production_route_escape_not_retained": "Production-route Escape/focus is no longer specifically covered by P42-021; this is an explicit accepted boundary, not proof of route behavior.",
+        "prepush_diagnostics_unexplained": "The test:full output contained malformed JSON/exit23-looking fixture diagnostics; despite final exit 0 and later successful build, exact output was not captured/explained.",
+        "phase5_33_pending": "The 33 MAP-ineligible per-ID investigations remain future work in Phase5.",
+        "m_independent_review_pending": "M remains 0 until independent review/accounting requirements are met.",
+        "other_specific_uncertainty": "Another concrete uncertainty remains."
+      }
+    }
+  }
+}

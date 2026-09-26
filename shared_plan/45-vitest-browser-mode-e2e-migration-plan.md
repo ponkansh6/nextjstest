@@ -77,7 +77,8 @@ Phase 0 では、現行 baseline revision の全 Playwright spec と project 設
 - **Reason follow-up audit of the 96 prior `not_eligible` rows (2026-09-25):** 対象は初回 direct API audit で top-choice `not_eligible` だった96 stable IDsのみ。事前定義した理由カテゴリを使い、各行の実際の source assertion / condition evidence を入力したが、prior reason labels は送っていない。8 batch responses はすべて HTTP 200。independent validation は96 requested / 96 distinct answered、gap / duplicate / unexpected / invalid choice は0。manifest の17 entriesはすべて hash 検証に通過した。SystemOne categorical selections は `real_layout_geometry_or_coordinate_hit_test=63`、`nextjs_or_production_integration=7`、`engine_specific_behavior=1`、`actually_eligible=25`。その他すべての理由選択は0。API response に保証された free-text rationale はないため、これらは監査側の分類選択であり説明的な証明とは扱わない。`actually_eligible` の25件を再分類すると、初回 eligible 27件をそのまま維持する**条件付き**合計は `eligible=52, not_eligible=71, unresolved=0`、`52/123=42.28%`。初回 eligible 27件は理由 follow-up では再監査されていない。したがってこの結合値も厳密な62件必要数を下回り、Phase 1 は未開始のままとする。証跡: [derived reason audit](../results/plan45/phase0/jev-api-noteligible-reason-derived.md) (SHA-256 `7013c09d5fcbfd1bbc4fed2c377455b1a438605193d3d6f85150f89b9e8213bb`)、[reason-audit manifest](../results/plan45/phase0/jev-api-noteligible-reason-sha256.txt) (SHA-256 `bae9c3f0de919d6e73d317cad71e03e06adfd4e20aee2621d15633f6b3db2d94`)。
 - **Full-scope direct TypeSafe API reassessment (current Phase 0 result; 2026-09-26):** This was a direct TypeSafe API assessment; no JEV review skill was used. It supplied all 123 source assertion / condition contracts and used the official SystemOne choice schema. Earlier classifications were included only as explicitly non-ground-truth hypotheses, not as authority; the audit re-evaluated every stable ID. Independent validation confirms 123/123 unique keyed answers, 0 missing / duplicate / unexpected / invalid IDs, all 12 batches HTTP 200, and all 25 manifest entries match. MAP choices are `eligible=90, not_eligible=33, unresolved=0`; category counts are eligible component/DOM `30`, viewport/layout/scroll `46`, pointer/chart `7`, engine provider `7`, and ineligible Next/production integration `21`, top-level/full app shell `1`, unit-only/no-browser contract `0`, other provider gap `11`. These are categorical selections, not explanatory proof: the choice API guarantees no free-text rationale.
 - **Official Browser Mode evidence considered in the full-scope audit:** Vitest `4.1.11` has no Browser Mode package/provider configured in this repository today, while `vitest.config.ts` uses happy-dom; the audit treated this as setup absence, not a provider capability gap. Official Browser Mode / Playwright provider evidence supports browser globals in a Vite iframe, configurable viewport, Chromium/Firefox/WebKit providers, locator cursor-position click, wheel deltas, bounding boxes/coordinate click, and provider/custom touch configuration. The iframe does not supply the Next production app or route, so Next build/start, Flight/hydration, URL-route wiring, production downloads/CSV parity, and the full top-level app shell remain outside the faithful boundary. See the official [Vitest Browser Mode guide](https://vitest.dev/guide/browser/) and [Playwright provider configuration](https://vitest.dev/config/browser/playwright).
-- **Full-scope gate / next step:** MAP eligible count gives `Emax=90/123=73.17%`, exceeding the strict gate threshold of at least `62/123` needed for a potential `M/A > 0.50`; current migrated count remains `M=0`. The separate rounded probability mass is eligible `74.28/123=60.39%`, not eligible `44.37`, unresolved `4.25`, summing to `122.90` due to row-level rounding; mean confidence is `0.523`. This probability mass is diagnostic and does not replace MAP classification. Under the plan's Phase 0 gate, this result **authorizes proceeding to the Phase 1 Browser Mode setup spike**. Phase 1 remains not started in this record: this audit does not implement the spike, establish a completed migration, or authorize jumping ahead to migration batches. The earlier conditional `52/71/0` estimate and other eligibility stages remain explicitly historical.
+- **Full-scope gate / next step:** MAP eligible count is `E=90` (`Emax=90/123=73.17%`), exceeding the strict gate threshold of at least `62/123` needed for a potential `M/A > 0.50`; at that historical checkpoint, reviewed migrated count was `M=0`. The separate rounded probability mass is eligible `74.28/123=60.39%`, not eligible `44.37`, unresolved `4.25`, summing to `122.90` due to row-level rounding; mean confidence is `0.523`. This probability mass is diagnostic and does not replace MAP classification. At the Phase 0 gate, this result **authorized proceeding to the Phase 1 Browser Mode setup spike**. Phase 1 was not started at that historical checkpoint: this audit does not implement the spike, establish a completed migration, or authorize jumping ahead to migration batches. The earlier conditional `52/71/0` estimate and other eligibility stages remain explicitly historical.
+- **Post-Batch 1 current migration accounting (2026-09-26):** `A=123`, `E=90`, `M=1`; MAP classes are `eligible=90`, `not_eligible=33`, `unresolved=0`. P42-021 completed the Browser Mode transfer after focused/full gates and independent review. P42-018 remains Playwright. See the Phase 3 Batch 1 record below.
 - **Full-scope audit artifacts:** [derived reassessment report](../results/plan45/phase0/jev-api-full-browser-mode-reassessment-derived.md) (SHA-256 `b2f3c718001a5b27798eaf1b6d433c4af9c9bea1acf05940ebdcb84cd722e0f0`) and [12-batch request/response manifest](../results/plan45/phase0/jev-api-full-browser-mode-reassessment-sha256.txt) (SHA-256 `96ddc50a9af522dca874dce86448ddc430cc8f31a36166cf742355141b05141a`). The manifest covers the 12 request/response pairs and all 25 listed artifact entries.
 - **Audit artifacts / schema:** [derived row-level audit report](../results/plan45/phase0/jev-api-eligibility-audit-derived.md) (SHA-256 `4feff3816e720f858aa2b6d53ce9cb07fd042143bac1bf469058cfae5787910c`); [batch manifest](../results/plan45/phase0/jev-api-eligibility-audit-sha256.txt) (SHA-256 `49100c6326f042320b587b65aed01239a921ba9b1a5bc68b338682b9d3c1b75f`). Official references: [SystemOne API documentation](https://docs.typesafe.ai/api) and [OpenAPI schema](https://api.typesafe.ai/openapi.json). Initial schema-validation failures were HTTP 422 and produced no classifications; only corrected HTTP 200 choices contribute to the result.
 - **Earlier feasibility readouts (historical):** the 27/96/0 full-inventory pass and the conditional `52/71/0` readout from auditing only the prior 96 not-eligible rows are preserved above as historical stages. The latter conditionally carried forward the 27 prior eligible rows, which were not audited in that reason pass. Both are superseded as current counts by the following full-scope reassessment.
@@ -230,7 +231,188 @@ investigation in Phase 5.
 
 ### Phase 3 — 小さな移管 batch
 
-- [ ] Phase 0 で承認された Browser Mode 候補のうち、制御しやすい aria / 表示 / 操作後 DOM ケースから1〜3 scenario の batch を選ぶ。Plan42 の未完了候補（例えば advanced series、range controls、CAGR sheet、filter / tooltip 状態）のみから選び、既に責務が unit / component test にあるケースは重複させない。
+#### Batch 1 transfer record — `p45-a-a11y-info-escape`
+
+**Status (2026-09-26): complete.** The pre-implementation JEV plan checkpoint
+passed (`valid_as_defined`, confidence `0.93`, selected probability `0.95`),
+and focused/full validation plus independent review are complete. P42-021 is
+counted in M. JEV's implementation checkpoint primary verdict was
+`valid_as_defined` (confidence `0.87`, selected probability `0.88`) and
+recommends accepting Batch 1 and continuing; no follow-up was sent. Its
+separate unresolved/incomplete diagnostic about pre-push output provenance is
+preserved below and does not change the primary verdict. See [Batch 1 plan
+checkpoint report](../results/plan45/phase3/jev-api-phase3-batch1-plan-checkpoint-derived.md)
+and [implementation checkpoint report](../results/plan45/phase3/jev-api-phase3-batch1-implementation-checkpoint-derived.md).
+
+- **Scope and baseline:** stable ID `p45-a-a11y-info-escape` maps to immutable
+  baseline assertion `P42-021`, with Phase 0 MAP eligibility
+  `eligible_component_or_dom_interaction`. The original first `/データソース/`
+  button was confirmed as the CPI-major `ChartInfoButton`. Current accounting is
+  `A=123`, `E=90`, `M=1` after focused/full gates and independent review.
+  Full MAP classes are `eligible=90`,
+  `not_eligible=33`, `unresolved=0`. Browser Mode passed 1/1, after which only the P42-021 E2E
+  case was removed. Source audit confirms its sole assertion was Escape
+  dismissal; no page-error / no-error assertion is claimed.
+- **Migrated Browser Mode behavior:** the real `ChartInfoButton` is mounted with
+  static children using `renderBrowserComponent`; use the rendered trigger to
+  open the popup, confirm the dialog is visible, send real Chromium Escape via
+  `await userEvent.keyboard('{Escape}')`, and assert the dialog is hidden. The
+  source currently exposes `aria-expanded={open}` on the trigger and renders
+  the popup with `role="dialog"`; the passing test asserts expanded true after
+  open and false after Escape. Retain `expect.element(...)` for retrying
+  asynchronous locator assertions.
+- **Boundaries and separate cases:** this component mount does not verify the
+  production route's Escape or focus integration; after P42-021's removal,
+  that particular route-level Escape path is no longer covered. Preserve
+  P42-018's outside-click / scroll Playwright case unchanged. P42-020 has
+  already been removed and must not be reintroduced. Do not add a pageerror
+  assertion or claim that one exists.
+- **Downstream record:** the Phase 0 scenario inventory, Plan42 responsibility
+  matrix, Plan42 assertion ledger, and OpenSpec WHEN/THEN scenario now map this
+  one assertion to Browser Mode. Immutable Plan42 baseline IDs, expression,
+  source lines, and 604-callsite count remain unchanged; current ownership and
+  the remaining route-level limitation are recorded separately. P42-018's
+  outside-click / scroll Playwright coverage is unchanged; P42-020 was already
+  removed and is not reintroduced. No GitHub Actions change is planned.
+- **Completed verification (2026-09-26):** focused Browser Mode 1/1; all
+  Browser Mode 4 files / 5 tests; `ChartInfoButton` unit 20/20; preserved
+  P42-018 outside-click/scroll E2E 1/1; `pnpm run test:hook-smoke` passed all
+  listed branches (initial, normal, docs-only skip, multi-ref, deletion,
+  failure atomicity, full profile, Browser Mode failure/fallback).
+  `pnpm test:full` exited 0: lint:fast, type-check, Vitest 84 files / 772
+  passed / 4 skipped, Browser Mode 5 passed, Next webpack build succeeded,
+  build parity 3 passed, security check passed, and E2E 119 passed / 19
+  skipped. Full `pnpm lint` and `git diff --check` exited 0. Independent review
+  passed. The implementation report is [here](../results/plan45/phase3/jev-api-phase3-batch1-implementation-checkpoint-derived.md)
+  (manifest SHA-256 `e0596b98ce66ed10504871a5a59dedbbab2b0c59fe4b6c1495430284a2b2b7fc`).
+- **JEV diagnostic uncertainty:** during `pnpm test:full`, malformed-JSON and
+  exit-23-looking pre-push lines appeared. The command returned 0 and a later
+  actual Next production build succeeded; JEV explicitly did not identify a
+  real build failure. The missing evidence is captured stdout/stderr mapping
+  those lines to a fixture versus the actual hook process. Keep this as an
+  unresolved/incomplete diagnostic, not a blocker to this component transfer.
+- **Deferred work:** keep the Phase 5 individual investigation of all 33
+  MAP-ineligible IDs deferred; this batch does not resolve or recategorize
+  them. No GitHub Actions workflow changes are included or requested.
+
+- [x] Batch 1 completed after focused/full gates and independent review; update
+      A / E / M to `123 / 90 / 1` and preserve the outstanding diagnostic separately.
+
+#### Batch 2 proposed plan — `p45-b-consumption-mobile-acceptance-139-mobile-pixel-acceptance-plan25-openspec-1`
+
+**Status (2026-09-26): complete.** The pre-correction
+checkpoint's primary verdict was `valid_as_defined` (confidence `0.95`, pass
+probability `0.96`), with separate `support_series_fixture` uncertainty
+(confidence `0.66`, probability `0.71`). Preserve it as historical: its
+diagnostic was unresolved/incomplete, so it did not satisfy the plan gate. The
+corrected fresh initial reassessment returned primary `valid_as_defined`
+(confidence `0.97`, pass probability `0.97`), case finding
+`no_case_specific_finding` (confidence `0.84`, probability `0.87`), and
+remaining uncertainty `none_for_plan_checkpoint` (confidence `0.86`,
+probability `0.88`). The JEV plan gate is satisfied; no follow-up was sent.
+Its weak `affected_requirement` localization to `inventory_row94` (confidence
+`0.34`, probability `0.40`) does not alter the pass, and the required inventory
+mapping correction remains. The plan approval covered only the written bounded
+proposal; implementation completion is recorded below. This is an
+assertion-level partial transfer of exactly `P42-181`, not a transfer of the mixed Playwright
+scenario or the stable scenario as a whole. Keep `A=123`, `E=90`, and `M=1`; M
+counts fully migrated stable scenarios, so this partial transfer does not
+increment it. The 33 Phase 0 MAP-ineligible IDs remain deferred to Phase 5. No
+GitHub Actions changes are in scope.
+
+Fresh reassessment artifacts: [request](../results/plan45/phase3/jev-api-phase3-batch2-plan-reassessment-request.json),
+[response](../results/plan45/phase3/jev-api-phase3-batch2-plan-reassessment-response.json),
+[derived report](../results/plan45/phase3/jev-api-phase3-batch2-plan-reassessment-derived.md)
+(SHA-256 `40f6d7650ad6744d204d7246bda9419bb22a09426a14dbd9d78eee814428c888`),
+and [manifest](../results/plan45/phase3/jev-api-phase3-batch2-plan-reassessment-sha256.txt)
+(SHA-256 `abd96f8b46218c86e82c5b875add7d3f12bef65932f9ac6c6da9e1f09a2c092f`).
+
+**Batch 2 implementation result (complete):** The first focused Browser Mode
+run encountered an invalid hook call in `ResponsiveContainer` after Vite
+late-discovered and optimized Recharts, then reloaded the test. The harness now
+pre-optimizes Recharts through `optimizeDeps.include: ["recharts"]`; the focused
+replacement passed 1/1 and all Browser Mode tests passed 5 files / 6 tests.
+The retained mobile Playwright case passed 1/1. Only the P42-181
+empty-state-text assertion was removed after the replacement passed.
+
+The first `pnpm test:full` run had one unrelated failure at
+`tests/e2e/tooltip-dismiss.e2e.spec.ts:207` (118 passed / 1 failed / 19 skipped);
+the exact isolated rerun passed 1/1. A second `pnpm test:full` passed, including
+lint:fast, type-check, unit tests (84 files / 772 passed / 4 skipped), Browser
+Mode (5 files / 6 passed), Next webpack build, build parity (3 passed), security
+checks, and E2E (119 passed / 19 skipped). `pnpm lint`,
+`pnpm run test:hook-smoke`, and `git diff --check` also passed. Independent scope
+audit found no mismatch.
+
+The implementation JEV checkpoint passed `valid_as_defined` (confidence `0.91`,
+pass probability `0.93`), with diagnosis complete and no follow-up. See [request](../results/plan45/phase3/jev-api-phase3-batch2-implementation-checkpoint-request.json)
+(SHA-256 `66ff264d7b28e59c43a037f210e18e25900df7e0e57b7da53b2f57fe468029a2`),
+[response](../results/plan45/phase3/jev-api-phase3-batch2-implementation-checkpoint-response.json)
+(`2686a9199c0f19985fddff70d03e2fa46f5f0722fb43fadd9d0f9750db967922`),
+[derived JSON](../results/plan45/phase3/jev-api-phase3-batch2-implementation-checkpoint-derived.json)
+(`af4502aec79e8c0a2cac6a726474fe923015f747656ea5ffc2ef69170d831f28`), and
+[manifest](../results/plan45/phase3/jev-api-phase3-batch2-implementation-checkpoint-sha256.txt)
+(`55440cabeb73b579dcc56db63db0dc57e2420ae501204d871df5ac20b8d20ced`).
+
+Recharts emitted unsuppressed React unknown-prop `console.error` warnings in
+development render; they were audited to the chart subtree, separate from the
+asserted status node. No zero-console-error claim is made. The existing
+production E2E console/pageerror check passed for its route test only and does
+not cover the empty-state interaction. Both full runs also displayed malformed
+Vitest JSON / exit-23-looking pre-push diagnostics. Their provenance remains
+unresolved and non-blocking: the second full command returned 0 and the actual
+production build succeeded. `A=123`, `E=90`, `M=1`; this partial mixed-scenario
+transfer does not increment M. The 33 Phase 5 individual MAP-ineligible
+investigations remain deferred. No GitHub Actions/workflow changes are in scope.
+
+- **Baseline mapping correction (applied):** Phase 0 scenario-inventory line 94
+  omitted `P42-181` from its Plan42 assertion-ID list. Plan42 ledger row 191 and
+  `tests/e2e/consumption-mobile-acceptance.e2e.spec.ts:153-155` identify the
+  assertion, and no other inventory row owns it. The existing row's ID mapping
+  is corrected; baseline and scenario row counts are unchanged, with no 124th
+  scenario created. The latest raw MAP request places
+  the text assertion in this stable row and selected
+  `eligible_component_or_dom_interaction` at confidence `0.17` / probability
+  `0.25`. This remains a candidate signal only, not blanket approval of the mixed
+  E2E case; JEV approved only the bounded P42-181 assertion transfer.
+- **Exact transferred contract and fixture boundary:** mount the actual
+  `SpendingBarChart` in Browser Mode with deterministic static data and props.
+  Supply expense keys only (for example, `食料` and `住居`); exclude every
+  special nominal/real support key and every support-series row. Set
+  `hiddenKeys` to every supplied expense key, making both
+  `hasVisibleExpenseSeries` and `hasVisibleSupportSeries` false. Assert only the
+  rendered `role="status"` empty-state message. This checks the component's
+  rendered empty-state message/status contract. It does not test the hide-all
+  action, actual Recharts bars/SVG behavior, or the mobile production route.
+  Existing component unit tests do not cover this empty status assertion;
+  `P42-517` owns the category aria toggle and is not an overlapping status
+  contract.
+- **Mixed E2E remainder:** the source case at lines 139-159 also covers the
+  production/mobile route, actual accordion and hide-all interaction, absent
+  real Recharts bars (`P42-180`), aria state (`P42-182`), and bar restoration
+  (`P42-183`). Retain the Playwright case and those assertions, together with
+  the production/mobile behavior (`P42-179`); do not claim the entire case or
+  stable scenario is migrated. After the focused Browser Mode test passed,
+  only `P42-181` was removed from Playwright and assigned to Browser Mode. The
+  route, viewport, accordion/action, SVG/chart, aria-state, and recovery
+  coverage remains in Playwright; the retained mobile case passed 1/1.
+- **Required record updates (applied):** the existing Phase 0 inventory row
+  mapping is corrected without altering A/E/M or row count; one current-owner
+  delta for `P42-181` is appended to the Plan42 responsibility matrix and
+  assertion ledger while immutable baseline fields remain intact; and existing
+  OpenSpec requirement R20d now states the empty-state message and
+  `role="status"` semantics while preserving recovery/no-bars and the remaining
+  viewport/accessibility coverage. No separate scenario was added.
+- **Acceptance gates (complete):** the corrected bounded proposal passed its
+  fresh initial JEV plan reassessment. The focused Browser Mode replacement
+  passed before only the matching Playwright assertion was removed; the full
+  Browser Mode suite, retained Playwright case, independent scope audit, full
+  validation gates, and JEV implementation checkpoint all passed. Assertion
+  ownership is reconciled with no duplicate primary owner. Keep `A/E/M=123/90/1`
+  because this is a partial transfer, and preserve the remaining mixed-case
+  guarantees explicitly.
+
+- [ ] Batch 2 以降は、Phase 0 で承認された残る Browser Mode 候補から1〜3 scenario の batch を選ぶ。既に責務が unit / component test にある契約は重複させず、各 batch の前に対象範囲と残す Playwright 保証を明記する。
 - [ ] scenario ごとに移行前 assertion ID → 新 test assertion → 残す Playwright assertion の対応を記録する。Browser Mode 側の代替が green になるまで既存 E2E assertion を消さず、その後に重複範囲だけ削る。
 - [ ] 実データ・実 component prop のどちらが必要か明記する。Browser Mode の render test が既存 happy-dom test と同じ契約を単に反復するなら移行しない。
 - **受け入れ条件:** batch 内全 assertion に一対一の責任先があり、A / E / M の更新後も Playwright の必須 browser-only 保証が残る。独立 review と focused verification が終わるまで次 batch を開始しない。

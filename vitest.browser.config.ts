@@ -5,6 +5,9 @@ import { playwright } from "@vitest/browser-playwright";
 
 export default defineConfig({
   plugins: [react()],
+  optimizeDeps: {
+    include: ["recharts"],
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),

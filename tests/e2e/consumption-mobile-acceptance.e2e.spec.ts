@@ -136,7 +136,7 @@ test.describe("消費支出 mobile-pixel acceptance (Plan25/OpenSpec)", () => {
     }
   });
 
-  test("凡例で全系列を非表示にすると空状態を示し、1系列の再選択でチャートが復帰する", async ({
+  test("凡例で全系列を非表示にすると実際の棒が消え、1系列の再選択で棒が復帰する", async ({
     page,
   }) => {
     await page.setViewportSize({ width: 412, height: 915 });
@@ -150,9 +150,6 @@ test.describe("消費支出 mobile-pixel acceptance (Plan25/OpenSpec)", () => {
     const initialBars = chart.locator(".recharts-bar-rectangle");
     await chart.getByRole("button", { name: "全選択解除" }).click();
     await expect(chart.locator(".recharts-bar-rectangle")).toHaveCount(0);
-    await expect(chart).toContainText(
-      /系列.*表示|表示.*系列|表示する系列がありません|データがありません/,
-    );
 
     await series.click();
     await expect(initialBars.first()).toBeVisible();

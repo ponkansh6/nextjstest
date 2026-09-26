@@ -1,0 +1,127 @@
+{
+  "model": "jev-latest",
+  "state": {
+    "reviewType": "Fresh INITIAL JEV v3 reassessment of the corrected written Phase3 Batch2 P42-181 plan; evaluate whether explicit support-series fixture boundary resolves the prior concern.",
+    "exactPlan": "#### Batch 2 proposed plan — `p45-b-consumption-mobile-acceptance-139-mobile-pixel-acceptance-plan25-openspec-1`\n\n**Status: proposed; pending a fresh initial JEV plan re-assessment after this\nwritten correction.** The first plan response's primary verdict was\n`valid_as_defined` (confidence `0.95`, pass probability `0.96`) and approved\nthe bounded transfer. It separately recorded `support_series_fixture`\nuncertainty (confidence `0.66`, probability `0.71`). Preserve that diagnostic\nas historical; because the initial verdict passed, do not send a follow-up or\nchange the original result. This is an assertion-level partial transfer of\nexactly `P42-181`, not a transfer of the mixed Playwright scenario or the stable\nscenario as a whole. Keep `A=123`, `E=90`, and `M=1`; M counts fully migrated\nstable scenarios, so this partial transfer does not increment it. The 33 Phase\n0 MAP-ineligible IDs remain deferred to Phase 5. No GitHub Actions changes are\nin scope.\n\n- **Baseline mapping correction:** Phase 0 scenario-inventory line 94 omitted\n  `P42-181` from its Plan42 assertion-ID list. Plan42 ledger row 191 and\n  `tests/e2e/consumption-mobile-acceptance.e2e.spec.ts:153-155` identify the\n  assertion, and no other inventory row owns it. Correct that row's ID mapping\n  during implementation; preserve the existing baseline and scenario row\n  counts, and do not create a 124th scenario. The latest raw MAP request places\n  the text assertion in this stable row and selected\n  `eligible_component_or_dom_interaction` at confidence `0.17` / probability\n  `0.25`. This is a candidate signal only, not blanket approval of the mixed\n  E2E case; this plan asks JEV to review the bounded assertion transfer.\n- **Exact transferred contract and fixture boundary:** mount the actual\n  `SpendingBarChart` in Browser Mode with deterministic static data and props.\n  Supply expense keys only (for example, `食料` and `住居`); exclude every\n  special nominal/real support key and every support-series row. Set\n  `hiddenKeys` to every supplied expense key, making both\n  `hasVisibleExpenseSeries` and `hasVisibleSupportSeries` false. Assert only the\n  rendered `role=\"status\"` empty-state message. This checks the component's\n  rendered empty-state message/status contract. It does not test the hide-all\n  action, actual Recharts bars/SVG behavior, or the mobile production route.\n  Existing component unit tests do not cover this empty status assertion;\n  `P42-517` owns the category aria toggle and is not an overlapping status\n  contract.\n- **Mixed E2E remainder:** the source case at lines 139-159 also covers the\n  production/mobile route, actual accordion and hide-all interaction, absent\n  real Recharts bars (`P42-180`), aria state (`P42-182`), and bar restoration\n  (`P42-183`). Retain the Playwright case and those assertions, together with\n  the production/mobile behavior (`P42-179`); do not claim the entire case or\n  stable scenario is migrated. After the Browser Mode assertion passes, remove\n  only `P42-181` from Playwright and assign that assertion's primary ownership\n  to Browser Mode. Keep route, viewport, accordion/action, SVG/chart, aria-state,\n  and recovery coverage in Playwright.\n- **Required record updates:** during implementation, correct the existing\n  Phase 0 inventory row mapping without altering A/E/M or row count; append one\n  current-owner delta for `P42-181` to the Plan42 responsibility matrix and\n  assertion ledger while preserving immutable baseline fields; and amend\n  existing OpenSpec requirement R20d to state the empty-state message and\n  `role=\"status\"` semantics clearly. Preserve R20d's recovery/no-bars contract\n  and its remaining viewport/accessibility coverage. Do not add a separate\n  scenario or change unrelated rows.\n- **Acceptance gates:** obtain a passing fresh initial JEV plan re-assessment\n  for this corrected bounded proposal. During implementation, run the focused\n  Browser Mode test before removing only the matching Playwright assertion; verify the\n  retained Playwright remainder still passes, then obtain independent review\n  and the required full validation gates before marking the transfer complete.\n  Reconcile assertion ownership and ensure no duplicate primary owner. Keep\n  `A/E/M=123/90/1` throughout because this is a partial transfer, and report\n  the remaining mixed-case guarantees explicitly.\n\n- [ ] Batch 2 以降は、Phase 0 で承認された残る Browser Mode 候補から1〜3 scenario の batch を選ぶ。既に責務が unit / component test にある契約は重複させず、各 batch の前に対象範囲と残す Playwright 保証を明記する。\n- [ ] scenario ごとに移行前 assertion ID → 新 test assertion → 残す Playwright assertion の対応を記録する。Browser Mode 側の代替が green になるまで既存 E2E assertion を消さず、その後に重複範囲だけ削る。\n- [ ] 実データ・実 component prop のどちらが必要か明記する。Browser Mode の render test が既存 happy-dom test と同じ契約を単に反復するなら移行しない。\n- **受け入れ条件:** batch 内全 assertion に一対一の責任先があり、A / E / M の更新後も Playwright の必須 browser-only 保証が残る。独立 review と focused verification が終わるまで次 batch を開始しない。\n",
+    "sourceAndCrosswalkFacts": [
+      "Exact proposed transfer: P42-181 only, empty-state message/status ownership for stable ID p45-b-consumption-mobile-acceptance-139-mobile-pixel-acceptance-plan25-openspec-1.",
+      "Fixture boundary now explicit: deterministic static props/data contain expense keys only such as 食料 and 住居; no nominal/real support keys and no support rows; hiddenKeys includes all supplied keys, making both visible expense and visible support predicates false.",
+      "Do not claim hide-all action, actual Recharts SVG/bars, production/mobile route, or whole mixed scenario. Keep P42-179/180/182/183 and remaining Playwright guarantees.",
+      "Correct only inventory row 94 missing P42-181 mapping; do not add/change scenario count. Keep A=123/E=90/M=1; partial assertion transfer does not increment M.",
+      "Plan42 ledger row 191 and current E2E lines 153-155 identify P42-181. No existing unit test covers empty status; P42-517 owns separate category aria toggle.",
+      "Append owner delta to Plan42 matrix/ledger and clarify OpenSpec R20d status semantics preserving recovery/no-bars. Only remove P42-181 from Playwright after Browser Mode is green.",
+      "Raw MAP included the assertion but coarse row selected eligible_component_or_dom_interaction at confidence .17 / probability .25; this weak label does not blanket-approve mixed scenario. Inventory considered whole route/SVG case non-transferable.",
+      "Phase5 individual investigation of all 33 MAP-ineligible IDs remains deferred. No GitHub Actions changes."
+    ],
+    "requirementsAndBoundaries": [
+      "Only the P42-181 message/status assertion may move; whole E2E and stable logical scenario stay in A and are not marked fully migrated.",
+      "Playwright P42-179 chart visibility, P42-180 no actual SVG bars, P42-182 aria state, P42-183 recovery, remaining actual production/mobile route/viewport/accordion/action and R20d recovery/no-bars guarantees are retained.",
+      "Correct only inventory row ID mapping and current ownership delta; immutable 123 rows, Plan42 baseline fields, A/E/M=123/90/1 stay unchanged.",
+      "No GitHub Actions. Phase5 33 MAP-ineligible IDs are still future individual reviews."
+    ],
+    "priorCheckpointContext": "Phase3 Batch1 implementation review selected valid_as_defined; its unrelated malformed JSON/exit23-looking output is recorded as unresolved/incomplete provenance despite command exit 0 and successful build. It is not a blocker to Batch2 and must not be recast as an actual build failure.",
+    "acceptanceCriteria": [
+      "P42-181 is correctly treated as a separable text/status assertion while the mixed scenario and stable row remain in A and the rest stays in Playwright.",
+      "A deterministic real-component Browser Mode fixture can produce the empty state by controlling support/expense props and assert role=status.",
+      "Removal gate and exact ID-only inventory correction plus ledger/matrix/R20d updates are sufficient and preserve recovery/no-bars/viewport accessibility contracts.",
+      "Weak raw MAP signal is not used to approve or recategorize the whole stable row.",
+      "A/E/M remain 123/90/1; no GitHub Actions; Phase5 33-ID investigations deferred.",
+      "Only valid_as_defined passes."
+    ],
+    "conditionalProtocol": "If initial valid API response primary verdict is non-pass including indeterminate, preserve its choice/probabilities/decision summary; create >=2 mutually exclusive case-specific immediate actions, each targeting exactly one of plan, OpenSpec, code/test ownership, or evidence-only and containing same finding, affected location, observed evidence or exact neededEvidence. Send exactly one follow-up requiring choice ID, case finding, affected path/requirement, evidence or exact neededEvidence, concrete nextAction/proposedFix, and remainingUncertainty (explicit none). Preserve first distribution; effectiveVerdict exactly requires_revalidation. Incomplete details => resolution unresolved, diagnosisStatus incomplete, unresolvedReasons. Never chain. Initial valid_as_defined => no follow-up; API/schema error => no follow-up and preserve error.",
+    "priorCheckpointHistory": "Historical prior initial review only: valid_as_defined confidence .95 / probability .96, proposed approval, with remaining_uncertainty support_series_fixture confidence .66 / probability .71. No follow-up was sent. This is a new initial review after a written plan correction; do not treat this as non-standard follow-up or overwrite historical response.",
+    "correctedFixtureBoundary": "The corrected plan explicitly supplies expense keys only (e.g. 食料 and 住居), excludes every nominal/real support key and all support-series rows, and sets hiddenKeys to every supplied expense key, so both hasVisibleExpenseSeries and hasVisibleSupportSeries are false. The only transferred assertion is P42-181 rendered role=status text. Assess whether this fully resolves the prior support_series_fixture concern."
+  },
+  "questions": {
+    "plan_validity": {
+      "type": "choice",
+      "instructions": "Fresh initial reassessment: given the written correction explicitly excludes every support key/row and hides all supplied expense keys, is this bounded P42-181-only transfer valid as defined? Only valid_as_defined passes.",
+      "criteria": {
+        "valid_as_defined": "The proposed assertion-level partial transfer is valid as defined: it transfers only P42-181 empty-state message/status ownership for the named stable row, while retaining the mixed production/mobile/SVG/interaction remainder and unchanged A/E/M. Only this label passes.",
+        "requirements_mismatch": "A concrete contradiction exists between the partial-transfer plan, immutable P42 assertions, current inventory/ownership, OpenSpec R20d, or agreed boundaries.",
+        "missing_prerequisites_info": "A necessary prerequisite for this bounded plan is missing, such as exact assertion mapping, test contract, or removal gate.",
+        "incomplete_implementation_info": "The plan cannot be assessed due to missing facts about current source/ownership; do not choose just because the future Browser Mode test is not yet implemented.",
+        "implementation_issue": "Current source/props make the exact proposed empty-status contract impossible or misleading in the proposed component mount.",
+        "scope_violation": "The proposal claims to migrate the whole stable row or mobile case, changes A/E/M, drops retained P42 assertions, modifies GitHub Actions, or treats the 33 Phase5 IDs as final.",
+        "other": "A different concrete plan blocker is supported by the evidence.",
+        "indeterminate": "The evidence does not establish validity or a concrete blocker."
+      }
+    },
+    "case_finding": {
+      "type": "choice",
+      "instructions": "What concrete plan defect, if any, remains after the explicit expense-only fixture correction? Do not repeat the historical support-series concern unless the corrected plan still fails to constrain it.",
+      "criteria": {
+        "no_case_specific_finding": "No material defect remains; explicit fixture boundary resolves support-series uncertainty and bounded transfer can proceed under removal/update gates.",
+        "baseline_id_mapping": "Inventory omission of P42-181 or the proposed corrected row mapping conflicts with immutable baseline accounting.",
+        "empty_status_contract": "Even with no nominal/real support keys or support rows, all expense keys in hiddenKeys, and both visible-series predicates false, the proposed actual component fixture still does not reliably exercise the empty status contract.",
+        "partial_transfer_boundary": "Plan improperly claims whole stable scenario/E2E migration or fails to retain the mixed route/SVG/recovery remainder.",
+        "duplicate_or_wrong_owner": "An existing unit test or P42-517 already owns the exact empty status contract, so this would duplicate/wrongly assign ownership.",
+        "openspec_semantics": "R20d message/status and recovery/no-bars semantics cannot be clarified as planned without changing the actual requirement.",
+        "map_signal_overreach": "Low-confidence raw MAP result is used as blanket approval of the mixed scenario instead of evaluating only P42-181.",
+        "migration_count_error": "M/A/E or stable row count is changed despite assertion-level partial transfer.",
+        "user_boundary_violation": "The plan conflicts with no GitHub Actions or Phase5 deferral.",
+        "other_concrete_finding": "Another specific issue is shown by evidence."
+      }
+    },
+    "affected_requirement": {
+      "type": "choice",
+      "instructions": "Which exact plan, source, inventory/crosswalk, or OpenSpec requirement is affected?",
+      "criteria": {
+        "none": "No affected location because no material finding.",
+        "batch2_plan": "shared_plan/45-vitest-browser-mode-e2e-migration-plan.md Phase3 Batch2 proposed plan.",
+        "inventory_row94": "results/plan45/phase0/scenario-inventory.md line 94 row; missing P42-181 mapping only.",
+        "p42_181_source": "tests/e2e/consumption-mobile-acceptance.e2e.spec.ts:153-155; exact assertion to transfer.",
+        "spending_chart_source": "src/app/components/SpendingBarChart.tsx empty-state logic and role=status message.",
+        "existing_unit_coverage": "tests/components/SpendingBarChart.test.tsx and Plan42 P42-517 aria toggle ownership.",
+        "p42_remainder": "Plan42 P42-179/180/182/183/184 and mixed E2E production/mobile/action/SVG/recovery coverage.",
+        "openspec_r20d": "openspec/specs/nextjstest/spec.md R20d empty/status/recovery/no-bars semantics.",
+        "crosswalks": "shared_plan/42-assertion-callsite-ledger.md P42-181 and shared_plan/42-assertion-case-responsibility-matrix.md.",
+        "a_e_m_accounting": "Plan45 A=123, E=90, M=1 accounting and stable row denominator.",
+        "phase5_scope": "All 33 MAP-ineligible IDs deferred for individual Phase5 investigation.",
+        "other": "Another exact path/requirement."
+      }
+    },
+    "evidence_assessment": {
+      "type": "choice",
+      "instructions": "Evaluate the corrected plan text. Does the explicit fixture boundary establish the required empty state while preserving the exact P42-181-only ownership transfer and all stated scope boundaries?",
+      "criteria": {
+        "bounded_plan_supported": "P42-181 is an empty-state message assertion that can be separated as a component status contract; plan accurately retains the rest and leaves all counts unchanged.",
+        "source_contains_status_role": "The corrected plan explicitly excludes all support keys/rows and hides every supplied expense key, making both visible-series predicates false; actual component can exercise role=status message.",
+        "no_duplicate_unit_owner": "No existing component unit assertion covers the empty-state status. P42-517 covers category aria toggle and is a separate contract.",
+        "mixed_case_not_transferable_whole": "The source test also covers production/mobile route, accordion, hide-all action, no real SVG bars, aria state, and restoration; these stay in Playwright.",
+        "inventory_id_omission": "Inventory line 94 currently lists P42-179/180/182/183/184 and omits P42-181; ledger row 191 and source line 153-155 show it is the one missing assertion ID.",
+        "raw_map_is_weak_signal": "Raw MAP categorized this stable row eligible_component_or_dom_interaction at confidence .17 / probability .25; this weak coarse row label does not approve whole mixed case. Inventory still says whole case non-transferable.",
+        "component_fixture_needs_support_handling": "The corrected plan still fails to exclude or hide support keys/rows, so empty-state condition is not established.",
+        "a_e_m_unchanged": "This is partial assertion ownership transfer; stable scenario count stays 123, E=90 and M=1.",
+        "evidence_conflict": "Specific source/crosswalk evidence contradicts plan.",
+        "insufficient": "Evidence cannot establish acceptance."
+      }
+    },
+    "proposed_next_action": {
+      "type": "choice",
+      "instructions": "What immediate action is appropriate? If valid, approve only the P42-181 partial transfer plan with the exact removal/update gates.",
+      "criteria": {
+        "approve_partial_transfer_plan": "Approve only this assertion-level plan. Implement a real SpendingBarChart Browser Mode status test, run it green before removing only P42-181; correct only inventory row ID mapping, append ledger/matrix owner deltas, clarify OpenSpec R20d, retain all other assertions and keep A/E/M unchanged.",
+        "change_batch2_plan_only": "Revise only the Batch2 plan text for the concrete issue; do not change source/spec/inventory/ledger/matrix in this action.",
+        "change_openspec_only": "Revise only R20d OpenSpec text for the concrete issue; do not change implementation/plan/crosswalk in this action.",
+        "collect_fixture_evidence_only": "Collect only exact deterministic-prop evidence needed to establish the role=status message; do not change code or docs in this action.",
+        "retain_p42_181_only": "Change only test ownership/code so P42-181 remains in Playwright; do not revise plan/spec or collect evidence in this action.",
+        "hold_for_scope_decision": "Hold only for concrete conflict with explicit boundaries or immutable accounting."
+      }
+    },
+    "remaining_uncertainty": {
+      "type": "choice",
+      "instructions": "For this plan-only checkpoint, has the corrected explicit fixture boundary resolved the historical support_series_fixture uncertainty? State any other concrete uncertainty, distinguishing routine future implementation gates.",
+      "criteria": {
+        "none_for_plan_checkpoint": "The explicit fixture boundary resolves the support-series concern; only normal implementation gates and pending crosswalk updates remain.",
+        "support_series_fixture": "Despite the explicit expense-only fixture with no support keys/rows and all supplied keys hidden, support-series visibility remains unresolved.",
+        "exact_status_semantics": "Exact role=status text/message condition or R20d meaning remains unclear.",
+        "raw_map_low_confidence": "Raw MAP row confidence/probability is weak; determine whether plan incorrectly treats it as blanket approval.",
+        "crosswalk_update_pending": "The proposed P42-181-only ID correction and owner deltas remain pending implementation.",
+        "p42_retained_case": "Whether remaining production/mobile/SVG/recovery assertions will remain Playwright is unclear.",
+        "phase5_33_pending": "The Phase5 33-ID individual review remains deferred.",
+        "other_specific_uncertainty": "Another concrete uncertainty remains."
+      }
+    }
+  }
+}
