@@ -323,9 +323,9 @@ GitHub Actions changes are in scope.
 Fresh reassessment artifacts: [request](../results/plan45/phase3/jev-api-phase3-batch2-plan-reassessment-request.json),
 [response](../results/plan45/phase3/jev-api-phase3-batch2-plan-reassessment-response.json),
 [derived report](../results/plan45/phase3/jev-api-phase3-batch2-plan-reassessment-derived.md)
-(SHA-256 `40f6d7650ad6744d204d7246bda9419bb22a09426a14dbd9d78eee814428c888`),
+(SHA-256 `f85d81e0c6f694f5e404f8c555f1ff9460f97a6a3efc9b40ec34bc7a93413109`),
 and [manifest](../results/plan45/phase3/jev-api-phase3-batch2-plan-reassessment-sha256.txt)
-(SHA-256 `abd96f8b46218c86e82c5b875add7d3f12bef65932f9ac6c6da9e1f09a2c092f`).
+(SHA-256 `3f08f0348c6e2c364356c957964b7ef0d24782a5c109fc95d5c65b9933f5b632`).
 
 **Batch 2 implementation result (complete):** The first focused Browser Mode
 run encountered an invalid hook call in `ResponsiveContainer` after Vite
