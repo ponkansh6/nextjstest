@@ -206,9 +206,9 @@ original artifacts: [plan-only request](../results/plan45/phase2/jev-api-phase2-
 [response](../results/plan45/phase2/jev-api-phase2-plan-checkpoint-response.json)
 (`2acdfbfa863c72f4dc842f73e0ee500f1586abdef06316c9517afaed3bf6a827`),
 [derived report](../results/plan45/phase2/jev-api-phase2-plan-checkpoint-derived.md)
-(`d291608377e14606f940f56080744a68020a4889cd4aebcaaf9485715f5b5b82`), and
+(`36503c1a9cbf775993ad86f0e2c61cb8d4ce99fe5ca3b8ee420d082671d5496e`), and
 [manifest](../results/plan45/phase2/jev-api-phase2-plan-checkpoint-sha256.txt)
-(`8bd89ebc42757801d535c7f56473bf791c9b9e9636f95d110c07e7e02d078d46`).
+(`27bc2c92e3e910b2cc5f97499dae61ccdce72360b1e815db3a9fbcecb59fea7d`).
 
 Implementation checkpoint artifacts and exact SHA-256 values:
 
@@ -217,9 +217,9 @@ Implementation checkpoint artifacts and exact SHA-256 values:
 - Response: [`jev-api-phase2-implementation-checkpoint-response.json`](../results/plan45/phase2/jev-api-phase2-implementation-checkpoint-response.json),
   `812e3f258b7b70680d8dc649d55b21b87bee5cb4ac0bb6f525e1c4d1c515e603`.
 - Derived report: [`jev-api-phase2-implementation-checkpoint-derived.md`](../results/plan45/phase2/jev-api-phase2-implementation-checkpoint-derived.md),
-  `4082ab8e98cfbb1e030eb92e1959f3926718eea810b5b66c5a70ac7d9ce83d64`.
+  `174a65edca9da10dfb55e5edd9f02e4ccb56484af2a3960b4e68ed951e263eb9`.
 - Manifest file: [`jev-api-phase2-implementation-checkpoint-sha256.txt`](../results/plan45/phase2/jev-api-phase2-implementation-checkpoint-sha256.txt),
-  file SHA-256 `03d2eec2409411757c4e229145605598e4991cbfe71321fd11f3a48decf8a091`.
+  file SHA-256 `9c19c4829a92a29498e915e5d6bf3bde5363dd046884c172d20c375ab5de2a36`.
   The manifest covers the four unchanged plan-checkpoint artifacts and the
   three implementation-checkpoint artifacts listed above; all seven entries
   were independently verified.
