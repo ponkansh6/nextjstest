@@ -1,0 +1,72 @@
+tests/browser-mode/CpiChart-single-year.browser.test.tsx(161,24): error TS2339: Property 'locator' does not exist on type 'Locator'.
+tests/browser-mode/CpiChart-single-year.browser.test.tsx(165,27): error TS2339: Property 'locator' does not exist on type 'Locator'.
+tests/browser-mode/EarningsBreakdownChart.browser.test.tsx(92,25): error TS2339: Property 'locator' does not exist on type 'Locator'.
+tests/browser-mode/EarningsBreakdownChart.browser.test.tsx(97,17): error TS2339: Property 'locator' does not exist on type 'Locator'.
+tests/browser-mode/EarningsBreakdownChart.browser.test.tsx(98,17): error TS2339: Property 'locator' does not exist on type 'Locator'.
+tests/browser-mode/EarningsBreakdownChart.browser.test.tsx(128,8): error TS2339: Property 'locator' does not exist on type 'Locator'.
+tests/browser-mode/MonthlyBoundaryAxis.browser.test.tsx(45,43): error TS2339: Property 'locator' does not exist on type 'Locator'.
+tests/browser-mode/MonthlyBoundaryAxis.browser.test.tsx(47,48): error TS7006: Parameter 'tick' implicitly has an 'any' type.
+tests/browser-mode/SpendingBarChart-mobile.browser.test.tsx(151,23): error TS2339: Property 'locator' does not exist on type 'Locator'.
+tests/browser-mode/SpendingBarChart-mobile.browser.test.tsx(155,27): error TS2339: Property 'locator' does not exist on type 'Locator'.
+tests/browser-mode/SpendingBarChart-mobile.browser.test.tsx(168,17): error TS2339: Property 'locator' does not exist on type 'Locator'.
+tests/browser-mode/SpendingBarChart-mobile.browser.test.tsx(174,33): error TS2339: Property 'locator' does not exist on type 'Locator'.
+tests/browser-mode/SpendingBarChart-mobile.browser.test.tsx(175,32): error TS7006: Parameter 'button' implicitly has an 'any' type.
+tests/browser-mode/SpendingBarChart-mobile.browser.test.tsx(180,27): error TS7031: Binding element 'width' implicitly has an 'any' type.
+tests/browser-mode/SpendingBarChart-mobile.browser.test.tsx(180,34): error TS7031: Binding element 'height' implicitly has an 'any' type.
+tests/browser-mode/SpendingBarChart-mobile.browser.test.tsx(188,17): error TS2339: Property 'locator' does not exist on type 'Locator'.
+tests/browser-mode/SpendingBarChart-mobile.browser.test.tsx(194,33): error TS2339: Property 'locator' does not exist on type 'Locator'.
+tests/browser-mode/SpendingBarChart-mobile.browser.test.tsx(195,32): error TS7006: Parameter 'button' implicitly has an 'any' type.
+tests/browser-mode/SpendingBarChart-mobile.browser.test.tsx(200,27): error TS7031: Binding element 'width' implicitly has an 'any' type.
+tests/browser-mode/SpendingBarChart-mobile.browser.test.tsx(200,34): error TS7031: Binding element 'height' implicitly has an 'any' type.
+tests/browser-mode/SpendingBarChart-mobile.browser.test.tsx(208,17): error TS2339: Property 'locator' does not exist on type 'Locator'.
+tests/browser-mode/SpendingBarChart-mobile.browser.test.tsx(210,27): error TS2339: Property 'locator' does not exist on type 'Locator'.
+tests/browser-mode/SpendingBarChart-mobile.browser.test.tsx(223,17): error TS2339: Property 'locator' does not exist on type 'Locator'.
+tests/browser-mode/SpendingBarChart-mobile.browser.test.tsx(225,27): error TS2339: Property 'locator' does not exist on type 'Locator'.
+tests/browser-mode/SpendingBarChart-mobile.browser.test.tsx(244,8): error TS2339: Property 'locator' does not exist on type 'Locator'.
+tests/browser-mode/SpendingBarChart-mobile.browser.test.tsx(246,62): error TS2339: Property 'locator' does not exist on type 'Locator'.
+tests/browser-mode/SpendingBarChart-readability.browser.test.tsx(111,30): error TS2339: Property 'locator' does not exist on type 'Locator'.
+tests/browser-mode/SpendingBarChart-readability.browser.test.tsx(112,30): error TS2339: Property 'locator' does not exist on type 'Locator'.
+tests/browser-mode/SpendingBarChart-tooltip-dismiss.browser.test.tsx(91,23): error TS2339: Property 'locator' does not exist on type 'Locator'.
+tests/browser-mode/SpendingBarChart-tooltip-dismiss.browser.test.tsx(95,27): error TS2339: Property 'locator' does not exist on type 'Locator'.
+tests/browser-mode/SpendingBarChart-tooltip-dismiss.browser.test.tsx(112,23): error TS2339: Property 'locator' does not exist on type 'Locator'.
+tests/browser-mode/SpendingBarChart-tooltip-rehover.browser.test.tsx(71,30): error TS2339: Property 'locator' does not exist on type 'Locator'.
+tests/browser-mode/SpendingBarChart-tooltip-rehover.browser.test.tsx(75,27): error TS2339: Property 'locator' does not exist on type 'Locator'.
+tests/browser-mode/SpendingBarChart-tooltip-rehover.browser.test.tsx(84,17): error TS2339: Property 'locator' does not exist on type 'Locator'.
+tests/browser-mode/SpendingBarChart-tooltip-rehover.browser.test.tsx(85,28): error TS2339: Property 'locator' does not exist on type 'Locator'.
+tests/browser-mode/SpendingBarChart-tooltip-scroll.browser.test.tsx(138,21): error TS2339: Property 'locator' does not exist on type 'Locator'.
+tests/browser-mode/SpendingBarChart-tooltip-scroll.browser.test.tsx(142,25): error TS2339: Property 'locator' does not exist on type 'Locator'.
+tests/browser-mode/SpendingBarChart-tooltip-total.browser.test.tsx(58,23): error TS2339: Property 'locator' does not exist on type 'Locator'.
+tests/browser-mode/SpendingBarChart-tooltip-total.browser.test.tsx(62,27): error TS2339: Property 'locator' does not exist on type 'Locator'.
+tests/browser-mode/SpendingBarChart.browser.test.tsx(107,23): error TS2741: Property 'strokeOpacity' is missing in type '{ stroke: string; strokeWidth: number; }' but required in type '{ stroke: string; strokeWidth: number; strokeOpacity: number; }'.
+tests/browser-mode/SpendingBarChart.browser.test.tsx(142,23): error TS2741: Property 'strokeOpacity' is missing in type '{ stroke: string; strokeWidth: number; }' but required in type '{ stroke: string; strokeWidth: number; strokeOpacity: number; }'.
+tests/browser-mode/legend-color-token.browser.test.tsx(5,24): error TS2307: Cannot find module '../../src/app/globals.css?raw' or its corresponding type declarations.
+tests/browser-mode/legend-color-token.browser.test.tsx(77,16): error TS2352: Conversion of type '{ 年月: string; 教養娯楽: number; }' to type 'CpiData' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ 年月: string; 教養娯楽: number; }' is missing the following properties from type 'CpiData': 総合, 生鮮食品を除く総合, 持家の帰属家賃を除く総合, "消費支出（参考）", "CPI総合(参考)"
+tests/browser-mode/legend-color-token.browser.test.tsx(90,33): error TS2339: Property 'locator' does not exist on type 'Locator'.
+tests/browser-mode/legend-color-token.browser.test.tsx(116,33): error TS2339: Property 'locator' does not exist on type 'Locator'.
+tests/browser-mode/phase6-b03-advanced-series.browser.test.ts(47,33): error TS2339: Property 'inspectPhase6B03' does not exist on type 'BrowserCommands'.
+tests/browser-mode/phase6-b03-advanced-series.browser.test.ts(62,33): error TS2339: Property 'inspectPhase6B03' does not exist on type 'BrowserCommands'.
+tests/browser-mode/phase6-b03-advanced-series.browser.test.ts(100,33): error TS2339: Property 'inspectPhase6B03' does not exist on type 'BrowserCommands'.
+tests/browser-mode/phase6-b04-parity.browser.test.ts(65,35): error TS2339: Property 'inspectPhase6B04' does not exist on type 'BrowserCommands'.
+tests/browser-mode/phase6-b05-parity.browser.test.ts(64,35): error TS2339: Property 'inspectPhase6B05' does not exist on type 'BrowserCommands'.
+tests/browser-mode/phase6-b06-quarterly.browser.test.ts(14,33): error TS2339: Property 'inspectPhase6B06' does not exist on type 'BrowserCommands'.
+tests/browser-mode/phase6-b06-quarterly.browser.test.ts(28,33): error TS2339: Property 'inspectPhase6B06' does not exist on type 'BrowserCommands'.
+tests/browser-mode/phase6-b06-quarterly.browser.test.ts(61,33): error TS2339: Property 'inspectPhase6B06' does not exist on type 'BrowserCommands'.
+tests/browser-mode/phase6-b07-real-consumption.browser.test.ts(10,39): error TS2339: Property 'inspectPhase6B07' does not exist on type 'BrowserCommands'.
+tests/browser-mode/phase6-b07-real-consumption.browser.test.ts(21,37): error TS2339: Property 'inspectPhase6B07' does not exist on type 'BrowserCommands'.
+tests/browser-mode/phase6-b07-real-consumption.browser.test.ts(26,38): error TS2339: Property 'inspectPhase6B07' does not exist on type 'BrowserCommands'.
+tests/browser-mode/phase6-b08-real-consumption.browser.test.ts(10,33): error TS2339: Property 'inspectPhase6B08' does not exist on type 'BrowserCommands'.
+tests/browser-mode/phase6-b08-real-consumption.browser.test.ts(16,33): error TS2339: Property 'inspectPhase6B08' does not exist on type 'BrowserCommands'.
+tests/browser-mode/phase6-b08-real-consumption.browser.test.ts(31,33): error TS2339: Property 'inspectPhase6B08' does not exist on type 'BrowserCommands'.
+tests/browser-mode/phase6-b09-real-consumption.browser.test.ts(8,33): error TS2339: Property 'inspectPhase6B09' does not exist on type 'BrowserCommands'.
+tests/browser-mode/phase6-b10-tooltip-dismiss.browser.test.ts(37,33): error TS2339: Property 'inspectPhase6B10' does not exist on type 'BrowserCommands'.
+tests/browser-mode/phase6-b10-tooltip-dismiss.browser.test.ts(45,33): error TS2339: Property 'inspectPhase6B10' does not exist on type 'BrowserCommands'.
+tests/browser-mode/phase6-b10-tooltip-dismiss.browser.test.ts(54,33): error TS2339: Property 'inspectPhase6B10' does not exist on type 'BrowserCommands'.
+tests/browser-mode/phase6-b11-tooltip-dismiss.browser.test.ts(26,33): error TS2339: Property 'inspectPhase6B11' does not exist on type 'BrowserCommands'.
+tests/browser-mode/phase6-b11-tooltip-dismiss.browser.test.ts(41,33): error TS2339: Property 'inspectPhase6B11' does not exist on type 'BrowserCommands'.
+tests/browser-mode/phase6-b11-tooltip-dismiss.browser.test.ts(53,33): error TS2339: Property 'inspectPhase6B11' does not exist on type 'BrowserCommands'.
+tests/browser-mode/phase6-b12-chartnote-tooltip.browser.test.ts(25,33): error TS2339: Property 'inspectPhase6B12' does not exist on type 'BrowserCommands'.
+tests/browser-mode/phase6-b12-chartnote-tooltip.browser.test.ts(51,33): error TS2339: Property 'inspectPhase6B12' does not exist on type 'BrowserCommands'.
+tests/browser-mode/phase6-b13-tooltip-dismiss.browser.test.ts(26,33): error TS2339: Property 'inspectPhase6B13' does not exist on type 'BrowserCommands'.
+tests/browser-mode/phase6-b13-tooltip-dismiss.browser.test.ts(47,33): error TS2339: Property 'inspectPhase6B13' does not exist on type 'BrowserCommands'.
+tests/browser-mode/phase6-b13-tooltip-dismiss.browser.test.ts(64,33): error TS2339: Property 'inspectPhase6B13' does not exist on type 'BrowserCommands'.

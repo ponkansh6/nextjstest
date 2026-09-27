@@ -1,0 +1,26 @@
+$ pnpm build && pnpm test:e2e
+$ next build --webpack
+▲ Next.js 16.3.5 (webpack)
+- Environments: .env.local
+✓ Running next.config.ts took 28ms
+- Experiments (use with caution):
+  ⨯ useTypeScriptCli
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 4.2s
+  Running TypeScript ...
+Failed to type check.
+
+./tests/browser-mode/phase6-b06.route.command.ts:126:94
+Type error: Cannot find namespace 'const'.
+
+  [90m124 |[0m   [36mawait[0m realLegend.click();
+  [90m125 |[0m
+[31m[1m>[0m [90m126 |[0m   [36mconst[0m charts = [36mawait[0m [33mPromise[0m.all([[nominal, [32m"CTIミクロ四半期系列（名目）"[0m], [real, [32m"民間最終消費支出（実質）"[0m]] [36mas[0m [36mconst[0m
+  [90m    |[0m                                                                                  [31m[1m^[0m
+  [90m127 |[0m     .map([36masync[0m ([section, publicKey]) => {
+  [90m128 |[0m       [36mconst[0m contract = section.getByTestId([32m"chart-data-contract"[0m);
+  [90m129 |[0m       [36mconst[0m keys = [33mJSON[0m.parse(([36mawait[0m contract.getAttribute([32m"data-series"[0m)) ?? [32m"[]"[0m) [36mas[0m string[];
+Next.js build worker exited with code: 1 and signal: null
+[ELIFECYCLE] Command failed with exit code 1.
+[ELIFECYCLE] Command failed with exit code 1.

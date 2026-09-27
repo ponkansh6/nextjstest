@@ -66,6 +66,9 @@ jobs:
       - name: Build with Next.js
         run: pnpm build
 
+      - name: Browser Mode production route validation
+        run: pnpm test:browser:next-route-poc:built
+
   full-validation:
     if: ${{ github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
@@ -109,6 +112,13 @@ jobs:
           set -o pipefail
           trap 'status=$?; finished=$(date +%s); echo "- build: $((finished - started))s (exit $status)" >> "$GITHUB_STEP_SUMMARY"' EXIT
           pnpm build 2>&1 | tee artifacts/validation-logs/build.log
+
+      - name: Browser Mode production route validation
+        run: |
+          started=$(date +%s)
+          set -o pipefail
+          trap 'status=$?; finished=$(date +%s); echo "- Browser Mode production route validation: $((finished - started))s (exit $status)" >> "$GITHUB_STEP_SUMMARY"' EXIT
+          pnpm test:browser:next-route-poc:built 2>&1 | tee artifacts/validation-logs/browser-route.log
 
       - name: Build parity
         run: |

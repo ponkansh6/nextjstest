@@ -1,0 +1,4 @@
+64f4c8783ba796acc1bc65a8217e80385c301a86ca5e96687ea2fd57885cfdd5  jev-plan45-phase3-phase4-implementation-checkpoint-review2-request.json
+0bbad77c63a094fdc693d220448b6c9b630681bccc1e831429b54c32771b41a3  jev-plan45-phase3-phase4-implementation-checkpoint-review2-response.json
+50efa7ca97be341a260653e6333e6b086dd1b2a03bfc42047615c8eeb65920f8  jev-plan45-phase3-phase4-implementation-checkpoint-review2-derived.md
+a28b3605c8bcbac227243f520441fed77b55a91fe48e914472e01ca72acbac1c  ../phase4/b3i-independent-review-2026-09-27.md

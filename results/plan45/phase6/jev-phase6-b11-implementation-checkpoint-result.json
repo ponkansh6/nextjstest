@@ -1,0 +1,103 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-27T10:30:58.844Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "model": "jev-latest",
+    "state": {
+      "evaluationScope": "implementation_checkpoint_validity",
+      "background": "Phase 6 batch B11 transfers exactly three Plan45 Pixel 7 Chromium touch scenarios to Browser Mode: p45-b-tooltip-dismiss-207-1 (#207), p45-b-tooltip-dismiss-249-case01 (#249), and p45-b-tooltip-dismiss-284-case01 (#284). All use the source shared __MOUNT_ALL__ fixture, production `/`, and networkidle. #207 touches a live nominal bar then a live real bar and preserves source checks: after nominal touch cursor count=1 and close visible; after real-bar touch cursor count=1 and close visible. #249 scrolls the nominal Recharts wrapper into view, reads its center, and follows the source's early return if its bounding box is null; otherwise it dispatches CDP touchStart at wrapper center, exactly five touchMove events each with y+15, then touchEnd. Its only post-gesture assertion is that the close button is hidden at gesture end. #284 taps a hit-tested nominal bar, checks close visible, touches close and checks it hidden, then finds a fresh hit-tested nominal bar point and retaps to check close visible again. Independent implementation and source-boundary audits passed. Focused Browser Mode passed 3/3; post-cutover residual E2E completed build/type-check and passed 8 with 12 skipped. Starting from B10 M=115, this batch advances M to 118; 28 of 33 eligible Phase 6 scenarios are accepted and 5 remain Playwright-owned. The B11 cutover removed only its three targeted E2E blocks. Separate unknown-provenance changes remain: two post-wheel assertions removed from P42 #231, and an unattributed desktop hover-dismiss test deletion. They are outside B11; P42 #249's mapped source predicate remains intact.",
+      "acceptanceCriteria": [
+        "All three B11 stable IDs preserve their exact mapped source touch predicates in permanent fail-on-contract Browser Mode tests under Pixel 7 Chromium touch context and shared fixture setup.",
+        "#207 preserves nominal-to-real chart tapping with cursor count=1 and close-button visibility after each chart touch.",
+        "#249 dispatches a CDP touchStart at the visible nominal wrapper center, exactly five y+15 touchMove events, and touchEnd; it preserves the source early return on a null bounding box and asserts only final close-button hidden state after the gesture.",
+        "#284 preserves first nominal bar tap/close visibility, close-button touch and hidden state, then a fresh hit-tested nominal bar retap and visible close button.",
+        "Only B11's three targeted E2E blocks were cut over; separate #231 post-wheel assertion removals and desktop hover-dismiss deletion are disclosed as unknown-provenance changes and are not counted in B11. The #249 source predicate remains unchanged.",
+        "Focused Browser Mode and post-cutover residual E2E gates pass, with independent implementation/source-boundary audits supporting the cutover; ledger advances from M=115 to M=118, with 28 accepted and 5 pending out of 33."
+      ],
+      "verification": [
+        "Focused run `pnpm run test:browser:phase6-b11:built` passed one file / three tests. Durable log: results/plan45/phase6/phase6-b11-browser-mode-validation-2026-09-27.log.",
+        "After source cutover, residual `pnpm test:e2e:fresh` completed build/type-check and passed 8 tests with 12 skipped and zero failures. Durable log: results/plan45/phase6/phase6-b11-residual-e2e-validation-2026-09-27.log.",
+        "Independent implementation and post-cutover source-boundary audits passed; only B11's three targeted E2E blocks were removed for this batch."
+      ],
+      "knownConstraints": [
+        "This checkpoint covers B11 only. B12-B13 remain pending and are not included in M.",
+        "Two post-wheel assertions removed from P42 #231 and an unattributed desktop hover-dismiss deletion in `tests/e2e/tooltip-dismiss.e2e.spec.ts` have unknown provenance. They are outside B11 and are not included in its cutover count.",
+        "The #249 cutover preserves only the source's final close-hidden predicate after the scripted gesture; it does not add intermediate-state assertions."
+      ],
+      "outputRequirement": "Choose exactly one criterion for this implementation checkpoint. Provide effective verdict, decision summary and full choice distribution, evidence tied to B11 IDs and artifact paths, any required correction with exact location, and remaining uncertainty. Do not attribute the separate unknown-provenance #231 or desktop test changes to B11. Do not claim intermediate gesture assertions for #249. If the initial choice is not valid_as_defined, follow exactly one required case-specific clarification and preserve the initial result; do not turn a non-pass into a pass."
+    },
+    "questions": {
+      "implementation": {
+        "type": "choice",
+        "instructions": "Evaluate whether B11 is a valid full cutover under the acceptance criteria and evidence. Select the single best matching criterion.",
+        "criteria": {
+          "valid_as_defined": "The supplied source-contract, cutover, ledger, and verification evidence supports accepting B11 as defined.",
+          "requirements_mismatch": "A concrete conflict exists between requirements and implementation or recorded evidence; identify the requirement and requirement-only correction.",
+          "missing_prerequisites_info": "Required prerequisite information is missing; identify exactly what is needed.",
+          "incomplete_implementation_info": "Specific evidence needed to assess B11 is missing; identify the exact gap.",
+          "implementation_issue": "A concrete implementation or reporting defect violates a criterion; name the location, evidence, and implementation-only correction.",
+          "scope_violation": "The cutover exceeds or falls outside the agreed batch boundary; identify the boundary and adjustment.",
+          "other": "A different concrete validity issue exists; state the finding, location, evidence, and next action.",
+          "indeterminate": "The supplied context cannot support a decision; identify the missing context and resolving evidence."
+        }
+      }
+    }
+  },
+  "questionIds": [
+    "implementation"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "implementation": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.91,
+        "probabilities": {
+          "scope_violation": 0,
+          "other": 0,
+          "valid_as_defined": 0.93,
+          "missing_prerequisites_info": 0.01,
+          "incomplete_implementation_info": 0.03,
+          "implementation_issue": 0.01,
+          "requirements_mismatch": 0.01,
+          "indeterminate": 0.01
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.91,
+    "probabilities": {
+      "scope_violation": 0,
+      "other": 0,
+      "valid_as_defined": 0.93,
+      "missing_prerequisites_info": 0.01,
+      "incomplete_implementation_info": 0.03,
+      "implementation_issue": 0.01,
+      "requirements_mismatch": 0.01,
+      "indeterminate": 0.01
+    },
+    "passProbability": 0.93,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

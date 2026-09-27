@@ -1,0 +1,108 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-26T05:48:22.255Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "model": "jev-latest",
+    "state": {
+      "evaluationScope": "plan_validity",
+      "background": "This fresh B3f plan checkpoint also records a correction to the historically approved B3e plan. Explorer's immutable Plan42 audit shows P42-262 maps to the 12-item legend-label loop (baseline ledger source line 35), already component-unit-covered for label/mapping/initial aria/callback behavior. It does not map to the current cpi-chart-categories.e2e.spec.ts #section-stacked / real area-path route smoke at lines 9-17. The area-path smoke remains wholly in Playwright and has no P42 transfer. The B3e actual mapped implementation scope is 14 cases: B3e-a 6, B3e-b 2, B3e-c 6; the two earnings viewport candidates were deferred, and P42-262 is dropped. B3e implementation checkpoints passed, bringing cadence to 16/20; A=123/E=90/M=1 remains unchanged. B3f proposes two partial component slices in tests/browser-mode/CagrPanel.browser.test.tsx, using the actual CagrPanel/useCagrState/BottomSheet with deterministic chart data. Phase0 marked the full rows ineligible because the full contracts include production route, real overlay placement/coordinate hit-testing, or viewport/page integration; the proposal splits local component contracts while preserving those production boundaries in E2E. The existing B3d fixture is evidence of feasibility: actual CagrPanel/useCagrState, explicit viewport and CSS baseline, focused 3/3 and JEV valid_as_defined (confidence .92, pass probability .93).",
+      "acceptanceCriteria": [
+        "The correction preserves the historical B3e JEV result but updates current accounting: B3e has 14 mapped cases (a=6, b=2, c=6); earnings viewport candidates are deferred; P42-262 is not a route area-path assertion and is not transferred. The current area-path smoke remains E2E with no P42 migration credit.",
+        "B3f proposes exactly two named actual-component Browser Mode cases in tests/browser-mode/CagrPanel.browser.test.tsx, with actual CagrPanel/useCagrState/BottomSheet and deterministic data.",
+        "Backdrop case for p45-a-cagr-sheet-03 transfers only P42-051's local dialog removal after a real click on the rendered backdrop. Retain P42-050 production route trigger-to-dialog visibility. Playwright additionally verifies document.elementFromPoint(10,10) resolves to the production backdrop before the coordinate click, preserving the production overlay-corner hit-target boundary; the isolated component fixture does not claim production placement/hit-testing.",
+        "375x667 no-inner-scroll case for p45-a-cagr-sheet-07 calculates a real component result and asserts actual sheet scrollHeight-clientHeight<=0 (P42-059). Retain the production route, #section-stacked trigger/open, result calculation, dialog/result checks, and all other E2E assertions.",
+        "Both proposed stable rows remain partial. Phase0's broad whole-row ineligibility rationale remains true for route/overlay/page guarantees, while the proposed local slices preserve those integrations in Playwright. A=123/E=90/M=1 stays unchanged.",
+        "B3e contributes 14 mapped cases to B3d's two, so cadence is 16/20; B3f adds two to reach only 18/20. No E2E is run or authorized until further valid cases reach 20/20.",
+        "B3f is plan scope only. Each implementation case requires focused Browser Mode verification, independent diff review, and an implementation JEV checkpoint before proceeding. No source changes or test results are claimed.",
+        "The prior B3d fixture uses a system-font fallback rather than production Geist; keep the proposed scroll assertion limited to the sheet-local metric and preserve production route, backdrop target, and viewport checks in Playwright."
+      ],
+      "verification": [
+        "Explorer crosswalk: immutable P42-262 source is the 12-item legend-label loop at baseline line 35 and is unit-covered; the current first CPI E2E at lines 9-17 is the section/area-path route smoke and has no such P42 mapping.",
+        "Explorer crosswalk: P42-050 is production-route dialog visible after trigger; P42-051 is dialog hidden after mouse click at coordinate (10,10). BottomSheet renders a fixed full-screen backdrop with onClick=onClose and the sheet above it.",
+        "Explorer crosswalk: P42-059 is the 375x667 actual sheet scrollHeight-clientHeight<=0 expectation after opening and calculating; retain the production trigger and calculation flow when transferring this component-local metric.",
+        "B3d precedent: tests/browser-mode/CagrPanel.browser.test.tsx passed 3/3 with actual CagrPanel/useCagrState, deterministic data, exact viewports and explicit fixture CSS; its implementation JEV checkpoint passed valid_as_defined.",
+        "B3e subbatches a/b/c passed focused and implementation JEV checkpoints; their 14 actual mapped cases advance the prior B3d cadence to 16/20. No E2E has run."
+      ],
+      "knownConstraints": [
+        "The Phase0 eligibility decision classifies complete mixed stable rows. This partial plan does not reverse that assessment or claim complete migration; it transfers only local assertions while preserving route and coordinate guarantees.",
+        "An isolated backdrop click cannot prove the production overlay is at screen coordinate (10,10); retain a Playwright hit-target assertion for that coordinate and keep route-open P42-050.",
+        "System fallback font differs from production Geist. The component test should claim only sheet-local scrollHeight/clientHeight behavior; production geometry/overlay integration remains E2E.",
+        "A=123/E=90/M=1 remains unchanged; cadence after B3f would be 18/20, still below the E2E gate."
+      ],
+      "outputRequirement": "Review the corrected B3e accounting and the exact two-case B3f plan. Select exactly one listed criterion and return confidence plus the full probability distribution. If not valid_as_defined, give a case-specific finding, affected row/assertion/source, observed evidence or exact neededEvidence, concrete nextAction/proposedFix, and remainingUncertainty. Do not upgrade the historical B3e review or claim P42-262 transfers to area-path behavior, full stable-row migration, M increase, or E2E authorization."
+    },
+    "questions": {
+      "plan": {
+        "type": "choice",
+        "instructions": "Select exactly one mutually exclusive criterion for the corrected B3e record and B3f plan validity checkpoint.",
+        "criteria": {
+          "valid_as_defined": "The corrected B3e mapping/accounting is accurate and the two partial B3f cases preserve route and coordinate guarantees while respecting cadence.",
+          "requirements_mismatch": "A proposed ownership boundary or retained guarantee conflicts with an applicable requirement.",
+          "missing_prerequisites_info": "Prerequisite information is missing and prevents judging this plan.",
+          "incomplete_implementation_info": "The plan lacks details needed to judge the two cases or corrected mapping.",
+          "implementation_issue": "A concrete source/component constraint invalidates the proposed plan.",
+          "scope_violation": "The proposal transfers more than the two local assertions, mis-maps P42-262, or violates the cadence/boundaries.",
+          "other": "A material planning concern does not fit these criteria.",
+          "indeterminate": "Available evidence does not support a reliable determination."
+        }
+      }
+    }
+  },
+  "questionIds": [
+    "plan"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "plan": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.98,
+        "probabilities": {
+          "missing_prerequisites_info": 0,
+          "valid_as_defined": 0.99,
+          "scope_violation": 0,
+          "implementation_issue": 0,
+          "requirements_mismatch": 0,
+          "indeterminate": 0,
+          "incomplete_implementation_info": 0.01,
+          "other": 0
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.98,
+    "probabilities": {
+      "missing_prerequisites_info": 0,
+      "valid_as_defined": 0.99,
+      "scope_violation": 0,
+      "implementation_issue": 0,
+      "requirements_mismatch": 0,
+      "indeterminate": 0,
+      "incomplete_implementation_info": 0.01,
+      "other": 0
+    },
+    "passProbability": 0.99,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

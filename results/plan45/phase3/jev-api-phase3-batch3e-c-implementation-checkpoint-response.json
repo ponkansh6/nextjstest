@@ -1,0 +1,107 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-26T05:30:12.610Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "model": "jev-latest",
+    "state": {
+      "evaluationScope": "implementation_checkpoint_validity",
+      "background": "B3e-c implements six separate nominal/real mobile tooltip-scroll Browser Mode cases in tests/browser-mode/SpendingBarChart-tooltip-scroll.browser.test.tsx at 375x667, 320x480, and 667x375. They mount actual SpendingBarChart and production CustomTooltip with the actual touch-mode useChartTooltipController, its chart handlers, normal controller activation, and no manual tooltip wrapper placement. Independent review confirms production expense key counts (21 nominal / 11 real), 84 deterministic quarters, and production-equivalent outer/chart parent widths. Exact source audit and Oracle review narrowed the original broader proposed transfer to six E2E assertions only: P42-246 computed overflowY, -247 positive maxHeight, -248 bottom padding, -250 scrollHeight>clientHeight, -255 scroll-to-end within 1px, and -256 close visibility after scrolling. Playwright retains P42-241–244, -251–254, and -257–261. P42-245 is unit-owned; P42-249 is absent from the current E2E and unit-owned. Focused Browser Mode passed 6/6. B3e-c adds 6 to 10/20, reaching 16/20; A=123/E=90/M=1 stays unchanged, rows remain partial, and no E2E was run.",
+      "acceptanceCriteria": [
+        "Focused Browser Mode file tests/browser-mode/SpendingBarChart-tooltip-scroll.browser.test.tsx passes 6/6 across nominal and real cases at 375x667, 320x480, and 667x375.",
+        "The cases mount actual SpendingBarChart and production CustomTooltip using useChartTooltipController({suppressed:false,isTouch:true}), real chart event handlers, touch/click controller activation, and standard production tooltip placement; no manual wrapper placement or direct tooltip-state assignment is used.",
+        "Independent review confirms the fixtures use the production 21 nominal / 11 real expense keys, 84 quarters, and production-equivalent parent widths.",
+        "Only P42-246/-247/-248 computed overflowY/max-height/paddingBottom, P42-250 scrollHeight>clientHeight, P42-255 scroll-to-end within 1px, and P42-256 close visibility after scroll move from E2E to Browser Mode.",
+        "Playwright retains P42-241–244 route/visibility, actual touch/controller activation, and content/key mapping; P42-251–254 absolute tooltip viewport bounds; P42-257–260 close-button viewport bounds; and P42-261 after-close hidden behavior. P42-245 is already unit-owned; P42-249 has no current E2E assertion and remains unit-owned.",
+        "The broader original B3e-c proposal was narrowed after exact assertion audit and Oracle review to preserve absolute viewport-bound E2E guarantees. No retained E2E assertion is represented as transferred.",
+        "B3e-c adds six cases to the previous 10/20 cadence, reaching 16/20. No E2E was run. A=123/E=90/M=1 is unchanged and all three stable rows remain partial.",
+        "The preceding B3e-b checkpoint passed valid_as_defined (confidence .97, pass probability .98); its two earnings viewport candidates remain deferred and all P42-219–240 assertions stay in E2E."
+      ],
+      "verification": [
+        "Focused Browser Mode result supplied: tests/browser-mode/SpendingBarChart-tooltip-scroll.browser.test.tsx, 6/6 passed.",
+        "Independent review confirms actual touch controller and handlers, ordinary controller-driven tooltip placement without manual wrapper positioning, production key counts 21/11, 84-quarter data, and parent widths.",
+        "The current E2E diff removes only P42-246/-247/-248, -250, -255, and -256 for both nominal and real cases across the three viewports; the listed route/content/absolute-bounds/close-bounds/after-close assertions remain.",
+        "The initial plan's broader tooltip geometry transfer was narrowed based on exact source assertion mapping and Oracle review to preserve absolute viewport bounds and close-button bounds in Playwright.",
+        "No E2E was run. Cadence is 16/20 and the stable rows remain partial."
+      ],
+      "knownConstraints": [
+        "Browser Mode exercises component tooltip scrolling and its local CSS under deterministic chart data; route integration, payload content, absolute tooltip position, close-button viewport bounds, and after-close state remain in Playwright.",
+        "P42-245 remains unit-owned and P42-249 is not a current E2E assertion; neither is counted as transferred.",
+        "A=123/E=90/M=1 remains unchanged; the next consolidated E2E waits for a later valid case to reach the 20-case cadence."
+      ],
+      "outputRequirement": "Assess whether B3e-c's implementation and evidence meet the narrowed partial-transfer scope. Select exactly one listed criterion and return confidence and full probability distribution. If not valid_as_defined, identify the exact assertion/source location, observed evidence or exact neededEvidence, a concrete nextAction/proposedFix, and remainingUncertainty. Do not claim the broader initial plan was implemented or that retained E2E guarantees moved."
+    },
+    "questions": {
+      "implementation": {
+        "type": "choice",
+        "instructions": "Select exactly one mutually exclusive criterion for the B3e-c implementation checkpoint.",
+        "criteria": {
+          "valid_as_defined": "The implementation and evidence satisfy the narrowed B3e-c assertion slice and preserve retained E2E boundaries.",
+          "requirements_mismatch": "The implementation contradicts an applicable assertion ownership or acceptance requirement.",
+          "missing_prerequisites_info": "Prerequisite information is missing and prevents assessment.",
+          "incomplete_implementation_info": "The implementation or evidence is too incomplete to assess the checkpoint.",
+          "implementation_issue": "A concrete implementation defect or unsupported behavior remains.",
+          "scope_violation": "The implementation exceeds the six mapped assertions or weakens retained E2E guarantees.",
+          "other": "A material issue does not fit the other criteria.",
+          "indeterminate": "The evidence does not support a reliable determination."
+        }
+      }
+    }
+  },
+  "questionIds": [
+    "implementation"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "implementation": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.95,
+        "probabilities": {
+          "incomplete_implementation_info": 0.01,
+          "other": 0,
+          "indeterminate": 0.01,
+          "valid_as_defined": 0.97,
+          "requirements_mismatch": 0,
+          "scope_violation": 0,
+          "implementation_issue": 0,
+          "missing_prerequisites_info": 0.01
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.95,
+    "probabilities": {
+      "incomplete_implementation_info": 0.01,
+      "other": 0,
+      "indeterminate": 0.01,
+      "valid_as_defined": 0.97,
+      "requirements_mismatch": 0,
+      "scope_violation": 0,
+      "implementation_issue": 0,
+      "missing_prerequisites_info": 0.01
+    },
+    "passProbability": 0.97,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

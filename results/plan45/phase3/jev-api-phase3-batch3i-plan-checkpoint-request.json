@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "jev-review-initial-distribution-v3",
+  "model": "jev-latest",
+  "state": {
+    "evaluationScope": "plan_validity",
+    "background": "B3i responds to the user's revised policy: accelerate across E=90 MAP-eligible stable rows, accept rough component fixtures for narrow assertion slices, and run one consolidated E2E after each 10 newly migrated eligible rows. B3g's previous 20/20 named-case gate and consolidated E2E passed and remain historical; the new cadence starts 0/10. A fresh independent audit confirmed all ten candidates are MAP-eligible and verified the P42 mappings. B3h's no-safe-candidate conclusion was made under the previous stricter equivalence screen; this proposal applies the revised authorization without weakening retained integration boundaries. Proposed rows: p45-a-cagr-sheet-04 P42-052 horizontal overflow; p45-a-cagr-sheet-05 P42-053/-054 visible chart height >=120px at 375x667; p45-b-mobile-ux-19-ux P42-323/-324 tap-target dimensions; p45-a-a11y-sheet-tab-trap P42-022 actual BottomSheet focus containment; p45-b-tooltip-stack-total-65-e2e-t7-2022 P42-585/-586 actual nominal SpendingBarChart hover tooltip/total (retain -587); p45-a-cpi-legend-scroll P42-263/-264 actual legend click and fixture scroll preservation; p45-b-section-tabs-scroll-47-case01-chromium P42-501/-502 actual SectionTabs click/fixture scroll behavior (retain WebKit); p45-b-range-change-187-e2e-1 P42-463–466 one-year/four-bar local chart contract; p45-b-range-change-200-e2e-2 P42-467–469 doubled-range/eight-bar local chart contract; p45-b-spending-filter-35-e2e-q1 P42-511–514 actual nominal Q1 filter state and bars. Each row remains partial; only mapped assertions that pass Browser Mode count toward 10. Keep production route/dataflow/chart-table/CSV, quarterly production data, URL, page geometry, and WebKit guarantees in E2E. Exclude weak p45-a-cagr-sheet-06 P42-055/-056. If a candidate proves non-actionable, stop and reassess before conditionally substituting p45-b-spending-filter-64-e2e P42-515–518. Keep A=123/E=90/M=1; M counts fully migrated rows only.",
+    "acceptanceCriteria": [
+      "The plan uses the revised 10-newly-migrated-eligible-stable-row cadence and starts at 0/10; B3g's previous completed 20/20 gate is preserved historically and does not count toward this cadence.",
+      "The ten rows and exact P42 ranges in the proposal match the independently audited MAP-eligible inventory.",
+      "Each Browser Mode case is limited to the mapped local assertion slice and a row counts only after that mapped Browser assertion passes.",
+      "Production route/dataflow/chart-table/CSV and quarterly data, URL integration, production geometry, and WebKit guarantees remain Playwright-owned.",
+      "Rows stay partial; A=123/E=90/M=1 remains unchanged until a stable row meets the existing full migration definition.",
+      "P42-055/-056 is excluded; P42-515–518 is a conditional substitute only after documented non-actionability and a fresh scoped plan reassessment.",
+      "This is plan review only; no source/test implementation or test results are claimed."
+    ],
+    "verification": [
+      "Independent MAP/P42 audit confirmed all ten candidate rows are eligible and identified the exact mapped assertion groups.",
+      "B3g's 20-case gate was completed and one consolidated E2E run passed; B3i proposes a new 0/10 eligible-row cadence.",
+      "No tests were run for this plan checkpoint."
+    ],
+    "knownConstraints": [
+      "Rough component fixtures are explicitly allowed by the user's revised policy only for the listed local assertions; they do not prove the production route or data integration.",
+      "Keep every unlisted P42 assertion and all production integration boundaries in Playwright.",
+      "Do not count named Browser Mode tests, assertion totals, or existing B3g cases in place of ten newly migrated eligible stable rows.",
+      "M continues to count fully migrated stable rows only; current A/E/M remains 123/90/1."
+    ],
+    "outputRequirement": "Assess whether B3i's ten-row assertion-level plan, exact P42 mapping, revised cadence, retained E2E boundaries, and M accounting are valid as defined. Select exactly one criterion and return confidence plus the full probability distribution. If not valid_as_defined, provide a case-specific finding and affected row/assertion, observed evidence or exact neededEvidence, concrete nextAction/proposedFix, and remainingUncertainty. Do not claim implementation/test success or approve scope beyond the listed assertions."
+  },
+  "questions": {
+    "plan": {
+      "type": "choice",
+      "instructions": "Select exactly one mutually exclusive criterion for the B3i plan-validity checkpoint.",
+      "criteria": {
+        "valid_as_defined": "The ten partial assertion slices and revised eligible-row cadence are sufficiently specified and preserve all stated boundaries.",
+        "requirements_mismatch": "The proposed assertion ownership or cadence conflicts with the user's revised policy or the migration requirements.",
+        "missing_prerequisites_info": "Required source/MAP evidence is missing for one or more proposed rows.",
+        "incomplete_implementation_info": "The plan lacks necessary fixture or assertion mapping details to judge the proposed partial slices.",
+        "implementation_issue": "A concrete source constraint makes one or more proposed component assertions infeasible.",
+        "scope_violation": "The plan exceeds the listed P42 slices, weakens production E2E guarantees, or counts partial rows as fully migrated.",
+        "other": "A material plan concern does not fit the listed categories.",
+        "indeterminate": "The evidence does not support a reliable judgment."
+      }
+    }
+  }
+}

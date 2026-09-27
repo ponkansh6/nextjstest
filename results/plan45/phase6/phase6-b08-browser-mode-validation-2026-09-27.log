@@ -1,0 +1,58 @@
+$ node scripts/run-next-route-poc.mjs --only=phase6-b08
+
+ RUN  v4.1.11 /home/shunki/working/nextjstest
+
+[phase6-b08-stage] p45-b-real-consumption-99-page-tsx-e2e-real-consumption-chart-with-actual-browser install source fixture mount behavior started
+[phase6-b08-stage] p45-b-real-consumption-99-page-tsx-e2e-real-consumption-chart-with-actual-browser install source fixture mount behavior completed in 4ms
+[phase6-b08-stage] p45-b-real-consumption-99-page-tsx-e2e-real-consumption-chart-with-actual-browser navigate to production route started
+[phase6-b08-stage] p45-b-real-consumption-99-page-tsx-e2e-real-consumption-chart-with-actual-browser navigate to production route completed in 289ms
+[phase6-b08-stage] p45-b-real-consumption-99-page-tsx-e2e-real-consumption-chart-with-actual-browser wait for source fixture network idle started
+[phase6-b08-stage] p45-b-real-consumption-99-page-tsx-e2e-real-consumption-chart-with-actual-browser wait for source fixture network idle completed in 766ms
+[phase6-b08-stage] p45-b-real-consumption-99-page-tsx-e2e-real-consumption-chart-with-actual-browser check first page-global legend item visibility started
+[phase6-b08-stage] p45-b-real-consumption-99-page-tsx-e2e-real-consumption-chart-with-actual-browser check first page-global legend item visibility completed in 367ms
+[phase6-b08-stage] p45-b-real-consumption-99-page-tsx-e2e-real-consumption-chart-with-actual-browser attempt first legend click with source 5s timeout started
+[phase6-b08-stage] p45-b-real-consumption-99-page-tsx-e2e-real-consumption-chart-with-actual-browser attempt first legend click with source 5s timeout completed in 450ms
+[phase6-b08-stage] p45-b-real-consumption-99-page-tsx-e2e-real-consumption-chart-with-actual-browser wait source 500ms settle interval started
+[phase6-b08-stage] p45-b-real-consumption-99-page-tsx-e2e-real-consumption-chart-with-actual-browser wait source 500ms settle interval completed in 501ms
+[phase6-b08-stage] p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser install source fixture mount behavior started
+[phase6-b08-stage] p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser install source fixture mount behavior completed in 2ms
+[phase6-b08-stage] p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser navigate to production route started
+[phase6-b08-stage] p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser navigate to production route completed in 267ms
+[phase6-b08-stage] p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser wait for source fixture network idle started
+[phase6-b08-stage] p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser wait for source fixture network idle completed in 736ms
+[phase6-b08-stage] p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser scroll real-consumption section into view started
+[phase6-b08-stage] p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser scroll real-consumption section into view completed in 384ms
+[phase6-b08-stage] p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser wait for real-consumption section visibility started
+[phase6-b08-stage] p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser wait for real-consumption section visibility completed in 437ms
+[phase6-b08-stage] p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser read real-consumption section visibility started
+[phase6-b08-stage] p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser read real-consumption section visibility completed in 43ms
+[phase6-b08-stage] p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser wait for accordion summary visibility started
+[phase6-b08-stage] p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser wait for accordion summary visibility completed in 23ms
+[phase6-b08-stage] p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser read accordion summary visibility started
+[phase6-b08-stage] p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser read accordion summary visibility completed in 20ms
+[phase6-b08-stage] p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser read section-local legend item visibility started
+[phase6-b08-stage] p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser read section-local legend item visibility completed in 329ms
+[phase6-b08-stage] p45-b-real-consumption-156-page-tsx-e2e-real-consumption-chart-with-actual-browser install source fixture mount behavior started
+[phase6-b08-stage] p45-b-real-consumption-156-page-tsx-e2e-real-consumption-chart-with-actual-browser install source fixture mount behavior completed in 1ms
+[phase6-b08-stage] p45-b-real-consumption-156-page-tsx-e2e-real-consumption-chart-with-actual-browser navigate to production route started
+[phase6-b08-stage] p45-b-real-consumption-156-page-tsx-e2e-real-consumption-chart-with-actual-browser navigate to production route completed in 265ms
+[phase6-b08-stage] p45-b-real-consumption-156-page-tsx-e2e-real-consumption-chart-with-actual-browser wait for source fixture network idle started
+[phase6-b08-stage] p45-b-real-consumption-156-page-tsx-e2e-real-consumption-chart-with-actual-browser wait for source fixture network idle completed in 736ms
+[phase6-b08-stage] p45-b-real-consumption-156-page-tsx-e2e-real-consumption-chart-with-actual-browser scroll real-consumption section into view started
+[phase6-b08-stage] p45-b-real-consumption-156-page-tsx-e2e-real-consumption-chart-with-actual-browser scroll real-consumption section into view completed in 374ms
+[phase6-b08-stage] p45-b-real-consumption-156-page-tsx-e2e-real-consumption-chart-with-actual-browser wait for real-consumption section visibility started
+[phase6-b08-stage] p45-b-real-consumption-156-page-tsx-e2e-real-consumption-chart-with-actual-browser wait for real-consumption section visibility completed in 427ms
+[phase6-b08-stage] p45-b-real-consumption-156-page-tsx-e2e-real-consumption-chart-with-actual-browser read real-consumption section visibility started
+[phase6-b08-stage] p45-b-real-consumption-156-page-tsx-e2e-real-consumption-chart-with-actual-browser read real-consumption section visibility completed in 39ms
+[phase6-b08-stage] p45-b-real-consumption-156-page-tsx-e2e-real-consumption-chart-with-actual-browser click accordion summary started
+[phase6-b08-stage] p45-b-real-consumption-156-page-tsx-e2e-real-consumption-chart-with-actual-browser click accordion summary completed in 74ms
+[phase6-b08-stage] p45-b-real-consumption-156-page-tsx-e2e-real-consumption-chart-with-actual-browser wait for first section-local legend item visibility started
+[phase6-b08-stage] p45-b-real-consumption-156-page-tsx-e2e-real-consumption-chart-with-actual-browser wait for first section-local legend item visibility completed in 73ms
+[phase6-b08-stage] p45-b-real-consumption-156-page-tsx-e2e-real-consumption-chart-with-actual-browser read first section-local legend item visibility started
+[phase6-b08-stage] p45-b-real-consumption-156-page-tsx-e2e-real-consumption-chart-with-actual-browser read first section-local legend item visibility completed in 30ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  18:59:24
+   Duration  9.13s (transform 0ms, setup 572ms, import 43ms, tests 7.00s, environment 0ms)
+

@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "jev-review-initial-distribution-v3",
+  "model": "jev-latest",
+  "state": {
+    "evaluationScope": "plan_validity",
+    "background": "This is a fresh initial plan_validity review of the clarified Batch3 proposal in shared_plan/45-vitest-browser-mode-e2e-migration-plan.md lines 415-449. Preserve the prior initial checkpoint at jev-api-phase3-batch3-plan-checkpoint-* as a historical valid_as_defined result (confidence .86, pass probability .88, complete diagnosis, no follow-up); it predates explicit assertion replacement/removal mapping. Revised plan defines ten NEW named Browser Mode cases and 10 cumulative source Playwright cases touched at the one consolidated E2E gate: Batch1 touches one, Batch2 touches one, Batch3 touches eight source declarations. There are 12 named Browser Mode cases cumulatively at that gate because Batches1-2 contribute two. Every new Browser Mode test replaces the listed mapped Playwright assertion group only after it passes; a case that only adds coverage without removing its mapped assertion group does not count. Batch3 assertions remain partial stable-row slices and do not increment M. Case map: 1) p45-a-cagr-sheet-02: CagrPanel + useCagrState with deterministic data takes P42-046-049 as one adjacent group (dialog initially visible, remains visible after start-year change, result visible and formatted to two decimals); assert rendered result behavior, not hook math alone; production section/data/route wiring remains E2E. 2) p45-b-monthly-boundary-axis-21-cpi-2017-12-2018-1-svg takes P42-353-354 (SVG tick labels attached; 2017年12月 absent) using real mounted CPI stacked chart/axis and synthetic monthly data; pure tick algorithm stays unit-owned and production route/data/render stays E2E. 3) p45-b-monthly-boundary-axis-21-2017-12-2018-1-svg takes P42-355-356 (2018年1月 absent; at least two labels remain) using actual earnings chart/axis and synthetic monthly data; pure algorithm and route data/render remain separate owners. 4-5) p45-b-consumption-mobile-acceptance-37-mobile-pixel-acceptance-plan25-openspec-dom-32px each take the nominal or real loop execution of P42-166-168 (first legend control visible, nonempty button set, actual buttons >=32x32) as independent fixtures at 412x915; retain P42-165 production chart visibility E2E. 6-7) p45-b-consumption-mobile-acceptance-63-mobile-pixel-acceptance-plan25-openspec-tooltip-14px-16 each take their nominal or real loop execution of P42-170 only: actual SpendingBarChart/Recharts hover on distinct nominal/real payloads makes tooltip visible. Do not duplicate direct CustomTooltip inline-style units; P42-169 production visibility and P42-171-174 style/presentation checks remain E2E. 8) p45-b-consumption-mobile-acceptance-122-mobile-pixel-acceptance-plan25-openspec-summary-1 takes P42-177 for both loop executions in one named test with nominal and real fixtures on the shared actual SpendingBarChart summary/CSS path. Assert computed white-space nowrap on actual summary elements, not summary copy. Exact fixture outputs based on all-visible keys and four quarters: two nominal keys render `費目・四半期を変更（費目 2/2・四半期 4/4）・全選択`; three real keys render the distinct `費目・四半期を変更（費目 3/3・四半期 4/4）・全選択`. Keep P42-175 production visibility and P42-176/P42-178 current ownership unchanged. 9) p45-a-earnings-hover takes P42-290 only: actual EarningsBreakdownChart plot hover -> visible tooltip; retain E2E production route, viewport plot geometry P42-287-289 and computed separator CSS. 10) p45-b-tooltip-dismiss-578-chromium-escape-dismiss takes P42-577 only: actual nominal SpendingBarChart with its payload, desktop chart hover then Escape-dismiss visible tooltip. It is separate from ChartInfoButton Escape. Retain E2E production chart visibility, mouseleave and outside click; current unit behavior only covers a mocked touch path. No production-route/coordinate guarantee is transferred.",
+    "acceptanceCriteria": [
+      "Exactly ten new named Browser Mode test cases each have an explicit stable row and P42 assertion group they replace; tests must not be counted if they only add coverage without removing that mapped group after green Browser Mode verification.",
+      "Each replacement guarantees only the mounted local component/axis/DOM contract described. Playwright keeps all production route/data/viewport/plot-geometry/style/user-action guarantees explicitly retained in the mapping.",
+      "Cagr test verifies the rendered visible dialog/result and formatted result, not hook math alone; nominal and real tooltip tests use distinct data payloads and assert actual Recharts hover-to-tooltip visibility; tooltip Escape dismissal is distinct from ChartInfoButton Escape; nowrap tests computed CSS on the actual rendered summary; earnings test uses the actual EarningsBreakdownChart plot path.",
+      "The summary case is one named case with two fixtures, maps P42-177 only, confirms the distinct expected text derived from actual fixture props, and leaves P42-175 and P42-176/P42-178 ownership unchanged without asserting summary text.",
+      "Do not run any E2E command (including targeted Playwright or pnpm test:full) until all ten new named Browser Mode cases pass. Then remove only mapped assertion groups and run the retained consolidated E2E regression once. At that gate exactly 12 named Browser Mode tests are cumulative and 10 source Playwright cases have been touched: B1 one + B2 one + B3 eight.",
+      "Preserve A=123, E=90, M=1 pending exact reconciliation; these partial stable-row slices do not increment M or imply complete stable-scenario migration.",
+      "Defer Phase5 investigation of all 33 MAP-ineligible IDs; no GitHub Actions/CI work. No implementation or tests are part of this plan review."
+    ],
+    "verification": [
+      "Initial plan checkpoint only. No proposed Batch3 implementation or test result is represented as completed."
+    ],
+    "knownConstraints": [
+      "The user's speed preference requires one consolidated retained-E2E run only after the ten new cases pass.",
+      "Batches1 and 2 each previously completed one named component-level Browser Mode case; do not transfer/count them again or alter M.",
+      "This review is not a blanket approval of any whole mixed Playwright stable row."
+    ],
+    "outputRequirement": "Choose exactly one listed primary plan verdict. Only valid_as_defined passes. Any non-pass diagnosis must name the specific case/stable row, affected requirement, observed evidence, and either a concrete proposed correction or exact needed evidence; do not convert a scoped issue into blanket approval/disapproval of other cases."
+  },
+  "questions": {
+    "plan": {
+      "type": "choice",
+      "instructions": "Does the clarified ten-case Batch3 plan satisfy its exact replacement mappings, retained E2E boundaries, and no-E2E-until-threshold cadence? Return a probability distribution over all choices.",
+      "criteria": {
+        "valid_as_defined": "The ten named tests replace exactly their enumerated P42 assertion groups, the separate production/unit guarantees remain assigned, the consolidated threshold/count is correct, and A/E/M and Phase5/CI boundaries are preserved. Only this choice passes.",
+        "requirements_mismatch": "A mapped assertion, current owner, or intended contract conflicts with the plan; name the exact case/requirement and correction.",
+        "missing_prerequisites_info": "A specific source fact or prerequisite is missing to judge a named replacement; name the exact case and required information.",
+        "incomplete_implementation_info": "The written plan omits a required assertion group, fixture detail, retention boundary, or gate needed to implement a particular transfer; specify it and the needed evidence/text.",
+        "implementation_issue": "A concrete technical constraint makes one proposed mounted Browser Mode case unsound; identify the case/source and evidence.",
+        "scope_violation": "A proposal breaks the no-E2E-before-ten-passes cadence, miscounts source cases/tests, changes A/E/M, claims a whole stable scenario, increments M, drops a retained boundary, or expands Phase5/CI scope; identify it precisely.",
+        "other": "Another material case-specific issue is supported by evidence; name its location and proposed correction or exact needed evidence.",
+        "indeterminate": "The supplied context cannot support a judgment; identify missing context if possible."
+      }
+    }
+  }
+}

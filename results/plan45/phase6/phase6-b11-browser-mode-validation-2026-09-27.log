@@ -1,0 +1,90 @@
+$ node scripts/run-next-route-poc.mjs --only=phase6-b11
+
+ RUN  v4.1.11 /home/shunki/working/nextjstest
+
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 install shared fixture mount behavior started (timeout 5000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 install shared fixture mount behavior completed in 2ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 navigate to production route started (timeout 30000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 navigate to production route completed in 295ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 wait for network idle started (timeout 20000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 wait for network idle completed in 771ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 record effective Pixel 7 touch context started (timeout 5000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 record effective Pixel 7 touch context completed in 243ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 scroll real-consumption chart into view before nominal tap started (timeout 15000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 scroll real-consumption chart into view before nominal tap completed in 97ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 find hit-tested nominal bar point (up to 4 retries) started (timeout 45000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 find hit-tested nominal bar point (up to 4 retries) completed in 976ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 touch tap nominal bar started (timeout 10000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 touch tap nominal bar completed in 659ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 wait for close button visible after nominal tap started (timeout 7000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 wait for close button visible after nominal tap completed in 197ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 count cursor after nominal tap started (timeout 5000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 count cursor after nominal tap completed in 47ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 find fresh hit-tested real bar point (up to 4 retries) started (timeout 45000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 find fresh hit-tested real bar point (up to 4 retries) completed in 501ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 touch tap real bar started (timeout 10000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 touch tap real bar completed in 643ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 wait for close button visible after real tap started (timeout 7000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 wait for close button visible after real tap completed in 118ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 count global cursor after real tap started (timeout 5000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 count global cursor after real tap completed in 20ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 install shared fixture mount behavior started (timeout 5000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 install shared fixture mount behavior completed in 2ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 navigate to production route started (timeout 30000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 navigate to production route completed in 264ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 wait for network idle started (timeout 20000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 wait for network idle completed in 779ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 record effective Pixel 7 touch context started (timeout 5000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 record effective Pixel 7 touch context completed in 248ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 scroll nominal recharts wrapper into view started (timeout 15000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 scroll nominal recharts wrapper into view completed in 96ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 read nominal wrapper bounding box started (timeout 5000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 read nominal wrapper bounding box completed in 417ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 create Chrome DevTools Protocol session started (timeout 5000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 create Chrome DevTools Protocol session completed in 3ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 dispatch touchStart at wrapper center started (timeout 5000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 dispatch touchStart at wrapper center completed in 332ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 dispatch touchMove 1/5 started (timeout 5000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 dispatch touchMove 1/5 completed in 30ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 dispatch touchMove 2/5 started (timeout 5000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 dispatch touchMove 2/5 completed in 316ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 dispatch touchMove 3/5 started (timeout 5000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 dispatch touchMove 3/5 completed in 393ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 dispatch touchMove 4/5 started (timeout 5000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 dispatch touchMove 4/5 completed in 7ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 dispatch touchMove 5/5 started (timeout 5000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 dispatch touchMove 5/5 completed in 17ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 dispatch touchEnd started (timeout 5000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 dispatch touchEnd completed in 322ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 wait for close button hidden at gesture end started (timeout 7000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 wait for close button hidden at gesture end completed in 192ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 install shared fixture mount behavior started (timeout 5000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 install shared fixture mount behavior completed in 3ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 navigate to production route started (timeout 30000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 navigate to production route completed in 262ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 wait for network idle started (timeout 20000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 wait for network idle completed in 728ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 record effective Pixel 7 touch context started (timeout 5000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 record effective Pixel 7 touch context completed in 252ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 find hit-tested nominal bar point (up to 4 retries) started (timeout 45000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 find hit-tested nominal bar point (up to 4 retries) completed in 548ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 touch tap nominal bar started (timeout 10000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 touch tap nominal bar completed in 666ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 wait for close button visible after first tap started (timeout 7000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 wait for close button visible after first tap completed in 202ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 touch tap close button started (timeout 10000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 touch tap close button completed in 588ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 wait for close button hidden after close tap started (timeout 7000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 wait for close button hidden after close tap completed in 100ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 find fresh actionable nominal bar point (up to 4 retries) started (timeout 45000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 find fresh actionable nominal bar point (up to 4 retries) completed in 127ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 touch tap fresh nominal bar point started (timeout 10000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 touch tap fresh nominal bar point completed in 617ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 wait for close button visible after retap started (timeout 7000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 wait for close button visible after retap completed in 108ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  19:27:00
+   Duration  14.49s (transform 0ms, setup 564ms, import 42ms, tests 12.63s, environment 0ms)
+

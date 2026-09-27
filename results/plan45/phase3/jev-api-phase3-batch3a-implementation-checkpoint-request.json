@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "jev-review-initial-distribution-v3",
+  "model": "jev-latest",
+  "state": {
+    "evaluationScope": "implementation_validity",
+    "background": "Plan45 Phase 3 Batch 3a migrates only component-level portions of three stable Playwright inventory rows into Vitest Browser Mode. The five named Browser Mode cases cover nominal and real mobile expense legend controls and touch bounds, nominal and real tooltip payload visibility after hover, and computed nowrap on both summaries. The migration is deliberately partial: route visibility and other integration/presentation assertions remain in Playwright. The Plan45 rule is to keep all E2E verification deferred until ten new named Browser Mode cases across B3a/B3b/B3c pass; this review is not a request to run E2E or claim the three stable rows are fully migrated.",
+    "acceptanceCriteria": [
+      "The Browser Mode test uses the actual SpendingBarChart, its CSS module, and the tooltip controller with deterministic nominal and real values.",
+      "The mobile viewport is set to 412x915 with page.viewport(412, 915), and window.innerWidth/window.innerHeight are asserted to equal those dimensions.",
+      "For nominal and real variants, the test checks the same button[aria-pressed] target set as source assertion P42-168, including quarter controls and expense legend controls, and verifies each target meets the 32x32 pixel minimum; the corresponding visibility and nonempty-control assertions P42-166 and P42-167 are represented for both variants.",
+      "For nominal and real variants, hovering the chart exposes the corresponding distinct tooltip payload from P42-170.",
+      "The summary assertion P42-177 verifies computed white-space nowrap on both nominal and real summary elements.",
+      "The migration remains limited to P42-166/-167/-168, P42-170, and P42-177 for the three named inventory rows; route visibility and P42-169/-171 through -178 assertions outside those groups remain in Playwright as planned."
+    ],
+    "verification": [
+      "Focused Browser Mode command: PLAYWRIGHT_BROWSERS_PATH=/home/shunki/.cache/ms-playwright XDG_CACHE_HOME=/tmp/nextjstest-pnpm-cache pnpm exec vitest --config vitest.browser.config.ts run tests/browser-mode/SpendingBarChart-mobile.browser.test.tsx; result: 1 file passed, 5 tests passed, exit code 0, duration 5.01 seconds.",
+      "The first focused run failed all five cases because page.setViewportSize is unsupported by Vitest Browser Mode. The next run passed two and failed three because Playwright-only evaluateAll and toHaveCSS APIs are unavailable. The implementation was corrected to use page.viewport, locator.elements, and window.getComputedStyle; the final focused run passed all five.",
+      "Independent design review after the selector correction found that the actual iframe viewport assertion closes the viewport concern, the button[aria-pressed] selector matches the source E2E scope for P42-168, and the five cases remain within the mapped component-level assertions. No E2E command has been run for this batch."
+    ],
+    "knownConstraints": [
+      "This focused component suite does not establish route-level visibility or full application integration behavior; those mapped assertions remain in Playwright.",
+      "The 10-case E2E deferral threshold has not yet been reached: B3a contributes five cases and B3b/B3c remain planned.",
+      "P42-170 is limited to chart hover and tooltip payload behavior, and P42-177 is limited to computed nowrap behavior; other assertions in those original Playwright tests remain unchanged."
+    ],
+    "outputRequirement": "Select one criterion for the implementation checkpoint. If not valid_as_defined, report a case-specific finding, affected file/location and Plan42/Plan45 requirement, observed evidence, and either a concrete proposed fix or the exact additional evidence needed. State remaining uncertainty explicitly, using none if resolved. Do not treat a prior failed attempt as the current result when the corrected final run passes, and do not treat the 5/5 focused pass as completion of the full migration or as a reason to run E2E before the ten-case threshold."
+  },
+  "questions": {
+    "implementation": {
+      "type": "choice",
+      "instructions": "Assess whether this specific B3a implementation checkpoint is valid as defined under the recorded source assertion groups, scope boundaries, and observed final verification. Select exactly one criterion based on the evidence. If selecting a non-pass criterion, give the required case-specific diagnostic details and explain any remaining uncertainty.",
+      "criteria": {
+        "valid_as_defined": "The implementation and evidence satisfy the stated B3a checkpoint within its limited component-level scope.",
+        "requirements_mismatch": "The implemented behavior contradicts or fails to meet an applicable requirement.",
+        "missing_prerequisites_info": "Required prerequisite information is absent and prevents assessment.",
+        "incomplete_implementation_info": "The implementation or its evidence is too incomplete to assess the defined checkpoint.",
+        "implementation_issue": "A concrete defect or unsupported behavior exists in the implementation.",
+        "scope_violation": "The implementation exceeds or fails to respect the stated scope boundaries.",
+        "other": "A material issue exists that does not fit the other criteria.",
+        "indeterminate": "The available information does not support a reliable determination."
+      }
+    }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "jev-review-initial-distribution-v3",
+  "model": "jev-latest",
+  "state": {
+    "evaluationScope": "implementation_checkpoint_validity",
+    "background": "B3k reaches 10/10 distinct planned rows touched in four batches of 2/2/3/3. Batch 4 adds three partial transfers. For P42-187/-190, actual SpendingBarChart Browser Mode coverage checks dark-mode tooltip visibility and first-category text; route, touch, close, category, numeric, dismissal, and viewport integration remains in Playwright E2E. For P42-309, Browser Mode checks the Earnings tooltip separator computed style after a hidden-series change and fresh re-hover; P42-297 initial style remains in E2E. LazyMount receives additive component-level Browser Mode coverage for its actual absent-to-mounted transition after native browser scrolling. The production-route initial absence and reveal checks P42-349/-350 remain in E2E; no route-reveal transfer is claimed. Earlier transfers were P42-457/-458 and -588/-591 (Batch 1), -505/-506/-507 (Batch 2), and -508/-509, -538/-539, and -180/-183 (Batch 3). Batches 1-3 each received valid_as_defined in their implementation reviews, and current-slate plan revalidation received valid_as_defined. This checkpoint makes no implementation acceptance claim before JEV judgment.",
+    "acceptanceCriteria": [
+      "Batch 4 transfers only the specified P42-187/-190 dark SpendingBarChart tooltip-visible and first-category text predicates to actual-component Browser Mode; adjacent production-route and interaction integration remains in E2E.",
+      "Batch 4 transfers only the P42-309 post-hidden-series-change/re-hover separator computed-style predicate; P42-297 initial tooltip style remains in E2E.",
+      "LazyMount Browser Mode coverage is scoped to the component absent-to-mounted transition after native browser scrolling. Production-route P42-349/-350 absence and reveal checks remain in E2E, and no route-level behavior is claimed from the local fixture.",
+      "Keep all B3k coverage partial and M unchanged at 1 (A/E/M=123/90/1); path dependence alone does not exclude a scenario.",
+      "Consolidated E2E is run after 10 touched rows, with all 10 rows now touched in the 2/2/3/3 cadence."
+    ],
+    "verification": [
+      "Batch 4 focused Browser Mode run passed: 3 files, 9 tests.",
+      "Consolidated pnpm run test:e2e passed: 115 passed, 19 skipped, 0 failed (134 total).",
+      "Batches 1-3 implementation reviews and current-slate plan revalidation each returned valid_as_defined."
+    ],
+    "knownConstraints": [
+      "Route dependence alone is not an exclusion; production-route behavior remains in E2E when local component coverage does not establish it.",
+      "LazyMount component-level scroll-triggered mounting is partial/additive coverage; production-route P42-349/-350 remain in E2E.",
+      "Inventory M counts only fully migrated scenarios, so partial B3k rows do not change M from 1."
+    ],
+    "outputRequirement": "Choose one listed choice. For a reason choice, give a case-specific finding, affected location or requirement, observed evidence, and either a concrete proposed fix or exact additional evidence needed. Do not invent details."
+  },
+  "questions": {
+    "implementation": {
+      "type": "choice",
+      "instructions": "Does the supplied Batch 4 implementation and evidence support acceptance against the stated criteria? Return a probability distribution over the listed choices.",
+      "criteria": {
+        "valid_as_defined": "The supplied evidence supports acceptance as defined.",
+        "requirements_mismatch": "Requirements conflict with intended behavior; identify the requirement and correction.",
+        "missing_prerequisites_info": "Prerequisite information is missing; identify exactly what is needed.",
+        "incomplete_implementation_info": "Implementation information is incomplete; identify missing details or evidence.",
+        "implementation_issue": "An implementation issue exists; identify its location, evidence, and correction.",
+        "scope_violation": "The proposal exceeds or falls outside the agreed scope; identify the boundary and adjustment.",
+        "other": "A material concern does not fit the categories; identify its location, evidence, and fix or needed evidence.",
+        "indeterminate": "The supplied context cannot support a judgment; identify missing context if possible."
+      }
+    }
+  }
+}

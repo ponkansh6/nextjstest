@@ -1,0 +1,105 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-26T08:59:39.309Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "model": "jev-latest",
+    "state": {
+      "evaluationScope": "implementation_checkpoint_validity",
+      "background": "B3i batch 3 adds three partial rows to the revised eligible-row cadence. Focused Browser Mode passed 3 files / 3 tests after fixing a test-side unsupported DOM count matcher; the final run passed. Independent review passed. Exact transfers: (1) p45-a-a11y-sheet-tab-trap transfers P42-022 for the actual BottomSheet focus trap. (2) p45-b-tooltip-stack-total-65-e2e-t7-2022 transfers P42-586 only: actual SpendingBarChart hover makes its tooltip visible. P42-585's production >5-bars condition stays in E2E; P42-587 remains covered by preexisting unit tests. (3) p45-b-range-change-187-e2e-1 transfers P42-463–466 for actual CpiChart single-year period/bar result; production route and URL assertions remain E2E. Together with batches 1 and 2, the cadence is 9/10 eligible rows. All rows remain partial; no E2E run yet. A=123/E=90/M=1 remains unchanged.",
+      "acceptanceCriteria": [
+        "Final focused Browser Mode run passed 3 files / 3 tests after correcting the unsupported DOM count matcher; no tests are rerun for this checkpoint.",
+        "Independent review passed for all three exact partial slices.",
+        "P42-022 uses actual BottomSheet focus containment; production route context beyond the component contract remains E2E.",
+        "P42-586 alone transfers actual SpendingBarChart hover tooltip visibility; retain P42-585 production >5-bars condition in E2E and P42-587 in existing unit coverage.",
+        "P42-463–466 transfer the actual CpiChart single-year period/bar result; retain production route and URL assertions in E2E.",
+        "Cadence is 9/10 after these three rows; no E2E run before ten newly migrated eligible rows.",
+        "All rows remain partial and A=123/E=90/M=1 unchanged; no M increase."
+      ],
+      "verification": [
+        "Focused Browser Mode final result: 3 files / 3 tests passed after the matcher correction.",
+        "Independent review passed on the three partial assertion boundaries.",
+        "No E2E run at 9/10 cadence."
+      ],
+      "knownConstraints": [
+        "A previous focused attempt was corrected because the test used an unsupported DOM count matcher; only the final 3/3 result is evidence of passing behavior.",
+        "P42-585 remains production E2E and P42-587 remains unit-owned; P42-586 alone is transferred.",
+        "Route and URL assertions for the single-year range remain E2E; route dependence does not categorically disqualify the local assertion slice.",
+        "The three rows remain partial and do not increase M."
+      ],
+      "outputRequirement": "Assess whether B3i batch 3 matches the three exact assertion slices, final focused result, independent review, retained ownership, and 9/10 cadence. Choose one criterion and return confidence plus the full probability distribution. If not valid_as_defined, provide a case-specific finding, affected row/assertion, observed evidence or exact neededEvidence, concrete nextAction/proposedFix, and remainingUncertainty. Do not claim E2E success or a full stable-row migration."
+    },
+    "questions": {
+      "implementation": {
+        "type": "choice",
+        "instructions": "Select exactly one mutually exclusive criterion for the B3i batch 3 implementation checkpoint.",
+        "criteria": {
+          "valid_as_defined": "The three mapped slices pass focused Browser Mode and review while retained E2E/unit ownership and cadence are correct.",
+          "requirements_mismatch": "A transferred/retained assertion boundary conflicts with the approved plan or revised policy.",
+          "missing_prerequisites_info": "Required evidence for a named slice is absent.",
+          "incomplete_implementation_info": "The focused or independent review evidence is insufficient to assess the implementation.",
+          "implementation_issue": "A mapped component assertion fails or does not exercise its stated contract.",
+          "scope_violation": "The implementation exceeds the listed P42 IDs, claims route integration, runs E2E early, or increments M.",
+          "other": "A material issue does not fit the listed choices.",
+          "indeterminate": "The supplied evidence does not support a reliable judgment."
+        }
+      }
+    }
+  },
+  "questionIds": [
+    "implementation"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "implementation": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.95,
+        "probabilities": {
+          "valid_as_defined": 0.96,
+          "requirements_mismatch": 0,
+          "implementation_issue": 0,
+          "scope_violation": 0,
+          "missing_prerequisites_info": 0.01,
+          "other": 0,
+          "incomplete_implementation_info": 0.02,
+          "indeterminate": 0.01
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.95,
+    "probabilities": {
+      "valid_as_defined": 0.96,
+      "requirements_mismatch": 0,
+      "implementation_issue": 0,
+      "scope_violation": 0,
+      "missing_prerequisites_info": 0.01,
+      "other": 0,
+      "incomplete_implementation_info": 0.02,
+      "indeterminate": 0.01
+    },
+    "passProbability": 0.96,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

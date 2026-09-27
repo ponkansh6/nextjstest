@@ -1,0 +1,99 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-26T13:05:50.974Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "model": "jev-latest",
+    "state": {
+      "evaluationScope": "plan_validity",
+      "background": "B3m planning proposes implementing all 38 untouched MAP-eligible scenarios before one consolidated E2E. Final accounting is A=123, E=90, M(full)=1: 51 partial eligible rows, 1 fully migrated row, 38 untouched eligible rows. The 51st partial row is p45-b-mobile-ux-201-lazymount-p5-1 because the existing JEV-approved B3k tests/browser-mode/LazyMount.browser.test.tsx covers actual LazyMount child absent-to-present after native browser scroll. This is shared component-local coverage only. Correct its P42 crosswalk: P42-349/-350 production route absence/reveal remain E2E; P42-351 __MOUNT_ALL__ force-mount is distinct and unit-owned. Do not count row201 as untouched, do not transfer P42-351, and do not claim route transfer. The 38-row roster is: p45-a-a11y-info-outside-click, p45-a-advanced-series-normal, p45-a-cagr-sheet-01, p45-a-cpi-sections, p45-b-consumption-boundary-85-768px-desktop-chromium-768px-viewport-overflow, p45-b-consumption-boundary-85-768px-desktop-chromium-769px-viewport-overflow, p45-b-consumption-mobile-acceptance-187-mobile-pixel-acceptance-plan25-openspec-375x667-tooltip, p45-b-consumption-mobile-readability-191-375px-tooltip-6-viewport, p45-b-consumption-mobile-readability-191-430px-tooltip-6-viewport, p45-b-mobile-ux-243-sectiontabs-sticky-android-chrome, p45-b-mobile-ux-47-ux-375px, p45-b-mobile-ux-65-ux-320px-overflow, p45-b-mobile-ux-65-ux-375px-overflow, p45-b-mobile-ux-65-ux-390px-overflow, p45-b-mobile-ux-65-ux-430px-overflow, p45-b-plan24-rendering-71-plan24-rendering-contract-cti-2005-2017-2018-legacy-gdp, p45-b-plan24-rendering-88-plan24-rendering-contract-2025q1-q4-csv-tooltip, p45-b-range-change-119-e2e, p45-b-range-change-136-e2e, p45-b-range-change-153-e2e, p45-b-range-change-170-e2e, p45-b-range-change-242-e2e, p45-b-range-change-273-e2e, p45-b-section-tabs-scroll-120-case02-webkit, p45-b-section-tabs-scroll-127-case02-webkit, p45-b-section-tabs-scroll-142-mask-image-webkit, p45-b-section-tabs-scroll-47-3-chromium, p45-b-section-tabs-scroll-47-3-webkit, p45-b-section-tabs-scroll-47-case02-chromium, p45-b-section-tabs-scroll-47-case04-webkit, p45-b-section-tabs-scroll-47-case05-webkit, p45-b-section-tabs-scroll-82-3-chromium, p45-b-section-tabs-scroll-82-3-webkit, p45-b-section-tabs-scroll-82-case01-chromium, p45-b-section-tabs-scroll-82-case02-chromium, p45-b-section-tabs-scroll-82-case04-webkit, p45-b-section-tabs-scroll-82-case05-webkit, p45-b-tooltip-stack-total-108-e2e-t9-cpi-section-stacked-tooltip-total.",
+      "acceptanceCriteria": [
+        "Plan the exact 38 untouched eligible IDs listed in background and exclude row201 from that roster.",
+        "Preserve A=123/E=90/M=1 and the decomposition 51 partial + 1 full + 38 untouched; distinguish partial local coverage from full scenario migration.",
+        "Define four focused implementation groups with exact local predicate boundaries and retained production E2E assertions; do not invent a P42 mapping for CPI area-path coverage or credit P42-351.",
+        "For row242, use an actual CpiChart range-change component fixture that captures window error and unhandledrejection events during the range interaction and asserts neither occurs; retain the production Playwright pageerror smoke (P42-474).",
+        "For WebKit SectionTabs cases, use targeted WebKit Browser Mode configuration/include; do not run the existing suite twice. Keep production route, document overflow, geometry, and engine integration guarantees in E2E where specified.",
+        "Run focused Browser Mode for all 38 and independent diff review before exactly one consolidated E2E. No implementation or test completion is claimed by this plan request."
+      ],
+      "knownConstraints": [
+        "Current Browser Mode config is Chromium-only; Vitest and @vitest/browser-playwright are 4.1.11, Playwright is 1.62.1, and WebKit revision 2336 is available.",
+        "CPI section source callsite mapping is unmapped/repair-needed; do not invent P42-262, which is unit-owned for the legend loop, and retain source E2E.",
+        "Document/page-shell overflow and route/data/server/CSV guarantees remain production E2E-owned.",
+        "No JEV submission, implementation, focused Browser Mode run, independent review, or consolidated E2E has occurred for this B3m plan revision."
+      ],
+      "outputRequirement": "Choose one listed choice. For any reason choice, return a case-specific finding, affected location/requirement, observed evidence or exact neededEvidence, a concrete nextAction/proposedFix, and remainingUncertainty (explicit none if resolved). Do not invent details."
+    },
+    "questions": {
+      "plan": {
+        "type": "choice",
+        "instructions": "Is the proposed B3m plan valid as defined, including its roster, migration boundaries, E2E gate, and corrected row201 accounting? Return a probability distribution over the listed choices.",
+        "criteria": {
+          "valid_as_defined": "The plan is coherent, has traceable scope and evidence boundaries, and supports the stated next steps.",
+          "requirements_mismatch": "Requirements conflict with intended behavior; identify the exact requirement and correction.",
+          "missing_prerequisites_info": "Prerequisite information is missing; identify exactly what is needed.",
+          "incomplete_implementation_info": "Implementation information is incomplete; identify missing details or evidence.",
+          "implementation_issue": "A material plan or implementation issue exists; identify location, evidence, and correction.",
+          "scope_violation": "The proposal exceeds or falls outside the agreed scope; identify the boundary and adjustment.",
+          "other": "A material concern does not fit the categories; identify location, evidence, and a fix or exact needed evidence.",
+          "indeterminate": "The supplied context cannot support a judgment; identify missing context if possible."
+        }
+      }
+    }
+  },
+  "questionIds": [
+    "plan"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "plan": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.23,
+        "probabilities": {
+          "requirements_mismatch": 0.17,
+          "valid_as_defined": 0.32,
+          "implementation_issue": 0.28,
+          "other": 0.01,
+          "missing_prerequisites_info": 0.02,
+          "indeterminate": 0.04,
+          "scope_violation": 0.08,
+          "incomplete_implementation_info": 0.08
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.23,
+    "probabilities": {
+      "requirements_mismatch": 0.17,
+      "valid_as_defined": 0.32,
+      "implementation_issue": 0.28,
+      "other": 0.01,
+      "missing_prerequisites_info": 0.02,
+      "indeterminate": 0.04,
+      "scope_violation": 0.08,
+      "incomplete_implementation_info": 0.08
+    },
+    "passProbability": 0.32,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

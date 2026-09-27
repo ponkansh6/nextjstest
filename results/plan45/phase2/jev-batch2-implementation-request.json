@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "jev-review-initial-distribution-v3",
+  "model": "jev-latest",
+  "state": {
+    "evaluationScope": "implementation_checkpoint_validity",
+    "background": "Plan45 Phase 2 Batch 2 has migrated roster positions 21–40 (20 partial scenarios) to Vitest Browser Mode against the production Next route. The route runner executes Chromium and a dedicated WebKit config against the same production server. The batch covers year-range URL/data contracts, section-tab scroll geometry across engines, spending legend filters, tooltip Escape and stack-total/rehover behavior, mobile touch/viewport acceptance, and 320/375/390px chart readability geometry. The B2-mapped E2E predicates were removed only after matching Browser Mode coverage was added. T8 in tooltip-stack-total.e2e.spec.ts was removed entirely after its predicates moved. A separate final audit found three out-of-scope B4 assertions had been removed; those exact earnings-tooltip label/total assertions and the scrolled-tooltip hidden assertion were restored, and their roster rows remain pending.",
+    "acceptanceCriteria": [
+      "All 20 Batch 2 stable IDs have Browser Mode predicates against a real production Next route, preserving source interactions, URL/data contracts, viewport/touch conditions, and relevant Chromium/WebKit behavior.",
+      "The corresponding B2 E2E predicates are removed only when matched in Browser Mode; unrelated E2E assertions remain.",
+      "The production-route suite, focused existing Browser Mode suites, lint, and full E2E complete successfully.",
+      "Known type-check diagnostics are reported separately and are not treated as passing verification."
+    ],
+    "verification": [
+      "pnpm run test:browser:next-route-poc: production build and TypeScript stage passed; Chromium 3 files, 40 tests passed; WebKit 2 files, 13 passed and 5 skipped.",
+      "Focused regular Browser Mode command over 9 B2 owner specs: 9 files and 34 tests passed.",
+      "pnpm lint: passed.",
+      "pnpm test:e2e after restoring unrelated assertions: 76 passed, 19 skipped, 95 total; exit 0.",
+      "pnpm type-check: exit 2 from existing Browser Mode typing issues (`Locator.locator`, implicit-any annotations, Recharts strokeOpacity contract, globals.css?raw declaration and an incomplete CpiData fixture). After the B2 fixes there are no diagnostics in the new B2 route test files."
+    ],
+    "knownConstraints": [
+      "The repository-wide type-check is still red from pre-existing Browser Mode spec typing issues; this is recorded rather than treated as a passing gate.",
+      "No commit or push was performed.",
+      "B4 stable IDs 61–63 remain pending; their assertions were restored and were not counted as Batch 2 migration."
+    ],
+    "outputRequirement": "Choose one listed choice. For a reason choice, give a case-specific finding, affected location or requirement, observed verification evidence, and either a concrete proposed fix or exact additional evidence needed. Do not invent details."
+  },
+  "questions": {
+    "implementation": {
+      "type": "choice",
+      "instructions": "Does the supplied evidence support acceptance as defined for Batch 2? Return a probability distribution over the listed choices.",
+      "criteria": {
+        "valid_as_defined": "The supplied evidence supports acceptance as defined.",
+        "requirements_mismatch": "Requirements conflict with intended behavior; identify the requirement and correction.",
+        "missing_prerequisites_info": "Prerequisite information is missing; identify exactly what is needed.",
+        "incomplete_implementation_info": "Implementation information is incomplete; identify missing details or evidence.",
+        "implementation_issue": "An implementation issue exists; identify its location, evidence, and correction.",
+        "scope_violation": "The proposal exceeds or falls outside the agreed scope; identify the boundary and adjustment.",
+        "other": "A material concern does not fit the categories; identify its location, evidence, and fix or needed evidence.",
+        "indeterminate": "The supplied context cannot support a judgment; identify missing context if possible."
+      }
+    }
+  }
+}

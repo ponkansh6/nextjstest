@@ -1,0 +1,104 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-26T10:51:57.085Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "model": "jev-latest",
+    "state": {
+      "evaluationScope": "plan_validity",
+      "background": "This is a corrected initial plan revalidation for B3k after an independent audit found the first boundary description left identical P42 checks active in Playwright. B3k continues the authorized speed-first migration of 90 final MAP-eligible E2E rows to Vitest Browser Mode. The latest user constraint says route dependence alone must not exclude a scenario. Actual component/browser slices are transferred while production route and integration checks remain in Playwright. The revised plan now removes the exact mapped E2E calls for every transferred assertion. The previous valid_as_defined plan result applied to the older boundary only and is preserved separately; this request evaluates the corrected boundary. Batch-1 actual-component Browser Mode tests are implemented but focused verification is pending; exact mapped Playwright expects were removed, and independent diff review confirms the retained integration boundaries.",
+      "acceptanceCriteria": [
+        "Migrate exactly ten distinct final MAP-eligible rows in four batches of 2/2/3/3, with focused Browser Mode and independent diff review at each batch, then one consolidated E2E run after all ten rows.",
+        "Batch-1 row p45-b-range-change-107-e2e: transfer only P42-457/-458, the nominal and real rendered SVG bar-count-versus-finite-data-contract predicates, to actual CpiChart Browser Mode. Remove only those two identical count-vs-contract E2E expects. Keep production route readiness/hydration/data setup, route-fed chart presence, and nominal/real first-bar visibility in E2E; do not claim the fixture proves production projection parity.",
+        "Batch-1 row p45-b-tooltip-stack-total-81-e2e-t8-tooltip: transfer only P42-588/-591 tooltip-visibility predicates to actual SpendingBarChart with its real controller/handlers and browser pointer path. Remove only the two matching expect(tooltip).toBeVisible() calls. Keep production setup, real bar hover, food-row visible/absent, legend aria transition/click, pointer leave, and route-chart re-hover integration.",
+        "Other planned rows remain: SectionTabs scrollbar P42-505, overflow/scroll P42-506/-507, mask styles P42-508/-509; scroll-triggered tooltip dismissal P42-538/-539 (tap then actual scroll, close control hidden and cursor count zero); mobile series toggle P42-180/-183; dark-mode/tap tooltip and category text P42-187/-190; Earnings separator computed-style assertions P42-297/-309 only; and LazyMount initial absence/scroll mount P42-349/-350. Retain their documented production route, CSS freshness, platform, page, touch, and integration checks in E2E.",
+        "Do not count partial rows as full migrations in M. Keep immutable P42 attribution exact and avoid duplicate ownership of transferred predicates."
+      ],
+      "verification": [
+        "Candidate audit confirmed ten unique final E=90 rows, no overlap with B3i/B3j, and no unit-owned assertion IDs.",
+        "Independent documentation and E2E diff review confirmed the corrected scope: only mapped P42-457/-458 and P42-588/-591 expects are removed, while the specified route and interaction integration remains.",
+        "Batch-1 Browser Mode tests exist for actual CpiChart count rendering and actual SpendingBarChart controller/re-hover visibility; focused tests and implementation JEV are pending.",
+        "The earlier plan JEV result is valid_as_defined but predates the precise E2E ownership correction and is preserved as historical evidence, not substituted for this revalidation."
+      ],
+      "knownConstraints": [
+        "A route-specific candidate remains eligible when a real component fixture reproduces a useful browser-observable slice; do not exclude based on route dependence alone.",
+        "Do not transfer full production route, Flight/data hydration, engine-specific, or production page behavior into component fixtures.",
+        "Consolidated E2E cadence is ten touched scenario rows; do not run it before the tenth row.",
+        "B3k current cadence remains 0/10, A=123/E=90/M=1; all rows remain partial until their component and retained route boundaries are reviewed."
+      ],
+      "outputRequirement": "Return a probability distribution over the listed choices and select one. For any non-pass reason, identify a case-specific finding, affected row or requirement, observed evidence, and either a concrete plan adjustment or exact additional evidence needed. Do not invent details."
+    },
+    "questions": {
+      "plan": {
+        "type": "choice",
+        "instructions": "Does the corrected B3k plan support a safe and useful speed-first partial migration under the stated scope and acceptance criteria? Return a probability distribution.",
+        "criteria": {
+          "valid_as_defined": "The supplied plan supports the stated objective and boundaries.",
+          "requirements_mismatch": "Requirements conflict with the intended migration; identify the requirement and correction.",
+          "missing_prerequisites_info": "Prerequisite information is missing; identify exactly what is needed.",
+          "incomplete_implementation_info": "The plan lacks implementation or evidence detail needed for acceptance.",
+          "implementation_issue": "A planned implementation step has an issue; identify its location, evidence, and correction.",
+          "scope_violation": "The plan exceeds or falls outside the agreed scope; identify the boundary and adjustment.",
+          "other": "A material concern does not fit the categories; identify its location, evidence, and fix or needed evidence.",
+          "indeterminate": "The supplied context cannot support a judgment; identify missing context if possible."
+        }
+      }
+    }
+  },
+  "questionIds": [
+    "plan"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "plan": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.38,
+        "probabilities": {
+          "valid_as_defined": 0.47000000000000003,
+          "other": 0,
+          "indeterminate": 0,
+          "requirements_mismatch": 0.01,
+          "incomplete_implementation_info": 0.43,
+          "scope_violation": 0.07,
+          "implementation_issue": 0.01,
+          "missing_prerequisites_info": 0.01
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.38,
+    "probabilities": {
+      "valid_as_defined": 0.47000000000000003,
+      "other": 0,
+      "indeterminate": 0,
+      "requirements_mismatch": 0.01,
+      "incomplete_implementation_info": 0.43,
+      "scope_violation": 0.07,
+      "implementation_issue": 0.01,
+      "missing_prerequisites_info": 0.01
+    },
+    "passProbability": 0.47000000000000003,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

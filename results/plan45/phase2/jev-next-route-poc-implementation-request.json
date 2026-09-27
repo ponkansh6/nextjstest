@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "jev-review-initial-distribution-v3",
+  "model": "jev-latest",
+  "state": {
+    "evaluationScope": "implementation_checkpoint_validity",
+    "background": "The agreed Phase 2 plan is to move all 89 partially migrated assertions to Vitest Browser Mode in batches of 20, running consolidated E2E after each batch. Before editing migration assertions, this checkpoint adds an isolated proof that a Vitest Browser Mode custom command can open a separate Playwright page, visit the actual production Next.js route, observe route-backed data, and interact with the rendered chart. The proof adds a dedicated Vitest config, command, test, and lifecycle runner. The runner starts a production Next server on an available loopback port, waits for the route, runs Vitest, and terminates only its own child. Existing Playwright E2E assertions and the normal Browser Mode config were not changed by this PoC.",
+    "acceptanceCriteria": [
+      "A production Next.js build succeeds before the proof runs.",
+      "Vitest Browser Mode reaches the real production route and verifies its HTTP route, heading, and data contract.",
+      "The test interacts with the production chart legend and verifies the pressed state and rendered Area path count change.",
+      "Port conflicts do not reuse or terminate another process; the runner owns and cleans up only its Next server child.",
+      "The PoC is isolated and existing E2E assertions remain untouched."
+    ],
+    "verification": [
+      "Command: pnpm run test:browser:next-route-poc",
+      "Next.js 16.3.5 production build completed successfully, including TypeScript and static page generation.",
+      "Vitest 4.1.11 reported Test Files 1 passed (1), Tests 1 passed (1), duration 3.61s.",
+      "Earlier attempts refused occupied ports 3187 and 3188; no process was terminated or reused. The final run used the runner-owned dynamic port."
+    ],
+    "knownConstraints": [
+      "This checkpoint proves the route harness only; it does not claim any of the 89 partial migrations are complete.",
+      "Next's standard Vitest integration documentation does not support async Server Components; this proof uses a separately started production Next server and a Playwright-provider custom command.",
+      "JEV review supplements but does not replace the actual build and Vitest result."
+    ],
+    "outputRequirement": "Choose one listed choice. For a reason choice, give a case-specific finding, affected file or acceptance criterion, observed evidence, and either a concrete proposed fix or exact additional evidence needed. Do not invent details."
+  },
+  "questions": {
+    "implementation": {
+      "type": "choice",
+      "instructions": "Does the supplied implementation and verification evidence support accepting this production-route Browser Mode proof as a valid prerequisite for proceeding to Batch 1 migration? Return a probability distribution over the listed choices.",
+      "criteria": {
+        "valid_as_defined": "The isolated production-route proof meets the acceptance criteria and its build and Vitest evidence support proceeding.",
+        "requirements_mismatch": "The agreed migration requirement or proof boundary conflicts with the intended behavior; identify the requirement and correction.",
+        "missing_prerequisites_info": "A prerequisite is missing; identify exactly what is needed.",
+        "incomplete_implementation_info": "Implementation details or verification evidence are insufficient; identify what is missing.",
+        "implementation_issue": "A concrete implementation defect exists; identify its file, evidence, and correction.",
+        "scope_violation": "The implementation exceeds or falls outside the approved PoC scope; identify the boundary and adjustment.",
+        "other": "A material concern does not fit the listed categories; identify its location, evidence, and fix or needed evidence.",
+        "indeterminate": "The supplied context cannot support a judgment; identify missing context if possible."
+      }
+    }
+  }
+}

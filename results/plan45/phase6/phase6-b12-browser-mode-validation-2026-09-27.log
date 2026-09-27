@@ -1,0 +1,112 @@
+$ node scripts/run-next-route-poc.mjs --only=phase6-b12
+
+ RUN  v4.1.11 /home/shunki/working/nextjstest
+
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip install shared fixture mount behavior started (timeout 5000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip install shared fixture mount behavior completed in 4ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip navigate to production route started (timeout 30000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip navigate to production route completed in 290ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip wait for network idle started (timeout 20000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip wait for network idle completed in 769ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip record effective Pixel 7 touch context started (timeout 5000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip record effective Pixel 7 touch context completed in 239ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip scroll real-consumption chart into view started (timeout 15000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip scroll real-consumption chart into view completed in 94ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip wait for chart to intersect the viewport started (timeout 7000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip wait for chart to intersect the viewport completed in 5ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip wait for actual chartNote link attachment started (timeout 7000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip wait for actual chartNote link attachment completed in 417ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip retry hit-tested real bar touch until tooltip visible (max 8) started (timeout 20000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip real bar touch attempt 1/8
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip retry hit-tested real bar touch until tooltip visible (max 8) completed in 798ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip read live tooltip rectangle started (timeout 5000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip read live tooltip rectangle completed in 39ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip read live chartNote rectangle started (timeout 5000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip read live chartNote rectangle completed in 77ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip save actual chartNote inline style started (timeout 5000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip save actual chartNote inline style completed in 35ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip position actual link at tooltip with positive size and z-index 0 started (timeout 5000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip position actual link at tooltip with positive size and z-index 0 completed in 80ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip read repositioned actual link rectangle started (timeout 5000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip read repositioned actual link rectangle completed in 45ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip hit-test overlap coordinate against actual tooltip started (timeout 5000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip hit-test overlap coordinate against actual tooltip completed in 2ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip real touchscreen tap at deliberately engineered overlap started (timeout 10000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip real touchscreen tap at deliberately engineered overlap completed in 10ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip wait for tooltip visible after overlap tap started (timeout 7000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip wait for tooltip visible after overlap tap completed in 22ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip read tooltip visibility after overlap action started (timeout 5000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip read tooltip visibility after overlap action completed in 21ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip restore original actual chartNote inline style started (timeout 5000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip restore original actual chartNote inline style completed in 25ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip set 412x915 viewport before production navigation started (timeout 5000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip set 412x915 viewport before production navigation completed in 4ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip install shared fixture mount behavior started (timeout 5000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip install shared fixture mount behavior completed in 1ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip navigate to production route started (timeout 30000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip navigate to production route completed in 262ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip wait for network idle started (timeout 20000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip wait for network idle completed in 721ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip record effective Pixel 7 touch context started (timeout 5000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip record effective Pixel 7 touch context completed in 230ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip scroll real-consumption chart into view started (timeout 15000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip scroll real-consumption chart into view completed in 95ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip find hit-tested real bar point without extra scroll (up to 4 retries) started (timeout 45000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip find hit-tested real bar point without extra scroll (up to 4 retries) completed in 438ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip real touchscreen tap on actual bar started (timeout 10000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip real touchscreen tap on actual bar completed in 704ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip wait for tooltip visible after bar tap started (timeout 7000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip wait for tooltip visible after bar tap completed in 39ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip wait for actual chartNote link visible started (timeout 7000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip wait for actual chartNote link visible completed in 21ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip read tooltip visibility after bar tap started (timeout 5000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip read tooltip visibility after bar tap completed in 17ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip read link visibility after bar tap started (timeout 5000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip read link visibility after bar tap completed in 20ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip read tooltip bounding box started (timeout 5000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip read tooltip bounding box completed in 43ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip read link bounding box started (timeout 5000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip read link bounding box completed in 95ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip hit-test outside point against actual link href started (timeout 5000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip hit-test outside point against actual link href completed in 29ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip hit-test outside point against tooltip started (timeout 5000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip hit-test outside point against tooltip completed in 2ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip real touchscreen tap on actual link outside tooltip started (timeout 10000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip real touchscreen tap on actual link outside tooltip completed in 348ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip wait for nominal section hash navigation started (timeout 7000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip wait for nominal section hash navigation completed in 3ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip wait for tooltip hidden after link navigation started (timeout 7000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip wait for tooltip hidden after link navigation completed in 359ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip read tooltip visibility after link navigation started (timeout 5000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip read tooltip visibility after link navigation completed in 19ms
+ ❯ |chromium| tests/browser-mode/phase6-b12-chartnote-tooltip.browser.test.ts (2 tests | 1 failed) 6911ms
+   × B12 #307: deliberately engineered actual link overlap is hit-tested by tooltip and blocks navigation 3330ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |chromium| tests/browser-mode/phase6-b12-chartnote-tooltip.browser.test.ts:24:1 > B12 #307: deliberately engineered actual link overlap is hit-tested by tooltip and blocks navigation
+ReferenceError: movedLinkBox is not defined
+
+Failure screenshot:
+  - tests/browser-mode/__screenshots__/phase6-b12-chartnote-tooltip.browser.test.ts/B12--307--deliberately-engineered-actual-link-overlap-is-hit-tested-by-tooltip-and-blocks-navigation-1.png
+
+ ❯ tests/browser-mode/phase6-b12-chartnote-tooltip.browser.test.ts:25:32
+     23|
+     24| it("B12 #307: deliberately engineered actual link overlap is hit-teste…
+     25|   const result = await commands.inspectPhase6B12(ENGINEERED_OVERLAP) a…
+       |                                ^
+     26|     contextEvidence: Pixel7Evidence;
+     27|     chartInViewport: boolean;
+
+ ❯ tests/browser-mode/phase6-b12-chartnote-tooltip.browser.test.ts:24:1 traces
+   ↳ tests/browser-mode/__traces__/phase6-b12-chartnote-tooltip.browser.test.ts/chromium-B12--307--deliberately-engineered-actual-link-overlap-is-hit-tested-by-tooltip-and-blocks-navigation-0-0.trace.zip
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  19:38:18
+   Duration  8.76s (transform 0ms, setup 560ms, import 41ms, tests 6.91s, environment 0ms)
+
+[ELIFECYCLE] Command failed with exit code 1.

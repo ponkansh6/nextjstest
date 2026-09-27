@@ -1,0 +1,49 @@
+$ node scripts/run-next-route-poc.mjs --only=phase6-b06
+
+ RUN  v4.1.11 /home/shunki/working/nextjstest
+
+ ❯ |chromium| tests/browser-mode/phase6-b06-quarterly.browser.test.ts (3 tests | 1 failed) 2481ms
+   × p45-b-plan27-private-consumption-79-plan27-38-cti-nominal-cti-key-is-distinct-from-the-real preserves the real chart and table key boundary on Pixel 7
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |chromium| tests/browser-mode/phase6-b06-quarterly.browser.test.ts [ tests/browser-mode/phase6-b06-quarterly.browser.test.ts ]
+Error: ENAMETOOLONG: name too long, copyfile '/home/shunki/working/nextjstest/tests/browser-mode/__traces__/phase6-b06-quarterly.browser.test.ts/chromium-p45-b-plan27-private-consumption-79-plan27-38-cti-nominal-cti-key-is-distinct-from-the-real-preserves-the-real-chart-and-table-key-boundary-on-Pixel-7-0-0.trace.zip' -> '/home/shunki/working/nextjstest/.vitest-attachments/tests-browser-mode-traces-phase6-b06-quarterly-browser-test-ts-chromium-p45-b-plan27-private-consumption-79-plan27-38-cti-nominal-cti-key-is-distinct-from-the-real-preserves-the-real-chart-and-table-key-boundary-on-Pixel-7-0-0-trace-zip-3ee58f6a738f971a4861e9fa7737a296b0a5095c.zip'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |chromium| tests/browser-mode/phase6-b06-quarterly.browser.test.ts:12:1 > p45-b-plan27-private-consumption-79-plan27-38-cti-nominal-cti-key-is-distinct-from-the-real preserves the real chart and table key boundary on Pixel 7
+AssertionError: expected { width: 981, height: 2177 } to deeply equal { width: 412, height: 915 }
+
+Failure screenshot:
+  - tests/browser-mode/__screenshots__/phase6-b06-quarterly.browser.test.ts/p45-b-plan27-private-consumption-79-plan27-38-cti-nominal-cti-key-is-distinct-from-the-real-preserves-the-real-chart-and-table-key-boundary-on-Pixel-7-1.png
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "height": 915,[39m
+[32m-   "width": 412,[39m
+[31m+   "height": 2177,[39m
+[31m+   "width": 981,[39m
+[2m  }[22m
+
+ ❯ tests/browser-mode/phase6-b06-quarterly.browser.test.ts:17:42
+     15|     realHeaders: string[];
+     16|   };
+     17|   expect(result.contextEvidence.viewport).toEqual({ width: 412, height…
+       |                                          ^
+     18|   expect(result.contextEvidence.deviceScaleFactor).toBe(2.625);
+     19|   expect(result.contextEvidence.touchPoints).toBeGreaterThan(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (3)
+   Start at  18:14:31
+   Duration  4.64s (transform 0ms, setup 553ms, import 51ms, tests 2.48s, environment 0ms)
+
+[ELIFECYCLE] Command failed with exit code 1.

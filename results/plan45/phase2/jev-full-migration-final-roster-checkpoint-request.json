@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "jev-review-initial-distribution-v3",
+  "model": "jev-latest",
+  "state": {
+    "evaluationScope": "implementation_checkpoint_validity",
+    "background": "Final reconciliation checkpoint for the Phase 2 full Browser Mode migration roster. The roster at results/plan45/phase2/full-migration-roster.md now states that all 89 eligible rows are Verified/full across five batches (20/20/20/20/9), with each row mapping its eligible source predicate to a Browser Mode destination and documenting distinct production integration assertions that remain separately scoped. The independent row-by-row audit of rows 1-20 found matching production-route Browser Mode cases for rows 1-16 and 19-20 and no specific predicate gaps. For rows 17-18, Browser Mode tests use the actual StackedAreaChart and EarningsBreakdownChart components with synthetic monthly data to assert omission of the same two final SVG-axis labels (2017-12 and 2018-01); the source E2E file exists in git HEAD and was removed during this migration. The audit also notes that broader CPI smoke and separate CAGR route-entry checks remain. Batch 1 JEV result is valid_as_defined with passProbability 0.71. Batch 2-5 result records are available alongside their request files. Final production-route suite evidence after Batch 5: Chromium 78/78 passed; WebKit 21 passed and 5 skipped. Consolidated E2E after Batch 5: 32 passed and 19 skipped (51 total). Lint passed. Type-check exits 2 because of pre-existing Browser Mode component diagnostics; it is not being reported as passing. The JEV checkpoint must judge the completeness and evidence for the roster reconciliation; do not infer that skipped tests passed or that type-check passed.",
+    "acceptanceCriteria": [
+      "Every eligible row in the 89-row roster has a concrete Browser Mode destination that covers its mapped live source predicate, with any distinct production integration assertion explicitly retained or separately owned.",
+      "The #1-20 row-by-row audit findings and source removals are represented accurately, including the actual-chart component evidence for #17-18 and their source file removal in this migration.",
+      "Batch verification counts and skipped tests are stated accurately; E2E and lint evidence are not conflated with type-check, whose current run has known diagnostics and exit code 2.",
+      "The roster does not claim that non-migrated independent smoke or route-entry assertions were transferred, and does not count skipped tests as passing."
+    ],
+    "verification": [
+      "Final production-route run recorded for Batch 5: Chromium 78 passed / 78 total; WebKit 21 passed and 5 skipped.",
+      "Post-Batch5 consolidated E2E: 32 passed, 19 skipped, 51 total.",
+      "pnpm lint passed.",
+      "pnpm type-check exited 2 with pre-existing Browser Mode component diagnostics; no pass is claimed.",
+      "Independent #1-20 audit: #1-16 and #19-20 matched production-route Browser Mode cases with no identified predicate gap; #17-18 matched final-axis omissions in real chart component Browser Mode tests using synthetic monthly data; source E2E deletion is part of this migration; broader CPI smoke and separate CAGR route-entry checks remain."
+    ],
+    "knownConstraints": [
+      "Review only the 89 eligible roster rows and their recorded source-to-Browser Mode mapping.",
+      "Do not treat configured skipped cases as passes.",
+      "Do not describe type-check as passing; its exit code is 2 due to pre-existing Browser Mode component diagnostics.",
+      "The #17-18 Browser Mode evidence exercises the actual chart components with synthetic monthly data, not a production route; assess whether that matches the mapped source predicate as recorded.",
+      "Do not include or request credentials or other secrets."
+    ],
+    "outputRequirement": "Choose one listed choice and return a probability distribution. For any reason choice, give a case-specific finding, the affected row/location or acceptance criterion, observed evidence, and either a concrete proposed fix or exact additional evidence needed. Do not invent details."
+  },
+  "questions": {
+    "implementation": {
+      "type": "choice",
+      "instructions": "Does the supplied roster and evidence support accepting the final full-migration status against the acceptance criteria? Return a probability distribution over the listed choices.",
+      "criteria": {
+        "valid_as_defined": "The supplied evidence supports the 89-row roster status and the stated qualifications against the criteria.",
+        "requirements_mismatch": "The acceptance criteria or roster definition conflicts with the intended migration; identify the row/requirement and correction.",
+        "missing_prerequisites_info": "Required source mapping, verification, or ownership evidence is missing; identify exactly what is needed.",
+        "incomplete_implementation_info": "The roster or implementation evidence is incomplete; identify the row/location and missing details or evidence.",
+        "implementation_issue": "A row's mapped predicate is not fully represented or a status/evidence statement is inaccurate; identify location, evidence, and correction.",
+        "scope_violation": "The claimed completion includes a predicate outside the eligible scope or omits a required in-scope predicate; identify boundary and adjustment.",
+        "other": "A material concern does not fit the categories; identify location, evidence, and fix or needed evidence.",
+        "indeterminate": "The supplied context cannot support a judgment; identify missing context if possible."
+      }
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "jev-review-initial-distribution-v3",
+  "model": "jev-latest",
+  "state": {
+    "evaluationScope": "implementation_checkpoint_validity",
+    "background": "The approved Phase 6 follow-up retires the remaining mobile Playwright E2E case p45-b-tooltip-dismiss-231. Existing Browser Mode case p45-b-tooltip-dismiss-231-case01 exercises the production route with hit-tested mobile touch, checks the tooltip-open state, and verifies tooltip/cursor dismissal after scroll. The implementation removes only that runnable case and its stale mobile-pixel matcher, retains the shell spec and already-absent unknown-provenance bodies, and removes the empty Playwright stage from test:full while preserving the standalone test:e2e command. Four project records and a focused retirement plan document the superseding decision; historical 33-case ledger values remain unchanged.",
+    "acceptanceCriteria": [
+      "The mobile #231 Playwright test body and only its stale tooltip-dismiss project matcher are removed; the existing Browser Mode owner remains unchanged.",
+      "The retained tooltip-dismiss spec contains no runnable Playwright tests, and test:full does not invoke an empty Playwright suite while the standalone test:e2e command remains available.",
+      "Unknown-provenance test-body removals and historical Phase 5/6 migration counts are preserved and described accurately.",
+      "Production build, lint, the focused Browser Mode replacement, and the aggregate Browser Mode production-route suites pass; validation limitations are reported accurately."
+    ],
+    "verification": [
+      "JEV plan revalidation returned valid_as_defined; result: results/plan45/phase6/jev-tooltip-231-e2e-retirement-plan-revalidation-result.json.",
+      "pnpm run build passed, including the production build TypeScript stage.",
+      "pnpm run lint:fast exited 0.",
+      "pnpm run test:browser:next-route-poc:built passed: B01-B14 had 37 passing tests; the production-route Browser Mode suite had 80 passing tests; WebKit had 21 passing and 5 skipped.",
+      "Focused NEXT_ROUTE_POC_PORT=3188 pnpm exec vitest run --config vitest.browser.next-route.config.ts --testNamePattern='p45-b-tooltip-dismiss-231-case01' passed 1 test; 79 tests were skipped by the name filter. Log: results/plan45/phase6/phase6-tooltip-231-focused-browser-mode-validation-2026-09-27.log.",
+      "The Playwright --list command reported Total: 0 tests in 0 files and exited 1 because the suite is empty; no empty-suite Playwright test run is claimed.",
+      "git diff --check passed before final documentation updates. test:full and standalone pnpm run type-check were not run as a whole."
+    ],
+    "knownConstraints": [
+      "The retired Playwright project had a Pixel 7 profile. Browser Mode uses a 412x915 viewport with mobile touch enabled and does not assert Pixel 7 user agent or device scale factor; no separate Pixel 7-only requirement was recorded.",
+      "Some other test-body deletions in the existing worktree have unknown provenance. They were preserved and not restored or reattributed.",
+      "The original migration ledger remains A=123, E=123, M=123 and 33/33; historical suite counts in earlier records are snapshots from before this retirement."
+    ],
+    "outputRequirement": "Choose one listed choice. For any concern, identify the specific file or acceptance criterion, cite the supplied evidence, and give a concrete correction or exact additional evidence needed. Do not infer unstated requirements."
+  },
+  "questions": {
+    "implementation": {
+      "type": "choice",
+      "instructions": "Does the supplied implementation and verification evidence support this scoped retirement against the acceptance criteria? Return a probability distribution over the listed choices.",
+      "criteria": {
+        "valid_as_defined": "The supplied evidence supports acceptance as defined.",
+        "requirements_mismatch": "Requirements conflict with intended behavior; identify the affected requirement and correction.",
+        "missing_prerequisites_info": "Prerequisite information is missing; identify exactly what is needed.",
+        "incomplete_implementation_info": "Implementation or verification information is incomplete; identify the missing evidence.",
+        "implementation_issue": "An implementation issue exists; identify its file or location, evidence, and correction.",
+        "scope_violation": "The implementation exceeds or falls outside the approved scope; identify the boundary and adjustment.",
+        "other": "A material concern does not fit the listed categories; identify its location, evidence, and correction or needed evidence.",
+        "indeterminate": "The supplied context cannot support a judgment; identify the missing context."
+      }
+    }
+  }
+}

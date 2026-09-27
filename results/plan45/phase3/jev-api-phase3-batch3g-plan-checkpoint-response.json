@@ -1,0 +1,108 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-26T06:07:57.039Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "model": "jev-latest",
+    "state": {
+      "evaluationScope": "plan_validity",
+      "background": "B3g proposes exactly two partial assertion transfers for stable row p45-b-range-change-215-e2e, P42-471 and P42-473. Source mapping: P42-470/-472 assert the start/end selects are visible before change; P42-471/-473 assert each becomes hidden after its corresponding selection change. The proposed Browser Mode cases must mount the real CpiChart, ChartFilters, and BottomSheet with deterministic representative CpiChart props/data; actual start/end handlers and rendered sheet are exercised. Explorer/Oracle scope review supports the split conditional on verifying this real component chain and starting each case with fresh window.history state. CpiChart's useUrlState calls Next useSearchParams; a narrow explicit adapter for that hook may be considered only if standalone mount requires it, but the adapter choice is not decided in this plan. Do not mock CpiChart, ChartFilters, BottomSheet, or their state handlers. Keep P42-470/-472 pre-change visibility and live route/URL/data-filter/chart integration in E2E. B3f leaves cadence 18/20; B3g adds two to reach 20/20 after gates, after which one consolidated E2E regression is permitted. A=123/E=90/M=1 remains unchanged; the row remains partial.",
+      "acceptanceCriteria": [
+        "B3g contains exactly two named Browser Mode cases for P42-471 and P42-473: actual start-year selection closes the real sheet; actual end-year selection closes the real sheet.",
+        "Both cases mount actual CpiChart, ChartFilters, and BottomSheet with deterministic representative CpiChart props/data and use the real year-change handlers and component sheet state; do not mock these components or handlers.",
+        "Each case starts with isolated, fresh window.history/query state so useUrlState replaceState calls cannot leak from another case or affect initial state.",
+        "P42-470/-472 pre-change select visibility remains asserted in the production Playwright route test; remove only P42-471/-473 post-change hidden expectations after Browser Mode evidence passes.",
+        "Keep the real production route/context and all URL serialization, filtered data, chart rendering, and other range-change integration assertions in E2E. The isolated Browser Mode slice claims only that each actual select handler closes the component sheet.",
+        "If standalone Browser Mode requires Next useSearchParams context, a narrowly scoped adapter for only that Next hook may be used; the adapter is not selected by this plan and must be documented/reviewed before implementation. It may not replace CpiChart, controls, BottomSheet, handlers, or range-sheet state.",
+        "Phase0 marked the whole stable row ineligible because the full contract includes route, URL, data, and chart integration; the partial split preserves those guarantees. The row remains partial, A=123/E=90/M=1 is unchanged, and M does not increase.",
+        "B3f is 18/20. B3g adds two and reaches 20/20 only after focused Browser Mode verification, independent review, and implementation JEV checkpoint. Run one consolidated E2E regression only after those gates pass; no E2E before then.",
+        "This is plan scope only: no implementation or test result is claimed."
+      ],
+      "verification": [
+        "Explorer source mapping confirms P42-470/-472 are pre-change visible select expectations; P42-471/-473 are hidden-after-change expectations in the same real-route test.",
+        "CpiChart owns rangeSheetOpen and passes actual handleSetStartYear/handleSetEndYear callbacks into ChartFilters; each callback updates year state and closes the actual BottomSheet. useUrlState consumes Next useSearchParams and synchronizes state through history.replaceState.",
+        "Independent scope review supports this partial split only if the tests render the real CpiChart→ChartFilters→BottomSheet chain and isolate fresh history state per test. Adapter for useSearchParams is an unresolved implementation choice, not assumed required.",
+        "Current stable row is ineligible as a whole due live route/URL/data/chart integration. Proposed scope retains P42-470/-472 and those integration assertions in Playwright.",
+        "Cadence after B3f is 18/20; the two B3g cases would reach 20/20 after gates and then allow one consolidated E2E run. No E2E or tests were run for this plan checkpoint."
+      ],
+      "knownConstraints": [
+        "The complete row mixes component sheet-close behavior with production routing, URL state, filtered data, and rendered chart behavior. Browser Mode is limited to the component close response; Playwright retains the integration guarantees.",
+        "A standalone CpiChart mount may need Next useSearchParams context. Whether to use a narrow adapter is not decided yet; any adapter must be limited to that hook and fresh history must be reset between independent cases.",
+        "A=123/E=90/M=1 remains unchanged, the stable row is partial, and the next E2E gate is exactly 20/20 only after the two new cases and their review gates pass."
+      ],
+      "outputRequirement": "Review the exact two-case B3g plan, its actual component chain, conditional narrow useSearchParams adapter, fresh history state, retained production E2E boundaries, and 20/20 cadence. Select exactly one criterion and return confidence plus the full probability distribution. If not valid_as_defined, provide a case-specific finding and affected requirement/source, observed evidence or exact neededEvidence, proposedFix/nextAction, and remainingUncertainty. Do not approve implementation unless the proposed fixture scope is sufficiently specific; do not permit E2E before both cases pass all focused/review/JEV gates."
+    },
+    "questions": {
+      "plan": {
+        "type": "choice",
+        "instructions": "Select exactly one mutually exclusive criterion for this B3g plan checkpoint.",
+        "criteria": {
+          "valid_as_defined": "The two partial CpiChart cases are sufficiently specified, can preserve fresh history state, and retain the requested route/URL/data/chart guarantees and cadence.",
+          "requirements_mismatch": "The assertion ownership or retained production boundaries conflict with an applicable requirement.",
+          "missing_prerequisites_info": "A prerequisite for judging fixture feasibility or retained integration is absent.",
+          "incomplete_implementation_info": "The proposal lacks details needed to assess the actual component chain or fixture isolation.",
+          "implementation_issue": "A concrete source/component constraint makes the proposed real CpiChart test infeasible.",
+          "scope_violation": "The proposal exceeds P42-471/-473, weakens retained route integration, or violates the 20/20 E2E gate.",
+          "other": "A material planning concern does not fit the listed criteria.",
+          "indeterminate": "Available evidence does not support a reliable determination."
+        }
+      }
+    }
+  },
+  "questionIds": [
+    "plan"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "plan": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.6,
+        "probabilities": {
+          "valid_as_defined": 0.66,
+          "indeterminate": 0.03,
+          "incomplete_implementation_info": 0.2,
+          "requirements_mismatch": 0,
+          "missing_prerequisites_info": 0.1,
+          "other": 0,
+          "implementation_issue": 0,
+          "scope_violation": 0.01
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.6,
+    "probabilities": {
+      "valid_as_defined": 0.66,
+      "indeterminate": 0.03,
+      "incomplete_implementation_info": 0.2,
+      "requirements_mismatch": 0,
+      "missing_prerequisites_info": 0.1,
+      "other": 0,
+      "implementation_issue": 0,
+      "scope_violation": 0.01
+    },
+    "passProbability": 0.66,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

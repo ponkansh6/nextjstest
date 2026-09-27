@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "jev-review-initial-distribution-v3",
+  "model": "jev-latest",
+  "state": {
+    "evaluationScope": "implementation_checkpoint_validity",
+    "background": "Fresh review of Plan 45 Phase 3 ledger reconciliation and Phase 4 verification, now including a completed independent read-only review of all ten B3i slices. The independent reviewer inspected code/crosswalks and ran no tests. Reviewed slices: P42-052 at CagrPanel.browser.test.tsx:177 checks closed-sheet no-horizontal-overflow at 375x667; P42-054 at :191 checks >=120px visible chart height with sheet open; P42-324 at SectionTabsTargets.browser.test.tsx:140 checks actual buttons >=44x44; P42-022 at BottomSheet-focus.browser.test.tsx:6 checks actual BottomSheet Tab focus loop; P42-586 at SpendingBarChart-tooltip-total.browser.test.tsx:53 checks actual bar hover opens tooltip; P42-263/-264 at CpiChart-range-close.browser.test.tsx:85 checks 住居 toggle pressed state and fixture scroll retention, with production handler covered by separate route test; P42-501/-502 at SectionTabsTargets.browser.test.tsx:156 checks target visibility but the fixture invokes scrolling via onSelect, while separate production-route check verifies the real handler; P42-463..466 at CpiChart-single-year.browser.test.tsx:62 checks one-year four periods and nominal/real bar counts; P42-469 at the same file :99 checks four 2017 rows grow to eight 2017-2018 rows in ascending order, despite test title saying row187, while plan and production route map it to row200 (production route batch2 lines 12-22 checks row200 URL/bar contract); P42-511 at SpendingBarChart.browser.test.tsx:151 checks Q1 aria-pressed turns false. Other retained boundaries: broader route/layout, P42-053 dialog visibility, P42-323 global guard, production focus context, P42-585 >5 bars and P42-587 unit ownership, production integration/URL/WebKit/lazy mount, and P42-512/-514 route SVG/P42-513 unit. Current global accounting remains A=123, E=90, M=84; M/A=68.29%, with six Phase 2 whole-scenario partials (#12, #30, #70-73), 33 MAP-ineligible Phase5 investigations, and ten B3i assertion slices overlapping existing Phase2 scenarios. Latest execution evidence supplied by the orchestrator: pnpm run test:browser 26 files, 95 passed, 9 skipped; pnpm run test:browser:next-route-poc production build and TS phase passed, Chromium 80/80, WebKit 21 passed/5 skipped; pnpm run test:e2e 32 passed, 19 skipped, 0 failed; pnpm run lint:fast passed; standalone pnpm run type-check failed with Browser Mode test diagnostics (Locator missing locator, implicit-any callback parameters, strokeOpacity omissions in SpendingBarChart.browser.test.tsx, raw CSS module and CpiData cast issue). The production-route command runs through Vitest Browser Mode with the Playwright provider and is distinct from E2E. React prop warnings during test:browser were non-failing. The first implementation JEV checkpoint returned valid_as_defined before the recorded independent review of all ten slices existed; preserve its artifacts as historical but supersede it for final acceptance. Initial plan review separately passed valid_as_defined (confidence .62, passProbability .67) and assessed plan only, not implementation.",
+    "acceptanceCriteria": [
+      "Phase 3 A/E/M accounting uses unique logical scenarios and strict whole-scenario M: A=123, E=90, M=84; six Phase 2 rows remain partial; strict M/A>0.50 is evaluated accurately.",
+      "Phase 4 accounts for all ten B3i slices and their independent read-only code review, including reviewed behavior and caveats; the review is not misrepresented as test execution.",
+      "P42-501/-502 clearly distinguishes fixture onSelect scrolling from the separately verified production scroll handler.",
+      "P42-469 is mapped to row200 despite the component test title saying row187, with the production-route row200 URL/bar check identified.",
+      "The ten partial assertion slices overlap Phase2 roster scenarios and do not add to global scenario counts or M.",
+      "Latest browser, route Browser Mode, E2E, lint, and standalone type-check results are accurately reported; type-check is explicitly failed.",
+      "Earlier JEV records remain preserved as historical snapshots; this fresh implementation checkpoint uses the newly available independent review evidence."
+    ],
+    "verification": [
+      "Independent read-only review covered all ten B3i slices; no tests or commands were executed by that reviewer.",
+      "Regular Browser Mode: 26 files, 95 passed, 9 skipped.",
+      "Production-route Browser Mode: build and TS phase passed; Chromium 80/80; WebKit 21 passed, 5 skipped.",
+      "Consolidated Playwright E2E: 32 passed, 19 skipped, 0 failed.",
+      "lint:fast passed; standalone type-check failed with recorded Browser Mode test diagnostics.",
+      "Phase 3 ledger and Phase 4 crosswalk preserve six partial rows, 33 Phase5 items, and non-additive B3i slice accounting."
+    ],
+    "knownConstraints": [
+      "Six Phase 2 rows remain whole-scenario partial and standalone type-check is still failing.",
+      "The 33 MAP-ineligible investigations and Phase 6 runtime/flake comparison remain open.",
+      "The independent review was code inspection only and does not replace the separately recorded test executions.",
+      "This review request contains no authentication credentials or other secrets."
+    ],
+    "outputRequirement": "Choose one listed choice. For a non-pass, provide a case-specific finding, affected source/crosswalk/criterion, observed evidence, and either a concrete proposed fix or exact additional evidence needed. Do not invent missing review findings. A pass assesses this Phase 3/4 checkpoint only and does not complete Phase 5/6."
+  },
+  "questions": {
+    "implementation": {
+      "type": "choice",
+      "instructions": "Does the complete supplied evidence, including the new independent read-only review of all ten B3i slices, support accepting the Phase 3 ledger and Phase 4 verification checkpoint as defined? Return a probability distribution over the listed choices.",
+      "criteria": {
+        "valid_as_defined": "Accounting, ten-slice crosswalk, independent review boundaries, and current verification are consistent with acceptance criteria, with residuals accurately scoped.",
+        "requirements_mismatch": "The ledger or execution conflicts with an acceptance criterion; identify it and the required correction.",
+        "missing_prerequisites_info": "A required prerequisite is missing; identify exactly what is needed.",
+        "incomplete_implementation_info": "Evidence is too incomplete to assess; identify exact missing evidence.",
+        "implementation_issue": "A concrete accounting, mapping, or verification defect exists; identify location, evidence, and correction.",
+        "scope_violation": "The checkpoint claims work outside the authorized Phase 3/4 scope; identify the boundary and adjustment.",
+        "other": "A material concern does not fit the other categories; identify its location, evidence, and fix or needed evidence.",
+        "indeterminate": "The supplied context cannot support a reliable determination; identify missing context if possible."
+      }
+    }
+  }
+}

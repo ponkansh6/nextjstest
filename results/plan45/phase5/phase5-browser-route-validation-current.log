@@ -1,0 +1,19 @@
+$ node scripts/run-next-route-poc.mjs
+
+ RUN  v4.1.11 /home/shunki/working/nextjstest
+
+
+ Test Files  9 passed (9)
+      Tests  80 passed (80)
+   Start at  16:00:08
+   Duration  269.86s (transform 0ms, setup 3.73s, import 896ms, tests 259.97s, environment 0ms)
+
+
+ RUN  v4.1.11 /home/shunki/working/nextjstest
+
+
+ Test Files  5 passed (5)
+      Tests  21 passed | 5 skipped (26)
+   Start at  16:04:39
+   Duration  117.11s (transform 0ms, setup 1.09s, import 455ms, tests 109.56s, environment 0ms)
+

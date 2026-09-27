@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "jev-review-initial-distribution-v3",
+  "model": "jev-latest",
+  "state": {
+    "evaluationScope": "implementation_checkpoint_validity",
+    "background": "Phase 6 batch B06 transfers exactly three Plan45 stable IDs to Browser Mode: p45-b-plan27-private-consumption-79-plan27-38-cti-nominal-cti-key-is-distinct-from-the-real, p45-b-plan27-private-consumption-9-plan27-38-cti-2005q1-2017q4-52-graph-table-csv-cti-regi, and p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders-. The permanent production-route tests preserve Pixel 7 context and nominal/real CTI key boundary for ID 79; Pixel 7 context, 52-quarter graph/table/CSV, post-boundary invalid metadata, and exclusions for ID 9; and quarterly GDP ready-state, selected charts/legends, chart keys, tables/CSV, values/metadata, and tooltip assertions for ID 26. The focused final suite passed all three tests; after the three source cases were cut over, the fresh residual Playwright suite passed 21 with 18 skipped. Independent implementation and post-cutover source-boundary audits passed. Current ledger is A=123/E=123/M=105; 15 of the 33 eligible Phase 6 scenarios are accepted and 18 remain Playwright-owned. Phase 6 remains in progress.",
+    "acceptanceCriteria": [
+      "All three B06 stable IDs preserve their mapped source assertion boundaries in permanent fail-on-contract Browser Mode tests.",
+      "ID 79 verifies Pixel 7 viewport/device context and the nominal/real CTI key boundary.",
+      "ID 9 verifies Pixel 7 context, all 52 quarters across graph/table/CSV, post-boundary invalid metadata and reason, nonzero chart bars, and exclusion of retired wage CTI and internal GDP fields.",
+      "ID 26 verifies quarterly ready state, public nominal and real series, expected legends and exclusions, 2025 year selection, both tables and CSVs, period values and metadata, and the source tooltip checks.",
+      "Only these three mapped source cases were cut over; other Playwright owners remain represented.",
+      "The focused production Browser Mode runner is wired into the route runner/default CI path, and the post-cutover residual E2E gate passes before B06 is counted in M.",
+      "Independent implementation and source-boundary audits support the mapping; ledger is A=123/E=123/M=105, with 15 accepted and 18 pending of 33."
+    ],
+    "verification": [
+      "Final focused run `pnpm run test:browser:phase6-b06:built` passed one file / three tests. Durable final log: results/plan45/phase6/phase6-b06-browser-mode-validation-pass5-2026-09-27.log.",
+      "After source cutover, `pnpm test:e2e:fresh` completed and passed 21 tests with 18 skipped and zero failures. Durable log: results/plan45/phase6/phase6-b06-residual-e2e-validation-2026-09-27.log.",
+      "Independent implementation and post-cutover source-boundary audits passed.",
+      "Earlier focused attempts are preserved in results/plan45/phase6/phase6-b06-browser-mode-validation-2026-09-27.log and the `pass2`, `pass3`, and `pass4` logs. They exposed trace-path, viewport-evidence, and 60-second timeout issues that were corrected before the final pass5 run; they are not counted as acceptance evidence."
+    ],
+    "knownConstraints": [
+      "This checkpoint covers B06 only. B07-B13 remain pending and are not included in M.",
+      "Prior failed or partial focused attempts are retained for audit history but do not override the final pass5 result.",
+      "The assessment relies on the supplied independent post-cutover source-boundary audit in addition to test logs."
+    ],
+    "outputRequirement": "Choose exactly one criterion for this implementation checkpoint. Provide effective verdict, decision summary and full choice distribution, evidence tied to B06 IDs and artifact paths, any required correction with exact location, and remaining uncertainty. Do not promote partial ownership or feasibility evidence to a full migration. If the initial choice is not valid_as_defined, follow exactly one required case-specific clarification and preserve the initial result; do not turn a non-pass into a pass."
+  },
+  "questions": {
+    "implementation": {
+      "type": "choice",
+      "instructions": "Evaluate whether B06 is a valid full cutover under the acceptance criteria and evidence. Select the single best matching criterion.",
+      "criteria": {
+        "valid_as_defined": "The supplied source-contract, cutover, ledger, and verification evidence supports accepting B06 as defined.",
+        "requirements_mismatch": "A concrete conflict exists between requirements and implementation or recorded evidence; identify the requirement and requirement-only correction.",
+        "missing_prerequisites_info": "Required prerequisite information is missing; identify exactly what is needed.",
+        "incomplete_implementation_info": "Specific evidence needed to assess B06 is missing; identify the exact gap.",
+        "implementation_issue": "A concrete implementation or reporting defect violates a criterion; name the location, evidence, and implementation-only correction.",
+        "scope_violation": "The cutover exceeds or falls outside the agreed batch boundary; identify the boundary and adjustment.",
+        "other": "A different concrete validity issue exists; state the finding, location, evidence, and next action.",
+        "indeterminate": "The supplied context cannot support a decision; identify the missing context and resolving evidence."
+      }
+    }
+  }
+}

@@ -1,0 +1,56 @@
+$ node scripts/run-next-route-poc.mjs --only=phase6-b06
+
+ RUN  v4.1.11 /home/shunki/working/nextjstest
+
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- navigate and wait for charts started
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- navigate and wait for charts completed in 1510ms
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- read chart labels and open real legend started
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- read chart labels and open real legend completed in 109ms
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- extract chart contracts started
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- extract chart contracts completed in 563ms
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- select 2025 start year started
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- select 2025 start year completed in 839ms
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- open nominal table started
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- open nominal table completed in 115ms
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- download nominal CSV started
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- download nominal CSV completed in 39ms
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- hover nominal 2025Q1 started
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- hover nominal 2025Q1 completed in 389ms
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- hover nominal 2025Q4 started
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- hover nominal 2025Q4 completed in 193ms
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- open real table started
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- open real table completed in 134ms
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- download real CSV started
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- download real CSV completed in 28ms
+ ❯ |chromium| tests/browser-mode/phase6-b06-quarterly.browser.test.ts (3 tests | 1 failed) 66240ms
+   × B06 Plan23 ID 26: quarterly public data 61107ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |chromium| tests/browser-mode/phase6-b06-quarterly.browser.test.ts:60:1 > B06 Plan23 ID 26: quarterly public data
+Error: Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+
+Failure screenshot:
+  - tests/browser-mode/__screenshots__/phase6-b06-quarterly.browser.test.ts/B06-Plan23-ID-26--quarterly-public-data-1.png
+
+ ❯ tests/browser-mode/phase6-b06-quarterly.browser.test.ts:60:0
+     57| });
+     58|
+     59| // Stable source ID: p45-b-quarterly-gdp-26-plan23-quarterly-public-pr…
+       |                                                                                                    ^
+     60| it("B06 Plan23 ID 26: quarterly public data", async () => {
+     61|   const result = await commands.inspectPhase6B06(QUARTERLY_GDP) as {
+
+ ❯ tests/browser-mode/phase6-b06-quarterly.browser.test.ts:60:1 traces
+   ↳ tests/browser-mode/__traces__/phase6-b06-quarterly.browser.test.ts/chromium-B06-Plan23-ID-26--quarterly-public-data-0-0.trace.zip
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  18:32:09
+   Duration  68.36s (transform 0ms, setup 564ms, import 60ms, tests 66.24s, environment 0ms)
+
+[ELIFECYCLE] Command failed with exit code 1.

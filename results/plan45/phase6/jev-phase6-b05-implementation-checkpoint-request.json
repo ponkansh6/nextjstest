@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "jev-review-initial-distribution-v3",
+  "model": "jev-latest",
+  "state": {
+    "evaluationScope": "implementation_checkpoint_validity",
+    "background": "Phase 6 batch B05 transfers exactly two Plan45 stable scenarios to Browser Mode: p45-a-parity-section-residual and p45-a-parity-section-stacked. The permanent production-route suite preserves the source chart/table/full CSV parity assertions for both sections and verifies the actual CSV download event, a non-null persisted download path, and parsing of the saved artifact. The route command and focused/default runner wiring are in place, and only the two mapped Playwright E2E cases were cut over. Current Phase 6 ledger: A=123/E=123/M=102; 12 of 33 eligible scenarios are accepted and 21 remain Playwright-owned. Phase 6 remains in progress.",
+    "acceptanceCriteria": [
+      "Both B05 stable IDs preserve their source chart, table, and full CSV parity assertions in permanent fail-on-contract Browser Mode tests.",
+      "For both scenarios, the Browser Mode route test captures the actual download event, requires a non-null persisted file path, reads and parses the saved CSV artifact, and compares its full data surface to the rendered table and chart contract.",
+      "The source series order, all rows, typed CSV metadata, empty-value rules, public rendered chart geometry, January 2025 boundary, and internal-series exclusions remain asserted as in the mapped source contract.",
+      "Only the two mapped E2E cases were cut over; unrelated chart/table/CSV contracts remain in Playwright.",
+      "The focused production Browser Mode runner is wired into the route runner and default test/CI path and passed before the two scenarios were counted in M.",
+      "The current ledger is A=123/E=123/M=102, with 12 accepted and 21 pending out of 33; independent implementation and source-cutover reviews support the mapping."
+    ],
+    "verification": [
+      "pnpm run test:browser:phase6-b05:built passed: one file and two tests. Durable focused log: results/plan45/phase6/phase6-b05-browser-mode-validation-2026-09-27.log.",
+      "After source cutover, pnpm test:e2e:fresh completed its production build and passed 24 tests with 18 skipped and zero failures. Durable final log: results/plan45/phase6/phase6-b05-residual-e2e-validation-pass2-2026-09-27.log.",
+      "Independent implementation and source-cutover audits passed; runner/route command wiring is included in the B05 diff.",
+      "An earlier fresh E2E attempt failed during build because a concurrently edited B06 route command had a TypeScript syntax error. The issue was corrected before the successful B05 final run; the failed attempt is preserved in results/plan45/phase6/phase6-b05-residual-e2e-validation-2026-09-27.log and is not counted as acceptance evidence."
+    ],
+    "knownConstraints": [
+      "This checkpoint covers B05 only. B06-B13 remain pending and are not included in M.",
+      "The prior failed build was due to the concurrent B06 syntax error and predates the successful fresh E2E build; it does not represent a B05 assertion failure.",
+      "The assessment relies on the supplied independent source-cutover audit and successful persisted-download artifact checks."
+    ],
+    "outputRequirement": "Choose exactly one criterion for this implementation checkpoint. Provide effective verdict, decision summary and full choice distribution, evidence tied to B05 IDs and artifact paths, any required correction with exact location, and remaining uncertainty. Do not promote partial ownership or feasibility evidence to a full migration. If the initial choice is not valid_as_defined, follow exactly one required case-specific clarification and preserve the initial result; do not turn a non-pass into a pass."
+  },
+  "questions": {
+    "implementation": {
+      "type": "choice",
+      "instructions": "Evaluate whether B05 is a valid full cutover under the acceptance criteria and evidence. Select the single best matching criterion.",
+      "criteria": {
+        "valid_as_defined": "The supplied source-contract, cutover, ledger, and verification evidence supports accepting B05 as defined.",
+        "requirements_mismatch": "A concrete conflict exists between requirements and implementation or recorded evidence; identify the requirement and requirement-only correction.",
+        "missing_prerequisites_info": "Required prerequisite information is missing; identify exactly what is needed.",
+        "incomplete_implementation_info": "Specific evidence needed to assess B05 is missing; identify the exact gap.",
+        "implementation_issue": "A concrete implementation or reporting defect violates a criterion; name the location, evidence, and implementation-only correction.",
+        "scope_violation": "The cutover exceeds or falls outside the agreed batch boundary; identify the boundary and adjustment.",
+        "other": "A different concrete validity issue exists; state the finding, location, evidence, and next action.",
+        "indeterminate": "The supplied context cannot support a decision; identify the missing context and resolving evidence."
+      }
+    }
+  }
+}

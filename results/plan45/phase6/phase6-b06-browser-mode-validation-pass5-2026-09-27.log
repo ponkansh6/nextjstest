@@ -1,0 +1,38 @@
+$ node scripts/run-next-route-poc.mjs --only=phase6-b06
+
+ RUN  v4.1.11 /home/shunki/working/nextjstest
+
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- navigate and wait for charts started
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- navigate and wait for charts completed in 1525ms
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- read chart labels and open real legend started
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- read chart labels and open real legend completed in 107ms
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- extract chart contracts started
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- extract chart contracts completed in 545ms
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- select 2025 start year started
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- select 2025 start year completed in 888ms
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- open nominal table started
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- open nominal table completed in 123ms
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- download nominal CSV started
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- download nominal CSV completed in 52ms
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- inspect nominal table and CSV values started
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- inspect nominal table and CSV values completed in 42ms
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- hover nominal 2025Q1 started
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- hover nominal 2025Q1 completed in 370ms
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- hover nominal 2025Q4 started
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- hover nominal 2025Q4 completed in 182ms
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- open real table started
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- open real table completed in 135ms
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- download real CSV started
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- download real CSV completed in 41ms
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- inspect real table and CSV values started
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- inspect real table and CSV values completed in 37ms
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- hover real 2025Q1 started
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- hover real 2025Q1 completed in 335ms
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- hover real 2025Q4 started
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- hover real 2025Q4 completed in 201ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  18:35:52
+   Duration  11.59s (transform 0ms, setup 545ms, import 62ms, tests 9.72s, environment 0ms)
+

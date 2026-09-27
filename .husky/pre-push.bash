@@ -100,11 +100,6 @@ NODE
   fi
 }
 
-run_e2e() {
-  hook_gate "test:e2e:clean" pnpm run test:e2e:clean || return $?
-  hook_gate "test:e2e" pnpm run test:e2e || return $?
-}
-
 run_full_profile() {
   FULL_PROFILE_RAN=1
   # Keep this order in sync with test:full. Every gate must stop the hook.
@@ -113,9 +108,9 @@ run_full_profile() {
   hook_gate "test:all" pnpm run test:all || return $?
   hook_gate "test:browser" pnpm run test:browser || return $?
   hook_gate "build" pnpm run build || return $?
+  hook_gate "test:browser:next-route-poc:built" pnpm run test:browser:next-route-poc:built || return $?
   hook_gate "test:build-parity" pnpm run test:build-parity || return $?
   hook_gate "security-check" pnpm run security-check || return $?
-  run_e2e || return $?
   echo "[hook] production validation: not run (separate gate; PROD_URL/network availability is not established)"
 }
 
@@ -132,7 +127,7 @@ else
   fi
   if ((FULL_PROFILE_RAN == 0)); then
     hook_gate "build" pnpm run build || exit $?
-    run_e2e || exit $?
+    hook_gate "test:browser:next-route-poc:built" pnpm run test:browser:next-route-poc:built || exit $?
     echo "[hook] production validation: not run (separate gate; PROD_URL/network availability is not established)"
   fi
 fi

@@ -1,0 +1,56 @@
+$ node scripts/run-next-route-poc.mjs --only=phase6-b03
+
+ RUN  v4.1.11 /home/shunki/working/nextjstest
+
+ ❯ |chromium| tests/browser-mode/phase6-b03-advanced-series.browser.test.ts (3 tests | 2 failed) 67867ms
+   × p45-a-parity-advanced-anchors preserves complete regular and advanced chart/table/CSV parity 33005ms
+   × p45-a-parity-hidden-series preserves chart, table, and CSV data when a legend series is hidden 32560ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |chromium| tests/browser-mode/phase6-b03-advanced-series.browser.test.ts:61:1 > p45-a-parity-advanced-anchors preserves complete regular and advanced chart/table/CSV parity
+TimeoutError: locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByTestId('data-table-section-new-graph').getByRole('table') to be visible[22m
+
+
+Failure screenshot:
+  - tests/browser-mode/__screenshots__/phase6-b03-advanced-series.browser.test.ts/p45-a-parity-advanced-anchors-preserves-complete-regular-and-advanced-chart-table-CSV-parity-1.png
+
+ ❯ tests/browser-mode/phase6-b03-advanced-series.browser.test.ts:62:32
+
+
+ ❯ tests/browser-mode/phase6-b03-advanced-series.browser.test.ts:61:1 traces
+   ↳ tests/browser-mode/__traces__/phase6-b03-advanced-series.browser.test.ts/chromium-p45-a-parity-advanced-anchors-preserves-complete-regular-and-advanced-chart-table-CSV-parity-0-0.trace.zip
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |chromium| tests/browser-mode/phase6-b03-advanced-series.browser.test.ts:99:1 > p45-a-parity-hidden-series preserves chart, table, and CSV data when a legend series is hidden
+TimeoutError: locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByTestId('data-table-section-stacked').getByRole('table') to be visible[22m
+
+
+Failure screenshot:
+  - tests/browser-mode/__screenshots__/phase6-b03-advanced-series.browser.test.ts/p45-a-parity-hidden-series-preserves-chart--table--and-CSV-data-when-a-legend-series-is-hidden-1.png
+
+ ❯ tests/browser-mode/phase6-b03-advanced-series.browser.test.ts:100:32
+     98|
+     99| it("p45-a-parity-hidden-series preserves chart, table, and CSV data wh…
+    100|   const result = await commands.inspectPhase6B03("p45-a-parity-hidden-…
+       |                                ^
+    101|     sectionCount: number; rootCount: number; rootVisible: boolean; svg…
+    102|     beforeChart: { keys: string[]; rows: Array<{ period: string; value…
+
+ ❯ tests/browser-mode/phase6-b03-advanced-series.browser.test.ts:99:1 traces
+   ↳ tests/browser-mode/__traces__/phase6-b03-advanced-series.browser.test.ts/chromium-p45-a-parity-hidden-series-preserves-chart--table--and-CSV-data-when-a-legend-series-is-hidden-0-0.trace.zip
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  17:37:55
+   Duration  70.46s (transform 0ms, setup 557ms, import 43ms, tests 67.87s, environment 0ms)
+
+[ELIFECYCLE] Command failed with exit code 1.

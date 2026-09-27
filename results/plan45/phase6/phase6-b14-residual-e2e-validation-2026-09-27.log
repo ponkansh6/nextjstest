@@ -1,0 +1,50 @@
+$ pnpm build && pnpm test:e2e
+$ next build --webpack
+▲ Next.js 16.3.5 (webpack)
+- Environments: .env.local
+✓ Running next.config.ts took 25ms
+- Experiments (use with caution):
+  ⨯ useTypeScriptCli
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 3.4s
+  Running TypeScript ...
+  Finished TypeScript in 10.5s ...
+  Collecting page data using 3 workers ...
+  Generating static pages using 3 workers (0/7) ...
+  Generating static pages using 3 workers (1/7) 
+  Generating static pages using 3 workers (3/7) 
+  Generating static pages using 3 workers (5/7) 
+✓ Generating static pages using 3 workers (7/7) in 1149ms
+  Finalizing page optimization ...
+  Collecting build traces ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/estat/data
+├ ƒ /api/estat/meta
+└ ƒ /api/estat/stats-list
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+$ playwright test
+[WebServer] (node:186) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] $ next start --port 3100 --hostname 127.0.0.1
+[WebServer] (node:199) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 2 tests using 2 workers
+
+(node:224) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:225) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  -  1 [chromium] › tests/e2e/tooltip-dismiss.e2e.spec.ts:138:7 › モバイル ツールチップの閉じるボタンとインタラクション › スクロールするとガイド線とツールチップが自動で消える
+  ✓  2 [mobile-pixel] › tests/e2e/tooltip-dismiss.e2e.spec.ts:138:7 › モバイル ツールチップの閉じるボタンとインタラクション › スクロールするとガイド線とツールチップが自動で消える (2.5s)
+
+  1 skipped
+  1 passed (4.3s)

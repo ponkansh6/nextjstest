@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 /home/shunki/working/nextjstest
+
+
+ Test Files  1 passed | 8 skipped (9)
+      Tests  1 passed | 79 skipped (80)
+   Start at  23:59:45
+   Duration  14.86s (transform 0ms, setup 4.16s, import 888ms, tests 3.89s, environment 0ms)
+

@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "jev-review-initial-distribution-v3",
+  "model": "jev-latest",
+  "state": {
+    "evaluationScope": "implementation_checkpoint_validity",
+    "background": "Post-implementation checkpoint for the 89-row full Browser Mode migration roster. The roster `results/plan45/phase2/full-migration-roster.md` records 89/89 eligible rows as Verified/full across five batches. Rows #17 and #18 were corrected after source audit: `batch1-production-route.browser.test.ts` now exercises production `/`, scrolls `#section-stacked` and `#section-earnings` into view, waits for the rendered SVG x-axis tick, and asserts the final labels omit `2017年12月` and `2018年1月`; corresponding stable IDs are registered with the route runner. These production-route cases use real page data/layout. The earlier `MonthlyBoundaryAxis.browser.test.tsx` synthetic component cases remain additional coverage. Independent code review found parity with source assertions; source E2E assertions were removed/replaced only for these matched predicates. Audit #1-20 now confirms predicate parity; audits of #21-89 found no additional uncovered eligible predicates. Targeted full production-route command `pnpm run test:browser:next-route-poc` exited 0: Chromium 80/80 passed, WebKit 21 passed and 5 skipped; production build and its TypeScript phase passed. `pnpm lint` exited 0. Standalone `pnpm type-check` exits 2 because of existing Browser Mode component typing diagnostics (including missing Locator.locator typing and implicit anys); no new diagnostics were reported in production-route files. The Batch 5 E2E checkpoint was 32 passed and 19 skipped (51 total); E2E was not rerun for this targeted #17/#18 predicate correction. Do not describe E2E as newly verified after the correction, count skipped cases as passed, or claim standalone type-check passed.",
+    "acceptanceCriteria": [
+      "All 89 eligible source predicates are represented by their mapped Browser Mode destinations, with unrelated and distinct source assertions preserved or separately owned.",
+      "Rows #17/#18 specifically exercise production `/` and actual production chart sections/data/layout, and assert both source-required x-axis labels are absent from the final rendered SVG.",
+      "Only matching #17/#18 Playwright assertions were removed/replaced after parity was independently reviewed and production-route tests passed.",
+      "The production-route run, build/type-generation phase, lint, standalone type-check caveat, and older E2E checkpoint are reported accurately without implying an E2E rerun for the targeted fix.",
+      "All configured skipped tests remain reported as skipped rather than passing."
+    ],
+    "verification": [
+      "Independent code review found the new #17/#18 production-route cases match the source predicate and production context.",
+      "`pnpm run test:browser:next-route-poc` exit 0: Chromium 80/80 passed; WebKit 21 passed, 5 skipped; production build and its TypeScript phase passed.",
+      "`pnpm lint` exit 0.",
+      "Standalone `pnpm type-check` exit 2 from existing Browser Mode component diagnostics, including `Locator.locator` typing and implicit anys; no new production-route file diagnostics.",
+      "Latest prior consolidated E2E checkpoint (Batch 5): 32 passed, 19 skipped, 51 total; not rerun after this targeted #17/#18 correction.",
+      "Roster audits: #1-20 predicate parity confirmed after the correction; #21-89 audits found no additional uncovered eligible predicates; roster reports 89/89 Verified/full."
+    ],
+    "knownConstraints": [
+      "Review the eligible 89-row roster and the implementation evidence summarized here; do not expand scope beyond these source-to-browser predicates.",
+      "A production-route pass does not imply skipped WebKit cases passed.",
+      "The standalone type-check did not pass; distinguish it from the production build's TypeScript phase, which passed.",
+      "The full E2E suite has not been rerun after the targeted #17/#18 correction; state only the prior Batch 5 result.",
+      "Do not include credentials, tokens, or other secrets in review content."
+    ],
+    "outputRequirement": "Choose one listed choice and return a probability distribution. For any non-pass, provide a case-specific finding, affected row/location or requirement, observed evidence, and a concrete proposed fix or exact additional evidence needed. Do not invent details."
+  },
+  "questions": {
+    "implementation": {
+      "type": "choice",
+      "instructions": "Does the supplied roster and implementation evidence support accepting the 89-row full migration against the criteria and stated verification limits? Return a probability distribution over the listed choices.",
+      "criteria": {
+        "valid_as_defined": "The supplied evidence supports the 89-row status and all verification qualifications against the criteria.",
+        "requirements_mismatch": "The roster or acceptance criteria conflict with the intended migration; identify the requirement and correction.",
+        "missing_prerequisites_info": "Required source-mapping, verification, or ownership evidence is missing; identify exactly what is needed.",
+        "incomplete_implementation_info": "A row mapping or implementation evidence is incomplete; identify the location and missing details or evidence.",
+        "implementation_issue": "A mapped predicate is not fully represented or a status/evidence statement is inaccurate; identify location, evidence, and correction.",
+        "scope_violation": "The claimed completion includes work outside the eligible scope or omits a required in-scope predicate; identify the boundary and adjustment.",
+        "other": "A material concern does not fit the categories; identify its location, evidence, and fix or needed evidence.",
+        "indeterminate": "The supplied context cannot support a judgment; identify missing context if possible."
+      }
+    }
+  }
+}

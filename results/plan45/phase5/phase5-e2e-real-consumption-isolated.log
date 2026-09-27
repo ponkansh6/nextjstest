@@ -1,0 +1,21 @@
+[WebServer] (node:33) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] $ next start --port 3100 --hostname 127.0.0.1
+[WebServer] (node:46) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 7 tests using 1 worker
+
+(node:71) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 [chromium] › tests/e2e/real-consumption.e2e.spec.ts:21:7 › page.tsx E2E: real consumption chart with actual browser › should render page and extract quarterlyRealData from Flight payload (686ms)
+  ✓  2 [chromium] › tests/e2e/real-consumption.e2e.spec.ts:60:7 › page.tsx E2E: real consumption chart with actual browser › should render without hydration or console errors (262ms)
+  ✓  3 [chromium] › tests/e2e/real-consumption.e2e.spec.ts:82:7 › page.tsx E2E: real consumption chart with actual browser › should render UI components in real consumption chart (1.0s)
+✓ Found visible legend items
+✓ Legend item is clickable
+  ✓  4 [chromium] › tests/e2e/real-consumption.e2e.spec.ts:99:7 › page.tsx E2E: real consumption chart with actual browser › should handle legend toggle and update chart visibility (2.1s)
+  ✓  5 [chromium] › tests/e2e/real-consumption.e2e.spec.ts:128:9 › page.tsx E2E: real consumption chart with actual browser › 実質消費凡例アコーディオン › T-E2E-A1: 初期表示で実質セクションの凡例ボタンが見えない（アコーディオンが閉じている） (1.8s)
+  ✓  6 [chromium] › tests/e2e/real-consumption.e2e.spec.ts:156:9 › page.tsx E2E: real consumption chart with actual browser › 実質消費凡例アコーディオン › T-E2E-A2: <summary> をクリックすると凡例が現れ、費目ボタンが可視になる (1.6s)
+  ✓  7 [chromium] › tests/e2e/real-consumption.e2e.spec.ts:174:9 › page.tsx E2E: real consumption chart with actual browser › 実質消費凡例アコーディオン › T-E2E-A3: summary ヘッダーがトナルピル装飾で、矢印SVGが含まれる (1.5s)
+
+  7 passed (11.2s)

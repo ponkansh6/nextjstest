@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "jev-review-initial-distribution-v3",
+  "model": "jev-latest",
+  "state": {
+    "evaluationScope": "implementation_checkpoint_validity",
+    "background": "Plan45 Phase 3 B3b adds three focused Browser Mode checks for two monthly-axis chart scenarios and one earnings-tooltip scenario. The stable rows are p45-b-monthly-boundary-axis-21-cpi-2017-12-2018-1-svg, p45-b-monthly-boundary-axis-21-2017-12-2018-1-svg, and p45-a-earnings-hover. The two actual axis components are StackedAreaChart (CPI) and EarningsBreakdownChart (earnings); the hover component is EarningsBreakdownChart. The B3b plan was corrected after source inspection: the CPI and earnings iterations share one Playwright source group, while the Plan42 ledger's P42-356 points to the test-ending line 29 and no labels.length expectation exists there. The original Playwright assertions remain in place until all ten new named Browser Mode cases across B3a/B3b/B3c pass; these B3b tests are green migration candidates, not completed source transfers.",
+    "acceptanceCriteria": [
+      "The CPI axis test mounts the actual StackedAreaChart and the earnings axis test mounts the actual EarningsBreakdownChart with deterministic monthly data around 2017年12月 and 2018年1月.",
+      "Each axis test confirms at least one rendered SVG x-axis tick as the P42-353 readiness equivalent and confirms both boundary labels, 2017年12月 and 2018年1月, are absent, representing the extant shared P42-354/-355 assertions for each chart iteration.",
+      "P42-356 is treated as a Plan42 ledger/source-boundary mismatch, not a behavior or assertion: current line 29 closes the test and has no labels.length expect. No >=2 labels assertion is claimed as migrated source behavior.",
+      "The earnings hover test mounts the actual EarningsBreakdownChart, hovers its visible Recharts area plot, and verifies deterministic tooltip content is visible, covering P42-290 only.",
+      "The B3b scope stays at three named Browser Mode cases. P42-287/-288/-289 plot visibility and viewport bounds, P42-297 separator styling, production route/data integration, and any other independent assertions remain in Playwright.",
+      "The shared Playwright axis group is removed only once after both axis Browser Mode cases pass; P42-356 is not removed as an assertion. This checkpoint does not claim either stable axis row is fully migrated."
+    ],
+    "verification": [
+      "Focused Browser Mode command: PLAYWRIGHT_BROWSERS_PATH=/home/shunki/.cache/ms-playwright XDG_CACHE_HOME=/tmp/nextjstest-pnpm-cache pnpm exec vitest --config vitest.browser.config.ts run tests/browser-mode/MonthlyBoundaryAxis.browser.test.tsx tests/browser-mode/EarningsBreakdownChart.browser.test.tsx; final result: 2 files passed, 3 tests passed, exit code 0, duration 5.32 seconds.",
+      "The first focused attempt passed both axis tests but failed the hover case because the selected horizontal line path had a zero-height bounding box and Browser Mode considered it not visible. The selector was changed to the actual visible nonzero-area Recharts area path; the corrected focused run passed all three tests.",
+      "The corrected focused run emitted unsuppressed React/Recharts development warnings for forwarded chart props and a false active attribute. The tests do not suppress these warnings or claim a zero-console-error result.",
+      "Independent Oracle review found no design blocker: the two axis tests cover the extant shared P42-353/-354/-355 behavior; P42-356 is not covered or migrated; the visible area path is an appropriate hover target. Route-fed data and production layout remain outside this component fixture. No E2E command or Playwright source edit was made."
+    ],
+    "knownConstraints": [
+      "The axis fixtures use deterministic synthetic data and cannot certify route-fed production data, production-responsive layout, fonts, or all viewport conditions.",
+      "The hover fixture validates the local Recharts pointer-to-tooltip path only and does not replace production plot bounds or route-level assertions.",
+      "The current Playwright source assertions remain untouched; these are implementation-checkpoint passes pending the ten-case migration gate and final source crosswalk update.",
+      "Recharts development rendering emits React unknown-prop/attribute warnings in the focused run; they remain visible and unsuppressed."
+    ],
+    "outputRequirement": "Select one criterion for this bounded B3b implementation checkpoint. If not valid_as_defined, state a case-specific finding, affected file and Plan42/Plan45 requirement, observed evidence, and either a concrete proposed fix or exact additional evidence needed; state remaining uncertainty explicitly, using none if resolved. Do not claim P42-356 or an >=2 labels expectation was migrated, do not call the green focused tests a completed E2E transfer, and do not recommend running E2E before the ten named Browser Mode case threshold."
+  },
+  "questions": {
+    "implementation": {
+      "type": "choice",
+      "instructions": "Assess whether the specific B3b implementation checkpoint is valid as defined under the corrected assertion mapping, partial boundaries, and observed focused Browser Mode result. Select exactly one criterion based on the evidence. If selecting a non-pass criterion, provide the requested case-specific diagnosis and remaining uncertainty.",
+      "criteria": {
+        "valid_as_defined": "The implementation and verification satisfy the B3b component-level checkpoint within the corrected scope.",
+        "requirements_mismatch": "Implemented behavior contradicts or fails an applicable requirement.",
+        "missing_prerequisites_info": "Required prerequisite information is absent and prevents assessment.",
+        "incomplete_implementation_info": "The implementation or evidence is too incomplete to assess the defined checkpoint.",
+        "implementation_issue": "A concrete defect or unsupported behavior exists in the implementation.",
+        "scope_violation": "The implementation exceeds or fails to respect the stated scope boundaries.",
+        "other": "A material issue exists that does not fit the other criteria.",
+        "indeterminate": "The available information does not support a reliable determination."
+      }
+    }
+  }
+}

@@ -1,0 +1,108 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-26T03:32:04.937Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "model": "jev-latest",
+    "state": {
+      "evaluationScope": "plan_validity",
+      "background": "Fresh B3c plan reassessment, preserving the previous JEV-approved B3c plan and its request/response as historical. B3c contains two named Browser Mode cases. The CAGR candidate is p45-a-cagr-sheet-02, actual CagrPanel plus actual useCagrState with deterministic chart data, covering P42-046–049: dialog visible initially and after start-year change, calculated result visible, and rendered result matching /^-?\\d+\\.\\d{2}%$/. Actual route/section trigger P42-040/-041 remains E2E. The desktop Escape candidate is p45-b-tooltip-dismiss-578-chromium-escape-dismiss, P42-577 only. Oracle found the prior plan had a blocking gap: it did not require the actual desktop chart tooltip controller and event handlers, allowing direct state/tooltip activation instead of testing desktop hover-to-dismiss. The corrected plan requires actual nominal SpendingBarChart wired to actual useChartTooltipController({ suppressed: false, isTouch: false }) via tooltipProps and the chart event props onPointerDown, onPointerMove, onMouseMove, onPointerLeave, and onMouseLeave. A real Browser Mode pointer hover over a rendered bar must activate the controller and show the tooltip; send a real Escape key with the established userEvent.keyboard(\"{Escape}\") Browser Mode API and assert the tooltip hides. Never set activeChartId, tooltip active state, or tooltip content directly. This case proves component/controller behavior only. Keep P42-575/-576, P42-578–583 (re-hover, mouseleave, heading/bounds, outside-click), P42-603/-604 and remaining route/coordinate assertions in E2E. Candidate test files are tests/browser-mode/CagrPanel.browser.test.tsx and tests/browser-mode/SpendingBarChart-tooltip-dismiss.browser.test.tsx. Keep A=123/E=90/M=1 and no E2E before all ten new named Batch3 Browser Mode cases pass.",
+      "acceptanceCriteria": [
+        "The CagrPanel.browser.test.tsx candidate mounts the actual CagrPanel and actual useCagrState with deterministic data, shows the dialog initially and after a start-year change, calculates, and asserts the visible rendered result matches /^-?\\d+\\.\\d{2}%$/ for P42-046–049; this is not hook-math-only coverage.",
+        "The CAGR route/section trigger and production integration assertions P42-040/-041 remain E2E.",
+        "The SpendingBarChart-tooltip-dismiss.browser.test.tsx candidate mounts actual nominal SpendingBarChart with actual useChartTooltipController({ suppressed: false, isTouch: false }) and wires tooltipProps plus onPointerDown, onPointerMove, onMouseMove, onPointerLeave, and onMouseLeave through actual chart event props.",
+        "A real Browser Mode pointer hover over an actual rendered bar activates the controller and makes the tooltip visible; the test then sends Escape with the established userEvent.keyboard(\"{Escape}\") API and asserts the tooltip becomes hidden.",
+        "The candidate never assigns activeChartId, tooltip active state, or tooltip content directly. It is limited to component/controller behavior and does not claim route integration, production coordinate geometry, or full desktop E2E behavior.",
+        "P42-577 is the only proposed assertion transfer for the tooltip stable row. P42-575/-576, P42-578–583 including re-hover, mouseleave, heading/bounds and outside-click, P42-603/-604, and remaining route/coordinate assertions remain in Playwright.",
+        "The previous Oracle finding is addressed by requiring the actual desktop controller and event handler path; the two candidate tests do not complete either stable row. Preserve A=123, E=90, M=1.",
+        "No Playwright/E2E command runs until all ten new Batch3 named Browser Mode cases pass."
+      ],
+      "verification": [
+        "Explorer source mapping: src/app/components/SpendingBarChart.tsx accepts tooltipProps and onPointerDown/onPointerMove/onMouseMove/onPointerLeave/onMouseLeave and forwards these props into its chart; src/app/components/charts/useChartTooltipProps.tsx exports useChartTooltipController and its bind result supplies these event handlers and tooltipProps.",
+        "Escape source/API evidence: useChartTooltipProps.tsx handles document keydown Escape; tests/browser-mode/ChartInfoButton.browser.test.tsx imports userEvent from vitest/browser and sends Escape with userEvent.keyboard(\"{Escape}\").",
+        "CAGR source mapping: shared_plan/42-assertion-callsite-ledger.md maps P42-046–049 to the dialog/result behavior and P42-040/-041 to actual route-trigger/section integration. Current E2E result matcher is /^-?\\d+\\.\\d{2}%$/.",
+        "Tooltip source mapping: P42-577 is the desktop Escape dismissal assertion; surrounding P42-575/-576 and P42-578–583 remain the actual hover/visibility/re-hover/mouseleave/heading/bounds/outside-click guarantees. P42-603/-604 and the remaining route/coordinate assertions are retained as well.",
+        "Oracle found the prior plan's omission of actual desktop controller/event-handler wiring to be a blocking plan gap and recommended the specific corrected controller-driven pointer-hover then Escape contract. The corrected plan states this behavior and its strict component-only boundary."
+      ],
+      "knownConstraints": [
+        "The CAGR component fixture does not prove P42-040/-041 route/section trigger integration or production data wiring.",
+        "The tooltip fixture does not prove production route integration, production coordinate geometry, or all pointer/touch/browser-engine conditions; retained Playwright assertions remain necessary.",
+        "Browser Mode emits a real DOM/chart path, but the plan must not bypass controller behavior by setting activeChartId or tooltip active/content state.",
+        "B3c remains a two-case partial assertion batch and does not change A/E/M. Do not run E2E before the ten-new-case gate."
+      ],
+      "outputRequirement": "Select exactly one plan criterion. If not valid_as_defined, provide a case-specific finding, affected Plan45 location or requirement, observed source evidence, and a concrete proposed fix or exact needed evidence. State remaining uncertainty explicitly. Assess only the corrected B3c plan; preserve prior approval as historical and do not treat this request as implementation or test evidence."
+    },
+    "questions": {
+      "plan": {
+        "type": "choice",
+        "instructions": "Assess whether the corrected B3c plan closes Oracle's controller-wiring gap, maps the two assertion slices precisely, retains production E2E boundaries, and preserves the ten-case E2E gate. Select exactly one criterion and give a case-specific diagnosis for any non-pass answer.",
+        "criteria": {
+          "valid_as_defined": "The corrected staged plan is internally consistent with the source mapping and acceptance boundaries.",
+          "requirements_mismatch": "The plan conflicts with an applicable requirement; identify and correct it.",
+          "missing_prerequisites_info": "Required source or scope information is missing; identify it exactly.",
+          "incomplete_implementation_info": "The supplied plan context is too incomplete to assess; specify what is needed.",
+          "implementation_issue": "A concrete implementation issue is established; identify its evidence and correction.",
+          "scope_violation": "The proposal exceeds or violates scope; identify the boundary and adjustment.",
+          "other": "A material plan concern does not fit the listed categories; give its finding and fix or evidence needed.",
+          "indeterminate": "The supplied context cannot support a reliable plan judgment; identify missing context."
+        }
+      }
+    }
+  },
+  "questionIds": [
+    "plan"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "plan": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.92,
+        "probabilities": {
+          "implementation_issue": 0.01,
+          "scope_violation": 0.01,
+          "indeterminate": 0,
+          "incomplete_implementation_info": 0,
+          "valid_as_defined": 0.93,
+          "other": 0.01,
+          "missing_prerequisites_info": 0,
+          "requirements_mismatch": 0.03
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.92,
+    "probabilities": {
+      "implementation_issue": 0.01,
+      "scope_violation": 0.01,
+      "indeterminate": 0,
+      "incomplete_implementation_info": 0,
+      "valid_as_defined": 0.93,
+      "other": 0.01,
+      "missing_prerequisites_info": 0,
+      "requirements_mismatch": 0.03
+    },
+    "passProbability": 0.93,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

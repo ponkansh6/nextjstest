@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "jev-review-initial-distribution-v3",
+  "model": "jev-latest",
+  "state": {
+    "evaluationScope": "implementation_checkpoint_validity",
+    "background": "B3i batch 2 implements three more partial MAP-eligible rows. Focused Browser Mode passed 3 files / 7 tests, and independent review passed. Exact assertion ownership: (1) p45-a-cpi-legend-scroll moves P42-263/-264: actual CpiChart visible 住居 legend toggle preserves fixture scroll. (2) p45-b-section-tabs-scroll-47-case01-chromium moves P42-501/-502 for Chromium case01 only: actual SectionTabs tab click scrolls its target; retain Chromium case02/03, all WebKit projects, and lazy-mount route coverage. (3) p45-b-spending-filter-35-e2e-q1 moves only P42-511: actual Q1 control aria-pressed state after click. P42-512/-514 route SVG assertions remain E2E and P42-513 is unit-owned. Keep route-dependent checks that remain meaningful; do not treat route dependence categorically as ineligible under the revised policy. Together with B3i batch1, cadence is 6/10 eligible rows; all six rows are partial. No E2E yet because the threshold is ten. A=123/E=90/M=1 unchanged; M counts only fully migrated stable rows.",
+    "acceptanceCriteria": [
+      "Focused Browser Mode passed 3 files / 7 tests and independent review passed.",
+      "P42-263/-264 transfer only the actual visible 住居 CpiChart legend toggle with fixture scroll preservation.",
+      "P42-501/-502 transfer only Chromium SectionTabs case01; retain Chromium case02/03, all WebKit cases, and lazy-mount/route coverage.",
+      "P42-511 alone transfers the actual Q1 control aria-pressed-after-click assertion; P42-512/-514 route SVG assertions remain in E2E and P42-513 remains unit-owned.",
+      "The batch adds three rows to B3i cadence, reaching 6/10; no E2E run before ten newly migrated eligible rows.",
+      "All rows remain partial and A=123/E=90/M=1 remains unchanged; no partial row increases M."
+    ],
+    "verification": [
+      "Focused Browser Mode result: 3 files / 7 tests passed.",
+      "Independent review passed on the exact three assertion slices and retained boundaries.",
+      "No E2E run at cadence 6/10."
+    ],
+    "knownConstraints": [
+      "Only the listed assertions are transferred; keep all route-dependent assertions that remain meaningful, without using route dependence as a categorical exclusion.",
+      "Chromium case01 does not replace SectionTabs case02/03, WebKit, or lazy-mount assertions.",
+      "The ten-row cadence counts eligible stable rows with passed mapped assertions, not number of tests or assertion calls; current cadence is 6/10."
+    ],
+    "outputRequirement": "Assess whether B3i batch 2 matches the exact three assertion slices, focused result, independent review, E2E retention, and 6/10 cadence. Choose one criterion and return confidence and full probability distribution. For a non-pass, give case-specific finding, affected row/assertion/source, evidence or exact neededEvidence, concrete nextAction/proposedFix, and remainingUncertainty. Do not claim E2E results, full-row migration, or an increase to M."
+  },
+  "questions": {
+    "implementation": {
+      "type": "choice",
+      "instructions": "Select exactly one mutually exclusive criterion for B3i batch 2 implementation checkpoint.",
+      "criteria": {
+        "valid_as_defined": "All three exact partial slices match the plan, focused Browser Mode and independent review pass, and remaining E2E/unit ownership is preserved.",
+        "requirements_mismatch": "An ownership boundary or retained route assertion conflicts with the revised policy or plan.",
+        "missing_prerequisites_info": "Evidence needed for one or more slices is absent.",
+        "incomplete_implementation_info": "The supplied focused/review evidence is insufficient to evaluate this batch.",
+        "implementation_issue": "A mapped Browser Mode assertion fails or does not exercise its stated component behavior.",
+        "scope_violation": "The changes exceed the three listed IDs, weaken retained guarantees, run E2E early, or count partial rows as fully migrated.",
+        "other": "A material implementation concern does not fit the listed categories.",
+        "indeterminate": "The evidence cannot support a reliable judgment."
+      }
+    }
+  }
+}

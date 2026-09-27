@@ -1,0 +1,104 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-27T08:11:57.322Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "model": "jev-latest",
+    "state": {
+      "evaluationScope": "implementation_checkpoint_validity",
+      "background": "Phase 6 batch B01 performs the first full cutover from Playwright to Browser Mode for two Plan45 stable scenarios: p45-a-a11y-cagr-trigger-default and p45-a-a11y-cagr-trigger-dark. The new permanent Browser Mode test is tests/browser-mode/phase6-b01-cagr-contrast.browser.test.ts with vitest.browser.phase6-b01.config.ts. It uses the production-route helper in tests/browser-mode/phase5-rendering-feasibility.route.command.ts with mandatory networkidle, section scrolling, retrying visibility checks, and measured contrast. scripts/run-next-route-poc.mjs registers the config and --only=phase6-b01; package.json exposes test:browser:phase6-b01:built. The source T-A11Y-1 CAGR trigger assertion was removed from tests/e2e/accessibility.e2e.spec.ts after the replacement passed. The Phase6 cutover plan, phase0 scenario inventory, and shared Plan45 migration plan record the accepted batch and metrics A=123, E=123, M=92, with 31 scenarios still awaiting cutover. An independent audit separately observed two focus-management test deletions in the current accessibility.e2e.spec.ts worktree diff; their provenance is unknown and they are outside B01 scope.",
+      "acceptanceCriteria": [
+        "The two B01 stable IDs retain the source T-A11Y-1 contract for default and dark color schemes, including computed contrast of at least 4.5, in a permanent fail-on-contract Browser Mode test.",
+        "Only the assertion transferred for these two accepted IDs is removed from Playwright; unrelated assertions and owners remain intact.",
+        "The dedicated production Browser Mode command is wired through the shared route runner and passes before B01 is counted as a full cutover.",
+        "The Phase6 plan, canonical scenario inventory, and shared Plan45 ledger consistently record A=123, E=123, M=92 and 31 of the 33 eligible scenarios still pending.",
+        "Validation evidence and the independent source-boundary review support the full-scenario ownership transfer; type-check limitations are accurately attributed to pre-existing unrelated Browser Mode component tests."
+      ],
+      "verification": [
+        "pnpm run test:browser:phase6-b01:built: exit 0; 1 file and 2 tests passed. Durable log: results/plan45/phase6/phase6-b01-browser-mode-validation-2026-09-27.log.",
+        "pnpm run test:e2e:fresh built successfully; residual E2E passed 29 with 18 skipped and 0 failures. Durable log: results/plan45/phase6/phase6-b01-residual-e2e-validation-2026-09-27.log.",
+        "pnpm run lint: exit 0. Durable log: results/plan45/phase6/phase6-b01-lint-validation-2026-09-27.log.",
+        "pnpm run type-check remains nonzero only for pre-existing older Browser Mode component-test diagnostics (CpiChart-single-year, EarningsBreakdownChart, MonthlyBoundaryAxis, SpendingBarChart variants, and legend-color-token); no Phase6 B01 file is reported. Durable log: results/plan45/phase6/phase6-b01-type-check-validation-2026-09-27.log.",
+        "Independent B01 source-contract review accepted the transfer, and an independent acceptance audit confirmed the metrics and evidence links."
+      ],
+      "knownConstraints": [
+        "This checkpoint covers B01 only. B02–B13 remain uncut and their source Playwright ownership remains active.",
+        "Type-check is not green because of existing diagnostics in unrelated Browser Mode component tests; lint and the dedicated production-route test pass.",
+        "The current tests/e2e/accessibility.e2e.spec.ts worktree diff includes two focus-management test deletions outside B01. Their provenance is unknown; do not attribute them to the B01 cutover or count them as transferred. This is an unresolved scope/provenance issue requiring separate reconciliation."
+      ],
+      "outputRequirement": "Choose exactly one criterion for this implementation checkpoint. Provide effective verdict, decision summary and full choice distribution, evidence tied to B01 IDs and artifact paths, any required correction with exact location, and remaining uncertainty. Do not promote partial ownership or feasibility evidence to a full migration. If the initial choice is not valid_as_defined, follow exactly one required case-specific clarification and preserve the initial result; do not turn a non-pass into a pass."
+    },
+    "questions": {
+      "implementation": {
+        "type": "choice",
+        "instructions": "Evaluate whether B01 is a valid full cutover under the acceptance criteria and evidence. Select the single best matching criterion.",
+        "criteria": {
+          "valid_as_defined": "The supplied source-contract, cutover, ledger, and verification evidence supports accepting B01 as defined.",
+          "requirements_mismatch": "A concrete conflict exists between requirements and implementation or recorded evidence; identify the requirement and requirement-only correction.",
+          "missing_prerequisites_info": "Required prerequisite information is missing; identify exactly what is needed.",
+          "incomplete_implementation_info": "Specific evidence needed to assess B01 is missing; identify the exact gap.",
+          "implementation_issue": "A concrete implementation or reporting defect violates a criterion; name the location, evidence, and implementation-only correction.",
+          "scope_violation": "The cutover exceeds or falls outside the agreed batch boundary; identify the boundary and adjustment.",
+          "other": "A different concrete validity issue exists; state the finding, location, evidence, and next action.",
+          "indeterminate": "The supplied context cannot support a decision; identify the missing context and resolving evidence."
+        }
+      }
+    }
+  },
+  "questionIds": [
+    "implementation"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "implementation": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.77,
+        "probabilities": {
+          "indeterminate": 0.01,
+          "scope_violation": 0.04,
+          "requirements_mismatch": 0.04,
+          "implementation_issue": 0.06,
+          "incomplete_implementation_info": 0.02,
+          "other": 0.02,
+          "missing_prerequisites_info": 0.02,
+          "valid_as_defined": 0.79
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.77,
+    "probabilities": {
+      "indeterminate": 0.01,
+      "scope_violation": 0.04,
+      "requirements_mismatch": 0.04,
+      "implementation_issue": 0.06,
+      "incomplete_implementation_info": 0.02,
+      "other": 0.02,
+      "missing_prerequisites_info": 0.02,
+      "valid_as_defined": 0.79
+    },
+    "passProbability": 0.79,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

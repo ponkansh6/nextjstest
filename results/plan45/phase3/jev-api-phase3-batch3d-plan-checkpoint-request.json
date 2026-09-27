@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "jev-review-initial-distribution-v3",
+  "model": "jev-latest",
+  "state": {
+    "evaluationScope": "plan_validity",
+    "background": "Plan45 proposes B3d as exactly two assertion-level Browser Mode candidates: portrait CAGR sheet row p45-a-cagr-sheet-08 (P42-060–063) and landscape row p45-a-cagr-sheet-09 (P42-064–066). Explorer/source review confirmed the exact Playwright mapping in tests/e2e/cagr-sheet.e2e.spec.ts and the existing Browser Mode fixture mounts actual CagrPanel/useCagrState with deterministic two-row CPI data. The fixture currently uses the default 1280x800 viewport and does not load globals.css, so the plan requires explicit viewport assertions and a bounded, documented CSS fixture baseline. Oracle recommends transferring only sheet-local dialog/result visibility and bottom-bound geometry; production route trigger, live #section-stacked intersection, and page-shell placement remain Playwright-owned. Each stable row remains partial and M stays 1. These are 2 of the next 20 further named Browser Mode cases before one consolidated E2E run.",
+    "acceptanceCriteria": [
+      "Exactly two new named Browser Mode tests are proposed, both in tests/browser-mode/CagrPanel.browser.test.tsx, each using the real CagrPanel and useCagrState with deterministic existing chart data.",
+      "Portrait row p45-a-cagr-sheet-08 maps P42-060 dialog visible, P42-061 result value visible, P42-062 .cagrResultDetail bottom <= 667, and P42-063 .cagrSheetNote bottom <= 667 from T-E2E-8 at tests/e2e/cagr-sheet.e2e.spec.ts:175. The Browser Mode viewport must be set to and verified as 375x667.",
+      "Landscape row p45-a-cagr-sheet-09 maps P42-064 dialog visible, P42-065 result value visible, and P42-066 .cagrResultDetail bottom <= window.innerHeight + 1 (376px) from T-E2E-9 at tests/e2e/cagr-sheet.e2e.spec.ts:205. The Browser Mode viewport must be set to and verified as 667x375.",
+      "The Browser Mode fixture does not load globals.css. State an explicit local CSS baseline for relevant document defaults (16px root font size, border-box sizing, zero body margin/padding, and a documented system-font fallback) and limit geometry claims to that fixture baseline; do not claim production page-shell placement.",
+      "Keep production page navigation, live #section-stacked intersection/scroll, actual route trigger/location and trigger-to-sheet integration, and page-shell placement in Playwright. If dialog visibility is retained as a route integration smoke after the click, explicitly distinguish that integration owner from the component-local dialog visibility contract.",
+      "Only the mapped local dialog/result visibility and bottom-bound assertions may be considered for removal after both focused Browser Mode tests pass and independent review plus an implementation JEV checkpoint pass. All unrelated E2E assertions remain.",
+      "These are partial slices: both stable rows remain partial, A=123/E=90/M=1 remains unchanged, and M is not incremented. They count as 2 toward 20 further named Browser Mode migrations before the next consolidated E2E run; run no E2E before those 20 cases pass.",
+      "The proposal records BottomSheet geometry context: inline/fixed, max-height 60dvh; compact 45dvh; landscape at <=500px height 70dvh. Component fixtures do not claim production route-fed data, chart intersection, trigger positioning, or page-shell layout."
+    ],
+    "verification": [
+      "Source mapping was inspected directly: T-E2E-8 line 175 maps P42-060/-061/-062/-063 to dialog, result value, detail bottom, and note bottom; T-E2E-9 line 205 maps P42-064/-065/-066 to dialog, result value, and detail bottom.",
+      "The existing Browser Mode fixture at tests/browser-mode/CagrPanel.browser.test.tsx mounts the actual CagrPanel and useCagrState with deterministic two-row CPI data; its current viewport is the provider default 1280x800. Browser Mode render helper uses Testing Library and setup does not load production globals.css.",
+      "Source CSS inspection found global universal border-box and zero margin/padding defaults, and BottomSheet viewport-dependent max heights. These production-shell defaults are not silently assumed by the current Browser Mode fixture."
+    ],
+    "knownConstraints": [
+      "Browser Mode validates the component-local fixture, not live intersection of #section-stacked, real route data, production trigger position, or page-shell placement.",
+      "Typography or computed geometry can differ if the fixture CSS baseline diverges from production; bound the claim to the declared fixture baseline and retain integration/layout guarantees in E2E.",
+      "No implementation or test evidence exists for B3d yet. The proposed E2E deletion is conditional on focused tests, independent review, and the later implementation checkpoint."
+    ],
+    "outputRequirement": "Assess this exact two-row viewport-pair proposal under the stated scope. Select exactly one criterion from the supplied set. If not valid_as_defined, identify one case-specific finding and affected row/assertion, observed evidence or exact neededEvidence, concrete proposedFix/nextAction, and remainingUncertainty. Do not treat either row as fully migrated or authorize E2E before the 20-case gate."
+  },
+  "questions": {
+    "plan": {
+      "type": "choice",
+      "instructions": "Select exactly one mutually exclusive criterion for this B3d plan checkpoint.",
+      "criteria": {
+        "valid_as_defined": "The bounded two-row viewport-pair plan is sufficiently specified and respects the stated ownership boundaries.",
+        "requirements_mismatch": "The proposed transfer or retained ownership contradicts an applicable requirement.",
+        "missing_prerequisites_info": "Prerequisite facts needed to assess the plan are missing.",
+        "incomplete_implementation_info": "The plan lacks implementation detail needed to assess feasibility or scope.",
+        "implementation_issue": "A concrete implementation or source constraint invalidates the proposed plan.",
+        "scope_violation": "The plan exceeds the two-row assertion slices or weakens required E2E boundaries.",
+        "other": "A material plan issue does not fit the other criteria.",
+        "indeterminate": "The available evidence does not support a reliable determination."
+      }
+    }
+  }
+}

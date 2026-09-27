@@ -1,0 +1,67 @@
+{
+  "checkpoint": "Plan45 Phase3 Batch3 staged-plan initial checkpoint",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "transport": "HTTP success; response validation passed",
+  "model": "jev-1.13.0",
+  "primaryVerdict": {
+    "choice": "valid_as_defined",
+    "confidence": 0.75,
+    "passProbability": 0.79,
+    "probabilities": {
+      "valid_as_defined": 0.79,
+      "requirements_mismatch": 0.03,
+      "missing_prerequisites_info": 0.03,
+      "incomplete_implementation_info": 0.05,
+      "implementation_issue": 0.0,
+      "scope_violation": 0.04,
+      "other": 0.0,
+      "indeterminate": 0.06
+    }
+  },
+  "diagnosis": {
+    "status": "complete",
+    "followUpRecommended": false,
+    "followUpSent": false,
+    "note": "The fresh initial v3 verdict is valid_as_defined. No separate non-pass finding or unresolved diagnosis was returned, so no one-shot clarification was sent."
+  },
+  "historicalPriorReviews": [
+    {
+      "kind": "pre-clarification initial checkpoint",
+      "primaryVerdict": "valid_as_defined",
+      "confidence": 0.86,
+      "passProbability": 0.88,
+      "request": {"path": "results/plan45/phase3/jev-api-phase3-batch3-plan-checkpoint-request.json", "sha256": "a271e40d69267253655f0a5ec5836f66c5a04cac134553af004dad12e84af54f"},
+      "response": {"path": "results/plan45/phase3/jev-api-phase3-batch3-plan-checkpoint-response.json", "sha256": "e8db43d76921c7b9cd686eadd63c90d5dcdf14a857643828d97f71bc79e3c628"}
+    },
+    {
+      "kind": "assertion-mapping clarification reassessment",
+      "primaryVerdict": "valid_as_defined",
+      "confidence": 0.86,
+      "passProbability": 0.88,
+      "diagnosisStatus": "complete",
+      "followUpSent": false,
+      "request": {"path": "results/plan45/phase3/jev-api-phase3-batch3-plan-reassessment-request.json", "sha256": "b54274d561a48c79cdd4562e2a3863a13e26454f99271151995f5d7902abed7b"},
+      "response": {"path": "results/plan45/phase3/jev-api-phase3-batch3-plan-reassessment-response.json", "sha256": "eefecd442d95a6934d88369f64b41b9320773ebe95e2858940027fd6ce4d2a0e"},
+      "derived": {"path": "results/plan45/phase3/jev-api-phase3-batch3-plan-reassessment-derived.json", "sha256": "41d3d6d8ea548566d7a1a8cec3f2b37b0d1df5bf6dc1dc9f00ab12f63fc4127b"},
+      "manifest": {"path": "results/plan45/phase3/jev-api-phase3-batch3-plan-reassessment-sha256.txt", "sha256": "cdf3e5e90ae70eeab69347b4f9a940ee0d9e4ca9cb35707869dc56d17d6a0f25"}
+    }
+  ],
+  "stagedPlan": {
+    "batch3a": {"stableRows": 3, "namedBrowserModeCases": 5, "rows": ["mobile legend P42-166-168", "mobile tooltip P42-170", "mobile summary nowrap P42-177"]},
+    "batch3b": {"stableRows": 3, "namedBrowserModeCases": 3, "rows": ["CPI monthly axis P42-353-354", "earnings monthly axis P42-355-356", "earnings plot hover P42-290"]},
+    "batch3c": {"stableRows": 2, "namedBrowserModeCases": 2, "rows": ["CAGR local panel result P42-046-049", "desktop tooltip Escape dismissal P42-577"]},
+    "newNamedBrowserModeCases": 10,
+    "cumulativeNamedBrowserModeCasesAtGate": 12,
+    "cumulativeSourcePlaywrightDeclarationsTouchedAtGate": 10,
+    "sourceCaseCount": "Batch1 one + Batch2 one + Batch3 eight",
+    "replacementRule": "Each case replaces its exact mapped P42 assertion group only after passing; additive-only tests do not count.",
+    "verificationOrder": "For each sub-batch, focused Browser Mode verification, independent review, and implementation JEV checkpoint precede the next. No E2E before all ten new cases pass; after Batch3c, run full Browser Mode and one consolidated retained-E2E regression.",
+    "accounting": "A=123, E=90, M=1; partial assertion slices do not increment M.",
+    "deferredScope": "Phase5 individual investigation of 33 MAP-ineligible IDs remains deferred; no GitHub Actions/CI change."
+  },
+  "artifacts": {
+    "request": {"path": "results/plan45/phase3/jev-api-phase3-batch3-staged-plan-checkpoint-request.json", "sha256": "9eb1ae91a521c4ab0f464ada7a15716d803bd68db0d664761a59289c0c3c569a"},
+    "response": {"path": "results/plan45/phase3/jev-api-phase3-batch3-staged-plan-checkpoint-response.json", "sha256": "257e296adacef1a88d896d57291a2ca6d7e827ad9c6932fe9d44e519eef9fc3f"}
+  },
+  "credentialHandling": "The API key was used only for bearer authentication by the local JEV client. No credential is present in request or response artifacts."
+}

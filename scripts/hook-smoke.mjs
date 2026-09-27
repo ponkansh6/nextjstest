@@ -42,6 +42,10 @@ function expect(condition, message) {
   if (!condition) throw new Error(message);
 }
 
+function hasExactCommand(log, command) {
+  return log.split(/\r?\n/).includes(command);
+}
+
 function expectPush(args, message, extraEnv = {}) {
   try {
     run(["push", ...args], work, extraEnv);
@@ -147,7 +151,7 @@ fi
   expectPush(["origin", "main"], "initial push failed");
   const initial = remoteRef("main");
   expect(
-    readFileSync(log, "utf8").includes("run lint:fast"),
+    hasExactCommand(readFileSync(log, "utf8"), "run lint:fast"),
     "initial push did not execute the hook profile",
   );
 
@@ -166,7 +170,12 @@ fi
   });
   const docsOnlyLog = readFileSync(log, "utf8").slice(docsOnlyLogStart);
   for (const codeGate of ["exec vitest related", "run test:all", "run test:browser"]) {
-    expect(!docsOnlyLog.includes(codeGate), `docs/assets-only push ran ${codeGate}`);
+    expect(
+      codeGate === "exec vitest related"
+        ? !docsOnlyLog.split(/\r?\n/).some((line) => line.startsWith(`${codeGate} `))
+        : !hasExactCommand(docsOnlyLog, codeGate),
+      `docs/assets-only push ran ${codeGate}`,
+    );
   }
   git(["switch", "main"]);
   git(["merge", "--ff-only", "docs-assets"]);
@@ -209,8 +218,15 @@ fi
   git(["add", "README.md"]);
   git(["commit", "-m", "full profile"]);
   const fullProfileLogStart = readFileSync(log, "utf8").length;
-  expectPush(["origin", "main"], "explicit full profile push failed", { PREPUSH_PROFILE: "full" });
+  expectPush(["origin", "main"], "explicit full profile push failed", {
+    PREPUSH_PROFILE: "full",
+  });
   const profileLog = readFileSync(log, "utf8").slice(fullProfileLogStart);
+  expect(!hasExactCommand(profileLog, "run test:e2e"), "full profile still ran test:e2e");
+  expect(
+    !hasExactCommand(profileLog, "run test:e2e:clean"),
+    "full profile still ran test:e2e:clean",
+  );
   const profileGates = profileLog.split(/\r?\n/);
   let previousGateIndex = -1;
   for (const gate of [
@@ -219,10 +235,9 @@ fi
     "run test:all",
     "run test:browser",
     "run build",
+    "run test:browser:next-route-poc:built",
     "run test:build-parity",
     "run security-check",
-    "run test:e2e:clean",
-    "run test:e2e",
   ]) {
     const gateIndex = profileGates.indexOf(gate);
     expect(gateIndex >= 0, `full profile did not execute ${gate}`);
@@ -238,10 +253,10 @@ fi
   const fullBrowserFailureLogStart = readFileSync(log, "utf8").length;
   expectRejectedPush(
     ["origin", "full-browser-failure:main"],
-    "full-profile Browser Mode failure did not block push",
+    "full-profile production-route Browser Mode failure did not block push",
     {
       PREPUSH_PROFILE: "full",
-      HOOK_SMOKE_FAIL_GATE: "test:browser",
+      HOOK_SMOKE_FAIL_GATE: "test:browser:next-route-poc:built",
     },
   );
   expect(
@@ -249,16 +264,17 @@ fi
     "remote changed despite full-profile Browser Mode failure",
   );
   const fullBrowserFailureLog = readFileSync(log, "utf8").slice(fullBrowserFailureLogStart);
-  expect(fullBrowserFailureLog.includes("run test:browser"), "full profile skipped Browser Mode");
-  for (const laterGate of [
-    "run build",
-    "run test:build-parity",
-    "run security-check",
-    "run test:e2e:clean",
-    "run test:e2e",
-  ]) {
+  expect(
+    hasExactCommand(fullBrowserFailureLog, "run test:browser"),
+    "full profile skipped Browser Mode",
+  );
+  expect(
+    hasExactCommand(fullBrowserFailureLog, "run test:browser:next-route-poc:built"),
+    "full profile skipped production-route Browser Mode",
+  );
+  for (const laterGate of ["run test:build-parity", "run security-check"]) {
     expect(
-      !fullBrowserFailureLog.includes(laterGate),
+      !hasExactCommand(fullBrowserFailureLog, laterGate),
       `full profile continued to ${laterGate} after Browser Mode failed`,
     );
   }
@@ -295,24 +311,31 @@ fi
   );
   const changedBrowserFailureLog = readFileSync(log, "utf8").slice(changedBrowserFailureLogStart);
   expect(
+    !hasExactCommand(changedBrowserFailureLog, "run test:e2e"),
+    "changed profile still ran test:e2e",
+  );
+  expect(
+    !hasExactCommand(changedBrowserFailureLog, "run test:e2e:clean"),
+    "changed profile still ran test:e2e:clean",
+  );
+  expect(
     changedBrowserFailureLog.includes("exec vitest related"),
     `changed profile did not run a related test selection (PREPUSH_PROFILE=changed)\n` +
       `HOOK_SMOKE_LOG:\n${changedBrowserFailureLog}\npush classifier/hook output:\n${changedPushOutput}`,
   );
   expect(
-    changedBrowserFailureLog.includes("run test:browser"),
+    hasExactCommand(changedBrowserFailureLog, "run test:browser"),
     "changed profile skipped Browser Mode",
   );
   for (const laterGate of [
     "run test:all",
     "run build",
+    "run test:browser:next-route-poc:built",
     "run test:build-parity",
     "run security-check",
-    "run test:e2e:clean",
-    "run test:e2e",
   ]) {
     expect(
-      !changedBrowserFailureLog.includes(laterGate),
+      !hasExactCommand(changedBrowserFailureLog, laterGate),
       `changed profile continued to ${laterGate} after Browser Mode failed`,
     );
   }
@@ -348,7 +371,7 @@ fi
       `${relatedMode} selection did not run related tests`,
     );
     expect(
-      fallbackLog.includes("run test:all"),
+      hasExactCommand(fallbackLog, "run test:all"),
       `${relatedMode} selection did not fall back to the full profile`,
     );
     const browserRuns = fallbackLog

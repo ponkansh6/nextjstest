@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "jev-review-initial-distribution-v3",
+  "model": "jev-latest",
+  "state": {
+    "evaluationScope": "plan_validity",
+    "background": "Fresh B3b plan reassessment preserving earlier B3 staged-plan reviews as historical records. The prior Plan45 B3b table falsely split one monthly-axis test loop into different assertion IDs by chart. The source tests/e2e/monthly-boundary-axis.e2e.spec.ts defines CPI and earnings entries at lines 3-6 and one loop/test declaration at lines 20-28. The readiness helper at lines 8-11 waits for the first SVG label; the extant test checks both boundary labels for each loop case. The Plan42 ledger maps P42-356 to source line 29, but line 29 closes the test without a labels.length expect. P42-356 is a ledger/source-boundary mismatch, not an independent E2E assertion or migrated behavior. The corrected plan gives each axis Browser Mode case both boundary-label exclusions plus at least one rendered axis tick as readiness equivalent. Treat extant P42-353–355 as one shared Playwright source group executed for two chart cases; after both Browser Mode cases pass, remove the shared loop/assertions once and the readiness helper only if unused, preserving independent E2E coverage. Production route/data integration, P42-287–289 plot geometry, P42-297 separator CSS, and separate P42-290 earnings hover remain in Playwright. Each stable row remains partial; A=123/E=90/M=1. Do not run E2E until all ten new Batch3 Browser Mode cases pass.",
+    "acceptanceCriteria": [
+      "The CPI StackedAreaChart Browser Mode case checks both 2017年12月 and 2018年1月 are absent and at least one rendered SVG axis tick is present as readiness equivalent. It covers extant shared source assertions P42-353–355 for the CPI loop case; P42-356 is not claimed as source behavior.",
+      "The earnings EarningsBreakdownChart Browser Mode case checks both 2017年12月 and 2018年1月 are absent and at least one rendered SVG axis tick is present as readiness equivalent. It covers extant shared source assertions P42-353–355 for the earnings loop case; P42-356 is not claimed as source behavior.",
+      "Plan accounting treats extant P42-353–355 as one shared Playwright callsite/assertion group executed for two chart cases, not duplicated source callsites. After both Browser Mode tests pass, remove the shared axis loop/assertions once and its readiness helper only if unused; preserve independent E2E coverage. Keep P42-356 as a ledger/source mismatch with no independent assertion, not migrated behavior.",
+      "The separate EarningsBreakdownChart hover Browser Mode case covers P42-290 only. Production route/data integration, P42-287–289 viewport/plot geometry, and P42-297 computed separator CSS remain in Playwright; preserve any other independent E2E coverage.",
+      "The plan names and bounds risks from deterministic boundary data, actual width/font/ResponsiveContainer behavior, route-fed data divergence, and P42-353 being a readiness wait.",
+      "B3b remains three named Browser Mode cases across its three stable rows, each stable row remains partial while route/integration assertions remain, and M does not change. A=123, E=90, M=1 remains the baseline.",
+      "No Playwright/E2E command runs before all ten new Batch3 named Browser Mode cases pass."
+    ],
+    "verification": [
+      "Source evidence: tests/e2e/monthly-boundary-axis.e2e.spec.ts lines 3-6 define CPI and earnings chart entries; lines 20-28 use one loop and one shared test declaration; lines 8-11 wait for the first SVG label to attach before reading labels.",
+      "Assertion inventory evidence: shared_plan/42-assertion-callsite-ledger.md maps P42-353 to readiness and P42-354/-355 to the two boundary-label exclusions; it maps P42-356 to line 29, but current source line 29 is the test end and contains no independent expect. This P42-356 ledger/source mismatch is explicit evidence, not proof of current E2E assertion behavior.",
+      "The earlier Plan45 B3 table incorrectly assigned P42-353/-354 to CPI and P42-355/-356 to earnings. Source shows one shared loop/test declaration and extant shared assertions P42-353–355; no independent P42-356 expect exists in the current file. The corrected Browser Mode cases add at-least-one-axis-tick readiness and both boundary exclusions per chart case. No implementation change or test execution is part of this reassessment request.",
+      "Independent Oracle recommendation: use one shared source group P42-353–355 executed for two chart loop cases; have each Browser Mode case confirm both boundary labels are absent and at least one tick exists; do not call P42-356 a current source assertion or migrated behavior; remove the shared loop/assertions once after both Browser Mode cases pass, remove the readiness helper only if unused, and preserve independent E2E coverage."
+    ],
+    "knownConstraints": [
+      "Deterministic synthetic boundary data may not reproduce route-fed production data.",
+      "Rendered SVG axis labels can depend on chart width, fonts, and ResponsiveContainer measurement behavior.",
+      "P42-353 is a readiness wait for attached labels, not itself a boundary-month visual assertion.",
+      "The prior valid B3 plan judgments are historical and are not overwritten; this request evaluates the corrected staged B3 plan only.",
+      "No E2E command may run until all ten new Batch3 Browser Mode cases pass; after Batch3c, the plan calls for one consolidated retained-E2E regression.",
+      "P42-356 is mapped by the ledger to the test-end line 29, but current source has no labels.length expect there; do not claim it as source behavior or migrate it."
+    ],
+    "outputRequirement": "Select exactly one plan criterion. If not valid_as_defined, provide a case-specific finding, affected Plan45 location and requirement, observed source evidence, and a concrete proposed fix or exact additional evidence needed. State remaining uncertainty explicitly. Assess only the corrected B3b mapping and associated accounting/retention boundaries; do not treat this request as evidence of implementation or verification."
+  },
+  "questions": {
+    "plan": {
+      "type": "choice",
+      "instructions": "Assess whether the corrected B3b plan accurately maps the source assertions, preserves the required E2E boundaries and accounting, and is ready for subsequent implementation review. Select exactly one criterion and return the requested case-specific diagnosis for any non-pass finding.",
+      "criteria": {
+        "valid_as_defined": "The corrected staged plan is internally consistent with the source evidence and acceptance boundaries.",
+        "requirements_mismatch": "The plan conflicts with a stated acceptance requirement; identify the requirement and correction.",
+        "missing_prerequisites_info": "Required source or scope information is missing; identify it exactly.",
+        "incomplete_implementation_info": "The plan evidence is too incomplete to assess; specify what is needed.",
+        "implementation_issue": "A concrete implementation issue is established; identify evidence and correction.",
+        "scope_violation": "The proposal exceeds or violates its scope; identify the boundary and adjustment.",
+        "other": "A material plan concern does not fit the listed categories; state its finding and fix or evidence needed.",
+        "indeterminate": "The supplied context cannot support a reliable plan judgment; identify what is missing."
+      }
+    }
+  }
+}

@@ -1,0 +1,26 @@
+$ node scripts/run-next-route-poc.mjs --only=phase6-b09
+
+ RUN  v4.1.11 /home/shunki/working/nextjstest
+
+[phase6-b09-stage] install source fixture mount behavior started
+[phase6-b09-stage] install source fixture mount behavior completed in 2ms
+[phase6-b09-stage] navigate to production route started
+[phase6-b09-stage] navigate to production route completed in 300ms
+[phase6-b09-stage] wait for network idle started
+[phase6-b09-stage] wait for network idle completed in 763ms
+[phase6-b09-stage] scroll real-consumption section into view started
+[phase6-b09-stage] scroll real-consumption section into view completed in 393ms
+[phase6-b09-stage] wait for real-consumption section visibility started
+[phase6-b09-stage] wait for real-consumption section visibility completed in 423ms
+[phase6-b09-stage] read real-consumption section visibility started
+[phase6-b09-stage] read real-consumption section visibility completed in 35ms
+[phase6-b09-stage] wait for summary visibility started
+[phase6-b09-stage] wait for summary visibility completed in 19ms
+[phase6-b09-stage] read summary visibility started
+[phase6-b09-stage] read summary visibility completed in 21ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  19:05:54
+   Duration  4.13s (transform 0ms, setup 563ms, import 41ms, tests 2.09s, environment 0ms)
+

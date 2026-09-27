@@ -1,0 +1,92 @@
+$ node scripts/run-next-route-poc.mjs --only=phase6-b13
+
+ RUN  v4.1.11 /home/shunki/working/nextjstest
+
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 install shared fixture mount behavior started (timeout 5000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 install shared fixture mount behavior completed in 4ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 navigate to production route started (timeout 30000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 navigate to production route completed in 289ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 wait for network idle started (timeout 20000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 wait for network idle completed in 773ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 record effective Pixel 7 touch context started (timeout 5000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 record effective Pixel 7 touch context completed in 282ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 navigate to stacked chart section started (timeout 15000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 navigate to stacked chart section completed in 100ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 wait for first stacked chart wrapper visible started (timeout 12000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 wait for first stacked chart wrapper visible completed in 402ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 read first stacked chart wrapper bounding box started (timeout 5000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 read first stacked chart wrapper bounding box completed in 37ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 touch stacked wrapper center started (timeout 10000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 touch stacked wrapper center completed in 409ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 wait for close button visible after stacked chart tap started (timeout 7000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 wait for close button visible after stacked chart tap completed in 193ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 count active dots after stacked chart tap started (timeout 5000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 count active dots after stacked chart tap completed in 19ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 count cursor after stacked chart tap started (timeout 5000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 count cursor after stacked chart tap completed in 19ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 touch stacked chart heading outside wrapper started (timeout 10000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 touch stacked chart heading outside wrapper completed in 552ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 wait for close button hidden after heading touch started (timeout 7000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 wait for close button hidden after heading touch completed in 153ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 count cursor after heading touch started (timeout 5000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 count cursor after heading touch completed in 18ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 count active dots after heading touch started (timeout 5000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 count active dots after heading touch completed in 21ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 install shared fixture mount behavior started (timeout 5000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 install shared fixture mount behavior completed in 5ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 navigate to production route started (timeout 30000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 navigate to production route completed in 266ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 wait for network idle started (timeout 20000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 wait for network idle completed in 725ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 record effective Pixel 7 touch context started (timeout 5000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 record effective Pixel 7 touch context completed in 263ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 navigate to stacked chart section started (timeout 15000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 navigate to stacked chart section completed in 90ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 wait for first stacked chart wrapper visible started (timeout 12000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 wait for first stacked chart wrapper visible completed in 401ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 read first stacked chart wrapper bounding box started (timeout 5000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 read first stacked chart wrapper bounding box completed in 38ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 touch stacked wrapper center started (timeout 10000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 touch stacked wrapper center completed in 423ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 wait for close button visible after stacked chart tap started (timeout 7000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 wait for close button visible after stacked chart tap completed in 183ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 count active dots after stacked chart tap started (timeout 5000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 count active dots after stacked chart tap completed in 29ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 touch close button started (timeout 10000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 touch close button completed in 462ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 wait for close button hidden after close touch started (timeout 7000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 wait for close button hidden after close touch completed in 104ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 count active dots after close touch started (timeout 5000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 count active dots after close touch completed in 34ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 install shared fixture mount behavior started (timeout 5000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 install shared fixture mount behavior completed in 2ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 navigate to production route started (timeout 30000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 navigate to production route completed in 263ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 wait for network idle started (timeout 20000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 wait for network idle completed in 725ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 record effective Pixel 7 touch context started (timeout 5000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 record effective Pixel 7 touch context completed in 226ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 scroll CPI-major wrapper into view started (timeout 15000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 scroll CPI-major wrapper into view completed in 91ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 touch salary tab started (timeout 10000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 touch salary tab completed in 620ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 immediately read CPI wrapper bounding box after tab touch started (timeout 5000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 immediately read CPI wrapper bounding box after tab touch completed in 360ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 create CDP session for in-flight tab gesture started (timeout 5000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 create CDP session for in-flight tab gesture completed in 3ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 dispatch touchStart at immediate CPI wrapper center started (timeout 5000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 dispatch touchStart at immediate CPI wrapper center completed in 16ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 dispatch touchEnd at CPI wrapper started (timeout 5000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 dispatch touchEnd at CPI wrapper completed in 18ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 wait for close button hidden after optional wrapper touch started (timeout 7000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 wait for close button hidden after optional wrapper touch completed in 107ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 wait for scrollY to settle with two stable samples started (timeout 5200ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 wait for scrollY to settle with two stable samples completed in 306ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 wait for close button hidden after scroll settles started (timeout 7000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 wait for close button hidden after scroll settles completed in 90ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  19:47:27
+   Duration  11.35s (transform 0ms, setup 557ms, import 42ms, tests 9.53s, environment 0ms)
+

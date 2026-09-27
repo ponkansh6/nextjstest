@@ -1,0 +1,84 @@
+$ node scripts/run-next-route-poc.mjs --only=phase6-b10
+
+ RUN  v4.1.11 /home/shunki/working/nextjstest
+
+[phase6-b10-stage] p45-b-tooltip-dismiss-138-case01 install shared fixture mount behavior started (timeout 5000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-138-case01 install shared fixture mount behavior completed in 4ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-138-case01 navigate to production route started (timeout 30000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-138-case01 navigate to production route completed in 310ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-138-case01 wait for network idle started (timeout 20000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-138-case01 wait for network idle completed in 759ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-138-case01 record effective Pixel 7 touch context started (timeout 5000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-138-case01 record effective Pixel 7 touch context completed in 244ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-138-case01 find visible hit-tested nominal bar tap point (up to 4 retries) started (timeout 45000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-138-case01 find visible hit-tested nominal bar tap point (up to 4 retries) completed in 549ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-138-case01 touch tap hit-tested nominal bar started (timeout 10000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-138-case01 touch tap hit-tested nominal bar completed in 683ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-138-case01 count tooltip cursor after bar tap started (timeout 5000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-138-case01 count tooltip cursor after bar tap completed in 34ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-138-case01 touch tap close button started (timeout 10000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-138-case01 touch tap close button completed in 607ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-138-case01 wait for close button hidden after close tap started (timeout 7000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-138-case01 wait for close button hidden after close tap completed in 106ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-138-case01 count tooltip cursor after close tap started (timeout 5000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-138-case01 count tooltip cursor after close tap completed in 17ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip install shared fixture mount behavior started (timeout 5000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip install shared fixture mount behavior completed in 3ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip navigate to production route started (timeout 30000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip navigate to production route completed in 252ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip wait for network idle started (timeout 20000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip wait for network idle completed in 720ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip record effective Pixel 7 touch context started (timeout 5000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip record effective Pixel 7 touch context completed in 249ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip find visible hit-tested nominal bar tap point (up to 4 retries) started (timeout 45000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip find visible hit-tested nominal bar tap point (up to 4 retries) completed in 547ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip touch tap hit-tested nominal bar started (timeout 10000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip touch tap hit-tested nominal bar completed in 706ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip wait for custom tooltip visible after bar tap started (timeout 7000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip wait for custom tooltip visible after bar tap completed in 37ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip read custom tooltip visibility after tap started (timeout 5000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip read custom tooltip visibility after tap completed in 19ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip press Escape started (timeout 10000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip press Escape completed in 286ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip wait for tooltip hidden after Escape started (timeout 7000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip wait for tooltip hidden after Escape completed in 33ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip wait for close button hidden after Escape started (timeout 7000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip wait for close button hidden after Escape completed in 283ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip read close button visibility after Escape started (timeout 5000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip read close button visibility after Escape completed in 87ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip read custom tooltip visibility after Escape started (timeout 5000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip read custom tooltip visibility after Escape completed in 20ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip immediately retap same nominal bar coordinate started (timeout 10000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip immediately retap same nominal bar coordinate completed in 329ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip wait for custom tooltip visible after retap started (timeout 7000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip wait for custom tooltip visible after retap completed in 24ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip read custom tooltip visibility after retap started (timeout 5000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip read custom tooltip visibility after retap completed in 18ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 install shared fixture mount behavior started (timeout 5000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 install shared fixture mount behavior completed in 2ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 navigate to production route started (timeout 30000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 navigate to production route completed in 270ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 wait for network idle started (timeout 20000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 wait for network idle completed in 721ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 record effective Pixel 7 touch context started (timeout 5000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 record effective Pixel 7 touch context completed in 215ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 find visible hit-tested nominal bar tap point (up to 4 retries) started (timeout 45000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 find visible hit-tested nominal bar tap point (up to 4 retries) completed in 569ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 touch tap hit-tested nominal bar started (timeout 10000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 touch tap hit-tested nominal bar completed in 686ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 wait for close button visible after bar tap started (timeout 7000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 wait for close button visible after bar tap completed in 352ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 count tooltip cursor before outside tap started (timeout 5000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 count tooltip cursor before outside tap completed in 19ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 touch tap nominal chart heading outside chart started (timeout 10000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 touch tap nominal chart heading outside chart completed in 497ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 wait for close button hidden after outside tap started (timeout 7000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 wait for close button hidden after outside tap completed in 107ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 count tooltip cursor after outside tap started (timeout 5000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 count tooltip cursor after outside tap completed in 17ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  19:16:35
+   Duration  12.57s (transform 0ms, setup 574ms, import 41ms, tests 10.79s, environment 0ms)
+

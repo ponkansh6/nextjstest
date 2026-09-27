@@ -1,0 +1,107 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-26T21:44:34.539Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "model": "jev-latest",
+    "state": {
+      "evaluationScope": "implementation_checkpoint_validity",
+      "background": "Phase 2 moves 89 partial Playwright assertions to Vitest Browser Mode in five batches; consolidated full E2E is run after each 20 migrated rows. Batch 1 covers exactly these 20 stable IDs: p45-a-a11y-sheet-tab-trap; p45-a-cagr-sheet-02, -03, -04, -05, -06, -07, -08, -09; p45-a-cpi-legend-scroll; p45-a-cpi-tooltip-rows; p45-a-earnings-hover; p45-a-earnings-hidden-series-hover; p45-a-legend-entertainment-series9; p45-a-legend-food-nominal; p45-a-legend-dark-all12; p45-b-monthly-boundary-axis-21-cpi-2017-12-2018-1-svg; p45-b-monthly-boundary-axis-21-earnings-2017-12-2018-1-svg; p45-b-range-change-107-e2e; p45-b-range-change-187-e2e-1. The 18 extant route assertions now have production-route Browser Mode coverage through a Vitest custom command and isolated Playwright page. The two monthly label source assertions were already deleted historically; existing Browser Mode assertions were retained and tagged with stable IDs, and the roster records this source reconciliation rather than claiming an E2E removal.",
+      "acceptanceCriteria": [
+        "Sheet tab trapping keeps focus in the dialog; CAGR scenarios preserve calculation/result, coordinate backdrop close, 375x667 overflow/chart visibility/internal scroll/note geometry, and landscape note geometry.",
+        "CPI legend toggling preserves window scroll; visible tooltip keeps the 12-key row/root/order/display-label/value contract; hidden-series hover preserves tooltip behavior.",
+        "Earnings hover and hidden-series rehover preserve tooltip/separator behavior.",
+        "Entertainment and nominal-food swatches match their CSS tokens; dark mode preserves all 12 legend colors.",
+        "Monthly boundary label Browser Mode cases preserve CPI and earnings assertions; their historical E2E source absence is explicitly documented.",
+        "Range sanity compares production chart contracts with rendered bars; the single-year 2017 route uses its URL and four-period contract.",
+        "Only matching migrated E2E predicates are removed; distinct generic CPI smoke, CAGR route-entry check, and the separate 2017-2018 eight-period range assertion remain."
+      ],
+      "verification": [
+        "`pnpm run test:browser:next-route-poc`: production build succeeded; 2 test files passed, 20 tests passed.",
+        "Focused Batch 1 component Browser Mode command: 26 test files passed; 95 tests passed, 9 skipped.",
+        "`pnpm lint`: passed.",
+        "`pnpm test:e2e`: full suite completed; 99 passed, 19 skipped, 118 total.",
+        "`pnpm type-check`: exits 2 on existing Browser Mode spec diagnostics (Playwright locator typing, older CSS raw import/data casts, strokeOpacity); the new Batch 1 route test diagnostics were eliminated."
+      ],
+      "knownConstraints": [
+        "This review covers Batch 1 only; rows 21–89 remain untouched and partial.",
+        "The two monthly-boundary source E2E assertions were already deleted before this batch, so their Browser Mode coverage is tagged and recorded without retroactive deletion claims.",
+        "Type-check remains blocked by diagnostics in pre-existing Browser Mode specs; build TypeScript phase, lint, Browser Mode, and full E2E passed.",
+        "JEV supplements the recorded test evidence and does not replace it."
+      ],
+      "outputRequirement": "Choose one listed choice. For a reason choice, give a case-specific finding, affected file or acceptance criterion, observed evidence, and either a concrete proposed fix or exact additional evidence needed. Do not invent details."
+    },
+    "questions": {
+      "implementation": {
+        "type": "choice",
+        "instructions": "Does the supplied implementation and verification evidence support marking these 20 Batch 1 rows fully transferred and proceeding to Batch 2? Return a probability distribution over the listed choices.",
+        "criteria": {
+          "valid_as_defined": "All 20 source predicates have equivalent Browser Mode coverage or explicit historical-source reconciliation, matching E2E predicates were removed, and verification supports the checkpoint.",
+          "requirements_mismatch": "A migration requirement or predicate mapping conflicts with intent; identify the requirement and correction.",
+          "missing_prerequisites_info": "A required prerequisite is missing; identify exactly what is needed.",
+          "incomplete_implementation_info": "Implementation details or verification evidence are insufficient; identify what is missing.",
+          "implementation_issue": "A concrete implementation defect exists; identify its file, evidence, and correction.",
+          "scope_violation": "The batch exceeds or falls outside its agreed 20-row scope; identify the boundary and adjustment.",
+          "other": "A material concern does not fit the listed categories; identify its location, evidence, and fix or needed evidence.",
+          "indeterminate": "The supplied context cannot support a judgment; identify missing context if possible."
+        }
+      }
+    }
+  },
+  "questionIds": [
+    "implementation"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "implementation": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.68,
+        "probabilities": {
+          "requirements_mismatch": 0.01,
+          "valid_as_defined": 0.71,
+          "missing_prerequisites_info": 0.05,
+          "implementation_issue": 0.07,
+          "other": 0.03,
+          "indeterminate": 0.01,
+          "scope_violation": 0.05,
+          "incomplete_implementation_info": 0.07
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.68,
+    "probabilities": {
+      "requirements_mismatch": 0.01,
+      "valid_as_defined": 0.71,
+      "missing_prerequisites_info": 0.05,
+      "implementation_issue": 0.07,
+      "other": 0.03,
+      "indeterminate": 0.01,
+      "scope_violation": 0.05,
+      "incomplete_implementation_info": 0.07
+    },
+    "passProbability": 0.71,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

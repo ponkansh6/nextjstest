@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "jev-review-initial-distribution-v3",
+  "model": "jev-latest",
+  "state": {
+    "evaluationScope": "plan_validity",
+    "background": "Plan45 execution plan: execute Phase3 global ledger reconciliation and Phase4 B3i acceptance. Preserve historical records; reconcile unique scenario IDs across Phase0 active inventory, Phase2's 89-row Verified/full roster, prior global M, and Phase4's ten assertion slices. Define A as active logical scenarios; E as eligible scenarios; M only scenario rows where the Playwright primary assertion was removed or reduced, the Browser Mode equivalent passes, and independent review evidence exists. Assertion slices are not scenario counts; partial slices never increment M. Recompute current A/E/M from evidence, deduplicate IDs, then evaluate strict M/A > 0.50 (for A=123, at least 62). Phase3 completion requires an auditable unique-ID ledger, evidenced A/E/M, reconciled open checklist and stale claims, and no unexplained discrepancies. Phase4 completion requires all ten B3i slice statuses plus scenario crosswalk and review evidence; Phase4 browser/integration E2E gates rerun after final #17/#18 route repair; lint/build/type-check results accurately reported; and current M/A gate assessed. Known context: Phase2 roster says 89/89 Verified/full and partial=0 within that scoped roster; global counters have not been recomputed. Latest plan says Phase3 checklist reconciliation remains and Phases4-6 open. Historical B3i result 10/10 slices with consolidated 115 pass/19 skip predates final route repair and is not current validation. Phase2 latest route suites: Chromium 80/80, WebKit 21 pass/5 skip; lint:fast and build pass; standalone type-check fails on existing Browser Mode diagnostics. No implementation or tests have yet been performed in this execution.",
+    "acceptanceCriteria": [
+      "Phase3 reconciliation produces an auditable ledger with unique scenario IDs and evidence-backed current A, E, and M counts, while preserving historical records and explaining all discrepancies.",
+      "M increments only for scenario rows satisfying all three criteria: Playwright primary assertion removed or reduced, Browser Mode equivalent passes, and independent review evidence exists; assertion slices are not counted as scenarios and partial slices do not increment M.",
+      "Phase4 accounts for all ten B3i assertion slices, links them to scenarios, and includes review evidence.",
+      "Phase4 reruns browser and integration E2E gates after the final #17/#18 route repair and reports lint, build, and type-check results accurately.",
+      "The strict M/A > 0.50 threshold is evaluated against reconciled current counts; a Phase2 scoped roster or historical pre-repair run is not treated as proof of global completion or current validation."
+    ],
+    "verification": [
+      "The provided context identifies the available historical evidence and explicitly states that execution and current verification have not yet been performed.",
+      "No implementation, tests, or validation runs have been performed as part of this plan review."
+    ],
+    "knownConstraints": [
+      "This is a plan_validity review only; it does not validate implementation or execution results.",
+      "Preserve historical records and do not infer missing ledger rows or validation evidence.",
+      "Do not report a current global M/A result until the evidence-backed ledger is reconciled."
+    ],
+    "outputRequirement": "Choose one listed choice. For a reason choice, provide a case-specific finding, affected plan requirement or location, observed evidence, and either a concrete proposed fix or exact additional evidence needed. Do not invent details. A passing verdict means only that this execution plan is valid as defined; it does not validate implementation or execution."
+  },
+  "questions": {
+    "plan_validity": {
+      "type": "choice",
+      "instructions": "Does the supplied execution plan provide a valid and sufficiently bounded way to complete Phase3 and Phase4 against the stated requirements and known evidence? Return a probability distribution over the listed choices.",
+      "criteria": {
+        "valid_as_defined": "The plan is coherent, auditable, and sufficiently bounded to reconcile Phase3 and perform Phase4 without treating historical or partial evidence as completion.",
+        "requirements_mismatch": "The plan conflicts with the intended requirements; identify the conflicting requirement and correction.",
+        "missing_prerequisites_info": "A prerequisite is missing; identify exactly what information is needed before this plan can proceed.",
+        "incomplete_implementation_info": "The execution approach lacks a necessary implementation or evidence detail; identify it and the missing information.",
+        "implementation_issue": "The plan contains an execution defect; identify its location, evidence, and correction.",
+        "scope_violation": "The plan exceeds or falls outside the authorized Phase3/Phase4 scope; identify the boundary and adjustment.",
+        "other": "A material plan concern does not fit the categories; identify its location, evidence, and fix or needed evidence.",
+        "indeterminate": "The supplied context cannot support a judgment; identify missing context if possible."
+      }
+    }
+  }
+}

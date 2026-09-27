@@ -1,0 +1,70 @@
+$ node scripts/run-next-route-poc.mjs --only=phase6-b03
+
+ RUN  v4.1.11 /home/shunki/working/nextjstest
+
+ ❯ |chromium| tests/browser-mode/phase6-b03-advanced-series.browser.test.ts (3 tests | 3 failed) 589ms
+   × p45-a-advanced-series-adv-query preserves the original advanced-query assertions 258ms
+   × p45-a-parity-advanced-anchors preserves complete regular and advanced chart/table/CSV parity 169ms
+   × p45-a-parity-hidden-series changes only SVG geometry 152ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |chromium| tests/browser-mode/phase6-b03-advanced-series.browser.test.ts:43:1 > p45-a-advanced-series-adv-query preserves the original advanced-query assertions
+TypeError: page.addInitScript is not a function
+
+Failure screenshot:
+  - tests/browser-mode/__screenshots__/phase6-b03-advanced-series.browser.test.ts/p45-a-advanced-series-adv-query-preserves-the-original-advanced-query-assertions-1.png
+
+ ❯ tests/browser-mode/phase6-b03-advanced-series.browser.test.ts:44:32
+     42|
+     43| it("p45-a-advanced-series-adv-query preserves the original advanced-qu…
+     44|   const result = await commands.inspectPhase6B03("p45-a-advanced-serie…
+       |                                ^
+     45|     status: number | null; descriptorAttribute: string | null; dataAtt…
+     46|     contract: { found: boolean }; buttonVisible: boolean; tableText: s…
+
+ ❯ tests/browser-mode/phase6-b03-advanced-series.browser.test.ts:43:1 traces
+   ↳ tests/browser-mode/__traces__/phase6-b03-advanced-series.browser.test.ts/chromium-p45-a-advanced-series-adv-query-preserves-the-original-advanced-query-assertions-0-0.trace.zip
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |chromium| tests/browser-mode/phase6-b03-advanced-series.browser.test.ts:58:1 > p45-a-parity-advanced-anchors preserves complete regular and advanced chart/table/CSV parity
+TypeError: page.addInitScript is not a function
+
+Failure screenshot:
+  - tests/browser-mode/__screenshots__/phase6-b03-advanced-series.browser.test.ts/p45-a-parity-advanced-anchors-preserves-complete-regular-and-advanced-chart-table-CSV-parity-1.png
+
+ ❯ tests/browser-mode/phase6-b03-advanced-series.browser.test.ts:59:32
+
+
+ ❯ tests/browser-mode/phase6-b03-advanced-series.browser.test.ts:58:1 traces
+   ↳ tests/browser-mode/__traces__/phase6-b03-advanced-series.browser.test.ts/chromium-p45-a-parity-advanced-anchors-preserves-complete-regular-and-advanced-chart-table-CSV-parity-0-0.trace.zip
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |chromium| tests/browser-mode/phase6-b03-advanced-series.browser.test.ts:96:1 > p45-a-parity-hidden-series changes only SVG geometry
+TypeError: page.addInitScript is not a function
+
+Failure screenshot:
+  - tests/browser-mode/__screenshots__/phase6-b03-advanced-series.browser.test.ts/p45-a-parity-hidden-series-changes-only-SVG-geometry-1.png
+
+ ❯ tests/browser-mode/phase6-b03-advanced-series.browser.test.ts:97:32
+     95|
+     96| it("p45-a-parity-hidden-series changes only SVG geometry", async () =>…
+     97|   const result = await commands.inspectPhase6B03("p45-a-parity-hidden-…
+       |                                ^
+     98|     status: number | null; sectionCount: number; rootCount: number; ro…
+     99|     beforeChart: { keys: string[]; descriptors: unknown[]; points: num…
+
+ ❯ tests/browser-mode/phase6-b03-advanced-series.browser.test.ts:96:1 traces
+   ↳ tests/browser-mode/__traces__/phase6-b03-advanced-series.browser.test.ts/chromium-p45-a-parity-hidden-series-changes-only-SVG-geometry-0-0.trace.zip
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  17:27:55
+   Duration  2.68s (transform 0ms, setup 561ms, import 43ms, tests 589ms, environment 0ms)
+
+[ELIFECYCLE] Command failed with exit code 1.

@@ -1,0 +1,105 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-27T09:52:32.176Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "model": "jev-latest",
+    "state": {
+      "evaluationScope": "implementation_checkpoint_validity",
+      "background": "Phase 6 batch B07 transfers exactly three Plan45 stable scenarios to Browser Mode: p45-b-real-consumption-21-page-tsx-e2e-real-consumption-chart-with-actual-browser (#21), p45-b-real-consumption-60-page-tsx-e2e-real-consumption-chart-with-actual-browser (#60), and p45-b-real-consumption-82-page-tsx-e2e-real-consumption-chart-with-actual-browser (#82). #21 checks the production Flight payload contains 48 quarterly real-consumption rows for 2005–2016 and positive endpoint support values. #60 registers pageerror and console-error listeners before navigation and asserts the collected array is empty. #82 navigates to the production route, selects the 消費(実質) application tab, and verifies the normally LazyMount-rendered section becomes visible within 15 seconds. Important source-boundary difference: the original shared E2E fixture injects __MOUNT_ALL__ before navigation and then asserts section visibility; the Browser Mode test deliberately omits that injection and activates the real application tab, exercising normal LazyMount behavior. This changes the fixture setup and interaction sequence while testing the intended visible-section outcome more directly. Independent implementation and source-boundary audits passed. The final focused suite passed 3/3, and the residual Playwright run after cutover passed 18 with 18 skipped. From the B06 ledger, B07 advances M from 105 to 108; 18 of 33 eligible Phase 6 scenarios are accepted, 15 remain Playwright-owned, and Phase 6 remains in progress.",
+      "acceptanceCriteria": [
+        "All three B07 stable IDs have permanent fail-on-contract Browser Mode coverage of their mapped visible outcomes.",
+        "#21 asserts exactly 48 source-period rows and positive real-consumption support values at both endpoints.",
+        "#60 installs error listeners before page navigation and fails if either page errors or console errors are collected.",
+        "#82 verifies production navigation, selecting the 消費(実質) tab, and normal LazyMount visibility within 15 seconds; its fixture/setup difference from the source's __MOUNT_ALL__ injection is explicitly disclosed and assessed as part of this checkpoint.",
+        "Only the three mapped E2E cases were cut over; unrelated Playwright owners remain represented.",
+        "The focused production Browser Mode runner passes, the post-cutover residual E2E suite passes, and independent implementation/source-boundary audits support the mapping.",
+        "The cumulative ledger advances from A=123/E=123/M=105 to A=123/E=123/M=108, with 18 accepted and 15 pending out of 33."
+      ],
+      "verification": [
+        "Final focused run `pnpm run test:browser:phase6-b07:built` passed one file / three tests. Durable acceptance log: results/plan45/phase6/phase6-b07-browser-mode-validation-pass2-2026-09-27.log.",
+        "After source cutover, the residual E2E run completed its production build/type-check phase and passed 18 tests with 18 skipped and zero failures. Durable log: results/plan45/phase6/phase6-b07-residual-e2e-validation-2026-09-27.log.",
+        "Independent implementation and post-cutover source-boundary audits passed.",
+        "An earlier focused run failed only for #82 because the test did not activate the application tab before waiting for the lazily mounted section. The tab activation was added; this diagnostic attempt is preserved in results/plan45/phase6/phase6-b07-browser-mode-validation-2026-09-27.log and is not acceptance evidence."
+      ],
+      "knownConstraints": [
+        "This checkpoint covers B07 only. B08-B13 remain pending and are not included in M.",
+        "The #82 Browser Mode setup intentionally differs from the shared E2E fixture: it uses production tab activation and normal LazyMount rather than setting __MOUNT_ALL__. This exercises the intended user flow but is not an exact replay of the source fixture setup.",
+        "The earlier #82 timeout is superseded by the final focused pass and is retained for audit history."
+      ],
+      "outputRequirement": "Choose exactly one criterion for this implementation checkpoint. Provide effective verdict, decision summary and full choice distribution, evidence tied to B07 IDs and artifact paths, any required correction with exact location, and remaining uncertainty. Evaluate the disclosed #82 source-fixture difference explicitly; do not describe it as identical fixture reproduction. Do not promote partial ownership or feasibility evidence to a full migration. If the initial choice is not valid_as_defined, follow exactly one required case-specific clarification and preserve the initial result; do not turn a non-pass into a pass."
+    },
+    "questions": {
+      "implementation": {
+        "type": "choice",
+        "instructions": "Evaluate whether B07 is a valid full cutover under the acceptance criteria and evidence. Select the single best matching criterion.",
+        "criteria": {
+          "valid_as_defined": "The supplied source-contract, cutover, ledger, and verification evidence supports accepting B07 as defined, including the disclosed #82 source-fixture difference.",
+          "requirements_mismatch": "A concrete conflict exists between requirements and implementation or recorded evidence; identify the requirement and requirement-only correction.",
+          "missing_prerequisites_info": "Required prerequisite information is missing; identify exactly what is needed.",
+          "incomplete_implementation_info": "Specific evidence needed to assess B07 is missing; identify the exact gap.",
+          "implementation_issue": "A concrete implementation or reporting defect violates a criterion; name the location, evidence, and implementation-only correction.",
+          "scope_violation": "The cutover exceeds or falls outside the agreed batch boundary; identify the boundary and adjustment.",
+          "other": "A different concrete validity issue exists; state the finding, location, evidence, and next action.",
+          "indeterminate": "The supplied context cannot support a decision; identify the missing context and resolving evidence."
+        }
+      }
+    }
+  },
+  "questionIds": [
+    "implementation"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "implementation": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.92,
+        "probabilities": {
+          "missing_prerequisites_info": 0.01,
+          "indeterminate": 0,
+          "scope_violation": 0,
+          "valid_as_defined": 0.93,
+          "incomplete_implementation_info": 0.01,
+          "requirements_mismatch": 0.03,
+          "implementation_issue": 0.01,
+          "other": 0.01
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.92,
+    "probabilities": {
+      "missing_prerequisites_info": 0.01,
+      "indeterminate": 0,
+      "scope_violation": 0,
+      "valid_as_defined": 0.93,
+      "incomplete_implementation_info": 0.01,
+      "requirements_mismatch": 0.03,
+      "implementation_issue": 0.01,
+      "other": 0.01
+    },
+    "passProbability": 0.93,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

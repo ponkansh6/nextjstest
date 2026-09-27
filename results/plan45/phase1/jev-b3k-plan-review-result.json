@@ -1,0 +1,102 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-26T10:41:47.730Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "model": "jev-latest",
+    "state": {
+      "evaluationScope": "plan_validity",
+      "background": "B3k is the next speed-first batch in the authorized migration of 90 final MAP-eligible Playwright assertion rows to Vitest Browser Mode. The latest user constraint says route dependence alone must not exclude a scenario. The plan therefore moves only browser-observable slices reproducible with actual components and local fixtures, while retaining route, production data, page, touch, engine, and integration guarantees in Playwright. All ten selected stable scenario IDs were audited as final E=90, distinct, not unit-owned, and non-overlapping with B3i/B3j. B3k has four implementation batches of 2/2/3/3 rows, followed by one consolidated E2E run after all ten rows. Partial rows do not increase M.",
+      "acceptanceCriteria": [
+        "Plan exactly ten unique eligible rows: p45-b-range-change-107-e2e (P42-457/-458 local CpiChart bar counts vs finite-data contract); p45-b-tooltip-stack-total-81-e2e-t8-tooltip (P42-588/-591 actual chart/controller initial and fresh-rehover tooltip visibility); p45-b-section-tabs-scroll-120-case01-chromium (P42-505 computed scrollbarWidth none); p45-b-section-tabs-scroll-127-case01-chromium (P42-506/-507 overflow and scrollLeft advance); p45-b-section-tabs-scroll-142-mask-image-chromium (P42-508/-509 computed mask styles); p45-b-tooltip-dismiss-231-case01 (P42-538/-539 close control hidden and cursor count zero after tap then real scroll-triggered dismissal); p45-b-consumption-mobile-acceptance-139-mobile-pixel-acceptance-plan25-openspec-1 (P42-180/-183 actual chart bars disappear after deselection and return after reselection); p45-b-consumption-mobile-acceptance-161-mobile-pixel-acceptance-plan25-openspec-dark-mode-tooltip (P42-187/-190 actual tooltip visible after tap and first selected category row nonempty); p45-a-earnings-hidden-series-hover (P42-297/-309 only initial and post-hidden-series-rehover computed separator-style assertions); p45-b-mobile-ux-192-lazymount-p5-1 (P42-349/-350 actual LazyMount absent initially then mounts after scroll).",
+        "Use actual components and browser-observable behavior for each transferred assertion. Preserve the distinct route/production boundaries: route readiness and route-fed data/projection/SVG integration; live chart hit/payload and legend integration; production page layout and scroll/touch wiring; WebKit-specific cases; production CSS/source freshness; dark-mode/zoom setup and numeric tooltip checks; and real route section/data reveal.",
+        "Batch the ten rows 2/2/3/3. Focused Browser Mode verification and independent diff review occur after each implementation batch; run the consolidated Playwright E2E suite only after the tenth row, as requested.",
+        "Keep partial migrations partial, update plan and inventory boundaries, and count only fully migrated rows in M."
+      ],
+      "verification": [
+        "Independent candidate audit confirmed all ten stable rows have final MAP-eligible choices, unique row/P42 IDs, and no unit-owned IDs or B3i/B3j overlap.",
+        "Independent plan/inventory diff audit passed after correcting the exact stable ID, specifying scroll-triggered P42-538/-539 semantics, and documenting the narrow P42-297/-309 boundary refinement.",
+        "Documentation diff check passed. No B3k implementation or tests have run yet; this initial JEV review gates the first implementation batch."
+      ],
+      "knownConstraints": [
+        "Do not transfer full route, production data, platform-engine, or page-integration guarantees into component fixtures.",
+        "P42-297 was retained in earlier records; B3k revises only the initial and re-hover computed separator-style assertions after establishing a reproducible actual-component Browser Mode slice. Production route, plot, hit, payload, legend propagation, and re-hover integration remain in Playwright.",
+        "P42-538/-539 are scroll-triggered after a chart tap, not close-button click dismissal.",
+        "Do not run consolidated E2E until all ten planned rows have been attempted; the requested cadence is ten rows."
+      ],
+      "outputRequirement": "Return a probability distribution over the listed choices and select one. For any non-pass reason, identify a case-specific finding, affected row or requirement, observed evidence, and either a concrete plan adjustment or exact additional evidence needed. Do not invent details."
+    },
+    "questions": {
+      "plan": {
+        "type": "choice",
+        "instructions": "Does this B3k plan support a safe and useful speed-first partial migration under the stated scope and acceptance criteria? Return a probability distribution.",
+        "criteria": {
+          "valid_as_defined": "The supplied plan supports the stated objective and boundaries.",
+          "requirements_mismatch": "Requirements conflict with the intended migration; identify the requirement and correction.",
+          "missing_prerequisites_info": "Prerequisite information is missing; identify exactly what is needed.",
+          "incomplete_implementation_info": "The plan lacks implementation or evidence detail needed for acceptance.",
+          "implementation_issue": "A planned implementation step has an issue; identify its location, evidence, and correction.",
+          "scope_violation": "The plan exceeds or falls outside the agreed scope; identify the boundary and adjustment.",
+          "other": "A material concern does not fit the categories; identify its location, evidence, and fix or needed evidence.",
+          "indeterminate": "The supplied context cannot support a judgment; identify missing context if possible."
+        }
+      }
+    }
+  },
+  "questionIds": [
+    "plan"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "plan": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.77,
+        "probabilities": {
+          "missing_prerequisites_info": 0.01,
+          "incomplete_implementation_info": 0.05,
+          "implementation_issue": 0.06,
+          "scope_violation": 0.04,
+          "indeterminate": 0,
+          "valid_as_defined": 0.8,
+          "requirements_mismatch": 0.03,
+          "other": 0.01
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.77,
+    "probabilities": {
+      "missing_prerequisites_info": 0.01,
+      "incomplete_implementation_info": 0.05,
+      "implementation_issue": 0.06,
+      "scope_violation": 0.04,
+      "indeterminate": 0,
+      "valid_as_defined": 0.8,
+      "requirements_mismatch": 0.03,
+      "other": 0.01
+    },
+    "passProbability": 0.8,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

@@ -1,0 +1,262 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-26T14:03:54.558Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "model": "jev-latest",
+    "state": {
+      "evaluationScope": "implementation_checkpoint_validity",
+      "background": "B3m has local component-level Browser Mode coverage for the exact 38 stable IDs in the existing plan roster. None is claimed fully migrated. Provisional accounting is 89 partial + 1 full + 0 untouched, A=123/E=90/M=1, pending this checkpoint and one consolidated E2E. Row201 LazyMount is excluded from the B3m roster and remains prior shared local partial coverage; production P42-349/-350 stay E2E-owned and P42-351 unit-owned. Focused Browser Mode reruns after B3m type fixes: Chromium config 29 passed/9 skipped (nine WebKit-specific cases), exit 0; targeted WebKit config 9 passed/5 skipped (five Chromium-only cases), exit 0. No consolidated B3m E2E has run. The orchestrator reran `pnpm run type-check` after B3m fixes: exit 2, no remaining B3m errors; failures remain only in existing Browser Mode specs CpiChart-single-year, EarningsBreakdownChart, MonthlyBoundaryAxis, SpendingBarChart-mobile, SpendingBarChart-readability, SpendingBarChart-tooltip-dismiss, SpendingBarChart-tooltip-rehover, SpendingBarChart-tooltip-scroll, SpendingBarChart-tooltip-total, SpendingBarChart, and legend-color-token (Locator typing, implicit any, strokeOpacity, ?raw, and CpiData errors). Type-check is not passing. The final independent E2E diff audit is clean after restoration. Retained route boundaries include first-bar visibility after selection for range rows 119/136/153/170, production pageerror P42-474, maximum-range value readbacks P42-479/-480, P42-231 mixed content and measurement, document overflow for mobile rows 47/65, production WebKit route behavior, and mobile viewport/readability measurements. CPI section Browser Mode labels/area-path coverage is additive and its source P42 mapping remains repair-required; do not invent P42-262. P42-018 has no corresponding source E2E assertion in the current diff, so its local outside-click coverage is additive and not a claimed transfer. Spending-filter production bar-count reduction remains; no change beyond aria-only P42-511 is claimed. Explicit T9 conflict: prior results/plan42/p42-599-final-jev.json approved retaining P42-593..598 in E2E, specifically P42-598 live total visibility, because a component fixture does not prove route/Recharts payload wiring. B3m actual StackedAreaChart fixture checks hover, 12 rows, and visible total as additive local coverage. Current T9 production E2E retains P42-597/-598. Do not claim either production predicate transferred or silently supersede the prior approval. Ask JEV to review this change from the proposed transfer to additive local coverage and say whether the row may count as partial while P42-597/-598 remain E2E-owned, or needs separate revalidation. This request does not authorize E2E assertion removal.",
+      "acceptanceCriteria": [
+        "The exact 38 stable roster IDs have actual-component Browser Mode coverage, with every B3m row counted as partial only; row201 remains excluded and P42-349/-350/-351 ownership is unchanged.",
+        "Focused evidence is exact: Chromium rerun 29 passed/9 WebKit-specific skipped, exit 0; targeted WebKit rerun 9 passed/5 Chromium-only skipped, exit 0. Consolidated E2E has not run.",
+        "Keep the provisional accounting 89 partial + 1 full + 0 untouched (A=123/E=90/M=1) until JEV and the consolidated E2E gate; no B3m row is full.",
+        "The final E2E diff audit is clean, with route-to-SVG first-bar assertions retained for range rows 119/136/153/170, P42-474 pageerror, P42-479/-480 max-range values, P42-231 mixed content/measurement, mobile document overflow/readability measurements, production WebKit integration, and other specified production route/data/viewport boundaries.",
+        "Type-check is reported accurately: B3m errors are fixed; only existing/non-B3m Browser Mode spec errors remain.",
+        "CPI section local checks are additive; source callsite mapping remains repair-required, P42-262 is not invented, and source E2E remains. P42-018 local coverage is additive because its source E2E assertion is absent in the current diff.",
+        "T9 fixture hover/row/total checks are additive. Retain P42-597/-598 in production E2E per prior P42-599 JEV, including live P42-598 total visibility. Explicitly judge whether B3m may count the T9 scenario as a partial with those predicates retained or needs separate revalidation; do not authorize removing them.",
+        "Do not claim the consolidated E2E has run or passed; it remains the next gate after this checkpoint."
+      ],
+      "verification": [
+        "Chromium focused Browser Mode rerun: 29 passed, 9 skipped (the nine WebKit-specific cases), exit 0.",
+        "Targeted WebKit Browser Mode rerun: 9 passed, 5 skipped (the five Chromium-only cases), exit 0.",
+        "`pnpm run type-check` exits 2: no errors remain in B3m files; failures remain only in existing specs CpiChart-single-year, EarningsBreakdownChart, MonthlyBoundaryAxis, SpendingBarChart-mobile/readability/tooltip-dismiss/tooltip-rehover/tooltip-scroll/tooltip-total/browser, and legend-color-token (Locator typing, implicit any, strokeOpacity, ?raw, CpiData).",
+        "Independent final E2E diff audit: clean after route/assertion restorations.",
+        "Consolidated B3m E2E: not run."
+      ],
+      "knownConstraints": [
+        "Component fixtures do not establish production route payload, server/client wiring, or full page geometry.",
+        "CPI sections source mapping is repair-required; do not invent P42-262.",
+        "Prior P42-599 JEV specifically approved retaining P42-598 live total visibility; this checkpoint does not supersede that approval or authorize removing P42-597/-598.",
+        "The 89 partial + 1 full + 0 untouched decomposition is provisional until JEV and the consolidated E2E gate."
+      ],
+      "outputRequirement": "Choose exactly one listed choice. For any non-pass, return a case-specific finding, affected file/requirement, observed evidence, concrete nextAction/proposedFix or exact neededEvidence, and remainingUncertainty (explicit none if resolved). Address the T9 prior-JEV conflict explicitly and do not infer E2E success.",
+      "scenarioTestCrosswalk": [
+        {
+          "stableScenarioId": "p45-a-a11y-info-outside-click",
+          "browserModeTest": "B3m-controls-series-render.browser.test.tsx#p45-a-a11y-info-outside-click"
+        },
+        {
+          "stableScenarioId": "p45-a-advanced-series-normal",
+          "browserModeTest": "B3m-controls-series-render.browser.test.tsx#p45-a-advanced-series-normal"
+        },
+        {
+          "stableScenarioId": "p45-a-cagr-sheet-01",
+          "browserModeTest": "B3m-controls-series-render.browser.test.tsx#p45-a-cagr-sheet-01"
+        },
+        {
+          "stableScenarioId": "p45-a-cpi-sections",
+          "browserModeTest": "B3m-controls-series-render.browser.test.tsx#p45-a-cpi-sections"
+        },
+        {
+          "stableScenarioId": "p45-b-plan24-rendering-71-plan24-rendering-contract-cti-2005-2017-2018-legacy-gdp",
+          "browserModeTest": "B3m-controls-series-render.browser.test.tsx#p45-b-plan24-rendering-71"
+        },
+        {
+          "stableScenarioId": "p45-b-plan24-rendering-88-plan24-rendering-contract-2025q1-q4-csv-tooltip",
+          "browserModeTest": "B3m-controls-series-render.browser.test.tsx#p45-b-plan24-rendering-88"
+        },
+        {
+          "stableScenarioId": "p45-b-tooltip-stack-total-108-e2e-t9-cpi-section-stacked-tooltip-total",
+          "browserModeTest": "B3m-controls-series-render.browser.test.tsx#p45-b-tooltip-stack-total-108"
+        },
+        {
+          "stableScenarioId": "p45-b-consumption-boundary-85-768px-desktop-chromium-768px-viewport-overflow",
+          "browserModeTest": "B3m-responsive-mobile.browser.test.tsx#p45-b-consumption-boundary-85-768"
+        },
+        {
+          "stableScenarioId": "p45-b-consumption-boundary-85-768px-desktop-chromium-769px-viewport-overflow",
+          "browserModeTest": "B3m-responsive-mobile.browser.test.tsx#p45-b-consumption-boundary-85-769"
+        },
+        {
+          "stableScenarioId": "p45-b-consumption-mobile-acceptance-187-mobile-pixel-acceptance-plan25-openspec-375x667-tooltip",
+          "browserModeTest": "B3m-responsive-mobile.browser.test.tsx#p45-b-consumption-mobile-acceptance-187"
+        },
+        {
+          "stableScenarioId": "p45-b-consumption-mobile-readability-191-375px-tooltip-6-viewport",
+          "browserModeTest": "B3m-responsive-mobile.browser.test.tsx#p45-b-consumption-mobile-readability-191-375"
+        },
+        {
+          "stableScenarioId": "p45-b-consumption-mobile-readability-191-430px-tooltip-6-viewport",
+          "browserModeTest": "B3m-responsive-mobile.browser.test.tsx#p45-b-consumption-mobile-readability-191-430"
+        },
+        {
+          "stableScenarioId": "p45-b-mobile-ux-243-sectiontabs-sticky-android-chrome",
+          "browserModeTest": "B3m-responsive-mobile.browser.test.tsx#p45-b-mobile-ux-243"
+        },
+        {
+          "stableScenarioId": "p45-b-mobile-ux-47-ux-375px",
+          "browserModeTest": "B3m-responsive-mobile.browser.test.tsx#p45-b-mobile-ux-47-375"
+        },
+        {
+          "stableScenarioId": "p45-b-mobile-ux-65-ux-320px-overflow",
+          "browserModeTest": "B3m-responsive-mobile.browser.test.tsx#p45-b-mobile-ux-65-320"
+        },
+        {
+          "stableScenarioId": "p45-b-mobile-ux-65-ux-375px-overflow",
+          "browserModeTest": "B3m-responsive-mobile.browser.test.tsx#p45-b-mobile-ux-65-375"
+        },
+        {
+          "stableScenarioId": "p45-b-mobile-ux-65-ux-390px-overflow",
+          "browserModeTest": "B3m-responsive-mobile.browser.test.tsx#p45-b-mobile-ux-65-390"
+        },
+        {
+          "stableScenarioId": "p45-b-mobile-ux-65-ux-430px-overflow",
+          "browserModeTest": "B3m-responsive-mobile.browser.test.tsx#p45-b-mobile-ux-65-430"
+        },
+        {
+          "stableScenarioId": "p45-b-range-change-119-e2e",
+          "browserModeTest": "CpiChart-range-change.browser.test.tsx#p45-b-range-change-119-e2e"
+        },
+        {
+          "stableScenarioId": "p45-b-range-change-136-e2e",
+          "browserModeTest": "CpiChart-range-change.browser.test.tsx#p45-b-range-change-136-e2e"
+        },
+        {
+          "stableScenarioId": "p45-b-range-change-153-e2e",
+          "browserModeTest": "CpiChart-range-change.browser.test.tsx#p45-b-range-change-153-e2e"
+        },
+        {
+          "stableScenarioId": "p45-b-range-change-170-e2e",
+          "browserModeTest": "CpiChart-range-change.browser.test.tsx#p45-b-range-change-170-e2e"
+        },
+        {
+          "stableScenarioId": "p45-b-range-change-242-e2e",
+          "browserModeTest": "CpiChart-range-change.browser.test.tsx#p45-b-range-change-242-e2e"
+        },
+        {
+          "stableScenarioId": "p45-b-range-change-273-e2e",
+          "browserModeTest": "CpiChart-range-change.browser.test.tsx#p45-b-range-change-273-e2e"
+        },
+        {
+          "stableScenarioId": "p45-b-section-tabs-scroll-120-case02-webkit",
+          "browserModeTest": "SectionTabsB3m.browser.test.tsx#p45-b-section-tabs-scroll-120-case02-webkit"
+        },
+        {
+          "stableScenarioId": "p45-b-section-tabs-scroll-127-case02-webkit",
+          "browserModeTest": "SectionTabsB3m.browser.test.tsx#p45-b-section-tabs-scroll-127-case02-webkit"
+        },
+        {
+          "stableScenarioId": "p45-b-section-tabs-scroll-142-mask-image-webkit",
+          "browserModeTest": "SectionTabsB3m.browser.test.tsx#p45-b-section-tabs-scroll-142-mask-image-webkit"
+        },
+        {
+          "stableScenarioId": "p45-b-section-tabs-scroll-47-3-chromium",
+          "browserModeTest": "SectionTabsB3m.browser.test.tsx#p45-b-section-tabs-scroll-47-3-chromium"
+        },
+        {
+          "stableScenarioId": "p45-b-section-tabs-scroll-47-3-webkit",
+          "browserModeTest": "SectionTabsB3m.browser.test.tsx#p45-b-section-tabs-scroll-47-3-webkit"
+        },
+        {
+          "stableScenarioId": "p45-b-section-tabs-scroll-47-case02-chromium",
+          "browserModeTest": "SectionTabsB3m.browser.test.tsx#p45-b-section-tabs-scroll-47-case02-chromium"
+        },
+        {
+          "stableScenarioId": "p45-b-section-tabs-scroll-47-case04-webkit",
+          "browserModeTest": "SectionTabsB3m.browser.test.tsx#p45-b-section-tabs-scroll-47-case04-webkit"
+        },
+        {
+          "stableScenarioId": "p45-b-section-tabs-scroll-47-case05-webkit",
+          "browserModeTest": "SectionTabsB3m.browser.test.tsx#p45-b-section-tabs-scroll-47-case05-webkit"
+        },
+        {
+          "stableScenarioId": "p45-b-section-tabs-scroll-82-3-chromium",
+          "browserModeTest": "SectionTabsB3m.browser.test.tsx#p45-b-section-tabs-scroll-82-3-chromium"
+        },
+        {
+          "stableScenarioId": "p45-b-section-tabs-scroll-82-3-webkit",
+          "browserModeTest": "SectionTabsB3m.browser.test.tsx#p45-b-section-tabs-scroll-82-3-webkit"
+        },
+        {
+          "stableScenarioId": "p45-b-section-tabs-scroll-82-case01-chromium",
+          "browserModeTest": "SectionTabsB3m.browser.test.tsx#p45-b-section-tabs-scroll-82-case01-chromium"
+        },
+        {
+          "stableScenarioId": "p45-b-section-tabs-scroll-82-case02-chromium",
+          "browserModeTest": "SectionTabsB3m.browser.test.tsx#p45-b-section-tabs-scroll-82-case02-chromium"
+        },
+        {
+          "stableScenarioId": "p45-b-section-tabs-scroll-82-case04-webkit",
+          "browserModeTest": "SectionTabsB3m.browser.test.tsx#p45-b-section-tabs-scroll-82-case04-webkit"
+        },
+        {
+          "stableScenarioId": "p45-b-section-tabs-scroll-82-case05-webkit",
+          "browserModeTest": "SectionTabsB3m.browser.test.tsx#p45-b-section-tabs-scroll-82-case05-webkit"
+        }
+      ]
+    },
+    "questions": {
+      "implementation": {
+        "type": "choice",
+        "instructions": "Do the supplied B3m implementation and evidence support this implementation checkpoint as defined? Return a probability distribution over the listed choices and explicitly address the T9 boundary.",
+        "criteria": {
+          "valid_as_defined": "The 38 scoped local partials, retained E2E responsibilities, focused evidence, and provisional accounting support the checkpoint as defined.",
+          "requirements_mismatch": "A stated requirement conflicts with intended behavior; identify the exact requirement and correction.",
+          "missing_prerequisites_info": "A prerequisite is missing; identify exactly what is needed.",
+          "incomplete_implementation_info": "Implementation or evidence is incomplete; identify the specific gap and needed evidence.",
+          "implementation_issue": "A concrete implementation or boundary issue exists; identify location, evidence, and correction.",
+          "scope_violation": "The implementation changes behavior beyond the approved boundary; identify the boundary and adjustment.",
+          "other": "A material concern does not fit the categories; identify location, evidence, and a remedy or needed evidence.",
+          "indeterminate": "The supplied context cannot support judgment; identify remaining uncertainty and exact missing context."
+        }
+      }
+    }
+  },
+  "questionIds": [
+    "implementation"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "implementation": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.39,
+        "probabilities": {
+          "requirements_mismatch": 0.05,
+          "indeterminate": 0.02,
+          "other": 0.02,
+          "missing_prerequisites_info": 0.08,
+          "scope_violation": 0.01,
+          "implementation_issue": 0.16,
+          "incomplete_implementation_info": 0.19,
+          "valid_as_defined": 0.47
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.39,
+    "probabilities": {
+      "requirements_mismatch": 0.05,
+      "indeterminate": 0.02,
+      "other": 0.02,
+      "missing_prerequisites_info": 0.08,
+      "scope_violation": 0.01,
+      "implementation_issue": 0.16,
+      "incomplete_implementation_info": 0.19,
+      "valid_as_defined": 0.47
+    },
+    "passProbability": 0.47,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

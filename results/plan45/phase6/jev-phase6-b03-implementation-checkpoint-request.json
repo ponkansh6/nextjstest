@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "jev-review-initial-distribution-v3",
+  "model": "jev-latest",
+  "state": {
+    "evaluationScope": "implementation_checkpoint_validity",
+    "background": "Phase 6 batch B03 transfers exactly three Plan45 stable scenarios to Browser Mode: p45-a-advanced-series-adv-query, p45-a-parity-advanced-anchors, and p45-a-parity-hidden-series. It adds a dedicated B03 command, permanent fail-on-contract Browser Mode spec/config, and focused production-route runner; the shared runner, default runner, and CI invoke it. After the focused replacement passed and an independent source-boundary review accepted the mapping, only these three IDs' source counterpart assertions were removed from Playwright. The advanced-series source contract covers the ?adv=1 route attributes, button operation, and expanded data table. Advanced parity compares regular and advanced full-period output, CSV projection, five keys, and internal-series exclusions. Hidden-series parity retains its source data/table/CSV invariance and visible-SVG assertions. The source does not assert an aria-pressed toggle or geometry delta, and neither is claimed as transferred. B01 and B02 were already accepted. Current ledger is A=123, E=123, M=97; seven of the 33 eligible Phase 6 scenarios are accepted and 26 remain. Phase 6 remains in progress. The current accessibility worktree diff contains two focus-management test deletions of unknown provenance; these are outside B03 and are not included in M. The normal-view advanced-series Playwright scenario remains.",
+    "acceptanceCriteria": [
+      "All three B03 stable IDs preserve their source assertion boundaries in a permanent fail-on-contract Browser Mode suite.",
+      "Only the counterpart Playwright assertions for the three accepted B03 IDs were removed; the normal-view advanced-series scenario and other source owners remain represented.",
+      "The focused production Browser Mode command is wired into the shared route runner and default CI, and it passes before B03 is counted as a full cutover.",
+      "The Phase 6 plan and canonical inventory consistently record A=123, E=123, M=97, seven accepted eligible scenarios, and 26 remaining.",
+      "Focused Browser Mode and residual E2E evidence plus independent source-boundary review support this transfer; unknown-provenance accessibility deletions are disclosed and excluded from B03 accounting."
+    ],
+    "verification": [
+      "pnpm run test:browser:phase6-b03:built: exit 0; one file and three tests passed. Durable acceptance log: results/plan45/phase6/phase6-b03-browser-mode-validation-pass3-2026-09-27.log. Earlier failed attempts are preserved separately; acceptance is based on the final pass.",
+      "After B03 source removals, pnpm run test:e2e:fresh succeeded with 25 passed / 18 skipped and no failures. Durable log: results/plan45/phase6/phase6-b03-residual-e2e-validation-2026-09-27.log.",
+      "Independent B03 final review confirmed the source boundaries and default CI wiring. The Phase 6 cutover plan records the accepted batch and updated ledger.",
+      "No claim is made that B03 verifies hidden-series aria-pressed behavior or an SVG geometry delta; those were not source assertions for the migrated ID."
+    ],
+    "knownConstraints": [
+      "This checkpoint covers B03 only. B04–B13 remain pending and are not included in M.",
+      "Two focus-management test deletions in tests/e2e/accessibility.e2e.spec.ts have unknown provenance and are outside B03. They are not counted as transferred and are excluded from M=97.",
+      "The normal-view advanced-series Playwright scenario remains and is not part of the B03 transfer."
+    ],
+    "outputRequirement": "Choose exactly one criterion for this implementation checkpoint. Provide effective verdict, decision summary and full choice distribution, evidence tied to B03 IDs and artifact paths, any required correction with exact location, and remaining uncertainty. Do not promote partial ownership or feasibility evidence to a full migration. If the initial choice is not valid_as_defined, follow exactly one required case-specific clarification and preserve the initial result; do not turn a non-pass into a pass."
+  },
+  "questions": {
+    "implementation": {
+      "type": "choice",
+      "instructions": "Evaluate whether B03 is a valid full cutover under the acceptance criteria and evidence. Select the single best matching criterion.",
+      "criteria": {
+        "valid_as_defined": "The supplied source-contract, cutover, ledger, and verification evidence supports accepting B03 as defined.",
+        "requirements_mismatch": "A concrete conflict exists between requirements and implementation or recorded evidence; identify the requirement and requirement-only correction.",
+        "missing_prerequisites_info": "Required prerequisite information is missing; identify exactly what is needed.",
+        "incomplete_implementation_info": "Specific evidence needed to assess B03 is missing; identify the exact gap.",
+        "implementation_issue": "A concrete implementation or reporting defect violates a criterion; name the location, evidence, and implementation-only correction.",
+        "scope_violation": "The cutover exceeds or falls outside the agreed batch boundary; identify the boundary and adjustment.",
+        "other": "A different concrete validity issue exists; state the finding, location, evidence, and next action.",
+        "indeterminate": "The supplied context cannot support a decision; identify the missing context and resolving evidence."
+      }
+    }
+  }
+}

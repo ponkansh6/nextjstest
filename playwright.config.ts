@@ -72,7 +72,7 @@ export default defineConfig({
       name: "mobile-pixel",
       // consumption-boundary は Desktop Chromium 専用で、ここには含めない。
       testMatch:
-        /(mobile-ux|tooltip-dismiss|consumption-mobile-readability|consumption-mobile-acceptance|plan27-private-consumption)\.e2e\.spec\.ts/,
+        /(mobile-ux|consumption-mobile-readability|consumption-mobile-acceptance|plan27-private-consumption)\.e2e\.spec\.ts/,
       use: { ...devices["Pixel 7"] },
     },
     {

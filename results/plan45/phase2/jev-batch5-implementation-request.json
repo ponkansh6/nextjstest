@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "jev-review-initial-distribution-v3",
+  "model": "jev-latest",
+  "state": {
+    "evaluationScope": "implementation_checkpoint_validity",
+    "background": "Batch 5 completes the final roster rows 81-89, the remaining standard and lazy section-tab navigation cases. Rows 81/83 move the standard Earnings tab navigation to production Chromium and iPhone 13 WebKit contexts with __MOUNT_ALL__ set before page load; row 82's existing nominal WebKit route was aligned to the source iPhone 13 context and scroll predicate. Rows 84-89 cover nominal, earnings, and 3種比較 targets in Chromium/iPhone13 WebKit from the real initial LazyMount state: target absent before clicking the corresponding real tab, then mounted, visible, and within the viewport. The production route runner invokes the Chromium and WebKit configs containing the Batch 5 route tests and command registrations. The final source E2E file for these standard/lazy tab cases was removed only after the production-route assertions passed. Independent LazyMount and remaining E2E assertions remain. Batch 3/4 corrections were also reverified through the full route suite.",
+    "acceptanceCriteria": [
+      "All remaining scenario rows 81-89 reproduce their source production route, target tab, initial mount condition, scroll movement, viewport, and applicable Chromium/iPhone 13 WebKit context.",
+      "Standard cases set __MOUNT_ALL__ before navigation; lazy cases leave it unset and prove absence before tab interaction.",
+      "Only E2E cases fully represented by the Browser Mode route assertions are removed; independent lazy-mount/E2E cases remain.",
+      "The production route suite and post-migration full E2E suite pass, with configured skipped tests reported explicitly.",
+      "No new route-test type diagnostics are introduced; known Browser Mode component-test type errors are reported accurately."
+    ],
+    "verification": [
+      "pnpm run test:browser:next-route-poc: production build/type generation passed; Chromium 78/78 passed; WebKit 21 passed and 5 skipped.",
+      "pnpm test:e2e after removal of the final migrated source cases: 32 passed, 19 skipped, 51 total.",
+      "pnpm lint: passed.",
+      "pnpm type-check: exit 2 from existing Browser Mode component-test diagnostics (Playwright Locator typing, implicit-any/strokeOpacity issues, raw CSS import, incomplete CpiData fixture); no Batch 3/4/5 production-route diagnostics remain.",
+      "Focused component Browser Mode checks from the preceding checkpoint: 13 files, 57 passed with one transient landscape tooltip click interception; isolated rerun of that test passed (1 passed, 5 skipped). No persistent failure remained.",
+      "The production route suite also rechecked corrected row 41 geometry, Pixel 7 context for rows 41/61, range-change rows 70-75, and scroll movement for rows 79/80."
+    ],
+    "knownConstraints": [
+      "The global type-check remains red only on existing component Browser Mode diagnostics; the production Next build/type generation passes.",
+      "Five WebKit route tests and 19 E2E tests are skipped by existing configuration/annotations; skipped tests are not treated as passing.",
+      "The focused landscape component test had one transient click-interception failure, then passed on isolated retry; retain that history.",
+      "Source E2E `section-tabs-scroll.e2e.spec.ts` contained only the migrated Earnings and lazy-tab cases in the working tree and was removed; unrelated LazyMount E2E checks in other files remain."
+    ],
+    "outputRequirement": "Choose one listed choice. For a reason choice, provide a case-specific finding, affected row/file or acceptance criterion, observed verification evidence, and either a concrete proposed fix or the exact additional evidence needed. Do not invent details."
+  },
+  "questions": {
+    "implementation": {
+      "type": "choice",
+      "instructions": "Does the supplied evidence support acceptance of the final Batch 5 rows 81-89 against the stated migration criteria? Return a probability distribution over the listed choices.",
+      "criteria": {
+        "valid_as_defined": "The supplied evidence supports acceptance as defined.",
+        "requirements_mismatch": "Requirements conflict with intended behavior; identify the requirement and correction.",
+        "missing_prerequisites_info": "Prerequisite information is missing; identify exactly what is needed.",
+        "incomplete_implementation_info": "Implementation information is incomplete; identify missing details or evidence.",
+        "implementation_issue": "An implementation issue exists; identify its location, evidence, and correction.",
+        "scope_violation": "The proposal exceeds or falls outside the agreed scope; identify the boundary and adjustment.",
+        "other": "A material concern does not fit the categories; identify its location, evidence, and fix or needed evidence.",
+        "indeterminate": "The supplied context cannot support a judgment; identify missing context if possible."
+      }
+    }
+  }
+}

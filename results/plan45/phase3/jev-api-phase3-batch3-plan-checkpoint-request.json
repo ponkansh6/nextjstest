@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "jev-review-initial-distribution-v3",
+  "model": "jev-latest",
+  "state": {
+    "evaluationScope": "plan_validity",
+    "background": "Review the concrete Plan45 Phase3 Batch3 proposal in shared_plan/45-vitest-browser-mode-e2e-migration-plan.md lines 415-449. Batch3 proposes exactly ten NEW named Browser Mode cases, all partial assertion slices, preserving A=123, E=90, M=1 until exact reconciliation and never incrementing M for partial stable scenarios. Case mapping: (1) p45-a-cagr-sheet-02 P42-046-049: actual CagrPanel plus useCagrState, deterministic data, local dialog/result interaction and formatted result; production section/data/route integration remains E2E. (2) p45-b-monthly-boundary-axis-21-cpi-2017-12-2018-1-svg P42-353-354: real mounted CPI stacked axis with synthetic monthly labels excluding 2017-12 and 2018-1; current pure tick algorithm tests remain unit-owned and route data/render remains E2E. (3) p45-b-monthly-boundary-axis-21-2017-12-2018-1-svg P42-355-356: corresponding actual earnings chart/axis fixture and same SVG boundary exclusion; pure tick logic and production integration remain as above. (4-5) p45-b-consumption-mobile-acceptance-37-mobile-pixel-acceptance-plan25-openspec-dom-32px P42-166-168: separate nominal and real actual SpendingBarChart fixtures at 412x915, legend controls/content visible and computed actual button bounds at least 32x32; P42-165 production chart visibility stays E2E. (6-7) p45-b-consumption-mobile-acceptance-63-mobile-pixel-acceptance-plan25-openspec-tooltip-14px-16 P42-170 only: separate nominal and real actual SpendingBarChart/Recharts chart-hover to tooltip-visible cases. Do not duplicate direct CustomTooltip inline-style unit tests; retain P42-169 production visibility and P42-171-174 presentation checks in E2E. (8) p45-b-consumption-mobile-acceptance-122-mobile-pixel-acceptance-plan25-openspec-summary-1 P42-177 only: one named case with nominal and real render fixtures using the same SpendingBarChart summary/CSS path, asserting actual computed white-space nowrap. The plan derives distinct exact fixture outputs from source props: two visible nominal expense keys/four quarters => 費目・四半期を変更（費目 2/2・四半期 4/4）・全選択; three visible real expense keys/four quarters => corresponding 3/3 output. No copy assertion; P42-175 remains production visibility and P42-176/178 ownership stays unchanged. (9) p45-a-earnings-hover P42-290 only: actual EarningsBreakdownChart plot hover to tooltip visible; production route, viewport plot geometry P42-287-289, and computed separator CSS remain E2E. (10) p45-b-tooltip-dismiss-578-chromium-escape-dismiss P42-577 only: actual nominal SpendingBarChart/Recharts hover then Escape dismiss; E2E production visibility, mouseleave, and outside-click remain, and existing unit coverage is only mocked touch path. Cadence is a hard constraint: no E2E command, targeted Playwright test, or pnpm test:full before all ten new named Browser Mode cases pass. Then perform the retained consolidated E2E regression once. Batches 1 and 2 already contribute two named Browser Mode cases, so the consolidated gate is at 12 cumulative named cases. Do not inspect this as ten whole stable-scenario migrations; no partial case increments M. Phase 5's 33 per-ID investigations remain deferred and no GitHub Actions/workflow change is planned.",
+    "acceptanceCriteria": [
+      "The ten named test cases correspond to the exact stable IDs and P42 assertion slices above, with each Browser Mode guarantee limited to the actual mounted component/axis behavior described.",
+      "Production route, loaded dataset, viewport/plot geometry, actual mobile route, presentation styles, and user actions listed above remain owned by Playwright; current pure/unit contracts remain with their existing unit owner.",
+      "The shared SpendingBarChart summary/CSS path is one named test containing nominal and real fixtures, transfers P42-177 only, and leaves P42-176 and P42-178 ownership unchanged. Nominal/real summary outputs are distinct and derived from the actual props, but summary copy is not asserted or transferred.",
+      "Exactly ten new named Browser Mode cases are planned. No E2E invocation occurs until all ten pass; then the retained E2E regression is consolidated into one run at 12 cumulative named Browser Mode cases including the two from Batches 1 and 2.",
+      "Keep A=123, E=90, M=1 pending exact assertion reconciliation. These partial assertion slices do not increment M or complete their stable rows.",
+      "Phase 5 per-ID investigation of 33 MAP-ineligible items remains deferred; no Actions/CI scope is introduced."
+    ],
+    "verification": [
+      "This is an initial plan review only; no implementation or tests are included in this review request. Existing Browser Mode/E2E evidence is not represented as evidence that these ten proposed cases have run."
+    ],
+    "knownConstraints": [
+      "User prioritizes speed and explicitly defers consolidated E2E verification until the ten new named Browser Mode cases pass.",
+      "Do not run any E2E before that threshold, including a targeted retained Playwright case or pnpm test:full.",
+      "Do not alter or count P42-021 and P42-181 again; they are the two earlier migrated named cases only for the cumulative test threshold. A/E/M still remains 123/90/1.",
+      "No GitHub Actions, Phase 5 investigation, whole stable-scenario transfer claims, or unlisted production guarantees."
+    ],
+    "outputRequirement": "Choose one listed primary plan verdict. Only valid_as_defined passes. For any non-pass, give one case-specific finding tied to an exact batch row/requirement, its evidence, and a concrete proposal correction or exact needed evidence. Do not treat any one row as blanket permission for its whole E2E scenario."
+  },
+  "questions": {
+    "plan": {
+      "type": "choice",
+      "instructions": "Does the bounded ten-case Batch3 plan satisfy its acceptance criteria and the user's no-E2E-until-threshold cadence? Return a probability distribution over the listed choices.",
+      "criteria": {
+        "valid_as_defined": "The exact ten case mappings, partial assertion scopes, existing unit responsibilities, Playwright-retained boundaries, 12-case cumulative gate, and A/E/M accounting are coherent and adequately specified. Only this choice passes.",
+        "requirements_mismatch": "The stated assertions, stable IDs, or retained responsibility conflict with the intended contract; identify the exact conflict and propose correction.",
+        "missing_prerequisites_info": "A specific source fact or prerequisite needed to approve one of the ten bounded cases is missing; identify it exactly.",
+        "incomplete_implementation_info": "The plan lacks a necessary fixture, assertion mapping, retained integration boundary, or execution gate; identify the exact omission and needed addition.",
+        "implementation_issue": "A concrete technical obstacle makes a proposed mounted Browser Mode contract invalid or unsound; identify exact source/contract and evidence.",
+        "scope_violation": "The plan violates the no-E2E-before-ten-new-tests cadence, changes the cumulative 12-case gate, overclaims a stable scenario, increments M for partial slices, changes Phase5/Actions scope, or removes a stated Playwright guarantee; identify it precisely.",
+        "other": "Another material plan concern is supported by specific evidence; identify its location and correction or exact evidence needed.",
+        "indeterminate": "The supplied facts cannot support a decision; identify missing context if possible."
+      }
+    }
+  }
+}

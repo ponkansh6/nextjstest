@@ -1,0 +1,84 @@
+$ pnpm build && pnpm test:e2e
+$ next build --webpack
+▲ Next.js 16.3.5 (webpack)
+- Environments: .env.local
+✓ Running next.config.ts took 24ms
+- Experiments (use with caution):
+  ⨯ useTypeScriptCli
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 4.0s
+  Running TypeScript ...
+  Finished TypeScript in 10.1s ...
+  Collecting page data using 3 workers ...
+  Generating static pages using 3 workers (0/7) ...
+  Generating static pages using 3 workers (1/7) 
+  Generating static pages using 3 workers (3/7) 
+  Generating static pages using 3 workers (5/7) 
+✓ Generating static pages using 3 workers (7/7) in 1022ms
+  Finalizing page optimization ...
+  Collecting build traces ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/estat/data
+├ ƒ /api/estat/meta
+└ ƒ /api/estat/stats-list
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+$ playwright test
+[WebServer] (node:187) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] $ next start --port 3100 --hostname 127.0.0.1
+[WebServer] (node:200) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 32 tests using 3 workers
+
+  -   1 [chromium] › tests/e2e/accessibility.e2e.spec.ts:22:7 › アクセシビリティ - ダークモード › 凡例をタップ後、他の場所をクリックすると hover が解除される
+  -   2 [chromium] › tests/e2e/accessibility.e2e.spec.ts:53:7 › アクセシビリティ - ダークモード › 凡例のコントラスト比が WCAG AA 以上
+  -   3 [chromium] › tests/e2e/accessibility.e2e.spec.ts:81:14 › アクセシビリティ - キーボード操作 › キーボードのみで凡例のチェックボックスを操作できる
+  -   4 [chromium] › tests/e2e/accessibility.e2e.spec.ts:100:14 › アクセシビリティ - キーボード操作 › フォーカスリングが表示される（:focus-visible）
+  -   5 [chromium] › tests/e2e/accessibility.e2e.spec.ts:124:14 › アクセシビリティ - キーボード操作 › 年範囲フィルタをキーボードのみで操作できる
+  -   6 [chromium] › tests/e2e/accessibility.e2e.spec.ts:142:7 › アクセシビリティ - アニメーション › prefers-reduced-motion が有効なとき animation が無効になる
+(node:226) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  -   7 [chromium] › tests/e2e/tooltip-dismiss.e2e.spec.ts:138:7 › モバイル ツールチップの閉じるボタンとインタラクション › グラフをタップするとツールチップが表示され、✕ボタンとガイド線で閉じられる
+(node:225) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  -   8 [chromium] › tests/e2e/tooltip-dismiss.e2e.spec.ts:159:7 › モバイル ツールチップの閉じるボタンとインタラクション › mobile-pixel: タップで表示したTooltipをEscapeで閉じ、Tooltipと閉じるボタンが消える
+(node:232) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  -   9 [chromium] › tests/e2e/tooltip-dismiss.e2e.spec.ts:188:7 › モバイル ツールチップの閉じるボタンとインタラクション › グラフ外をタップすると閉じるボタンとガイド線の両方が消える
+  -  10 [chromium] › tests/e2e/tooltip-dismiss.e2e.spec.ts:207:7 › モバイル ツールチップの閉じるボタンとインタラクション › 別グラフをタップすると既存のガイド線が消え、新しいガイド線が1本だけになる
+  -  11 [chromium] › tests/e2e/tooltip-dismiss.e2e.spec.ts:231:7 › モバイル ツールチップの閉じるボタンとインタラクション › スクロールするとガイド線とツールチップが自動で消える
+  -  14 [chromium] › tests/e2e/tooltip-dismiss.e2e.spec.ts:246:7 › モバイル ツールチップの閉じるボタンとインタラクション › グラフ上を縦にスワイプしてもツールチップが表示されないこと（ネガティブテスト）
+  -  15 [chromium] › tests/e2e/tooltip-dismiss.e2e.spec.ts:281:7 › モバイル ツールチップの閉じるボタンとインタラクション › ✕で閉じた後、同じバーをもう一度タップして再表示されること
+  -  16 [chromium] › tests/e2e/tooltip-dismiss.e2e.spec.ts:304:9 › モバイル ツールチップの閉じるボタンとインタラクション › 固定viewportでのchartNote/Tooltip重なり › tooltipと実質chartNoteリンクが重なる座標ではリンク遷移を遮蔽しtooltipを維持する
+  -  17 [chromium] › tests/e2e/tooltip-dismiss.e2e.spec.ts:427:7 › モバイル ツールチップの閉じるボタンとインタラクション › tooltip外の実質chartNoteリンクはtooltipを閉じて名目セクションへ遷移する
+  -  18 [chromium] › tests/e2e/tooltip-dismiss.e2e.spec.ts:470:7 › モバイル ツールチップの閉じるボタンとインタラクション › エリアチャートをグラフ外タップで閉じるとアクティブドットも消える
+  -  19 [chromium] › tests/e2e/tooltip-dismiss.e2e.spec.ts:505:7 › モバイル ツールチップの閉じるボタンとインタラクション › エリアチャートを✕で閉じるとアクティブドットも消える
+  -  20 [chromium] › tests/e2e/tooltip-dismiss.e2e.spec.ts:532:7 › モバイル ツールチップの閉じるボタンとインタラクション › タブジャンプ中（プログラム的スクロール中）にグラフへ触れてもツールチップが出ないこと
+(node:356) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  13 [mobile-pixel] › tests/e2e/mobile-ux.e2e.spec.ts:8:7 › LazyMount 遅延マウント (P5-1) › __MOUNT_ALL__ を立てると初期表示で全チャートがマウントされる (1.0s)
+  ✓  12 [chromium] › tests/e2e/advanced-series.e2e.spec.ts:4:7 › 比較グラフのCTI通常・advanced系列契約 › 通常表示はCTI通常系列を含み、延長系列だけを非表示にする (2.8s)
+  ✓  21 [mobile-pixel] › tests/e2e/tooltip-dismiss.e2e.spec.ts:138:7 › モバイル ツールチップの閉じるボタンとインタラクション › グラフをタップするとツールチップが表示され、✕ボタンとガイド線で閉じられる (3.3s)
+  ✓  22 [mobile-pixel] › tests/e2e/tooltip-dismiss.e2e.spec.ts:159:7 › モバイル ツールチップの閉じるボタンとインタラクション › mobile-pixel: タップで表示したTooltipをEscapeで閉じ、Tooltipと閉じるボタンが消える (3.0s)
+  ✓  23 [mobile-pixel] › tests/e2e/tooltip-dismiss.e2e.spec.ts:188:7 › モバイル ツールチップの閉じるボタンとインタラクション › グラフ外をタップすると閉じるボタンとガイド線の両方が消える (2.9s)
+  ✓  24 [mobile-pixel] › tests/e2e/tooltip-dismiss.e2e.spec.ts:207:7 › モバイル ツールチップの閉じるボタンとインタラクション › 別グラフをタップすると既存のガイド線が消え、新しいガイド線が1本だけになる (3.8s)
+  ✓  25 [mobile-pixel] › tests/e2e/tooltip-dismiss.e2e.spec.ts:231:7 › モバイル ツールチップの閉じるボタンとインタラクション › スクロールするとガイド線とツールチップが自動で消える (2.3s)
+  ✓  26 [mobile-pixel] › tests/e2e/tooltip-dismiss.e2e.spec.ts:246:7 › モバイル ツールチップの閉じるボタンとインタラクション › グラフ上を縦にスワイプしてもツールチップが表示されないこと（ネガティブテスト） (2.8s)
+  ✓  27 [mobile-pixel] › tests/e2e/tooltip-dismiss.e2e.spec.ts:281:7 › モバイル ツールチップの閉じるボタンとインタラクション › ✕で閉じた後、同じバーをもう一度タップして再表示されること (3.5s)
+  ✓  28 [mobile-pixel] › tests/e2e/tooltip-dismiss.e2e.spec.ts:304:9 › モバイル ツールチップの閉じるボタンとインタラクション › 固定viewportでのchartNote/Tooltip重なり › tooltipと実質chartNoteリンクが重なる座標ではリンク遷移を遮蔽しtooltipを維持する (2.5s)
+  ✓  29 [mobile-pixel] › tests/e2e/tooltip-dismiss.e2e.spec.ts:427:7 › モバイル ツールチップの閉じるボタンとインタラクション › tooltip外の実質chartNoteリンクはtooltipを閉じて名目セクションへ遷移する (2.9s)
+  ✓  30 [mobile-pixel] › tests/e2e/tooltip-dismiss.e2e.spec.ts:470:7 › モバイル ツールチップの閉じるボタンとインタラクション › エリアチャートをグラフ外タップで閉じるとアクティブドットも消える (2.7s)
+  ✓  31 [mobile-pixel] › tests/e2e/tooltip-dismiss.e2e.spec.ts:505:7 › モバイル ツールチップの閉じるボタンとインタラクション › エリアチャートを✕で閉じるとアクティブドットも消える (2.6s)
+  ✓  32 [mobile-pixel] › tests/e2e/tooltip-dismiss.e2e.spec.ts:532:7 › モバイル ツールチップの閉じるボタンとインタラクション › タブジャンプ中（プログラム的スクロール中）にグラフへ触れてもツールチップが出ないこと (2.3s)
+
+  18 skipped
+  14 passed (38.0s)

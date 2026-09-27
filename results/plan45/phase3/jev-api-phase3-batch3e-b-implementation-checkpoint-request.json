@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "jev-review-initial-distribution-v3",
+  "model": "jev-latest",
+  "state": {
+    "evaluationScope": "implementation_checkpoint_validity",
+    "background": "B3e-b advances the chart-readability row p45-b-consumption-mobile-readability-52-430px-y-x with exactly two new named Browser Mode cases: nominal and real actual SpendingBarChart geometry at 430x667. Focused tests/browser-mode/SpendingBarChart-readability.browser.test.tsx passed 8/8 total: the prior six 320/375/390 cases plus these two 430 cases. Independent review confirms the cases use the production 21/11 expense key sets, 84 quarters, and the .container-equivalent 1rem padding/border-box fixture baseline. The 430px Playwright iteration removes only P42-203–207, P42-209–213, and P42-215–217, retaining P42-202/-208/-214/-218. The previously planned EarningsBreakdownChart/CustomTooltip viewport cases were deferred after Oracle identified a production-fixture mismatch: mobile uses click activation and fixed wrapper placement, whereas the candidate used hover and overridden placement; there is no stable checked-in Geist font asset. Those candidate viewport tests were removed from B3e and all P42-219–240 Playwright assertions remain. The existing separate B3c earnings-hover Browser Mode case is unrelated and remains. B3e-b adds two cases to the prior 8/20, resulting in 10/20; no E2E was run.",
+    "acceptanceCriteria": [
+      "The focused Browser Mode file tests/browser-mode/SpendingBarChart-readability.browser.test.tsx passes 8/8: nominal and real chart fixtures at 320, 375, 390, and 430 pixels, all 667px high.",
+      "B3e-b adds exactly two new named cases, nominal and real actual SpendingBarChart geometry at 430x667, using deterministic fixture data, production 21 nominal / 11 real expense keys, 84 quarters, and the reviewed .container-equivalent 1rem padding/border-box baseline.",
+      "At 430 only, Playwright removes P42-203–207, P42-209–213, and P42-215–217 geometry assertions.",
+      "At 430 Playwright retains P42-202 section visibility, P42-208 nonnegative Y values, P42-214 quarter-label formatting, and P42-218 document scroll width. The 320/375/390 state remains from the passing B3e-a checkpoint.",
+      "The planned EarningsBreakdownChart/CustomTooltip viewport candidates are deferred: the candidate's hover/custom wrapper placement did not match production mobile click/fixed placement, and no stable checked-in Geist font asset is available. All P42-219–240 assertions remain in E2E; do not count or claim these viewport cases. The separate existing B3c earnings hover test is unrelated and remains.",
+      "This is a partial chart-local transfer. A=123/E=90/M=1 remains unchanged; no stable row is fully migrated.",
+      "B3e-b adds two cases to the 8/20 counter, advancing it to 10/20. No E2E was run, and no consolidated E2E may be claimed or triggered by this checkpoint.",
+      "B3e-a remains previously JEV-approved: valid_as_defined, confidence .98, pass probability .99, diagnosis complete/no follow-up."
+    ],
+    "verification": [
+      "Focused Browser Mode result supplied: tests/browser-mode/SpendingBarChart-readability.browser.test.tsx, 8/8 passed.",
+      "Independent review confirms the two newly named 430x667 nominal/real cases and production-aligned expense keys, 84-quarter data, and fixture container baseline.",
+      "Current E2E diff removes only P42-203–207, -209–213, and -215–217 in the 430px iteration. It retains P42-202/-208/-214/-218 there; the 320/375/390 retained and removed boundaries remain as previously reviewed.",
+      "Oracle review deferred the two planned earnings viewport candidates because hover/custom wrapper placement did not model production mobile click/fixed-wrapper placement and no stable checked-in Geist font fixture exists. The candidate viewport tests are removed from B3e; P42-219–240 are all present in E2E. The separate B3c earnings plot-hover Browser Mode test is unrelated.",
+      "No E2E was run. Cadence advances from 8/20 to 10/20; all stable rows remain partial and no M increment is claimed."
+    ],
+    "knownConstraints": [
+      "Browser Mode measures actual chart-local rendering under deterministic fixture data and a production-equivalent container baseline; it does not establish production route/page-shell behavior.",
+      "All P42-219–240 earnings viewport, activation, content, and bounds assertions remain Playwright-owned; the deferred viewport candidates do not count toward cadence.",
+      "A=123/E=90/M=1 remains unchanged. The next consolidated E2E waits until a later valid case reaches the 20-case cadence."
+    ],
+    "outputRequirement": "Assess whether the B3e-b implementation and focused evidence satisfy the approved partial-transfer scope and accurately defer the earnings viewport candidates. Select exactly one listed criterion and return confidence and the full probability distribution. If not valid_as_defined, identify the exact affected source assertion/location, observed evidence or exact neededEvidence, a concrete nextAction/proposedFix, and remainingUncertainty. Do not claim full stable-row migration, production route coverage, or earnings viewport transfer."
+  },
+  "questions": {
+    "implementation": {
+      "type": "choice",
+      "instructions": "Select exactly one mutually exclusive criterion for the B3e-b implementation checkpoint.",
+      "criteria": {
+        "valid_as_defined": "The implementation and evidence satisfy the approved B3e-b scope and preserve the specified E2E boundaries.",
+        "requirements_mismatch": "The implementation contradicts an applicable assertion ownership or acceptance requirement.",
+        "missing_prerequisites_info": "Prerequisite information is missing and prevents assessment.",
+        "incomplete_implementation_info": "The implementation or evidence is too incomplete to assess the checkpoint.",
+        "implementation_issue": "A concrete implementation defect or unsupported behavior remains.",
+        "scope_violation": "The implementation exceeds the two chart assertions or weakens retained E2E boundaries.",
+        "other": "A material issue does not fit the other criteria.",
+        "indeterminate": "The evidence does not support a reliable determination."
+      }
+    }
+  }
+}

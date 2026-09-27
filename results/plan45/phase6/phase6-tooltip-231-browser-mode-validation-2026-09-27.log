@@ -1,0 +1,581 @@
+$ next build --webpack
+▲ Next.js 16.3.5 (webpack)
+- Environments: .env.local
+✓ Running next.config.ts took 23ms
+- Experiments (use with caution):
+  ⨯ useTypeScriptCli
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 4.2s
+  Running TypeScript ...
+  Finished TypeScript in 10.7s ...
+  Collecting page data using 3 workers ...
+  Generating static pages using 3 workers (0/7) ...
+  Generating static pages using 3 workers (1/7) 
+  Generating static pages using 3 workers (3/7) 
+  Generating static pages using 3 workers (5/7) 
+✓ Generating static pages using 3 workers (7/7) in 1096ms
+  Finalizing page optimization ...
+  Collecting build traces ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/estat/data
+├ ƒ /api/estat/meta
+└ ƒ /api/estat/stats-list
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+$ node scripts/run-next-route-poc.mjs
+
+ RUN  v4.1.11 /home/shunki/working/nextjstest
+
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  23:48:38
+   Duration  4.83s (transform 0ms, setup 559ms, import 43ms, tests 2.69s, environment 0ms)
+
+
+ RUN  v4.1.11 /home/shunki/working/nextjstest
+
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  23:48:43
+   Duration  6.32s (transform 0ms, setup 572ms, import 41ms, tests 4.24s, environment 0ms)
+
+
+ RUN  v4.1.11 /home/shunki/working/nextjstest
+
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  23:48:50
+   Duration  13.73s (transform 0ms, setup 561ms, import 43ms, tests 11.52s, environment 0ms)
+
+
+ RUN  v4.1.11 /home/shunki/working/nextjstest
+
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  23:49:04
+   Duration  8.81s (transform 0ms, setup 561ms, import 45ms, tests 6.81s, environment 0ms)
+
+
+ RUN  v4.1.11 /home/shunki/working/nextjstest
+
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  23:49:13
+   Duration  6.37s (transform 0ms, setup 559ms, import 43ms, tests 4.39s, environment 0ms)
+
+
+ RUN  v4.1.11 /home/shunki/working/nextjstest
+
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- navigate and wait for charts started
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- navigate and wait for charts completed in 1495ms
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- read chart labels and open real legend started
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- read chart labels and open real legend completed in 117ms
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- extract chart contracts started
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- extract chart contracts completed in 565ms
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- select 2025 start year started
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- select 2025 start year completed in 851ms
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- open nominal table started
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- open nominal table completed in 106ms
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- download nominal CSV started
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- download nominal CSV completed in 61ms
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- inspect nominal table and CSV values started
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- inspect nominal table and CSV values completed in 48ms
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- hover nominal 2025Q1 started
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- hover nominal 2025Q1 completed in 406ms
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- hover nominal 2025Q4 started
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- hover nominal 2025Q4 completed in 212ms
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- open real table started
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- open real table completed in 141ms
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- download real CSV started
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- download real CSV completed in 41ms
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- inspect real table and CSV values started
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- inspect real table and CSV values completed in 34ms
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- hover real 2025Q1 started
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- hover real 2025Q1 completed in 316ms
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- hover real 2025Q4 started
+[phase6-b06-stage] p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders- hover real 2025Q4 completed in 211ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  23:49:20
+   Duration  11.50s (transform 0ms, setup 575ms, import 50ms, tests 9.70s, environment 0ms)
+
+
+ RUN  v4.1.11 /home/shunki/working/nextjstest
+
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  23:49:32
+   Duration  5.15s (transform 0ms, setup 556ms, import 42ms, tests 3.14s, environment 0ms)
+
+
+ RUN  v4.1.11 /home/shunki/working/nextjstest
+
+[phase6-b08-stage] p45-b-real-consumption-99-page-tsx-e2e-real-consumption-chart-with-actual-browser install source fixture mount behavior started
+[phase6-b08-stage] p45-b-real-consumption-99-page-tsx-e2e-real-consumption-chart-with-actual-browser install source fixture mount behavior completed in 2ms
+[phase6-b08-stage] p45-b-real-consumption-99-page-tsx-e2e-real-consumption-chart-with-actual-browser navigate to production route started
+[phase6-b08-stage] p45-b-real-consumption-99-page-tsx-e2e-real-consumption-chart-with-actual-browser navigate to production route completed in 281ms
+[phase6-b08-stage] p45-b-real-consumption-99-page-tsx-e2e-real-consumption-chart-with-actual-browser wait for source fixture network idle started
+[phase6-b08-stage] p45-b-real-consumption-99-page-tsx-e2e-real-consumption-chart-with-actual-browser wait for source fixture network idle completed in 760ms
+[phase6-b08-stage] p45-b-real-consumption-99-page-tsx-e2e-real-consumption-chart-with-actual-browser check first page-global legend item visibility started
+[phase6-b08-stage] p45-b-real-consumption-99-page-tsx-e2e-real-consumption-chart-with-actual-browser check first page-global legend item visibility completed in 373ms
+[phase6-b08-stage] p45-b-real-consumption-99-page-tsx-e2e-real-consumption-chart-with-actual-browser attempt first legend click with source 5s timeout started
+[phase6-b08-stage] p45-b-real-consumption-99-page-tsx-e2e-real-consumption-chart-with-actual-browser attempt first legend click with source 5s timeout completed in 445ms
+[phase6-b08-stage] p45-b-real-consumption-99-page-tsx-e2e-real-consumption-chart-with-actual-browser wait source 500ms settle interval started
+[phase6-b08-stage] p45-b-real-consumption-99-page-tsx-e2e-real-consumption-chart-with-actual-browser wait source 500ms settle interval completed in 502ms
+[phase6-b08-stage] p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser install source fixture mount behavior started
+[phase6-b08-stage] p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser install source fixture mount behavior completed in 3ms
+[phase6-b08-stage] p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser navigate to production route started
+[phase6-b08-stage] p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser navigate to production route completed in 266ms
+[phase6-b08-stage] p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser wait for source fixture network idle started
+[phase6-b08-stage] p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser wait for source fixture network idle completed in 736ms
+[phase6-b08-stage] p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser scroll real-consumption section into view started
+[phase6-b08-stage] p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser scroll real-consumption section into view completed in 390ms
+[phase6-b08-stage] p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser wait for real-consumption section visibility started
+[phase6-b08-stage] p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser wait for real-consumption section visibility completed in 419ms
+[phase6-b08-stage] p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser read real-consumption section visibility started
+[phase6-b08-stage] p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser read real-consumption section visibility completed in 41ms
+[phase6-b08-stage] p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser wait for accordion summary visibility started
+[phase6-b08-stage] p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser wait for accordion summary visibility completed in 22ms
+[phase6-b08-stage] p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser read accordion summary visibility started
+[phase6-b08-stage] p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser read accordion summary visibility completed in 20ms
+[phase6-b08-stage] p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser read section-local legend item visibility started
+[phase6-b08-stage] p45-b-real-consumption-128-page-tsx-e2e-real-consumption-chart-with-actual-browser read section-local legend item visibility completed in 322ms
+[phase6-b08-stage] p45-b-real-consumption-156-page-tsx-e2e-real-consumption-chart-with-actual-browser install source fixture mount behavior started
+[phase6-b08-stage] p45-b-real-consumption-156-page-tsx-e2e-real-consumption-chart-with-actual-browser install source fixture mount behavior completed in 2ms
+[phase6-b08-stage] p45-b-real-consumption-156-page-tsx-e2e-real-consumption-chart-with-actual-browser navigate to production route started
+[phase6-b08-stage] p45-b-real-consumption-156-page-tsx-e2e-real-consumption-chart-with-actual-browser navigate to production route completed in 285ms
+[phase6-b08-stage] p45-b-real-consumption-156-page-tsx-e2e-real-consumption-chart-with-actual-browser wait for source fixture network idle started
+[phase6-b08-stage] p45-b-real-consumption-156-page-tsx-e2e-real-consumption-chart-with-actual-browser wait for source fixture network idle completed in 745ms
+[phase6-b08-stage] p45-b-real-consumption-156-page-tsx-e2e-real-consumption-chart-with-actual-browser scroll real-consumption section into view started
+[phase6-b08-stage] p45-b-real-consumption-156-page-tsx-e2e-real-consumption-chart-with-actual-browser scroll real-consumption section into view completed in 373ms
+[phase6-b08-stage] p45-b-real-consumption-156-page-tsx-e2e-real-consumption-chart-with-actual-browser wait for real-consumption section visibility started
+[phase6-b08-stage] p45-b-real-consumption-156-page-tsx-e2e-real-consumption-chart-with-actual-browser wait for real-consumption section visibility completed in 438ms
+[phase6-b08-stage] p45-b-real-consumption-156-page-tsx-e2e-real-consumption-chart-with-actual-browser read real-consumption section visibility started
+[phase6-b08-stage] p45-b-real-consumption-156-page-tsx-e2e-real-consumption-chart-with-actual-browser read real-consumption section visibility completed in 37ms
+[phase6-b08-stage] p45-b-real-consumption-156-page-tsx-e2e-real-consumption-chart-with-actual-browser click accordion summary started
+[phase6-b08-stage] p45-b-real-consumption-156-page-tsx-e2e-real-consumption-chart-with-actual-browser click accordion summary completed in 54ms
+[phase6-b08-stage] p45-b-real-consumption-156-page-tsx-e2e-real-consumption-chart-with-actual-browser wait for first section-local legend item visibility started
+[phase6-b08-stage] p45-b-real-consumption-156-page-tsx-e2e-real-consumption-chart-with-actual-browser wait for first section-local legend item visibility completed in 31ms
+[phase6-b08-stage] p45-b-real-consumption-156-page-tsx-e2e-real-consumption-chart-with-actual-browser read first section-local legend item visibility started
+[phase6-b08-stage] p45-b-real-consumption-156-page-tsx-e2e-real-consumption-chart-with-actual-browser read first section-local legend item visibility completed in 28ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  23:49:38
+   Duration  9.26s (transform 0ms, setup 559ms, import 41ms, tests 6.94s, environment 0ms)
+
+
+ RUN  v4.1.11 /home/shunki/working/nextjstest
+
+[phase6-b09-stage] install source fixture mount behavior started
+[phase6-b09-stage] install source fixture mount behavior completed in 2ms
+[phase6-b09-stage] navigate to production route started
+[phase6-b09-stage] navigate to production route completed in 288ms
+[phase6-b09-stage] wait for network idle started
+[phase6-b09-stage] wait for network idle completed in 764ms
+[phase6-b09-stage] scroll real-consumption section into view started
+[phase6-b09-stage] scroll real-consumption section into view completed in 385ms
+[phase6-b09-stage] wait for real-consumption section visibility started
+[phase6-b09-stage] wait for real-consumption section visibility completed in 422ms
+[phase6-b09-stage] read real-consumption section visibility started
+[phase6-b09-stage] read real-consumption section visibility completed in 37ms
+[phase6-b09-stage] wait for summary visibility started
+[phase6-b09-stage] wait for summary visibility completed in 32ms
+[phase6-b09-stage] read summary visibility started
+[phase6-b09-stage] read summary visibility completed in 18ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  23:49:48
+   Duration  4.37s (transform 0ms, setup 556ms, import 42ms, tests 2.10s, environment 0ms)
+
+
+ RUN  v4.1.11 /home/shunki/working/nextjstest
+
+[phase6-b10-stage] p45-b-tooltip-dismiss-138-case01 install shared fixture mount behavior started (timeout 5000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-138-case01 install shared fixture mount behavior completed in 4ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-138-case01 navigate to production route started (timeout 30000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-138-case01 navigate to production route completed in 278ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-138-case01 wait for network idle started (timeout 20000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-138-case01 wait for network idle completed in 771ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-138-case01 record effective Pixel 7 touch context started (timeout 5000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-138-case01 record effective Pixel 7 touch context completed in 232ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-138-case01 find visible hit-tested nominal bar tap point (up to 4 retries) started (timeout 45000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-138-case01 find visible hit-tested nominal bar tap point (up to 4 retries) completed in 562ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-138-case01 touch tap hit-tested nominal bar started (timeout 10000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-138-case01 touch tap hit-tested nominal bar completed in 709ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-138-case01 count tooltip cursor after bar tap started (timeout 5000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-138-case01 count tooltip cursor after bar tap completed in 34ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-138-case01 touch tap close button started (timeout 10000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-138-case01 touch tap close button completed in 626ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-138-case01 wait for close button hidden after close tap started (timeout 7000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-138-case01 wait for close button hidden after close tap completed in 108ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-138-case01 count tooltip cursor after close tap started (timeout 5000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-138-case01 count tooltip cursor after close tap completed in 19ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip install shared fixture mount behavior started (timeout 5000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip install shared fixture mount behavior completed in 2ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip navigate to production route started (timeout 30000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip navigate to production route completed in 242ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip wait for network idle started (timeout 20000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip wait for network idle completed in 733ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip record effective Pixel 7 touch context started (timeout 5000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip record effective Pixel 7 touch context completed in 254ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip find visible hit-tested nominal bar tap point (up to 4 retries) started (timeout 45000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip find visible hit-tested nominal bar tap point (up to 4 retries) completed in 562ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip touch tap hit-tested nominal bar started (timeout 10000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip touch tap hit-tested nominal bar completed in 693ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip wait for custom tooltip visible after bar tap started (timeout 7000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip wait for custom tooltip visible after bar tap completed in 43ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip read custom tooltip visibility after tap started (timeout 5000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip read custom tooltip visibility after tap completed in 17ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip press Escape started (timeout 10000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip press Escape completed in 319ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip wait for tooltip hidden after Escape started (timeout 7000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip wait for tooltip hidden after Escape completed in 47ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip wait for close button hidden after Escape started (timeout 7000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip wait for close button hidden after Escape completed in 239ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip read close button visibility after Escape started (timeout 5000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip read close button visibility after Escape completed in 82ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip read custom tooltip visibility after Escape started (timeout 5000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip read custom tooltip visibility after Escape completed in 18ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip immediately retap same nominal bar coordinate started (timeout 10000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip immediately retap same nominal bar coordinate completed in 321ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip wait for custom tooltip visible after retap started (timeout 7000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip wait for custom tooltip visible after retap completed in 35ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip read custom tooltip visibility after retap started (timeout 5000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip read custom tooltip visibility after retap completed in 19ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 install shared fixture mount behavior started (timeout 5000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 install shared fixture mount behavior completed in 2ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 navigate to production route started (timeout 30000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 navigate to production route completed in 252ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 wait for network idle started (timeout 20000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 wait for network idle completed in 734ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 record effective Pixel 7 touch context started (timeout 5000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 record effective Pixel 7 touch context completed in 219ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 find visible hit-tested nominal bar tap point (up to 4 retries) started (timeout 45000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 find visible hit-tested nominal bar tap point (up to 4 retries) completed in 554ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 touch tap hit-tested nominal bar started (timeout 10000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 touch tap hit-tested nominal bar completed in 692ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 wait for close button visible after bar tap started (timeout 7000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 wait for close button visible after bar tap completed in 403ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 count tooltip cursor before outside tap started (timeout 5000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 count tooltip cursor before outside tap completed in 18ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 touch tap nominal chart heading outside chart started (timeout 10000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 touch tap nominal chart heading outside chart completed in 447ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 wait for close button hidden after outside tap started (timeout 7000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 wait for close button hidden after outside tap completed in 110ms
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 count tooltip cursor after outside tap started (timeout 5000ms)
+[phase6-b10-stage] p45-b-tooltip-dismiss-188-case01 count tooltip cursor after outside tap completed in 16ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  23:49:53
+   Duration  12.74s (transform 0ms, setup 554ms, import 45ms, tests 10.85s, environment 0ms)
+
+
+ RUN  v4.1.11 /home/shunki/working/nextjstest
+
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 install shared fixture mount behavior started (timeout 5000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 install shared fixture mount behavior completed in 3ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 navigate to production route started (timeout 30000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 navigate to production route completed in 306ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 wait for network idle started (timeout 20000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 wait for network idle completed in 756ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 record effective Pixel 7 touch context started (timeout 5000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 record effective Pixel 7 touch context completed in 246ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 scroll real-consumption chart into view before nominal tap started (timeout 15000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 scroll real-consumption chart into view before nominal tap completed in 96ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 find hit-tested nominal bar point (up to 4 retries) started (timeout 45000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 find hit-tested nominal bar point (up to 4 retries) completed in 971ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 touch tap nominal bar started (timeout 10000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 touch tap nominal bar completed in 658ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 wait for close button visible after nominal tap started (timeout 7000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 wait for close button visible after nominal tap completed in 183ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 count cursor after nominal tap started (timeout 5000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 count cursor after nominal tap completed in 62ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 find fresh hit-tested real bar point (up to 4 retries) started (timeout 45000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 find fresh hit-tested real bar point (up to 4 retries) completed in 489ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 touch tap real bar started (timeout 10000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 touch tap real bar completed in 625ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 wait for close button visible after real tap started (timeout 7000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 wait for close button visible after real tap completed in 122ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 count global cursor after real tap started (timeout 5000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-207-1 count global cursor after real tap completed in 20ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 install shared fixture mount behavior started (timeout 5000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 install shared fixture mount behavior completed in 2ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 navigate to production route started (timeout 30000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 navigate to production route completed in 264ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 wait for network idle started (timeout 20000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 wait for network idle completed in 723ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 record effective Pixel 7 touch context started (timeout 5000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 record effective Pixel 7 touch context completed in 234ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 scroll nominal recharts wrapper into view started (timeout 15000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 scroll nominal recharts wrapper into view completed in 107ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 read nominal wrapper bounding box started (timeout 5000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 read nominal wrapper bounding box completed in 411ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 create Chrome DevTools Protocol session started (timeout 5000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 create Chrome DevTools Protocol session completed in 4ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 dispatch touchStart at wrapper center started (timeout 5000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 dispatch touchStart at wrapper center completed in 361ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 dispatch touchMove 1/5 started (timeout 5000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 dispatch touchMove 1/5 completed in 37ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 dispatch touchMove 2/5 started (timeout 5000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 dispatch touchMove 2/5 completed in 338ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 dispatch touchMove 3/5 started (timeout 5000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 dispatch touchMove 3/5 completed in 384ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 dispatch touchMove 4/5 started (timeout 5000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 dispatch touchMove 4/5 completed in 11ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 dispatch touchMove 5/5 started (timeout 5000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 dispatch touchMove 5/5 completed in 18ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 dispatch touchEnd started (timeout 5000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 dispatch touchEnd completed in 311ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 wait for close button hidden at gesture end started (timeout 7000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-249-case01 wait for close button hidden at gesture end completed in 182ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 install shared fixture mount behavior started (timeout 5000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 install shared fixture mount behavior completed in 2ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 navigate to production route started (timeout 30000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 navigate to production route completed in 264ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 wait for network idle started (timeout 20000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 wait for network idle completed in 724ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 record effective Pixel 7 touch context started (timeout 5000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 record effective Pixel 7 touch context completed in 276ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 find hit-tested nominal bar point (up to 4 retries) started (timeout 45000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 find hit-tested nominal bar point (up to 4 retries) completed in 596ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 touch tap nominal bar started (timeout 10000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 touch tap nominal bar completed in 706ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 wait for close button visible after first tap started (timeout 7000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 wait for close button visible after first tap completed in 185ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 touch tap close button started (timeout 10000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 touch tap close button completed in 534ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 wait for close button hidden after close tap started (timeout 7000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 wait for close button hidden after close tap completed in 120ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 find fresh actionable nominal bar point (up to 4 retries) started (timeout 45000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 find fresh actionable nominal bar point (up to 4 retries) completed in 75ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 touch tap fresh nominal bar point started (timeout 10000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 touch tap fresh nominal bar point completed in 622ms
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 wait for close button visible after retap started (timeout 7000ms)
+[phase6-b11-stage] p45-b-tooltip-dismiss-284-case01 wait for close button visible after retap completed in 119ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  23:50:06
+   Duration  14.38s (transform 0ms, setup 561ms, import 43ms, tests 12.66s, environment 0ms)
+
+
+ RUN  v4.1.11 /home/shunki/working/nextjstest
+
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip install shared fixture mount behavior started (timeout 5000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip install shared fixture mount behavior completed in 3ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip navigate to production route started (timeout 30000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip navigate to production route completed in 265ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip wait for network idle started (timeout 20000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip wait for network idle completed in 758ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip record effective Pixel 7 touch context started (timeout 5000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip record effective Pixel 7 touch context completed in 247ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip scroll real-consumption chart into view started (timeout 15000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip scroll real-consumption chart into view completed in 96ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip wait for chart to intersect the viewport started (timeout 7000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip wait for chart to intersect the viewport completed in 6ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip wait for actual chartNote link attachment started (timeout 7000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip wait for actual chartNote link attachment completed in 407ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip retry hit-tested real bar touch until tooltip visible (max 8) started (timeout 20000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip real bar touch attempt 1/8
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip retry hit-tested real bar touch until tooltip visible (max 8) completed in 798ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip read live tooltip rectangle started (timeout 5000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip read live tooltip rectangle completed in 43ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip read live chartNote rectangle started (timeout 5000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip read live chartNote rectangle completed in 80ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip save actual chartNote inline style started (timeout 5000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip save actual chartNote inline style completed in 36ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip position actual link at tooltip with positive size and z-index 0 started (timeout 5000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip position actual link at tooltip with positive size and z-index 0 completed in 57ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip read repositioned actual link rectangle started (timeout 5000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip read repositioned actual link rectangle completed in 47ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip hit-test overlap coordinate against actual tooltip started (timeout 5000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip hit-test overlap coordinate against actual tooltip completed in 2ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip real touchscreen tap at deliberately engineered overlap started (timeout 10000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip real touchscreen tap at deliberately engineered overlap completed in 12ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip wait for tooltip visible after overlap tap started (timeout 7000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip wait for tooltip visible after overlap tap completed in 23ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip read tooltip visibility after overlap action started (timeout 5000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip read tooltip visibility after overlap action completed in 19ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip restore original actual chartNote inline style started (timeout 5000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip restore original actual chartNote inline style completed in 27ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip set 412x915 viewport before production navigation started (timeout 5000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip set 412x915 viewport before production navigation completed in 2ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip install shared fixture mount behavior started (timeout 5000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip install shared fixture mount behavior completed in 1ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip navigate to production route started (timeout 30000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip navigate to production route completed in 266ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip wait for network idle started (timeout 20000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip wait for network idle completed in 716ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip record effective Pixel 7 touch context started (timeout 5000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip record effective Pixel 7 touch context completed in 218ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip scroll real-consumption chart into view started (timeout 15000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip scroll real-consumption chart into view completed in 86ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip find hit-tested real bar point without extra scroll (up to 4 retries) started (timeout 45000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip find hit-tested real bar point without extra scroll (up to 4 retries) completed in 447ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip real touchscreen tap on actual bar started (timeout 10000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip real touchscreen tap on actual bar completed in 693ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip wait for tooltip visible after bar tap started (timeout 7000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip wait for tooltip visible after bar tap completed in 36ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip wait for actual chartNote link visible started (timeout 7000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip wait for actual chartNote link visible completed in 22ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip read tooltip visibility after bar tap started (timeout 5000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip read tooltip visibility after bar tap completed in 17ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip read link visibility after bar tap started (timeout 5000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip read link visibility after bar tap completed in 19ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip read tooltip bounding box started (timeout 5000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip read tooltip bounding box completed in 57ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip read link bounding box started (timeout 5000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip read link bounding box completed in 134ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip hit-test outside point against actual link href started (timeout 5000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip hit-test outside point against actual link href completed in 24ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip hit-test outside point against tooltip started (timeout 5000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip hit-test outside point against tooltip completed in 3ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip real touchscreen tap on actual link outside tooltip started (timeout 10000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip real touchscreen tap on actual link outside tooltip completed in 344ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip wait for nominal section hash navigation started (timeout 7000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip wait for nominal section hash navigation completed in 2ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip wait for tooltip hidden after link navigation started (timeout 7000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip wait for tooltip hidden after link navigation completed in 362ms
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip read tooltip visibility after link navigation started (timeout 5000ms)
+[phase6-b12-stage] p45-b-tooltip-dismiss-430-tooltip-chartnote-tooltip read tooltip visibility after link navigation completed in 18ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  23:50:21
+   Duration  8.93s (transform 0ms, setup 557ms, import 42ms, tests 6.68s, environment 0ms)
+
+
+ RUN  v4.1.11 /home/shunki/working/nextjstest
+
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 install shared fixture mount behavior started (timeout 5000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 install shared fixture mount behavior completed in 3ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 navigate to production route started (timeout 30000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 navigate to production route completed in 270ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 wait for network idle started (timeout 20000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 wait for network idle completed in 764ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 record effective Pixel 7 touch context started (timeout 5000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 record effective Pixel 7 touch context completed in 240ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 navigate to stacked chart section started (timeout 15000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 navigate to stacked chart section completed in 148ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 wait for first stacked chart wrapper visible started (timeout 12000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 wait for first stacked chart wrapper visible completed in 409ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 read first stacked chart wrapper bounding box started (timeout 5000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 read first stacked chart wrapper bounding box completed in 35ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 touch stacked wrapper center started (timeout 10000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 touch stacked wrapper center completed in 401ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 wait for close button visible after stacked chart tap started (timeout 7000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 wait for close button visible after stacked chart tap completed in 192ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 count active dots after stacked chart tap started (timeout 5000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 count active dots after stacked chart tap completed in 22ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 count cursor after stacked chart tap started (timeout 5000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 count cursor after stacked chart tap completed in 18ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 touch stacked chart heading outside wrapper started (timeout 10000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 touch stacked chart heading outside wrapper completed in 626ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 wait for close button hidden after heading touch started (timeout 7000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 wait for close button hidden after heading touch completed in 142ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 count cursor after heading touch started (timeout 5000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 count cursor after heading touch completed in 20ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 count active dots after heading touch started (timeout 5000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-473-case01 count active dots after heading touch completed in 16ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 install shared fixture mount behavior started (timeout 5000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 install shared fixture mount behavior completed in 1ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 navigate to production route started (timeout 30000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 navigate to production route completed in 257ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 wait for network idle started (timeout 20000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 wait for network idle completed in 745ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 record effective Pixel 7 touch context started (timeout 5000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 record effective Pixel 7 touch context completed in 234ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 navigate to stacked chart section started (timeout 15000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 navigate to stacked chart section completed in 89ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 wait for first stacked chart wrapper visible started (timeout 12000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 wait for first stacked chart wrapper visible completed in 410ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 read first stacked chart wrapper bounding box started (timeout 5000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 read first stacked chart wrapper bounding box completed in 38ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 touch stacked wrapper center started (timeout 10000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 touch stacked wrapper center completed in 413ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 wait for close button visible after stacked chart tap started (timeout 7000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 wait for close button visible after stacked chart tap completed in 221ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 count active dots after stacked chart tap started (timeout 5000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 count active dots after stacked chart tap completed in 18ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 touch close button started (timeout 10000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 touch close button completed in 470ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 wait for close button hidden after close touch started (timeout 7000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 wait for close button hidden after close touch completed in 103ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 count active dots after close touch started (timeout 5000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-508-case01 count active dots after close touch completed in 34ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 install shared fixture mount behavior started (timeout 5000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 install shared fixture mount behavior completed in 2ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 navigate to production route started (timeout 30000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 navigate to production route completed in 253ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 wait for network idle started (timeout 20000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 wait for network idle completed in 733ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 record effective Pixel 7 touch context started (timeout 5000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 record effective Pixel 7 touch context completed in 259ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 scroll CPI-major wrapper into view started (timeout 15000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 scroll CPI-major wrapper into view completed in 93ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 touch salary tab started (timeout 10000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 touch salary tab completed in 605ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 immediately read CPI wrapper bounding box after tab touch started (timeout 5000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 immediately read CPI wrapper bounding box after tab touch completed in 436ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 create CDP session for in-flight tab gesture started (timeout 5000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 create CDP session for in-flight tab gesture completed in 3ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 dispatch touchStart at immediate CPI wrapper center started (timeout 5000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 dispatch touchStart at immediate CPI wrapper center completed in 6ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 dispatch touchEnd at CPI wrapper started (timeout 5000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 dispatch touchEnd at CPI wrapper completed in 17ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 wait for close button hidden after optional wrapper touch started (timeout 7000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 wait for close button hidden after optional wrapper touch completed in 107ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 wait for scrollY to settle with two stable samples started (timeout 5200ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 wait for scrollY to settle with two stable samples completed in 306ms
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 wait for close button hidden after scroll settles started (timeout 7000ms)
+[phase6-b13-stage] p45-b-tooltip-dismiss-535-case01 wait for close button hidden after scroll settles completed in 85ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  23:50:31
+   Duration  11.44s (transform 0ms, setup 549ms, import 40ms, tests 9.70s, environment 0ms)
+
+
+ RUN  v4.1.11 /home/shunki/working/nextjstest
+
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  23:50:43
+   Duration  12.27s (transform 0ms, setup 560ms, import 42ms, tests 10.25s, environment 0ms)
+
+
+ RUN  v4.1.11 /home/shunki/working/nextjstest
+
+
+ Test Files  9 passed (9)
+      Tests  80 passed (80)
+   Start at  23:50:56
+   Duration  269.46s (transform 0ms, setup 3.84s, import 906ms, tests 259.49s, environment 0ms)
+
+
+ RUN  v4.1.11 /home/shunki/working/nextjstest
+
+
+ Test Files  5 passed (5)
+      Tests  21 passed | 5 skipped (26)
+   Start at  23:55:26
+   Duration  129.48s (transform 0ms, setup 1.08s, import 462ms, tests 122.55s, environment 0ms)
+

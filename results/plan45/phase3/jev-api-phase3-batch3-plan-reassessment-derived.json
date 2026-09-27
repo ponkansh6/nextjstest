@@ -1,0 +1,62 @@
+{
+  "checkpoint": "Plan45 Phase3 Batch3 corrected initial plan reassessment",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "transport": "HTTP success; response validation passed",
+  "model": "jev-1.13.0",
+  "primaryVerdict": {
+    "choice": "valid_as_defined",
+    "confidence": 0.86,
+    "passProbability": 0.88,
+    "probabilities": {
+      "valid_as_defined": 0.88,
+      "requirements_mismatch": 0.05,
+      "missing_prerequisites_info": 0.01,
+      "incomplete_implementation_info": 0.03,
+      "implementation_issue": 0.0,
+      "scope_violation": 0.02,
+      "other": 0.0,
+      "indeterminate": 0.01
+    }
+  },
+  "diagnosis": {
+    "status": "complete",
+    "followUpRecommended": false,
+    "followUpSent": false,
+    "note": "The corrected fresh initial v3 verdict passed valid_as_defined; no one-shot clarification was required. No separate non-pass finding was returned."
+  },
+  "historicalPriorCheckpoint": {
+    "primaryVerdict": "valid_as_defined",
+    "confidence": 0.86,
+    "passProbability": 0.88,
+    "diagnosisStatus": "complete",
+    "followUpSent": false,
+    "note": "Preserved unchanged as the initial review of the pre-clarification Batch3 wording. The current fresh initial request separately reviews exact source assertion groups, one-for-one replacements, case-specific boundaries, and the source Playwright case count."
+  },
+  "reviewedPlan": {
+    "newNamedBrowserModeCases": 10,
+    "cumulativeNamedBrowserModeCasesAtGate": 12,
+    "cumulativeSourcePlaywrightCasesTouchedAtGate": 10,
+    "caseCount": "Batch1 1 + Batch2 1 + Batch3 8 source declarations",
+    "cadence": "No E2E command (including targeted Playwright or pnpm test:full) until all ten new named Browser Mode cases pass; then run the retained consolidated E2E regression once.",
+    "assertionTransferRule": "Each named Browser Mode case replaces its explicitly listed source assertion group only after passing; an additive-only test does not count.",
+    "accounting": "A=123, E=90, M=1; all Batch3 transfers are partial stable-row slices and do not increment M.",
+    "phase5AndCi": "The 33 per-ID MAP-ineligible investigations remain deferred; no GitHub Actions change."
+  },
+  "caseSpecificMappings": [
+    {"stableId": "p45-a-cagr-sheet-02", "sourceAssertions": ["P42-046", "P42-047", "P42-048", "P42-049"], "contract": "Actual CagrPanel/useCagrState dialog visibility before/after year change and rendered visible, two-decimal result; production section/data/route remains E2E."},
+    {"stableId": "p45-b-monthly-boundary-axis-21-cpi-2017-12-2018-1-svg", "sourceAssertions": ["P42-353", "P42-354"], "contract": "Actual mounted CPI stacked SVG axis with synthetic monthly data; attached labels and 2017-12 exclusion; pure tick math unit and production route/data/render E2E remain."},
+    {"stableId": "p45-b-monthly-boundary-axis-21-2017-12-2018-1-svg", "sourceAssertions": ["P42-355", "P42-356"], "contract": "Actual mounted earnings SVG axis with synthetic monthly data; 2018-1 excluded and at least two labels remain; pure tick math unit and production route/data/render E2E remain."},
+    {"stableId": "p45-b-consumption-mobile-acceptance-37-mobile-pixel-acceptance-plan25-openspec-dom-32px", "sourceAssertions": ["P42-166", "P42-167", "P42-168"], "contract": "Separate nominal and real fixtures replace each loop iteration; actual legend control visibility/nonempty state and >=32x32 bounds at 412x915; P42-165 route visibility remains E2E."},
+    {"stableId": "p45-b-consumption-mobile-acceptance-63-mobile-pixel-acceptance-plan25-openspec-tooltip-14px-16", "sourceAssertions": ["P42-170 nominal iteration", "P42-170 real iteration"], "contract": "Distinct nominal/real actual SpendingBarChart/Recharts hover-to-visible-tooltip; no CustomTooltip style unit duplication; P42-169 and P42-171-174 remain E2E."},
+    {"stableId": "p45-b-consumption-mobile-acceptance-122-mobile-pixel-acceptance-plan25-openspec-summary-1", "sourceAssertions": ["P42-177 nominal iteration", "P42-177 real iteration"], "contract": "One named test with both actual SpendingBarChart fixtures asserts computed white-space nowrap only; summary copy not transferred; P42-175 and P42-176/P42-178 ownership unchanged."},
+    {"stableId": "p45-a-earnings-hover", "sourceAssertions": ["P42-290"], "contract": "Actual EarningsBreakdownChart plot hover to visible tooltip; production route, viewport geometry P42-287-289, and computed separator CSS remain E2E."},
+    {"stableId": "p45-b-tooltip-dismiss-578-chromium-escape-dismiss", "sourceAssertions": ["P42-577"], "contract": "Actual nominal SpendingBarChart/Recharts payload hover then Escape-dismiss; separate from ChartInfoButton Escape; production visibility, mouseleave, outside-click E2E and mocked touch unit coverage remain distinct."}
+  ],
+  "artifacts": {
+    "historicalRequest": {"path": "results/plan45/phase3/jev-api-phase3-batch3-plan-checkpoint-request.json", "sha256": "a271e40d69267253655f0a5ec5836f66c5a04cac134553af004dad12e84af54f"},
+    "historicalResponse": {"path": "results/plan45/phase3/jev-api-phase3-batch3-plan-checkpoint-response.json", "sha256": "e8db43d76921c7b9cd686eadd63c90d5dcdf14a857643828d97f71bc79e3c628"},
+    "request": {"path": "results/plan45/phase3/jev-api-phase3-batch3-plan-reassessment-request.json", "sha256": "b54274d561a48c79cdd4562e2a3863a13e26454f99271151995f5d7902abed7b"},
+    "response": {"path": "results/plan45/phase3/jev-api-phase3-batch3-plan-reassessment-response.json", "sha256": "eefecd442d95a6934d88369f64b41b9320773ebe95e2858940027fd6ce4d2a0e"}
+  },
+  "credentialHandling": "The API key was used only for bearer authentication by the local JEV client. No credential is present in request or response artifacts."
+}

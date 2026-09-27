@@ -1,0 +1,216 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-26T15:30:34.626Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "model": "jev-latest",
+    "state": {
+      "evaluationScope": "plan_validity",
+      "background": "Review the revised Phase 2 plan after freezing and auditing its 89-row roster. This is a plan-validity checkpoint before implementation. Plan and concise row census are embedded below; paths alone are not evidence. Evaluate whether the route PoC, source reconciliation, batch parity gates, boundaries, and acceptance criteria are concrete and internally consistent.",
+      "planExcerpt": "# Phase 2: Full Browser Mode Migration Plan\n\n## Goal and scope\n\nMove the original 89 partial candidate scenarios (the disjoint prior-51 and B3m-38 rosters) to full Vitest Browser Mode ownership, reaching `partial=0`. The target stack is Vitest and `@vitest/browser-playwright` 4.1.11 with Playwright 1.62.1. The frozen [89-row audit crosswalk](full-migration-roster.md) records stable IDs, source predicates, Browser Mode owners, remaining work, classification, and batch assignment.\n\nViewport, DOM/layout, hover, keyboard/focus, wheel/scroll, Chromium/WebKit, and touch emulation are supported or achievable with setup. Current component fixtures do not establish production Next route or server-data coverage; this is an unproven integration boundary, not evidence of technical impossibility.\n\n## Staged execution\n\n1. **Freeze and reconcile the ledger before implementation.** The frozen roster has exactly 89 unique IDs in sequential 20/20/20/20/9 batches. Counts are prior-51 A=0/B=44/C=7, B3m-38 A=0/B=36/C=2, total A=0/B=80/C=9. These are the original partial candidates, not proof that all 89 have a live unmigrated predicate. Resolve every C source predicate and any flagged source mismatch before implementation. Never mark a row complete merely because an E2E assertion was deleted; confirm a current source predicate and its complete Browser Mode owner, or correct the ledger status if the predicate was already transferred or no longer exists.\n2. **Prove the production-route path.** The [Next.js 16 Vitest guide](https://nextjs.org/docs/16/app/guides/testing/vitest) says async Server Components are unsupported through the standard Next Vitest integration; this constraint is distinct from browser APIs. Spike a Playwright-provider custom command with browser context/new-page access and a Next server harness. Build a minimal production Next route PoC that a Browser Mode test can operate and observe, including its route URL, server-provided data, and a visible chart/result predicate. Verify the exact APIs against the installed versions. If the first approach is blocked, isolate the limitation and try the minimum supported context/page and server-harness alternatives. Do not mark scenarios unsupported without reproducible technical evidence and JEV review.\n   Before writing or changing Next.js code for the PoC or harness, read the applicable version guide under `node_modules/next/dist/docs/` as required by the repository's `AGENTS.md`.\n3. **Reconcile source status and known mappings.** A means a live predicate reproducible by component fixtures alone; B means a live predicate requiring route/data/build/page-context integration; C means source predicate ownership/mapping is deleted, transferred, or unresolved, not technical unsupported. The roster flags acceptance-187 as P42-193..201 and readability-191 as P42-219..240; the earlier attribution of P42-223..231 to acceptance-187 was wrong. Keep those predicates at their respective source callsites until reconciled. Row201 (`p45-b-mobile-ux-201-lazymount-p5-1`) is in prior-51; production P42-349/-350 remain route E2E and P42-351 is unit-owned. Resolve its ledger wording before changing status.\n4. **Migrate in five batches.** Use batches of 20, 20, 20, 20, and 9 stable IDs, following the reconciled inventory order. For every ID, establish assertion parity first, then remove only its corresponding E2E predicate after the Browser Mode equivalent passes. Run the retained E2E regression after each 20-row batch and after the final batch. Keep unrelated E2E checks. Batch reports must list IDs, source-to-target predicate mapping, fidelity evidence, removed assertions, focused results, E2E result, and remaining gaps.\n5. **Close the ledger.** Audit all 89 IDs for exactly-once accounting, source-assertion ownership, test evidence, and E2E removals. An unresolved source mapping remains an explicit tracked item; it must not be silently treated as either a technical exclusion or a completed transfer.\n\n## Fidelity and parity requirements\n\nFor each scenario, preserve the source predicate and its meaningful inputs. The coverage map must state whether data comes from the real production route/server path or a fixture, and identify the route/build/page-shell boundary; viewport and layout dimensions; pointer, keyboard, focus, wheel, or touch interaction; and Chromium or WebKit engine. Use production route/data coverage wherever the source assertion depends on it. A component fixture is sufficient only where it reproduces the complete source predicate without a production integration dependency. Do not weaken thresholds, selected values, output expectations, page-error checks, or interaction assertions to make migration pass.\n\n## Gates, risks, and decisions\n\n- The route PoC is the first decision gate. A failure should produce a minimal reproducer and a tested next supported path (for example, provider custom command/context lifecycle or server startup/teardown adjustment). Escalate a claimed technical boundary with exact evidence and JEV review before changing scenario eligibility.\n- C-row reconciliation is a ledger/source-mapping gate, not a browser-capability gate. Keep any missing source assertion visible until its owner and disposition are established.\n- At each batch gate, compare the Browser Mode predicate and the E2E predicate side by side before deletion. Failed parity or E2E regression blocks that batch’s removals; unrelated assertions remain intact.\n- Browser engine, viewport, touch, and production-data fidelity can vary by row. Run the row in every engine/input context required by its source contract; do not infer WebKit or touch coverage from Chromium mouse coverage.\n\n## Acceptance and reporting\n\nAccept Phase 2 when the original 89-row candidate roster has been reconciled; each live source predicate has a passing, complete Browser Mode owner or an auditable ledger correction; no row is marked complete solely because an E2E assertion disappeared; the eligible roster has `partial=0`; all five retained E2E batch gates pass; and no unrelated E2E assertion was removed or weakened. Report per-batch counts/results, source-to-test crosswalk, C-row dispositions, route-PoC evidence, limitations with JEV outcome, and final inventory totals.\n\n## Capability references\n\nOfficial references for the spike and per-row evidence: [Vitest Browser Mode](https://vitest.dev/guide/browser/), [Vitest browser viewport](https://vitest.dev/config/browser/viewport.html), [browser interactivity](https://vitest.dev/config/browser/interactivity), [custom browser commands](https://vitest.dev/api/browser/commands), [Playwright provider](https://vitest.dev/config/browser/playwright), [Playwright BrowserContext](https://playwright.dev/docs/api/class-browsercontext), [Playwright page](https://playwright.dev/docs/api/class-page), and [Playwright emulation](https://playwright.dev/docs/emulation). Confirm exact behavior against the pinned project versions during the PoC.\n",
+      "acceptanceCriteria": [
+        "The 89-row frozen roster is exactly-once and partitions into the stated 20/20/20/20/9 batches and A0/B80/C9 total, with prior51 A0/B44/C7 and B3m38 A0/B36/C2.",
+        "C rows and flagged acceptance-187/readability-191/mobile-ux-201 mappings are reconciled before source assertion changes; C is not technical unsupported status.",
+        "No scenario is counted complete only because its source E2E assertion disappeared; each live predicate must have a complete Browser Mode owner or its source ledger status corrected with evidence.",
+        "Production Next route/server data is tested through the prescribed provider custom-command/context and Next server PoC; Next 16.3.5 async Server Component limitation is distinguished from browser API capability.",
+        "Assertion parity precedes narrow E2E removal; unrelated E2E assertions remain; retained E2E regressions run after each 20-row batch and at final batch.",
+        "Only valid_as_defined passes."
+      ],
+      "verification": [
+        "Frozen roster audit verified 89 table rows and 89 unique stable IDs; batch counts are 20/20/20/20/9.",
+        "Roster classification census: prior51 A0/B44/C7, B3m38 A0/B36/C2, total A0/B80/C9.",
+        "The plan links the frozen roster and cites the official Next.js 16 Vitest guide plus official Vitest/Playwright capability references.",
+        "No Phase 2 implementation, PoC, tests, or E2E regression has been run; this remains a plan checkpoint."
+      ],
+      "knownConstraints": [
+        "Original roster contains 89 partial candidates, not 89 confirmed live unmigrated predicates; source/ledger reconciliation may change the final eligible partial count.",
+        "The nine C rows require source assertion ownership/mapping reconciliation; never deem them full solely due to E2E deletion.",
+        "Official Next.js 16.3.5 Vitest guidance says async Server Components are unsupported through standard Next Vitest integration; that limitation does not establish that Playwright/browser APIs or a custom production-route harness are impossible.",
+        "Current component fixtures do not prove production route/server-data wiring; the custom BrowserContext/Next server PoC is required.",
+        "No source predicate weakening or unrelated E2E removal. Plan-only checkpoint; do not infer implementation/test success."
+      ],
+      "outputRequirement": "Choose exactly one of the exact eight listed verdict IDs and return a probability distribution over them. For any non-pass verdict, report a concrete finding, affected plan/roster row, evidence, and a specific correction or exact additional evidence needed. For valid_as_defined, state no case-specific finding and disclose non-blocking uncertainty. Do not invent details.",
+      "frozenRosterFacts": {
+        "census": "Frozen roster audit: prior-51 A=0/B=44/C=7; B3m-38 A=0/B=36/C=2; total A=0/B=80/C=9. Exactly 89 unique rows, sequential batches 20/20/20/20/9. These are original partial candidate rows, not proof each still has an outstanding source predicate. C rows require source-predicate reconciliation before full status. Never mark complete solely because an E2E assertion was deleted.",
+        "stableIdsByBatch": {
+          "B1": [
+            "p45-a-a11y-sheet-tab-trap",
+            "p45-a-cagr-sheet-02",
+            "p45-a-cagr-sheet-03",
+            "p45-a-cagr-sheet-04",
+            "p45-a-cagr-sheet-05",
+            "p45-a-cagr-sheet-06",
+            "p45-a-cagr-sheet-07",
+            "p45-a-cagr-sheet-08",
+            "p45-a-cagr-sheet-09",
+            "p45-a-cpi-legend-scroll",
+            "p45-a-cpi-tooltip-rows",
+            "p45-a-earnings-hover",
+            "p45-a-earnings-hidden-series-hover",
+            "p45-a-legend-entertainment-series9",
+            "p45-a-legend-food-nominal",
+            "p45-a-legend-dark-all12",
+            "p45-b-monthly-boundary-axis-21-cpi-2017-12-2018-1-svg",
+            "p45-b-monthly-boundary-axis-21-2017-12-2018-1-svg",
+            "p45-b-range-change-107-e2e",
+            "p45-b-range-change-187-e2e-1"
+          ],
+          "B2": [
+            "p45-b-range-change-200-e2e-2",
+            "p45-b-range-change-215-e2e",
+            "p45-b-range-change-303-e2e-2005-url",
+            "p45-b-section-tabs-scroll-47-case01-chromium",
+            "p45-b-section-tabs-scroll-120-case01-chromium",
+            "p45-b-section-tabs-scroll-127-case01-chromium",
+            "p45-b-section-tabs-scroll-142-mask-image-chromium",
+            "p45-b-spending-filter-35-e2e-q1",
+            "p45-b-spending-filter-64-e2e",
+            "p45-b-tooltip-dismiss-578-chromium-escape-dismiss",
+            "p45-b-tooltip-stack-total-65-e2e-t7-2022",
+            "p45-b-tooltip-stack-total-81-e2e-t8-tooltip",
+            "p45-b-consumption-mobile-acceptance-37-mobile-pixel-acceptance-plan25-openspec-dom-32px",
+            "p45-b-consumption-mobile-acceptance-63-mobile-pixel-acceptance-plan25-openspec-tooltip-14px-16",
+            "p45-b-consumption-mobile-acceptance-122-mobile-pixel-acceptance-plan25-openspec-summary-1",
+            "p45-b-consumption-mobile-acceptance-139-mobile-pixel-acceptance-plan25-openspec-1",
+            "p45-b-consumption-mobile-acceptance-161-mobile-pixel-acceptance-plan25-openspec-dark-mode-toolt",
+            "p45-b-consumption-mobile-readability-52-320px-y-x",
+            "p45-b-consumption-mobile-readability-52-375px-y-x",
+            "p45-b-consumption-mobile-readability-52-390px-y-x"
+          ],
+          "B3": [
+            "p45-b-consumption-mobile-readability-52-430px-y-x",
+            "p45-b-consumption-mobile-readability-297-375x667-tooltip",
+            "p45-b-consumption-mobile-readability-297-320x480-tooltip",
+            "p45-b-consumption-mobile-readability-297-landscape-tooltip",
+            "p45-b-mobile-ux-19-ux",
+            "p45-b-mobile-ux-79-ux-375px-select",
+            "p45-b-mobile-ux-112-ux-375px-select",
+            "p45-b-mobile-ux-140-ux-375px-3",
+            "p45-b-mobile-ux-192-lazymount-p5-1",
+            "p45-b-mobile-ux-201-lazymount-p5-1",
+            "p45-b-tooltip-dismiss-231-case01",
+            "p45-a-a11y-info-outside-click",
+            "p45-a-advanced-series-normal",
+            "p45-a-cagr-sheet-01",
+            "p45-a-cpi-sections",
+            "p45-b-plan24-rendering-71-plan24-rendering-contract-cti-2005-2017-2018-legacy-gdp",
+            "p45-b-plan24-rendering-88-plan24-rendering-contract-2025q1-q4-csv-tooltip",
+            "p45-b-tooltip-stack-total-108-e2e-t9-cpi-section-stacked-tooltip-total",
+            "p45-b-consumption-boundary-85-768px-desktop-chromium-768px-viewport-overflow",
+            "p45-b-consumption-boundary-85-768px-desktop-chromium-769px-viewport-overflow"
+          ],
+          "B4": [
+            "p45-b-consumption-mobile-acceptance-187-mobile-pixel-acceptance-plan25-openspec-375x667-tooltip",
+            "p45-b-consumption-mobile-readability-191-375px-tooltip-6-viewport",
+            "p45-b-consumption-mobile-readability-191-430px-tooltip-6-viewport",
+            "p45-b-mobile-ux-243-sectiontabs-sticky-android-chrome",
+            "p45-b-mobile-ux-47-ux-375px",
+            "p45-b-mobile-ux-65-ux-320px-overflow",
+            "p45-b-mobile-ux-65-ux-375px-overflow",
+            "p45-b-mobile-ux-65-ux-390px-overflow",
+            "p45-b-mobile-ux-65-ux-430px-overflow",
+            "p45-b-range-change-119-e2e",
+            "p45-b-range-change-136-e2e",
+            "p45-b-range-change-153-e2e",
+            "p45-b-range-change-170-e2e",
+            "p45-b-range-change-242-e2e",
+            "p45-b-range-change-273-e2e",
+            "p45-b-section-tabs-scroll-120-case02-webkit",
+            "p45-b-section-tabs-scroll-127-case02-webkit",
+            "p45-b-section-tabs-scroll-142-mask-image-webkit",
+            "p45-b-section-tabs-scroll-47-3-chromium",
+            "p45-b-section-tabs-scroll-47-3-webkit"
+          ],
+          "B5": [
+            "p45-b-section-tabs-scroll-47-case02-chromium",
+            "p45-b-section-tabs-scroll-47-case04-webkit",
+            "p45-b-section-tabs-scroll-47-case05-webkit",
+            "p45-b-section-tabs-scroll-82-3-chromium",
+            "p45-b-section-tabs-scroll-82-3-webkit",
+            "p45-b-section-tabs-scroll-82-case01-chromium",
+            "p45-b-section-tabs-scroll-82-case02-chromium",
+            "p45-b-section-tabs-scroll-82-case04-webkit",
+            "p45-b-section-tabs-scroll-82-case05-webkit"
+          ]
+        },
+        "sourceConflicts": [
+          "acceptance-187 is tests/e2e/consumption-mobile-acceptance.e2e.spec.ts:187, P42-193..201. readability-191 is tests/e2e/consumption-mobile-readability.e2e.spec.ts:191, P42-219..240. Prior attribution of readability P42-223..231 to acceptance-187 was wrong; keep predicates at their source callsites pending reconciliation.",
+          "mobile-ux-201 is in prior-51, not B3m. Production P42-349/-350 remain route E2E; P42-351 is unit-owned. Resolve conflicting inventory ledger wording before final status change.",
+          "B3m C: a11y-info-outside-click has no matching current P42-018 source assertion (P42-019 scroll remains); cpi-sections has no P42 mapping, and P42-262 is a separate unit-owned legend loop."
+        ]
+      }
+    },
+    "questions": {
+      "plan_validity": {
+        "type": "choice",
+        "instructions": "Is the revised Phase 2 plan and frozen 89-row roster valid as defined, with source-mapping uncertainty correctly gated before implementation? Return probabilities over all eight exact verdict IDs.",
+        "criteria": {
+          "valid_as_defined": "The revised plan and frozen roster are coherent, properly scoped, and have testable prerequisites, source reconciliation rules, migration gates, and acceptance criteria.",
+          "requirements_mismatch": "Plan requirements conflict with each other or the stated migration objective; identify the exact conflict and correction.",
+          "missing_prerequisites_info": "A material prerequisite or decision is missing and blocks a defensible plan; identify exactly what is needed.",
+          "incomplete_implementation_info": "Material plan or roster evidence is insufficient to judge feasibility; identify the missing detail. Do not reject merely because implementation has not started.",
+          "implementation_issue": "Existing implementation evidence exposes a concrete blocker to this plan; identify location, evidence, and correction.",
+          "scope_violation": "The plan exceeds or violates the stated Phase 2 scope/boundaries; identify the boundary and adjustment.",
+          "other": "A material concern does not fit the above categories; identify its location, evidence, and fix or exact needed evidence.",
+          "indeterminate": "The supplied plan excerpt and evidence cannot support a defensible judgment; identify what is missing if possible."
+        }
+      }
+    }
+  },
+  "questionIds": [
+    "plan_validity"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "plan_validity": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.87,
+        "probabilities": {
+          "other": 0.02,
+          "implementation_issue": 0.01,
+          "requirements_mismatch": 0.04,
+          "missing_prerequisites_info": 0.02,
+          "indeterminate": 0,
+          "incomplete_implementation_info": 0.02,
+          "valid_as_defined": 0.89,
+          "scope_violation": 0
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.87,
+    "probabilities": {
+      "other": 0.02,
+      "implementation_issue": 0.01,
+      "requirements_mismatch": 0.04,
+      "missing_prerequisites_info": 0.02,
+      "indeterminate": 0,
+      "incomplete_implementation_info": 0.02,
+      "valid_as_defined": 0.89,
+      "scope_violation": 0
+    },
+    "passProbability": 0.89,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

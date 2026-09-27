@@ -1,0 +1,10 @@
+$ node scripts/run-next-route-poc.mjs --only=phase6-b07
+
+ RUN  v4.1.11 /home/shunki/working/nextjstest
+
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  18:48:40
+   Duration  5.39s (transform 0ms, setup 558ms, import 42ms, tests 3.11s, environment 0ms)
+

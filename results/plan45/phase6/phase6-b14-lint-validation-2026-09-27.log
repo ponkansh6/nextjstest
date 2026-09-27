@@ -1,0 +1,1 @@
+$ oxlint --ignore-pattern 'tests/**' --ignore-pattern 'scripts/ts_converters/**' --ignore-pattern '**/.plan42*' --ignore-pattern '**/.plan42*/**' --nextjs-plugin --react-plugin --react-perf-plugin

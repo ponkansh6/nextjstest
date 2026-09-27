@@ -1,0 +1,38 @@
+$ node scripts/run-next-route-poc.mjs --only=phase6-b07
+
+ RUN  v4.1.11 /home/shunki/working/nextjstest
+
+ ❯ |chromium| tests/browser-mode/phase6-b07-real-consumption.browser.test.ts (3 tests | 1 failed) 16827ms
+   × B07 #82: renders the real-consumption section through normal LazyMount behavior 15797ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |chromium| tests/browser-mode/phase6-b07-real-consumption.browser.test.ts:25:1 > B07 #82: renders the real-consumption section through normal LazyMount behavior
+TimeoutError: locator.waitFor: Timeout 15000ms exceeded.
+Call log:
+[2m  - waiting for locator('#section-consumption-real') to be visible[22m
+
+
+Failure screenshot:
+  - tests/browser-mode/__screenshots__/phase6-b07-real-consumption.browser.test.ts/B07--82--renders-the-real-consumption-section-through-normal-LazyMount-behavior-1.png
+
+ ❯ tests/browser-mode/phase6-b07-real-consumption.browser.test.ts:26:37
+     24|
+     25| it("B07 #82: renders the real-consumption section through normal LazyM…
+     26|   const { visible } = await commands.inspectPhase6B07(SECTION_VISIBLE)…
+       |                                     ^
+     27|   expect(visible, "Real consumption chart section should be visible").…
+     28| });
+
+ ❯ tests/browser-mode/phase6-b07-real-consumption.browser.test.ts:25:1 traces
+   ↳ tests/browser-mode/__traces__/phase6-b07-real-consumption.browser.test.ts/chromium-B07--82--renders-the-real-consumption-section-through-normal-LazyMount-behavior-0-0.trace.zip
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  18:45:50
+   Duration  18.88s (transform 0ms, setup 566ms, import 42ms, tests 16.83s, environment 0ms)
+
+[ELIFECYCLE] Command failed with exit code 1.

@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "jev-review-initial-distribution-v3",
+  "model": "jev-latest",
+  "state": {
+    "evaluationScope": "plan_validity",
+    "background": "Review the Phase 2 plan excerpt below for migrating all 89 currently partial MAP scenarios to full Vitest Browser Mode ownership. This is a plan-only checkpoint before implementation. The plan targets Vitest/@vitest/browser-playwright 4.1.11 and Playwright 1.62.1. It requires a reconciled, frozen 89-row crosswalk before implementation, a production Next route/server-data PoC, per-ID source assertion parity and fidelity mapping, five batches of 20/20/20/20/9, and retained E2E regression after each 20-row batch and at completion. The goal is partial=0 for the eligible roster, with no weakened predicates or unrelated E2E removals.",
+    "planExcerpt": "Goal: move prior-51 + B3m-38 (89 partial scenarios) to full Browser Mode coverage. Current component fixtures do not establish production Next route/server-data coverage; this is unproven, not inherently impossible.\n\nBefore implementation, reconcile stale inventory entries and create/review results/plan45/phase2/full-migration-roster.md as an exactly-once frozen 89-row crosswalk. Every row records stable ID, exact remaining E2E predicate and P42 ID, source test/callsite, current Browser Mode assertion or explicit none, planned Browser Mode scenario and route harness, A/B/C status, and assigned 20/20/20/20/9 batch. Do not start implementation before this is complete.\n\nFirst spike a Playwright-provider custom command with browser context/new-page access and a Next server harness. A minimal production Next route PoC must be operable and observable from Browser Mode, including route URL, server-provided data, and a visible chart/result predicate. Verify exact APIs against installed versions; if blocked, isolate the obstacle and try minimum supported context/page and server-harness alternatives. Do not mark scenarios unsupported without reproducible technical evidence and JEV review. Before writing/changing Next.js code, read the applicable version guide in node_modules/next/dist/docs/ as required by AGENTS.md.\n\nStrict prior-51 residual audit: A=0 (live predicates fully reproducible using component fixtures alone), B=44 (live predicates requiring route/data/build/page-context integration), C=7 (source predicate deleted, transferred, or unmapped; resolve source mapping/ledger status before adding migration). C is not technical unsupported status. C IDs: p45-a-cagr-sheet-02, p45-a-cagr-sheet-04, p45-b-monthly-boundary-axis-21-cpi-2017-12-2018-1-svg, p45-b-monthly-boundary-axis-21-2017-12-2018-1-svg, p45-b-section-tabs-scroll-120-case01-chromium, p45-b-section-tabs-scroll-127-case01-chromium, p45-b-section-tabs-scroll-142-mask-image-chromium. If all source predicates already have Browser Mode owners, reconcile the row to full; trace any unexplained missing predicate.\n\nMigrate in five batches of 20/20/20/20/9. Establish exact assertion parity before removing only the matching E2E predicate; run retained E2E regression after every 20-row batch and the final batch. Keep unrelated E2E checks. Map source data vs fixture, route/build/page-shell, viewport/layout, pointer/keyboard/focus/wheel/touch, and required browser engine per ID. Do not weaken source thresholds, selected values, output, page-error, or interaction expectations.\n\nAccept when the reconciled roster has 89 unique IDs, every source predicate has a passing Browser Mode owner or precise auditable equivalent, the eligible roster has partial=0 (89 migrated; total 90 full/0 partial), all five E2E batch gates pass, and no unrelated E2E assertion is removed or weakened.",
+    "acceptanceCriteria": [
+      "The plan specifies a complete, exactly-once 89-row frozen crosswalk before implementation, including exact source E2E/P42 predicates, current and planned Browser Mode ownership, A/B/C status, route harness needs, and batch membership.",
+      "The production Next route/server-data boundary is treated as unproven and investigated with a minimal Browser Mode PoC; technical exclusion requires reproducible evidence and JEV review.",
+      "The prior-51 A=0/B=44/C=7 classification is interpreted correctly: C denotes source mapping/ledger reconciliation, not technical inability.",
+      "The 20/20/20/20/9 batch plan requires source-to-Browser Mode assertion parity before narrowly removing corresponding E2E predicates and runs retained E2E regression at the stated cadence.",
+      "Per-ID data, route, viewport/layout, interaction mode, and engine fidelity are preserved without weakening assertions or removing unrelated E2E checks.",
+      "The completion criteria reconcile to 89 migrated eligible partials, partial=0, 90 full total, and passing E2E batch gates."
+    ],
+    "verification": [
+      "Plan artifact: results/plan45/phase2/full-migration-plan.md; its excerpt is included above because JEV cannot access local paths.",
+      "The plan records the pinned target versions and links official Vitest Browser Mode/viewport/interactivity/custom-command/Playwright-provider docs and Playwright BrowserContext/page/emulation docs; it requires confirming exact behavior against pinned versions during the PoC.",
+      "This is a plan-only review: no Phase 2 implementation, PoC, focused tests, or E2E runs have been performed. The plan explicitly schedules those as later implementation gates.",
+      "Repository instructions require reading the applicable Next version guide from node_modules/next/dist/docs/ before writing Next code; the plan includes that prerequisite."
+    ],
+    "knownConstraints": [
+      "Plan-only checkpoint: do not infer implementation or test success from the plan; do not run implementation or tests as part of this review.",
+      "Current inventory may contain stale rows; reconciling it is a required first phase task before freezing the roster or implementation.",
+      "Component Browser Mode fixtures currently do not prove production Next route/server-data wiring. This is an evidence gap to investigate, not a technical exclusion.",
+      "All viewport, DOM/layout, hover, keyboard/focus, wheel/scroll, Chromium/WebKit, and touch-emulation capabilities are possible or achievable with setup according to the supplied capability audit; exact behavior must be confirmed against pinned versions.",
+      "No source predicate may be weakened or silently dropped; no unrelated E2E assertion may be removed.",
+      "No tests, JEV beyond this checkpoint workflow, code implementation, commit, or push are included in this plan review task."
+    ],
+    "outputRequirement": "Choose exactly one of the eight listed verdict IDs and provide a probability distribution over all eight. For any verdict other than valid_as_defined, give a concrete case-specific finding, affected plan requirement/location, observed evidence, and a specific plan correction or exact additional evidence needed. For valid_as_defined, state that no case-specific finding remains and identify any non-blocking uncertainty explicitly. Do not invent facts."
+  },
+  "questions": {
+    "plan_validity": {
+      "type": "choice",
+      "instructions": "Is the supplied Phase 2 migration plan valid as defined and sufficiently concrete to proceed to its pre-implementation roster-freeze and PoC gates? Return a probability distribution over the exact listed verdict IDs.",
+      "criteria": {
+        "valid_as_defined": "The plan is coherent, scoped, evidence-aware, and has testable prerequisites, migration gates, and acceptance criteria.",
+        "requirements_mismatch": "Plan requirements conflict with each other or the stated migration objective; identify the exact conflict and correction.",
+        "missing_prerequisites_info": "A prerequisite or required decision is missing and blocks the plan; identify exactly what is needed.",
+        "incomplete_implementation_info": "The plan lacks material implementation/evidence detail needed to judge its feasibility; identify the missing detail. Do not reject merely because this is a pre-implementation plan.",
+        "implementation_issue": "Existing implementation evidence exposes a concrete blocker to the plan; identify location, evidence, and correction.",
+        "scope_violation": "The plan exceeds or violates the requested scope/boundaries; identify the boundary and adjustment.",
+        "other": "A material concern does not fit the above categories; identify its location, evidence, and fix or exact needed evidence.",
+        "indeterminate": "The supplied plan excerpt and evidence cannot support a defensible judgment; identify what is missing if possible."
+      }
+    }
+  }
+}

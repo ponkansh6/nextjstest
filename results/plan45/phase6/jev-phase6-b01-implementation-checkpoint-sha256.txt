@@ -1,0 +1,7 @@
+50be5025f81f9960c7b84c7ac4773e01253bff4c0caebc19da63d82106794367  results/plan45/phase6/jev-phase6-b01-implementation-checkpoint-request.json
+819484c8391427f65c880d639e21dcbf3ca87c4845a9cf30588f0ad3bc094086  results/plan45/phase6/jev-phase6-b01-implementation-checkpoint-result.json
+c20f3e27b36767b7be5003eb48d834e3b456ea316601b6ab9ca5009c0e91de26  results/plan45/phase6/jev-phase6-b01-implementation-checkpoint-derived.md
+591c82a932fc2bfe3cfdfa52005be5372185cfa881b3e513fbc7d211f78286e7  results/plan45/phase6/phase6-b01-browser-mode-validation-2026-09-27.log
+2f572b45d3b93eba276e73c32c816b4d49fd99d5bc5536b9ee88dbbbd1d1862c  results/plan45/phase6/phase6-b01-residual-e2e-validation-2026-09-27.log
+18bfce7cd1e7ce6f5c1eff02e14d845eee04e0b946a12fa1b65a5f5d6ab1b8da  results/plan45/phase6/phase6-b01-lint-validation-2026-09-27.log
+dc1528abcb5286c27ae97b2a66c5af91b248a9c2e5046845fc6bf190214e5a63  results/plan45/phase6/phase6-b01-type-check-validation-2026-09-27.log

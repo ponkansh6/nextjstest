@@ -1,0 +1,109 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-27T07:20:27.366Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "model": "jev-latest",
+    "state": {
+      "evaluationScope": "implementation_checkpoint_validity",
+      "background": "This is a revalidation of the Plan45 Phase 5 implementation checkpoint after correcting the #12/#13 source-assertion crosswalk and adding current full-suite validation logs. The six former partials (#12, #30, #70–73) are full Browser Mode cutovers; the remaining 33 cases were in Phase 5 feasibility-only scope, remain owned by Playwright E2E, and have not been counted as migrated. Final evidence is in results/plan45/phase5/phase5-feasibility-execution-results-2026-09-27.md, results/plan45/phase0/scenario-inventory.md, and shared_plan/45-vitest-browser-mode-e2e-migration-plan.md.",
+      "acceptanceCriteria": [
+        "The six former partial scenarios (#12,#30,#70,#71,#72,#73) have source-level assertion coverage in their Browser Mode destinations and current route-suite verification; M is 90/123.",
+        "The #12/#13 assertion crosswalk is accurate: #12 owns P42-287–290 plus the unnumbered expectBrowserSeparatorStyle helper assertion (source lines 49–55, called at line 67); #13 owns P42-297 evidence-row border assertion at source line 122.",
+        "All 33 historical MAP-ineligible scenarios have per-ID source-contract feasibility evidence; they are E-eligible but remain Playwright-owned and are not counted in M until whole-scenario cutover.",
+        "The current metrics are internally consistent: A=123, E=123/123, M=90/123, with zero cases proven impossible to migrate under Browser Mode.",
+        "Current route and E2E validation outcomes are represented accurately and the incomplete first E2E attempt is not counted as successful.",
+        "The report preserves evidence limits for #307's engineered overlap and #535's offscreen touch, and discloses that raw focused transcripts for the historical six-cutover runs were not preserved."
+      ],
+      "verification": [
+        "pnpm run test:browser:next-route-poc:built: Chromium 9 files / 80 tests passed; WebKit 5 files / 21 passed and 5 skipped; output saved in phase5-browser-route-validation-current.log.",
+        "pnpm test:e2e after fresh build: 31 passed / 18 skipped; output saved in phase5-e2e-validation-current.log.",
+        "pnpm exec playwright test tests/e2e/real-consumption.e2e.spec.ts --workers=1: 7 passed; output saved in phase5-e2e-real-consumption-isolated.log.",
+        "Phase 5 rendering probe: 15/15 passed and observed; interaction probe: 18/18 passed and observed with contractMatch=true; final logs retained.",
+        "pnpm run lint and git diff --check passed. pnpm run type-check retains existing errors in older Browser Mode component tests and has no diagnostic in new Phase 5 probe files.",
+        "A first fresh-built E2E run had an incomplete log and a transient timeout locating #section-consumption-real in test #14; the isolated 7-test file and subsequent full 49-test run passed."
+      ],
+      "knownConstraints": [
+        "The current Phase 5 scope is a feasibility assessment for the 33 scenarios, not their whole-test cutover. Their Playwright source assertions remain the owners until a separate cutover crosses the plan's migration gates.",
+        "#307 verifies the source test's deliberately engineered link/tooltip overlap, not a natural production overlap.",
+        "#535 replays the source hidden-close assertion at a post-tab touch point around y=-2785, outside the viewport, with a null chart hit and no observed scroll; it does not verify a real on-screen chart touch during scrolling.",
+        "#159's source Escape/retap predicates pass even though the auxiliary event recorder did not record an Escape keydown; #249 briefly shows a tooltip mid-swipe but is hidden at gesture end as the original test asserts.",
+        "Historical focused six-case and temporary source dual-run counts are retained in documentation, but raw transcripts for those focused runs were not preserved. Current broad route and E2E logs are available.",
+        "The E2E suite's first incomplete attempt is not treated as a pass; later isolated and full runs provide the successful current evidence."
+      ],
+      "outputRequirement": "Choose exactly one criterion for this corrected implementation checkpoint. Provide the effective verdict, decision summary and distribution, evidence tied to affected IDs and artifact paths, any required correction with exact location, and remaining uncertainty. Do not count feasibility probes as whole-test migrations, do not infer impossibility from an unobserved intended behavior, and preserve the stated caveats. If a valid non-pass choice is selected, retain this initial distribution and perform only the prescribed single clarification; never promote an initial failure to pass."
+    },
+    "questions": {
+      "implementation": {
+        "type": "choice",
+        "instructions": "Evaluate the corrected Phase 5 implementation checkpoint against the acceptance criteria and current evidence; select exactly one matching criterion.",
+        "criteria": {
+          "valid_as_defined": "Source crosswalk, migration status, case-by-case feasibility evidence, caveats, and current verification are internally consistent and satisfy the acceptance criteria.",
+          "requirements_mismatch": "A concrete requirement conflicts with implementation or evidence; identify it and a requirements-only correction.",
+          "missing_prerequisites_info": "Required prerequisite information is absent; identify the exact information needed.",
+          "incomplete_implementation_info": "Evidence needed for a particular criterion or scenario is missing; identify the exact gap and needed evidence.",
+          "implementation_issue": "A concrete implementation or reporting defect violates a criterion; identify location, evidence, and correction.",
+          "scope_violation": "The work crosses the defined Phase 5 or migration scope; identify the boundary and required adjustment.",
+          "other": "A different validity issue exists; identify the finding, location, evidence, and next action.",
+          "indeterminate": "Available evidence cannot support a decision; identify the missing context and what would resolve it."
+        }
+      }
+    }
+  },
+  "questionIds": [
+    "implementation"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "implementation": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.84,
+        "probabilities": {
+          "scope_violation": 0.01,
+          "valid_as_defined": 0.85,
+          "requirements_mismatch": 0.03,
+          "missing_prerequisites_info": 0.01,
+          "indeterminate": 0.01,
+          "other": 0,
+          "implementation_issue": 0.07,
+          "incomplete_implementation_info": 0.02
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.84,
+    "probabilities": {
+      "scope_violation": 0.01,
+      "valid_as_defined": 0.85,
+      "requirements_mismatch": 0.03,
+      "missing_prerequisites_info": 0.01,
+      "indeterminate": 0.01,
+      "other": 0,
+      "implementation_issue": 0.07,
+      "incomplete_implementation_info": 0.02
+    },
+    "passProbability": 0.85,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

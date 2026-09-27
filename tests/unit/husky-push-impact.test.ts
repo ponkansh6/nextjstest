@@ -203,6 +203,10 @@ describe("pre-push isolated gate harness", () => {
     const wrapper = fs.readFileSync(hookWrapper, "utf8");
     expect(wrapper).toContain("#!/bin/sh");
     expect(wrapper).toContain('exec bash -e "$(dirname "$0")/pre-push.bash" "$@"');
+    const scripts = JSON.parse(
+      fs.readFileSync(path.resolve(process.cwd(), "package.json"), "utf8"),
+    ).scripts;
+    expect(scripts["test:e2e"]).toBe("playwright test");
   });
 
   function setupHookFixture(): { repo: string; input: string; bin: string; log: string } {
@@ -261,7 +265,7 @@ exit 0
     }
   }
 
-  it("runs related with the actual candidate array, then build and E2E", () => {
+  it("runs related with the actual candidate array, then build and production-route Browser Mode", () => {
     const fixture = setupHookFixture();
     try {
       const result = runHook(fixture);
@@ -273,8 +277,12 @@ exit 0
         ),
       ).toBe(true);
       expect(calls).toContain("run build");
-      expect(calls).toContain("run test:e2e:clean");
-      expect(calls).toContain("run test:e2e");
+      expect(calls).toContain("run test:browser:next-route-poc:built");
+      expect(calls).not.toContain("run test:e2e");
+      expect(calls).not.toContain("run test:e2e:clean");
+      expect(calls.indexOf("run build")).toBeLessThan(
+        calls.indexOf("run test:browser:next-route-poc:built"),
+      );
       expect(calls).not.toContain("run lint:fast");
     } finally {
       fs.rmSync(fixture.repo, { recursive: true, force: true });
@@ -293,7 +301,9 @@ exit 0
         expect(result.output).toContain("fallback profile: full");
         expect(calls.filter((call) => call === "run lint:fast")).toHaveLength(1);
         expect(calls.filter((call) => call === "run build")).toHaveLength(1);
-        expect(calls.filter((call) => call === "run test:e2e")).toHaveLength(1);
+        expect(
+          calls.filter((call) => call === "run test:browser:next-route-poc:built"),
+        ).toHaveLength(1);
       } finally {
         fs.rmSync(fixture.repo, { recursive: true, force: true });
         fs.rmSync(fixture.bin, { recursive: true, force: true });
@@ -307,15 +317,26 @@ exit 0
       const full = runHook(fixture, { PREPUSH_PROFILE: "full" });
       expect(full.status).toBe(0);
       expect(full.output).toContain("explicit full profile requested");
-      const fullCalls = fs.readFileSync(fixture.log, "utf8");
+      const fullCalls = fs.readFileSync(fixture.log, "utf8").trim().split("\n");
       expect(fullCalls).not.toContain("exec vitest related");
+      expect(fullCalls).not.toContain("run test:e2e");
+      expect(fullCalls).not.toContain("run test:e2e:clean");
       expect(fullCalls.indexOf("run build")).toBeGreaterThan(fullCalls.indexOf("run test:all"));
+      expect(fullCalls.indexOf("run test:browser:next-route-poc:built")).toBeGreaterThan(
+        fullCalls.indexOf("run build"),
+      );
 
       fs.writeFileSync(fixture.log, "");
-      const failed = runHook(fixture, { MOCK_FAIL_GATE: "build" });
+      const failed = runHook(fixture, {
+        PREPUSH_PROFILE: "full",
+        MOCK_FAIL_GATE: "test:browser:next-route-poc:built",
+      });
       expect(failed.status).toBe(23);
-      expect(failed.output).toContain("gate failed: build");
-      expect(fs.readFileSync(fixture.log, "utf8")).not.toContain("run test:e2e");
+      expect(failed.output).toContain("gate failed: test:browser:next-route-poc:built");
+      const failedCalls = fs.readFileSync(fixture.log, "utf8");
+      expect(failedCalls).toContain("run build");
+      expect(failedCalls).not.toContain("run test:build-parity");
+      expect(failedCalls).not.toContain("run security-check");
     } finally {
       fs.rmSync(fixture.repo, { recursive: true, force: true });
       fs.rmSync(fixture.bin, { recursive: true, force: true });

@@ -1,0 +1,94 @@
+$ node scripts/run-next-route-poc.mjs --only=phase6-b06
+
+ RUN  v4.1.11 /home/shunki/working/nextjstest
+
+ ❯ |chromium| tests/browser-mode/phase6-b06-quarterly.browser.test.ts (3 tests | 3 failed) 66135ms
+   × B06 Plan27 ID 79: real CTI key boundary 2373ms
+   × B06 Plan27 ID 9: 52-quarter table and CSV 2911ms
+   × B06 Plan23 ID 26: quarterly public data 60800ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |chromium| tests/browser-mode/phase6-b06-quarterly.browser.test.ts:13:1 > B06 Plan27 ID 79: real CTI key boundary
+AssertionError: expected { width: 412, height: 839 } to deeply equal { width: 412, height: 915 }
+
+Failure screenshot:
+  - tests/browser-mode/__screenshots__/phase6-b06-quarterly.browser.test.ts/B06-Plan27-ID-79--real-CTI-key-boundary-1.png
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "height": 915,[39m
+[31m+   "height": 839,[39m
+[2m    "width": 412,[22m
+[2m  }[22m
+
+ ❯ tests/browser-mode/phase6-b06-quarterly.browser.test.ts:18:42
+     16|     realHeaders: string[];
+     17|   };
+     18|   expect(result.contextEvidence.viewport).toEqual({ width: 412, height…
+       |                                          ^
+     19|   expect(result.contextEvidence.deviceScaleFactor).toBe(2.625);
+     20|   expect(result.contextEvidence.touchPoints).toBeGreaterThan(0);
+
+ ❯ tests/browser-mode/phase6-b06-quarterly.browser.test.ts:13:1 traces
+   ↳ tests/browser-mode/__traces__/phase6-b06-quarterly.browser.test.ts/chromium-B06-Plan27-ID-79--real-CTI-key-boundary-0-0.trace.zip
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |chromium| tests/browser-mode/phase6-b06-quarterly.browser.test.ts:26:1 > B06 Plan27 ID 9: 52-quarter table and CSV
+AssertionError: expected { width: 412, height: 839 } to deeply equal { width: 412, height: 915 }
+
+Failure screenshot:
+  - tests/browser-mode/__screenshots__/phase6-b06-quarterly.browser.test.ts/B06-Plan27-ID-9--52-quarter-table-and-CSV-1.png
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "height": 915,[39m
+[31m+   "height": 839,[39m
+[2m    "width": 412,[22m
+[2m  }[22m
+
+ ❯ tests/browser-mode/phase6-b06-quarterly.browser.test.ts:36:42
+     34|     csv: { text: string; rows: string[][]; artifactPath: string };
+     35|   };
+     36|   expect(result.contextEvidence.viewport).toEqual({ width: 412, height…
+       |                                          ^
+     37|   expect(result.contextEvidence.deviceScaleFactor).toBe(2.625);
+     38|   expect(result.contextEvidence.touchPoints).toBeGreaterThan(0);
+
+ ❯ tests/browser-mode/phase6-b06-quarterly.browser.test.ts:26:1 traces
+   ↳ tests/browser-mode/__traces__/phase6-b06-quarterly.browser.test.ts/chromium-B06-Plan27-ID-9--52-quarter-table-and-CSV-0-0.trace.zip
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |chromium| tests/browser-mode/phase6-b06-quarterly.browser.test.ts:58:1 > B06 Plan23 ID 26: quarterly public data
+Error: Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+
+Failure screenshot:
+  - tests/browser-mode/__screenshots__/phase6-b06-quarterly.browser.test.ts/B06-Plan23-ID-26--quarterly-public-data-1.png
+
+ ❯ tests/browser-mode/phase6-b06-quarterly.browser.test.ts:58:0
+     55| });
+     56|
+     57| // Stable source ID: p45-b-quarterly-gdp-26-plan23-quarterly-public-pr…
+       |                                                                                                    ^
+     58| it("B06 Plan23 ID 26: quarterly public data", async () => {
+     59|   const result = await commands.inspectPhase6B06(QUARTERLY_GDP) as {
+
+ ❯ tests/browser-mode/phase6-b06-quarterly.browser.test.ts:58:1 traces
+   ↳ tests/browser-mode/__traces__/phase6-b06-quarterly.browser.test.ts/chromium-B06-Plan23-ID-26--quarterly-public-data-0-0.trace.zip
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  18:24:36
+   Duration  67.93s (transform 0ms, setup 555ms, import 48ms, tests 66.14s, environment 0ms)
+
+[ELIFECYCLE] Command failed with exit code 1.

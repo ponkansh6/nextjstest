@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "jev-review-initial-distribution-v3",
+  "model": "jev-latest",
+  "state": {
+    "evaluationScope": "plan_validity",
+    "background": "The user approved retiring the standalone Playwright tooltip #231 case in favor of the existing Browser Mode owner. Exact source comparison found that tests/e2e/tooltip-dismiss.e2e.spec.ts has one runnable mobile Pixel 7 case: it hit-tests a production chart bar, touchscreen-taps it, expects the tooltip close button and cursor, then sends a 60px wheel event with no post-scroll assertion. Existing tests/browser-mode/batch3-b-production-route.browser.test.ts case p45-b-tooltip-dismiss-231-case01 uses the same production-route hit-tested touch target and open assertions; it also asserts scroll movement and dismissal (tooltip and cursor gone). Its context is mobile 412x915 with isMobile/hasTouch, while Playwright uses the Pixel 7 emulation. No Pixel 7-specific requirement was identified and the user accepted the Browser Mode alternative. The residual spec's only runnable case is #231; remove that case while preserving the pre-task empty desktop describe and already-absent unknown-provenance test bodies. With no active Playwright E2E cases left, `test:full` must not invoke `test:e2e`; retain the standalone `test:e2e` script for future cases because `scripts/hook-smoke.mjs` checks that script exists. Remove the stale tooltip matcher from playwright.config.ts. Do not change the existing Browser Mode owner. Append superseding documentation while preserving historical logs and the original 33-case ledger.",
+    "acceptanceCriteria": [
+      "Remove only the active mobile #231 test and its stale mobile-pixel project matcher after documenting the same-boundary Browser Mode owner; preserve the pre-existing empty desktop describe and already-absent unknown test bodies.",
+      "Keep tests/browser-mode/batch3-b-production-route.browser.test.ts and its production-route touch/scroll checks unchanged; focused validation passes.",
+      "Remove `pnpm run test:e2e` only from `test:full` because no runnable Playwright E2E cases remain, while preserving the standalone `test:e2e` script and hook-smoke contract.",
+      "Update inventory and plan records with a superseding decision, preserve historical results and unknown-provenance notes, and keep A=123/E=123/M=123 for the original cohort.",
+      "The remaining `test:full` gates and diff check pass; accurately disclose that standalone Playwright has no active cases instead of claiming an empty E2E run passed."
+    ],
+    "verification": [
+      "Source comparison: tests/e2e/tooltip-dismiss.e2e.spec.ts:129-151 vs tests/browser-mode/batch3-b-route.command.ts:22-103 and tests/browser-mode/batch3-b-production-route.browser.test.ts:12-20.",
+      "The prior B14 full Browser Mode validation included the B3b production-route tooltip case and passed 138 tests with 5 skipped: results/plan45/phase6/phase6-b14-full-browser-mode-validation-pass2-2026-09-27.log.",
+      "Current residual E2E run had 1 pass and 1 project skip; the only runnable logical case was #231."
+    ],
+    "knownConstraints": [
+      "Browser Mode emulates mobile touch at 412x915; it does not preserve Pixel 7 device scale factor or UA as a distinct assertion boundary.",
+      "Vitest Browser Mode still uses its configured browser provider; this change removes the separate empty Playwright E2E stage from test:full rather than all browser startup from the project.",
+      "Historical validation logs and the original 33-case migration ledger remain snapshots and must not be rewritten as if this retirement had already happened."
+    ],
+    "outputRequirement": "Choose one listed choice. For any non-pass reason, provide a case-specific finding, affected requirement/location, observed evidence, and concrete proposed correction or exact additional evidence needed. Do not invent facts."
+  },
+  "questions": {
+    "plan": {
+      "type": "choice",
+      "instructions": "Is retirement of the residual #231 Playwright E2E and removal of the now-empty test:full E2E stage sufficiently supported and correctly scoped, given the existing Browser Mode assertions and Pixel 7 emulation difference? Return a probability distribution over the listed choices.",
+      "criteria": {
+        "valid_as_defined": "The plan preserves all live behavioral assertions under the existing Browser Mode owner, scopes the Pixel 7 profile difference transparently, and avoids calling Playwright with no E2E cases.",
+        "requirements_mismatch": "A required behavior is not covered by the proposed owner; identify the exact assertion and correction.",
+        "missing_prerequisites_info": "A specific product requirement or decision about Pixel 7 fidelity is still needed.",
+        "incomplete_implementation_info": "A concrete implementation or validation detail is missing.",
+        "implementation_issue": "The proposed removal or test ownership is technically unsound; identify the location and correction.",
+        "scope_violation": "The plan changes tests or gates outside the approved residual tooltip scope; identify the boundary.",
+        "other": "A material case-specific concern does not fit the listed reasons; give evidence and required fix.",
+        "indeterminate": "Available evidence is insufficient; identify the exact evidence needed."
+      }
+    }
+  }
+}

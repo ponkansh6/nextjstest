@@ -1,0 +1,105 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-27T04:13:10.988Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "model": "jev-latest",
+    "state": {
+      "evaluationScope": "plan_validity",
+      "background": "Review only the proposed Phase 5 feasibility execution plan dated 2026-09-27, stored at results/plan45/phase5/phase5-feasibility-execution-plan-2026-09-27.md. No Phase 5 implementation, test execution, inventory edits, or assertion removals have been performed. Scope is six whole-scenario partial Phase 2 rows (#12 p45-a-earnings-hover/P42-297 missing wrapper assertion despite gathered separatorBorder; #30 p45-b-tooltip-dismiss-578-chromium-escape-dismiss where Escape/rehover/mouseleave/outside-dismiss are incompletely represented; #70-73 range-change rows 119/136/153/170 missing source first-bar-visible assertion) plus all 33 MAP-ineligible Phase 0 scenarios. Those 33 historically split into 21 next/production integration, 1 full app shell quarterly-GDP, and 11 mobile touch cases. The plan enumerates each stable ID, requires original source/input/project inspection, identifies actual failure boundary and current test owners, and distinguishes component Browser Mode feasibility, production-route Browser Mode feasibility, evidenced infeasibility, and unresolved cases. It prohibits treating viewport/layout/geometry/scroll/coordinate/engine/touch alone as blockers; keeps original E2E owners until an exact same-boundary green replacement, assertion crosswalk, overlap review, and independent approval exist; and recomputes E separately from whole-scenario M. Existing evidence: current A=123/E=90/M=84; Phase 2 roster and Phase 3 ledger document the six partials and B3i overlap. The built production Next route has already been driven through Vitest Browser Mode with Playwright provider, but the PoC does not prove every route or server component. Existing route commands use browser.newContext and mobile contexts with hasTouch/touchscreen.tap, but do not prove all 11 touch sequences. Use installed Vitest 4.1.11, Playwright 1.62.1, Next 16.3.5. Local Next 16.3.5 docs say standard Vitest integration does not support async Server Components; the plan correctly distinguishes this from the existing production-server Browser Mode route harness and requires case-specific proof. This request asks whether the plan is valid, not whether any Phase 5 work has succeeded.",
+      "acceptanceCriteria": [
+        "The plan scopes the six partial scenarios and all 33 historic MAP-ineligible scenarios exactly once and does not recount B3i's ten overlapping slices.",
+        "The plan requires exact source assertion, input, viewport, project, and P42 crosswalk inspection before classification.",
+        "The plan tests component Browser Mode and production-route/provider/touch paths case by case instead of declaring classes impossible from category labels or one PoC.",
+        "The plan uses distinct evidence-based outcomes for feasible, not feasible with case-specific proof, retained pending evidence, and unresolved; unresolved cases remain unresolved.",
+        "E eligibility and whole-scenario M are recomputed separately, preserving A unless a documented inventory change exists.",
+        "Original E2E assertions remain until same-boundary passing replacements, ID-to-assertion crosswalk, overlap review, and independent approval are recorded.",
+        "No implementation, inventory edit, assertion removal, or test success is claimed before this plan-validity gate."
+      ],
+      "verification": [
+        "Plan artifact includes all six partial IDs, all 33 ineligible stable IDs by their historical group, case-specific probes, output fields, and removal gates.",
+        "Reusable production-route and touch evidence is clearly bounded and not generalized to every case.",
+        "Installed versions and local Next testing/server-client guides are identified for execution-time verification.",
+        "No Phase 5 implementation or tests were run for this plan review."
+      ],
+      "knownConstraints": [
+        "This is a plan_validity review only; it cannot approve Phase 5 implementation or assertion removal.",
+        "The current 33 MAP classifications are historical categories, not case-by-case explanations or permanent feasibility determinations.",
+        "No credentials or authentication data are included in this request."
+      ],
+      "outputRequirement": "Choose one listed choice. For any reason choice, give a case-specific finding, affected plan section/criterion or stable ID, observed evidence, and either a concrete plan correction or exact additional evidence needed. Do not invent implementation results. A valid_as_defined judgment approves only the execution plan, not later implementation or tests."
+    },
+    "questions": {
+      "plan_validity": {
+        "type": "choice",
+        "instructions": "Does this Phase 5 feasibility execution plan provide a complete, evidence-led and bounded method for investigating all six partial rows and all 33 MAP-ineligible scenarios while preserving assertion ownership until parity and independent review are proven? Return a probability distribution over the listed choices.",
+        "criteria": {
+          "valid_as_defined": "The plan is coherent, sufficiently specific, preserves the required evidence and ownership gates, and makes no premature feasibility or implementation claims.",
+          "requirements_mismatch": "The plan conflicts with the stated Phase 5 requirements; identify the exact conflict and correction.",
+          "missing_prerequisites_info": "A necessary prerequisite is missing; identify the exact information needed.",
+          "incomplete_implementation_info": "The execution approach lacks a necessary detail or evidence step; identify it precisely.",
+          "implementation_issue": "The plan contains an execution defect; identify its location, evidence, and correction.",
+          "scope_violation": "The plan exceeds or fails to respect the requested plan-only Phase 5 scope; identify the boundary and adjustment.",
+          "other": "A material concern does not fit the other categories; identify the location, evidence, and correction or needed evidence.",
+          "indeterminate": "The supplied plan and context cannot support a judgment; identify missing context if possible."
+        }
+      }
+    }
+  },
+  "questionIds": [
+    "plan_validity"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "plan_validity": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.59,
+        "probabilities": {
+          "scope_violation": 0,
+          "implementation_issue": 0,
+          "valid_as_defined": 0.65,
+          "indeterminate": 0.25,
+          "other": 0.01,
+          "incomplete_implementation_info": 0.01,
+          "requirements_mismatch": 0,
+          "missing_prerequisites_info": 0.08
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.59,
+    "probabilities": {
+      "scope_violation": 0,
+      "implementation_issue": 0,
+      "valid_as_defined": 0.65,
+      "indeterminate": 0.25,
+      "other": 0.01,
+      "incomplete_implementation_info": 0.01,
+      "requirements_mismatch": 0,
+      "missing_prerequisites_info": 0.08
+    },
+    "passProbability": 0.65,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "jev-review-initial-distribution-v3",
+  "model": "jev-latest",
+  "state": {
+    "evaluationScope": "implementation_checkpoint_validity",
+    "background": "Final Plan45 Phase3 Batch3 source cleanup and consolidated verification are complete. All ten new named Browser Mode tests passed before the mapped Playwright assertion slices were removed. The full Browser Mode suite passed 10 files / 16 tests. `pnpm run test:e2e:clean` reported that no process was found using E2E port 3100; `pnpm run test:e2e` then passed 116 of 135 tests, skipped 19, failed 0, in 3.6 minutes. Independent Explorer source mapping and Oracle scope review found no blocker. This request asks whether the final cleanup and evidence are valid as defined; it does not ask JEV to treat partial rows as fully migrated.",
+    "acceptanceCriteria": [
+      "All ten new named Batch3 Browser Mode cases passed before cleanup; full Browser Mode is 10 files / 16 tests passed. Consolidated E2E is 135 total, 116 passed, 19 skipped, 0 failed, 3.6 minutes, after the clean command confirmed no process was found using E2E port 3100.",
+      "Stable row p45-a-cagr-sheet-02 removes only its P42-046–049 component dialog/result slice after actual CagrPanel/useCagrState Browser Mode verification. Production trigger P42-040/-041, route/data integration, and other sheet assertions remain in Playwright.",
+      "Mobile row37 removes P42-166–168 and retains P42-165. Mobile row63 removes P42-170 and retains P42-169 and P42-171–174. Mobile row122 removes only P42-177 and retains P42-175/-176/-178. These remain partial stable rows.",
+      "The earnings hover helper's P42-290 visibility assertion is removed; explicit visibility assertions remain at the hidden-series initial and fresh-hover callsites. P42-287–289 plot geometry and P42-297 separator CSS remain in Playwright.",
+      "Tooltip-dismiss removes only P42-577 Escape dismissal. P42-575/-576, P42-578–583, plus route and coordinate assertions remain in Playwright.",
+      "The monthly-boundary Playwright file was its sole test and was deleted after both synthetic Browser Mode axis cases passed. P42-353/-354/-355 formed one shared source assertion group executed for CPI and earnings loop iterations. P42-356 is a ledger/source mismatch at test-end line 29 with no labels.length expect, so it is not a transferred assertion.",
+      "Synthetic Browser Mode axis fixtures assert exact absence of 2017年12月 and 2018年1月 labels. Broader retained route E2E covers integration but does not assert these exact omissions; this limitation is stated accurately and is not described as unchanged route coverage.",
+      "All affected stable rows remain partial under retained route/data integration or assertion ownership. A=123, E=90, M=1 remains unchanged; no new fully migrated stable scenario is claimed. Browser Mode Recharts unknown-prop/false-active warnings remain unsuppressed, and E2E NO_COLOR/FORCE_COLOR output is bounded as nonblocking; no clean-console claim is made."
+    ],
+    "verification": [
+      "All ten named Batch3 Browser Mode tests passed before source cleanup; full Browser Mode suite: 10 files / 16 tests passed.",
+      "`pnpm run test:e2e:clean` reported no process was found using E2E port 3100. `pnpm run test:e2e` passed 116/135, skipped 19, failed 0, duration 3.6 minutes.",
+      "Independent Explorer review reconciled the final source assertion map, including the shared axis group and P42-356 mismatch. Independent Oracle review found no blocker and confirmed conservative partial-row accounting and the exact-axis limitation.",
+      "Warnings: Browser Mode Recharts unknown-prop and false-active console warnings are unsuppressed; E2E NO_COLOR/FORCE_COLOR output was nonblocking. No zero-console-error claim is made."
+    ],
+    "knownConstraints": [
+      "All migrated slices remain partial at stable-row level; production route, data integration, viewport, geometry, and remaining assertions stay in Playwright as mapped.",
+      "Exact monthly boundary omissions are now asserted by synthetic component fixtures only. Retained route E2E does not check those exact December/January labels.",
+      "The overall Phase3 migration is not complete and 33 MAP-ineligible Phase5 investigations remain deferred. No CI/GitHub Actions changes are part of this checkpoint."
+    ],
+    "outputRequirement": "Assess whether this final cleanup and evidence are valid as defined. Select exactly one criterion from the eight supplied choices. If the result is not valid_as_defined, give one case-specific finding, affected source/requirement, observed evidence or exact neededEvidence, a concrete nextAction/proposedFix, and remainingUncertainty. Do not upgrade partial stable rows or claim the exact monthly boundary assertions remain in route E2E."
+  },
+  "questions": {
+    "implementation": {
+      "type": "choice",
+      "instructions": "Select exactly one mutually exclusive criterion for this final migration implementation checkpoint.",
+      "criteria": {
+        "valid_as_defined": "The source cleanup and consolidated verification satisfy the stated scope and evidence requirements.",
+        "requirements_mismatch": "The resulting source ownership or coverage contradicts an applicable requirement.",
+        "missing_prerequisites_info": "Required prerequisite information is absent and prevents assessment.",
+        "incomplete_implementation_info": "The implementation or evidence is too incomplete to assess the defined checkpoint.",
+        "implementation_issue": "A concrete defect or unsupported behavior exists in the implementation.",
+        "scope_violation": "The cleanup exceeds or fails to respect the stated scope boundaries.",
+        "other": "A material issue exists that does not fit the other criteria.",
+        "indeterminate": "The available information does not support a reliable determination."
+      }
+    }
+  }
+}

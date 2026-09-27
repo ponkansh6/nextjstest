@@ -1,0 +1,106 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-26T04:50:42.050Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "model": "jev-latest",
+    "state": {
+      "evaluationScope": "plan_validity",
+      "background": "Plan45 proposes B3e as a staged 17-case mobile chart readability migration, with 16 cases in consumption-mobile-readability plus one CPI stacked-area component smoke. The cases are grouped into four execution subbatches (A/B/C/D) of at most three stable rows each, while the one fresh initial JEV plan review covers the whole roadmap. Each subbatch requires focused Browser Mode verification, independent diff review, and a fresh implementation JEV checkpoint before the next; no E2E runs in B3e. B3d contributes 2 of the cadence 20, so passing all B3e cases makes 19/20. Explorer's latest source mapping found no defensible 20th case; the next consolidated E2E must wait for a later valid migrated case and its gates. Preserve A=123/E=90/M=1 and do not include the 768/769 page-shell-dependent cases.",
+      "acceptanceCriteria": [
+        "B3e contains exactly 17 new named Browser Mode cases: 8 nominal/real spending chart geometry cases (four widths), 2 EarningsBreakdownChart/CustomTooltip bounds cases, 6 nominal/real internal-scroll cases (three viewports), and 1 actual CPI StackedAreaChart area-path component smoke.",
+        "The four geometry widths map to stable rows p45-b-consumption-mobile-readability-52-{320px,375px,390px,430px}-y-x. Each width has separate nominal/real actual SpendingBarChart cases transferring only P42-203–207, P42-209–213, and P42-215–217. Keep P42-202 and P42-218 in E2E; keep P42-208 tick-domain and P42-214 quarter-format assertions outside the slice and in Playwright. Do not include 768/769 cases.",
+        "The two earnings tooltip rows are p45-b-consumption-mobile-readability-191-375px-tooltip-6-viewport and the corresponding 430px row. Use actual EarningsBreakdownChart and actual CustomTooltip at 375x667 and 430x667. Transfer P42-230 and P42-232–240 viewport bounds only. Retain P42-219–229 route/chart activation and content assertions, and retain P42-231 because its expect mixes row-value presence with label-measurement behavior.",
+        "The three tooltip scroll rows are p45-b-consumption-mobile-readability-297-375x667-tooltip, -320x480-tooltip, and -landscape-tooltip. Each has distinct nominal/real actual SpendingBarChart/CustomTooltip cases with enough fixture series to overflow. Transfer P42-246–248 and P42-250–260 only. Retain P42-241–244 activation/route/exact-key assertions and P42-261 post-close behavior. P42-245 remains covered by existing CustomTooltip unit coverage; P42-249 has no current E2E assertion and is already unit-owned; do not duplicate either.",
+        "The CPI case maps stable row p45-a-cpi-sections and P42-262 only: mount actual StackedAreaChart in the existing MonthlyBoundaryAxis Browser Mode fixture and assert an area path renders. Keep #section-stacked route visibility in its Playwright smoke and retain existing route/scroll E2E elsewhere.",
+        "The roadmap is staged as A=3 rows/6 tests, B=3 rows/4 tests, C=3 rows/6 tests, D=1 row/1 test. After each, focused verification and independent diff review precede a fresh implementation JEV checkpoint. Use one initial plan review for the roadmap; do not add a repeated plan call per subbatch.",
+        "B3d accounts for 2/20 from the last consolidated E2E. B3e contributes 17 and reaches only 19/20 after all pass. The next consolidated E2E waits for another defensible plan-reviewed case to reach 20/20 and pass its gates. No E2E/targeted Playwright/full E2E command runs during B3e. A=123/E=90/M=1 remains unchanged; no stable row becomes fully migrated and M does not increase.",
+        "Current Browser fixtures are narrower than proposed: SpendingBarChart mobile uses 412x915 and two/three categories; earnings tooltip uses a simplified test tooltip at 1280x800; MonthlyBoundaryAxis already mounts actual StackedAreaChart with synthetic data. Proposals must use actual component CSS, deterministic fixture data sized for the contracts, and actual CustomTooltip where asserted; they must not claim route, production data, or page-shell coverage."
+      ],
+      "verification": [
+        "Explorer/source audit confirms four width-loop inputs at 320/375/390/430 with nominal/real loop executions. The selected geometry assertions are P42-203–207, P42-209–213, and P42-215–217. P42-208 and P42-214 are value-domain/label-format checks; P42-202 section and P42-218 document overflow are route-owned.",
+        "The 375px and 430px earnings tooltip rows share one E2E test body loop; P42-219–229 are activation/content assertions; P42-230 and P42-232–240 are box-presence/bounds; P42-231 is a mixed nonempty value and label-measure assertion and remains Playwright-owned.",
+        "The internal-scroll source loops nominal/real for three viewports. Mapped CSS and scroll geometry is P42-246–248 and P42-250–260; P42-241–244 activation/key/content and P42-261 close behavior stay E2E. P42-245 is unit-owned; P42-249 is absent from current E2E and a unit test checks the safe-area declaration.",
+        "P42-262 is the area path visible expect in the cpi-chart-categories route smoke, separate from the same test's #section-stacked route visibility expect. Existing Browser Mode MonthlyBoundaryAxis mounts real StackedAreaChart with deterministic synthetic data."
+      ],
+      "knownConstraints": [
+        "The current E2E tests include production routes and production data; Browser Mode fixtures prove actual components with deterministic props only. Preserve route, data activation/content, section visibility, and document scroll assertions as mapped.",
+        "The current EarningsBreakdownChart Browser Mode test uses simplified tooltip content and cannot be reused as evidence for actual CustomTooltip bounds without replacing that content in the new viewport fixtures.",
+        "B3e is plan scope only: no implementation or test result is claimed. After B3e implementation there remains one case before the consolidated E2E cadence threshold; the current source audit has not identified that case."
+      ],
+      "outputRequirement": "Review the concrete 17-case staged roadmap. Select exactly one criterion from the supplied choices. If the verdict is not valid_as_defined, give a case-specific finding and affected stable row/assertion, observed evidence or exact neededEvidence, a concrete proposedFix/nextAction, and remainingUncertainty. Do not authorize E2E at 19/20, increment M, or broaden to the excluded 768/769 cases."
+    },
+    "questions": {
+      "plan": {
+        "type": "choice",
+        "instructions": "Select exactly one mutually exclusive criterion for this B3e plan checkpoint.",
+        "criteria": {
+          "valid_as_defined": "The staged 17-case plan is sufficiently specified and respects the mapped E2E/unit boundaries and cadence.",
+          "requirements_mismatch": "The proposed source ownership or retained guarantees contradict an applicable requirement.",
+          "missing_prerequisites_info": "Prerequisite information needed to judge the roadmap is missing.",
+          "incomplete_implementation_info": "The proposal lacks detail needed to assess feasibility or scope.",
+          "implementation_issue": "A concrete component/source constraint invalidates the proposed plan.",
+          "scope_violation": "The proposal exceeds the selected assertion slices, widens scope, or violates the 20-case E2E cadence.",
+          "other": "A material planning issue does not fit the other criteria.",
+          "indeterminate": "Available evidence does not support a reliable determination."
+        }
+      }
+    }
+  },
+  "questionIds": [
+    "plan"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "plan": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.78,
+        "probabilities": {
+          "incomplete_implementation_info": 0.01,
+          "valid_as_defined": 0.81,
+          "requirements_mismatch": 0.06,
+          "missing_prerequisites_info": 0,
+          "indeterminate": 0,
+          "other": 0,
+          "scope_violation": 0.06,
+          "implementation_issue": 0.06
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.78,
+    "probabilities": {
+      "incomplete_implementation_info": 0.01,
+      "valid_as_defined": 0.81,
+      "requirements_mismatch": 0.06,
+      "missing_prerequisites_info": 0,
+      "indeterminate": 0,
+      "other": 0,
+      "scope_violation": 0.06,
+      "implementation_issue": 0.06
+    },
+    "passProbability": 0.81,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}
