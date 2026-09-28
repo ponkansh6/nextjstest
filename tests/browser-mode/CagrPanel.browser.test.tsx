@@ -68,36 +68,6 @@ function CagrFixtureWithGlobalBaseline() {
   );
 }
 
-function CagrSheetWithChartFixture() {
-  const cagr = useCagrState({
-    initialStartYear: 2010,
-    initialEndYear: 2020,
-    chartData: CHART_DATA,
-    stackedHiddenKeys: STACKED_HIDDEN_KEYS,
-    stackedKeys: STACKED_KEYS,
-  });
-  const { bind } = useChartTooltipController({ suppressed: false, isTouch: true });
-  const tooltip = bind("cagr-sheet-browser", { dataLength: CHART_DATA.length });
-
-  return (
-    <>
-      <StackedAreaChart
-        title="費目別寄与度"
-        sectionId="section-stacked"
-        data={CHART_DATA}
-        keys={STACKED_KEYS}
-        colors={["#2563eb"]}
-        hiddenKeys={STACKED_HIDDEN_KEYS}
-        onToggle={() => {}}
-        chartColors={{ gridStroke: "#e2e8f0", axisText: "#64748b" }}
-        tooltipProps={tooltip.tooltipProps}
-        onReset={() => {}}
-      />
-      <CagrPanel allYears={ALL_YEARS} {...cagr} />
-    </>
-  );
-}
-
 function CagrSectionCompositionFixture() {
   const cagr = useCagrState({
     initialStartYear: 2010,
@@ -174,48 +144,6 @@ describe("CagrPanel in Chromium", () => {
         (button) => button.textContent?.trim() === "CPI年率",
       ),
     ).toBe(false);
-  });
-
-  it("p45-a-cagr-sheet-04 — P42-052: keeps the closed-sheet document within 375px", async () => {
-    await page.viewport(375, 667);
-    expect(window.innerWidth).toBe(375);
-    renderBrowserComponent(<CagrFixtureWithGlobalBaseline />);
-
-    await expect
-      .element(page.getByRole("button", { name: /年率上昇率（CAGR）を計算/ }))
-      .toBeVisible();
-    await expect
-      .element(page.getByRole("dialog", { name: "年率上昇率（CAGR）" }))
-      .not.toBeInTheDocument();
-    expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
-  });
-
-  it("p45-a-cagr-sheet-05 — P42-053/-054: keeps at least 120px of chart visible with the sheet open", async () => {
-    await page.viewport(375, 667);
-    expect(window.innerWidth).toBe(375);
-    expect(window.innerHeight).toBe(667);
-    renderBrowserComponent(
-      <>
-        <style>{FIXTURE_GLOBAL_CSS}</style>
-        <CagrSheetWithChartFixture />
-      </>,
-    );
-
-    await page.getByRole("button", { name: /年率上昇率（CAGR）を計算/ }).click();
-    const dialog = document.querySelector<HTMLElement>("[role='dialog']");
-    const chart = document.querySelector<HTMLElement>("#section-stacked [class*='chartWrapper']");
-    expect(dialog).not.toBeNull();
-    expect(chart).not.toBeNull();
-    if (!dialog || !chart)
-      throw new Error("Rendered chart or actual CagrPanel sheet is unavailable");
-
-    const chartBounds = chart.getBoundingClientRect();
-    const sheetBounds = dialog.getBoundingClientRect();
-    const visible = Math.max(
-      0,
-      Math.min(chartBounds.bottom, sheetBounds.top) - Math.max(chartBounds.top, 0),
-    );
-    expect(visible).toBeGreaterThanOrEqual(120);
   });
 
   it("keeps the dialog open after changing the start year and shows a signed two-decimal result", async () => {

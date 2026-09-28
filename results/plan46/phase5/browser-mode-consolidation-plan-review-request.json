@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "jev-review-initial-distribution-v3",
+  "model": "jev-latest",
+  "state": {
+    "evaluationScope": "plan_validity",
+    "background": "Review results/plan46/phase5/browser-mode-consolidation-plan-2026-09-29.md. It proposes assertion-first consolidation of 17 active component cases into named active route cases while holding 24 component cases, excluding 9 DOM migration candidates, and preserving the rest of the 105 active production-route .ts cases. It also maps 31 source-only Phase 5 wrappers to active destinations, with 18 exact transfers, 11 requiring assertion transfer, and 2 requiring added interaction proof. B08 #99 and B11 #249 remain until their explicit proof conditions are present. No source/test code was changed and no tests or API were run in this planning phase.",
+    "acceptanceCriteria": [
+      "The 17 safe active component sources, their destinations, and unique assertions are listed accurately; each source is deleted only after its assertion is added and focused destination verification passes.",
+      "All 24 held active component candidates remain unchanged, with concise hold reasons; all 9 DOM-migration candidates are out of scope.",
+      "All 31 source-only Phase 5 cases map to an active destination with assertion-transfer requirements and deletion gates; unsafe or observational-only evidence does not define a test condition.",
+      "B07 #60 waits for networkidle before checking errors; B07 #82 checks id/wrapper/SVG/summary presence; B08 #99 preserves page-global legend visibility and adds local pressed/SVG change; B08 #128/#156 preserve closed/open accordion behavior.",
+      "B09 #174 pins only summary visibility; B10 #138/#188 assert tooltip hidden; B11 #249 proves gesture dispatch and chart hit before asserting hidden tooltip; advanced query/parity/hidden predicates transfer to B03; Plan27 #79 preserves HTTP, nominal/real chart and real visibility predicates.",
+      "The B09 #174 summary-visibility mapping is an explicit exception to the triage's B02 contrast mapping for real-accordion-style: wrapper style fields are observational diagnostics, not assertions; actual default/dark legend-header contrast wrappers still map to B02.",
+      "The plan states maximum deletion counts, dirty-worktree no-overwrite constraints, verification command candidates from repository scripts, and the limitation that source-only cleanup does not reduce active batch runtime."
+    ],
+    "verification": [
+      "Plan source checked against results/plan46/phase5/browser-mode-three-way-triage-2026-09-29.md and browser-mode-test-inventory-2026-09-28.md.",
+      "JEV request structure follows skills/jev-review/references/requests.md v3 initial-review schema; evaluationScope is plan_validity.",
+      "Package-script candidates were read from package.json; no tests, commands beyond read-only inspection, or API calls were run for this plan."
+    ],
+    "knownConstraints": [
+      "The shared worktree contains unrelated staged and unstaged changes; future implementation must preserve them and limit edits to the listed cases.",
+      "The 31 Phase 5 source-only wrappers are outside the standard config union, so their removal does not shorten the current active batch.",
+      "B08 #99 and B11 #249 require explicit additional assertions/proof; keep their wrappers if those conditions cannot be safely reproduced.",
+      "For real-accordion-style, the plan intentionally maps only the asserted summary-visibility predicate to B09 #174; style observations remain diagnostic, while the explicit contrast predicates remain mapped to B02.",
+      "Browser Mode consolidation runtime impact is unmeasured; route assertions may add run time.",
+      "This artifact is a plan only; no test implementation or verification result is claimed."
+    ],
+    "outputRequirement": "Choose one listed choice. For a reason choice, give a case-specific finding, affected plan section/source case, observed evidence, and either a concrete proposed fix or exact additional evidence needed. Do not invent details. Assess whether the plan is valid as defined and whether any scope, transfer, deletion gate, or verification gap prevents safe implementation."
+  },
+  "questions": {
+    "plan": {
+      "type": "choice",
+      "instructions": "Is this browser-mode consolidation plan valid as defined and sufficiently specified to implement safely? Return a probability distribution over the mutually exclusive choices.",
+      "criteria": {
+        "valid_as_defined": "The sources, destinations, predicates, scope boundaries, deletion gates, and verification candidates support implementation as planned.",
+        "requirements_mismatch": "A stated scope or transfer requirement conflicts with the intended test behavior; identify the exact requirement and correction.",
+        "missing_prerequisites_info": "A prerequisite is missing; identify exactly what source, destination, assertion, or evidence is needed before implementation.",
+        "incomplete_implementation_info": "A required case mapping, predicate, deletion gate, or verification detail is incomplete; identify the exact missing information.",
+        "implementation_issue": "A concrete unsafe or incorrect transfer/deletion instruction exists; identify its plan location, evidence, and correction.",
+        "scope_violation": "The proposal includes a held, DOM-migration, unrelated active route, or otherwise excluded case; identify the boundary and adjustment.",
+        "other": "A material plan concern does not fit the categories; identify its location, evidence, and fix or exact needed evidence.",
+        "indeterminate": "The supplied plan and cited inventory cannot support a judgment; identify missing context if possible."
+      }
+    }
+  }
+}

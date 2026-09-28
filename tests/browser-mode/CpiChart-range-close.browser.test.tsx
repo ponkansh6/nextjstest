@@ -81,31 +81,3 @@ describe("CpiChart range selection closes the actual sheet in Chromium", () => {
     await expect.element(sheet).not.toBeInTheDocument();
   });
 });
-
-describe("CpiChart legend scroll preservation in Chromium", () => {
-  it("p45-a-cpi-legend-scroll — P42-263/-264: preserves fixture scroll after a real legend toggle", async () => {
-    renderBrowserComponent(
-      <>
-        <div style={{ height: 500 }} aria-hidden="true" />
-        <CpiChart
-          data={chartData}
-          quarterlyNominalData={[]}
-          quarterlyRealData={[]}
-          totalEarningData={[]}
-          maxCpiDate={{ year: 2022, month: 12 }}
-        />
-      </>,
-    );
-
-    const housing = page.getByRole("button", { name: "住居", exact: true });
-    await expect.element(housing).toBeVisible();
-    (await housing.element()).scrollIntoView({ block: "center" });
-
-    const before = window.scrollY;
-    expect(before).toBeGreaterThan(100);
-    await userEvent.click(await housing.element());
-
-    await expect.element(housing).toHaveAttribute("aria-pressed", "false");
-    expect(Math.abs(window.scrollY - before)).toBeLessThan(50);
-  });
-});

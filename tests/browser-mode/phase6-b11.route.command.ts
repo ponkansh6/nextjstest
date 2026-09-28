@@ -120,6 +120,7 @@ export const inspectPhase6B11: BrowserCommand<[id: Phase6B11Id], unknown> = asyn
   try {
     const contextEvidence = await preparePage(page, id);
     const nominalChart = page.getByTestId("spending-chart-nominal");
+    const tooltip = page.locator("[data-custom-tooltip]");
     const closeButton = page.getByRole("button", { name: "閉じる" });
 
     if (id === "p45-b-tooltip-dismiss-207-1") {
@@ -232,12 +233,22 @@ export const inspectPhase6B11: BrowserCommand<[id: Phase6B11Id], unknown> = asyn
     await stage(id, "wait for close button visible after retap", 7_000, () =>
       closeButton.waitFor({ state: "visible", timeout: 5_000 }),
     );
+    await stage(id, "wait for custom tooltip visible after retap", 7_000, () =>
+      tooltip.waitFor({ state: "visible", timeout: 5_000 }),
+    );
+    const tooltipVisibleAfterRetap = await stage(
+      id,
+      "read custom tooltip visibility after retap",
+      5_000,
+      () => tooltip.isVisible(),
+    );
     return {
       id,
       contextEvidence,
       closeVisibleAfterFirstTap: true,
       closeHiddenAfterCloseTap: true,
       closeVisibleAfterRetap: true,
+      tooltipVisibleAfterRetap,
     };
   } finally {
     await isolated.close();

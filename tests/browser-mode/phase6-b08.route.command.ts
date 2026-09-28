@@ -84,7 +84,17 @@ export const inspectPhase6B08: BrowserCommand<[id: Phase6B08Id], Observation> = 
     );
 
     if (id.startsWith("p45-b-real-consumption-128-")) {
+      const details = realSection.locator("details").first();
       const summary = realSection.locator("summary");
+      const detailsCount = await stage(id, "count section accordion details", () =>
+        details.count(),
+      );
+      const detailsOpen =
+        detailsCount > 0
+          ? await stage(id, "read closed accordion details state", () =>
+              details.evaluate((element) => element.hasAttribute("open")),
+            )
+          : false;
       await stage(id, "wait for accordion summary visibility", () =>
         summary.waitFor({ state: "visible", timeout: 5_000 }),
       );
@@ -103,11 +113,15 @@ export const inspectPhase6B08: BrowserCommand<[id: Phase6B08Id], Observation> = 
           return visibility;
         },
       );
-      return { sectionVisible, summaryVisible, legendItemVisibility };
+      return { sectionVisible, summaryVisible, detailsCount, detailsOpen, legendItemVisibility };
     }
 
+    const details = realSection.locator("details").first();
     const summary = realSection.locator("summary");
     await stage(id, "click accordion summary", () => summary.click({ timeout: 10_000 }));
+    const detailsOpen = await stage(id, "read open accordion details state", () =>
+      details.evaluate((element) => element.hasAttribute("open")),
+    );
     const firstLegendItem = realSection.locator("[aria-pressed]").first();
     await stage(id, "wait for first section-local legend item visibility", () =>
       firstLegendItem.waitFor({ state: "visible", timeout: 10_000 }),
@@ -117,7 +131,7 @@ export const inspectPhase6B08: BrowserCommand<[id: Phase6B08Id], Observation> = 
       "read first section-local legend item visibility",
       () => firstLegendItem.isVisible(),
     );
-    return { sectionVisible, firstLegendItemVisible };
+    return { sectionVisible, detailsOpen, firstLegendItemVisible };
   } finally {
     await isolated.close();
   }

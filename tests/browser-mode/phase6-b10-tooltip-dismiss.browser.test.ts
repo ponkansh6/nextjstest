@@ -1,6 +1,12 @@
-import { expect, it } from "vitest";
-import { commands } from "vitest/browser";
+import { beforeEach, expect, it, vi } from "vitest";
+import { commands, page } from "vitest/browser";
 import type { Phase6B10Id } from "./phase6-b10.route.command";
+
+vi.setConfig({ testTimeout: 90_000 });
+
+beforeEach(async () => {
+  await page.viewport(1280, 720);
+});
 
 const TAP_CLOSE: Phase6B10Id = "p45-b-tooltip-dismiss-138-case01";
 const ESCAPE_RETAP: Phase6B10Id = "p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip";
@@ -23,6 +29,9 @@ type Result = {
   closeVisibleBeforeClose?: boolean;
   closeHiddenAfterClose?: boolean;
   closeHiddenAfterOutsideTap?: boolean;
+  tooltipVisibleAfterClose?: boolean;
+  tooltipVisibleAfterOutsideTap?: boolean;
+  closeVisibleAfterRetap?: boolean;
 };
 
 function expectPixel7TouchContext(evidence: Result["contextEvidence"]) {
@@ -38,6 +47,7 @@ it("B10 #138: touchscreen bar tap opens the cursor and close tap clears both", a
   expectPixel7TouchContext(result.contextEvidence);
   expect(result.cursorBefore).toBeGreaterThan(0);
   expect(result.closeHiddenAfterClose).toBe(true);
+  expect(result.tooltipVisibleAfterClose).toBe(false);
   expect(result.cursorAfter).toBe(0);
 });
 
@@ -48,6 +58,7 @@ it("B10 #159: Escape hides the tapped tooltip and same-coordinate retap reopens 
   expect(result.tooltipVisibleAfterEscape).toBe(false);
   expect(result.closeHiddenAfterEscape).toBe(true);
   expect(result.tooltipVisibleAfterRetap).toBe(true);
+  expect(result.closeVisibleAfterRetap).toBe(true);
 });
 
 it("B10 #188: touching the nominal chart heading outside the chart clears close button and cursor", async () => {
@@ -56,5 +67,6 @@ it("B10 #188: touching the nominal chart heading outside the chart clears close 
   expect(result.closeVisibleBeforeClose).toBe(true);
   expect(result.cursorBefore).toBeGreaterThan(0);
   expect(result.closeHiddenAfterOutsideTap).toBe(true);
+  expect(result.tooltipVisibleAfterOutsideTap).toBe(false);
   expect(result.cursorAfter).toBe(0);
 });

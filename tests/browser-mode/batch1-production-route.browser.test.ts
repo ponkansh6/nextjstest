@@ -1,4 +1,4 @@
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
 import { commands } from "vitest/browser";
 // @ts-expect-error Vitest's Vite transform resolves this raw CSS import at runtime.
 import globalsCss from "../../src/app/globals.css?raw";
@@ -9,6 +9,8 @@ import {
   stackedColors,
 } from "../../src/lib/chartConstants";
 import type { Batch1RouteCase } from "./batch1-route.command";
+
+vi.setConfig({ testTimeout: 45_000 });
 
 async function inspect(scenario: Batch1RouteCase) {
   const result = await commands.inspectBatch1ProductionCase(scenario);
@@ -175,13 +177,17 @@ it("p45-a-legend-dark-all12 — production dark theme exposes all 12 source-colo
 });
 
 it("p45-b-monthly-boundary-axis-21-cpi-2017-12-2018-1-svg — production CPI axis omits both boundary labels", async () => {
-  const labels = (await inspect("monthly-boundary-cpi")).axisLabels as string[];
+  const values = await inspect("monthly-boundary-cpi");
+  const labels = values.axisLabels as string[];
+  expect(values.firstTickLabel).not.toBe("");
   expect(labels).not.toContain("2017年12月");
   expect(labels).not.toContain("2018年1月");
 });
 
 it("p45-b-monthly-boundary-axis-21-2017-12-2018-1-svg — production earnings axis omits both boundary labels", async () => {
-  const labels = (await inspect("monthly-boundary-earnings")).axisLabels as string[];
+  const values = await inspect("monthly-boundary-earnings");
+  const labels = values.axisLabels as string[];
+  expect(values.firstTickLabel).not.toBe("");
   expect(labels).not.toContain("2017年12月");
   expect(labels).not.toContain("2018年1月");
 });

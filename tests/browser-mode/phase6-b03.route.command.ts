@@ -198,14 +198,25 @@ export const inspectPhase6B03: BrowserCommand<[id: Phase6B03Id], unknown> = asyn
       const buttonVisible = await button.isVisible();
       const tableSurface = await table(page, "data-table-section-new-graph", true);
       const tableText = await page.getByTestId("data-table-section-new-graph").innerText();
+      await page.reload({ waitUntil: "domcontentloaded" });
+      const reloadedChart = await chart(page, "section-new-graph");
+      const reloadedContract = page
+        .locator("#section-new-graph")
+        .getByTestId("chart-data-contract");
+      const reloadedDescriptorAttribute = await reloadedContract.getAttribute("data-descriptors");
+      const reloadedDataAttribute = await reloadedContract.getAttribute("data-series");
       return {
         status: response?.status() ?? null,
+        urlAfterReload: page.url(),
         sectionCount,
         descriptorAttribute,
         dataAttribute,
         buttonVisible,
         tableText,
         tableCount: tableSurface.count,
+        reloadedChart,
+        reloadedDescriptorAttribute,
+        reloadedDataAttribute,
       };
     }
 
@@ -216,13 +227,19 @@ export const inspectPhase6B03: BrowserCommand<[id: Phase6B03Id], unknown> = asyn
       const advancedResponse = await page.goto(`${NEXT_ROUTE_POC_BASE_URL}/?adv=1`);
       const advancedChart = await chart(page, "section-new-graph");
       const advanced = await surface(page, "data-table-section-new-graph");
+      await page.reload({ waitUntil: "domcontentloaded" });
+      const reloadedAdvancedChart = await chart(page, "section-new-graph");
+      const reloadedAdvanced = await table(page, "data-table-section-new-graph");
       return {
         normalStatus: normalResponse?.status() ?? null,
         advancedStatus: advancedResponse?.status() ?? null,
+        urlAfterAdvancedReload: page.url(),
         normalChart,
         advancedChart,
         normal,
         advanced,
+        reloadedAdvancedChart,
+        reloadedAdvanced,
       };
     }
 
@@ -235,9 +252,47 @@ export const inspectPhase6B03: BrowserCommand<[id: Phase6B03Id], unknown> = asyn
     await root.waitFor({ state: "visible" });
     const beforeChart = await chart(page, "section-stacked");
     const before = await surface(page, "data-table-section-stacked");
-    await page.getByTestId("legend-住居").click();
+    const geometry = async () =>
+      page
+        .locator(
+          "#section-stacked .recharts-wrapper svg path, #section-stacked .recharts-wrapper svg rect",
+        )
+        .evaluateAll((nodes) =>
+          nodes.flatMap((node) => {
+            const element = node as SVGGraphicsElement;
+            const rect = element.getBoundingClientRect();
+            const style = getComputedStyle(element);
+            if (
+              rect.width <= 0 ||
+              rect.height <= 0 ||
+              style.display === "none" ||
+              style.visibility === "hidden"
+            )
+              return [];
+            return [
+              [
+                element.tagName,
+                element.getAttribute("d"),
+                element.getAttribute("x"),
+                element.getAttribute("y"),
+                element.getAttribute("width"),
+                element.getAttribute("height"),
+                rect.x,
+                rect.y,
+                rect.width,
+                rect.height,
+              ].join("|"),
+            ];
+          }),
+        );
+    const geometryBefore = await geometry();
+    const legend = page.getByTestId("legend-住居");
+    const ariaPressedBefore = await legend.getAttribute("aria-pressed");
+    await legend.click();
+    const ariaPressedAfter = await legend.getAttribute("aria-pressed");
     const afterChart = await chart(page, "section-stacked");
     const after = await surface(page, "data-table-section-stacked");
+    const geometryAfter = await geometry();
     return {
       status: response?.status() ?? null,
       sectionCount: await section.count(),
@@ -246,6 +301,9 @@ export const inspectPhase6B03: BrowserCommand<[id: Phase6B03Id], unknown> = asyn
       svgVisible: await root.locator("svg").first().isVisible(),
       beforeChart,
       afterChart,
+      ariaPressedBefore,
+      ariaPressedAfter,
+      geometryChanged: JSON.stringify(geometryBefore) !== JSON.stringify(geometryAfter),
       before,
       after,
     };

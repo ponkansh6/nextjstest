@@ -1,6 +1,12 @@
-import { expect, it } from "vitest";
-import { commands } from "vitest/browser";
+import { beforeEach, expect, it, vi } from "vitest";
+import { commands, page } from "vitest/browser";
 import type { Phase6B11Id } from "./phase6-b11.route.command";
+
+vi.setConfig({ testTimeout: 90_000 });
+
+beforeEach(async () => {
+  await page.viewport(1280, 720);
+});
 
 const SWITCH_CHART: Phase6B11Id = "p45-b-tooltip-dismiss-207-1";
 const SWIPE_DISMISS: Phase6B11Id = "p45-b-tooltip-dismiss-249-case01";
@@ -55,9 +61,11 @@ it("B11 #284: closing and retapping a fresh nominal bar point shows the close bu
     closeVisibleAfterFirstTap: boolean;
     closeHiddenAfterCloseTap: boolean;
     closeVisibleAfterRetap: boolean;
+    tooltipVisibleAfterRetap: boolean;
   };
   expectPixel7TouchContext(result.contextEvidence);
   expect(result.closeVisibleAfterFirstTap).toBe(true);
   expect(result.closeHiddenAfterCloseTap).toBe(true);
   expect(result.closeVisibleAfterRetap).toBe(true);
+  expect(result.tooltipVisibleAfterRetap).toBe(true);
 });

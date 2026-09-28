@@ -140,6 +140,13 @@ async function nominalPlan27(page: import("@playwright/test").Page, full: boolea
     .first()
     .locator(".recharts-bar-rectangle")
     .count();
+  const positiveBarCount = await chart.locator(".recharts-bar-rectangle").evaluateAll(
+    (nodes) =>
+      nodes.filter((node) => {
+        const rect = node.getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0;
+      }).length,
+  );
   const nominalTable = page.locator("#data-table-section-consumption-nominal");
   await openTable(nominalTable, true);
   const snapshot = await tableSnapshot(nominalTable);
@@ -147,7 +154,7 @@ async function nominalPlan27(page: import("@playwright/test").Page, full: boolea
     .map((row) => row[0] ?? "")
     .filter((period) => /^200[5-9]Q[1-4]$|^201[0-7]Q[1-4]$/.test(period));
   const csv = await downloadCsv(page, nominalTable, true);
-  return { postBoundary, realHeaders, barCount, snapshot, periods, csv };
+  return { postBoundary, realHeaders, barCount, positiveBarCount, snapshot, periods, csv };
 }
 
 async function quarterlyGdp(page: import("@playwright/test").Page) {

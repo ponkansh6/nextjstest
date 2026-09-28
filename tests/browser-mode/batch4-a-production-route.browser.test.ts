@@ -1,6 +1,8 @@
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
 import { commands } from "vitest/browser";
 import type { Batch4ARouteCase } from "./batch4-a-route.command";
+
+vi.setConfig({ testTimeout: 45_000 });
 
 async function inspect(scenario: Batch4ARouteCase) {
   const result = await commands.inspectBatch4AProductionCase(scenario);
@@ -94,7 +96,11 @@ it("p45-b-mobile-ux-243-sectiontabs-sticky-android-chrome — production route a
 for (const width of [320, 375, 390, 430] as const) {
   it(`p45-b-mobile-ux-65-${width}px-overflow — production document has no horizontal overflow`, async () => {
     const values = await inspect(`document-overflow-${width}`);
-    const overflow = values.overflow as { scrollWidth: number; clientWidth: number };
-    expect(overflow.scrollWidth).toBeLessThanOrEqual(overflow.clientWidth);
+    const overflow = values.overflow as {
+      document: { scrollWidth: number; clientWidth: number };
+      chart: { scrollWidth: number; clientWidth: number };
+    };
+    expect(overflow.document.scrollWidth).toBeLessThanOrEqual(overflow.document.clientWidth);
+    expect(overflow.chart.scrollWidth).toBeLessThanOrEqual(overflow.chart.clientWidth);
   });
 }

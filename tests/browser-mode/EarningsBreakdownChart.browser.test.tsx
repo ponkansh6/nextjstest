@@ -1,9 +1,6 @@
-import { useState } from "react";
 import { describe, expect, it } from "vitest";
-import { page, userEvent } from "vitest/browser";
+import { page } from "vitest/browser";
 import { EarningsBreakdownChart } from "../../src/app/components/EarningsBreakdownChart";
-import { useChartTooltipController } from "../../src/app/components/charts/useChartTooltipProps";
-import { EARNINGS_AUXILIARY_KEYS, EARNINGS_TOTAL_KEYS } from "../../src/lib/chartConstants";
 import type { CustomTooltipProps } from "../../src/types/chart";
 import type { CpiData } from "../../src/types";
 import { renderBrowserComponent } from "./renderBrowserComponent";
@@ -51,70 +48,7 @@ const data: CpiData[] = ["2025年1月", "2025年2月"].map((年月) => ({
   "15歳以上国民当たり給与": 210,
 }));
 
-function EarningsHiddenSeriesSeparatorFixture() {
-  const [hiddenKeys, setHiddenKeys] = useState<string[]>([]);
-  const { bind } = useChartTooltipController({ suppressed: false, isTouch: false });
-  const tooltip = bind("browser-earnings-hidden-separator", {
-    dataLength: data.length,
-    showTotal: true,
-    totalIncludedKeys: [...EARNINGS_TOTAL_KEYS],
-    separatorBetweenGroups: {
-      firstGroupKeys: [...EARNINGS_TOTAL_KEYS],
-      secondGroupKeys: [...EARNINGS_AUXILIARY_KEYS],
-    },
-    showAllPayload: true,
-  });
-
-  return (
-    <div style={{ width: 1000 }}>
-      <div data-testid="earnings-hidden-separator-chart">
-        <EarningsBreakdownChart
-          data={data}
-          hiddenKeys={hiddenKeys}
-          onToggle={(key) =>
-            setHiddenKeys((current) =>
-              current.includes(key) ? current.filter((item) => item !== key) : [...current, key],
-            )
-          }
-          chartColors={CHART_COLORS}
-          isMobile={false}
-          tooltipProps={tooltip.tooltipProps}
-        />
-      </div>
-    </div>
-  );
-}
-
 describe("EarningsBreakdownChart tooltip in Chromium", () => {
-  it("P42-309 earnings separator after hidden-series rehover", async () => {
-    await page.viewport(1280, 800);
-    renderBrowserComponent(<EarningsHiddenSeriesSeparatorFixture />);
-
-    const chart = page.getByTestId("earnings-hidden-separator-chart");
-    const chartElement = await chart.element();
-    const plotElements = chartElement.querySelectorAll<SVGPathElement>("path.recharts-area-area");
-    const firstPlot = plotElements.item(0);
-    if (!firstPlot) throw new Error("Earnings chart area path is missing");
-    await page.elementLocator(firstPlot).hover();
-
-    const hiddenSeries = chart.getByTestId("legend-所定内給与");
-    await userEvent.click(await hiddenSeries.element());
-    const heading = chartElement.querySelector<HTMLHeadingElement>("h2");
-    if (!heading) throw new Error("Earnings chart heading is missing");
-    await page.elementLocator(heading).hover();
-    const freshPlot = chartElement.querySelector<SVGPathElement>("path.recharts-area-area");
-    if (!freshPlot) throw new Error("Earnings chart area path is missing after toggle");
-    await page.elementLocator(freshPlot).hover();
-
-    const freshSeparator = document.querySelector<HTMLElement>(
-      '[data-tooltip-root="true"] [data-tooltip-group-separator="true"]',
-    );
-    const freshBorder = freshSeparator
-      ? window.getComputedStyle(freshSeparator).borderTopWidth
-      : "0px";
-    expect(freshBorder).not.toBe("0px");
-  });
-
   it("real earnings plot hover activates visible tooltip content", async () => {
     await page.viewport(1280, 800);
     renderBrowserComponent(

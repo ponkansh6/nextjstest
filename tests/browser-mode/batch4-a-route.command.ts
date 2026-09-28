@@ -143,8 +143,17 @@ export const inspectBatch4AProductionCase: BrowserCommand<
       };
     } else {
       values.overflow = await page.evaluate(() => ({
-        scrollWidth: document.documentElement.scrollWidth,
-        clientWidth: document.documentElement.clientWidth,
+        document: {
+          scrollWidth: document.documentElement.scrollWidth,
+          clientWidth: document.documentElement.clientWidth,
+        },
+        chart: (() => {
+          const container = document.querySelector<HTMLElement>(
+            "#section-stacked [class*='chartWrapper']",
+          );
+          if (!container) throw new Error("Production CPI chart container is missing.");
+          return { scrollWidth: container.scrollWidth, clientWidth: container.clientWidth };
+        })(),
       }));
     }
     return { responseStatus: response.status(), url: page.url(), values };

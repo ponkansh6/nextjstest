@@ -2,26 +2,7 @@ import { expect, it } from "vitest";
 import { commands } from "vitest/browser";
 import type { Phase5InteractionScenario } from "./phase5-interaction-feasibility.route.command";
 
-const scenarios: Phase5InteractionScenario[] = [
-  "real-flight",
-  "real-hydration",
-  "real-components",
-  "real-legend-toggle",
-  "real-accordion-closed",
-  "real-accordion-open",
-  "real-accordion-style",
-  "touch-open-close",
-  "touch-escape",
-  "touch-outside",
-  "touch-switch-chart",
-  "touch-swipe-negative",
-  "touch-retap",
-  "touch-overlap",
-  "touch-chart-note-navigation",
-  "touch-area-outside",
-  "touch-area-close",
-  "touch-during-tab-scroll",
-];
+const scenarios: Phase5InteractionScenario[] = ["real-legend-toggle", "touch-swipe-negative"];
 
 for (const scenario of scenarios) {
   it(`Phase 5 feasibility observation: ${scenario}`, async () => {

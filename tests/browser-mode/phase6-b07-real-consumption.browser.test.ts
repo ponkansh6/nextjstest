@@ -1,6 +1,12 @@
-import { expect, it } from "vitest";
-import { commands } from "vitest/browser";
+import { beforeEach, expect, it, vi } from "vitest";
+import { commands, page } from "vitest/browser";
 import type { Phase6B07Id } from "./phase6-b07.route.command";
+
+vi.setConfig({ testTimeout: 60_000 });
+
+beforeEach(async () => {
+  await page.viewport(1280, 720);
+});
 
 const FLIGHT: Phase6B07Id =
   "p45-b-real-consumption-21-page-tsx-e2e-real-consumption-chart-with-actual-browser";

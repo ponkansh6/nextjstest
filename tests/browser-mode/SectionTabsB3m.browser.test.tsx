@@ -59,7 +59,11 @@ afterEach(() => {
   window.__MOUNT_ALL__ = false;
 });
 
-async function expectComponentScroll(label: string, targetId: string) {
+async function expectComponentScroll(
+  label: string,
+  targetId: string,
+  assertTargetInViewport = false,
+) {
   await page.viewport(375, 800);
   renderBrowserComponent(<SectionNavigationFixture targetId={targetId} />);
   const before = window.scrollY;
@@ -68,40 +72,20 @@ async function expectComponentScroll(label: string, targetId: string) {
   await userEvent.click(await tab.element());
   await new Promise((resolve) => window.setTimeout(resolve, 1_000));
   expect(window.scrollY).toBeGreaterThan(before);
+
+  if (assertTargetInViewport) {
+    const target = document.getElementById(targetId);
+    expect(target).not.toBeNull();
+    const rect = target!.getBoundingClientRect();
+    expect(rect.bottom).toBeGreaterThan(0);
+    expect(rect.top).toBeLessThan(window.innerHeight);
+  }
 }
 
 async function expectLazySectionInitiallyAbsent(targetId: string) {
   await page.viewport(375, 800);
   renderBrowserComponent(<LazySectionFixture targetId={targetId} />);
   await expect.element(page.getByTestId("lazy-section-content")).not.toBeInTheDocument();
-}
-
-async function renderOverflowingTabs() {
-  await page.viewport(375, 800);
-  renderBrowserComponent(
-    <>
-      <style>{BASELINE_CSS}</style>
-      <SectionTabs
-        sections={[
-          { id: "overview", label: "概要" },
-          { id: "consumption", label: "消費支出" },
-          { id: "food", label: "食料" },
-          { id: "housing", label: "住居" },
-          { id: "utilities", label: "光熱・水道" },
-          { id: "clothing", label: "被服及び履物" },
-          { id: "health", label: "保健医療" },
-          { id: "education", label: "教育" },
-        ]}
-        activeId="overview"
-        onSelect={() => {}}
-        rangeLabel="2005年〜2025年"
-        onRangeClick={() => {}}
-      />
-    </>,
-  );
-  const container = document.querySelector<HTMLElement>('[class*="sectionTabsScroll"]');
-  expect(container).not.toBeNull();
-  return container!;
 }
 
 describe("B3m SectionTabs", () => {
@@ -124,41 +108,19 @@ describe("B3m SectionTabs", () => {
   it("p45-b-section-tabs-scroll-82-3-chromium", async () => {
     await expectLazySectionInitiallyAbsent("section-new-graph");
   });
-
-  it("p45-b-section-tabs-scroll-120-case02-webkit", async () => {
-    const container = await renderOverflowingTabs();
-    expect(getComputedStyle(container).scrollbarWidth).toBe("none");
-  });
-
-  it("p45-b-section-tabs-scroll-127-case02-webkit", async () => {
-    const container = await renderOverflowingTabs();
-    const before = container.scrollLeft;
-    container.scrollLeft = container.scrollWidth;
-    expect(container.scrollWidth).toBeGreaterThan(container.clientWidth);
-    expect(container.scrollLeft).toBeGreaterThan(before);
-  });
-
-  it("p45-b-section-tabs-scroll-142-mask-image-webkit", async () => {
-    const container = await renderOverflowingTabs();
-    const styles = getComputedStyle(container) as CSSStyleDeclaration & {
-      webkitMaskImage?: string;
-    };
-    expect(styles.maskImage).not.toBe("none");
-    expect(styles.webkitMaskImage).not.toBe("none");
-  });
 });
 
 describe("B3m SectionTabs WebKit", () => {
   it("p45-b-section-tabs-scroll-47-case04-webkit", async () => {
-    await expectComponentScroll("消費(名目)", "section-consumption-nominal");
+    await expectComponentScroll("消費(名目)", "section-consumption-nominal", true);
   });
 
   it("p45-b-section-tabs-scroll-47-case05-webkit", async () => {
-    await expectComponentScroll("給与", "section-earnings");
+    await expectComponentScroll("給与", "section-earnings", true);
   });
 
   it("p45-b-section-tabs-scroll-47-3-webkit", async () => {
-    await expectComponentScroll("3種比較", "section-new-graph");
+    await expectComponentScroll("3種比較", "section-new-graph", true);
   });
 
   it("p45-b-section-tabs-scroll-82-case04-webkit", async () => {

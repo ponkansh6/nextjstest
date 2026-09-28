@@ -98,7 +98,7 @@ describe("CpiChart single-year range in Chromium", () => {
     }
   });
 
-  it("p45-b-range-change-187-e2e-1 — single year and extension update contract periods and bars", async () => {
+  it("selecting and extending a one-year range updates periods and bars", async () => {
     window.__MOUNT_ALL__ = true;
     window.history.replaceState(null, "", `${window.location.pathname}?from=2020&to=2022`);
     renderBrowserComponent(
@@ -115,69 +115,41 @@ describe("CpiChart single-year range in Chromium", () => {
       await page.getByRole("button", { name: "表示期間を変更" }).click();
       await userEvent.selectOptions(await page.getByLabelText(label).element(), String(year));
     };
-    const nominalContractPeriodCount = async () => {
-      const chart = await page.getByTestId("spending-chart-nominal").element();
-      return chart.querySelectorAll('[data-testid="chart-data-contract"] [data-chart-data-row]')
-        .length;
+    const expectChartContractAndBars = async (
+      testId: "spending-chart-nominal" | "spending-chart-real",
+      expectedPeriods: number,
+    ) => {
+      const chart = await page.getByTestId(testId).element();
+      const rows = chart.querySelectorAll<HTMLElement>(
+        '[data-testid="chart-data-contract"] [data-chart-data-row]',
+      );
+      expect(rows.length).toBe(expectedPeriods);
+      const contractValues = Array.from(rows).reduce(
+        (count, row) =>
+          count + row.querySelectorAll('[data-series-key][data-value-type="number"]').length,
+        0,
+      );
+      const bars = chart.querySelectorAll(".recharts-bar-rectangle").length;
+      expect(contractValues).toBeGreaterThan(0);
+      expect(bars).toBe(contractValues);
     };
 
-    // Use the actual ChartFilters controls and CpiChart handlers to reach 2017 only.
-    await selectYear("開始年:", 2017);
-    await selectYear("終了年:", 2017);
-    const periods2017Only = await nominalContractPeriodCount();
-    expect(periods2017Only).toBe(4);
-    const nominal2017 = await page.getByTestId("spending-chart-nominal").element();
-    const nominalRows2017 = nominal2017.querySelectorAll<HTMLElement>(
-      '[data-testid="chart-data-contract"] [data-chart-data-row]',
-    );
-    const expected2017Bars = Array.from(nominalRows2017).reduce(
-      (count, row) =>
-        count + row.querySelectorAll("[data-series-key][data-value-type='number']").length,
-      0,
-    );
-    expect(nominal2017.querySelectorAll(".recharts-bar-rectangle").length).toBe(expected2017Bars);
+    // Use years with available post-boundary expense values in the fixture.
+    await selectYear("開始年:", 2021);
+    await selectYear("終了年:", 2021);
+    await expectChartContractAndBars("spending-chart-nominal", 4);
+    await expectChartContractAndBars("spending-chart-real", 4);
+    const singleYearUrl = new URL(window.location.href);
+    expect(singleYearUrl.searchParams.get("from")).toBe("2021");
+    expect(singleYearUrl.searchParams.get("to")).toBe("2021");
 
-    // Extend the same visible range by one year and inspect the real chart contract again.
-    await selectYear("終了年:", 2018);
-    const periods2017to2018 = await nominalContractPeriodCount();
-    expect(periods2017to2018).toBe(8);
-    expect(periods2017to2018).toBeGreaterThan(periods2017Only);
-  });
-
-  it("P45 CPI tooltip rows", async () => {
-    window.__MOUNT_ALL__ = true;
-    window.history.replaceState(null, "", `${window.location.pathname}?from=2020&to=2022`);
-    renderBrowserComponent(
-      <CpiChart
-        data={chartData}
-        quarterlyNominalData={nominalData}
-        quarterlyRealData={realData}
-        totalEarningData={[]}
-        maxCpiDate={{ year: 2022, month: 12 }}
-      />,
-    );
-
-    const chart = page.getByRole("img", {
-      name: "物価指数 費目別寄与度の積み上げグラフ",
-    });
-    const chartElement = await chart.element();
-    const areaElement = chartElement.querySelector<SVGPathElement>("path.recharts-area-area");
-    if (!areaElement) throw new Error("CPI chart area path is missing");
-    const area = page.elementLocator(areaElement);
-    await expect.element(area).toBeVisible();
-    await area.hover();
-
-    const tooltipElement = chartElement.querySelector<HTMLElement>('[data-tooltip-root="true"]');
-    if (!tooltipElement) throw new Error("CPI chart tooltip is missing");
-    const tooltip = page.elementLocator(tooltipElement);
-    await expect.element(tooltip).toBeVisible();
-    const totalElement = tooltipElement.querySelector<HTMLElement>('[data-tooltip-total="true"]');
-    if (!totalElement) throw new Error("CPI chart total is missing");
-    const total = page.elementLocator(totalElement);
-    await expect.element(total).toBeVisible();
-    const rowElements = (await tooltip.element()).querySelectorAll('[data-tooltip-row="true"]');
-    expect(rowElements.length).toBe(12);
-    expect((await tooltip.element()).hasAttribute("data-tooltip-root")).toBe(true);
-    expect((await tooltip.element()).querySelector('[data-tooltip-total="true"]')).not.toBeNull();
+    // Extend the same visible range by one year and inspect both chart contracts again.
+    await selectYear("終了年:", 2022);
+    await expectChartContractAndBars("spending-chart-nominal", 8);
+    await expectChartContractAndBars("spending-chart-real", 8);
+    const twoYearUrl = new URL(window.location.href);
+    expect(twoYearUrl.searchParams.get("from")).toBe("2021");
+    // The fixture's latest year is the URL default, so serialization omits `to`.
+    expect(twoYearUrl.searchParams.get("to") ?? "2022").toBe("2022");
   });
 });

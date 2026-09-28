@@ -1,7 +1,13 @@
-import { expect, it } from "vitest";
-import { commands } from "vitest/browser";
+import { beforeEach, expect, it, vi } from "vitest";
+import { commands, page } from "vitest/browser";
 import expected from "../fixtures/plan27-private-consumption.json";
 import type { Phase6B06Id } from "./phase6-b06.route.command";
+
+vi.setConfig({ testTimeout: 60_000 });
+
+beforeEach(async () => {
+  await page.viewport(1280, 720);
+});
 
 const KEY_ONLY: Phase6B06Id =
   "p45-b-plan27-private-consumption-79-plan27-38-cti-nominal-cti-key-is-distinct-from-the-real";
@@ -53,6 +59,7 @@ it("B06 Plan27 ID 9: 52-quarter table and CSV", async () => {
     }>;
     realHeaders: string[];
     barCount: number;
+    positiveBarCount: number;
     snapshot: { headers: string[]; rows: string[][] };
     periods: string[];
     csv: { text: string; rows: string[][]; artifactPath: string };
@@ -68,6 +75,7 @@ it("B06 Plan27 ID 9: 52-quarter table and CSV", async () => {
   expect(result.postBoundary.every((row) => row.reason === "unavailable")).toBe(true);
   expect(result.postBoundary.every((row) => row.hasStackedValue)).toBe(true);
   expect(result.barCount).toBeGreaterThan(0);
+  expect(result.positiveBarCount).toBeGreaterThan(0);
   expect(result.barCount).toBeLessThanOrEqual(expected.quarterCount);
   expect(result.periods).toHaveLength(expected.quarterCount);
   expect(result.snapshot.headers.join(" ")).toContain(expected.label);

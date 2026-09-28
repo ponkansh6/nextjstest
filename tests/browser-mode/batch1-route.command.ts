@@ -358,7 +358,8 @@ export const inspectBatch1ProductionCase: BrowserCommand<
         );
         await section.scrollIntoViewIfNeeded();
         const ticks = section.locator(".recharts-xAxis-tick-labels text");
-        await ticks.first().waitFor({ state: "attached", timeout: 15_000 });
+        await ticks.first().waitFor({ state: "visible", timeout: 15_000 });
+        values.firstTickLabel = (await ticks.first().textContent())?.trim() ?? "";
         values.axisLabels = await ticks.allTextContents();
         break;
       }

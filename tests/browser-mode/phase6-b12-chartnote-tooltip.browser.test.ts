@@ -1,6 +1,12 @@
-import { expect, it } from "vitest";
-import { commands } from "vitest/browser";
+import { beforeEach, expect, it, vi } from "vitest";
+import { commands, page } from "vitest/browser";
 import type { Phase6B12Id } from "./phase6-b12.route.command";
+
+vi.setConfig({ testTimeout: 90_000 });
+
+beforeEach(async () => {
+  await page.viewport(1280, 720);
+});
 
 const ENGINEERED_OVERLAP: Phase6B12Id =
   "p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip";
@@ -33,6 +39,9 @@ it("B12 #307: deliberately engineered actual link overlap is hit-tested by toolt
     intersection: { x: number; y: number };
     elementFromPointHitTooltip: boolean;
     touchPerformed: boolean;
+    urlBeforeTouch: string;
+    urlAfterTouch: string;
+    hashBeforeTouch: string;
     hashAfterTouch: string;
     tooltipVisibleAfterTouch: boolean;
   };
@@ -44,7 +53,8 @@ it("B12 #307: deliberately engineered actual link overlap is hit-tested by toolt
   expect(result.intersection).not.toBeNull();
   expect(result.elementFromPointHitTooltip).toBe(true);
   expect(result.touchPerformed).toBe(true);
-  expect(result.hashAfterTouch).not.toBe("#section-consumption-nominal");
+  expect(result.urlAfterTouch).toBe(result.urlBeforeTouch);
+  expect(result.hashAfterTouch).toBe(result.hashBeforeTouch);
   expect(result.tooltipVisibleAfterTouch).toBe(true);
 });
 

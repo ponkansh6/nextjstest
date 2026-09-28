@@ -40,6 +40,7 @@ export const inspectPhase6B07: BrowserCommand<[id: Phase6B07Id], unknown> = asyn
         if (msg.type() === "error") errors.push(`Console error: ${msg.text()}`);
       });
       await page.goto(`${NEXT_ROUTE_POC_BASE_URL}/`);
+      await page.waitForTimeout(1_000);
       return { errors };
     }
 

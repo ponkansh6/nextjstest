@@ -1,0 +1,110 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-28T17:13:01.335Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "model": "jev-latest",
+    "state": {
+      "evaluationScope": "implementation_checkpoint_validity",
+      "background": "Review the implemented assertion-first consolidation recorded in results/plan46/phase5/browser-mode-consolidation-plan-2026-09-29.md. Seventeen active component cases and 29 Phase 5 wrappers were retired; the two retained source-only IDs are real-legend-toggle and touch-swipe-negative. Active config union count changed 211→194, source-only Phase 5 31→2, and the source inventory 242→196. The 24 component hold cases and 9 DOM-move candidates were not changed. Twelve planned assertion transfers were implemented. B08 #99 remains held because local legend behavior differs from the active page-global assertion; B11 #249 remains held because the destination early return does not establish dispatched gesture or chart-hit origin.",
+      "acceptanceCriteria": [
+        "The implementation retires exactly the planned 17 active component cases and 29 Phase 5 cases while retaining real-legend-toggle and touch-swipe-negative; both Phase 5 source files are handled consistently with the retained wrapper, and the rendering feasibility wrapper file is removed.",
+        "Inventory counts are consistent: active config union 211→194, source-only Phase 5 31→2, full inventory 242→196; 24 held component cases and 9 DOM-move candidates remain unchanged.",
+        "All 12 Phase 5 assertion transfers are present: B07 #60 zero captured errors after the fixed one-second post-navigation wait; B08 #128 details open=false and #156 detailsOpen=true; B10 #138 tooltip hidden after close, #159 close visible after retap, #188 tooltip hidden after outside; B11 #284 tooltip visible after retap; B12 #307 URL/hash unchanged; B03 advanced query/reload, advanced parity anchors, and hidden-series pressed transition plus SVG geometry change; B06 Plan27 #9 positive-size bar rectangle.",
+        "The 375px mobile overflow cases query [class*='chartWrapper'] for scrollWidth <= clientWidth while preserving document-root overflow; the failed [class*='chartContainer'] selector was corrected. CPI and earnings MonthlyBoundaryAxis checks include a visible-first-tick non-vacuity predicate.",
+        "WebKit cases #120/#127/#142 are in batch4-b-webkit-production-route.browser.test.ts. The focused Chromium and WebKit checks pass after the selector correction.",
+        "Verification results and the pre-existing type-check failure are represented accurately, including that the Next build TypeScript phase passed while pnpm run type-check fails on an unrelated untracked probe file."
+      ],
+      "verification": [
+        "pnpm run build: passed; Next.js TypeScript build phase passed.",
+        "pnpm run test:browser -- tests/browser-mode/B3m-responsive-mobile.browser.test.tsx tests/browser-mode/CagrPanel.browser.test.tsx tests/browser-mode/CpiChart-range-close.browser.test.tsx tests/browser-mode/CpiChart-single-year.browser.test.tsx tests/browser-mode/EarningsBreakdownChart.browser.test.tsx tests/browser-mode/SectionTabsB3m.browser.test.tsx: CLI args were forwarded but the full component suite ran; 25 files, 83 passed, 6 skipped, 85.15s.",
+        "pnpm run test:browser:next-route-poc:built: initial Chromium route run had 93 passed and 4 selector failures due to [class*='chartContainer']; implementation corrected the selector to [class*='chartWrapper'].",
+        "NEXT_ROUTE_POC_PORT=3188 pnpm exec vitest run --config vitest.browser.aggregate-chromium.config.ts tests/browser-mode/batch4-a-production-route.browser.test.ts: 7/7 passed, 14.29s.",
+        "NEXT_ROUTE_POC_PORT=3188 pnpm exec vitest run --config vitest.browser.webkit.config.ts tests/browser-mode/batch4-b-webkit-production-route.browser.test.ts: 4/4 passed, 26.16s.",
+        "git diff --check: passed. Scoped eslint --no-ignore: passed for the changed source scope.",
+        "pnpm run type-check: failed at pre-existing untracked results/plan46/phase4/vitest-selector-route-probe.browser.test.ts:8 because BrowserCommands type augmentation is missing. Consolidation did not touch that file; do not treat this as a consolidation regression or hide the limitation.",
+        "This artifact is the required input for one implementation-checkpoint JEV API review call. Do not include credentials or secrets in the request; review context and verification evidence are approved for transmission. No API call was run while preparing this artifact."
+      ],
+      "knownConstraints": [
+        "The shared worktree contains unrelated staged/unstaged changes; they were preserved and remain outside this consolidation.",
+        "The two remaining Phase 5 IDs are intentionally held and are outside the deletion count.",
+        "The type-check command remains red because of the unrelated untracked BrowserCommands probe; the Next build TypeScript phase passed.",
+        "Prior JEV history must be preserved: the plan initial review selected incomplete_implementation_info with an unresolved/incomplete clarification; the distinct post-evidence plan revalidation selected indeterminate with an unresolved/incomplete clarification. Neither result is a pass, and this checkpoint request must not reinterpret either distribution or clarification result.",
+        "No credentials or API use are required to review this local plan and verification evidence."
+      ],
+      "outputRequirement": "Choose one listed choice and return a probability distribution. For a non-pass choice, provide a case-specific finding, affected file/case or acceptance criterion, observed evidence from the supplied plan/verification record, and a concrete correction or exact additional evidence needed. Do not invent facts. Assess the implementation checkpoint independently while preserving the earlier unresolved JEV results as unresolved. If the initial checkpoint verdict is a valid non-pass result, issue exactly one automatic clarification with case-specific mutually exclusive next actions and required diagnosis details; retain an unresolved or incomplete clarification result as such, and do not chain another clarification. If the initial API response is invalid, unsupported, or fails, preserve the initial error behavior and do not clarify."
+    },
+    "questions": {
+      "implementation": {
+        "type": "choice",
+        "instructions": "Does the supplied implementation and verification evidence meet the consolidation plan's acceptance criteria? Return a probability distribution over the mutually exclusive choices.",
+        "criteria": {
+          "valid_as_defined": "The recorded implementation and verification evidence support the plan as defined, with limitations disclosed.",
+          "requirements_mismatch": "A transfer conflicts with the intended behavior; identify the exact case/requirement and correction.",
+          "missing_prerequisites_info": "A prerequisite or evidence needed to judge a case is missing; specify it exactly.",
+          "incomplete_implementation_info": "A planned assertion, retained case, count, or validation detail is incomplete; identify the gap.",
+          "implementation_issue": "A concrete implementation defect exists; identify its file/case, evidence, and correction.",
+          "scope_violation": "The implementation changed a held, DOM-move, unrelated, or otherwise excluded case; identify the boundary and adjustment.",
+          "other": "A material checkpoint concern does not fit the listed categories; identify its location, evidence, and fix or needed evidence.",
+          "indeterminate": "The supplied implementation and verification record cannot support a judgment; identify the missing context."
+        }
+      }
+    }
+  },
+  "questionIds": [
+    "implementation"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "implementation": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.54,
+        "probabilities": {
+          "valid_as_defined": 0.59,
+          "incomplete_implementation_info": 0.19,
+          "indeterminate": 0.04,
+          "other": 0.01,
+          "missing_prerequisites_info": 0.06,
+          "requirements_mismatch": 0.02,
+          "implementation_issue": 0.07,
+          "scope_violation": 0.02
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.54,
+    "probabilities": {
+      "valid_as_defined": 0.59,
+      "incomplete_implementation_info": 0.19,
+      "indeterminate": 0.04,
+      "other": 0.01,
+      "missing_prerequisites_info": 0.06,
+      "requirements_mismatch": 0.02,
+      "implementation_issue": 0.07,
+      "scope_violation": 0.02
+    },
+    "passProbability": 0.59,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

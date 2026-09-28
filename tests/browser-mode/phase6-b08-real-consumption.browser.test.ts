@@ -1,6 +1,12 @@
-import { expect, it } from "vitest";
-import { commands } from "vitest/browser";
+import { beforeEach, expect, it, vi } from "vitest";
+import { commands, page } from "vitest/browser";
 import type { Phase6B08Id } from "./phase6-b08.route.command";
+
+vi.setConfig({ testTimeout: 60_000 });
+
+beforeEach(async () => {
+  await page.viewport(1280, 720);
+});
 
 const LEGEND_TOGGLE: Phase6B08Id =
   "p45-b-real-consumption-99-page-tsx-e2e-real-consumption-chart-with-actual-browser";
@@ -22,10 +28,14 @@ it("B08 #128: closed real-consumption accordion hides all section-local legend i
   const result = (await commands.inspectPhase6B08(CLOSED_ACCORDION)) as {
     sectionVisible: boolean;
     summaryVisible: boolean;
+    detailsCount: number;
+    detailsOpen: boolean;
     legendItemVisibility: boolean[];
   };
   expect(result.sectionVisible).toBe(true);
   expect(result.summaryVisible).toBe(true);
+  expect(result.detailsCount).toBeGreaterThan(0);
+  expect(result.detailsOpen).toBe(false);
   if (result.legendItemVisibility.length > 0) {
     expect(result.legendItemVisibility.every((visible) => !visible)).toBe(true);
   } else {
@@ -36,8 +46,10 @@ it("B08 #128: closed real-consumption accordion hides all section-local legend i
 it("B08 #156: clicking the real-consumption accordion summary reveals its first legend item", async () => {
   const result = (await commands.inspectPhase6B08(OPEN_ACCORDION)) as {
     sectionVisible: boolean;
+    detailsOpen: boolean;
     firstLegendItemVisible: boolean;
   };
   expect(result.sectionVisible).toBe(true);
+  expect(result.detailsOpen).toBe(true);
   expect(result.firstLegendItemVisible).toBe(true);
 });

@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "jev-review-initial-distribution-v3",
+  "model": "jev-latest",
+  "state": {
+    "evaluationScope": "plan_validity",
+    "background": "This is a distinct post-evidence initial reevaluation of results/plan46/phase5/browser-mode-consolidation-plan-2026-09-29.md, not a clarification/follow-up chain. The earlier JEV result remains unresolved/incomplete and is not treated as approval. This revised plan includes exact predicates for the 17 active component consolidations and a case-level Phase 5 matrix of 17 exact transfers, 12 assertion transfers, and 2 held cases (#99 and #249). It preserves the 24 held component cases, excludes 9 DOM migration cases, and leaves other active route .ts cases unchanged.",
+    "acceptanceCriteria": [
+      "The 17 active component candidates and destinations are accurate. For mobile-ux-47/65 at 375px, add the actual [class*='chartContainer'] scrollWidth <= clientWidth predicate while preserving the existing document-root overflow assertion.",
+      "For both MonthlyBoundaryAxis CPI and earnings transfers, preserve absence of both boundary labels and add a visible-first-tick assertion so the omission check cannot pass vacuously. Other active component destinations preserve the exact or superset contract listed in the plan.",
+      "The Phase 5 matrix accounts for all 31 case labels with 17 exact, 12 assertion-transfer, and 2 held statuses. It explains that wrappers assert observed IDs while matchesSourceContract/mismatch captures the declared diagnostic contract; raw measurement fields are not automatically pass conditions.",
+      "Phase 5 interaction transfers preserve these contracts: B07 #21 Flight rows/endpoints; B07 #60 zero captured errors after settle; B07 #82 section visibility; B08 #128 details open=false (empty legend is allowed); B08 #156 detailsOpen=true; B09 #174 summaryVisible only; B10 #138 tooltip hidden after close; B10 #159 close visible after retap; B10 #188 tooltip hidden after outside; B11 #207 one guide line; B11 #284 tooltip visible after retap; B12 #307 URL/hash unchanged; B12 #430 navigation/dismissal; B13 #473/#508/#535 their purposeful touch dismissal contracts.",
+      "B08 #99 remains held because local consumption legend behavior differs from the page-global first-legend destination; B11 #249 remains held because the destination early return does not prove dispatched gesture or chart-hit origin. Do not count either for deletion unless the destination is deliberately strengthened and verified.",
+      "Rendering contracts are case-specific: B02 default/dark, B04 CPI/earnings/new-graph, B05 residual/stacked, B06 Plan27 #79 and Plan23 #26 are exact; B03 advanced query/parity anchors/hidden-series and B06 Plan27 #9 receive the listed additional predicates.",
+      "The plan sets maximum deletion at 17 component plus 29 Phase 5 cases (46 total), retains two Phase 5 cases and both source files, preserves dirty worktree changes, and lists repository verification candidates without claiming they were run."
+    ],
+    "verification": [
+      "Revised case inventory and mapping are documented in the plan at results/plan46/phase5/browser-mode-consolidation-plan-2026-09-29.md.",
+      "The change is a plan-only update based on the corrected source/route audit; no implementation or tests were run as part of this reevaluation request preparation.",
+      "This request uses the local initial v3 schema with evaluationScope=plan_validity. It is a new initial review after added evidence; it does not overwrite or reinterpret the earlier unresolved result."
+    ],
+    "knownConstraints": [
+      "Shared worktree has unrelated staged and unstaged changes; preserve them and modify only planned cases during implementation.",
+      "The 31 Phase 5 cases are outside the standard Browser Mode config union, so removing 29 wrappers does not reduce active batch runtime.",
+      "B08 #99 and B11 #249 are hold cases, not deletion proof gates; retain both wrappers and source files under the current destinations.",
+      "For real-accordion-style, only summaryVisible is the purposeful predicate transferred to B09 #174; style measurements are diagnostics, while actual default/dark contrast cases stay at B02.",
+      "Runtime effect of active route assertion additions is unmeasured.",
+      "The previous JEV result remains unresolved/incomplete; this request is a separate reevaluation and does not imply the earlier result passed."
+    ],
+    "outputRequirement": "Choose one listed choice and return a probability distribution. For any non-pass choice, give a case-specific finding, affected plan location or source case, observed evidence, and a concrete proposed correction or exact additional evidence needed. Do not invent details. Treat this as a fresh initial plan-validity review after the revised case-level evidence, not as a clarification chain; do not convert the earlier unresolved result into a pass."
+  },
+  "questions": {
+    "plan": {
+      "type": "choice",
+      "instructions": "Is the revised browser-mode consolidation plan valid as defined and sufficiently specific to implement safely, including exact/transfer/hold statuses and deletion gates? Return a probability distribution over the mutually exclusive choices.",
+      "criteria": {
+        "valid_as_defined": "The case mappings, declared predicates, hold boundaries, deletion counts, and verification candidates support implementation as planned.",
+        "requirements_mismatch": "A plan contract conflicts with intended behavior; identify the exact case/requirement and correction.",
+        "missing_prerequisites_info": "An exact precondition, destination behavior, or required source evidence is missing; specify what is needed.",
+        "incomplete_implementation_info": "A case-level transfer predicate, status, destination, or deletion gate is incomplete; identify the missing item.",
+        "implementation_issue": "A concrete unsafe transfer or deletion instruction exists; identify its location, evidence, and correction.",
+        "scope_violation": "The plan includes a held case, DOM migration, or unrelated route case; identify the boundary and adjustment.",
+        "other": "A material concern does not fit these categories; identify its location, evidence, and fix or exact evidence needed.",
+        "indeterminate": "The supplied revised plan and cited audit context do not support a judgment; identify missing context if possible."
+      }
+    }
+  }
+}

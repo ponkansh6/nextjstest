@@ -241,6 +241,9 @@ export const inspectPhase6B12: BrowserCommand<[id: Phase6B12Id], unknown> = asyn
       let movedLinkBox: Rect | null = null;
       let elementFromPointHitTooltip = false;
       let hashAfterTouch = "";
+      let hashBeforeTouch = "";
+      let urlBeforeTouch = "";
+      let urlAfterTouch = "";
       let tooltipVisibleAfterTouch = false;
       let touchPerformed = false;
       try {
@@ -282,6 +285,8 @@ export const inspectPhase6B12: BrowserCommand<[id: Phase6B12Id], unknown> = asyn
             ),
         );
         if (elementFromPointHitTooltip) {
+          urlBeforeTouch = page.url();
+          hashBeforeTouch = new URL(urlBeforeTouch).hash;
           await stage(id, "real touchscreen tap at deliberately engineered overlap", 10_000, () =>
             page.touchscreen.tap(intersection!.x, intersection!.y),
           );
@@ -296,6 +301,7 @@ export const inspectPhase6B12: BrowserCommand<[id: Phase6B12Id], unknown> = asyn
           5_000,
           () => tooltip.isVisible(),
         );
+        urlAfterTouch = page.url();
         hashAfterTouch = new URL(page.url()).hash;
       } finally {
         await stage(id, "restore original actual chartNote inline style", 5_000, () =>
@@ -320,6 +326,9 @@ export const inspectPhase6B12: BrowserCommand<[id: Phase6B12Id], unknown> = asyn
         intersection,
         elementFromPointHitTooltip,
         touchPerformed,
+        urlBeforeTouch,
+        urlAfterTouch,
+        hashBeforeTouch,
         hashAfterTouch,
         tooltipVisibleAfterTouch,
       };

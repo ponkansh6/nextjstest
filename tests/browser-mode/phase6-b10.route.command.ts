@@ -27,6 +27,9 @@ type B10Observation = {
   closeVisibleBeforeClose?: boolean;
   closeHiddenAfterClose?: boolean;
   closeHiddenAfterOutsideTap?: boolean;
+  tooltipVisibleAfterClose?: boolean;
+  tooltipVisibleAfterOutsideTap?: boolean;
+  closeVisibleAfterRetap?: boolean;
   tooltipVisibleAfterRetap?: boolean;
 };
 
@@ -159,10 +162,26 @@ export const inspectPhase6B10: BrowserCommand<[id: Phase6B10Id], B10Observation>
       await stage(id, "wait for close button hidden after close tap", 7_000, () =>
         closeButton.waitFor({ state: "hidden", timeout: 5_000 }),
       );
+      await stage(id, "wait for custom tooltip hidden after close tap", 7_000, () =>
+        tooltip.waitFor({ state: "hidden", timeout: 5_000 }),
+      );
+      const tooltipVisibleAfterClose = await stage(
+        id,
+        "read custom tooltip visibility after close tap",
+        5_000,
+        () => tooltip.isVisible(),
+      );
       const cursorAfter = await stage(id, "count tooltip cursor after close tap", 5_000, () =>
         cursor.count(),
       );
-      return { id, contextEvidence, cursorBefore, cursorAfter, closeHiddenAfterClose: true };
+      return {
+        id,
+        contextEvidence,
+        cursorBefore,
+        cursorAfter,
+        closeHiddenAfterClose: true,
+        tooltipVisibleAfterClose,
+      };
     }
 
     if (id === "p45-b-tooltip-dismiss-159-mobile-pixel-tooltip-escape-tooltip") {
@@ -207,6 +226,12 @@ export const inspectPhase6B10: BrowserCommand<[id: Phase6B10Id], B10Observation>
         5_000,
         () => tooltip.isVisible(),
       );
+      const closeVisibleAfterRetap = await stage(
+        id,
+        "read close button visibility after retap",
+        5_000,
+        () => closeButton.isVisible(),
+      );
       return {
         id,
         contextEvidence,
@@ -214,6 +239,7 @@ export const inspectPhase6B10: BrowserCommand<[id: Phase6B10Id], B10Observation>
         tooltipVisibleAfterEscape,
         closeHiddenAfterEscape,
         tooltipVisibleAfterRetap,
+        closeVisibleAfterRetap,
       };
     }
 
@@ -236,6 +262,15 @@ export const inspectPhase6B10: BrowserCommand<[id: Phase6B10Id], B10Observation>
     await stage(id, "wait for close button hidden after outside tap", 7_000, () =>
       closeButton.waitFor({ state: "hidden", timeout: 5_000 }),
     );
+    await stage(id, "wait for custom tooltip hidden after outside tap", 7_000, () =>
+      tooltip.waitFor({ state: "hidden", timeout: 5_000 }),
+    );
+    const tooltipVisibleAfterOutsideTap = await stage(
+      id,
+      "read custom tooltip visibility after outside tap",
+      5_000,
+      () => tooltip.isVisible(),
+    );
     const cursorAfter = await stage(id, "count tooltip cursor after outside tap", 5_000, () =>
       cursor.count(),
     );
@@ -246,6 +281,7 @@ export const inspectPhase6B10: BrowserCommand<[id: Phase6B10Id], B10Observation>
       cursorAfter,
       closeVisibleBeforeClose,
       closeHiddenAfterOutsideTap: true,
+      tooltipVisibleAfterOutsideTap,
     };
   } finally {
     await isolated.close();
