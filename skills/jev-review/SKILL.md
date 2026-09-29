@@ -1,11 +1,11 @@
 ---
 name: jev-review
-description: Review a plan or implementation checkpoint with JEV, then use the result to guide bounded fixes and a repeat review when needed.
+description: Review an implementation checkpoint with JEV, then use the result to guide bounded fixes and a repeat review when needed.
 ---
 
 # JEV review
 
-Use JEV at a plan or implementation checkpoint when an independent judgment will help decide the next step. Include only the relevant plan or diff, acceptance criteria, verification evidence, and constraints.
+Use JEV at an implementation checkpoint when an independent judgment will help decide the next step. Include only the relevant implementation diff, acceptance criteria, verification evidence, and constraints. Plan formulation and plan review are outside this skill's scope.
 
 ## API contract
 
@@ -19,10 +19,10 @@ Create a JSON request with `state` and a non-empty `questions` object. For a new
 
 ```sh
 SKILL_DIR=/path/to/jev-review
-node "$SKILL_DIR/scripts/jev-request.mjs" --request request.json --output review.json
+node "$SKILL_DIR/scripts/jev-request.mjs" --request request.json
 ```
 
-The client validates the request locally, removes local `schemaVersion` metadata before POSTing, and stores a result envelope for local interpretation. It uses an explicitly exported `TYPESAFE_API_KEY` first; otherwise it searches ancestor directories of the current directory and script for `.env.local`. `TYPESAFE_ENV_FILE` selects an explicit env file. `TYPESAFE_MODEL`, `TYPESAFE_BASE_URL`, and `--timeout-ms` are optional. Without a key, a live request fails closed. The key is used only for bearer authentication and is never review content.
+The client validates the request locally, removes local `schemaVersion` metadata before POSTing, and returns a result envelope for interpretation. Inspect and report the judgment in the active work session; saving an audit document is not required. Use `--output review.json` only when retaining a local result is useful or requested. The client uses an explicitly exported `TYPESAFE_API_KEY` first; otherwise it searches ancestor directories of the current directory and script for `.env.local`. `TYPESAFE_ENV_FILE` selects an explicit env file. `TYPESAFE_MODEL`, `TYPESAFE_BASE_URL`, and `--timeout-ms` are optional. Without a key, a live request fails closed. The key is used only for bearer authentication and is never review content.
 
 Inspect the returned answers and evidence; HTTP success alone is not approval. For new v3 initial reviews, only `valid_as_defined` passes. Every valid non-pass triggers exactly one locally orchestrated clarification POST; it preserves the initial judgment and cannot turn it into a pass. Apply the bounded action or gather requested evidence, run relevant checks, then submit a new regular initial review. See [references/advanced-workflow.md](references/advanced-workflow.md) for compatibility formats and detailed interpretation rules.
 

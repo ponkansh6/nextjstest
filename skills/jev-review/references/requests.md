@@ -4,7 +4,7 @@ The API contract is [https://api.typesafe.ai/openapi.json](https://api.typesafe.
 
 ## Standard initial review
 
-Use this local schema for new plan and checkpoint reviews. Only `valid_as_defined` is a passing answer. A reason category describes the kind of concern; it does not encode severity. A non-pass reason needs a case-specific finding, affected location or requirement, observed evidence, and either a concrete proposed fix or exact additional evidence needed.
+Use this local schema for new implementation-checkpoint reviews. Only `valid_as_defined` is a passing answer. A reason category describes the kind of concern; it does not encode severity. A non-pass reason needs a case-specific finding, affected location or requirement, observed evidence, and either a concrete proposed fix or exact additional evidence needed.
 
 ```json
 {
@@ -13,7 +13,7 @@ Use this local schema for new plan and checkpoint reviews. Only `valid_as_define
   "state": {
     "evaluationScope": "implementation_checkpoint_validity",
     "background": "Describe the intended behavior and relevant diff.",
-    "acceptanceCriteria": ["Behavior matches the plan", "Errors are surfaced"],
+    "acceptanceCriteria": ["Behavior matches the acceptance criteria", "Errors are surfaced"],
     "verification": ["Request validation completed before submission"],
     "knownConstraints": ["No unrelated files"],
     "outputRequirement": "Choose one listed choice. For a reason choice, give a case-specific finding, affected location or requirement, observed evidence, and either a concrete proposed fix or exact additional evidence needed. Do not invent details."
@@ -37,7 +37,7 @@ Use this local schema for new plan and checkpoint reviews. Only `valid_as_define
 }
 ```
 
-For a plan review, set `evaluationScope` to `plan_validity`, describe the plan in `background`, and adapt criteria to the plan. The client stores the selected choice's confidence and full probability distribution, including the probability assigned to `valid_as_defined` as `passProbability`.
+The client returns the selected choice's confidence and full probability distribution, including the probability assigned to `valid_as_defined` as `passProbability`. Save the returned envelope with `--output` only when a local copy is useful or requested.
 
 ## API request and response shape
 
@@ -51,4 +51,4 @@ The wire request contains only the API fields, for example:
 }
 ```
 
-The API response has the typed shape `{ model, answers, usage }`; use the OpenAPI schema for the types and precise answer and usage fields. A `422` response is a request validation error, not a judgment. The client preserves raw responses and local request/result metadata in its output envelope.
+The API response has the typed shape `{ model, answers, usage }`; use the OpenAPI schema for the types and precise answer and usage fields. A `422` response is a request validation error, not a judgment. When an output envelope is requested, the client preserves raw responses and local request/result metadata in it; otherwise inspect and report the response in the active work session.
