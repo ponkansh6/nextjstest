@@ -58,3 +58,12 @@ tests/test_perm.txt
 log/
 .vercel
 .env.local
+
+# Local browser investigation artifacts and phase6 experiments
+/.vitest-attachments/
+/tests/browser-mode/__screenshots__/
+/tests/browser-mode/__traces__/
+/results/plan45/phase6/
+/results/plan46/
+/tests/browser-mode/phase6-chromium.sequencer.ts
+/vitest.browser.phase6-aggregate-chromium.config.ts
