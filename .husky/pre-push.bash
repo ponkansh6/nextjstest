@@ -61,7 +61,7 @@ run_changed_tests() {
   echo "[hook] gate: changed integration tests"
   if ((${#PUSH_IMPACT_RELATED_PATHS[@]} == 0)); then
     echo "[hook] fallback reason: related test candidates were empty or unsafe"
-    echo "[hook] fallback profile: full (lint:fast → type-check → test:all → test:browser → build → build-parity → security → E2E)"
+    echo "[hook] fallback profile: full (lint:fast → type-check → test:all → component JEV → build → routes JEV → build-parity → security)"
     run_full_profile || return $?
     return
   fi
@@ -79,23 +79,23 @@ NODE
     ); then
       if [[ "$related_files" == 0 ]]; then
         echo "[hook] fallback reason: related test set was empty (Vitest JSON testResults=0)"
-        echo "[hook] fallback profile: full (lint:fast → type-check → test:all → test:browser → build → build-parity → security → E2E)"
+        echo "[hook] fallback profile: full (lint:fast → type-check → test:all → component JEV → build → routes JEV → build-parity → security)"
         run_full_profile || return $?
       else
         echo "[hook] related test files: $related_files"
         echo "[hook] gate passed: changed integration tests"
-        hook_gate "test:browser" pnpm run test:browser || return $?
+        hook_gate "test:browser:component:jev" pnpm run test:browser:component:jev -- "${PUSH_IMPACT_PATHS[@]}" || return $?
       fi
     else
       echo "[hook] fallback reason: related test result was indeterminate (missing, invalid, or incompatible Vitest JSON)"
-      echo "[hook] fallback profile: full (lint:fast → type-check → test:all → test:browser → build → build-parity → security → E2E)"
+      echo "[hook] fallback profile: full (lint:fast → type-check → test:all → component JEV → build → routes JEV → build-parity → security)"
       run_full_profile || return $?
     fi
   else
     status=$?
     cat -- "$log"
     echo "[hook] fallback reason: related tests failed (exit $status)"
-    echo "[hook] fallback profile: full (lint:fast → type-check → test:all → test:browser → build → build-parity → security → E2E)"
+    echo "[hook] fallback profile: full (lint:fast → type-check → test:all → component JEV → build → routes JEV → build-parity → security)"
     run_full_profile || return $?
   fi
 }
@@ -106,9 +106,9 @@ run_full_profile() {
   hook_gate "lint:fast" pnpm run lint:fast || return $?
   hook_gate "type-check" pnpm run type-check || return $?
   hook_gate "test:all" pnpm run test:all || return $?
-  hook_gate "test:browser" pnpm run test:browser || return $?
+  hook_gate "test:browser:component:jev" pnpm run test:browser:component:jev -- "${PUSH_IMPACT_PATHS[@]}" || return $?
   hook_gate "build" pnpm run build || return $?
-  hook_gate "test:browser:next-route-poc:built" pnpm run test:browser:next-route-poc:built || return $?
+  hook_gate "test:browser:routes:jev" pnpm run test:browser:routes:jev -- "${PUSH_IMPACT_PATHS[@]}" || return $?
   hook_gate "test:build-parity" pnpm run test:build-parity || return $?
   hook_gate "security-check" pnpm run security-check || return $?
   echo "[hook] production validation: not run (separate gate; PROD_URL/network availability is not established)"
@@ -127,7 +127,7 @@ else
   fi
   if ((FULL_PROFILE_RAN == 0)); then
     hook_gate "build" pnpm run build || exit $?
-    hook_gate "test:browser:next-route-poc:built" pnpm run test:browser:next-route-poc:built || exit $?
+    hook_gate "test:browser:routes:jev" pnpm run test:browser:routes:jev -- "${PUSH_IMPACT_PATHS[@]}" || exit $?
     echo "[hook] production validation: not run (separate gate; PROD_URL/network availability is not established)"
   fi
 fi

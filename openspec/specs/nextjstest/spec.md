@@ -657,6 +657,21 @@ Production-route Browser Mode commands use the configured Vitest provider's
 `Browser` and the command's device descriptor plus scenario overrides as test
 configuration. This adds no external application-data source.
 
+Browser-test selection uses the active Vitest Browser Mode configurations and
+their discovered test cases as its authoritative catalog. Each selectable ID is
+derived from the configuration, spec-file path, and complete test name
+(`fullName`); cases with the same complete name within one configuration/file
+are one indivisible selection group. The selector sends this finite catalog,
+the discovered test names, and the pushed paths to JEV. JEV's
+response may select only catalog IDs. Playwright E2E specs are a separate test
+path and are outside this JEV Browser Mode selector unless a future change adds
+them explicitly.
+The component-only `test:browser` catalog is limited to
+`vitest.browser.config.ts`. The route-scoped selector catalog includes
+`vitest.browser.aggregate-chromium.config.ts` and every case in
+`vitest.browser.webkit.config.ts`; all four files in the WebKit config are in
+scope, including `SectionTabsB3m` under its WebKit title filter.
+
 Hook execution inputs are derived from the Git state being validated, not from
 the working-tree default branch: pre-commit reads the staged path list, while
 pre-push consumes every ref line supplied by Git and classifies the actual
@@ -665,6 +680,9 @@ an unset value defaults to `changed`, and any other value is treated as the
 safe `full` profile. Pre-push retains only safe repository-relative source,
 server, and test paths as related-test candidates; unsafe, empty, malformed,
 unresolvable, or otherwise indeterminate input selects the full profile.
+Browser Mode selection receives the complete validated push-impact path set,
+including configuration and cross-cutting paths, rather than only the
+related-test subset.
 
 Static CSV files (not publicly served) stored in `data/source/`:
 
@@ -2022,6 +2040,16 @@ Page (RSC)
     └── CustomTooltip (React.memo, module-level component for charts, managed via `useChartTooltipController`; key-based metadata supplies label/color/order and the total row follows the Spending tooltip hierarchy)
 ```
 
+The browser validation branch is `.husky/pre-push.bash` → active Vitest
+Browser Mode catalog discovery → JEV case selection → strict selected-ID
+validation → configured component or production-route runner. The catalog is
+keyed by config, file, and full test name; the selector does not execute model
+supplied commands or paths. Playwright E2E remains on its separate runner.
+The normal `test:browser:next-route-poc` and `test:browser:next-route-poc:built`
+commands use the route selector. Raw unfiltered route execution is reserved
+for the explicit `test:browser:next-route-poc:all` and
+`test:browser:next-route-poc:built:all` commands.
+
 The repository validation boundary is the Husky hook tree rather than a UI
 component: the POSIX `.husky/pre-commit` and `.husky/pre-push` launchers exec
 the Bash implementations in `.husky/pre-commit.bash` and
@@ -2029,8 +2057,9 @@ the Bash implementations in `.husky/pre-commit.bash` and
 interpret Bash-only syntax. The Bash implementations run `lint:fast`, staged
 typecheck, commit-scoped `lint-staged`, detached-HEAD validation,
 clean-worktree validation, actual-push-ref impact classification, related-test
-selection, build, E2E, and the full validation profile. Production validation
-is a separate gate and is not implied by the local pre-push hook.
+selection, the component JEV selector, `build`, the production-route JEV
+selector, and the remaining full-profile gates. Production validation is a
+separate gate and is not implied by the local pre-push hook.
 
 `CpiChart` remains the composition root. The static seven-section definition is owned by the typed `CPI_CHART_SECTIONS` in `src/app/components/cpiChartConfig.ts`; its existing ids and order are `section-cpi-major`, `section-stacked`, `section-consumption-nominal`, `section-consumption-real`, `section-earnings`, `section-residual`, and `section-new-graph`. `CpiChart` passes this same array to the active-section initial value, `SectionTabs`, and DOM/scroll observation.
 
@@ -2103,17 +2132,39 @@ Plan38 rows bypass the GDP join entirely.
   conservative full-profile inputs. Ordinary source/server/test changes retain
   safe related candidates and use the changed profile. The classifier unions
   all pushed refs before selecting a profile.
+  The Browser Mode selector receives all validated push-impact paths,
+  including paths excluded from related-test candidates.
+- Before any Browser Mode execution, the selector discovers current cases from
+  the active Vitest Browser Mode configurations and forms catalog IDs from
+  config + file path + complete `fullName`; same-`fullName` cases in one
+  config/file form one indivisible group. JEV selects IDs from this finite
+  catalog for the push paths, and only validated IDs reach the runner. Model
+  text is never interpreted as a shell command, path, config, or test filter.
+- Selected component cases run under their configured Browser Mode profile.
+  Selected route-scoped cases run through the route runner, which
+  retains its provider checks and managed production-server lifecycle. Existing
+  Chromium/WebKit title filters remain in force and selection cannot widen
+  them. Playwright E2E is a separate profile and is outside this catalog.
 - In the changed profile, safe related candidates are passed to
   `vitest related --run --passWithNoTests --reporter=json`; a non-empty valid
-  JSON result allows the changed integration gate to pass, followed by
-  `build` and then `test:e2e:clean` → `test:e2e`. Empty candidates, zero JSON
+  JSON result allows the changed integration gate to pass, followed by the
+  existing component Browser Mode gate through JEV selection. The hook then
+  runs `build` and the existing route-scoped Browser Mode gate through JEV
+  selection. When the no-related-path branch invokes only the built
+  route-scoped Browser Mode runner, that invocation uses its route-scoped
+  JEV catalog. Empty candidates, zero JSON
   `testResults`, missing/invalid/incompatible JSON, or a related-test failure
   invoke the full profile exactly once.
-- The full profile is ordered `lint:fast` → `type-check` → `test:all` → `build`
-  → `test:build-parity` → `security-check` → `test:e2e:clean` → `test:e2e`;
-  each gate stops later gates on failure. Build always precedes E2E. Production
-  validation remains a separate production gate and is reported as not run by
-  local pre-push when its URL/network availability is not established.
+- The full pre-push profile is ordered `lint:fast` → `type-check` → `test:all`
+  → component-scoped JEV Browser Mode selection/execution → `build` →
+  route-scoped JEV Browser Mode selection/execution → `test:build-parity` →
+  `security-check`; each gate stops later gates on failure. The changed profile
+  runs the selected related tests and component Browser Mode gate when
+  applicable, then `build` and route-scoped JEV Browser Mode selection.
+  Playwright E2E remains a separate command and is not part of the local
+  pre-push profile. Production validation remains a separate gate and is
+  reported as not run by local pre-push when its URL/network availability is
+  not established.
 - The normal GitHub build job grants only `contents: read` and runs the full
   dependency `pnpm audit --audit-level=high` plus secretlint on every push and
   pull request; the dispatch-only full validation repeats its all-dependency
@@ -2484,10 +2535,15 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, `hid
 #### Scenario Browser Mode test scope
 
 - **WHEN** `pnpm test:browser` runs the browser profile
-- **THEN** it uses `vitest.browser.config.ts` to run only
-  `tests/browser-mode/**/*.browser.test.tsx` in headless Chromium
-- **AND** Browser Mode verifies a real client component in a browser, but does
+- **THEN** it uses `vitest.browser.config.ts` to discover component cases,
+  asks JEV to select from that component-only catalog, and executes only the
+  selected cases in headless Chromium
+- **AND** this command does not require a production build or start the
+  production-route runner
+- **AND** component cases verify real client components in a browser; they do
   not verify Next.js production routing, SSR, Flight, or hydration
+- **AND** route-scoped cases are selected only by the separate route-scoped
+  commands and use the managed route runner
 
 #### Scenario Browser Mode per-file cleanup and sequential isolation
 
@@ -2622,15 +2678,81 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, `hid
 
 #### Scenario PRE-PUSH Browser Mode validation
 
-- **WHEN** `pnpm run test:full` or the full pre-push profile runs
-- **THEN** it runs `pnpm run test:all` followed by `pnpm run test:browser`
+- **WHEN** `pnpm run test:full` reaches its Browser Mode gates
+- **THEN** its component and production-route selector invocations each ask
+  JEV to select from that gate's current eligible Vitest Browser Mode catalog
+  and run only the selected catalog IDs
+- **WHEN** the full pre-push profile reaches its Browser Mode gates
+- **THEN** it runs component-scoped JEV selection after `test:all`, then runs
+  route-scoped JEV selection after `build`; each invocation runs only its
+  selected catalog IDs
 - **WHEN** the changed pre-push profile selects a non-empty related code/test
   set
-- **THEN** it runs those related tests followed by `pnpm run test:browser`
+- **THEN** it runs those related tests, the existing component Browser Mode
+  gate through JEV selection, then the existing build and production-route
+  Browser Mode gate through its route-scoped JEV selection
 - **WHEN** a changed-profile push contains only documentation and/or asset
   paths
-- **THEN** it skips related code-test selection, `pnpm run test:all`, and
-  `pnpm run test:browser`
+- **THEN** it skips related code-test selection, `pnpm run test:all`, and the
+  component Browser Mode gate, while the existing built production-route
+  Browser Mode gate in the no-related-path branch uses JEV selection
+
+#### Scenario Browser Mode catalog and stable case identity
+
+- **WHEN** a scoped Browser Mode selector starts
+- **THEN** it discovers the cases eligible for that existing component or
+  route-scoped invocation from the active Vitest Browser Mode
+  configurations and builds selectable IDs from config, repository-relative
+  spec file, and complete `fullName`
+- **AND** component scope uses only `vitest.browser.config.ts`
+- **AND** route scope includes `vitest.browser.aggregate-chromium.config.ts`
+  and every case in `vitest.browser.webkit.config.ts`, including
+  `SectionTabsB3m` and all other files matched by that config's WebKit title
+  filter
+- **AND** cases sharing a `fullName` in the same config and file are selected
+  and executed as one group
+- **AND** the discovery and execution preserve each config's existing browser
+  provider, include/exclude rules, and Chromium/WebKit title constraints
+
+#### Scenario JEV Browser Mode case selection
+
+- **WHEN** the selector submits the current case catalog and complete
+  push-impact paths to JEV
+- **THEN** it accepts only a valid structured answer that accounts for every
+  catalog ID and selects only allowed IDs; an explicit `skip` for every ID is
+  a valid empty selection
+- **AND** it executes only the selected catalog IDs; arbitrary response text is
+  never interpreted as a command, path, Vitest config, or test-name pattern
+- **WHEN** discovery fails, the JEV request fails, the response is malformed,
+  or an ID is missing/duplicated/unknown
+- **THEN** the selector exits nonzero before starting a browser test and does
+  not fall back to running the full Browser Mode catalog
+- **WHEN** JEV explicitly skips every catalog ID
+- **THEN** the selector succeeds without starting a browser for that invocation
+
+#### Scenario Selected route-scoped Browser Mode lifecycle
+
+- **WHEN** JEV selects one or more route-scoped Browser Mode cases
+- **THEN** the configured route runner executes only those cases
+- **AND** it retains its existing provider validation, build/readiness checks,
+  server startup and cleanup, and per-command isolated BrowserContext lifecycle
+
+#### Scenario Route-scoped command selection boundary
+
+- **WHEN** `pnpm run test:browser:next-route-poc` or
+  `pnpm run test:browser:next-route-poc:built` runs
+- **THEN** it asks JEV to select from the current route-scoped catalog and
+  executes only the selected cases through the managed route runner
+- **WHEN** `pnpm run test:browser:next-route-poc:all` or
+  `pnpm run test:browser:next-route-poc:built:all` runs
+- **THEN** it executes the raw unfiltered route-scoped suite explicitly,
+  without JEV selection
+
+#### Scenario Playwright E2E remains separate
+
+- **WHEN** the JEV Browser Mode selector creates its catalog
+- **THEN** it includes only active Vitest Browser Mode cases and does not include
+  Playwright E2E specs or replace the separate E2E gate
 
 #### Scenario PRE-PUSH Browser install prerequisite
 
@@ -2646,7 +2768,7 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, `hid
 - **WHEN** related-test selection in the changed profile is empty, invalid, or
   indeterminate
 - **THEN** it falls back to the full profile, running `pnpm run test:all`
-  followed by `pnpm run test:browser` exactly once
+  followed by the JEV-selected Browser Mode gate exactly once
 
 #### Scenario PRE-PUSH Browser Mode failure stop
 

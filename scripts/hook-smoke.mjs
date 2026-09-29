@@ -169,7 +169,11 @@ fi
     PREPUSH_PROFILE: "changed",
   });
   const docsOnlyLog = readFileSync(log, "utf8").slice(docsOnlyLogStart);
-  for (const codeGate of ["exec vitest related", "run test:all", "run test:browser"]) {
+  for (const codeGate of [
+    "exec vitest related",
+    "run test:all",
+    "run test:browser:component:jev",
+  ]) {
     expect(
       codeGate === "exec vitest related"
         ? !docsOnlyLog.split(/\r?\n/).some((line) => line.startsWith(`${codeGate} `))
@@ -233,9 +237,9 @@ fi
     "run lint:fast",
     "run type-check",
     "run test:all",
-    "run test:browser",
+    "run test:browser:component:jev",
     "run build",
-    "run test:browser:next-route-poc:built",
+    "run test:browser:routes:jev",
     "run test:build-parity",
     "run security-check",
   ]) {
@@ -256,7 +260,7 @@ fi
     "full-profile production-route Browser Mode failure did not block push",
     {
       PREPUSH_PROFILE: "full",
-      HOOK_SMOKE_FAIL_GATE: "test:browser:next-route-poc:built",
+      HOOK_SMOKE_FAIL_GATE: "test:browser:routes:jev",
     },
   );
   expect(
@@ -265,11 +269,11 @@ fi
   );
   const fullBrowserFailureLog = readFileSync(log, "utf8").slice(fullBrowserFailureLogStart);
   expect(
-    hasExactCommand(fullBrowserFailureLog, "run test:browser"),
-    "full profile skipped Browser Mode",
+    hasExactCommand(fullBrowserFailureLog, "run test:browser:component:jev"),
+    "full profile skipped component Browser Mode",
   );
   expect(
-    hasExactCommand(fullBrowserFailureLog, "run test:browser:next-route-poc:built"),
+    hasExactCommand(fullBrowserFailureLog, "run test:browser:routes:jev"),
     "full profile skipped production-route Browser Mode",
   );
   for (const laterGate of ["run test:build-parity", "run security-check"]) {
@@ -300,7 +304,7 @@ fi
   expectRejectedPush(
     ["origin", "changed:main"],
     "changed-profile Browser Mode failure did not block push",
-    { PREPUSH_PROFILE: "changed", HOOK_SMOKE_FAIL_GATE: "test:browser" },
+    { PREPUSH_PROFILE: "changed", HOOK_SMOKE_FAIL_GATE: "test:browser:component:jev" },
     ({ stdout, stderr }) => {
       changedPushOutput = `stdout:\n${stdout}\nstderr:\n${stderr}`;
     },
@@ -324,13 +328,13 @@ fi
       `HOOK_SMOKE_LOG:\n${changedBrowserFailureLog}\npush classifier/hook output:\n${changedPushOutput}`,
   );
   expect(
-    hasExactCommand(changedBrowserFailureLog, "run test:browser"),
+    hasExactCommand(changedBrowserFailureLog, "run test:browser:component:jev"),
     "changed profile skipped Browser Mode",
   );
   for (const laterGate of [
     "run test:all",
     "run build",
-    "run test:browser:next-route-poc:built",
+    "run test:browser:routes:jev",
     "run test:build-parity",
     "run security-check",
   ]) {
@@ -376,10 +380,13 @@ fi
     );
     const browserRuns = fallbackLog
       .split(/\r?\n/)
-      .filter((line) => line === "run test:browser").length;
+      .filter(
+        (line) =>
+          line === "run test:browser:component:jev" || line === "run test:browser:routes:jev",
+      ).length;
     expect(
-      browserRuns === 1,
-      `${relatedMode} full fallback ran test:browser ${browserRuns} times instead of once`,
+      browserRuns === 2,
+      `${relatedMode} full fallback ran ${browserRuns} browser selection gates instead of two`,
     );
     expect(
       remoteRef("main") === git(["rev-parse", branch]),

@@ -93,10 +93,10 @@ describe("production Browser Mode aggregate runner", () => {
     const browserApiPortSetup = runner.slice(runVitestStart, profileOutputsStart);
     expect(runVitestStart).toBeGreaterThanOrEqual(0);
     expect(profileOutputsStart).toBeGreaterThan(runVitestStart);
-    expect(browserApiPortSetup).toContain("configs === VITEST_CONFIGS.all");
+    expect(browserApiPortSetup).toContain("configs.length > 1");
     expect(browserApiPortSetup).toContain("allocateRunLocalBrowserApiPorts(configs)");
     expect(runner).toMatch(
-      /runVitestConfig\(\s*port,\s*config,\s*timeoutMs,\s*browserApiPorts\[index\],\s*profileJsonPath\s*,?\s*\)/,
+      /runVitestConfig\(\s*port,\s*config,\s*timeoutMs,\s*browserApiPorts\[index\],\s*profileJsonPath,\s*selectedFile\s*,?\s*\)/,
     );
     expect(runner).toContain("const shutdownController = new AbortController()");
     expect(runner).toContain("shutdownController.abort(signal)");

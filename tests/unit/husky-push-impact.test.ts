@@ -265,7 +265,11 @@ exit 0
     }
   }
 
-  it("runs related with the actual candidate array, then build and production-route Browser Mode", () => {
+  function callsForGate(calls: string[], gate: string): string[] {
+    return calls.filter((call) => call.startsWith(`${gate} -- `));
+  }
+
+  it("runs related with the actual candidate array, then selected Browser Mode suites", () => {
     const fixture = setupHookFixture();
     try {
       const result = runHook(fixture);
@@ -276,13 +280,17 @@ exit 0
           (call) => call.startsWith("exec vitest related") && call.includes("src/hook.ts"),
         ),
       ).toBe(true);
+      const componentCalls = callsForGate(calls, "run test:browser:component:jev");
+      const routeCalls = callsForGate(calls, "run test:browser:routes:jev");
+      expect(componentCalls).toHaveLength(1);
+      expect(componentCalls[0]).toContain("src/hook.ts");
       expect(calls).toContain("run build");
-      expect(calls).toContain("run test:browser:next-route-poc:built");
+      expect(routeCalls).toHaveLength(1);
+      expect(routeCalls[0]).toContain("src/hook.ts");
       expect(calls).not.toContain("run test:e2e");
       expect(calls).not.toContain("run test:e2e:clean");
-      expect(calls.indexOf("run build")).toBeLessThan(
-        calls.indexOf("run test:browser:next-route-poc:built"),
-      );
+      expect(calls.indexOf(componentCalls[0])).toBeLessThan(calls.indexOf("run build"));
+      expect(calls.indexOf("run build")).toBeLessThan(calls.indexOf(routeCalls[0]));
       expect(calls).not.toContain("run lint:fast");
     } finally {
       fs.rmSync(fixture.repo, { recursive: true, force: true });
@@ -300,10 +308,13 @@ exit 0
         expect(result.status).toBe(0);
         expect(result.output).toContain("fallback profile: full");
         expect(calls.filter((call) => call === "run lint:fast")).toHaveLength(1);
+        const componentCalls = callsForGate(calls, "run test:browser:component:jev");
+        const routeCalls = callsForGate(calls, "run test:browser:routes:jev");
+        expect(componentCalls).toHaveLength(1);
+        expect(componentCalls[0]).toContain("src/hook.ts");
         expect(calls.filter((call) => call === "run build")).toHaveLength(1);
-        expect(
-          calls.filter((call) => call === "run test:browser:next-route-poc:built"),
-        ).toHaveLength(1);
+        expect(routeCalls).toHaveLength(1);
+        expect(routeCalls[0]).toContain("src/hook.ts");
       } finally {
         fs.rmSync(fixture.repo, { recursive: true, force: true });
         fs.rmSync(fixture.bin, { recursive: true, force: true });
@@ -321,19 +332,28 @@ exit 0
       expect(fullCalls).not.toContain("exec vitest related");
       expect(fullCalls).not.toContain("run test:e2e");
       expect(fullCalls).not.toContain("run test:e2e:clean");
-      expect(fullCalls.indexOf("run build")).toBeGreaterThan(fullCalls.indexOf("run test:all"));
-      expect(fullCalls.indexOf("run test:browser:next-route-poc:built")).toBeGreaterThan(
-        fullCalls.indexOf("run build"),
+      const fullComponentCalls = callsForGate(fullCalls, "run test:browser:component:jev");
+      const fullRouteCalls = callsForGate(fullCalls, "run test:browser:routes:jev");
+      expect(fullComponentCalls).toHaveLength(1);
+      expect(fullRouteCalls).toHaveLength(1);
+      expect(fullComponentCalls[0]).toContain("src/hook.ts");
+      expect(fullRouteCalls[0]).toContain("src/hook.ts");
+      expect(fullCalls.indexOf(fullComponentCalls[0])).toBeGreaterThan(
+        fullCalls.indexOf("run test:all"),
       );
+      expect(fullCalls.indexOf(fullComponentCalls[0])).toBeLessThan(fullCalls.indexOf("run build"));
+      expect(fullCalls.indexOf("run build")).toBeGreaterThan(fullCalls.indexOf("run test:all"));
+      expect(fullCalls.indexOf(fullRouteCalls[0])).toBeGreaterThan(fullCalls.indexOf("run build"));
 
       fs.writeFileSync(fixture.log, "");
       const failed = runHook(fixture, {
         PREPUSH_PROFILE: "full",
-        MOCK_FAIL_GATE: "test:browser:next-route-poc:built",
+        MOCK_FAIL_GATE: "test:browser:routes:jev",
       });
       expect(failed.status).toBe(23);
-      expect(failed.output).toContain("gate failed: test:browser:next-route-poc:built");
+      expect(failed.output).toContain("gate failed: test:browser:routes:jev");
       const failedCalls = fs.readFileSync(fixture.log, "utf8");
+      expect(failedCalls).toContain("run test:browser:component:jev -- src/hook.ts");
       expect(failedCalls).toContain("run build");
       expect(failedCalls).not.toContain("run test:build-parity");
       expect(failedCalls).not.toContain("run security-check");
