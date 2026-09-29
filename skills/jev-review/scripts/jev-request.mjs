@@ -4,6 +4,7 @@ import { access, link, mkdir, open, readFile, unlink, writeFile } from "node:fs/
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
+import { validateCatalogSelectionRequest } from "./catalog-selection-request.mjs";
 
 const DEFAULT_BASE_URL = "https://api.typesafe.ai/v1/systemone";
 const DEFAULT_TIMEOUT_MS = 120_000;
@@ -72,6 +73,7 @@ function parseArgs(argv) {
   const args = new Map();
   const valueOptions = new Set([
     "--request",
+    "--catalog-selection-request",
     "--output",
     "--timeout-ms",
     "--follow-up",
@@ -1576,17 +1578,18 @@ async function writeNewJson(output, value) {
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const requestFile = args.get("--request");
+  const catalogSelectionRequestFile = args.get("--catalog-selection-request");
   const followUpFile = args.get("--follow-up");
   const clarifyFile = args.get("--clarify");
-  const modes = [requestFile, followUpFile, clarifyFile].filter(
+  const modes = [requestFile, catalogSelectionRequestFile, followUpFile, clarifyFile].filter(
     (value) => typeof value === "string",
   );
   if (modes.length !== 1)
     throw new Error(
-      "usage: jev-request.mjs --request FILE [--output FILE], --follow-up RESULT --reason ID, or --clarify INITIAL_OR_FOLLOW_UP_RESULT --choices-file FILE --choice ID",
+      "usage: jev-request.mjs --request FILE [--output FILE], --catalog-selection-request FILE [--output FILE], --follow-up RESULT --reason ID, or --clarify INITIAL_OR_FOLLOW_UP_RESULT --choices-file FILE --choice ID",
     );
   if (
-    typeof requestFile === "string" &&
+    (typeof requestFile === "string" || typeof catalogSelectionRequestFile === "string") &&
     (args.has("--reason") ||
       args.has("--reasons-file") ||
       args.has("--choice") ||
@@ -1622,8 +1625,14 @@ async function main() {
             args.get("--choice"),
             apiKey,
           )
-        : JSON.parse(await readFile(path.resolve(requestFile), "utf8"));
-  const questionIds = validateRequest(request);
+        : JSON.parse(
+            await readFile(path.resolve(catalogSelectionRequestFile ?? requestFile), "utf8"),
+          );
+  const catalogSelectionMode = typeof catalogSelectionRequestFile === "string";
+  const fileRequestMode = typeof requestFile === "string" || catalogSelectionMode;
+  const questionIds = catalogSelectionMode
+    ? validateCatalogSelectionRequest(request)
+    : validateRequest(request);
   const timeoutMs = Number(args.get("--timeout-ms") ?? DEFAULT_TIMEOUT_MS);
   if (!Number.isInteger(timeoutMs) || timeoutMs <= 0)
     throw new Error("--timeout-ms must be a positive integer");
@@ -1639,7 +1648,7 @@ async function main() {
   const base = {
     schemaVersion: "jev-review-result-v1",
     reviewSchemaVersion:
-      request.schemaVersion ??
+      (catalogSelectionMode ? "jev-browser-test-selection-v1" : request.schemaVersion) ??
       (typeof requestFile === "string"
         ? initialQuestionLayout(request).diagnostic
           ? "jev-review-initial-diagnostics-v1"
@@ -1679,7 +1688,7 @@ async function main() {
   try {
     rawResponse = JSON.parse(rawText);
   } catch {
-    if (typeof requestFile !== "string") throw new Error("TypeSafe response is not valid JSON");
+    if (!fileRequestMode) throw new Error("TypeSafe response is not valid JSON");
     rawResponse = rawText;
     responseValidation = {
       valid: false,
@@ -1691,7 +1700,7 @@ async function main() {
       validateResponse(rawResponse, questionIds);
       responseValidation = { valid: true };
     } catch (error) {
-      if (typeof requestFile !== "string") throw error;
+      if (!fileRequestMode) throw error;
       responseValidation = {
         valid: false,
         error: humanSummaryText(redact(error?.message ?? error, apiKey), 1000),
@@ -1722,6 +1731,8 @@ async function main() {
         timeoutMs,
       );
     }
+  } else if (catalogSelectionMode) {
+    output.responseValidation = responseValidation;
   }
   if (resolvedOutput) {
     await writeNewJson(resolvedOutput, output);

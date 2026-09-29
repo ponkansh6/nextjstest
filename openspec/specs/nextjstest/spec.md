@@ -2134,6 +2134,14 @@ Plan38 rows bypass the GDP join entirely.
   all pushed refs before selecting a profile.
   The Browser Mode selector receives all validated push-impact paths,
   including paths excluded from related-test candidates.
+- Browser selection sends its per-case catalog request through the dedicated
+  catalog-selection mode in `skills/jev-review/scripts/jev-request.mjs`:
+  catalog and push paths → existing JEV auth/key resolution and HTTP transport
+  → shared response-envelope validation plus selector-specific run/skip and
+  catalog-ID validation → allowlisted selected IDs → scoped Browser Mode
+  runner. It does not route the per-case request through normal `--request`,
+  whose review contract accepts one review question or the fixed
+  three-question diagnostic.
 - Before any Browser Mode execution, the selector discovers current cases from
   the active Vitest Browser Mode configurations and forms catalog IDs from
   config + file path + complete `fullName`; same-`fullName` cases in one
@@ -2718,7 +2726,14 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, `hid
 
 - **WHEN** the selector submits the current case catalog and complete
   push-impact paths to JEV
-- **THEN** it accepts only a valid structured answer that accounts for every
+- **THEN** it uses the dedicated catalog-selection mode in
+  `skills/jev-review/scripts/jev-request.mjs`, reusing the client's existing
+  API-key resolution, authenticated transport, and shared response validation
+- **AND** the mode validates the per-case selection response against its
+  submitted catalog IDs, without sending that payload through normal
+  `--request`, whose review request contract accepts one review question or
+  the fixed three-question diagnostic
+- **AND** it accepts only a valid structured answer that accounts for every
   catalog ID and selects only allowed IDs; an explicit `skip` for every ID is
   a valid empty selection
 - **AND** it executes only the selected catalog IDs; arbitrary response text is
@@ -2729,6 +2744,8 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, `hid
   not fall back to running the full Browser Mode catalog
 - **WHEN** JEV explicitly skips every catalog ID
 - **THEN** the selector succeeds without starting a browser for that invocation
+- **WHEN** a normal JEV review uses `--request`, `--clarify`, or `--follow-up`
+- **THEN** those existing modes and their validation behavior remain unchanged
 
 #### Scenario Selected route-scoped Browser Mode lifecycle
 

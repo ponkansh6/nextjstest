@@ -215,7 +215,7 @@ async function askJev(catalog, changedPaths, directory) {
     );
     const result = run(process.execPath, [
       JEV_CLIENT,
-      "--request",
+      "--catalog-selection-request",
       requestFile,
       "--output",
       responseFile,
