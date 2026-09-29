@@ -3,6 +3,11 @@ import path from "node:path";
 import { devices } from "@playwright/test";
 import type { BrowserCommand } from "vitest/node";
 import type {} from "@vitest/browser-playwright";
+import {
+  buildContextOptions,
+  desktop1280x720ContextOptions,
+  withIsolatedContext,
+} from "./isolated-route-context";
 import { NEXT_ROUTE_POC_BASE_URL } from "./next-route-poc.constants";
 
 export type Phase6B06Id =
@@ -380,11 +385,11 @@ export const inspectPhase6B06: BrowserCommand<[id: Phase6B06Id], unknown> = asyn
   const browser = context.browser();
   if (!browser) throw new Error("Playwright Browser is unavailable");
   const mobile = id.includes("plan27-private-consumption");
-  const isolated = await browser.newContext(
-    mobile ? devices["Pixel 7"] : { viewport: { width: 1280, height: 720 } },
-  );
-  const page = await isolated.newPage();
-  try {
+  const options = mobile
+    ? buildContextOptions(devices["Pixel 7"])
+    : desktop1280x720ContextOptions();
+  return withIsolatedContext(browser, options, async (isolated) => {
+    const page = await isolated.newPage();
     await page.addInitScript(() => {
       (window as Window & { __MOUNT_ALL__?: boolean }).__MOUNT_ALL__ = true;
     });
@@ -404,9 +409,7 @@ export const inspectPhase6B06: BrowserCommand<[id: Phase6B06Id], unknown> = asyn
       return { contextEvidence, ...(await nominalPlan27(page, id.includes("-9-plan27-"))) };
     }
     return await quarterlyGdp(page);
-  } finally {
-    await isolated.close();
-  }
+  });
 };
 
 declare module "vitest/browser" {

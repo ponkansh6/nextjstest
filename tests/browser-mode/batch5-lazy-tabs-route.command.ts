@@ -2,6 +2,11 @@ import type { BrowserCommand } from "vitest/node";
 import type {} from "@vitest/browser-playwright";
 import { devices } from "@playwright/test";
 import { NEXT_ROUTE_POC_BASE_URL } from "./next-route-poc.constants";
+import {
+  buildContextOptions,
+  desktop1280x720ContextOptions,
+  withIsolatedContext,
+} from "./isolated-route-context";
 
 export type Batch5LazyTabCase =
   | "new-graph-chromium"
@@ -67,20 +72,11 @@ export const inspectBatch5LazyTab: BrowserCommand<
   }
 
   const iphone13 = devices["iPhone 13"];
-  const isolated = await browser.newContext({
-    viewport: webkit ? iphone13.viewport : { width: 1280, height: 720 },
-    ...(webkit
-      ? {
-          screen: { width: 390, height: 844 },
-          userAgent: iphone13.userAgent,
-          deviceScaleFactor: iphone13.deviceScaleFactor,
-          isMobile: iphone13.isMobile,
-          hasTouch: iphone13.hasTouch,
-        }
-      : {}),
-  });
-  const page = await isolated.newPage();
-  try {
+  const contextOptions = webkit
+    ? buildContextOptions(iphone13, { screen: { width: 390, height: 844 } })
+    : desktop1280x720ContextOptions();
+  return withIsolatedContext(browser, contextOptions, async (isolated) => {
+    const page = await isolated.newPage();
     // Deliberately preserve the production LazyMount default; do not set __MOUNT_ALL__.
     const response = await page.goto(`${NEXT_ROUTE_POC_BASE_URL}/`, {
       waitUntil: "domcontentloaded",
@@ -137,9 +133,7 @@ export const inspectBatch5LazyTab: BrowserCommand<
       );
     }
     return { url: page.url(), responseStatus: response.status(), values };
-  } finally {
-    await isolated.close();
-  }
+  });
 };
 
 declare module "vitest/browser" {

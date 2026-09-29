@@ -2,6 +2,7 @@ import { devices } from "@playwright/test";
 import type { BrowserCommand } from "vitest/node";
 import type {} from "@vitest/browser-playwright";
 import { NEXT_ROUTE_POC_BASE_URL } from "./next-route-poc.constants";
+import { buildContextOptions, withIsolatedContext } from "./isolated-route-context";
 
 export type Phase6B13Id =
   | "p45-b-tooltip-dismiss-473-case01"
@@ -121,9 +122,8 @@ export const inspectPhase6B13: BrowserCommand<[id: Phase6B13Id], unknown> = asyn
     throw new Error(`Requires Playwright provider; received ${provider.name}`);
   const browser = context.browser();
   if (!browser) throw new Error("Playwright Browser is unavailable");
-  const isolated = await browser.newContext({ ...devices["Pixel 7"] });
-  const page = await isolated.newPage();
-  try {
+  return withIsolatedContext(browser, buildContextOptions(devices["Pixel 7"]), async (isolated) => {
+    const page = await isolated.newPage();
     const contextEvidence = await preparePage(page, id);
     const closeButton = page.getByRole("button", { name: "閉じる" });
 
@@ -255,9 +255,7 @@ export const inspectPhase6B13: BrowserCommand<[id: Phase6B13Id], unknown> = asyn
       closeHiddenAfterGesture: true,
       closeHiddenAfterSettle: true,
     };
-  } finally {
-    await isolated.close();
-  }
+  });
 };
 
 declare module "vitest/browser" {

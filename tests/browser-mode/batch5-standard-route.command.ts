@@ -2,6 +2,11 @@ import type { BrowserCommand } from "vitest/node";
 import type {} from "@vitest/browser-playwright";
 import { devices } from "@playwright/test";
 import { NEXT_ROUTE_POC_BASE_URL } from "./next-route-poc.constants";
+import {
+  buildContextOptions,
+  desktop1280x720ContextOptions,
+  withIsolatedContext,
+} from "./isolated-route-context";
 
 export type Batch5StandardRouteCase = "earnings-tab-desktop" | "earnings-tab-iphone13";
 
@@ -37,11 +42,11 @@ export const inspectBatch5StandardProductionCase: BrowserCommand<
     throw new Error(`${scenario} requires ${mobile ? "WebKit" : "Chromium"}; received ${engine}.`);
   }
 
-  const isolated = await browser.newContext(
-    mobile ? { ...devices["iPhone 13"] } : { viewport: { width: 1280, height: 720 } },
-  );
-  const page = await isolated.newPage();
-  try {
+  const contextOptions = mobile
+    ? buildContextOptions(devices["iPhone 13"])
+    : desktop1280x720ContextOptions();
+  return withIsolatedContext(browser, contextOptions, async (isolated) => {
+    const page = await isolated.newPage();
     await page.addInitScript(() => {
       window.__MOUNT_ALL__ = true;
     });
@@ -97,9 +102,7 @@ export const inspectBatch5StandardProductionCase: BrowserCommand<
         hasTouch: mobile,
       },
     };
-  } finally {
-    await isolated.close();
-  }
+  });
 };
 
 declare module "vitest/browser" {

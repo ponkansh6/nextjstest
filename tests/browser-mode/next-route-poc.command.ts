@@ -1,5 +1,6 @@
 import type { BrowserCommand } from "vitest/node";
 import type {} from "@vitest/browser-playwright";
+import { desktop1280x800ContextOptions, withIsolatedContext } from "./isolated-route-context";
 import { NEXT_ROUTE_POC_BASE_URL, NEXT_ROUTE_POC_PORT } from "./next-route-poc.constants";
 
 export interface NextRouteObservation {
@@ -37,12 +38,8 @@ export const inspectProductionDashboard: BrowserCommand<[], NextRouteObservation
     );
   }
 
-  const isolatedContext = await browser.newContext({
-    viewport: { width: 1280, height: 800 },
-  });
-  const page = await isolatedContext.newPage();
-
-  try {
+  return withIsolatedContext(browser, desktop1280x800ContextOptions(), async (isolatedContext) => {
+    const page = await isolatedContext.newPage();
     const response = await page.goto(`${NEXT_ROUTE_POC_BASE_URL}/`, {
       waitUntil: "domcontentloaded",
     });
@@ -90,9 +87,7 @@ export const inspectProductionDashboard: BrowserCommand<[], NextRouteObservation
       legendPressedBefore,
       legendPressedAfter,
     };
-  } finally {
-    await isolatedContext.close();
-  }
+  });
 };
 
 declare module "vitest/browser" {

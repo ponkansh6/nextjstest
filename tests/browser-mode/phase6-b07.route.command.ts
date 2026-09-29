@@ -7,6 +7,7 @@ import {
   REAL_PROP,
   type QuarterlyRow,
 } from "../utils/flight-payload";
+import { desktop1280x720ContextOptions, withIsolatedContext } from "./isolated-route-context";
 import { NEXT_ROUTE_POC_BASE_URL } from "./next-route-poc.constants";
 
 export type Phase6B07Id =
@@ -22,9 +23,8 @@ export const inspectPhase6B07: BrowserCommand<[id: Phase6B07Id], unknown> = asyn
     throw new Error(`Requires Playwright provider; received ${provider.name}`);
   const browser = context.browser();
   if (!browser) throw new Error("Playwright Browser is unavailable");
-  const isolated = await browser.newContext({ viewport: { width: 1280, height: 720 } });
-  const page = await isolated.newPage();
-  try {
+  return withIsolatedContext(browser, desktop1280x720ContextOptions(), async (isolated) => {
+    const page = await isolated.newPage();
     if (id.startsWith("p45-b-real-consumption-21-")) {
       await page.goto(`${NEXT_ROUTE_POC_BASE_URL}/`);
       const html = await page.content();
@@ -57,9 +57,7 @@ export const inspectPhase6B07: BrowserCommand<[id: Phase6B07Id], unknown> = asyn
     const realChartSection = page.locator("#section-consumption-real");
     await realChartSection.waitFor({ state: "visible", timeout: 15_000 });
     return { visible: await realChartSection.isVisible() };
-  } finally {
-    await isolated.close();
-  }
+  });
 };
 
 declare module "vitest/browser" {

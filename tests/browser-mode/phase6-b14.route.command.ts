@@ -1,5 +1,6 @@
 import type { BrowserCommand } from "vitest/node";
 import type {} from "@vitest/browser-playwright";
+import { desktop1280x800ContextOptions, withIsolatedContext } from "./isolated-route-context";
 import { NEXT_ROUTE_POC_BASE_URL } from "./next-route-poc.constants";
 
 export type Phase6B14Id =
@@ -69,107 +70,107 @@ export const inspectPhase6B14: BrowserCommand<[id: Phase6B14Id], unknown> = asyn
     throw new Error(`Requires Playwright provider; received ${provider.name}`);
   const browser = context.browser();
   if (!browser) throw new Error("Playwright Browser is unavailable");
-  const isolated = await browser.newContext({
-    viewport: { width: 1280, height: 800 },
-    ...(id === "dark-hover-contrast" ? { colorScheme: "dark" as const } : {}),
-    ...(id === "reduced-motion" ? { reducedMotion: "reduce" as const } : {}),
-  });
-  const page = await isolated.newPage();
-  try {
-    const route = await visit(page, id);
-    if (id === "dark-hover-contrast") {
-      const section = page.locator("#section-stacked");
-      const legend = section.getByTestId("legend-住居");
+  return withIsolatedContext(
+    browser,
+    desktop1280x800ContextOptions({
+      ...(id === "dark-hover-contrast" ? { colorScheme: "dark" as const } : {}),
+      ...(id === "reduced-motion" ? { reducedMotion: "reduce" as const } : {}),
+    }),
+    async (isolated) => {
+      const page = await isolated.newPage();
+      const route = await visit(page, id);
+      if (id === "dark-hover-contrast") {
+        const section = page.locator("#section-stacked");
+        const legend = section.getByTestId("legend-住居");
+        await legend.scrollIntoViewIfNeeded();
+        await legend.waitFor({ state: "visible", timeout: 15_000 });
+        const colors = await legend.evaluate((element) => {
+          const style = getComputedStyle(element);
+          return {
+            theme: document.documentElement.getAttribute("data-theme"),
+            color: style.color,
+            background: style.backgroundColor,
+            transformBeforeHover: style.transform,
+          };
+        });
+        await legend.hover();
+        const transformWhileHovered = await legend.evaluate(
+          (element) => getComputedStyle(element).transform,
+        );
+        await page.mouse.move(5, 5);
+        await page.waitForFunction(
+          (button) => getComputedStyle(button).transform === "none",
+          await legend.elementHandle(),
+        );
+        const transformAfterHover = await legend.evaluate(
+          (element) => getComputedStyle(element).transform,
+        );
+        const ratio = contrastRatio(colors.color, colors.background);
+        return {
+          id,
+          route,
+          colors,
+          contrastRatio: ratio,
+          transformWhileHovered,
+          transformAfterHover,
+        };
+      }
+
+      const legend = page.locator("#section-stacked").getByTestId("legend-住居");
       await legend.scrollIntoViewIfNeeded();
       await legend.waitFor({ state: "visible", timeout: 15_000 });
-      const colors = await legend.evaluate((element) => {
-        const style = getComputedStyle(element);
+      if (id === "space-toggle") {
+        const before = await legend.getAttribute("aria-pressed");
+        await legend.focus();
+        await page.keyboard.press("Space");
+        const after = await legend.getAttribute("aria-pressed");
         return {
-          theme: document.documentElement.getAttribute("data-theme"),
-          color: style.color,
-          background: style.backgroundColor,
-          transformBeforeHover: style.transform,
+          id,
+          route,
+          before,
+          after,
+          focused: await legend.evaluate((element) => element === document.activeElement),
         };
-      });
-      await legend.hover();
-      const transformWhileHovered = await legend.evaluate(
-        (element) => getComputedStyle(element).transform,
-      );
-      await page.mouse.move(5, 5);
-      await page.waitForFunction(
-        (button) => getComputedStyle(button).transform === "none",
-        await legend.elementHandle(),
-      );
-      const transformAfterHover = await legend.evaluate(
-        (element) => getComputedStyle(element).transform,
-      );
-      const ratio = contrastRatio(colors.color, colors.background);
-      return {
-        id,
-        route,
-        colors,
-        contrastRatio: ratio,
-        transformWhileHovered,
-        transformAfterHover,
-      };
-    }
-
-    const legend = page.locator("#section-stacked").getByTestId("legend-住居");
-    await legend.scrollIntoViewIfNeeded();
-    await legend.waitFor({ state: "visible", timeout: 15_000 });
-    if (id === "space-toggle") {
-      const before = await legend.getAttribute("aria-pressed");
-      await legend.focus();
-      await page.keyboard.press("Space");
-      const after = await legend.getAttribute("aria-pressed");
-      return {
-        id,
-        route,
-        before,
-        after,
-        focused: await legend.evaluate((element) => element === document.activeElement),
-      };
-    }
-
-    if (id === "keyboard-focus") {
-      let tabPresses = 0;
-      while (
-        !(await legend.evaluate((element) => element === document.activeElement)) &&
-        tabPresses < 200
-      ) {
-        await page.keyboard.press("Tab");
-        tabPresses += 1;
       }
-      const focus = await legend.evaluate((element) => {
-        const style = getComputedStyle(element);
-        return {
-          isActiveElement: element === document.activeElement,
-          focusVisible: element.matches(":focus-visible"),
-          outlineStyle: style.outlineStyle,
-          outlineWidth: style.outlineWidth,
-        };
-      });
-      return { id, route, tabPresses, focus };
-    }
 
-    const media = await page.evaluate(() => ({
-      reducedMotion: matchMedia("(prefers-reduced-motion: reduce)").matches,
-      headerAnimationDuration: getComputedStyle(document.querySelector("header")!)
-        .animationDuration,
-      legendTransitionDuration: getComputedStyle(
-        document.querySelector("#section-stacked [data-testid='legend-住居']")!,
-      ).transitionDuration,
-    }));
-    return {
-      id,
-      route,
-      media,
-      headerAnimationMs: durationMs(media.headerAnimationDuration),
-      legendTransitionMs: durationMs(media.legendTransitionDuration),
-    };
-  } finally {
-    await isolated.close();
-  }
+      if (id === "keyboard-focus") {
+        let tabPresses = 0;
+        while (
+          !(await legend.evaluate((element) => element === document.activeElement)) &&
+          tabPresses < 200
+        ) {
+          await page.keyboard.press("Tab");
+          tabPresses += 1;
+        }
+        const focus = await legend.evaluate((element) => {
+          const style = getComputedStyle(element);
+          return {
+            isActiveElement: element === document.activeElement,
+            focusVisible: element.matches(":focus-visible"),
+            outlineStyle: style.outlineStyle,
+            outlineWidth: style.outlineWidth,
+          };
+        });
+        return { id, route, tabPresses, focus };
+      }
+
+      const media = await page.evaluate(() => ({
+        reducedMotion: matchMedia("(prefers-reduced-motion: reduce)").matches,
+        headerAnimationDuration: getComputedStyle(document.querySelector("header")!)
+          .animationDuration,
+        legendTransitionDuration: getComputedStyle(
+          document.querySelector("#section-stacked [data-testid='legend-住居']")!,
+        ).transitionDuration,
+      }));
+      return {
+        id,
+        route,
+        media,
+        headerAnimationMs: durationMs(media.headerAnimationDuration),
+        legendTransitionMs: durationMs(media.legendTransitionDuration),
+      };
+    },
+  );
 };
 
 declare module "vitest/node" {

@@ -2,6 +2,7 @@ import type { BrowserCommand } from "vitest/node";
 import type {} from "@vitest/browser-playwright";
 import { devices } from "@playwright/test";
 import { NEXT_ROUTE_POC_BASE_URL } from "./next-route-poc.constants";
+import { buildContextOptions, withIsolatedContext } from "./isolated-route-context";
 
 export type Batch4BRouteCase =
   | "start-nominal"
@@ -48,20 +49,12 @@ export const inspectBatch4BProductionCase: BrowserCommand<
       ? { width: 375, height: 800 }
       : iphone13.viewport
     : { width: 1280, height: 720 };
-  const isolated = await browser.newContext({
+  const contextOptions = buildContextOptions(webkit ? iphone13 : {}, {
     viewport,
-    ...(webkit
-      ? {
-          screen: { width: 390, height: 844 },
-          userAgent: iphone13.userAgent,
-          isMobile: iphone13.isMobile,
-          hasTouch: iphone13.hasTouch,
-          deviceScaleFactor: iphone13.deviceScaleFactor,
-        }
-      : {}),
+    ...(webkit ? { screen: { width: 390, height: 844 } } : {}),
   });
-  const page = await isolated.newPage();
-  try {
+  return withIsolatedContext(browser, contextOptions, async (isolated) => {
+    const page = await isolated.newPage();
     if (!styleOnlySectionCase) {
       await page.addInitScript(() => {
         window.__MOUNT_ALL__ = true;
@@ -252,9 +245,7 @@ export const inspectBatch4BProductionCase: BrowserCommand<
       }
     }
     return { url: page.url(), responseStatus: response.status(), values };
-  } finally {
-    await isolated.close();
-  }
+  });
 };
 
 declare module "vitest/browser" {

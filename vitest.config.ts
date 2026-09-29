@@ -23,6 +23,7 @@ export default defineConfig({
       "tests/build/**",
       "tests/e2e/**",
       "tests/browser-mode/**",
+      "results/plan46/phase4/vitest-selector-route-probe.browser.test.ts",
       "**/.plan42*",
       "**/.plan42*/**",
     ],

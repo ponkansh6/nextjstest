@@ -2,6 +2,7 @@ import type { Locator, Page } from "@playwright/test";
 import { devices } from "@playwright/test";
 import type { BrowserCommand } from "vitest/node";
 import type {} from "@vitest/browser-playwright";
+import { buildContextOptions, withIsolatedContext } from "./isolated-route-context";
 import { NEXT_ROUTE_POC_BASE_URL } from "./next-route-poc.constants";
 
 export type Phase6B10Id =
@@ -126,9 +127,8 @@ export const inspectPhase6B10: BrowserCommand<[id: Phase6B10Id], B10Observation>
   const browser = context.browser();
   if (!browser) throw new Error("Playwright Browser is unavailable");
   // This is the mobile-pixel project's effective context: Pixel 7 viewport, touch, scale, and UA.
-  const isolated = await browser.newContext({ ...devices["Pixel 7"] });
-  const page = await isolated.newPage();
-  try {
+  return withIsolatedContext(browser, buildContextOptions(devices["Pixel 7"]), async (isolated) => {
+    const page = await isolated.newPage();
     await openProductionPage(page, id);
     const contextEvidence = await stage(id, "record effective Pixel 7 touch context", 5_000, () =>
       page.evaluate(() => ({
@@ -283,9 +283,7 @@ export const inspectPhase6B10: BrowserCommand<[id: Phase6B10Id], B10Observation>
       closeHiddenAfterOutsideTap: true,
       tooltipVisibleAfterOutsideTap,
     };
-  } finally {
-    await isolated.close();
-  }
+  });
 };
 
 declare module "vitest/browser" {

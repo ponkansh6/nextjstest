@@ -6,6 +6,7 @@ import {
   QUARTERLY_PUBLIC_REAL_KEYS,
 } from "../../src/lib/quarterlyPublicProjection";
 import { NEXT_ROUTE_POC_BASE_URL } from "./next-route-poc.constants";
+import { buildContextOptions, withIsolatedContext } from "./isolated-route-context";
 
 export type Batch3ARouteCase =
   | "readability-430"
@@ -58,7 +59,7 @@ export const inspectBatch3AProductionCase: BrowserCommand<
   if (!browser) throw new Error("The Playwright Browser is unavailable to the batch command.");
   const viewport = VIEWPORTS[scenario];
   const usePixel7 = pixel7Cases.has(scenario);
-  const isolatedContext = await browser.newContext({
+  const contextOptions = buildContextOptions(usePixel7 ? pixel7 : {}, {
     viewport,
     ...(mobileCases.has(scenario) ? { isMobile: true, hasTouch: true } : {}),
     ...(usePixel7
@@ -71,8 +72,8 @@ export const inspectBatch3AProductionCase: BrowserCommand<
         }
       : {}),
   });
-  const page = await isolatedContext.newPage();
-  try {
+  return withIsolatedContext(browser, contextOptions, async (isolatedContext) => {
+    const page = await isolatedContext.newPage();
     // Match the normal production route fixture except for the two LazyMount
     // cases, whose contract specifically depends on the default lazy behavior.
     if (scenario !== "lazymount-initial" && scenario !== "lazymount-scroll") {
@@ -292,9 +293,7 @@ export const inspectBatch3AProductionCase: BrowserCommand<
       values.scrollY = await page.evaluate(() => window.scrollY);
     }
     return { url: page.url(), responseStatus: response.status(), values };
-  } finally {
-    await isolatedContext.close();
-  }
+  });
 };
 
 declare module "vitest/browser" {

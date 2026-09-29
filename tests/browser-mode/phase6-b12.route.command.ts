@@ -3,6 +3,7 @@ import { devices } from "@playwright/test";
 import type { BrowserCommand } from "vitest/node";
 import type {} from "@vitest/browser-playwright";
 import { NEXT_ROUTE_POC_BASE_URL } from "./next-route-poc.constants";
+import { buildContextOptions, withIsolatedContext } from "./isolated-route-context";
 
 export type Phase6B12Id =
   | "p45-b-tooltip-dismiss-307-viewport-chartnote-tooltip-tooltip-chartnote-tooltip"
@@ -155,12 +156,12 @@ export const inspectPhase6B12: BrowserCommand<[id: Phase6B12Id], unknown> = asyn
   if (!browser) throw new Error("Playwright Browser is unavailable");
   const overlapCase = id.startsWith("p45-b-tooltip-dismiss-307-");
   // #307 corresponds to nested test.use(viewport); #430 changes page viewport before goto.
-  const isolated = await browser.newContext({
-    ...devices["Pixel 7"],
-    ...(overlapCase ? { viewport: { width: 412, height: 915 } } : {}),
-  });
-  const page = await isolated.newPage();
-  try {
+  const options = buildContextOptions(
+    devices["Pixel 7"],
+    overlapCase ? { viewport: { width: 412, height: 915 } } : {},
+  );
+  return withIsolatedContext(browser, options, async (isolated) => {
+    const page = await isolated.newPage();
     const contextEvidence = await prepare(page, id, !overlapCase);
     const chart = page.getByTestId("spending-chart-real");
     const tooltip = page.locator("[data-custom-tooltip]");
@@ -471,9 +472,7 @@ export const inspectPhase6B12: BrowserCommand<[id: Phase6B12Id], unknown> = asyn
       hashAfterTap,
       tooltipVisibleAfterNavigation,
     };
-  } finally {
-    await isolated.close();
-  }
+  });
 };
 
 declare module "vitest/browser" {

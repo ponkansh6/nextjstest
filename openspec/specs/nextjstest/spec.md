@@ -653,6 +653,10 @@ only the `setItem`/`removeItem` write operations are absorbed during interaction
 DOM theme application and React state updates continue after a write failure. No browser-state source changes
 the server-loaded data model.
 
+Production-route Browser Mode commands use the configured Vitest provider's
+`Browser` and the command's device descriptor plus scenario overrides as test
+configuration. This adds no external application-data source.
+
 Hook execution inputs are derived from the Git state being validated, not from
 the working-tree default branch: pre-commit reads the staged path list, while
 pre-push consumes every ref line supplied by Git and classifies the actual
@@ -789,6 +793,11 @@ metadata順で維持し、`EARNINGS_TOTAL_KEYS` に含まれる可視行の有�
 グループが空なら境界を生成しない。CPI・消費支出・比較tooltipはこの指定を受け取らず、行順・
 表示値・読み上げ内容は変わらない。
 
+After provider validation and Browser acquisition, a production-route command
+calls `withIsolatedContext(browser, options, callback)`. The command retains
+route navigation, page creation, assertions, and result handling; the shared
+helper only creates and closes the independent `BrowserContext`.
+
 ### Component Tree
 
 `CpiChart` → `CpiChartSections` → `NewGraph`, `EarningsBreakdownChart`, and
@@ -837,6 +846,11 @@ The fixture-comparison gate is a test-only source contract. It compares loader
 observations and status/error observations independently; it does not add a
 runtime cache layer. Its cache result is explicitly `not-applicable: no runtime
 cache wrapper`.
+
+Production-route Browser Mode test → route command →
+`withIsolatedContext` → isolated `BrowserContext` → command-owned page/route
+work. The production-route runner invokes these commands with its configured
+Vitest provider; it does not share a context between command invocations.
 
 The e-Stat API route files under `src/app/api/estat/*` remain an independent
 same-origin source boundary and are outside the Phase 2-5 facade refactoring
@@ -2439,6 +2453,29 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, `hid
 
 ## Operational validation contracts
 
+#### Scenario Production-route command context lifecycle
+
+- **WHEN** a production-route Browser Mode command has validated its provider
+  and acquired a `Browser`
+- **THEN** each invocation creates a fresh independent context through
+  `withIsolatedContext(browser, options, callback)` and does not reuse a context
+- **AND** the context is closed exactly once after callback success or failure
+- **AND** if `newContext` fails, no close is attempted
+- **AND** if the callback and close both fail, the callback's original thrown
+  value remains primary and the close error is retained as supplemental
+  information
+- **AND** if only close fails, the close error propagates
+- **AND** the production-route command retains provider checks, route work,
+  assertions, and result handling
+
+#### Scenario Production-route context options
+
+- **WHEN** a command builds context options from a device descriptor and
+  scenario-specific settings
+- **THEN** it applies the complete device descriptor before scenario overrides
+- **AND** each call receives a fresh top-level options object and fresh mutable
+  `viewport` and `screen` objects when present
+
 #### Scenario Default Vitest suite isolation
 
 - **WHEN** `pnpm test` runs the default Vitest profile
@@ -2471,8 +2508,9 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, `hid
 - **WHEN** a current Browser Mode spec renders a client component or performs
   an interaction
 - **THEN** it may use the shared render helper for current render behavior,
-  the supported `userEvent` API from `vitest/browser`, and Playwright locators
-- **AND** asynchronous locator assertions use `expect.element(...)`
+  the supported `userEvent` API and `page` APIs from `vitest/browser`, and
+  Playwright locators where an existing spec specifically requires them
+- **AND** asynchronous UI assertions use `expect.element(...)`
 - **AND** the shared helper does not add a provider-wrapper abstraction until
   multiple current components need one
 - **AND** native ESM namespace exports are not passed to `vi.spyOn`; use
@@ -2480,6 +2518,88 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, `hid
   needed
 - **AND** blocking `alert`, `confirm`, or `print` behavior remains in
   Playwright E2E or is explicitly mocked
+
+#### Scenario Batch2 Vitest component fixture scope
+
+- **WHEN** the Batch2 Browser Mode cases verify chart and section UI behavior
+- **THEN** they render the real `CpiChart`, `SectionTabs`, `ChartFilters`, or
+  `SpendingBarChart` client component through the shared render helper into the
+  Vitest Browser Mode test iframe, using deterministic fixture data
+- **AND** they use the Vitest Browser `page` query APIs, `userEvent`, and
+  `expect.element(...)` for UI queries, interactions, and asynchronous state
+  assertions; iframe geometry, computed styles, and document overflow may be
+  read through native DOM APIs
+- **AND** a `next/navigation` `useSearchParams` mock may supply a fixed initial
+  query snapshot, while changes made by the component are checked through the
+  iframe's URL state
+- **AND** they do not require a production route, SSR, Flight, production
+  server data projection, hydration, real device touch emulation, or browser
+  zoom, and passing these cases does not establish those behaviors
+
+#### Scenario Batch2 range, URL, and range-sheet behavior
+
+- **WHEN** the Batch2 fixture selects a single year and then a two-year range
+- **THEN** the charts render the expected four and eight quarterly periods
+  respectively, with corresponding nominal and real bars, and the selected
+  range is reflected in the iframe URL state
+
+#### Scenario Batch2 range-sheet selection
+
+- **WHEN** the fixture chooses start/end years in the range sheet or selects
+  the maximum range
+- **THEN** the sheet closes after selection and the chart and URL state reflect
+  the selected or fixture-bounded maximum range
+
+#### Scenario Batch2 section navigation and tab overflow
+
+- **WHEN** the Batch2 fixture selects a section tab
+- **THEN** its target section is brought into view
+- **AND** when tabs exceed their container width, horizontal scrolling advances
+  the tab row, its native scrollbar is visually hidden, and the right-edge
+  fade mask is present
+
+#### Scenario Batch2 quarter and category filters
+
+- **WHEN** the Batch2 fixture hides Q1, hides all quarters, or restores a
+  quarter
+- **THEN** the corresponding bars decrease, disappear when all quarters are
+  hidden, and return when a quarter is restored, with the controls' accessible
+  pressed state matching visibility
+
+#### Scenario Batch2 category filter
+
+- **WHEN** the fixture hides a spending category
+- **THEN** that category's bars are removed, the chart remains visible, and the
+  control's accessible pressed state reflects the change
+
+#### Scenario Batch2 tooltip contents and dismissal
+
+- **WHEN** the Batch2 fixture hovers a chart bar
+- **THEN** the tooltip shows the expected category values and fixture-derived
+  total
+
+#### Scenario Batch2 hidden tooltip category
+
+- **WHEN** the fixture hides a category and reopens its chart tooltip
+- **THEN** the tooltip remains usable and the hidden category row is absent
+
+#### Scenario Batch2 tooltip dismissal
+
+- **WHEN** the fixture dismisses an open tooltip with Escape, pointer exit, or
+  an outside click
+- **THEN** the tooltip closes and can be opened again by hovering a bar
+
+#### Scenario Batch2 mobile controls and readability
+
+- **WHEN** the Batch2 fixture renders nominal and real charts at mobile widths
+- **THEN** legend controls meet the 32 CSS-pixel minimum, summaries are visible
+  and non-empty without wrapping, and hiding/restoring series updates both
+  accessible pressed state and rendered bars
+- **AND** dark-mode tooltips show category labels and values with a working
+  close control, remain within the iframe viewport, and use the specified
+  readable text sizes and value alignment
+- **AND** at 320px, 375px, and 390px widths the expected bars and axis labels
+  remain readable and the iframe document has no horizontal overflow
 
 #### Scenario Browser Mode chart mock boundary
 

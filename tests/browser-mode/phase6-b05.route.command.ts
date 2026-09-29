@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import type { BrowserCommand } from "vitest/node";
 import type {} from "@vitest/browser-playwright";
+import { desktop1280x800ContextOptions, withIsolatedContext } from "./isolated-route-context";
 import { NEXT_ROUTE_POC_BASE_URL } from "./next-route-poc.constants";
 
 export type Phase6B05Id = "p45-a-parity-section-residual" | "p45-a-parity-section-stacked";
@@ -119,9 +120,8 @@ export const inspectPhase6B05: BrowserCommand<[id: Phase6B05Id], unknown> = asyn
     throw new Error(`Requires Playwright provider; received ${provider.name}`);
   const browser = context.browser();
   if (!browser) throw new Error("Playwright Browser is unavailable");
-  const isolated = await browser.newContext({ viewport: { width: 1280, height: 800 } });
-  const page = await isolated.newPage();
-  try {
+  return withIsolatedContext(browser, desktop1280x800ContextOptions(), async (isolated) => {
+    const page = await isolated.newPage();
     await page.addInitScript(() => {
       (window as Window & { __MOUNT_ALL__?: boolean }).__MOUNT_ALL__ = true;
     });
@@ -190,9 +190,7 @@ export const inspectPhase6B05: BrowserCommand<[id: Phase6B05Id], unknown> = asyn
       csv: await captureCsv(page, spec.tableId),
     };
     return { id, route: new URL(page.url()).pathname + new URL(page.url()).search, chart, surface };
-  } finally {
-    await isolated.close();
-  }
+  });
 };
 
 declare module "vitest/browser" {

@@ -1,6 +1,11 @@
 import type { BrowserCommand } from "vitest/node";
 import type {} from "@vitest/browser-playwright";
 import { NEXT_ROUTE_POC_BASE_URL } from "./next-route-poc.constants";
+import {
+  buildContextOptions,
+  desktop1280x800ContextOptions,
+  withIsolatedContext,
+} from "./isolated-route-context";
 
 export type Phase5RenderingId =
   | "p45-a-a11y-cagr-trigger-default"
@@ -858,8 +863,8 @@ export const inspectPhase5Rendering: BrowserCommand<
     };
   const dark = id.endsWith("-dark");
   const mobileViewport = id.includes("plan27-private-consumption");
-  const isolated = await browser.newContext({
-    ...(mobileViewport
+  const options = buildContextOptions(
+    mobileViewport
       ? {
           viewport: { width: 412, height: 915 },
           screen: { width: 412, height: 915 },
@@ -869,31 +874,31 @@ export const inspectPhase5Rendering: BrowserCommand<
           userAgent:
             "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
         }
-      : { viewport: { width: 1280, height: 800 } }),
-    ...(dark ? { colorScheme: "dark" as const } : {}),
-  });
-  const page = await isolated.newPage();
-  try {
-    if (!id.startsWith("p45-a-a11y-cagr-trigger-")) {
-      await page.addInitScript(() => {
-        (window as Window & { __MOUNT_ALL__?: boolean }).__MOUNT_ALL__ = true;
-      });
+      : desktop1280x800ContextOptions(),
+    dark ? { colorScheme: "dark" } : {},
+  );
+  return withIsolatedContext(browser, options, async (isolated) => {
+    const page = await isolated.newPage();
+    try {
+      if (!id.startsWith("p45-a-a11y-cagr-trigger-")) {
+        await page.addInitScript(() => {
+          (window as Window & { __MOUNT_ALL__?: boolean }).__MOUNT_ALL__ = true;
+        });
+      }
+      await installCsvCapture(page);
+      return await execute(id, page);
+    } catch (error) {
+      return {
+        id,
+        outcome: "probe-error-unclassified",
+        expected: {},
+        observations: {
+          probeSetup: { lazyMountOverride: true, sourcePrecedent: "tests/e2e/fixtures.ts" },
+        },
+        error: error instanceof Error ? `${error.name}: ${error.message}` : String(error),
+      };
     }
-    await installCsvCapture(page);
-    return await execute(id, page);
-  } catch (error) {
-    return {
-      id,
-      outcome: "probe-error-unclassified",
-      expected: {},
-      observations: {
-        probeSetup: { lazyMountOverride: true, sourcePrecedent: "tests/e2e/fixtures.ts" },
-      },
-      error: error instanceof Error ? `${error.name}: ${error.message}` : String(error),
-    };
-  } finally {
-    await isolated.close();
-  }
+  });
 };
 
 declare module "vitest/browser" {

@@ -3,6 +3,7 @@ import { devices } from "@playwright/test";
 import type { BrowserCommand } from "vitest/node";
 import type {} from "@vitest/browser-playwright";
 import { NEXT_ROUTE_POC_BASE_URL } from "./next-route-poc.constants";
+import { buildContextOptions, withIsolatedContext } from "./isolated-route-context";
 
 export type Phase6B11Id =
   | "p45-b-tooltip-dismiss-207-1"
@@ -115,9 +116,8 @@ export const inspectPhase6B11: BrowserCommand<[id: Phase6B11Id], unknown> = asyn
     throw new Error(`Requires Playwright provider; received ${provider.name}`);
   const browser = context.browser();
   if (!browser) throw new Error("Playwright Browser is unavailable");
-  const isolated = await browser.newContext({ ...devices["Pixel 7"] });
-  const page = await isolated.newPage();
-  try {
+  return withIsolatedContext(browser, buildContextOptions(devices["Pixel 7"]), async (isolated) => {
+    const page = await isolated.newPage();
     const contextEvidence = await preparePage(page, id);
     const nominalChart = page.getByTestId("spending-chart-nominal");
     const tooltip = page.locator("[data-custom-tooltip]");
@@ -250,9 +250,7 @@ export const inspectPhase6B11: BrowserCommand<[id: Phase6B11Id], unknown> = asyn
       closeVisibleAfterRetap: true,
       tooltipVisibleAfterRetap,
     };
-  } finally {
-    await isolated.close();
-  }
+  });
 };
 
 declare module "vitest/browser" {

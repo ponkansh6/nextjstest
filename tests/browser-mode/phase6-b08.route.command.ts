@@ -1,5 +1,6 @@
 import type { BrowserCommand } from "vitest/node";
 import type {} from "@vitest/browser-playwright";
+import { desktop1280x720ContextOptions, withIsolatedContext } from "./isolated-route-context";
 import { NEXT_ROUTE_POC_BASE_URL } from "./next-route-poc.constants";
 
 export type Phase6B08Id =
@@ -46,9 +47,8 @@ export const inspectPhase6B08: BrowserCommand<[id: Phase6B08Id], Observation> = 
     throw new Error(`Requires Playwright provider; received ${provider.name}`);
   const browser = context.browser();
   if (!browser) throw new Error("Playwright Browser is unavailable");
-  const isolated = await browser.newContext({ viewport: { width: 1280, height: 720 } });
-  const page = await isolated.newPage();
-  try {
+  return withIsolatedContext(browser, desktop1280x720ContextOptions(), async (isolated) => {
+    const page = await isolated.newPage();
     await preparePage(page, id);
 
     if (id.startsWith("p45-b-real-consumption-99-")) {
@@ -132,9 +132,7 @@ export const inspectPhase6B08: BrowserCommand<[id: Phase6B08Id], Observation> = 
       () => firstLegendItem.isVisible(),
     );
     return { sectionVisible, detailsOpen, firstLegendItemVisible };
-  } finally {
-    await isolated.close();
-  }
+  });
 };
 
 declare module "vitest/browser" {
