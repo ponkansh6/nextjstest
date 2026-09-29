@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import CpiChart from "../../src/app/components/CpiChart";
-import ChartInfoButton from "../../src/app/components/ChartInfoButton";
 import { CagrPanel } from "../../src/app/components/CagrPanel";
 import { NewGraph } from "../../src/app/components/NewGraph";
 import { SpendingBarChart } from "../../src/app/components/SpendingBarChart";
@@ -86,17 +85,6 @@ function ComparisonSeriesFixture() {
       />
     </div>
   );
-}
-
-function CagrDialogFixture() {
-  const cagr = useCagrState({
-    initialStartYear: 2020,
-    initialEndYear: 2021,
-    chartData: MONTHLY_DATA,
-    stackedHiddenKeys: [],
-    stackedKeys,
-  });
-  return <CagrPanel allYears={[2020, 2021]} {...cagr} />;
 }
 
 function CpiSectionsFixture() {
@@ -196,24 +184,6 @@ function StackedTooltipFixture() {
 }
 
 describe("B3m Chromium slices", () => {
-  it("p45-a-a11y-info-outside-click", async () => {
-    renderBrowserComponent(
-      <>
-        <ChartInfoButton>
-          <p>Static source information.</p>
-        </ChartInfoButton>
-        <button type="button">Outside target</button>
-      </>,
-    );
-    const trigger = page.getByRole("button", { name: "データソースの説明を表示" });
-    const dialog = page.getByRole("dialog", { name: "データソースの説明を表示" });
-    await trigger.click();
-    await expect.element(dialog).toBeVisible();
-    await userEvent.click(page.getByRole("button", { name: "Outside target" }));
-    await expect.element(dialog).not.toBeInTheDocument();
-    await expect.element(trigger).toHaveAttribute("aria-expanded", "false");
-  });
-
   it("p45-a-advanced-series-normal", async () => {
     await page.viewport(1280, 800);
     renderBrowserComponent(<ComparisonSeriesFixture />);
@@ -233,13 +203,6 @@ describe("B3m Chromium slices", () => {
     expect(chart!.querySelector(`[data-key="${CTI_BASIC_EXTENSION_KEY}"]`)).toBeNull();
     const renderedLines = chart!.querySelectorAll(".recharts-line-curve");
     expect(renderedLines).toHaveLength(4);
-  });
-
-  it("p45-a-cagr-sheet-01", async () => {
-    renderBrowserComponent(<CagrDialogFixture />);
-    const trigger = page.getByRole("button", { name: /年率上昇率（CAGR）を計算/ });
-    await trigger.click();
-    await expect.element(page.getByRole("dialog", { name: "年率上昇率（CAGR）" })).toBeVisible();
   });
 
   it("p45-a-cpi-sections", async () => {

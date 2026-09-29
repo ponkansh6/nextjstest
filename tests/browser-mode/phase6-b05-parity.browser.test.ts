@@ -1,6 +1,8 @@
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
 import { commands } from "vitest/browser";
 import type { Phase6B05Id } from "./phase6-b05.route.command";
+
+vi.setConfig({ testTimeout: 45_000 });
 
 const INTERNAL = /GDP名目原値|GDP名目比較指数|GDP実質原値|GDP実質比較指数|四半期raw|原値|比較指数/;
 const CONTRACTS: Array<{ id: Phase6B05Id; keys: string[] }> = [

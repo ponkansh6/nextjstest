@@ -1,11 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import { CagrPanel } from "../../src/app/components/CagrPanel";
-import { SectionTabs } from "../../src/app/components/SectionTabs";
-import { StackedAreaChart } from "../../src/app/components/StackedAreaChart";
-import { CPI_CHART_SECTIONS } from "../../src/app/components/cpiChartConfig";
 import { useCagrState } from "../../src/hooks/useCagrState";
-import { useChartTooltipController } from "../../src/app/components/charts/useChartTooltipProps";
 import type { CpiData } from "../../src/types";
 import { renderBrowserComponent } from "./renderBrowserComponent";
 
@@ -68,46 +64,6 @@ function CagrFixtureWithGlobalBaseline() {
   );
 }
 
-function CagrSectionCompositionFixture() {
-  const cagr = useCagrState({
-    initialStartYear: 2010,
-    initialEndYear: 2020,
-    chartData: CHART_DATA,
-    stackedHiddenKeys: STACKED_HIDDEN_KEYS,
-    stackedKeys: STACKED_KEYS,
-  });
-  const { bind } = useChartTooltipController({ suppressed: false, isTouch: true });
-  const tooltip = bind("cagr-section-composition-browser", { dataLength: CHART_DATA.length });
-
-  return (
-    <>
-      <style>{FIXTURE_GLOBAL_CSS}</style>
-      <SectionTabs
-        sections={CPI_CHART_SECTIONS}
-        activeId="section-stacked"
-        onSelect={() => {}}
-        rangeLabel="2010–2020"
-        onRangeClick={() => {}}
-      />
-      <section id="section-stacked">
-        <StackedAreaChart
-          title="費目別寄与度"
-          sectionId="section-stacked-chart"
-          data={CHART_DATA}
-          keys={STACKED_KEYS}
-          colors={["#2563eb"]}
-          hiddenKeys={STACKED_HIDDEN_KEYS}
-          onToggle={() => {}}
-          chartColors={{ gridStroke: "#e2e8f0", axisText: "#64748b" }}
-          tooltipProps={tooltip.tooltipProps}
-          onReset={() => {}}
-          belowChartSlot={<CagrPanel allYears={ALL_YEARS} {...cagr} />}
-        />
-      </section>
-    </>
-  );
-}
-
 async function calculateFixtureResult(width: number, height: number) {
   await page.viewport(width, height);
   expect(window.innerWidth).toBe(width);
@@ -129,39 +85,6 @@ async function calculateFixtureResult(width: number, height: number) {
 }
 
 describe("CagrPanel in Chromium", () => {
-  it("p45-a-cagr-sheet-06 — P42-055/-056: omits the CAGR section and tab in the real section composition", async () => {
-    renderBrowserComponent(<CagrSectionCompositionFixture />);
-
-    await expect
-      .element(page.getByRole("button", { name: "CPI費目別", exact: true }))
-      .toBeVisible();
-    await expect
-      .element(page.getByRole("button", { name: /年率上昇率（CAGR）を計算/ }))
-      .toBeVisible();
-    expect(document.querySelector("#section-cagr")).toBeNull();
-    expect(
-      Array.from(document.querySelectorAll("[class*='sectionTabs'] button")).some(
-        (button) => button.textContent?.trim() === "CPI年率",
-      ),
-    ).toBe(false);
-  });
-
-  it("keeps the dialog open after changing the start year and shows a signed two-decimal result", async () => {
-    renderBrowserComponent(<CagrFixture />);
-
-    await page.getByRole("button", { name: /年率上昇率（CAGR）を計算/ }).click();
-    const dialog = page.getByRole("dialog", { name: "年率上昇率（CAGR）" });
-    await expect.element(dialog).toBeVisible();
-
-    const startYear = await page.getByLabelText("開始年:").element();
-    await userEvent.selectOptions(startYear, "2015");
-    await expect.element(dialog).toBeVisible();
-
-    await page.getByRole("button", { name: "計算する" }).click();
-    await expect.element(dialog).toBeVisible();
-    await expect.element(dialog.getByText("-12.94%")).toBeVisible();
-  });
-
   it("closes the actual sheet after clicking its backdrop", async () => {
     await page.viewport(375, 667);
     expect(window.innerWidth).toBe(375);

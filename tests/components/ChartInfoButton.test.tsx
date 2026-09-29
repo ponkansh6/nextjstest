@@ -1,4 +1,5 @@
 import { render, screen, fireEvent, act } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeAll, describe, it, expect, vi } from "vitest";
 import ChartInfoButton, {
   ChartInfoSectionHeading,
@@ -145,6 +146,7 @@ describe("ChartInfoButton", () => {
 
     fireEvent.keyDown(document, { key: "Escape" });
     expect(screen.queryByRole("dialog")).toBeNull();
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
   });
 
   it("closes popup on outside pointerdown", async () => {
@@ -161,6 +163,32 @@ describe("ChartInfoButton", () => {
 
     fireEvent.pointerDown(document.body);
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("closes from a real outside button click without swallowing its action", async () => {
+    const user = userEvent.setup();
+    const outsideAction = vi.fn();
+    render(
+      <div>
+        <ChartInfoButton>{SampleContent}</ChartInfoButton>
+        <button type="button" onClick={outsideAction}>
+          Outside target
+        </button>
+      </div>,
+    );
+    const trigger = screen.getByRole("button", { name: "データソースの説明を表示" });
+    fireEvent.click(trigger);
+    expect(screen.getByRole("dialog")).toBeDefined();
+
+    await act(async () => {
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    });
+    await user.click(screen.getByRole("button", { name: "Outside target" }));
+
+    expect(outsideAction).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.getByRole("button", { name: "Outside target" })).toBeDefined();
   });
 
   it("does NOT close popup when clicking inside the popup content", () => {

@@ -524,6 +524,14 @@ describe("SpendingBarChart component legendMode tests", () => {
     expect(onToggleQuarter.mock.calls).toEqual([[1], [1], [2], [2], [3], [3], [4], [4]]);
   });
 
+  it("announces the empty state when every supplied expense series is hidden", () => {
+    renderChart({ keys: mockKeys, hiddenKeys: mockKeys });
+    const status = screen.getByRole("status");
+    expect(status.textContent).toBe(
+      "表示する系列がありません。凡例から費目を1つ以上選択してください。",
+    );
+  });
+
   // U4: legendMode="collapsible" の <summary> に費目・四半期の変更方法と状態要約が出る
   it("U4: summary element describes category and quarter selection state", () => {
     const { container } = render(

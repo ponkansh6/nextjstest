@@ -2,10 +2,12 @@ import path from "node:path";
 import { defineConfig, configDefaults } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import { playwright } from "@vitest/browser-playwright";
-import { inspectBatch2ProductionCase } from "./tests/browser-mode/batch2-route.command";
 import { inspectBatch4BProductionCase } from "./tests/browser-mode/batch4-b-route.command";
 import { inspectBatch5StandardProductionCase } from "./tests/browser-mode/batch5-standard-route.command";
 import { inspectBatch5LazyTab } from "./tests/browser-mode/batch5-lazy-tabs-route.command";
+
+const browserApiPort = Number(process.env.NEXT_ROUTE_POC_BROWSER_API_PORT ?? 63315);
+const hasRunLocalBrowserApiPort = process.env.NEXT_ROUTE_POC_BROWSER_API_PORT !== undefined;
 
 export default defineConfig({
   plugins: [react()],
@@ -21,7 +23,6 @@ export default defineConfig({
   test: {
     include: [
       "tests/browser-mode/SectionTabsB3m.browser.test.tsx",
-      "tests/browser-mode/batch2-section-tabs-webkit.browser.test.ts",
       "tests/browser-mode/batch4-b-webkit-production-route.browser.test.ts",
       "tests/browser-mode/batch5-standard-webkit-production-route.browser.test.ts",
       "tests/browser-mode/batch5-lazy-tabs-webkit-production-route.browser.test.ts",
@@ -35,10 +36,10 @@ export default defineConfig({
     hookTimeout: 90_000,
     browser: {
       enabled: true,
+      api: { port: browserApiPort, strictPort: hasRunLocalBrowserApiPort },
       provider: playwright({ actionTimeout: 5_000 }),
       instances: [{ browser: "webkit", headless: true, viewport: { width: 375, height: 800 } }],
       commands: {
-        inspectBatch2ProductionCase,
         inspectBatch4BProductionCase,
         inspectBatch5StandardProductionCase,
         inspectBatch5LazyTab,

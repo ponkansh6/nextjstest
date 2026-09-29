@@ -27,11 +27,25 @@ function NominalTooltipFixture() {
         title="消費支出（名目）"
         testId="spending-chart-nominal-2022-total"
         data={[
-          { label: "2022Q1", 年: 2022, quarter: 1, 年月: "2022Q1", "食料（名目）": 123 },
-          { label: "2022Q2", 年: 2022, quarter: 2, 年月: "2022Q2", "食料（名目）": 234 },
+          {
+            label: "2022Q1",
+            年: 2022,
+            quarter: 1,
+            年月: "2022Q1",
+            "食料（名目）": 123,
+            "住居（名目）": 234,
+          },
+          {
+            label: "2022Q2",
+            年: 2022,
+            quarter: 2,
+            年月: "2022Q2",
+            "食料（名目）": 234,
+            "住居（名目）": 345,
+          },
         ]}
-        keys={["食料（名目）"]}
-        colors={["#be123c"]}
+        keys={["食料（名目）", "住居（名目）"]}
+        colors={["#be123c", "#1d4ed8"]}
         hiddenKeys={[]}
         onToggle={() => {}}
         chartColors={CHART_COLORS}
@@ -51,7 +65,7 @@ function NominalTooltipFixture() {
 }
 
 describe("SpendingBarChart nominal tooltip total in Chromium", () => {
-  it("shows the actual total contract after hovering a rendered 2022 bar", async () => {
+  it("shows the stacked total after hovering a rendered 2022 bar", async () => {
     renderBrowserComponent(<NominalTooltipFixture />);
 
     const chart = await page.getByTestId("spending-chart-nominal-2022-total").element();
@@ -70,6 +84,6 @@ describe("SpendingBarChart nominal tooltip total in Chromium", () => {
     const total = page.elementLocator(totalElement);
     await expect.element(total).toBeVisible();
     await expect.element(total).toHaveTextContent("合計");
-    await expect.element(total).toHaveTextContent("123.00");
+    await expect.element(total).toHaveTextContent("357.00");
   });
 });

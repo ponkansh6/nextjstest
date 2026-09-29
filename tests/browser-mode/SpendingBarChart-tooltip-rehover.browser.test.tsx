@@ -79,6 +79,11 @@ describe("Spending tooltip", () => {
     if (!tooltipElement) throw new Error("Tooltip rehover tooltip is missing");
     const tooltip = page.elementLocator(tooltipElement);
     await expect.element(tooltip).toBeVisible();
+    const foodRowElement = tooltipElement.querySelector<HTMLElement>(
+      '[data-tooltip-row="true"][data-tooltip-key="食料（名目）"]',
+    );
+    if (!foodRowElement) throw new Error("Food tooltip row is missing before filtering");
+    await expect.element(page.elementLocator(foodRowElement)).toBeVisible();
 
     const foodButton = chart.getByRole("button", { name: "食料", exact: true });
     await expect.element(foodButton).toHaveAttribute("aria-pressed", "true");
@@ -94,6 +99,16 @@ describe("Spending tooltip", () => {
     const freshBar = page.elementLocator(freshBarElement);
     await expect.element(freshBar).toBeVisible();
     await freshBar.hover();
-    await expect.element(tooltip).toBeVisible();
+    const tooltipAfterRehoverElement = chartElement.querySelector<HTMLElement>(
+      '[data-custom-tooltip="true"]',
+    );
+    if (!tooltipAfterRehoverElement)
+      throw new Error("Tooltip did not reappear after filtering a series");
+    await expect.element(page.elementLocator(tooltipAfterRehoverElement)).toBeVisible();
+    expect(
+      tooltipAfterRehoverElement.querySelector(
+        '[data-tooltip-row="true"][data-tooltip-key="食料（名目）"]',
+      ),
+    ).toBeNull();
   });
 });

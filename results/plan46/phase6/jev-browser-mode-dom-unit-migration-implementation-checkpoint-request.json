@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "jev-review-initial-distribution-v3",
+  "model": "jev-latest",
+  "state": {
+    "evaluationScope": "implementation_checkpoint_validity",
+    "background": "Review the implementation of the approved nine-case DOM/unit migration in results/plan46/phase6/browser-mode-dom-unit-migration-plan-2026-09-29.md. The active Browser Mode source cases were retired only after their DOM destinations were implemented and the orchestrator reported a focused happy-dom run of 5 files, 72/72 tests passing. The DOM changes are: (1) ChartInfoButton uses a real outside button click and checks the action runs once, dialog closes, and aria-expanded becomes false; the existing inside-pointerdown behavior remains. (2) CagrPanel T3 explicitly obtains the named dialog role while checking its controls. (3) A new CpiChart.test.tsx renders the actual CpiChartSections and SectionTabs composition, checks the trigger exists, and verifies #section-cagr and the CPI年率 tab are absent. (4) CagrPanel uses a real useCagrState fixture, changes the start year through its select, calculates -12.94%, and verifies the dialog remains open. (5) A new integrated CpiChart test retains actual CpiChart, ChartFilters, URL/data calculations, and chart data transformation. next/navigation search-param input reads window.location.search; Recharts is mocked for presentation and renders bar rectangles from actual BarChart data and dataKey values, while an AreaChart presentation mock emits periods from its actual data prop. The test checks the custom CPI monthly periods, selects max range, reopens the sheet and checks 2005/2025, checks URL query removal and full CPI monthly periods, then verifies nominal/real row and data-derived bar shrink/restore around the Q1 aria transition. (6) Existing ChartInfoButton Escape test adds aria-expanded false after closure. (7) SpendingBarChart adds the exact empty-state status/message assertion. (8) Existing controlled quarter DOM test checks Q1 true→false→true and the other quarter controls. (9) Existing ThemeToggle test covers system→light→dark→system click, localStorage, and data-theme state. Source cases removed from the working tree are exactly those nine plan entries; neighboring Browser Mode tests remain. Three single-case Browser Mode files (ChartFilters-max-range, ChartInfoButton, ThemeToggle) are deleted from the worktree. Existing staged index content for ChartFilters-max-range and SpendingBarChart was not modified; no git add/reset was used. The inventory remains a historical snapshot. The prior plan JEV result at results/plan46/phase6/jev-browser-mode-dom-unit-migration-plan-review-result.json selected valid_as_defined; it is retained separately and is not replaced by this checkpoint. No Browser Mode suite was run.",
+    "acceptanceCriteria": [
+      "Exactly the nine approved source cases are retired and no adjacent Browser Mode test case is removed.",
+      "Each of the nine mapped destination assertions is present in its DOM/unit destination, including actual outside-button interaction, CAGR dialog semantics and calculation, actual CpiChartSections composition, Escape closure, exact empty-state status, controlled Q1 state, and theme persistence.",
+      "The integrated max-range test retains actual CpiChart, ChartFilters, and URL/data calculations; only search-param input and chart presentation are mocked.",
+      "The AreaChart periods and bar rectangles are derived from actual component data props; the test covers CPI monthly periods, nominal and real periods, query removal, selected max years, Q1 state, and row/bar shrink and restore.",
+      "Focused happy-dom verification passes before source cases are retired, and no Browser Mode execution result is claimed.",
+      "The working-tree source counts are active config union 185, source-only Phase 5 2, and total 187; the historical inventory snapshot is preserved.",
+      "Pre-existing staged content is preserved without git add/reset or other staging manipulation."
+    ],
+    "verification": [
+      "Orchestrator ran: pnpm exec vitest run --config vitest.config.ts tests/components/ChartInfoButton.test.tsx tests/components/CagrPanel.test.tsx tests/components/SpendingBarChart.test.tsx tests/components/ThemeToggle.test.tsx tests/components/CpiChart.test.tsx",
+      "Reported result: 5 files passed, 72/72 tests passed.",
+      "Browser Mode suite was not run.",
+      "The current implementation checkpoint request is prepared but has not been submitted to JEV."
+    ],
+    "knownConstraints": [
+      "This is a review request only; it does not authorize changes beyond the nine source cases, their DOM destinations, triage status, and this result record.",
+      "Prior plan review result valid_as_defined remains a separate historical judgment and must not be rewritten or treated as the implementation checkpoint answer. Other prior JEV results and their unresolved statuses are also unchanged.",
+      "The focused test outcome was provided by the orchestrator; this agent did not rerun tests, lint, or type-check.",
+      "The working tree contains unrelated staged and unstaged changes; staging state must be preserved."
+    ],
+    "outputRequirement": "Choose one listed choice and return the initial probability distribution. Only valid_as_defined passes. For a valid non-pass initial verdict, the local v3 client must issue exactly one automatic clarification. That clarification must present at least two mutually exclusive immediate next actions, changing only one target per choice, and require a case-specific finding, affected file/case or requirement, observed evidence or exact neededEvidence, a concrete nextAction/proposedFix, and remainingUncertainty (explicitly none if none). Preserve the initial decision summary and choice distribution; the clarification effective verdict must remain requires_revalidation and must never upgrade a non-pass to approval. If clarification fails, is invalid, selects outside the listed choices, or lacks required diagnosis detail, preserve the initial result and clarification outcome as unresolved/incomplete, and do not chain another clarification. If the initial request/response fails, is invalid, or unsupported, preserve the initial error behavior and do not clarify. Do not invent details."
+  },
+  "questions": {
+    "implementation": {
+      "type": "choice",
+      "instructions": "Does the supplied implementation and focused verification evidence satisfy the approved nine-case DOM/unit migration plan? Return a probability distribution over the mutually exclusive choices.",
+      "criteria": {
+        "valid_as_defined": "The exact nine cases map to DOM assertions that preserve the planned contracts, focused verification passes, counts are updated, and scope/staging constraints are respected.",
+        "requirements_mismatch": "An implementation or acceptance criterion conflicts with source behavior; identify the exact case and correction.",
+        "missing_prerequisites_info": "Prerequisite source, destination, or verification evidence is missing; identify exactly what is needed.",
+        "incomplete_implementation_info": "A case mapping, assertion, deletion gate, or verification condition is incomplete; identify the specific gap.",
+        "implementation_issue": "A concrete implementation issue exists; identify its location, evidence, and correction.",
+        "scope_violation": "The implementation removes or modifies cases outside the approved nine or violates a staging constraint; identify the boundary and adjustment.",
+        "other": "A material concern does not fit another category; identify its location, evidence, and concrete fix or exact needed evidence.",
+        "indeterminate": "The supplied evidence cannot support a judgment; identify missing context if possible."
+      }
+    }
+  }
+}

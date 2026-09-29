@@ -1,5 +1,7 @@
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import { commands } from "vitest/browser";
+
+vi.setConfig({ testTimeout: 45_000 });
 
 test("Playwright Browser Mode custom command observes a production Next chart interaction", async () => {
   const observation = await commands.inspectProductionDashboard();

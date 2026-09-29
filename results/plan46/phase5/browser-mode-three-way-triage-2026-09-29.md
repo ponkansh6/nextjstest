@@ -472,4 +472,31 @@ Phase 5診断のwrapper 31件中29件を削除した。interaction側は`real-le
 
 対象は既存インベントリで定義した標準Browser Mode config union（全`.tsx` Browser Mode tests、aggregate Chromium、WebKit）のactive 51ファイル・211ケースと、union外に記録されたPhase 5診断31ケース。source-only Phase 5診断の除外は対象範囲の可視化であり、実行中のactive batchからの削除や時間短縮を意味しない。
 
-今回の統合では上記Phase 5 wrapperと移行先assertionを変更した。テストは実行していない。
+今回のPhase 5統合ではwrapperと移行先assertionを変更した。DOM移行実装後の最新状況は次節に記録する。
+
+## unit/DOM移行 実施状況（2026-09-29）
+
+計画した9件をDOM/単体テストへ移し、対応するBrowser Modeケースを作業ツリーから退役させた。移行先を先に検証し、5ファイル・72/72テスト成功を確認してから削除した。Browser Mode全体は実行していない。
+
+| 範囲                | 移行前 | 移行後 | 変更 |
+| ------------------- | -----: | -----: | ---: |
+| active config union |    194 |    185 |   -9 |
+| source-only Phase 5 |      2 |      2 |    0 |
+| 全ソースケース      |    196 |    187 |   -9 |
+
+移行対応:
+
+- `B3m-controls-series-render.browser.test.tsx` の `p45-a-a11y-info-outside-click` → `tests/components/ChartInfoButton.test.tsx` の実外ボタン操作、action実行、dialog閉鎖。`p45-a-cagr-sheet-01` → `tests/components/CagrPanel.test.tsx` T3の名前付きdialog表示。
+- `CagrPanel.browser.test.tsx` の `p45-a-cagr-sheet-06` → `tests/components/CpiChart.test.tsx` の実CpiChartSections/SectionTabs composition。開始年変更後の負値結果ケース → `tests/components/CagrPanel.test.tsx` のuseCagrState UI計算ケース。
+- `ChartFilters-max-range.browser.test.tsx` の統合ケース → `tests/components/CpiChart.test.tsx`。実CpiChart/ChartFilters/data・URL計算を用い、CPI月次期間、nominal/real期間とdata由来bar、URL query、Q1状態・縮小復元を確認。
+- `ChartInfoButton.browser.test.tsx` のEscape dismissal → `tests/components/ChartInfoButton.test.tsx` 既存Escapeケースにaria-expanded閉鎖assertionを追加。
+- `SpendingBarChart.browser.test.tsx` の全系列非表示empty state → `tests/components/SpendingBarChart.test.tsx` exact status assertion。`p45-b-spending-filter-35-e2e-q1` → 同ファイルの既存controlled quarter cycle。
+- `ThemeToggle.browser.test.tsx` のclick/persistenceケース → `tests/components/ThemeToggle.test.tsx` の既存system→light→dark→system DOM/storage/data-themeテスト。
+
+補足訂正（#9）: 履歴上の分類行にある「再読込後の状態」は元Browser Modeケースのpredicateではない。移行した契約はクリック後のtheme表示、localStorage、`data-theme`のみであり、reload後状態は移行要件に含めない。保存済みdark/light値とstorageなしのsystem初期化は別の既存DOMテストが確認する。
+
+検証コマンドは `pnpm exec vitest run --config vitest.config.ts tests/components/ChartInfoButton.test.tsx tests/components/CagrPanel.test.tsx tests/components/SpendingBarChart.test.tsx tests/components/ThemeToggle.test.tsx tests/components/CpiChart.test.tsx`。Orchestrator実行結果は5 files passed, 72/72 tests passed。Browser Mode全体の検証は行っていない。
+
+最初の三分類集計およびinventoryは提案・履歴スナップショットとして保持する。この実施状況は、その後のPhase 5統合（active union 211→194、Phase 5 source-only 31→2）と今回のDOM移行を反映したworking-treeの件数である。ChartFiltersとSpendingBarChartには以前からのstaged変更があり、そのindex内容は操作せず、今回の削除はworking tree側にのみ反映した。
+
+実装チェックポイントのJEV判定は `valid_as_defined`（合格）、diagnosis complete、clarificationなし。結果は[実装チェックポイント記録](../phase6/jev-browser-mode-dom-unit-migration-implementation-checkpoint-result.json)を参照。

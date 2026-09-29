@@ -1,6 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent, within } from "@testing-library/react";
 import { CagrPanel } from "../../src/app/components/CagrPanel";
+import { useCagrState } from "../../src/hooks/useCagrState";
+import type { CpiData } from "../../src/types";
 
 vi.mock("../../src/app/components/CpiChart.module.css", () => ({
   default: new Proxy({}, { get: (_: unknown, key: string) => key }),
@@ -11,6 +13,8 @@ vi.mock("../../src/lib/chartConstants", () => ({
 }));
 
 const allYears = Array.from({ length: 22 }, (_, i) => i + 2005);
+const cagrFixtureStackedKeys = ["住居"];
+const cagrFixtureHiddenKeys: string[] = [];
 
 const defaultProps = {
   allYears,
@@ -24,6 +28,38 @@ const defaultProps = {
   setCagrMonth: vi.fn(),
   calculateCAGR: vi.fn(),
 };
+
+const calculationData: CpiData[] = [
+  {
+    年月: "2015年1月",
+    総合: 100,
+    生鮮食品を除く総合: 99,
+    持家の帰属家賃を除く総合: 98,
+    "消費支出（参考）": null,
+    "CPI総合(参考)": 100,
+    住居: 200,
+  },
+  {
+    年月: "2020年1月",
+    総合: 110,
+    生鮮食品を除く総合: 109,
+    持家の帰属家賃を除く総合: 108,
+    "消費支出（参考）": null,
+    "CPI総合(参考)": 110,
+    住居: 100,
+  },
+];
+
+function CagrCalculationFixture() {
+  const cagr = useCagrState({
+    initialStartYear: 2010,
+    initialEndYear: 2020,
+    chartData: calculationData,
+    stackedHiddenKeys: cagrFixtureHiddenKeys,
+    stackedKeys: cagrFixtureStackedKeys,
+  });
+  return <CagrPanel allYears={allYears} {...cagr} />;
+}
 
 describe("CagrPanel", () => {
   beforeEach(() => {
@@ -49,10 +85,22 @@ describe("CagrPanel", () => {
   it("T3: トリガークリックで3 select と「計算する」ボタンが同時に表示される", () => {
     render(<CagrPanel {...defaultProps} />);
     fireEvent.click(screen.getByRole("button", { name: /年率上昇率（CAGR）を計算/ }));
+    expect(screen.getByRole("dialog", { name: "年率上昇率（CAGR）" })).not.toBeNull();
     expect(screen.getByLabelText("開始年:")).not.toBeNull();
     expect(screen.getByLabelText("終了年:")).not.toBeNull();
     expect(screen.getByLabelText("評価月:")).not.toBeNull();
     expect(screen.getByRole("button", { name: "計算する" })).not.toBeNull();
+  });
+
+  it("開始年変更後も dialog を開いたまま、符号付き小数2桁の結果を表示する", () => {
+    render(<CagrCalculationFixture />);
+    fireEvent.click(screen.getByRole("button", { name: /年率上昇率（CAGR）を計算/ }));
+    const dialog = screen.getByRole("dialog", { name: "年率上昇率（CAGR）" });
+    fireEvent.change(within(dialog).getByLabelText("開始年:"), { target: { value: "2015" } });
+    expect(screen.getByRole("dialog", { name: "年率上昇率（CAGR）" })).toBe(dialog);
+    fireEvent.click(within(dialog).getByRole("button", { name: "計算する" }));
+    expect(screen.getByRole("dialog", { name: "年率上昇率（CAGR）" })).toBe(dialog);
+    expect(within(dialog).getByText("-12.94%", { exact: true })).not.toBeNull();
   });
 
   it("T4: シート内 select 変更で setter が呼ばれ、シートは開いたまま", () => {

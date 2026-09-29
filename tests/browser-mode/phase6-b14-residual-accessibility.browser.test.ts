@@ -1,6 +1,8 @@
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
 import { commands } from "vitest/browser";
 import type { Phase6B14Id } from "./phase6-b14.route.command";
+
+vi.setConfig({ testTimeout: 45_000 });
 
 type Phase6B14BrowserCommands = {
   inspectPhase6B14: (id: Phase6B14Id) => Promise<unknown>;

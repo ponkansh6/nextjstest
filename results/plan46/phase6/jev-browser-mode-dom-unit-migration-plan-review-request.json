@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "jev-review-initial-distribution-v3",
+  "model": "jev-latest",
+  "state": {
+    "evaluationScope": "plan_validity",
+    "background": "Review results/plan46/phase6/browser-mode-dom-unit-migration-plan-2026-09-29.md, the corrected execution plan for moving the nine Browser Mode cases classified as unit/DOM candidates in results/plan46/phase5/browser-mode-three-way-triage-2026-09-29.md. The plan maps each source case to its current DOM destination or a proposed dedicated DOM test, retains the case-specific behavior, and requires destination coverage before retiring Browser Mode cases. The audit was read-only and identified the following destinations and gaps: ChartInfoButton outside-click coverage exists but does not click a real outside button; CagrPanel DOM coverage has a T3 overlap but must explicitly retain trigger/dialog role and visibility; CpiChartSections requires a real composition test for the omitted CAGR section/tab; CagrPanel start-year behavior requires the open-dialog signed -12.94% two-decimal result; ChartFilters max-range requires a dedicated integrated CpiChart DOM harness because current individual ChartFilters/SpendingBarChart tests do not prove URL, all three charts, Q1 aria state, and row/bar shrink/restore together; the DOM Escape case is stronger; SpendingBarChart needs the exact empty-state status/message; the existing controlled-quarter case cycles Q1 true→false→true; ThemeToggle DOM tests cover click persistence and saved-value initialization. The corrected plan excludes reload persistence from the ThemeToggle source contract. No source or test files were changed and no tests, type checks, JEV API calls, or implementation checks were run for this planning artifact. Oracle review adds a specific safety boundary for the #5 harness: keep CpiChart, ChartFilters, and URL/data calculations real; mock only router/search-param input and SVG presentation; derive rendered rows/bars from actual data props rather than fixed post-toggle counts; and keep history/useSearchParams synchronized. If this cannot be demonstrated in happy-dom, retain the Browser Mode case and mark #5 incomplete.",
+    "acceptanceCriteria": [
+      "All nine source cases are mapped exactly to their DOM destination, and no case is retired before the mapped destination behavior is present and verified.",
+      "The plan preserves all nine behaviors: actual outside-button interaction, CAGR trigger/dialog semantics, real CpiChartSections composition omissions, open CAGR dialog with selected start year and signed -12.94% result, integrated maximum-range URL/three-chart/Q1/row-bar behavior, Escape dismissal, exact empty-state status/message, Q1 true→false→true, and ThemeToggle click/storage/data-theme predicates.",
+      "DOM tests use happy-dom contracts and do not claim geometry, layout, hit-testing, or other browser-only behavior.",
+      "The CpiChart maximum-range test keeps CpiChart, ChartFilters, and URL/data calculations real; mocks only router/search-param input and SVG presentation; derives rendered rows/bars from actual data props rather than hardcoding post-toggle counts; and keeps history/useSearchParams synchronized. It preserves URL query removal, period behavior for CPI, nominal, and real charts, Q1 aria state, and shrink/restore of each chart rows and bars in one integrated scenario. If this cannot be demonstrated in happy-dom, retain the Browser Mode case and mark #5 incomplete rather than reducing the contract.",
+      "The CpiChartSections test renders the actual src/app/components/CpiChartSections.tsx composition and simultaneously verifies the trigger is visible while #section-cagr and the CPI年率 tab are absent.",
+      "The plan treats the integrated CpiChart harness and actual CpiChartSections composition as high-risk, calls out their mocks/composition constraints, and sequences their implementation before Browser Mode retirement.",
+      "The ThemeToggle mapping requires only source-observed light→dark click behavior and the DOM migration's system click state, localStorage, and data-theme predicates; it does not require reload persistence. Existing DOM initialization cases cover saved dark/light values and system state with no storage.",
+      "Completion conditions require focused happy-dom validation, checking related existing tests for state/mock leakage, preserving Browser Mode cases when a destination condition is unmet, and synchronizing inventory/config counts after completed migrations."
+    ],
+    "verification": [
+      "Read-only source audit mapped all nine triage entries to the existing or proposed destinations and identified the concrete gaps listed in the background; no source/test files were changed.",
+      "The corrected plan file was read as the review target; its case table and completion criteria cover all nine behaviors, including the integrated three-chart contract and actual section composition.",
+      "ThemeToggle source and DOM test files were read to verify that the Browser Mode source asserts system→light→dark clicks with localStorage and data-theme, while DOM tests include light/dark saved-state restoration, system initial state without storage, and light→dark→system persistence. Neither source or DOM case asserts reload persistence.",
+      "No tests, type checks, implementation checks, or API calls were run while preparing this request."
+    ],
+    "knownConstraints": [
+      "This request evaluates only the nine-case DOM/unit migration plan; it does not authorize or describe source/test implementation.",
+      "The maximum-range integration harness must control router/search params and Recharts while retaining the contract between URL, filters, and all three charts; individual unit tests alone are insufficient evidence.",
+      "CpiChartSections coverage must exercise the real composition path and may not fake away the section/tab conditions under test.",
+      "Prior browser-mode consolidation-plan JEV initial and revalidation results remain unresolved and are not changed, reinterpreted, or treated as approval by this request.",
+      "The shared worktree may contain unrelated changes; any later implementation must preserve them.",
+      "For #5, CpiChart, ChartFilters, and URL/data calculations remain real; only router/search-param input and SVG presentation may be mocked. Row/bar elements must derive from actual data props, and history/useSearchParams must remain synchronized. If not provable in happy-dom, retain the Browser Mode case and mark #5 incomplete."
+    ],
+    "outputRequirement": "Choose one listed choice. For a valid non-pass verdict, provide a case-specific finding, affected plan section or source case, observed evidence, and either a concrete proposed fix or exact additional evidence needed. Do not invent details. The standard v3 client should issue exactly one automatic clarification for a valid non-pass initial verdict; the clarification must present mutually exclusive immediate next actions and require a case-specific finding, affected location/requirement, evidence or exact neededEvidence, a concrete nextAction/proposedFix, and remainingUncertainty. Preserve the initial decision summary and choice distribution; clarification does not turn a non-pass into approval. If clarification fails or lacks required diagnosis details, retain it as unresolved/incomplete without chaining another clarification. If the initial response is invalid, unsupported, or fails, preserve the initial error behavior and do not clarify."
+  },
+  "questions": {
+    "plan": {
+      "type": "choice",
+      "instructions": "Is this nine-case DOM/unit migration plan valid as defined and sufficiently specified to preserve the intended test contracts safely? Return a probability distribution over the mutually exclusive choices.",
+      "criteria": {
+        "valid_as_defined": "The nine exact mappings, preserved predicates, scope boundaries, sequencing, and completion criteria support implementation as planned.",
+        "requirements_mismatch": "A stated migration requirement conflicts with the source behavior or intended contract; identify the exact case and correction.",
+        "missing_prerequisites_info": "A prerequisite is absent; identify exactly what source, destination, or evidence is needed before implementation.",
+        "incomplete_implementation_info": "A mapping, behavior predicate, deletion gate, or verification condition is insufficiently specified; identify the exact gap.",
+        "implementation_issue": "A concrete unsafe or incorrect plan instruction exists; identify its location, evidence, and correction.",
+        "scope_violation": "The plan includes work outside the nine candidates or drops an in-scope source behavior; identify the boundary and adjustment.",
+        "other": "A material concern does not fit the listed categories; identify its location, evidence, and concrete fix or exact needed evidence.",
+        "indeterminate": "The supplied plan and audit evidence cannot support a judgment; identify the missing context if possible."
+      }
+    }
+  }
+}

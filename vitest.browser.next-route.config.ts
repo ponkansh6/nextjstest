@@ -4,7 +4,6 @@ import react from "@vitejs/plugin-react";
 import { playwright } from "@vitest/browser-playwright";
 import { inspectProductionDashboard } from "./tests/browser-mode/next-route-poc.command";
 import { inspectBatch1ProductionCase } from "./tests/browser-mode/batch1-route.command";
-import { inspectBatch2ProductionCase } from "./tests/browser-mode/batch2-route.command";
 import { inspectBatch3AProductionCase } from "./tests/browser-mode/batch3-a-route.command";
 import { inspectBatch3BProductionCase } from "./tests/browser-mode/batch3-b-route.command";
 import { inspectBatch4AProductionCase } from "./tests/browser-mode/batch4-a-route.command";
@@ -27,7 +26,6 @@ export default defineConfig({
     include: [
       "tests/browser-mode/next-route-poc.browser.test.ts",
       "tests/browser-mode/batch1-production-route.browser.test.ts",
-      "tests/browser-mode/batch2-production-route.browser.test.ts",
       "tests/browser-mode/batch3-a-production-route.browser.test.ts",
       "tests/browser-mode/batch3-b-production-route.browser.test.ts",
       "tests/browser-mode/batch4-a-production-route.browser.test.ts",
@@ -48,7 +46,6 @@ export default defineConfig({
       commands: {
         inspectProductionDashboard,
         inspectBatch1ProductionCase,
-        inspectBatch2ProductionCase,
         inspectBatch3AProductionCase,
         inspectBatch3BProductionCase,
         inspectBatch4AProductionCase,

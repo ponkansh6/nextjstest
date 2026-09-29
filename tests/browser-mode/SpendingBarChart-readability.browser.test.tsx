@@ -151,16 +151,20 @@ async function renderAtWidth(width: 320 | 375 | 390 | 430, kind: ChartKind) {
     width,
     sectionPaddingBottom: parseFloat(getComputedStyle(section).paddingBottom),
     wrapperWidth: wrapper.getBoundingClientRect().width,
+    svgLeft: svgBox.left,
     svgRight: svgBox.right,
     svgTop: svgBox.top,
     svgBottom: svgBox.bottom,
     barWidth: firstVisibleBar.width,
     barCenterGaps: barCenters.slice(1).map((center, index) => center - barCenters[index]),
     yTickCount: yTicks.length,
-    yValueCount: yTicks
+    yValues: yTicks
       .map((tick) => Number(tick.textContent?.trim().replaceAll(",", "")))
-      .filter((value) => Number.isFinite(value)).length,
+      .filter((value) => Number.isFinite(value)),
+    documentScrollWidth: document.documentElement.scrollWidth,
+    documentClientWidth: document.documentElement.clientWidth,
     xTickCount: xTicks.length,
+    xTickTexts: xTicks.map((tick) => tick.textContent?.trim() ?? ""),
     xTextGeometry,
   };
 }
@@ -168,14 +172,18 @@ async function renderAtWidth(width: 320 | 375 | 390 | 430, kind: ChartKind) {
 function assertChartGeometry(geometry: Awaited<ReturnType<typeof renderAtWidth>>) {
   expect(geometry.sectionPaddingBottom).toBeGreaterThanOrEqual(32);
   expect(geometry.wrapperWidth).toBeLessThanOrEqual(geometry.width - 16 + 1);
+  expect(geometry.svgLeft).toBeGreaterThanOrEqual(0);
   expect(geometry.svgRight).toBeLessThanOrEqual(geometry.width + 1);
   expect(geometry.yTickCount).toBeGreaterThan(1);
-  expect(geometry.yValueCount).toBeGreaterThan(1);
+  expect(geometry.yValues.length).toBeGreaterThan(1);
+  expect(geometry.yValues.every((value) => value >= 0)).toBe(true);
+  expect(geometry.documentScrollWidth).toBeLessThanOrEqual(geometry.documentClientWidth);
   expect(geometry.barWidth).toBeGreaterThan(0);
   expect(geometry.barWidth).toBeLessThanOrEqual(geometry.width <= 350 ? 9 : 11);
   expect(geometry.barCenterGaps).toEqual(expect.arrayContaining([expect.any(Number)]));
   expect(Math.min(...geometry.barCenterGaps)).toBeGreaterThan(geometry.barWidth);
   expect(geometry.xTickCount).toBeGreaterThan(1);
+  expect(geometry.xTickTexts.every((text) => /^\d{4}Q[1-4]$/.test(text))).toBe(true);
   expect(geometry.xTextGeometry.length).toBe(geometry.xTickCount);
   expect(
     geometry.xTextGeometry.every(
@@ -190,6 +198,8 @@ function assertChartGeometry(geometry: Awaited<ReturnType<typeof renderAtWidth>>
       (box) =>
         box.top >= geometry.svgTop &&
         box.bottom <= geometry.svgBottom &&
+        box.left >= 0 &&
+        box.right <= geometry.width &&
         box.textAnchor === "middle",
     ),
   ).toBe(true);

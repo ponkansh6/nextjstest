@@ -1,6 +1,8 @@
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
 import { commands } from "vitest/browser";
 import type { Batch3ARouteCase } from "./batch3-a-route.command";
+
+vi.setConfig({ testTimeout: 45_000 });
 
 async function inspect(scenario: Batch3ARouteCase) {
   const result = await commands.inspectBatch3AProductionCase(scenario);

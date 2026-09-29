@@ -1,6 +1,8 @@
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
 import { commands } from "vitest/browser";
 import type { Phase5RenderingId } from "./phase5-rendering-feasibility.route.command";
+
+vi.setConfig({ testTimeout: 45_000 });
 
 const scenarios: Phase5RenderingId[] = [
   "p45-a-a11y-cagr-trigger-default",

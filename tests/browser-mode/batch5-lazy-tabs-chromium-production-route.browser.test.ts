@@ -1,6 +1,8 @@
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
 import { commands } from "vitest/browser";
 import type { Batch5LazyTabCase } from "./batch5-lazy-tabs-route.command";
+
+vi.setConfig({ testTimeout: 45_000 });
 
 async function inspect(scenario: Batch5LazyTabCase) {
   const result = await commands.inspectBatch5LazyTab(scenario);

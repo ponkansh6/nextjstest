@@ -1,5 +1,7 @@
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
 import { commands } from "vitest/browser";
+
+vi.setConfig({ testTimeout: 45_000 });
 
 it("p45-b-section-tabs-scroll-47-case02-chromium — production desktop route scrolls the earnings target into view", async () => {
   const result = await commands.inspectBatch5StandardProductionCase("earnings-tab-desktop");

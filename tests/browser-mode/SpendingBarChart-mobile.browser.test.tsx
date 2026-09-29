@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { page } from "vitest/browser";
+import { page, userEvent } from "vitest/browser";
+import { useState } from "react";
 import { SpendingBarChart } from "../../src/app/components/SpendingBarChart";
 import { useChartTooltipController } from "../../src/app/components/charts/useChartTooltipProps";
 import { renderBrowserComponent } from "./renderBrowserComponent";
@@ -40,9 +41,11 @@ const CHART_COLORS = {
 function SpendingFixture({ kind, isMobile = true }: { kind: ConsumptionKind; isMobile?: boolean }) {
   const series = SERIES[kind];
   const keys = series.entries.map(({ key }) => key);
+  const [hiddenKeys, setHiddenKeys] = useState<string[]>([]);
   const { bind } = useChartTooltipController({ suppressed: false, isTouch: false });
   const tooltip = bind(`browser-${kind}`, {
     dataLength: 1,
+    showTotal: true,
     showAllPayload: true,
     includeUnmappedPayload: true,
   });
@@ -62,8 +65,12 @@ function SpendingFixture({ kind, isMobile = true }: { kind: ConsumptionKind; isM
       ]}
       keys={keys}
       colors={series.entries.map((_, index) => (index % 2 === 0 ? "#be123c" : "#1d4ed8"))}
-      hiddenKeys={[]}
-      onToggle={() => {}}
+      hiddenKeys={hiddenKeys}
+      onToggle={(key) =>
+        setHiddenKeys((current) =>
+          current.includes(key) ? current.filter((item) => item !== key) : [...current, key],
+        )
+      }
       chartColors={CHART_COLORS}
       tooltipProps={tooltip.tooltipProps}
       onPointerDown={tooltip.onPointerDown}
@@ -73,7 +80,7 @@ function SpendingFixture({ kind, isMobile = true }: { kind: ConsumptionKind; isM
       onMouseLeave={tooltip.onMouseLeave}
       hiddenQuarters={[]}
       onToggleQuarter={() => {}}
-      onReset={() => {}}
+      onReset={() => setHiddenKeys(keys)}
       legendMode="collapsible"
       isMobile={isMobile}
     />
@@ -88,16 +95,57 @@ async function useMobileViewport() {
 
 function renderMobileFixture(kind: ConsumptionKind) {
   renderBrowserComponent(
-    <div style={{ width: 412 }}>
+    <div style={{ width: "100%" }}>
       <SpendingFixture kind={kind} />
     </div>,
   );
 }
 
-function DarkModeNominalTapFixture() {
+function readTooltipMetrics(tooltip: HTMLElement) {
+  const rect = tooltip.getBoundingClientRect();
+  const rows = [...tooltip.querySelectorAll<HTMLElement>('[data-tooltip-row="true"]')];
+  const labelSizes = rows.map((row) => {
+    const cells = [...row.querySelectorAll<HTMLElement>(":scope > span")];
+    const label = cells.find(
+      (cell) => cell.textContent?.trim() && getComputedStyle(cell).marginLeft !== "auto",
+    );
+    return label ? parseFloat(getComputedStyle(label).fontSize) : 0;
+  });
+  const valueCells = rows.map((row) =>
+    row
+      .querySelectorAll<HTMLElement>(":scope > span")
+      .item(row.querySelectorAll(":scope > span").length - 1),
+  );
+  const total = tooltip.querySelector<HTMLElement>("[data-tooltip-total='true']");
+
+  return {
+    visible: rect.width > 0 && rect.height > 0,
+    inViewport:
+      rect.left >= 0 &&
+      rect.right <= window.innerWidth &&
+      rect.top >= 0 &&
+      rect.bottom <= window.innerHeight,
+    totalFontSize: total ? parseFloat(getComputedStyle(total).fontSize) : 0,
+    labelSizes,
+    valueRightAligned:
+      valueCells.length > 0 &&
+      valueCells.every((cell) => cell !== null && getComputedStyle(cell).textAlign === "right"),
+  };
+}
+
+function isVisible(element: Element) {
+  const rect = element.getBoundingClientRect();
+  const style = getComputedStyle(element);
+  return (
+    rect.width > 0 && rect.height > 0 && style.visibility !== "hidden" && style.display !== "none"
+  );
+}
+
+function DarkModeNominalTooltipFixture() {
   const { bind } = useChartTooltipController({ suppressed: false, isTouch: true });
   const tooltip = bind("browser-dark-nominal-tap", {
     dataLength: 1,
+    showTotal: true,
     showAllPayload: true,
     includeUnmappedPayload: true,
   });
@@ -141,30 +189,39 @@ function DarkModeNominalTapFixture() {
 }
 
 describe("SpendingBarChart mobile legend and tooltip in Chromium", () => {
-  it("P42-187/-190 dark tap category", async () => {
+  it("dark tooltip shows a visible value and closes from its control", async () => {
     await useMobileViewport();
     const originalTheme = document.documentElement.getAttribute("data-theme");
     document.documentElement.setAttribute("data-theme", "dark");
-    renderBrowserComponent(<DarkModeNominalTapFixture />);
+    renderBrowserComponent(<DarkModeNominalTooltipFixture />);
 
     const chart = page.getByTestId("chart-dark-nominal");
     const chartElement = await chart.element();
-    const bar = page.elementLocator(
-      requireChartElement<SVGElement>(chartElement, ".recharts-bar-rectangle"),
-    );
-    await expect.element(bar).toBeVisible();
-    await bar.click();
+    const bar = requireChartElement<SVGElement>(chartElement, ".recharts-bar-rectangle");
+    await expect.element(chart).toBeVisible();
+    await userEvent.click(bar);
 
     const tooltipElement = requireChartElement<HTMLElement>(
       chartElement,
       '[data-custom-tooltip="true"]',
     );
-    const tooltip = page.elementLocator(tooltipElement);
-    await expect.element(tooltip).toBeVisible();
-    const firstCategoryRow = page.elementLocator(
-      requireChartElement<HTMLElement>(tooltipElement, '[data-tooltip-row="true"]'),
+    expect(isVisible(tooltipElement)).toBe(true);
+    const firstCategoryRow = requireChartElement<HTMLElement>(
+      tooltipElement,
+      '[data-tooltip-row="true"]',
     );
-    await expect.element(firstCategoryRow).toHaveTextContent(/\S/);
+    expect(firstCategoryRow.textContent).toMatch(/\S/);
+    const valueCell = requireChartElement<HTMLElement>(
+      tooltipElement.querySelector('[data-tooltip-row="true"]')!,
+      ":scope > span:last-child",
+    );
+    expect(valueCell.textContent).toMatch(/\d/);
+    expect(valueCell.getBoundingClientRect().width).toBeGreaterThan(0);
+    expect(getComputedStyle(valueCell).color).toBe("rgb(249, 250, 251)");
+    const closeButton = page.getByRole("button", { name: "閉じる" });
+    await expect.element(closeButton).toBeVisible();
+    await userEvent.click(await closeButton.element());
+    expect(isVisible(tooltipElement)).toBe(false);
     if (originalTheme === null) document.documentElement.removeAttribute("data-theme");
     else document.documentElement.setAttribute("data-theme", originalTheme);
   });
@@ -175,9 +232,7 @@ describe("SpendingBarChart mobile legend and tooltip in Chromium", () => {
 
     const chart = page.getByTestId("chart-nominal");
     const chartElement = await chart.element();
-    await page
-      .elementLocator(requireChartElement<HTMLElement>(chartElement, "details summary"))
-      .click();
+    await userEvent.click(requireChartElement<HTMLElement>(chartElement, "details summary"));
     await expect.element(chart.getByRole("button", { name: "Q1" })).toBeVisible();
     for (const { key } of SERIES.nominal.entries) {
       await expect.element(chart.getByTestId(`legend-${key}`)).toBeVisible();
@@ -200,9 +255,7 @@ describe("SpendingBarChart mobile legend and tooltip in Chromium", () => {
 
     const chart = page.getByTestId("chart-real");
     const chartElement = await chart.element();
-    await page
-      .elementLocator(requireChartElement<HTMLElement>(chartElement, "details summary"))
-      .click();
+    await userEvent.click(requireChartElement<HTMLElement>(chartElement, "details summary"));
     await expect.element(chart.getByRole("button", { name: "Q1" })).toBeVisible();
     for (const { key } of SERIES.real.entries) {
       await expect.element(chart.getByTestId(`legend-${key}`)).toBeVisible();
@@ -226,20 +279,20 @@ describe("SpendingBarChart mobile legend and tooltip in Chromium", () => {
     const chart = page.getByTestId("chart-nominal");
     const chartElement = await chart.element();
     const bar = requireChartElement<SVGElement>(chartElement, ".recharts-bar-rectangle");
-    await page.elementLocator(bar).hover();
+    await userEvent.hover(bar);
 
     const tooltipElement = requireChartElement<HTMLElement>(
       chartElement,
       '[data-custom-tooltip="true"]',
     );
-    const tooltip = page.elementLocator(tooltipElement);
-    await expect.element(tooltip).toBeVisible();
+    expect(isVisible(tooltipElement)).toBe(true);
     const [firstSeries] = SERIES.nominal.entries;
-    const payload = page.elementLocator(
-      requireChartElement<HTMLElement>(tooltipElement, `[data-tooltip-key="${firstSeries.key}"]`),
+    const payload = requireChartElement<HTMLElement>(
+      tooltipElement,
+      `[data-tooltip-key="${firstSeries.key}"]`,
     );
-    await expect.element(payload).toBeVisible();
-    await expect.element(payload).toHaveTextContent(`${firstSeries.value.toFixed(2)}`);
+    expect(isVisible(payload)).toBe(true);
+    expect(payload.textContent).toContain(`${firstSeries.value.toFixed(2)}`);
   });
 
   it("real Recharts hover shows the real series payload", async () => {
@@ -249,20 +302,20 @@ describe("SpendingBarChart mobile legend and tooltip in Chromium", () => {
     const chart = page.getByTestId("chart-real");
     const chartElement = await chart.element();
     const bar = requireChartElement<SVGElement>(chartElement, ".recharts-bar-rectangle");
-    await page.elementLocator(bar).hover();
+    await userEvent.hover(bar);
 
     const tooltipElement = requireChartElement<HTMLElement>(
       chartElement,
       '[data-custom-tooltip="true"]',
     );
-    const tooltip = page.elementLocator(tooltipElement);
-    await expect.element(tooltip).toBeVisible();
+    expect(isVisible(tooltipElement)).toBe(true);
     const [firstSeries] = SERIES.real.entries;
-    const payload = page.elementLocator(
-      requireChartElement<HTMLElement>(tooltipElement, `[data-tooltip-key="${firstSeries.key}"]`),
+    const payload = requireChartElement<HTMLElement>(
+      tooltipElement,
+      `[data-tooltip-key="${firstSeries.key}"]`,
     );
-    await expect.element(payload).toBeVisible();
-    await expect.element(payload).toHaveTextContent(`${firstSeries.value.toFixed(2)}`);
+    expect(isVisible(payload)).toBe(true);
+    expect(payload.textContent).toContain(`${firstSeries.value.toFixed(2)}`);
   });
 
   it("nominal and real mobile summaries use computed nowrap", async () => {
@@ -282,7 +335,73 @@ describe("SpendingBarChart mobile legend and tooltip in Chromium", () => {
       await page.getByTestId("chart-real").element(),
       "details summary",
     );
-    expect(window.getComputedStyle(nominalSummary).whiteSpace).toBe("nowrap");
-    expect(window.getComputedStyle(realSummary).whiteSpace).toBe("nowrap");
+    for (const summary of [nominalSummary, realSummary]) {
+      const chartId = summary.closest<HTMLElement>("[data-testid^='chart-']")?.dataset.testid;
+      if (!chartId) throw new Error("Summary is not inside a chart fixture");
+      const chart = page.getByTestId(chartId);
+      const details = summary.closest("details") as HTMLDetailsElement;
+      await expect.element(chart).toBeVisible();
+      await expect.element(chart.getByText("費目・四半期を変更")).toBeVisible();
+      expect(details.open).toBe(false);
+      expect(summary.getBoundingClientRect().width).toBeGreaterThan(0);
+      expect(summary.textContent?.trim()).toMatch(/\S/);
+      expect(window.getComputedStyle(summary).whiteSpace).toBe("nowrap");
+    }
+  });
+
+  it("nominal and real mobile tooltips stay readable inside a 320px viewport", async () => {
+    await page.viewport(320, 667);
+    expect(window.innerWidth).toBe(320);
+    renderBrowserComponent(
+      <div style={{ width: "100%", display: "grid", gap: 16 }}>
+        <SpendingFixture kind="nominal" />
+        <SpendingFixture kind="real" />
+      </div>,
+    );
+
+    for (const kind of ["nominal", "real"] as const) {
+      const chart = page.getByTestId(`chart-${kind}`);
+      const chartElement = await chart.element();
+      const bar = requireChartElement<SVGElement>(chartElement, ".recharts-bar-rectangle");
+      await userEvent.hover(bar);
+      const tooltipElement = requireChartElement<HTMLElement>(
+        chartElement,
+        '[data-custom-tooltip="true"]',
+      );
+      expect(isVisible(tooltipElement)).toBe(true);
+
+      const metrics = readTooltipMetrics(tooltipElement);
+      expect(metrics.visible).toBe(true);
+      expect(metrics.inViewport).toBe(true);
+      expect(metrics.totalFontSize).toBeGreaterThanOrEqual(16);
+      expect(metrics.labelSizes.length).toBeGreaterThan(0);
+      expect(metrics.labelSizes.every((size) => size >= 14)).toBe(true);
+      expect(metrics.valueRightAligned).toBe(true);
+    }
+  });
+
+  it("nominal legend clear hides every series and selecting one restores its bars", async () => {
+    await useMobileViewport();
+    renderMobileFixture("nominal");
+
+    const chart = page.getByTestId("chart-nominal");
+    const chartElement = await chart.element();
+    const summary = requireChartElement<HTMLElement>(chartElement, "details summary");
+    await userEvent.click(summary);
+    const release = chart.getByRole("button", { name: "全選択解除" });
+    await userEvent.click(await release.element());
+
+    const seriesButtons = SERIES.nominal.entries.map(({ key }) =>
+      chart.getByTestId(`legend-${key}`),
+    );
+    for (const button of seriesButtons) {
+      await expect.element(button).toHaveAttribute("aria-pressed", "false");
+    }
+    expect(chartElement.querySelectorAll(".recharts-bar-rectangle")).toHaveLength(0);
+
+    const restoredButton = seriesButtons[0];
+    await userEvent.click(await restoredButton.element());
+    await expect.element(restoredButton).toHaveAttribute("aria-pressed", "true");
+    expect(chartElement.querySelectorAll(".recharts-bar-rectangle").length).toBeGreaterThan(0);
   });
 });
