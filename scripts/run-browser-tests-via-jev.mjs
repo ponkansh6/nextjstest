@@ -2,7 +2,7 @@
 
 import { spawnSync } from "node:child_process";
 import { writeFileSync } from "node:fs";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { createHash } from "node:crypto";
@@ -19,6 +19,7 @@ const CONFIGS = [
 ];
 const ROUTE_CONFIGS = new Set(CONFIGS.slice(1));
 const QUESTIONS_PER_REQUEST = 24;
+const LISTING_EXCERPT_LIMIT = 800;
 
 function run(command, args, options = {}) {
   return spawnSync(command, args, {
@@ -31,6 +32,31 @@ function run(command, args, options = {}) {
 
 function fail(message) {
   throw new Error(message);
+}
+
+function safeExcerpt(value) {
+  const text = String(value ?? "")
+    .replace(
+      /(\bTYPESAFE_API_KEY\b["']?\s*(?:=|:)\s*)(?:"[^"]*"|'[^']*'|[^\s,;]+)/gi,
+      "$1[REDACTED]",
+    )
+    .replace(/(\bAuthorization\b["']?\s*:\s*["']?\s*Bearer\s+)[^\s,;"']+/gi, "$1[REDACTED]")
+    .replace(/\bBearer\s+[^\s,;"']+/gi, "Bearer [REDACTED]");
+  const truncated = text.length > LISTING_EXCERPT_LIMIT;
+  return `${JSON.stringify(text.slice(0, LISTING_EXCERPT_LIMIT))}${truncated ? " (truncated)" : ""}`;
+}
+
+function listingDiagnostic(config, result, reason, artifactDirectory) {
+  return [
+    `Vitest catalog listing failed for ${config}: ${reason}`,
+    `exit status=${result.status ?? "unavailable"}`,
+    `stderr=${safeExcerpt(result.stderr)}`,
+    `stdout=${safeExcerpt(result.stdout)}`,
+    `raw listing diagnostics saved at ${artifactDirectory}`,
+    result.error ? `spawn error=${safeExcerpt(result.error.message)}` : null,
+  ]
+    .filter(Boolean)
+    .join("; ");
 }
 
 function parseArgs(args) {
@@ -71,13 +97,14 @@ function candidateId(config, file, name) {
 }
 
 function parseList(stdout, config) {
+  if (!stdout.trim()) fail("Vitest list returned empty output.");
   let entries;
   try {
     entries = JSON.parse(stdout);
   } catch {
-    fail(`Vitest list returned invalid JSON for ${config}.`);
+    fail("Vitest list returned invalid JSON.");
   }
-  if (!Array.isArray(entries)) fail(`Vitest list returned an unexpected shape for ${config}.`);
+  if (!Array.isArray(entries)) fail("Vitest list returned an unexpected JSON shape.");
   const grouped = new Map();
   for (const entry of entries) {
     if (
@@ -99,18 +126,61 @@ function parseList(stdout, config) {
   }));
 }
 
-function collectCatalog(configs) {
+function collectCatalog(configs, diagnosticsDirectory) {
   const catalog = [];
+  const listings = [];
   for (const config of configs) {
-    const result = run(process.execPath, [VITEST, "list", "--config", config, "--json"]);
+    const args = [VITEST, "list", "--config", config, "--json"];
+    const result = run(process.execPath, args);
+    const stdoutFile = path.join(diagnosticsDirectory, `${config}.stdout.txt`);
+    const stderrFile = path.join(diagnosticsDirectory, `${config}.stderr.txt`);
+    const metadataFile = path.join(diagnosticsDirectory, `${config}.metadata.json`);
+    writeFileSync(stdoutFile, result.stdout ?? "", { flag: "wx", mode: 0o600 });
+    writeFileSync(stderrFile, result.stderr ?? "", { flag: "wx", mode: 0o600 });
+    writeFileSync(
+      metadataFile,
+      `${JSON.stringify(
+        {
+          config,
+          command: process.execPath,
+          args,
+          exitStatus: result.status,
+          signal: result.signal,
+          spawnError: result.error
+            ? {
+                code: result.error.code,
+                errno: result.error.errno,
+                syscall: result.error.syscall,
+                message: result.error.message,
+              }
+            : null,
+        },
+        null,
+        2,
+      )}\n`,
+      { flag: "wx", mode: 0o600 },
+    );
+    listings.push({ config, result });
     if (result.error || result.status !== 0) {
       fail(
-        `Could not list browser tests for ${config}: ${(result.stderr || result.error?.message || "Vitest list failed").trim()}`,
+        listingDiagnostic(config, result, "Vitest list subprocess failed", diagnosticsDirectory),
       );
     }
-    catalog.push(...parseList(result.stdout, config));
+    try {
+      catalog.push(...parseList(result.stdout ?? "", config));
+    } catch (error) {
+      fail(listingDiagnostic(config, result, error.message, diagnosticsDirectory));
+    }
   }
-  if (catalog.length === 0) fail("The active browser-test catalog is empty.");
+  if (catalog.length === 0) {
+    fail(
+      `The active browser-test catalog is empty. ${listings
+        .map(({ config, result }) =>
+          listingDiagnostic(config, result, "Vitest returned no test cases", diagnosticsDirectory),
+        )
+        .join(" | ")}`,
+    );
+  }
   const ids = new Set();
   for (const candidate of catalog) {
     if (ids.has(candidate.id)) fail(`Browser-test catalog ID collision: ${candidate.id}`);
@@ -292,34 +362,49 @@ async function main() {
   const { changedPaths, scope } = parseArgs(process.argv.slice(2));
   const configs =
     scope === "all" ? CONFIGS : scope === "routes" ? CONFIGS.slice(1) : CONFIGS.slice(0, 1);
-  const catalog = collectCatalog(configs);
-  if (catalog.length === 0) fail(`The ${scope} browser-test catalog is empty.`);
-  console.log(
-    `[browser-jev] catalog: ${catalog.length} selectable groups across ${configs.length} Vitest Browser Mode configs`,
+  const diagnosticsDirectory = await mkdtemp(
+    path.join(os.tmpdir(), "nextjstest-browser-jev-diagnostics-"),
   );
-  const directory = await mkdtemp(path.join(os.tmpdir(), "nextjstest-browser-jev-"));
+  await chmod(diagnosticsDirectory, 0o700);
+  let completedSuccessfully = false;
   try {
-    const selected = await askJev(catalog, changedPaths, directory);
-    console.log(`[browser-jev] selected ${selected.size}/${catalog.length} groups`);
-    if (selected.size === 0) {
-      console.log("[browser-jev] JEV selected no browser tests.");
-      return;
+    const catalog = collectCatalog(configs, diagnosticsDirectory);
+    if (catalog.length === 0) fail(`The ${scope} browser-test catalog is empty.`);
+    console.log(
+      `[browser-jev] catalog: ${catalog.length} selectable groups across ${configs.length} Vitest Browser Mode configs`,
+    );
+    const directory = await mkdtemp(path.join(os.tmpdir(), "nextjstest-browser-jev-"));
+    try {
+      const selected = await askJev(catalog, changedPaths, directory);
+      console.log(`[browser-jev] selected ${selected.size}/${catalog.length} groups`);
+      if (selected.size === 0) {
+        console.log("[browser-jev] JEV selected no browser tests.");
+        completedSuccessfully = true;
+        return;
+      }
+      for (const candidate of catalog) {
+        if (!selected.has(candidate.id)) continue;
+        console.log(
+          `[browser-jev] selected ${JSON.stringify({
+            config: candidate.config,
+            file: candidate.file,
+            name: candidate.name,
+            groupedCases: candidate.occurrences,
+          })}`,
+        );
+      }
+      const selection = makeSelection(catalog, selected);
+      process.exitCode = runSelectedTests(selection, directory);
+      completedSuccessfully = process.exitCode === 0;
+    } finally {
+      await rm(directory, { recursive: true, force: true });
     }
-    for (const candidate of catalog) {
-      if (!selected.has(candidate.id)) continue;
-      console.log(
-        `[browser-jev] selected ${JSON.stringify({
-          config: candidate.config,
-          file: candidate.file,
-          name: candidate.name,
-          groupedCases: candidate.occurrences,
-        })}`,
-      );
-    }
-    const selection = makeSelection(catalog, selected);
-    process.exitCode = runSelectedTests(selection, directory);
+  } catch (error) {
+    console.error(`[browser-jev] ${error instanceof Error ? error.message : error}`);
+    console.error(`[browser-jev] catalog diagnostics preserved at ${diagnosticsDirectory}`);
+    process.exitCode = 1;
   } finally {
-    await rm(directory, { recursive: true, force: true });
+    if (completedSuccessfully) await rm(diagnosticsDirectory, { recursive: true, force: true });
   }
 }
 
