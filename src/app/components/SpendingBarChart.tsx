@@ -7,6 +7,7 @@ import type { SeriesMeasurement } from "@/types/chart";
 import type { SeriesMetadata } from "../../lib/chartConstants";
 import styles from "./CpiChart.module.css";
 import {
+  CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY,
   getLegendLabel,
   getSpendingSeriesColor,
   SUPPORT_SERIES_KEY_NOMINAL,
@@ -21,6 +22,61 @@ import { ChartDataContract, getPublicSpendingKeys } from "./ChartDataContract";
 import { computePeriodXAxisTicks } from "./charts/xAxisTicks";
 
 const FIXED_SPENDING_MILESTONE_YEARS = new Set([2010, 2015, 2020, 2025]);
+
+// Preserve the official 2018Q1+ presentation in the legend and Bar order
+// independently of the data key order. The residual keeps its canonical
+// public key; only its displayed series name uses the formal label.
+const OFFICIAL_SPENDING_LEGEND_CATEGORIES = [
+  "住居",
+  "家具・家事用品",
+  "被服及び履物",
+  "保健医療",
+  "教育",
+  "光熱・水道",
+  "教養娯楽",
+  "交通・通信",
+  "食料",
+  "その他の消費支出",
+] as const;
+
+const OFFICIAL_SPENDING_LEGEND_LABELS = {
+  住居: "住居",
+  "家具・家事用品": "家具・家事用品",
+  被服及び履物: "被服履物",
+  保健医療: "保健医療",
+  教育: "教育",
+  "光熱・水道": "光熱水道",
+  教養娯楽: "教養娯楽",
+  "交通・通信": "交通通信",
+  食料: "食料",
+  その他の消費支出: "諸雑費・CPI外",
+} as const;
+
+const OFFICIAL_SPENDING_LEGEND_ORDER = new Map<string, number>(
+  OFFICIAL_SPENDING_LEGEND_CATEGORIES.map((category, index) => [
+    CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY[category],
+    index,
+  ]),
+);
+
+const OFFICIAL_SPENDING_LABEL_BY_KEY = new Map<string, string>(
+  OFFICIAL_SPENDING_LEGEND_CATEGORIES.map((category) => [
+    CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY[category],
+    OFFICIAL_SPENDING_LEGEND_LABELS[category],
+  ]),
+);
+
+function orderOfficialSpendingKeys(keys: readonly string[]): string[] {
+  return [...keys].sort((left, right) => {
+    const leftOrder = OFFICIAL_SPENDING_LEGEND_ORDER.get(left) ?? Number.POSITIVE_INFINITY;
+    const rightOrder = OFFICIAL_SPENDING_LEGEND_ORDER.get(right) ?? Number.POSITIVE_INFINITY;
+    return leftOrder - rightOrder;
+  });
+}
+
+function getSpendingLegendLabel(key: string): string {
+  return OFFICIAL_SPENDING_LABEL_BY_KEY.get(key) ?? getLegendLabel(key);
+}
 
 function quarterIndex(value: string): number | null {
   const match = value.match(/^(\d{4})Q([1-4])$/);
@@ -148,7 +204,8 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
         measurement?.reason === "official_quarterly_source_unavailable_latest_period_unknown",
     ),
   );
-  const legendKeys = hasPreBoundarySupport ? keys : ctiKeys;
+  const orderedCtiKeys = orderOfficialSpendingKeys(ctiKeys);
+  const legendKeys = orderOfficialSpendingKeys(hasPreBoundarySupport ? keys : ctiKeys);
   const selectedLegendCount = legendKeys.filter((key) => !hiddenKeys.includes(key)).length;
   const visibleCtiKeyCount = ctiKeys.filter((key) => !hiddenKeys.includes(key)).length;
   const hasVisibleExpenseSeries = visibleCtiKeyCount > 0;
@@ -214,7 +271,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
                 }}
               />
 
-              <span className={styles.legendLabel}>{getLegendLabel(key)}</span>
+              <span className={styles.legendLabel}>{getSpendingLegendLabel(key)}</span>
             </button>
           ))}
         </div>
@@ -375,7 +432,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
                 isAnimationActive={false}
               />
             )}
-            {ctiKeys.map((key) =>
+            {orderedCtiKeys.map((key) =>
               !hiddenKeys.includes(key) ? (
                 <Bar
                   key={key}

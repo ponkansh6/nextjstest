@@ -110,6 +110,7 @@ vi.mock("recharts", async () => {
     const rows = ReactModule.useContext(DataContext);
     return (
       <>
+        <span data-testid="rendered-bar-series" data-series-key={dataKey} />
         {rows
           .filter((row) => typeof row[dataKey] === "number" && Number.isFinite(row[dataKey]))
           .map((row, index) => (
@@ -118,6 +119,7 @@ vi.mock("recharts", async () => {
               className="recharts-bar-rectangle"
               data-period={row.label}
               data-series={dataKey}
+              data-series-key={dataKey}
             />
           ))}
       </>
@@ -361,6 +363,24 @@ describe("CpiChart maximum range integration", () => {
 
     const chartIds = ["spending-chart-nominal", "spending-chart-real"] as const;
     await screen.findByTestId("spending-chart-nominal");
+    const nominalChart = screen.getByTestId("spending-chart-nominal");
+    expect(
+      Array.from(
+        nominalChart.querySelectorAll("button[data-testid^='legend-'] .legendLabel"),
+        (label) => label.textContent?.trim(),
+      ),
+    ).toEqual([
+      "住居",
+      "家具・家事用品",
+      "被服履物",
+      "保健医療",
+      "教育",
+      "光熱水道",
+      "教養娯楽",
+      "交通通信",
+      "食料",
+      "諸雑費・CPI外",
+    ]);
     const fullBarCounts = new Map(
       chartIds.map((id) => [
         id,
@@ -385,6 +405,24 @@ describe("CpiChart maximum range integration", () => {
       expect(seriesKeys).toEqual(expect.arrayContaining(canonicalNominalKeys));
       expect(seriesKeys).not.toContain("食料（名目）");
     }
+    const expectedPresentationKeys = [
+      CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY.住居,
+      CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY["家具・家事用品"],
+      CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY["被服及び履物"],
+      CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY.保健医療,
+      CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY.教育,
+      CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY["光熱・水道"],
+      CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY.教養娯楽,
+      CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY["交通・通信"],
+      CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY.食料,
+      CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY["その他の消費支出"],
+    ];
+    const renderedNominalBarKeys = Array.from(
+      nominalChart.querySelectorAll("[data-testid='rendered-bar-series']"),
+      (bar) => bar.getAttribute("data-series-key"),
+    );
+    expect(renderedNominalBarKeys).toHaveLength(10);
+    expect(renderedNominalBarKeys).toEqual(expectedPresentationKeys);
     const q1 = within(screen.getByTestId("spending-chart-nominal")).getByRole("button", {
       name: /^Q1$/,
     });
