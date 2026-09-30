@@ -327,8 +327,9 @@ printf 'reasons=%s\\n' "\${PUSH_IMPACT_REASONS[*]-}"`,
   it("connects the hook to the filtered candidates and keeps unsafe diff classes conservative", () => {
     const hook = fs.readFileSync(path.resolve(process.cwd(), ".husky/pre-push.bash"), "utf8");
     expect(hook).toContain('"${PUSH_IMPACT_RELATED_PATHS[@]}"');
-    expect(hook).toContain('pnpm run test:browser:component:jev -- "${PUSH_IMPACT_PATHS[@]}"');
-    expect(hook).toContain('pnpm run test:browser:routes:jev -- "${PUSH_IMPACT_PATHS[@]}"');
+    expect(hook).toContain("pnpm run test:browser:component:all");
+    expect(hook).toContain("pnpm run test:browser:next-route-poc:built:all");
+    expect(hook).not.toContain("jev");
     expect(hook).toContain("run_full_profile");
 
     const repo = setupImpactRepo();

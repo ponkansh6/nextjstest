@@ -704,9 +704,19 @@ positional paths are unioned with those detected paths. Only allowlisted text
 files receive diff excerpts. Unsupported tracked, explicit, and untracked paths
 remain selection inputs and are recorded with `unsupported_file_type` omission
 metadata.
-Pre-push invocation derives paths and diff context from every validated
-`remote_oid`/`local_oid` update pair supplied by Git. Diff context is limited to
-20 files, 4 KiB per file, and 16 KiB total. Credential-looking paths are
+When the manual selector is invoked with validated push-range input, it derives
+paths and diff context from each supplied `remote_oid`/`local_oid` update pair.
+The pre-push hook does not invoke this selector. Explicit absolute paths inside
+the repository are normalized to repository-relative paths. Outside paths and
+explicit paths containing raw `..` segments, backslashes, control characters,
+or over 512 UTF-8 bytes are omitted without exposing their values and
+contribute only a pathless reason/count. Diff context is limited to
+20 files, 512 UTF-8 bytes per diff-file path, 4 KiB per file, and 16 KiB total.
+Every transmitted path is repository-relative, uses `/` separators, and rejects
+absolute paths, `.`/`..` segments, control characters, backslashes, and
+credential-looking markers. Unsafe or oversized paths are omitted from every
+path-bearing field and represented only by pathless reason/count metadata,
+marking the context incomplete. Credential-looking paths are
 excluded from both `changedPaths` and per-file omission entries; only a generic
 reason and count are reported. Binary content is omitted. A non-UTF-8 tracked
 or untracked file's diff body is omitted in full and marks the context
@@ -2120,11 +2130,13 @@ Page (RSC)
     └── CustomTooltip (React.memo, module-level component for charts, managed via `useChartTooltipController`; key-based metadata supplies label/color/order and the total row follows the Spending tooltip hierarchy)
 ```
 
-The browser validation branch is `.husky/pre-push.bash` → active Vitest
-Browser Mode catalog discovery → JEV case selection → strict selected-ID
-validation → configured component or production-route runner. The catalog is
-keyed by config, file, and full test name; the selector does not execute model
-supplied commands or paths. Playwright E2E remains on its separate runner.
+Manual Browser Mode selection uses active Vitest Browser Mode catalog
+discovery → JEV case selection → strict selected-ID validation → configured
+component or production-route runner. The catalog is keyed by config, file,
+and full test name; the selector does not execute model-supplied commands or
+paths. Pre-push does not invoke the selector: it runs all component Browser
+Mode cases and all production-route cases. Playwright E2E remains on its
+separate runner.
 The normal `test:browser:next-route-poc` and `test:browser:next-route-poc:built`
 commands use the route selector. Raw unfiltered route execution is reserved
 for the explicit `test:browser:next-route-poc:all` and
@@ -2137,8 +2149,8 @@ the Bash implementations in `.husky/pre-commit.bash` and
 interpret Bash-only syntax. The Bash implementations run `lint:fast`, staged
 typecheck, commit-scoped `lint-staged`, detached-HEAD validation,
 clean-worktree validation, actual-push-ref impact classification, related-test
-selection, the component JEV selector, `build`, the production-route JEV
-selector, and the remaining full-profile gates. Production validation is a
+selection, all component Browser Mode cases, `build`, all built production
+route cases, and the remaining full-profile gates. Production validation is a
 separate gate and is not implied by the local pre-push hook.
 
 `CpiChart` remains the composition root. The static seven-section definition is owned by the typed `CPI_CHART_SECTIONS` in `src/app/components/cpiChartConfig.ts`; its existing ids and order are `section-cpi-major`, `section-stacked`, `section-consumption-nominal`, `section-consumption-real`, `section-earnings`, `section-residual`, and `section-new-graph`. `CpiChart` passes this same array to the active-section initial value, `SectionTabs`, and DOM/scroll observation.
@@ -2212,9 +2224,8 @@ Plan38 rows bypass the GDP join entirely.
   conservative full-profile inputs. Ordinary source/server/test changes retain
   safe related candidates and use the changed profile. The classifier unions
   all pushed refs before selecting a profile.
-  The Browser Mode selector receives all validated push-impact paths,
-  including paths excluded from related-test candidates, and the exact
-  validated push ref ranges used to collect their diffs.
+  Browser Mode gates run the complete configured suites and do not pass push
+  paths or ref ranges to the JEV selector.
 - Browser selection sends its per-case catalog request through the dedicated
   catalog-selection mode in `skills/jev-review/scripts/jev-request.mjs`:
   active Vitest catalog + automatically detected and explicit paths + bounded,
@@ -2222,9 +2233,16 @@ Plan38 rows bypass the GDP join entirely.
   → shared response-envelope validation plus selector-specific run/skip and
   catalog-ID validation → allowlisted selected IDs → scoped Browser Mode
   runner. Manual invocation collects tracked `HEAD`-to-worktree/index changes
-  and non-ignored untracked source files; pre-push collects each validated
-  `remote_oid`-to-`local_oid` range from the same Git ref updates as impact
-  paths. Diff context is capped at 20 files, 4 KiB per file, and 16 KiB total.
+  and non-ignored untracked source files. Diff context is capped at 20 files,
+  512 UTF-8 bytes per diff-file path,
+  4 KiB per file, and 16 KiB total. Every transmitted path is repository-relative,
+  uses `/` separators, and rejects absolute paths, `.`/`..` segments, control
+  characters, backslashes, and credential-looking markers. Unsafe or oversized
+  paths are omitted from all path-bearing fields and represented only by
+  pathless reason/count metadata, marking the context incomplete.
+  Explicit absolute paths inside the repository are normalized to relative
+  paths; outside paths, raw `..` segments, backslashes, control characters,
+  and overlong explicit paths are omitted without exposing their values.
   Credential-looking paths are omitted from `changedPaths` and per-file
   omission entries, with only a generic reason/count exposed. Non-UTF-8 diff
   bodies are omitted in full and mark the context incomplete; non-sensitive
@@ -2252,8 +2270,8 @@ Plan38 rows bypass the GDP join entirely.
   metadata-only fallback is used if required. Its bounded fields include
   file/omitted/sensitive-omitted
   counts, added/deleted totals, unknown-line-count file count, reasons, and
-  truncated-file count. The `limits` object reports `maxSummaryFiles=40` and
-  `maxSummaryBytes=4096`, `maxChangedPaths=256`,
+  truncated-file count. The `limits` object reports `maxDiffFilePathBytes=512`,
+  `maxSummaryFiles=40`, `maxSummaryBytes=4096`, `maxChangedPaths=256`,
   `maxChangedPathBytes=512`, `maxChangedPathTotalBytes=16384`,
   `maxOmittedFiles=64`, `maxOmittedPathBytes=512`, and
   `maxOmittedPathTotalBytes=8192`. Binary, unsupported, non-UTF-8, symlink,
@@ -2278,20 +2296,19 @@ Plan38 rows bypass the GDP join entirely.
   them. Playwright E2E is a separate profile and is outside this catalog.
 - In the changed profile, safe related candidates are passed to
   `vitest related --run --passWithNoTests --reporter=json`; a non-empty valid
-  JSON result allows the changed integration gate to pass, followed by the
-  existing component Browser Mode gate through JEV selection. The hook then
-  runs `build` and the existing route-scoped Browser Mode gate through JEV
-  selection. When the no-related-path branch invokes only the built
-  route-scoped Browser Mode runner, that invocation uses its route-scoped
-  JEV catalog. Empty candidates, zero JSON
-  `testResults`, missing/invalid/incompatible JSON, or a related-test failure
-  invoke the full profile exactly once.
+  JSON result allows the changed integration gate to pass, followed by
+  `test:browser:component:all`, `build`, and
+  `test:browser:next-route-poc:built:all`. Documentation/assets-only changes
+  skip related tests but still run the component suite, `build`, and all built
+  production routes. Empty candidates, zero JSON `testResults`,
+  missing/invalid/incompatible JSON, or a related-test failure invoke the full
+  profile exactly once.
 - The full pre-push profile is ordered `lint:fast` → `type-check` → `test:all`
-  → component-scoped JEV Browser Mode selection/execution → `build` →
-  route-scoped JEV Browser Mode selection/execution → `test:build-parity` →
+  → `test:browser:component:all` → `build` →
+  `test:browser:next-route-poc:built:all` → `test:build-parity` →
   `security-check`; each gate stops later gates on failure. The changed profile
-  runs the selected related tests and component Browser Mode gate when
-  applicable, then `build` and route-scoped JEV Browser Mode selection.
+  runs the selected related tests and all component Browser Mode cases when
+  applicable, then `build` and all built production-route cases.
   Playwright E2E remains a separate command and is not part of the local
   pre-push profile. Production validation remains a separate gate and is
   reported as not run by local pre-push when its URL/network availability is
@@ -2807,26 +2824,25 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, `hid
   removed; the separate P42-018 outside-click / scroll integration case
   remains in Playwright
 
-#### Scenario PRE-PUSH Browser Mode validation
+#### Scenario PRE-PUSH Browser Mode full execution
 
 - **WHEN** `pnpm run test:full` reaches its Browser Mode gates
 - **THEN** its component and production-route selector invocations each ask
   JEV to select from that gate's current eligible Vitest Browser Mode catalog
   and run only the selected catalog IDs
 - **WHEN** the full pre-push profile reaches its Browser Mode gates
-- **THEN** it runs component-scoped JEV selection after `test:all`, then runs
-  route-scoped JEV selection after `build`; each invocation runs only its
-  selected catalog IDs
+- **THEN** it runs `pnpm run test:browser:component:all` after `test:all`, then
+  `pnpm run test:browser:next-route-poc:built:all` after `build`
 - **WHEN** the changed pre-push profile selects a non-empty related code/test
   set
-- **THEN** it runs those related tests, the existing component Browser Mode
-  gate through JEV selection, then the existing build and production-route
-  Browser Mode gate through its route-scoped JEV selection
+- **THEN** it runs those related tests, `pnpm run test:browser:component:all`,
+  `pnpm run build`, and `pnpm run test:browser:next-route-poc:built:all` in
+  that order
 - **WHEN** a changed-profile push contains only documentation and/or asset
   paths
-- **THEN** it skips related code-test selection, `pnpm run test:all`, and the
-  component Browser Mode gate, while the existing built production-route
-  Browser Mode gate in the no-related-path branch uses JEV selection
+- **THEN** it skips related code-test selection and `pnpm run test:all`, while
+  it still runs `pnpm run test:browser:component:all`, `pnpm run build`, and
+  `pnpm run test:browser:next-route-poc:built:all` in that order
 
 #### Scenario Browser Mode catalog and stable case identity
 
@@ -2876,15 +2892,22 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, `hid
   paths with supplied positional paths; unsupported file types remain path
   inputs but receive `unsupported_file_type` omission metadata rather than
   diff excerpts
-- **WHEN** the selector runs from pre-push with validated Git ref updates
-  **THEN** it derives each diff from the corresponding `remote_oid` and
-  `local_oid` pair and includes the complete validated push-impact path set
 - **WHEN** changed paths exceed the configured path count, per-path byte, or
   aggregate byte limit
   **THEN** `changedPaths` contains at most 256 entries, each at most 512 UTF-8
   bytes, and at most 16 KiB of aggregate path bytes; it records the excluded
   path count as `omittedChangedPathCount` and adds `changed_path_limit` to the
   summary reasons
+- **WHEN** a detected or explicit path is not repository-relative and safe, or
+  exceeds the 512 UTF-8 byte per-path limit
+  **THEN** it is excluded from `changedPaths`, `diffContext.files[].path`,
+  `summary.files[].path`, and `omittedFiles[].path`; the selector reports only
+  a pathless reason/count omission and marks the context incomplete
+- **WHEN** an explicit absolute path resolves inside the repository
+  **THEN** it is normalized to a repository-relative path before selection; an
+  outside path or raw `..` segment, backslash, control character, or overlong
+  path is omitted without exposing its value and contributes only a pathless
+  reason/count
 - **WHEN** omitted file metadata exceeds its configured entry, per-path, or
   aggregate path-byte limit
   **THEN** `omittedFiles` contains at most 64 entries, each path is at most
@@ -2896,7 +2919,8 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, `hid
   counts, and reason `explicit_path_no_detected_diff`
 - **WHEN** a changed file is considered for diff context
   **THEN** the context includes at most 20 files, 4 KiB per file, and 16 KiB
-  total, omits binary content, and redacts lines containing secret-like markers
+  total, limits each `diffContext.files[].path` to 512 UTF-8 bytes, omits binary
+  content, and redacts lines containing secret-like markers
 - **WHEN** a changed path looks like a credential or private-key path
   **THEN** it is excluded from `changedPaths` and per-file omission entries,
   its actual path is not sent to JEV, and a pathless aggregated omission
@@ -2972,7 +2996,8 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, `hid
 - **WHEN** related-test selection in the changed profile is empty, invalid, or
   indeterminate
 - **THEN** it falls back to the full profile, running `pnpm run test:all`
-  followed by the JEV-selected Browser Mode gate exactly once
+  followed by the full component and production-route Browser Mode suites
+  exactly once, with `build` between them
 
 #### Scenario PRE-PUSH Browser Mode failure stop
 
@@ -3042,13 +3067,15 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, `hid
   **THEN** unset and `changed` select changed, `full` selects full, and any
   other value selects full.
 - **WHEN** the changed pre-push related runner is tested
-  **THEN** a valid non-empty Vitest JSON result proceeds to build and then E2E,
-  while empty candidates, zero `testResults`, missing/invalid/incompatible
-  JSON, or a related-test failure invokes the full profile exactly once.
+  **THEN** a valid non-empty Vitest JSON result proceeds to the complete
+  component Browser Mode suite, build, and complete built route suite, while
+  empty candidates, zero `testResults`, missing/invalid/incompatible JSON, or
+  a related-test failure invokes the full profile exactly once.
 - **WHEN** full pre-push execution is tested
-  **THEN** the gate order is `lint:fast` → `type-check` → `test:all` → `build`
-  → `test:build-parity` → `security-check` → `test:e2e:clean` → `test:e2e`,
-  build precedes E2E, and a failed gate prevents later gates; production
+  **THEN** the gate order is `lint:fast` → `type-check` → `test:all` →
+  `test:browser:component:all` → `build` →
+  `test:browser:next-route-poc:built:all` → `test:build-parity` →
+  `security-check`, and a failed gate prevents later gates; production
   validation remains a separately reported gate.
 
 #### Phase 1 regression requirements

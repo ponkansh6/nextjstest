@@ -169,11 +169,7 @@ fi
     PREPUSH_PROFILE: "changed",
   });
   const docsOnlyLog = readFileSync(log, "utf8").slice(docsOnlyLogStart);
-  for (const codeGate of [
-    "exec vitest related",
-    "run test:all",
-    "run test:browser:component:jev",
-  ]) {
+  for (const codeGate of ["exec vitest related", "run test:all"]) {
     expect(
       codeGate === "exec vitest related"
         ? !docsOnlyLog.split(/\r?\n/).some((line) => line.startsWith(`${codeGate} `))
@@ -181,6 +177,22 @@ fi
       `docs/assets-only push ran ${codeGate}`,
     );
   }
+  const docsOnlyGates = docsOnlyLog.split(/\r?\n/);
+  expect(
+    hasExactCommand(docsOnlyLog, "run test:browser:component:all"),
+    "docs/assets-only push skipped the complete component suite",
+  );
+  expect(hasExactCommand(docsOnlyLog, "run build"), "docs/assets-only push skipped build");
+  expect(
+    hasExactCommand(docsOnlyLog, "run test:browser:next-route-poc:built:all"),
+    "docs/assets-only push skipped the complete built route suite",
+  );
+  expect(
+    docsOnlyGates.indexOf("run test:browser:component:all") < docsOnlyGates.indexOf("run build") &&
+      docsOnlyGates.indexOf("run build") <
+        docsOnlyGates.indexOf("run test:browser:next-route-poc:built:all"),
+    "docs/assets-only push did not run component Browser Mode, build, and built routes in order",
+  );
   git(["switch", "main"]);
   git(["merge", "--ff-only", "docs-assets"]);
   const normal = remoteRef("main");
@@ -237,9 +249,9 @@ fi
     "run lint:fast",
     "run type-check",
     "run test:all",
-    "run test:browser:component:jev",
+    "run test:browser:component:all",
     "run build",
-    "run test:browser:routes:jev",
+    "run test:browser:next-route-poc:built:all",
     "run test:build-parity",
     "run security-check",
   ]) {
@@ -260,7 +272,7 @@ fi
     "full-profile production-route Browser Mode failure did not block push",
     {
       PREPUSH_PROFILE: "full",
-      HOOK_SMOKE_FAIL_GATE: "test:browser:routes:jev",
+      HOOK_SMOKE_FAIL_GATE: "test:browser:next-route-poc:built:all",
     },
   );
   expect(
@@ -269,11 +281,11 @@ fi
   );
   const fullBrowserFailureLog = readFileSync(log, "utf8").slice(fullBrowserFailureLogStart);
   expect(
-    hasExactCommand(fullBrowserFailureLog, "run test:browser:component:jev"),
+    hasExactCommand(fullBrowserFailureLog, "run test:browser:component:all"),
     "full profile skipped component Browser Mode",
   );
   expect(
-    hasExactCommand(fullBrowserFailureLog, "run test:browser:routes:jev"),
+    hasExactCommand(fullBrowserFailureLog, "run test:browser:next-route-poc:built:all"),
     "full profile skipped production-route Browser Mode",
   );
   for (const laterGate of ["run test:build-parity", "run security-check"]) {
@@ -304,7 +316,7 @@ fi
   expectRejectedPush(
     ["origin", "changed:main"],
     "changed-profile Browser Mode failure did not block push",
-    { PREPUSH_PROFILE: "changed", HOOK_SMOKE_FAIL_GATE: "test:browser:component:jev" },
+    { PREPUSH_PROFILE: "changed", HOOK_SMOKE_FAIL_GATE: "test:browser:component:all" },
     ({ stdout, stderr }) => {
       changedPushOutput = `stdout:\n${stdout}\nstderr:\n${stderr}`;
     },
@@ -328,13 +340,13 @@ fi
       `HOOK_SMOKE_LOG:\n${changedBrowserFailureLog}\npush classifier/hook output:\n${changedPushOutput}`,
   );
   expect(
-    hasExactCommand(changedBrowserFailureLog, "run test:browser:component:jev"),
+    hasExactCommand(changedBrowserFailureLog, "run test:browser:component:all"),
     "changed profile skipped Browser Mode",
   );
   for (const laterGate of [
     "run test:all",
     "run build",
-    "run test:browser:routes:jev",
+    "run test:browser:next-route-poc:built:all",
     "run test:build-parity",
     "run security-check",
   ]) {
@@ -382,12 +394,31 @@ fi
       .split(/\r?\n/)
       .filter(
         (line) =>
-          line === "run test:browser:component:jev" || line === "run test:browser:routes:jev",
+          line === "run test:browser:component:all" ||
+          line === "run test:browser:next-route-poc:built:all",
       ).length;
     expect(
       browserRuns === 2,
       `${relatedMode} full fallback ran ${browserRuns} browser selection gates instead of two`,
     );
+    const fallbackGates = fallbackLog.split(/\r?\n/);
+    let previousFallbackGateIndex = -1;
+    for (const gate of [
+      "run test:all",
+      "run test:browser:component:all",
+      "run build",
+      "run test:browser:next-route-poc:built:all",
+      "run test:build-parity",
+      "run security-check",
+    ]) {
+      const gateIndex = fallbackGates.indexOf(gate);
+      expect(gateIndex >= 0, `${relatedMode} full fallback did not execute ${gate}`);
+      expect(
+        gateIndex > previousFallbackGateIndex,
+        `${relatedMode} full fallback ran ${gate} out of order`,
+      );
+      previousFallbackGateIndex = gateIndex;
+    }
     expect(
       remoteRef("main") === git(["rev-parse", branch]),
       `${relatedMode} full fallback did not update remote main`,

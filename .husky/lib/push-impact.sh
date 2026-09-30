@@ -206,8 +206,7 @@ push_impact_print() {
   if ((PUSH_IMPACT_FULL)); then
     echo "[hook] profile: full (safe fallback)"
   else
-    echo "[hook] profile: changed integration + build + E2E"
+    echo "[hook] profile: changed integration + build + Browser Mode"
   fi
-  echo "[hook] E2E: required (changed and full; no omission condition recorded)"
   echo "[hook] fallback reasons: ${reasons:-none}"
 }
