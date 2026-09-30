@@ -412,6 +412,8 @@ async function nominalStackedTotalRange(page: import("@playwright/test").Page) {
         yTickCount: yTicks.length,
         yTicks,
         yScaleValid,
+        yAxisUnitsPerCssPixel:
+          Number.isFinite(ySlope) && ySlope !== 0 ? Math.abs(1 / ySlope) : Number.NaN,
         xTickCount: xTickPairs.length,
         xTicks: xTickPairs,
         xScaleValid,

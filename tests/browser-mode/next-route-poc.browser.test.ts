@@ -55,6 +55,7 @@ test("rendered nominal stacked bars total 50–150 from 2005Q1 through official 
       yTickCount: number;
       yTicks: Array<{ value: number; y: number }>;
       yScaleValid: boolean;
+      yAxisUnitsPerCssPixel: number;
       xTickCount: number;
       xTicks: Array<{ index: number; x: number }>;
       xScaleValid: boolean;
@@ -125,21 +126,35 @@ test("rendered nominal stacked bars total 50–150 from 2005Q1 through official 
   const renderDiagnostic = JSON.stringify(result.renderedStackDiagnostics);
   expect(result.renderedStackDiagnostics.dataRowCount, renderDiagnostic).toBe(result.rows.length);
   expect(result.renderedStackDiagnostics.yScaleValid, renderDiagnostic).toBe(true);
+  expect(
+    Number.isFinite(result.renderedStackDiagnostics.yAxisUnitsPerCssPixel),
+    renderDiagnostic,
+  ).toBe(true);
+  expect(result.renderedStackDiagnostics.yAxisUnitsPerCssPixel, renderDiagnostic).toBeGreaterThan(
+    0,
+  );
   expect(result.renderedStackDiagnostics.xScaleValid, renderDiagnostic).toBe(true);
   expect(result.renderedStackDiagnostics.unmappedShapeCount, renderDiagnostic).toBe(0);
   expect(renderedTargetRows.map((row) => row.period)).toEqual(targetRows.map((row) => row.period));
   for (const row of renderedTargetRows) {
     const dataRow = targetRows.find((candidate) => candidate.period === row.period);
+    const inputTotal = dataRow?.values.reduce((sum, value) => sum + Number(value.value), 0);
     const expectedVisibleSegments = dataRow?.values.filter(
       (value) => Number(value.value) > 0,
     ).length;
-    const diagnostic = `period=${row.period}, visibleSegments=${row.visibleSegmentCount}, expectedVisibleSegments=${expectedVisibleSegments}, renderedStackTotal=${row.total}`;
+    const allowedGeometryDifference =
+      0.5 * result.renderedStackDiagnostics.yAxisUnitsPerCssPixel + 1e-9;
+    const diagnostic = `period=${row.period}, visibleSegments=${row.visibleSegmentCount}, expectedVisibleSegments=${expectedVisibleSegments}, inputTotal=${inputTotal}, renderedStackTotal=${row.total}, allowedGeometryDifference=${allowedGeometryDifference}`;
     expect(dataRow, diagnostic).toBeDefined();
     expect(row.visibleSegmentCount, diagnostic).toBe(expectedVisibleSegments);
     expect(row.visibleSegmentCount, diagnostic).toBeGreaterThan(0);
+    expect(Number.isFinite(inputTotal), diagnostic).toBe(true);
+    expect(inputTotal, diagnostic).toBeGreaterThanOrEqual(50);
+    expect(inputTotal, diagnostic).toBeLessThanOrEqual(150);
     expect(row.total, diagnostic).not.toBeNull();
     expect(Number.isFinite(row.total), diagnostic).toBe(true);
-    expect(row.total, diagnostic).toBeGreaterThanOrEqual(50);
-    expect(row.total, diagnostic).toBeLessThanOrEqual(150);
+    expect(Math.abs(Number(row.total) - Number(inputTotal)), diagnostic).toBeLessThanOrEqual(
+      allowedGeometryDifference,
+    );
   }
 });
