@@ -1,0 +1,137 @@
+{
+  "schemaVersion": "plan39-quarterly-nominal-v1",
+  "revision": "2026-09-29",
+  "statisticalCode": "00200567",
+  "source": "総務省統計局 e-Stat CTI",
+  "artifact": "cti_data2025_distribution_adjusted_quarterly.csv",
+  "artifactIdentifier": "000040499087",
+  "officialPageUrl": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499087",
+  "downloadUrl": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499087",
+  "statInfId": "000040499087",
+  "retrievedAt": "2026-09-29T09:53:44.280Z",
+  "baseYear": 2025,
+  "unit": "指数",
+  "valueType": "原数値（名目指数）",
+  "seriesClassification": "調整系列・分布調整値（原数値）",
+  "householdScope": "総世帯",
+  "frequency": "quarterly",
+  "rawRange": {
+    "start": "2017Q1",
+    "end": "2026Q2",
+    "rows": 38
+  },
+  "adoptedRange": {
+    "start": "2017Q1",
+    "end": "2026Q2",
+    "rows": 38
+  },
+  "missingRepresentation": "- は未公表値。補完・補間なし。その他は公式表の未公表値を補完せず、表示時に総合−他9費目の残差として導出。",
+  "sha256": "7224e5eb424c94d90402502f665a4953cfe16377f65f1040a939696ac948ef41",
+  "sourceSha256": "7224e5eb424c94d90402502f665a4953cfe16377f65f1040a939696ac948ef41",
+  "csvSha256": "e32f7e3627718874cd85cae386216b370563b6ef7dba3ff686a5b456cba4dd78",
+  "sourceFormat": "xlsx",
+  "sourceSheet": "総・四(原)",
+  "sourceWorkbook": {
+    "path": "data/source/official-cti-2025/cti-distribution-adjusted-000040499087.xlsx",
+    "fileName": "cti-distribution-adjusted-000040499087.xlsx"
+  },
+  "columnMapping": [
+    {
+      "column": "B",
+      "header": null,
+      "canonicalSeries": "period",
+      "sourceRole": "coded_period"
+    },
+    {
+      "column": "H",
+      "header": "時間軸コード",
+      "canonicalSeries": "period",
+      "sourceRole": "period_code"
+    },
+    {
+      "column": "I",
+      "header": "四半期平均",
+      "canonicalSeries": "period",
+      "sourceRole": "period_label"
+    },
+    {
+      "column": "J",
+      "header": "消費支出（名目）",
+      "canonicalSeries": "総合",
+      "normalizedColumn": "総合",
+      "sourceRole": "official_total"
+    },
+    {
+      "column": "K",
+      "header": "食料（名目）",
+      "canonicalSeries": "食料",
+      "normalizedColumn": "食料",
+      "sourceRole": "official_nominal_observation"
+    },
+    {
+      "column": "L",
+      "header": "住居（名目）",
+      "canonicalSeries": "住居",
+      "normalizedColumn": "住居",
+      "sourceRole": "official_nominal_observation"
+    },
+    {
+      "column": "M",
+      "header": "光熱・水道（名目）",
+      "canonicalSeries": "光熱・水道",
+      "normalizedColumn": "光熱・水道",
+      "sourceRole": "official_nominal_observation"
+    },
+    {
+      "column": "N",
+      "header": "家具・家事用品（名目）",
+      "canonicalSeries": "家具・家事用品",
+      "normalizedColumn": "家具・家事用品",
+      "sourceRole": "official_nominal_observation"
+    },
+    {
+      "column": "O",
+      "header": "被服及び履物（名目）",
+      "canonicalSeries": "被服及び履物",
+      "normalizedColumn": "被服及び履物",
+      "sourceRole": "official_nominal_observation"
+    },
+    {
+      "column": "P",
+      "header": "保健医療（名目）",
+      "canonicalSeries": "保健医療",
+      "normalizedColumn": "保健医療",
+      "sourceRole": "official_nominal_observation"
+    },
+    {
+      "column": "Q",
+      "header": "交通・通信（名目）",
+      "canonicalSeries": "交通・通信",
+      "normalizedColumn": "交通・通信",
+      "sourceRole": "official_nominal_observation"
+    },
+    {
+      "column": "R",
+      "header": "教育（名目）",
+      "canonicalSeries": "教育",
+      "normalizedColumn": "教育",
+      "sourceRole": "official_nominal_observation"
+    },
+    {
+      "column": "S",
+      "header": "教養娯楽（名目）",
+      "canonicalSeries": "教養娯楽",
+      "normalizedColumn": "教養娯楽",
+      "sourceRole": "official_nominal_observation"
+    },
+    {
+      "column": "T",
+      "header": "その他の消費支出（名目）",
+      "canonicalSeries": "その他の消費支出",
+      "normalizedColumn": "その他の消費支出",
+      "sourceRole": "unpublished_derived_residual",
+      "sourceValue": "-",
+      "derivation": "J (official total) minus K:S (nine official nominal categories)"
+    }
+  ]
+}

@@ -19,7 +19,7 @@ const metadata = (artifact: string) => ({
   retrievedAt: "2026-09-22T00:00:00.000Z",
   baseYear: 2025,
   unit: "指数",
-  valueType: "原数値（指数）",
+  valueType: "原数値（名目指数）",
   householdScope: "総世帯",
   frequency: "annual" as const,
   rawRange: { startYear: 2005, endYear: 2025 },
@@ -41,12 +41,12 @@ const input = (artifact: string): CtiAdjustedAnnualInput => ({
   })),
 });
 
-const fixture = () => ({ B: input("B.json"), A: input("A.json"), L: input("L.json") });
+const fixture = () => ({ B: input("B.json"), A: input("A.json") });
 
 describe("Plan40 annual-anchor input contract", () => {
   it("accepts complete positive 2005-2017 anchors with an explicit 2025 base invariant", () => {
-    const { B, A, L } = fixture();
-    const result = validateCtiAdjustedV2Plan40Inputs(B, A, L);
+    const { B, A } = fixture();
+    const result = validateCtiAdjustedV2Plan40Inputs(B, A);
     expect(result.valid).toBe(true);
     expect(result.targetYears).toEqual(Array.from({ length: 13 }, (_, index) => 2005 + index));
     expect(result.inputCategories).toHaveLength(10);
@@ -70,7 +70,7 @@ describe("Plan40 annual-anchor input contract", () => {
     [
       "year omission",
       (data: ReturnType<typeof fixture>) =>
-        (data.L.rows = data.L.rows.filter((row) => row.year !== 2011)),
+        (data.B.rows = data.B.rows.filter((row) => row.year !== 2011)),
     ],
     [
       "category omission",
@@ -88,7 +88,7 @@ describe("Plan40 annual-anchor input contract", () => {
   ])("rejects Plan40 %s input", (_label, mutate) => {
     const data = fixture();
     mutate(data);
-    const result = validateCtiAdjustedV2Plan40Inputs(data.B, data.A, data.L);
+    const result = validateCtiAdjustedV2Plan40Inputs(data.B, data.A);
     expect(result.valid).toBe(false);
     expect(result.status).toBe("invalid");
     expect(result.reasonCodes.length).toBeGreaterThan(0);
@@ -97,7 +97,7 @@ describe("Plan40 annual-anchor input contract", () => {
   it("fails closed when the 2025 normalization invariant is not declared", () => {
     const data = fixture();
     data.A.metadata = { ...data.A.metadata, baseYear: 2024 };
-    const result = validateCtiAdjustedV2Plan40Inputs(data.B, data.A, data.L);
+    const result = validateCtiAdjustedV2Plan40Inputs(data.B, data.A);
     expect(result.reasonCodes).toContain("A:base_year_not_2025");
     expect(result.normalizedBaseYear).toBeNull();
   });
@@ -106,7 +106,7 @@ describe("Plan40 annual-anchor input contract", () => {
     const data = fixture();
     const row = defined(data.A.rows.find((item) => item.year === 2025));
     row.values.総合 = 0;
-    const result = validateCtiAdjustedV2Plan40Inputs(data.B, data.A, data.L);
+    const result = validateCtiAdjustedV2Plan40Inputs(data.B, data.A);
     expect(result.reasonCodes).toContain("A:missing_or_non_positive_2025_anchor");
     expect(result.normalizedBaseYear).toBeNull();
   });
@@ -114,7 +114,7 @@ describe("Plan40 annual-anchor input contract", () => {
   it("makes every Plan40 anchor row unavailable when the contract fails", () => {
     const data = fixture();
     data.A.rows = data.A.rows.filter((row) => row.year !== 2025);
-    const result = buildCtiAdjustedV2Estimate(data.B, data.A, data.L, { contract: "plan40" });
+    const result = buildCtiAdjustedV2Estimate(data.B, data.A, undefined, { contract: "plan40" });
     expect(result.plan40InputValidation?.valid).toBe(false);
     expect(result.rows.filter((row) => row.year >= 2005 && row.year <= 2017)).toHaveLength(13);
     expect(

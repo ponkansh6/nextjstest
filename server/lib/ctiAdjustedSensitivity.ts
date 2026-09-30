@@ -11,6 +11,7 @@ import {
   CTI_ADJUSTED_V2_YEARS,
   generateCtiAdjustedV2GammaCases,
   type CtiAdjustedV2GammaCase,
+  type CtiAdjustedV2HouseholdComposition,
 } from "./ctiAdjustedConnectionEstimateV2";
 
 export type CtiAdjustedLSensitivityRule =
@@ -112,6 +113,7 @@ export type CtiAdjustedSensitivityOptions = {
   maxDDifference?: number;
   maxEstimateRelativeDifference?: number;
   residualJumpThreshold?: number;
+  householdComposition?: CtiAdjustedV2HouseholdComposition;
 };
 
 const DEFAULT_SCENARIOS: readonly CtiAdjustedSensitivityScenario[] = [
@@ -144,9 +146,10 @@ function gammaScenarioResults(
   A: CtiAdjustedAnnualInput | null | undefined,
   L: CtiAdjustedAnnualInput | null | undefined,
   v1: CtiAdjustedConnectionEstimate,
+  householdComposition?: CtiAdjustedV2HouseholdComposition,
 ): readonly CtiAdjustedGammaScenarioResult[] {
   if (!B || !A) return [];
-  const v2 = buildCtiAdjustedV2Estimate(B, A, L);
+  const v2 = buildCtiAdjustedV2Estimate(B, A, L, { householdComposition });
   const gammaCases = generateCtiAdjustedV2GammaCases(B, A);
   const v1Values = Object.fromEntries(
     v1.rows.map((row) => [row.year, finiteOrNull(row.values.総合)]),
@@ -472,6 +475,7 @@ export function buildCtiAdjustedSensitivityAnalysis(
       L,
       scenarioResults[0]?.estimate ??
         buildCtiAdjustedConnectionEstimate(B, A, L, { residualJumpThreshold: threshold }),
+      options.householdComposition,
     ),
     acceptance: {
       maxBetaDifference: maxBeta,

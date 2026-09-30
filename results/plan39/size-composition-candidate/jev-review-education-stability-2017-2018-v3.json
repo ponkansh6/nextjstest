@@ -1,0 +1,105 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-29T21:53:43.418Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "model": "jev-latest",
+    "state": {
+      "evaluationScope": "implementation_checkpoint_validity",
+      "background": "Review only the Plan39 analysis-only diagnostic in scripts/plan39/education-stability-2017-2018.mjs and results/plan39/size-composition-candidate/education-stability-2017-2018.json, plus its source manifest. Scope is education sensitivity using 2017/2018 Household Survey size profiles, the single-year lambda comparisons, the 2018 historical-lambda holdout, and a separately labeled two-year in-sample calibration. Do not assess the production estimator, publication readiness, loaders, gates, or quarterly behavior. No production loader/gates/quarterly path was changed. The 2018 Household Survey ledger method was comprehensively redesigned, so cross-year profiles may not be comparable as a seamless series.",
+      "acceptanceCriteria": [
+        "The diagnostic uses nominal 2017/2018 Household Survey monthly expenditure profiles by household size 1, 2, 3, 4, 5+, and clearly labels the 2018 redesign comparability caveat.",
+        "The single-cross-section education lambdas are reported as diagnostics, not regression estimates: lambda2017=5.1946 and lambda2018=4.9543.",
+        "The same official January LFS special setai-n series is used for 2017 and 2018 by household size 1, 2, 3, 4, 5+; it is a preceding-12-month special aggregation, not annual IV-4 or the 2025 joint household-size-by-age reference distribution.",
+        "Official CTI A/B sources are basic/adjusted files statInfId 000040499069 and 000040499087, sheet 総・年. Education values are 2017 A/B=3.1645/3.1634=1.0003477271 and 2018 A/B=3.2671/3.3114=0.9866219726. Other is derived as a residual because official T is '-'.",
+        "The historical education lambda 5.96125 is trained on 2005–2016 excluding 2011; 2018 official A/B is held out for post-prediction comparison. The 2018 prediction ratio is 1.0019437735 against 0.9866219726, relative error +1.55296%. The total-change log denominator is 0.000273865 and is flagged as small/unstable.",
+        "The distinct two-year anchored lambda (-50.4482 for education) uses the 2018 outcome and is explicitly in-sample, with small denominator and not validation.",
+        "No software tests were added or run. Analysis scripts regenerated the diagnostic and git diff --check passed."
+      ],
+      "verification": [
+        "Inspected the analysis script, generated diagnostic JSON/CSV, source manifest, and current workspace changes.",
+        "Analysis regeneration completed and git diff --check passed (per task evidence).",
+        "No software tests were added or run; this JEV review supplements and does not replace tests or other checks."
+      ],
+      "knownConstraints": [
+        "The 2018 Household Survey account method redesign may limit comparability of 2017 and 2018 size profiles.",
+        "Year-specific lambdas use one cross-section each and are noisy diagnostics.",
+        "The two-year anchor uses 2018 outcome data and is in-sample, not validation.",
+        "Only the specified result JSON may be written by this review task."
+      ],
+      "outputRequirement": "Choose one listed choice. For any reason choice, provide a case-specific finding, affected location or requirement, observed evidence, and either a concrete proposed fix or exact additional evidence needed. Do not invent details."
+    },
+    "questions": {
+      "implementation": {
+        "type": "choice",
+        "instructions": "Does the supplied evidence support accepting this bounded diagnostic against its stated criteria, with limitations accurately represented? Return a probability distribution over the listed choices.",
+        "criteria": {
+          "valid_as_defined": "Evidence supports this analysis-only diagnostic and its stated limitations as defined.",
+          "requirements_mismatch": "A stated requirement conflicts with intended behavior; identify it and correction.",
+          "missing_prerequisites_info": "A specific missing source datum or series definition prevents the declared diagnostic; state exactly what is needed.",
+          "incomplete_implementation_info": "The code or artifact omits required behavior or evidence; identify the missing item exactly.",
+          "implementation_issue": "A specific calculation or provenance defect exists; identify its location, evidence, and bounded correction.",
+          "scope_violation": "The proposal exceeds or falls outside the agreed diagnostic scope; identify the boundary and adjustment.",
+          "other": "A material concern does not fit the listed categories; identify its location, evidence, and fix or needed evidence.",
+          "indeterminate": "The supplied context cannot support a judgment; identify missing context if possible."
+        }
+      }
+    }
+  },
+  "questionIds": [
+    "implementation"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "implementation": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.59,
+        "probabilities": {
+          "missing_prerequisites_info": 0.03,
+          "valid_as_defined": 0.64,
+          "scope_violation": 0,
+          "implementation_issue": 0.06,
+          "requirements_mismatch": 0.01,
+          "indeterminate": 0.21,
+          "incomplete_implementation_info": 0.04,
+          "other": 0.01
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.59,
+    "probabilities": {
+      "missing_prerequisites_info": 0.03,
+      "valid_as_defined": 0.64,
+      "scope_violation": 0,
+      "implementation_issue": 0.06,
+      "requirements_mismatch": 0.01,
+      "indeterminate": 0.21,
+      "incomplete_implementation_info": 0.04,
+      "other": 0.01
+    },
+    "passProbability": 0.64,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

@@ -13,6 +13,12 @@ type TooltipDisplayPayload = NonNullable<CustomTooltipProps["payload"]>[number] 
   sourceId?: string;
   statInfId?: string;
   householdScope?: string;
+  sourceWorkbook?: string;
+  sourceSheet?: string;
+  sourceColumn?: string;
+  sourceRole?: string;
+  sourceDerivedFromColumns?: string[];
+  canonicalSeries?: string;
   seasonalitySourceId?: string;
   targetSourceId?: string;
   targetHouseholdScope?: string;
@@ -37,6 +43,12 @@ type TooltipMeasurement = Partial<
     | "sourceId"
     | "statInfId"
     | "householdScope"
+    | "sourceWorkbook"
+    | "sourceSheet"
+    | "sourceColumn"
+    | "sourceRole"
+    | "sourceDerivedFromColumns"
+    | "canonicalSeries"
     | "seasonalitySourceId"
     | "targetSourceId"
     | "targetHouseholdScope"
@@ -161,6 +173,12 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
                 sourceId: measurement.sourceId,
                 statInfId: measurement.statInfId,
                 householdScope: measurement.householdScope,
+                sourceWorkbook: measurement.sourceWorkbook,
+                sourceSheet: measurement.sourceSheet,
+                sourceColumn: measurement.sourceColumn,
+                sourceRole: measurement.sourceRole,
+                sourceDerivedFromColumns: measurement.sourceDerivedFromColumns,
+                canonicalSeries: measurement.canonicalSeries,
                 seasonalitySourceId: measurement.seasonalitySourceId,
                 targetSourceId: measurement.targetSourceId,
                 targetHouseholdScope: measurement.targetHouseholdScope,
@@ -356,6 +374,7 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
                 official: entry.official,
                 annualAnchorType: entry.annualAnchorType,
                 quarterlyDerived: entry.quarterlyDerived,
+                aggregation: entry.aggregation,
                 bridgeCoefficient: entry.bridgeCoefficient,
                 status: entry.status ?? "valid",
                 reason: entry.reason,
@@ -373,6 +392,12 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
               data-tooltip-source-id={entry.sourceId}
               data-tooltip-stat-inf-id={entry.statInfId}
               data-tooltip-household-scope={entry.householdScope}
+              data-tooltip-source-workbook={entry.sourceWorkbook}
+              data-tooltip-source-sheet={entry.sourceSheet}
+              data-tooltip-source-column={entry.sourceColumn}
+              data-tooltip-source-role={entry.sourceRole}
+              data-tooltip-source-derived-from-columns={entry.sourceDerivedFromColumns?.join(";")}
+              data-tooltip-canonical-series={entry.canonicalSeries}
               data-tooltip-seasonality-source-id={entry.seasonalitySourceId}
               data-tooltip-target-source-id={entry.targetSourceId}
               data-tooltip-target-household-scope={entry.targetHouseholdScope}

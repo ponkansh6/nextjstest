@@ -1,0 +1,940 @@
+{
+  "schemaVersion": "plan39-education-stability-2017-2018-v1",
+  "status": "analysis_only_holdout_diagnostic",
+  "interpretation": {
+    "yearSpecificLambda": "lambda[t,c] = log(Q[t,c]) / log(Q[t,total]); one cross-sectional ratio per year, unstable diagnostic rather than a regression estimate",
+    "q": "Q[t,c] = sum_s p[2025,s] x[t,s,c] / sum_s p[setai-special,t,s] x[t,s,c]",
+    "r": "R[2018,total] = Q[2018,total] / Q[2017,total]",
+    "householdSurveyBreak2018": "The Household Survey ledger format was comprehensively revised in 2018. Top-level labels are matched, but 2017/2018 household-size expenditure profiles may not be fully comparable; this is a stability diagnostic, not a seamless time series.",
+    "specialWeightDefinition": "setai-n.xls is published as the special tabulation used for each year's January Household Survey adjustment. Household Survey sample-design documentation defines the adjustment distribution as the Labour Force Survey household-size distribution averaged over the latest 12 months; it is not confirmed as a calendar-year average. It is not an annual IV-4 household-count series and is not the 2025 CTI joint household-size-by-age reference distribution. Sources: https://www.stat.go.jp/data/kakei/pdf/18gai00.pdf p.25 and https://www.stat.go.jp/data/kakei/setai_bunpu.html."
+  },
+  "inputs": {
+    "manifest": "data/source/cti-size-composition/education-stability-2017-2018-manifest.json",
+    "profileCsvSha256": "05f34740bb0c5451276ac140da88c749e628513dadfc4d4652eb845fd6238e6a",
+    "weightsCsvSha256": "adb172bd130b1289f5bffceee0a1a3d2005b9179ce0aa10902688b9ec8cea708",
+    "ctiHashes": {
+      "A": "7224e5eb424c94d90402502f665a4953cfe16377f65f1040a939696ac948ef41",
+      "B": "5e99cf3c61e26ba90bcde12b3311eb553458f97e5624258712d7414bed53197b"
+    },
+    "officialCtiRawTrace": {
+      "adjustedA": {
+        "2017": {
+          "excelRow": 10,
+          "timeLabel": "2017年",
+          "timeCode": 2017000000,
+          "cells": {
+            "総合": {
+              "cell": "J",
+              "value": 91.4733
+            },
+            "食料": {
+              "cell": "K",
+              "value": 23.9584
+            },
+            "住居": {
+              "cell": "L",
+              "value": 6.7138
+            },
+            "光熱・水道": {
+              "cell": "M",
+              "value": 6.5149
+            },
+            "家具・家事用品": {
+              "cell": "N",
+              "value": 3.5192
+            },
+            "被服及び履物": {
+              "cell": "O",
+              "value": 3.5898
+            },
+            "保健医療": {
+              "cell": "P",
+              "value": 4.0762
+            },
+            "交通・通信": {
+              "cell": "Q",
+              "value": 15.0434
+            },
+            "教育": {
+              "cell": "R",
+              "value": 3.1645
+            },
+            "教養娯楽": {
+              "cell": "S",
+              "value": 9.5302
+            },
+            "その他の消費支出": {
+              "cell": "T",
+              "published": "-",
+              "derivedFrom": [
+                "J",
+                "K",
+                "L",
+                "M",
+                "N",
+                "O",
+                "P",
+                "Q",
+                "R",
+                "S"
+              ]
+            }
+          },
+          "sourceRow": {
+            "総合": 91.4733,
+            "食料": 23.9584,
+            "住居": 6.7138,
+            "光熱・水道": 6.5149,
+            "家具・家事用品": 3.5192,
+            "被服及び履物": 3.5898,
+            "保健医療": 4.0762,
+            "交通・通信": 15.0434,
+            "教育": 3.1645,
+            "教養娯楽": 9.5302
+          }
+        },
+        "2018": {
+          "excelRow": 11,
+          "timeLabel": "2018年",
+          "timeCode": 2018000000,
+          "cells": {
+            "総合": {
+              "cell": "J",
+              "value": 92.5049
+            },
+            "食料": {
+              "cell": "K",
+              "value": 24.1054
+            },
+            "住居": {
+              "cell": "L",
+              "value": 6.9536
+            },
+            "光熱・水道": {
+              "cell": "M",
+              "value": 6.6516
+            },
+            "家具・家事用品": {
+              "cell": "N",
+              "value": 3.5535
+            },
+            "被服及び履物": {
+              "cell": "O",
+              "value": 3.527
+            },
+            "保健医療": {
+              "cell": "P",
+              "value": 4.1827
+            },
+            "交通・通信": {
+              "cell": "Q",
+              "value": 15.4598
+            },
+            "教育": {
+              "cell": "R",
+              "value": 3.2671
+            },
+            "教養娯楽": {
+              "cell": "S",
+              "value": 9.6022
+            },
+            "その他の消費支出": {
+              "cell": "T",
+              "published": "-",
+              "derivedFrom": [
+                "J",
+                "K",
+                "L",
+                "M",
+                "N",
+                "O",
+                "P",
+                "Q",
+                "R",
+                "S"
+              ]
+            }
+          },
+          "sourceRow": {
+            "総合": 92.5049,
+            "食料": 24.1054,
+            "住居": 6.9536,
+            "光熱・水道": 6.6516,
+            "家具・家事用品": 3.5535,
+            "被服及び履物": 3.527,
+            "保健医療": 4.1827,
+            "交通・通信": 15.4598,
+            "教育": 3.2671,
+            "教養娯楽": 9.6022
+          }
+        }
+      },
+      "basicB": {
+        "2017": {
+          "excelRow": 25,
+          "timeLabel": "2017年",
+          "timeCode": 2017000000,
+          "cells": {
+            "総合": {
+              "cell": "J",
+              "value": 95.3443
+            },
+            "食料": {
+              "cell": "K",
+              "value": 24.9264
+            },
+            "住居": {
+              "cell": "L",
+              "value": 7.1244
+            },
+            "光熱・水道": {
+              "cell": "M",
+              "value": 6.782
+            },
+            "家具・家事用品": {
+              "cell": "N",
+              "value": 3.6817
+            },
+            "被服及び履物": {
+              "cell": "O",
+              "value": 3.712
+            },
+            "保健医療": {
+              "cell": "P",
+              "value": 4.2787
+            },
+            "交通・通信": {
+              "cell": "Q",
+              "value": 15.6443
+            },
+            "教育": {
+              "cell": "R",
+              "value": 3.1634
+            },
+            "教養娯楽": {
+              "cell": "S",
+              "value": 9.9463
+            },
+            "その他の消費支出": {
+              "cell": "T",
+              "published": "-",
+              "derivedFrom": [
+                "J",
+                "K",
+                "L",
+                "M",
+                "N",
+                "O",
+                "P",
+                "Q",
+                "R",
+                "S"
+              ]
+            }
+          },
+          "sourceRow": {
+            "総合": 95.3443,
+            "食料": 24.9264,
+            "住居": 7.1244,
+            "光熱・水道": 6.782,
+            "家具・家事用品": 3.6817,
+            "被服及び履物": 3.712,
+            "保健医療": 4.2787,
+            "交通・通信": 15.6443,
+            "教育": 3.1634,
+            "教養娯楽": 9.9463
+          }
+        },
+        "2018": {
+          "excelRow": 26,
+          "timeLabel": "2018年",
+          "timeCode": 2018000000,
+          "cells": {
+            "総合": {
+              "cell": "J",
+              "value": 96.3498
+            },
+            "食料": {
+              "cell": "K",
+              "value": 25.0275
+            },
+            "住居": {
+              "cell": "L",
+              "value": 7.3658
+            },
+            "光熱・水道": {
+              "cell": "M",
+              "value": 6.9183
+            },
+            "家具・家事用品": {
+              "cell": "N",
+              "value": 3.7061
+            },
+            "被服及び履物": {
+              "cell": "O",
+              "value": 3.6443
+            },
+            "保健医療": {
+              "cell": "P",
+              "value": 4.3872
+            },
+            "交通・通信": {
+              "cell": "Q",
+              "value": 15.9883
+            },
+            "教育": {
+              "cell": "R",
+              "value": 3.3114
+            },
+            "教養娯楽": {
+              "cell": "S",
+              "value": 9.9803
+            },
+            "その他の消費支出": {
+              "cell": "T",
+              "published": "-",
+              "derivedFrom": [
+                "J",
+                "K",
+                "L",
+                "M",
+                "N",
+                "O",
+                "P",
+                "Q",
+                "R",
+                "S"
+              ]
+            }
+          },
+          "sourceRow": {
+            "総合": 96.3498,
+            "食料": 25.0275,
+            "住居": 7.3658,
+            "光熱・水道": 6.9183,
+            "家具・家事用品": 3.7061,
+            "被服及び履物": 3.6443,
+            "保健医療": 4.3872,
+            "交通・通信": 15.9883,
+            "教育": 3.3114,
+            "教養娯楽": 9.9803
+          }
+        }
+      },
+      "headerExcelRow": 9,
+      "nominalColumns": "J:T",
+      "categoryMapping": [
+        "消費支出（名目）",
+        "食料（名目）",
+        "住居（名目）",
+        "光熱・水道（名目）",
+        "家具・家事用品（名目）",
+        "被服及び履物（名目）",
+        "保健医療（名目）",
+        "交通・通信（名目）",
+        "教育（名目）",
+        "教養娯楽（名目）",
+        "その他の消費支出（名目）"
+      ],
+      "otherDefinition": "official annual table publishes a dash in T; residual = J - sum(K:S)"
+    },
+    "officialCtiRawValues": {
+      "2017": {
+        "adjustedA": {
+          "総合": 91.4733,
+          "食料": 23.9584,
+          "住居": 6.7138,
+          "光熱・水道": 6.5149,
+          "家具・家事用品": 3.5192,
+          "被服及び履物": 3.5898,
+          "保健医療": 4.0762,
+          "交通・通信": 15.0434,
+          "教育": 3.1645,
+          "教養娯楽": 9.5302,
+          "その他の消費支出": 15.362899999999996
+        },
+        "basicB": {
+          "総合": 95.3443,
+          "食料": 24.9264,
+          "住居": 7.1244,
+          "光熱・水道": 6.782,
+          "家具・家事用品": 3.6817,
+          "被服及び履物": 3.712,
+          "保健医療": 4.2787,
+          "交通・通信": 15.6443,
+          "教育": 3.1634,
+          "教養娯楽": 9.9463,
+          "その他の消費支出": 16.08510000000001
+        }
+      },
+      "2018": {
+        "adjustedA": {
+          "総合": 92.5049,
+          "食料": 24.1054,
+          "住居": 6.9536,
+          "光熱・水道": 6.6516,
+          "家具・家事用品": 3.5535,
+          "被服及び履物": 3.527,
+          "保健医療": 4.1827,
+          "交通・通信": 15.4598,
+          "教育": 3.2671,
+          "教養娯楽": 9.6022,
+          "その他の消費支出": 15.202000000000012
+        },
+        "basicB": {
+          "総合": 96.3498,
+          "食料": 25.0275,
+          "住居": 7.3658,
+          "光熱・水道": 6.9183,
+          "家具・家事用品": 3.7061,
+          "被服及び履物": 3.6443,
+          "保健医療": 4.3872,
+          "交通・通信": 15.9883,
+          "教育": 3.3114,
+          "教養娯楽": 9.9803,
+          "その他の消費支出": 16.0206
+        }
+      }
+    },
+    "publishedOrDerivedCtiAoverBRatios": {
+      "2017": {
+        "総合": 0.9593997753405289,
+        "食料": 0.9611656717375955,
+        "住居": 0.9423670765257426,
+        "光熱・水道": 0.9606163373636095,
+        "家具・家事用品": 0.9558627807806176,
+        "被服及び履物": 0.9670797413793103,
+        "保健医療": 0.9526725407249866,
+        "交通・通信": 0.9615898442244141,
+        "教育": 1.0003477271290382,
+        "教養娯楽": 0.9581653479183214,
+        "その他の消費支出": 0.9551013049343794
+      },
+      "2018": {
+        "総合": 0.960094364492713,
+        "食料": 0.9631565278193986,
+        "住居": 0.9440386651823292,
+        "光熱・水道": 0.9614500672130436,
+        "家具・家事用品": 0.958824640457624,
+        "被服及び履物": 0.9678127486760146,
+        "保健医療": 0.9533871261852661,
+        "交通・通信": 0.9669445782228254,
+        "教育": 0.9866219725795736,
+        "教養娯楽": 0.9621153672735289,
+        "その他の消費支出": 0.948903287017965
+      }
+    },
+    "otherRatioStatus": "Other is derived residual because T-column is published as '-'; do not describe this as an official published Other ratio",
+    "historicalLambdaFitYears": [
+      2005,
+      2006,
+      2007,
+      2008,
+      2009,
+      2010,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016
+    ]
+  },
+  "fixed2025ReferenceShares": {
+    "1": 0.39348853492035707,
+    "2": 0.29266584981620863,
+    "3": 0.1564852091720637,
+    "4": 0.11377559950988972,
+    "5+": 0.04358480658148083
+  },
+  "qByYear": {
+    "2017": {
+      "総合": 0.9585108860556723,
+      "食料": 0.9547190185507134,
+      "住居": 1.0203151634145342,
+      "光熱・水道": 0.9534165693943678,
+      "家具・家事用品": 0.9539967286489055,
+      "被服及び履物": 0.9457711544663646,
+      "保健医療": 0.9692600239633699,
+      "交通・通信": 0.9445903496722406,
+      "教育": 0.8024242067283465,
+      "教養娯楽": 0.9671445139954771,
+      "その他の消費支出": 0.9716425190067918
+    },
+    "2018": {
+      "総合": 0.9587734246078089,
+      "食料": 0.9556191151723414,
+      "住居": 1.0244509105033561,
+      "光熱・水道": 0.9560435594446336,
+      "家具・家事用品": 0.9482386015314584,
+      "被服及び履物": 0.9431771873572691,
+      "保健医療": 0.9680357490442844,
+      "交通・通信": 0.9500042112194719,
+      "教育": 0.811738744119983,
+      "教養娯楽": 0.9688000398725262,
+      "その他の消費支出": 0.966386515236581
+    }
+  },
+  "yearSpecificLambdaDiagnostics": {
+    "2017": {
+      "総合": {
+        "value": 1,
+        "logQCategory": -0.042374359173689674,
+        "logQTotal": -0.042374359173689674,
+        "unstableSingleObservationRatio": false,
+        "reason": null
+      },
+      "食料": {
+        "value": 1.0935434566915054,
+        "logQCategory": -0.04633820320588401,
+        "logQTotal": -0.042374359173689674,
+        "unstableSingleObservationRatio": false,
+        "reason": null
+      },
+      "住居": {
+        "value": -0.4746163411660853,
+        "logQCategory": 0.020111563310274135,
+        "logQTotal": -0.042374359173689674,
+        "unstableSingleObservationRatio": false,
+        "reason": null
+      },
+      "光熱・水道": {
+        "value": 1.1257599648558096,
+        "logQCategory": -0.04770335709416034,
+        "logQTotal": -0.042374359173689674,
+        "unstableSingleObservationRatio": false,
+        "reason": null
+      },
+      "家具・家事用品": {
+        "value": 1.1114041025585315,
+        "logQCategory": -0.04709503662892745,
+        "logQTotal": -0.042374359173689674,
+        "unstableSingleObservationRatio": false,
+        "reason": null
+      },
+      "被服及び履物": {
+        "value": 1.3157637986748536,
+        "logQCategory": -0.055754647792786556,
+        "logQTotal": -0.042374359173689674,
+        "unstableSingleObservationRatio": false,
+        "reason": null
+      },
+      "保健医療": {
+        "value": 0.7368220101539908,
+        "logQCategory": -0.03122236050534523,
+        "logQTotal": -0.042374359173689674,
+        "unstableSingleObservationRatio": false,
+        "reason": null
+      },
+      "交通・通信": {
+        "value": 1.3452460165843072,
+        "logQCategory": -0.05700393788371873,
+        "logQTotal": -0.042374359173689674,
+        "unstableSingleObservationRatio": false,
+        "reason": null
+      },
+      "教育": {
+        "value": 5.194600677746936,
+        "logQCategory": -0.22011787488274048,
+        "logQTotal": -0.042374359173689674,
+        "unstableSingleObservationRatio": false,
+        "reason": null
+      },
+      "教養娯楽": {
+        "value": 0.7883859400470414,
+        "logQCategory": -0.03340734899104031,
+        "logQTotal": -0.042374359173689674,
+        "unstableSingleObservationRatio": false,
+        "reason": null
+      },
+      "その他の消費支出": {
+        "value": 0.6788850977212175,
+        "logQCategory": -0.028767320968504283,
+        "logQTotal": -0.042374359173689674,
+        "unstableSingleObservationRatio": false,
+        "reason": null
+      }
+    },
+    "2018": {
+      "総合": {
+        "value": 1,
+        "logQCategory": -0.04210049415292318,
+        "logQTotal": -0.04210049415292318,
+        "unstableSingleObservationRatio": false,
+        "reason": null
+      },
+      "食料": {
+        "value": 1.0782738142197443,
+        "logQCategory": -0.04539586041080852,
+        "logQTotal": -0.04210049415292318,
+        "unstableSingleObservationRatio": false,
+        "reason": null
+      },
+      "住居": {
+        "value": -0.5737883240940195,
+        "logQCategory": 0.024156771983535857,
+        "logQTotal": -0.04210049415292318,
+        "unstableSingleObservationRatio": false,
+        "reason": null
+      },
+      "光熱・水道": {
+        "value": 1.0677262488379904,
+        "logQCategory": -0.04495180269612642,
+        "logQTotal": -0.04210049415292318,
+        "unstableSingleObservationRatio": false,
+        "reason": null
+      },
+      "家具・家事用品": {
+        "value": 1.2624345648614557,
+        "logQCategory": -0.053149119016397836,
+        "logQTotal": -0.04210049415292318,
+        "unstableSingleObservationRatio": false,
+        "reason": null
+      },
+      "被服及び履物": {
+        "value": 1.3895589033004987,
+        "logQCategory": -0.058501116483544995,
+        "logQTotal": -0.04210049415292318,
+        "unstableSingleObservationRatio": false,
+        "reason": null
+      },
+      "保健医療": {
+        "value": 0.7716361104602018,
+        "logQCategory": -0.03248626155661411,
+        "logQTotal": -0.04210049415292318,
+        "unstableSingleObservationRatio": false,
+        "reason": null
+      },
+      "交通・通信": {
+        "value": 1.218248444982029,
+        "logQCategory": -0.05128886153477367,
+        "logQTotal": -0.04210049415292318,
+        "unstableSingleObservationRatio": false,
+        "reason": null
+      },
+      "教育": {
+        "value": 4.954258577774589,
+        "logQCategory": -0.20857673428566864,
+        "logQTotal": -0.04210049415292318,
+        "unstableSingleObservationRatio": false,
+        "reason": null
+      },
+      "教養娯楽": {
+        "value": 0.7528901079286285,
+        "logQCategory": -0.03169704558664293,
+        "logQTotal": -0.04210049415292318,
+        "unstableSingleObservationRatio": false,
+        "reason": null
+      },
+      "その他の消費支出": {
+        "value": 0.8121378665835964,
+        "logQCategory": -0.03419140550347021,
+        "logQTotal": -0.04210049415292318,
+        "unstableSingleObservationRatio": false,
+        "reason": null
+      }
+    }
+  },
+  "historicalLambda2018Holdout": {
+    "fitPeriod": [
+      2005,
+      2006,
+      2007,
+      2008,
+      2009,
+      2010,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016
+    ],
+    "excludedInterpolatedWeightYear": 2011,
+    "uses2017OfficialABAnchorOnly": true,
+    "holdoutYear": 2018,
+    "holdoutOfficialABUsedOnlyForPostPredictionComparison": true,
+    "R2018Total": 1.000273902525215,
+    "logR2018Total": 0.00027386502076653474,
+    "unstableSmallLogR": true,
+    "commonScaleForAdditivity": 0.9999616438228971,
+    "predictedTotalIndex2018": 92.4632954692869,
+    "predictedTotalAoverB2018": 0.9596625573616853,
+    "categories": {
+      "総合": {
+        "historicalLambda": 1,
+        "ctiValueStatus": "published_nominal_category_value",
+        "predictedIndex2018": 92.4632954692869,
+        "predictedAoverB2018": 0.9596625573616853,
+        "comparisonAoverB2018": 0.960094364492713,
+        "indexErrorVsOfficialA": -0.04160453071310144,
+        "ratioError": -0.0004318071310277505,
+        "ratioErrorPercent": -0.0004497548855584288
+      },
+      "食料": {
+        "historicalLambda": 1.0449504050669245,
+        "ctiValueStatus": "published_nominal_category_value",
+        "predictedIndex2018": 24.061536003213266,
+        "predictedAoverB2018": 0.9614038958431033,
+        "comparisonAoverB2018": 0.9631565278193986,
+        "indexErrorVsOfficialA": -0.04386399678673314,
+        "ratioError": -0.0017526319762953824,
+        "ratioErrorPercent": -0.00181967512618475
+      },
+      "住居": {
+        "historicalLambda": -0.45987500219882343,
+        "ctiValueStatus": "published_nominal_category_value",
+        "predictedIndex2018": 6.9401470483416725,
+        "predictedAoverB2018": 0.9422122577780652,
+        "comparisonAoverB2018": 0.9440386651823292,
+        "indexErrorVsOfficialA": -0.013452951658327272,
+        "ratioError": -0.0018264074042639855,
+        "ratioErrorPercent": -0.001934674364117539
+      },
+      "光熱・水道": {
+        "historicalLambda": 1.4672219526640198,
+        "ctiValueStatus": "published_nominal_category_value",
+        "predictedIndex2018": 6.64824796555249,
+        "predictedAoverB2018": 0.9609655501427359,
+        "comparisonAoverB2018": 0.9614500672130436,
+        "indexErrorVsOfficialA": -0.0033520344475101993,
+        "ratioError": -0.00048451707030772173,
+        "ratioErrorPercent": -0.0005039440807489415
+      },
+      "家具・家事用品": {
+        "historicalLambda": 1.1632224462130492,
+        "ctiValueStatus": "published_nominal_category_value",
+        "predictedIndex2018": 3.543515837874663,
+        "predictedAoverB2018": 0.95613065968934,
+        "comparisonAoverB2018": 0.958824640457624,
+        "indexErrorVsOfficialA": -0.009984162125336926,
+        "ratioError": -0.0026939807682839767,
+        "ratioErrorPercent": -0.0028096699381841006
+      },
+      "被服及び履物": {
+        "historicalLambda": 0.812967694940368,
+        "ctiValueStatus": "published_nominal_category_value",
+        "predictedIndex2018": 3.5249782475661458,
+        "predictedAoverB2018": 0.9672579775446988,
+        "comparisonAoverB2018": 0.9678127486760146,
+        "indexErrorVsOfficialA": -0.0020217524338543846,
+        "ratioError": -0.0005547711313158565,
+        "ratioErrorPercent": -0.0005732215576564892
+      },
+      "保健医療": {
+        "historicalLambda": 0.9263914962761131,
+        "ctiValueStatus": "published_nominal_category_value",
+        "predictedIndex2018": 4.180465134037735,
+        "predictedAoverB2018": 0.9528777201945967,
+        "comparisonAoverB2018": 0.9533871261852661,
+        "indexErrorVsOfficialA": -0.0022348659622650757,
+        "ratioError": -0.0005094059906693982,
+        "ratioErrorPercent": -0.00053431179914043
+      },
+      "交通・通信": {
+        "historicalLambda": 1.00579624547882,
+        "ctiValueStatus": "published_nominal_category_value",
+        "predictedIndex2018": 15.377832489056285,
+        "predictedAoverB2018": 0.9618178598760522,
+        "comparisonAoverB2018": 0.9669445782228254,
+        "indexErrorVsOfficialA": -0.08196751094371457,
+        "ratioError": -0.005126718346773251,
+        "ratioErrorPercent": -0.005301977447555228
+      },
+      "教育": {
+        "historicalLambda": 5.961246918762978,
+        "ctiValueStatus": "published_nominal_category_value",
+        "predictedIndex2018": 3.317836611460739,
+        "predictedAoverB2018": 1.0019437734676389,
+        "comparisonAoverB2018": 0.9866219725795736,
+        "indexErrorVsOfficialA": 0.050736611460739045,
+        "ratioError": 0.015321800888065229,
+        "ratioErrorPercent": 0.015529555710183107
+      },
+      "教養娯楽": {
+        "historicalLambda": 0.6169785680889946,
+        "ctiValueStatus": "published_nominal_category_value",
+        "predictedIndex2018": 9.564026716296075,
+        "predictedAoverB2018": 0.9582905039223345,
+        "comparisonAoverB2018": 0.9621153672735289,
+        "indexErrorVsOfficialA": -0.03817328370392481,
+        "ratioError": -0.003824863351194363,
+        "ratioErrorPercent": -0.003975472673337865
+      },
+      "その他の消費支出": {
+        "historicalLambda": 0.9545375593027542,
+        "ctiValueStatus": "derived_residual_not_published_as_a_category_value",
+        "predictedIndex2018": 15.304709415887842,
+        "predictedAoverB2018": 0.9553143712400185,
+        "comparisonAoverB2018": 0.948903287017965,
+        "indexErrorVsOfficialA": 0.10270941588782989,
+        "ratioError": 0.006411084222053498,
+        "ratioErrorPercent": 0.00675630942559069
+      }
+    }
+  },
+  "twoYearAnchorReferenceInSample": {
+    "fitUses2018OfficialAB": true,
+    "isValidation": false,
+    "formulaTwoYearLambda": "lambda_2y[c] = log((A18[c]/B18[c])/(A17[c]/B17[c])) / log(Q18[total]/Q17[total])",
+    "formulaGeometricScenario": "anchorGM[c]=sqrt((A17/B17)[c]*(A18/B18)[c]); compositionFactorAt2018=sqrt(Q18[total]/Q17[total]); then common-scale to the geometric-anchor total",
+    "logRTotalDenominator": 0.00027386502076653474,
+    "unstableSmallDenominator": true,
+    "lambdaTwoYearAnchored": {
+      "食料": {
+        "value": 7.555368670417638,
+        "logOfficialAdjustmentChange": 0.0020691511978227525,
+        "logQTotalChange": 0.00027386502076653474,
+        "unstableSmallDenominator": true,
+        "reason": null
+      },
+      "住居": {
+        "value": 6.471245101589103,
+        "logOfficialAdjustmentChange": 0.001772247674132036,
+        "logQTotalChange": 0.00027386502076653474,
+        "unstableSmallDenominator": true,
+        "reason": null
+      },
+      "光熱・水道": {
+        "value": 3.167746500196527,
+        "logOfficialAdjustmentChange": 0.0008675349610594396,
+        "logQTotalChange": 0.00027386502076653474,
+        "unstableSmallDenominator": true,
+        "reason": null
+      },
+      "家具・家事用品": {
+        "value": 11.296928274360287,
+        "logOfficialAdjustmentChange": 0.0030938334964557336,
+        "logQTotalChange": 0.00027386502076653474,
+        "unstableSmallDenominator": true,
+        "reason": null
+      },
+      "被服及び履物": {
+        "value": 2.7665906794548203,
+        "logOfficialAdjustmentChange": 0.0007576724138813958,
+        "logQTotalChange": 0.00027386502076653474,
+        "unstableSmallDenominator": true,
+        "reason": null
+      },
+      "保健医療": {
+        "value": 2.7378593516751097,
+        "logOfficialAdjustmentChange": 0.0007498039082023553,
+        "logQTotalChange": 0.00027386502076653474,
+        "unstableSmallDenominator": true,
+        "reason": null
+      },
+      "交通・通信": {
+        "value": 20.277063098480667,
+        "logOfficialAdjustmentChange": 0.005553178306549743,
+        "logQTotalChange": 0.00027386502076653474,
+        "unstableSmallDenominator": true,
+        "reason": null
+      },
+      "教育": {
+        "value": -50.44815897507827,
+        "logOfficialAdjustmentChange": -0.013815986105343257,
+        "logQTotalChange": 0.00027386502076653474,
+        "unstableSmallDenominator": true,
+        "reason": null
+      },
+      "教養娯楽": {
+        "value": 15.022027255963344,
+        "logOfficialAdjustmentChange": 0.004114007806409852,
+        "logQTotalChange": 0.00027386502076653474,
+        "unstableSmallDenominator": true,
+        "reason": null
+      },
+      "その他の消費支出": {
+        "value": -23.77277060903275,
+        "logOfficialAdjustmentChange": -0.006510530316520821,
+        "logQTotalChange": 0.00027386502076653474,
+        "unstableSmallDenominator": true,
+        "reason": null
+      }
+    },
+    "geometricMeanAnchorScenario": {
+      "総合": {
+        "geometricMeanPublishedOrDerivedAnchor": 0.9597470070805205,
+        "referenceIndex2018": 92.48409539513719,
+        "referenceAoverB2018": 0.9598784366458175,
+        "comparisonAoverB2018": 0.960094364492713,
+        "inSampleDifferenceVsComparison": -0.00021592784689550282
+      },
+      "食料": {
+        "geometricMeanPublishedOrDerivedAnchor": 0.9621605848557622,
+        "referenceIndex2018": 24.083528996634083,
+        "referenceAoverB2018": 0.9622826489515166,
+        "comparisonAoverB2018": 0.9631565278193986,
+        "inSampleDifferenceVsComparison": -0.0008738788678820386
+      },
+      "住居": {
+        "geometricMeanPublishedOrDerivedAnchor": 0.9432025005454215,
+        "referenceIndex2018": 6.946890742208348,
+        "referenceAoverB2018": 0.9431277990453648,
+        "comparisonAoverB2018": 0.9440386651823292,
+        "inSampleDifferenceVsComparison": -0.0009108661369643389
+      },
+      "光熱・水道": {
+        "geometricMeanPublishedOrDerivedAnchor": 0.9610331118771039,
+        "referenceIndex2018": 6.6499433709487175,
+        "referenceAoverB2018": 0.9612106111253801,
+        "comparisonAoverB2018": 0.9614500672130436,
+        "inSampleDifferenceVsComparison": -0.00023945608766351434
+      },
+      "家具・家事用品": {
+        "geometricMeanPublishedOrDerivedAnchor": 0.9573425651817641,
+        "referenceIndex2018": 3.5485148660166645,
+        "referenceAoverB2018": 0.9574795245721013,
+        "comparisonAoverB2018": 0.958824640457624,
+        "inSampleDifferenceVsComparison": -0.001345115885522663
+      },
+      "被服及び履物": {
+        "geometricMeanPublishedOrDerivedAnchor": 0.9674461756052373,
+        "referenceIndex2018": 3.525999371056715,
+        "referenceAoverB2018": 0.9675381749737164,
+        "comparisonAoverB2018": 0.9678127486760146,
+        "inSampleDifferenceVsComparison": -0.00027457370229821976
+      },
+      "保健医療": {
+        "geometricMeanPublishedOrDerivedAnchor": 0.9530297664802558,
+        "referenceIndex2018": 4.181594742130224,
+        "referenceAoverB2018": 0.9531351983338403,
+        "comparisonAoverB2018": 0.9533871261852661,
+        "inSampleDifferenceVsComparison": -0.00025192785142580387
+      },
+      "交通・通信": {
+        "geometricMeanPublishedOrDerivedAnchor": 0.964263494251923,
+        "referenceIndex2018": 15.418807220156665,
+        "referenceAoverB2018": 0.9643806546134777,
+        "comparisonAoverB2018": 0.9669445782228254,
+        "inSampleDifferenceVsComparison": -0.0025639236093477624
+      },
+      "教育": {
+        "geometricMeanPublishedOrDerivedAnchor": 0.9934611455943029,
+        "referenceIndex2018": 3.2923802771418478,
+        "referenceAoverB2018": 0.9942562895276463,
+        "comparisonAoverB2018": 0.9866219725795736,
+        "inSampleDifferenceVsComparison": 0.007634316948072706
+      },
+      "教養娯楽": {
+        "geometricMeanPublishedOrDerivedAnchor": 0.9601383262953336,
+        "referenceIndex2018": 9.583122595082331,
+        "referenceAoverB2018": 0.960203861114629,
+        "comparisonAoverB2018": 0.9621153672735289,
+        "inSampleDifferenceVsComparison": -0.0019115061588999005
+      },
+      "その他の消費支出": {
+        "geometricMeanPublishedOrDerivedAnchor": 0.951997251932683,
+        "referenceIndex2018": 15.253313213761594,
+        "referenceAoverB2018": 0.9521062390772875,
+        "comparisonAoverB2018": 0.948903287017965,
+        "inSampleDifferenceVsComparison": 0.003202952059322528
+      }
+    }
+  },
+  "limitations": [
+    "The Household Survey ledger format was comprehensively revised in 2018. Top-level labels are matched, but 2017/2018 household-size expenditure profiles may not be fully comparable; this is a stability diagnostic, not a seamless time series.",
+    "setai-n.xls is published as the special tabulation used for each year's January Household Survey adjustment. Household Survey sample-design documentation defines the adjustment distribution as the Labour Force Survey household-size distribution averaged over the latest 12 months; it is not confirmed as a calendar-year average. It is not an annual IV-4 household-count series and is not the 2025 CTI joint household-size-by-age reference distribution. Sources: https://www.stat.go.jp/data/kakei/pdf/18gai00.pdf p.25 and https://www.stat.go.jp/data/kakei/setai_bunpu.html.",
+    "The 2017 and 2018 year-specific lambda diagnostics each use one cross-section and can be unstable when log(Q_total) is near zero; raw ratios are retained with an instability flag.",
+    "2018 official A/B is held out from the historical-lambda prediction, but the separately labeled two-year anchor scenarios use it in-sample and are not validation.",
+    "No production estimator, loader, publication gate, or quarterly measurement consumes this analysis."
+  ]
+}

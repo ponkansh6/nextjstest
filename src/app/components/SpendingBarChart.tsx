@@ -142,6 +142,12 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
   const hasPlan39Measurements = data.some(
     (row) => row.年 < 2018 && ctiKeys.some((key) => row.measurements?.[key] !== undefined),
   );
+  const officialQuarterlyUnavailable = data.some((row) =>
+    Object.values(row.measurements ?? {}).some(
+      (measurement) =>
+        measurement?.reason === "official_quarterly_source_unavailable_latest_period_unknown",
+    ),
+  );
   const legendKeys = hasPreBoundarySupport ? keys : ctiKeys;
   const selectedLegendCount = legendKeys.filter((key) => !hiddenKeys.includes(key)).length;
   const visibleCtiKeyCount = ctiKeys.filter((key) => !hiddenKeys.includes(key)).length;
@@ -252,9 +258,14 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
         <p
           className={styles.chartNote}
           data-testid="spending-series-switch-note"
-          data-series-switch="plan39-v2-bottom-up-to-cti-categories"
+          data-series-switch="plan39-v2-bottom-up-to-official-adjusted-quarters"
         >
-          2005Q1〜2016Q4：接続推計の年次値を月次系列から四半期化。2017Q1〜2017Q4：公式年次値を月次系列から四半期化。2018Q1以降：既存CTI名目費目系列。
+          2005Q1〜2016Q4：名目接続推計を月次パターンで四半期化。2017Q1以降：総世帯・調整系列の公式名目四半期値（最新公表期まで）。
+        </p>
+      )}
+      {supportKey === SUPPORT_SERIES_KEY_NOMINAL && officialQuarterlyUnavailable && (
+        <p role="status" className={styles.chartNote}>
+          2005Q1〜2016Q4の名目接続推計は表示しています。2017Q1以降の公式調整済み名目四半期データを検証できず、公式期間と最新対象期は不明です。
         </p>
       )}
       <ChartDataContract data={chartData} keys={publicKeys} descriptors={descriptors} />

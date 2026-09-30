@@ -35,9 +35,10 @@ separate consumers.
 
 The nominal consumption graph keeps the existing support contract
 `CTIミクロ四半期系列（名目）` (displayed as
-`CTIミクロ（名目・四半期平均）`) for 2005Q1–2017Q4 and keeps the existing
-validated CTI expense-item stack from 2018Q1 onward. The legacy monthly field
-does not create an additional bar in either interval.
+`CTIミクロ（名目・四半期平均）`), using the existing nominal historical
+estimates for 2005Q1–2016Q4 and official adjusted nominal quarterly source values
+from 2017Q1 through the latest complete quarter. The legacy monthly field does
+not create an additional bar.
 
 ### Requirements
 
@@ -195,37 +196,43 @@ replacement value or silently expose an internal estimate.
 
 ### Data Sources
 
-The route requires a valid versioned artifact manifest before it may consume the
-versioned B, A, and L annual artifacts and their
-metadata. Each artifact metadata record identifies its source, definition,
+The nominal route requires a valid versioned artifact manifest before it may
+consume nominal B and A annual columns and their metadata. L may remain in the
+artifact set for historical audit/rollback, but it is not a required input to
+the nominal estimate. Each artifact metadata record identifies its source, definition,
 unit, covered years, revision state, schema/version, and the SHA-256 hash of
 the exact source artifact. The annual contract covers every required year in
 the public range, with official A observations complete from 2017 onward.
-The 2005–2016 A values are estimated values produced by the validated core
-model; they are not presented as official observations.
+The 2005–2016 nominal public values are estimated from nominal B connected to
+the nominal A/B overlap in 2017; they are not presented as official
+observations.
 
 The legacy consumption-level index is a separate contract. It may consume only
 an official annual artifact that explicitly defines that index and its annual
 basis. Monthly aggregation, monthly interpolation, or a monthly index derived
 without an official annual source is not a permitted input or fallback.
 
-The current Plan39 artifact set is saved under `data/source/cti-adjusted/`:
-`B.json` covers the official basic real-index annual table (2002–2025, with the
-public required range beginning in 2005), `A.json` covers the official adjusted
-real-index annual table (2017–2025), and `L.json` is the official annual
-`lev-jnb.xls` original index (1981–2018, two-or-more-person households adjusted
-for household-size and household-head-age distributions). The B/A real columns
-are consumed directly; L is consumed only from its official annual overall-index
-sheet, so no monthly yearization is used. Each manifest-declared artifact
-retains its `sourceUrl`, `downloadUrl`, and exact SHA-256; source and
-saved-artifact hashes plus format/range/missing-value inspection results are
-retained in the calculation audit artifact.
+The Plan39 annual artifacts are saved under `data/source/cti-adjusted/`:
+`B.json` contains the official basic annual table and `A.json` contains the
+official distribution-adjusted annual table. The nominal estimate path selects
+the `消費支出（名目）` columns from both artifacts (`B`: 2002–2025; `A`:
+2017–2025). The artifacts also contain real columns, but those columns are not
+inputs to the nominal estimate. `L.json` is a real-only long-run benchmark
+(`lev-jnb.xls`); because there is no corresponding nominal L series, L and the
+real-only L-derived D household-composition correction are excluded from the
+nominal historical estimate. This exclusion does not remove the official
+distribution-adjusted nominal A anchor for 2017 onward. Each
+manifest-declared artifact retains its `sourceUrl`, `downloadUrl`, and exact
+SHA-256; source and saved-artifact hashes plus format/range/missing-value
+inspection results are retained in the calculation audit artifact.
 
-The public v2 source is the validated annual A/B/L contract and its projection
-metadata; display provenance is not inferred from a year or from the raw
-category key. Official A is the source only when the projected measurement is
-`official_adjusted`; an unavailable measurement remains unavailable regardless
-of which artifact supplied the attempted row.
+The nominal public v2 estimate source is the validated nominal B/A annual
+contract and its projection metadata; display provenance is not inferred from
+a year or from the raw category key. Official distribution-adjusted nominal A
+is the source only when the projected measurement is `official_adjusted`; an
+unavailable measurement remains unavailable regardless of which artifact
+supplied the attempted row. The real-only L artifact is not an input to this
+nominal contract.
 
 At runtime, the Plan39 artifact root is resolved from the absolute
 `CTI_ADJUSTED_ARTIFACT_ROOT` environment value when it is set. When it is not
@@ -246,12 +253,13 @@ but seven of twelve 2005–2016 years have estimate coverage (2005, 2006, 2007,
 are `residual_jump_threshold_exceeded`. The sensitivity reason is
 `insufficient_estimate_difference`. This sensitivity result is retained as
 non-blocking audit information. The 2016→2017 boundary passes with the
-provisional threshold=1.4. Therefore 2017 onward remains official A, while
+superseded legacy-v1 level threshold=1.4. Therefore 2017 onward remains official A, while
 2005–2016 is null/unavailable and not publicly estimated because the mandatory
 threshold redesign, rolling/leave-one-year-out backtest, Other/beta stability,
 2017 connection, and comprehensive re-audit remain incomplete. This is
-superseded historical diagnostic state, separate from the current Plan39-v2
-publication decision; it does not make current v2 rows unavailable.
+superseded historical diagnostic state. It neither determines nor validates
+the current nominal Plan39-v2 gate; absent input-matched nominal evidence,
+nominal estimated rows remain unavailable.
 
 The adopted Plan39 rollback snapshot is fixed under
 `data/source/cti-adjusted/snapshots/plan39-9b899d39bae3dd832fdc9ac2806a44cd678ea700f09ec5f7f5b58e0ed5c87fa3/`.
@@ -263,13 +271,13 @@ record only and does not change the public Plan39 route.
 
 ### Data Flow
 
-`B/A/L annual artifacts + metadata` → artifact/schema/hash validation →
-annual contract validation → core adjusted calculation using `R`, `beta`,
-`D`, and residual terms → status-preserving annual projection → explicit
-public A-only projection → graph/table/tooltip/CSV. The calculation retains
-official A values for 2017 onward and uses the estimated A path only for
-2005–2016. A missing L input makes only the affected estimate unavailable; it
-does not erase, replace, or recalculate an official A value.
+`nominal B/A annual artifacts + metadata` → artifact/schema/hash validation →
+nominal annual contract validation → nominal historical connection estimate
+(without real-only L or L-derived D) → status-preserving annual projection →
+explicit public A-only projection → graph/table/tooltip/CSV. The calculation
+retains official distribution-adjusted nominal A values for 2017 onward and
+uses the connected nominal B path for 2005–2016. Missing L data cannot alter
+the nominal estimate or erase, replace, or recalculate an official A value.
 
 The Plan39-v2 adapter preserves, for each projected category, the same
 `value`, `seriesType`, `status`, `reason`, `official`, `model`, and
@@ -286,8 +294,9 @@ Failure at artifact discovery or evidence validation leaves estimated rows
 `unavailable`.
 
 The superseded audit verdict made the public flow fail-closed for estimated
-2005–2016 values and preserved only official A from 2017 onward. The current
-Plan39-v2 route is governed by its accepted publication gate below. Rollback
+2005–2016 values and preserved only official A from 2017 onward. The nominal
+Plan39-v2 route requires a publication gate whose evidence matches the nominal
+B/A inputs; the former real-input gate is not inherited. Rollback
 restoration is a separate operational flow:
 `rollback snapshot` → snapshot/hash/metadata validation → exact B/A/L,
 manifest, and audit restore → loader-compatible manifest SHA-256 verification.
@@ -296,17 +305,19 @@ It must not fetch, synthesize, interpolate, or silently replace an artifact.
 The model and validation partition observations chronologically: production and
 backtest calibration use 2018–2025, while target/holdout is 2017 and is
 excluded from calibration. No target value or forbidden derived parameter may
-leak into calibration. The public route exposes A only;
-B/L inputs, R, beta, D, residuals, intermediate parameters, and diagnostic
-series remain internal or audit-only.
+leak into calibration. The public route exposes the A-key measurement;
+B inputs, real-only L, R, beta, L-derived D, residuals, intermediate
+parameters, and diagnostic series remain internal or audit-only. L-derived D
+does not enter the nominal estimate.
 
 The public status vocabulary is `estimated_adjusted`, `official_adjusted`,
 and `unavailable`. A missing or invalid manifest, invalid artifact, failed
 metadata/hash/annual validation, non-finite calculation input, or missing
 required estimate input fails closed to `unavailable` with a machine-readable
 reason. Candidate CSV/JSON files are not discovered without a valid manifest.
-A valid official A value is `official_adjusted`; a validated 2005–2016 model
-output may be `estimated_adjusted` only after the overall verdict is accepted.
+A valid official distribution-adjusted nominal A value is `official_adjusted`;
+a validated 2005–2016 nominal B/A connection output may be
+`estimated_adjusted` only after the applicable publication gate is accepted.
 The old `insufficient-data` verdict is historical diagnostic state; current v2
 publication uses the accepted gate in the Plan39-v2 section.
 
@@ -336,8 +347,8 @@ this same measurement object rather than from the raw row or year.
 
 ### Component Tree
 
-`B/A/L artifact loader` → `metadata/hash/annual validator` →
-`SharedPlan39 core (R/beta/D/residual)` → `status-preserving A-only public
+`nominal B/A artifact loader` → `metadata/hash/annual validator` →
+`nominal B/A connection estimate (without real-only L/D)` → `status-preserving A-only public
 projection` → `CpiChart`/annual graph → shared descriptor and measurement map
 → tooltip/table/CSV. Every public surface reads the same projected
 measurement; none recomputes the adjusted value or derives display metadata
@@ -347,7 +358,7 @@ unavailable row into an official row.
 
 ### Requirements
 
-- **WHEN** the B, A, and L artifacts have valid schema, metadata, SHA-256
+- **WHEN** the nominal B and A artifacts have valid schema, metadata, SHA-256
   references, source identity, units, and complete required annual coverage,
   **THEN** the annual contract is eligible for calculation and retains the
   artifact identity and hash references in the audit record.
@@ -363,12 +374,12 @@ unavailable row into an official row.
 - **WHEN** `CTI_ADJUSTED_ARTIFACT_ROOT` is set, **THEN** its absolute root is
   preferred for manifest and artifact resolution, and the same validation
   failure remains `unavailable` rather than falling back to another root.
-- **WHEN** a valid manifest declares B/A/L artifacts as missing, **THEN** the
-  corresponding `missing_b_artifact`, `missing_a_artifact`, or
-  `missing_l_artifact` reason is retained and no candidate artifact replaces
-  the declared missing input; an unresolved L artifact therefore remains
-  fail-closed.
-- **WHEN** any B/A/L artifact, metadata record, hash, annual period, or required
+- **WHEN** a valid manifest declares a required nominal B/A artifact as
+  missing, **THEN** the corresponding `missing_b_artifact` or
+  `missing_a_artifact` reason is retained and no candidate artifact replaces
+  the declared missing input. The real-only L artifact is not a required input
+  to this nominal estimate.
+- **WHEN** any required nominal B/A artifact, metadata record, hash, annual period, or required
   value is missing, malformed, duplicated, non-finite, or inconsistent,
   **THEN** the public adjusted measurement is `null` with status
   `unavailable` and a machine-readable reason; no fallback or partial public
@@ -377,35 +388,37 @@ unavailable row into an official row.
   are complete and authoritative for every year from 2017 onward, while
   2005–2016 is eligible for an estimated path only after the overall verdict
   is accepted and is never labeled official.
-- **WHEN** the core calculation runs, **THEN** its declared R, beta, D, and
-  residual terms are preserved as internal/audit data, and the public route
-  exposes only the adjusted A measurement and its status metadata.
+- **WHEN** the nominal core calculation runs, **THEN** it preserves applicable
+  nominal connection parameters and residual diagnostics as internal/audit data,
+  excludes real-only L-derived D from the estimate, and exposes only the
+  adjusted A-key measurement and its status metadata.
 - **WHEN** fitting or validating the model for the 2017 boundary, **THEN**
   2018–2025 observations are used for calibration/training, 2017 is the
   holdout/target and is excluded from calibration, and the audit verifies
   `leakage=false`; backtest pass alone does not authorize publication.
-- **WHEN** a 2005–2016 estimate has finite validated inputs including L,
+- **WHEN** a 2005–2016 estimate has finite validated nominal B/A inputs,
   **THEN** the public status is `estimated_adjusted` only when the overall
   audit verdict is accepted; **WHEN** the verdict is `insufficient-data` or
   `accepted=false`, **THEN** 2005–2016 is `null`/`unavailable`.
-  **WHEN** a required L input is missing or invalid, **THEN** only that
-  estimate is `unavailable`, while official A values remain retained and
-  `official_adjusted`.
-- **WHEN** a valid official A observation is available from 2017 onward,
+  Missing/invalid real-only L does not affect the nominal estimate; missing
+  required nominal B/A input fails the estimate closed.
+- **WHEN** a valid official distribution-adjusted nominal A observation is available from 2017 onward,
   **THEN** the public projection preserves that official value and status even
-  if the estimate path or L input is unavailable; estimation MUST NOT
+  if the estimate path is unavailable; estimation MUST NOT
   overwrite official A.
 - **WHEN** backtest passes but sensitivity or another adoption gate is not
   evaluable or fails, **THEN** backtest success alone does not permit public
   estimated values.
-- **WHEN** residual boundary validation is evaluated, **THEN** provisional threshold `1.4` is recorded pending threshold redesign; the maximum observed absolute residual jump in confirmed 2018–2025 is `1.4` in 2020, and 2017 holdout is excluded from threshold calculation. Its absolute/relative values and exceeded flag remain
-  in the audit result; a passing boundary does not publish estimates when the
-  overall sensitivity verdict is not accepted.
-- **WHEN** the loader reads Plan39 artifacts, **THEN** it consumes only
-  manifest-declared B/A/L artifacts, validates `sourceUrl`/`downloadUrl` and
+- **WHEN** the superseded legacy v1 residual-boundary diagnostic is evaluated,
+  **THEN** its historical provisional level-based threshold `1.4` and former
+  2018–2025 maximum are retained only as legacy audit data; they do not define
+  the current Plan39-v2 gate, which uses the official-A Other-share threshold
+  specified in the active Plan39-v2 requirement below.
+- **WHEN** the loader reads Plan39 nominal estimate artifacts, **THEN** it consumes only
+  manifest-declared nominal B/A artifacts, validates `sourceUrl`/`downloadUrl` and
   SHA-256 hashes, and fails closed without candidate discovery on any mismatch.
-- **WHEN** the public projection is created, **THEN** B and L inputs, R,
-  beta, D, residuals, and intermediate diagnostics are absent from the public
+- **WHEN** the public projection is created, **THEN** B inputs, real-only L,
+  R, beta, D, residuals, and intermediate diagnostics are absent from the public
   A-only payload; they remain available only to the permitted audit contract.
 - **WHEN** graph, table, tooltip, or CSV output renders the same annual
   measurement, **THEN** value, label, unit, source, frequency, aggregation,
@@ -456,7 +469,7 @@ checks pass, but estimate coverage is 7/12 years (2005, 2006, 2007, 2008, 2009,
 2010, 2012). The other five years (2011, 2013, 2014, 2015, 2016) are
 `residual_jump_threshold_exceeded`; this is retained as non-blocking
 sensitivity information. The 2016→2017 residual boundary passes:
-absolute `0.7122004367`, relative `0.0429351967`, threshold `1.4`,
+absolute `0.7122004367`, relative `0.0429351967`, legacy-v1 level threshold `1.4`,
 `exceeded=false`. The superseded overall verdict was `insufficient-data` and
 `accepted=false` because the mandatory threshold redesign,
 rolling/leave-one-year-out backtest, Other/beta stability, 2017 connection,
@@ -490,7 +503,7 @@ expand gamma comparisons and design G thresholds.
 
 The Plan39 section displayed by `src/app/page.tsx` uses the server-only
 `loadCtiAdjustedV2Estimate` loader and `projectCtiAdjustedV2PublicView`. The
-loader consumes the manifest-validated B/A/L inputs and builds the v2 result;
+nominal loader consumes manifest-validated nominal B/A inputs and builds the v2 result;
 the legacy loader and `projectCtiAdjustedPublicView` remain available for v1
 consumers. The v2 result is adapted to the existing
 `CtiAdjustedDisplayRow`/measurement keys before it reaches the client chart.
@@ -524,19 +537,19 @@ mismatch fails closed and preserves `unavailable` estimated rows.
   **THEN** its period is 2018–2025; sensitivity baseline calibration is also
   2018–2025, while sensitivity alternative calibration is 2018–2024. The
   target/holdout is 2017, excluded from calibration, and `leakage=false`.
-- **WHEN** a mandatory Other/bottom-up, 2017 connection, rolling/LOO
+- **WHEN** a mandatory nominal-input Other/bottom-up, 2017 connection, rolling/LOO
   backtest, input-reconciliation, or threshold audit is incomplete or fails,
   **THEN** a future evaluation is `insufficient-data`, `accepted=false`, and
   no estimated row is public. Sensitivity coverage and G are retained for
-  audit and do not independently determine the gate; the current mandatory
-  checks all pass.
-- **WHEN** the residual boundary has `exceeded=false` under threshold `1.4`,
+  audit and do not independently determine the gate; the former real-input
+  audit's pass state does not establish the nominal gate.
+- **WHEN** the former real-input legacy-v1 residual boundary has `exceeded=false` under threshold `1.4`,
   **THEN** it is retained as a passing audit result and remains non-blocking
-  alongside the current gamma, L, G, and residual warnings.
-- **WHEN** the current v2 publication gate is evaluated, **THEN** it has
-  `accepted=true`, `blocking=[]`, `publication.globallyPublishable=true`,
-  and `estimatedRows=12`; all 2005–2016 estimates are available while
-  official 2017–2025 rows remain official.
+  historical evidence; it does not establish current nominal publication readiness.
+- **WHEN** the nominal v2 publication gate is evaluated, **THEN** its accepted
+  analysis fingerprint must match selected nominal B/A inputs; absent this
+  nominal-specific evidence, 2005–2016 estimates remain unavailable, while
+  official distribution-adjusted nominal A rows from 2017 onward remain official.
 - **WHEN** the v2 loader and UI projection are connected, **THEN** chart,
   table, tooltip, and CSV use the same projected values and metadata.
 - **WHEN** runtime publication evaluates rolling/LOO evidence from an analysis
@@ -662,10 +675,56 @@ their discovered test cases as its authoritative catalog. Each selectable ID is
 derived from the configuration, spec-file path, and complete test name
 (`fullName`); cases with the same complete name within one configuration/file
 are one indivisible selection group. The selector sends this finite catalog,
-the discovered test names, and the pushed paths to JEV. JEV's
-response may select only catalog IDs. Playwright E2E specs are a separate test
-path and are outside this JEV Browser Mode selector unless a future change adds
-them explicitly.
+the discovered test names, the union of automatically detected and explicit
+paths, and bounded sanitized diff context to JEV. Manual invocation derives
+tracked changes from `HEAD` through the index and worktree, and adds non-ignored
+untracked paths, including paths outside the diff-source extension allowlist;
+positional paths are unioned with those detected paths. Only allowlisted text
+files receive diff excerpts. Unsupported tracked, explicit, and untracked paths
+remain selection inputs and are recorded with `unsupported_file_type` omission
+metadata.
+Pre-push invocation derives paths and diff context from every validated
+`remote_oid`/`local_oid` update pair supplied by Git. Diff context is limited to
+20 files, 4 KiB per file, and 16 KiB total. Credential-looking paths are
+excluded from both `changedPaths` and per-file omission entries; only a generic
+reason and count are reported. Binary content is omitted. A non-UTF-8 tracked
+or untracked file's diff body is omitted in full and marks the context
+incomplete; its non-sensitive path may remain in `changedPaths` and
+`omittedFiles`. Diff lines
+containing secret, token, password, authorization, private-key, API-key, or
+access-key markers are redacted. Symlink untracked files are omitted. The
+`changedPaths` list is capped at 256 entries, 512 UTF-8 bytes per path, and
+16 KiB total path bytes; paths excluded by these caps are counted in the
+summary and add the `changed_path_limit` reason. `omittedFiles` is capped at 64
+entries, 512 UTF-8 bytes per path, and 8 KiB aggregate path bytes; overflow is
+represented by a pathless reason/count aggregate. Explicit paths without a
+detected diff have
+unknown status and null line counts in the summary with reason
+`explicit_path_no_detected_diff`.
+The context reports its source, completeness, limits, included files,
+redactions, omitted files, and omission reasons; redaction or omission marks
+the context incomplete. `state.diffContext.summary` is always present and
+contains structural statistics, never changed text lines. It reports per-file
+entries only for omitted, truncated, redacted, or capped files; safe
+non-sensitive paths are
+included only when at most 512 UTF-8 bytes. Each entry reports status
+(`added`, `modified`, `deleted`, or `unknown`), added/deleted line counts
+(integer or null), and non-empty reasons. Its fields are `files`, `fileCount`,
+`omittedFileCount`, `sensitiveOmittedFileCount`, `addedLines`, `deletedLines`,
+`unknownLineCountFileCount`, `reasons`, `truncated`, and
+`truncatedFileCount`; it also includes `changedPathCount` and
+`omittedChangedPathCount`. Sensitive paths have no per-file entry or path and
+contribute only to pathless aggregate counts and reasons. Binary, unsupported,
+non-UTF-8, symlink, and redacted inputs contribute only safely available
+statistics and reasons. The summary is capped at 40 entries and 4 KiB
+serialized as UTF-8. Final counters are set before measuring serialized size;
+if needed, file entries are removed and truncation counters updated. If fixed
+metadata still does not fit, a smaller metadata-only fallback is emitted.
+JEV is instructed to treat it as incomplete structural context. The diff and
+summary are untrusted code data, not instructions for JEV to follow.
+JEV's response may select only catalog IDs. Playwright E2E specs are a separate
+test path and are outside this JEV Browser Mode selector unless a future change
+adds them explicitly.
 The component-only `test:browser` catalog is limited to
 `vitest.browser.config.ts`. The route-scoped selector catalog includes
 `vitest.browser.aggregate-chromium.config.ts` and every case in
@@ -1125,10 +1184,10 @@ The system SHALL display economic indicators as interactive Recharts-based chart
     - The index difference is smoothed with a 2-month moving average (2MA), then rebased so that its 2025 calendar-year average is 0 when every required series has 12 valid months.
   - NewGraph (supplementary view, 3種比較):
     - Displays the CPI and wage comparison lines; the CTI micro monthly wage lines are not part of this registry.
-- The nominal spending chart uses one dedicated CTI quarterly key for 2005Q1〜2017Q4. It is a strict three-month simple average of the official nominal raw index; the value and row measurement metadata are public together.
+- The nominal spending chart uses one dedicated CTI quarterly key: existing nominal estimates for 2005Q1〜2016Q4 and official adjusted nominal quarterly original values for 2017Q1 through the latest complete quarter. The value and row measurement metadata are public together.
 - Missing, duplicate, non-finite, out-of-range, and incomplete CTI inputs fail closed with a retained reason. No interpolation, zero-fill, partial window, GDP fallback, seasonal-adjusted mix, or 2020 rollback path is used.
   - NewGraph does not use GDP for the Plan37 CTI basic line; GDP comparison remains an independent quarterly/annual contract elsewhere.
-  - The 2017Q4/2018Q1 boundary is owned by the quarterly aggregation/projection layer; 2018Q1以降の既存CTI費目積上げ値は維持する。Quarterly public labels remain `YYYYQn`.
+  - The 2016Q4/2017Q1 source boundary is owned by the quarterly aggregation/projection layer; from 2017Q1 the official adjusted nominal quarterly source is used. Quarterly public labels remain `YYYYQn`.
   - Time-series charts render the first/last (start year / end year) tick label in `--foreground` via the shared `XAxisEdgeTick` component (`src/app/components/charts/XAxisEdgeTick.tsx`), while other tick labels use the default `--chart-text` color. MajorIndicesChart, ResidualAreaChart, NewGraph, EarningsBreakdownChart, and StackedAreaChart delegate their XAxis configuration to `TimeSeriesXAxis`.
   - Time-series charts use the shared period-based tick policy for their year/month axis. MajorIndicesChart, ResidualAreaChart, NewGraph, EarningsBreakdownChart, and StackedAreaChart use `TimeSeriesXAxis`; its boundary-tick policy is equivalent to `includeBoundaryTicks: false` for these charts. The axis displays only the start/end labels and data-present round-number milestones (2010/1, 2015/1, 2020/1, 2025/1); non-round series-boundary labels such as 2017/12・2018/1 are omitted because the hand-off remains visible through reference lines. The shared selector preserves endpoints, de-duplicates label values, and suppresses milestone candidates within the configured period distance of either endpoint; endpoint labels retain the existing centered `text-anchor="middle"` behavior. On mobile, `XAxisEdgeTick` avoids rendering an interior tick close enough to overlap an endpoint label.
 
@@ -1150,11 +1209,11 @@ The system SHALL display economic indicators as interactive Recharts-based chart
 
 #### Scenario R2c: Plan38 CTI Bars and CTI Consumption Bars
 
-- **WHEN** nominal or real consumption data is rendered in `SpendingBarChart`
-- **THEN** 2017Q4以前は公開CTI四半期系列だけを単独のBarとして描画する
-- **AND** 2018Q1以降は検証済みCTI費目だけを積み上げBarとして描画する
+- **WHEN** nominal consumption data is rendered in `SpendingBarChart`
+- **THEN** 2016Q4以前は既存の名目推計系列を描画し、2017Q1以降は公式調整済み名目四半期系列を描画する
+- **AND** 公式四半期値はe-Stat table 2-1-1の原数値と費目構成を保持する
 - **AND** GDPとCTIを同一四半期に同時表示・合算せず、GDP専用key/value/nameは公開しない
-- **AND** 2018Q1以降の表示データ、凡例、tooltipからGDP比較値を除外する
+- **AND** nominal CTI data, legend, and tooltip exclude GDP comparison values for every period
 - **AND** CTI欠損を0埋めせず、境界で値の複製・補間・表示用係数合わせをしない
 - **AND** 消費支出グラフはモバイル専用の余白・safe-area、棒幅・間隔を適用し、横overflowを発生させない
 - **AND** tooltipはモバイルでも全費目を内部スクロール付きで表示する
@@ -2133,13 +2192,56 @@ Plan38 rows bypass the GDP join entirely.
   safe related candidates and use the changed profile. The classifier unions
   all pushed refs before selecting a profile.
   The Browser Mode selector receives all validated push-impact paths,
-  including paths excluded from related-test candidates.
+  including paths excluded from related-test candidates, and the exact
+  validated push ref ranges used to collect their diffs.
 - Browser selection sends its per-case catalog request through the dedicated
   catalog-selection mode in `skills/jev-review/scripts/jev-request.mjs`:
-  catalog and push paths → existing JEV auth/key resolution and HTTP transport
+  active Vitest catalog + automatically detected and explicit paths + bounded,
+  redacted diff context → existing JEV auth/key resolution and HTTP transport
   → shared response-envelope validation plus selector-specific run/skip and
   catalog-ID validation → allowlisted selected IDs → scoped Browser Mode
-  runner. It does not route the per-case request through normal `--request`,
+  runner. Manual invocation collects tracked `HEAD`-to-worktree/index changes
+  and non-ignored untracked source files; pre-push collects each validated
+  `remote_oid`-to-`local_oid` range from the same Git ref updates as impact
+  paths. Diff context is capped at 20 files, 4 KiB per file, and 16 KiB total.
+  Credential-looking paths are omitted from `changedPaths` and per-file
+  omission entries, with only a generic reason/count exposed. Non-UTF-8 diff
+  bodies are omitted in full and mark the context incomplete; non-sensitive
+  paths may remain in `changedPaths` and `omittedFiles`. Binary and symlink
+  untracked files are also omitted. Paths outside the diff-source extension
+  allowlist remain selection inputs and receive `unsupported_file_type`
+  omission metadata. `changedPaths` is bounded to 256 entries, 512 UTF-8 bytes
+  per path, and 16 KiB aggregate path bytes; omitted paths are counted in the
+  summary and add `changed_path_limit`. `omittedFiles` is bounded to 64 entries,
+  512 UTF-8 bytes per path, and 8 KiB aggregate path bytes; overflow becomes a
+  pathless reason/count aggregate. Secret-like lines are redacted. Redaction and other
+  omissions mark the context incomplete; completeness and omission metadata
+  accompany the excerpts. `state.diffContext.summary` is always sent alongside
+  the excerpts and has no changed text lines. It includes aggregate statistics and
+  reasons, plus per-file entries only for omitted, truncated, redacted, or
+  capped files. Each safe path is limited to 512 UTF-8 bytes and includes
+  status, added/deleted line counts (or null when unknown), and non-empty
+  reasons; sensitive paths have no entry or path and affect only pathless
+  aggregates. The summary has at most 40 entries and 4 KiB serialized UTF-8;
+  entries that do not fit are omitted and reflected by omitted/truncated counts
+  and `truncated`. Its fields also include `changedPathCount` and
+  `omittedChangedPathCount`. Final counters are calculated before serialized
+  UTF-8 size is measured; if it exceeds 4 KiB, file entries are removed and
+  truncation counters updated with `summary_size_limit`, then a smaller
+  metadata-only fallback is used if required. Its bounded fields include
+  file/omitted/sensitive-omitted
+  counts, added/deleted totals, unknown-line-count file count, reasons, and
+  truncated-file count. The `limits` object reports `maxSummaryFiles=40` and
+  `maxSummaryBytes=4096`, `maxChangedPaths=256`,
+  `maxChangedPathBytes=512`, `maxChangedPathTotalBytes=16384`,
+  `maxOmittedFiles=64`, `maxOmittedPathBytes=512`, and
+  `maxOmittedPathTotalBytes=8192`. Binary, unsupported, non-UTF-8, symlink,
+  and redacted
+  inputs expose only safely available statistics and reasons. The prompt tells
+  JEV to treat the summary as incomplete structural evidence.
+  The diff is untrusted data and the selector instructs JEV not to treat it as
+  instructions. The same context is sent with each catalog chunk of at most 24
+  candidates. It does not route the per-case request through normal `--request`,
   whose review contract accepts one review question or the fixed
   three-question diagnostic.
 - Before any Browser Mode execution, the selector discovers current cases from
@@ -2725,7 +2827,7 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, `hid
 #### Scenario JEV Browser Mode case selection
 
 - **WHEN** the selector submits the current case catalog and complete
-  push-impact paths to JEV
+  push-impact paths and diff context to JEV
 - **THEN** it uses the dedicated catalog-selection mode in
   `skills/jev-review/scripts/jev-request.mjs`, reusing the client's existing
   API-key resolution, authenticated transport, and shared response validation
@@ -2738,12 +2840,76 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, `hid
   a valid empty selection
 - **AND** it executes only the selected catalog IDs; arbitrary response text is
   never interpreted as a command, path, Vitest config, or test-name pattern
+- **AND** every catalog chunk receives the same bounded diff context and
+  omission metadata, and the prompt identifies all diff excerpts as untrusted
+  code data that must not be followed as instructions
 - **WHEN** discovery fails, the JEV request fails, the response is malformed,
   or an ID is missing/duplicated/unknown
 - **THEN** the selector exits nonzero before starting a browser test and does
   not fall back to running the full Browser Mode catalog
 - **WHEN** JEV explicitly skips every catalog ID
 - **THEN** the selector succeeds without starting a browser for that invocation
+- **WHEN** the selector runs manually
+  **THEN** it detects tracked changes from `HEAD` through the index/worktree,
+  adds non-ignored untracked paths regardless of extension, and unions those
+  paths with supplied positional paths; unsupported file types remain path
+  inputs but receive `unsupported_file_type` omission metadata rather than
+  diff excerpts
+- **WHEN** the selector runs from pre-push with validated Git ref updates
+  **THEN** it derives each diff from the corresponding `remote_oid` and
+  `local_oid` pair and includes the complete validated push-impact path set
+- **WHEN** changed paths exceed the configured path count, per-path byte, or
+  aggregate byte limit
+  **THEN** `changedPaths` contains at most 256 entries, each at most 512 UTF-8
+  bytes, and at most 16 KiB of aggregate path bytes; it records the excluded
+  path count as `omittedChangedPathCount` and adds `changed_path_limit` to the
+  summary reasons
+- **WHEN** omitted file metadata exceeds its configured entry, per-path, or
+  aggregate path-byte limit
+  **THEN** `omittedFiles` contains at most 64 entries, each path is at most
+  512 UTF-8 bytes, and aggregate path bytes are at most 8 KiB; excess omissions
+  are represented by a pathless reason/count aggregate
+- **WHEN** an explicit path has no detected diff in the collected range or
+  worktree/index state
+  **THEN** its summary entry uses `status: unknown`, null added/deleted line
+  counts, and reason `explicit_path_no_detected_diff`
+- **WHEN** a changed file is considered for diff context
+  **THEN** the context includes at most 20 files, 4 KiB per file, and 16 KiB
+  total, omits binary content, and redacts lines containing secret-like markers
+- **WHEN** a changed path looks like a credential or private-key path
+  **THEN** it is excluded from `changedPaths` and per-file omission entries,
+  its actual path is not sent to JEV, and a pathless aggregated omission
+  reports the reason and number of excluded paths while marking the context
+  incomplete
+- **WHEN** a tracked or untracked diff is not valid UTF-8
+  **THEN** its diff body is omitted in full, its non-sensitive path may remain
+  in `changedPaths` and `omittedFiles`, and the context is marked incomplete
+- **WHEN** a non-ignored untracked path is a symlink or binary file
+  **THEN** its content is omitted and the context is marked incomplete
+- **WHEN** a context entry is truncated, redacted, unsupported, or omitted
+  **THEN** completeness and omission metadata report the limitation to JEV
+- **WHEN** the selector creates the change context for a JEV catalog request
+  **THEN** it always includes `state.diffContext.summary` with fields
+  `files`, `fileCount`, `omittedFileCount`, `sensitiveOmittedFileCount`,
+  `addedLines`, `deletedLines`, `unknownLineCountFileCount`, `reasons`,
+  `truncated`, `truncatedFileCount`, `changedPathCount`, and
+  `omittedChangedPathCount`, plus aggregate counts,
+  line totals where available, omission/trigger reasons, and truncation fields,
+  without including changed text lines
+- **AND** it includes per-file summary entries only for omitted, truncated,
+  redacted, or capped files; entries for safe non-sensitive paths report a
+  path of at most 512 UTF-8 bytes, status, added/deleted line counts or null,
+  and non-empty reasons
+- **AND** sensitive paths have no per-file entry or path and contribute only
+  pathless aggregate counts/reasons; binary, unsupported, non-UTF-8, symlink,
+  and redacted inputs expose only safely available statistics and reasons
+- **AND** final counters are set before the serialized UTF-8 summary is measured
+  against 4 KiB; if needed, file entries are removed and truncation counters
+  updated, and a smaller metadata-only fallback is used if fixed metadata still
+  exceeds the limit
+- **AND** the summary has at most 40 entries, reports changed-path and omitted
+  file limits in `limits`, and JEV is instructed to treat it as incomplete
+  structural context
 - **WHEN** a normal JEV review uses `--request`, `--clarify`, or `--follow-up`
 - **THEN** those existing modes and their validation behavior remain unchanged
 
@@ -3020,23 +3186,29 @@ These regression requirements do not add requirements for a new `popstate` liste
 
 ### Data Sources
 
-Plan39-v2 consumes the validated B/A/L annual artifacts and the
+Plan39-v2 nominal estimates consume the validated nominal B/A annual artifacts and the
 `CtiAdjustedV2Result` produced by `server/lib/ctiAdjustedConnectionEstimateV2.ts`
 (model `v2-bottom-up`, estimateVersion `plan39-v2`). Major categories are
 calculated first and `その他の消費支出` is derived as the explicit Other
 category; the v1 diagnostic `残差` key is not an input to the v2 public
-registry. The external L annual benchmark is retained as a validation and
-diagnostic input only through its official 1981–2018 annual coverage. L is not
-extrapolated or interpolated after 2018; 2019 onward remains missing.
-Calibration is fixed to 2018–2025, with 2017 as the holdout/connection year;
-2017 is never used for learning. Rolling validation has 5 folds and
+registry. A selects official distribution-adjusted nominal annual values for
+2017 onward; B selects basic nominal annual values from each artifact's
+`消費支出（名目）` field. Historical 2005–2016
+estimates use nominal B connected to the nominal A/B overlap in 2017. The
+artifacts' real columns are not selected. The external L artifact is real-only,
+and the source set has no nominal L series; therefore L and its derived D
+household-composition correction are excluded. Historical 2005–2016 estimates
+receive a provisional endpoint-calibrated 2+ household-share correction from
+the dedicated production `pi2plus` artifact. The official distribution-adjusted
+nominal A anchor from 2017 onward is retained unchanged. Calibration is fixed to 2018–2025, with 2017 as the
+holdout/connection year; 2017 is never used for learning. Rolling validation has 5 folds and
 leave-one-year-out (LOO) validation has 8 folds; every fold is finite and
 leakage-free, with model MAE `0.2272221271` versus baseline MAE
 `1.1815238095` for rolling and model MAE `0.2260979458` versus baseline MAE
 `0.9428571429` for LOO.
 
-The implemented v2 core includes Other derivation and `β_other`, 2005–2016
-bottom-up estimation, official A retention from 2017 onward, residual
+The previously implemented v2 audit included Other derivation and `β_other`,
+2005–2016 estimation, official A retention from 2017 onward, residual
 diagnostics, G and boundary diagnostics, the five fixed γ comparison cases,
 and input validation. The v2 sensitivity path is connected to
 `scripts/plan39/run-analysis.mjs`, and the latest analysis artifact contains a
@@ -3046,28 +3218,152 @@ coverage is 2/3 for 2005–2018, and the 2016→2017 boundary is available with
 `absoluteDifference=0.7122004366712389`. The threshold is the maximum
 official-A 2017–2025 Other year-over-year difference, `1.4`; the generated
 bottom-up path covers 2005–2016, connects through 2016→2017, and all official
-A years from 2017 onward pass. These results satisfy the publication audit;
-γ, L, G, and residual outputs remain warning-level diagnostics.
+A years from 2017 onward pass. These are historical results from the former
+real-input calculation and are retained as audit history only; they do not
+validate the current nominal B/A estimate or authorize its publication. The
+current nominal analysis is input-matched, but its gate is blocked at the
+2016→2017 Other-share boundary as described below. Historical γ, L, G, and
+legacy residual outputs remain diagnostic records.
+
+Current Plan39-v2 residual-jump acceptance evaluates Other as a share of the
+total: `100 × Other / 総合`. It compares absolute adjacent-year changes in
+percentage points. The threshold is derived only from official adjusted A
+2017–2025, using every adjacent pair from 2017→2018 through 2024→2025; it is
+the exact maximum observed share change in those pairs rounded upward to the
+next 0.01 percentage point (`ceil(raw×100)/100`). Diagnostics retain both the
+unrounded maximum and effective rounded threshold. Missing/non-finite values,
+non-positive totals, or Other outside `[0, 総合]` make a pair unevaluable. If
+any official pair is unevaluable, threshold derivation fails closed. The same
+threshold evaluates every adjacent pair in the displayed historical
+connection, including estimated 2016→official 2017. Audit output records each
+pair's Other, total, share, share change, source type, threshold, unit, and
+pass/violation/unavailable state. Estimated values never contribute to
+threshold derivation. The `residualBoundary` sweep in
+`scripts/plan39/run-analysis.mjs` remains a separate legacy diagnostic and
+does not control the V2 publication gate.
+
+- **WHEN** the Plan39-v2 residual-jump gate is evaluated, **THEN** it compares
+  the absolute adjacent-year change in `100 × Other / 総合` with a threshold
+  in percentage points derived from the maximum adjacent share change in
+  official A from 2017 through 2025 and rounded up to the next 0.01 point;
+  it records the exact derived maximum and effective rounded threshold; **AND** any missing, invalid,
+  non-positive-total, or inconsistent official pair fails threshold
+  derivation closed rather than treating Other as zero.
+- **WHEN** an estimated-to-official connection or historical adjacent pair is
+  checked, **THEN** it uses the same official-derived threshold, includes the
+  2016→2017 pair, and records each pair's source, values, unit, and result;
+  **AND** estimated pairs do not affect the threshold value.
+
+The provisional household-size correction preserves the existing category
+anchor baseline `base[t,c]=B[t,c]×A[2017,c]/B[2017,c]` for each of the nine
+major categories and Other (Other is derived as total minus the nine majors
+where the published cell is unavailable). For each category, it estimates
+`gamma[c]=(A[2025,c]-base[2025,c])/(piJan[2025]-piJan[2017])`, where `piJan`
+comes from annual January `setai-n` national 2+ shares. Historical estimates
+are `base[t,c]+gamma[c]×(piIV4[t]-piIV4[2017])`; total is always the sum of the
+nine corrected major categories and corrected Other. The correction is zero at
+the 2017 anchor and total gamma must reconcile to the sum of category gammas.
+Applying the 2025 endpoint coefficient retrospectively to 2018–2024 is a
+diagnostic, not independent or causal validation.
+
+The production input is
+`data/source/cti-size-composition/production-pi2plus.json`, generated by
+`scripts/plan39/build-production-pi2plus.mjs`. The loader accepts it only when
+`production-pi2plus-manifest.json` validates its artifact hash, normalized
+source hashes and retained January source-file hashes. Historical annual IV-4
+shares in `weights.csv` and January `setai-n` shares have distinct source and
+vintage definitions; historical pi is centered on its own 2017 value, making
+the correction zero at the anchor without claiming a verified bridge. The
+2011 IV-4 share is synthetic linear interpolation from unverified 2010/2012
+endpoints, included provisionally under the user's selected simple completion
+and subject to revision if a verified national value becomes available.
+January shares proxy the preceding/trailing-12-month distribution, and 2018
+survey redesign plus 2017/2022 LFS benchmark changes remain caveats. Missing,
+invalid, non-finite, or non-positive shares, coefficients, corrected categories,
+or hashes fail closed. Result diagnostics include coefficients, caveats,
+2018–2024 retrospective MAE/RMSE, and total reconciliation error.
+
+#### 世帯人数構成候補（分析専用）
+
+`scripts/plan39/prepare-size-composition-panel.mjs` は家計調査の年次詳細結果表
+3-1（二人以上世帯）と単身世帯表1から、2005–2017の名目支出プロフィールを作る。
+`household-survey-panel-manifest.json` は年別のe-Stat file ID/URL、元ファイルSHA-256、
+対象sheetと正規化CSV hashを記録する。抽出器は実行前にmanifestと元ファイルhashを照合し、
+候補計算器も必要年、ID/URL、元ファイルhash、正規化CSV hashを再検証する。
+世帯ウェイトmanifestは2025年労働力調査IV-4原表とhash、および旧年ウェイトのvintage/statusを記録する。
+
+2011年の全国ウェイト原表は分析入力として使わず、2010/2012年の各世帯人数shareを
+線形補間し、丸め後に再正規化した診断値をweights.csvへ保存する。2010 IV-4
+(`statInfId=000008597994`) は2005年国勢調査基準、2012 IV-4
+(`statInfId=000018854323`) は2010年国勢調査基準で、共通基準への公式接続は確認できていない。
+2011 IV-4 (`statInfId=000012675623`) は岩手・宮城・福島を除く44都道府県であり、全国の
+世帯人数ウェイトとして代用しない。2011値には補間方式・端点・基準差のcaveatを付け、
+年次R診断に含めるがlambda学習から除外する。2010または2012のshareを2011に代用した
+端点シナリオとの差を年次candidateに併記する。これらはすべて未接続旧ウェイト由来の
+感度診断であり、statusは `legacy_unharmonized_weights` のままとする。
+
+候補式は2025年の世帯人数分布を固定参照にし、構成効果を2017年に正規化する。
+費目別lambdaは家計調査パネルだけから推定し、CTI A/Bはlambda学習に使わない。
+利用可能な旧年労働力調査ウェイトは基準接続が未検証で元ファイルID/hashも保持されていない。
+2011年はrawウェイトが欠測し、年次Rに限って2010/2012 share補間の診断値を使うが、lambda学習からは
+除外する。端点代替シナリオも出力し、出力は `legacy_unharmonized_weights` の感度診断に限る。
+2017 A/B比は水準アンカーとしてのみ使い、2017一致は適合度・バックテストの根拠としない。
+この候補は本番推計、loader、公開gate、Plan39公開measurementの入力ではない。
+2018年だけは別枠の教育安定性診断として、家計調査の2017/2018年別プロフィールと
+各年1月分の補正用特別集計として公表されたsetai-nウェイトを取得し、2017 anchorからの2018予測を調べる。
+家計調査の標本設計では補正に用いる世帯数分布を労働力調査の直近12か月平均値と定義しており、暦年平均とは確認できない
+（[家計調査2018年報 p.25](https://www.stat.go.jp/data/kakei/pdf/18gai00.pdf)、
+[世帯数分布](https://www.stat.go.jp/data/kakei/setai_bunpu.html)）。2018年は家計簿様式全面改正年であり、
+このウェイトは年平均IV-4でも2025 CTIの世帯人数×年齢joint weightでもない。
+この二年断面を連続系列・本番ウェイトとみなさない。
+
+CTI A/B anchor・照合値は丸め済みJSONではなく、公式2025年基準のbasic B
+(`statInfId=000040499069`) と adjusted A (`000040499087`) の一次Excel sheet `総・年` から読む。
+見出しはExcel行9、名目J:T、Aの2017/2018は行10/11、Bは行25/26であり、raw値とSHA-256、
+年・列・費目の対応をmanifest/result JSONへ記録する。T列の「その他の消費支出」は`-`で公表値がないため、
+総合−公表9費目の残差を使い、そのA/Bを公式公表Other比と呼ばない。2017比は予測の水準anchorのみで、
+anchor一致を適合度やバックテストに数えない。
+
+年別lambda `log(Q[t,c])/log(Q[t,total])` は各年1断面による不安定な診断で、回帰推定値と同等に扱わない。
+2018 holdoutは2005–2016（2011除外）から推定した既存lambdaと2017 A/B anchorのみで予測し、
+2018 A/Bは予測後の照合に使う。2017/2018二年lambdaの分母は
+`log(Q2018,total/Q2017,total)` とし、絶対値が小さくても値を保持して不安定flagを付ける。
+2018を使う二年較正・幾何平均anchorはin-sample参考値で、検証結果ではない。
+この分析は本番推計、loader、公開gate、Plan39公開measurement、SharedPlan40四半期値の入力ではない。
 
 ### Data Flow
 
-`CtiAdjustedV2Result` → model/version-aware v2 public projection → separate
+`nominal B/A annual artifacts` + manifest-validated provisional `pi2plus` artifact → nominal 2005–2016 connected estimate / official
+distribution-adjusted nominal A from 2017 → `CtiAdjustedV2Result` → model/version-aware v2 public projection → separate
 v2 key registry → chart/tooltip/table/CSV. The v1 registry and projection keep
 `CTIミクロ調整系列（残差）` and its existing category/display contract.
 The v2 registry maps the same `その他の消費支出` measurement to the public
 key `CTIミクロ調整系列（その他の消費支出）` on every public surface.
 The saved Plan39 artifact remains on the legacy `pass` / `insufficient-data`
-contract: its A input may cover 2017–2025 and its L input 2005–2018. The
+audit contract. The nominal calculation requires nominal columns from B and A;
+the real-only L artifact is not a required nominal estimate input. The
 Plan40 runtime-evidence path is a separate strict contract that requires the
 2005–2017 target years, `baseYear=2025`, compatible `adoptedRange`, and the
 positive 2025 A anchor; those checks must not be applied to the Plan39 path.
-When `publicationGate.status === "pass" && accepted === true`, finite bottom-up
-estimates are published. Otherwise estimated rows are `unavailable`, null,
-and reasoned (`overall_verdict_not_accepted`); `accepted=false` means the
-estimated publication is incomplete. The current gate is `status="pass"`,
-`accepted=true`, with `blockingReasonCodes=[]`, so finite generated
-2005–2016 estimates are publishable. Official A observations from 2017 onward
-remain official and are never overwritten by the gate.
+Finite bottom-up estimates are published only when
+`publicationGate.status === "pass" && accepted === true` and the accepted
+analysis input fingerprint matches the selected nominal runtime artifacts.
+Otherwise estimated rows are `unavailable`, null, and reasoned
+(`overall_verdict_not_accepted` or the applicable input-fingerprint reason);
+`accepted=false` means the estimated publication is incomplete. The previously
+recorded `status="pass"`, `accepted=true` gate belongs to the former real-input
+calculation and is not inherited by the nominal path. Official distribution-
+adjusted nominal A observations from 2017 onward remain official and are never
+overwritten by the gate.
+
+The household-survey expenditure profiles, conditional 2+ expenditure panel,
+and their lambda/composition candidate remain analysis-only. Their provenance
+gate checks source manifests, year coverage, e-Stat IDs/URLs, raw hashes,
+normalized CSV hashes, and weight vintage/status before calculation. Missing or
+mismatched provenance fails closed. Those candidate coefficients and values do
+not flow into `CtiAdjustedV2Result`. Separately, the production estimate uses
+only the manifest-validated `production-pi2plus.json` annual household shares
+described above; the research candidate formulas and outputs remain excluded.
 
 ### Data Model
 
@@ -3078,29 +3374,34 @@ official/estimated provenance. The v2 category set contains Other and does not
 contain the v1 residual diagnostic category. Residual diagnostics remain
 internal/audit-only and are not mixed into the v2 public measurement map.
 `CtiAdjustedV2Result.publicationGate` uses `status: CtiAdjustedV2Status | "pass"`
-and `accepted: boolean`. The current implementation has `status="pass"`,
-`accepted=true`, and `blockingReasonCodes=[]`; the type continues to represent
-the fail-closed state for future invalid or incomplete audits.
+and `accepted: boolean`. The previously recorded `status="pass"`,
+`accepted=true`, and empty `blockingReasonCodes` belong to the former real-input
+calculation; they do not establish a valid nominal gate. The type continues to
+represent the fail-closed state for invalid or incomplete nominal audits.
 
 ### Component Tree
 
-`B/A/L artifacts` → `v2 bottom-up calculation` → `CtiAdjustedV2Result` →
+`nominal B/A artifacts` → `v2 nominal connected estimate` → `CtiAdjustedV2Result` →
 `projectCtiAdjustedV2PublicView` → v2 registry → chart/tooltip/table/CSV.
 The v1 `projectCtiAdjustedPublicView` and registry remain a separate branch.
 
-The current artifact has `publicationGate.accepted=true`,
-`blockingReasonCodes=[]`, and no mandatory remaining tasks. Threshold,
-rolling/LOO, Other/β stability, and the 2017 connection audit are complete.
-Residual remains a warning-only diagnostic; G remains an external audit
-benchmark and is not a standalone publication stop condition. The five γ cases
-are sensitivity analysis only and non-blocking. L is missing from 2019 onward
-and is not extrapolated or interpolated. The v1 contract remains unchanged,
+The former real-input artifact had `publicationGate.accepted=true` and
+`blockingReasonCodes=[]`; this is historical state and does not establish
+nominal acceptance. The current nominal analysis artifact is input-matched.
+Before the approved upward-rounding rule, it reported
+`threshold_redesign_incomplete` and `connection_2017_reaudit_incomplete`
+because the corrected 2016→2017 share jump was 0.7661764640 percentage points
+against the exact official-derived maximum 0.7639419404. The effective threshold
+is now rounded upward to 0.77 percentage points; the refreshed analysis records
+the boundary as passing and `publicationGate.accepted=true`; comparison and
+sensitivity warnings remain non-blocking. The v1 contract remains unchanged,
 including its residual key; v2 Other uses a separate key and is not treated as
 v1 residual.
 
-There are no mandatory remaining tasks. Optional audit strengthening is limited
-to expanded γ comparison, G threshold consideration, and warning wording;
-none may independently authorize or block publication.
+The nominal publication gate passes for the current input fingerprint under
+the documented rounded threshold. This does not make the 2025-endpoint
+retrospective correction an independent forecast validation or a causal
+household-size estimate. Recompute and review the gate whenever inputs change.
 
 ### Requirements
 
@@ -3109,9 +3410,31 @@ none may independently authorize or block publication.
   `CTIミクロ調整系列（残差）` and its category/display array is unchanged.
 - **WHEN** v2 Other is derived, **THEN** the derivation is bottom-up from total
   minus the major categories and is published as Other, never as v1 residual.
-- **WHEN** the external L benchmark is used, **THEN** it is an external
-  validation/diagnostic benchmark through 2018 only; it is not extrapolated
-  or interpolated for 2019 onward and cannot by itself authorize publication.
+- **WHEN** the nominal estimate is calculated, **THEN** it selects nominal
+  columns from B and A, excludes their real columns, and does not require the
+  real-only L artifact or L-derived D household-composition correction.
+- **WHEN** the endpoint correction is calibrated or retrospectively compared,
+  **THEN** it uses the saved nominal B/A annual JSON artifact precision (one
+  decimal), records this in result diagnostics, and does not substitute the
+  higher-precision research-only raw-workbook backtest values.
+- **WHEN** the analysis-only 2017/2018 education stability diagnostic runs,
+  **THEN** it verifies and reads the raw basic/adjusted CTI annual XLSX cells
+  (2017 A row 10/B row 25; 2018 A row 11/B row 26; nominal J:T), records file
+  hashes and raw values, and does not derive a published Other ratio from the
+  T-column dash; **AND** if raw source identity, year row, header, or hash
+  fails, the diagnostic stops without emitting a new result.
+- **WHEN** the 2018 holdout is compared with the historical-lambda prediction,
+  **THEN** lambda is fit only to the 2005–2016 household-survey panel excluding
+  2011, the 2017 A/B ratio is only a level anchor, 2018 A/B is held out until
+  post-prediction comparison, and the 2018 ledger-format revision plus
+  setai-n special-weight definition are stated as limitations.
+- **WHEN** the separate two-year 2017/2018 anchor scenario is calculated,
+  **THEN** `log(Q2018,total/Q2017,total)` is the denominator, any small-denominator
+  estimate is retained with an instability flag, and the scenario is labeled
+  in-sample rather than validation.
+- **WHEN** the external real-only L benchmark is used by a separate audit,
+  **THEN** it remains diagnostic only and is not extrapolated or interpolated
+  for 2019 onward; it does not affect nominal estimate values or publication.
 - **WHEN** γ cases are compared, **THEN** they are recorded as non-blocking
   sensitivity analysis and γ is not fixed as a production parameter.
 - **WHEN** G is evaluated, **THEN** it is recorded as an external audit
@@ -3120,10 +3443,11 @@ none may independently authorize or block publication.
   2018–2025, 2017 is a holdout/connection year, and residual diagnostics are
   separate from public measurements.
 - **WHEN** `publicationGate.status === "pass" && accepted === true`, **THEN**
-  finite v2 estimates may be `estimated_adjusted`; **WHEN** either condition
-  fails, **THEN** estimated values are null/unavailable with a reason and are
-  not publicly emitted.
-- **WHEN** an official A value from 2017 onward exists, **THEN** its value and
+  finite v2 estimates may be `estimated_adjusted` only when the accepted
+  analysis fingerprint matches the selected nominal B/A inputs; **WHEN** the
+  gate or fingerprint check fails, **THEN** estimated values are null/unavailable
+  with a reason and are not publicly emitted.
+- **WHEN** an official distribution-adjusted nominal A value from 2017 onward exists, **THEN** its value and
   official status are retained regardless of the estimated publication gate.
 - **WHEN** chart, tooltip, table, or CSV renders v2 Other, **THEN** all surfaces
   resolve the same v2 key, measurement, model/version, source, year, value,
@@ -3138,18 +3462,131 @@ none may independently authorize or block publication.
 - **WHEN** the Plan39 CSV is offered for download, **THEN** the surrounding
   UI states that per-series value-type metadata is included, and the CSV
   retains the machine-readable `seriesType` columns for each series.
-- **WHEN** the latest v2 artifact is inspected, **THEN** its 12/12 Other and
-  bottom-up estimate coverage for 2005–2016, five γ cases, β_other,
-  2005–2018 G coverage, boundary result, publication gate, reason codes, and
-  finite published estimate rows are retained as audit evidence; **THEN** the
-  pass gate has `accepted=true`, `blockingReasonCodes=[]`, and the estimate is
-  publicly publishable.
-- **WHEN** v2 publication is evaluated, **THEN** threshold redesign,
-  rolling/leave-one-year-out backtests, Other/β stability, and the 2017
-  connection re-audit are the primary mandatory gate and all pass. γ
-  full-period sensitivity, G threshold design, and warning wording are optional
-  audit strengthening; neither they nor L/residual warnings are standalone
-  publication stop conditions.
+- **WHEN** the former real-input v2 artifact is inspected, **THEN** its
+  coverage, γ cases, β_other, G coverage, boundary result, gate, and reason
+  codes remain historical audit evidence only; they do not validate nominal
+  estimates or establish a currently accepted nominal publication gate.
+- **WHEN** nominal v2 publication is evaluated, **THEN** nominal-input
+  backtests, Other/β stability, and the 2017 connection must be evaluated using
+  an input-matched analysis artifact before estimates can be published.
+  Historical real-input diagnostics do not satisfy these conditions.
+- **WHEN** the household-size candidate is calculated, **THEN** required years,
+  source IDs/URLs, raw hashes, normalized CSV hashes, and declared weight
+  vintage/status are verified before calculating; **WHEN** any provenance check
+  fails, **THEN** candidate coefficients and annual estimates are not emitted.
+- **WHEN** weights have unverified benchmark connections or the raw national 2011 weight is missing,
+  **THEN** a 2011 diagnostic row may be produced only from normalized 2010/2012 size shares by linear interpolation and renormalization; its manifest and rows identify it as derived, not observed, and the result remains `legacy_unharmonized_weights` and cannot satisfy the production publication gate. The 2010 and 2012 endpoint benchmark bases are not verified as connected, and the 2011 44-prefecture table is not a national substitute.
+- **WHEN** annual R is calculated for 2011, **THEN** the interpolated distribution is included, lambda fitting continues to exclude 2011, and annual-candidate output includes 2010/2012 endpoint alternatives and their candidate range.
+- **WHEN** the 2017 A/B ratio is used as an anchor, **THEN** its identity is not counted as fit or backtest evidence.
+- **WHEN** Plan39-v2 estimates are built, **THEN** the loader verifies the
+  dedicated `production-pi2plus` artifact and source hashes, applies endpoint
+  corrections only to 2005–2016, keeps 2017–2025 official A unchanged, derives
+  total as corrected categories' sum, and records coefficient/source
+  diagnostics; **AND** missing or invalid required sources make the estimate
+  unavailable and close the publication gate.
+- **WHEN** the 2018–2024 retrospective validation is reported, **THEN** it
+  identifies 2025 as the endpoint calibration year and labels the result
+  retrospective and non-causal, not independent forecast evidence.
+- **WHEN** historical IV-4 shares are applied, **THEN** their source/vintage is
+  identified as distinct from January `setai-n` and centered on their own 2017
+  value; 2011 is identified as synthetic interpolation and remains provisional.
+
+#### Research-only education-share 2+ backtest and production share source
+
+This supplemental diagnostic is separate from the Plan39 production estimator,
+loader, publication gate, quarterly values, and the prior 2017/2018 education
+stability artifact. It reads the retained raw official 2025-base CTI B/A
+workbooks and annual January `setai-n` special-tabulation files for 2017–2025.
+For each year, national size shares are each exact published size-bin count
+divided by the reported 1,000,000-part national denominator; `pi2plus` is
+`1 - pi1`. It preserves file URLs and SHA-256 hashes, reported year, sheet,
+denominator, raw values, and extraction row/cell evidence. The special files
+are each year's January tabulation, while the Household Survey design defines
+the correction distribution for a month using the preceding/trailing 12-month
+LFS distribution. January therefore serves only as an annual proxy, not a
+calendar-year average. The 2018 Household Survey redesign and LFS population
+benchmark changes to the 2015 Census base in January 2017 and 2020 Census base
+in January 2022 are comparability caveats.
+
+Calibration uses only 2017:
+`K = (pAedu_2017 / pBedu_2017) / pi2plus_2017`, where
+`pAedu=A_education/A_total` and `pBedu=B_education/B_total` come from exact raw
+CTI XLSX cells. The candidate is
+`pHat_Aedu_t = pBedu_t * pi2plus_t * K`; the anchor baseline is
+`pHat_Aedu_t = pBedu_t * (pAedu_2017/pBedu_2017)`. Validation excludes 2017
+and compares per-year residuals and aggregate MAE/RMSE/bias over 2018–2025.
+The reproducible script is `scripts/plan39/two-plus-share-backtest.mjs`;
+trace and results are stored under `data/source/cti-size-composition/two-plus-share-backtest/`
+and `results/plan39/two-plus-share-backtest/`.
+
+- **WHEN** the 2+ share backtest runs, **THEN** it reads unrounded annual CTI
+  education/total values from the retained raw official A/B workbooks and
+  validates each annual January `setai-n` file's year, national rows, and
+  reported denominator before extracting 1/2/3/4/5+ shares; **AND** if a
+  validation-year source check fails, that year is omitted and the failure is
+  recorded in coverage; a missing/invalid 2017 calibration input stops without
+  a new backtest result.
+- **WHEN** the model is calibrated, **THEN** only 2017 determines `K`, and
+  2017 is excluded from validation; the 2018–2025 results report each model's
+  annual prediction/residual, `n`/coverage, MAE, RMSE, and bias against official
+  adjusted A education share.
+- **WHEN** the January LFS special shares are interpreted, **THEN** the result
+  states that they proxy one January distribution rather than a calendar-year
+  average of the preceding/trailing 12-month correction distribution, and
+  records the 2018 Household Survey redesign and the January 2017/January 2022
+  LFS benchmark changes.
+- **WHEN** Plan39 production estimators run, **THEN** they do not consume this
+  backtest's education formula, K, predictions, validation rows, or summary;
+  they consume only the separately generated, manifest-validated
+  `production-pi2plus.json`, whose January source shares are independently
+  hash-checked and used in the endpoint-residual correction specified above.
+- **WHEN** loaders, publication gates, quarterly values, or the previous
+  2017/2018 stability analysis run, **THEN** the research backtest's calculated
+  predictions and results do not affect their formulas or acceptance state.
+
+#### Research-only 2017-anchor-only category-share backtest
+
+This supplemental diagnostic reads exact raw cells from the retained 2025-base
+CTI basic B (`000040499069`) and adjusted A (`000040499087`) workbooks, sheet
+`総・年`, for 2017–2025. It maps the nine published nominal categories by exact
+header and includes Other as a tenth category: use the workbook's numeric Other
+cell when present, and derive total minus the nine published categories when
+the cell is `-`. The source status and exact cell coordinates are retained per
+series/year. Numeric Other values occur from 2020 onward; the 2020 switch from
+residual to official values is a comparability caveat, with the maximum
+official-minus-residual difference reported for each workbook.
+
+For each category, `pB[t,c]=B[t,c]/B[t,total]`,
+`pA[t,c]=A[t,c]/A[t,total]`, and the only calibration is
+`q[c]=pA[2017,c]/pB[2017,c]`. The requested raw prediction is
+`pHatRaw[t,c]=pB[t,c]*q[c]`. A separate coherent variant is
+`pHatNorm[t,c]=pHatRaw[t,c]/sum_j(pHatRaw[t,j])`; it is reported distinctly and
+does not replace the raw formula. Validation uses only 2018–2025. Per-category
+MAE, RMSE, and bias are reported in percentage points, along with unweighted
+macro metrics, annual actual/predicted/errors, and annual sums of raw predicted
+shares. The script is `scripts/plan39/anchor-only-category-backtest.mjs`; its
+summary and annual rows are saved under
+`results/plan39/anchor-only-category-backtest/`.
+
+`raw B/A CTI cells` → exact header/year validation → ten annual category shares
+→ 2017 category anchors → raw predictions and separately normalized variant
+→ 2018–2025 category/overall metrics and source-traced result files.
+
+- **WHEN** the category-share backtest runs, **THEN** it extracts exact raw
+  annual nominal values from the retained B/A XLSX files, records workbook
+  hashes and cell evidence, derives `q[c]` only from 2017, and reports both the
+  requested unnormalized formula and the separately labeled normalized
+  variant over 2018–2025; **AND** if a year, required category header/value,
+  total, or anchor cannot be identified unambiguously, it fails closed for the
+  affected input instead of silently substituting another category.
+- **WHEN** category metrics are emitted, **THEN** they include per-category
+  MAE/RMSE/bias in percentage points, overall macro metrics, per-year
+  predicted/actual/error values, and each year's raw predicted category-share
+  sum; Other's per-year source status and direct-versus-residual maximum
+  difference are included so the 2020 source-method boundary is auditable.
+- **WHEN** Plan39 production estimators, loaders, publication gates, or
+  quarterly values run, **THEN** this backtest's files and values are not
+  consumed and do not alter production formulas.
 
 ### Data Flow
 
@@ -3162,17 +3599,17 @@ production/base calibration は 2018–2025 とし、target/holdout 2017 は cal
 - sensitivity の比較は baseline 2018–2025 と alternative 2018–2024 を、target/holdout 2017・同一 L ルールで行わなければならない。
 - L は `official_annual` のみを使用し、`calendar_year_average` を採用してはならない。
 - audit には期間、対象年、除外年、入力 coverage、leakage 判定を保存し、不足時は `insufficient-data` として fail-closed にしなければならない。
-- threshold、rolling／leave-one-year-out backtest、Other/β安定性、2017接続再監査はpass済みである。gamma比較の拡張、G閾値検討、warning文言は任意監査強化であり、単独の公開停止条件にしない。
-- threshold指標は公式A 2017–2025のOther前年差最大値 `1.4` とし、判定は `abs(delta)>1.4`、epsilonは `1e-9` とする。2017年は学習に使わないholdout／接続年である。
+- 上記のthreshold、backtest、Other/β安定性、2017接続監査のpass記録と `1.4` のthresholdは旧real入力に対する歴史的監査記録であり、現行nominal推計の合格根拠にしない。
+- 現行nominal推計の受入には、名目B/Aを入力として再生成しruntime artifact fingerprintと一致する監査結果が必要である。監査未実施時は2005–2016推計を公開しない。
 
 ### WHEN-THEN
 
 - WHEN production/base または backtest を実行する THEN calibration は 2018–2025、target/holdout は 2017 とし、2017 を calibration から除外する。
-- WHEN sensitivity の比較を実行する THEN baseline 2018–2025 と alternative 2018–2024 を、target/holdout 2017・同一 L ルールで比較する。
-- WHEN L を解決する THEN `official_annual` のみを使用し、月次 L artifact がないため `calendar_year_average` は選択しない。
+- WHEN 旧real入力のsensitivity記録を読む THEN baseline 2018–2025 と alternative 2018–2024 およびL ruleは歴史的条件として扱い、nominal計算へ再利用しない。
+- WHEN nominal v2を監査する THEN 名目B/Aの入力fingerprintを検証し、real-only LまたはL由来Dを推計へ使用しない。
 - WHEN audit を確定する THEN 期間、対象年、除外年、入力 coverage、leakage 判定を保存し、いずれかが不足していれば `insufficient-data` として fail-closed にする。
-- WHEN threshold再設計、rolling／leave-one-year-out backtest、Other/β安定性、2017接続再監査のいずれかが未監査または不合格である THEN 公開を拒否し、`accepted=false` の理由は当該必須課題に限定する。現行実装ではこれらはすべてpass済みである。
-- WHEN 必須監査がすべてpassし、`accepted=true` の公開条件を満たす THEN 公開可能状態へ進める。gamma全期間sensitivityまたはG閾値監査の未実施・結果だけでは公開可否を決めない。
+- WHEN nominal inputsによる必須監査が未監査または不合格である THEN 公開を拒否し、`accepted=false` とする。旧real入力でのpass記録は引き継がない。
+- WHEN nominal inputsによる必須監査がpassし、`accepted=true` と入力fingerprint一致を満たす THEN 公開可能状態へ進める。旧real入力auditのgamma/G結果だけでは公開可否を決めない。
 
 ## JEV 開発チェックポイントレビュー
 
@@ -3299,10 +3736,11 @@ JEVは既存テスト・型チェック・lintその他の検証の代替とは�
 Plan38 remains the historical/legacy contract for the dedicated support-series
 surface: its `CTIミクロ四半期系列（名目）` key, loader, aggregation, and
 standalone contract tests remain valid for callers that use that API. Plan40
-replaces only the normal page presentation and quarterly public projection: the
-Plan39-v2 ten-category stack is integrated into the existing nominal section and
-the dedicated Plan39 annual section is not rendered. The legacy API and the
-Plan40 page contract are therefore intentionally tested separately.
+replaces the normal page quarterly public projection: the 2005–2016 Plan39-v2
+nominal estimate and the 2017Q1 onward official adjusted nominal quarterly
+values are integrated into the existing nominal section, and the dedicated
+Plan39 annual section is not rendered. The legacy API remains available to
+legacy callers and the Plan40 page contract is separate.
 
 - **WHEN** a legacy caller omits `QuarterlyRow.kind`, **THEN** projection uses
   the `legacy-cti` fallback and emits the established legacy keys only.
@@ -3312,6 +3750,9 @@ Plan40 page contract are therefore intentionally tested separately.
 - **WHEN** a row has `kind=plan40-v2-cost-stack`, **THEN** projection adds the
   registry-owned Plan40 v2 expense keys to the existing nominal public surface
   without inferring the kind from the year.
+- **WHEN** a row has `kind=plan40-official-quarterly`, **THEN** projection adds
+  the registry-owned Plan40 v2 expense keys with official-quarterly measurements
+  and preserves their unavailable reasons without inferring the kind from the year.
 - **WHEN** the normal page is rendered under Plan40, **THEN** the existing
   active chart sections, table, tooltip, and CSV surfaces remain, the dedicated
   Plan39 annual section is hidden, and the legacy annual component API remains
@@ -3326,45 +3767,76 @@ Plan40 page contract are therefore intentionally tested separately.
 
 ### Data Sources
 
-名目消費支出指数は e-Stat 統計表 `000040499070` の月次元データから取得し、
-2025 年を 100 とする。2005Q1–2017Q4 は月次の3か月を暦四半期へ集計して派生する
-値であり、e-Stat の公式四半期値とは表示しない。欠損月、重複月、非有限値、
-3か月未満の四半期は値を生成しない。
+2005Q1–2016Q4 の名目推計は既存のPlan39-v2名目B/A接続推計と名目月次季節プロファイルを
+維持する。2017Q1以降は `data/source/cti-distribution-adjusted-000040499087.xlsx` の
+sheet `総・四(原)` にある公式2025年基準・総世帯・調整系列（分布調整値）・原数値の
+名目四半期列を直接使い、対象期間は2017Q1から最新の完全四半期までとする。
+公式四半期値は月次値から再集計・再正規化しない。実質列は選択しない。
 
-Plan39-v2 の B（基本系列）、A（調整系列）、L（長期ベンチマーク）、費目別 β、
-D の bottom-up 契約を維持する。2005–2016 は `B_i,t * R_i,2017 * D_t^β_i`
-で10大費目を推計し、2017 は公式年次Aをアンカーにする。ただし2017年の四半期値は
-公式四半期値ではない。Other はv2専用の年次anchorから導出し、e-Stat同名月次は
-季節プロファイルとして使う。v1のResidualをそのまま代用せず、専用の B/A、
+実装runtimeは公式Excel sheetからbuild時に生成・正規化した
+`data/source/cti_data2025_distribution_adjusted_quarterly.csv` と
+`data/source/cti_data2025_distribution_adjusted_quarterly.metadata.json` を読み込む。
+これらは公式Excelを一次sourceとする生成artifactであり、sidecar metadataにはworkbook relative pathとfilename、
+sheet、統計表ID、基準年、世帯範囲、系列区分、値種別、頻度、収録期間、公式source columnからcanonical
+category/public seriesへの対応、元ExcelのSHA-256、および生成CSVのSHA-256を記録する。
+runtimeはmetadataと内容の対応を検証し、
+Excel由来の公式名目原数値を保つ。
+
+Plan39-v2 の nominal B（基本系列）/A（調整系列）で2005–2016の名目推計を作る。
+A/B の実質列および実質のみの L と L 由来 D は名目推計から除外する
+（対応する名目 L 系列がないため）。過去の推計値、接続係数、季節プロファイルは変更しない。
+2005–2016のOtherはv2専用の年次anchorから導出し、e-Stat同名月次は
+季節プロファイルとして使う。2017Q1以降は公式四半期sheetの主要9費目と総合を使い、
+Otherを総合−主要9費目のderived residualとして計算する。
+v1のResidualをそのまま代用せず、専用の B/A、
 `R_other`、`β_other` から導出する。
+Plan39世帯人数構成候補のデータ・係数・legacyウェイト（2011年の端点share補間を含む）と、
+2017/2018教育安定性診断のsetai-n特別集計ウェイト・様式改正年プロフィールは分析専用であり、
+Plan40の年次推計、月次profile、四半期値を補正または再スケールする入力にはしない。
 
-各 B/A/L artifact は source、artifact、取得時刻、単位、値種別、世帯範囲、年次頻度、
+nominal B/A artifact は source、artifact、取得時刻、単位、値種別、世帯範囲、年次頻度、
 基準年、欠損表現を含む metadata を入力契約として保持する。A は `baseYear=2025` と
-2025年公式A総合アンカー（有限かつ正）を 2025=100 契約の検証可能な不変条件とする。
+2025年公式名目A総合アンカー（有限かつ正）を 2025=100 契約の検証可能な不変条件とする。
+実質列および実質のみのL artifact metadataは nominal input contract の対象外とする。
+四半期source metadataには `workbookRelativePath`、`workbookFilename`、sheet `総・四(原)`、統計表ID
+`000040499087`、2025年基準、総世帯、調整系列（分布調整値）、原数値、名目、四半期頻度、収録期間、
+公式 `sourceColumnToCanonicalCategory` mapping、`sourceSha256` と生成CSVの `csvSha256` を保持する。
+runtime用normalized CSVとsidecar metadataはこのExcelからのbuild生成artifactとして
+`manifest.artifacts.quarterlyNominal` に登録し、少なくともCSV path/hash、metadata path/hash、revision、
+statInfId、sourceUrl、sourceSha256、statusを持つ。bootstrap、rollback snapshot、artifact pair validationの対象に含める。どちらかが欠落・不一致なら
+2005–2016年の歴史推計は保持し、2017Q1に `value=null`、`status=unavailable`、
+reason `official_quarterly_source_unavailable_latest_period_unknown` のmarkerを置いて、2017Q1以降の値と
+最新対象期が不明である旨を画面へ伝える。
 
 ### Data Flow
 
-`e-Stat monthly 000040499070` → 対象年全体の月重複・欠損・有限性検証 →
-2005Q1–2017Q4 の四半期平均 → 2025=100 の指数化 →
-Plan39-v2 の B/A/L・β・D bottom-up（2005–2016）／公式 A（2017） →
-全10カテゴリの積み上げ → 既存名目グラフの共通 registry／measurement →
-chart、注記、tooltip、data table、CSV。
+既存の名目B/A接続推計と名目月次季節profileを維持（2005–2016） →
+公式Excel `cti-distribution-adjusted-000040499087.xlsx` sheet `総・四(原)` からbuild生成された
+normalized CSV/sidecar metadataを検証して公式2025基準・総世帯・調整系列（分布調整値）・
+原数値・名目四半期列を選択（2017Q1–最新完全四半期） → 主要9費目の原数値と総合を検証し、
+Otherを総合−主要9費目のderived residualとして計算 → measurement → 既存名目グラフ、注記、
+tooltip、data table、CSV。公式四半期列は月次平均や年次Aアンカーから再計算せず、未完成期は公開しない。
+source pairまたは検証が失敗した場合も2005–2016年の歴史推計は保持する。2017Q1にunavailable markerを
+追加し、reason `official_quarterly_source_unavailable_latest_period_unknown` を画面、tooltip、表、CSVへ
+伝播して2017Q1以降の欠損と最新対象期不明を示す。月次値や歴史推計へのfallbackはしない。
 
-各年の四半期値は同じ年の12か月平均を分母に使うため、対象年のいずれかの月に
-重複が見つかった場合は、その年の全Plan40四半期行・全10カテゴリを
+2005–2016の既存歴史推計は従来どおり対象年の月次profile完全性・重複を検証する。
+当該年の年次meanを汚染する重複があれば、その年の全対象四半期・全10カテゴリを
 `duplicate_month`、`value=null`、`status=unavailable` として一括fail-closedにする。
-別四半期の月重複が年次meanを汚染し得る状態で、正常な四半期だけを残さない。
+2017Q1以降は公式四半期artifactの期・カテゴリ・値を直接検証し、月次値へfallbackしない。
 
-2005–2017 は対象四半期の全10カテゴリを積み上げる。2018Q1以降は既存の
-費目別 CTI を継続し、2017Q4 と2018Q1の間で入力経路を切り替える。Plan39専用
-年次セクションは表示せず、既存の名目消費グラフに統合する。推計／公式、
-四半期派生／既存継続、切替境界は注記、tooltip、表、CSVの measurement metadata
-から同じ値を参照して表示する。
+2005–2016は既存の名目歴史推計10カテゴリを積み上げ、2017Q1以降は公式調整済み名目
+四半期表の主要9費目の原数値と総合から計算したOther residualを積み上げる。
+10費目の合計は公式総合に一致させる。2016Q4/2017Q1で入力経路を切り替える。
+Plan39専用年次セクションは表示せず、既存の名目消費グラフに統合する。推計／公式、
+四半期派生／公式原数値、境界は注記、tooltip、表、CSVのmeasurement metadataから
+同じ値を参照して表示する。
 
 公開投影は行の内部 `kind` を明示的に受け取る。`legacy-cti`（kind省略時の後方互換を
 含む）は既存の22キー（名目11＋実質11）のみを投影し、`plan40-v2-cost-stack` は
-名目の既存11キーにregistry由来のv2 10費目キーを加える。2018Q1以降とPlan39は
-`legacy-cti`、Plan40の2005–2017行だけがv2 kindを持ち、年だけから推測しない。
+名目の既存11キーにregistry由来のv2 10費目キーを加える。通常表示では2005–2016行に
+v2 kind、2017Q1以降の行に専用の `plan40-official-quarterly` kindを付与する。Kindは年から推測せず、
+旧 `legacy-cti` 契約はlegacy API consumer向けに保持する。
 投影結果の公開JSONには内部kindを出さない。
 
 Plan39の月次 `seriesIndex` 対応はartifact固有契約として `PLAN39_CATEGORY_SERIES` に
@@ -3379,24 +3851,32 @@ seriesIndexをregistryへ無理に混在させず、キーの二重管理だけ�
 
 各行は既存の `SeriesMeasurement` / `SeriesDescriptor`（`src/types/chart.ts`）を
 用い、`value`、`status`、`reason`、`unit`、`source`、`frequency`、
-`aggregation`、`seriesType`、`official`、`annualAnchorType`（`estimated`/`official`）、
-`quarterlyDerived=true`、note、計測期間を同一 measurement に保持する。2005–2016 は
-`annualAnchorType=estimated`、2017 は `annualAnchorType=official` とし、2017も
-`quarterlyDerived=true` により公式年次Aアンカーと公式四半期値を区別する。
-`official` はアンカーの公式性を示す軸であり、`quarterlyDerived=true` は四半期値自体を
-公式四半期値として扱わないことを示す。
+`aggregation`、`seriesType`、`official`、`annualAnchorType`、`quarterlyDerived`、
+note、計測期間を同一 measurement に保持する。2005–2016の推計行は
+`seriesType=estimated_adjusted`、`annualAnchorType=estimated`、`official=false`、
+`quarterlyDerived=true` とする。2017Q1以降の公式四半期行は `sourceId` / `statInfId`、公式Excel artifact、
+workbook relative path/filename、sheet、period、source/artifact hash、Excel source columnからcanonical
+categoryへのmappingをmeasurement provenanceに保持する。9費目は原数値を使い、
+`seriesType=official_adjusted`、`official=true`、
+`frequency=quarterly`、`aggregation=official_quarterly_original_value`、`annualAnchorType=official`、
+`quarterlyDerived=false` とする。Otherは公式総合−主要9費目のderived residualで、
+`aggregation=derived_quarterly_residual_from_official_nominal_total_minus_nine_categories`、
+`seriesType=estimated_adjusted`、`official=false`、`quarterlyDerived=true` とする。
+公式行のrow kindは `plan40-official-quarterly`。source欠損・不整合時は2005–2016歴史推計を保持したまま
+2017Q1に `value=null`、`status=unavailable`、reason `official_quarterly_source_unavailable_latest_period_unknown`
+のmarkerを置き、2017Q1以降unavailableかつ最新対象期不明である旨を表示する。
 `QuarterlyRow.kind` は共有型上のoptional/internal metadataであり、aggregationが
 差し替え境界で設定する。表示側はkindや値を再計算しない。
-2005–2016 は `estimated_adjusted`、2017 は `official_adjusted`、月次不備または
-計算不能は `unavailable` とし、unavailable の `value` は必ず `null` とする。
+2005–2016 は `estimated_adjusted`、2017Q1以降の9公式費目は `official_adjusted`、Other residualは
+`estimated_adjusted` とし、入力不備または計算不能は `unavailable`、unavailable の `value` は必ず `null` とする。
 この状態は publication gate の結果を含む。合成 Plan40 runtime-evidence fixture は
 annual input validation 自体は valid だが、監査ゲート未完了のため `accepted=false` であり、
 実際の 2005 row は `unavailable`/`null`、`annualAnchorType=estimated`、
 `quarterlyDerived=true`、`official=false` を返す。publication gate が accepted の
-入力では 2005–2016 の有効値が `estimated_adjusted` となる。2017 は gate の状態に
-かかわらず公式年次 A をアンカーとするため、四半期 measurement は
-`official_adjusted`、`annualAnchorType=official`、`quarterlyDerived=true`、
-`official=false` とする。
+入力では 2005–2016 の有効値が `estimated_adjusted` となる。2017Q1以降は推計gateに
+かかわらず公式四半期artifactを使い、9公式費目は `official_adjusted`、`official=true`、
+`quarterlyDerived=false`、Other residualは `estimated_adjusted`、`official=false`、
+`quarterlyDerived=true` とする。source validationが失敗しても歴史推計を保持し、2017Q1 unavailable markerを追加する。
 chart/table/tooltip/CSV はこの measurement と同じ数値・metadata を使用し、
 表示側で再計算しない。凡例は既存名目グラフと共通にする。
 
@@ -3410,60 +3890,84 @@ data table、CSV の契約境界を検証する。Recharts の実ブラウザ描
 
 ### Component Tree
 
-`e-Stat 000040499070 loader` → `monthly completeness/duplicate validator` →
-`quarterly nominal adapter` → `Plan39-v2 bottom-up adapter` →
+`Plan39 nominal B/A + 000040499070 historical loader` → `historical profile validator` →
+`2005–2016 Plan39-v2 estimate adapter` +
+`000040499087 Excel build artifact (normalized quarterly CSV + metadata) loader and validator` →
+`official-quarterly row mapper (9 source categories + derived Other; dedicated kind)` →
 `existing nominal series registry` → `CpiChart` / nominal graph →
 shared tooltip・data table・CSV projection。
 
 Plan40 の年次アンカー入力は `validateCtiAdjustedV2Plan40Inputs` で、2005–2017 の対象年、
-10入力カテゴリ、有限かつ正の値、各 B/A/L の source/artifact metadata、`adoptedRange` が
+10入力カテゴリ、有限かつ正の名目値、nominal B/A の source/artifact metadata、`adoptedRange` が
 Plan40対象年と実データ行および `rawRange` に整合することを先に検証する。
 検証失敗は既存の `unavailable` / reason 経路へ渡し、四半期表示層で別系列、0補完、補間を
 選択しない。
 Plan39 の実 artifact/runtime は `buildCtiAdjustedV2Estimate` の typed `contract: "plan39"`
-を明示して既存の B/A/L 公開契約を使用し、Plan40 の対象年・metadata 厳格検証を適用しない。
+を明示して既存の nominal B/A 契約を使用し、Plan40 の対象年・metadata 厳格検証を適用しない。
 Plan40 runtime evidence は `contract: "plan40"` を明示するため、両契約の検証結果を
 混同しない。指定がない既存 builder 呼び出しは後方互換の Plan39 契約として扱う。
 
 ### Requirements
 
-- **WHEN** e-Stat `000040499070` の対象月が3か月とも一意で有限である、
-  **THEN** その四半期は月次3値の平均から導出し、2025年の基準化後平均を100とする。
-- **WHEN** 対象月が欠損、重複、非有限、または3か月未満である、**THEN**
+- **WHEN** 2005–2016の既存名目歴史推計の対象月が一意で有限である、
+  **THEN** 既存の名目B/A接続推計と名目月次profileの式・値を維持する。
+- **WHEN** SharedPlan40の年次・月次・四半期値を生成する、**THEN** Plan39世帯人数構成候補や
+  legacy unharmonized weight（2011年linear-share interpolationを含む）、2017/2018教育安定性診断のsetai-n特別集計weight、
+  または2018様式改正年の世帯人数プロフィールを適用して既存推計、季節profile、四半期値を補正または再スケールしない。
+- **WHEN** 2005–2016歴史推計の対象月が欠損、重複、非有限、または3か月未満である、**THEN**
   その四半期の全10カテゴリを一括して `value=null`、`status=unavailable`、非空の
   機械可読 `reason` とし、不完全なstackを表示せず、補間、0補完、重複マージ、
   別系列フォールバックを行わない。
-- **WHEN** 年次meanに使う2005–2017の対象年の月次入力に1件でも重複月がある、
+- **WHEN** 年次meanに使う2005–2016の対象年の月次入力に1件でも重複月がある、
   **THEN** その対象年の全Plan40四半期行・全10カテゴリを同じ
   `duplicate_month`、`value=null`、`status=unavailable` とし、重複が存在しない別四半期を
-  正常値として公開しない。2018Q1以降のlegacy経路とPlan39契約にはこの判定を適用しない。
-- **WHEN** 年次契約が有効で対象月だけが不備である、**THEN** 月次 failure matrix の
+  正常値として公開しない。この判定は公式四半期source（2017Q1以降）には適用しない。
+- **WHEN** `cti-distribution-adjusted-000040499087.xlsx` の `総・四(原)` に2017Q1以降の完全な
+  名目四半期値がある、**THEN** 主要9費目の公式原数値を使い、Otherを公式総合−主要9費目の
+  derived residualとして計算する。月次平均、年次Aアンカー、または別CTI入力で再計算・置換しない。
+- **WHEN** 公式四半期sourceの対象期、費目系列または名目原数値が欠落・重複・非有限である、
+  **THEN** 2005–2016年推計を保持し、2017Q1に `official_quarterly_source_unavailable_latest_period_unknown`
+  reasonの `unavailable` / `value=null` markerを公開する。グラフ注記、tooltip、表、CSVへreasonを伝播し、
+  2017Q1以降の値がなく最新対象期も不明であることを示す。月次profileや推計値へfallbackしない。
+- **WHEN** 公式四半期normalized CSV、sidecar metadata、manifest entryまたはsource/artifact hash pairが
+  欠落・不一致である、**THEN** 2005–2016の歴史推計は保持し、2017Q1に
+  `value=null`、`status=unavailable`、reason `official_quarterly_source_unavailable_latest_period_unknown`
+  のmarkerを公開する。UIは2017Q1以降の公式値がunavailableで最新対象期が不明と伝え、
+  月次値、推計値、legacy CTIへfallbackしない。
+- **WHEN** 2005–2016の年次契約が有効で対象月だけが不備である、**THEN** 月次 failure matrix の
   `insufficient_months` または `duplicate_month` などを reason とし、年次アンカー不備の
   reason に置き換えない。**WHEN** Plan40 の入力契約自体が不備である、**THEN** 別ケースとして
   全10カテゴリを同一の機械可読年次契約 reason、`value=null`、`status=unavailable` とする。
-- **WHEN** B/A/L、費目別β、D、またはOtherの年次anchorが欠損・重複・不正である、
+- **WHEN** nominal B/A、費目別β、またはOtherの年次anchorが欠損・重複・不正である、
   **THEN** その対象四半期の全10カテゴリを一括fail-closedにし、不完全なstackを表示しない。
-- **WHEN** 2005Q1–2017Q4を表示する、**THEN** 月次から派生した四半期値であることを
-  `quarterlyDerived=true`、`annualAnchorType`、metadata、noteに示し、公式四半期値とは
-  表示しない。2017は公式年次Aアンカーでも四半期値は公式ではない。
-- **WHEN** Plan39-v2 を計算する、**THEN** B/A/L、費目別β、D、2005–2016推計、
-  2017公式A、Other専用導出、bottom-up式を維持し、ResidualをOtherの代替にしない。
-- **WHEN** 2005–2017の名目グラフを描画する、**THEN** 全10カテゴリを積み上げ、
-  2018Q1以降は既存の費目別CTIを継続する。
+- **WHEN** 2005Q1–2016Q4を表示する、**THEN** 月次から派生した名目推計であることを
+  `quarterlyDerived=true`、`annualAnchorType=estimated`、metadata、noteに示す。
+- **WHEN** 2017Q1以降の完全な公式四半期値を表示する、**THEN** `frequency=quarterly`,
+  `aggregation=official_quarterly_original_value`, `official=true`, `annualAnchorType=official`,
+  `quarterlyDerived=false`、専用の `kind=plan40-official-quarterly` を9費目の公式観測に記録する。
+  Other residualは同じrow kindを使うが、`derived_quarterly_residual_from_official_nominal_total_minus_nine_categories`、
+  `seriesType=estimated_adjusted`、`official=false`、`quarterlyDerived=true` とし、10費目の合計を公式総合に一致させる。
+- **WHEN** Plan39-v2 の名目歴史推計を計算する、**THEN** B/Aの名目列を使い、実質列、
+  実質のみのL、およびL由来Dを推計入力にせず、既存の名目B/A接続による2005–2016推計と
+  Other専用導出を維持する。2017年Aアンカーは歴史推計の接続に使い、公式四半期値の代替にしない。
+- **WHEN** 2005–2016の名目推計を作る、**THEN** 実質Lから導く長期世帯構成補正を
+  適用せず、名目Bを名目A/Bの2017重複年で接続する。
+- **WHEN** 名目グラフを描画する、**THEN** 2005–2016は既存の推計10カテゴリ、2017Q1以降は
+  `総・四(原)` の9公式名目四半期原数値と総合−主要9費目のOther residualを積み上げる。
 - **WHEN** 名目グラフを描画する、**THEN** Plan39専用年次セクションを表示せず、
   既存名目グラフの共通凡例とregistryへ統合する。
-- **WHEN** 2017Q4から2018Q1へ遷移する、**THEN** 2017Q4以前の月次派生／bottom-up
-  と2018Q1以降の既存費目別CTIの切替を注記で明示する。
+- **WHEN** 2016Q4から2017Q1へ遷移する、**THEN** 既存歴史推計から公式調整済み四半期原数値への
+  入力切替を注記で明示する。
 - **WHEN** chart、tooltip、data table、CSVの同一行を出力する、**THEN**
   measurement metadata（source、unit、frequency、aggregation、status、reason、
   `seriesType`、`official`、`annualAnchorType`、`quarterlyDerived`、note）と数値が
   一致し、推計／公式の状態も全て同じである。
 - **WHEN** 推計値、公式値、または unavailable 値を表示する、**THEN** 注記、tooltip、
   表、CSVで同一の状態を示し、unavailable の数値セルは空欄とする。
-- **WHEN** 月次検証または bottom-up の必須入力／anchor検証が失敗する、**THEN**
+- **WHEN** 2005–2016の月次検証またはbottom-up必須入力/anchor検証が失敗する、**THEN**
   対象四半期の全10カテゴリを一括fail-closedにし、不完全なstackを表示せず、公式Aや
   別期間の既存CTIを推計値へ置換しない。
-- **WHEN** Plan40 の B/A/L 入力に 2005–2017 の対象年、10入力カテゴリ、source/artifact
+- **WHEN** Plan40 の nominal B/A 入力に 2005–2017 の対象年、10入力カテゴリ、source/artifact
   metadata のいずれかが欠落する、または値が非有限・非正値である、**THEN**
   年次アンカー契約を invalid とし、四半期計算層は対象期間の全10カテゴリを
   `value=null`、`status=unavailable`、非空の reason 付きで扱う。欠損年を別系列、0、補間で
@@ -3476,22 +3980,23 @@ Plan40 runtime evidence は `contract: "plan40"` を明示するため、両契�
 - **WHEN** Plan39 の既存 artifact/runtime publication gate を評価する、**THEN** `contract: "plan39"`
   の通常検証と publication gate を維持し、Plan40 の厳格な対象年検証を Plan39 の正常契約へ
   適用しない。
-- **WHEN** B/A/L の `adoptedRange` が Plan40対象年を包含しない、実データ行を包含しない、
+- **WHEN** nominal B/A の `adoptedRange` が Plan40対象年を包含しない、実データ行を包含しない、
   または `rawRange` の外側にある、**THEN** 同じ fail-closed reason体系で年次アンカー契約を
   invalid とし、対象measurementを `value=null`、`status=unavailable` とする。
-- **WHEN** L の実データ行だけが特定年に欠損する、**THEN** その年の推計だけを
-  `insufficient-data` とし、Lが実在する他年の推計や公式A年を不要に unavailable にしない。
-- **WHEN** A の metadata が `baseYear=2025` を宣言し、2025年の公式A総合アンカーが
+- **WHEN** 実質のみのLの実データ行が欠損する、**THEN** 名目推計値と公式名目A年を
+  unavailable にせず、Lの状態を名目計算から独立した監査情報として扱う。
+- **WHEN** nominal A の metadata が `baseYear=2025` を宣言し、2025年の公式名目A総合アンカーが
   有限かつ正である、**THEN** Plan40 は 2025年基準化契約を満たすものとして扱い、
   四半期値を2025年四半期平均で再正規化しない。**WHEN** この不変条件を検証できない、
   **THEN** 契約は fail-closed となり、理由 `A:base_year_not_2025` または
   `A:missing_or_non_positive_2025_anchor` を返す。
-- **WHEN** 年次アンカー検証に成功する、**THEN** 2005–2016 は bottom-up、2017 は公式Aを
-  年次アンカーとして選び、いずれも月次から派生した四半期値として扱う。2005–2016 は
-  `estimated_adjusted`／`annualAnchorType=estimated`、2017 は
-  `official_adjusted`／`annualAnchorType=official`、かつ全て
-  `quarterlyDerived=true` を保証する。2017のOtherはv2専用の年次anchorから導出し、
-  v1 Residualや同名月次系列を年次anchorとして代用しない。
+- **WHEN** 2005–2016の年次アンカー検証に成功する、**THEN** 名目B/A接続推計から得る
+  四半期値を `estimated_adjusted`／`annualAnchorType=estimated`／`quarterlyDerived=true` とする。
+- **WHEN** 2017Q1以降の公式四半期原数値を公開する、**THEN** Excel sheet `総・四(原)` の
+  9費目名目列をそのまま使用し、`official_adjusted`／`official=true`／`quarterlyDerived=false` とする。
+  Otherは公式総合−主要9費目から計算し、`derived_quarterly_residual_from_official_nominal_total_minus_nine_categories`／
+  `estimated_adjusted`／`official=false`／`quarterlyDerived=true` とする。年次Aアンカー、Tの月次平均、
+  またはその他の系列から公式四半期値を再計算しない。
 - **WHEN** 実 runtime の月次検証または Plan40 年次入力契約が失敗する、**THEN** 対象四半期の
   10費目すべてを同じ reason の `value=null`、`status=unavailable` とし、正常経路と同じ
   measurement 契約（source、unit、frequency、aggregation、seriesType、official、
@@ -3504,8 +4009,8 @@ Plan40 runtime evidence は `contract: "plan40"` を明示するため、両契�
   **THEN** それぞれを fail-closed failure matrix として固定し、別系列、0補完、補間を行わない。
 - **WHEN** Plan40 の `2017Q4` v2 行を公開する、**THEN** 10費目すべてを既存の名目四半期
   グラフへ同じ measurement 契約で渡し、専用年次セクションへ分岐しない。
-- **WHEN** 公開期間が `2018Q1` に進む、**THEN** v2 の月次派生／bottom-up 経路から
-  既存 CTI 費目積み上げ経路へ切り替え、既存の費目値を変更しない。
+- **WHEN** 公開期間が `2017Q1` に進む、**THEN** v2歴史推計から公式四半期Excel経路へ
+  切り替え、公式sheetの名目原数値を使う。
 - **WHEN** `projectQuarterlyPublicView()` が `legacy-cti` 行を受け取る、**THEN**
   年に関係なく既存22キーだけを投影し、v2 10キーを出力しない。
 - **WHEN** `projectQuarterlyPublicView()` が `plan40-v2-cost-stack` 行を受け取る、
@@ -3513,19 +4018,20 @@ Plan40 runtime evidence は `contract: "plan40"` を明示するため、両契�
 - **WHEN** `projectQuarterlyPublicView()` が `quarter` が1〜4の整数ではない行、または
   `label` が `${row.年}Q${row.quarter}` と一致しない行を受け取る、**THEN** その行を公開projection
   の結果から除外し、他の有効な四半期行は返す。正規データ生成と有効行の投影結果は変更しない。
-- **WHEN** 2017Q4から2018Q1へ行を差し替える、**THEN** aggregationは2017Q4側へ
-  `plan40-v2-cost-stack`、2018Q1側へ `legacy-cti` を設定し、projectionはkind以外の
-  表示側ロジックで境界を再計算しない。
-- **WHEN** `2017` の Plan40 四半期 measurement を公開する、**THEN** 年次アンカーは
-  `annualAnchorType=official`、四半期 measurement 自体は `official=false`、四半期値は
-  `quarterlyDerived=true` として保持し、公式四半期値とは表示しない。
+- **WHEN** 2016Q4から2017Q1へ行を差し替える、**THEN** aggregationは歴史推計側へ
+  `plan40-v2-cost-stack`、公式データ側へ専用の公式quarterly source kindを設定し、projectionは
+  年だけから入力経路を再推定しない。
+- **WHEN** 2017Q1以降の公式四半期measurementを公開する、**THEN** 9公式費目は `official=true`、
+  `quarterlyDerived=false` とし、Other residualは `official=false`、`quarterlyDerived=true` とする。
+  両者で元のsource mappingとderived formulaをmeasurement provenanceに保持する。
 - **WHEN** Plan40 の同一行を chart、tooltip、data table、CSV に投影する、**THEN**
   数値と全 measurement metadata の状態を同一 registry から参照し、全 surface で parity を保つ。
-- **WHEN** 同一の Plan40 `2017Q4` official annual-anchor fixture を各 surface adapter へ渡す、
+- **WHEN** 同一の Plan40 公式四半期fixtureを各 surface adapter へ渡す、
   **THEN** registry の全10 v2カテゴリで key 集合、value、status、reason、source、unit、frequency、
-  aggregation、seriesType、official、annualAnchorType、quarterlyDerived、note、model、
+  aggregation、seriesType、official、quarterlyDerived、note、model（9公式費目のofficial metadataとOtherの
+  derived residual metadataの違いを含む）、
   estimateVersion、baseYear、rawRange、adoptedRange が measurement 基準と一致し、table の状態・理由・注記、
-  tooltip payload/metadata、CSV の `key__status`、`key__reason`、`key__annualAnchorType`、
+  tooltip payload/metadata、CSV の `key__status`、`key__reason`、
   `key__quarterlyDerived` 等も同じ値を示す。Recharts の実 DOM 描画はこの adapter-contract parity の対象外とする。
 - **WHEN** 同じ fixture を unavailable にした場合、**THEN** 全10カテゴリを `value=null`、
   `status=unavailable`、同一の非空 reason とし、全 surface の数値セル／CSV 数値セルを空欄にする。
@@ -3536,29 +4042,48 @@ Plan40 runtime evidence は `contract: "plan40"` を明示するため、両契�
 
 ## SharedPlan 41: 正式調整済みCTIへの名目四半期接続
 
-Plan41 は Plan39 の年次原本・年次契約を保持し、Plan40 の2005–2017表示アンカーと
-2017年季節比契約を本節の方式で上書きする。2018Q1以降の既存値・選択経路は不変とする。
-したがって本節は、同じ期間を扱うPlan40の旧入力source・旧季節比式に優先する。Plan39の
-原本、年次モデル、公式2017年アンカーは読み取り専用で保持する。
+Plan41 は Plan39 の年次原本・年次契約と2005–2016年の既存名目推計を保持し、
+2017Q1以降の表示値を公式調整済み名目四半期原数値へ接続する。
+本節は同じ期間を扱うPlan40の旧入力source・旧季節比式に優先する。2005–2016年の年次値は
+nominal Bを2017年のnominal A/B重複年で接続して作り、real-only Lおよびそこから導くDの
+長期世帯構成補正は適用しない。2017年の公式分布調整済みnominal Aアンカーは保持する。
 
 ### Data Sources / Data Flow
 
-Plan39-v2 の年次アンカー H（2005–2016 はC、2017はA）、`loadCtiDataInternal` が選択した
-`CpiData[]` の T（`data/source/cti_data2025.csv`、`statInfId=000040499069`、2025年基準、
-総世帯、2017年12か月を含む）および過去季節比専用の M（`statInfId=000040499070`、
-二人以上の世帯、2005–2016）を入力とする。四半期計算は選択済みTを受け取り、別loaderで
-再選択したり固定ファイルを再読したりしない。
+Plan39-v2 の名目年次アンカー H（2005–2016 は nominal B を nominal A/B の2017重複年で
+接続した推計値、接続点は公式分布調整済み nominal A の2017年値）と、歴史四半期推計に使う
+名目 T/M を入力とする。Tは選択済み `loadCtiDataInternal` の `CpiData[]`（`data/source/cti_data2025.csv`、
+`statInfId=000040499069`、2025年基準、総世帯、2017年12か月を含む）、Mは
+`statInfId=000040499070`（二人以上世帯、2005–2016）の`消費支出（名目）`系列である。
+Tの2017年平均は2005–2016の既存接続係数を維持するためだけに用い、2017Q1以降の公開値には使わない。
+2017Q1以降は `data/source/cti-distribution-adjusted-000040499087.xlsx` sheet `総・四(原)` の
+公式2025年基準・総世帯・調整系列（分布調整値）・原数値の名目四半期列を使う。主要9費目は
+公式値、Otherは公式総合−主要9費目のderived residualとする。
+runtimeではこの一次sourceからbuild生成された `data/source/cti_data2025_distribution_adjusted_quarterly.csv`
+と同名 `.metadata.json` sidecarを読み、workbook relative path/filename・sheet・統計表ID・系列metadata・
+Excel source columnからcanonical category/public seriesへのmapping、`sourceSha256` と `csvSha256` を検証する。
+CSV/sidecarはmanifest、bootstrap、rollback snapshot、artifact pair validationの対象である。
+欠損・hash不一致時も2005–2016の歴史推計は保持し、2017Q1に
+`official_quarterly_source_unavailable_latest_period_unknown` reasonのunavailable markerを出して、
+2017Q1以降の値と最新対象期が不明である旨を表す。
+年次推計ではreal-only LとL由来Dを使わず、歴史推計に長期世帯構成補正を適用しない。
+A/Bの実質列も選択しない。
 
-費目 i ごとに `s_i = mean(T_i,2017) / H_i,2017` を一度だけ求める。2005–2016 は
-`Q_i,y,q = s_i H_i,y × mean(M_i,y,q) / mean(M_i,y,1..12)`、2017 は
-`Q_i,2017,q = s_i H_i,2017 × mean(T_i,2017,q) / mean(T_i,2017) = mean(T_i,2017,q)`
-とする。2018年以降は既存のT経路をそのまま利用する。2016→2017のMからTへの季節source
-切替は残余仮定として provenance に記録し、連続性を推定しない。
+公式四半期artifactの完全な期・費目・名目列のみを使用し、最終の公開期は入力artifactの
+最新完全四半期までとする。
 
-主要9費目は公式年次値を対応させる。HのOtherは、2017年だけAの公式総合から主要9費目を
-引いた残差（`17.3`）を使い、2005–2016年はPlan39の既存 `result.other` 推計値を保持する。
-一方、T/Mの月次Otherだけは各月の総合から主要9費目を引いた残差とする。独立した公式
-series 11は入力に使わず、総合は10費目の合算から生成する。`quarterlyAggregation` から既存の公開projection、グラフ、
+2005–2016の既存推計では各費目の `s_i = mean(T_i,2017) / H_i,2017` を保持し、
+`Q_i,y,q = s_i H_i,y × mean(M_i,y,q) / mean(M_i,y,1..12)` をそのまま用いる。
+`H_i,2017` は nominal A/B接続の公式分布調整済み名目Aアンカーである。この計算の2017年T平均は
+歴史推計の接続係数にのみ使われ、公開する2017Q1以降の値は公式四半期表から直接取得する。
+2017Q1以降は `Q_i,y,q = official_sheet_nominal_original_value_i,y,q` とし、月次四半期平均へ変換しない。
+2016→2017の季節source切替と2016Q4/2017Q1の公開source境界はprovenanceに記録し、値連続性を推定しない。
+
+2005–2016年の歴史推計では主要9費目にHを対応させ、OtherはPlan39の既存 `result.other` 推計値を保持する。
+歴史的な接続計算でHの2017 Otherを必要とする箇所では、Aの公式分布調整済み名目総合から主要9費目を
+引いた残差（`17.3`）を使う。一方、T/Mの月次Otherは各月の総合から主要9費目を引いた残差とする。
+2017Q1以降の公開Otherも公式四半期総合から主要9費目を差し引いて計算し、独立した公式
+series 11は使わない。10費目の合計は公式総合と一致させる。`quarterlyAggregation` から既存の公開projection、グラフ、
 tooltip、データ表、CSVまで同一のmeasurementとprovenanceを渡す。T/Mの月次Other残差は総合から主要9費目を直接減算し、
 丸めやゼロ下限を適用せず恒等式を保つ。ただしR4に従い、負または非正の季節性入力は表示値として通さず、
 measurementを`status=unavailable`、`reason=invalid_seasonal_input`としてfail-closedにする。負残差の検証では
@@ -3567,62 +4092,86 @@ measurementを`status=unavailable`、`reason=invalid_seasonal_input`としてfai
 
 ### Data Model
 
-既存の `SeriesMeasurement` / `SeriesDescriptor`（`src/types/chart.ts`）に、`sourceId`、`statInfId`、
-`householdScope`、`seasonalitySourceId`、`targetSourceId`、`targetHouseholdScope`、
-`bridgeAppliedRange`、`bridgeCoefficient` を保持する。元source・接続先source・基準年・適用範囲・
-単位・対象世帯・固定係数 `s_i`・季節sourceはこれらのフィールドと既存の `source`、`aggregation`、
-`baseYear`、`rawRange`、`adoptedRange` で同一measurementへ公開する。さらに
-`official=false`、`quarterlyDerived=true`、および fail-closed の `status`/`reason` を保持する。Plan41で補正した
-2005–2017の四半期値は公式四半期値として扱わず、Plan39の2017年次A直接値は従来どおり
-公式として保持する。既存の公開surfaceは同一measurementを参照し、表示側で再計算しない。
+2005–2016の歴史推計measurementには既存の `SeriesMeasurement` / `SeriesDescriptor` のsource、
+接続係数、季節source、`annualAnchorType=estimated`、`official=false`、`quarterlyDerived=true` を保持する。
+2017Q1以降の9公式measurementはExcel artifact、workbook relative path/filename、sheet `総・四(原)`、
+statInfId `000040499087`、quarter、名目列、source/artifact hash、Excel column-to-canonical mappingを
+provenanceへ記録し、`official=true`、`frequency=quarterly`、
+`aggregation=official_quarterly_original_value`、`annualAnchorType=official`、`quarterlyDerived=false` とする。
+Other measurementは公式総合から主要9費目を差し引いたderived residualであり、
+`aggregation=derived_quarterly_residual_from_official_nominal_total_minus_nine_categories`、
+`seriesType=estimated_adjusted`、`official=false`、`quarterlyDerived=true` を記録する。
+公式rowには専用の `kind=plan40-official-quarterly` を付与する。公式四半期値はA annual anchorや
+T monthly bridgeから再計算しない。公式source欠損時は2005–2016年値を維持しつつ2017Q1 unavailable markerと
+機械可読reasonを公開する。両経路ともchart、tooltip、
+data table、CSVは同一measurementを参照し、表示側で値を再計算しない。
 
 ### Component Tree
 
-`loadCtiDataInternal (selected T + non-enumerable ctiMetadata)` + `historical seasonal M loader` →
-Plan39 H と source/費目対応の検証 → `s_i`／表示アンカー／四半期値 builder →
+`Plan39 nominal B/A + selected T historical bridge` + `historical seasonal M loader` →
+Plan39 H と費目対応の検証 → `2005–2016 s_i`／四半期推計 builder +
+`000040499087 Excel-derived normalized CSV/metadata official nominal-quarter loader` →
 `server/lib/view-models/quarterlyAggregation.ts`（`aggregation=plan41_bridge`）→
 `src/lib/quarterlyPublicProjection.ts` → 名目グラフ、tooltip、データ表、CSV。
 
 ### Requirements
 
-- **WHEN** H、選択済みTの2017年12か月、Mの対象年12か月、および10費目の対応が検証済みである、
-  **THEN** 費目ごとに固定 `s_i` を一度だけ計算し、2005–2017の四半期表示アンカーへ適用する。
-- **WHEN** 2005–2016を四半期化する、**THEN** Mの同年12か月平均を季節比分母に用い、年次平均は
-  `s_i H_i,y` と一致させる。Mを2017年の水準または季節性に使わない。
-- **WHEN** 2017年を四半期化する、**THEN** Tの同年四半期平均へ一致させ、4四半期平均がTの
-  2017年平均になることをraw値で検証する。公開丸め後の一致は別に検証する。
-- **WHEN** 2018Q1以降を表示する、**THEN** 既存の正式T経路、値、metadataを変更せず、
-  2017Q4以前だけにPlan41の補正を適用する。
-- **WHEN** 10費目を構築する、**THEN** 2017年HのOtherはAの公式総合−主要9費目、2005–2016年Hの
-  Otherは既存 `result.other` 推計値、T/M月次のOtherは各々の総合−主要9費目とする。総合は10費目の
-  合算とし、残差には丸めやゼロ下限を適用せず恒等式を保つ。ただし負または非正の季節性入力は
-  `invalid_seasonal_input`でfail-closedにし、負のquarter outputを表示しない。独立した総合係数やseries 11を生成・使用しない。
-- **WHEN** 補正値を投影する、**THEN** 元source、先source、seasonal source、係数、基準年、単位、
-  世帯範囲、適用期間をprovenanceへ記録し、2005–2017の四半期measurementは `official=false` とする。
-- **WHEN** T/M/Hのmetadata、費目対応、単位、基準年、頻度、月キー、12か月完全性、値の有限性・正値を
-  検証できない、**THEN** 対象費目または対象年を `value=null`、`status=unavailable` とし、機械可読な
-  reasonを全projectionへ伝播する。0補完、補間、重複マージ、別loader選択、旧supportへのfallbackをしない。
-- **WHEN** runtime Tの検証に失敗する、**THEN** 欠損月は `runtime_t_insufficient_months`、重複月は
+- **WHEN** nominal B/Aから作るH、選択済みnominal Tの2017年12か月、nominal Mの対象年12か月、および10費目の対応が検証済みである、
+  **THEN** 費目ごとに固定 `s_i` を一度だけ計算し、2005–2016の既存歴史推計へ適用する。
+- **WHEN** 2005–2016を四半期化する、**THEN** nominal Mの同年12か月平均を季節比分母に用い、年次平均は
+  `s_i H_i,y` と一致させる。Hはnominal B/A接続値で、real-only L由来の長期世帯構成補正を含まない。
+- Mの名目月次プロファイルは四半期内の形状に使い、Mを2017年の水準または季節性に使わない。
+- **WHEN** `s_i` を計算する、**THEN** `mean(T_i,2017) / H_i,2017` を使い、Hの2017値は
+  公式分布調整済み名目A/B接続アンカーである。この係数は2005–2016歴史推計の維持にのみ使う。
+- **WHEN** 2017Q1以降を表示する、**THEN** Excel `総・四(原)` の公式調整済み名目四半期原数値を
+  直接使い、T月次平均や `s_i` で再計算しない。
+- **WHEN** 歴史推計の10費目と公式四半期系列を構築する、**THEN** 2005–2016年HのOtherは既存
+  `result.other` 推計値、過去の接続計算で必要な2017年HのOtherは公式分布調整済み名目A総合−主要9費目、
+  T/M月次のOtherは各々の総合−主要9費目とする。2017Q1以降の公開Otherは公式四半期総合から
+  主要9費目を差し引いたderived residualとし、10費目の合計を公式総合に一致させる。
+  歴史推計の総合は10費目の合算とし、残差には丸めやゼロ下限を
+  適用せず恒等式を保つ。ただし負または非正の季節性入力は`invalid_seasonal_input`でfail-closedにし、
+  負のquarter outputを表示しない。独立した総合係数やseries 11を生成・使用しない。
+- **WHEN** 2005–2016の補正値を投影する、**THEN** 元source、先source、seasonal source、係数、基準年、単位、
+  世帯範囲、適用期間をprovenanceへ記録し、四半期measurementは `official=false` とする。
+- **WHEN** 2017Q1以降の公式measurementを投影する、**THEN** Excel filename, sheet, statInfId,
+  workbook relative path, period, nominal source column, original-value type, household scope, base year,
+  source/artifact hashes, and source-column-to-canonical mapping are recorded in measurement provenance.
+  The 9 official expenses have `official=true`, `annualAnchorType=official`, `quarterlyDerived=false`;
+  Other has aggregation `derived_quarterly_residual_from_official_nominal_total_minus_nine_categories`,
+  `seriesType=estimated_adjusted`, `official=false`, `quarterlyDerived=true`. The row kind is
+  `plan40-official-quarterly`.
+- **WHEN** official quarterly source CSV, sidecar, manifest entry, or source/artifact hash pair is missing or invalid,
+  **THEN** historical estimates for 2005–2016 remain intact and a 2017Q1 marker is emitted with
+  `value=null`, `status=unavailable`, and reason `official_quarterly_source_unavailable_latest_period_unknown`.
+  The chart, tooltip, table, and CSV explain that 2017Q1 onward is unavailable and the latest target period is unknown;
+  no monthly, estimated, or legacy fallback is allowed.
+- **WHEN** T/M/Hまたは公式四半期sheetのmetadata、費目対応、単位、基準年、頻度、期間の完全性、値の有限性・正値を
+  検証できない、**THEN** 対象費目または対象期間を `value=null`、`status=unavailable` とし、機械可読な
+  reasonを全projectionへ伝播する。0補完、補間、重複マージ、別loader選択、月次値や旧supportへのfallbackをしない。
+- **WHEN** 歴史推計用runtime Tの検証に失敗する、**THEN** 欠損月は `runtime_t_insufficient_months`、重複月は
   `duplicate_month`、値の不正は `runtime_t_invalid`、metadata不一致は
   `runtime_t_metadata_mismatch` として対象期間をfail-closedにする。Hの年次アンカー不正は
   `v2_annual_anchor_unavailable` とする。
 - **WHEN** 選択済みTへ付与された `ctiMetadata` を伝播する、**THEN** 同じTのsourceId、statInfId、
   householdScope、seasonalitySourceId、targetSourceId、targetHouseholdScope、bridgeAppliedRange、
   bridgeCoefficientをchart、tooltip、data table、CSVへ保持し、loaderで別sourceを再選択しない。
-- **WHEN** 2017Q4と2018Q1を比較する、**THEN** 両者の境界変化率がTのraw値から算出した変化率と
-  一致することを検証する。MからTへの2016→2017季節source切替の値連続性は要求しない。
+- **WHEN** 2016Q4と2017Q1を比較する、**THEN** 2017Q1の公式sourceへの切替をprovenanceで明示し、
+  Mから公式四半期sourceへの境界で値連続性は要求しない。
 - **WHEN** chart、tooltip、data table、CSVへ同じ行を投影する、**THEN** 数値、状態、理由、出所、
   `official`、季節source、係数、注記が同一measurementと一致する。
 
 ### Non-goals
 
-- Plan39のC/A/L、係数、Other、年次artifactを再計算・改変しない。
-- 2018年以降のCTI値、source選択、系列定義、表示経路を変更しない。
+- 2005–2016年の既存名目推計や、2017年の公式分布調整済みnominal A接続アンカーを再計算しない。
+- 2017Q1以降の公開値を月次値や年次アンカーから再計算しない。
+- real-only L または L 由来Dを名目推計に加えず、2005–2016年推計へ長期世帯構成補正を適用しない。
 - TとMの世帯範囲差や2016→2017の季節source切替から母集団差・因果効果を推定しない。
 
 ### Plan41 implementation checkpoint（2026-09-23）
 
-選択済みTへの `ctiMetadata` 付与・注入、Tの2017年水準／季節性、Mの2005–2016年季節比、
+このcheckpointの数値は nominal B/AおよびL/D除外への切替前に取得した歴史的証跡であり、
+現行nominal年次推計の検証として扱わない。選択済みTへの `ctiMetadata` 付与・注入、Tの2017年水準／季節性、Mの2005–2016年季節比、
 Other残差、fail-closed理由、および `plan41_bridge` のmeasurement伝播を実装へ反映した。
 実データ検証では年次130件の最大誤差が `7.1e-15`、2017年四半期40値がTと一致し、
 2018年以降34四半期が深い比較で不変だった。2017Q4の総合は旧値109.8598505から
@@ -3631,6 +4180,9 @@ T raw 98.2431333へ接続され、2018Q1はraw 95.5640667（公開値95.56）だ
 関連テスト、type-check、lintの最終結果とJEV再判定はOrchestratorの検証記録に従う。
 
 ### Plan41 最終検証記録（2026-09-23）
+
+この最終検証はnominal B/A切替前の実装に対する記録である。現行nominal推計のテスト・
+型検査・lint・JEV再判定は未実施であり、この証跡から現行推計の合格を推論しない。
 
 公開面の実runtime provenanceは証跡JSONの29/29を確認した。最終実測の`pnpm test`は78 files、
 750 passed、4 skippedであり、hookのfocused runはsandbox外で2 files / 32 passedだった。`pnpm test`には
@@ -3655,6 +4207,9 @@ M→T seasonal source切替等の既知データ契約である。これは完�
 ## SharedPlan 40 続編: ユーザー視点の最小操作評価（履歴・後続記録により更新済み）
 
 > **履歴上の中間評価。** 以下の「2005–2017 が `unavailable`/`null`」という記述は、修正前の観測結果を保存したものであり、後続の「完了時のユーザー視点検証」および「実装完了チェックポイント」により superseded されている。現在の判定には使用しない。
+
+ただし、後続のPlan40完了・検証記録も今回の nominal B/A・L/D除外の改訂前に作られた履歴である。
+旧Plan40のL必須入力契約と旧real-input publication gateは現行名目契約に適用せず、名目版の受入証拠として再利用しない。
 
 Plan40 の続編評価では、実装内部の fixture や adapter ではなく、利用者が画面で行う最小限の操作を判定根拠とする。評価時点では、名目消費を選択してデータ表を展開し、CSVをダウンロードした。その結果、2005–2017 の全行は数値を持たず `unavailable`/`null` で、画面上の文言は「利用できません」だった。一方、2018Q1以降は数値を表示し、データ表の展開、CSVダウンロード、期間ごとの出所注記は操作できた。この観測は、2005Q1–2017Q4の表示可能な値と欠損理由の利用者向け説明を満たした証拠にはならない。
 
@@ -3689,7 +4244,9 @@ Plan40 loader の接続修正は完了した。`contract: "plan40"` のロード
 
 検証記録では、Plan40 関連41件、type-check、対象2ファイルの oxlint は通過した。全体 lint は `jev-request.mjs` の既存 `no-unsafe-finally` により失敗した。この既存失敗は Plan40 runtime の fail-closed 検証結果と別に記録する。
 
-### Plan40 実装完了チェックポイント（現行の権威ある判定）
+### Plan40 実装完了チェックポイント（旧Plan40履歴: nominal B/A・L/D改訂前、現行証拠ではない）
+
+以下は当時のPlan40実装に対する完了評価である。当時は受入済みと記録したが、その実装は後のnominal B/A・L/D除外改訂より前の契約に基づくため、現在の仕様・データ経路の完了証拠としては扱わない。
 
 続編JEVの中間 follow-up は `choice=needs_fix`、`confidence=0.47`（`needs_fix=0.60`、
 `clarified=0.34`、`needs_evidence=0.06`）だった。これは実装前の中間判定として保持し、完了判定とは扱わない。
@@ -3708,14 +4265,18 @@ Plan40 targeted tests 43件（実 artifact integration regression test を含む
 oxlint、`git diff --check` は通過した。
 全体 lint は既存 `skills/jev-review/scripts/jev-request.mjs` の `no-unsafe-finally` で失敗した。
 
-### 完了時のユーザー視点検証（現行の権威ある証拠）
+### 旧Plan40完了時のユーザー視点検証（nominal B/A・L/D改訂前の履歴、現行証拠ではない）
+
+以下は当時の受入操作と結果の記録であり、当時のPlan40受入条件を満たしたと評価した。現行の公式四半期名目値を直接使う契約に対する検証ではない。
 
 名目消費を選択し、データ表を展開し、CSVを1回ダウンロードする最小操作を再実施した。
 画面に「利用できません」の表示はなく、2005Q1 と 2017Q4 は v2 数値、2018Q1 は既存
 legacy CTI 数値を確認した。CSV は87行で、同じ3期間と対応する metadata を含み、画面とCSVの
 値・状態・出所が一致した。ユーザー視点の最小操作に関するPlan40受入条件を満たす。
 
-### 実装後JEVレビュー（前回チェックポイント・最新判定により更新済み）
+### 旧Plan40実装後JEVレビュー（nominal B/A・L/D改訂前の履歴、現行判定ではない）
+
+以下のJEV評価は当時の実装に対する履歴であり、現行の名目専用・公式四半期値経路を審査した結果ではない。
 
 実装後の通常の初回判定は `choice=valid_but_limited`、`confidence=0.39` だった。
 確率は `valid_but_limited=0.54`、`valid_as_defined=0.44`、`not_valid=0.01`、
@@ -3725,10 +4286,10 @@ legacy CTI 数値を確認した。CSV は87行で、同じ3期間と対応す�
 明示はなかったため、JEV判定にはこの記録上の制約がある。受入の根拠は、43件の targeted
 tests、type-check、対象oxlint、git diff check、およびブラウザとCSVのユーザー視点証拠とする。
 
-## Plan40 現行の完了判定（権威ある最終記録）
+## 旧Plan40 完了判定記録（nominal B/A・L/D改訂前の履歴、現行判定ではない）
 
-本仕様書のPlan40続編に関する現在の判定は、直前の「実装完了チェックポイント」「完了時のユーザー視点検証」および最新JEVレビューに基づき、完了とする。L の `missing_required_year` は入力検証失敗として fail-closed になることを実 artifact integration regression test で確認済みである。修正前の `unavailable`/`null` 観測、Plan39契約経由、Plan40入力範囲不整合、および過去のJEV判定は履歴として保持するが、現行判定を上書きしない。最小操作では名目消費の選択、データ表の展開、CSVのダウンロードを行い、2005Q1・2017Q4のv2数値、2018Q1のlegacy CTI数値、画面とCSVの値・状態・出所の対応を確認済みである。
-最新の実装後JEVレビューは HTTP 成功し、`choice=valid_as_defined`、`confidence=0.50`、確率は `valid_as_defined=0.63`、`valid_but_limited=0.37`、`not_valid=0`、`indeterminate=0` だった。`rawResponse` に `evidence` と `limitations` の明示はなかったため、この制約は保持する。これは直前の `valid_but_limited` / `clarified` 判定を supersede する最新結果であり、既存のテスト・型チェック・lintの代替とは扱わない。
+この完了判定はnominal B/A・L/D除外改訂前のPlan40契約に対する当時の記録であり、当時は完了と評価した。そこで確認したLの `missing_required_year`、最小操作、v2数値およびlegacy CTIとの対応は旧実装の証拠である。現行契約の判定には再利用しない。
+当時の最後の実装後JEVレビューはHTTP成功し、`choice=valid_as_defined`、`confidence=0.50`、確率は `valid_as_defined=0.63`、`valid_but_limited=0.37`、`not_valid=0`、`indeterminate=0` だった。`rawResponse` に `evidence` と `limitations` の明示はなかったため、この制約を記録する。この結果は旧Plan40履歴内で直前の `valid_but_limited` / `clarified` 判定をsupersedeしたものに限られ、現行nominal契約のJEV判定ではない。既存のテスト・型チェック・lintの代替とも扱わない。
 
 ## 続編: 実装完了チェックポイント
 

@@ -1,0 +1,296 @@
+{
+  "schemaVersion": "cti-size-composition-household-survey-panel-v1",
+  "sources": [
+    {
+      "year": 2005,
+      "twoOrMore": {
+        "statInfId": "000000331B02",
+        "url": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000000331B02",
+        "file": "data/source/cti-size-composition/raw/two-or-more/2005-000000331B02.xls",
+        "sha256": "bd265492c4f551364dcd192733de3b09053b5562d4a5c46b5f738ce31a5a60d6",
+        "sheet": "３-1全国・全世帯",
+        "table": "詳細結果表 年次 表番号3-1 世帯人員別 全国・二人以上の世帯"
+      },
+      "single": {
+        "statInfId": "00000033280A",
+        "url": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=00000033280A",
+        "file": "data/source/cti-size-composition/raw/single/2005-00000033280A.xls",
+        "sha256": "602ec75467a461f5f34d9371d84aaebb9acbc37f122fec65b4c8eb9a7832168a",
+        "sheet": "全・勤・勤外",
+        "table": "単身世帯 詳細結果表 年次 表番号1 全世帯"
+      }
+    },
+    {
+      "year": 2006,
+      "twoOrMore": {
+        "statInfId": "000000331D54",
+        "url": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000000331D54",
+        "file": "data/source/cti-size-composition/raw/two-or-more/2006-000000331D54.xls",
+        "sha256": "6089d387141f1c0e93736085b9660c79e7a12ee4c76272c1d12529de6489c733",
+        "sheet": "３-1全国・全世帯",
+        "table": "詳細結果表 年次 表番号3-1 世帯人員別 全国・二人以上の世帯"
+      },
+      "single": {
+        "statInfId": "000000332819",
+        "url": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000000332819",
+        "file": "data/source/cti-size-composition/raw/single/2006-000000332819.xls",
+        "sha256": "fbe4eb17c0964cd228090a557d33107bdcf120cd8b0282565efd2bbace707245",
+        "sheet": "全・勤・勤外",
+        "table": "単身世帯 詳細結果表 年次 表番号1 全世帯"
+      }
+    },
+    {
+      "year": 2007,
+      "twoOrMore": {
+        "statInfId": "000001158890",
+        "url": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000001158890",
+        "file": "data/source/cti-size-composition/raw/two-or-more/2007-000001158890.xls",
+        "sha256": "ab5743f814f16a3bb328d6c3f62bd7a20c4766a578ee3d64739a338f570aa76a",
+        "sheet": "３-1全国・二人以上の世帯",
+        "table": "詳細結果表 年次 表番号3-1 世帯人員別 全国・二人以上の世帯"
+      },
+      "single": {
+        "statInfId": "000001157598",
+        "url": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000001157598",
+        "file": "data/source/cti-size-composition/raw/single/2007-000001157598.xls",
+        "sha256": "0ed4013c2720afa01fb6ddd7a254251375b20da4665a413ce669c8bcb2eab624",
+        "sheet": "単身・勤・勤外",
+        "table": "単身世帯 詳細結果表 年次 表番号1 全世帯"
+      }
+    },
+    {
+      "year": 2008,
+      "twoOrMore": {
+        "statInfId": "000002209379",
+        "url": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000002209379",
+        "file": "data/source/cti-size-composition/raw/two-or-more/2008-000002209379.xls",
+        "sha256": "0f113878c196ad0c25d8b6d33790365c5e6035607526842808326cd1d9b409ed",
+        "sheet": "３-1全国・二人以上の世帯",
+        "table": "詳細結果表 年次 表番号3-1 世帯人員別 全国・二人以上の世帯"
+      },
+      "single": {
+        "statInfId": "000002199330",
+        "url": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000002199330",
+        "file": "data/source/cti-size-composition/raw/single/2008-000002199330.xls",
+        "sha256": "40253af913cd079dc2c2fba21d445807d2d570681c6fead1bed3f30f2c86ea46",
+        "sheet": "単身・勤・勤外",
+        "table": "単身世帯 詳細結果表 年次 表番号1 全世帯"
+      }
+    },
+    {
+      "year": 2009,
+      "twoOrMore": {
+        "statInfId": "000007370315",
+        "url": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000007370315",
+        "file": "data/source/cti-size-composition/raw/two-or-more/2009-000007370315.xls",
+        "sha256": "393f5e3d5ee5e1ac0e04c51c3070fa388606e050ef91ac6bbd4ed18f1e193db5",
+        "sheet": "３-1全国・二人以上の世帯",
+        "table": "詳細結果表 年次 表番号3-1 世帯人員別 全国・二人以上の世帯"
+      },
+      "single": {
+        "statInfId": "000007368972",
+        "url": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000007368972",
+        "file": "data/source/cti-size-composition/raw/single/2009-000007368972.xls",
+        "sha256": "e14cfabb6535e89dd8e07cec6804ea83a24b291583d22d993d8f05f86b9e81d3",
+        "sheet": "単身・勤・勤外",
+        "table": "単身世帯 詳細結果表 年次 表番号1 全世帯"
+      }
+    },
+    {
+      "year": 2010,
+      "twoOrMore": {
+        "statInfId": "000008635814",
+        "url": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000008635814",
+        "file": "data/source/cti-size-composition/raw/two-or-more/2010-000008635814.xls",
+        "sha256": "cb999a8865330c4f7292e5a4e2a769f8d48df10877f158bf269389be94b75e44",
+        "sheet": "3-1全国・二人以上の世帯",
+        "table": "詳細結果表 年次 表番号3-1 世帯人員別 全国・二人以上の世帯"
+      },
+      "single": {
+        "statInfId": "000008635877",
+        "url": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000008635877",
+        "file": "data/source/cti-size-composition/raw/single/2010-000008635877.xls",
+        "sha256": "127aa7e7d57c5853c3ce914ff8a150fc83fcc40730beacaafc2b52f83ced4467",
+        "sheet": "単身・勤・勤外",
+        "table": "単身世帯 詳細結果表 年次 表番号1 全世帯"
+      }
+    },
+    {
+      "year": 2011,
+      "twoOrMore": {
+        "statInfId": "000012687855",
+        "url": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000012687855",
+        "file": "data/source/cti-size-composition/raw/two-or-more/2011-000012687855.xls",
+        "sha256": "122b080223e69b5a392e46b3c808de09a3b3d82aacd206c6cc0b0c08c8012a75",
+        "sheet": "3-1全国・二人以上の世帯",
+        "table": "詳細結果表 年次 表番号3-1 世帯人員別 全国・二人以上の世帯"
+      },
+      "single": {
+        "statInfId": "000012687982",
+        "url": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000012687982",
+        "file": "data/source/cti-size-composition/raw/single/2011-000012687982.xls",
+        "sha256": "0bc458ded46047dcf1a05b8f61b89aa2c5e4f4903215473d3a6ea399ab501d6e",
+        "sheet": "単身・勤・勤外",
+        "table": "単身世帯 詳細結果表 年次 表番号1 全世帯"
+      }
+    },
+    {
+      "year": 2012,
+      "twoOrMore": {
+        "statInfId": "000019023705",
+        "url": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000019023705",
+        "file": "data/source/cti-size-composition/raw/two-or-more/2012-000019023705.xls",
+        "sha256": "9120ce2ca8c6fdf6f02ece28db1399143f567d02fa5c7a54772a120fe95028ff",
+        "sheet": "3-1全国・二人以上の世帯",
+        "table": "詳細結果表 年次 表番号3-1 世帯人員別 全国・二人以上の世帯"
+      },
+      "single": {
+        "statInfId": "000019023757",
+        "url": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000019023757",
+        "file": "data/source/cti-size-composition/raw/single/2012-000019023757.xls",
+        "sha256": "7ec77c16736d4c266331f3e7dddbc179fadeb9d37424a4139850d02f3dc6fdd3",
+        "sheet": "単身・勤・勤外",
+        "table": "単身世帯 詳細結果表 年次 表番号1 全世帯"
+      }
+    },
+    {
+      "year": 2013,
+      "twoOrMore": {
+        "statInfId": "000023621360",
+        "url": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000023621360",
+        "file": "data/source/cti-size-composition/raw/two-or-more/2013-000023621360.xls",
+        "sha256": "8455c5bb6588a44f1fb9301609f1b5744d8bc0c5f1b4914de922dbca12a45956",
+        "sheet": "3-1全国・二人以上の世帯",
+        "table": "詳細結果表 年次 表番号3-1 世帯人員別 全国・二人以上の世帯"
+      },
+      "single": {
+        "statInfId": "000023621412",
+        "url": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000023621412",
+        "file": "data/source/cti-size-composition/raw/single/2013-000023621412.xls",
+        "sha256": "f8cf75263368a353f78597b09ff6d6a86bc9e99e06776cde20ebfb5a6267b9eb",
+        "sheet": "単身・勤・勤外",
+        "table": "単身世帯 詳細結果表 年次 表番号1 全世帯"
+      }
+    },
+    {
+      "year": 2014,
+      "twoOrMore": {
+        "statInfId": "000028352449",
+        "url": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000028352449",
+        "file": "data/source/cti-size-composition/raw/two-or-more/2014-000028352449.xls",
+        "sha256": "f9841fca14a818d4694d35e6f9c9965cd441916ad4f15a4008b3f50a0651b4b9",
+        "sheet": "3-1全国・二人以上の世帯",
+        "table": "詳細結果表 年次 表番号3-1 世帯人員別 全国・二人以上の世帯"
+      },
+      "single": {
+        "statInfId": "000028352921",
+        "url": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000028352921",
+        "file": "data/source/cti-size-composition/raw/single/2014-000028352921.xls",
+        "sha256": "448bd92eb295501d7eec8f4d53568253196fe0fb1a662d27b94bc3afaf668d90",
+        "sheet": "単身・勤・勤外",
+        "table": "単身世帯 詳細結果表 年次 表番号1 全世帯"
+      }
+    },
+    {
+      "year": 2015,
+      "twoOrMore": {
+        "statInfId": "000031370115",
+        "url": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000031370115",
+        "file": "data/source/cti-size-composition/raw/two-or-more/2015-000031370115.xls",
+        "sha256": "c69d72b103131edc810cf08b9bbc1ba28476c818aacd2565d73ab6156e44feba",
+        "sheet": "3-1全国・二人以上の世帯",
+        "table": "詳細結果表 年次 表番号3-1 世帯人員別 全国・二人以上の世帯"
+      },
+      "single": {
+        "statInfId": "000031370093",
+        "url": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000031370093",
+        "file": "data/source/cti-size-composition/raw/single/2015-000031370093.xls",
+        "sha256": "69d53c339087c961a9fa56d8c4e28598221c925d976de5c3b558b0946ab43a08",
+        "sheet": "単身・勤・勤外",
+        "table": "単身世帯 詳細結果表 年次 表番号1 全世帯"
+      }
+    },
+    {
+      "year": 2016,
+      "twoOrMore": {
+        "statInfId": "000031534678",
+        "url": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000031534678",
+        "file": "data/source/cti-size-composition/raw/two-or-more/2016-000031534678.xls",
+        "sha256": "aa9be88b11892829c4cb8057c8bfc13b6a2d49fcce93a8f86c956e66c506237f",
+        "sheet": "3-1全国・二人以上の世帯",
+        "table": "詳細結果表 年次 表番号3-1 世帯人員別 全国・二人以上の世帯"
+      },
+      "single": {
+        "statInfId": "000031534763",
+        "url": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000031534763",
+        "file": "data/source/cti-size-composition/raw/single/2016-000031534763.xls",
+        "sha256": "73b3d22a0f401f4986d615ac2c1ee040effb1a20021f8d9eb14e87eb32f29351",
+        "sheet": "単身・勤・勤外",
+        "table": "単身世帯 詳細結果表 年次 表番号1 全世帯"
+      }
+    },
+    {
+      "year": 2017,
+      "twoOrMore": {
+        "statInfId": "000031674320",
+        "url": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000031674320",
+        "file": "data/source/cti-size-composition/raw/two-or-more/2017-000031674320.xls",
+        "sha256": "6cd8e44d134eea9eebe1f6a4f178ae861959fd91f28ba48103ae950a965d7e47",
+        "sheet": "3-1全国・二人以上の世帯",
+        "table": "詳細結果表 年次 表番号3-1 世帯人員別 全国・二人以上の世帯"
+      },
+      "single": {
+        "statInfId": "000031673520",
+        "url": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000031673520",
+        "file": "data/source/cti-size-composition/raw/single/2017-000031673520.xls",
+        "sha256": "b584f4f4e9c8f2ab7778f88bd074b5f50b1fc774fd9d3a5fe00b42b588f74869",
+        "sheet": "単身・勤・勤外",
+        "table": "単身世帯 詳細結果表 年次 表番号1 全世帯"
+      }
+    }
+  ],
+  "classifications": [
+    "消費支出",
+    "食料",
+    "住居",
+    "光熱・水道",
+    "家具・家事用品",
+    "被服及び履物",
+    "保健医療",
+    "交通・通信",
+    "教育",
+    "教養娯楽",
+    "その他の消費支出"
+  ],
+  "classificationReference": "https://www.stat.go.jp/data/kakei/9.html",
+  "classificationBreaksToReview": [
+    2005,
+    2007,
+    2010,
+    2015
+  ],
+  "output": {
+    "expenditureCsv": "expenditure.csv",
+    "conditionalTwoPlusDistributionCsv": "two-plus-household-distribution.csv",
+    "normalizedOutputs": {
+      "expenditureCsv": {
+        "path": "expenditure.csv",
+        "sha256": "304cdbf3bcc880d755a128fe604df0a83a5ae8d4b52fcacc6481a24d47606f75"
+      },
+      "conditionalTwoPlusDistributionCsv": {
+        "path": "two-plus-household-distribution.csv",
+        "sha256": "7454d7c06144538645ef9a08959832bb05053449025747ee41d70b4cc277acb1"
+      }
+    },
+    "unit": "yen per household per month",
+    "nominal": true,
+    "fivePlusAggregation": "within each two-or-more-household source table, average 5-person and 6+-person expenditures using the same year's table 3-1 adjusted household counts",
+    "categoryMatching": "exact top-level Japanese labels only; no CPI or real-value fields are used"
+  },
+  "caveats": [
+    "The 3-1 distribution is conditional on two-or-more-person households; it is not the all-household CTI/LFS household-size weight.",
+    "Single-person expenditure comes from the separate single-household survey; the single-household source does not provide the same all-household 1-person proportion needed to merge distributions.",
+    "This panel is a Household Survey proxy, not CTI's composite of three surveys.",
+    "Category label matching does not prove full classification equivalence across the listed change years; those years require sensitivity treatment."
+  ]
+}

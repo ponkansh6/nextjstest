@@ -110,6 +110,14 @@ export function DataTablesSection({ tables }: DataTablesSectionProps) {
                               data-measurement-source-id={measurement.sourceId}
                               data-measurement-stat-inf-id={measurement.statInfId}
                               data-measurement-household-scope={measurement.householdScope}
+                              data-measurement-source-workbook={measurement.sourceWorkbook}
+                              data-measurement-source-sheet={measurement.sourceSheet}
+                              data-measurement-source-column={measurement.sourceColumn}
+                              data-measurement-source-role={measurement.sourceRole}
+                              data-measurement-source-derived-from-columns={measurement.sourceDerivedFromColumns?.join(
+                                ";",
+                              )}
+                              data-measurement-canonical-series={measurement.canonicalSeries}
                               data-measurement-seasonality-source-id={
                                 measurement.seasonalitySourceId
                               }

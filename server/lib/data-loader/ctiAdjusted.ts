@@ -11,6 +11,7 @@ import {
 } from "../ctiAdjustedConnectionEstimate";
 import {
   buildCtiAdjustedV2Estimate,
+  type CtiAdjustedV2HouseholdComposition,
   type CtiAdjustedV2Result,
 } from "../ctiAdjustedConnectionEstimateV2";
 import {
@@ -59,6 +60,7 @@ type CtiAdjustedManifest = {
 };
 
 const STATISTICAL_CODE = "00200567";
+const NOMINAL_ANNUAL_VALUE_TYPE = "原数値（名目指数）";
 const HASH_PATTERN = /^[a-f0-9]{64}$/i;
 
 const names: Record<"B" | "A" | "L", string[]> = {
@@ -145,6 +147,125 @@ function readJson(file: string): unknown {
   return JSON.parse(fs.readFileSync(file, "utf8"));
 }
 
+const finiteNumber = (value: unknown): value is number =>
+  typeof value === "number" && Number.isFinite(value);
+
+function loadProductionPi2Plus(root: string): CtiAdjustedV2HouseholdComposition | null {
+  try {
+    const dir = path.resolve(root, "../cti-size-composition");
+    const manifestFile = path.join(dir, "production-pi2plus-manifest.json");
+    const manifestBytes = fs.readFileSync(manifestFile);
+    const manifest = JSON.parse(manifestBytes.toString("utf8")) as {
+      schemaVersion?: string;
+      artifactStatus?: string;
+      artifact?: { path?: string; sha256?: string };
+      inputs?: Record<string, { path?: string; sha256?: string }>;
+      sourceRawFiles?: Record<string, { path?: string; sha256?: string }>;
+    };
+    if (manifest.schemaVersion !== "plan39-production-pi2plus-manifest-v1") return null;
+    if (
+      Object.keys(manifest.inputs ?? {})
+        .sort()
+        .join(",") !==
+        ["januaryShares", "januaryTrace", "weights", "weightsManifest"].sort().join(",") ||
+      Object.keys(manifest.sourceRawFiles ?? {})
+        .sort()
+        .join(",") !== Array.from({ length: 9 }, (_, i) => String(2017 + i)).join(",") ||
+      manifest.artifactStatus !== "provisional_source_bridged_by_2017_centering"
+    )
+      return null;
+    const sourceRoot = path.resolve(root, "../../../");
+    const verifyHash = (relative: string, expected: string) => {
+      const file = path.resolve(sourceRoot, relative);
+      if (!file.startsWith(`${sourceRoot}${path.sep}`)) return false;
+      return (
+        HASH_PATTERN.test(expected) &&
+        fs.existsSync(file) &&
+        createHash("sha256").update(fs.readFileSync(file)).digest("hex") === expected
+      );
+    };
+    for (const source of Object.values(manifest.inputs ?? {}))
+      if (!source.path || !source.sha256 || !verifyHash(source.path, source.sha256)) return null;
+    for (const source of Object.values(manifest.sourceRawFiles ?? {}))
+      if (!source.path || !source.sha256 || !verifyHash(source.path, source.sha256)) return null;
+    const artifactPath = manifest.artifact?.path;
+    if (artifactPath !== "production-pi2plus.json" || !manifest.artifact?.sha256) return null;
+    const artifactFile = path.join(dir, artifactPath);
+    const artifactBytes = fs.readFileSync(artifactFile);
+    const artifactSha256 = createHash("sha256").update(artifactBytes).digest("hex");
+    if (artifactSha256 !== manifest.artifact.sha256) return null;
+    const artifact = JSON.parse(artifactBytes.toString("utf8")) as {
+      schemaVersion?: string;
+      modelStatus?: string;
+      historicalPi2Plus?: Record<string, number>;
+      historicalPiStatusByYear?: Record<
+        string,
+        {
+          status?: string;
+          synthetic?: boolean;
+          benchmarkId?: string;
+          connectionStatus?: string;
+          interpolationMethod?: string | null;
+        }
+      >;
+      calibrationPi2Plus?: Record<string, number>;
+      caveats?: string[];
+    };
+    if (
+      artifact.schemaVersion !== "plan39-production-pi2plus-v1" ||
+      artifact.modelStatus !== "provisional_source_bridged_by_2017_centering"
+    )
+      return null;
+    const historicalPi2Plus: Record<number, number> = {};
+    const historicalPiStatusByYear: CtiAdjustedV2HouseholdComposition["historicalPiStatusByYear"] =
+      {};
+    const calibrationPi2Plus: Record<number, number> = {};
+    for (let year = 2005; year <= 2017; year++) {
+      const value = artifact.historicalPi2Plus?.[year];
+      const quality = artifact.historicalPiStatusByYear?.[year];
+      const isSynthetic = year === 2011;
+      if (
+        !finiteNumber(value) ||
+        !(value > 0 && value < 1) ||
+        !quality ||
+        quality.synthetic !== isSynthetic ||
+        quality.status !==
+          (isSynthetic
+            ? "synthetic_interpolation_unverified"
+            : "published_annual_unverified_vintage") ||
+        quality.connectionStatus !== "unverified_connected_series" ||
+        typeof quality.benchmarkId !== "string" ||
+        !quality.benchmarkId ||
+        quality.interpolationMethod !== (isSynthetic ? "linear_share_interpolation" : null)
+      )
+        return null;
+      historicalPi2Plus[year] = value;
+      historicalPiStatusByYear[year] =
+        quality as CtiAdjustedV2HouseholdComposition["historicalPiStatusByYear"][number];
+    }
+    for (let year = 2017; year <= 2025; year++) {
+      const value = artifact.calibrationPi2Plus?.[year];
+      if (!finiteNumber(value) || !(value > 0 && value < 1)) return null;
+      calibrationPi2Plus[year] = value;
+    }
+    return {
+      historicalPi2Plus,
+      historicalPiStatusByYear,
+      calibrationPi2Plus,
+      provenance: {
+        artifactPath: path.relative(sourceRoot, artifactFile),
+        artifactSha256,
+        manifestSha256: createHash("sha256").update(manifestBytes).digest("hex"),
+        historicalSource: "weights.csv IV-4 annual household counts; 2011 synthetic interpolation",
+        calibrationSource: "annual January setai-n national pi2plus special tabulations",
+        caveats: artifact.caveats ?? [],
+      },
+    };
+  } catch {
+    return null;
+  }
+}
+
 function readManifest(root: string): CtiAdjustedManifest {
   const file = path.join(root, "manifest.json");
   if (!fs.existsSync(file)) throw new Error("missing CTI adjusted manifest");
@@ -191,14 +312,14 @@ function validateMetadata(
   )
     return false;
   if (extended.statisticalCode !== STATISTICAL_CODE) return false;
+  if ((kind === "B" || kind === "A") && extended.valueType !== NOMINAL_ANNUAL_VALUE_TYPE)
+    return false;
   const hash = extended.sha256 ?? extended.csvSha256 ?? extended.hash;
   if (!hash || !HASH_PATTERN.test(hash)) return false;
-  if (
-    manifest &&
-    (extended.schemaVersion !== manifest.schemaVersion || extended.revision !== manifest.revision)
-  )
-    return false;
   const manifestArtifact = manifest?.artifacts[kind];
+  if (manifest && extended.schemaVersion !== manifest.schemaVersion) return false;
+  const expectedRevision = manifestArtifact?.revision ?? manifest?.revision;
+  if (expectedRevision && extended.revision !== expectedRevision) return false;
   if (manifestArtifact?.statInfId && extended.statInfId !== manifestArtifact.statInfId)
     return false;
   const metadataSourceUrl = extended.sourceUrl ?? extended.downloadUrl;
@@ -364,6 +485,7 @@ export function loadCtiAdjustedV2Estimate(
   const inputs = loadCtiAdjustedInputs(options);
   const result = buildCtiAdjustedV2Estimate(inputs.B, inputs.A, inputs.L, {
     contract: options.contract ?? "plan39",
+    householdComposition: inputs.householdComposition ?? undefined,
   });
   // Plan40 owns its input validation and annual/publication state. Its result
   // must not be replaced by the Plan39 evidence gate, which is only a Plan39
@@ -384,7 +506,12 @@ export function loadCtiAdjustedV2Estimate(
       ...result.publicationGate,
       ...gate,
       warningReasonCodes: result.publicationGate.warningReasonCodes,
-      diagnostics: result.publicationGate.diagnostics,
+      diagnostics: [
+        ...result.publicationGate.diagnostics.filter(
+          (diagnostic) => diagnostic !== "publication_gate_closed",
+        ),
+        ...(gate.accepted ? [] : ["publication_gate_closed"]),
+      ],
     },
   };
 }
@@ -397,6 +524,7 @@ type LoadedCtiAdjustedInputs = {
   loadReasons: string[];
   manifestInvalid: boolean;
   artifactRoot: string;
+  householdComposition: CtiAdjustedV2HouseholdComposition | null;
 };
 
 type Plan39AnalysisArtifact = { path?: string; sha256?: string };
@@ -440,12 +568,19 @@ function loadMatchingPlan39Analysis(artifactRoot: string): Plan39Analysis | null
         ];
       }),
     );
+    const composition = loadProductionPi2Plus(root);
     expectedFingerprint = `sha256:${createHash("sha256")
       .update(
         JSON.stringify({
           manifest: createHash("sha256").update(manifestBytes).digest("hex"),
           audit: createHash("sha256").update(auditBytes).digest("hex"),
           artifacts,
+          householdComposition: composition
+            ? {
+                artifact: composition.provenance.artifactSha256,
+                manifest: composition.provenance.manifestSha256,
+              }
+            : null,
         }),
       )
       .digest("hex")}`;
@@ -521,7 +656,16 @@ export function loadCtiAdjustedInputs(
   const B = load("B");
   const A = load("A");
   const L = load("L");
-  return { B, A, L, missingKinds, loadReasons, manifestInvalid, artifactRoot: root };
+  return {
+    B,
+    A,
+    L,
+    missingKinds,
+    loadReasons,
+    manifestInvalid,
+    artifactRoot: root,
+    householdComposition: loadProductionPi2Plus(root),
+  };
 }
 
 export const loadCtiAdjustedData = loadCtiAdjustedConnectionEstimate;

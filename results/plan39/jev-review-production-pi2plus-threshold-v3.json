@@ -1,0 +1,112 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-30T02:20:37.215Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "model": "jev-latest",
+    "state": {
+      "evaluationScope": "implementation_checkpoint_validity",
+      "background": "Review the provisional Plan39 V2 production correction and its updated Other-share jump threshold. Category baseline[t,c]=B[t,c]*A[2017,c]/B[2017,c] for nine major categories and Other (Other is derived from total less nine majors where missing). Category endpoint coefficient gamma[c]=(A[2025,c]-baseline[2025,c])/(piJan[2025]-piJan[2017]). For 2005-2016, corrected[t,c]=baseline[t,c]+gamma[c]*(piIV4[t]-piIV4[2017]); total is the sum of corrected categories. Official A from 2017 onward passes through unchanged. The residual jump metric is abs(change in 100*Other/total) in percentage points. Its raw official-A maximum over all 8 pairs from 2017->18 through 2024->25 is 0.763941940412554 pp. The dynamic threshold is ceil(rawMaximum*100)/100 = 0.77 pp (round upward to next 0.01 pp), and diagnostics retain both values. The 20 adjacent pairs from 2005->06 through 2024->25 all pass; 2016->17 changes 0.7661764640058344 pp and passes 0.77. Current input-matched publication gate is accepted=true/status=pass with no blocking reasons.",
+      "acceptanceCriteria": [
+        "Threshold is derived from official A share changes only, then dynamically rounded upward by ceil(raw maximum * 100)/100; estimated jumps do not affect threshold derivation.",
+        "All 20 adjacent pairs are tested using the same effective threshold; an exceeded or unevaluable required pair closes publication.",
+        "Household-share input is manifest/hash validated; 2011 is identified as synthetic interpolation from unverified 2010/2012 endpoints.",
+        "Category-specific endpoint correction remains additive; category gamma sum reconciles with independently computed total gamma and total equals category sum.",
+        "Only 2005-2016 values are estimated; 2017 onward preserves official A unchanged.",
+        "The endpoint calibration uses the saved nominal B/A annual JSON precision of one decimal, disclosed in artifacts and diagnostics.",
+        "The 2018-2024 metrics are explicitly retrospective because 2025 is used for calibration, and are not represented as independent forecast or causal evidence.",
+        "Current manifest, source hashes, artifact hash, and analysis input fingerprint match."
+      ],
+      "verification": [
+        "Latest analysis artifact: results/plan39/plan39-analysis-a8c7ad0fa68a5208.json; inputFingerprint sha256:a8c7ad0fa68a5208c24ff6d86bd562e60613ed0ea4f127cded1de8ec4b2c744f.",
+        "Latest result records raw threshold max 0.763941940412554, effective threshold 0.77, 8/8 official pairs evaluable, and 20/20 adjacent pair thresholdPass=true with no failed jumps.",
+        "2016->2017 Other-share jump is 0.7661764640058344 percentage points and thresholdPass=true under effective 0.77.",
+        "Publication gate accepted=true, status=pass, reasonCodes=[], blockingReasonCodes=[].",
+        "2011 historicalPiStatusByYear entry is synthetic_interpolation_unverified, synthetic=true, benchmarkId derived-LFS-IV-4-2010-2012-linear-share.",
+        "ctiInputPrecision is saved nominal B/A annual artifacts (one decimal). 2018-2024 retrospective MAE/RMSE change from 1.835685801939113 / 2.181862878656486 to 0.07758913057365037 / 0.08486097633869942.",
+        "Category-to-total endpoint gamma discrepancy is 3.268496584496461e-13; maximum historical total/category reconciliation error is 0.",
+        "Current pi2plus artifact and manifest hashes are f0e716f980a2129df163034b2a480f8e948e0c5f352f1b406ac41a4978d17a63 and e002ecec397c07691ccdfe8e69817debb5fc0c9e2a054ca276eaa8eb837a5e00; they match the latest result provenance.",
+        "OpenSpec and README document the dynamic ceiling rule, raw/effective values, all-pass boundary, one-decimal precision, 2011 synthetic status, and retrospective limitation. No tests were run for this audit."
+      ],
+      "knownConstraints": [
+        "This is a provisional predictive correction; the 2018-2024 comparison is in-sample retrospectively calibrated using 2025 and does not prove causality or independent forecasting performance.",
+        "Historical IV-4 and January setai-n shares are different source/vintage definitions; centering at 2017 does not establish a validated bridge.",
+        "2011 remains synthetic/unverified and must not be misrepresented as observed.",
+        "Assess both mathematical rule and fail-closed implementation; do not infer that passing the rounded threshold validates causality or independent predictive accuracy."
+      ],
+      "outputRequirement": "Choose one listed choice. For any non-pass, provide a case-specific finding, affected file/requirement, observed evidence, and either a concrete proposed fix or exact additional evidence needed. Do not invent details."
+    },
+    "questions": {
+      "implementation": {
+        "type": "choice",
+        "instructions": "Does the supplied evidence support the implementation against the stated threshold and provisional correction criteria? Return a probability distribution over the listed choices.",
+        "criteria": {
+          "valid_as_defined": "The supplied evidence supports acceptance as defined.",
+          "requirements_mismatch": "Requirements conflict with intended behavior; identify the requirement and correction.",
+          "missing_prerequisites_info": "Prerequisite information is missing; identify exactly what is needed.",
+          "incomplete_implementation_info": "Implementation information is incomplete; identify missing details or evidence.",
+          "implementation_issue": "An implementation issue exists; identify its location, evidence, and correction.",
+          "scope_violation": "The proposal exceeds or falls outside the agreed scope; identify the boundary and adjustment.",
+          "other": "A material concern does not fit the categories; identify its location, evidence, and fix or needed evidence.",
+          "indeterminate": "The supplied context cannot support a judgment; identify missing context if possible."
+        }
+      }
+    }
+  },
+  "questionIds": [
+    "implementation"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "implementation": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.85,
+        "probabilities": {
+          "missing_prerequisites_info": 0.01,
+          "scope_violation": 0,
+          "other": 0.02,
+          "implementation_issue": 0.05,
+          "valid_as_defined": 0.88,
+          "incomplete_implementation_info": 0.03,
+          "indeterminate": 0,
+          "requirements_mismatch": 0.01
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.85,
+    "probabilities": {
+      "missing_prerequisites_info": 0.01,
+      "scope_violation": 0,
+      "other": 0.02,
+      "implementation_issue": 0.05,
+      "valid_as_defined": 0.88,
+      "incomplete_implementation_info": 0.03,
+      "indeterminate": 0,
+      "requirements_mismatch": 0.01
+    },
+    "passProbability": 0.88,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

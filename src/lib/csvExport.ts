@@ -44,6 +44,12 @@ export interface BuildCsvOptions {
     sourceId?: string;
     statInfId?: string;
     householdScope?: string;
+    sourceWorkbook?: string;
+    sourceSheet?: string;
+    sourceColumn?: string;
+    sourceRole?: string;
+    sourceDerivedFromColumns?: string[];
+    canonicalSeries?: string;
     seasonalitySourceId?: string;
     targetSourceId?: string;
     targetHouseholdScope?: string;
@@ -140,6 +146,18 @@ export const buildCsv = (
   const includeBridgeMetadata =
     metadata.some(hasBridgeMetadata) ||
     rows.some((row) => keys.some((key) => hasBridgeMetadata(rowMeasurementValue(row, key))));
+  const hasSourceArtifactMetadata = (measurement: Partial<CsvMeasurement> | undefined) =>
+    measurement?.sourceWorkbook !== undefined ||
+    measurement?.sourceSheet !== undefined ||
+    measurement?.sourceColumn !== undefined ||
+    measurement?.sourceRole !== undefined ||
+    measurement?.sourceDerivedFromColumns !== undefined ||
+    measurement?.canonicalSeries !== undefined;
+  const includeSourceArtifactMetadata =
+    metadata.some(hasSourceArtifactMetadata) ||
+    rows.some((row) =>
+      keys.some((key) => hasSourceArtifactMetadata(rowMeasurementValue(row, key))),
+    );
   const metadataHeaders = metadata.flatMap(({ key }) => [
     `${key}__label`,
     `${key}__valueType`,
@@ -169,6 +187,16 @@ export const buildCsv = (
           `${key}__targetHouseholdScope`,
           `${key}__bridgeAppliedRange`,
           `${key}__bridgeCoefficient`,
+        ]
+      : []),
+    ...(includeSourceArtifactMetadata
+      ? [
+          `${key}__sourceWorkbook`,
+          `${key}__sourceSheet`,
+          `${key}__sourceColumn`,
+          `${key}__sourceRole`,
+          `${key}__sourceDerivedFromColumns`,
+          `${key}__canonicalSeries`,
         ]
       : []),
   ]);
@@ -208,6 +236,12 @@ export const buildCsv = (
         sourceId,
         statInfId,
         householdScope,
+        sourceWorkbook,
+        sourceSheet,
+        sourceColumn,
+        sourceRole,
+        sourceDerivedFromColumns,
+        canonicalSeries,
         seasonalitySourceId,
         targetSourceId,
         targetHouseholdScope,
@@ -248,6 +282,16 @@ export const buildCsv = (
                 ? `${bridgeAppliedRange.startYear}-${bridgeAppliedRange.endYear}`
                 : "",
               bridgeCoefficient ?? "",
+            ]
+          : []),
+        ...(includeSourceArtifactMetadata
+          ? [
+              sourceWorkbook ?? "",
+              sourceSheet ?? "",
+              sourceColumn ?? "",
+              sourceRole ?? "",
+              sourceDerivedFromColumns?.join(";") ?? "",
+              canonicalSeries ?? "",
             ]
           : []),
       ].map(escapeCsvCell);

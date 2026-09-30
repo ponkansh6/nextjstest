@@ -37,6 +37,55 @@ export function isContinuousMonths(months: string[]): boolean {
   });
 }
 
+function isContinuousQuarterLabels(labels: string[]): boolean {
+  return labels.every((label, index) => {
+    const current = label.match(/^(\d{4})Q([1-4])$/);
+    if (!current) return false;
+    if (index === 0) return true;
+    const previous = labels[index - 1].match(/^(\d{4})Q([1-4])$/);
+    return Boolean(
+      previous &&
+      Number(current[1]) * 4 + Number(current[2]) ===
+        Number(previous[1]) * 4 + Number(previous[2]) + 1,
+    );
+  });
+}
+
+const OFFICIAL_QUARTERLY_WORKBOOK_PATH =
+  "data/source/official-cti-2025/cti-distribution-adjusted-000040499087.xlsx";
+const OFFICIAL_QUARTERLY_COLUMN_MAPPING = [
+  { column: "B", header: null, canonicalSeries: "period", sourceRole: "coded_period" },
+  { column: "H", header: "時間軸コード", canonicalSeries: "period", sourceRole: "period_code" },
+  { column: "I", header: "四半期平均", canonicalSeries: "period", sourceRole: "period_label" },
+  ...[
+    "総合",
+    "食料",
+    "住居",
+    "光熱・水道",
+    "家具・家事用品",
+    "被服及び履物",
+    "保健医療",
+    "交通・通信",
+    "教育",
+    "教養娯楽",
+  ].map((category, index) => ({
+    column: String.fromCharCode("J".charCodeAt(0) + index),
+    header: `${category === "総合" ? "消費支出" : category}（名目）`,
+    canonicalSeries: category,
+    normalizedColumn: category,
+    sourceRole: category === "総合" ? "official_total" : "official_nominal_observation",
+  })),
+  {
+    column: "T",
+    header: "その他の消費支出（名目）",
+    canonicalSeries: "その他の消費支出",
+    normalizedColumn: "その他の消費支出",
+    sourceRole: "unpublished_derived_residual",
+    sourceValue: "-",
+    derivation: "J (official total) minus K:S (nine official nominal categories)",
+  },
+];
+
 export function validateCtiLegacySupport(content: string): string | Map<string, number> {
   const rows = Papa.parse<string[]>(content, { header: false, skipEmptyLines: true }).data;
   const headerIndex = rows.findIndex(
@@ -129,6 +178,8 @@ export function validateCtiPair(
       paths.metadata,
       paths.candidateDistributionAdjusted,
       paths.candidateDistributionAdjustedMetadata,
+      paths.candidateDistributionAdjustedQuarterly,
+      paths.candidateDistributionAdjustedQuarterlyMetadata,
     );
   if (required.some((filePath) => !fs.existsSync(filePath))) return "missing required CTI set file";
   const content = fs.readFileSync(pair.mainPath, "utf8");
@@ -216,6 +267,89 @@ export function validateCtiPair(
     if (createHash("sha256").update(csv).digest("hex") !== checked.csvSha256)
       return "metadata SHA-256 mismatch";
   }
+  const quarterlyCsv = fs.readFileSync(paths.candidateDistributionAdjustedQuarterly, "utf8");
+  let quarterlyMetadata: Record<string, unknown>;
+  let plan39Manifest: Record<string, unknown>;
+  try {
+    quarterlyMetadata = JSON.parse(
+      fs.readFileSync(paths.candidateDistributionAdjustedQuarterlyMetadata, "utf8"),
+    ) as Record<string, unknown>;
+    plan39Manifest = JSON.parse(
+      fs.readFileSync(path.join(process.cwd(), "data/source/cti-adjusted/manifest.json"), "utf8"),
+    ) as Record<string, unknown>;
+  } catch {
+    return "invalid official quarterly metadata or Plan39 manifest";
+  }
+  const quarterlyEntry = (
+    plan39Manifest.artifacts as Record<string, Record<string, unknown>> | undefined
+  )?.quarterlyNominal;
+  const annualEntry = (
+    plan39Manifest.artifacts as Record<string, Record<string, unknown>> | undefined
+  )?.A;
+  const annualA = JSON.parse(
+    fs.readFileSync(path.join(process.cwd(), "data/source/cti-adjusted/A.json"), "utf8"),
+  ) as {
+    metadata?: Record<string, unknown>;
+  };
+  const annualABytes = fs.readFileSync(path.join(process.cwd(), "data/source/cti-adjusted/A.json"));
+  const quarterlyHash = createHash("sha256").update(quarterlyCsv).digest("hex");
+  const quarterlyMetadataHash = createHash("sha256")
+    .update(fs.readFileSync(paths.candidateDistributionAdjustedQuarterlyMetadata))
+    .digest("hex");
+  let sourceWorkbookBytes: Buffer;
+  try {
+    sourceWorkbookBytes = fs.readFileSync(OFFICIAL_QUARTERLY_WORKBOOK_PATH);
+  } catch {
+    return "missing official quarterly source workbook";
+  }
+  const sourceWorkbook = quarterlyMetadata.sourceWorkbook as
+    | { path?: unknown; fileName?: unknown }
+    | undefined;
+  if (
+    quarterlyMetadata.schemaVersion !== "plan39-quarterly-nominal-v1" ||
+    quarterlyMetadata.artifact !== path.basename(paths.candidateDistributionAdjustedQuarterly) ||
+    quarterlyMetadata.statisticalCode !== "00200567" ||
+    quarterlyMetadata.statInfId !== "000040499087" ||
+    quarterlyMetadata.valueType !== "原数値（名目指数）" ||
+    quarterlyMetadata.householdScope !== "総世帯" ||
+    quarterlyMetadata.frequency !== "quarterly" ||
+    quarterlyMetadata.sourceSheet !== "総・四(原)" ||
+    sourceWorkbook?.path !== OFFICIAL_QUARTERLY_WORKBOOK_PATH ||
+    sourceWorkbook?.fileName !== "cti-distribution-adjusted-000040499087.xlsx" ||
+    JSON.stringify(quarterlyMetadata.columnMapping) !==
+      JSON.stringify(OFFICIAL_QUARTERLY_COLUMN_MAPPING) ||
+    createHash("sha256").update(sourceWorkbookBytes).digest("hex") !==
+      quarterlyMetadata.sourceSha256 ||
+    quarterlyMetadata.revision !== plan39Manifest.revision ||
+    quarterlyMetadata.revision !== annualA.metadata?.revision ||
+    quarterlyMetadata.sourceSha256 !== annualA.metadata?.sourceSha256 ||
+    annualEntry?.path !== "A.json" ||
+    annualEntry?.sha256 !== createHash("sha256").update(annualABytes).digest("hex") ||
+    quarterlyMetadata.csvSha256 !== quarterlyHash ||
+    quarterlyEntry?.path !== "../cti_data2025_distribution_adjusted_quarterly.csv" ||
+    quarterlyEntry?.metadataPath !==
+      "../cti_data2025_distribution_adjusted_quarterly.metadata.json" ||
+    quarterlyEntry?.sha256 !== quarterlyHash ||
+    quarterlyEntry?.metadataSha256 !== quarterlyMetadataHash ||
+    quarterlyEntry?.revision !== quarterlyMetadata.revision ||
+    quarterlyEntry?.sourceSha256 !== quarterlyMetadata.sourceSha256
+  )
+    return "official quarterly CTI artifact/metadata/manifest mismatch";
+  const quarterlyRows = Papa.parse<Record<string, string>>(quarterlyCsv, {
+    header: true,
+    skipEmptyLines: true,
+  });
+  const quarterlyPeriod = quarterlyRows.data.map((row) => row.period?.trim() ?? "");
+  const quarterlyStart = quarterlyMetadata.adoptedRange as Record<string, unknown> | undefined;
+  if (
+    quarterlyRows.errors.length ||
+    quarterlyPeriod[0] !== "2017Q1" ||
+    !isContinuousQuarterLabels(quarterlyPeriod) ||
+    quarterlyPeriod.at(-1) !== quarterlyStart?.end ||
+    quarterlyStart?.start !== "2017Q1" ||
+    quarterlyStart.rows !== quarterlyPeriod.length
+  )
+    return "invalid official quarterly CTI period range";
   const records = (filePath: string) =>
     Papa.parse<Record<string, string>>(fs.readFileSync(filePath, "utf8"), {
       header: true,

@@ -79,6 +79,16 @@ export function buildCtiFilePaths() {
       "data/source",
       "cti_data2025_distribution_adjusted.metadata.json",
     ),
+    candidateDistributionAdjustedQuarterly: path.join(
+      process.cwd(),
+      "data/source",
+      "cti_data2025_distribution_adjusted_quarterly.csv",
+    ),
+    candidateDistributionAdjustedQuarterlyMetadata: path.join(
+      process.cwd(),
+      "data/source",
+      "cti_data2025_distribution_adjusted_quarterly.metadata.json",
+    ),
     candidateSupportNominal: path.join(process.cwd(), "data/source", "cti_support_nominal2025.csv"),
     candidateSupportReal: path.join(process.cwd(), "data/source", "cti_support_real2025.csv"),
     seriesMap: path.join(process.cwd(), "data/source", "cti-2025-series-map.csv"),

@@ -1,0 +1,103 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-30T00:14:50.284Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "model": "jev-latest",
+    "state": {
+      "evaluationScope": "implementation_checkpoint_validity",
+      "background": "Review the current Plan39-v2 change that replaces annual absolute Other-value jumps with jumps in Other's share of total. The implementation computes 100 × Other / 総合 and compares absolute adjacent-year differences in percentage points. It derives the threshold as the maximum over all eight official A pairs 2017→2018 through 2024→2025. Estimated years do not contribute to threshold calibration; the same threshold evaluates historical adjacent pairs including the estimated-to-official 2016→2017 connection. The legacy v1 residual-boundary sweep remains separate and does not control v2 publication.",
+      "acceptanceCriteria": [
+        "Other-share percentage-point jumps are used for Plan39-v2 threshold acceptance, with threshold derived only from complete official A adjacent pairs 2017–2025.",
+        "Missing or invalid total/Other values and any unevaluable official calibration pair fail closed; every historical adjacent pair including 2016→2017 is checked and recorded.",
+        "The final publication gate diagnostic publication_gate_closed agrees with post-LOO accepted/status in both analysis generation and runtime loading.",
+        "The specification distinguishes current v2 share threshold behavior from superseded legacy v1 residual threshold behavior; the regenerated analysis artifact reflects the implementation."
+      ],
+      "verification": [
+        "Source inspection: server/lib/ctiAdjustedConnectionEstimateV2.ts computes shares at lines 651–678 and pair pass/fail at 680–721; acceptance blockers are at 866–880.",
+        "Source inspection: scripts/plan39/run-analysis.mjs lines 250–267 and server/lib/data-loader/ctiAdjusted.ts lines 373–394 recompute publication_gate_closed from the post-LOO gate.",
+        "Artifact inspection: results/plan39/plan39-analysis-31774fca0be2fc86.json reports threshold=0.763941940412554 percentage points, all 8 official pairs evaluable, no unevaluable pairs, 2016→2017 share change=-0.7638721675114013 and thresholdPass=true; publicationGate accepted=true/status=pass/diagnostics=[].",
+        "Specification inspection: openspec/specs/nextjstest/spec.md lines 412–416 scope 1.4 to superseded legacy v1; lines 3228–3252 describe active share-based v2 threshold.",
+        "Tests and other verification commands were not run for this review checkpoint."
+      ],
+      "knownConstraints": [
+        "Read-only review; do not modify code or run tests.",
+        "JEV review supplements normal tests, type checks, and lint; it does not replace them.",
+        "Review only supplied non-secret code and artifact excerpts; no credentials are review content."
+      ],
+      "outputRequirement": "Choose one listed choice. For a reason choice, give a case-specific finding, affected location or requirement, observed evidence, and either a concrete proposed fix or exact additional evidence needed. Do not invent details."
+    },
+    "questions": {
+      "implementation": {
+        "type": "choice",
+        "instructions": "Does the supplied evidence support the implementation against the acceptance criteria? Return a probability distribution over the listed choices.",
+        "criteria": {
+          "valid_as_defined": "The supplied evidence supports acceptance as defined.",
+          "requirements_mismatch": "Requirements conflict with intended behavior; identify the requirement and correction.",
+          "missing_prerequisites_info": "Prerequisite information is missing; identify exactly what is needed.",
+          "incomplete_implementation_info": "Implementation information is incomplete; identify missing details or evidence.",
+          "implementation_issue": "An implementation issue exists; identify its location, evidence, and correction.",
+          "scope_violation": "The proposal exceeds or falls outside the agreed scope; identify the boundary and adjustment.",
+          "other": "A material concern does not fit the categories; identify its location, evidence, and fix or needed evidence.",
+          "indeterminate": "The supplied context cannot support a judgment; identify missing context if possible."
+        }
+      }
+    }
+  },
+  "questionIds": [
+    "implementation"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "implementation": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.89,
+        "probabilities": {
+          "missing_prerequisites_info": 0,
+          "implementation_issue": 0.06,
+          "indeterminate": 0,
+          "valid_as_defined": 0.91,
+          "other": 0,
+          "requirements_mismatch": 0.01,
+          "scope_violation": 0,
+          "incomplete_implementation_info": 0.02
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.89,
+    "probabilities": {
+      "missing_prerequisites_info": 0,
+      "implementation_issue": 0.06,
+      "indeterminate": 0,
+      "valid_as_defined": 0.91,
+      "other": 0,
+      "requirements_mismatch": 0.01,
+      "scope_violation": 0,
+      "incomplete_implementation_info": 0.02
+    },
+    "passProbability": 0.91,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

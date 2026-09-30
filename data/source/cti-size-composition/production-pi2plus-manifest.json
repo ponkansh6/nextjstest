@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "plan39-production-pi2plus-manifest-v1",
+  "artifact": {
+    "path": "production-pi2plus.json",
+    "sha256": "f0e716f980a2129df163034b2a480f8e948e0c5f352f1b406ac41a4978d17a63"
+  },
+  "inputs": {
+    "weights": {
+      "path": "data/source/cti-size-composition/weights.csv",
+      "sha256": "2098287276fa564d0280c9c7c29a336548d634bd20db739bbd1582ad71e1fcd2"
+    },
+    "weightsManifest": {
+      "path": "data/source/cti-size-composition/weights-source-manifest.json",
+      "sha256": "2f709fb82b5b974ef0b0463d41689d55c458148e38cfbc4fb12abde14db4dd5c"
+    },
+    "januaryShares": {
+      "path": "data/source/cti-size-composition/two-plus-share-backtest/lfs-national-shares.csv",
+      "sha256": "7b2a71c97b4662bdb121246825534051f30b6959f8f3f83b7b74c7374e474c91"
+    },
+    "januaryTrace": {
+      "path": "data/source/cti-size-composition/two-plus-share-backtest/source-trace.json",
+      "sha256": "eb7d72929443dd984667395b71e2faeb1a9f425f26c4a341e72ecb2d31db087f"
+    }
+  },
+  "sourceRawFiles": {
+    "2017": {
+      "path": "data/source/cti-size-composition/raw/lfs-special-jan/2017-setai-n.xls",
+      "sha256": "78dfeb79a9c39495ade1f8dee2469da5e3ba8a94d81c48621590e4c3bc8e7682"
+    },
+    "2018": {
+      "path": "data/source/cti-size-composition/raw/lfs-special-jan/2018-setai-n.xls",
+      "sha256": "7032cd9d7b06f26f2cea9b6de00c9a9e22527ae08d98ecfa4a8e2af88a665928"
+    },
+    "2019": {
+      "path": "data/source/cti-size-composition/raw/lfs-special-jan/2019-setai-n.xls",
+      "sha256": "52fb89bbf360c5ca72f6cbe65ccf09342736bf0077d3938c7df78ee86ccab1d8"
+    },
+    "2020": {
+      "path": "data/source/cti-size-composition/raw/lfs-special-jan/2020-setai-n.xls",
+      "sha256": "b5e541674119e5dfdae8b69c0801bf7561b36bc8567e67ab86f2d1921363e92e"
+    },
+    "2021": {
+      "path": "data/source/cti-size-composition/raw/lfs-special-jan/2021-setai-n.xls",
+      "sha256": "558ec9b2abe88e10e6b18cd17d9071efc719d556f5369fbaf5443a3e89398579"
+    },
+    "2022": {
+      "path": "data/source/cti-size-composition/raw/lfs-special-jan/2022-setai-n.xls",
+      "sha256": "6bdb29720ded3ce0e6f49a28fdc004af7b67549726b61aae87dc2c73989910e3"
+    },
+    "2023": {
+      "path": "data/source/cti-size-composition/raw/lfs-special-jan/2023-setai-n.xls",
+      "sha256": "64101813896c485c4584f1b4881a75435cddb0bfa3b4321367fa727315894e3b"
+    },
+    "2024": {
+      "path": "data/source/cti-size-composition/raw/lfs-special-jan/2024-setai-n.xls",
+      "sha256": "ad0c9e8cdc0c3cb04f6d830006ddab7c999840ababd5dd6ada78b6fd9ccb1c46"
+    },
+    "2025": {
+      "path": "data/source/cti-size-composition/raw/lfs-special-jan/2025-setai-n.xlsx",
+      "sha256": "6dac12725446a8cf1e8e8325fd0ce7cec3b0f55f897fc9edeb416503631d4a22"
+    }
+  },
+  "artifactStatus": "provisional_source_bridged_by_2017_centering"
+}

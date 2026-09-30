@@ -15,17 +15,22 @@ const makeMonth = (month: number, value = 10): CpiData => {
 };
 
 describe("2018年以降のCTI四半期完全性", () => {
-  it("3か月が揃った有効値0の四半期は名目・実質に残す", () => {
+  it("月次集計は3か月が揃った有効値0の四半期を名目・実質に残す", () => {
     const data = [makeMonth(1, 0), makeMonth(2, 0), makeMonth(3, 0)];
     const result = computeQuarterlyAggregates(data, { year: 2018, month: 3 });
 
-    expect(result.nominal.filter((row) => row.年 >= 2018).map((row) => row.label)).toEqual([
-      "2018Q1",
-    ]);
+    const monthlyNominal = result.nominal.filter(
+      (row) => row.kind === "legacy-cti" && row.年 >= 2018,
+    );
+    expect(monthlyNominal.map((row) => row.label)).toEqual(["2018Q1"]);
     expect(result.real.filter((row) => row.年 >= 2018).map((row) => row.label)).toEqual(["2018Q1"]);
+    expect(monthlyNominal[0]?.kind).toBe("legacy-cti");
+    expect(monthlyNominal[0]?.[CONSUMPTION_NOMINAL_KEYS[0]]).toBe(0);
     expect(
-      result.nominal.find((row) => row.label === "2018Q1")?.[CONSUMPTION_NOMINAL_KEYS[0]],
-    ).toBe(0);
+      result.nominal.find(
+        (row) => row.label === "2018Q1" && row.kind === "plan40-official-quarterly",
+      ),
+    ).toBeDefined();
   });
 
   const incompleteCases: Array<[string, (data: CpiData[]) => void]> = [
@@ -44,7 +49,12 @@ describe("2018年以降のCTI四半期完全性", () => {
     mutate(data);
     const result = computeQuarterlyAggregates(data, { year: 2018, month: 3 });
 
-    expect(result.nominal.filter((row) => row.年 >= 2018)).toEqual([]);
+    expect(result.nominal.filter((row) => row.kind === "legacy-cti" && row.年 >= 2018)).toEqual([]);
+    expect(
+      result.nominal.find(
+        (row) => row.label === "2018Q1" && row.kind === "plan40-official-quarterly",
+      ),
+    ).toBeDefined();
     expect(result.real.filter((row) => row.年 >= 2018)).toEqual([]);
   });
 
@@ -59,8 +69,8 @@ describe("2018年以降のCTI四半期完全性", () => {
     ] as CpiData[];
     const serverResult = computeQuarterlyAggregates(data, { year: 2018, month: 3 });
     expect(serverResult.nominal.map((row) => row.label)).toContain("2017Q4");
-    expect(serverResult.nominal.filter((row) => row.年 >= 2018).map((row) => row.label)).toEqual([
-      "2018Q1",
-    ]);
+    expect(
+      serverResult.nominal.find((row) => row.label === "2018Q1" && row.kind === "legacy-cti"),
+    ).toBeDefined();
   });
 });

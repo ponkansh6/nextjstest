@@ -1,0 +1,106 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-29T23:05:13.488Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "model": "jev-latest",
+    "state": {
+      "evaluationScope": "implementation_checkpoint_validity",
+      "background": "Review the new research-only Plan39 two-plus-share backtest implemented in scripts/plan39/two-plus-share-backtest.mjs, with output in results/plan39/two-plus-share-backtest/summary.json and annual-backtest.csv and provenance in data/source/cti-size-composition/two-plus-share-backtest/source-trace.json. Scope is a test of whether multiplying the basic CTI education share by all-households two-plus share improves prediction after 2017 calibration. Exclude 2017 from validation; validate 2018–2025 only. This does not modify or feed production estimator, loader, publication gates, or quarterly calculations. Independent read-only review found calculations and source joins consistent.",
+      "acceptanceCriteria": [
+        "Use pB_t=B_edu/B_total and pi2plus_t=1-pi1_t. Calibrate q2017=(Aedu17/Atotal17)/(Bedu17/Btotal17), then K=q2017/pi2plus17. Compare baseline pAhat_t=pB_t*q2017 with proposed pAhat_t=pB_t*pi2plus_t*K.",
+        "2017 is calibration/anchor only; validation is all eight years 2018–2025, with coverage 8/8 and no omitted validation years.",
+        "CTI inputs come from official 2025-base raw XLSX files: basic B statInfId 000040499069 and adjusted A statInfId 000040499087, sheet 総・年. The source trace records exact annual rows and I/J/R year/total/education cells, source hashes and raw values for every 2017–2025 year.",
+        "Annual January setai-n files provide exact national counts from column E, sheet/year-specific household-distribution table, size bins 1,2,3,4,5+, published denominator 1,000,000. pi2plus is computed as one minus single-household share. Published rounding may make size-bin shares total 999,999 or 1,000,001 parts; the script retains published counts without renormalizing.",
+        "Calibration K=1.5442044275. On validation 2018–2025, anchor-only MAE/RMSE/bias are 0.0671437/0.0842242/+0.0616872 percentage points; proposed pi2plus model metrics are 0.1148997/0.1437164/-0.0904172 percentage points. Thus adding pi2plus worsened absolute prediction errors in this backtest; report this outcome as a research result, not a successful improvement claim.",
+        "Caveats: each setai-n file is published as the special tabulation for that year's January Household Survey; the monthly correction uses trailing-12-month LFS household-size shares, making the January snapshots annual proxies rather than calendar-year averages. Household Survey redesigned in 2018. LFS population benchmark changed to 2015 Census estimates beginning January 2017 and 2020 Census estimates beginning January 2022; pooled metrics include these discontinuity years.",
+        "The backtest is research-only with no production connection. Script regeneration completed, git diff --check passed, and no tests were run."
+      ],
+      "verification": [
+        "Inspected current script, result summary and annual table, and source trace with CTI raw rows/cells and LFS national extraction evidence.",
+        "Summary reports eight complete validation years and the stated calibration and model metrics.",
+        "Independent read-only review found calculations and source joins consistent.",
+        "git diff --check passed. No tests run."
+      ],
+      "knownConstraints": [
+        "The LFS January snapshot is a proxy for the preceding/trailing 12-month correction distribution, not a calendar-year average.",
+        "Household Survey redesign and LFS benchmark changes overlap the validation period; pooled metrics include discontinuity years.",
+        "The proposed model worsens MAE and RMSE versus the anchor-only baseline on the supplied 2018–2025 validation data.",
+        "This artifact is research-only and has no production estimator, loader, gate, or quarterly consumer."
+      ],
+      "outputRequirement": "Choose one listed choice. For a reason choice, provide a case-specific finding, affected artifact or criterion, observed evidence, and either concrete proposed fix or exact additional evidence needed. Do not invent details."
+    },
+    "questions": {
+      "implementation": {
+        "type": "choice",
+        "instructions": "Does the supplied evidence support accepting this research-only backtest as a faithful, clearly caveated test of the stated formula and validation design, including an honest report when the proposed model performs worse? Return a probability distribution over the listed choices.",
+        "criteria": {
+          "valid_as_defined": "Evidence supports the research-only test and reported result against its criteria.",
+          "requirements_mismatch": "A stated requirement conflicts with intended behavior; identify it and correction.",
+          "missing_prerequisites_info": "A specific source datum or series definition needed for this backtest is missing; state exactly what is needed.",
+          "incomplete_implementation_info": "The implementation or evidence omits a required formula, source trace, or validation detail; identify it exactly.",
+          "implementation_issue": "A concrete source join, calculation, or validation-label defect exists; identify location, evidence, and bounded correction.",
+          "scope_violation": "The implementation exceeds the research-only scope; identify the boundary and adjustment.",
+          "other": "A material concern does not fit the listed categories; identify location, evidence, and fix or needed evidence.",
+          "indeterminate": "The supplied context cannot support a judgment; identify missing context if possible."
+        }
+      }
+    }
+  },
+  "questionIds": [
+    "implementation"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "implementation": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.94,
+        "probabilities": {
+          "requirements_mismatch": 0.01,
+          "valid_as_defined": 0.94,
+          "implementation_issue": 0.02,
+          "other": 0.01,
+          "incomplete_implementation_info": 0.02,
+          "missing_prerequisites_info": 0,
+          "indeterminate": 0,
+          "scope_violation": 0
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.94,
+    "probabilities": {
+      "requirements_mismatch": 0.01,
+      "valid_as_defined": 0.94,
+      "implementation_issue": 0.02,
+      "other": 0.01,
+      "incomplete_implementation_info": 0.02,
+      "missing_prerequisites_info": 0,
+      "indeterminate": 0,
+      "scope_violation": 0
+    },
+    "passProbability": 0.94,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

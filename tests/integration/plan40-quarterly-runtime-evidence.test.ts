@@ -28,8 +28,6 @@ import {
 } from "@server/lib/ctiAdjustedConnectionEstimate";
 import { buildPlan39V2CtiNominalRows } from "@server/lib/view-models/quarterlyAggregation";
 import type { CtiBasicRecord } from "@server/lib/ctiBasicSeries2025LongTerm";
-import type { CpiData } from "@/types/data";
-import type { CtiRuntimeMetadata } from "@server/lib/data-loader/cpi";
 
 function defined<T>(value: T | null | undefined): T {
   if (value == null) throw new Error("expected fixture value");
@@ -59,13 +57,15 @@ const categories = CTI_ADJUSTED_V2_PUBLIC_CATEGORIES.filter((category) => catego
 const keys: CtiAdjustedV2PublicKey[] = CTI_ADJUSTED_V2_PUBLIC_REGISTRY.filter(
   (entry) => entry.category !== "総合",
 ).map((entry) => entry.key);
+const OFFICIAL_OTHER_RESIDUAL_NOTE =
+  "公式調整済み四半期値の総合から他9費目を引いた残差（公式公表値ではない）";
 const metadata = (artifact: string) => ({
   source: `Plan40 runtime ${artifact}`,
   artifact,
   retrievedAt: "2026-09-22T00:00:00.000Z",
   baseYear: 2025,
   unit: "指数",
-  valueType: "原数値（指数）",
+  valueType: "原数値（名目指数）",
   householdScope: "総世帯",
   frequency: "annual" as const,
   rawRange: { startYear: 2005, endYear: 2025 },
@@ -87,7 +87,7 @@ const input = (artifact: string): CtiAdjustedAnnualInput => ({
   }),
 });
 
-const makeAnnualInputs = () => ({ B: input("B.json"), A: input("A.json"), L: input("L.json") });
+const makeAnnualInputs = () => ({ B: input("B.json"), A: input("A.json") });
 
 function records(year = 2017, mutator?: (records: CtiBasicRecord[]) => void): CtiBasicRecord[] {
   const result: CtiBasicRecord[] = [];
@@ -122,19 +122,33 @@ function records(year = 2017, mutator?: (records: CtiBasicRecord[]) => void): Ct
   return result;
 }
 
-function runtimeT(mutator?: (rows: CpiData[]) => void): CpiData[] {
-  const keys = categories
-    .filter((category) => category !== "その他の消費支出")
-    .map((category) => `${category}（名目）`);
-  const rows = Array.from({ length: 12 }, (_, index) => {
-    const month = index + 1;
-    const value = month <= 3 ? 30 : 15;
-    return {
-      年月: `2017年${month}月`,
-      ["消費支出（名目）"]: month <= 3 ? 400 : 250,
-      ...Object.fromEntries(keys.map((key) => [key, value])),
-    } as unknown as CpiData;
-  });
+type OfficialQuarterFixture = {
+  label: string;
+  year: number;
+  quarter: number;
+  values: Record<string, number | null>;
+};
+
+function officialQuarters(
+  mutator?: (rows: OfficialQuarterFixture[]) => void,
+): OfficialQuarterFixture[] {
+  const data = [
+    [91.1, 22.4, 6.3, 7.8, 3, 3.6, 4, 15.6, 3.1, 9.1],
+    [90.8, 23.3, 6.6, 6.3, 3.3, 3.7, 4, 15, 3.9, 9.5],
+    [89.7, 24.3, 6.7, 5.6, 3.9, 3.1, 3.9, 15.1, 2.7, 9.8],
+    [94.4, 25.9, 7.3, 6.3, 3.8, 4.1, 4.3, 14.6, 3, 9.8],
+  ];
+  const rows = data.map((values, index) => ({
+    label: `2017Q${index + 1}`,
+    year: 2017,
+    quarter: index + 1,
+    values: Object.fromEntries([
+      ...CTI_ADJUSTED_V2_PUBLIC_CATEGORIES.filter(
+        (category) => category !== "その他の消費支出",
+      ).map((category, categoryIndex) => [category, values[categoryIndex]!]),
+      ["その他の消費支出", null],
+    ]),
+  })) as OfficialQuarterFixture[];
   mutator?.(rows);
   return rows;
 }
@@ -143,13 +157,12 @@ function runtimeRows(
   annualMutator?: (inputs: ReturnType<typeof makeAnnualInputs>) => void,
   monthlyMutator?: (records: CtiBasicRecord[]) => void,
   year = 2017,
-  runtimeMutator?: (rows: CpiData[]) => void,
-  runtimeMetadataOverrides?: Partial<CtiRuntimeMetadata>,
+  quarterlyMutator?: (rows: OfficialQuarterFixture[]) => void,
   publicationAccepted = false,
 ) {
   const inputs = makeAnnualInputs();
   if (annualMutator) annualMutator(inputs);
-  const result = buildCtiAdjustedV2Estimate(inputs.B, inputs.A, inputs.L, {
+  const result = buildCtiAdjustedV2Estimate(inputs.B, inputs.A, undefined, {
     contract: "plan40",
   });
   if (publicationAccepted) result.publicationGate.accepted = true;
@@ -158,25 +171,15 @@ function runtimeRows(
     rows: buildPlan39V2CtiNominalRows({
       records: records(year, monthlyMutator),
       result,
-      runtimeCtiData: runtimeT(runtimeMutator),
-      runtimeMetadata: {
-        statInfId: "000040499069",
-        baseYear: 2025,
-        householdScope: "総世帯",
-        unit: "指数",
-        frequency: "monthly",
-        sourceFile: "cti_data2025.csv",
-        rawRange: { startYear: 2017, endYear: 2026 },
-        adoptedRange: { startYear: 2017, endYear: 2026 },
-        ...runtimeMetadataOverrides,
-      },
+      officialQuarterly: officialQuarters(quarterlyMutator),
     }),
   };
 }
 
 function targetRow(rows: ReturnType<typeof buildPlan39V2CtiNominalRows>) {
   const row = defined(rows.find((candidate) => candidate.label === "2017Q1"));
-  if (row.kind !== "plan40-v2-cost-stack") throw new Error("expected Plan40 v2 row kind");
+  if (row.kind !== "plan40-official-quarterly")
+    throw new Error("expected official quarterly row kind");
   return row;
 }
 
@@ -186,11 +189,15 @@ function rowForYear(
   quarter = 1,
 ) {
   const row = defined(rows.find((candidate) => candidate.label === `${year}Q${quarter}`));
-  if (row.kind !== "plan40-v2-cost-stack") throw new Error("expected Plan40 v2 row kind");
+  if (year < 2017 ? row.kind !== "plan40-v2-cost-stack" : row.kind !== "plan40-official-quarterly")
+    throw new Error("unexpected Plan40 quarterly row kind");
   return row;
 }
 
 function metadataSnapshot(measurement: ReturnType<typeof measurementFor>) {
+  const isOfficialOtherResidual =
+    measurement.aggregation ===
+    "derived_quarterly_residual_from_official_nominal_total_minus_nine_categories";
   return {
     value: measurement.value,
     status: measurement.status,
@@ -203,7 +210,7 @@ function metadataSnapshot(measurement: ReturnType<typeof measurementFor>) {
     official: measurement.official,
     annualAnchorType: measurement.annualAnchorType,
     quarterlyDerived: measurement.quarterlyDerived,
-    note: getMeasurementNote(measurement),
+    note: isOfficialOtherResidual ? OFFICIAL_OTHER_RESIDUAL_NOTE : getMeasurementNote(measurement),
     model: measurement.model,
     estimateVersion: measurement.estimateVersion,
     baseYear: measurement.baseYear,
@@ -228,7 +235,10 @@ function csvRow(source: string): string[] {
   return rows[1]?.split(",") ?? [];
 }
 
-function assertPlan40SurfaceParity(row: ReturnType<typeof rowForYear>) {
+function assertPlan40SurfaceParity(
+  row: ReturnType<typeof rowForYear>,
+  expectedNoteOverrides: Partial<Record<CtiAdjustedV2PublicKey, string>> = {},
+) {
   const publicRow = defined(
     projectQuarterlyPublicView([row]).find((candidate) => candidate.label === row.label),
   );
@@ -281,7 +291,10 @@ function assertPlan40SurfaceParity(row: ReturnType<typeof rowForYear>) {
 
   for (const key of keys) {
     const measurement = measurementFor(row, key);
-    const expected = metadataSnapshot(measurement);
+    const expected = {
+      ...metadataSnapshot(measurement),
+      note: expectedNoteOverrides[key] ?? metadataSnapshot(measurement).note,
+    };
     const projected = defined(publicRow.measurements?.[key]);
     expect(metadataSnapshot(projected)).toEqual(expected);
 
@@ -457,7 +470,6 @@ function assertPlan40SurfaceParity(row: ReturnType<typeof rowForYear>) {
 }
 
 type AnnualMutation = (data: ReturnType<typeof makeAnnualInputs>) => void;
-type RuntimeMutation = (rows: CpiData[]) => void;
 
 const annualFailureCases: ReadonlyArray<[string, AnnualMutation, string]> = [
   [
@@ -573,26 +585,9 @@ const annualFailureCases: ReadonlyArray<[string, AnnualMutation, string]> = [
   ],
 ];
 
-const runtimeFailureCases: ReadonlyArray<[string, RuntimeMutation, string]> = [
-  ["missing", (rows) => rows.splice(1, 1), "runtime_t_insufficient_months"],
-  ["duplicate", (rows) => rows.push({ ...defined(rows[0]) }), "duplicate_month"],
-  [
-    "non-finite",
-    (rows) => {
-      (rows[0] as Record<string, unknown>)["食料（名目）"] = Number.NaN;
-    },
-    "runtime_t_invalid",
-  ],
-  [
-    "negative",
-    (rows) => ((rows[0] as Record<string, unknown>)["食料（名目）"] = -1),
-    "runtime_t_invalid",
-  ],
-];
-
 describe("Plan40 phase-1 runtime evidence", () => {
   it.each(annualFailureCases)(
-    "fails closed for annual %s input across all ten quarterly expenses",
+    "keeps official quarterly observations independent of annual %s input",
     (_label, mutate, expectedReason) => {
       const { result, rows } = runtimeRows(mutate);
       const row = targetRow(rows);
@@ -601,108 +596,31 @@ describe("Plan40 phase-1 runtime evidence", () => {
       expect(validation.valid).toBe(false);
       expect(validation.reasonCodes).toContain(expectedReason);
       expect(measurements).toHaveLength(10);
-      const invalidFields = measurements.map(({ status, value, reason }) => ({
-        status,
-        value,
-        reason,
-      }));
-      expect(new Set(invalidFields.map((fields) => JSON.stringify(fields)))).toHaveLength(1);
-      expect(invalidFields[0]).toEqual({
-        status: "unavailable",
-        value: null,
-        reason: "v2_annual_anchor_unavailable",
-      });
-      expect(measurements.every((measurement) => measurement.model === "v2-bottom-up")).toBe(true);
-      expect(measurements.every((measurement) => measurement.estimateVersion === "plan39-v2")).toBe(
-        true,
-      );
-      expect(measurements.every((measurement) => measurement.source.length > 0)).toBe(true);
-      expect(measurements.every((measurement) => measurement.unit === "指数")).toBe(true);
-      expect(measurements.every((measurement) => measurement.frequency === "quarterly")).toBe(true);
-      expect(measurements.every((measurement) => measurement.aggregation.length > 0)).toBe(true);
-      expect(measurements.every((measurement) => measurement.seriesType === "unavailable")).toBe(
-        true,
-      );
-      expect(measurements.every((measurement) => measurement.official === false)).toBe(true);
-      expect(measurements.every((measurement) => measurement.annualAnchorType === "official")).toBe(
-        true,
-      );
-      expect(measurements.every((measurement) => measurement.quarterlyDerived === true)).toBe(true);
+      expect(measurements.every((measurement) => measurement.status === "available")).toBe(true);
       expect(
-        measurements.every(
-          (measurement) =>
-            getMeasurementNote(measurement) === "利用不可: v2_annual_anchor_unavailable",
+        measurements.every((measurement) =>
+          measurement.key === CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY.その他の消費支出
+            ? measurement.official === false &&
+              measurement.seriesType === "estimated_adjusted" &&
+              measurement.quarterlyDerived === true
+            : measurement.official === true &&
+              measurement.seriesType === "official_adjusted" &&
+              measurement.quarterlyDerived === false,
         ),
       ).toBe(true);
-      const expectsValidMetadata =
-        !_label.includes("base year") && !_label.includes("adopted range");
-      if (expectsValidMetadata) {
-        expect(measurements.every((measurement) => measurement.baseYear === 2025)).toBe(true);
-        const rawRanges = measurements.map((measurement) => measurement.rawRange);
-        expect(rawRanges.every((range) => range !== undefined)).toBe(true);
-        for (const range of rawRanges) {
-          if (!range) throw new Error("expected raw range");
-          expect(range.startYear).toBe(2017);
-          expect(range.endYear).toBe(2026);
-        }
-        const adoptedRanges = measurements.map((measurement) => measurement.adoptedRange);
-        expect(adoptedRanges.every((range) => range !== undefined)).toBe(true);
-        for (const range of adoptedRanges) {
-          if (!range) throw new Error("expected adopted range");
-          expect(range.startYear).toBeLessThanOrEqual(2017);
-          expect(range.endYear).toBeGreaterThanOrEqual(2017);
-        }
-      }
+      expect(measurements.every((measurement) => measurement.sourceId === "000040499087")).toBe(
+        true,
+      );
+      expect(measurementFor(row, CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY.食料).value).toBe(22.4);
     },
   );
 
-  it.each(runtimeFailureCases)(
-    "fails closed for runtime T %s input across all ten quarterly expenses",
-    (_label, mutate, reason) => {
-      const { result, rows } = runtimeRows(undefined, undefined, 2017, mutate);
-      const row = targetRow(rows);
-      const measurements = keys.map((key) => measurementFor(row, key));
-      expect(plan40Validation(result).valid).toBe(true);
-      expect(keys.every((key) => row[key] === null)).toBe(true);
-      expect(measurements.every((measurement) => measurement.value === null)).toBe(true);
-      expect(new Set(measurements.map((measurement) => measurement.reason))).toEqual(
-        new Set([reason]),
-      );
-      expect(
-        measurements.every((measurement) => measurement.reason !== "v2_annual_anchor_unavailable"),
-      ).toBe(true);
-      expect(measurements.every((measurement) => measurement.status === "unavailable")).toBe(true);
-    },
-  );
-
-  it("fails closed when the selected T metadata declares an incompatible base year", () => {
-    const { rows } = runtimeRows(undefined, undefined, 2017, undefined, { baseYear: 2020 });
-    const row = targetRow(rows);
-    expect(keys.every((key) => row[key] === null)).toBe(true);
-    expect(keys.every((key) => measurementFor(row, key).status === "unavailable")).toBe(true);
-  });
-
-  it("fails closed for every quarter in a year when a different quarter has a duplicate month", () => {
-    const { rows } = runtimeRows(undefined, undefined, 2017, (runtimeRows) => {
-      runtimeRows.push({ ...defined(runtimeRows.find((record) => record.年月 === "2017年4月")) });
-    });
-
-    for (const quarter of [1, 2, 3, 4]) {
-      const row = rowForYear(rows, 2017, quarter);
-      expect(keys.every((key) => row[key] === null)).toBe(true);
-      expect(keys.map((key) => measurementFor(row, key).reason)).toEqual(
-        keys.map(() => "duplicate_month"),
-      );
-      expect(keys.every((key) => measurementFor(row, key).status === "unavailable")).toBe(true);
-    }
-  });
-
-  it("keeps 2017 T available when the historical M input is missing", () => {
+  it("keeps the official 2017 quarter available when historical monthly input is missing", () => {
     const { rows } = runtimeRows(undefined, (monthlyRecords) => monthlyRecords.splice(1, 1));
     const row = rowForYear(rows, 2017, 1);
     const foodKey = CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY.食料;
     expect(measurementFor(row, foodKey).status).toBe("available");
-    expect(measurementFor(row, foodKey).source).toContain("000040499069");
+    expect(measurementFor(row, foodKey).source).toContain("000040499087");
   });
 
   it("keeps 2005 Plan40 rows unavailable when the publication gate is closed", () => {
@@ -724,7 +642,7 @@ describe("Plan40 phase-1 runtime evidence", () => {
     expect(measurements.every((measurement) => measurement.official === false)).toBe(true);
   });
 
-  it("keeps 2017 official annual anchors distinct from derived quarterly values, including Other", () => {
+  it("keeps published 2017 quarters distinct from annual anchors, including the Other residual", () => {
     const { result, rows } = runtimeRows((inputs) => {
       const annual = defined(inputs.A.rows.find((candidate) => candidate.year === 2017));
       annual.values.総合 = 200;
@@ -743,35 +661,47 @@ describe("Plan40 phase-1 runtime evidence", () => {
     const otherValue = measurementFor(row, otherKey).value;
     expect(typeof otherValue).toBe("number");
     if (typeof otherValue !== "number") throw new Error("expected available Other measurement");
-    expect(otherValue).toBeGreaterThan(annualOther);
+    expect(otherValue).toBeCloseTo(16.2);
     expect(measurements.every((measurement) => measurement.status === "available")).toBe(true);
     expect(
-      measurements.every((measurement) => measurement.seriesType === "official_adjusted"),
+      measurements.every((measurement) =>
+        measurement.key === otherKey
+          ? measurement.seriesType === "estimated_adjusted"
+          : measurement.seriesType === "official_adjusted",
+      ),
     ).toBe(true);
     expect(measurements.every((measurement) => measurement.annualAnchorType === "official")).toBe(
       true,
     );
-    expect(measurements.every((measurement) => measurement.official === false)).toBe(true);
-    expect(measurements.every((measurement) => measurement.quarterlyDerived === true)).toBe(true);
+    expect(
+      measurements.every((measurement) =>
+        measurement.key === otherKey
+          ? measurement.official === false && measurement.quarterlyDerived === true
+          : measurement.official === true && measurement.quarterlyDerived === false,
+      ),
+    ).toBe(true);
   });
 
   it("keeps the 2017Q4 official-anchor Plan40 adapter contract in parity for all ten categories (Recharts DOM is out of scope)", () => {
     const { rows } = runtimeRows();
-    assertPlan40SurfaceParity(rowForYear(rows, 2017, 4));
+    assertPlan40SurfaceParity(rowForYear(rows, 2017, 4), {
+      [CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY.その他の消費支出]: OFFICIAL_OTHER_RESIDUAL_NOTE,
+    });
   });
 
-  it("keeps all ten categories null, unavailable, and reason-identical across surfaces for an unavailable fixture", () => {
-    const { rows } = runtimeRows((inputs) => {
+  it("keeps published 2017 quarters available when the annual anchor is unavailable", () => {
+    const { result, rows } = runtimeRows((inputs) => {
       inputs.A.rows = inputs.A.rows.filter((candidate) => candidate.year !== 2017);
     });
     const row = rowForYear(rows, 2017, 4);
     const measurements = keys.map((key) => measurementFor(row, key));
-    expect(measurements.every((measurement) => measurement.value === null)).toBe(true);
-    expect(measurements.every((measurement) => measurement.status === "unavailable")).toBe(true);
-    expect(new Set(measurements.map((measurement) => measurement.reason))).toEqual(
-      new Set(["v2_annual_anchor_unavailable"]),
-    );
-    assertPlan40SurfaceParity(row);
+    expect(result.plan40InputValidation?.valid).toBe(false);
+    expect(measurements.every((measurement) => measurement.value !== null)).toBe(true);
+    expect(measurements.every((measurement) => measurement.status === "available")).toBe(true);
+    expect(measurements.every((measurement) => measurement.sourceId === "000040499087")).toBe(true);
+    assertPlan40SurfaceParity(row, {
+      [CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY.その他の消費支出]: OFFICIAL_OTHER_RESIDUAL_NOTE,
+    });
   });
 
   it("keeps v2 ten categories absent for the legacy 2018Q1 adapter fixture", () => {
@@ -824,10 +754,10 @@ describe("Plan40 phase-1 runtime evidence", () => {
     expect(keys.some((key) => csv.includes(key))).toBe(false);
   });
 
-  it("projects one runtime measurement unchanged through the chart contract, tooltip, table, and CSV", () => {
-    const { rows } = runtimeRows(undefined, undefined, 2017, (runtime) => runtime.splice(1, 1));
+  it("projects one official quarterly measurement unchanged through the chart contract, tooltip, table, and CSV", () => {
+    const { rows } = runtimeRows();
     const source = targetRow(rows);
-    expect(source.kind).toBe("plan40-v2-cost-stack");
+    expect(source.kind).toBe("plan40-official-quarterly");
     const key = defined(keys[0]);
     const measurement = measurementFor(source, key);
     const publicRows = projectQuarterlyPublicView(rows);
@@ -847,7 +777,7 @@ describe("Plan40 phase-1 runtime evidence", () => {
       aggregation: measurement.aggregation,
     });
     expect(publicMeasurement).toBe(measurement);
-    expect(normalized[key]).toBeNull();
+    expect(normalized[key]).toBe(22.4);
 
     const chart = render(
       createElement(ChartDataContract, {
@@ -860,7 +790,7 @@ describe("Plan40 phase-1 runtime evidence", () => {
     );
     const chartCell = defined(chart.container.querySelector(`[data-series-key="${key}"]`));
     expect(chartCell.getAttribute("data-status")).toBe(measurement.status);
-    expect(chartCell.getAttribute("data-reason")).toBe(measurement.reason);
+    expect(chartCell.getAttribute("data-reason")).toBe(measurement.reason ?? "");
     expect(chartCell.getAttribute("data-measurement-note")).toBe(getMeasurementNote(measurement));
 
     const table = render(
@@ -870,7 +800,7 @@ describe("Plan40 phase-1 runtime evidence", () => {
     );
     const metadata = defined(table.container.querySelector(`[data-measurement-metadata="${key}"]`));
     expect(metadata.textContent).toContain(`状態: ${measurement.status}`);
-    expect(metadata.textContent).toContain(`理由: ${measurement.reason}`);
+    expect(metadata.textContent).toContain(`理由: ${measurement.reason ?? "-"}`);
 
     const tooltip = render(
       createElement(CustomTooltip, {
@@ -888,20 +818,28 @@ describe("Plan40 phase-1 runtime evidence", () => {
     );
     const tooltipReason = tooltip.container.querySelector("[data-tooltip-reason]");
     if (!tooltipReason) throw new Error("expected tooltip reason");
-    expect(tooltipReason.getAttribute("data-tooltip-reason")).toBe(measurement.reason);
+    expect(tooltipReason.getAttribute("data-tooltip-reason")).toBe(measurement.reason ?? "");
 
     const csv = buildCsv([publicRow as unknown as Record<string, unknown>], [key], [key]);
     expect(csv).toContain(`${key}__status`);
     expect(csv).toContain(`${key}__reason`);
-    expect(csv).toContain(measurement.reason);
+    const csvHeaders =
+      csv
+        .replace(/^\uFEFF/, "")
+        .split("\r\n")[0]
+        ?.split(",") ?? [];
+    const csvValues = csvRow(csv);
+    const csvReasonIndex = csvHeaders.indexOf(`${key}__reason`);
+    expect(csvReasonIndex).toBeGreaterThan(-1);
+    expect(csvValues[csvReasonIndex]).toBe(measurement.reason ?? "");
   });
 
-  it("writes a runtime provenance evidence artifact for the public surfaces", () => {
+  it("writes an official quarterly provenance evidence artifact for the public surfaces", () => {
     const { rows } = runtimeRows();
     const source = rowForYear(rows, 2017, 4);
     const key = defined(keys[0]);
     const measurement = measurementFor(source, key);
-    const historicalRows = runtimeRows(undefined, undefined, 2005, undefined, undefined, true).rows;
+    const historicalRows = runtimeRows(undefined, undefined, 2005, undefined, true).rows;
     const historical = rowForYear(historicalRows, 2005, 4);
     const historicalMeasurement = measurementFor(historical, key);
     assertPlan40SurfaceParity(historical);
@@ -951,10 +889,10 @@ describe("Plan40 phase-1 runtime evidence", () => {
         .split("\r\n")[0]
         ?.split(",") ?? [];
     const evidence = {
-      schemaVersion: "plan41-public-surface-runtime-evidence-v1",
+      schemaVersion: "plan39-official-quarterly-public-surface-evidence-v1",
       period: source.label,
       key,
-      runtimeSource: "000040499069",
+      officialQuarterlySource: "000040499087",
       historicalSeasonalitySource: "000040499070",
       measurement: {
         value: measurement.value,
@@ -1015,7 +953,7 @@ describe("Plan40 phase-1 runtime evidence", () => {
     expect(evidence.surfaces.table.status).toBe(measurement.status);
     mkdirSync(join(process.cwd(), ".tmp"), { recursive: true });
     writeFileSync(
-      join(process.cwd(), ".tmp/plan41-public-surface-runtime-evidence.json"),
+      join(process.cwd(), ".tmp/plan39-official-quarterly-public-surface-evidence.json"),
       `${JSON.stringify(evidence, null, 2)}\n`,
       "utf8",
     );

@@ -141,17 +141,17 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
     ],
   },
   "consumption-expenditure": {
-    source: "e-Stat「消費動向指数（CTIミクロ基本系列）」公式長期artifact",
-    url: "https://www.e-stat.go.jp/stat-search/files?toukei=00100409&tstat=000001014470",
+    source: "e-Stat「消費動向指数（CTIミクロ基本系列・調整系列）」公式長期artifact/四半期表",
+    url: "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499087",
     sections: [
       {
         heading: "データの内訳",
         items: [
           {
-            text: "2005Q1〜2017Q4：CTI公式長期artifact（000040499070、series_index=1、official_series_code=1）の名目原指数を四半期3か月単純平均で表示",
+            text: "2005Q1〜2016Q4：名目B×2017年A/B接続推計を月次季節パターンで四半期化。2017Q1以降：調整系列・分布調整値（原数値）の公式名目四半期値（統計表ID 000040499087）を最新公表期まで表示",
           },
           {
-            text: "2018Q1以降：既存CTI名目費目積上を表示し、2017Q4/2018Q1で系列の境界を明示します。",
+            text: "公式の『その他の消費支出』は未公表のため、公式総合から他9費目を引いた残差を表示",
           },
           {
             text: "内訳は9大費目と諸雑費・CPI外支出に分類して表示",
@@ -235,7 +235,7 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
             text: "給与（総合）：所定内給与 + 所定外給与 + 特別給与の12か月移動平均を指数化",
           },
           {
-            text: "CTIミクロ名目四半期系列：二人以上世帯の公式原数値を暦年四半期の3か月単純平均で表示。",
+            text: "CTIミクロ名目四半期系列：2017年以降は総世帯・調整系列の公式四半期原数値を使用。2005〜2016年は名目年次接続推計を月次パターンで四半期化。",
           },
           {
             text: "物価指数（総合）：消費者物価指数総合の月次系列を12か月移動平均で指数化",
@@ -248,9 +248,9 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
           { text: "給与：月次系列の12か月移動平均" },
           { text: "物価：月次系列の12か月移動平均" },
           {
-            text: "CTIミクロ名目四半期系列：対象期間は2005Q1〜2017Q4で、3か月がそろわない四半期は欠測として表示。",
+            text: "CTIミクロ名目四半期系列：対象期間は2005Q1〜2016Q4の接続推計と、2017Q1以降の公式調整済み四半期値。",
           },
-          { text: "2018年以降の延長系列は、このinfo下部の切替で表示できます。" },
+          { text: "2017年以降は最新の完全な公式四半期まで表示します。" },
         ],
       },
     ],

@@ -2,7 +2,7 @@
 import { createElement } from "react";
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import artifact from "../../results/plan39/plan39-analysis-20c80ddac60344d0.json";
+import artifact from "../../results/plan39/plan39-analysis-a8c7ad0fa68a5208.json";
 import { CustomTooltip } from "@/app/components/CustomTooltip";
 import { ChartDataContract, normalizePublicChartData } from "@/app/components/ChartDataContract";
 import {
@@ -344,9 +344,9 @@ describe("Plan39 real analysis artifact graph/table/tooltip/CSV parity", () => {
       boundary2016To2017: {
         fromYear: 2016,
         toYear: 2017,
-        absoluteDifference: 0.7122004366712389,
-        relativeChange: 0.042935196675858434,
-        yearOverYearRatio: 1.0429351966758584,
+        absoluteDifference: 0.2699605515440453,
+        relativeChange: -0.017227902435111412,
+        yearOverYearRatio: 0.9827720975648886,
         exceeded: false,
         reason: null,
       },
@@ -364,7 +364,7 @@ describe("Plan39 real analysis artifact graph/table/tooltip/CSV parity", () => {
         count: 7,
         publishable: true,
         reason: null,
-        years: [2005, 2006, 2007, 2008, 2009, 2010, 2012],
+        years: [2005, 2006, 2007, 2008, 2010, 2012, 2014],
       },
       estimatedRows: {
         count: 12,
@@ -416,7 +416,7 @@ describe("Plan39 real analysis artifact graph/table/tooltip/CSV parity", () => {
     }
     expect(analysis.publication.candidateRows).toMatchObject({
       count: 7,
-      years: [2005, 2006, 2007, 2008, 2009, 2010, 2012],
+      years: [2005, 2006, 2007, 2008, 2010, 2012, 2014],
     });
     expect(
       candidateRows.filter((row) => row.seriesType === "estimated_adjusted").map((row) => row.year),
@@ -425,7 +425,7 @@ describe("Plan39 real analysis artifact graph/table/tooltip/CSV parity", () => {
       Array.from({ length: 12 }, (_, index) => 2005 + index).filter(
         (year) => !analysis.publication.candidateRows.years.includes(year),
       ),
-    ).toEqual([2011, 2013, 2014, 2015, 2016]);
+    ).toEqual([2009, 2011, 2013, 2015, 2016]);
     expect(
       rows.filter((row) => row.year >= 2005 && row.year <= 2016 && row.status === "available"),
     ).toHaveLength(12);

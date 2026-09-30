@@ -17,8 +17,9 @@ describe("new-graph chart info (3種比較)", () => {
     const text = items.map((item) => item.text).join("\n");
     const ctiItem = items.find((i) => i.text.startsWith("CTIミクロ名目四半期系列"));
     expect(ctiItem).toBeDefined();
-    expect(ctiItem!.text).toContain("3か月単純平均");
-    expect(text).toContain("2005Q1〜2017Q4");
+    expect(ctiItem!.text).toContain("2017年以降は総世帯・調整系列の公式四半期原数値");
+    expect(text).toContain("2005Q1〜2016Q4");
+    expect(text).toContain("2017Q1以降の公式調整済み四半期値");
     expect(ctiItem!.text).not.toContain("12か月移動平均");
   });
 });
@@ -39,7 +40,8 @@ describe("CTI chart info data-source state", () => {
 
     expect(text).toContain("公式CTI名目原数値");
     expect(text).toContain("基本系列（原数値）");
-    expect(text).not.toContain("総世帯");
+    expect(text).toContain("二人以上の世帯の公式CTI名目原数値");
+    expect(text).toContain("総世帯・調整系列の公式四半期原数値");
     expect(text).toContain("CTIミクロ名目四半期系列を公開します。");
   });
 
@@ -132,7 +134,7 @@ describe("CTI chart info data-source state", () => {
 });
 
 describe("new-graph and residual chart info wording", () => {
-  it("describes per-series 12-month moving averages and the extension-series switch", () => {
+  it("describes per-series 12-month moving averages and the official quarterly extension", () => {
     const text = [
       ...CHART_INFO["new-graph"].sections.flatMap((section) =>
         section.items.map((item) => item.text),
@@ -142,10 +144,10 @@ describe("new-graph and residual chart info wording", () => {
     expect(text).toContain("給与：月次系列の12か月移動平均");
     expect(text).toContain("物価：月次系列の12か月移動平均");
     expect(text).toContain(
-      "CTIミクロ名目四半期系列：対象期間は2005Q1〜2017Q4で、3か月がそろわない四半期は欠測として表示。",
+      "CTIミクロ名目四半期系列：対象期間は2005Q1〜2016Q4の接続推計と、2017Q1以降の公式調整済み四半期値。",
     );
     expect(text).not.toContain("GDP参考値：四半期値を月次化");
-    expect(text).toContain("2018年以降の延長系列は、このinfo下部の切替で表示できます。");
+    expect(text).toContain("2017年以降は最新の完全な公式四半期まで表示します。");
     expect(text).not.toMatch(/Plan22|raw値|内部保持|月次原系列|9大費目（/);
   });
 

@@ -38,6 +38,7 @@ const v2Result = (rows: readonly CtiAdjustedV2Row[], accepted: boolean): CtiAdju
   rows,
   years: rows.map(({ year }) => year),
   categories: {} as CtiAdjustedV2Result["categories"],
+  householdComposition: {} as CtiAdjustedV2Result["householdComposition"],
   other: {
     derived: {},
     officialOther: {},
@@ -94,7 +95,6 @@ const v2Result = (rows: readonly CtiAdjustedV2Row[], accepted: boolean): CtiAdju
   artifactValidation: {
     B: { valid: true, reasons: [], diagnostics: [], duplicateYears: [], observedYears: [] },
     A: { valid: true, reasons: [], diagnostics: [], duplicateYears: [], observedYears: [] },
-    L: { valid: true, reasons: [], diagnostics: [], duplicateYears: [], observedYears: [] },
   },
   model: "v2-bottom-up",
   estimateVersion: "plan39-v2",
@@ -216,7 +216,7 @@ describe("Plan39 annual adjusted measurement parity", () => {
             seriesType: "unavailable",
             official: false,
             status: "insufficient-data",
-            reason: "missing_l_artifact",
+            reason: "insufficient_data_for_bottom_up_estimate",
             values: v2Values(14),
           },
         ],
@@ -238,14 +238,17 @@ describe("Plan39 annual adjusted measurement parity", () => {
       seriesType: "official_adjusted",
       official: true,
     });
-    expect(unavailable).toMatchObject({ status: "unavailable", reason: "missing_l_artifact" });
+    expect(unavailable).toMatchObject({
+      status: "unavailable",
+      reason: "insufficient_data_for_bottom_up_estimate",
+    });
     expect(unavailable.values["その他の消費支出"]).toBeNull();
     expect(unavailable.measurements["その他の消費支出"]).toMatchObject({
       value: null,
       status: "unavailable",
       seriesType: "unavailable",
       official: false,
-      reason: "missing_l_artifact",
+      reason: "insufficient_data_for_bottom_up_estimate",
     });
   });
 
@@ -275,7 +278,7 @@ describe("Plan39 annual adjusted measurement parity", () => {
               seriesType: "unavailable",
               official: false,
               status: "insufficient-data",
-              reason: "missing_l_artifact",
+              reason: "insufficient_data_for_bottom_up_estimate",
               values: v2Values(14),
             },
           ],

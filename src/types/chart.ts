@@ -47,6 +47,12 @@ export interface TooltipSeriesMetadata {
   sourceId?: string;
   statInfId?: string;
   householdScope?: string;
+  sourceWorkbook?: string;
+  sourceSheet?: string;
+  sourceColumn?: string;
+  sourceRole?: string;
+  sourceDerivedFromColumns?: string[];
+  canonicalSeries?: string;
   seasonalitySourceId?: string;
   targetSourceId?: string;
   targetHouseholdScope?: string;
@@ -78,6 +84,12 @@ export interface SeriesMeasurement {
   sourceId?: string;
   statInfId?: string;
   householdScope?: string;
+  sourceWorkbook?: string;
+  sourceSheet?: string;
+  sourceColumn?: string;
+  sourceRole?: string;
+  sourceDerivedFromColumns?: string[];
+  canonicalSeries?: string;
   seasonalitySourceId?: string;
   /** Plan41 target T and fixed-bridge coverage for derived historical values. */
   targetSourceId?: string;
@@ -142,6 +154,7 @@ export const getMeasurementNote = (
       | "annualAnchorType"
       | "quarterlyDerived"
       | "bridgeCoefficient"
+      | "aggregation"
     >
   >,
 ): string | null => {
@@ -150,9 +163,16 @@ export const getMeasurementNote = (
     measurement.status === "invalid" ||
     measurement.status === "unavailable"
   ) {
+    if (measurement.reason === "official_quarterly_source_unavailable_latest_period_unknown")
+      return "公式四半期値を確認できず、最新対象期は不明";
     if (measurement.reason === "outside_period") return "対象期間外";
     return measurement.reason ? `利用不可: ${measurement.reason}` : "利用不可";
   }
+  if (
+    measurement.aggregation ===
+    "derived_quarterly_residual_from_official_nominal_total_minus_nine_categories"
+  )
+    return "公式調整済み四半期値の総合から他9費目を引いた残差（公式公表値ではない）";
   if (measurement.quarterlyDerived) {
     if (
       typeof measurement.bridgeCoefficient === "number" &&
@@ -182,7 +202,7 @@ export interface CpiView extends Record<string, string | number | null> {
   年月: string;
 }
 
-export type QuarterlyRowKind = "legacy-cti" | "plan40-v2-cost-stack";
+export type QuarterlyRowKind = "legacy-cti" | "plan40-v2-cost-stack" | "plan40-official-quarterly";
 
 export interface QuarterlyRow {
   年: number;

@@ -30,6 +30,7 @@ const makeResult = (accepted: boolean): CtiAdjustedV2Result => ({
   years: Array.from({ length: 21 }, (_, index) => 2005 + index),
   rows: Array.from({ length: 21 }, (_, index) => makeRow(2005 + index)),
   categories: {} as CtiAdjustedV2Result["categories"],
+  householdComposition: {} as CtiAdjustedV2Result["householdComposition"],
   other: {} as CtiAdjustedV2Result["other"],
   residual: {} as CtiAdjustedV2Result["residual"],
   beta: {} as CtiAdjustedV2Result["beta"],

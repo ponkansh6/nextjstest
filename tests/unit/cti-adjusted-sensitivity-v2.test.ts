@@ -3,6 +3,7 @@ import {
   CTI_ADJUSTED_INPUT_CATEGORIES,
   type CtiAdjustedAnnualInput,
 } from "@server/lib/ctiAdjustedConnectionEstimate";
+import type { CtiAdjustedV2HouseholdComposition } from "@server/lib/ctiAdjustedConnectionEstimateV2";
 
 const input = (
   artifact: string,
@@ -34,12 +35,41 @@ const input = (
   }),
 });
 
+const householdComposition: CtiAdjustedV2HouseholdComposition = {
+  historicalPi2Plus: Object.fromEntries(
+    Array.from({ length: 13 }, (_, index) => [2005 + index, 0.65 + index * 0.001]),
+  ),
+  historicalPiStatusByYear: Object.fromEntries(
+    Array.from({ length: 13 }, (_, index) => [
+      2005 + index,
+      {
+        status: index === 6 ? "synthetic_interpolation_unverified" : "observed",
+        synthetic: index === 6,
+        benchmarkId: "synthetic-unit-test",
+        connectionStatus: "centered_at_2017",
+        interpolationMethod: index === 6 ? "linear" : null,
+      },
+    ]),
+  ),
+  calibrationPi2Plus: { 2017: 0.66, 2025: 0.68 },
+  provenance: {
+    artifactPath: "test/production-pi2plus.json",
+    artifactSha256: "test",
+    manifestSha256: "test",
+    historicalSource: "synthetic unit fixture",
+    calibrationSource: "synthetic unit fixture",
+    caveats: ["synthetic test fixture"],
+  },
+};
+
 describe("Plan39 v2 sensitivity audit", () => {
   it("keeps the gamma sweep comparison-only and records all comparison series", () => {
     const b = input("B", (year, category) => (category === "総合" ? 100 + year - 2005 : 5));
     const a = input("A", (year, category) => (category === "総合" ? 110 + year - 2005 : 5.2));
     const l = input("L", (year) => 100 + (year - 2005) / 2, 2018);
-    const result = buildCtiAdjustedSensitivityAnalysis(b, a, l);
+    const result = buildCtiAdjustedSensitivityAnalysis(b, a, l, {
+      householdComposition,
+    });
 
     expect(result.gammaScenarios.map((scenario) => scenario.gamma)).toEqual([
       0, 0.25, 0.5, 0.75, 1,

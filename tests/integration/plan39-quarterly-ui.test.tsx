@@ -115,7 +115,7 @@ describe("Plan39 quarterly nominal UI", () => {
 
     expect(
       screen.getByTestId("spending-series-switch-note").getAttribute("data-series-switch"),
-    ).toBe("plan39-v2-bottom-up-to-cti-categories");
+    ).toBe("plan39-v2-bottom-up-to-official-adjusted-quarters");
 
     const table = screen.getByTestId("data-table-section-consumption-nominal");
     const cells = [...table.querySelectorAll("[data-measurement-metadata]")];

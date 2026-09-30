@@ -1,0 +1,104 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-29T14:16:37.878Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "model": "jev-latest",
+    "state": {
+      "evaluationScope": "implementation_checkpoint_validity",
+      "background": "Added an isolated Plan39 household-size diagnostic; no production estimator, loader, publication gate, quarterly artifact, or existing test was changed. The extractor downloaded and hashed 13 official annual two-or-more-household table 3-1 workbooks plus 13 single-household table 1 workbooks from e-Stat, producing nominal yen per household/month for one person, 2, 3, 4, and 5+ (5/6+ combined using same-table adjusted counts). The candidate reweights these profiles with 2025 annual LFS IV-4 household-size proportions, normalizes composition factors to the 2017 anchor, estimates category lambdas with through-origin OLS over 2005-2016 excluding unavailable 2011, reports LOO and strict known-break-year exclusions, and applies a shared g to nine CTI categories plus an explicit Other residual. Actual result status is legacy_unharmonized_weights because earlier LFS weights are unconnected legacy annual vintages; 2011 and 2018-2024 Household Survey profiles are absent. 2017 is tagged anchor identity only and is not counted as validation.",
+      "acceptanceCriteria": [
+        "The reproducible analysis uses only nominal primary-source Household Survey expenditure profiles and records source IDs, URLs, hashes, classification caveats, and 5+ aggregation.",
+        "The historical household-size weight limitation is explicit; results are separately tagged legacy_unharmonized_weights and cannot be mistaken for an officially connected candidate or production release.",
+        "Category sensitivities are estimated from Household Survey composition data without CTI A/B values in lambda fitting; OLS fit years, leave-one-year-out ranges, strict break-year exclusions, and additivity diagnostics are emitted.",
+        "The 2017 A/B ratio serves only as a level anchor and its identity is not counted as fit or backtest evidence.",
+        "The implementation is confined to new analysis scripts, source-analysis data, and results; production estimate and publication gate remain unchanged."
+      ],
+      "verification": [
+        "Ran node scripts/plan39/prepare-size-composition-panel.mjs; it emitted 715 normalized rows for 2005-2017.",
+        "Ran node scripts/plan39/size-composition-candidate.mjs; it emitted status legacy_unharmonized_weights with coefficient, composition-factor, and annual-candidate CSVs.",
+        "The computed 2017 common scale is 1 and the maximum absolute additivity error is 4.3e-14 index points.",
+        "No tests were added or run."
+      ],
+      "knownConstraints": [
+        "Earlier annual LFS weights are not verified as one connected population-benchmark series and 2011 is missing; 2025 is the official annual reference weight.",
+        "External comparison to official CTI adjusted/basic A/B over 2018-2024 records actual ratios but cannot compute predicted composition ratios because Household Survey profiles/weights for those years were not acquired.",
+        "Household Survey profiles are a proxy, not CTI's three-survey composite; changes in age composition may confound the apparent household-size sensitivities.",
+        "This analysis has no effect on production output or publication gates."
+      ],
+      "outputRequirement": "Choose one listed choice. For a reason choice, give a case-specific finding, affected artifact/criterion, exact observed evidence, and either a bounded correction or exact additional evidence needed. Do not treat the 2017 anchor identity as validation."
+    },
+    "questions": {
+      "implementation": {
+        "type": "choice",
+        "instructions": "Does the evidence support accepting this bounded non-production analysis artifact against its stated criteria, with its remaining data limitations clearly fail-closed? Return a probability distribution over the listed choices.",
+        "criteria": {
+          "valid_as_defined": "Evidence supports the isolated diagnostic and its explicit limitations as defined.",
+          "requirements_mismatch": "A stated requirement conflicts with intended behavior; identify it and a correction.",
+          "missing_prerequisites_info": "A specific missing source datum or series definition prevents the declared diagnostic; state exactly what is needed.",
+          "incomplete_implementation_info": "The code or artifacts omit required behavior or evidence; identify it exactly.",
+          "implementation_issue": "A specific code or calculation defect exists; give file, evidence, and bounded fix.",
+          "scope_violation": "The changes exceed or fall outside the assigned non-production analysis scope; identify the boundary.",
+          "other": "A material concern does not fit the above; identify its location, evidence, and fix or needed evidence.",
+          "indeterminate": "The context is insufficient for a judgment; name missing evidence."
+        }
+      }
+    }
+  },
+  "questionIds": [
+    "implementation"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "implementation": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.73,
+        "probabilities": {
+          "valid_as_defined": 0.76,
+          "missing_prerequisites_info": 0.03,
+          "requirements_mismatch": 0.01,
+          "scope_violation": 0,
+          "incomplete_implementation_info": 0.17,
+          "other": 0.01,
+          "implementation_issue": 0.01,
+          "indeterminate": 0.01
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.73,
+    "probabilities": {
+      "valid_as_defined": 0.76,
+      "missing_prerequisites_info": 0.03,
+      "requirements_mismatch": 0.01,
+      "scope_violation": 0,
+      "incomplete_implementation_info": 0.17,
+      "other": 0.01,
+      "implementation_issue": 0.01,
+      "indeterminate": 0.01
+    },
+    "passProbability": 0.76,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

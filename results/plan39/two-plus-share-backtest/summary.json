@@ -1,0 +1,1272 @@
+{
+  "schemaVersion": "plan39-two-plus-share-backtest-v1",
+  "generatedAt": "2026-09-29T23:01:48.928Z",
+  "purpose": "Research-only annual backtest; separate from production estimators, loaders, gates, quarterly values, and prior 2017/2018 study outputs.",
+  "formulas": {
+    "pBedu": "B_education / B_total from exact raw values in the 2025-base basic CTI workbook",
+    "pAedu": "A_education / A_total from exact raw values in the 2025-base distribution-adjusted CTI workbook",
+    "pi2plus": "1 - pi_1, where pi_1 is the January LFS special-tabulation single-household share",
+    "K": "(pAedu_2017 / pBedu_2017) / pi2plus_2017; calibrated only on 2017",
+    "proposed": "pHat_Aedu_t = pBedu_t * pi2plus_t * K",
+    "baseline": "pHat_Aedu_t = pBedu_t * (pAedu_2017 / pBedu_2017)",
+    "residual": "prediction - official adjusted CTI education share"
+  },
+  "calibration": {
+    "year": 2017,
+    "pAedu": 0.03459479432796237,
+    "pBedu": 0.03317870077183429,
+    "pi2plus": 0.675222,
+    "anchorRatio": 1.0426808019357472,
+    "K": 1.544204427485697
+  },
+  "validation": {
+    "years": "2018-2025",
+    "excludedCalibrationYear": 2017,
+    "count": 8,
+    "expectedCount": 8,
+    "coverage": "8/8",
+    "missingYears": [],
+    "failures": [],
+    "models": {
+      "anchor": {
+        "n": 8,
+        "coverage": "8/8 validation years",
+        "mae": 0.00067143739759135,
+        "rmse": 0.0008422415494904358,
+        "bias": 0.0006168716527516884,
+        "maePercentagePoints": 0.067143739759135,
+        "rmsePercentagePoints": 0.08422415494904358,
+        "biasPercentagePoints": 0.061687165275168834,
+        "unit": "share fraction; percentage-point values are also provided"
+      },
+      "pi2plus": {
+        "n": 8,
+        "coverage": "8/8 validation years",
+        "mae": 0.00114899666341696,
+        "rmse": 0.0014371640035316874,
+        "bias": -0.0009041721320507561,
+        "maePercentagePoints": 0.114899666341696,
+        "rmsePercentagePoints": 0.14371640035316874,
+        "biasPercentagePoints": -0.09041721320507562,
+        "unit": "share fraction; percentage-point values are also provided"
+      }
+    }
+  },
+  "caveats": {
+    "lfsProxy": "Each file is the special setai-n tabulation published for that year's January Household Survey. Household Survey design documentation says the correction distribution used for a month is the LFS household-size distribution averaged over the preceding/trailing 12 months. Thus one January snapshot is only an annual proxy, not a calendar-year average. References: https://www.stat.go.jp/data/kakei/setai_bunpu.html and https://www.stat.go.jp/data/kakei/pdf/18gai00.pdf.",
+    "redesign": "The Household Survey underwent a major redesign in 2018. CTI basic/adjusted series use the 2025-base official tables, but the target A/B composition may still reflect source-survey methodology changes around 2018.",
+    "lfsBenchmarks": "LFS population benchmarks changed to the 2015 Census-based estimates beginning January 2017 and to the 2020 Census-based estimates beginning January 2022. Treat movements across these January benchmark changes, especially the 2021-to-2022 movement, as potentially affected by rebenchmarking as well as real household-composition change. Sources: https://www.stat.go.jp/data/roudou/benchpop/change/2017.html and https://www.stat.go.jp/data/roudou/benchpop/change.html."
+  },
+  "sources": {
+    "lfsFiles": {
+      "2017": {
+        "year": 2017,
+        "sourceUrl": "https://www.stat.go.jp/data/kakei/2017nn/zuhyou/setai-n.xls",
+        "file": "data/source/cti-size-composition/raw/lfs-special-jan/2017-setai-n.xls",
+        "sha256": "78dfeb79a9c39495ade1f8dee2469da5e3ba8a94d81c48621590e4c3bc8e7682",
+        "sheet": "2017年世帯数分布表",
+        "tableTitle": "地方，世帯人員別世帯分布(100万分比)",
+        "reportedYear": 2017,
+        "nationalColumn": "E",
+        "unit": "parts per million households",
+        "denominator": 1000000,
+        "rawCounts": {
+          "1": 324778,
+          "2": 296228,
+          "3": 177091,
+          "4": 140102,
+          "total": 1000000,
+          "5+": 61800
+        },
+        "shares": {
+          "1": 0.324778,
+          "2": 0.296228,
+          "3": 0.177091,
+          "4": 0.140102,
+          "5+": 0.0618
+        },
+        "rawBinSum": 999999,
+        "shareSum": 0.999999,
+        "pi2plus": 0.675222,
+        "extractionEvidence": {
+          "headerCell": "E5",
+          "nationalHeader": "全国",
+          "rowNumbers": {
+            "1": 8,
+            "2": 9,
+            "3": 10,
+            "4": 11,
+            "total": 7,
+            "5+": 12
+          },
+          "cells": {
+            "1": "E8",
+            "2": "E9",
+            "3": "E10",
+            "4": "E11",
+            "total": "E7",
+            "5+": "E12"
+          },
+          "note": "Shares use each exact published row count divided by the published 1,000,000-part national total. Source rounding can make the five size rows sum to 999,999 or 1,000,001; values are not renormalized."
+        }
+      },
+      "2018": {
+        "year": 2018,
+        "sourceUrl": "https://www.stat.go.jp/data/kakei/2018nn/zuhyou/setai-n.xls",
+        "file": "data/source/cti-size-composition/raw/lfs-special-jan/2018-setai-n.xls",
+        "sha256": "7032cd9d7b06f26f2cea9b6de00c9a9e22527ae08d98ecfa4a8e2af88a665928",
+        "sheet": "2018年世帯数分布表",
+        "tableTitle": "地方，世帯人員別世帯分布(100万分比)",
+        "reportedYear": 2018,
+        "nationalColumn": "E",
+        "unit": "parts per million households",
+        "denominator": 1000000,
+        "rawCounts": {
+          "1": 327135,
+          "2": 296521,
+          "3": 176430,
+          "4": 138758,
+          "total": 1000000,
+          "5+": 61156
+        },
+        "shares": {
+          "1": 0.327135,
+          "2": 0.296521,
+          "3": 0.17643,
+          "4": 0.138758,
+          "5+": 0.061156
+        },
+        "rawBinSum": 1000000,
+        "shareSum": 1,
+        "pi2plus": 0.672865,
+        "extractionEvidence": {
+          "headerCell": "E5",
+          "nationalHeader": "全国",
+          "rowNumbers": {
+            "1": 8,
+            "2": 9,
+            "3": 10,
+            "4": 11,
+            "total": 7,
+            "5+": 12
+          },
+          "cells": {
+            "1": "E8",
+            "2": "E9",
+            "3": "E10",
+            "4": "E11",
+            "total": "E7",
+            "5+": "E12"
+          },
+          "note": "Shares use each exact published row count divided by the published 1,000,000-part national total. Source rounding can make the five size rows sum to 999,999 or 1,000,001; values are not renormalized."
+        }
+      },
+      "2019": {
+        "year": 2019,
+        "sourceUrl": "https://www.stat.go.jp/data/kakei/2019nn/zuhyou/setai-n.xls",
+        "file": "data/source/cti-size-composition/raw/lfs-special-jan/2019-setai-n.xls",
+        "sha256": "52fb89bbf360c5ca72f6cbe65ccf09342736bf0077d3938c7df78ee86ccab1d8",
+        "sheet": "2019年世帯数分布表",
+        "tableTitle": "地方，世帯人員別世帯分布(100万分比)",
+        "reportedYear": 2019,
+        "nationalColumn": "E",
+        "unit": "parts per million households",
+        "denominator": 1000000,
+        "rawCounts": {
+          "1": 331947,
+          "2": 295278,
+          "3": 174385,
+          "4": 137808,
+          "total": 1000000,
+          "5+": 60583
+        },
+        "shares": {
+          "1": 0.331947,
+          "2": 0.295278,
+          "3": 0.174385,
+          "4": 0.137808,
+          "5+": 0.060583
+        },
+        "rawBinSum": 1000001,
+        "shareSum": 1.000001,
+        "pi2plus": 0.668053,
+        "extractionEvidence": {
+          "headerCell": "E5",
+          "nationalHeader": "全国",
+          "rowNumbers": {
+            "1": 8,
+            "2": 9,
+            "3": 10,
+            "4": 11,
+            "total": 7,
+            "5+": 12
+          },
+          "cells": {
+            "1": "E8",
+            "2": "E9",
+            "3": "E10",
+            "4": "E11",
+            "total": "E7",
+            "5+": "E12"
+          },
+          "note": "Shares use each exact published row count divided by the published 1,000,000-part national total. Source rounding can make the five size rows sum to 999,999 or 1,000,001; values are not renormalized."
+        }
+      },
+      "2020": {
+        "year": 2020,
+        "sourceUrl": "https://www.stat.go.jp/data/kakei/2020nn/zuhyou/setai-n.xls",
+        "file": "data/source/cti-size-composition/raw/lfs-special-jan/2020-setai-n.xls",
+        "sha256": "b5e541674119e5dfdae8b69c0801bf7561b36bc8567e67ab86f2d1921363e92e",
+        "sheet": "2020年世帯数分布表",
+        "tableTitle": "地方，世帯人員別世帯分布(100万分比)",
+        "reportedYear": 2020,
+        "nationalColumn": "E",
+        "unit": "parts per million households",
+        "denominator": 1000000,
+        "rawCounts": {
+          "1": 344106,
+          "2": 296208,
+          "3": 168974,
+          "4": 133316,
+          "total": 1000000,
+          "5+": 57396
+        },
+        "shares": {
+          "1": 0.344106,
+          "2": 0.296208,
+          "3": 0.168974,
+          "4": 0.133316,
+          "5+": 0.057396
+        },
+        "rawBinSum": 1000000,
+        "shareSum": 1,
+        "pi2plus": 0.655894,
+        "extractionEvidence": {
+          "headerCell": "E5",
+          "nationalHeader": "全国",
+          "rowNumbers": {
+            "1": 8,
+            "2": 9,
+            "3": 10,
+            "4": 11,
+            "total": 7,
+            "5+": 12
+          },
+          "cells": {
+            "1": "E8",
+            "2": "E9",
+            "3": "E10",
+            "4": "E11",
+            "total": "E7",
+            "5+": "E12"
+          },
+          "note": "Shares use each exact published row count divided by the published 1,000,000-part national total. Source rounding can make the five size rows sum to 999,999 or 1,000,001; values are not renormalized."
+        }
+      },
+      "2021": {
+        "year": 2021,
+        "sourceUrl": "https://www.stat.go.jp/data/kakei/2021nn/zuhyou/setai-n.xls",
+        "file": "data/source/cti-size-composition/raw/lfs-special-jan/2021-setai-n.xls",
+        "sha256": "558ec9b2abe88e10e6b18cd17d9071efc719d556f5369fbaf5443a3e89398579",
+        "sheet": "2021年世帯数分布表",
+        "tableTitle": "地方，世帯人員別世帯分布(100万分比)",
+        "reportedYear": 2021,
+        "nationalColumn": "E",
+        "unit": "parts per million households",
+        "denominator": 1000000,
+        "rawCounts": {
+          "1": 350330,
+          "2": 295556,
+          "3": 169354,
+          "4": 129314,
+          "total": 1000000,
+          "5+": 55446
+        },
+        "shares": {
+          "1": 0.35033,
+          "2": 0.295556,
+          "3": 0.169354,
+          "4": 0.129314,
+          "5+": 0.055446
+        },
+        "rawBinSum": 1000000,
+        "shareSum": 1,
+        "pi2plus": 0.64967,
+        "extractionEvidence": {
+          "headerCell": "E5",
+          "nationalHeader": "全国",
+          "rowNumbers": {
+            "1": 8,
+            "2": 9,
+            "3": 10,
+            "4": 11,
+            "total": 7,
+            "5+": 12
+          },
+          "cells": {
+            "1": "E8",
+            "2": "E9",
+            "3": "E10",
+            "4": "E11",
+            "total": "E7",
+            "5+": "E12"
+          },
+          "note": "Shares use each exact published row count divided by the published 1,000,000-part national total. Source rounding can make the five size rows sum to 999,999 or 1,000,001; values are not renormalized."
+        }
+      },
+      "2022": {
+        "year": 2022,
+        "sourceUrl": "https://www.stat.go.jp/data/kakei/2022nn/zuhyou/setai-n.xls",
+        "file": "data/source/cti-size-composition/raw/lfs-special-jan/2022-setai-n.xls",
+        "sha256": "6bdb29720ded3ce0e6f49a28fdc004af7b67549726b61aae87dc2c73989910e3",
+        "sheet": "2022年世帯数分布表",
+        "tableTitle": "地方，世帯人員別世帯分布(100万分比)",
+        "reportedYear": 2022,
+        "nationalColumn": "E",
+        "unit": "parts per million households",
+        "denominator": 1000000,
+        "rawCounts": {
+          "1": 358424,
+          "2": 296454,
+          "3": 167541,
+          "4": 124501,
+          "total": 1000000,
+          "5+": 53080
+        },
+        "shares": {
+          "1": 0.358424,
+          "2": 0.296454,
+          "3": 0.167541,
+          "4": 0.124501,
+          "5+": 0.05308
+        },
+        "rawBinSum": 1000000,
+        "shareSum": 1,
+        "pi2plus": 0.6415759999999999,
+        "extractionEvidence": {
+          "headerCell": "E5",
+          "nationalHeader": "全国",
+          "rowNumbers": {
+            "1": 8,
+            "2": 9,
+            "3": 10,
+            "4": 11,
+            "total": 7,
+            "5+": 12
+          },
+          "cells": {
+            "1": "E8",
+            "2": "E9",
+            "3": "E10",
+            "4": "E11",
+            "total": "E7",
+            "5+": "E12"
+          },
+          "note": "Shares use each exact published row count divided by the published 1,000,000-part national total. Source rounding can make the five size rows sum to 999,999 or 1,000,001; values are not renormalized."
+        }
+      },
+      "2023": {
+        "year": 2023,
+        "sourceUrl": "https://www.stat.go.jp/data/kakei/2023nn/zuhyou/setai-n.xls",
+        "file": "data/source/cti-size-composition/raw/lfs-special-jan/2023-setai-n.xls",
+        "sha256": "64101813896c485c4584f1b4881a75435cddb0bfa3b4321367fa727315894e3b",
+        "sheet": "2023年世帯数分布表",
+        "tableTitle": "地方，世帯人員別世帯分布(100万分比)",
+        "reportedYear": 2023,
+        "nationalColumn": "E",
+        "unit": "parts per million households",
+        "denominator": 1000000,
+        "rawCounts": {
+          "1": 366257,
+          "2": 298264,
+          "3": 164305,
+          "4": 120545,
+          "total": 1000000,
+          "5+": 50629
+        },
+        "shares": {
+          "1": 0.366257,
+          "2": 0.298264,
+          "3": 0.164305,
+          "4": 0.120545,
+          "5+": 0.050629
+        },
+        "rawBinSum": 1000000,
+        "shareSum": 1,
+        "pi2plus": 0.633743,
+        "extractionEvidence": {
+          "headerCell": "E5",
+          "nationalHeader": "全国",
+          "rowNumbers": {
+            "1": 8,
+            "2": 9,
+            "3": 10,
+            "4": 11,
+            "total": 7,
+            "5+": 12
+          },
+          "cells": {
+            "1": "E8",
+            "2": "E9",
+            "3": "E10",
+            "4": "E11",
+            "total": "E7",
+            "5+": "E12"
+          },
+          "note": "Shares use each exact published row count divided by the published 1,000,000-part national total. Source rounding can make the five size rows sum to 999,999 or 1,000,001; values are not renormalized."
+        }
+      },
+      "2024": {
+        "year": 2024,
+        "sourceUrl": "https://www.stat.go.jp/data/kakei/2024nn/zuhyou/setai-n.xls",
+        "file": "data/source/cti-size-composition/raw/lfs-special-jan/2024-setai-n.xls",
+        "sha256": "ad0c9e8cdc0c3cb04f6d830006ddab7c999840ababd5dd6ada78b6fd9ccb1c46",
+        "sheet": "2024年世帯数分布表",
+        "tableTitle": "地方，世帯人員別世帯分布(100万分比)",
+        "reportedYear": 2024,
+        "nationalColumn": "E",
+        "unit": "parts per million households",
+        "denominator": 1000000,
+        "rawCounts": {
+          "1": 373232,
+          "2": 297376,
+          "3": 162142,
+          "4": 119148,
+          "total": 1000000,
+          "5+": 48103
+        },
+        "shares": {
+          "1": 0.373232,
+          "2": 0.297376,
+          "3": 0.162142,
+          "4": 0.119148,
+          "5+": 0.048103
+        },
+        "rawBinSum": 1000001,
+        "shareSum": 1.000001,
+        "pi2plus": 0.626768,
+        "extractionEvidence": {
+          "headerCell": "E5",
+          "nationalHeader": "全国",
+          "rowNumbers": {
+            "1": 8,
+            "2": 9,
+            "3": 10,
+            "4": 11,
+            "total": 7,
+            "5+": 12
+          },
+          "cells": {
+            "1": "E8",
+            "2": "E9",
+            "3": "E10",
+            "4": "E11",
+            "total": "E7",
+            "5+": "E12"
+          },
+          "note": "Shares use each exact published row count divided by the published 1,000,000-part national total. Source rounding can make the five size rows sum to 999,999 or 1,000,001; values are not renormalized."
+        }
+      },
+      "2025": {
+        "year": 2025,
+        "sourceUrl": "https://www.stat.go.jp/data/kakei/2025nn/zuhyou/setai-n.xlsx",
+        "file": "data/source/cti-size-composition/raw/lfs-special-jan/2025-setai-n.xlsx",
+        "sha256": "6dac12725446a8cf1e8e8325fd0ce7cec3b0f55f897fc9edeb416503631d4a22",
+        "sheet": "2025年世帯数分布表",
+        "tableTitle": "地方，世帯人員別世帯分布(100万分比)",
+        "reportedYear": 2025,
+        "nationalColumn": "E",
+        "unit": "parts per million households",
+        "denominator": 1000000,
+        "rawCounts": {
+          "1": 381308,
+          "2": 295811,
+          "3": 159849,
+          "4": 117469,
+          "total": 1000000,
+          "5+": 45564
+        },
+        "shares": {
+          "1": 0.381308,
+          "2": 0.295811,
+          "3": 0.159849,
+          "4": 0.117469,
+          "5+": 0.045564
+        },
+        "rawBinSum": 1000001,
+        "shareSum": 1.0000010000000001,
+        "pi2plus": 0.618692,
+        "extractionEvidence": {
+          "headerCell": "E5",
+          "nationalHeader": "全国",
+          "rowNumbers": {
+            "1": 8,
+            "2": 9,
+            "3": 10,
+            "4": 11,
+            "total": 7,
+            "5+": 12
+          },
+          "cells": {
+            "1": "E8",
+            "2": "E9",
+            "3": "E10",
+            "4": "E11",
+            "total": "E7",
+            "5+": "E12"
+          },
+          "note": "Shares use each exact published row count divided by the published 1,000,000-part national total. Source rounding can make the five size rows sum to 999,999 or 1,000,001; values are not renormalized."
+        }
+      }
+    },
+    "ctiWorkbooks": {
+      "B": {
+        "url": "https://www.e-stat.go.jp/stat-search/file-download?statInfId=000040499069&fileKind=0",
+        "file": "data/source/cti-size-composition/raw/cti/000040499069-basic.xlsx",
+        "series": "CTI basic B",
+        "sha256": "5e99cf3c61e26ba90bcde12b3311eb553458f97e5624258712d7414bed53197b",
+        "sheet": "総・年"
+      },
+      "A": {
+        "url": "https://www.e-stat.go.jp/stat-search/file-download?statInfId=000040499087&fileKind=0",
+        "file": "data/source/cti-size-composition/raw/cti/000040499087-adjusted.xlsx",
+        "series": "CTI distribution-adjusted A",
+        "sha256": "7224e5eb424c94d90402502f665a4953cfe16377f65f1040a939696ac948ef41",
+        "sheet": "総・年"
+      }
+    },
+    "ctiRows": {
+      "2017": {
+        "A": {
+          "value": {
+            "total": 91.4733,
+            "education": 3.1645,
+            "share": 0.03459479432796237
+          },
+          "evidence": {
+            "file": "data/source/cti-size-composition/raw/cti/000040499087-adjusted.xlsx",
+            "sourceUrl": "https://www.e-stat.go.jp/stat-search/file-download?statInfId=000040499087&fileKind=0",
+            "sha256": "7224e5eb424c94d90402502f665a4953cfe16377f65f1040a939696ac948ef41",
+            "series": "CTI distribution-adjusted A",
+            "sheet": "総・年",
+            "headerRow": 9,
+            "yearRow": 10,
+            "reportedYear": "2017年",
+            "cells": {
+              "year": "I10",
+              "total": "J10",
+              "education": "R10"
+            },
+            "rawValues": {
+              "total": 91.4733,
+              "education": 3.1645
+            }
+          }
+        },
+        "B": {
+          "value": {
+            "total": 95.3443,
+            "education": 3.1634,
+            "share": 0.03317870077183429
+          },
+          "evidence": {
+            "file": "data/source/cti-size-composition/raw/cti/000040499069-basic.xlsx",
+            "sourceUrl": "https://www.e-stat.go.jp/stat-search/file-download?statInfId=000040499069&fileKind=0",
+            "sha256": "5e99cf3c61e26ba90bcde12b3311eb553458f97e5624258712d7414bed53197b",
+            "series": "CTI basic B",
+            "sheet": "総・年",
+            "headerRow": 9,
+            "yearRow": 25,
+            "reportedYear": "2017年",
+            "cells": {
+              "year": "I25",
+              "total": "J25",
+              "education": "R25"
+            },
+            "rawValues": {
+              "total": 95.3443,
+              "education": 3.1634
+            }
+          }
+        }
+      },
+      "2018": {
+        "A": {
+          "value": {
+            "total": 92.5049,
+            "education": 3.2671,
+            "share": 0.035318129093702064
+          },
+          "evidence": {
+            "file": "data/source/cti-size-composition/raw/cti/000040499087-adjusted.xlsx",
+            "sourceUrl": "https://www.e-stat.go.jp/stat-search/file-download?statInfId=000040499087&fileKind=0",
+            "sha256": "7224e5eb424c94d90402502f665a4953cfe16377f65f1040a939696ac948ef41",
+            "series": "CTI distribution-adjusted A",
+            "sheet": "総・年",
+            "headerRow": 9,
+            "yearRow": 11,
+            "reportedYear": "2018年",
+            "cells": {
+              "year": "I11",
+              "total": "J11",
+              "education": "R11"
+            },
+            "rawValues": {
+              "total": 92.5049,
+              "education": 3.2671
+            }
+          }
+        },
+        "B": {
+          "value": {
+            "total": 96.3498,
+            "education": 3.3114,
+            "share": 0.03436851970632009
+          },
+          "evidence": {
+            "file": "data/source/cti-size-composition/raw/cti/000040499069-basic.xlsx",
+            "sourceUrl": "https://www.e-stat.go.jp/stat-search/file-download?statInfId=000040499069&fileKind=0",
+            "sha256": "5e99cf3c61e26ba90bcde12b3311eb553458f97e5624258712d7414bed53197b",
+            "series": "CTI basic B",
+            "sheet": "総・年",
+            "headerRow": 9,
+            "yearRow": 26,
+            "reportedYear": "2018年",
+            "cells": {
+              "year": "I26",
+              "total": "J26",
+              "education": "R26"
+            },
+            "rawValues": {
+              "total": 96.3498,
+              "education": 3.3114
+            }
+          }
+        }
+      },
+      "2019": {
+        "A": {
+          "value": {
+            "total": 93.6344,
+            "education": 3.2397,
+            "share": 0.034599463445058654
+          },
+          "evidence": {
+            "file": "data/source/cti-size-composition/raw/cti/000040499087-adjusted.xlsx",
+            "sourceUrl": "https://www.e-stat.go.jp/stat-search/file-download?statInfId=000040499087&fileKind=0",
+            "sha256": "7224e5eb424c94d90402502f665a4953cfe16377f65f1040a939696ac948ef41",
+            "series": "CTI distribution-adjusted A",
+            "sheet": "総・年",
+            "headerRow": 9,
+            "yearRow": 12,
+            "reportedYear": "2019年",
+            "cells": {
+              "year": "I12",
+              "total": "J12",
+              "education": "R12"
+            },
+            "rawValues": {
+              "total": 93.6344,
+              "education": 3.2397
+            }
+          }
+        },
+        "B": {
+          "value": {
+            "total": 96.9032,
+            "education": 3.2625,
+            "share": 0.033667618819605546
+          },
+          "evidence": {
+            "file": "data/source/cti-size-composition/raw/cti/000040499069-basic.xlsx",
+            "sourceUrl": "https://www.e-stat.go.jp/stat-search/file-download?statInfId=000040499069&fileKind=0",
+            "sha256": "5e99cf3c61e26ba90bcde12b3311eb553458f97e5624258712d7414bed53197b",
+            "series": "CTI basic B",
+            "sheet": "総・年",
+            "headerRow": 9,
+            "yearRow": 27,
+            "reportedYear": "2019年",
+            "cells": {
+              "year": "I27",
+              "total": "J27",
+              "education": "R27"
+            },
+            "rawValues": {
+              "total": 96.9032,
+              "education": 3.2625
+            }
+          }
+        }
+      },
+      "2020": {
+        "A": {
+          "value": {
+            "total": 88.8547,
+            "education": 3.1239,
+            "share": 0.03515739741398036
+          },
+          "evidence": {
+            "file": "data/source/cti-size-composition/raw/cti/000040499087-adjusted.xlsx",
+            "sourceUrl": "https://www.e-stat.go.jp/stat-search/file-download?statInfId=000040499087&fileKind=0",
+            "sha256": "7224e5eb424c94d90402502f665a4953cfe16377f65f1040a939696ac948ef41",
+            "series": "CTI distribution-adjusted A",
+            "sheet": "総・年",
+            "headerRow": 9,
+            "yearRow": 13,
+            "reportedYear": "2020年",
+            "cells": {
+              "year": "I13",
+              "total": "J13",
+              "education": "R13"
+            },
+            "rawValues": {
+              "total": 88.8547,
+              "education": 3.1239
+            }
+          }
+        },
+        "B": {
+          "value": {
+            "total": 91.235,
+            "education": 3.2079,
+            "share": 0.0351608483586343
+          },
+          "evidence": {
+            "file": "data/source/cti-size-composition/raw/cti/000040499069-basic.xlsx",
+            "sourceUrl": "https://www.e-stat.go.jp/stat-search/file-download?statInfId=000040499069&fileKind=0",
+            "sha256": "5e99cf3c61e26ba90bcde12b3311eb553458f97e5624258712d7414bed53197b",
+            "series": "CTI basic B",
+            "sheet": "総・年",
+            "headerRow": 9,
+            "yearRow": 28,
+            "reportedYear": "2020年",
+            "cells": {
+              "year": "I28",
+              "total": "J28",
+              "education": "R28"
+            },
+            "rawValues": {
+              "total": 91.235,
+              "education": 3.2079
+            }
+          }
+        }
+      },
+      "2021": {
+        "A": {
+          "value": {
+            "total": 89.5976,
+            "education": 3.338,
+            "share": 0.03725546219988035
+          },
+          "evidence": {
+            "file": "data/source/cti-size-composition/raw/cti/000040499087-adjusted.xlsx",
+            "sourceUrl": "https://www.e-stat.go.jp/stat-search/file-download?statInfId=000040499087&fileKind=0",
+            "sha256": "7224e5eb424c94d90402502f665a4953cfe16377f65f1040a939696ac948ef41",
+            "series": "CTI distribution-adjusted A",
+            "sheet": "総・年",
+            "headerRow": 9,
+            "yearRow": 14,
+            "reportedYear": "2021年",
+            "cells": {
+              "year": "I14",
+              "total": "J14",
+              "education": "R14"
+            },
+            "rawValues": {
+              "total": 89.5976,
+              "education": 3.338
+            }
+          }
+        },
+        "B": {
+          "value": {
+            "total": 91.3832,
+            "education": 3.3448,
+            "share": 0.036601913699673465
+          },
+          "evidence": {
+            "file": "data/source/cti-size-composition/raw/cti/000040499069-basic.xlsx",
+            "sourceUrl": "https://www.e-stat.go.jp/stat-search/file-download?statInfId=000040499069&fileKind=0",
+            "sha256": "5e99cf3c61e26ba90bcde12b3311eb553458f97e5624258712d7414bed53197b",
+            "series": "CTI basic B",
+            "sheet": "総・年",
+            "headerRow": 9,
+            "yearRow": 29,
+            "reportedYear": "2021年",
+            "cells": {
+              "year": "I29",
+              "total": "J29",
+              "education": "R29"
+            },
+            "rawValues": {
+              "total": 91.3832,
+              "education": 3.3448
+            }
+          }
+        }
+      },
+      "2022": {
+        "A": {
+          "value": {
+            "total": 92.4233,
+            "education": 3.2352,
+            "share": 0.03500416020635489
+          },
+          "evidence": {
+            "file": "data/source/cti-size-composition/raw/cti/000040499087-adjusted.xlsx",
+            "sourceUrl": "https://www.e-stat.go.jp/stat-search/file-download?statInfId=000040499087&fileKind=0",
+            "sha256": "7224e5eb424c94d90402502f665a4953cfe16377f65f1040a939696ac948ef41",
+            "series": "CTI distribution-adjusted A",
+            "sheet": "総・年",
+            "headerRow": 9,
+            "yearRow": 15,
+            "reportedYear": "2022年",
+            "cells": {
+              "year": "I15",
+              "total": "J15",
+              "education": "R15"
+            },
+            "rawValues": {
+              "total": 92.4233,
+              "education": 3.2352
+            }
+          }
+        },
+        "B": {
+          "value": {
+            "total": 93.6869,
+            "education": 3.1732,
+            "share": 0.033870263612095185
+          },
+          "evidence": {
+            "file": "data/source/cti-size-composition/raw/cti/000040499069-basic.xlsx",
+            "sourceUrl": "https://www.e-stat.go.jp/stat-search/file-download?statInfId=000040499069&fileKind=0",
+            "sha256": "5e99cf3c61e26ba90bcde12b3311eb553458f97e5624258712d7414bed53197b",
+            "series": "CTI basic B",
+            "sheet": "総・年",
+            "headerRow": 9,
+            "yearRow": 30,
+            "reportedYear": "2022年",
+            "cells": {
+              "year": "I30",
+              "total": "J30",
+              "education": "R30"
+            },
+            "rawValues": {
+              "total": 93.6869,
+              "education": 3.1732
+            }
+          }
+        }
+      },
+      "2023": {
+        "A": {
+          "value": {
+            "total": 95.2129,
+            "education": 3.2091,
+            "share": 0.03370446651661697
+          },
+          "evidence": {
+            "file": "data/source/cti-size-composition/raw/cti/000040499087-adjusted.xlsx",
+            "sourceUrl": "https://www.e-stat.go.jp/stat-search/file-download?statInfId=000040499087&fileKind=0",
+            "sha256": "7224e5eb424c94d90402502f665a4953cfe16377f65f1040a939696ac948ef41",
+            "series": "CTI distribution-adjusted A",
+            "sheet": "総・年",
+            "headerRow": 9,
+            "yearRow": 16,
+            "reportedYear": "2023年",
+            "cells": {
+              "year": "I16",
+              "total": "J16",
+              "education": "R16"
+            },
+            "rawValues": {
+              "total": 95.2129,
+              "education": 3.2091
+            }
+          }
+        },
+        "B": {
+          "value": {
+            "total": 96.0487,
+            "education": 3.1067,
+            "share": 0.0323450499590312
+          },
+          "evidence": {
+            "file": "data/source/cti-size-composition/raw/cti/000040499069-basic.xlsx",
+            "sourceUrl": "https://www.e-stat.go.jp/stat-search/file-download?statInfId=000040499069&fileKind=0",
+            "sha256": "5e99cf3c61e26ba90bcde12b3311eb553458f97e5624258712d7414bed53197b",
+            "series": "CTI basic B",
+            "sheet": "総・年",
+            "headerRow": 9,
+            "yearRow": 31,
+            "reportedYear": "2023年",
+            "cells": {
+              "year": "I31",
+              "total": "J31",
+              "education": "R31"
+            },
+            "rawValues": {
+              "total": 96.0487,
+              "education": 3.1067
+            }
+          }
+        }
+      },
+      "2024": {
+        "A": {
+          "value": {
+            "total": 97.4996,
+            "education": 3.437,
+            "share": 0.03525142667251968
+          },
+          "evidence": {
+            "file": "data/source/cti-size-composition/raw/cti/000040499087-adjusted.xlsx",
+            "sourceUrl": "https://www.e-stat.go.jp/stat-search/file-download?statInfId=000040499087&fileKind=0",
+            "sha256": "7224e5eb424c94d90402502f665a4953cfe16377f65f1040a939696ac948ef41",
+            "series": "CTI distribution-adjusted A",
+            "sheet": "総・年",
+            "headerRow": 9,
+            "yearRow": 17,
+            "reportedYear": "2024年",
+            "cells": {
+              "year": "I17",
+              "total": "J17",
+              "education": "R17"
+            },
+            "rawValues": {
+              "total": 97.4996,
+              "education": 3.437
+            }
+          }
+        },
+        "B": {
+          "value": {
+            "total": 97.946,
+            "education": 3.2909,
+            "share": 0.03359912604904744
+          },
+          "evidence": {
+            "file": "data/source/cti-size-composition/raw/cti/000040499069-basic.xlsx",
+            "sourceUrl": "https://www.e-stat.go.jp/stat-search/file-download?statInfId=000040499069&fileKind=0",
+            "sha256": "5e99cf3c61e26ba90bcde12b3311eb553458f97e5624258712d7414bed53197b",
+            "series": "CTI basic B",
+            "sheet": "総・年",
+            "headerRow": 9,
+            "yearRow": 32,
+            "reportedYear": "2024年",
+            "cells": {
+              "year": "I32",
+              "total": "J32",
+              "education": "R32"
+            },
+            "rawValues": {
+              "total": 97.946,
+              "education": 3.2909
+            }
+          }
+        }
+      },
+      "2025": {
+        "A": {
+          "value": {
+            "total": 99.9966,
+            "education": 3.2433,
+            "share": 0.03243410275949382
+          },
+          "evidence": {
+            "file": "data/source/cti-size-composition/raw/cti/000040499087-adjusted.xlsx",
+            "sourceUrl": "https://www.e-stat.go.jp/stat-search/file-download?statInfId=000040499087&fileKind=0",
+            "sha256": "7224e5eb424c94d90402502f665a4953cfe16377f65f1040a939696ac948ef41",
+            "series": "CTI distribution-adjusted A",
+            "sheet": "総・年",
+            "headerRow": 9,
+            "yearRow": 18,
+            "reportedYear": "2025年",
+            "cells": {
+              "year": "I18",
+              "total": "J18",
+              "education": "R18"
+            },
+            "rawValues": {
+              "total": 99.9966,
+              "education": 3.2433
+            }
+          }
+        },
+        "B": {
+          "value": {
+            "total": 100,
+            "education": 3.2435,
+            "share": 0.032435
+          },
+          "evidence": {
+            "file": "data/source/cti-size-composition/raw/cti/000040499069-basic.xlsx",
+            "sourceUrl": "https://www.e-stat.go.jp/stat-search/file-download?statInfId=000040499069&fileKind=0",
+            "sha256": "5e99cf3c61e26ba90bcde12b3311eb553458f97e5624258712d7414bed53197b",
+            "series": "CTI basic B",
+            "sheet": "総・年",
+            "headerRow": 9,
+            "yearRow": 33,
+            "reportedYear": "2025年",
+            "cells": {
+              "year": "I33",
+              "total": "J33",
+              "education": "R33"
+            },
+            "rawValues": {
+              "total": 100,
+              "education": 3.2435
+            }
+          }
+        }
+      }
+    }
+  },
+  "annual": [
+    {
+      "year": 2017,
+      "validation": false,
+      "pAedu": 0.03459479432796237,
+      "pBedu": 0.03317870077183429,
+      "pi1": 0.324778,
+      "pi2plus": 0.675222,
+      "anchorRatio2017": 1.0426808019357472,
+      "K2017": 1.544204427485697,
+      "pHatAnchor": 0.03459479432796237,
+      "anchorResidual": 0,
+      "pHatPi2plus": 0.03459479432796237,
+      "pi2plusResidual": 0,
+      "A_total": 91.4733,
+      "A_education": 3.1645,
+      "B_total": 95.3443,
+      "B_education": 3.1634,
+      "lfsDenominator": 1000000,
+      "lfsCounts": {
+        "1": 324778,
+        "2": 296228,
+        "3": 177091,
+        "4": 140102,
+        "total": 1000000,
+        "5+": 61800
+      }
+    },
+    {
+      "year": 2018,
+      "validation": true,
+      "pAedu": 0.035318129093702064,
+      "pBedu": 0.03436851970632009,
+      "pi1": 0.327135,
+      "pi2plus": 0.672865,
+      "anchorRatio2017": 1.0426808019357472,
+      "K2017": 1.544204427485697,
+      "pHatAnchor": 0.03583539568873036,
+      "anchorResidual": 0.0005172665950282998,
+      "pHatPi2plus": 0.035710304936891216,
+      "pi2plusResidual": 0.000392175843189152,
+      "A_total": 92.5049,
+      "A_education": 3.2671,
+      "B_total": 96.3498,
+      "B_education": 3.3114,
+      "lfsDenominator": 1000000,
+      "lfsCounts": {
+        "1": 327135,
+        "2": 296521,
+        "3": 176430,
+        "4": 138758,
+        "total": 1000000,
+        "5+": 61156
+      }
+    },
+    {
+      "year": 2019,
+      "validation": true,
+      "pAedu": 0.034599463445058654,
+      "pBedu": 0.033667618819605546,
+      "pi1": 0.331947,
+      "pi2plus": 0.668053,
+      "anchorRatio2017": 1.0426808019357472,
+      "K2017": 1.544204427485697,
+      "pHatAnchor": 0.03510457979009336,
+      "anchorResidual": 0.000505116345034709,
+      "pHatPi2plus": 0.03473186573084296,
+      "pi2plusResidual": 0.00013240228578430963,
+      "A_total": 93.6344,
+      "A_education": 3.2397,
+      "B_total": 96.9032,
+      "B_education": 3.2625,
+      "lfsDenominator": 1000000,
+      "lfsCounts": {
+        "1": 331947,
+        "2": 295278,
+        "3": 174385,
+        "4": 137808,
+        "total": 1000000,
+        "5+": 60583
+      }
+    },
+    {
+      "year": 2020,
+      "validation": true,
+      "pAedu": 0.03515739741398036,
+      "pBedu": 0.0351608483586343,
+      "pi1": 0.344106,
+      "pi2plus": 0.655894,
+      "anchorRatio2017": 1.0426808019357472,
+      "K2017": 1.544204427485697,
+      "pHatAnchor": 0.03666154156332201,
+      "anchorResidual": 0.001504144149341656,
+      "pHatPi2plus": 0.03561211741047171,
+      "pi2plusResidual": 0.00045471999649135397,
+      "A_total": 88.8547,
+      "A_education": 3.1239,
+      "B_total": 91.235,
+      "B_education": 3.2079,
+      "lfsDenominator": 1000000,
+      "lfsCounts": {
+        "1": 344106,
+        "2": 296208,
+        "3": 168974,
+        "4": 133316,
+        "total": 1000000,
+        "5+": 57396
+      }
+    },
+    {
+      "year": 2021,
+      "validation": true,
+      "pAedu": 0.03725546219988035,
+      "pBedu": 0.036601913699673465,
+      "pi1": 0.35033,
+      "pi2plus": 0.64967,
+      "anchorRatio2017": 1.0426808019357472,
+      "K2017": 1.544204427485697,
+      "pHatAnchor": 0.03816411272875854,
+      "anchorResidual": 0.0009086505288781882,
+      "pHatPi2plus": 0.03671989229689281,
+      "pi2plusResidual": -0.0005355699029875385,
+      "A_total": 89.5976,
+      "A_education": 3.338,
+      "B_total": 91.3832,
+      "B_education": 3.3448,
+      "lfsDenominator": 1000000,
+      "lfsCounts": {
+        "1": 350330,
+        "2": 295556,
+        "3": 169354,
+        "4": 129314,
+        "total": 1000000,
+        "5+": 55446
+      }
+    },
+    {
+      "year": 2022,
+      "validation": true,
+      "pAedu": 0.03500416020635489,
+      "pBedu": 0.033870263612095185,
+      "pi1": 0.358424,
+      "pi2plus": 0.6415759999999999,
+      "anchorRatio2017": 1.0426808019357472,
+      "K2017": 1.544204427485697,
+      "pHatAnchor": 0.035315873624834564,
+      "anchorResidual": 0.0003117134184796727,
+      "pHatPi2plus": 0.03355609997412238,
+      "pi2plusResidual": -0.001448060232232512,
+      "A_total": 92.4233,
+      "A_education": 3.2352,
+      "B_total": 93.6869,
+      "B_education": 3.1732,
+      "lfsDenominator": 1000000,
+      "lfsCounts": {
+        "1": 358424,
+        "2": 296454,
+        "3": 167541,
+        "4": 124501,
+        "total": 1000000,
+        "5+": 53080
+      }
+    },
+    {
+      "year": 2023,
+      "validation": true,
+      "pAedu": 0.03370446651661697,
+      "pBedu": 0.0323450499590312,
+      "pi1": 0.366257,
+      "pi2plus": 0.633743,
+      "anchorRatio2017": 1.0426808019357472,
+      "K2017": 1.544204427485697,
+      "pHatAnchor": 0.03372556262993446,
+      "anchorResidual": 0.000021096113317492504,
+      "pHatPi2plus": 0.03165379569650064,
+      "pi2plusResidual": -0.0020506708201163265,
+      "A_total": 95.2129,
+      "A_education": 3.2091,
+      "B_total": 96.0487,
+      "B_education": 3.1067,
+      "lfsDenominator": 1000000,
+      "lfsCounts": {
+        "1": 366257,
+        "2": 298264,
+        "3": 164305,
+        "4": 120545,
+        "total": 1000000,
+        "5+": 50629
+      }
+    },
+    {
+      "year": 2024,
+      "validation": true,
+      "pAedu": 0.03525142667251968,
+      "pBedu": 0.03359912604904744,
+      "pi1": 0.373232,
+      "pi2plus": 0.626768,
+      "anchorRatio2017": 1.0426808019357472,
+      "K2017": 1.544204427485697,
+      "pHatAnchor": 0.035033163693161035,
+      "anchorResidual": -0.00021826297935864658,
+      "pHatPi2plus": 0.032519180272021886,
+      "pi2plusResidual": -0.0027322464004977953,
+      "A_total": 97.4996,
+      "A_education": 3.437,
+      "B_total": 97.946,
+      "B_education": 3.2909,
+      "lfsDenominator": 1000000,
+      "lfsCounts": {
+        "1": 373232,
+        "2": 297376,
+        "3": 162142,
+        "4": 119148,
+        "total": 1000000,
+        "5+": 48103
+      }
+    },
+    {
+      "year": 2025,
+      "validation": true,
+      "pAedu": 0.03243410275949382,
+      "pBedu": 0.032435,
+      "pi1": 0.381308,
+      "pi2plus": 0.618692,
+      "anchorRatio2017": 1.0426808019357472,
+      "K2017": 1.544204427485697,
+      "pHatAnchor": 0.03381935181078596,
+      "anchorResidual": 0.0013852490512921353,
+      "pHatPi2plus": 0.03098797493345713,
+      "pi2plusResidual": -0.0014461278260366923,
+      "A_total": 99.9966,
+      "A_education": 3.2433,
+      "B_total": 100,
+      "B_education": 3.2435,
+      "lfsDenominator": 1000000,
+      "lfsCounts": {
+        "1": 381308,
+        "2": 295811,
+        "3": 159849,
+        "4": 117469,
+        "total": 1000000,
+        "5+": 45564
+      }
+    }
+  ]
+}

@@ -14,7 +14,6 @@ export const CTI_ADJUSTED_V2_CALIBRATION_YEARS = Array.from({ length: 8 }, (_, i
 export const CTI_ADJUSTED_V2_CONNECTION_YEAR = 2017 as const;
 export const CTI_ADJUSTED_V2_YEARS = Array.from({ length: 21 }, (_, i) => 2005 + i);
 export const CTI_ADJUSTED_V2_GAMMAS = [0, 0.25, 0.5, 0.75, 1] as const;
-export const CTI_ADJUSTED_V2_RESIDUAL_JUMP_THRESHOLD = 1.4 as const;
 export const CTI_ADJUSTED_V2_THRESHOLD_EPSILON = 1e-9 as const;
 export type CtiAdjustedV2Category =
   | typeof CTI_ADJUSTED_TOTAL_CATEGORY
@@ -67,11 +66,17 @@ export type CtiAdjustedV2ResidualJump = {
   absoluteDifference?: number | null;
   relativeChange?: number | null;
   yearOverYearRatio: number | null;
-  otherDelta?: number | null;
-  otherAbsoluteDifference?: number | null;
+  otherSharePreviousPercentage?: number | null;
+  otherShareCurrentPercentage?: number | null;
+  otherShareDeltaPercentagePoints?: number | null;
+  otherShareAbsoluteDifferencePercentagePoints?: number | null;
+  otherSharePreviousTotal?: number | null;
+  otherShareCurrentTotal?: number | null;
+  otherSharePreviousOther?: number | null;
+  otherShareCurrentOther?: number | null;
   otherYearOverYearRatio?: number | null;
-  thresholdSource?: "generated_bottom_up" | "official_a";
-  thresholdSeriesType?: "estimated" | "official";
+  thresholdSource?: "generated_bottom_up" | "generated_to_official_boundary" | "official_a";
+  thresholdSeriesType?: "estimated" | "mixed" | "official";
   finite?: boolean;
   thresholdPass?: boolean | null;
   exceeded: boolean | null;
@@ -83,9 +88,15 @@ export type CtiAdjustedV2ResidualJump = {
 export type CtiAdjustedV2ThresholdMetadata = {
   source: "official-a-2017-2025";
   baselineYears: readonly [2017, 2025];
-  indicator: "Other前年差";
-  derivedMaxAbsoluteDelta: number | null;
-  comparison: "abs(delta)>threshold";
+  indicator: "Otherシェアの前年差";
+  unit: "percentage-points";
+  roundingRule: "ceiling-to-hundredth-percentage-point";
+  roundingIncrementPercentagePoints: 0.01;
+  derivedMaxAbsoluteShareChangePercentagePoints: number | null;
+  effectiveThresholdPercentagePoints: number | null;
+  officialAdjacentPairs: readonly number[];
+  unevaluableOfficialAdjacentPairs: readonly number[];
+  comparison: "abs(otherShareDeltaPercentagePoints)>threshold";
   inclusive: false;
   epsilon: number;
 };
@@ -94,7 +105,7 @@ export type CtiAdjustedV2ResidualDiagnostics = {
   residualWithOther: Record<number, number | null>;
   jumps: Record<number, CtiAdjustedV2ResidualJump>;
   boundary2016To2017: CtiAdjustedV2ResidualJump & { fromYear: 2016; toYear: 2017 };
-  threshold: number;
+  threshold: number | null;
   thresholdMetadata: CtiAdjustedV2ThresholdMetadata | "provisional-frozen";
   status: CtiAdjustedV2Status;
   generationSource: "diagnostic-only";
@@ -116,6 +127,29 @@ export type CtiAdjustedV2Options = {
   officialStartYear?: number;
   connectionYear?: number;
   minBetaObservations?: number;
+  householdComposition?: CtiAdjustedV2HouseholdComposition;
+};
+export type CtiAdjustedV2HouseholdComposition = {
+  historicalPi2Plus: Record<number, number>;
+  historicalPiStatusByYear: Record<
+    number,
+    {
+      status: string;
+      synthetic: boolean;
+      benchmarkId: string;
+      connectionStatus: string;
+      interpolationMethod: string | null;
+    }
+  >;
+  calibrationPi2Plus: Record<number, number>;
+  provenance: {
+    artifactPath: string;
+    artifactSha256: string;
+    manifestSha256: string;
+    historicalSource: string;
+    calibrationSource: string;
+    caveats: readonly string[];
+  };
 };
 export type CtiAdjustedV2PublicationGate = {
   accepted: boolean;
@@ -147,6 +181,30 @@ export type CtiAdjustedV2Result = {
   categories: Record<CtiAdjustedV2Category, Record<number, number | null>>;
   other: CtiAdjustedV2OtherDiagnostics;
   residual: CtiAdjustedV2ResidualDiagnostics;
+  householdComposition: {
+    status: "available" | "unavailable";
+    method: "endpoint-calibrated-provisional";
+    calibrationYears: readonly [2017, 2025];
+    calibrationPiDelta: number | null;
+    gamma: Record<CtiAdjustedV2Category, number | null>;
+    historicalPi: Record<number, number | null>;
+    historicalPiStatusByYear: CtiAdjustedV2HouseholdComposition["historicalPiStatusByYear"] | null;
+    historicalVintageBridge: "centered-at-2017";
+    ctiInputPrecision: "saved nominal B/A annual artifacts (one decimal)";
+    totalReconciliationMaximumAbsoluteError: number | null;
+    endpointGammaReconciliationError: number | null;
+    retrospectiveValidation: {
+      years: readonly number[];
+      endpointCalibrationYear: 2025;
+      baselineMae: number | null;
+      correctedMae: number | null;
+      baselineRmse: number | null;
+      correctedRmse: number | null;
+      status: "available" | "unavailable";
+    };
+    caveats: readonly string[];
+    provenance: CtiAdjustedV2HouseholdComposition["provenance"] | null;
+  };
   beta: Record<CtiAdjustedV2Category, CtiAdjustedV2BetaDiagnostic | null>;
   fitDiagnostics: Record<CtiAdjustedV2Category, CtiAdjustedV2BetaDiagnostic | null>;
   benchmarkG: Record<number, number | null>;
@@ -165,7 +223,7 @@ export type CtiAdjustedV2Result = {
     reason: string | null;
   };
   artifactValidation: Record<
-    "B" | "A" | "L",
+    "B" | "A",
     {
       valid: boolean;
       reasons: readonly string[];
@@ -176,7 +234,7 @@ export type CtiAdjustedV2Result = {
   >;
   /** Present for results produced by the Plan40-aware builder; optional for legacy fixtures. */
   plan40InputValidation?: CtiAdjustedV2Plan40InputValidation;
-  plan40InputMetadata?: Partial<Record<"B" | "A" | "L", CtiAdjustedV2Plan40InputMetadata>>;
+  plan40InputMetadata?: Partial<Record<"B" | "A", CtiAdjustedV2Plan40InputMetadata>>;
   publicationGate: CtiAdjustedV2PublicationGate;
 };
 
@@ -307,19 +365,15 @@ const requiredPlan40Metadata = [
 export const validateCtiAdjustedV2Plan40Inputs = (
   B: CtiAdjustedAnnualInput | null | undefined,
   A: CtiAdjustedAnnualInput | null | undefined,
-  L: CtiAdjustedAnnualInput | null | undefined,
+  _L: CtiAdjustedAnnualInput | null | undefined = undefined,
 ): CtiAdjustedV2Plan40InputValidation => {
   const targetYears = Array.from({ length: 13 }, (_, index) => 2005 + index);
   const inputCategories = [...CTI_ADJUSTED_INPUT_CATEGORIES];
-  const validation = {
-    B: validateArtifact("B", B, true),
-    A: validateArtifact("A", A, true),
-    L: validateArtifact("L", L, true),
-  };
+  const validation = { B: validateArtifact("B", B, true), A: validateArtifact("A", A, true) };
   const reasons = new Set<string>();
   const diagnostics: string[] = [];
-  for (const [name, input] of Object.entries({ B, A, L }) as [
-    "B" | "A" | "L",
+  for (const [name, input] of Object.entries({ B, A }) as [
+    "B" | "A",
     CtiAdjustedAnnualInput | null | undefined,
   ][]) {
     for (const reason of validation[name].reasons) reasons.add(reason);
@@ -329,13 +383,14 @@ export const validateCtiAdjustedV2Plan40Inputs = (
       if (typeof value !== "string" || value.trim() === "")
         reasons.add(`${name}:missing_metadata:${field}`);
     }
+    if (input.metadata?.valueType !== "原数値（名目指数）")
+      reasons.add(`${name}:value_type_not_nominal`);
     if (input.metadata?.baseYear === undefined) reasons.add(`${name}:missing_base_year`);
     else if (!finite(input.metadata.baseYear)) reasons.add(`${name}:non_finite_base_year`);
     else if (input.metadata.baseYear !== 2025) reasons.add(`${name}:base_year_not_2025`);
     if (input.metadata?.frequency !== "annual") reasons.add(`${name}:frequency_not_annual`);
     const adopted = input.metadata?.adoptedRange;
-    const metadataTargetYears =
-      name === "A" ? [2017, 2025] : name === "B" ? [...targetYears, 2025] : targetYears;
+    const metadataTargetYears = name === "A" ? [2017, 2025] : [...targetYears, 2025];
     if (
       adopted &&
       finite(adopted.startYear) &&
@@ -461,7 +516,7 @@ export const generateCtiAdjustedV2GammaCases = (
 export function buildCtiAdjustedV2Estimate(
   B: CtiAdjustedAnnualInput | null | undefined,
   A: CtiAdjustedAnnualInput | null | undefined,
-  L: CtiAdjustedAnnualInput | null | undefined,
+  _L: CtiAdjustedAnnualInput | null | undefined = undefined,
   options: CtiAdjustedV2Options = {},
 ): CtiAdjustedV2Result {
   const contract = options.contract ?? "plan39";
@@ -482,10 +537,9 @@ export function buildCtiAdjustedV2Estimate(
   const validation = {
       B: validateArtifact("B", B, contract === "plan40"),
       A: validateArtifact("A", A, contract === "plan40"),
-      L: validateArtifact("L", L, contract === "plan40"),
     },
     plan40InputValidation =
-      contract === "plan40" ? validateCtiAdjustedV2Plan40Inputs(B, A, L) : undefined,
+      contract === "plan40" ? validateCtiAdjustedV2Plan40Inputs(B, A, _L) : undefined,
     diagnostics = [
       ...fixed,
       ...Object.values(validation).flatMap((v) => [...v.reasons, ...v.diagnostics]),
@@ -495,7 +549,6 @@ export function buildCtiAdjustedV2Estimate(
     plan40EstimateInputsUsable = !plan40InputValidation || plan40InputValidation.valid,
     bRows = rowMap(B),
     aRows = rowMap(A),
-    lRows = rowMap(L),
     otherDerived: Record<number, number | null> = {},
     officialOther: Record<number, number | null> = {};
   for (const y of CTI_ADJUSTED_V2_YEARS) {
@@ -539,14 +592,89 @@ export function buildCtiAdjustedV2Estimate(
   if (ratio2017 === null) diagnostics.push("other_connection_ratio_unavailable");
   if (otherBeta.status !== "available")
     diagnostics.push(otherBeta.reason ?? "other_beta_unavailable");
-  const d: Record<number, number | null> = {};
-  for (const y of CTI_ADJUSTED_V2_ESTIMATE_YEARS) {
-    const l = lRows.get(y)?.values[CTI_ADJUSTED_TOTAL_CATEGORY],
-      l0 = lRows.get(2017)?.values[CTI_ADJUSTED_TOTAL_CATEGORY],
-      b = bRows.get(y)?.values[CTI_ADJUSTED_TOTAL_CATEGORY],
-      b0 = bRows.get(2017)?.values[CTI_ADJUSTED_TOTAL_CATEGORY];
-    d[y] = positive(l) && positive(l0) && positive(b) && positive(b0) ? l / l0 / (b / b0) : null;
+  const composition = options.householdComposition;
+  const historicalPi: Record<number, number | null> = {};
+  const historicalPiStatusByYear = composition?.historicalPiStatusByYear ?? null;
+  for (const y of Array.from({ length: 13 }, (_, i) => 2005 + i)) {
+    const pi = composition?.historicalPi2Plus[y];
+    historicalPi[y] = finite(pi) && pi > 0 && pi < 1 ? pi : null;
   }
+  const pi17Calibration = composition?.calibrationPi2Plus[2017],
+    pi25Calibration = composition?.calibrationPi2Plus[2025],
+    calibrationPiDelta =
+      finite(pi17Calibration) && finite(pi25Calibration) ? pi25Calibration - pi17Calibration : null,
+    householdCaveats = composition?.provenance.caveats ?? [],
+    compositionGamma = Object.fromEntries(categories.map((c) => [c, null])) as Record<
+      CtiAdjustedV2Category,
+      number | null
+    >;
+  const baseCategoryValue = (year: number, category: CtiAdjustedV2Category): number | null => {
+    const b = bRows.get(year),
+      b17 = bRows.get(2017),
+      a17 = aRows.get(2017);
+    if (category === CTI_ADJUSTED_TOTAL_CATEGORY) {
+      const componentValues = [
+        ...CTI_ADJUSTED_MAJOR_CATEGORIES.map((c) => baseCategoryValue(year, c)),
+        baseCategoryValue(year, CTI_ADJUSTED_V2_OTHER_CATEGORY),
+      ];
+      return componentValues.every(positive)
+        ? componentValues.reduce((sum, value) => sum + value!, 0)
+        : null;
+    }
+    if (category === CTI_ADJUSTED_V2_OTHER_CATEGORY) {
+      const by = deriveOther(b),
+        bo17Local = deriveOther(b17),
+        ao17Local = deriveOther(a17);
+      return positive(by) && positive(bo17Local) && positive(ao17Local)
+        ? by * (ao17Local / bo17Local)
+        : null;
+    }
+    const bv = b?.values[category],
+      av17 = a17?.values[category],
+      bv17 = b17?.values[category];
+    return positive(bv) && positive(av17) && positive(bv17) ? bv * (av17 / bv17) : null;
+  };
+  let endpointGammaReconciliationError: number | null = null;
+  let compositionAvailable =
+    contract === "plan40" ||
+    (composition !== undefined &&
+      positive(pi17Calibration) &&
+      positive(pi25Calibration) &&
+      pi17Calibration! < 1 &&
+      pi25Calibration! < 1 &&
+      Math.abs(calibrationPiDelta ?? 0) > 1e-12 &&
+      positive(historicalPi[2017]));
+  if (compositionAvailable) {
+    for (const c of [...CTI_ADJUSTED_MAJOR_CATEGORIES, CTI_ADJUSTED_V2_OTHER_CATEGORY] as const) {
+      const a25 =
+        c === CTI_ADJUSTED_V2_OTHER_CATEGORY
+          ? deriveOther(aRows.get(2025))
+          : aRows.get(2025)?.values[c];
+      const base25 = baseCategoryValue(2025, c);
+      const gamma = positive(a25) && positive(base25) ? (a25 - base25) / calibrationPiDelta! : null;
+      if (!finite(gamma)) compositionAvailable = false;
+      compositionGamma[c] = finite(gamma) ? gamma : null;
+    }
+    compositionGamma[CTI_ADJUSTED_TOTAL_CATEGORY] =
+      CTI_ADJUSTED_MAJOR_CATEGORIES.reduce((sum, c) => sum + (compositionGamma[c] ?? 0), 0) +
+      (compositionGamma[CTI_ADJUSTED_V2_OTHER_CATEGORY] ?? 0);
+    const aTotal25 = aRows.get(2025)?.values[CTI_ADJUSTED_TOTAL_CATEGORY],
+      baseTotal25 = baseCategoryValue(2025, CTI_ADJUSTED_TOTAL_CATEGORY),
+      independentlyDerivedTotalGamma =
+        positive(aTotal25) && positive(baseTotal25)
+          ? (aTotal25 - baseTotal25) / calibrationPiDelta!
+          : null;
+    endpointGammaReconciliationError = finite(independentlyDerivedTotalGamma)
+      ? Math.abs(independentlyDerivedTotalGamma - compositionGamma[CTI_ADJUSTED_TOTAL_CATEGORY]!)
+      : null;
+    if (!finite(endpointGammaReconciliationError) || endpointGammaReconciliationError > 1e-8)
+      diagnostics.push("household_composition_endpoint_gamma_reconciliation_failed");
+    for (let y = 2005; y <= 2016; y++) if (!positive(historicalPi[y])) compositionAvailable = false;
+  }
+  if (!compositionAvailable) diagnostics.push("household_composition_artifact_missing_or_invalid");
+  // The source vintages differ. Centering the historical series at its own
+  // 2017 weight makes the correction zero at the connection anchor; it does
+  // not establish that the two source series are comparable.
   const rows: CtiAdjustedV2Row[] = [],
     series = Object.fromEntries(categories.map((c) => [c, {}])) as Record<
       CtiAdjustedV2Category,
@@ -567,27 +695,31 @@ export function buildCtiAdjustedV2Estimate(
       reason = valid ? null : "official_a_or_official_other_unavailable";
     } else if (
       plan40EstimateInputsUsable &&
-      d[y] !== null &&
       ratio2017 !== null &&
+      (contract === "plan40" || compositionAvailable) &&
       otherBeta.status === "available" &&
       !fixed.length &&
       validation.B.valid &&
       validation.A.valid
     ) {
-      for (const c of CTI_ADJUSTED_MAJOR_CATEGORIES) {
-        const beta = categoryBeta[c].beta,
-          bv = bRows.get(y)?.values[c],
-          ba = aRows.get(2017)?.values[c],
-          bb = bRows.get(2017)?.values[c];
-        values[c] =
-          positive(bv) && positive(ba) && positive(bb) && finite(beta)
-            ? bv * (ba / bb) * Math.pow(d[y]!, beta)
-            : null;
+      for (const c of [...CTI_ADJUSTED_MAJOR_CATEGORIES, CTI_ADJUSTED_V2_OTHER_CATEGORY] as const) {
+        const base = baseCategoryValue(y, c),
+          pi = historicalPi[y],
+          deltaPi = positive(pi) && positive(historicalPi[2017]) ? pi! - historicalPi[2017]! : null,
+          gamma = compositionGamma[c];
+        const corrected =
+          contract === "plan40"
+            ? base
+            : positive(base) && finite(deltaPi) && finite(gamma)
+              ? base + gamma * deltaPi
+              : null;
+        values[c] = positive(corrected) ? corrected : null;
       }
-      const bo = deriveOther(bRows.get(y));
-      values[CTI_ADJUSTED_V2_OTHER_CATEGORY] =
-        positive(bo) && finite(otherBeta.beta)
-          ? bo * ratio2017 * Math.pow(d[y]!, otherBeta.beta)
+      values[CTI_ADJUSTED_TOTAL_CATEGORY] =
+        CTI_ADJUSTED_MAJOR_CATEGORIES.every((c) => positive(values[c])) &&
+        positive(values[CTI_ADJUSTED_V2_OTHER_CATEGORY])
+          ? CTI_ADJUSTED_MAJOR_CATEGORIES.reduce((sum, c) => sum + values[c]!, 0) +
+            values[CTI_ADJUSTED_V2_OTHER_CATEGORY]!
           : null;
       const total =
         CTI_ADJUSTED_MAJOR_CATEGORIES.reduce((s, c) => s + (values[c] ?? 0), 0) +
@@ -617,6 +749,44 @@ export function buildCtiAdjustedV2Estimate(
     residualWithOther: Record<number, number | null> = {},
     legacyResidual: Record<number, number | null> = {},
     observations: Record<number, CtiAdjustedV2ResidualObservation> = {};
+  let totalReconciliationMaximumAbsoluteError = 0;
+  for (const row of rows.filter(
+    (item) => item.year < CTI_ADJUSTED_V2_CONNECTION_YEAR && item.status === "available",
+  )) {
+    const parts = CTI_ADJUSTED_MAJOR_CATEGORIES.map((c) => row.values[c]);
+    const other = row.values[CTI_ADJUSTED_V2_OTHER_CATEGORY];
+    const total = row.values[CTI_ADJUSTED_TOTAL_CATEGORY];
+    if (parts.every(finite) && finite(other) && finite(total))
+      totalReconciliationMaximumAbsoluteError = Math.max(
+        totalReconciliationMaximumAbsoluteError,
+        Math.abs(parts.reduce((sum, value) => sum + value!, 0) + other - total),
+      );
+  }
+  if (totalReconciliationMaximumAbsoluteError > 1e-9)
+    diagnostics.push("household_composition_total_reconciliation_failed");
+  const retrospectiveRows = Array.from({ length: 7 }, (_, i) => 2018 + i).flatMap((year) => {
+    const baseline = baseCategoryValue(year, CTI_ADJUSTED_TOTAL_CATEGORY),
+      actual = aRows.get(year)?.values[CTI_ADJUSTED_TOTAL_CATEGORY],
+      pi = composition?.calibrationPi2Plus[year],
+      anchorPi = composition?.calibrationPi2Plus[2017],
+      corrected =
+        positive(baseline) &&
+        positive(pi) &&
+        positive(anchorPi) &&
+        finite(compositionGamma[CTI_ADJUSTED_TOTAL_CATEGORY])
+          ? baseline + compositionGamma[CTI_ADJUSTED_TOTAL_CATEGORY]! * (pi - anchorPi)
+          : null;
+    return positive(actual) && positive(baseline) && finite(corrected)
+      ? [{ year, baselineError: baseline - actual, correctedError: corrected! - actual }]
+      : [];
+  });
+  const retrospectiveStats = (key: "baselineError" | "correctedError", rms = false) => {
+    if (retrospectiveRows.length !== 7) return null;
+    const mean =
+      retrospectiveRows.reduce((sum, row) => sum + (rms ? row[key] ** 2 : Math.abs(row[key])), 0) /
+      retrospectiveRows.length;
+    return rms ? Math.sqrt(mean) : mean;
+  };
   for (const y of CTI_ADJUSTED_V2_YEARS) {
     const source = y >= 2017 ? "A" : "B",
       input = source === "A" ? aRows.get(y) : bRows.get(y),
@@ -653,22 +823,48 @@ export function buildCtiAdjustedV2Estimate(
       reason,
     };
   }
-  const officialDeltas: number[] = [];
+  const rowByYear = new Map(rows.map((row) => [row.year, row]));
+  const sharePercentage = (other: unknown, total: unknown) =>
+    finite(other) && positive(total) && other >= 0 && other <= total ? (other / total) * 100 : null;
+  const officialDeltas: number[] = [],
+    officialAdjacentPairs: number[] = [],
+    unevaluableOfficialAdjacentPairs: number[] = [];
   for (let year = 2018; year <= 2025; year++) {
-    const previous = residualWithOther[year - 1],
-      current = residualWithOther[year];
-    if (finite(previous) && finite(current)) officialDeltas.push(Math.abs(current - previous));
+    const previousRow = rowByYear.get(year - 1),
+      currentRow = rowByYear.get(year),
+      previousOther = residualWithOther[year - 1],
+      currentOther = residualWithOther[year],
+      previousShare = sharePercentage(
+        previousOther,
+        previousRow?.values[CTI_ADJUSTED_TOTAL_CATEGORY],
+      ),
+      currentShare = sharePercentage(currentOther, currentRow?.values[CTI_ADJUSTED_TOTAL_CATEGORY]);
+    if (finite(previousShare) && finite(currentShare)) {
+      officialDeltas.push(Math.abs(currentShare - previousShare));
+      officialAdjacentPairs.push(year);
+    } else unevaluableOfficialAdjacentPairs.push(year);
   }
-  const derivedThreshold = officialDeltas.length ? Math.max(...officialDeltas) : null,
-    threshold = CTI_ADJUSTED_V2_RESIDUAL_JUMP_THRESHOLD;
+  const derivedThreshold = officialDeltas.length === 8 ? Math.max(...officialDeltas) : null,
+    threshold = finite(derivedThreshold) ? Math.ceil(derivedThreshold * 100) / 100 : null;
   const jumps: Record<number, CtiAdjustedV2ResidualJump> = {};
   for (let i = 1; i < CTI_ADJUSTED_V2_YEARS.length; i++) {
     const year = CTI_ADJUSTED_V2_YEARS[i],
       previousYear = CTI_ADJUSTED_V2_YEARS[i - 1],
       p = residualWithOther[previousYear],
       c = residualWithOther[year],
-      otherDelta = finite(p) && finite(c) ? c - p : null,
-      otherAbsoluteDifference = finite(otherDelta) ? Math.abs(otherDelta) : null,
+      previousRow = rowByYear.get(previousYear),
+      currentRow = rowByYear.get(year),
+      previousTotal = previousRow?.values[CTI_ADJUSTED_TOTAL_CATEGORY],
+      currentTotal = currentRow?.values[CTI_ADJUSTED_TOTAL_CATEGORY],
+      previousOtherShare = sharePercentage(p, previousTotal),
+      currentOtherShare = sharePercentage(c, currentTotal),
+      otherShareDeltaPercentagePoints =
+        finite(previousOtherShare) && finite(currentOtherShare)
+          ? currentOtherShare - previousOtherShare
+          : null,
+      otherShareAbsoluteDifferencePercentagePoints = finite(otherShareDeltaPercentagePoints)
+        ? Math.abs(otherShareDeltaPercentagePoints)
+        : null,
       otherRatio = finite(p) && finite(c) && p !== 0 ? c / p : null,
       legacyPrevious = legacyResidual[previousYear],
       legacyCurrent = legacyResidual[year],
@@ -681,15 +877,19 @@ export function buildCtiAdjustedV2Estimate(
           : null,
       previous = observations[previousYear],
       current = observations[year],
-      finiteValues = finite(otherDelta) && finite(otherAbsoluteDifference),
-      thresholdPass = finiteValues
-        ? otherAbsoluteDifference! <= threshold + CTI_ADJUSTED_V2_THRESHOLD_EPSILON
-        : null,
+      finiteValues = finite(previousOtherShare) && finite(currentOtherShare),
+      thresholdPass =
+        finiteValues && finite(threshold)
+          ? otherShareAbsoluteDifferencePercentagePoints! <=
+            threshold + CTI_ADJUSTED_V2_THRESHOLD_EPSILON
+          : null,
       reason = !finiteValues
-        ? `other_delta_unavailable:${previous.reason ?? current.reason ?? "missing_value"}`
-        : thresholdPass
-          ? null
-          : "other_delta_threshold_exceeded";
+        ? `other_share_unavailable:${previous.reason ?? current.reason ?? "missing_or_inconsistent_total_or_other"}`
+        : !finite(threshold)
+          ? "official_other_share_threshold_unavailable"
+          : thresholdPass
+            ? null
+            : "other_share_threshold_exceeded";
     jumps[year] = {
       previousYear,
       delta,
@@ -699,11 +899,22 @@ export function buildCtiAdjustedV2Estimate(
           ? delta! / Math.abs(legacyPrevious)
           : null,
       yearOverYearRatio: ratio,
-      otherDelta,
-      otherAbsoluteDifference,
+      otherSharePreviousPercentage: previousOtherShare,
+      otherShareCurrentPercentage: currentOtherShare,
+      otherShareDeltaPercentagePoints,
+      otherShareAbsoluteDifferencePercentagePoints,
+      otherSharePreviousTotal: finite(previousTotal) ? previousTotal : null,
+      otherShareCurrentTotal: finite(currentTotal) ? currentTotal : null,
+      otherSharePreviousOther: finite(p) ? p : null,
+      otherShareCurrentOther: finite(c) ? c : null,
       otherYearOverYearRatio: otherRatio,
-      thresholdSource: year < 2017 ? "generated_bottom_up" : "official_a",
-      thresholdSeriesType: year < 2017 ? "estimated" : "official",
+      thresholdSource:
+        year < 2017
+          ? "generated_bottom_up"
+          : year === 2017
+            ? "generated_to_official_boundary"
+            : "official_a",
+      thresholdSeriesType: year < 2017 ? "estimated" : year === 2017 ? "mixed" : "official",
       finite: finiteValues,
       thresholdPass,
       exceeded: thresholdPass === null ? null : !thresholdPass,
@@ -719,8 +930,14 @@ export function buildCtiAdjustedV2Estimate(
     absoluteDifference: null,
     relativeChange: null,
     yearOverYearRatio: null,
-    otherDelta: null,
-    otherAbsoluteDifference: null,
+    otherSharePreviousPercentage: null,
+    otherShareCurrentPercentage: null,
+    otherShareDeltaPercentagePoints: null,
+    otherShareAbsoluteDifferencePercentagePoints: null,
+    otherSharePreviousTotal: null,
+    otherShareCurrentTotal: null,
+    otherSharePreviousOther: null,
+    otherShareCurrentOther: null,
     otherYearOverYearRatio: null,
     finite: false,
     thresholdPass: null,
@@ -740,8 +957,7 @@ export function buildCtiAdjustedV2Estimate(
       positive(base.values[CTI_ADJUSTED_V2_OTHER_CATEGORY])
         ? CTI_ADJUSTED_MAJOR_CATEGORIES.reduce((s, c) => s + base.values[c]!, 0) +
           base.values[CTI_ADJUSTED_V2_OTHER_CATEGORY]!
-        : null,
-    l0 = lRows.get(2017)?.values[CTI_ADJUSTED_TOTAL_CATEGORY];
+        : null;
   for (const y of CTI_ADJUSTED_V2_YEARS) {
     const r = rows[y - 2005],
       bottom =
@@ -749,24 +965,14 @@ export function buildCtiAdjustedV2Estimate(
         positive(r.values[CTI_ADJUSTED_V2_OTHER_CATEGORY])
           ? CTI_ADJUSTED_MAJOR_CATEGORIES.reduce((s, c) => s + r.values[c]!, 0) +
             r.values[CTI_ADJUSTED_V2_OTHER_CATEGORY]!
-          : null,
-      l = lRows.get(y)?.values[CTI_ADJUSTED_TOTAL_CATEGORY];
-    benchmarkG[y] =
-      positive(bottom) && positive(baseValue) && positive(l) && positive(l0)
-        ? bottom / baseValue / (l / l0)
-        : null;
+          : null;
+    benchmarkG[y] = positive(bottom) && positive(baseValue) ? bottom / baseValue : null;
     if (benchmarkG[y] === null) missing.push(y);
     else available.push(y);
   }
   const finiteG = available.every((y) => finite(benchmarkG[y])),
     deviations = available.filter((y) => Math.abs((benchmarkG[y] ?? 1) - 1) > 0.1),
-    gStatus = !validation.L.valid
-      ? "invalid"
-      : !available.length
-        ? "insufficient-data"
-        : finiteG
-          ? "available"
-          : "invalid";
+    gStatus = !available.length ? "insufficient-data" : finiteG ? "available" : "invalid";
   if (!finiteG) diagnostics.push("benchmark_g_invalid");
   const invalidInput = Object.values(validation).some((v) => !v.valid),
     status =
@@ -780,9 +986,6 @@ export function buildCtiAdjustedV2Estimate(
     ...categoryBeta,
     [CTI_ADJUSTED_V2_OTHER_CATEGORY]: otherBeta,
   } as Record<CtiAdjustedV2Category, CtiAdjustedV2BetaDiagnostic | null>;
-  const lMissingForG = CTI_ADJUSTED_V2_YEARS.filter(
-    (year) => year >= 2019 && missing.includes(year),
-  );
   const warningReasonCodes = new Set<string>([
     "g_benchmark_not_acceptance_evidence",
     "residual_diagnostic_only",
@@ -792,10 +995,6 @@ export function buildCtiAdjustedV2Estimate(
   const warningDiagnostics: string[] = [];
   if (missing.length) warningReasonCodes.add("missing_g_benchmark");
   if (gStatus === "invalid") warningReasonCodes.add("invalid_g_benchmark");
-  if (lMissingForG.length) {
-    warningReasonCodes.add("l_missing_for_g_benchmark");
-    warningDiagnostics.push(`L:missing_for_g:${lMissingForG.join(",")}`);
-  }
   const blockingReasonCodes = new Set<string>(["rolling_loo_backtest_incomplete", ...fixed]);
   for (const diagnostic of diagnostics) {
     if (/non_finite_value/.test(diagnostic)) blockingReasonCodes.add("non_finite_value");
@@ -812,7 +1011,6 @@ export function buildCtiAdjustedV2Estimate(
     if (/(?:missing|non_finite)_base_year/.test(diagnostic))
       blockingReasonCodes.add("invalid_base_year");
     if (/base_year_not_2025/.test(diagnostic)) blockingReasonCodes.add("invalid_base_year");
-    if (/missing_l_artifact/.test(diagnostic)) blockingReasonCodes.add("missing_l_artifact");
     if (/invalid_metadata_range/.test(diagnostic))
       blockingReasonCodes.add("invalid_metadata_range");
   }
@@ -820,6 +1018,15 @@ export function buildCtiAdjustedV2Estimate(
   if (invalidInput) blockingReasonCodes.add("invalid_observed_artifact");
   if (plan40InputValidation?.valid === false)
     blockingReasonCodes.add("plan40_input_contract_invalid");
+  if (contract === "plan39" && !compositionAvailable)
+    blockingReasonCodes.add("household_composition_correction_unavailable");
+  if (contract === "plan39" && totalReconciliationMaximumAbsoluteError > 1e-9)
+    blockingReasonCodes.add("household_composition_total_reconciliation_failed");
+  if (
+    contract === "plan39" &&
+    (!finite(endpointGammaReconciliationError) || endpointGammaReconciliationError > 1e-8)
+  )
+    blockingReasonCodes.add("household_composition_endpoint_gamma_reconciliation_failed");
   const targetRows = rows.filter((row) => row.year < CTI_ADJUSTED_V2_CONNECTION_YEAR);
   const otherBetaIncomplete =
     otherBeta.status !== "available" ||
@@ -831,9 +1038,10 @@ export function buildCtiAdjustedV2Estimate(
   if (otherBetaIncomplete) blockingReasonCodes.add("other_beta_stability_incomplete");
   const thresholdAuditable =
     derivedThreshold !== null &&
-    officialDeltas.length > 0 &&
-    officialDeltas.every(finite) &&
-    Math.abs(derivedThreshold - threshold) <= CTI_ADJUSTED_V2_THRESHOLD_EPSILON;
+    officialDeltas.length === 8 &&
+    officialAdjacentPairs.length === 8 &&
+    unevaluableOfficialAdjacentPairs.length === 0 &&
+    officialDeltas.every(finite);
   if (
     !thresholdAuditable ||
     Object.keys(jumps).some(
@@ -874,8 +1082,8 @@ export function buildCtiAdjustedV2Estimate(
     ...(contract === "plan40"
       ? {
           plan40InputMetadata: Object.fromEntries(
-            (["B", "A", "L"] as const).flatMap((name) => {
-              const metadata = { B, A, L }[name]?.metadata;
+            (["B", "A"] as const).flatMap((name) => {
+              const metadata = { B, A }[name]?.metadata;
               return metadata
                 ? [
                     [
@@ -910,18 +1118,48 @@ export function buildCtiAdjustedV2Estimate(
         ...boundary,
         reason: boundary.reason ?? "boundary_diagnostic_only",
       },
-      threshold: CTI_ADJUSTED_V2_RESIDUAL_JUMP_THRESHOLD,
+      threshold,
       thresholdMetadata: {
         source: "official-a-2017-2025",
         baselineYears: [2017, 2025],
-        indicator: "Other前年差",
-        derivedMaxAbsoluteDelta: derivedThreshold,
-        comparison: "abs(delta)>threshold",
+        indicator: "Otherシェアの前年差",
+        unit: "percentage-points",
+        roundingRule: "ceiling-to-hundredth-percentage-point",
+        roundingIncrementPercentagePoints: 0.01,
+        derivedMaxAbsoluteShareChangePercentagePoints: derivedThreshold,
+        effectiveThresholdPercentagePoints: threshold,
+        officialAdjacentPairs,
+        unevaluableOfficialAdjacentPairs,
+        comparison: "abs(otherShareDeltaPercentagePoints)>threshold",
         inclusive: false,
         epsilon: CTI_ADJUSTED_V2_THRESHOLD_EPSILON,
       },
       status: "available",
       generationSource: "diagnostic-only",
+    },
+    householdComposition: {
+      status: compositionAvailable && contract === "plan39" ? "available" : "unavailable",
+      method: "endpoint-calibrated-provisional",
+      calibrationYears: [2017, 2025],
+      calibrationPiDelta,
+      gamma: compositionGamma,
+      historicalPi,
+      historicalPiStatusByYear,
+      historicalVintageBridge: "centered-at-2017",
+      ctiInputPrecision: "saved nominal B/A annual artifacts (one decimal)",
+      totalReconciliationMaximumAbsoluteError,
+      endpointGammaReconciliationError,
+      retrospectiveValidation: {
+        years: retrospectiveRows.map((row) => row.year),
+        endpointCalibrationYear: 2025,
+        baselineMae: retrospectiveStats("baselineError"),
+        correctedMae: retrospectiveStats("correctedError"),
+        baselineRmse: retrospectiveStats("baselineError", true),
+        correctedRmse: retrospectiveStats("correctedError", true),
+        status: retrospectiveRows.length === 7 ? "available" : "unavailable",
+      },
+      caveats: householdCaveats,
+      provenance: composition?.provenance ?? null,
     },
     beta,
     fitDiagnostics: beta,

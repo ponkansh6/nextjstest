@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "plan39-annual-v1",
+  "revision": "2026-09-29",
+  "statisticalCode": "00200567",
+  "artifacts": {
+    "B": {
+      "path": "B.json",
+      "sha256": "5c9ff35ccf52f730b0c7c2fdf0296a8fd099d9285ba24aa3759661d695888faf",
+      "statInfId": "000040499069",
+      "sourceUrl": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499069",
+      "status": "ready"
+    },
+    "A": {
+      "path": "A.json",
+      "sha256": "938994386cc56a35318213fbc7099e68eb376c5a2dab40daab2524bcf8e8a9fd",
+      "statInfId": "000040499087",
+      "sourceUrl": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499087",
+      "status": "ready"
+    },
+    "L": {
+      "path": "L.json",
+      "sha256": "26902849c7d835a1dcf3db130384600d0f853907fac927e7942fb806e2eec076",
+      "statInfId": null,
+      "sourceUrl": "https://www.stat.go.jp/data/kakei/longtime/zuhyou/lev-jnb.xls",
+      "status": "ready",
+      "revision": "2026-09-20"
+    },
+    "quarterlyNominal": {
+      "path": "../cti_data2025_distribution_adjusted_quarterly.csv",
+      "metadataPath": "../cti_data2025_distribution_adjusted_quarterly.metadata.json",
+      "sha256": "e32f7e3627718874cd85cae386216b370563b6ef7dba3ff686a5b456cba4dd78",
+      "metadataSha256": "dff70931a7365f04de6429aedb01d928926a6c941e24a614a9d03f64db15c94d",
+      "revision": "2026-09-29",
+      "statInfId": "000040499087",
+      "sourceUrl": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499087",
+      "sourceSha256": "7224e5eb424c94d90402502f665a4953cfe16377f65f1040a939696ac948ef41",
+      "status": "ready"
+    }
+  },
+  "definitions": {
+    "B": "表1-1-1 基本系列・名目 年平均・総世帯・2025年消費支出平均月額=100",
+    "A": "表2-1-1 調整系列・名目 年平均・総世帯・2025年消費支出平均月額=100",
+    "L": "消費水準指数（世帯人員及び世帯主の年齢分布調整済）二人以上の世帯・原指数年平均"
+  }
+}

@@ -111,6 +111,14 @@ export function ChartDataContract({
                   data-source-id={measurement?.sourceId}
                   data-stat-inf-id={measurement?.statInfId}
                   data-household-scope={measurement?.householdScope}
+                  data-source-workbook={measurement?.sourceWorkbook}
+                  data-source-sheet={measurement?.sourceSheet}
+                  data-source-column={measurement?.sourceColumn}
+                  data-source-role={measurement?.sourceRole}
+                  data-source-derived-from-columns={measurement?.sourceDerivedFromColumns?.join(
+                    ";",
+                  )}
+                  data-canonical-series={measurement?.canonicalSeries}
                   data-seasonality-source-id={measurement?.seasonalitySourceId}
                   data-target-source-id={measurement?.targetSourceId}
                   data-target-household-scope={measurement?.targetHouseholdScope}

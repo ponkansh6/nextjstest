@@ -15,9 +15,9 @@ const metadata = (artifact: string) => ({
   artifact,
   retrievedAt: "2026-01-01T00:00:00.000Z",
   baseYear: 2025,
-  unit: "円",
-  valueType: "amount",
-  householdScope: "二人以上の世帯",
+  unit: "指数",
+  valueType: "原数値（名目指数）",
+  householdScope: "総世帯",
   frequency: "annual" as const,
   rawRange: { startYear: 2005, endYear: 2025 },
   adoptedRange: { startYear: 2005, endYear: 2025 },
@@ -39,6 +39,33 @@ const makeInput = (
   })),
 });
 
+const householdComposition = {
+  historicalPi2Plus: Object.fromEntries(
+    Array.from({ length: 13 }, (_, index) => [2005 + index, 0.65 + index * 0.001]),
+  ),
+  historicalPiStatusByYear: Object.fromEntries(
+    Array.from({ length: 13 }, (_, index) => [
+      2005 + index,
+      {
+        status: index === 6 ? "synthetic_interpolation_unverified" : "observed",
+        synthetic: index === 6,
+        benchmarkId: "synthetic-unit-test",
+        connectionStatus: "centered_at_2017",
+        interpolationMethod: index === 6 ? "linear" : null,
+      },
+    ]),
+  ),
+  calibrationPi2Plus: { 2017: 0.66, 2025: 0.68 },
+  provenance: {
+    artifactPath: "test/production-pi2plus.json",
+    artifactSha256: "test",
+    manifestSha256: "test",
+    historicalSource: "synthetic unit fixture",
+    calibrationSource: "synthetic unit fixture",
+    caveats: ["synthetic test fixture"],
+  },
+};
+
 const fixture = () => {
   const years = Array.from({ length: 21 }, (_, index) => 2005 + index);
   const b = makeInput("B.csv", years, (year, category) =>
@@ -49,14 +76,13 @@ const fixture = () => {
     if (category === "総合") return (100 + year - 2005) * (1.1 + n * 0.01);
     return 5 * (1.02 + n * 0.004);
   });
-  const l = makeInput("L.csv", years, (year) => 100 + (year - 2005) * 0.5);
-  return { b, a, l };
+  return { b, a };
 };
 
 describe("buildCtiAdjustedV2Estimate", () => {
   it("derives positive Other from total minus major nine and uses it bottom-up", () => {
-    const { b, a, l } = fixture();
-    const result = buildCtiAdjustedV2Estimate(b, a, l);
+    const { b, a } = fixture();
+    const result = buildCtiAdjustedV2Estimate(b, a, undefined, { householdComposition });
     const row = result.rows.find((item) => item.year === 2010)!;
     const sum9 = CTI_ADJUSTED_MAJOR_CATEGORIES.reduce(
       (sum, category) => sum + row.values[category]!,
@@ -68,28 +94,22 @@ describe("buildCtiAdjustedV2Estimate", () => {
     );
   });
 
-  it("accepts an L artifact with total only", () => {
-    const { b, a, l } = fixture();
-    l.categoryOrder = [CTI_ADJUSTED_TOTAL_CATEGORY];
-    l.rows = l.rows.map((row) => ({
-      year: row.year,
-      values: { [CTI_ADJUSTED_TOTAL_CATEGORY]: row.values[CTI_ADJUSTED_TOTAL_CATEGORY] },
-    }));
-    const result = buildCtiAdjustedV2Estimate(b, a, l);
-    expect(result.artifactValidation.L.valid).toBe(true);
+  it("estimates without an L artifact when the composition artifact is provided", () => {
+    const { b, a } = fixture();
+    const result = buildCtiAdjustedV2Estimate(b, a, undefined, { householdComposition });
     expect(result.rows.find((row) => row.year === 2010)?.status).toBe("available");
   });
 
   it("excludes 2017 from Other beta calibration", () => {
-    const { b, a, l } = fixture();
-    const result = buildCtiAdjustedV2Estimate(b, a, l);
+    const { b, a } = fixture();
+    const result = buildCtiAdjustedV2Estimate(b, a, undefined, { householdComposition });
     expect(result.other.beta.years).toEqual([2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]);
     expect(result.other.beta.years).not.toContain(2017);
   });
 
   it("keeps official A values from 2017 onward and does not generate estimates from residual", () => {
-    const { b, a, l } = fixture();
-    const result = buildCtiAdjustedV2Estimate(b, a, l);
+    const { b, a } = fixture();
+    const result = buildCtiAdjustedV2Estimate(b, a, undefined, { householdComposition });
     const official = result.rows.find((item) => item.year === 2017)!;
     expect(official.seriesType).toBe("official_adjusted");
     expect(official.values[CTI_ADJUSTED_TOTAL_CATEGORY]).toBe(
@@ -113,28 +133,28 @@ describe("buildCtiAdjustedV2Estimate", () => {
   });
 
   it("uses observed B/A totals for residual diagnostics and structures the boundary", () => {
-    const { b, a, l } = fixture();
+    const { b, a } = fixture();
     b.rows = b.rows.map((row) =>
       row.year === 2016 ? { ...row, values: { ...row.values, 総合: 130 } } : row,
     );
     a.rows = a.rows.map((row) =>
       row.year === 2017 ? { ...row, values: { ...row.values, 総合: 170 } } : row,
     );
-    const result = buildCtiAdjustedV2Estimate(b, a, l);
+    const result = buildCtiAdjustedV2Estimate(b, a, undefined, { householdComposition });
     expect(result.residual.residualMajor[2016]).toBeCloseTo(130 - 45);
     expect(result.residual.residualMajor[2017]).toBeCloseTo(170 - 45 * (1.02 + 0.004 * 0));
     expect(result.residual.boundary2016To2017.fromYear).toBe(2016);
     expect(result.residual.boundary2016To2017.toYear).toBe(2017);
     expect(result.residual.boundary2016To2017.previous?.source).toBe("B");
     expect(result.residual.boundary2016To2017.current?.source).toBe("A");
-    expect(result.residual.boundary2016To2017.reason).not.toBe("boundary_diagnostic_only");
+    expect(result.residual.boundary2016To2017.reason).toBe("boundary_diagnostic_only");
+    expect(result.residual.boundary2016To2017.thresholdPass).toBe(true);
   });
 
-  it("does not extrapolate D from L outside its observed range", () => {
-    const { b, a, l } = fixture();
-    l.rows = l.rows.filter((row) => row.year !== 2005);
-    const result = buildCtiAdjustedV2Estimate(b, a, l);
-    expect(result.rows.find((row) => row.year === 2005)?.status).toBe("insufficient-data");
+  it("uses the nominal historical anchor without a real L adjustment", () => {
+    const { b, a } = fixture();
+    const result = buildCtiAdjustedV2Estimate(b, a, undefined, { householdComposition });
+    expect(result.rows.find((row) => row.year === 2005)?.status).toBe("available");
     expect(result.rows.find((row) => row.year === 2006)?.status).toBe("available");
   });
 
@@ -151,8 +171,8 @@ describe("buildCtiAdjustedV2Estimate", () => {
   });
 
   it("rejects Plan39 overrides fail-closed and keeps the fixed calibration", () => {
-    const { b, a, l } = fixture();
-    const result = buildCtiAdjustedV2Estimate(b, a, l, {
+    const { b, a } = fixture();
+    const result = buildCtiAdjustedV2Estimate(b, a, undefined, {
       connectionYear: 2016,
       calibrationYears: [2017],
     });
@@ -171,28 +191,28 @@ describe("buildCtiAdjustedV2Estimate", () => {
   });
 
   it("accepts category order permutations", () => {
-    const { b, a, l } = fixture();
+    const { b, a } = fixture();
     b.categoryOrder = [...CTI_ADJUSTED_INPUT_CATEGORIES].reverse();
-    const result = buildCtiAdjustedV2Estimate(b, a, l);
+    const result = buildCtiAdjustedV2Estimate(b, a, undefined, { householdComposition });
     expect(result.artifactValidation.B.valid).toBe(true);
     expect(result.artifactValidation.B.reasons).not.toContain("B:category_order_mismatch");
   });
 
   it("reports duplicate-year and non-finite validation reasons", () => {
-    const { b, a, l } = fixture();
+    const { b, a } = fixture();
     b.rows = [...b.rows, b.rows[0]];
     b.rows = b.rows.map((row, index) =>
       index === 1 ? { ...row, values: { ...row.values, 食料: Number.NaN } } : row,
     );
     b.categoryOrder = [...CTI_ADJUSTED_INPUT_CATEGORIES].reverse();
-    const result = buildCtiAdjustedV2Estimate(b, a, l);
+    const result = buildCtiAdjustedV2Estimate(b, a, undefined, { householdComposition });
     expect(result.artifactValidation.B.reasons).toEqual(
       expect.arrayContaining(["B:duplicate_year:2005", "B:non_finite_value:2006:食料"]),
     );
   });
 
   it("exposes official Other, benchmark status, residual boundary, and fixed gammas", () => {
-    const { b, a, l } = fixture();
+    const { b, a } = fixture();
     a.rows = a.rows.map((row) => {
       if (row.year < 2017) return row;
       const n = row.year - 2017;
@@ -201,29 +221,37 @@ describe("buildCtiAdjustedV2Estimate", () => {
     b.rows = b.rows.map((row) =>
       row.year === 2016 ? { ...row, values: { ...row.values, 総合: 115 } } : row,
     );
-    const result = buildCtiAdjustedV2Estimate(b, a, l);
+    const result = buildCtiAdjustedV2Estimate(b, a, undefined, { householdComposition });
     expect(result.other.officialOther[2017]).toBe(result.other.derived[2017]);
     expect(result.benchmarkGDiagnostics.status).toBe("available");
     expect(result.residual.thresholdMetadata).toMatchObject({
       source: "official-a-2017-2025",
       baselineYears: [2017, 2025],
-      indicator: "Other前年差",
-      comparison: "abs(delta)>threshold",
+      indicator: "Otherシェアの前年差",
+      unit: "percentage-points",
+      roundingRule: "ceiling-to-hundredth-percentage-point",
+      roundingIncrementPercentagePoints: 0.01,
+      comparison: "abs(otherShareDeltaPercentagePoints)>threshold",
       inclusive: false,
       epsilon: 1e-9,
     });
-    expect(result.residual.threshold).toBe(1.4);
-    expect(
-      (result.residual.thresholdMetadata as { derivedMaxAbsoluteDelta: number })
-        .derivedMaxAbsoluteDelta,
-    ).toBeCloseTo(1.4, 9);
+    const metadata = result.residual.thresholdMetadata as {
+      derivedMaxAbsoluteShareChangePercentagePoints: number;
+      effectiveThresholdPercentagePoints: number;
+    };
+    expect(result.residual.threshold).toBe(metadata.effectiveThresholdPercentagePoints);
+    expect(metadata.effectiveThresholdPercentagePoints).toBe(
+      Math.ceil(metadata.derivedMaxAbsoluteShareChangePercentagePoints * 100) / 100,
+    );
     expect(result.residual.boundary2016To2017.previous?.source).toBe("B");
     expect(result.residual.boundary2016To2017.current?.source).toBe("A");
-    expect(result.residual.boundary2016To2017.thresholdPass).toBe(true);
-    expect(result.residual.boundary2016To2017.thresholdSource).toBe("official_a");
+    expect(result.residual.boundary2016To2017.thresholdPass).toBe(false);
+    expect(result.residual.boundary2016To2017.thresholdSource).toBe(
+      "generated_to_official_boundary",
+    );
     expect(result.residual.jumps[2016].thresholdSource).toBe("generated_bottom_up");
     expect(result.residual.jumps[2016].thresholdSeriesType).toBe("estimated");
-    expect(result.residual.boundary2016To2017.reason).toBe("boundary_diagnostic_only");
+    expect(result.residual.boundary2016To2017.reason).toBe("other_share_threshold_exceeded");
     expect(result.publicationGate.reasonCodes).toContain("rolling_loo_backtest_incomplete");
     expect(result.publicationGate.reasonCodes).toEqual(
       expect.arrayContaining(["rolling_loo_backtest_incomplete", "threshold_redesign_incomplete"]),
@@ -235,12 +263,12 @@ describe("buildCtiAdjustedV2Estimate", () => {
   });
 
   it("summarizes input diagnostics in publication reason codes", () => {
-    const { b, a, l } = fixture();
+    const { b, a } = fixture();
     b.rows = [...b.rows, b.rows[0]];
     b.rows = b.rows.map((row, index) =>
       index === 1 ? { ...row, values: { ...row.values, 食料: Number.NaN } } : row,
     );
-    const result = buildCtiAdjustedV2Estimate(b, a, l);
+    const result = buildCtiAdjustedV2Estimate(b, a, undefined, { householdComposition });
     expect(result.publicationGate.reasonCodes).toEqual(
       expect.arrayContaining(["duplicate_year", "non_finite_value"]),
     );
@@ -250,16 +278,19 @@ describe("buildCtiAdjustedV2Estimate", () => {
   });
 
   it("fails closed for invalid minimum beta observations", () => {
-    const { b, a, l } = fixture();
-    const result = buildCtiAdjustedV2Estimate(b, a, l, { minBetaObservations: 2 });
+    const { b, a } = fixture();
+    const result = buildCtiAdjustedV2Estimate(b, a, undefined, {
+      householdComposition,
+      minBetaObservations: 2,
+    });
     expect(result.publicationGate.reasonCodes).toContain("invalid_min_beta_observations");
     expect(result.publicationGate.accepted).toBe(false);
   });
 
-  it("reports missing and invalid G diagnostics without using G as acceptance evidence", () => {
-    const { b, a, l } = fixture();
-    l.rows = l.rows.filter((row) => row.year !== 2005);
-    const missing = buildCtiAdjustedV2Estimate(b, a, l);
+  it("reports nominal benchmark diagnostics without using G as acceptance evidence", () => {
+    const { b, a } = fixture();
+    b.rows = b.rows.filter((row) => row.year !== 2005);
+    const missing = buildCtiAdjustedV2Estimate(b, a, undefined, { householdComposition });
     expect(missing.publicationGate.warningReasonCodes).toContain("missing_g_benchmark");
     expect(missing.publicationGate.warningReasonCodes).toContain(
       "g_benchmark_not_acceptance_evidence",
@@ -268,26 +299,26 @@ describe("buildCtiAdjustedV2Estimate", () => {
     expect(missing.publicationGate.blockingReasonCodes).not.toContain(
       "g_benchmark_not_acceptance_evidence",
     );
-    const invalidL = {
-      ...l,
-      rows: l.rows.map((row) =>
-        row.year === 2017
-          ? { ...row, values: { ...row.values, [CTI_ADJUSTED_TOTAL_CATEGORY]: Number.NaN } }
-          : row,
-      ),
-    };
-    const invalid = buildCtiAdjustedV2Estimate(b, a, invalidL);
-    expect(invalid.publicationGate.warningReasonCodes).toContain("invalid_g_benchmark");
-    expect(invalid.publicationGate.blockingReasonCodes).not.toContain("invalid_g_benchmark");
   });
 
-  it("does not extrapolate L and returns only Plan39 years", () => {
-    const { b, a, l } = fixture();
-    l.rows = l.rows.filter((row) => row.year >= 2006 && row.year <= 2024);
-    const result = buildCtiAdjustedV2Estimate(b, a, l);
+  it("does not require L and returns only Plan39 years", () => {
+    const { b, a } = fixture();
+    const result = buildCtiAdjustedV2Estimate(b, a, undefined, { householdComposition });
     expect(result.years).toEqual(Array.from({ length: 21 }, (_, index) => 2005 + index));
-    expect(result.rows.find((row) => row.year === 2005)?.status).toBe("insufficient-data");
+    expect(result.rows.find((row) => row.year === 2005)?.status).toBe("available");
     expect(result.rows.find((row) => row.year === 2025)?.status).toBe("available");
-    expect(result.benchmarkG[2005]).toBeNull();
+    expect(result.benchmarkG[2005]).not.toBeNull();
+  });
+
+  it("fails closed for historical rows when the composition artifact is missing", () => {
+    const { b, a } = fixture();
+    const result = buildCtiAdjustedV2Estimate(b, a);
+    expect(result.rows.find((row) => row.year === 2017)?.status).toBe("available");
+    expect(result.rows.find((row) => row.year === 2016)?.status).toBe("insufficient-data");
+    expect(result.publicationGate.accepted).toBe(false);
+    expect(result.publicationGate.blockingReasonCodes).toContain(
+      "household_composition_correction_unavailable",
+    );
+    expect(result.other.reasons).toContain("household_composition_artifact_missing_or_invalid");
   });
 });

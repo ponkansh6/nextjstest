@@ -1,0 +1,131 @@
+{
+  "schemaVersion": "plan39-production-pi2plus-v1",
+  "modelStatus": "provisional_source_bridged_by_2017_centering",
+  "historicalDefinition": "1 - one-person share from annual IV-4 weights.csv, years 2005-2017; 2011 is interpolated and unverified",
+  "calibrationDefinition": "January setai-n pi2plus from annual national special tabulations, years 2017-2025",
+  "historicalPi2Plus": {
+    "2005": 0.7026588187538055,
+    "2006": 0.7013118062563067,
+    "2007": 0.7030655179322781,
+    "2008": 0.6938613861386138,
+    "2009": 0.6886497064579256,
+    "2010": 0.6911219512195121,
+    "2011": 0.6907347207836974,
+    "2012": 0.6903474903474903,
+    "2013": 0.6836852207293667,
+    "2014": 0.6753936634414722,
+    "2015": 0.6672932330827068,
+    "2016": 0.663682148852826,
+    "2017": 0.6622148024485253
+  },
+  "historicalPiStatusByYear": {
+    "2005": {
+      "status": "published_annual_unverified_vintage",
+      "synthetic": false,
+      "benchmarkId": "legacy-LFS-IV-4-2005-published-vintage",
+      "connectionStatus": "unverified_connected_series",
+      "interpolationMethod": null
+    },
+    "2006": {
+      "status": "published_annual_unverified_vintage",
+      "synthetic": false,
+      "benchmarkId": "legacy-LFS-IV-4-2006-published-vintage",
+      "connectionStatus": "unverified_connected_series",
+      "interpolationMethod": null
+    },
+    "2007": {
+      "status": "published_annual_unverified_vintage",
+      "synthetic": false,
+      "benchmarkId": "legacy-LFS-IV-4-2007-published-vintage",
+      "connectionStatus": "unverified_connected_series",
+      "interpolationMethod": null
+    },
+    "2008": {
+      "status": "published_annual_unverified_vintage",
+      "synthetic": false,
+      "benchmarkId": "legacy-LFS-IV-4-2008-published-vintage",
+      "connectionStatus": "unverified_connected_series",
+      "interpolationMethod": null
+    },
+    "2009": {
+      "status": "published_annual_unverified_vintage",
+      "synthetic": false,
+      "benchmarkId": "legacy-LFS-IV-4-2009-published-vintage",
+      "connectionStatus": "unverified_connected_series",
+      "interpolationMethod": null
+    },
+    "2010": {
+      "status": "published_annual_unverified_vintage",
+      "synthetic": false,
+      "benchmarkId": "legacy-LFS-IV-4-2010-published-vintage",
+      "connectionStatus": "unverified_connected_series",
+      "interpolationMethod": null
+    },
+    "2011": {
+      "status": "synthetic_interpolation_unverified",
+      "synthetic": true,
+      "benchmarkId": "derived-LFS-IV-4-2010-2012-linear-share",
+      "connectionStatus": "unverified_connected_series",
+      "interpolationMethod": "linear_share_interpolation"
+    },
+    "2012": {
+      "status": "published_annual_unverified_vintage",
+      "synthetic": false,
+      "benchmarkId": "legacy-LFS-IV-4-2012-published-vintage",
+      "connectionStatus": "unverified_connected_series",
+      "interpolationMethod": null
+    },
+    "2013": {
+      "status": "published_annual_unverified_vintage",
+      "synthetic": false,
+      "benchmarkId": "legacy-LFS-IV-4-2013-published-vintage",
+      "connectionStatus": "unverified_connected_series",
+      "interpolationMethod": null
+    },
+    "2014": {
+      "status": "published_annual_unverified_vintage",
+      "synthetic": false,
+      "benchmarkId": "legacy-LFS-IV-4-2014-published-vintage",
+      "connectionStatus": "unverified_connected_series",
+      "interpolationMethod": null
+    },
+    "2015": {
+      "status": "published_annual_unverified_vintage",
+      "synthetic": false,
+      "benchmarkId": "legacy-LFS-IV-4-2015-published-vintage",
+      "connectionStatus": "unverified_connected_series",
+      "interpolationMethod": null
+    },
+    "2016": {
+      "status": "published_annual_unverified_vintage",
+      "synthetic": false,
+      "benchmarkId": "legacy-LFS-IV-4-2016-published-vintage",
+      "connectionStatus": "unverified_connected_series",
+      "interpolationMethod": null
+    },
+    "2017": {
+      "status": "published_annual_unverified_vintage",
+      "synthetic": false,
+      "benchmarkId": "legacy-LFS-IV-4-2017-published-vintage",
+      "connectionStatus": "unverified_connected_series",
+      "interpolationMethod": null
+    }
+  },
+  "calibrationPi2Plus": {
+    "2017": 0.675222,
+    "2018": 0.672865,
+    "2019": 0.668053,
+    "2020": 0.655894,
+    "2021": 0.64967,
+    "2022": 0.6415759999999999,
+    "2023": 0.633743,
+    "2024": 0.626768,
+    "2025": 0.618692
+  },
+  "caveats": [
+    "Historical IV-4 and January setai-n shares are distinct source/vintage definitions; historical correction is centered on historical 2017, so the composition correction is zero at the anchor.",
+    "2011 is synthetic interpolation in weights.csv from unverified 2010/2012 endpoints; it is included provisionally and must be revised when a verified national value is available.",
+    "January setai-n is a proxy for the preceding/trailing 12-month correction distribution, not a calendar-year mean; 2018 survey redesign and LFS benchmark changes remain caveats.",
+    "The endpoint-calibrated residual is a provisional predictive correction, not evidence of a causal household-size effect or independent forecast validation."
+  ]
+}

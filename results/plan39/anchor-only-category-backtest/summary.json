@@ -1,0 +1,1790 @@
+{
+  "schemaVersion": "plan39-anchor-only-category-backtest-v1",
+  "generatedAt": "2026-09-29T23:20:02.209Z",
+  "purpose": "Research-only comparison of 2017 category-share anchors against official adjusted CTI category shares for 2018-2025. No connection to production estimators, loaders, gates, or quarterly data.",
+  "formulas": {
+    "pB": "B[t,c] / B[t,total], using exact raw numeric cells from the retained basic CTI workbook",
+    "pA": "A[t,c] / A[t,total], using exact raw numeric cells from the retained distribution-adjusted CTI workbook",
+    "q": "pA[2017,c] / pB[2017,c], estimated once per category from the 2017 anchor year",
+    "pHatRaw": "pB[t,c] * q[c]; this is the requested unnormalized formula",
+    "rawError": "(pHatRaw[t,c] - pA[t,c]) * 100 percentage points",
+    "pHatNorm": "pHatRaw[t,c] / sum_j(pHatRaw[t,j]); separately labeled coherent normalized variant",
+    "normalizedError": "(pHatNorm[t,c] - pA[t,c]) * 100 percentage points",
+    "other": "Use the official Other column when it contains a numeric value; if the official cell is '-', derive total - sum(the nine published lower-category values). The source status is recorded per year and series.",
+    "metrics": "For each category over n=8 validation years, MAE=mean(abs(error)), RMSE=sqrt(mean(error^2)), bias=mean(error), all in percentage points. Macro is the unweighted arithmetic mean of the ten category-level metrics; pooled metrics aggregate all 80 category-year errors."
+  },
+  "validation": {
+    "years": "2018-2025",
+    "excludedCalibrationYear": 2017,
+    "n": 8,
+    "expectedN": 8,
+    "categoryCount": 10,
+    "categories": [
+      {
+        "id": "food",
+        "label": "Food",
+        "sourceHeader": "食料（名目）",
+        "derivation": "published nominal column"
+      },
+      {
+        "id": "housing",
+        "label": "Housing",
+        "sourceHeader": "住居（名目）",
+        "derivation": "published nominal column"
+      },
+      {
+        "id": "utilities",
+        "label": "Utilities",
+        "sourceHeader": "光熱・水道（名目）",
+        "derivation": "published nominal column"
+      },
+      {
+        "id": "furniture_household_goods",
+        "label": "Furniture and household goods",
+        "sourceHeader": "家具・家事用品（名目）",
+        "derivation": "published nominal column"
+      },
+      {
+        "id": "clothing_footwear",
+        "label": "Clothing and footwear",
+        "sourceHeader": "被服及び履物（名目）",
+        "derivation": "published nominal column"
+      },
+      {
+        "id": "health",
+        "label": "Health",
+        "sourceHeader": "保健医療（名目）",
+        "derivation": "published nominal column"
+      },
+      {
+        "id": "transport_communications",
+        "label": "Transport and communications",
+        "sourceHeader": "交通・通信（名目）",
+        "derivation": "published nominal column"
+      },
+      {
+        "id": "education",
+        "label": "Education",
+        "sourceHeader": "教育（名目）",
+        "derivation": "published nominal column"
+      },
+      {
+        "id": "culture_recreation",
+        "label": "Culture and recreation",
+        "sourceHeader": "教養娯楽（名目）",
+        "derivation": "published nominal column"
+      },
+      {
+        "id": "other",
+        "label": "Other (official; residual when unpublished)",
+        "sourceHeader": "その他の消費支出（名目）",
+        "derivation": "official numeric value; otherwise total minus nine published nominal categories"
+      }
+    ],
+    "metricsByCategory": {
+      "food": {
+        "label": "Food",
+        "raw": {
+          "n": 8,
+          "mae_pp": 0.035976584056710004,
+          "rmse_pp": 0.03997031407117251,
+          "bias_pp": 0.007092862640260822
+        },
+        "normalized": {
+          "n": 8,
+          "mae_pp": 0.03682976561182119,
+          "rmse_pp": 0.04096162506907998,
+          "bias_pp": 0.00872321605605228
+        }
+      },
+      "housing": {
+        "label": "Housing",
+        "raw": {
+          "n": 8,
+          "mae_pp": 0.06450502146785192,
+          "rmse_pp": 0.08205334602770543,
+          "bias_pp": -0.02693748379168602
+        },
+        "normalized": {
+          "n": 8,
+          "mae_pp": 0.06437397410682752,
+          "rmse_pp": 0.08194908071492145,
+          "bias_pp": -0.026449799434995723
+        }
+      },
+      "utilities": {
+        "label": "Utilities",
+        "raw": {
+          "n": 8,
+          "mae_pp": 0.0104377373677772,
+          "rmse_pp": 0.012886518850566409,
+          "bias_pp": 0.003401656200090891
+        },
+        "normalized": {
+          "n": 8,
+          "mae_pp": 0.010915783479079934,
+          "rmse_pp": 0.013229815208097236,
+          "bias_pp": 0.003856001493143281
+        }
+      },
+      "furniture_household_goods": {
+        "label": "Furniture and household goods",
+        "raw": {
+          "n": 8,
+          "mae_pp": 0.024801270292463054,
+          "rmse_pp": 0.026754390284550355,
+          "bias_pp": -0.024801270292463054
+        },
+        "normalized": {
+          "n": 8,
+          "mae_pp": 0.02454346831303189,
+          "rmse_pp": 0.02649221560501043,
+          "bias_pp": -0.02454346831303189
+        }
+      },
+      "clothing_footwear": {
+        "label": "Clothing and footwear",
+        "raw": {
+          "n": 8,
+          "mae_pp": 0.013909406546304143,
+          "rmse_pp": 0.016980670949960055,
+          "bias_pp": 0.01387704492692406
+        },
+        "normalized": {
+          "n": 8,
+          "mae_pp": 0.014123355307821706,
+          "rmse_pp": 0.017137648931556677,
+          "bias_pp": 0.014070933624589065
+        }
+      },
+      "health": {
+        "label": "Health",
+        "raw": {
+          "n": 8,
+          "mae_pp": 0.01820608261446418,
+          "rmse_pp": 0.02201901764657265,
+          "bias_pp": -0.01820608261446418
+        },
+        "normalized": {
+          "n": 8,
+          "mae_pp": 0.01791186891315884,
+          "rmse_pp": 0.021776692381139242,
+          "bias_pp": -0.01791186891315884
+        }
+      },
+      "transport_communications": {
+        "label": "Transport and communications",
+        "raw": {
+          "n": 8,
+          "mae_pp": 0.05109660954363618,
+          "rmse_pp": 0.056542034470085566,
+          "bias_pp": -0.03285114630316374
+        },
+        "normalized": {
+          "n": 8,
+          "mae_pp": 0.050445076992658086,
+          "rmse_pp": 0.056002827102442525,
+          "bias_pp": -0.031880837363011325
+        }
+      },
+      "education": {
+        "label": "Education",
+        "raw": {
+          "n": 8,
+          "mae_pp": 0.067143739759135,
+          "rmse_pp": 0.08422415494904358,
+          "bias_pp": 0.061687165275168834
+        },
+        "normalized": {
+          "n": 8,
+          "mae_pp": 0.0672899762426125,
+          "rmse_pp": 0.08435087127114288,
+          "bias_pp": 0.06190112081552665
+        }
+      },
+      "culture_recreation": {
+        "label": "Culture and recreation",
+        "raw": {
+          "n": 8,
+          "mae_pp": 0.014994124145709456,
+          "rmse_pp": 0.01900151667025358,
+          "bias_pp": -0.0021376788818430748
+        },
+        "normalized": {
+          "n": 8,
+          "mae_pp": 0.015212368144150272,
+          "rmse_pp": 0.019097429684153955,
+          "bias_pp": -0.0015440016660850028
+        }
+      },
+      "other": {
+        "label": "Other (official; residual when unpublished)",
+        "raw": {
+          "n": 8,
+          "mae_pp": 0.05729450955053901,
+          "rmse_pp": 0.06597171231876232,
+          "bias_pp": 0.012890901926452744
+        },
+        "normalized": {
+          "n": 8,
+          "mae_pp": 0.056963003803632214,
+          "rmse_pp": 0.06580695659270216,
+          "bias_pp": 0.013796395508432549
+        }
+      }
+    },
+    "overallMacro": {
+      "raw": {
+        "mae_pp": 0.03583650853445901,
+        "rmse_pp": 0.04264036762386724,
+        "bias_pp": -0.0005984030914722716
+      },
+      "normalized": {
+        "mae_pp": 0.03586086409147942,
+        "rmse_pp": 0.04268051625602465,
+        "bias_pp": 0.0000017691807461049647
+      }
+    },
+    "overallPooled": {
+      "raw": {
+        "n": 80,
+        "mae_pp": 0.03583650853445902,
+        "rmse_pp": 0.049989450981023774,
+        "bias_pp": -0.0005984030914722716
+      },
+      "normalized": {
+        "n": 80,
+        "mae_pp": 0.035860864091479414,
+        "rmse_pp": 0.049984946616545844,
+        "bias_pp": 0.0000017691807461042708
+      }
+    }
+  },
+  "anchorQ2017ByCategory": {
+    "food": 1.0018406262357524,
+    "housing": 0.9822465053124065,
+    "utilities": 1.0012680449322064,
+    "furniture_household_goods": 0.9963133256325227,
+    "clothing_footwear": 1.0080049696030577,
+    "health": 0.992988079851119,
+    "transport_communications": 1.0022827490063857,
+    "education": 1.0426808019357472,
+    "culture_recreation": 0.9987133336342826,
+    "other": 0.9955196253776235
+  },
+  "annual": {
+    "2017": {
+      "validation": false,
+      "rawPredictedCategoryShareSum": 1.0000000000000002,
+      "rawPredictedCategoryShareSumPercentagePoints": 100.00000000000003,
+      "normalizedPredictedCategoryShareSum": 0.9999999999999999,
+      "otherSourceStatus": {
+        "B": "residual_from_total_minus_nine_published",
+        "A": "residual_from_total_minus_nine_published"
+      },
+      "categories": {
+        "food": {
+          "pB": 0.26143566002372454,
+          "pA_actual": 0.26191686535852543,
+          "pHatRaw": 0.26191686535852543,
+          "rawErrorPercentagePoints": 0,
+          "pHatNorm": 0.2619168653585254,
+          "normalizedErrorPercentagePoints": -5.551115123125783e-15
+        },
+        "housing": {
+          "pB": 0.07472287278841,
+          "pA_actual": 0.07339628066331924,
+          "pHatRaw": 0.07339628066331924,
+          "rawErrorPercentagePoints": 0,
+          "pHatNorm": 0.07339628066331923,
+          "normalizedErrorPercentagePoints": -1.3877787807814457e-15
+        },
+        "utilities": {
+          "pB": 0.07113167750982492,
+          "pA_actual": 0.0712218756730106,
+          "pHatRaw": 0.0712218756730106,
+          "rawErrorPercentagePoints": 0,
+          "pHatNorm": 0.07122187567301058,
+          "normalizedErrorPercentagePoints": -1.3877787807814457e-15
+        },
+        "furniture_household_goods": {
+          "pB": 0.03861478871836072,
+          "pA_actual": 0.03847242856658719,
+          "pHatRaw": 0.03847242856658719,
+          "rawErrorPercentagePoints": 0,
+          "pHatNorm": 0.03847242856658718,
+          "normalizedErrorPercentagePoints": -6.938893903907228e-16
+        },
+        "clothing_footwear": {
+          "pB": 0.03893258432858598,
+          "pA_actual": 0.039244238482704794,
+          "pHatRaw": 0.039244238482704794,
+          "rawErrorPercentagePoints": 0,
+          "pHatNorm": 0.03924423848270479,
+          "normalizedErrorPercentagePoints": -6.938893903907228e-16
+        },
+        "health": {
+          "pB": 0.044876306187155386,
+          "pA_actual": 0.04456163711159432,
+          "pHatRaw": 0.04456163711159432,
+          "rawErrorPercentagePoints": 0,
+          "pHatNorm": 0.04456163711159431,
+          "normalizedErrorPercentagePoints": -6.938893903907228e-16
+        },
+        "transport_communications": {
+          "pB": 0.16408217376392714,
+          "pA_actual": 0.16445673218305235,
+          "pHatRaw": 0.16445673218305235,
+          "rawErrorPercentagePoints": 0,
+          "pHatNorm": 0.16445673218305232,
+          "normalizedErrorPercentagePoints": -2.7755575615628914e-15
+        },
+        "education": {
+          "pB": 0.03317870077183429,
+          "pA_actual": 0.03459479432796237,
+          "pHatRaw": 0.03459479432796237,
+          "rawErrorPercentagePoints": 0,
+          "pHatNorm": 0.034594794327962364,
+          "normalizedErrorPercentagePoints": -6.938893903907228e-16
+        },
+        "culture_recreation": {
+          "pB": 0.10431981775523026,
+          "pA_actual": 0.10418559295444683,
+          "pHatRaw": 0.10418559295444683,
+          "rawErrorPercentagePoints": 0,
+          "pHatNorm": 0.1041855929544468,
+          "normalizedErrorPercentagePoints": -2.7755575615628914e-15
+        },
+        "other": {
+          "pB": 0.16870541815294685,
+          "pA_actual": 0.16794955467879696,
+          "pHatRaw": 0.16794955467879696,
+          "rawErrorPercentagePoints": 0,
+          "pHatNorm": 0.16794955467879694,
+          "normalizedErrorPercentagePoints": -2.7755575615628914e-15
+        }
+      }
+    },
+    "2018": {
+      "validation": true,
+      "rawPredictedCategoryShareSum": 1.0000210462859047,
+      "rawPredictedCategoryShareSumPercentagePoints": 100.00210462859047,
+      "normalizedPredictedCategoryShareSum": 1,
+      "otherSourceStatus": {
+        "B": "residual_from_total_minus_nine_published",
+        "A": "residual_from_total_minus_nine_published"
+      },
+      "categories": {
+        "food": {
+          "pB": 0.2597566367548246,
+          "pA_actual": 0.26058511495066744,
+          "pHatRaw": 0.2602347516353463,
+          "rawErrorPercentagePoints": -0.035036331532112275,
+          "pHatNorm": 0.2602292747756286,
+          "normalizedErrorPercentagePoints": -0.03558401750388129
+        },
+        "housing": {
+          "pB": 0.07644852402392117,
+          "pA_actual": 0.0751700720718578,
+          "pHatRaw": 0.07509129555878813,
+          "rawErrorPercentagePoints": -0.00787765130696727,
+          "pHatNorm": 0.07508971519917354,
+          "normalizedErrorPercentagePoints": -0.008035687268426184
+        },
+        "utilities": {
+          "pB": 0.0718039892143004,
+          "pA_actual": 0.07190538014743003,
+          "pHatRaw": 0.0718950398989358,
+          "rawErrorPercentagePoints": -0.0010340248494236648,
+          "pHatNorm": 0.07189352680721592,
+          "normalizedErrorPercentagePoints": -0.0011853340214112995
+        },
+        "furniture_household_goods": {
+          "pB": 0.03846505130264931,
+          "pA_actual": 0.03841418130282828,
+          "pHatRaw": 0.03832324318396813,
+          "rawErrorPercentagePoints": -0.009093811886014963,
+          "pHatNorm": 0.03832243663901006,
+          "normalizedErrorPercentagePoints": -0.009174466381822038
+        },
+        "clothing_footwear": {
+          "pB": 0.03782363845072849,
+          "pA_actual": 0.03812770999157882,
+          "pHatRaw": 0.03812641552680362,
+          "rawErrorPercentagePoints": -0.0001294464775203341,
+          "pHatNorm": 0.038125613124249516,
+          "normalizedErrorPercentagePoints": -0.00020968673293056406
+        },
+        "health": {
+          "pB": 0.04553408517713581,
+          "pA_actual": 0.04521598315332485,
+          "pHatRaw": 0.045214803807821384,
+          "rawErrorPercentagePoints": -0.00011793455034631029,
+          "pHatNorm": 0.04521385222416062,
+          "normalizedErrorPercentagePoints": -0.00021309291642276906
+        },
+        "transport_communications": {
+          "pB": 0.1659401472551059,
+          "pA_actual": 0.16712411991148576,
+          "pHatRaw": 0.16631894696137198,
+          "rawErrorPercentagePoints": -0.08051729501137861,
+          "pHatNorm": 0.16631544663893164,
+          "normalizedErrorPercentagePoints": -0.08086732725541279
+        },
+        "education": {
+          "pB": 0.03436851970632009,
+          "pA_actual": 0.035318129093702064,
+          "pHatRaw": 0.03583539568873036,
+          "rawErrorPercentagePoints": 0.05172665950282998,
+          "pHatNorm": 0.03583464150262001,
+          "normalizedErrorPercentagePoints": 0.051651240891794487
+        },
+        "culture_recreation": {
+          "pB": 0.10358402404571675,
+          "pA_actual": 0.10380206886337912,
+          "pHatRaw": 0.10345074596595145,
+          "rawErrorPercentagePoints": -0.03513228974276611,
+          "pHatNorm": 0.10344856875779694,
+          "normalizedErrorPercentagePoints": -0.03535001055821746
+        },
+        "other": {
+          "pB": 0.1662753840692975,
+          "pA_actual": 0.16433724051374587,
+          "pHatRaw": 0.16553040805818753,
+          "rawErrorPercentagePoints": 0.11931675444416534,
+          "pHatNorm": 0.16552692433121313,
+          "normalizedErrorPercentagePoints": 0.11896838174672575
+        }
+      }
+    },
+    "2019": {
+      "validation": true,
+      "rawPredictedCategoryShareSum": 0.9999919989697597,
+      "rawPredictedCategoryShareSumPercentagePoints": 99.99919989697597,
+      "normalizedPredictedCategoryShareSum": 1,
+      "otherSourceStatus": {
+        "B": "residual_from_total_minus_nine_published",
+        "A": "residual_from_total_minus_nine_published"
+      },
+      "categories": {
+        "food": {
+          "pB": 0.25834853750959724,
+          "pA_actual": 0.2594228189639705,
+          "pHatRaw": 0.2588240606057057,
+          "rawErrorPercentagePoints": -0.059875835826483925,
+          "pHatNorm": 0.25882613148141065,
+          "normalizedErrorPercentagePoints": -0.05966874825598656
+        },
+        "housing": {
+          "pB": 0.07526583229449595,
+          "pA_actual": 0.07376135266525978,
+          "pHatRaw": 0.0739296007406983,
+          "rawErrorPercentagePoints": 0.016824807543852627,
+          "pHatNorm": 0.07393019225840224,
+          "normalizedErrorPercentagePoints": 0.016883959314245578
+        },
+        "utilities": {
+          "pB": 0.07053327444294925,
+          "pA_actual": 0.07089381680237178,
+          "pHatRaw": 0.07062271380415856,
+          "rawErrorPercentagePoints": -0.02711029982132157,
+          "pHatNorm": 0.07062327886314843,
+          "normalizedErrorPercentagePoints": -0.027053793922335312
+        },
+        "furniture_household_goods": {
+          "pB": 0.04010393877601565,
+          "pA_actual": 0.040379390480421724,
+          "pHatRaw": 0.039956088612895235,
+          "rawErrorPercentagePoints": -0.04233018675264891,
+          "pHatNorm": 0.03995640830532638,
+          "normalizedErrorPercentagePoints": -0.04229821750953433
+        },
+        "clothing_footwear": {
+          "pB": 0.037232000594407615,
+          "pA_actual": 0.03731748160932307,
+          "pHatRaw": 0.037530041627426874,
+          "rawErrorPercentagePoints": 0.02125600181038037,
+          "pHatNorm": 0.03753034190882742,
+          "normalizedErrorPercentagePoints": 0.021286029950434715
+        },
+        "health": {
+          "pB": 0.04686532539689092,
+          "pA_actual": 0.04674670847466316,
+          "pHatRaw": 0.0465367094774566,
+          "rawErrorPercentagePoints": -0.02099989972065633,
+          "pHatNorm": 0.04653708182205556,
+          "normalizedErrorPercentagePoints": -0.020962665260760432
+        },
+        "transport_communications": {
+          "pB": 0.16665084331580382,
+          "pA_actual": 0.16755914492964125,
+          "pHatRaw": 0.1670312653627963,
+          "rawErrorPercentagePoints": -0.0527879566844941,
+          "pHatNorm": 0.1670326017956944,
+          "normalizedErrorPercentagePoints": -0.052654313394684404
+        },
+        "education": {
+          "pB": 0.033667618819605546,
+          "pA_actual": 0.034599463445058654,
+          "pHatRaw": 0.03510457979009336,
+          "rawErrorPercentagePoints": 0.050511634503470904,
+          "pHatNorm": 0.03510486066514513,
+          "normalizedErrorPercentagePoints": 0.05053972200864745
+        },
+        "culture_recreation": {
+          "pB": 0.10645365684518159,
+          "pA_actual": 0.10601552420905137,
+          "pHatRaw": 0.10631668650541126,
+          "rawErrorPercentagePoints": 0.030116229635988867,
+          "pHatNorm": 0.10631753715524112,
+          "normalizedErrorPercentagePoints": 0.030201294618974195
+        },
+        "other": {
+          "pB": 0.1648789720050523,
+          "pA_actual": 0.1633042984202388,
+          "pHatRaw": 0.16414025244311733,
+          "rawErrorPercentagePoints": 0.08359540228785323,
+          "pHatNorm": 0.16414156574474856,
+          "normalizedErrorPercentagePoints": 0.0837267324509755
+        }
+      }
+    },
+    "2020": {
+      "validation": true,
+      "rawPredictedCategoryShareSum": 0.9999404389123925,
+      "rawPredictedCategoryShareSumPercentagePoints": 99.99404389123924,
+      "normalizedPredictedCategoryShareSum": 1,
+      "otherSourceStatus": {
+        "B": "official_workbook_value",
+        "A": "official_workbook_value"
+      },
+      "categories": {
+        "food": {
+          "pB": 0.26882227215432675,
+          "pA_actual": 0.2688355258641355,
+          "pHatRaw": 0.2693170734812086,
+          "rawErrorPercentagePoints": 0.04815476170730859,
+          "pHatNorm": 0.2693331152544819,
+          "normalizedErrorPercentagePoints": 0.04975893903463868
+        },
+        "housing": {
+          "pB": 0.08087685646955664,
+          "pA_actual": 0.08088486033940806,
+          "pHatRaw": 0.0794410096278751,
+          "rawErrorPercentagePoints": -0.1443850711532954,
+          "pHatNorm": 0.07944574150264479,
+          "normalizedErrorPercentagePoints": -0.1439118836763273
+        },
+        "utilities": {
+          "pB": 0.07381816188962569,
+          "pA_actual": 0.07379688412655717,
+          "pHatRaw": 0.07391176663571462,
+          "rawErrorPercentagePoints": 0.011488250915744902,
+          "pHatNorm": 0.07391616916314177,
+          "normalizedErrorPercentagePoints": 0.011928503658459322
+        },
+        "furniture_household_goods": {
+          "pB": 0.04541787691127309,
+          "pA_actual": 0.045424721483500595,
+          "pHatRaw": 0.04525043598863906,
+          "rawErrorPercentagePoints": -0.017428549486153688,
+          "pHatNorm": 0.045253131314357785,
+          "normalizedErrorPercentagePoints": -0.01715901691428101
+        },
+        "clothing_footwear": {
+          "pB": 0.032533567161725216,
+          "pA_actual": 0.03253738969351087,
+          "pHatRaw": 0.03279399737793386,
+          "rawErrorPercentagePoints": 0.025660768442299642,
+          "pHatNorm": 0.03279595074042908,
+          "normalizedErrorPercentagePoints": 0.025856104691821674
+        },
+        "health": {
+          "pB": 0.049352770318408505,
+          "pA_actual": 0.049367112825770616,
+          "pHatRaw": 0.04900671263380976,
+          "rawErrorPercentagePoints": -0.03604001919608538,
+          "pHatNorm": 0.04900963170077711,
+          "normalizedErrorPercentagePoints": -0.03574811249935084
+        },
+        "transport_communications": {
+          "pB": 0.16287060886721105,
+          "pA_actual": 0.16286139056234505,
+          "pHatRaw": 0.16324240158777212,
+          "rawErrorPercentagePoints": 0.03810110254270638,
+          "pHatNorm": 0.16325212506189504,
+          "normalizedErrorPercentagePoints": 0.03907344995499884
+        },
+        "education": {
+          "pB": 0.0351608483586343,
+          "pA_actual": 0.03515739741398036,
+          "pHatRaw": 0.03666154156332201,
+          "rawErrorPercentagePoints": 0.1504144149341656,
+          "pHatNorm": 0.036663725294676305,
+          "normalizedErrorPercentagePoints": 0.15063278806959485
+        },
+        "culture_recreation": {
+          "pB": 0.09332712226667397,
+          "pA_actual": 0.09334115134033427,
+          "pHatRaw": 0.09320704139744425,
+          "rawErrorPercentagePoints": -0.013410994289002331,
+          "pHatNorm": 0.0932125932408764,
+          "normalizedErrorPercentagePoints": -0.012855809945787333
+        },
+        "other": {
+          "pB": 0.15781553132021703,
+          "pA_actual": 0.15779244091758793,
+          "pHatRaw": 0.15710845861867306,
+          "rawErrorPercentagePoints": -0.06839822989148647,
+          "pHatNorm": 0.15711781672671982,
+          "normalizedErrorPercentagePoints": -0.06746241908681117
+        }
+      }
+    },
+    "2021": {
+      "validation": true,
+      "rawPredictedCategoryShareSum": 0.9998972504122304,
+      "rawPredictedCategoryShareSumPercentagePoints": 99.98972504122304,
+      "normalizedPredictedCategoryShareSum": 1.0000000000000002,
+      "otherSourceStatus": {
+        "B": "official_workbook_value",
+        "A": "official_workbook_value"
+      },
+      "categories": {
+        "food": {
+          "pB": 0.26498306034369556,
+          "pA_actual": 0.2651053153209461,
+          "pHatRaw": 0.26547079511659416,
+          "rawErrorPercentagePoints": 0.03654797956480493,
+          "pHatNorm": 0.2654980749343473,
+          "normalizedErrorPercentagePoints": 0.03927596134011835
+        },
+        "housing": {
+          "pB": 0.08628828931357185,
+          "pA_actual": 0.0853627775743993,
+          "pHatRaw": 0.08475637062764182,
+          "rawErrorPercentagePoints": -0.060640694675748175,
+          "pHatNorm": 0.0847650802046901,
+          "normalizedErrorPercentagePoints": -0.059769736970920195
+        },
+        "utilities": {
+          "pB": 0.07208217703035132,
+          "pA_actual": 0.0720878684250471,
+          "pHatRaw": 0.07217358046963707,
+          "rawErrorPercentagePoints": 0.008571204458997228,
+          "pHatNorm": 0.07218099703732744,
+          "normalizedErrorPercentagePoints": 0.00931286122803493
+        },
+        "furniture_household_goods": {
+          "pB": 0.04378266464733124,
+          "pA_actual": 0.04384046001232176,
+          "pHatRaw": 0.04362125221983607,
+          "rawErrorPercentagePoints": -0.021920779248568723,
+          "pHatNorm": 0.04362573474609738,
+          "normalizedErrorPercentagePoints": -0.021472526622438176
+        },
+        "clothing_footwear": {
+          "pB": 0.0316392947500197,
+          "pA_actual": 0.03170843861889158,
+          "pHatRaw": 0.031892566342755786,
+          "rawErrorPercentagePoints": 0.01841277238642039,
+          "pHatNorm": 0.031895843627540076,
+          "normalizedErrorPercentagePoints": 0.018740500864849324
+        },
+        "health": {
+          "pB": 0.04999824913113132,
+          "pA_actual": 0.049876335973284995,
+          "pHatRaw": 0.04964766540063997,
+          "rawErrorPercentagePoints": -0.022867057264502194,
+          "pHatNorm": 0.049652767202001596,
+          "normalizedErrorPercentagePoints": -0.022356877128339864
+        },
+        "transport_communications": {
+          "pB": 0.16354100097173221,
+          "pA_actual": 0.16400774127878426,
+          "pHatRaw": 0.16391432402920375,
+          "rawErrorPercentagePoints": -0.009341724958050746,
+          "pHatNorm": 0.16393116788912696,
+          "normalizedErrorPercentagePoints": -0.007657338965730287
+        },
+        "education": {
+          "pB": 0.036601913699673465,
+          "pA_actual": 0.03725546219988035,
+          "pHatRaw": 0.03816411272875854,
+          "rawErrorPercentagePoints": 0.09086505288781882,
+          "pHatNorm": 0.03816803447856719,
+          "normalizedErrorPercentagePoints": 0.09125722786868379
+        },
+        "culture_recreation": {
+          "pB": 0.093365082422152,
+          "pA_actual": 0.09331165120494299,
+          "pHatRaw": 0.09324495271086698,
+          "rawErrorPercentagePoints": -0.006669849407600625,
+          "pHatNorm": 0.0932545345758523,
+          "normalizedErrorPercentagePoints": -0.005711662909069215
+        },
+        "other": {
+          "pB": 0.15771826769034133,
+          "pA_actual": 0.1574406010875291,
+          "pHatRaw": 0.15701163076629635,
+          "rawErrorPercentagePoints": -0.042897032123276335,
+          "pHatNorm": 0.15702776530444976,
+          "normalizedErrorPercentagePoints": -0.041283578307935165
+        }
+      }
+    },
+    "2022": {
+      "validation": true,
+      "rawPredictedCategoryShareSum": 0.999860846303321,
+      "rawPredictedCategoryShareSumPercentagePoints": 99.9860846303321,
+      "normalizedPredictedCategoryShareSum": 1.0000000000000002,
+      "otherSourceStatus": {
+        "B": "official_workbook_value",
+        "A": "official_workbook_value"
+      },
+      "categories": {
+        "food": {
+          "pB": 0.26665307529654625,
+          "pA_actual": 0.2667779661622124,
+          "pHatRaw": 0.26714388394278116,
+          "rawErrorPercentagePoints": 0.03659177805687697,
+          "pHatNorm": 0.26718106317540463,
+          "normalizedErrorPercentagePoints": 0.0403097013192244
+        },
+        "housing": {
+          "pB": 0.08366484535191153,
+          "pA_actual": 0.08234828230543596,
+          "pHatRaw": 0.08217950196441803,
+          "rawErrorPercentagePoints": -0.01687803410179295,
+          "pHatNorm": 0.08219093913743253,
+          "normalizedErrorPercentagePoints": -0.015734316800343484
+        },
+        "utilities": {
+          "pB": 0.08023000013876007,
+          "pA_actual": 0.08018324383569944,
+          "pHatRaw": 0.08033173538384694,
+          "rawErrorPercentagePoints": 0.01484915481475002,
+          "pHatNorm": 0.08034291539752648,
+          "normalizedErrorPercentagePoints": 0.015967156182704334
+        },
+        "furniture_household_goods": {
+          "pB": 0.042836298351210264,
+          "pA_actual": 0.0429707660297782,
+          "pHatRaw": 0.04267837486808125,
+          "rawErrorPercentagePoints": -0.029239116169695045,
+          "pHatNorm": 0.04268431454824085,
+          "normalizedErrorPercentagePoints": -0.028645148153735173
+        },
+        "clothing_footwear": {
+          "pB": 0.03244423713454069,
+          "pA_actual": 0.032575119044656486,
+          "pHatRaw": 0.032703952266597086,
+          "rawErrorPercentagePoints": 0.012883322194059965,
+          "pHatNorm": 0.03270850377581033,
+          "normalizedErrorPercentagePoints": 0.013338473115384608
+        },
+        "health": {
+          "pB": 0.048810452688689665,
+          "pA_actual": 0.048629512255026604,
+          "pHatRaw": 0.04846819769200584,
+          "rawErrorPercentagePoints": -0.016131456302076463,
+          "pHatNorm": 0.048474943159542795,
+          "normalizedErrorPercentagePoints": -0.01545690954838086
+        },
+        "transport_communications": {
+          "pB": 0.15958260973519242,
+          "pA_actual": 0.16040652086649146,
+          "pHatRaw": 0.15994689677900187,
+          "rawErrorPercentagePoints": -0.04596240874895907,
+          "pHatNorm": 0.159969157078564,
+          "normalizedErrorPercentagePoints": -0.043736378792746944
+        },
+        "education": {
+          "pB": 0.033870263612095185,
+          "pA_actual": 0.03500416020635489,
+          "pHatRaw": 0.035315873624834564,
+          "rawErrorPercentagePoints": 0.03117134184796727,
+          "pHatNorm": 0.03532078864314388,
+          "normalizedErrorPercentagePoints": 0.03166284367889863
+        },
+        "culture_recreation": {
+          "pB": 0.09862531474517783,
+          "pA_actual": 0.09847625003651676,
+          "pHatRaw": 0.09849841686988692,
+          "rawErrorPercentagePoints": 0.002216683337015468,
+          "pHatNorm": 0.09851212519627568,
+          "normalizedErrorPercentagePoints": 0.0035875159758919084
+        },
+        "other": {
+          "pB": 0.15328076817570013,
+          "pA_actual": 0.1526292612360736,
+          "pHatRaw": 0.15259401291186736,
+          "rawErrorPercentagePoints": -0.0035248324206232917,
+          "pHatNorm": 0.15261524988805888,
+          "normalizedErrorPercentagePoints": -0.0014011348014708602
+        }
+      }
+    },
+    "2023": {
+      "validation": true,
+      "rawPredictedCategoryShareSum": 0.999904903062566,
+      "rawPredictedCategoryShareSumPercentagePoints": 99.99049030625659,
+      "normalizedPredictedCategoryShareSum": 1,
+      "otherSourceStatus": {
+        "B": "official_workbook_value",
+        "A": "official_workbook_value"
+      },
+      "categories": {
+        "food": {
+          "pB": 0.27481267315434776,
+          "pA_actual": 0.2753313889189385,
+          "pHatRaw": 0.2753185005704729,
+          "rawErrorPercentagePoints": -0.0012888348465578403,
+          "pHatNorm": 0.2753446850067558,
+          "normalizedErrorPercentagePoints": 0.0013296087817304958
+        },
+        "housing": {
+          "pB": 0.08018015860703998,
+          "pA_actual": 0.07834547629575404,
+          "pHatRaw": 0.07875668058715948,
+          "rawErrorPercentagePoints": 0.04112042914054398,
+          "pHatNorm": 0.07876417081858386,
+          "normalizedErrorPercentagePoints": 0.041869452282981834
+        },
+        "utilities": {
+          "pB": 0.07600311092185527,
+          "pA_actual": 0.07604536780205202,
+          "pHatRaw": 0.07609948628149166,
+          "rawErrorPercentagePoints": 0.005411847943963266,
+          "pHatNorm": 0.07610672379784297,
+          "normalizedErrorPercentagePoints": 0.006135599579094875
+        },
+        "furniture_household_goods": {
+          "pB": 0.04160181241391086,
+          "pA_actual": 0.04175694680027601,
+          "pHatRaw": 0.04144844007844389,
+          "rawErrorPercentagePoints": -0.030850672183211497,
+          "pHatNorm": 0.041452382073028385,
+          "normalizedErrorPercentagePoints": -0.030456472724762346
+        },
+        "clothing_footwear": {
+          "pB": 0.03239502460730859,
+          "pA_actual": 0.032617428940826296,
+          "pHatRaw": 0.0326543457945804,
+          "rawErrorPercentagePoints": 0.0036916853754107026,
+          "pHatNorm": 0.03265745141819468,
+          "normalizedErrorPercentagePoints": 0.00400224773683816
+        },
+        "health": {
+          "pB": 0.048859588937695146,
+          "pA_actual": 0.048578501442556626,
+          "pHatRaw": 0.04851698940155688,
+          "rawErrorPercentagePoints": -0.006151204099974494,
+          "pHatNorm": 0.048521603657464094,
+          "normalizedErrorPercentagePoints": -0.005689778509253285
+        },
+        "transport_communications": {
+          "pB": 0.16360242252107526,
+          "pA_actual": 0.16453757841637004,
+          "pHatRaw": 0.16397588578852754,
+          "rawErrorPercentagePoints": -0.05616926278425027,
+          "pHatNorm": 0.16399148087612414,
+          "normalizedErrorPercentagePoints": -0.054609754024589896
+        },
+        "education": {
+          "pB": 0.0323450499590312,
+          "pA_actual": 0.03370446651661697,
+          "pHatRaw": 0.03372556262993446,
+          "rawErrorPercentagePoints": 0.0021096113317492504,
+          "pHatNorm": 0.03372877013267749,
+          "normalizedErrorPercentagePoints": 0.0024303616060525335
+        },
+        "culture_recreation": {
+          "pB": 0.1036036927100523,
+          "pA_actual": 0.10346392138040118,
+          "pHatRaw": 0.10347038932327816,
+          "rawErrorPercentagePoints": 0.0006467942876980937,
+          "pHatNorm": 0.10348022997623388,
+          "normalizedErrorPercentagePoints": 0.0016308595832695283
+        },
+        "other": {
+          "pB": 0.1465954250291779,
+          "pA_actual": 0.14561682293050626,
+          "pHatRaw": 0.14593862260712068,
+          "rawErrorPercentagePoints": 0.03217996766144149,
+          "pHatNorm": 0.14595250224309483,
+          "normalizedErrorPercentagePoints": 0.03356793125885715
+        }
+      }
+    },
+    "2024": {
+      "validation": true,
+      "rawPredictedCategoryShareSum": 0.9999226860333317,
+      "rawPredictedCategoryShareSumPercentagePoints": 99.99226860333317,
+      "normalizedPredictedCategoryShareSum": 1,
+      "otherSourceStatus": {
+        "B": "official_workbook_value",
+        "A": "official_workbook_value"
+      },
+      "categories": {
+        "food": {
+          "pB": 0.27890368162048473,
+          "pA_actual": 0.2796103778887298,
+          "pHatRaw": 0.27941703905412335,
+          "rawErrorPercentagePoints": -0.019333883460642687,
+          "pHatNorm": 0.2794386435640977,
+          "normalizedErrorPercentagePoints": -0.017173432463207794
+        },
+        "housing": {
+          "pB": 0.08142139546280604,
+          "pA_actual": 0.079052632010798,
+          "pHatRaw": 0.07997588115100067,
+          "rawErrorPercentagePoints": 0.09232491402026699,
+          "pHatNorm": 0.079982064881699,
+          "normalizedErrorPercentagePoints": 0.0929432870900998
+        },
+        "utilities": {
+          "pB": 0.07237151083249954,
+          "pA_actual": 0.07242286122199476,
+          "pHatRaw": 0.07246328116004681,
+          "rawErrorPercentagePoints": 0.004041993805205257,
+          "pHatNorm": 0.07246888401693019,
+          "normalizedErrorPercentagePoints": 0.004602279493542971
+        },
+        "furniture_household_goods": {
+          "pB": 0.04226002082780307,
+          "pA_actual": 0.04242273814456674,
+          "pHatRaw": 0.042104221892248155,
+          "rawErrorPercentagePoints": -0.03185162523185875,
+          "pHatNorm": 0.042107477388351446,
+          "normalizedErrorPercentagePoints": -0.03152607562152965
+        },
+        "clothing_footwear": {
+          "pB": 0.0321728299266943,
+          "pA_actual": 0.032396030342688585,
+          "pHatRaw": 0.032430372452301834,
+          "rawErrorPercentagePoints": 0.003434210961324874,
+          "pHatNorm": 0.032432879966902556,
+          "normalizedErrorPercentagePoints": 0.00368496242139707
+        },
+        "health": {
+          "pB": 0.049301656014538627,
+          "pA_actual": 0.049035072964401905,
+          "pHatRaw": 0.048955956739357084,
+          "rawErrorPercentagePoints": -0.007911622504482019,
+          "pHatNorm": 0.048959742011219026,
+          "normalizedErrorPercentagePoints": -0.00753309531828783
+        },
+        "transport_communications": {
+          "pB": 0.15921119800706512,
+          "pA_actual": 0.1604847609631219,
+          "pHatRaw": 0.15957463721112122,
+          "rawErrorPercentagePoints": -0.09101237520006689,
+          "pHatNorm": 0.15958697551322676,
+          "normalizedErrorPercentagePoints": -0.08977854498951332
+        },
+        "education": {
+          "pB": 0.03359912604904744,
+          "pA_actual": 0.03525142667251968,
+          "pHatRaw": 0.035033163693161035,
+          "rawErrorPercentagePoints": -0.021826297935864658,
+          "pHatNorm": 0.03503587245543625,
+          "normalizedErrorPercentagePoints": -0.02155542170834343
+        },
+        "culture_recreation": {
+          "pB": 0.10459947317909869,
+          "pA_actual": 0.10428042781713975,
+          "pHatRaw": 0.10446488855508738,
+          "rawErrorPercentagePoints": 0.018446073794763096,
+          "pHatNorm": 0.10447296577448101,
+          "normalizedErrorPercentagePoints": 0.019253795734125445
+        },
+        "other": {
+          "pB": 0.14615808710922346,
+          "pA_actual": 0.14504674890973912,
+          "pHatRaw": 0.1455032441248842,
+          "rawErrorPercentagePoints": 0.04564952151450696,
+          "pHatNorm": 0.14551449442765613,
+          "normalizedErrorPercentagePoints": 0.04677455179170065
+        }
+      }
+    },
+    "2025": {
+      "validation": true,
+      "rawPredictedCategoryShareSum": 0.9999806922027195,
+      "rawPredictedCategoryShareSumPercentagePoints": 99.99806922027194,
+      "normalizedPredictedCategoryShareSum": 0.9999999999999999,
+      "otherSourceStatus": {
+        "B": "official_workbook_value",
+        "A": "official_workbook_value"
+      },
+      "categories": {
+        "food": {
+          "pB": 0.28663,
+          "pA_actual": 0.2866477460233648,
+          "pHatRaw": 0.2871575786979537,
+          "rawErrorPercentagePoints": 0.05098326745889281,
+          "pHatNorm": 0.2871631231853226,
+          "normalizedErrorPercentagePoints": 0.05153771619578196
+        },
+        "housing": {
+          "pB": 0.076508,
+          "pA_actual": 0.07650960132644509,
+          "pHatRaw": 0.07514971562844161,
+          "rawErrorPercentagePoints": -0.13598856980034796,
+          "pHatNorm": 0.07515116663193233,
+          "normalizedErrorPercentagePoints": -0.13584346945127584
+        },
+        "utilities": {
+          "pB": 0.075322,
+          "pA_actual": 0.07530756045705554,
+          "pHatRaw": 0.07541751168038366,
+          "rawErrorPercentagePoints": 0.010995122332811691,
+          "pHatNorm": 0.0754189678545261,
+          "normalizedErrorPercentagePoints": 0.011140739747056427
+        },
+        "furniture_household_goods": {
+          "pB": 0.041378000000000005,
+          "pA_actual": 0.04138240700183806,
+          "pHatRaw": 0.04122545278802253,
+          "rawErrorPercentagePoints": -0.01569542138155286,
+          "pHatNorm": 0.041226248776076536,
+          "normalizedErrorPercentagePoints": -0.015615822576152405
+        },
+        "clothing_footwear": {
+          "pB": 0.031749,
+          "pA_actual": 0.03174507933269731,
+          "pHatRaw": 0.03200314977992748,
+          "rawErrorPercentagePoints": 0.02580704472301687,
+          "pHatNorm": 0.032003767702186485,
+          "normalizedErrorPercentagePoints": 0.025868836948917534
+        },
+        "health": {
+          "pB": 0.049574,
+          "pA_actual": 0.04958068574331528,
+          "pHatRaw": 0.049226391070539374,
+          "rawErrorPercentagePoints": -0.03542946727759025,
+          "pHatNorm": 0.04922734154207053,
+          "normalizedErrorPercentagePoints": -0.03533442012447485
+        },
+        "transport_communications": {
+          "pB": 0.156446,
+          "pA_actual": 0.1564543194468612,
+          "pHatRaw": 0.15680312695105303,
+          "rawErrorPercentagePoints": 0.03488075041918337,
+          "pHatNorm": 0.15680615453249708,
+          "normalizedErrorPercentagePoints": 0.035183508563588206
+        },
+        "education": {
+          "pB": 0.032435,
+          "pA_actual": 0.03243410275949382,
+          "pHatRaw": 0.03381935181078596,
+          "rawErrorPercentagePoints": 0.13852490512921353,
+          "pHatNorm": 0.03382000480058267,
+          "normalizedErrorPercentagePoints": 0.1385902041088849
+        },
+        "culture_recreation": {
+          "pB": 0.106871,
+          "pA_actual": 0.10686663346553782,
+          "pHatRaw": 0.10673349267882941,
+          "rawErrorPercentagePoints": -0.013314078670841056,
+          "pHatNorm": 0.10673555350725915,
+          "normalizedErrorPercentagePoints": -0.013107995827867092
+        },
+        "other": {
+          "pB": 0.143086,
+          "pA_actual": 0.14307286447739223,
+          "pHatRaw": 0.14244492111678264,
+          "rawErrorPercentagePoints": -0.06279433606095897,
+          "pHatNorm": 0.14244767146754642,
+          "normalizedErrorPercentagePoints": -0.06251930098458147
+        }
+      }
+    }
+  },
+  "otherComparability": {
+    "B": {
+      "sourceStatusByYear": {
+        "2017": "residual_from_total_minus_nine_published",
+        "2018": "residual_from_total_minus_nine_published",
+        "2019": "residual_from_total_minus_nine_published",
+        "2020": "official_workbook_value",
+        "2021": "official_workbook_value",
+        "2022": "official_workbook_value",
+        "2023": "official_workbook_value",
+        "2024": "official_workbook_value",
+        "2025": "official_workbook_value"
+      },
+      "directVersusResidualNumericYears": [
+        2020,
+        2021,
+        2022,
+        2023,
+        2024,
+        2025
+      ],
+      "maxAbsoluteDirectMinusResidual": 0.000399999999990186,
+      "maxAbsoluteDifferenceYear": 2020
+    },
+    "A": {
+      "sourceStatusByYear": {
+        "2017": "residual_from_total_minus_nine_published",
+        "2018": "residual_from_total_minus_nine_published",
+        "2019": "residual_from_total_minus_nine_published",
+        "2020": "official_workbook_value",
+        "2021": "official_workbook_value",
+        "2022": "official_workbook_value",
+        "2023": "official_workbook_value",
+        "2024": "official_workbook_value",
+        "2025": "official_workbook_value"
+      },
+      "directVersusResidualNumericYears": [
+        2020,
+        2021,
+        2022,
+        2023,
+        2024,
+        2025
+      ],
+      "maxAbsoluteDirectMinusResidual": 0.0003000000000010772,
+      "maxAbsoluteDifferenceYear": 2021
+    }
+  },
+  "sources": {
+    "workbooks": {
+      "B": {
+        "label": "2025-base CTI basic",
+        "file": "data/source/cti-size-composition/raw/cti/000040499069-basic.xlsx",
+        "url": "https://www.e-stat.go.jp/stat-search/file-download?statInfId=000040499069&fileKind=0",
+        "sha256": "5e99cf3c61e26ba90bcde12b3311eb553458f97e5624258712d7414bed53197b",
+        "sheet": "総・年"
+      },
+      "A": {
+        "label": "2025-base distribution-adjusted CTI",
+        "file": "data/source/cti-size-composition/raw/cti/000040499087-adjusted.xlsx",
+        "url": "https://www.e-stat.go.jp/stat-search/file-download?statInfId=000040499087&fileKind=0",
+        "sha256": "7224e5eb424c94d90402502f665a4953cfe16377f65f1040a939696ac948ef41",
+        "sheet": "総・年"
+      }
+    },
+    "extractionEvidence": {
+      "2017": {
+        "B": {
+          "headerRow": 9,
+          "yearRow": 25,
+          "cells": {
+            "total": "J25",
+            "food": "K25",
+            "housing": "L25",
+            "utilities": "M25",
+            "furniture_household_goods": "N25",
+            "clothing_footwear": "O25",
+            "health": "P25",
+            "transport_communications": "Q25",
+            "education": "R25",
+            "culture_recreation": "S25",
+            "otherRaw": "T25"
+          },
+          "rawOtherValue": "-",
+          "sourceStatus": "residual_from_total_minus_nine_published",
+          "residualValue": 16.08510000000001,
+          "directMinusResidual": null,
+          "residualInputs": [
+            "J25",
+            "K25",
+            "L25",
+            "M25",
+            "N25",
+            "O25",
+            "P25",
+            "Q25",
+            "R25",
+            "S25"
+          ]
+        },
+        "A": {
+          "headerRow": 9,
+          "yearRow": 10,
+          "cells": {
+            "total": "J10",
+            "food": "K10",
+            "housing": "L10",
+            "utilities": "M10",
+            "furniture_household_goods": "N10",
+            "clothing_footwear": "O10",
+            "health": "P10",
+            "transport_communications": "Q10",
+            "education": "R10",
+            "culture_recreation": "S10",
+            "otherRaw": "T10"
+          },
+          "rawOtherValue": "-",
+          "sourceStatus": "residual_from_total_minus_nine_published",
+          "residualValue": 15.362899999999996,
+          "directMinusResidual": null,
+          "residualInputs": [
+            "J10",
+            "K10",
+            "L10",
+            "M10",
+            "N10",
+            "O10",
+            "P10",
+            "Q10",
+            "R10",
+            "S10"
+          ]
+        }
+      },
+      "2018": {
+        "B": {
+          "headerRow": 9,
+          "yearRow": 26,
+          "cells": {
+            "total": "J26",
+            "food": "K26",
+            "housing": "L26",
+            "utilities": "M26",
+            "furniture_household_goods": "N26",
+            "clothing_footwear": "O26",
+            "health": "P26",
+            "transport_communications": "Q26",
+            "education": "R26",
+            "culture_recreation": "S26",
+            "otherRaw": "T26"
+          },
+          "rawOtherValue": "-",
+          "sourceStatus": "residual_from_total_minus_nine_published",
+          "residualValue": 16.0206,
+          "directMinusResidual": null,
+          "residualInputs": [
+            "J26",
+            "K26",
+            "L26",
+            "M26",
+            "N26",
+            "O26",
+            "P26",
+            "Q26",
+            "R26",
+            "S26"
+          ]
+        },
+        "A": {
+          "headerRow": 9,
+          "yearRow": 11,
+          "cells": {
+            "total": "J11",
+            "food": "K11",
+            "housing": "L11",
+            "utilities": "M11",
+            "furniture_household_goods": "N11",
+            "clothing_footwear": "O11",
+            "health": "P11",
+            "transport_communications": "Q11",
+            "education": "R11",
+            "culture_recreation": "S11",
+            "otherRaw": "T11"
+          },
+          "rawOtherValue": "-",
+          "sourceStatus": "residual_from_total_minus_nine_published",
+          "residualValue": 15.202000000000012,
+          "directMinusResidual": null,
+          "residualInputs": [
+            "J11",
+            "K11",
+            "L11",
+            "M11",
+            "N11",
+            "O11",
+            "P11",
+            "Q11",
+            "R11",
+            "S11"
+          ]
+        }
+      },
+      "2019": {
+        "B": {
+          "headerRow": 9,
+          "yearRow": 27,
+          "cells": {
+            "total": "J27",
+            "food": "K27",
+            "housing": "L27",
+            "utilities": "M27",
+            "furniture_household_goods": "N27",
+            "clothing_footwear": "O27",
+            "health": "P27",
+            "transport_communications": "Q27",
+            "education": "R27",
+            "culture_recreation": "S27",
+            "otherRaw": "T27"
+          },
+          "rawOtherValue": "-",
+          "sourceStatus": "residual_from_total_minus_nine_published",
+          "residualValue": 15.977299999999985,
+          "directMinusResidual": null,
+          "residualInputs": [
+            "J27",
+            "K27",
+            "L27",
+            "M27",
+            "N27",
+            "O27",
+            "P27",
+            "Q27",
+            "R27",
+            "S27"
+          ]
+        },
+        "A": {
+          "headerRow": 9,
+          "yearRow": 12,
+          "cells": {
+            "total": "J12",
+            "food": "K12",
+            "housing": "L12",
+            "utilities": "M12",
+            "furniture_household_goods": "N12",
+            "clothing_footwear": "O12",
+            "health": "P12",
+            "transport_communications": "Q12",
+            "education": "R12",
+            "culture_recreation": "S12",
+            "otherRaw": "T12"
+          },
+          "rawOtherValue": "-",
+          "sourceStatus": "residual_from_total_minus_nine_published",
+          "residualValue": 15.290900000000008,
+          "directMinusResidual": null,
+          "residualInputs": [
+            "J12",
+            "K12",
+            "L12",
+            "M12",
+            "N12",
+            "O12",
+            "P12",
+            "Q12",
+            "R12",
+            "S12"
+          ]
+        }
+      },
+      "2020": {
+        "B": {
+          "headerRow": 9,
+          "yearRow": 28,
+          "cells": {
+            "total": "J28",
+            "food": "K28",
+            "housing": "L28",
+            "utilities": "M28",
+            "furniture_household_goods": "N28",
+            "clothing_footwear": "O28",
+            "health": "P28",
+            "transport_communications": "Q28",
+            "education": "R28",
+            "culture_recreation": "S28",
+            "otherRaw": "T28"
+          },
+          "rawOtherValue": 14.3983,
+          "sourceStatus": "official_workbook_value",
+          "residualValue": 14.398699999999991,
+          "directMinusResidual": -0.000399999999990186,
+          "residualInputs": [
+            "J28",
+            "K28",
+            "L28",
+            "M28",
+            "N28",
+            "O28",
+            "P28",
+            "Q28",
+            "R28",
+            "S28"
+          ]
+        },
+        "A": {
+          "headerRow": 9,
+          "yearRow": 13,
+          "cells": {
+            "total": "J13",
+            "food": "K13",
+            "housing": "L13",
+            "utilities": "M13",
+            "furniture_household_goods": "N13",
+            "clothing_footwear": "O13",
+            "health": "P13",
+            "transport_communications": "Q13",
+            "education": "R13",
+            "culture_recreation": "S13",
+            "otherRaw": "T13"
+          },
+          "rawOtherValue": 14.0206,
+          "sourceStatus": "official_workbook_value",
+          "residualValue": 14.020699999999977,
+          "directMinusResidual": -0.0000999999999766743,
+          "residualInputs": [
+            "J13",
+            "K13",
+            "L13",
+            "M13",
+            "N13",
+            "O13",
+            "P13",
+            "Q13",
+            "R13",
+            "S13"
+          ]
+        }
+      },
+      "2021": {
+        "B": {
+          "headerRow": 9,
+          "yearRow": 29,
+          "cells": {
+            "total": "J29",
+            "food": "K29",
+            "housing": "L29",
+            "utilities": "M29",
+            "furniture_household_goods": "N29",
+            "clothing_footwear": "O29",
+            "health": "P29",
+            "transport_communications": "Q29",
+            "education": "R29",
+            "culture_recreation": "S29",
+            "otherRaw": "T29"
+          },
+          "rawOtherValue": 14.4128,
+          "sourceStatus": "official_workbook_value",
+          "residualValue": 14.412800000000004,
+          "directMinusResidual": -3.552713678800501e-15,
+          "residualInputs": [
+            "J29",
+            "K29",
+            "L29",
+            "M29",
+            "N29",
+            "O29",
+            "P29",
+            "Q29",
+            "R29",
+            "S29"
+          ]
+        },
+        "A": {
+          "headerRow": 9,
+          "yearRow": 14,
+          "cells": {
+            "total": "J14",
+            "food": "K14",
+            "housing": "L14",
+            "utilities": "M14",
+            "furniture_household_goods": "N14",
+            "clothing_footwear": "O14",
+            "health": "P14",
+            "transport_communications": "Q14",
+            "education": "R14",
+            "culture_recreation": "S14",
+            "otherRaw": "T14"
+          },
+          "rawOtherValue": 14.1063,
+          "sourceStatus": "official_workbook_value",
+          "residualValue": 14.1066,
+          "directMinusResidual": -0.0003000000000010772,
+          "residualInputs": [
+            "J14",
+            "K14",
+            "L14",
+            "M14",
+            "N14",
+            "O14",
+            "P14",
+            "Q14",
+            "R14",
+            "S14"
+          ]
+        }
+      },
+      "2022": {
+        "B": {
+          "headerRow": 9,
+          "yearRow": 30,
+          "cells": {
+            "total": "J30",
+            "food": "K30",
+            "housing": "L30",
+            "utilities": "M30",
+            "furniture_household_goods": "N30",
+            "clothing_footwear": "O30",
+            "health": "P30",
+            "transport_communications": "Q30",
+            "education": "R30",
+            "culture_recreation": "S30",
+            "otherRaw": "T30"
+          },
+          "rawOtherValue": 14.3604,
+          "sourceStatus": "official_workbook_value",
+          "residualValue": 14.360600000000005,
+          "directMinusResidual": -0.00020000000000486295,
+          "residualInputs": [
+            "J30",
+            "K30",
+            "L30",
+            "M30",
+            "N30",
+            "O30",
+            "P30",
+            "Q30",
+            "R30",
+            "S30"
+          ]
+        },
+        "A": {
+          "headerRow": 9,
+          "yearRow": 15,
+          "cells": {
+            "total": "J15",
+            "food": "K15",
+            "housing": "L15",
+            "utilities": "M15",
+            "furniture_household_goods": "N15",
+            "clothing_footwear": "O15",
+            "health": "P15",
+            "transport_communications": "Q15",
+            "education": "R15",
+            "culture_recreation": "S15",
+            "otherRaw": "T15"
+          },
+          "rawOtherValue": 14.1065,
+          "sourceStatus": "official_workbook_value",
+          "residualValue": 14.10639999999998,
+          "directMinusResidual": 0.00010000000002108322,
+          "residualInputs": [
+            "J15",
+            "K15",
+            "L15",
+            "M15",
+            "N15",
+            "O15",
+            "P15",
+            "Q15",
+            "R15",
+            "S15"
+          ]
+        }
+      },
+      "2023": {
+        "B": {
+          "headerRow": 9,
+          "yearRow": 31,
+          "cells": {
+            "total": "J31",
+            "food": "K31",
+            "housing": "L31",
+            "utilities": "M31",
+            "furniture_household_goods": "N31",
+            "clothing_footwear": "O31",
+            "health": "P31",
+            "transport_communications": "Q31",
+            "education": "R31",
+            "culture_recreation": "S31",
+            "otherRaw": "T31"
+          },
+          "rawOtherValue": 14.0803,
+          "sourceStatus": "official_workbook_value",
+          "residualValue": 14.080399999999997,
+          "directMinusResidual": -0.00009999999999799059,
+          "residualInputs": [
+            "J31",
+            "K31",
+            "L31",
+            "M31",
+            "N31",
+            "O31",
+            "P31",
+            "Q31",
+            "R31",
+            "S31"
+          ]
+        },
+        "A": {
+          "headerRow": 9,
+          "yearRow": 16,
+          "cells": {
+            "total": "J16",
+            "food": "K16",
+            "housing": "L16",
+            "utilities": "M16",
+            "furniture_household_goods": "N16",
+            "clothing_footwear": "O16",
+            "health": "P16",
+            "transport_communications": "Q16",
+            "education": "R16",
+            "culture_recreation": "S16",
+            "otherRaw": "T16"
+          },
+          "rawOtherValue": 13.8646,
+          "sourceStatus": "official_workbook_value",
+          "residualValue": 13.864799999999988,
+          "directMinusResidual": -0.00019999999998887574,
+          "residualInputs": [
+            "J16",
+            "K16",
+            "L16",
+            "M16",
+            "N16",
+            "O16",
+            "P16",
+            "Q16",
+            "R16",
+            "S16"
+          ]
+        }
+      },
+      "2024": {
+        "B": {
+          "headerRow": 9,
+          "yearRow": 32,
+          "cells": {
+            "total": "J32",
+            "food": "K32",
+            "housing": "L32",
+            "utilities": "M32",
+            "furniture_household_goods": "N32",
+            "clothing_footwear": "O32",
+            "health": "P32",
+            "transport_communications": "Q32",
+            "education": "R32",
+            "culture_recreation": "S32",
+            "otherRaw": "T32"
+          },
+          "rawOtherValue": 14.3156,
+          "sourceStatus": "official_workbook_value",
+          "residualValue": 14.315699999999993,
+          "directMinusResidual": -0.00009999999999266151,
+          "residualInputs": [
+            "J32",
+            "K32",
+            "L32",
+            "M32",
+            "N32",
+            "O32",
+            "P32",
+            "Q32",
+            "R32",
+            "S32"
+          ]
+        },
+        "A": {
+          "headerRow": 9,
+          "yearRow": 17,
+          "cells": {
+            "total": "J17",
+            "food": "K17",
+            "housing": "L17",
+            "utilities": "M17",
+            "furniture_household_goods": "N17",
+            "clothing_footwear": "O17",
+            "health": "P17",
+            "transport_communications": "Q17",
+            "education": "R17",
+            "culture_recreation": "S17",
+            "otherRaw": "T17"
+          },
+          "rawOtherValue": 14.142,
+          "sourceStatus": "official_workbook_value",
+          "residualValue": 14.1417,
+          "directMinusResidual": 0.0002999999999993008,
+          "residualInputs": [
+            "J17",
+            "K17",
+            "L17",
+            "M17",
+            "N17",
+            "O17",
+            "P17",
+            "Q17",
+            "R17",
+            "S17"
+          ]
+        }
+      },
+      "2025": {
+        "B": {
+          "headerRow": 9,
+          "yearRow": 33,
+          "cells": {
+            "total": "J33",
+            "food": "K33",
+            "housing": "L33",
+            "utilities": "M33",
+            "furniture_household_goods": "N33",
+            "clothing_footwear": "O33",
+            "health": "P33",
+            "transport_communications": "Q33",
+            "education": "R33",
+            "culture_recreation": "S33",
+            "otherRaw": "T33"
+          },
+          "rawOtherValue": 14.3086,
+          "sourceStatus": "official_workbook_value",
+          "residualValue": 14.308700000000002,
+          "directMinusResidual": -0.0001000000000015433,
+          "residualInputs": [
+            "J33",
+            "K33",
+            "L33",
+            "M33",
+            "N33",
+            "O33",
+            "P33",
+            "Q33",
+            "R33",
+            "S33"
+          ]
+        },
+        "A": {
+          "headerRow": 9,
+          "yearRow": 18,
+          "cells": {
+            "total": "J18",
+            "food": "K18",
+            "housing": "L18",
+            "utilities": "M18",
+            "furniture_household_goods": "N18",
+            "clothing_footwear": "O18",
+            "health": "P18",
+            "transport_communications": "Q18",
+            "education": "R18",
+            "culture_recreation": "S18",
+            "otherRaw": "T18"
+          },
+          "rawOtherValue": 14.3068,
+          "sourceStatus": "official_workbook_value",
+          "residualValue": 14.306699999999992,
+          "directMinusResidual": 0.00010000000000864873,
+          "residualInputs": [
+            "J18",
+            "K18",
+            "L18",
+            "M18",
+            "N18",
+            "O18",
+            "P18",
+            "Q18",
+            "R18",
+            "S18"
+          ]
+        }
+      }
+    }
+  },
+  "limitations": [
+    "Other uses the workbook's numeric official value in 2020-2025 and is derived as total minus the nine published lower-category columns in 2017-2019, when the workbook cell is '-'. The source status is recorded per year and series. The direct-versus-residual difference for years with a numeric official value is included in source extraction evidence; this creates a source-method boundary at 2020, so interpret Other-category time-series errors with that comparability limitation.",
+    "The workbooks contain 2025-base index values, not yen amounts; within-year category shares are computed by dividing each index category by that workbook's same-year total.",
+    "Calibration uses only 2017. The 2017 row is shown for traceability and excluded from all error metrics."
+  ]
+}

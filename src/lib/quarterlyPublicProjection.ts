@@ -51,7 +51,10 @@ export const QUARTERLY_PLAN40_V2_NOMINAL_KEYS = [
 ] as const;
 
 function publicKeysForRow(mode: QuarterlyPublicMode, kind: QuarterlyRowKind): readonly string[] {
-  if (mode === "nominal" && kind === "plan40-v2-cost-stack") {
+  if (
+    mode === "nominal" &&
+    (kind === "plan40-v2-cost-stack" || kind === "plan40-official-quarterly")
+  ) {
     return QUARTERLY_PLAN40_V2_NOMINAL_KEYS;
   }
   return mode === "nominal" ? QUARTERLY_PUBLIC_NOMINAL_KEYS : QUARTERLY_PUBLIC_REAL_KEYS;

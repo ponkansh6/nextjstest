@@ -1,0 +1,197 @@
+{
+  "schemaVersion": "cti-size-composition-lfs-weights-v1",
+  "weightsCsv": {
+    "path": "weights.csv",
+    "sha256": "2098287276fa564d0280c9c7c29a336548d634bd20db739bbd1582ad71e1fcd2"
+  },
+  "reference": {
+    "year": 2025,
+    "status": "verified_raw_unconnected_reference",
+    "benchmarkId": "LFS-IV-4-2025-annual-2025-benchmark",
+    "source": "Labour Force Survey annual IV-4, nationwide household size counts",
+    "statInfId": "000040403950",
+    "url": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040403950",
+    "file": "data/source/cti-size-composition/raw/lfs/2025-000040403950.xls",
+    "sha256": "f40187df50484243c35216cf26942ba6708ce41cde7c684a098425beaf92085c",
+    "rawCountsInTenThousandHouseholds": {
+      "total": 5714,
+      "one": 2248,
+      "two": 1672,
+      "three": 894,
+      "four": 650,
+      "five": 186,
+      "six": 46,
+      "sevenPlus": 17
+    }
+  },
+  "legacyUnharmonizedWeights": {
+    "status": "unverified_connected_series",
+    "connectionStatus": "unverified_connected_series",
+    "seriesId": "legacy-unharmonized-published-annual",
+    "years": [
+      2005,
+      2006,
+      2007,
+      2008,
+      2009,
+      2010,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017
+    ],
+    "missingYear": 2011,
+    "sourceIdRetention": "not_retained",
+    "sourceDescription": "Prior official annual IV-4 extraction; original year-specific download IDs and raw workbooks were not retained in this candidate workspace.",
+    "benchmarkTransitionsToAudit": [
+      2007,
+      2012,
+      2017
+    ],
+    "publishedCounts10k": {
+      "2005": [
+        4926,
+        1465,
+        1327,
+        885,
+        788,
+        280,
+        121,
+        61
+      ],
+      "2006": [
+        4956,
+        1480,
+        1349,
+        892,
+        783,
+        277,
+        116,
+        58
+      ],
+      "2007": [
+        4991,
+        1482,
+        1377,
+        905,
+        787,
+        271,
+        113,
+        56
+      ],
+      "2008": [
+        5052,
+        1546,
+        1388,
+        908,
+        782,
+        269,
+        107,
+        50
+      ],
+      "2009": [
+        5111,
+        1591,
+        1416,
+        909,
+        779,
+        266,
+        101,
+        48
+      ],
+      "2010": [
+        5124,
+        1583,
+        1432,
+        925,
+        783,
+        257,
+        98,
+        47
+      ],
+      "2012": [
+        5182,
+        1604,
+        1470,
+        931,
+        788,
+        254,
+        90,
+        43
+      ],
+      "2013": [
+        5210,
+        1648,
+        1492,
+        929,
+        767,
+        246,
+        87,
+        41
+      ],
+      "2014": [
+        5272,
+        1711,
+        1521,
+        921,
+        759,
+        239,
+        82,
+        38
+      ],
+      "2015": [
+        5319,
+        1770,
+        1531,
+        933,
+        743,
+        231,
+        76,
+        36
+      ],
+      "2016": [
+        5361,
+        1803,
+        1561,
+        933,
+        738,
+        221,
+        72,
+        33
+      ],
+      "2017": [
+        5391,
+        1821,
+        1573,
+        936,
+        736,
+        221,
+        71,
+        33
+      ]
+    },
+    "note": "Values are a provisional sensitivity input only; no connection/rebasing is claimed.",
+    "interpolatedDiagnosticYear": {
+      "year": 2011,
+      "method": "linear_share_interpolation",
+      "endpoints": [
+        2010,
+        2012
+      ],
+      "notObserved": true,
+      "normalizedSharesBeforeCountScaling": true,
+      "vintageCaveat": "Custom interpolation across a benchmark break: 2010 IV-4 statInfId 000008597994 uses the 2005 Census base and 2012 IV-4 statInfId 000018854323 uses the 2010 Census base. No official common-base bridge is established. The 2011 IV-4 statInfId 000012675623 excludes Iwate, Miyagi, and Fukushima and is not a nationwide household-size weight. This is not an observed national 2011 LFS value.",
+      "endpointSourceIds": {
+        "2010": "000008597994",
+        "2012": "000018854323"
+      },
+      "excluded2011SourceId": "000012675623",
+      "commonBaseBridgeEstablished": false,
+      "benchmarkId": "derived-LFS-IV-4-2010-2012-linear-share",
+      "connectionStatus": "unverified_connected_series",
+      "interpolatedTotalHouseholds10k": 5152.5
+    }
+  }
+}

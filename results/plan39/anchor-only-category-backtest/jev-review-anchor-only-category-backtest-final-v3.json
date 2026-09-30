@@ -1,0 +1,107 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-29T23:23:45.125Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "model": "jev-latest",
+    "state": {
+      "evaluationScope": "implementation_checkpoint_validity",
+      "background": "Current final implementation checkpoint for the research-only Plan39 anchor-only category-share backtest. Inspect scripts/plan39/anchor-only-category-backtest.mjs, results/plan39/anchor-only-category-backtest/summary.json and annual-category-backtest.csv, data/source/cti-size-composition/README.md, and the newly added OpenSpec section at openspec/specs/nextjstest/spec.md under 'Research-only 2017-anchor-only category-share backtest'. Scope only this category-share backtest; do not assess production estimator, production loaders/gates, or quarterly outputs. No production path consumes these artifacts. An independent read-only review recomputed CSV metrics from annual rows and matched summary values to 12 digits, found no major issue, and noted the January setai proxy/trailing-12-month LFS definition, 2018 Household Survey redesign, and 2017/2022 LFS benchmark changes as caveats.",
+      "acceptanceCriteria": [
+        "Use exact raw values from retained 2025-base CTI basic B statInfId 000040499069 and distribution-adjusted A statInfId 000040499087, sheet 総・年, all years 2017–2025. Source hashes, exact workbook/year/cell locations, raw values and statuses are recorded.",
+        "For each of ten categories, set only the 2017 anchor q[c]=pA[2017,c]/pB[2017,c]. Report requested raw formula pHatRaw[t,c]=pB[t,c]*q[c], and separately labeled normalized variant pHatNorm[t,c]=pHatRaw[t,c]/sum_j(pHatRaw[t,j]). Keep both predictions distinct.",
+        "Use 2017 for calibration/traceability only; validate on 2018–2025 (n=8, 80 category-year rows). Report per-category MAE/RMSE/bias in percentage points, macro metrics, annual actual/predictions/errors, and raw predicted annual category-share sums.",
+        "Per-category raw MAE/RMSE/bias (pp): food .03598/.03997/.00709; housing .06451/.08205/-.02694; utilities .01044/.01289/.00340; furniture .02480/.02675/-.02480; clothing .01391/.01698/.01388; health .01821/.02202/-.01821; transport/communications .05110/.05654/-.03285; education .06714/.08422/+.06169; culture/recreation .01499/.01900/-.00214; Other .05729/.06597/+.01289.",
+        "Raw macro MAE/RMSE/bias are .0358365/.0426404/-.0005984 pp; normalized macro metrics are .0358609/.0426805/+.0000018 pp. Annual raw predicted category-share sums range 0.999861–1.000021; normalized variant sums exactly to one by construction.",
+        "Other is derived as total minus the nine published categories for 2017–2019 where official Other cell is '-', then uses official numeric values for 2020–2025. Source method status is retained per workbook/year. Direct-versus-residual maximum difference is 0.0004 index points for B (2020) and 0.0003 for A (2021); treat this as a comparability boundary.",
+        "Document the research-only boundary and WHEN/THEN OpenSpec requirement. Caveats include the annual January setai-n snapshots as proxies for the trailing-12-month LFS correction share, not calendar-year averages; Household Survey redesign in 2018; and LFS benchmark changes effective Jan 2017 (2015 Census) and Jan 2022 (2020 Census).",
+        "Script generation completed; git diff --check passed. No tests were run."
+      ],
+      "verification": [
+        "Inspected the current script, result summary, annual CSV, README and added OpenSpec WHEN/THEN section.",
+        "Independent read-only review recomputed annual CSV metrics and matched summary values to 12 digits with no major discrepancy.",
+        "Confirmed summary has eight validation years, ten categories, raw and normalized results, source trace, and source-method caveats for Other.",
+        "git diff --check passed. No tests run."
+      ],
+      "knownConstraints": [
+        "This is a research-only historical backtest and makes no production claim.",
+        "Annual January setai-n values proxy a trailing-12-month LFS share and must not be interpreted as calendar-year averages.",
+        "The validation period includes the 2018 Household Survey redesign and LFS benchmark changes beginning 2017 and 2022.",
+        "Other changes from residual-derived to published numeric values in 2020; its time-series metrics have that source-method boundary."
+      ],
+      "outputRequirement": "Choose one listed choice. For any reason choice, provide a case-specific finding, affected artifact or requirement, observed evidence, and either a concrete proposed fix or exact additional evidence needed. Do not invent details."
+    },
+    "questions": {
+      "implementation": {
+        "type": "choice",
+        "instructions": "Does the supplied evidence support accepting this bounded research-only category-share backtest against its stated formulas, validation split, source trace, and caveats? Return a probability distribution over the listed choices.",
+        "criteria": {
+          "valid_as_defined": "Evidence supports the research-only backtest and its declared limitations as defined.",
+          "requirements_mismatch": "A requirement conflicts with intended behavior; identify it and correction.",
+          "missing_prerequisites_info": "A specific missing source or series definition prevents the declared backtest; state what is needed.",
+          "incomplete_implementation_info": "The implementation or evidence omits required formula, data, or validation evidence; identify it.",
+          "implementation_issue": "A concrete source, calculation, or labeling defect exists; state location, evidence and bounded correction.",
+          "scope_violation": "The implementation exceeds the research-only scope; identify boundary and adjustment.",
+          "other": "A material concern does not fit the choices above; identify its location, evidence and fix or needed evidence.",
+          "indeterminate": "The supplied context cannot support a judgment; identify missing context if possible."
+        }
+      }
+    }
+  },
+  "questionIds": [
+    "implementation"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "implementation": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.87,
+        "probabilities": {
+          "implementation_issue": 0.02,
+          "scope_violation": 0,
+          "incomplete_implementation_info": 0.07,
+          "valid_as_defined": 0.89,
+          "other": 0.01,
+          "requirements_mismatch": 0,
+          "missing_prerequisites_info": 0,
+          "indeterminate": 0.01
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.87,
+    "probabilities": {
+      "implementation_issue": 0.02,
+      "scope_violation": 0,
+      "incomplete_implementation_info": 0.07,
+      "valid_as_defined": 0.89,
+      "other": 0.01,
+      "requirements_mismatch": 0,
+      "missing_prerequisites_info": 0,
+      "indeterminate": 0.01
+    },
+    "passProbability": 0.89,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

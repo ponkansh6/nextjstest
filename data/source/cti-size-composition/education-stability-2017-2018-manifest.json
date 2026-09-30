@@ -1,0 +1,534 @@
+{
+  "schemaVersion": "cti-size-composition-education-stability-2017-2018-v1",
+  "generatedPurpose": "analysis-only education and category stability diagnostic",
+  "sources": {
+    "twoOrMore2018": {
+      "year": 2018,
+      "statInfId": "000031795454",
+      "url": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000031795454",
+      "file": "data/source/cti-size-composition/raw/two-or-more/2018-000031795454.xls",
+      "sheet": "二人",
+      "table": "家計調査 家計収支編 2018年 詳細結果表 表3-1 二人以上の世帯",
+      "sha256": "463a0ea2c7cbbbe1eb0924dc24ec0010248b8aaed08c793981b71abb1f631a32",
+      "sheetNames": [
+        "二人",
+        "勤労",
+        "勤労（60歳未満）",
+        "無職"
+      ]
+    },
+    "single2018": {
+      "year": 2018,
+      "statInfId": "000031795518",
+      "url": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000031795518",
+      "file": "data/source/cti-size-composition/raw/single/2018-000031795518.xls",
+      "sheet": "単身，勤労，勤労以外，無職",
+      "table": "家計調査 家計収支編 2018年 詳細結果表 表1 単身世帯",
+      "sha256": "9db5727883ef69076cb0c8e77159d02b3d398be496342fd7a90fa715a71257f9",
+      "sheetNames": [
+        "単身，勤労，勤労以外，無職"
+      ]
+    },
+    "lfsSpecial2017": {
+      "year": 2017,
+      "url": "https://www.stat.go.jp/data/kakei/2017nn/zuhyou/setai-n.xls",
+      "file": "data/source/cti-size-composition/raw/lfs-special-jan/2017-setai-n.xls",
+      "sheet": "2017年世帯数分布表",
+      "sha256": "78dfeb79a9c39495ade1f8dee2469da5e3ba8a94d81c48621590e4c3bc8e7682"
+    },
+    "lfsSpecial2018": {
+      "year": 2018,
+      "url": "https://www.stat.go.jp/data/kakei/2018nn/zuhyou/setai-n.xls",
+      "file": "data/source/cti-size-composition/raw/lfs-special-jan/2018-setai-n.xls",
+      "sheet": "2018年世帯数分布表",
+      "sha256": "7032cd9d7b06f26f2cea9b6de00c9a9e22527ae08d98ecfa4a8e2af88a665928"
+    },
+    "ctiBasic": {
+      "year": "2017-2018",
+      "statInfId": "000040499069",
+      "url": "https://www.e-stat.go.jp/stat-search/file-download?statInfId=000040499069&fileKind=0",
+      "file": "data/source/cti-size-composition/raw/cti/000040499069-basic.xlsx",
+      "sheet": "総・年",
+      "series": "basic nominal B",
+      "sha256": "5e99cf3c61e26ba90bcde12b3311eb553458f97e5624258712d7414bed53197b",
+      "annualRows": {
+        "2017": {
+          "excelRow": 25,
+          "timeLabel": "2017年",
+          "timeCode": 2017000000,
+          "cells": {
+            "総合": {
+              "cell": "J",
+              "value": 95.3443
+            },
+            "食料": {
+              "cell": "K",
+              "value": 24.9264
+            },
+            "住居": {
+              "cell": "L",
+              "value": 7.1244
+            },
+            "光熱・水道": {
+              "cell": "M",
+              "value": 6.782
+            },
+            "家具・家事用品": {
+              "cell": "N",
+              "value": 3.6817
+            },
+            "被服及び履物": {
+              "cell": "O",
+              "value": 3.712
+            },
+            "保健医療": {
+              "cell": "P",
+              "value": 4.2787
+            },
+            "交通・通信": {
+              "cell": "Q",
+              "value": 15.6443
+            },
+            "教育": {
+              "cell": "R",
+              "value": 3.1634
+            },
+            "教養娯楽": {
+              "cell": "S",
+              "value": 9.9463
+            },
+            "その他の消費支出": {
+              "cell": "T",
+              "published": "-",
+              "derivedFrom": [
+                "J",
+                "K",
+                "L",
+                "M",
+                "N",
+                "O",
+                "P",
+                "Q",
+                "R",
+                "S"
+              ]
+            }
+          },
+          "sourceRow": {
+            "総合": 95.3443,
+            "食料": 24.9264,
+            "住居": 7.1244,
+            "光熱・水道": 6.782,
+            "家具・家事用品": 3.6817,
+            "被服及び履物": 3.712,
+            "保健医療": 4.2787,
+            "交通・通信": 15.6443,
+            "教育": 3.1634,
+            "教養娯楽": 9.9463
+          }
+        },
+        "2018": {
+          "excelRow": 26,
+          "timeLabel": "2018年",
+          "timeCode": 2018000000,
+          "cells": {
+            "総合": {
+              "cell": "J",
+              "value": 96.3498
+            },
+            "食料": {
+              "cell": "K",
+              "value": 25.0275
+            },
+            "住居": {
+              "cell": "L",
+              "value": 7.3658
+            },
+            "光熱・水道": {
+              "cell": "M",
+              "value": 6.9183
+            },
+            "家具・家事用品": {
+              "cell": "N",
+              "value": 3.7061
+            },
+            "被服及び履物": {
+              "cell": "O",
+              "value": 3.6443
+            },
+            "保健医療": {
+              "cell": "P",
+              "value": 4.3872
+            },
+            "交通・通信": {
+              "cell": "Q",
+              "value": 15.9883
+            },
+            "教育": {
+              "cell": "R",
+              "value": 3.3114
+            },
+            "教養娯楽": {
+              "cell": "S",
+              "value": 9.9803
+            },
+            "その他の消費支出": {
+              "cell": "T",
+              "published": "-",
+              "derivedFrom": [
+                "J",
+                "K",
+                "L",
+                "M",
+                "N",
+                "O",
+                "P",
+                "Q",
+                "R",
+                "S"
+              ]
+            }
+          },
+          "sourceRow": {
+            "総合": 96.3498,
+            "食料": 25.0275,
+            "住居": 7.3658,
+            "光熱・水道": 6.9183,
+            "家具・家事用品": 3.7061,
+            "被服及び履物": 3.6443,
+            "保健医療": 4.3872,
+            "交通・通信": 15.9883,
+            "教育": 3.3114,
+            "教養娯楽": 9.9803
+          }
+        }
+      }
+    },
+    "ctiAdjusted": {
+      "year": "2017-2018",
+      "statInfId": "000040499087",
+      "url": "https://www.e-stat.go.jp/stat-search/file-download?statInfId=000040499087&fileKind=0",
+      "file": "data/source/cti-size-composition/raw/cti/000040499087-adjusted.xlsx",
+      "sheet": "総・年",
+      "series": "distribution-adjusted nominal A",
+      "sha256": "7224e5eb424c94d90402502f665a4953cfe16377f65f1040a939696ac948ef41",
+      "annualRows": {
+        "2017": {
+          "excelRow": 10,
+          "timeLabel": "2017年",
+          "timeCode": 2017000000,
+          "cells": {
+            "総合": {
+              "cell": "J",
+              "value": 91.4733
+            },
+            "食料": {
+              "cell": "K",
+              "value": 23.9584
+            },
+            "住居": {
+              "cell": "L",
+              "value": 6.7138
+            },
+            "光熱・水道": {
+              "cell": "M",
+              "value": 6.5149
+            },
+            "家具・家事用品": {
+              "cell": "N",
+              "value": 3.5192
+            },
+            "被服及び履物": {
+              "cell": "O",
+              "value": 3.5898
+            },
+            "保健医療": {
+              "cell": "P",
+              "value": 4.0762
+            },
+            "交通・通信": {
+              "cell": "Q",
+              "value": 15.0434
+            },
+            "教育": {
+              "cell": "R",
+              "value": 3.1645
+            },
+            "教養娯楽": {
+              "cell": "S",
+              "value": 9.5302
+            },
+            "その他の消費支出": {
+              "cell": "T",
+              "published": "-",
+              "derivedFrom": [
+                "J",
+                "K",
+                "L",
+                "M",
+                "N",
+                "O",
+                "P",
+                "Q",
+                "R",
+                "S"
+              ]
+            }
+          },
+          "sourceRow": {
+            "総合": 91.4733,
+            "食料": 23.9584,
+            "住居": 6.7138,
+            "光熱・水道": 6.5149,
+            "家具・家事用品": 3.5192,
+            "被服及び履物": 3.5898,
+            "保健医療": 4.0762,
+            "交通・通信": 15.0434,
+            "教育": 3.1645,
+            "教養娯楽": 9.5302
+          }
+        },
+        "2018": {
+          "excelRow": 11,
+          "timeLabel": "2018年",
+          "timeCode": 2018000000,
+          "cells": {
+            "総合": {
+              "cell": "J",
+              "value": 92.5049
+            },
+            "食料": {
+              "cell": "K",
+              "value": 24.1054
+            },
+            "住居": {
+              "cell": "L",
+              "value": 6.9536
+            },
+            "光熱・水道": {
+              "cell": "M",
+              "value": 6.6516
+            },
+            "家具・家事用品": {
+              "cell": "N",
+              "value": 3.5535
+            },
+            "被服及び履物": {
+              "cell": "O",
+              "value": 3.527
+            },
+            "保健医療": {
+              "cell": "P",
+              "value": 4.1827
+            },
+            "交通・通信": {
+              "cell": "Q",
+              "value": 15.4598
+            },
+            "教育": {
+              "cell": "R",
+              "value": 3.2671
+            },
+            "教養娯楽": {
+              "cell": "S",
+              "value": 9.6022
+            },
+            "その他の消費支出": {
+              "cell": "T",
+              "published": "-",
+              "derivedFrom": [
+                "J",
+                "K",
+                "L",
+                "M",
+                "N",
+                "O",
+                "P",
+                "Q",
+                "R",
+                "S"
+              ]
+            }
+          },
+          "sourceRow": {
+            "総合": 92.5049,
+            "食料": 24.1054,
+            "住居": 6.9536,
+            "光熱・水道": 6.6516,
+            "家具・家事用品": 3.5535,
+            "被服及び履物": 3.527,
+            "保健医療": 4.1827,
+            "交通・通信": 15.4598,
+            "教育": 3.2671,
+            "教養娯楽": 9.6022
+          }
+        }
+      }
+    }
+  },
+  "panel2017": {
+    "sourceManifestSha256": "e994c7248c3e2c9d5f544657f5871aeb10e49b29be46e0ecaa525be48a4c2910",
+    "expenditureCsvSha256": "304cdbf3bcc880d755a128fe604df0a83a5ae8d4b52fcacc6481a24d47606f75",
+    "sourceRows": {
+      "year": 2017,
+      "twoOrMore": {
+        "statInfId": "000031674320",
+        "url": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000031674320",
+        "file": "data/source/cti-size-composition/raw/two-or-more/2017-000031674320.xls",
+        "sha256": "6cd8e44d134eea9eebe1f6a4f178ae861959fd91f28ba48103ae950a965d7e47",
+        "sheet": "3-1全国・二人以上の世帯",
+        "table": "詳細結果表 年次 表番号3-1 世帯人員別 全国・二人以上の世帯"
+      },
+      "single": {
+        "statInfId": "000031673520",
+        "url": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000031673520",
+        "file": "data/source/cti-size-composition/raw/single/2017-000031673520.xls",
+        "sha256": "b584f4f4e9c8f2ab7778f88bd074b5f50b1fc774fd9d3a5fe00b42b588f74869",
+        "sheet": "単身・勤・勤外",
+        "table": "単身世帯 詳細結果表 年次 表番号1 全世帯"
+      }
+    }
+  },
+  "weights2025": {
+    "sourceManifestPath": "data/source/cti-size-composition/weights-source-manifest.json",
+    "weightsCsvSha256": "2098287276fa564d0280c9c7c29a336548d634bd20db739bbd1582ad71e1fcd2",
+    "referenceStatus": "verified_raw_unconnected_reference",
+    "notSameDefinitionAsSetaiSpecialTabulation": true
+  },
+  "extraction": {
+    "twoOrMore2018": {
+      "table3_1DistributionRow": 14,
+      "singleTableConsumptionRow": 60,
+      "categories": {
+        "総合": {
+          "table3_1Row": 29,
+          "table3_1AmountCells": "Q:U",
+          "singleTableRow": 60,
+          "singleAmountCell": "Q"
+        },
+        "食料": {
+          "table3_1Row": 30,
+          "table3_1AmountCells": "Q:U",
+          "singleTableRow": 61,
+          "singleAmountCell": "Q",
+          "singleLabel": "食料"
+        },
+        "住居": {
+          "table3_1Row": 71,
+          "table3_1AmountCells": "Q:U",
+          "singleTableRow": 101,
+          "singleAmountCell": "Q",
+          "singleLabel": "住居"
+        },
+        "光熱・水道": {
+          "table3_1Row": 76,
+          "table3_1AmountCells": "Q:U",
+          "singleTableRow": 106,
+          "singleAmountCell": "Q",
+          "singleLabel": "光熱・水道"
+        },
+        "家具・家事用品": {
+          "table3_1Row": 81,
+          "table3_1AmountCells": "Q:U",
+          "singleTableRow": 111,
+          "singleAmountCell": "Q",
+          "singleLabel": "家具・家事用品"
+        },
+        "被服及び履物": {
+          "table3_1Row": 91,
+          "table3_1AmountCells": "Q:U",
+          "singleTableRow": 121,
+          "singleAmountCell": "Q",
+          "singleLabel": "被服及び履物"
+        },
+        "保健医療": {
+          "table3_1Row": 109,
+          "table3_1AmountCells": "Q:U",
+          "singleTableRow": 130,
+          "singleAmountCell": "Q",
+          "singleLabel": "保健医療"
+        },
+        "交通・通信": {
+          "table3_1Row": 114,
+          "table3_1AmountCells": "Q:U",
+          "singleTableRow": 135,
+          "singleAmountCell": "Q",
+          "singleLabel": "交通・通信"
+        },
+        "教育": {
+          "table3_1Row": 121,
+          "table3_1AmountCells": "Q:U",
+          "singleTableRow": 142,
+          "singleAmountCell": "Q",
+          "singleLabel": "教育"
+        },
+        "教養娯楽": {
+          "table3_1Row": 125,
+          "table3_1AmountCells": "Q:U",
+          "singleTableRow": 143,
+          "singleAmountCell": "Q",
+          "singleLabel": "教養娯楽"
+        },
+        "その他の消費支出": {
+          "table3_1Row": 134,
+          "table3_1AmountCells": "Q:U",
+          "singleTableRow": 152,
+          "singleAmountCell": "Q",
+          "singleLabel": "その他の消費支出 1)"
+        }
+      }
+    },
+    "setaiSpecialShares": {
+      "2017": {
+        "sheet": "2017年世帯数分布表",
+        "nationalColumn": "E",
+        "unit": "parts per million households",
+        "rows": {
+          "1": 8,
+          "2": 9,
+          "3": 10,
+          "4": 11,
+          "total": 7,
+          "5+": 12
+        },
+        "displayedTotalParts": 1000000,
+        "roundedSizeCountSum": 999999,
+        "sharesRenormalizedToSizeCountSum": true,
+        "shareSum": 1,
+        "sourceFootnotes": [
+          "注１)総務省統計局「労働力調査」の調査票情報を特別集計したものである。",
+          "注２)本表は，家計調査及び家計消費状況調査2017年1月分の結果の世帯分布補正に用いた結果であり，"
+        ]
+      },
+      "2018": {
+        "sheet": "2018年世帯数分布表",
+        "nationalColumn": "E",
+        "unit": "parts per million households",
+        "rows": {
+          "1": 8,
+          "2": 9,
+          "3": 10,
+          "4": 11,
+          "total": 7,
+          "5+": 12
+        },
+        "displayedTotalParts": 1000000,
+        "roundedSizeCountSum": 1000000,
+        "sharesRenormalizedToSizeCountSum": true,
+        "shareSum": 1,
+        "sourceFootnotes": [
+          "注１)総務省統計局「労働力調査」の調査票情報を特別集計したものである。",
+          "注２)本表は，家計調査及び家計消費状況調査2018年1月分の結果の世帯分布補正に用いた結果であり，"
+        ]
+      }
+    },
+    "year2018HouseholdSurveyRedesignCaveat": "The Household Survey ledger format was comprehensively revised in 2018. Top-level labels are matched, but 2017/2018 household-size expenditure profiles may not be fully comparable; this is a stability diagnostic, not a seamless time series.",
+    "lfsSpecialWeightsCaveat": "setai-n.xls is published as the special tabulation used for each year's January Household Survey adjustment. Household Survey sample-design documentation defines the adjustment distribution as the Labour Force Survey household-size distribution averaged over the latest 12 months; it is not confirmed as a calendar-year average. It is not an annual IV-4 household-count series and is not the 2025 CTI joint household-size-by-age reference distribution. Sources: https://www.stat.go.jp/data/kakei/pdf/18gai00.pdf p.25 and https://www.stat.go.jp/data/kakei/setai_bunpu.html."
+  },
+  "outputs": {
+    "profileCsv": "data/source/cti-size-composition/education-stability-2017-2018/profiles.csv",
+    "profileCsvSha256": "05f34740bb0c5451276ac140da88c749e628513dadfc4d4652eb845fd6238e6a",
+    "weightsCsv": "data/source/cti-size-composition/education-stability-2017-2018/setai-special-shares.csv",
+    "weightsCsvSha256": "adb172bd130b1289f5bffceee0a1a3d2005b9179ce0aa10902688b9ec8cea708"
+  }
+}

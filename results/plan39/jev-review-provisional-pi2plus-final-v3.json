@@ -1,0 +1,109 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-30T02:40:59.924Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "model": "jev-latest",
+    "state": {
+      "evaluationScope": "implementation_checkpoint_validity",
+      "background": "Review the current Plan39 nominal V2 provisional 2+ household-share correction, Other-share jump threshold rule, documentation/artifact synchronization, and direct type fixes required for the production build. Historical estimates through 2016 preserve per-category 2017 A/B anchor baselines, then add category-specific endpoint slopes gamma[c]=(A2025[c]-base2025[c])/(piJan2025-piJan2017), applied as base[t,c]+gamma[c]*(piIV4[t]-piIV4[2017]). Other is residual total minus nine majors when not published; total is the corrected category sum. Official A inputs from 2017 onward pass through. Runtime uses saved nominal A/B JSON at one-decimal precision. The dedicated production-pi2plus artifact and manifest verify source hashes and year/status coverage; 2011 is explicitly marked synthetic_interpolation_unverified. The historical IV-4 and January setai-n definitions differ, so historical pi is centered on its own 2017 value as a provisional source bridge. The Other-share threshold uses the maximum absolute adjacent annual change in official adjusted A Other/total shares from 2017 through 2025; effective threshold is dynamically rounded upward by ceil(rawMaximum*100)/100 to hundredths of a percentage point while both raw and effective values are retained.",
+      "acceptanceCriteria": [
+        "The endpoint household-share correction preserves 2017 anchor values, uses per-category 2025 residual calibration, includes Other consistently, reconciles category slopes and total within floating-point tolerance, and fails closed on missing or invalid required shares and corrected values.",
+        "Official adjusted annual inputs from 2017 onward remain unchanged; the production A/B values use their saved one-decimal precision, and the separate raw-workbook research estimates are not substituted.",
+        "The production pi2plus artifact is manifest- and hash-validated, records source/vintage limitations, and identifies 2011 as a synthetic interpolated value; the result exposes provenance and year quality flags.",
+        "The Other-share threshold is derived dynamically from official A annual share jumps, rounds upward to the next 0.01 percentage point, and records the unrounded maximum, effective threshold, unit, and rule.",
+        "The input-matched analysis and OpenSpec/README state the model, retrospective calibration limitation, boundary result, and current publication-gate state consistently.",
+        "The production build completes successfully; no tests are required in this review scope."
+      ],
+      "verification": [
+        "pnpm plan39:analysis succeeded and regenerated results/plan39/plan39-analysis-a8c7ad0fa68a5208.json with inputFingerprint sha256:a8c7ad0fa68a5208c24ff6d86bd562e60613ed0ea4f127cded1de8ec4b2c744f.",
+        "Analysis reports raw official threshold maximum 0.763941940412554 percentage points, effective dynamic threshold 0.77, and 2016-to-2017 jump 0.7661764640058344 percentage points passing; V2 publicationGate accepted=true with no blocking reason codes.",
+        "2018-2024 retrospective production-precision comparison uses the 2025 endpoint calibration year: total MAE 1.8356858 to 0.0775891 and RMSE 2.1818629 to 0.0848610 index points. This is retrospective endpoint calibration, not independent forecast validation or causal evidence.",
+        "Historical IV-4 and January setai-n pi definitions differ and the series are centered at their separate 2017 values; January shares proxy the trailing 12-month distribution. The 2011 historical pi is flagged synthetic interpolation from unverified 2010/2012 endpoints.",
+        "pnpm build passed compilation, TypeScript, page-data collection, static page generation, and build trace collection.",
+        "Four direct build fixes: declare existing manifest artifactStatus in server/lib/data-loader/ctiAdjusted.ts; reference the defined isContinuousQuarterLabels in server/lib/data-loader/ctiValidation.ts; use the validated match[0] quarter label in server/lib/view-models/quarterlyAggregation.ts; and declare existing official-workbook provenance fields in SeriesMeasurement in src/types/chart.ts.",
+        "git diff --check succeeded. Tests were not run. No credentials are included."
+      ],
+      "knownConstraints": [
+        "The retrospective error metrics use 2025 endpoint calibration and do not establish independent forecast performance or a causal household-size effect.",
+        "The IV-4 to January setai-n source/vintage bridge is provisional; centering at each source's 2017 value makes the anchor correction zero but does not validate equivalence.",
+        "2011 pi is synthetic interpolation from unverified endpoints and must remain flagged provisional.",
+        "JEV review supplements the successful production build and analysis; tests were not run.",
+        "Do not commit, push, deploy, or claim release completion in this review."
+      ],
+      "outputRequirement": "Choose one listed choice. For a reason choice, give one case-specific finding, affected file/requirement, observed evidence, and a concrete proposed fix or exact additional evidence needed. Do not infer access to repository paths; use only supplied evidence."
+    },
+    "questions": {
+      "implementation": {
+        "type": "choice",
+        "instructions": "Does the supplied implementation and verification evidence support the behavior and caveats against the stated acceptance criteria? Select one choice and, for non-pass, identify exact findings and actions.",
+        "criteria": {
+          "valid_as_defined": "The supplied evidence supports acceptance as defined.",
+          "requirements_mismatch": "Requirements conflict with intended behavior; identify the requirement and correction.",
+          "missing_prerequisites_info": "Prerequisite information is missing; identify exactly what is needed.",
+          "incomplete_implementation_info": "Implementation information is incomplete; identify missing details or evidence.",
+          "implementation_issue": "An implementation issue exists; identify its location, evidence, and correction.",
+          "scope_violation": "The proposal exceeds or falls outside the agreed scope; identify the boundary and adjustment.",
+          "other": "A material concern does not fit the categories; identify its location, evidence, and fix or needed evidence.",
+          "indeterminate": "The supplied context cannot support a judgment; identify missing context if possible."
+        }
+      }
+    }
+  },
+  "questionIds": [
+    "implementation"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "implementation": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.44,
+        "probabilities": {
+          "valid_as_defined": 0.5,
+          "requirements_mismatch": 0.01,
+          "scope_violation": 0.01,
+          "indeterminate": 0.02,
+          "other": 0.01,
+          "incomplete_implementation_info": 0.31,
+          "missing_prerequisites_info": 0.03,
+          "implementation_issue": 0.11
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.44,
+    "probabilities": {
+      "valid_as_defined": 0.5,
+      "requirements_mismatch": 0.01,
+      "scope_violation": 0.01,
+      "indeterminate": 0.02,
+      "other": 0.01,
+      "incomplete_implementation_info": 0.31,
+      "missing_prerequisites_info": 0.03,
+      "implementation_issue": 0.11
+    },
+    "passProbability": 0.5,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}

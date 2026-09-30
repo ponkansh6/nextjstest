@@ -115,6 +115,12 @@ async function inputSnapshot(root, validatedInputs) {
       manifest: sha256(manifestBytes),
       audit: sha256(auditBytes),
       artifacts: Object.fromEntries(KINDS.map((kind) => [kind, artifacts[kind].sha256])),
+      householdComposition: validatedInputs.householdComposition
+        ? {
+            artifact: validatedInputs.householdComposition.provenance.artifactSha256,
+            manifest: validatedInputs.householdComposition.provenance.manifestSha256,
+          }
+        : null,
     },
     artifacts,
   };
@@ -259,6 +265,10 @@ function v2PublicationGate(v2Gate, rollingLoo) {
     status: gate.status,
     reasonCodes: gate.reasonCodes,
     blockingReasonCodes: gate.blockingReasonCodes,
+    diagnostics: [
+      ...v2Gate.diagnostics.filter((diagnostic) => diagnostic !== "publication_gate_closed"),
+      ...(gate.accepted ? [] : ["publication_gate_closed"]),
+    ],
     rollingLooEvidence: gate.evidence,
   };
 }
@@ -320,6 +330,7 @@ function v2AuditSection(v2, gammaScenarios, standard, rollingLoo) {
     fitDiagnostics: v2.fitDiagnostics,
     other: { category: "その他の消費支出", annual: other, diagnostics: v2.other },
     bottomUp,
+    householdComposition: v2.householdComposition,
     residual: v2.residual,
     benchmarkG: {
       values: v2.benchmarkG,
@@ -429,9 +440,15 @@ async function run(args) {
     snapshot.inputs.B,
     snapshot.inputs.A,
     snapshot.inputs.L,
-    { residualJumpThreshold: SELECTED_THRESHOLD, scenarios: SENSITIVITY_SCENARIOS },
+    {
+      residualJumpThreshold: SELECTED_THRESHOLD,
+      scenarios: SENSITIVITY_SCENARIOS,
+      householdComposition: validatedInputs.householdComposition ?? undefined,
+    },
   );
-  const v2 = buildCtiAdjustedV2Estimate(snapshot.inputs.B, snapshot.inputs.A, snapshot.inputs.L);
+  const v2 = buildCtiAdjustedV2Estimate(snapshot.inputs.B, snapshot.inputs.A, snapshot.inputs.L, {
+    householdComposition: validatedInputs.householdComposition ?? undefined,
+  });
   const rollingLoo = buildCtiAdjustedRollingLooBacktest(
     snapshot.inputs.B,
     snapshot.inputs.A,
@@ -444,6 +461,7 @@ async function run(args) {
       manifest: snapshot.hashes.manifest,
       audit: snapshot.hashes.audit,
       artifacts: snapshot.hashes.artifacts,
+      householdComposition: snapshot.hashes.householdComposition,
     }),
   );
   const generatedAt = new Date().toISOString();
@@ -664,6 +682,7 @@ async function check(args) {
       manifest: snapshot.hashes.manifest,
       audit: snapshot.hashes.audit,
       artifacts: snapshot.hashes.artifacts,
+      householdComposition: snapshot.hashes.householdComposition,
     }),
   );
   let file = args.get("--check");
@@ -791,6 +810,7 @@ async function check(args) {
     snapshot.inputs.B,
     snapshot.inputs.A,
     snapshot.inputs.L,
+    { householdComposition: validatedInputs.householdComposition ?? undefined },
   );
   const expectedV2 = v2AuditSection(
     expectedV2Result,

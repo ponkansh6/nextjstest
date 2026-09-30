@@ -138,11 +138,11 @@ describe("SpendingBarChart component legendMode tests", () => {
     });
 
     const note = screen.getByTestId("spending-series-switch-note");
-    expect(note.getAttribute("data-series-switch")).toBe("plan39-v2-bottom-up-to-cti-categories");
-    expect(note.textContent).toContain("2005Q1〜2016Q4：接続推計の年次値を月次系列から四半期化。");
-    expect(note.textContent).toContain("2017Q1〜2017Q4：公式年次値を月次系列から四半期化。");
-    expect(note.textContent).toContain("2018Q1以降");
-    expect(note.textContent).toContain("既存CTI名目費目系列");
+    expect(note.getAttribute("data-series-switch")).toBe(
+      "plan39-v2-bottom-up-to-official-adjusted-quarters",
+    );
+    expect(note.textContent).toContain("2005Q1〜2016Q4：名目接続推計を月次パターンで四半期化。");
+    expect(note.textContent).toContain("2017Q1以降：総世帯・調整系列の公式名目四半期値");
   });
 
   it("does not show the legacy missing-support message when Plan39 measurements exist", () => {

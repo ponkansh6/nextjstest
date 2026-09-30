@@ -12,7 +12,6 @@ import type {
 } from "../../server/lib/ctiAdjustedConnectionEstimateV2";
 import { buildCsv } from "../../src/lib/csvExport";
 import { getMeasurementNote } from "../../src/types/chart";
-import type { CpiData } from "../../src/types/data";
 
 const seriesIndexByCategory = Object.fromEntries(
   CTI_ADJUSTED_V2_PUBLIC_CATEGORIES.filter((category) => category !== "総合").map(
@@ -48,6 +47,7 @@ function makeResult(): CtiAdjustedV2Result {
     years: rows.map((row) => row.year),
     rows,
     categories: {} as CtiAdjustedV2Result["categories"],
+    householdComposition: {} as CtiAdjustedV2Result["householdComposition"],
     other: {} as CtiAdjustedV2Result["other"],
     residual: {} as CtiAdjustedV2Result["residual"],
     beta: {} as CtiAdjustedV2Result["beta"],
@@ -100,75 +100,37 @@ function makeRecords(missing?: string): CtiBasicRecord[] {
   return records;
 }
 
-function makeRuntimeBridgeData(): CpiData[] {
-  const keys = [
-    "食料（名目）",
-    "住居（名目）",
-    "光熱・水道（名目）",
-    "家具・家事用品（名目）",
-    "被服及び履物（名目）",
-    "保健医療（名目）",
-    "交通・通信（名目）",
-    "教育（名目）",
-    "教養娯楽（名目）",
+function makeOfficialQuarterly(): Array<{
+  label: string;
+  year: number;
+  quarter: number;
+  values: Record<string, number | null>;
+}> {
+  const sourceRows = [
+    [91.1, 22.4, 6.3, 7.8, 3.0, 3.6, 4.0, 15.6, 3.1, 9.1],
+    [90.8, 23.3, 6.6, 6.3, 3.3, 3.7, 4.0, 15.0, 3.9, 9.5],
+    [89.7, 24.3, 6.7, 5.6, 3.9, 3.1, 3.9, 15.1, 2.7, 9.8],
+    [94.4, 25.9, 7.3, 6.3, 3.8, 4.1, 4.3, 14.6, 3.0, 9.8],
   ];
-  return Array.from({ length: 12 }, (_, index) => {
-    const month = index + 1;
-    const value = month <= 3 ? 180 : 90;
-    return {
-      年月: `2017年${month}月`,
-      ["消費支出（名目）"]: month <= 3 ? 1750 : 925,
-      ...Object.fromEntries(keys.map((key) => [key, value])),
-    } as unknown as CpiData;
-  });
+  return sourceRows.map((values, index) => ({
+    label: `2017Q${index + 1}`,
+    year: 2017,
+    quarter: index + 1,
+    values: Object.fromEntries([
+      ...CTI_ADJUSTED_V2_PUBLIC_CATEGORIES.filter(
+        (category) => category !== "その他の消費支出",
+      ).map((category, categoryIndex) => [category, values[categoryIndex]!]),
+      ["その他の消費支出", null],
+    ]),
+  }));
 }
-
-function makeDistinctRuntimeBridgeData(): CpiData[] {
-  const keys = [
-    "食料（名目）",
-    "住居（名目）",
-    "光熱・水道（名目）",
-    "家具・家事用品（名目）",
-    "被服及び履物（名目）",
-    "保健医療（名目）",
-    "交通・通信（名目）",
-    "教育（名目）",
-    "教養娯楽（名目）",
-  ];
-  return Array.from({ length: 12 }, (_, index) => {
-    const month = index + 1;
-    const values = Object.fromEntries(
-      keys.map((key, categoryIndex) => [key, (categoryIndex + 2) * (month <= 3 ? 10 : 5)]),
-    );
-    const total =
-      Object.values(values).reduce((sum, value) => sum + Number(value), 0) +
-      (month <= 3 ? 110 : 55);
-    return {
-      年月: `2017年${month}月`,
-      ["消費支出（名目）"]: total,
-      ...values,
-    } as unknown as CpiData;
-  });
-}
-
-const runtimeMetadata = {
-  statInfId: "000040499069",
-  baseYear: 2025,
-  householdScope: "総世帯",
-  unit: "指数",
-  frequency: "monthly",
-  sourceFile: "cti_data2025.csv",
-  rawRange: { startYear: 2017, endYear: 2026 },
-  adoptedRange: { startYear: 2017, endYear: 2026 },
-};
 
 describe("Plan39-v2 quarterly nominal projection", () => {
   it("preserves monthly seasonality while anchoring each category to v2 annual values", () => {
     const rows = buildPlan39V2CtiNominalRows({
       records: makeRecords(),
       result: makeResult(),
-      runtimeCtiData: makeRuntimeBridgeData(),
-      runtimeMetadata,
+      officialQuarterly: makeOfficialQuarterly(),
     });
     expect(rows).toHaveLength(52);
     const q1 = rows.find((row) => row.label === "2005Q1")!;
@@ -186,12 +148,11 @@ describe("Plan39-v2 quarterly nominal projection", () => {
           key !== "measurements",
       ),
     ).toEqual(expenseKeys);
-    const sFood = 112.5 / 10;
-    expect(q1[foodKey]).toBeCloseTo(10 * sFood * (20 / 12.5));
-    expect(q2[foodKey]).toBeCloseTo(10 * sFood * (10 / 12.5));
+    expect(q1[foodKey]).toBeCloseTo(10 * (20 / 12.5));
+    expect(q2[foodKey]).toBeCloseTo(10 * (10 / 12.5));
     expect(q1.measurements?.[foodKey]).toMatchObject({
       frequency: "quarterly",
-      aggregation: "derived_quarterly_mean_seasonal_pattern_anchored_to_plan39_v2_plan41_bridge",
+      aggregation: "derived_quarterly_mean_seasonal_pattern_anchored_to_plan39_v2_annual",
       seriesType: "estimated_adjusted",
       official: false,
       annualAnchorType: "estimated",
@@ -199,14 +160,12 @@ describe("Plan39-v2 quarterly nominal projection", () => {
     });
     expect(rows.find((row) => row.label === "2017Q4")?.measurements?.[foodKey]).toMatchObject({
       seriesType: "official_adjusted",
-      official: false,
+      official: true,
       annualAnchorType: "official",
-      quarterlyDerived: true,
+      quarterlyDerived: false,
     });
     const officialQuarter = rows.find((row) => row.label === "2017Q4")?.measurements?.[foodKey];
-    expect(getMeasurementNote(officialQuarter ?? {})).toBe(
-      "公式Tへ接続補正した年次値を月次系列から四半期化（公式四半期値ではない）",
-    );
+    expect(getMeasurementNote(officialQuarter ?? {})).toBe("公式調整値");
   });
 
   it("marks invalid derived quarterly measurements as unavailable", () => {
@@ -220,55 +179,80 @@ describe("Plan39-v2 quarterly nominal projection", () => {
     ).toBe("利用不可: insufficient_months");
   });
 
-  it("uses the injected runtime T for 2017 level and seasonality", () => {
+  it("uses the official 2017 quarterly nominal values directly", () => {
     const rows = buildPlan39V2CtiNominalRows({
       records: makeRecords(),
       result: makeResult(),
-      runtimeCtiData: makeRuntimeBridgeData(),
-      runtimeMetadata,
+      officialQuarterly: makeOfficialQuarterly(),
     });
     const q1 = rows.find((row) => row.label === "2017Q1")!;
     const q2 = rows.find((row) => row.label === "2017Q2")!;
-    expect(q1[foodKey]).toBeCloseTo(180);
-    expect(q2[foodKey]).toBeCloseTo(90);
+    expect(q1[foodKey]).toBe(22.4);
+    expect(q2[foodKey]).toBe(23.3);
     expect(q1.measurements?.[foodKey]).toMatchObject({
-      source: "e-Stat 公式CTI runtime T 000040499069 / Plan41 bridge",
-      statInfId: "000040499069",
+      source:
+        "e-Stat 公式Excel cti-distribution-adjusted-000040499087.xlsx / 総・四(原) / 000040499087",
+      statInfId: "000040499087",
       householdScope: "総世帯",
       baseYear: 2025,
-      rawRange: { startYear: 2017, endYear: 2026 },
+      official: true,
+      aggregation: "official_quarterly_adjusted_nominal_observation",
     });
   });
 
-  it("matches all ten 2017 expense categories to raw T quarter means and sums them", () => {
+  it("matches all ten 2017 expense categories to official quarters and derives Other as a residual", () => {
     const rows = buildPlan39V2CtiNominalRows({
       records: makeRecords(),
       result: makeResult(),
-      runtimeCtiData: makeDistinctRuntimeBridgeData(),
-      runtimeMetadata,
+      officialQuarterly: makeOfficialQuarterly(),
     });
     const q1 = rows.find((row) => row.label === "2017Q1")!;
     const q2 = rows.find((row) => row.label === "2017Q2")!;
     const q3 = rows.find((row) => row.label === "2017Q3")!;
     const q4 = rows.find((row) => row.label === "2017Q4")!;
-    const expectedQ1 = [20, 30, 40, 50, 60, 70, 80, 90, 100, 110];
-    const expectedQ2 = expectedQ1.map((value) => value / 2);
-    const expectedQ3 = expectedQ2;
-    const expectedQ4 = expectedQ2;
+    const expected = [
+      [22.4, 6.3, 7.8, 3, 3.6, 4, 15.6, 3.1, 9.1, 16.2],
+      [23.3, 6.6, 6.3, 3.3, 3.7, 4, 15, 3.9, 9.5, 15.2],
+      [24.3, 6.7, 5.6, 3.9, 3.1, 3.9, 15.1, 2.7, 9.8, 14.6],
+      [25.9, 7.3, 6.3, 3.8, 4.1, 4.3, 14.6, 3, 9.8, 15.3],
+    ];
+    const quarters = [q1, q2, q3, q4];
     for (const [index, key] of expenseKeys.entries()) {
-      expect(q1[key]).toBeCloseTo(expectedQ1[index]!);
-      expect(q2[key]).toBeCloseTo(expectedQ2[index]!);
-      expect(q3[key]).toBeCloseTo(expectedQ3[index]!);
-      expect(q4[key]).toBeCloseTo(expectedQ4[index]!);
-      expect(q1.measurements?.[key]).toMatchObject({
-        official: false,
-        status: "available",
-        source: "e-Stat 公式CTI runtime T 000040499069 / Plan41 bridge",
-        baseYear: 2025,
-      });
+      for (const [quarterIndex, row] of quarters.entries()) {
+        expect(row[key]).toBeCloseTo(expected[quarterIndex]![index]!);
+        const isOther = key === CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY.その他の消費支出;
+        expect(row.measurements?.[key]).toMatchObject({
+          official: !isOther,
+          status: "available",
+          source:
+            "e-Stat 公式Excel cti-distribution-adjusted-000040499087.xlsx / 総・四(原) / 000040499087",
+          baseYear: 2025,
+          seriesType: isOther ? "estimated_adjusted" : "official_adjusted",
+          quarterlyDerived: isOther,
+          aggregation: isOther
+            ? "derived_quarterly_residual_from_official_nominal_total_minus_nine_categories"
+            : "official_quarterly_adjusted_nominal_observation",
+        });
+      }
     }
-    expect(expenseKeys.reduce((sum, key) => sum + Number(q1[key]), 0)).toBeCloseTo(650);
-    expect(expenseKeys.reduce((sum, key) => sum + Number(q2[key]), 0)).toBeCloseTo(325);
+    expect(expenseKeys.reduce((sum, key) => sum + Number(q1[key]), 0)).toBeCloseTo(91.1);
+    expect(expenseKeys.reduce((sum, key) => sum + Number(q2[key]), 0)).toBeCloseTo(90.8);
+    const otherKey = CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY.その他の消費支出;
+    expect(q1[otherKey]).toBeCloseTo(16.2);
+    expect(q4[otherKey]).toBe(15.3);
+    const otherMeasurement = q1.measurements?.[otherKey];
+    expect(otherMeasurement).toMatchObject({
+      official: false,
+      seriesType: "estimated_adjusted",
+      quarterlyDerived: true,
+      aggregation: "derived_quarterly_residual_from_official_nominal_total_minus_nine_categories",
+      sourceRole: "derived_residual",
+      canonicalSeries: "その他の消費支出",
+      sourceDerivedFromColumns: ["J", "K", "L", "M", "N", "O", "P", "Q", "R", "S"],
+    });
+    expect(getMeasurementNote(otherMeasurement ?? {})).toBe(
+      "公式調整済み四半期値の総合から他9費目を引いた残差（公式公表値ではない）",
+    );
   });
 
   it("keeps the fixed s_i annual level and original annual growth through 2005-2016", () => {
@@ -279,13 +263,11 @@ describe("Plan39-v2 quarterly nominal projection", () => {
     const rows = buildPlan39V2CtiNominalRows({
       records: makeRecords(),
       result,
-      runtimeCtiData: makeRuntimeBridgeData(),
-      runtimeMetadata,
     });
     for (const year of [2005, 2010, 2016]) {
       const quarters = rows.filter((row) => row.年 === year);
       const mean = quarters.reduce((sum, row) => sum + Number(row[foodKey]), 0) / 4;
-      expect(mean).toBeCloseTo((year - 2000) * (112.5 / 17));
+      expect(mean).toBeCloseTo(year - 2000);
     }
     const mean2010 =
       rows.filter((row) => row.年 === 2010).reduce((sum, row) => sum + Number(row[foodKey]), 0) / 4;
@@ -315,14 +297,10 @@ describe("Plan39-v2 quarterly nominal projection", () => {
     const rows = buildPlan39V2CtiNominalRows({
       records,
       result: makeResult(),
-      runtimeCtiData: makeRuntimeBridgeData(),
-      runtimeMetadata,
     });
     const q1 = rows.find((row) => row.label === "2005Q1")!;
     const otherKey = CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY.その他の消費支出;
-    // T's Other residual is 130 in Q1 and 115 in the other quarters, so
-    // T̄2017=118.75. The historical M residual is -1 in Q1 and 2.5
-    // otherwise, giving an annual residual mean of 1.625.
+    // The historical monthly residual is negative in Q1 and positive otherwise.
     expect(q1[otherKey]).toBeNull();
     expect(q1.measurements?.[otherKey]).toMatchObject({
       status: "unavailable",
@@ -345,64 +323,7 @@ describe("Plan39-v2 quarterly nominal projection", () => {
     }
   });
 
-  it.each([
-    ["missing", (data: CpiData[]) => data.splice(0, 1)],
-    ["duplicate", (data: CpiData[]) => data.push(data[0]!)],
-    [
-      "non-positive",
-      (data: CpiData[]) => ((data[0] as Record<string, unknown>)["食料（名目）"] = 0),
-    ],
-  ])("fails closed for a runtime T %s across the bridged period", (_label, mutate) => {
-    const runtime = makeDistinctRuntimeBridgeData();
-    mutate(runtime);
-    const rows = buildPlan39V2CtiNominalRows({
-      records: makeRecords(),
-      result: makeResult(),
-      runtimeCtiData: runtime,
-      runtimeMetadata,
-    });
-    for (const row of rows) {
-      expect(row.measurements?.[foodKey]?.status).toBe("unavailable");
-      expect(row[foodKey]).toBeNull();
-    }
-  });
-
-  it.each([
-    ["missing metadata", undefined],
-    ["wrong source id", { ...runtimeMetadata, statInfId: "000040499070" }],
-    ["wrong household scope", { ...runtimeMetadata, householdScope: "二人以上の世帯" }],
-    [
-      "non-finite raw range",
-      { ...runtimeMetadata, rawRange: { startYear: Number.NaN, endYear: 2026 } },
-    ],
-  ])("fails closed for runtime T %s metadata", (_label, metadata) => {
-    const rows = buildPlan39V2CtiNominalRows({
-      records: makeRecords(),
-      result: makeResult(),
-      runtimeCtiData: makeRuntimeBridgeData(),
-      runtimeMetadata,
-    });
-    if (metadata === undefined) {
-      // A selected T without metadata must not silently fall back to a legacy source.
-      const unavailableRows = buildPlan39V2CtiNominalRows({
-        records: makeRecords(),
-        result: makeResult(),
-        runtimeCtiData: makeRuntimeBridgeData(),
-      });
-      expect(unavailableRows.every((row) => row[foodKey] === null)).toBe(true);
-      return;
-    }
-    const invalidRows = buildPlan39V2CtiNominalRows({
-      records: makeRecords(),
-      result: makeResult(),
-      runtimeCtiData: makeRuntimeBridgeData(),
-      runtimeMetadata: metadata,
-    });
-    expect(invalidRows.every((row) => row[foodKey] === null)).toBe(true);
-    expect(rows.some((row) => row[foodKey] !== null)).toBe(true);
-  });
-
-  it("ignores historical M duplication in 2017 when injected T is valid", () => {
+  it("uses the published 2017 quarter when a legacy monthly record is duplicated", () => {
     const records = makeRecords();
     records.push({
       ...records.find((record) => record.month === "2017-01" && record.seriesIndex === 1)!,
@@ -410,20 +331,18 @@ describe("Plan39-v2 quarterly nominal projection", () => {
     const rows = buildPlan39V2CtiNominalRows({
       records,
       result: makeResult(),
-      runtimeCtiData: makeRuntimeBridgeData(),
-      runtimeMetadata,
+      officialQuarterly: makeOfficialQuarterly(),
     });
-    expect(rows.find((row) => row.label === "2017Q1")?.[foodKey]).toBeCloseTo(180);
+    expect(rows.find((row) => row.label === "2017Q1")?.[foodKey]).toBe(22.4);
   });
 
-  it("does not mutate the Plan39 annual result while injecting runtime T", () => {
+  it("does not mutate the Plan39 annual result while adding official quarters", () => {
     const result = makeResult();
     const before = result.rows.map((row) => ({ year: row.year, food: row.values.食料 }));
     buildPlan39V2CtiNominalRows({
       records: makeRecords(),
       result,
-      runtimeCtiData: makeRuntimeBridgeData(),
-      runtimeMetadata,
+      officialQuarterly: makeOfficialQuarterly(),
     });
     expect(result.rows.map((row) => ({ year: row.year, food: row.values.食料 }))).toEqual(before);
   });
@@ -432,8 +351,6 @@ describe("Plan39-v2 quarterly nominal projection", () => {
     const rows = buildPlan39V2CtiNominalRows({
       records: makeRecords("2005-02"),
       result: makeResult(),
-      runtimeCtiData: makeRuntimeBridgeData(),
-      runtimeMetadata,
     });
     const invalid = rows.find((row) => row.label === "2005Q1")!;
     expect(invalid[foodKey]).toBeNull();

@@ -5,10 +5,15 @@ import fs from "node:fs";
 import path from "node:path";
 
 const KINDS = ["B", "A", "L"];
+const QUARTERLY_FILES = {
+  csv: "cti_data2025_distribution_adjusted_quarterly.csv",
+  metadata: "cti_data2025_distribution_adjusted_quarterly.metadata.json",
+};
 const SCRIPT_DIR = path.dirname(new URL(import.meta.url).pathname);
 const REPO_ROOT = path.resolve(SCRIPT_DIR, "../..");
 const DEFAULT_ARTIFACT_ROOT = path.join(REPO_ROOT, "data/source/cti-adjusted");
 const HASH_PATTERN = /^[a-f0-9]{64}$/;
+const NOMINAL_ANNUAL_VALUE_TYPE = "原数値（名目指数）";
 
 function sha256(file) {
   return createHash("sha256").update(fs.readFileSync(file)).digest("hex");
@@ -40,18 +45,43 @@ function parseArgs(argv) {
 }
 
 function artifactFiles(root) {
-  return Object.fromEntries(KINDS.map((kind) => [kind, path.join(root, `${kind}.json`)]));
+  const inSnapshot = path.basename(root).startsWith("plan39-");
+  return {
+    ...Object.fromEntries(KINDS.map((kind) => [kind, path.join(root, `${kind}.json`)])),
+    quarterlyNominal: inSnapshot
+      ? path.join(root, QUARTERLY_FILES.csv)
+      : path.resolve(root, `../${QUARTERLY_FILES.csv}`),
+  };
+}
+
+function quarterlyMetadataPath(root) {
+  return path.basename(root).startsWith("plan39-")
+    ? path.join(root, QUARTERLY_FILES.metadata)
+    : path.resolve(root, `../${QUARTERLY_FILES.metadata}`);
 }
 
 function artifactHashes(root) {
   const files = artifactFiles(root);
-  const hashes = Object.fromEntries(KINDS.map((kind) => [kind, sha256(files[kind])]));
-  const canonical = KINDS.map((kind) => `${kind}:${hashes[kind]}`).join("\n");
+  const hashes = Object.fromEntries(
+    [...KINDS, "quarterlyNominal"].map((kind) => [kind, sha256(files[kind])]),
+  );
+  const canonical = [
+    ...[...KINDS, "quarterlyNominal"].map((kind) => `${kind}:${hashes[kind]}`),
+    `quarterlyNominalMetadata:${sha256(quarterlyMetadataPath(root))}`,
+  ].join("\n");
   return { hashes, canonical, snapshotId: createHash("sha256").update(canonical).digest("hex") };
 }
 
 function readJson(file) {
   return JSON.parse(fs.readFileSync(file, "utf8"));
+}
+
+function assertNominalInputs(root) {
+  for (const kind of ["B", "A"]) {
+    const metadata = readJson(path.join(root, `${kind}.json`)).metadata;
+    if (metadata?.valueType !== NOMINAL_ANNUAL_VALUE_TYPE)
+      throw new Error(`non-nominal annual input rejected: ${kind}`);
+  }
 }
 
 function snapshotPath(root, snapshotId) {
@@ -65,7 +95,14 @@ function readSnapshot(root, snapshotId) {
   const hashes = readJson(path.join(directory, "hashes.json"));
   if (hashes.snapshotId !== snapshotId || hashes.hashAlgorithm !== "SHA-256")
     throw new Error("invalid snapshot hash manifest");
-  if (hashes.canonicalInput !== KINDS.map((kind) => `${kind}:${hashes.artifacts[kind]}`).join("\n"))
+  const expectedCanonical = [
+    ...[...KINDS, "quarterlyNominal"].map((kind) => `${kind}:${hashes.artifacts[kind]}`),
+    `quarterlyNominalMetadata:${hashes.metadata.quarterlyNominal}`,
+  ].join("\n");
+  if (
+    hashes.canonicalInput !== expectedCanonical ||
+    createHash("sha256").update(expectedCanonical).digest("hex") !== snapshotId
+  )
     throw new Error("snapshot canonical hash input mismatch");
   for (const kind of KINDS) {
     const file = path.join(directory, `${kind}.json`);
@@ -77,6 +114,14 @@ function readSnapshot(root, snapshotId) {
     if (JSON.stringify(readJson(file).metadata) !== JSON.stringify(metadata))
       throw new Error(`snapshot metadata content mismatch: ${kind}`);
   }
+  const quarterlyFile = path.join(directory, QUARTERLY_FILES.csv);
+  const quarterlyMetadataFile = path.join(directory, QUARTERLY_FILES.metadata);
+  if (
+    sha256(quarterlyFile) !== hashes.artifacts.quarterlyNominal ||
+    sha256(quarterlyMetadataFile) !== hashes.metadata.quarterlyNominal
+  )
+    throw new Error("snapshot quarterly artifact or metadata hash mismatch");
+  assertNominalInputs(directory);
   if (sha256(path.join(directory, "manifest.json")) !== hashes.manifest)
     throw new Error("snapshot manifest hash mismatch");
   if (sha256(path.join(directory, "audit.json")) !== hashes.audit)
@@ -100,24 +145,57 @@ function verifyLoaderHashes(root) {
     if (
       !metadata ||
       metadata.schemaVersion !== manifest.schemaVersion ||
-      metadata.revision !== manifest.revision ||
+      metadata.revision !== (manifest.artifacts[kind].revision ?? manifest.revision) ||
       metadata.statisticalCode !== manifest.statisticalCode
     ) {
       throw new Error(`loader metadata contract mismatch: ${kind}`);
     }
+    if ((kind === "B" || kind === "A") && metadata.valueType !== NOMINAL_ANNUAL_VALUE_TYPE)
+      throw new Error(`non-nominal annual input rejected: ${kind}`);
     if (metadata.sha256 !== sha256(file) && metadata.sourceSha256 !== metadata.sha256)
       throw new Error(`loader metadata hash contract mismatch: ${kind}`);
   }
-  return Object.fromEntries(KINDS.map((kind) => [kind, manifest.artifacts[kind].sha256]));
+  const quarterly = manifest.artifacts?.quarterlyNominal;
+  if (
+    quarterly?.path !== `../${QUARTERLY_FILES.csv}` ||
+    quarterly?.metadataPath !== `../${QUARTERLY_FILES.metadata}` ||
+    !HASH_PATTERN.test(quarterly.sha256) ||
+    !HASH_PATTERN.test(quarterly.metadataSha256)
+  )
+    throw new Error("loader quarterly manifest contract missing");
+  const files = artifactFiles(root);
+  const quarterMetadataFile = quarterlyMetadataPath(root);
+  if (
+    sha256(files.quarterlyNominal) !== quarterly.sha256 ||
+    sha256(quarterMetadataFile) !== quarterly.metadataSha256
+  )
+    throw new Error("loader quarterly artifact/metadata hash mismatch");
+  const metadata = readJson(quarterMetadataFile);
+  const annualA = readJson(path.join(root, "A.json")).metadata;
+  if (
+    metadata.schemaVersion !== "plan39-quarterly-nominal-v1" ||
+    metadata.valueType !== NOMINAL_ANNUAL_VALUE_TYPE ||
+    metadata.revision !== (quarterly.revision ?? manifest.revision) ||
+    metadata.revision !== annualA.revision ||
+    metadata.sourceSha256 !== annualA.sourceSha256 ||
+    metadata.csvSha256 !== quarterly.sha256
+  )
+    throw new Error("loader quarterly metadata contract mismatch");
+  return {
+    ...Object.fromEntries(KINDS.map((kind) => [kind, manifest.artifacts[kind].sha256])),
+    quarterlyNominal: quarterly.sha256,
+  };
 }
 
 function createSnapshot(root) {
+  verifyLoaderHashes(root);
   const { hashes, canonical, snapshotId } = artifactHashes(root);
   const artifactDigest = { ...hashes };
   const metadataDigest = {};
   const directory = snapshotPath(root, snapshotId);
   if (fs.existsSync(directory)) {
     readSnapshot(root, snapshotId);
+    verifyLoaderHashes(directory);
     console.log(`snapshot already verified: ${snapshotId}`);
     return snapshotId;
   }
@@ -135,6 +213,11 @@ function createSnapshot(root) {
     );
     metadataDigest[kind] = sha256(path.join(staging, "metadata", `${kind}.json`));
   }
+  const quarterlySource = artifactFiles(root).quarterlyNominal;
+  const quarterlyMetadataSource = quarterlyMetadataPath(root);
+  fs.copyFileSync(quarterlySource, path.join(staging, QUARTERLY_FILES.csv));
+  fs.copyFileSync(quarterlyMetadataSource, path.join(staging, QUARTERLY_FILES.metadata));
+  metadataDigest.quarterlyNominal = sha256(path.join(staging, QUARTERLY_FILES.metadata));
   for (const name of ["manifest.json", "audit.json"])
     fs.copyFileSync(path.join(root, name), path.join(staging, name));
   const manifestDigest = sha256(path.join(staging, "manifest.json"));
@@ -152,6 +235,7 @@ function createSnapshot(root) {
   fs.mkdirSync(path.dirname(directory), { recursive: true });
   fs.renameSync(staging, directory);
   readSnapshot(root, snapshotId);
+  verifyLoaderHashes(directory);
   console.log(`created and verified snapshot: ${snapshotId}`);
   return snapshotId;
 }
@@ -165,10 +249,20 @@ function restoreSnapshot(root, snapshotId, force) {
   const staging = path.join(root, `.plan39-restore-${snapshotId}.staging`);
   if (fs.existsSync(staging)) throw new Error(`staging path already exists: ${staging}`);
   fs.mkdirSync(staging, { recursive: true });
-  for (const name of ["B.json", "A.json", "L.json", "manifest.json", "audit.json"])
+  for (const name of [
+    "B.json",
+    "A.json",
+    "L.json",
+    "manifest.json",
+    "audit.json",
+    QUARTERLY_FILES.csv,
+    QUARTERLY_FILES.metadata,
+  ])
     fs.copyFileSync(path.join(directory, name), path.join(staging, name));
   for (const name of ["B.json", "A.json", "L.json", "manifest.json", "audit.json"])
     fs.copyFileSync(path.join(staging, name), path.join(root, name));
+  for (const name of [QUARTERLY_FILES.csv, QUARTERLY_FILES.metadata])
+    fs.copyFileSync(path.join(staging, name), path.resolve(root, `../${name}`));
   fs.rmSync(staging, { recursive: true, force: true });
   const restored = verifyLoaderHashes(root);
   if (JSON.stringify(restored) !== JSON.stringify(hashes.artifacts))

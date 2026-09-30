@@ -1,0 +1,106 @@
+{
+  "schemaVersion": "jev-review-result-v1",
+  "reviewSchemaVersion": "jev-review-initial-distribution-v3",
+  "generatedAt": "2026-09-29T15:11:06.996Z",
+  "request": {
+    "schemaVersion": "jev-review-initial-distribution-v3",
+    "model": "jev-latest",
+    "state": {
+      "evaluationScope": "implementation_checkpoint_validity",
+      "background": "Review the analysis-only Plan39 size-composition candidate update. A new reproducible materializer writes 2011 weights.csv rows by normalizing the 2010 and 2012 counts to shares, linearly averaging each size share, rounding shares, renormalizing the rounded shares, and scaling by the mean endpoint total. Every synthetic row and manifest record has interpolationMethod=linear_share_interpolation, endpoints, notObserved, and vintage caveat. Source audit established 2010 IV-4 statInfId 000008597994 uses the 2005 Census base, 2012 IV-4 statInfId 000018854323 uses the 2010 Census base, and no official common-base bridge is established. The direct 2011 IV-4 statInfId 000012675623 excludes Iwate, Miyagi, and Fukushima, so it is not used as a national size weight. The candidate includes this interpolated 2011 distribution in annual R calculations but excludes 2011 from lambda fitting; it also reports alternate 2011 estimates using the 2010 or 2012 endpoint distribution. Status remains legacy_unharmonized_weights. Existing provenance/hash gates are preserved. The 2017 CTI A/B remains identity-anchor-only. No production estimator, loader, public gate, production measurement, or SharedPlan40 quarterly path consumes this candidate.",
+      "acceptanceCriteria": [
+        "2011 shares are generated reproducibly from 2010/2012 normalized shares and renormalized; CSV rows and manifest identify the method, endpoints, and non-observed status.",
+        "The 2005 Census versus 2010 Census endpoint benchmark break, absence of an official common-base bridge, and excluded three-prefecture 2011 direct table are explicitly retained as caveats; status remains legacy_unharmonized_weights.",
+        "Annual R uses the interpolated 2011 distribution, lambda fitting continues to exclude 2011, and 2010/2012 endpoint alternative candidate ranges are reported in JSON/CSV.",
+        "Plan39 and SharedPlan40 specification scenarios document the interpolation and continue to forbid production/quarterly application.",
+        "Household survey and weight manifest/hash gates remain active; no tests are added or run."
+      ],
+      "verification": [
+        "Ran scripts/plan39/interpolate-size-composition-weights.mjs successfully; it verified the existing weights.csv hash before materialization and updated the weights CSV hash in its manifest.",
+        "Ran scripts/plan39/size-composition-candidate.mjs successfully; result status is legacy_unharmonized_weights.",
+        "Candidate fit years are 2005-2010 and 2012-2016; 2011 is omitted from lambda fitting and included in weight years for annual R.",
+        "2011 interpolated annual total target is approximately 93.0386; endpoint alternatives yield total target range 92.9532-93.1241; largest category absolute difference from interpolated result is approximately 0.0214 index points.",
+        "Maximum additivity error is approximately 4.26e-14; scoped git diff --check passed. No tests were added or run."
+      ],
+      "knownConstraints": [
+        "Both endpoint series are unverified old annual vintages and have different census bases; interpolation does not create a connected official series.",
+        "Legacy year-specific source workbooks/IDs were not retained in this workspace; endpoint IDs and benchmark definitions are recorded from the source audit, but no common-base bridge has been verified.",
+        "The 2011 direct IV-4 table excludes three disaster prefectures and cannot supply a nationwide size distribution.",
+        "Endpoint alternatives are sensitivity diagnostics, not confidence intervals or evidence of official comparability.",
+        "Household Survey expenditure profiles proxy CTI's three-survey composite, and the candidate remains non-production."
+      ],
+      "outputRequirement": "Choose one listed choice. For any non-pass reason, identify the concrete affected file/requirement, observed evidence, and a proposed bounded fix or exact needed evidence. Do not describe the synthetic 2011 row as observed, connected, or officially validated; do not infer production authorization."
+    },
+    "questions": {
+      "implementation": {
+        "type": "choice",
+        "instructions": "Does the current implementation and evidence support acceptance of the analysis-only 2011 interpolation update as defined? Return a probability distribution over the listed choices.",
+        "criteria": {
+          "valid_as_defined": "The supplied evidence supports acceptance as defined.",
+          "requirements_mismatch": "Requirements conflict with intended behavior; identify the requirement and correction.",
+          "missing_prerequisites_info": "Prerequisite information is missing; identify exactly what is needed.",
+          "incomplete_implementation_info": "Implementation information is incomplete; identify missing details or evidence.",
+          "implementation_issue": "An implementation issue exists; identify its location, evidence, and correction.",
+          "scope_violation": "The proposal exceeds or falls outside the agreed scope; identify the boundary and adjustment.",
+          "other": "A material concern does not fit the categories; identify its location, evidence, and fix or needed evidence.",
+          "indeterminate": "The supplied context cannot support a judgment; identify missing context if possible."
+        }
+      }
+    }
+  },
+  "questionIds": [
+    "implementation"
+  ],
+  "status": "http-success",
+  "rawResponse": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "implementation": {
+        "type": "choice",
+        "choice": "valid_as_defined",
+        "confidence": 0.91,
+        "probabilities": {
+          "valid_as_defined": 0.93,
+          "requirements_mismatch": 0.01,
+          "missing_prerequisites_info": 0.01,
+          "incomplete_implementation_info": 0.03,
+          "implementation_issue": 0.02,
+          "scope_violation": 0,
+          "other": 0,
+          "indeterminate": 0
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": "[REDACTED]",
+      "output_tokens": "[REDACTED]"
+    }
+  },
+  "responseValidation": {
+    "valid": true
+  },
+  "decisionSummary": {
+    "choice": "valid_as_defined",
+    "outcome": "pass",
+    "label": "合格",
+    "reason": null,
+    "failureReason": null,
+    "reasonSource": null,
+    "jevReason": null,
+    "confidence": 0.91,
+    "probabilities": {
+      "valid_as_defined": 0.93,
+      "requirements_mismatch": 0.01,
+      "missing_prerequisites_info": 0.01,
+      "incomplete_implementation_info": 0.03,
+      "implementation_issue": 0.02,
+      "scope_violation": 0,
+      "other": 0,
+      "indeterminate": 0
+    },
+    "passProbability": 0.93,
+    "diagnosisComplete": true,
+    "diagnosisStatus": "complete",
+    "followUpRecommended": false
+  }
+}
