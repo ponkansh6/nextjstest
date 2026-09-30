@@ -9,8 +9,10 @@ import {
   createComparisonSeriesRegistry,
   EARNINGS_SERIES_REGISTRY,
   getLegendLabel,
-  SUPPORT_SERIES_KEY_NOMINAL,
+  CTI_ADJUSTED_V2_PUBLIC_CATEGORIES,
+  CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY,
 } from "@/lib/chartConstants";
+import { QUARTERLY_PUBLIC_NOMINAL_KEYS } from "@/lib/quarterlyPublicProjection";
 import { setupUiMocks } from "../utils/ui-mocks";
 import "../utils/recharts-mock";
 
@@ -32,41 +34,91 @@ type FixtureSection = {
   expected: string[][];
 };
 const matrix = independentFixture.matrix as Record<string, FixtureSection>;
-const ctiNominalLabel = getLegendLabel(SUPPORT_SERIES_KEY_NOMINAL);
-const plan38Nominal = (section: FixtureSection): FixtureSection => {
-  const legacyKey = "民間最終消費支出（名目）";
-  const ctiKey = SUPPORT_SERIES_KEY_NOMINAL;
+const nominalCategories = CTI_ADJUSTED_V2_PUBLIC_CATEGORIES.filter(
+  (category) => category !== "総合",
+);
+const canonicalNominalKeys = [...QUARTERLY_PUBLIC_NOMINAL_KEYS];
+const otherNominalKey = CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY["その他の消費支出"];
+const plan47Nominal = (section: FixtureSection): FixtureSection => {
+  const legacyKeyByCategory: Record<string, string> = {
+    食料: "食料（名目）",
+    住居: "住居（名目）",
+    "光熱・水道": "光熱・水道（名目）",
+    "家具・家事用品": "家具・家事用品（名目）",
+    被服及び履物: "被服及び履物（名目）",
+    保健医療: "保健医療（名目）",
+    "交通・通信": "交通・通信（名目）",
+    教育: "教育（名目）",
+    教養娯楽: "教養娯楽（名目）",
+    その他の消費支出: "その他の消費支出（名目）",
+  };
   return {
     ...section,
-    keys: section.keys.map((key) => (key === legacyKey ? ctiKey : key)),
-    headers: section.headers.map((header, index) =>
-      section.keys[index] === legacyKey ? ctiNominalLabel : header,
-    ),
+    keys: canonicalNominalKeys,
+    headers: canonicalNominalKeys.map(getLegendLabel),
     rows: section.rows.map((row) => {
-      const { [legacyKey]: legacyValue, ...rest } = row;
-      const ctiValue = row.label === "2017年10-12月" ? legacyValue : null;
+      const values = Object.fromEntries(
+        nominalCategories.map((category) => [
+          CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY[category],
+          row[legacyKeyByCategory[category]!],
+        ]),
+      );
+      const measurements = Object.fromEntries(
+        nominalCategories.map((category) => {
+          const key = CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY[category];
+          const value = values[key];
+          const isOther = category === "その他の消費支出";
+          return [
+            key,
+            {
+              key,
+              label: getLegendLabel(key),
+              unit: typeof value === "number" ? "指数" : "",
+              source: isOther
+                ? "Plan39 quarterly fixture: official total minus nine categories"
+                : "Plan39 quarterly fixture: canonical nominal category",
+              valueType: "comparison" as const,
+              value: typeof value === "number" ? value : null,
+              status: typeof value === "number" ? ("available" as const) : ("unavailable" as const),
+              reason: typeof value === "number" ? null : "missing_official_quarter",
+              frequency: "quarterly" as const,
+              aggregation: isOther
+                ? "derived_quarterly_residual_from_official_nominal_total_minus_nine_categories"
+                : "official_quarterly_adjusted_nominal_observation",
+              seriesType: isOther
+                ? ("estimated_adjusted" as const)
+                : ("official_adjusted" as const),
+              official: !isOther,
+              annualAnchorType: "official" as const,
+              quarterlyDerived: isOther,
+              model: "v2-bottom-up" as const,
+              estimateVersion: "plan39-v2" as const,
+              inputFingerprint: "sha256:chart-parity-plan39-fixture",
+              ...(isOther ? { sourceRole: "derived_residual", canonicalSeries: category } : {}),
+            },
+          ];
+        }),
+      );
       return {
-        ...rest,
-        [ctiKey]: ctiValue,
-        measurements: {
-          [ctiKey]: {
-            key: ctiKey,
-            label: ctiNominalLabel,
-            unit: typeof ctiValue === "number" ? "指数" : "",
-            source: typeof ctiValue === "number" ? "e-Stat 公式CTI長期artifact 000040499070" : "",
-            valueType: "raw" as const,
-            value: ctiValue,
-            status: typeof ctiValue === "number" ? ("valid" as const) : ("invalid" as const),
-            reason: typeof ctiValue === "number" ? null : "unavailable",
-            frequency: "quarterly" as const,
-            aggregation: typeof ctiValue === "number" ? "simple_mean_of_three_calendar_months" : "",
-          },
-        },
+        年: row.年,
+        quarter: row.quarter,
+        label: row.label,
+        年月: row.年月,
+        ...values,
+        // Keep old expense/support aliases poisoned in the input; only the
+        // canonical expense keys above belong to the public stack.
+        "食料（名目）": 777_777,
+        "民間最終消費支出（名目）": 999_999,
+        "民間最終消費支出（名目）（延長）": 888_888,
+        measurements,
       };
     }),
-    expected: section.expected.map((row) => [
-      ...row.slice(0, -1),
-      row[0] === "2017年10-12月" ? row.at(-1)! : "",
+    expected: section.rows.map((row) => [
+      String(row.label),
+      ...nominalCategories.map((category) => {
+        const value = row[legacyKeyByCategory[category]!];
+        return typeof value === "number" ? value.toFixed(2) : "";
+      }),
     ]),
   };
 };
@@ -93,7 +145,7 @@ const CONTRACT = {
   sections: [
     matrix.cpi,
     matrix.stacked,
-    publicQuarterly(plan38Nominal(matrix.nominal)),
+    publicQuarterly(plan47Nominal(matrix.nominal)),
     publicQuarterly(matrix.real),
     matrix.earnings,
     matrix.residual,
@@ -126,7 +178,7 @@ const input = () => {
   return {
     data: matrix.cpi.rows,
     // Spending quarterly props expose only the regular public keys.
-    quarterlyNominalData: quarterly(plan38Nominal(matrix.nominal).rows),
+    quarterlyNominalData: quarterly(plan47Nominal(matrix.nominal).rows),
     quarterlyRealData: quarterly(matrix.real.rows),
     totalEarningData: matrix.earnings.rows,
   };
@@ -229,65 +281,11 @@ describe("Phase 4-4 real chart/table/CSV parity", () => {
     window.localStorage.clear();
   });
 
-  it("keeps the CTI public descriptor and each row measurement on raw valueType", async () => {
-    const measurement = {
-      key: SUPPORT_SERIES_KEY_NOMINAL,
-      label: ctiNominalLabel,
-      unit: "指数",
-      source: "e-Stat 公式CTI長期artifact 000040499070",
-      valueType: "raw" as const,
-      value: 123,
-      status: "valid" as const,
-      reason: null,
-      frequency: "quarterly" as const,
-      aggregation: "simple_mean_of_three_calendar_months",
-    };
-    const invalidMeasurement = {
-      ...measurement,
-      value: null,
-      status: "invalid" as const,
-      reason: "insufficient_months",
-    };
-    const chartInput = input();
-    chartInput.quarterlyNominalData = chartInput.quarterlyNominalData.map((row, index) => ({
-      ...row,
-      [SUPPORT_SERIES_KEY_NOMINAL]: index === 0 ? 123 : null,
-      measurements: {
-        [SUPPORT_SERIES_KEY_NOMINAL]: index === 0 ? measurement : invalidMeasurement,
-      },
-    }));
-    const ctiState = {
-      baseYear: 2025 as const,
-      sourceMode: "official-connected" as const,
-      status: "valid" as const,
-      reason: null,
-      series: {
-        raw: {
-          key: SUPPORT_SERIES_KEY_NOMINAL,
-          valueType: "raw" as const,
-          unit: measurement.unit,
-          source: measurement.source,
-          status: "valid" as const,
-          reason: null,
-        },
-        comparison: {
-          key: SUPPORT_SERIES_KEY_NOMINAL,
-          valueType: "comparison" as const,
-          unit: measurement.unit,
-          source: measurement.source,
-          status: "valid" as const,
-          reason: null,
-        },
-      },
-    };
-    window.__MOUNT_ALL__ = true;
-    const rendered = render(
-      createElement(CpiChart, {
-        ...chartInput,
-        ctiInfoState: ctiState,
-        maxCpiDate: { year: 2018, month: 1 },
-      } as never),
+  it("publishes the canonical ten Plan39 categories with model and fingerprint provenance", async () => {
+    expect(canonicalNominalKeys).toEqual(
+      nominalCategories.map((category) => CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY[category]),
     );
+    const rendered = await renderChart();
     await waitFor(() =>
       expect(
         rendered.container.querySelectorAll('[data-testid="chart-data-contract"]'),
@@ -299,17 +297,22 @@ describe("Phase 4-4 real chart/table/CSV parity", () => {
       key: string;
       valueType: string;
     }>;
-    expect(descriptors.find(({ key }) => key === SUPPORT_SERIES_KEY_NOMINAL)).toMatchObject({
-      valueType: "raw",
-    });
+    expect(JSON.parse(contract.dataset.series ?? "[]")).toEqual(canonicalNominalKeys);
+    expect(descriptors.map(({ key }) => key)).toEqual(canonicalNominalKeys);
     const rows = [...contract.querySelectorAll("[data-chart-data-row]")];
-    expect(
-      rows.map((row) =>
-        row
-          .querySelector(`[data-series-key="${SUPPORT_SERIES_KEY_NOMINAL}"]`)
-          ?.getAttribute("data-measurement-value-type"),
-      ),
-    ).toEqual(["raw", "raw"]);
+    expect(rows).toHaveLength(2);
+    for (const row of rows) {
+      for (const key of canonicalNominalKeys) {
+        const cell = row.querySelector(`[data-series-key="${key}"]`);
+        expect(cell?.getAttribute("data-model")).toBe("v2-bottom-up");
+        expect(cell?.getAttribute("data-estimate-version")).toBe("plan39-v2");
+        expect(cell?.getAttribute("data-input-fingerprint")).toBe(
+          "sha256:chart-parity-plan39-fixture",
+        );
+      }
+      expect(row.querySelector('[data-series-key="民間最終消費支出（名目）"]')).toBeNull();
+      expect(row.querySelector('[data-series-key="食料（名目）"]')).toBeNull();
+    }
   });
   it("compares all seven public key sets, periods, and every table/CSV cell", async () => {
     const { container } = await renderChart();
@@ -355,28 +358,26 @@ describe("Phase 4-4 real chart/table/CSV parity", () => {
       expect(rows.slice(1).map((r) => within(r).getAllByRole("cell").map(tableValueText))).toEqual(
         section.expected,
       );
-      const hasCti = section.keys.includes(SUPPORT_SERIES_KEY_NOMINAL);
-      const ctiMetadata = [
-        ...table.querySelectorAll(`[data-measurement-metadata="${SUPPORT_SERIES_KEY_NOMINAL}"]`),
-      ];
+      const hasCanonicalNominal = i === 2;
       const nonCtiGdpMetadata = [
         ...table.querySelectorAll('td[data-series-key^="GDP"] [data-measurement-metadata]'),
       ];
-      if (hasCti) {
-        const ctiValueCells = [
-          ...table.querySelectorAll(`td[data-series-key="${SUPPORT_SERIES_KEY_NOMINAL}"]`),
-        ];
-        expect(ctiValueCells.map(tableValueText)).toEqual(
-          section.expected.map((row) => row.at(-1)),
-        );
-
-        expect(ctiMetadata).toHaveLength(section.expected.length);
-        expect(ctiMetadata[0]?.textContent).toContain("頻度: quarterly");
-        expect(ctiMetadata[0]?.textContent).toContain("集計: simple_mean_of_three_calendar_months");
-        expect(ctiMetadata[1]?.textContent).toContain("状態: invalid");
-        expect(ctiMetadata[1]?.textContent).toContain("理由: unavailable");
+      if (hasCanonicalNominal) {
+        for (const key of canonicalNominalKeys) {
+          const metadataRows = [...table.querySelectorAll(`[data-measurement-metadata="${key}"]`)];
+          expect(metadataRows).toHaveLength(section.expected.length);
+          expect(metadataRows[0]?.getAttribute("data-measurement-model")).toBe("v2-bottom-up");
+          expect(metadataRows[0]?.getAttribute("data-measurement-estimate-version")).toBe(
+            "plan39-v2",
+          );
+          expect(metadataRows[0]?.getAttribute("data-measurement-input-fingerprint")).toBe(
+            "sha256:chart-parity-plan39-fixture",
+          );
+        }
+        expect(
+          table.querySelector('[data-measurement-metadata="民間最終消費支出（名目）"]'),
+        ).toBeNull();
       } else {
-        expect(ctiMetadata).toHaveLength(0);
         expect(nonCtiGdpMetadata).toHaveLength(0);
       }
       (within(table).getByRole("button", { name: /CSVでダウンロード/ }) as HTMLElement).click();
@@ -390,7 +391,7 @@ describe("Phase 4-4 real chart/table/CSV parity", () => {
       const section = CONTRACT.sections[i];
       const metadataRegistry =
         i === 2
-          ? [{ key: SUPPORT_SERIES_KEY_NOMINAL }]
+          ? canonicalNominalKeys.map((key) => ({ key }))
           : i === 4
             ? EARNINGS_SERIES_REGISTRY
             : i === 6
@@ -403,6 +404,15 @@ describe("Phase 4-4 real chart/table/CSV parity", () => {
           `${key}__valueType`,
           `${key}__seriesType`,
           `${key}__official`,
+          ...(i === 2
+            ? [
+                `${key}__model`,
+                `${key}__estimateVersion`,
+                `${key}__inputFingerprint`,
+                `${key}__annualAnchorType`,
+                `${key}__quarterlyDerived`,
+              ]
+            : []),
           `${key}__value`,
           `${key}__unit`,
           `${key}__source`,
@@ -410,6 +420,16 @@ describe("Phase 4-4 real chart/table/CSV parity", () => {
           `${key}__aggregation`,
           `${key}__status`,
           `${key}__reason`,
+          ...(i === 2
+            ? [
+                `${key}__sourceWorkbook`,
+                `${key}__sourceSheet`,
+                `${key}__sourceColumn`,
+                `${key}__sourceRole`,
+                `${key}__sourceDerivedFromColumns`,
+                `${key}__canonicalSeries`,
+              ]
+            : []),
         ]);
       expect(rows[0]).toEqual(["年月", ...section.headers, ...metadataHeaders]);
       expect(rows.slice(1).map((row) => row.slice(0, section.keys.length + 1))).toEqual(
@@ -423,60 +443,60 @@ describe("Phase 4-4 real chart/table/CSV parity", () => {
       }
       if (i === 2) {
         const metadataStart = section.keys.length + 1;
-        expect(rows[1]!.slice(metadataStart)).toEqual([
-          ctiNominalLabel,
-          "raw",
-          "",
-          "",
-          "61",
-          "指数",
-          "e-Stat 公式CTI長期artifact 000040499070",
-          "quarterly",
-          "simple_mean_of_three_calendar_months",
-          "valid",
-          "",
-        ]);
-        expect(rows[2]!.slice(metadataStart)).toEqual([
-          ctiNominalLabel,
-          "raw",
-          "",
-          "",
-          "",
-          "",
-          "",
-          "quarterly",
-          "",
-          "invalid",
-          "unavailable",
-        ]);
+        for (const row of rows.slice(1)) {
+          for (let keyIndex = 0; keyIndex < canonicalNominalKeys.length; keyIndex += 1) {
+            const offset = metadataStart + keyIndex * 22;
+            const key = canonicalNominalKeys[keyIndex]!;
+            const isOther = key === otherNominalKey;
+            expect(row[offset + 2]).toBe(isOther ? "estimated_adjusted" : "official_adjusted");
+            expect(row[offset + 3]).toBe(String(!isOther));
+            expect(row[offset + 4]).toBe("v2-bottom-up");
+            expect(row[offset + 5]).toBe("plan39-v2");
+            expect(row[offset + 6]).toBe("sha256:chart-parity-plan39-fixture");
+            expect(row[offset + 7]).toBe("official");
+            expect(row[offset + 8]).toBe(String(isOther));
+            expect(row[offset + 16]).toBe("");
+            expect(row[offset + 17]).toBe("");
+            expect(row[offset + 18]).toBe("");
+            expect(row[offset + 19]).toBe(isOther ? "derived_residual" : "");
+            expect(row[offset + 20]).toBe("");
+            expect(row[offset + 21]).toBe(isOther ? "その他の消費支出" : "");
+          }
+        }
+        expect(rows.flat().join(",")).not.toContain("999999");
+        expect(rows.flat().join(",")).not.toContain("777777");
+        expect(rows.flat().join(",")).not.toContain("888888");
       }
     }
   });
   it("keeps raw quarterly keys private and publishes YYYYQn boundary labels", async () => {
     const { container } = await renderChart();
-    expect(CONTRACT.sections[2].keys).toContain(SUPPORT_SERIES_KEY_NOMINAL);
+    expect(CONTRACT.sections[2].keys).toEqual(canonicalNominalKeys);
     expect(CONTRACT.sections[2].keys).not.toContain("民間最終消費支出（名目）");
+    expect(CONTRACT.sections[2].keys).toHaveLength(10);
     expect(CONTRACT.sections[2].keys.some((key) => key.startsWith("GDP"))).toBe(false);
     for (const mode of ["nominal", "real"] as const) {
       const table = container.querySelector(
         `#data-table-section-consumption-${mode}`,
       ) as HTMLElement;
-      const section = matrix[mode];
+      const section = mode === "nominal" ? plan47Nominal(matrix.nominal) : matrix.real;
       const rows = [...table.querySelectorAll("tbody tr")].map((row) =>
         [...row.querySelectorAll("th,td")].map(tableValueText),
       );
       expect(rows).toEqual(publicQuarterly(section).expected);
       expect(rows.map((row) => row[0])).toEqual(["2017Q4", "2018Q1"]);
-      const ctiMetadata = [
-        ...table.querySelectorAll(`[data-measurement-metadata="${SUPPORT_SERIES_KEY_NOMINAL}"]`),
-      ];
       if (mode === "nominal") {
-        expect(ctiMetadata).toHaveLength(2);
-        expect(ctiMetadata[0]?.textContent).toContain("状態: valid");
-        expect(ctiMetadata[1]?.textContent).toContain("状態: invalid");
-        expect(ctiMetadata[1]?.textContent).toContain("理由: unavailable");
+        expect(CONTRACT.sections[2].keys).toHaveLength(10);
+        expect(
+          table.querySelectorAll(`[data-measurement-metadata="${otherNominalKey}"]`),
+        ).toHaveLength(2);
+        expect(
+          table
+            .querySelector(`[data-measurement-metadata="${otherNominalKey}"]`)
+            ?.getAttribute("data-measurement-source-role"),
+        ).toBe("derived_residual");
       } else {
-        expect(ctiMetadata).toHaveLength(0);
+        expect(table.querySelector(`[data-measurement-metadata="${otherNominalKey}"]`)).toBeNull();
       }
     }
   });
@@ -564,7 +584,7 @@ describe("Phase 4-4 real chart/table/CSV parity", () => {
     rendered = await renderChart();
     for (let i = 0; i < modes.length; i++) {
       const current = surface(rendered.container, modes[i]);
-      const fixture = modes[i] === "nominal" ? plan38Nominal(matrix[modes[i]]) : matrix[modes[i]];
+      const fixture = modes[i] === "nominal" ? plan47Nominal(matrix[modes[i]]) : matrix[modes[i]];
       expect(current.contract).toEqual(regular[modes[i]].contract);
       expect(current.table.map((row) => row.map(normalizeMissingCell))).toEqual(
         regular[modes[i]].table.map((row) => row.map(normalizeMissingCell)),

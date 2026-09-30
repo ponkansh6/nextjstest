@@ -99,6 +99,7 @@ export function projectCtiAdjustedV2PublicView(
           official,
           model: result.model,
           estimateVersion: result.estimateVersion,
+          inputFingerprint: result.inputFingerprint,
           year: row.year,
           category,
         } satisfies CtiAdjustedV2PublicMeasurement;

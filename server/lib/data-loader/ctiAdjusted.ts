@@ -27,6 +27,8 @@ export type CtiAdjustedLoaderOptions = {
   paths?: CtiAdjustedArtifactPaths;
   /** Select the annual estimate contract used by the caller. */
   contract?: "plan39" | "plan40";
+  /** Preserve strict annual source integrity checks independently of the estimate contract. */
+  validatePlan40Inputs?: boolean;
 };
 
 type CtiAdjustedArtifactMetadata = CtiAdjustedInputMetadata & {
@@ -268,10 +270,12 @@ function loadProductionPi2Plus(root: string): CtiAdjustedV2HouseholdComposition 
   }
 }
 
-function readManifest(root: string): CtiAdjustedManifest {
+function readManifest(root: string, manifestBytes?: Buffer): CtiAdjustedManifest {
   const file = path.join(root, "manifest.json");
   if (!fs.existsSync(file)) throw new Error("missing CTI adjusted manifest");
-  const value = readJson(file) as Partial<CtiAdjustedManifest>;
+  const value = (
+    manifestBytes ? JSON.parse(manifestBytes.toString("utf8")) : readJson(file)
+  ) as Partial<CtiAdjustedManifest>;
   if (
     value.schemaVersion === undefined ||
     typeof value.revision !== "string" ||
@@ -348,10 +352,12 @@ function parseArtifact(
   file: string,
   manifest: CtiAdjustedManifest | null,
   kind: "B" | "A" | "L",
+  artifactBytes?: Buffer,
 ): CtiAdjustedAnnualInput {
-  const content = fs.readFileSync(file, "utf8");
+  const contentBytes = artifactBytes ?? fs.readFileSync(file);
+  const content = contentBytes.toString("utf8");
   if (file.endsWith(".json")) {
-    const data = readJson(file) as { metadata?: unknown; rows?: unknown };
+    const data = JSON.parse(content) as { metadata?: unknown; rows?: unknown };
     const metadata = metadataFrom(data);
     if (!validateMetadata(metadata, manifest, kind))
       throw new Error(metadataValidationReason(metadata));
@@ -414,6 +420,7 @@ function validateArtifactHash(
   input: CtiAdjustedAnnualInput | null,
   manifest: CtiAdjustedManifest | null,
   kind: "B" | "A" | "L",
+  artifactBytes?: Buffer,
 ): CtiAdjustedAnnualInput | null {
   if (!input) return null;
   const metadata = input.metadata as CtiAdjustedArtifactMetadata;
@@ -426,7 +433,11 @@ function validateArtifactHash(
     metadata?.csvSha256 ??
     metadata?.hash;
   if (!expected || !HASH_PATTERN.test(expected)) throw new Error("missing artifact hash");
-  if (createHash("sha256").update(fs.readFileSync(file)).digest("hex") !== expected)
+  if (
+    createHash("sha256")
+      .update(artifactBytes ?? fs.readFileSync(file))
+      .digest("hex") !== expected
+  )
     throw new Error("artifact hash mismatch");
   return input;
 }
@@ -487,10 +498,18 @@ export function loadCtiAdjustedV2Estimate(
   const inputs = loadCtiAdjustedInputs(options);
   const plan40ExpectedInputFingerprint =
     options.contract === "plan40" ? fingerprintLoadedCtiAdjustedInputs(inputs) : null;
-  const result = buildCtiAdjustedV2Estimate(inputs.B, inputs.A, inputs.L, {
-    contract: options.contract ?? "plan39",
-    householdComposition: inputs.householdComposition ?? undefined,
-  });
+  const plan39ExpectedInputFingerprint =
+    options.contract === "plan40" ? null : inputs.inputFingerprint;
+  const result = {
+    ...buildCtiAdjustedV2Estimate(inputs.B, inputs.A, inputs.L, {
+      contract: options.contract ?? "plan39",
+      validatePlan40Inputs: options.validatePlan40Inputs,
+      householdComposition: inputs.householdComposition ?? undefined,
+    }),
+    ...(plan40ExpectedInputFingerprint || plan39ExpectedInputFingerprint
+      ? { inputFingerprint: plan40ExpectedInputFingerprint ?? plan39ExpectedInputFingerprint! }
+      : {}),
+  };
   if (options.contract === "plan40") {
     // Plan40 has its own publication blockers, but rolling/LOO evidence is
     // shared. Recompute it from the exact loaded B/A inputs; never reuse a
@@ -536,14 +555,43 @@ export function loadCtiAdjustedV2Estimate(
       },
     };
   }
-  const analysis = loadMatchingPlan39Analysis(inputs.artifactRoot);
-  if (!analysis) return result;
+  const analysis = loadMatchingPlan39Analysis(inputs.artifactRoot, plan39ExpectedInputFingerprint);
+  let rollingLoo = analysis?.rollingLoo;
+  let evidenceSchema = analysis?.v2?.publicationGate?.rollingLooEvidence?.schema;
+  let evidenceInputFingerprint = analysis?.inputFingerprint;
+  if (!analysis) {
+    const canBuildEvidence =
+      !inputs.manifestInvalid &&
+      inputs.missingKinds.length === 0 &&
+      inputs.loadReasons.length === 0 &&
+      inputs.B !== null &&
+      inputs.A !== null &&
+      inputs.L !== null;
+    if (canBuildEvidence) {
+      try {
+        rollingLoo = buildCtiAdjustedRollingLooBacktest(inputs.B!, inputs.A!, inputs.L!);
+        evidenceSchema = CTI_ADJUSTED_PUBLICATION_GATE_SCHEMA;
+        const fingerprintAfterEvidenceBuild = deriveCtiAdjustedInputFingerprint(
+          inputs.artifactRoot,
+        );
+        evidenceInputFingerprint =
+          fingerprintAfterEvidenceBuild === plan39ExpectedInputFingerprint
+            ? (plan39ExpectedInputFingerprint ?? undefined)
+            : undefined;
+      } catch {
+        // Missing or invalid evidence remains a publication blocker.
+      }
+    }
+  }
   const gate = evaluateCtiAdjustedPublicationGate({
     baseGate: result.publicationGate,
-    rollingLoo: analysis.rollingLoo,
-    evidenceSchema: analysis.v2?.publicationGate?.rollingLooEvidence?.schema,
-    evidenceInputFingerprint: analysis.inputFingerprint,
-    expectedInputFingerprint: analysis.inputFingerprint,
+    rollingLoo,
+    evidenceSchema,
+    evidenceInputFingerprint,
+    expectedInputFingerprint:
+      deriveCtiAdjustedInputFingerprint(inputs.artifactRoot) === inputs.inputFingerprint
+        ? (inputs.inputFingerprint ?? undefined)
+        : undefined,
   });
   return {
     ...result,
@@ -570,6 +618,7 @@ type LoadedCtiAdjustedInputs = {
   manifestInvalid: boolean;
   artifactRoot: string;
   householdComposition: CtiAdjustedV2HouseholdComposition | null;
+  inputFingerprint: string | null;
 };
 
 type Plan39AnalysisArtifact = { path?: string; sha256?: string };
@@ -577,11 +626,18 @@ type Plan39Analysis = {
   schemaVersion?: string;
   inputFingerprint?: string;
   rollingLoo?: CtiAdjustedRollingLooEvidence;
-  v2?: { publicationGate?: { rollingLooEvidence?: { schema?: unknown } } };
+  v2?: {
+    model?: string;
+    version?: string;
+    publicationGate?: { rollingLooEvidence?: { schema?: unknown } };
+  };
   inputs?: { artifacts?: Partial<Record<"B" | "A" | "L", Plan39AnalysisArtifact>> };
 };
 
-function loadMatchingPlan39Analysis(artifactRoot: string): Plan39Analysis | null {
+function loadMatchingPlan39Analysis(
+  artifactRoot: string,
+  expectedFingerprint: string | null = deriveCtiAdjustedInputFingerprint(artifactRoot),
+): Plan39Analysis | null {
   const explicit = process.env.CTI_ADJUSTED_ANALYSIS_FILE?.trim();
   const resultsRoot =
     process.env.CTI_ADJUSTED_ANALYSIS_ROOT?.trim() ||
@@ -596,7 +652,6 @@ function loadMatchingPlan39Analysis(artifactRoot: string): Plan39Analysis | null
           .reverse()
           .map((name) => path.join(resultsRoot, name))
       : [];
-  const expectedFingerprint = deriveCtiAdjustedInputFingerprint(artifactRoot);
   if (!expectedFingerprint) return null;
   for (const file of files) {
     try {
@@ -605,6 +660,8 @@ function loadMatchingPlan39Analysis(artifactRoot: string): Plan39Analysis | null
         value?.schemaVersion !== "plan39-analysis-v1" ||
         value.inputFingerprint !== expectedFingerprint ||
         !value.rollingLoo ||
+        value.v2?.model !== "v2-bottom-up" ||
+        value.v2?.version !== "plan39-v2" ||
         !value.v2?.publicationGate
       )
         continue;
@@ -629,7 +686,31 @@ function loadMatchingPlan39Analysis(artifactRoot: string): Plan39Analysis | null
   return null;
 }
 
-/** Canonical fingerprint shared by stored Plan39 matching and live Plan40 evidence. */
+/** Hash the same serialized snapshot parts used by saved Plan39 analysis artifacts. */
+function fingerprintCtiAdjustedSnapshot(
+  manifestBytes: Buffer,
+  auditBytes: Buffer,
+  artifacts: Record<"B" | "A" | "L", string>,
+  composition: CtiAdjustedV2HouseholdComposition | null,
+): string {
+  return `sha256:${createHash("sha256")
+    .update(
+      JSON.stringify({
+        manifest: createHash("sha256").update(manifestBytes).digest("hex"),
+        audit: createHash("sha256").update(auditBytes).digest("hex"),
+        artifacts,
+        householdComposition: composition
+          ? {
+              artifact: composition.provenance.artifactSha256,
+              manifest: composition.provenance.manifestSha256,
+            }
+          : null,
+      }),
+    )
+    .digest("hex")}`;
+}
+
+/** Canonical current-file fingerprint used to guard the loaded Plan39 snapshot. */
 function deriveCtiAdjustedInputFingerprint(artifactRoot: string): string | null {
   try {
     const root = path.resolve(artifactRoot);
@@ -650,21 +731,12 @@ function deriveCtiAdjustedInputFingerprint(artifactRoot: string): string | null 
       }),
     );
     const composition = loadProductionPi2Plus(root);
-    return `sha256:${createHash("sha256")
-      .update(
-        JSON.stringify({
-          manifest: createHash("sha256").update(manifestBytes).digest("hex"),
-          audit: createHash("sha256").update(auditBytes).digest("hex"),
-          artifacts,
-          householdComposition: composition
-            ? {
-                artifact: composition.provenance.artifactSha256,
-                manifest: composition.provenance.manifestSha256,
-              }
-            : null,
-        }),
-      )
-      .digest("hex")}`;
+    return fingerprintCtiAdjustedSnapshot(
+      manifestBytes,
+      auditBytes,
+      artifacts as Record<"B" | "A" | "L", string>,
+      composition,
+    );
   } catch {
     return null;
   }
@@ -690,12 +762,20 @@ export function loadCtiAdjustedInputs(
   options: CtiAdjustedLoaderOptions = {},
 ): LoadedCtiAdjustedInputs {
   const root = resolveRoot(options.artifactRoot);
+  let manifestBytes: Buffer | null = null;
+  let auditBytes: Buffer | null = null;
   let manifest: CtiAdjustedManifest | null = null;
   let manifestInvalid = false;
   try {
-    manifest = readManifest(root);
+    manifestBytes = fs.readFileSync(path.join(root, "manifest.json"));
+    manifest = readManifest(root, manifestBytes);
   } catch {
     manifestInvalid = true;
+  }
+  try {
+    auditBytes = fs.readFileSync(path.join(root, "audit.json"));
+  } catch {
+    // The Plan39 snapshot fingerprint remains unavailable without its audit input.
   }
   const missingKinds =
     manifestInvalid || !manifest
@@ -705,12 +785,17 @@ export function loadCtiAdjustedInputs(
           return !file || !fs.existsSync(file);
         });
   const loadReasons: string[] = [];
+  const artifactHashes: Partial<Record<"B" | "A" | "L", string>> = {};
   const load = (kind: "B" | "A" | "L") => {
     if (manifestInvalid) return empty();
     const file = locate(kind, root, manifest, options.paths?.[kind]);
     if (!file || !fs.existsSync(file)) return empty();
     try {
-      return validateArtifactHash(file, parseArtifact(file, manifest, kind), manifest, kind);
+      const bytes = fs.readFileSync(file);
+      const input = parseArtifact(file, manifest, kind, bytes);
+      const validated = validateArtifactHash(file, input, manifest, kind, bytes);
+      if (validated) artifactHashes[kind] = createHash("sha256").update(bytes).digest("hex");
+      return validated;
     } catch (error) {
       const reason =
         error instanceof Error &&
@@ -724,6 +809,7 @@ export function loadCtiAdjustedInputs(
   const B = load("B");
   const A = load("A");
   const L = load("L");
+  const householdComposition = loadProductionPi2Plus(root);
   return {
     B,
     A,
@@ -732,7 +818,16 @@ export function loadCtiAdjustedInputs(
     loadReasons,
     manifestInvalid,
     artifactRoot: root,
-    householdComposition: loadProductionPi2Plus(root),
+    householdComposition,
+    inputFingerprint:
+      manifestBytes && auditBytes && artifactHashes.B && artifactHashes.A && artifactHashes.L
+        ? fingerprintCtiAdjustedSnapshot(
+            manifestBytes,
+            auditBytes,
+            artifactHashes as Record<"B" | "A" | "L", string>,
+            householdComposition,
+          )
+        : null,
   };
 }
 

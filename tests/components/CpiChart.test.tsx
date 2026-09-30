@@ -7,10 +7,12 @@ import { CPI_CHART_SECTIONS } from "../../src/app/components/cpiChartConfig";
 import CpiChart from "../../src/app/components/CpiChart";
 import type { CpiView, QuarterlyView } from "../../src/types/chart";
 import {
-  CONSUMPTION_NOMINAL_KEYS,
   CONSUMPTION_REAL_KEYS,
+  CTI_ADJUSTED_V2_PUBLIC_CATEGORIES,
+  CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY,
   stackedKeys,
 } from "../../src/lib/chartConstants";
+import { QUARTERLY_PUBLIC_NOMINAL_KEYS } from "../../src/lib/quarterlyPublicProjection";
 import { beforeEach } from "vitest";
 import { setupUiMocks } from "../utils/ui-mocks";
 
@@ -246,7 +248,14 @@ const periodsInYearRange = (from: number, to: number) =>
     })
     .map((row) => row.年月);
 
-function quarterlyFixture(keys: readonly string[]): QuarterlyView[] {
+function quarterlyFixture(
+  keys: readonly string[],
+  options: {
+    plan39?: boolean;
+    poisonLegacyAlias?: boolean;
+    omitCanonicalFood?: boolean;
+  } = {},
+): QuarterlyView[] {
   return rangeYears.flatMap((year) =>
     [1, 2, 3, 4].map((quarter) => {
       const row: QuarterlyView = {
@@ -254,22 +263,61 @@ function quarterlyFixture(keys: readonly string[]): QuarterlyView[] {
         quarter,
         label: `${year}Q${quarter}`,
         年月: `${year}Q${quarter}`,
+        measurements: {},
       };
       keys.forEach((key, index) => {
-        row[key] = 100 + index + quarter;
+        if (options.omitCanonicalFood && key === canonicalFoodKey) return;
+        const value = 100 + index + quarter;
+        row[key] = value;
+        row.measurements![key] = {
+          key,
+          label: key,
+          unit: "指数",
+          source: options.plan39 ? "Plan39 quarterly fixture" : "Quarterly fixture",
+          valueType: "comparison",
+          value,
+          status: "available",
+          reason: null,
+          frequency: "quarterly",
+          aggregation: "fixture_quarterly_value",
+          ...(options.plan39
+            ? {
+                seriesType: "estimated_adjusted" as const,
+                official: false,
+                annualAnchorType: "estimated" as const,
+                quarterlyDerived: true,
+                model: "v2-bottom-up" as const,
+                estimateVersion: "plan39-v2" as const,
+                inputFingerprint: "sha256:plan39-cpichart-fixture",
+              }
+            : {}),
+        };
       });
+      if (options.poisonLegacyAlias) row["食料（名目）"] = 999_999;
       return row;
     }),
   );
 }
 
+const canonicalNominalCategories = CTI_ADJUSTED_V2_PUBLIC_CATEGORIES.filter(
+  (category) => category !== "総合",
+);
+const canonicalNominalKeys = canonicalNominalCategories.map(
+  (category) => CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY[category],
+);
+const canonicalFoodKey = CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY.食料;
+
 describe("CpiChart maximum range integration", () => {
   it("synchronizes URL, periods, Q1 state, and data-derived nominal/real bars", async () => {
+    expect(canonicalNominalKeys).toEqual(QUARTERLY_PUBLIC_NOMINAL_KEYS);
     window.history.replaceState(null, "", `${window.location.pathname}?from=2015&to=2020`);
     render(
       <CpiChart
         data={cpiFixture}
-        quarterlyNominalData={quarterlyFixture(CONSUMPTION_NOMINAL_KEYS)}
+        quarterlyNominalData={quarterlyFixture(canonicalNominalKeys, {
+          plan39: true,
+          poisonLegacyAlias: true,
+        })}
         quarterlyRealData={quarterlyFixture(CONSUMPTION_REAL_KEYS)}
         totalEarningData={[]}
         maxCpiDate={{ year: 2025, month: 12 }}
@@ -327,6 +375,16 @@ describe("CpiChart maximum range integration", () => {
       expect(rows).toHaveLength(rangeYears.length * 4);
       expect(chart.querySelectorAll(".recharts-bar-rectangle").length).toBeGreaterThan(0);
     }
+    const nominalContractRows = screen
+      .getByTestId("spending-chart-nominal")
+      .querySelectorAll("[data-testid='chart-data-contract'] [data-chart-data-row]");
+    for (const row of nominalContractRows) {
+      const seriesKeys = Array.from(row.querySelectorAll("[data-series-key]"), (series) =>
+        series.getAttribute("data-series-key"),
+      );
+      expect(seriesKeys).toEqual(expect.arrayContaining(canonicalNominalKeys));
+      expect(seriesKeys).not.toContain("食料（名目）");
+    }
     const q1 = within(screen.getByTestId("spending-chart-nominal")).getByRole("button", {
       name: /^Q1$/,
     });
@@ -351,5 +409,27 @@ describe("CpiChart maximum range integration", () => {
       ).toHaveLength(rangeYears.length * 4);
       expect(chart.querySelectorAll(".recharts-bar-rectangle").length).toBe(fullBarCounts.get(id));
     }
+  });
+
+  it("does not promote a poisoned legacy nominal alias into the canonical food series", async () => {
+    window.history.replaceState(null, "", window.location.pathname);
+    render(
+      <CpiChart
+        data={cpiFixture}
+        quarterlyNominalData={quarterlyFixture(canonicalNominalKeys, {
+          plan39: true,
+          poisonLegacyAlias: true,
+          omitCanonicalFood: true,
+        })}
+        quarterlyRealData={quarterlyFixture(CONSUMPTION_REAL_KEYS)}
+        totalEarningData={[]}
+        maxCpiDate={{ year: 2025, month: 12 }}
+      />,
+    );
+
+    const nominalChart = await screen.findByTestId("spending-chart-nominal");
+    expect(
+      nominalChart.querySelectorAll(`.recharts-bar-rectangle[data-series="${canonicalFoodKey}"]`),
+    ).toHaveLength(0);
   });
 });

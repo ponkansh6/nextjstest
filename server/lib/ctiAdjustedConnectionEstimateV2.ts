@@ -121,6 +121,8 @@ export type CtiAdjustedV2GammaCase = {
 export type CtiAdjustedV2Options = {
   /** Selects the input contract owned by the caller. Runtime Plan39 artifacts do not satisfy Plan40's wider annual-anchor contract. */
   contract?: "plan39" | "plan40";
+  /** Run Plan40's strict artifact integrity checks without selecting its base-only model. */
+  validatePlan40Inputs?: boolean;
   calibrationYears?: readonly number[];
   estimateStartYear?: number;
   estimateEndYear?: number;
@@ -232,6 +234,8 @@ export type CtiAdjustedV2Result = {
       observedYears: readonly number[];
     }
   >;
+  /** Fingerprint for the exact annual input snapshot used by the loader. */
+  inputFingerprint?: string;
   /** Present for results produced by the Plan40-aware builder; optional for legacy fixtures. */
   plan40InputValidation?: CtiAdjustedV2Plan40InputValidation;
   plan40InputMetadata?: Partial<Record<"B" | "A", CtiAdjustedV2Plan40InputMetadata>>;
@@ -535,11 +539,13 @@ export function buildCtiAdjustedV2Estimate(
   )
     fixed.push("plan39_calibration_years_override_rejected");
   const validation = {
-      B: validateArtifact("B", B, contract === "plan40"),
-      A: validateArtifact("A", A, contract === "plan40"),
+      B: validateArtifact("B", B, contract === "plan40" || options.validatePlan40Inputs === true),
+      A: validateArtifact("A", A, contract === "plan40" || options.validatePlan40Inputs === true),
     },
     plan40InputValidation =
-      contract === "plan40" ? validateCtiAdjustedV2Plan40Inputs(B, A, _L) : undefined,
+      contract === "plan40" || options.validatePlan40Inputs === true
+        ? validateCtiAdjustedV2Plan40Inputs(B, A, _L)
+        : undefined,
     diagnostics = [
       ...fixed,
       ...Object.values(validation).flatMap((v) => [...v.reasons, ...v.diagnostics]),
@@ -1079,7 +1085,7 @@ export function buildCtiAdjustedV2Estimate(
     categories: series,
     artifactValidation: validation,
     ...(plan40InputValidation ? { plan40InputValidation } : {}),
-    ...(contract === "plan40"
+    ...(contract === "plan40" || options.validatePlan40Inputs === true
       ? {
           plan40InputMetadata: Object.fromEntries(
             (["B", "A"] as const).flatMap((name) => {

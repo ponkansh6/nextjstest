@@ -12,7 +12,11 @@ import { loadTotalEarningDataInternal } from "../../server/lib/data-loader/earni
 import { loadCtiDataInternal } from "../../server/lib/data-loader/cpi";
 import { buildCtiFilePaths } from "../../server/lib/dataIo";
 import { projectQuarterlyPublicView } from "../../src/lib/quarterlyPublicProjection";
-import { SUPPORT_SERIES_KEY_NOMINAL } from "../../src/lib/chartConstants";
+import {
+  CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY,
+  CTI_ADJUSTED_V2_PUBLIC_REGISTRY,
+  SUPPORT_SERIES_KEY_NOMINAL,
+} from "../../src/lib/chartConstants";
 import { toCanonicalYearMonth } from "../../src/lib/yearMonth";
 import { toEarningsView } from "../../server/lib/view-models/dashboard";
 import type { SeriesMeasurement } from "../../src/types/chart";
@@ -397,13 +401,32 @@ describe("Earnings Data Integrity", () => {
     });
 
     it("Plan38: keeps the quarterly public projection free of legacy CTI/GDP/consumption keys", () => {
+      const foodKey = CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY.食料;
+      const foodMeasurement: SeriesMeasurement = {
+        key: foodKey,
+        label: foodKey,
+        unit: "指数",
+        source:
+          "e-Stat 公式Excel cti-distribution-adjusted-000040499087.xlsx / 総・四(原) / 000040499087",
+        valueType: "comparison",
+        value: 100,
+        status: "available",
+        reason: null,
+        frequency: "quarterly",
+        aggregation: "official_quarterly_adjusted_nominal_observation",
+        annualAnchorType: "official",
+        quarterlyDerived: true,
+        seriesType: "official_adjusted",
+        official: true,
+      };
       const projected = projectQuarterlyPublicView([
         {
           年: 2017,
           quarter: 4,
           label: "2017Q4",
           年月: "2017年10月",
-          [SUPPORT_SERIES_KEY_NOMINAL]: 100,
+          [foodKey]: 100,
+          [SUPPORT_SERIES_KEY_NOMINAL]: 999,
           "CTIミクロ基本系列（名目・原数値）": 101,
           "CTIミクロ基本系列（名目・参考）": 102,
           "CTIミクロ基本系列（名目・参考・延長）": 103,
@@ -411,9 +434,22 @@ describe("Earnings Data Integrity", () => {
           GDP名目比較指数: 105,
           "民間最終消費支出（名目・原値）": 106,
           "民間最終消費支出（名目・比較指数）": 107,
+          measurements: { [foodKey]: foodMeasurement },
         },
       ] as never)[0];
-      expect(projected).toHaveProperty(SUPPORT_SERIES_KEY_NOMINAL, 100);
+      expect(projected).toHaveProperty(foodKey, 100);
+      expect(projected).not.toHaveProperty(SUPPORT_SERIES_KEY_NOMINAL);
+      expect(projected.measurements?.[foodKey]).toMatchObject({
+        source:
+          "e-Stat 公式Excel cti-distribution-adjusted-000040499087.xlsx / 総・四(原) / 000040499087",
+        seriesType: "official_adjusted",
+        official: true,
+      });
+      expect(Object.keys(projected).filter((key) => key.startsWith("CTIミクロ調整系列（"))).toEqual(
+        CTI_ADJUSTED_V2_PUBLIC_REGISTRY.filter((entry) => entry.category !== "総合").map(
+          (entry) => entry.key,
+        ),
+      );
       const retiredCtiKeys = [
         "CTIミクロ基本系列（名目・原数値）",
         "CTIミクロ基本系列（名目・参考）",
@@ -423,6 +459,7 @@ describe("Earnings Data Integrity", () => {
         ...retiredCtiKeys,
         "GDP名目原値",
         "GDP名目比較指数",
+        SUPPORT_SERIES_KEY_NOMINAL,
         "民間最終消費支出（名目・原値）",
         "民間最終消費支出（名目・比較指数）",
       ])

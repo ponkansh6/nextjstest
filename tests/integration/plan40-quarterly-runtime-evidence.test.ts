@@ -165,6 +165,7 @@ function runtimeRows(
   const result = buildCtiAdjustedV2Estimate(inputs.B, inputs.A, undefined, {
     contract: "plan40",
   });
+  result.inputFingerprint = "sha256:plan39-runtime-evidence-fixture";
   if (publicationAccepted) result.publicationGate.accepted = true;
   return {
     result,
@@ -213,6 +214,7 @@ function metadataSnapshot(measurement: ReturnType<typeof measurementFor>) {
     note: isOfficialOtherResidual ? OFFICIAL_OTHER_RESIDUAL_NOTE : getMeasurementNote(measurement),
     model: measurement.model,
     estimateVersion: measurement.estimateVersion,
+    inputFingerprint: measurement.inputFingerprint,
     baseYear: measurement.baseYear,
     rawRange: measurement.rawRange,
     adoptedRange: measurement.adoptedRange,
@@ -311,6 +313,9 @@ function assertPlan40SurfaceParity(
       frequency: chartCell.getAttribute("data-frequency"),
       aggregation: chartCell.getAttribute("data-aggregation"),
       seriesType: chartCell.getAttribute("data-series-type"),
+      model: chartCell.getAttribute("data-model"),
+      estimateVersion: chartCell.getAttribute("data-estimate-version"),
+      inputFingerprint: chartCell.getAttribute("data-input-fingerprint"),
       sourceId: chartCell.getAttribute("data-source-id"),
       statInfId: chartCell.getAttribute("data-stat-inf-id"),
       householdScope: chartCell.getAttribute("data-household-scope"),
@@ -333,6 +338,9 @@ function assertPlan40SurfaceParity(
       frequency: expected.frequency,
       aggregation: expected.aggregation,
       seriesType: expected.seriesType,
+      model: expected.model ?? null,
+      estimateVersion: expected.estimateVersion ?? null,
+      inputFingerprint: expected.inputFingerprint ?? null,
       sourceId: expected.sourceId ?? null,
       statInfId: expected.statInfId ?? null,
       householdScope: expected.householdScope ?? null,
@@ -376,6 +384,13 @@ function assertPlan40SurfaceParity(
     expect(tableCell.getAttribute("data-measurement-bridge-coefficient")).toBe(
       expected.bridgeCoefficient === undefined ? null : String(expected.bridgeCoefficient),
     );
+    expect(tableCell.getAttribute("data-measurement-model")).toBe(expected.model ?? null);
+    expect(tableCell.getAttribute("data-measurement-estimate-version")).toBe(
+      expected.estimateVersion ?? null,
+    );
+    expect(tableCell.getAttribute("data-measurement-input-fingerprint")).toBe(
+      expected.inputFingerprint ?? null,
+    );
 
     const tooltipRow = defined(tooltip.container.querySelector(`[data-tooltip-key="${key}"]`));
     expect({
@@ -389,6 +404,9 @@ function assertPlan40SurfaceParity(
       status: tooltipRow.getAttribute("data-tooltip-status"),
       reason: tooltipRow.getAttribute("data-tooltip-reason") || null,
       seriesType: tooltipRow.getAttribute("data-tooltip-series-type"),
+      model: tooltipRow.getAttribute("data-tooltip-model"),
+      estimateVersion: tooltipRow.getAttribute("data-tooltip-estimate-version"),
+      inputFingerprint: tooltipRow.getAttribute("data-tooltip-input-fingerprint"),
       sourceId: tooltipRow.getAttribute("data-tooltip-source-id"),
       statInfId: tooltipRow.getAttribute("data-tooltip-stat-inf-id"),
       householdScope: tooltipRow.getAttribute("data-tooltip-household-scope"),
@@ -411,6 +429,9 @@ function assertPlan40SurfaceParity(
       status: expected.status,
       reason: expected.reason,
       seriesType: expected.seriesType,
+      model: expected.model ?? null,
+      estimateVersion: expected.estimateVersion ?? null,
+      inputFingerprint: expected.inputFingerprint ?? null,
       sourceId: expected.sourceId ?? null,
       statInfId: expected.statInfId ?? null,
       householdScope: expected.householdScope ?? null,
@@ -433,8 +454,15 @@ function assertPlan40SurfaceParity(
       "quarterlyDerived",
       "seriesType",
       "official",
+      "model",
+      "estimateVersion",
+      "inputFingerprint",
     ] as const) {
       const index = csvHeaders.indexOf(`${key}__${suffix}`);
+      if (expected[suffix] === undefined) {
+        expect(index).toBe(-1);
+        continue;
+      }
       expect(index).toBeGreaterThan(-1);
       const value = csvValues[index];
       const expectedValue =
@@ -704,19 +732,61 @@ describe("Plan40 phase-1 runtime evidence", () => {
     });
   });
 
-  it("keeps v2 ten categories absent for the legacy 2018Q1 adapter fixture", () => {
+  it("publishes canonical categories from legacy-kind rows and ignores poisoned aliases", () => {
+    const values = Object.fromEntries(keys.map((key, index) => [key, 201 + index]));
+    const measurements = Object.fromEntries(
+      keys.map((key, index) => {
+        const category = categories[index]!;
+        const isOther = category === "その他の消費支出";
+        const value = values[key]!;
+        return [
+          key,
+          {
+            key,
+            label: category,
+            unit: "指数",
+            source: isOther ? "official total minus nine categories" : "official quarterly row",
+            valueType: "comparison" as const,
+            value,
+            status: "available" as const,
+            reason: null,
+            frequency: "quarterly" as const,
+            aggregation: isOther
+              ? "derived_quarterly_residual_from_official_nominal_total_minus_nine_categories"
+              : "official_quarterly_adjusted_nominal_observation",
+            seriesType: isOther ? ("estimated_adjusted" as const) : ("official_adjusted" as const),
+            official: !isOther,
+            annualAnchorType: "official" as const,
+            quarterlyDerived: isOther,
+            model: "v2-bottom-up" as const,
+            estimateVersion: "plan39-v2" as const,
+            inputFingerprint: "sha256:legacy-kind-plan39-fixture",
+            ...(isOther ? { sourceRole: "derived_residual" } : {}),
+          },
+        ];
+      }),
+    );
     const legacyRow = {
       年: 2018,
       quarter: 1,
       label: "2018Q1",
       年月: "2018年1月",
       kind: "legacy-cti" as const,
-      ...Object.fromEntries(QUARTERLY_PUBLIC_NOMINAL_KEYS.map((key) => [key, 10])),
-      ...Object.fromEntries(keys.map((key) => [key, 999])),
+      ...values,
+      measurements,
+      "食料（名目）": 999_999,
+      "民間最終消費支出（名目）": 888_888,
     };
     const projected = defined(projectQuarterlyPublicView([legacyRow])[0]);
-    expect(keys.every((key) => projected[key] === undefined)).toBe(true);
-    expect(keys.every((key) => projected.measurements?.[key] === undefined)).toBe(true);
+    expect(keys.map((key) => projected[key])).toEqual(keys.map((key) => values[key]));
+    expect(Object.keys(projected.measurements ?? {}).sort()).toEqual([...keys].sort());
+    expect(projected["食料（名目）"]).toBeUndefined();
+    expect(projected["民間最終消費支出（名目）"]).toBeUndefined();
+    expect(projected.measurements?.[keys[0]!]).toMatchObject({
+      model: "v2-bottom-up",
+      estimateVersion: "plan39-v2",
+      inputFingerprint: "sha256:legacy-kind-plan39-fixture",
+    });
 
     const chart = render(
       createElement(ChartDataContract, {
@@ -730,7 +800,10 @@ describe("Plan40 phase-1 runtime evidence", () => {
           "data-series",
         ) ?? "[]",
       ),
-    ).not.toEqual(expect.arrayContaining(keys));
+    ).toEqual(QUARTERLY_PUBLIC_NOMINAL_KEYS);
+    expect(
+      chart.container.querySelector(`[data-series-key="${keys[0]}"]`)?.getAttribute("data-value"),
+    ).toBe(String(values[keys[0]!]));
 
     const table = render(
       createElement(DataTablesSection, {
@@ -744,14 +817,16 @@ describe("Plan40 phase-1 runtime evidence", () => {
         ],
       }),
     );
-    expect(keys.some((key) => table.container.querySelector(`[data-series-key="${key}"]`))).toBe(
-      false,
+    expect(keys.every((key) => table.container.querySelector(`[data-series-key="${key}"]`))).toBe(
+      true,
     );
     const csv = buildCsv(
       [projected as unknown as Record<string, unknown>],
       [...QUARTERLY_PUBLIC_NOMINAL_KEYS],
     );
-    expect(keys.some((key) => csv.includes(key))).toBe(false);
+    expect(keys.every((key) => csv.includes(key))).toBe(true);
+    expect(csv).not.toContain("999999");
+    expect(csv).not.toContain("888888");
   });
 
   it("projects one official quarterly measurement unchanged through the chart contract, tooltip, table, and CSV", () => {
@@ -762,7 +837,11 @@ describe("Plan40 phase-1 runtime evidence", () => {
     const measurement = measurementFor(source, key);
     const publicRows = projectQuarterlyPublicView(rows);
     const publicRow = defined(publicRows.find((row) => row.label === "2017Q1"));
-    expect(new Set([...QUARTERLY_PUBLIC_KEYS, ...keys]).size).toBe(32);
+    expect(QUARTERLY_PUBLIC_NOMINAL_KEYS).toHaveLength(10);
+    const canonicalNominalKeySet: ReadonlySet<string> = new Set(keys);
+    expect(
+      QUARTERLY_PUBLIC_KEYS.filter((publicKey) => canonicalNominalKeySet.has(publicKey)),
+    ).toHaveLength(10);
     const normalized = defined(normalizePublicChartData([publicRow], [key])[0]);
     expect(Object.keys(source.measurements ?? {}).sort()).toEqual([...keys].sort());
     const publicMeasurement = measurementFor(publicRow, key);

@@ -119,6 +119,9 @@ export function ChartDataContract({
                     ";",
                   )}
                   data-canonical-series={measurement?.canonicalSeries}
+                  data-model={measurement?.model}
+                  data-estimate-version={measurement?.estimateVersion}
+                  data-input-fingerprint={measurement?.inputFingerprint}
                   data-seasonality-source-id={measurement?.seasonalitySourceId}
                   data-target-source-id={measurement?.targetSourceId}
                   data-target-household-scope={measurement?.targetHouseholdScope}

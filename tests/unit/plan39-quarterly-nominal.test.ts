@@ -12,6 +12,7 @@ import type {
 } from "../../server/lib/ctiAdjustedConnectionEstimateV2";
 import { buildCsv } from "../../src/lib/csvExport";
 import { getMeasurementNote } from "../../src/types/chart";
+import { projectQuarterlyPublicView } from "../../src/lib/quarterlyPublicProjection";
 
 const seriesIndexByCategory = Object.fromEntries(
   CTI_ADJUSTED_V2_PUBLIC_CATEGORIES.filter((category) => category !== "総合").map(
@@ -321,6 +322,58 @@ describe("Plan39-v2 quarterly nominal projection", () => {
       if (typeof totalValue !== "number") throw new Error("fixture total value is missing");
       expect(totalValue - majorSum).toBe(-1);
     }
+  });
+
+  it("keeps poisoned legacy nominal aliases out of the canonical ten-series publication", () => {
+    const baselineRows = buildPlan39V2CtiNominalRows({
+      records: makeRecords(),
+      result: makeResult(),
+      officialQuarterly: makeOfficialQuarterly(),
+    });
+    const poisonedRows = buildPlan39V2CtiNominalRows({
+      records: [
+        ...makeRecords(),
+        ...Array.from({ length: 12 }, (_, index) => ({
+          variant: "nominal" as const,
+          seriesIndex: 11,
+          officialSeriesCode: "11",
+          seriesName: "その他（直接値）",
+          month: `2005-${String(index + 1).padStart(2, "0")}` as `${number}-${number}`,
+          rawValue: 999_999,
+          isMissing: false,
+        })),
+      ],
+      result: makeResult(),
+      officialQuarterly: makeOfficialQuarterly(),
+    });
+    const baseline = baselineRows.find((row) => row.label === "2005Q1")!;
+    const poisoned = poisonedRows.find((row) => row.label === "2005Q1")!;
+    const expectedPublishedKeys = expenseKeys;
+
+    expect(
+      Object.keys(poisoned).filter(
+        (key) => !["label", "quarter", "年", "年月", "kind", "measurements"].includes(key),
+      ),
+    ).toEqual(expectedPublishedKeys);
+    for (const key of expectedPublishedKeys) {
+      expect(poisoned[key]).toBe(baseline[key]);
+    }
+
+    const projected = projectQuarterlyPublicView([poisoned], "nominal")[0]!;
+    expect(expectedPublishedKeys.map((key) => projected[key])).toEqual(
+      expectedPublishedKeys.map((key) => poisoned[key]),
+    );
+    expect(Object.keys(projected.measurements ?? {}).sort()).toEqual(
+      [...expectedPublishedKeys].sort(),
+    );
+    const csv = buildCsv(
+      [projected as unknown as Record<string, unknown>],
+      expectedPublishedKeys,
+      expectedPublishedKeys,
+    );
+    expect(csv).toContain("その他の消費支出");
+    expect(csv).not.toContain("その他（直接値）");
+    expect(csv).not.toContain("999999");
   });
 
   it("uses the published 2017 quarter when a legacy monthly record is duplicated", () => {

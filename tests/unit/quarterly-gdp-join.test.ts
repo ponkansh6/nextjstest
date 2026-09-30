@@ -4,7 +4,12 @@ import {
   mergeQuarterlyGdpRows,
   type QuarterlyRow,
 } from "../../server/lib/view-models/quarterlyAggregation";
-import { SUPPORT_SERIES_KEY_NOMINAL, SUPPORT_SERIES_KEY_REAL } from "../../src/lib/chartConstants";
+import {
+  CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY,
+  CTI_ADJUSTED_V2_PUBLIC_REGISTRY,
+  SUPPORT_SERIES_KEY_NOMINAL,
+  SUPPORT_SERIES_KEY_REAL,
+} from "../../src/lib/chartConstants";
 
 const row = (year: number, quarter: number): QuarterlyRow => ({
   年: year,
@@ -41,12 +46,30 @@ describe("quarterly public projection boundary", () => {
   });
 
   it("keeps nominal CTI projection independent from GDP raw/comparison fields", () => {
+    const foodKey = CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY.食料;
+    const foodMeasurement = {
+      key: foodKey,
+      label: foodKey,
+      unit: "指数",
+      source:
+        "e-Stat 公式Excel cti-distribution-adjusted-000040499087.xlsx / 総・四(原) / 000040499087",
+      valueType: "comparison" as const,
+      value: 101.25,
+      status: "available" as const,
+      reason: null,
+      frequency: "quarterly" as const,
+      aggregation: "official_quarterly_adjusted_nominal_observation",
+      seriesType: "official_adjusted" as const,
+      official: true,
+    };
     const nominal = [
       {
         ...row(2005, 1),
-        [SUPPORT_SERIES_KEY_NOMINAL]: 101.25,
+        [foodKey]: foodMeasurement.value,
+        [SUPPORT_SERIES_KEY_NOMINAL]: 999,
         GDP名目原値: 400,
         GDP名目比較指数: 120,
+        measurements: { [foodKey]: foodMeasurement },
       },
     ];
     const projected = buildQuarterlyPublicViews(nominal, [], {
@@ -62,7 +85,21 @@ describe("quarterly public projection boundary", () => {
       ],
     });
 
-    expect(projected.nominal[0][SUPPORT_SERIES_KEY_NOMINAL]).toBe(101.25);
+    expect(projected.nominal[0][foodKey]).toBe(101.25);
+    expect(projected.nominal[0]!.measurements?.[foodKey]).toMatchObject({
+      source:
+        "e-Stat 公式Excel cti-distribution-adjusted-000040499087.xlsx / 総・四(原) / 000040499087",
+      seriesType: "official_adjusted",
+      official: true,
+    });
+    expect(
+      Object.keys(projected.nominal[0]!).filter((key) => key.startsWith("CTIミクロ調整系列（")),
+    ).toEqual(
+      CTI_ADJUSTED_V2_PUBLIC_REGISTRY.filter((entry) => entry.category !== "総合").map(
+        (entry) => entry.key,
+      ),
+    );
+    expect(projected.nominal[0]).not.toHaveProperty(SUPPORT_SERIES_KEY_NOMINAL);
     expect(projected.nominal[0]).not.toHaveProperty("GDP名目原値");
     expect(projected.nominal[0]).not.toHaveProperty("GDP名目比較指数");
     expect(projected.nominal[0]).not.toHaveProperty(SUPPORT_SERIES_KEY_REAL);

@@ -40,8 +40,6 @@ import {
 import {
   QUARTERLY_PUBLIC_NOMINAL_KEYS,
   QUARTERLY_PUBLIC_REAL_KEYS,
-  QUARTERLY_PLAN40_V2_EXPENSE_KEYS,
-  QUARTERLY_PLAN40_V2_NOMINAL_KEYS,
 } from "../../lib/quarterlyPublicProjection";
 import { DataTablesSection, type DataTableSpec } from "./DataTablesSection";
 import { normalizeSpendingChartData } from "./SpendingBarChart";
@@ -142,21 +140,10 @@ export default function CpiChart({
     hiddenQuarters,
   });
 
-  const nominalKeys = CONSUMPTION_NOMINAL_KEYS;
   const realKeys = CONSUMPTION_REAL_KEYS;
-  const nominalColors = nominalKeys.map(getColorForNominalKey);
-  // Plan40 rows carry the v2 ten-category registry explicitly. Keep the
-  // legacy contract in the same surface for 2018Q1+, where those fields are
-  // intentionally absent. The union is required by Recharts/table/CSV, while
-  // row measurements remain the source of truth for availability.
-  const hasPlan40Rows = filteredQuarterlyNominalData.some(
-    (row) =>
-      row.measurements !== undefined &&
-      QUARTERLY_PLAN40_V2_EXPENSE_KEYS.some((key) => row.measurements?.[key] !== undefined),
-  );
-  const nominalKeysWithSupport = [
-    ...(hasPlan40Rows ? QUARTERLY_PLAN40_V2_NOMINAL_KEYS : QUARTERLY_PUBLIC_NOMINAL_KEYS),
-  ];
+  // The quarterly nominal chart, table, tooltip and CSV expose the same ten
+  // canonical expense keys for every period. Legacy aliases stay internal.
+  const nominalKeysWithSupport = [...QUARTERLY_PUBLIC_NOMINAL_KEYS];
   const realKeysWithSupport = [...QUARTERLY_PUBLIC_REAL_KEYS];
   const nominalTableKeys = getPublicSpendingKeys(nominalKeysWithSupport);
   const realTableKeys = getPublicSpendingKeys(realKeysWithSupport);
@@ -178,16 +165,7 @@ export default function CpiChart({
   // selected quarterly projection.
   const nominalTableData = nominalPublicData;
   const realTableData = realPublicData;
-  const nominalColorsWithSupport = [
-    ...(hasPlan40Rows
-      ? nominalKeysWithSupport
-          .filter((key) => key !== SUPPORT_SERIES_KEY_NOMINAL)
-          .map(getColorForNominalKey)
-      : nominalColors),
-    "#94a3b8",
-    "#475569",
-    "#0f766e",
-  ];
+  const nominalColorsWithSupport = nominalKeysWithSupport.map(getColorForNominalKey);
   const realColors = realKeys.map((key) => {
     const nominalKey = key.replace("（実質）", "（名目）");
     return getColorForNominalKey(nominalKey);
@@ -239,7 +217,11 @@ export default function CpiChart({
     ];
 
     const pair = adjustedCategory
-      ? allPairs.find((p) => p.nominal === legacyNominalKey)
+      ? {
+          nominal: dataKey,
+          real: legacyRealKey ?? dataKey.replace("（名目）", "（実質）"),
+          label: adjustedCategory,
+        }
       : allPairs.find((p) => p.nominal === dataKey || p.real === dataKey);
     if (!pair) return;
 
@@ -320,29 +302,27 @@ export default function CpiChart({
           },
         ]
       : [];
-    const expense = nominalKeysWithSupport
-      .filter((key) => key !== SUPPORT_SERIES_KEY_NOMINAL)
-      .flatMap((key, order) => {
-        const row = nominalPublicData.find(
-          (candidate) =>
-            candidate.measurements !== undefined && candidate.measurements[key] !== undefined,
-        );
-        const measurement = row && row.measurements ? row.measurements[key] : undefined;
-        if (!measurement) return [];
-        return [
-          {
-            ...measurement,
-            label: getLegendLabel(key),
-            color: getColorForNominalKey(key),
-            displayName: getLegendLabel(key),
-            tooltipLabel: getLegendLabel(key),
-            legendLabel: getLegendLabel(key),
-            kind: "line",
-            type: "line",
-            order,
-          } satisfies SeriesMetadata,
-        ];
-      });
+    const expense = nominalKeysWithSupport.flatMap((key, order) => {
+      const row = nominalPublicData.find(
+        (candidate) =>
+          candidate.measurements !== undefined && candidate.measurements[key] !== undefined,
+      );
+      const measurement = row && row.measurements ? row.measurements[key] : undefined;
+      if (!measurement) return [];
+      return [
+        {
+          ...measurement,
+          label: getLegendLabel(key),
+          color: getColorForNominalKey(key),
+          displayName: getLegendLabel(key),
+          tooltipLabel: getLegendLabel(key),
+          legendLabel: getLegendLabel(key),
+          kind: "line",
+          type: "line",
+          order,
+        } satisfies SeriesMetadata,
+      ];
+    });
     return [...expense, ...support];
   })();
 

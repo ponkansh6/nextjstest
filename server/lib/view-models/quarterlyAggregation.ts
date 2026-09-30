@@ -101,6 +101,7 @@ const plan39InvalidMeasurement = (
   key: string,
   reason: string,
   annualAnchorType: "estimated" | "official",
+  inputFingerprint?: string,
   plan40Metadata?: {
     baseYear: number;
     rawRange: { startYear: number; endYear: number };
@@ -126,6 +127,7 @@ const plan39InvalidMeasurement = (
   quarterlyDerived: true,
   model: "v2-bottom-up",
   estimateVersion: "plan39-v2",
+  inputFingerprint,
   ...plan40Metadata,
 });
 
@@ -443,6 +445,7 @@ export function buildPlan39V2CtiNominalRows({
               candidate.key,
               commonReason,
               "estimated",
+              result.inputFingerprint,
               result.plan40InputMetadata?.A,
             )
           : {
@@ -462,6 +465,7 @@ export function buildPlan39V2CtiNominalRows({
               quarterlyDerived: true,
               model: "v2-bottom-up",
               estimateVersion: "plan39-v2",
+              inputFingerprint: result.inputFingerprint,
               ...result.plan40InputMetadata?.A,
             };
       }
@@ -765,7 +769,9 @@ export function computeQuarterlyAggregates(
   const realRows = getQuarterlyData(realKeys);
 
   nominalRows.push(
-    ...loadPlan39V2CtiNominalRows(loadCtiAdjustedV2Estimate({ contract: "plan40" })),
+    ...loadPlan39V2CtiNominalRows(
+      loadCtiAdjustedV2Estimate({ contract: "plan39", validatePlan40Inputs: true }),
+    ),
   );
   const coalescedNominalRows = coalesceQuarterlyRowsByPeriod(nominalRows);
   coalescedNominalRows.sort((left, right) => left.年 - right.年 || left.quarter - right.quarter);

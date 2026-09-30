@@ -1,10 +1,8 @@
 import {
-  CONSUMPTION_NOMINAL_KEYS,
   CONSUMPTION_REAL_KEYS,
   CTI_ADJUSTED_V2_PUBLIC_CATEGORIES,
   CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY,
   CTI_ADJUSTED_V2_PUBLIC_REGISTRY,
-  SUPPORT_SERIES_KEY_NOMINAL,
   SUPPORT_SERIES_KEY_REAL,
 } from "./chartConstants";
 import type { QuarterlyRow, QuarterlyRowKind, QuarterlyView } from "@/types/chart";
@@ -25,11 +23,8 @@ if (
   throw new Error("Plan40 quarterly public registry/key order mismatch");
 }
 
-/** The established legacy contract remains 22 keys; v2 keys are conditional row fields. */
-export const QUARTERLY_PUBLIC_NOMINAL_KEYS = [
-  ...CONSUMPTION_NOMINAL_KEYS,
-  SUPPORT_SERIES_KEY_NOMINAL,
-] as const;
+/** Public quarterly nominal stack: exactly the ten canonical expense series. */
+export const QUARTERLY_PUBLIC_NOMINAL_KEYS = [...CTI_ADJUSTED_V2_QUARTERLY_EXPENSE_KEYS] as const;
 export const QUARTERLY_PUBLIC_REAL_KEYS = [
   ...CONSUMPTION_REAL_KEYS,
   SUPPORT_SERIES_KEY_REAL,
@@ -45,19 +40,12 @@ export type QuarterlyPublicMode = "nominal" | "real";
 export const QUARTERLY_PLAN40_V2_EXPENSE_KEYS = [
   ...CTI_ADJUSTED_V2_QUARTERLY_EXPENSE_KEYS,
 ] as const;
-export const QUARTERLY_PLAN40_V2_NOMINAL_KEYS = [
-  ...QUARTERLY_PLAN40_V2_EXPENSE_KEYS,
-  ...QUARTERLY_PUBLIC_NOMINAL_KEYS,
-] as const;
+/** Compatibility export; Plan40 is a row-key legacy label, not the selected model. */
+export const QUARTERLY_PLAN40_V2_NOMINAL_KEYS = [...QUARTERLY_PLAN40_V2_EXPENSE_KEYS] as const;
 
-function publicKeysForRow(mode: QuarterlyPublicMode, kind: QuarterlyRowKind): readonly string[] {
-  if (
-    mode === "nominal" &&
-    (kind === "plan40-v2-cost-stack" || kind === "plan40-official-quarterly")
-  ) {
-    return QUARTERLY_PLAN40_V2_NOMINAL_KEYS;
-  }
-  return mode === "nominal" ? QUARTERLY_PUBLIC_NOMINAL_KEYS : QUARTERLY_PUBLIC_REAL_KEYS;
+function publicKeysForRow(mode: QuarterlyPublicMode, _kind: QuarterlyRowKind): readonly string[] {
+  if (mode === "nominal") return QUARTERLY_PUBLIC_NOMINAL_KEYS;
+  return QUARTERLY_PUBLIC_REAL_KEYS;
 }
 
 function publicQuarterLabel(row: QuarterlyRow): string {

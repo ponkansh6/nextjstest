@@ -41,6 +41,7 @@ export interface BuildCsvOptions {
     quarterlyDerived?: boolean;
     model?: "v2-bottom-up";
     estimateVersion?: "plan39-v2";
+    inputFingerprint?: string;
     sourceId?: string;
     statInfId?: string;
     householdScope?: string;
@@ -123,6 +124,27 @@ export const buildCsv = (
           return measurement?.seriesType !== undefined || measurement?.official !== undefined;
         }),
       ));
+  const includeInputFingerprintMetadata =
+    metadata.some(({ inputFingerprint }) => inputFingerprint !== undefined) ||
+    rows.some((row) =>
+      keys.some((key) => {
+        const measurement = rowMeasurementValue(row, key);
+        return (
+          measurement?.inputFingerprint !== undefined ||
+          (measurement?.model === "v2-bottom-up" && measurement.estimateVersion === "plan39-v2")
+        );
+      }),
+    );
+  const includeModelMetadata =
+    metadata.some(
+      ({ model, estimateVersion }) => model !== undefined || estimateVersion !== undefined,
+    ) ||
+    rows.some((row) =>
+      keys.some((key) => {
+        const measurement = rowMeasurementValue(row, key);
+        return measurement?.model !== undefined || measurement?.estimateVersion !== undefined;
+      }),
+    );
   const includeDerivedAxisMetadata =
     metadata.some(
       ({ annualAnchorType, quarterlyDerived }) =>
@@ -165,6 +187,8 @@ export const buildCsv = (
       ? [
           `${key}__seriesType`,
           `${key}__official`,
+          ...(includeModelMetadata ? [`${key}__model`, `${key}__estimateVersion`] : []),
+          ...(includeInputFingerprintMetadata ? [`${key}__inputFingerprint`] : []),
           ...(includeDerivedAxisMetadata
             ? [`${key}__annualAnchorType`, `${key}__quarterlyDerived`]
             : []),
@@ -224,6 +248,9 @@ export const buildCsv = (
         valueType,
         seriesType,
         official,
+        model,
+        estimateVersion,
+        inputFingerprint,
         annualAnchorType,
         quarterlyDerived,
         value,
@@ -255,6 +282,8 @@ export const buildCsv = (
         valueType ?? "",
         ...(includeProvenanceMetadata
           ? [seriesType ?? "", official === undefined ? "" : String(official)].concat(
+              includeModelMetadata ? [model ?? "", estimateVersion ?? ""] : [],
+              includeInputFingerprintMetadata ? [inputFingerprint ?? ""] : [],
               includeDerivedAxisMetadata
                 ? [
                     annualAnchorType ?? "",

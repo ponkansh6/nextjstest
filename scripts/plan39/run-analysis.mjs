@@ -253,11 +253,13 @@ function rollingLooVerdict(rollingLoo) {
   };
 }
 
-function v2PublicationGate(v2Gate, rollingLoo) {
+function v2PublicationGate(v2Gate, rollingLoo, inputFingerprint) {
   const gate = evaluateCtiAdjustedPublicationGate({
     baseGate: v2Gate,
     rollingLoo,
     evidenceSchema: CTI_ADJUSTED_PUBLICATION_GATE_SCHEMA,
+    evidenceInputFingerprint: inputFingerprint,
+    expectedInputFingerprint: inputFingerprint,
   });
   return {
     ...v2Gate,
@@ -273,7 +275,7 @@ function v2PublicationGate(v2Gate, rollingLoo) {
   };
 }
 
-function v2AuditSection(v2, gammaScenarios, standard, rollingLoo) {
+function v2AuditSection(v2, gammaScenarios, standard, rollingLoo, inputFingerprint) {
   const other = Object.fromEntries(
     v2.years.map((year) => {
       const row = v2.rows.find((candidate) => candidate.year === year);
@@ -339,7 +341,7 @@ function v2AuditSection(v2, gammaScenarios, standard, rollingLoo) {
       diagnostics: v2.benchmarkGDiagnostics,
     },
     boundary2016To2017: boundary,
-    publicationGate: v2PublicationGate(v2.publicationGate, rollingLoo),
+    publicationGate: v2PublicationGate(v2.publicationGate, rollingLoo, inputFingerprint),
     gammaScenarios,
   };
 }
@@ -455,7 +457,6 @@ async function run(args) {
     snapshot.inputs.L,
   );
   const rollingLooCheck = rollingLooVerdict(rollingLoo);
-  const v2Audit = v2AuditSection(v2, sensitivity.gammaScenarios, standard, rollingLoo);
   const inputFingerprint = sha256(
     JSON.stringify({
       manifest: snapshot.hashes.manifest,
@@ -463,6 +464,13 @@ async function run(args) {
       artifacts: snapshot.hashes.artifacts,
       householdComposition: snapshot.hashes.householdComposition,
     }),
+  );
+  const v2Audit = v2AuditSection(
+    v2,
+    sensitivity.gammaScenarios,
+    standard,
+    rollingLoo,
+    `sha256:${inputFingerprint}`,
   );
   const generatedAt = new Date().toISOString();
   const result = {

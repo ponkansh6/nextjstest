@@ -10,6 +10,8 @@ import { projectQuarterlyPublicView } from "../../src/lib/quarterlyPublicProject
 import { buildPlan38CtiNominalRowsFromRecords } from "../../server/lib/view-models/quarterlyAggregation";
 import { buildCsv } from "../../src/lib/csvExport";
 import {
+  CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY,
+  CTI_ADJUSTED_V2_PUBLIC_REGISTRY,
   QUARTERLY_GDP_RAW_NOMINAL_KEY,
   SUPPORT_SERIES_KEY_NOMINAL,
   SUPPORT_SERIES_KEY_REAL,
@@ -131,7 +133,7 @@ describe("Plan38 CTI nominal quarterly support", () => {
     )[0];
     expect(row).not.toHaveProperty("GDP名目原値");
     expect(row).not.toHaveProperty("GDP名目比較指数");
-    expect(row.measurements).not.toHaveProperty("GDP名目原値");
+    expect(row.measurements?.["GDP名目原値"]).toBeUndefined();
   });
 
   it("ignores artifact records outside the fixed Plan38 window", () => {
@@ -182,37 +184,63 @@ describe("Plan38 CTI nominal quarterly support", () => {
   });
 
   it("preserves the same row metadata through public projection and CSV", () => {
-    const measurement = aggregateCtiBasicNominalQuarterly(records()).measurements.get("2005Q1");
-    if (!measurement || measurement.value === null)
-      throw new Error("valid CTI measurement missing");
+    const key = CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY.食料;
+    const measurement = {
+      key,
+      label: key,
+      unit: "指数",
+      source:
+        "e-Stat 公式Excel cti-distribution-adjusted-000040499087.xlsx / 総・四(原) / 000040499087",
+      valueType: "comparison" as const,
+      value: 12.34,
+      status: "available" as const,
+      reason: null,
+      frequency: "quarterly" as const,
+      aggregation: "official_quarterly_adjusted_nominal_observation",
+      seriesType: "official_adjusted" as const,
+      official: true,
+    };
     const rows = projectQuarterlyPublicView([
       {
         年: 2005,
         quarter: 1,
         label: "2005Q1",
         年月: "2005年1月",
-        [SUPPORT_SERIES_KEY_NOMINAL]: measurement.value,
-        measurements: { [SUPPORT_SERIES_KEY_NOMINAL]: measurement },
+        [key]: measurement.value,
+        measurements: { [key]: measurement },
       },
     ]);
-    const csv = buildCsv(
-      rows as unknown as Record<string, unknown>[],
-      [SUPPORT_SERIES_KEY_NOMINAL],
-      ["CTI"],
-      { metadata: [measurement] },
+    const csv = buildCsv(rows as unknown as Record<string, unknown>[], [key], ["CTI"], {
+      metadata: [measurement],
+    });
+    expect(rows[0]![key]).toBe(12.34);
+    expect(rows[0]!.measurements?.[key]).toEqual(measurement);
+    expect(rows[0]!.measurements?.[SUPPORT_SERIES_KEY_NOMINAL]).toBeUndefined();
+    expect(csv).toContain(
+      "e-Stat 公式Excel cti-distribution-adjusted-000040499087.xlsx / 総・四(原) / 000040499087",
     );
-    expect(rows[0]!.measurements?.[SUPPORT_SERIES_KEY_NOMINAL]).toEqual(measurement);
-    expect(csv).toContain("e-Stat 公式CTI長期artifact 000040499070");
     expect(csv).toContain("__frequency");
     expect(csv).toContain("__aggregation");
     expect(csv).toContain("quarterly");
-    expect(csv).toContain("simple_mean_of_three_calendar_months");
-    expect(csv).toContain(",valid,");
+    expect(csv).toContain("official_quarterly_adjusted_nominal_observation");
+    expect(csv).toContain("official_adjusted");
+    expect(csv).toContain(",available,");
   });
 
   it("projects only the requested mode and never leaks GDP measurements into nominal CTI", () => {
     const ctiMeasurement = aggregateCtiBasicNominalQuarterly(records()).measurements.get("2005Q1");
     if (!ctiMeasurement) throw new Error("CTI measurement missing");
+    const foodKey = CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY.食料;
+    const nominalMeasurement = {
+      ...ctiMeasurement,
+      key: foodKey,
+      label: foodKey,
+      source:
+        "e-Stat 公式Excel cti-distribution-adjusted-000040499087.xlsx / 総・四(原) / 000040499087",
+      valueType: "comparison" as const,
+      seriesType: "official_adjusted" as const,
+      official: true,
+    };
     const gdpMeasurement = {
       key: QUARTERLY_GDP_RAW_NOMINAL_KEY,
       label: "GDP名目原値",
@@ -232,11 +260,11 @@ describe("Plan38 CTI nominal quarterly support", () => {
           quarter: 1,
           label: "2005Q1",
           年月: "2005Q1",
-          [SUPPORT_SERIES_KEY_NOMINAL]: ctiMeasurement.value,
+          [foodKey]: nominalMeasurement.value,
           [SUPPORT_SERIES_KEY_REAL]: 202,
           [QUARTERLY_GDP_RAW_NOMINAL_KEY]: 999,
           measurements: {
-            [SUPPORT_SERIES_KEY_NOMINAL]: ctiMeasurement,
+            [foodKey]: nominalMeasurement,
             [SUPPORT_SERIES_KEY_REAL]: { ...ctiMeasurement, key: SUPPORT_SERIES_KEY_REAL },
             [QUARTERLY_GDP_RAW_NOMINAL_KEY]: gdpMeasurement,
           },
@@ -244,10 +272,17 @@ describe("Plan38 CTI nominal quarterly support", () => {
       ],
       "nominal",
     );
-    expect(nominal[0]).toHaveProperty(SUPPORT_SERIES_KEY_NOMINAL, ctiMeasurement.value);
+    expect(nominal[0]).toHaveProperty(foodKey, ctiMeasurement.value);
+    expect(nominal[0]!.measurements?.[foodKey]).toMatchObject({
+      source:
+        "e-Stat 公式Excel cti-distribution-adjusted-000040499087.xlsx / 総・四(原) / 000040499087",
+      seriesType: "official_adjusted",
+      official: true,
+    });
     expect(nominal[0]).not.toHaveProperty(SUPPORT_SERIES_KEY_REAL);
+    expect(nominal[0]).not.toHaveProperty(SUPPORT_SERIES_KEY_NOMINAL);
     expect(nominal[0]).not.toHaveProperty(QUARTERLY_GDP_RAW_NOMINAL_KEY);
-    expect(nominal[0]!.measurements).toEqual({ [SUPPORT_SERIES_KEY_NOMINAL]: ctiMeasurement });
+    expect(Object.keys(nominal[0]!.measurements ?? {})).toEqual([foodKey]);
   });
 
   it("does not create values outside 2005Q1-2017Q4", () => {
@@ -257,6 +292,7 @@ describe("Plan38 CTI nominal quarterly support", () => {
   });
 
   it("does not expose legacy CTI, GDP, or consumption columns through the quarterly projection", () => {
+    const foodKey = CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY.食料;
     const rows = projectQuarterlyPublicView(
       [
         {
@@ -264,7 +300,8 @@ describe("Plan38 CTI nominal quarterly support", () => {
           quarter: 4,
           label: "2017Q4",
           年月: "2017年10月",
-          [SUPPORT_SERIES_KEY_NOMINAL]: 100,
+          [foodKey]: 100,
+          [SUPPORT_SERIES_KEY_NOMINAL]: 999,
           "CTIミクロ基本系列（名目・原数値）": 101,
           "CTIミクロ基本系列（名目・参考）": 102,
           "CTIミクロ基本系列（名目・参考・延長）": 103,
@@ -285,7 +322,13 @@ describe("Plan38 CTI nominal quarterly support", () => {
       "民間最終消費支出（実質・原値）",
       "民間最終消費支出（実質・比較指数）",
     ];
-    expect(rows[0]).toHaveProperty(SUPPORT_SERIES_KEY_NOMINAL, 100);
+    expect(rows[0]).toHaveProperty(foodKey, 100);
+    expect(rows[0]).not.toHaveProperty(SUPPORT_SERIES_KEY_NOMINAL);
+    expect(Object.keys(rows[0]!).filter((key) => key.startsWith("CTIミクロ調整系列（"))).toEqual(
+      CTI_ADJUSTED_V2_PUBLIC_REGISTRY.filter((entry) => entry.category !== "総合").map(
+        (entry) => entry.key,
+      ),
+    );
     for (const key of forbidden) expect(rows[0]).not.toHaveProperty(key);
   });
 });

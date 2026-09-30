@@ -69,6 +69,7 @@ export interface TooltipSeriesMetadata {
   quarterlyDerived?: boolean;
   model?: "v2-bottom-up";
   estimateVersion?: "plan39-v2";
+  inputFingerprint?: string;
 }
 
 export type SeriesType = "estimated_adjusted" | "official_adjusted" | "unavailable";
@@ -113,6 +114,8 @@ export interface SeriesMeasurement {
   /** Plan39-v2 provenance, retained across all public surfaces. */
   model?: "v2-bottom-up";
   estimateVersion?: "plan39-v2";
+  /** Fingerprint of the exact B/A/L/Pi input snapshot used for Plan39. */
+  inputFingerprint?: string;
   /** Plan40 annual-anchor contract provenance for derived quarterly rows. */
   baseYear?: number | null;
   rawRange?: { startYear: number; endYear: number };

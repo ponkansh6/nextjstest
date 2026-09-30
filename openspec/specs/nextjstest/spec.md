@@ -4480,3 +4480,39 @@ JEVは、全体lint 0 error/0 warning、React console warning解消、およびP
 - **WHEN** 利用者がPlan40 v2の費目凡例をクリックする、**THEN** 対応するlegacy名目キーとクリックされたv2キーを同時にhiddenへ反映し、表示中の棒と凡例の状態を一致させる。実質側は対応するlegacy実質キーを切り替える。
 - **WHEN** モバイル利用者が棒を短くタップして停止する、**THEN** tooltipを表示したままにし、縦方向のスワイプとして判定された操作ではtooltipを閉じる。
 - **WHEN** 範囲変更E2EがChartDataContractの系列セルを数える、**THEN** Plan40 v2系列が存在しない行を待機失敗にせず、その行に実在する数値セルだけを描画本数との比較対象にする。
+
+## SharedPlan 47: 名目消費10費目のcanonical系列統合（現行優先仕様）
+
+本節は名目消費の10費目公開契約について、Plan38/40/41および旧続編にある相反する記述に優先する。旧節の実装チェックポイントや検証記録は当時の履歴として保持するが、そこにある「Plan40を現行採用する」「世帯構成補正を適用しない」「旧名目キーとv2キーを同時に公開する」という記述は現行要件ではない。計画書に記載された実装前の観測・制約を実装済みの事実として扱わず、公開契約は以下のWHEN/THENによって定める。
+
+### Data Sources
+
+2005Q1–2016Q4は、Plan39のnominal B/A接続年次アンカーに既存の二人以上世帯割合（Pi）による費目別世帯構成補正を適用し、名目月次系列の季節形状で四半期へ配分した推定系列を使う。対象期間の年次値には無補正Plan40 baseを採用しない。2017Q1以降は統計表 `000040499087` の総世帯・2025年基準・「総・四(原)」にある公式調整済み名目四半期の9費目を使う。公式総合から9費目を差し引いた「その他の消費支出」は派生残差として扱い、公式観測費目とは区別する。
+
+採用系列は期間ごと・canonical費目ごとに一つとする。Plan39の保存分析・manifest・B/A/L/Pi入力fingerprintおよび既存publication gateを照合し、Plan40由来の有用なsource metadata、coverage、base year、frequency等の検査はモデル選択と分離したinput-integrity gateとして保つ。入力の一致やgate状態を確認できないことを、保存結果の `accepted` 値だけで補わない。
+
+### Data Flow
+
+nominal B/A、Piおよび関連artifact/manifest → 入力metadata・範囲・hash・費目・単位・基準年・頻度検証 → Plan39補正年次アンカーと一致する分析証拠・publication gateの確認 → 2005–2016の季節配分済み推定、または2017Q1以降の公式四半期9費目と公式総合由来Other残差 → 期間別source selection → canonical 10費目の公開投影 → `CpiChart` / `SpendingBarChart`、tooltip、data table、CSV。
+
+期間別のsource selectionは公開投影前に行い、チャート・表・tooltip・CSVへ同じ選択済み値とmeasurement provenanceを渡す。旧名目aliasや互換用v2名を同じ公開stackへ重ねず、aliasの値が有効・極端値・poison値のいずれであってもcanonical出力に影響させない。公式その他残差は公式totalとの整合用derived measurementとして由来を保持する。
+
+### Data Model
+
+公開名目行は `src/types/chart.ts` の `QuarterlyRow` と `SeriesMeasurement` / `SeriesDescriptor` を用い、費目ごとにcanonicalなseries key/descriptorを一つだけ持つ。source期間、値、status/reason、単位、基準年、頻度、集計方法、source、model、official/derived区分およびfingerprint由来のprovenanceをmeasurementに保持する。2005–2016のPlan39値は推定・非公式の四半期派生値、2017Q1以降の9費目は公式四半期観測値である。Otherは総合から9費目を差し引いた残差で、歴史推定と公式期間のどちらも独立した公式費目として扱わない。総合値は10番目のstack費目に含めない。
+
+### Component Tree
+
+Plan39 nominal B/A・Pi loaderとmanifest/evidence validation → `ctiAdjustedConnectionEstimateV2.ts` のPlan39年次アンカー → `server/lib/view-models/quarterlyAggregation.ts` の歴史季節配分および公式四半期loader・期間別選択 → `src/lib/quarterlyPublicProjection.ts` のcanonical名目投影 → `CpiChart` → `SpendingBarChart` / tooltip / data table / CSV。
+
+### Requirements
+
+- **WHEN** 2005Q1–2016Q4の年次アンカーを公開候補として計算する、**THEN** nominal B/A接続値に既存Plan39のPi世帯構成補正を適用し、Plan40の無補正baseを採用値として使わない。
+- **WHEN** 有効な歴史年次アンカーと対象年の12か月季節入力が揃う、**THEN** 各四半期値を「補正済み年次アンカー × 当該四半期3か月平均 ÷ 同年12か月平均」で算出し、同年の四半期平均が年次アンカーと一致する。
+- **WHEN** 2017Q1以降の公式四半期行が有効である、**THEN** 9費目はe-Stat公式四半期値をそのまま採り、月次平均・Plan39推定値・旧名目値を加算またはfallbackしない。
+- **WHEN** 公式四半期のOtherを構成する、**THEN** 公式総合から公式9費目を引いた残差とし、measurementにderived provenanceを付けて `official=false` と識別する。10費目合計は丸め許容内で公式総合に一致し、総合自体をstack費目に含めない。
+- **WHEN** 名目公開row、projection、chart stack、tableまたはCSVを生成する、**THEN** 期間ごとにcanonical 10費目だけを一度ずつ含め、旧名目aliasとv2/互換名キーの二重投影を行わない。aliasへpoison値を設定してもcanonical 10値とstack合計は変わらず、追加stack keyが公開されない。
+- **WHEN** Plan39モデルと現在のB/A/L/Pi・manifest fingerprintが保存analysisに一致しない、またはinput-integrity/publication gateの必須条件を確認できない、**THEN** 対象推定値を`null`/`unavailable`と機械可読reasonで公開し、無補正Plan40値やlegacy aliasで穴埋めしない。必要な分析を対応するモデル・入力で再評価する。
+- **WHEN** 公式artifact、sidecar、manifest、hash、必要期間、category mappingまたは公式行が欠損・不正である、**THEN** 公式期間を推定値・月次値・legacy aliasで埋めず、既存のunavailable marker、`null`、status/reasonを保持する。
+- **WHEN** chart、tooltip、data table、CSVで同一期間・費目を表示する、**THEN** 値、canonical category、status/reason、source、model、official/derived区分、単位、frequency、aggregationおよびprovenanceが同じmeasurementに基づき一致する。
+- **WHEN** 2016Q4から2017Q1へ移る、**THEN** 2016Q4まではPlan39補正済み歴史推定、2017Q1からは公式四半期sourceと明示し、接続点の再基準化・平滑化や公式値への補正式適用を暗黙に行わない。

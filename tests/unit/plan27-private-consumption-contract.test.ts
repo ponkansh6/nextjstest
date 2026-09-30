@@ -5,6 +5,7 @@ import {
   loadCtiBasicSeries2025,
 } from "../../server/lib/ctiBasicSeries2025LongTerm";
 import {
+  CTI_ADJUSTED_V2_PUBLIC_REGISTRY,
   COMPARISON_SERIES_REGISTRY,
   CTI_BASIC_RAW_KEY,
   CTI_BASIC_SERIES_DESCRIPTORS,
@@ -51,7 +52,12 @@ describe("Plan27 private-consumption source contract", () => {
     );
 
     expect(expected.series).toBe(SUPPORT_SERIES_KEY_NOMINAL);
-    expect(QUARTERLY_PUBLIC_NOMINAL_KEYS).toContain(expected.series);
+    const canonicalNominalKeys = CTI_ADJUSTED_V2_PUBLIC_REGISTRY.filter(
+      (entry) => entry.category !== "総合",
+    ).map((entry) => entry.key);
+    expect(QUARTERLY_PUBLIC_NOMINAL_KEYS).toEqual(canonicalNominalKeys);
+    expect(QUARTERLY_PUBLIC_NOMINAL_KEYS).toHaveLength(10);
+    expect(QUARTERLY_PUBLIC_NOMINAL_KEYS).not.toContain(expected.series);
     expect(sourceDescriptor).toMatchObject({
       key: CTI_BASIC_RAW_KEY,
       unit: "指数",

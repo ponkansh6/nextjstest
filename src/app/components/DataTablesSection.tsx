@@ -118,6 +118,9 @@ export function DataTablesSection({ tables }: DataTablesSectionProps) {
                                 ";",
                               )}
                               data-measurement-canonical-series={measurement.canonicalSeries}
+                              data-measurement-model={measurement.model}
+                              data-measurement-estimate-version={measurement.estimateVersion}
+                              data-measurement-input-fingerprint={measurement.inputFingerprint}
                               data-measurement-seasonality-source-id={
                                 measurement.seasonalitySourceId
                               }

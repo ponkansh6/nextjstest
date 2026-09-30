@@ -289,13 +289,17 @@ describe("Plan39 annual adjusted measurement parity", () => {
     const key = CTI_ADJUSTED_PUBLIC_KEYS[0];
 
     for (const row of [estimated, official, unavailable]) {
-      const measurement = row.measurements[key];
+      const inputFingerprint = "sha256:plan39-public-metadata-fixture";
+      const measurement = { ...row.measurements[key], inputFingerprint };
       const displayRow = {
         年: row.year,
         [key]: measurement.value,
-        measurements: row.measurements,
+        measurements: { ...row.measurements, [key]: measurement },
       };
-      const csv = buildCsv([displayRow], [key], undefined, { metadata: [measurement] });
+      const csv = buildCsv([displayRow], [key], undefined, {
+        metadata: [measurement],
+      });
+      const csvHeaders = csv.trim().split("\r\n")[0].split(",");
       const csvFields = csv.trim().split("\r\n")[1].split(",");
 
       expect(measurement.value).toBe(row.values["総合"]);
@@ -304,11 +308,30 @@ describe("Plan39 annual adjusted measurement parity", () => {
       expect(measurement.seriesType).toBe(row.seriesType);
       expect(measurement.official).toBe(row.official);
       expect(displayRow[key]).toBe(measurement.value);
+      expect(csvHeaders.slice(2)).toEqual([
+        `${key}__label`,
+        `${key}__valueType`,
+        `${key}__seriesType`,
+        `${key}__official`,
+        `${key}__model`,
+        `${key}__estimateVersion`,
+        `${key}__inputFingerprint`,
+        `${key}__value`,
+        `${key}__unit`,
+        `${key}__source`,
+        `${key}__frequency`,
+        `${key}__aggregation`,
+        `${key}__status`,
+        `${key}__reason`,
+      ]);
       expect(csvFields.slice(2)).toEqual([
         measurement.label,
         measurement.valueType,
         measurement.seriesType,
         String(measurement.official),
+        measurement.model,
+        measurement.estimateVersion,
+        inputFingerprint,
         measurement.value === null ? "" : String(measurement.value),
         measurement.unit,
         measurement.source,

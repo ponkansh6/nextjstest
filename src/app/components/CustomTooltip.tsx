@@ -33,6 +33,9 @@ type TooltipDisplayPayload = NonNullable<CustomTooltipProps["payload"]>[number] 
   official?: boolean;
   annualAnchorType?: "estimated" | "official";
   quarterlyDerived?: boolean;
+  model?: "v2-bottom-up";
+  estimateVersion?: "plan39-v2";
+  inputFingerprint?: string;
 };
 
 type TooltipMeasurement = Partial<
@@ -63,6 +66,9 @@ type TooltipMeasurement = Partial<
     | "official"
     | "annualAnchorType"
     | "quarterlyDerived"
+    | "model"
+    | "estimateVersion"
+    | "inputFingerprint"
   >
 >;
 
@@ -193,6 +199,9 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
                 official: hasProvenance ? measurement.official : undefined,
                 annualAnchorType: measurement.annualAnchorType,
                 quarterlyDerived: measurement.quarterlyDerived,
+                model: measurement.model,
+                estimateVersion: measurement.estimateVersion,
+                inputFingerprint: measurement.inputFingerprint,
               };
             }),
           ...(canIncludeUnmappedPayload
@@ -398,6 +407,9 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
               data-tooltip-source-role={entry.sourceRole}
               data-tooltip-source-derived-from-columns={entry.sourceDerivedFromColumns?.join(";")}
               data-tooltip-canonical-series={entry.canonicalSeries}
+              data-tooltip-model={entry.model}
+              data-tooltip-estimate-version={entry.estimateVersion}
+              data-tooltip-input-fingerprint={entry.inputFingerprint}
               data-tooltip-seasonality-source-id={entry.seasonalitySourceId}
               data-tooltip-target-source-id={entry.targetSourceId}
               data-tooltip-target-household-scope={entry.targetHouseholdScope}

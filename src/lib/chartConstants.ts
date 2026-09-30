@@ -415,6 +415,7 @@ export interface SeriesMetadata {
   quarterlyDerived?: boolean;
   model?: "v2-bottom-up";
   estimateVersion?: "plan39-v2";
+  inputFingerprint?: string;
   descriptor?: {
     key: string;
     label: string;
@@ -451,6 +452,9 @@ export interface TooltipSeriesProjection {
   official?: boolean;
   annualAnchorType?: "estimated" | "official";
   quarterlyDerived?: boolean;
+  model?: "v2-bottom-up";
+  estimateVersion?: "plan39-v2";
+  inputFingerprint?: string;
 }
 
 /** Project one display contract into the metadata consumed by CustomTooltip. */
@@ -488,6 +492,9 @@ export const projectTooltipMetadata = (
           official,
           annualAnchorType,
           quarterlyDerived,
+          model,
+          estimateVersion,
+          inputFingerprint,
           descriptor,
         },
         index,
@@ -517,6 +524,9 @@ export const projectTooltipMetadata = (
         ...((quarterlyDerived ?? descriptor?.quarterlyDerived) === undefined
           ? {}
           : { quarterlyDerived: quarterlyDerived ?? descriptor?.quarterlyDerived }),
+        ...(model === undefined ? {} : { model }),
+        ...(estimateVersion === undefined ? {} : { estimateVersion }),
+        ...(inputFingerprint === undefined ? {} : { inputFingerprint }),
       }),
     );
 };

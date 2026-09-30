@@ -10,7 +10,13 @@ import {
 import {
   projectQuarterlyPublicView,
   QUARTERLY_PUBLIC_KEYS,
+  QUARTERLY_PUBLIC_NOMINAL_KEYS,
 } from "../../src/lib/quarterlyPublicProjection";
+import {
+  CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY,
+  CTI_ADJUSTED_V2_PUBLIC_REGISTRY,
+  SUPPORT_SERIES_KEY_NOMINAL,
+} from "../../src/lib/chartConstants";
 
 describe("Plan21 quarterly GDP artifacts", () => {
   const paths = buildCtiFilePaths();
@@ -19,10 +25,16 @@ describe("Plan21 quarterly GDP artifacts", () => {
     const internal = loadQuarterlyGdpData();
     expect(internal.rows[0]).toHaveProperty("nominalRaw");
     expect(internal.rows[0]).toHaveProperty("realRaw");
-    expect(QUARTERLY_PUBLIC_KEYS).toEqual(
-      expect.arrayContaining(["CTIミクロ四半期系列（名目）", "民間最終消費支出（実質）"]),
+    const canonicalNominalKeys = CTI_ADJUSTED_V2_PUBLIC_REGISTRY.filter(
+      (entry) => entry.category !== "総合",
+    ).map((entry) => entry.key);
+    expect(QUARTERLY_PUBLIC_NOMINAL_KEYS).toEqual(canonicalNominalKeys);
+    expect(QUARTERLY_PUBLIC_NOMINAL_KEYS).toHaveLength(10);
+    expect(QUARTERLY_PUBLIC_KEYS).toContain("民間最終消費支出（実質）");
+    expect(QUARTERLY_PUBLIC_KEYS).not.toContain(SUPPORT_SERIES_KEY_NOMINAL);
+    expect(QUARTERLY_PUBLIC_NOMINAL_KEYS).not.toContain(
+      CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY.総合,
     );
-    expect(QUARTERLY_PUBLIC_KEYS).toHaveLength(22);
     const projected = projectQuarterlyPublicView(
       [{ label: "2025Q1", quarter: 1, 年: 2025, 年月: "2025年1月", GDP名目原値: 1 } as any],
       "nominal",

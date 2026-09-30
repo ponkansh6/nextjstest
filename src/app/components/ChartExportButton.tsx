@@ -87,6 +87,8 @@ export const ChartExportButton: React.FC<ChartExportButtonProps> = ({
             typeof current.quarterlyDerived === "boolean" ? current.quarterlyDerived : undefined,
           model: current.model === "v2-bottom-up" ? "v2-bottom-up" : undefined,
           estimateVersion: current.estimateVersion === "plan39-v2" ? "plan39-v2" : undefined,
+          inputFingerprint:
+            typeof current.inputFingerprint === "string" ? current.inputFingerprint : undefined,
         } satisfies NonNullable<BuildCsvOptions["metadata"]>[number],
       ];
     });
@@ -107,6 +109,7 @@ export const ChartExportButton: React.FC<ChartExportButtonProps> = ({
         quarterlyDerived,
         model,
         estimateVersion,
+        inputFingerprint,
       }) => ({
         key,
         label,
@@ -124,12 +127,17 @@ export const ChartExportButton: React.FC<ChartExportButtonProps> = ({
         quarterlyDerived,
         model,
         estimateVersion,
+        inputFingerprint,
       }),
     );
     const csv = withBom(
       buildCsv(data, keys, headers, {
         metadata: [...csvMetadataRows, ...rowMetadata],
         includeProvenanceMetadata:
+          csvMetadataRows.some(
+            (measurement) =>
+              measurement.seriesType !== undefined || measurement.official !== undefined,
+          ) ||
           keys.includes(SUPPORT_SERIES_KEY_NOMINAL) ||
           !data.some((row) => row.measurements && typeof row.measurements === "object"),
       }),

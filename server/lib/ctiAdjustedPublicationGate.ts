@@ -47,7 +47,8 @@ export function evaluateCtiAdjustedPublicationGate(
   const loo = input.rollingLoo?.loo;
   const schemaOk = input.evidenceSchema === CTI_ADJUSTED_PUBLICATION_GATE_SCHEMA;
   const fingerprintOk =
-    !input.expectedInputFingerprint ||
+    typeof input.expectedInputFingerprint === "string" &&
+    input.expectedInputFingerprint.length > 0 &&
     input.evidenceInputFingerprint === input.expectedInputFingerprint;
   const checks = [rolling, loo].map(
     (item) =>
@@ -60,6 +61,8 @@ export function evaluateCtiAdjustedPublicationGate(
   if (!input.rollingLoo || !rolling || !loo) evidenceReasons.push("rolling_loo_evidence_missing");
   if (!fingerprintOk) evidenceReasons.push("rolling_loo_evidence_input_fingerprint_mismatch");
   if (checks.some((passed) => !passed)) evidenceReasons.push("rolling_loo_backtest_incomplete");
+  evidenceReasons.forEach((reason) => reasons.add(reason));
+  if (!fingerprintOk) blocking.add("rolling_loo_evidence_input_fingerprint_mismatch");
   const evidenceAccepted = evidenceReasons.length === 0;
   if (evidenceAccepted) blocking.delete("rolling_loo_backtest_incomplete");
   else blocking.add("rolling_loo_backtest_incomplete");

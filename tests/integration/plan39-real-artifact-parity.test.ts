@@ -588,13 +588,19 @@ describe("Plan39 real analysis artifact graph/table/tooltip/CSV parity", () => {
         expect(cells[base]).toBe(measurement.valueType);
         expect(cells[base + 1]).toBe(measurement.seriesType);
         expect(cells[base + 2]).toBe(String(measurement.official));
-        expect(cells[base + 3]).toBe(measurement.value === null ? "" : String(measurement.value));
-        expect(cells[base + 4]).toBe(measurement.unit);
-        expect(cells[base + 5]).toBe(measurement.source);
-        expect(cells[base + 6]).toBe(measurement.frequency);
-        expect(cells[base + 7]).toBe(measurement.aggregation);
-        expect(cells[base + 8]).toBe(measurement.status);
-        expect(cells[base + 9]).toBe(measurement.reason ?? "");
+        expect(header[base + 3]).toBe(`${key}__model`);
+        expect(header[base + 4]).toBe(`${key}__estimateVersion`);
+        expect(header[base + 5]).toBe(`${key}__inputFingerprint`);
+        expect(cells[base + 3]).toBe(measurement.model ?? "");
+        expect(cells[base + 4]).toBe(measurement.estimateVersion ?? "");
+        expect(cells[base + 5]).toBe(measurement.inputFingerprint ?? "");
+        expect(cells[base + 6]).toBe(measurement.value === null ? "" : String(measurement.value));
+        expect(cells[base + 7]).toBe(measurement.unit);
+        expect(cells[base + 8]).toBe(measurement.source);
+        expect(cells[base + 9]).toBe(measurement.frequency);
+        expect(cells[base + 10]).toBe(measurement.aggregation);
+        expect(cells[base + 11]).toBe(measurement.status);
+        expect(cells[base + 12]).toBe(measurement.reason ?? "");
       }
     }
   });
