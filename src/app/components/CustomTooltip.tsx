@@ -95,6 +95,7 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
     totalLabel = "合計",
     separatorBetweenGroups,
     showAllPayload = false,
+    showMeasurementNotes = true,
     seriesMeta,
     allowedKeys,
     includeUnmappedPayload = false,
@@ -466,7 +467,7 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
                 }}
               >
                 {entry.name}
-                {measurementNote && (
+                {showMeasurementNotes && measurementNote && (
                   <small
                     data-tooltip-measurement-note="true"
                     style={{ display: "block", opacity: 0.78, fontSize: "0.82em" }}

@@ -28,6 +28,8 @@ export interface CustomTooltipProps {
     secondGroupKeys: string[];
   };
   showAllPayload?: boolean;
+  /** Keep measurement metadata but omit repeated inline provenance notes. */
+  showMeasurementNotes?: boolean;
   /** Explicit visible-series contract; a function may switch keys by period. */
   allowedKeys?: string[] | ((label?: string) => string[]);
   /** Opt in to the raw-payload fallback only when no allowed-key contract is supplied. */

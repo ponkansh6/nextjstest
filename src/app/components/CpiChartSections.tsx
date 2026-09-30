@@ -6,6 +6,10 @@ import type { QuarterlyView } from "@/types/chart";
 import type { CpiData } from "@/types";
 import { createDualResetHandler } from "../../lib/resetLogic";
 import {
+  getSpendingPresentationLabel,
+  orderSpendingPresentationKeys,
+} from "../../lib/spendingSeriesPresentation";
+import {
   colors,
   stackedColors,
   stackedKeys,
@@ -162,17 +166,29 @@ export function CpiChartSections({
     if (!period) return comparisonVisibleKeys;
     return comparisonVisibleKeys.filter((key) => key === "CPI総合(12MA)" || key === "総合(12MA)");
   };
-  const spendingTooltipMeta = (keys: string[], chartColorsForSeries: string[]) =>
-    keys.map((key, order): TooltipSeriesProjection => ({
-      key,
-      label: getLegendLabel(key),
-      color:
-        key === SUPPORT_SERIES_KEY_NOMINAL || key === SUPPORT_SERIES_KEY_REAL
-          ? chartColors.barFill
-          : chartColorsForSeries[order],
-      order,
-      ...ctiMetadata.find((metadata) => metadata.key === key),
-    }));
+  const spendingTooltipMeta = (
+    keys: string[],
+    chartColorsForSeries: string[],
+    useSpendingPresentation = false,
+  ): TooltipSeriesProjection[] => {
+    const displayKeys = useSpendingPresentation ? orderSpendingPresentationKeys(keys) : keys;
+    return displayKeys.map((key, order): TooltipSeriesProjection => {
+      const measurementMetadata = ctiMetadata.find((metadata) => metadata.key === key);
+      const sourceIndex = keys.indexOf(key);
+      return {
+        ...measurementMetadata,
+        key,
+        label: useSpendingPresentation
+          ? (getSpendingPresentationLabel(key) ?? getLegendLabel(key))
+          : getLegendLabel(key),
+        color:
+          key === SUPPORT_SERIES_KEY_NOMINAL || key === SUPPORT_SERIES_KEY_REAL
+            ? chartColors.barFill
+            : (measurementMetadata?.color ?? chartColorsForSeries[sourceIndex]),
+        order,
+      };
+    });
+  };
   const spendingAllowedKeys = (keys: string[], hidden: string[]) => (label?: string) => {
     const period = typeof label === "string" ? label.match(/^(\d{4})Q[1-4]$/) : null;
     if (!period) return [];
@@ -261,7 +277,8 @@ export function CpiChartSections({
             dataLength: nominalPublicData.length,
             showTotal: true,
             showAllPayload: true,
-            seriesMeta: spendingTooltipMeta(nominalKeysWithSupport, nominalColorsWithSupport),
+            seriesMeta: spendingTooltipMeta(nominalKeysWithSupport, nominalColorsWithSupport, true),
+            showMeasurementNotes: false,
             allowedKeys: spendingAllowedKeys(nominalKeysWithSupport, nominalHiddenKeys),
           })}
           isMobile={isMobile}
@@ -301,7 +318,8 @@ export function CpiChartSections({
             dataLength: realPublicData.length,
             showTotal: true,
             showAllPayload: true,
-            seriesMeta: spendingTooltipMeta(realKeysWithSupport, [...realColors, "#94a3b8"]),
+            seriesMeta: spendingTooltipMeta(realKeysWithSupport, [...realColors, "#94a3b8"], true),
+            showMeasurementNotes: false,
             allowedKeys: spendingAllowedKeys(realKeysWithSupport, realHiddenKeys),
           })}
           isMobile={isMobile}

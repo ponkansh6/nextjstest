@@ -134,6 +134,18 @@ describe("CTI chart info data-source state", () => {
 });
 
 describe("new-graph and residual chart info wording", () => {
+  it("identifies 2016-and-earlier nominal values as unofficial connection estimates", () => {
+    const info = CHART_INFO["consumption-expenditure"];
+    const text = [
+      info.source,
+      ...info.sections.flatMap((section) => section.items.map((item) => item.text)),
+    ].join("\n");
+
+    expect(text).toContain("2016Q4以前");
+    expect(text).toContain("接続推計");
+    expect(text).toContain("非公式");
+  });
+
   it("describes per-series 12-month moving averages and the official quarterly extension", () => {
     const text = [
       ...CHART_INFO["new-graph"].sections.flatMap((section) =>

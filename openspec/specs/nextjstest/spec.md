@@ -4495,7 +4495,7 @@ JEVは、全体lint 0 error/0 warning、React console warning解消、およびP
 
 nominal B/A、Piおよび関連artifact/manifest → 入力metadata・範囲・hash・費目・単位・基準年・頻度検証 → Plan39補正年次アンカーと一致する分析証拠・publication gateの確認 → 2005–2016の季節配分済み推定、または2017Q1以降の公式四半期9費目と公式総合由来Other残差 → 期間別source selection → canonical 10費目の公開投影 → `CpiChart` / `SpendingBarChart`、tooltip、data table、CSV。
 
-期間別のsource selectionは公開投影前に行い、チャート・表・tooltip・CSVへ同じ選択済み値とmeasurement provenanceを渡す。旧名目aliasや互換用v2名を同じ公開stackへ重ねず、aliasの値が有効・極端値・poison値のいずれであってもcanonical出力に影響させない。公式その他残差は公式totalとの整合用derived measurementとして由来を保持する。
+期間別のsource selectionは公開投影前に行い、チャート・表・tooltip・CSVへ同じ選択済み値とmeasurement provenanceを渡す。公開チャート・凡例・名目および実質消費tooltipは同じpresentation mappingを使い、凡例とtooltip項目を同じ表示順・ラベルで揃える。旧名目aliasや互換用v2名を同じ公開stackへ重ねず、aliasの値が有効・極端値・poison値のいずれであってもcanonical出力に影響させない。公式その他残差は公式totalとの整合用derived measurementとして由来を保持する。
 
 ### Data Model
 
@@ -4516,4 +4516,5 @@ Plan39 nominal B/A・Pi loaderとmanifest/evidence validation → `ctiAdjustedCo
 - **WHEN** 公式artifact、sidecar、manifest、hash、必要期間、category mappingまたは公式行が欠損・不正である、**THEN** 公式期間を推定値・月次値・legacy aliasで埋めず、既存のunavailable marker、`null`、status/reasonを保持する。
 - **WHEN** chart、tooltip、data table、CSVで同一期間・費目を表示する、**THEN** 値、canonical category、status/reason、source、model、official/derived区分、単位、frequency、aggregationおよびprovenanceが同じmeasurementに基づき一致する。
 - **WHEN** `CpiChart` が2018Q1以降の正式系列を描画する、**THEN** 棒の表示順と凡例の表示順を、canonical key「住居、家具・家事用品、被服及び履物、保健医療、教育、光熱・水道、教養娯楽、交通・通信、食料、その他の消費支出」に対応する可視ラベル「住居、家具・家事用品、被服履物、保健医療、教育、光熱水道、教養娯楽、交通通信、食料、諸雑費・CPI外」の順にする。変更対象はレンダリング時の系列・棒の表示順と凡例のラベル・表示順に限り、canonical data keys、row/objectのキー順、およびinput projectionの順序は変更しない。
+- **WHEN** `CpiChart` の名目または実質消費tooltipとチャート情報を表示する、**THEN** tooltip項目は凡例と同じ「住居、家具・家事用品、被服履物、保健医療、教育、光熱水道、教養娯楽、交通通信、食料、諸雑費・CPI外」の順・ラベルで表示し、各費目に繰り返す歴史系列の非公式注記は省く。チャート情報には「2016Q4以前の接続推定値は非公式」であることを明記する（2016年を含む）。
 - **WHEN** 2016Q4から2017Q1へ移る、**THEN** 2016Q4まではPlan39補正済み歴史推定、2017Q1からは公式四半期sourceと明示し、接続点の再基準化・平滑化や公式値への補正式適用を暗黙に行わない。

@@ -2,17 +2,20 @@ import React from "react";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { CpiChartSections } from "../../src/app/components/CpiChartSections";
+import { CustomTooltip } from "../../src/app/components/CustomTooltip";
 import { SectionTabs } from "../../src/app/components/SectionTabs";
 import { CPI_CHART_SECTIONS } from "../../src/app/components/cpiChartConfig";
 import CpiChart from "../../src/app/components/CpiChart";
 import type { CpiView, QuarterlyView } from "../../src/types/chart";
 import {
   CONSUMPTION_REAL_KEYS,
+  SUPPORT_SERIES_KEY_REAL,
   CTI_ADJUSTED_V2_PUBLIC_CATEGORIES,
   CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY,
   stackedKeys,
 } from "../../src/lib/chartConstants";
 import { QUARTERLY_PUBLIC_NOMINAL_KEYS } from "../../src/lib/quarterlyPublicProjection";
+import type { SeriesMetadata } from "../../src/lib/chartConstants";
 import { beforeEach } from "vitest";
 import { setupUiMocks } from "../utils/ui-mocks";
 
@@ -220,6 +223,140 @@ describe("CpiChartSections composition", () => {
         (button) => button.textContent?.trim() === "CPI年率",
       ),
     ).toBe(false);
+  });
+
+  it("builds compact spending tooltip metadata from the shared nominal/real presentation map", () => {
+    const expectedNominalKeys = [
+      CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY.住居,
+      CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY["家具・家事用品"],
+      CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY["被服及び履物"],
+      CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY.保健医療,
+      CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY.教育,
+      CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY["光熱・水道"],
+      CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY.教養娯楽,
+      CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY["交通・通信"],
+      CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY.食料,
+      CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY["その他の消費支出"],
+    ];
+    const expectedRealKeys = [
+      "住居（実質）",
+      "家具・家事用品（実質）",
+      "被服及び履物（実質）",
+      "保健医療（実質）",
+      "教育（実質）",
+      "光熱・水道（実質）",
+      "教養娯楽（実質）",
+      "交通・通信（実質）",
+      "食料（実質）",
+      "その他の消費支出（実質）",
+    ];
+    const expectedLabels = [
+      "住居",
+      "家具・家事用品",
+      "被服履物",
+      "保健医療",
+      "教育",
+      "光熱水道",
+      "教養娯楽",
+      "交通通信",
+      "食料",
+      "諸雑費・CPI外",
+    ];
+    const chartKeys = [...expectedNominalKeys, ...expectedRealKeys, SUPPORT_SERIES_KEY_REAL];
+    const ctiMetadata: SeriesMetadata[] = [...new Set(chartKeys)].map((key, index) => ({
+      key,
+      color: "#0f766e",
+      label: key,
+      unit: "万円",
+      source: "Plan39 connection estimate",
+      valueType: "comparison",
+      value: index + 1,
+      status: "available",
+      reason: null,
+      frequency: "quarterly",
+      aggregation: "quarterly_connection_estimate",
+      seriesType: "estimated_adjusted",
+      official: false,
+    }));
+    const capturedBindings = new Map<string, Record<string, unknown>>();
+    const chartTooltip = {
+      bind: ((id: string, options?: Record<string, unknown>) => {
+        if (options) capturedBindings.set(id, options);
+        return sectionProps.chartTooltip.bind(id);
+      }) as unknown as typeof sectionProps.chartTooltip.bind,
+    };
+    const realKeysWithSupport = [...CONSUMPTION_REAL_KEYS, SUPPORT_SERIES_KEY_REAL];
+
+    render(
+      <CpiChartSections
+        {...sectionProps}
+        nominalKeysWithSupport={canonicalNominalKeys}
+        nominalColorsWithSupport={canonicalNominalKeys.map(() => "#0f766e")}
+        realKeysWithSupport={realKeysWithSupport}
+        realColors={CONSUMPTION_REAL_KEYS.map(() => "#0f766e")}
+        ctiMetadata={ctiMetadata}
+        chartTooltip={chartTooltip}
+      />,
+    );
+
+    const nominalOptions = capturedBindings.get("section-consumption-nominal");
+    const realOptions = capturedBindings.get("section-consumption-real");
+    expect(nominalOptions).toBeDefined();
+    expect(realOptions).toBeDefined();
+    const nominalMeta = nominalOptions?.seriesMeta as SeriesMetadata[];
+    const realMeta = realOptions?.seriesMeta as SeriesMetadata[];
+    expect(nominalMeta.map(({ key }) => key)).toEqual(expectedNominalKeys);
+    expect(nominalMeta.map(({ label }) => label)).toEqual(expectedLabels);
+    expect(nominalMeta.map(({ order }) => order)).toEqual(expectedLabels.map((_, index) => index));
+    expect(
+      realMeta.filter(({ key }) => key !== SUPPORT_SERIES_KEY_REAL).map(({ key }) => key),
+    ).toEqual(expectedRealKeys);
+    expect(
+      realMeta.filter(({ key }) => key !== SUPPORT_SERIES_KEY_REAL).map(({ label }) => label),
+    ).toEqual(expectedLabels);
+    expect(realMeta.find(({ key }) => key === SUPPORT_SERIES_KEY_REAL)).toMatchObject({
+      label: "民間最終消費",
+      order: expectedLabels.length,
+    });
+    expect(nominalOptions?.showMeasurementNotes).toBe(false);
+    expect(realOptions?.showMeasurementNotes).toBe(false);
+
+    const tooltip = (
+      testId: string,
+      metadata: SeriesMetadata[],
+      options: Record<string, unknown>,
+    ) => (
+      <div data-testid={testId}>
+        <CustomTooltip
+          active
+          isMobile={false}
+          isTouch={false}
+          label="2016Q4"
+          payload={metadata.map((series) => ({
+            dataKey: series.key,
+            name: series.label,
+            value: series.value,
+            payload: { measurements: { [series.key]: series } },
+          }))}
+          seriesMeta={metadata}
+          showAllPayload
+          showMeasurementNotes={options.showMeasurementNotes as boolean}
+          tooltipBg="#fff"
+          tooltipText="#000"
+        />
+      </div>
+    );
+    render(
+      <>
+        {tooltip("nominal-tooltip", nominalMeta, nominalOptions ?? {})}
+        {tooltip("real-tooltip", realMeta, realOptions ?? {})}
+      </>,
+    );
+    for (const testId of ["nominal-tooltip", "real-tooltip"]) {
+      expect(
+        screen.getByTestId(testId).querySelectorAll("[data-tooltip-measurement-note]"),
+      ).toHaveLength(0);
+    }
   });
 });
 
