@@ -608,6 +608,43 @@ export function loadPlan39V2CtiNominalRows(
   });
 }
 
+/** Merge quarterly rows for the same period, preferring direct official Plan40 observations by key. */
+export function coalesceQuarterlyRowsByPeriod(rows: readonly QuarterlyRow[]): QuarterlyRow[] {
+  const byPeriod = new Map<string, QuarterlyRow>();
+  for (const row of rows) {
+    const period = `${row.年}Q${row.quarter}`;
+    const existing = byPeriod.get(period);
+    if (!existing) {
+      byPeriod.set(period, { ...row, measurements: row.measurements && { ...row.measurements } });
+      continue;
+    }
+
+    const existingIsOfficial = existing.kind === "plan40-official-quarterly";
+    const incomingIsOfficial = row.kind === "plan40-official-quarterly";
+    const preferred =
+      incomingIsOfficial && !existingIsOfficial ? row : existingIsOfficial ? existing : row;
+    const fallback = preferred === row ? existing : row;
+    byPeriod.set(period, {
+      ...fallback,
+      ...preferred,
+      kind: preferred.kind ?? fallback.kind,
+      measurements: {
+        ...fallback.measurements,
+        ...preferred.measurements,
+      },
+    });
+  }
+
+  const merged = [...byPeriod.values()];
+  const labels = new Set<string>();
+  for (const row of merged) {
+    if (labels.has(row.label))
+      throw new Error(`Duplicate quarterly label after merge: ${row.label}`);
+    labels.add(row.label);
+  }
+  return merged;
+}
+
 /** Existing adapter name retained for callers of the aggregation module. */
 export function mergeQuarterlyGdpRows(
   nominalRows: QuarterlyRow[],
@@ -730,10 +767,11 @@ export function computeQuarterlyAggregates(
   nominalRows.push(
     ...loadPlan39V2CtiNominalRows(loadCtiAdjustedV2Estimate({ contract: "plan40" })),
   );
-  nominalRows.sort((left, right) => left.年 - right.年 || left.quarter - right.quarter);
+  const coalescedNominalRows = coalesceQuarterlyRowsByPeriod(nominalRows);
+  coalescedNominalRows.sort((left, right) => left.年 - right.年 || left.quarter - right.quarter);
 
   return {
-    nominal: nominalRows,
+    nominal: coalescedNominalRows,
     real: realRows,
   };
 }

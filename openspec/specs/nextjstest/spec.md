@@ -70,8 +70,9 @@ not create an additional bar.
 The Plan38-only nominal CTI route is the only route that targets 2005Q1 through
 2017Q4. Missing, non-finite, duplicate, or incomplete months inside that window
 produce a retained shared row with `value=null` and a non-empty reason; artifact
-records outside the window are ignored. The route never zero-fills,
-interpolates, merges duplicates, or falls back to GDP.
+records outside the window are ignored. Within this 2005Q1–2017Q4 source
+window, the route never zero-fills, interpolates, merges duplicates, or falls
+back to GDP.
 
 The existing 2018Q1-and-later legacy expense path in
 `server/lib/view-models/quarterlyAggregation.ts` and
@@ -104,7 +105,10 @@ uncommitted worktree is not a completion prerequisite.
 The nominal pre-2018 support series uses only the official long-term CTI artifact
 `data/source/official-cti-2025-long-term/000040499070`, with `series_index=1`,
 `official_series_code=1`, and the nominal raw index. No GDP artifact is an input
-to this public nominal key.
+to this public nominal key. Quarterly data can also contain legacy expense rows
+(including 2018Q1 and later) alongside official Plan40 rows. Their periods may
+overlap; the merge retains the distinct series values from both source families
+and the measurement provenance attached to each series.
 
 ### Data Flow
 
@@ -119,7 +123,16 @@ nominal spending chart/table/CSV.
 The real projection does not receive that key and retains its existing support
 path. From 2018Q1, existing CTI expense stacking remains unchanged. Its
 legacy zero-fill/2018-start compatibility checks remain confined to that path
-and do not weaken the Plan38-only fail-closed rule above.
+and do not weaken the Plan38-only fail-closed rule above. Once source rows have
+been assembled into the combined nominal collection, legacy quarterly rows and
+official Plan40 rows are coalesced by year and quarter before public projection.
+For a shared period, distinct keys from both rows are kept; when both sources
+provide the same key, the official Plan40 value and its measurement metadata
+take precedence. Each retained value keeps the provenance from its own series
+measurement, rather than inheriting row-level provenance from the other source.
+This quarterly row coalescing does not change the dedicated Plan38 route's
+monthly input validation, including its fail-closed handling of duplicate
+months.
 
 ### Data Model
 
@@ -174,6 +187,14 @@ series.
   keys and real projection publishes only real CTI/consumption keys; GDP raw or
   comparison names, values, and measurements are absent from both CTI public
   contracts.
+- **WHEN** combined nominal rows contain a legacy quarterly row and an official
+  Plan40 row for the same year and quarter, **THEN** they are merged into one
+  row per period, distinct series keys and their per-series
+  measurements/provenance from both sources are retained, and official Plan40
+  values and measurements take precedence for keys present in both rows. This
+  applies to the combined nominal row collection before public projection; it
+  does not change the dedicated Plan38 route's monthly input validation or its
+  fail-closed handling of duplicate months.
 - **WHEN** a measurement-aware row is exported or shown in `DataTablesSection`,
   **THEN** label, unit, source, frequency, aggregation, status, and reason are
   emitted as CSV columns and displayed from the row measurement object.

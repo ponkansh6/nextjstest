@@ -106,6 +106,7 @@ it("p45-b-plan24-rendering-88 — 2025 production tables contain Q1/Q4 values an
       foodValue: string;
       tooltipHasPeriod: boolean;
       tooltipFoodValueVisible: boolean;
+      tooltipFoodValue: string;
       tooltipHasCalculatedTotal: boolean;
       tooltipHasGdp: boolean;
       calculatedTotal: string;
@@ -123,9 +124,20 @@ it("p45-b-plan24-rendering-88 — 2025 production tables contain Q1/Q4 values an
       expect(period.foodValue.trim()).toBeTruthy();
       expect(period.tooltipHasPeriod).toBe(true);
       expect(period.tooltipFoodValueVisible).toBe(true);
+      const rawTooltipFoodValue = period.tooltipFoodValue.trim();
+      const tooltipFoodNumber =
+        rawTooltipFoodValue === "" || rawTooltipFoodValue === "—" || rawTooltipFoodValue === "-"
+          ? Number.NaN
+          : Number(rawTooltipFoodValue.replace(/,/g, ""));
+      const tableFoodNumber = Number(period.foodValue.replace(/,/g, "").trim());
+      const tooltipFoodDiagnostic =
+        `Unable to parse tooltip value for ${period.period}: ` +
+        `tooltip=${JSON.stringify(period.tooltipFoodValue)}, ` +
+        `table=${JSON.stringify(period.foodValue)}`;
+      expect(Number.isFinite(tooltipFoodNumber), tooltipFoodDiagnostic).toBe(true);
+      expect(tooltipFoodNumber).toBe(tableFoodNumber);
       expect(period.tooltipHasCalculatedTotal).toBe(true);
       expect(period.tooltipHasGdp).toBe(false);
-      expect(table.csv).toContain(period.foodValue);
     }
     expect(table.csv).toContain("2025Q1");
     expect(table.csv).toContain("2025Q4");

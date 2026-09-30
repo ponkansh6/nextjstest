@@ -399,12 +399,20 @@ export const inspectBatch3BProductionCase: BrowserCommand<
               ["2025Q1", 0],
               ["2025Q4", 3],
             ] as const) {
-              const cells = await table
-                .locator("tbody tr")
-                .filter({ hasText: period })
-                .locator("td")
-                .allTextContents();
+              const tableRow = table.locator("tbody tr").filter({ hasText: period });
+              const tableCells = tableRow.locator("td");
+              const cells = await tableCells.evaluateAll((elements) =>
+                elements.map((cell) =>
+                  Array.from(cell.childNodes)
+                    .filter((node) => node.nodeType === Node.TEXT_NODE)
+                    .map((node) => node.textContent ?? "")
+                    .join("")
+                    .trim(),
+                ),
+              );
               const foodValue = cells[valueIndex] ?? "";
+              const foodKey = await tableCells.nth(valueIndex).getAttribute("data-series-key");
+              if (!foodKey) throw new Error(`Table series key for ${foodLabel} is missing.`);
               const total = cells
                 .slice(1)
                 .map((value, offset) => ({ value: Number(value), index: offset + 1 }))
@@ -420,16 +428,31 @@ export const inspectBatch3BProductionCase: BrowserCommand<
               const totalText = (
                 await tooltip.locator('[data-tooltip-total="true"]').innerText()
               ).replace(/\s+/g, "");
-              const foodRow = tooltip.getByText(foodLabel, { exact: true }).locator("..");
-              const tooltipFoodValueVisible = await foodRow
-                .getByText(foodValue, { exact: true })
-                .isVisible();
+              const foodRows = tooltip.locator('[data-tooltip-row="true"]');
+              const foodRowIndex = await foodRows.evaluateAll(
+                (rows, target) =>
+                  rows.findIndex(
+                    (row) =>
+                      row.getAttribute("data-tooltip-key") === target.key &&
+                      row.getAttribute("data-tooltip-label") === target.label,
+                  ),
+                { key: foodKey, label: foodLabel },
+              );
+              if (foodRowIndex < 0)
+                throw new Error(`Tooltip row for ${foodKey} (${foodLabel}) is missing.`);
+              const foodRow = foodRows.nth(foodRowIndex);
+              const tooltipFoodValueVisible = await foodRow.isVisible();
+              const tooltipFoodValue = await foodRow.evaluate((row) => {
+                const valueCell = Array.from(row.querySelectorAll(":scope > span")).at(-1);
+                return valueCell?.textContent?.trim() ?? "";
+              });
               periodResults.push({
                 period,
                 supportValue: cells[supportIndex],
                 foodValue,
                 tooltipHasPeriod: tooltipText.includes(period),
                 tooltipFoodValueVisible,
+                tooltipFoodValue,
                 tooltipHasCalculatedTotal: totalText.includes("合計" + total),
                 tooltipHasGdp: tooltipText.includes("GDP"),
                 calculatedTotal: total,

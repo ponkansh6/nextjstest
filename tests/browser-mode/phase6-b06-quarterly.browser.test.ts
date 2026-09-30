@@ -109,7 +109,21 @@ it("B06 Plan23 ID 26: quarterly public data", async () => {
       csv: { text: string; rows: string[][]; artifactPath: string };
       publicColumnIndex: number;
       foodColumnIndex: number;
-      foodQuarterRows: Array<{ period: string; value: string | undefined }>;
+      foodQuarterRows: Array<{
+        period: string;
+        tableRowCount: number;
+        csvRowCount: number;
+        tableRows: Array<{
+          cells: Array<{
+            tableKey: string;
+            tableHeader: string;
+            tableValue: string;
+            metadataText: string;
+            metadataAttributes: Record<string, string>;
+          }>;
+        }>;
+        csvRows: Array<{ csvHeader: string; csvValue: string | undefined }>;
+      }>;
       tooltips: Array<{
         period: string;
         text: string;
@@ -174,9 +188,42 @@ it("B06 Plan23 ID 26: quarterly public data", async () => {
     expect(table.csv.rows[0]?.[table.publicColumnIndex]).toContain(table.ctiLabel);
     expect(table.csv.rows[0]?.some((header) => header.includes("GDP"))).toBe(false);
     expect(table.foodColumnIndex).toBeGreaterThanOrEqual(0);
-    for (const row of table.foodQuarterRows) {
-      expect(Number.isFinite(Number(row.value))).toBe(true);
-      expect(Number(row.value)).not.toBe(0);
+    if (table.ctiLabel === "CTIミクロ（名目・四半期平均）") {
+      expect(table.csv.rows[0]?.[table.foodColumnIndex]).toBe("CTIミクロ調整系列（食料）");
+      const nominalFoodEvidence = table.foodQuarterRows;
+      expect(nominalFoodEvidence).toHaveLength(4);
+      for (const row of nominalFoodEvidence) {
+        const foodCells = row.tableRows.flatMap((tableRow) => tableRow.cells);
+        expect(
+          row.tableRowCount,
+          `Nominal table row count mismatch; evidence: ${JSON.stringify(row, null, 2)}`,
+        ).toBe(1);
+        expect(
+          row.csvRowCount,
+          `Nominal CSV row count mismatch; evidence: ${JSON.stringify(row, null, 2)}`,
+        ).toBe(1);
+        expect(
+          foodCells,
+          `Nominal food key cell count mismatch; evidence: ${JSON.stringify(row, null, 2)}`,
+        ).toHaveLength(1);
+        for (const foodCell of foodCells) {
+          expect(foodCell.tableKey).toBe("CTIミクロ調整系列（食料）");
+          expect(foodCell.tableHeader).toBe("CTIミクロ調整系列（食料）");
+          expect(
+            foodCell.tableValue,
+            `Nominal table/CSV display mismatch; full row evidence: ${JSON.stringify(row, null, 2)}; all nominal rows: ${JSON.stringify(nominalFoodEvidence, null, 2)}`,
+          ).toBe(row.csvRows[0]?.csvValue);
+        }
+        expect(row.csvRows[0]?.csvHeader).toBe("CTIミクロ調整系列（食料）");
+      }
+      expect(
+        nominalFoodEvidence.flatMap((row) => row.csvRows.map((csvRow) => Number(csvRow.csvValue))),
+        `Official nominal food Q1-Q4 mismatch; table, measurement metadata, and CSV evidence: ${JSON.stringify(nominalFoodEvidence, null, 2)}`,
+      ).toEqual([27.1, 27.6, 29.1, 30.9]);
+    } else {
+      expect(table.csv.rows[0]?.[table.foodColumnIndex]).toBe("食料");
+      expect(table.csv.rows[0]).not.toContain("CTIミクロ調整系列（食料）");
+      expect(table.foodQuarterRows).toEqual([]);
     }
     for (const tooltip of table.tooltips) {
       expect(tooltip.visible).toBe(true);

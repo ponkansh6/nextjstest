@@ -105,7 +105,20 @@ export const inspectBatch4BProductionCase: BrowserCommand<
       const root = page.getByTestId(testId);
       return {
         periods: await root.locator("[data-chart-data-row]").count(),
-        bars: await root.locator(".recharts-bar-rectangle").count(),
+        visibleBars: await root.locator(".recharts-bar-rectangle").evaluateAll(
+          (elements) =>
+            elements.filter((element) => {
+              const bounds = element.getBoundingClientRect();
+              const style = getComputedStyle(element);
+              return (
+                bounds.width > 0 &&
+                bounds.height > 0 &&
+                style.display !== "none" &&
+                style.visibility !== "hidden" &&
+                Number(style.opacity) > 0
+              );
+            }).length,
+        ),
       };
     };
     const waitForNarrowerPeriods = async (testId: string, before: number) => {
@@ -145,13 +158,29 @@ export const inspectBatch4BProductionCase: BrowserCommand<
       await page.locator("#startYear").waitFor({ state: "hidden", timeout: 5_000 });
       await page.waitForTimeout(100);
       await waitForNarrowerPeriods(testId, before.periods);
-      const firstRenderedBar = page.getByTestId(testId).locator(".recharts-bar-rectangle").first();
-      await firstRenderedBar.waitFor({ state: "visible", timeout: 10_000 });
+      await page.waitForFunction(
+        (id) => {
+          const root = document.querySelector(`[data-testid="${id}"]`);
+          if (!root) return false;
+          return Array.from(root.querySelectorAll(".recharts-bar-rectangle")).some((element) => {
+            const bounds = element.getBoundingClientRect();
+            const style = getComputedStyle(element);
+            return (
+              bounds.width > 0 &&
+              bounds.height > 0 &&
+              style.display !== "none" &&
+              style.visibility !== "hidden" &&
+              Number(style.opacity) > 0
+            );
+          });
+        },
+        testId,
+        { timeout: 10_000 },
+      );
       const after = await chartCounts(testId);
       values.testId = testId;
       values.before = before;
       values.after = after;
-      values.firstRenderedBarVisible = await firstRenderedBar.isVisible();
     } else if (scenario === "range-errors") {
       await page
         .getByTestId("spending-chart-nominal")

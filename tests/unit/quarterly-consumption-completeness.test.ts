@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 import type { CpiData } from "../../src/types";
 import {
+  CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY,
   CONSUMPTION_NOMINAL_KEYS,
   CONSUMPTION_REAL_KEYS,
   SUPPORT_SERIES_KEY_NOMINAL,
+  SUPPORT_SERIES_KEY_REAL,
 } from "../../src/lib/chartConstants";
 import { computeQuarterlyAggregates } from "../../server/lib/view-models/quarterlyAggregation";
+import { buildQuarterlyPublicViews } from "../../server/lib/view-models/quarterlyProjection";
 
 const makeMonth = (month: number, value = 10): CpiData => {
   const row = { 年月: `2018年${month}月` } as CpiData;
@@ -19,18 +22,22 @@ describe("2018年以降のCTI四半期完全性", () => {
     const data = [makeMonth(1, 0), makeMonth(2, 0), makeMonth(3, 0)];
     const result = computeQuarterlyAggregates(data, { year: 2018, month: 3 });
 
-    const monthlyNominal = result.nominal.filter(
-      (row) => row.kind === "legacy-cti" && row.年 >= 2018,
-    );
-    expect(monthlyNominal.map((row) => row.label)).toEqual(["2018Q1"]);
+    const nominal = result.nominal.filter((row) => row.label === "2018Q1");
+    expect(nominal.map((row) => row.label)).toEqual(["2018Q1"]);
+    expect(new Set(nominal.map((row) => row.label))).toEqual(new Set(["2018Q1"]));
     expect(result.real.filter((row) => row.年 >= 2018).map((row) => row.label)).toEqual(["2018Q1"]);
-    expect(monthlyNominal[0]?.kind).toBe("legacy-cti");
-    expect(monthlyNominal[0]?.[CONSUMPTION_NOMINAL_KEYS[0]]).toBe(0);
+    const mergedNominal = nominal[0]!;
+    expect(mergedNominal.kind).toBe("plan40-official-quarterly");
+    // The monthly legacy result remains available alongside the preferred official series.
+    expect(mergedNominal[CONSUMPTION_NOMINAL_KEYS[0]]).toBe(0);
     expect(
-      result.nominal.find(
-        (row) => row.label === "2018Q1" && row.kind === "plan40-official-quarterly",
-      ),
-    ).toBeDefined();
+      mergedNominal.measurements?.[CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY["食料"]],
+    ).toMatchObject({
+      status: "available",
+      value: expect.any(Number),
+      sourceRole: "official_nominal_observation",
+    });
+    expect(result.real.find((row) => row.label === "2018Q1")?.[CONSUMPTION_REAL_KEYS[0]]).toBe(0);
   });
 
   const incompleteCases: Array<[string, (data: CpiData[]) => void]> = [
@@ -49,12 +56,10 @@ describe("2018年以降のCTI四半期完全性", () => {
     mutate(data);
     const result = computeQuarterlyAggregates(data, { year: 2018, month: 3 });
 
-    expect(result.nominal.filter((row) => row.kind === "legacy-cti" && row.年 >= 2018)).toEqual([]);
-    expect(
-      result.nominal.find(
-        (row) => row.label === "2018Q1" && row.kind === "plan40-official-quarterly",
-      ),
-    ).toBeDefined();
+    const nominal = result.nominal.filter((row) => row.label === "2018Q1");
+    expect(nominal.map((row) => row.label)).toEqual(["2018Q1"]);
+    expect(nominal[0]?.kind).toBe("plan40-official-quarterly");
+    expect(nominal[0]).not.toHaveProperty(CONSUMPTION_NOMINAL_KEYS[0]);
     expect(result.real.filter((row) => row.年 >= 2018)).toEqual([]);
   });
 
@@ -68,9 +73,20 @@ describe("2018年以降のCTI四半期完全性", () => {
       makeMonth(3),
     ] as CpiData[];
     const serverResult = computeQuarterlyAggregates(data, { year: 2018, month: 3 });
-    expect(serverResult.nominal.map((row) => row.label)).toContain("2017Q4");
-    expect(
-      serverResult.nominal.find((row) => row.label === "2018Q1" && row.kind === "legacy-cti"),
-    ).toBeDefined();
+    const row2017Q4 = serverResult.nominal.find((row) => row.label === "2017Q4");
+    const combined2018Rows = serverResult.nominal.filter((row) => row.label === "2018Q1");
+    const combined2018 = combined2018Rows[0];
+    expect(row2017Q4).toBeDefined();
+    expect(combined2018?.kind).toBe("plan40-official-quarterly");
+    expect(combined2018).not.toHaveProperty(SUPPORT_SERIES_KEY_NOMINAL);
+    expect(combined2018Rows).toHaveLength(1);
+
+    const projected = buildQuarterlyPublicViews(serverResult.nominal, serverResult.real, {
+      comparisonReady: false,
+      rows: [],
+    });
+    const public2018 = projected.nominal.find((row) => row.label === "2018Q1");
+    expect(public2018).toHaveProperty(CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY["食料"]);
+    expect(public2018).not.toHaveProperty(SUPPORT_SERIES_KEY_REAL);
   });
 });

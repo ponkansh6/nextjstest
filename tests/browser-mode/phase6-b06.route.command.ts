@@ -234,7 +234,21 @@ async function quarterlyGdp(page: import("@playwright/test").Page) {
     csv: CsvArtifact;
     publicColumnIndex: number;
     foodColumnIndex: number;
-    foodQuarterRows: Array<{ period: string; value: string | undefined }>;
+    foodQuarterRows: Array<{
+      period: string;
+      tableRowCount: number;
+      csvRowCount: number;
+      tableRows: Array<{
+        cells: Array<{
+          tableKey: string;
+          tableHeader: string;
+          tableValue: string;
+          metadataText: string;
+          metadataAttributes: Record<string, string>;
+        }>;
+      }>;
+      csvRows: Array<{ csvHeader: string; csvValue: string | undefined }>;
+    }>;
     tooltips: Array<{
       period: string;
       text: string;
@@ -305,11 +319,84 @@ async function quarterlyGdp(page: import("@playwright/test").Page) {
           quarterValues.push({ period, ...cellEvidence, csvValue: csvRow?.[supportIndex] ?? "" });
         }
 
-        const foodColumnIndex = csv.rows[0]?.findIndex((header) => header.includes("食料")) ?? -1;
-        const foodQuarterRows = ["2025Q1", "2025Q2", "2025Q3", "2025Q4"].map((period) => {
-          const row = csv.rows.find((candidate) => candidate[0] === period);
-          return { period, value: row?.[foodColumnIndex] };
-        });
+        const foodHeader = tableName === "nominal" ? "CTIミクロ調整系列（食料）" : "食料";
+        const foodHeaderIndexes = (csv.rows[0] ?? []).flatMap((header, index) =>
+          header === foodHeader ? [index] : [],
+        );
+        if (foodHeaderIndexes.length !== 1) {
+          throw new Error(
+            `Expected one exact ${tableName} CSV header ${foodHeader}; found ${foodHeaderIndexes.length}.`,
+          );
+        }
+        const foodColumnIndex = foodHeaderIndexes[0] ?? -1;
+        const tableFoodHeaderIndexes = snapshot.headers.flatMap((header, index) =>
+          header === foodHeader ? [index] : [],
+        );
+        if (tableFoodHeaderIndexes.length !== 1) {
+          throw new Error(
+            `Expected one exact ${tableName} table header ${foodHeader}; found ${tableFoodHeaderIndexes.length}.`,
+          );
+        }
+        if (foodColumnIndex !== (tableFoodHeaderIndexes[0] ?? -1)) {
+          throw new Error(
+            `CSV/table column mismatch for ${foodHeader}: CSV ${foodColumnIndex}, table ${tableFoodHeaderIndexes[0]}.`,
+          );
+        }
+        const foodQuarterRows =
+          tableName === "nominal"
+            ? await Promise.all(
+                (["2025Q1", "2025Q2", "2025Q3", "2025Q4"] as const).map(async (period) => {
+                  const tableRows = await table.evaluate(
+                    (element, { period, key }) => {
+                      const matchingRows = [...element.querySelectorAll("tbody tr")].filter(
+                        (row) => row.querySelector("td")?.textContent?.trim() === period,
+                      );
+                      return matchingRows.map((row) => ({
+                        cells: [...row.querySelectorAll("td")]
+                          .filter((cell) => cell.getAttribute("data-series-key") === key)
+                          .map((cell) => {
+                            const metadata = cell.querySelector<HTMLElement>(
+                              `[data-measurement-metadata="${key}"]`,
+                            );
+                            return {
+                              tableKey: cell.getAttribute("data-series-key") ?? "",
+                              tableValue:
+                                [...cell.childNodes]
+                                  .find((node) => node.nodeType === Node.TEXT_NODE)
+                                  ?.textContent?.trim() ?? "",
+                              metadataText: metadata?.innerText ?? "",
+                              metadataAttributes: Object.fromEntries(
+                                [...(metadata?.attributes ?? [])]
+                                  .filter((attribute) =>
+                                    attribute.name.startsWith("data-measurement-"),
+                                  )
+                                  .map((attribute) => [attribute.name, attribute.value]),
+                              ),
+                            };
+                          }),
+                      }));
+                    },
+                    { period, key: foodHeader },
+                  );
+                  const matchingCsvRows = csv.rows.filter((candidate) => candidate[0] === period);
+                  return {
+                    period,
+                    tableRowCount: tableRows.length,
+                    csvRowCount: matchingCsvRows.length,
+                    tableRows: tableRows.map((row) => ({
+                      cells: row.cells.map((cell) => ({
+                        ...cell,
+                        tableHeader: snapshot.headers[tableFoodHeaderIndexes[0] ?? -1] ?? "",
+                      })),
+                    })),
+                    csvRows: matchingCsvRows.map((row) => ({
+                      csvHeader: csv.rows[0]?.[foodColumnIndex] ?? "",
+                      csvValue: row[foodColumnIndex],
+                    })),
+                  };
+                }),
+              )
+            : [];
         return { publicColumnIndex, quarterValues, foodColumnIndex, foodQuarterRows };
       },
     );
@@ -347,7 +434,15 @@ async function quarterlyGdp(page: import("@playwright/test").Page) {
           .filter({ hasText: period })
           .locator("td")
           .nth(foodColumnIndex)
-          .innerText({ timeout: 5_000 });
+          .evaluate(
+            (cell) =>
+              [...cell.childNodes]
+                .filter((node) => node.nodeType === Node.TEXT_NODE)
+                .map((node) => node.textContent?.trim() ?? "")
+                .join(""),
+            undefined,
+            { timeout: 5_000 },
+          );
         return {
           period,
           text,
