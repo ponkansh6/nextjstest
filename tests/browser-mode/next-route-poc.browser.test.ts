@@ -22,7 +22,7 @@ test("Playwright Browser Mode custom command observes a production Next chart in
   expect(observation.chartAreaCountAfter).toBe(observation.chartAreaCountBefore - 1);
 });
 
-test("nominal stacked totals stay within 50–150 from Plan39 estimates through official data", async () => {
+test("rendered nominal stacked bars total 50–150 from 2005Q1 through official data", async () => {
   const result = (await commands.inspectPhase6B06(
     "p45-b-plan40-nominal-stacked-total-range-dom-contract",
   )) as {
@@ -45,6 +45,28 @@ test("nominal stacked totals stay within 50–150 from Plan39 estimates through 
       rectangleCount: number;
       visibleRectangleCount: number;
     }>;
+    renderedStackRows: Array<{
+      period: string | null;
+      visibleSegmentCount: number;
+      total: number | null;
+    }>;
+    renderedStackDiagnostics: {
+      dataRowCount: number;
+      yTickCount: number;
+      yTicks: Array<{ value: number; y: number }>;
+      yScaleValid: boolean;
+      xTickCount: number;
+      xTicks: Array<{ index: number; x: number }>;
+      xScaleValid: boolean;
+      series: Array<{
+        key: string;
+        groupFound: boolean;
+        rectangleCount: number;
+        visibleShapeCount: number;
+      }>;
+      unmappedShapeCount: number;
+      emptyRenderedRowCount: number;
+    };
   };
   expect(result.categories).toEqual([
     "CTIミクロ調整系列（食料）",
@@ -77,7 +99,7 @@ test("nominal stacked totals stay within 50–150 from Plan39 estimates through 
     expect(quarterIndices[index]).toBe(quarterIndices[index - 1]! + 1);
   }
   for (const row of targetRows) {
-    const rowDiagnostic = `period=${row.period}, key=all-ten-expenses, rowTotal=${row.total}, values=${JSON.stringify(row.values)}`;
+    const rowDiagnostic = `period=${row.period}, key=all-ten-expenses-dom-data, rowTotal=${row.total}, values=${JSON.stringify(row.values)}`;
     expect(row.period).toBeTruthy();
     expect(row.values).toHaveLength(result.categories.length);
     for (const value of row.values) {
@@ -89,9 +111,6 @@ test("nominal stacked totals stay within 50–150 from Plan39 estimates through 
       expect(value.status, diagnostic).toBe("available");
       expect(["official_adjusted", "estimated_adjusted"], diagnostic).toContain(value.seriesType);
     }
-    expect(Number.isFinite(row.total), rowDiagnostic).toBe(true);
-    expect(row.total, rowDiagnostic).toBeGreaterThanOrEqual(50);
-    expect(row.total, rowDiagnostic).toBeLessThanOrEqual(150);
   }
   expect(result.renderedSeries).toHaveLength(result.categories.length);
   for (const series of result.renderedSeries) {
@@ -99,5 +118,28 @@ test("nominal stacked totals stay within 50–150 from Plan39 estimates through 
     expect(series.seriesGroupCount, diagnostic).toBe(1);
     expect(series.rectangleCount, diagnostic).toBeGreaterThan(0);
     expect(series.visibleRectangleCount, diagnostic).toBeGreaterThan(0);
+  }
+  const renderedTargetRows = result.renderedStackRows.filter(
+    (row) => row.period !== null && row.period >= "2005Q1",
+  );
+  const renderDiagnostic = JSON.stringify(result.renderedStackDiagnostics);
+  expect(result.renderedStackDiagnostics.dataRowCount, renderDiagnostic).toBe(result.rows.length);
+  expect(result.renderedStackDiagnostics.yScaleValid, renderDiagnostic).toBe(true);
+  expect(result.renderedStackDiagnostics.xScaleValid, renderDiagnostic).toBe(true);
+  expect(result.renderedStackDiagnostics.unmappedShapeCount, renderDiagnostic).toBe(0);
+  expect(renderedTargetRows.map((row) => row.period)).toEqual(targetRows.map((row) => row.period));
+  for (const row of renderedTargetRows) {
+    const dataRow = targetRows.find((candidate) => candidate.period === row.period);
+    const expectedVisibleSegments = dataRow?.values.filter(
+      (value) => Number(value.value) > 0,
+    ).length;
+    const diagnostic = `period=${row.period}, visibleSegments=${row.visibleSegmentCount}, expectedVisibleSegments=${expectedVisibleSegments}, renderedStackTotal=${row.total}`;
+    expect(dataRow, diagnostic).toBeDefined();
+    expect(row.visibleSegmentCount, diagnostic).toBe(expectedVisibleSegments);
+    expect(row.visibleSegmentCount, diagnostic).toBeGreaterThan(0);
+    expect(row.total, diagnostic).not.toBeNull();
+    expect(Number.isFinite(row.total), diagnostic).toBe(true);
+    expect(row.total, diagnostic).toBeGreaterThanOrEqual(50);
+    expect(row.total, diagnostic).toBeLessThanOrEqual(150);
   }
 });

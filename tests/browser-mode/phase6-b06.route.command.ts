@@ -278,7 +278,162 @@ async function nominalStackedTotalRange(page: import("@playwright/test").Page) {
         }, `spending-series-${key}`);
     }),
   );
-  return { id, categories, rows, renderedSeries };
+  const renderedStackRows = await chart.evaluate((chartElement, keys) => {
+    const dataRows = [
+      ...chartElement.querySelectorAll<HTMLElement>(
+        '[data-testid="chart-data-contract"] [data-chart-data-row]',
+      ),
+    ];
+    const yTickElements = [
+      ...chartElement.querySelectorAll<SVGTextElement>(".recharts-yAxis-tick-labels text"),
+    ];
+    const yTicks = yTickElements
+      .map((tick) => {
+        const value = Number((tick.textContent ?? "").replaceAll(",", "").trim());
+        const bounds = tick.getBoundingClientRect();
+        return { value, y: bounds.top + bounds.height / 2 };
+      })
+      .filter((tick) => Number.isFinite(tick.value) && Number.isFinite(tick.y));
+    const zeroTick = yTicks.find((tick) => tick.value === 0);
+    const positiveTicks = yTicks.filter((tick) => tick.value > 0);
+    const yPairs = yTicks.filter((tick) => tick.value !== 0);
+    const yMeanValue =
+      yPairs.reduce((sum, tick) => sum + tick.value, 0) / Math.max(yPairs.length, 1);
+    const yMeanPosition =
+      yPairs.reduce((sum, tick) => sum + tick.y, 0) / Math.max(yPairs.length, 1);
+    const ySlope =
+      yPairs.length > 1
+        ? yPairs.reduce(
+            (sum, tick) => sum + (tick.value - yMeanValue) * (tick.y - yMeanPosition),
+            0,
+          ) / yPairs.reduce((sum, tick) => sum + (tick.value - yMeanValue) ** 2, 0)
+        : Number.NaN;
+    const yIntercept = yMeanPosition - ySlope * yMeanValue;
+    const yScaleValid = Boolean(
+      zeroTick && positiveTicks.length > 0 && Number.isFinite(ySlope) && ySlope < 0,
+    );
+
+    const rectanglesBySeries = keys.map((key) => {
+      const anchor = chartElement.querySelector<SVGGElement>(
+        `[data-testid="spending-series-${key}"]`,
+      );
+      const group = anchor?.matches("g.recharts-bar")
+        ? anchor
+        : anchor?.closest<SVGGElement>("g.recharts-bar");
+      return group
+        ? {
+            key,
+            groupFound: true,
+            rectangleCount: group.querySelectorAll(".recharts-bar-rectangle").length,
+            shapes: [...group.querySelectorAll<SVGGElement>(".recharts-bar-rectangle")]
+              .map((segment) => {
+                const shape = segment.querySelector<SVGGraphicsElement>("rect, path");
+                const bounds = shape?.getBoundingClientRect();
+                return bounds && bounds.width > 0 && bounds.height > 0
+                  ? {
+                      x: bounds.left + bounds.width / 2,
+                      top: bounds.top,
+                      bottom: bounds.bottom,
+                    }
+                  : null;
+              })
+              .filter((shape): shape is NonNullable<typeof shape> => shape !== null),
+          }
+        : { key, groupFound: false, rectangleCount: 0, shapes: [] };
+    });
+
+    const xTickElements = [
+      ...chartElement.querySelectorAll<SVGTextElement>(".recharts-xAxis-tick-labels text"),
+    ];
+    const rowIndices = new Map(
+      dataRows.map((row, index) => [row.getAttribute("data-period"), index]),
+    );
+    const xTickPairs = xTickElements.flatMap((tick) => {
+      const index = rowIndices.get((tick.textContent ?? "").trim());
+      if (index === undefined) return [];
+      const bounds = tick.getBoundingClientRect();
+      return [{ index, x: bounds.left + bounds.width / 2 }];
+    });
+    const xMeanIndex =
+      xTickPairs.reduce((sum, tick) => sum + tick.index, 0) / Math.max(xTickPairs.length, 1);
+    const xMeanPosition =
+      xTickPairs.reduce((sum, tick) => sum + tick.x, 0) / Math.max(xTickPairs.length, 1);
+    const xSlope =
+      xTickPairs.length > 1
+        ? xTickPairs.reduce(
+            (sum, tick) => sum + (tick.index - xMeanIndex) * (tick.x - xMeanPosition),
+            0,
+          ) / xTickPairs.reduce((sum, tick) => sum + (tick.index - xMeanIndex) ** 2, 0)
+        : Number.NaN;
+    const xIntercept = xMeanPosition - xSlope * xMeanIndex;
+    const xScaleValid = Number.isFinite(xSlope) && xSlope > 0 && xTickPairs.length > 1;
+    const rowSegments = dataRows.map(() => [] as Array<{ top: number; bottom: number }>);
+    let unmappedShapeCount = 0;
+    if (xScaleValid) {
+      for (const series of rectanglesBySeries) {
+        for (const shape of series.shapes) {
+          const index = Math.round((shape.x - xIntercept) / xSlope);
+          const expectedX = xIntercept + xSlope * index;
+          if (
+            index < 0 ||
+            index >= dataRows.length ||
+            Math.abs(shape.x - expectedX) > Math.abs(xSlope) * 0.55
+          ) {
+            unmappedShapeCount += 1;
+            continue;
+          }
+          rowSegments[index]?.push({ top: shape.top, bottom: shape.bottom });
+        }
+      }
+    } else {
+      unmappedShapeCount = rectanglesBySeries.reduce(
+        (sum, series) => sum + series.shapes.length,
+        0,
+      );
+    }
+
+    const rows = dataRows.map((row, index) => {
+      const segments = rowSegments[index] ?? [];
+      const top = segments.length > 0 ? Math.min(...segments.map((segment) => segment.top)) : null;
+      const bottom =
+        segments.length > 0 ? Math.max(...segments.map((segment) => segment.bottom)) : null;
+      const total =
+        top === null || bottom === null || !yScaleValid ? null : (top - yIntercept) / ySlope;
+      return {
+        period: row.getAttribute("data-period"),
+        visibleSegmentCount: segments.length,
+        total,
+      };
+    });
+    return {
+      rows,
+      diagnostics: {
+        dataRowCount: dataRows.length,
+        yTickCount: yTicks.length,
+        yTicks,
+        yScaleValid,
+        xTickCount: xTickPairs.length,
+        xTicks: xTickPairs,
+        xScaleValid,
+        series: rectanglesBySeries.map(({ key, groupFound, rectangleCount, shapes }) => ({
+          key,
+          groupFound,
+          rectangleCount,
+          visibleShapeCount: shapes.length,
+        })),
+        unmappedShapeCount,
+        emptyRenderedRowCount: rows.filter((row) => row.visibleSegmentCount === 0).length,
+      },
+    };
+  }, categories);
+  return {
+    id,
+    categories,
+    rows,
+    renderedSeries,
+    renderedStackRows: renderedStackRows.rows,
+    renderedStackDiagnostics: renderedStackRows.diagnostics,
+  };
 }
 
 async function quarterlyGdp(page: import("@playwright/test").Page) {
