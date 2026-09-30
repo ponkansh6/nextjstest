@@ -3917,11 +3917,14 @@ categoryへのmappingをmeasurement provenanceに保持する。9費目は原数
 差し替え境界で設定する。表示側はkindや値を再計算しない。
 2005–2016 は `estimated_adjusted`、2017Q1以降の9公式費目は `official_adjusted`、Other residualは
 `estimated_adjusted` とし、入力不備または計算不能は `unavailable`、unavailable の `value` は必ず `null` とする。
-この状態は publication gate の結果を含む。合成 Plan40 runtime-evidence fixture は
-annual input validation 自体は valid だが、監査ゲート未完了のため `accepted=false` であり、
-実際の 2005 row は `unavailable`/`null`、`annualAnchorType=estimated`、
-`quarterlyDerived=true`、`official=false` を返す。publication gate が accepted の
-入力では 2005–2016 の有効値が `estimated_adjusted` となる。2017Q1以降は推計gateに
+Plan40 の rolling/leave-one-out (LOO) evidence は、同じ実行で検証済みの nominal B/A
+入力snapshotから算出し、canonical evidence schema と当該snapshotのinput fingerprintに
+結び付ける。stale fingerprint、canonical schema不一致、必須evidenceの欠落または不正は
+gate入力として受理せず、既存の共有publication gateを変更せずに評価する。ゲートが閉じている
+場合は対象値を `unavailable` / `null` とし、invalidなevidenceや他のPlan40入力・anchor・月次検証の
+阻害要因を迂回しない。全入力検証と必須evidenceが通り、共有gateが `accepted=true` のときは、
+2005–2016の歴史推計値を `estimated_adjusted` として公開可能にする。
+2017Q1以降は推計gateに
 かかわらず公式四半期artifactを使い、9公式費目は `official_adjusted`、`official=true`、
 `quarterlyDerived=false`、Other residualは `estimated_adjusted`、`official=false`、
 `quarterlyDerived=true` とする。source validationが失敗しても歴史推計を保持し、2017Q1 unavailable markerを追加する。
@@ -3954,9 +3957,27 @@ Plan39 の実 artifact/runtime は `buildCtiAdjustedV2Estimate` の typed `contr
 を明示して既存の nominal B/A 契約を使用し、Plan40 の対象年・metadata 厳格検証を適用しない。
 Plan40 runtime evidence は `contract: "plan40"` を明示するため、両契約の検証結果を
 混同しない。指定がない既存 builder 呼び出しは後方互換の Plan39 契約として扱う。
+Plan40 の必須 rolling/LOO evidence は、Plan40 input validation を通過した同一の nominal B/A
+snapshotから生成する。evidence recordにはcanonical schema識別子とsnapshotのinput fingerprintを
+記録し、evidenceのfingerprintが実行中snapshotと一致し、schema・期間・必須diagnosticが有効な場合のみ、
+そのevidenceを既存の共有publication gateへ渡す。evidence不正・不一致、または別の必須Plan40検証が
+失敗した場合はfail-closedとし、古いpass evidenceやPlan39/実質入力の判定を再利用しない。
 
 ### Requirements
 
+- **WHEN** the production nominal stacked chart renders real data rows, **THEN**
+  its DOM contract contains all ten `CTIミクロ調整系列（費目）` public expense
+  keys with finite numeric values, `status=available`, and series type `official_adjusted` or
+  `estimated_adjusted`, and the sum of those categories for every row is within
+  the inclusive range 50–150. The Browser Mode command returns every hidden
+  contract row; after validating that every row has a `YYYYQn` DOM `data-period`,
+  the test targets rows whose period is 2005Q1 or later, beginning at 2005Q1 and
+  continuing through the last contract period. Period alone selects target rows;
+  the 2005–2016 Plan39 estimated stack is included, and missing metadata,
+  null/non-finite values, or unavailable status are failures. Only the
+  legacy/support-only 1994–2004 rows are outside this check. The test verifies
+  uniqueness and quarterly continuity and confirms each category's Recharts bar
+  and at least one visible rectangle are rendered.
 - **WHEN** 2005–2016の既存名目歴史推計の対象月が一意で有限である、
   **THEN** 既存の名目B/A接続推計と名目月次profileの式・値を維持する。
 - **WHEN** SharedPlan40の年次・月次・四半期値を生成する、**THEN** Plan39世帯人数構成候補や
@@ -4028,6 +4049,16 @@ Plan40 runtime evidence は `contract: "plan40"` を明示するため、両契�
 - **WHEN** Plan39 の既存 artifact/runtime publication gate を評価する、**THEN** `contract: "plan39"`
   の通常検証と publication gate を維持し、Plan40 の厳格な対象年検証を Plan39 の正常契約へ
   適用しない。
+- **WHEN** Plan40 の必須 rolling/LOO evidence を生成する、**THEN** Plan40 input validation を通過した
+  同一の nominal B/A input snapshotから計算し、canonical evidence schemaとsnapshotのinput fingerprintを
+  evidenceへ記録して既存の共有publication gateに渡す。別snapshot、旧real/Plan39 evidence、または
+  fingerprint不一致のevidenceを代用しない。
+- **WHEN** Plan40 rolling/LOO evidenceが欠落・不正・canonical schema不一致・input fingerprint不一致である、
+  または別の必須Plan40 input、anchor、月次検証に失敗がある、**THEN** 共有publication gateを通過扱いにせず、
+  対象値を既存の fail-closed `unavailable` / `value=null` 契約で扱う。
+- **WHEN** Plan40 の全必須入力、anchor、月次検証およびrolling/LOO evidenceが有効で、共有publication gateが
+  `accepted=true` を返す、**THEN** 2005–2016の歴史的費目値を `estimated_adjusted` として公開可能にし、
+  公開範囲内の他の有効なPlan40費目値も欠損扱いにしない。
 - **WHEN** nominal B/A の `adoptedRange` が Plan40対象年を包含しない、実データ行を包含しない、
   または `rawRange` の外側にある、**THEN** 同じ fail-closed reason体系で年次アンカー契約を
   invalid とし、対象measurementを `value=null`、`status=unavailable` とする。

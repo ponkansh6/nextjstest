@@ -5,7 +5,7 @@ import { loadPlan39V2CtiNominalRows } from "@server/lib/view-models/quarterlyAgg
 import { CTI_ADJUSTED_V2_PUBLIC_REGISTRY } from "@/lib/chartConstants";
 
 describe("Plan40 repository artifact runtime", () => {
-  it("fails closed on gated historical rows and keeps official 2017+ quarterly values", async () => {
+  it("accepts current-input Plan40 evidence and keeps historical and official quarterly values", async () => {
     const result = loadCtiAdjustedV2Estimate({
       artifactRoot: "data/source/cti-adjusted",
       contract: "plan40",
@@ -14,8 +14,13 @@ describe("Plan40 repository artifact runtime", () => {
     const rows = loadPlan39V2CtiNominalRows(result, runtime, runtime.ctiMetadata);
 
     expect(result.plan40InputValidation?.valid).toBe(true);
-    expect(result.publicationGate.accepted).toBe(false);
-    expect(result.publicationGate.blockingReasonCodes).toContain("rolling_loo_backtest_incomplete");
+    expect(result.publicationGate.accepted).toBe(true);
+    expect(result.publicationGate.status).toBe("pass");
+    expect(result.publicationGate.reasonCodes).not.toContain("rolling_loo_backtest_incomplete");
+    expect(result.publicationGate.blockingReasonCodes).not.toContain(
+      "rolling_loo_backtest_incomplete",
+    );
+    expect(result.publicationGate.blockingReasonCodes).toEqual([]);
     expect(runtime.ctiMetadata?.statInfId).toBe("000040499069");
     const metadataDescriptor = Object.getOwnPropertyDescriptor(runtime, "ctiMetadata");
     expect(metadataDescriptor).toMatchObject({
@@ -31,9 +36,10 @@ describe("Plan40 repository artifact runtime", () => {
       (candidate) => candidate.category !== "総合",
     )) {
       const measurement = historical?.measurements?.[entry.key];
-      expect(measurement?.value).toBeNull();
-      expect(measurement?.status).toBe("unavailable");
-      expect(measurement?.reason).toBe("v2_annual_anchor_unavailable");
+      expect(measurement?.value).toEqual(expect.any(Number));
+      expect(measurement?.value).not.toBeNaN();
+      expect(measurement?.status).toBe("available");
+      expect(measurement?.reason).toBeNull();
     }
 
     for (const period of ["2017Q4", "2018Q1"]) {

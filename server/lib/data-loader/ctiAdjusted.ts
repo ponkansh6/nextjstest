@@ -16,8 +16,10 @@ import {
 } from "../ctiAdjustedConnectionEstimateV2";
 import {
   evaluateCtiAdjustedPublicationGate,
+  CTI_ADJUSTED_PUBLICATION_GATE_SCHEMA,
   type CtiAdjustedRollingLooEvidence,
 } from "../ctiAdjustedPublicationGate";
+import { buildCtiAdjustedRollingLooBacktest } from "../ctiAdjustedRollingBacktest";
 
 export type CtiAdjustedArtifactPaths = Partial<Record<"B" | "A" | "L", string>>;
 export type CtiAdjustedLoaderOptions = {
@@ -483,14 +485,57 @@ export function loadCtiAdjustedV2Estimate(
   options: CtiAdjustedLoaderOptions = {},
 ): CtiAdjustedV2Result {
   const inputs = loadCtiAdjustedInputs(options);
+  const plan40ExpectedInputFingerprint =
+    options.contract === "plan40" ? fingerprintLoadedCtiAdjustedInputs(inputs) : null;
   const result = buildCtiAdjustedV2Estimate(inputs.B, inputs.A, inputs.L, {
     contract: options.contract ?? "plan39",
     householdComposition: inputs.householdComposition ?? undefined,
   });
-  // Plan40 owns its input validation and annual/publication state. Its result
-  // must not be replaced by the Plan39 evidence gate, which is only a Plan39
-  // publication contract.
-  if (options.contract === "plan40") return result;
+  if (options.contract === "plan40") {
+    // Plan40 has its own publication blockers, but rolling/LOO evidence is
+    // shared. Recompute it from the exact loaded B/A inputs; never reuse a
+    // stored Plan39 analysis report as Plan40 evidence.
+    const canBuildEvidence =
+      !inputs.manifestInvalid &&
+      inputs.missingKinds.length === 0 &&
+      inputs.loadReasons.length === 0 &&
+      inputs.B !== null &&
+      inputs.A !== null &&
+      inputs.L !== null;
+    let rollingLoo: CtiAdjustedRollingLooEvidence | undefined;
+    if (canBuildEvidence) {
+      try {
+        rollingLoo = buildCtiAdjustedRollingLooBacktest(inputs.B!, inputs.A!, inputs.L!);
+      } catch {
+        // The shared evaluator treats missing evidence as a hard blocker.
+      }
+    }
+    // Fingerprint the loaded input snapshot before and after estimate/backtest
+    // construction so evidence stays bound to the exact in-memory inputs.
+    const evidenceInputFingerprint = fingerprintLoadedCtiAdjustedInputs(inputs);
+    const gate = evaluateCtiAdjustedPublicationGate({
+      baseGate: result.publicationGate,
+      rollingLoo,
+      evidenceSchema: CTI_ADJUSTED_PUBLICATION_GATE_SCHEMA,
+      evidenceInputFingerprint,
+      expectedInputFingerprint:
+        plan40ExpectedInputFingerprint ?? "missing_expected_cti_adjusted_input_fingerprint",
+    });
+    return {
+      ...result,
+      publicationGate: {
+        ...result.publicationGate,
+        ...gate,
+        warningReasonCodes: result.publicationGate.warningReasonCodes,
+        diagnostics: [
+          ...result.publicationGate.diagnostics.filter(
+            (diagnostic) => diagnostic !== "publication_gate_closed",
+          ),
+          ...(gate.accepted ? [] : ["publication_gate_closed"]),
+        ],
+      },
+    };
+  }
   const analysis = loadMatchingPlan39Analysis(inputs.artifactRoot);
   if (!analysis) return result;
   const gate = evaluateCtiAdjustedPublicationGate({
@@ -551,42 +596,8 @@ function loadMatchingPlan39Analysis(artifactRoot: string): Plan39Analysis | null
           .reverse()
           .map((name) => path.join(resultsRoot, name))
       : [];
-  let expectedFingerprint: string | null = null;
-  try {
-    const root = path.resolve(artifactRoot);
-    const manifestBytes = fs.readFileSync(path.join(root, "manifest.json"));
-    const auditBytes = fs.readFileSync(path.join(root, "audit.json"));
-    const manifest = JSON.parse(manifestBytes.toString("utf8"));
-    const artifacts = Object.fromEntries(
-      ["B", "A", "L"].map((kind) => {
-        const relative = manifest.artifacts?.[kind]?.path;
-        return [
-          kind,
-          createHash("sha256")
-            .update(fs.readFileSync(path.resolve(root, relative)))
-            .digest("hex"),
-        ];
-      }),
-    );
-    const composition = loadProductionPi2Plus(root);
-    expectedFingerprint = `sha256:${createHash("sha256")
-      .update(
-        JSON.stringify({
-          manifest: createHash("sha256").update(manifestBytes).digest("hex"),
-          audit: createHash("sha256").update(auditBytes).digest("hex"),
-          artifacts,
-          householdComposition: composition
-            ? {
-                artifact: composition.provenance.artifactSha256,
-                manifest: composition.provenance.manifestSha256,
-              }
-            : null,
-        }),
-      )
-      .digest("hex")}`;
-  } catch {
-    return null;
-  }
+  const expectedFingerprint = deriveCtiAdjustedInputFingerprint(artifactRoot);
+  if (!expectedFingerprint) return null;
   for (const file of files) {
     try {
       const value = readJson(file) as Plan39Analysis;
@@ -616,6 +627,63 @@ function loadMatchingPlan39Analysis(artifactRoot: string): Plan39Analysis | null
     }
   }
   return null;
+}
+
+/** Canonical fingerprint shared by stored Plan39 matching and live Plan40 evidence. */
+function deriveCtiAdjustedInputFingerprint(artifactRoot: string): string | null {
+  try {
+    const root = path.resolve(artifactRoot);
+    const manifestBytes = fs.readFileSync(path.join(root, "manifest.json"));
+    const auditBytes = fs.readFileSync(path.join(root, "audit.json"));
+    const manifest = JSON.parse(manifestBytes.toString("utf8")) as {
+      artifacts?: Partial<Record<"B" | "A" | "L", { path?: string }>>;
+    };
+    const artifacts = Object.fromEntries(
+      (["B", "A", "L"] as const).map((kind) => {
+        const relative = manifest.artifacts?.[kind]?.path;
+        if (typeof relative !== "string" || relative.length === 0)
+          throw new Error("missing input artifact path");
+        const artifactPath = path.resolve(root, relative);
+        if (!artifactPath.startsWith(`${root}${path.sep}`))
+          throw new Error("input artifact path escapes root");
+        return [kind, createHash("sha256").update(fs.readFileSync(artifactPath)).digest("hex")];
+      }),
+    );
+    const composition = loadProductionPi2Plus(root);
+    return `sha256:${createHash("sha256")
+      .update(
+        JSON.stringify({
+          manifest: createHash("sha256").update(manifestBytes).digest("hex"),
+          audit: createHash("sha256").update(auditBytes).digest("hex"),
+          artifacts,
+          householdComposition: composition
+            ? {
+                artifact: composition.provenance.artifactSha256,
+                manifest: composition.provenance.manifestSha256,
+              }
+            : null,
+        }),
+      )
+      .digest("hex")}`;
+  } catch {
+    return null;
+  }
+}
+
+/** Fingerprint the exact validated in-memory inputs consumed by both Plan40 builders. */
+function fingerprintLoadedCtiAdjustedInputs(inputs: LoadedCtiAdjustedInputs): string | null {
+  try {
+    const serialized = JSON.stringify({
+      B: inputs.B,
+      A: inputs.A,
+      L: inputs.L,
+      householdComposition: inputs.householdComposition,
+    });
+    if (serialized === undefined) return null;
+    return `sha256:${createHash("sha256").update(serialized).digest("hex")}`;
+  } catch {
+    return null;
+  }
 }
 
 export function loadCtiAdjustedInputs(

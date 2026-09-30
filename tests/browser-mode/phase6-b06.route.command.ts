@@ -13,6 +13,7 @@ import { NEXT_ROUTE_POC_BASE_URL } from "./next-route-poc.constants";
 export type Phase6B06Id =
   | "p45-b-plan27-private-consumption-79-plan27-38-cti-nominal-cti-key-is-distinct-from-the-real"
   | "p45-b-plan27-private-consumption-9-plan27-38-cti-2005q1-2017q4-52-graph-table-csv-cti-regi"
+  | "p45-b-plan40-nominal-stacked-total-range-dom-contract"
   | "p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders-";
 
 type CsvArtifact = { text: string; rows: string[][]; artifactPath: string };
@@ -160,6 +161,97 @@ async function nominalPlan27(page: import("@playwright/test").Page, full: boolea
     .filter((period) => /^200[5-9]Q[1-4]$|^201[0-7]Q[1-4]$/.test(period));
   const csv = await downloadCsv(page, nominalTable, true);
   return { postBoundary, realHeaders, barCount, positiveBarCount, snapshot, periods, csv };
+}
+
+async function nominalStackedTotalRange(page: import("@playwright/test").Page) {
+  const id: Phase6B06Id = "p45-b-plan40-nominal-stacked-total-range-dom-contract";
+  await page.goto(`${NEXT_ROUTE_POC_BASE_URL}/`, { timeout: 20_000 });
+  const section = page.locator("#section-consumption-nominal");
+  await section.waitFor({ state: "visible", timeout: 15_000 });
+  const chart = page.getByTestId("spending-chart-nominal");
+  await chart.waitFor({ state: "visible", timeout: 15_000 });
+  const categories = [
+    "CTIミクロ調整系列（食料）",
+    "CTIミクロ調整系列（住居）",
+    "CTIミクロ調整系列（光熱・水道）",
+    "CTIミクロ調整系列（家具・家事用品）",
+    "CTIミクロ調整系列（被服及び履物）",
+    "CTIミクロ調整系列（保健医療）",
+    "CTIミクロ調整系列（交通・通信）",
+    "CTIミクロ調整系列（教育）",
+    "CTIミクロ調整系列（教養娯楽）",
+    "CTIミクロ調整系列（その他の消費支出）",
+  ];
+  const rows = await chart
+    .locator('[data-testid="chart-data-contract"] [data-chart-data-row]')
+    .evaluateAll((elements, keys) => {
+      const measurementAttributes = [
+        "data-status",
+        "data-series-type",
+        "data-measurement-value-type",
+        "data-source",
+        "data-unit",
+        "data-frequency",
+        "data-aggregation",
+      ];
+      return elements.map((row) => {
+        const values = keys.map((key) => {
+          const cell = row.querySelector<HTMLElement>(`[data-series-key="${key}"]`);
+          return {
+            key,
+            value: cell?.getAttribute("data-value") ?? null,
+            valueType: cell?.getAttribute("data-value-type") ?? null,
+            status: cell?.getAttribute("data-status") ?? null,
+            seriesType: cell?.getAttribute("data-series-type") ?? null,
+            hasMeasurementMetadata: measurementAttributes.some((attribute) =>
+              cell?.hasAttribute(attribute),
+            ),
+          };
+        });
+        return {
+          period: row.getAttribute("data-period"),
+          values,
+          total: values.reduce((sum, item) => sum + Number(item.value), 0),
+        };
+      });
+    }, categories);
+  const renderedSeries = await Promise.all(
+    categories.map(async (key) => {
+      return chart
+        .locator(`[data-testid="spending-series-${key}"]`)
+        .evaluateAll((anchors, testId) => {
+          const barGroups = new Set<Element>();
+          const rectangles = new Set<Element>();
+          for (const anchor of anchors) {
+            const group = anchor.matches("g.recharts-bar")
+              ? anchor
+              : anchor.closest("g.recharts-bar");
+            if (group) {
+              barGroups.add(group);
+              for (const rectangle of group.querySelectorAll(".recharts-bar-rectangle")) {
+                rectangles.add(rectangle);
+              }
+            }
+            if (anchor.matches(".recharts-bar-rectangle")) rectangles.add(anchor);
+            const parentRectangle = anchor.closest(".recharts-bar-rectangle");
+            if (parentRectangle) rectangles.add(parentRectangle);
+            for (const rectangle of anchor.querySelectorAll(".recharts-bar-rectangle")) {
+              rectangles.add(rectangle);
+            }
+          }
+          return {
+            key: testId.replace("spending-series-", ""),
+            seriesGroupCount: barGroups.size,
+            rectangleCount: rectangles.size,
+            visibleRectangleCount: [...rectangles].filter((element) => {
+              const rect = element.getBoundingClientRect();
+              return rect.width > 0 && rect.height > 0;
+            }).length,
+          };
+        }, `spending-series-${key}`);
+    }),
+  );
+  return { id, categories, rows, renderedSeries };
 }
 
 async function quarterlyGdp(page: import("@playwright/test").Page) {
@@ -503,6 +595,8 @@ export const inspectPhase6B06: BrowserCommand<[id: Phase6B06Id], unknown> = asyn
         : null;
       return { contextEvidence, ...(await nominalPlan27(page, id.includes("-9-plan27-"))) };
     }
+    if (id === "p45-b-plan40-nominal-stacked-total-range-dom-contract")
+      return nominalStackedTotalRange(page);
     return await quarterlyGdp(page);
   });
 };
