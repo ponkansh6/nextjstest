@@ -141,6 +141,33 @@ async function nominalPlan27(page: import("@playwright/test").Page, full: boolea
   const realHeaders = (await tableSnapshot(realTable)).headers;
   if (!full) return { postBoundary, realHeaders };
 
+  const openRange = async () => {
+    if (
+      !(await page
+        .locator("#startYear")
+        .isVisible()
+        .catch(() => false))
+    ) {
+      await page.getByRole("button", { name: "表示期間を変更" }).click();
+      await page.locator("#startYear").waitFor({ state: "visible", timeout: 10_000 });
+    }
+  };
+  await openRange();
+  await page.locator("#startYear").selectOption("2005");
+  await openRange();
+  await page.locator("#endYear").selectOption("2017");
+  await page.waitForFunction(
+    () => {
+      const chart = document.querySelector('[data-testid="spending-chart-nominal"]');
+      return (
+        chart?.querySelector(".recharts-bar")?.querySelectorAll(".recharts-bar-rectangle")
+          .length === 52
+      );
+    },
+    undefined,
+    { timeout: 15_000 },
+  );
+
   const barCount = await chart
     .locator(".recharts-bar")
     .first()
