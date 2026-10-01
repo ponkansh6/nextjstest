@@ -202,7 +202,7 @@ it("p45-b-range-change-107-e2e — production route starts with nominal and real
   expect(values.realBarCount).toBe(
     (values.realProjectedValues as number) - (values.realTotalProjectedValues as number),
   );
-  expect(values.realTotalMarkerCount).toBe(values.realTotalProjectedValues);
+  expect(values.realTotalMarkerCount).toBe(0);
 });
 
 it("p45-b-range-change-187-e2e-1 — production single-year selection renders four periods", async () => {
@@ -217,5 +217,5 @@ it("p45-b-range-change-187-e2e-1 — production single-year selection renders fo
   expect(values.realBars).toBe(
     (values.realProjectedValues as number) - (values.realTotalProjectedValues as number),
   );
-  expect(values.realTotalMarkerCount).toBe(values.realTotalProjectedValues);
+  expect(values.realTotalMarkerCount).toBe(0);
 });

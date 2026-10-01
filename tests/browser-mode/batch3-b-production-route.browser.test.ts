@@ -90,7 +90,7 @@ it("p45-b-plan24-rendering-71 — production ranges render legacy and CTI data w
     .map((period) => period.trim())
     .filter(Boolean);
   expect(realTotalSupportPeriods2005to2017).toHaveLength(52);
-  expect(values.realTotalMarkers2005to2017).toBe(realTotalSupportPeriods2005to2017.length);
+  expect(values.realTotalMarkers2005to2017).toBe(0);
   expect(values.nominal2018Bars).toBeGreaterThan(0);
   expect(values.real2018Bars).toBeGreaterThan(0);
   const realTotalSupportPeriods2018 = (values.realTotalSupportPeriods2018 as string)
@@ -99,8 +99,7 @@ it("p45-b-plan24-rendering-71 — production ranges render legacy and CTI data w
     .filter(Boolean);
   expect(realTotalSupportPeriods2018).toContain("2018Q1");
   expect(realTotalSupportPeriods2018).toHaveLength(4);
-  expect(values.realTotalMarkers2018).toBe(realTotalSupportPeriods2018.length);
-  expect(values.realTotalMarkers2018).toBeGreaterThan(0);
+  expect(values.realTotalMarkers2018).toBe(0);
   expect(values.nominal2018Headers).not.toContain("GDP");
   expect(values.nominal2018Headers).not.toContain("民間最終消費支出");
   expect(values.real2018Headers).not.toContain("GDP");

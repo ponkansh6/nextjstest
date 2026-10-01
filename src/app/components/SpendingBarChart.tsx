@@ -447,29 +447,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
                   stroke="none"
                   strokeWidth={0}
                   connectNulls={false}
-                  dot={(dot) => {
-                    const value = dot.payload?.[supportKey];
-                    if (
-                      typeof value !== "number" ||
-                      !Number.isFinite(value) ||
-                      dot.cx == null ||
-                      dot.cy == null
-                    )
-                      return null;
-                    return (
-                      <circle
-                        cx={dot.cx}
-                        cy={dot.cy}
-                        r={4}
-                        fill={chartColors.barFill || "#94a3b8"}
-                        stroke={chartColors.gridStroke}
-                        strokeWidth={1.5}
-                        pointerEvents="none"
-                        data-key={supportKey}
-                        data-testid={`spending-series-marker-${supportKey}`}
-                      />
-                    );
-                  }}
+                  dot={false}
                   activeDot={false}
                   isAnimationActive={false}
                 />

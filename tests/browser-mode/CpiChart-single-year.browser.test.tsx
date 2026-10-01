@@ -95,7 +95,7 @@ describe("CpiChart single-year range in Chromium", () => {
           }).length,
         0,
       );
-      const totalMarkerCount = isReal
+      const realTotalValueCount = isReal
         ? Array.from(rowElements ?? []).reduce(
             (count, row) =>
               count +
@@ -105,7 +105,7 @@ describe("CpiChart single-year range in Chromium", () => {
             0,
           )
         : 0;
-      const expectedBarCount = finiteContractCount - totalMarkerCount;
+      const expectedBarCount = finiteContractCount - realTotalValueCount;
       expect(chartElement.querySelectorAll(".recharts-bar-rectangle").length).toBe(
         expectedBarCount,
       );
@@ -113,7 +113,7 @@ describe("CpiChart single-year range in Chromium", () => {
         chartElement.querySelectorAll(
           `[data-testid="spending-series-marker-${CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY}"]`,
         ).length,
-      ).toBe(totalMarkerCount);
+      ).toBe(0);
     }
   });
 
@@ -149,7 +149,7 @@ describe("CpiChart single-year range in Chromium", () => {
         0,
       );
       const bars = chart.querySelectorAll(".recharts-bar-rectangle").length;
-      const realTotalValues =
+      const realTotalValueCount =
         testId === "spending-chart-real"
           ? chart.querySelectorAll(
               `[data-series-key="${CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY}"][data-value-type="number"]`,
@@ -159,8 +159,8 @@ describe("CpiChart single-year range in Chromium", () => {
         `[data-testid="spending-series-marker-${CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY}"]`,
       ).length;
       expect(contractValues).toBeGreaterThan(0);
-      expect(bars).toBe(contractValues - realTotalValues);
-      expect(totalMarkers).toBe(realTotalValues);
+      expect(bars).toBe(contractValues - realTotalValueCount);
+      expect(totalMarkers).toBe(0);
     };
 
     // Use years with available post-boundary expense values in the fixture.

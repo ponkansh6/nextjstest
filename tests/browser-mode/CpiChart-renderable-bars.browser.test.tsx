@@ -109,7 +109,7 @@ describe("CpiChart bars", () => {
         `[data-testid="spending-series-marker-${CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY}"]`,
       ).length;
       expect(renderedBars).toBe(contractRenderableCount(chart) - realTotalValues);
-      expect(totalMarkers).toBe(realTotalValues);
+      expect(totalMarkers).toBe(0);
     }
   });
 });
