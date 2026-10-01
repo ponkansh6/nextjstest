@@ -158,6 +158,8 @@ it("B06 Plan23 ID 26: quarterly public data", async () => {
         realTotalCpiPeriod: string | null;
         realTotalCpiAggregation: string | null;
         realTotalNominalSource: string | null;
+        measurementNoteCount: number;
+        cpiProvenanceCount: number;
       }>;
     }>;
   };
@@ -262,13 +264,11 @@ it("B06 Plan23 ID 26: quarterly public data", async () => {
       if (isRealTable) {
         expect(tooltip.calculatedTotalVisible).toBe(false);
         expect(tooltip.text).not.toContain("合計");
-        expect(tooltip.realTotalVisible).toBe(true);
-        expect(tooltip.realTotalValue).toBe(tooltip.realTotalTableValue);
-        expect(tooltip.realTotalCpiSeries).toBe("持家の帰属家賃を除く総合");
-        expect(tooltip.realTotalBaseYear).toBe("2025");
-        expect(tooltip.realTotalCpiPeriod).toContain(tooltip.period);
-        expect(tooltip.realTotalCpiAggregation).toBe("算術平均（四半期内の3か月）");
-        expect(tooltip.realTotalNominalSource).toBeTruthy();
+        expect(tooltip.realTotalVisible).toBe(false);
+        expect(tooltip.text).toContain("食料");
+        expect(tooltip.realTotalTableValue).toMatch(/^-?\d[\d,]*(?:\.\d+)?$/);
+        expect(tooltip.measurementNoteCount).toBe(0);
+        expect(tooltip.cpiProvenanceCount).toBe(0);
       } else {
         expect(tooltip.calculatedTotalVisible).toBe(true);
         expect(tooltip.text).toContain("合計");

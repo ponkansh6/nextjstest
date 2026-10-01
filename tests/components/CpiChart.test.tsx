@@ -322,22 +322,11 @@ describe("CpiChartSections composition", () => {
     expect(nominalMeta.map(({ key }) => key)).toEqual(expectedNominalKeys);
     expect(nominalMeta.map(({ label }) => label)).toEqual(expectedLabels);
     expect(nominalMeta.map(({ order }) => order)).toEqual(expectedLabels.map((_, index) => index));
-    expect(
-      realMeta
-        .filter(({ key }) => key !== CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY)
-        .map(({ key }) => key),
-    ).toEqual(expectedRealKeys);
-    expect(
-      realMeta
-        .filter(({ key }) => key !== CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY)
-        .map(({ label }) => label),
-    ).toEqual(expectedLabels);
-    expect(realMeta.find(({ key }) => key === CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY)).toMatchObject({
-      label: "CTIミクロ総合（実質・CPI調整）",
-      order: expectedLabels.length,
-    });
+    expect(realMeta.map(({ key }) => key)).toEqual(expectedRealKeys);
+    expect(realMeta.map(({ label }) => label)).toEqual(expectedLabels);
+    expect(realMeta.some(({ key }) => key === CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY)).toBe(false);
     expect(nominalOptions?.showMeasurementNotes).toBe(false);
-    expect(realOptions?.showMeasurementNotes).toBe(true);
+    expect(realOptions?.showMeasurementNotes).toBe(false);
 
     const tooltip = (
       testId: string,
@@ -375,9 +364,9 @@ describe("CpiChartSections composition", () => {
     ).toHaveLength(0);
     expect(
       screen.getByTestId("real-tooltip").querySelectorAll("[data-tooltip-measurement-note]"),
-    ).toHaveLength(realMeta.length);
-    expect(screen.getByText("実質総合は名目総合を総合CPIで独立調整")).not.toBeNull();
-    expect(screen.getByText(/CPI: 持家の帰属家賃を除く総合.*2025年基準/)).not.toBeNull();
+    ).toHaveLength(0);
+    expect(screen.queryByText("実質総合は名目総合を総合CPIで独立調整")).toBeNull();
+    expect(screen.queryByText(/CPI: 持家の帰属家賃を除く総合.*2025年基準/)).toBeNull();
   });
 });
 

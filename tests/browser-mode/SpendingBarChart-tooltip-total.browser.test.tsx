@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { page } from "vitest/browser";
 import { SpendingBarChart } from "../../src/app/components/SpendingBarChart";
 import { useChartTooltipController } from "../../src/app/components/charts/useChartTooltipProps";
+import { CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY } from "../../src/lib/chartConstants";
 import { renderBrowserComponent } from "./renderBrowserComponent";
 
 const CHART_COLORS = {
@@ -64,6 +65,62 @@ function NominalTooltipFixture() {
   );
 }
 
+function RealTooltipFixture() {
+  const { bind } = useChartTooltipController({ suppressed: false, isTouch: false });
+  const tooltip = bind("browser-real-simple-tooltip", {
+    dataLength: 1,
+    showTotal: false,
+    showMeasurementNotes: false,
+    allowedKeys: ["食料（実質）", "住居（実質）"],
+    seriesMeta: [
+      { key: "食料（実質）", label: "食料", color: "#be123c", order: 0 },
+      { key: "住居（実質）", label: "住居", color: "#1d4ed8", order: 1 },
+      {
+        key: CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY,
+        label: "消費支出（実質）",
+        color: "#64748b",
+        order: 2,
+        cpiSeries: "CPI series",
+      },
+    ],
+  });
+
+  return (
+    <div style={{ width: 1000 }}>
+      <SpendingBarChart
+        title="消費支出（実質）"
+        testId="spending-chart-real-simple-tooltip"
+        data={[
+          {
+            label: "2025Q1",
+            年: 2025,
+            quarter: 1,
+            年月: "2025Q1",
+            "食料（実質）": 123,
+            "住居（実質）": 234,
+            [CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY]: 357,
+          },
+        ]}
+        keys={["食料（実質）", "住居（実質）", CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY]}
+        colors={["#be123c", "#1d4ed8", "#64748b"]}
+        hiddenKeys={[]}
+        onToggle={() => {}}
+        chartColors={CHART_COLORS}
+        tooltipProps={tooltip.tooltipProps}
+        onPointerDown={tooltip.onPointerDown}
+        onPointerMove={tooltip.onPointerMove}
+        onMouseMove={tooltip.onMouseMove}
+        onPointerLeave={tooltip.onPointerLeave}
+        onMouseLeave={tooltip.onMouseLeave}
+        hiddenQuarters={[]}
+        onToggleQuarter={() => {}}
+        onReset={() => {}}
+        isMobile={false}
+      />
+    </div>
+  );
+}
+
 describe("SpendingBarChart nominal tooltip total in Chromium", () => {
   it("shows the stacked total after hovering a rendered 2022 bar", async () => {
     renderBrowserComponent(<NominalTooltipFixture />);
@@ -85,5 +142,31 @@ describe("SpendingBarChart nominal tooltip total in Chromium", () => {
     await expect.element(total).toBeVisible();
     await expect.element(total).toHaveTextContent("合計");
     await expect.element(total).toHaveTextContent("357.00");
+  });
+
+  it("shows only real category rows without the support total or CPI notes", async () => {
+    renderBrowserComponent(<RealTooltipFixture />);
+
+    const chart = await page.getByTestId("spending-chart-real-simple-tooltip").element();
+    const barElement = chart.querySelector<SVGElement>(".recharts-bar-rectangle");
+    if (!barElement) throw new Error("2025 real spending bar is missing");
+    const bar = page.elementLocator(barElement);
+    await expect.element(bar).toBeVisible();
+    await bar.hover();
+
+    const tooltipElement = chart.querySelector<HTMLElement>('[data-custom-tooltip="true"]');
+    if (!tooltipElement) throw new Error("Real spending tooltip is missing");
+    const tooltip = page.elementLocator(tooltipElement);
+    await expect.element(tooltip).toBeVisible();
+    const tooltipRows = [
+      ...tooltipElement.querySelectorAll<HTMLElement>('[data-tooltip-row="true"]'),
+    ];
+    expect(tooltipRows.map((row) => row.getAttribute("data-tooltip-key"))).toEqual([
+      "食料（実質）",
+      "住居（実質）",
+    ]);
+    expect(tooltipElement.querySelector('[data-tooltip-total="true"]')).toBeNull();
+    expect(tooltipElement.querySelector('[data-tooltip-measurement-note="true"]')).toBeNull();
+    expect(tooltipElement.querySelector('[data-tooltip-cpi-provenance="true"]')).toBeNull();
   });
 });

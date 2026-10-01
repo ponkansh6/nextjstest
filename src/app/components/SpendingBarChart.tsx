@@ -1,16 +1,7 @@
 "use client";
 
 import React from "react";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Line,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { CpiData } from "@/types";
 import type { SeriesMeasurement } from "@/types/chart";
 import type { SeriesMetadata } from "../../lib/chartConstants";
@@ -162,12 +153,6 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
       (supportKey === CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY || row.年 < 2018) &&
       typeof row[supportKey] === "number",
   );
-  const hasIndependentRealTotal =
-    supportKey === CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY &&
-    data.some((row) => {
-      const value = row[CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY];
-      return typeof value === "number" && Number.isFinite(value);
-    });
   const hasPlan39Measurements = data.some(
     (row) => row.年 < 2018 && ctiKeys.some((key) => row.measurements?.[key] !== undefined),
   );
@@ -192,7 +177,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
         supportKey
       ]?.reason
     : undefined;
-  // Nominal support remains a bar; the independently deflated real total is a separate marker.
+  // Nominal support remains a bar; the independently deflated real total stays in the data series.
   const chartData = normalizeSpendingChartData(data, keys);
   const publicKeys = getPublicSpendingKeys(keys);
   const maxHeight = chartData.reduce((max, row) => {
@@ -437,21 +422,6 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
                 />
               ) : null,
             )}
-            {supportKey === CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY &&
-              hasIndependentRealTotal &&
-              !hiddenKeys.includes(supportKey) && (
-                <Line
-                  dataKey={supportKey}
-                  data-key={supportKey}
-                  data-testid={`spending-series-${supportKey}`}
-                  stroke="none"
-                  strokeWidth={0}
-                  connectNulls={false}
-                  dot={false}
-                  activeDot={false}
-                  isAnimationActive={false}
-                />
-              )}
           </BarChart>
         </ResponsiveContainer>
         {shouldShowEmptyState && (

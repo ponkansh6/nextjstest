@@ -167,6 +167,9 @@ export function CpiChartSections({
     if (!period) return comparisonVisibleKeys;
     return comparisonVisibleKeys.filter((key) => key === "CPI総合(12MA)" || key === "総合(12MA)");
   };
+  const realTooltipKeys = realKeysWithSupport.filter(
+    (key) => key !== CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY,
+  );
   const spendingTooltipMeta = (
     keys: string[],
     chartColorsForSeries: string[],
@@ -321,9 +324,9 @@ export function CpiChartSections({
             dataLength: realPublicData.length,
             showTotal: false,
             showAllPayload: true,
-            seriesMeta: spendingTooltipMeta(realKeysWithSupport, [...realColors, "#94a3b8"], true),
-            showMeasurementNotes: true,
-            allowedKeys: spendingAllowedKeys(realKeysWithSupport, realHiddenKeys),
+            seriesMeta: spendingTooltipMeta(realTooltipKeys, realColors, true),
+            showMeasurementNotes: false,
+            allowedKeys: spendingAllowedKeys(realTooltipKeys, realHiddenKeys),
           })}
           isMobile={isMobile}
           hiddenQuarters={hiddenQuarters}

@@ -702,6 +702,8 @@ async function quarterlyGdp(page: import("@playwright/test").Page) {
       realTotalCpiPeriod: string | null;
       realTotalCpiAggregation: string | null;
       realTotalNominalSource: string | null;
+      measurementNoteCount: number;
+      cpiProvenanceCount: number;
     }>;
     const testId = selector.includes("nominal") ? "spending-chart-nominal" : "spending-chart-real";
     const chart = page.getByTestId(testId);
@@ -728,6 +730,12 @@ async function quarterlyGdp(page: import("@playwright/test").Page) {
           .evaluateAll((rows) =>
             rows.some((row) => row.firstElementChild?.textContent?.trim() === "合計"),
           );
+        const measurementNoteCount = await tooltip
+          .locator('[data-tooltip-measurement-note="true"]')
+          .count();
+        const cpiProvenanceCount = await tooltip
+          .locator('[data-tooltip-cpi-provenance="true"]')
+          .count();
         const realTotalRow = tooltip.locator(
           '[data-tooltip-row="true"][data-tooltip-key="CTIミクロ調整系列（総合・実質）"]',
         );
@@ -801,6 +809,8 @@ async function quarterlyGdp(page: import("@playwright/test").Page) {
           realTotalCpiPeriod,
           realTotalCpiAggregation,
           realTotalNominalSource,
+          measurementNoteCount,
+          cpiProvenanceCount,
         };
       });
       tooltips.push(observation);
