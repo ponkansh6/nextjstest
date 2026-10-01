@@ -154,6 +154,21 @@ export function DataTablesSection({ tables }: DataTablesSectionProps) {
                               単位: {measurement.unit || "-"}
                               <br />
                               出典: {measurement.source || "-"}
+                              {measurement.cpiSeries && (
+                                <>
+                                  <br />
+                                  CPI識別子: {measurement.statInfId ?? measurement.sourceId ?? "-"}
+                                  <br />
+                                  CPI系列: {measurement.cpiSeries}（{measurement.baseYear ?? "-"}
+                                  年基準）
+                                  <br />
+                                  CPI期間: {measurement.cpiPeriod || "-"}
+                                  <br />
+                                  CPI集計: {measurement.cpiAggregation || "-"}
+                                  <br />
+                                  名目出典: {measurement.nominalSource || "-"}
+                                </>
+                              )}
                               <br />
                               頻度: {measurement.frequency || "-"}
                               <br />

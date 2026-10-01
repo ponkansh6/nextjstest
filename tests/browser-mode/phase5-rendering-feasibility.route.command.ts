@@ -185,13 +185,14 @@ async function tableSnapshot(page: import("@playwright/test").Page, tableId: str
       .catch(() => false);
     if (!expanded) await summary.click().catch(() => undefined);
   }
+  const headers: string[] = await tableSection
+    .locator("thead th")
+    .allTextContents()
+    .catch((): string[] => []);
   return {
     found: (await tableSection.count()) > 0,
     summaryText: await summary.textContent().catch(() => null),
-    headers: await tableSection
-      .locator("thead th")
-      .allTextContents()
-      .catch(() => []),
+    headers,
     rows: await tableSection
       .locator("tbody tr")
       .evaluateAll((rows) =>
@@ -651,28 +652,30 @@ async function execute(
     let periods: string[] = [];
     let realTableHeaders: string[] = [];
     let csvExpectedPayload = false;
+    let latestAvailableRealPeriod: string | null = null;
+    let rowsAfterLatestCpi: typeof postBoundaryEvidence = [];
     if (full) {
       const contractRows = page
-        .getByTestId("spending-chart-nominal")
+        .getByTestId("spending-chart-real")
         .locator('[data-testid="chart-data-contract"] [data-chart-data-row]');
       postBoundaryEvidence = await contractRows.evaluateAll(
         (rows, seriesKey) =>
           rows
             .filter((row) => (row.getAttribute("data-period") ?? "") >= "2018Q1")
             .map((row) => {
-              const nominal = row.querySelector(`[data-series-key="${seriesKey}"]`);
+              const realTotal = row.querySelector(`[data-series-key="${seriesKey}"]`);
               const stackedValues = [...row.querySelectorAll<HTMLElement>("[data-series-key]")]
                 .filter((cell) => cell.getAttribute("data-series-key") !== seriesKey)
                 .map((cell) => cell.getAttribute("data-value") ?? "null");
               return {
                 period: row.getAttribute("data-period"),
-                nominalValue: nominal?.getAttribute("data-value") ?? null,
-                status: nominal?.getAttribute("data-status") ?? null,
-                reason: nominal?.getAttribute("data-reason") ?? null,
+                nominalValue: realTotal?.getAttribute("data-value") ?? null,
+                status: realTotal?.getAttribute("data-status") ?? null,
+                reason: realTotal?.getAttribute("data-reason") ?? null,
                 hasStackedValue: stackedValues.some((value) => value !== "null"),
               };
             }),
-        "CTIミクロ四半期系列（名目）",
+        "CTIミクロ調整系列（総合・実質）",
       );
       periods = nominalTable.rows
         .map((row) => row[0] ?? "")
@@ -681,9 +684,19 @@ async function execute(
       nominalCsv = await captureCsv(page, "data-table-section-consumption-nominal");
       const csvText = nominalCsv.csv?.text ?? "";
       csvExpectedPayload =
-        csvText.includes("CTIミクロ（名目・四半期平均）") &&
+        csvText.includes("CTIミクロ調整系列（食料）") &&
+        !csvText.includes("CTIミクロ（名目・四半期平均）") &&
         !/CTIミクロ基本系列（名目・(?:原数値|参考|参考・延長)）/.test(csvText) &&
         !/GDP/.test(csvText);
+      const availableRealRows = postBoundaryEvidence.filter(
+        (row) => row.status === "available" && row.nominalValue !== "null",
+      );
+      latestAvailableRealPeriod = availableRealRows.at(-1)?.period ?? null;
+      rowsAfterLatestCpi = latestAvailableRealPeriod
+        ? postBoundaryEvidence.filter(
+            (row) => row.period !== null && row.period > latestAvailableRealPeriod!,
+          )
+        : [];
     }
     const expected = {
       source: full
@@ -696,26 +709,30 @@ async function execute(
       touchPointsRequired: true,
       nominalSelector: "[data-testid='spending-chart-nominal']",
       realSelector: "[data-testid='spending-chart-real']",
-      nominalSeries: "CTIミクロ四半期系列（名目）",
-      nominalLabel: "CTIミクロ（名目・四半期平均）",
+      nominalSeries: "CTIミクロ調整系列（食料）",
+      nominalLabel: "CTIミクロ調整系列（食料）",
       expectedPeriodRange: "2005Q1-2017Q4",
       expectedQuarterCount: full ? 52 : undefined,
       fullOnly: full
         ? {
-            post2018: "nominal null/invalid/unavailable with another stacked value",
+            post2018: "2018Q1 newly available; rows after latest covered CPI quarter unavailable",
             barSelector:
               "[data-testid='spending-chart-nominal'] .recharts-bar:first .recharts-bar-rectangle",
             barCount: "1..52",
             positiveBoundingBoxCount: ">0",
             tableRows: 52,
             rejectHeaders: ["wage CTI", "GDP"],
-            csvIncludes: "nominal label",
+            csvIncludes: "canonical nominal expense key",
             csvExcludes: ["wage CTI", "GDP"],
           }
         : undefined,
       keyOnly: full
         ? undefined
-        : { realChartVisible: true, realTableMustExclude: "CTIミクロ（名目・四半期平均）" },
+        : {
+            realChartVisible: true,
+            realTableMustInclude: "CTIミクロ総合（実質・CPI調整）",
+            realTableMustExclude: "民間最終消費支出（実質）",
+          },
     };
     const commonMismatch =
       routeResult.status !== 200 ||
@@ -724,8 +741,10 @@ async function execute(
       !realChart.chartVisible;
     const fullMismatch =
       full &&
-      (!nominalChart.declaredSeriesKeys.includes("CTIミクロ四半期系列（名目）") ||
-        !nominalTable.headers.join(" ").includes("CTIミクロ（名目・四半期平均）") ||
+      (!nominalChart.declaredSeriesKeys.includes("CTIミクロ調整系列（食料）") ||
+        nominalTable.headers.filter((header) => header.startsWith("CTIミクロ調整系列（")).length !==
+          10 ||
+        nominalTable.headers.includes("CTIミクロ調整系列（総合・名目）") ||
         /CTIミクロ基本系列（名目・(?:原数値|参考|参考・延長)）|GDP/.test(
           nominalTable.headers.join(" "),
         ) ||
@@ -733,17 +752,29 @@ async function execute(
         nominalBars <= 0 ||
         nominalBars > 52 ||
         positiveNominalBars <= 0 ||
+        !realChart.declaredSeriesKeys.includes("CTIミクロ調整系列（総合・実質）") ||
+        realChart.declaredSeriesKeys.includes("民間最終消費支出（実質）") ||
+        !realTable.headers.includes("CTIミクロ総合（実質・CPI調整）") ||
+        realTable.headers.includes("民間最終消費支出（実質）") ||
         postBoundaryEvidence.length === 0 ||
-        !postBoundaryEvidence.every(
+        latestAvailableRealPeriod === null ||
+        !postBoundaryEvidence.some(
           (row) =>
-            row.nominalValue === "null" &&
-            row.status === "invalid" &&
-            row.reason === "unavailable" &&
+            row.period === "2018Q1" &&
+            row.nominalValue !== "null" &&
+            row.status === "available" &&
             row.hasStackedValue,
+        ) ||
+        !postBoundaryEvidence.some((row) => row.status === "available") ||
+        !rowsAfterLatestCpi.every(
+          (row) =>
+            row.nominalValue === "null" && row.status === "unavailable" && Boolean(row.reason),
         ) ||
         !csvExpectedPayload);
     const keyMismatch =
-      !full && realTable.headers.join(" ").includes("CTIミクロ（名目・四半期平均）");
+      !full &&
+      (!realTable.headers.join(" ").includes("CTIミクロ総合（実質・CPI調整）") ||
+        realTable.headers.join(" ").includes("民間最終消費支出（実質）"));
     return result(
       id,
       expected,
@@ -763,6 +794,9 @@ async function execute(
               periods2005to2017: periods,
               csvPayloadChecks: {
                 expectedLabelPresent: (nominalCsv?.csv?.text ?? "").includes(
+                  "CTIミクロ調整系列（食料）",
+                ),
+                retiredNominalSupportAbsent: !(nominalCsv?.csv?.text ?? "").includes(
                   "CTIミクロ（名目・四半期平均）",
                 ),
                 retiredWageSeriesAbsent:
@@ -807,7 +841,7 @@ async function execute(
     (count, chart) =>
       count +
       chart.declaredSeriesKeys.filter(
-        (key) => key === "CTIミクロ四半期系列（名目）" || key === "民間最終消費支出（実質）",
+        (key) => key === "CTIミクロ調整系列（食料）" || key === "CTIミクロ調整系列（総合・実質）",
       ).length,
     0,
   );
@@ -815,8 +849,9 @@ async function execute(
     source: "quarterly-gdp.e2e.spec.ts:26",
     route: "/",
     shellSelector: "production dashboard h1",
-    requiredNominalSeries: "CTIミクロ四半期系列（名目）",
-    requiredRealSeries: "民間最終消費支出（実質）",
+    requiredNominalSeries: "CTIミクロ調整系列（食料）",
+    requiredNominalSeriesCount: 10,
+    requiredRealSeries: "CTIミクロ調整系列（総合・実質）",
     expectedPublicSeriesCount: 2,
     forbiddenSeries:
       "GDP名目原値|GDP名目比較指数|GDP実質原値|GDP実質比較指数|四半期raw|原値|比較指数",
@@ -828,8 +863,12 @@ async function execute(
     shell.loadingText ||
     !nominal.chartFound ||
     !real.chartFound ||
-    !nominal.declaredSeriesKeys.includes("CTIミクロ四半期系列（名目）") ||
-    !real.declaredSeriesKeys.includes("民間最終消費支出（実質）") ||
+    !nominal.declaredSeriesKeys.includes("CTIミクロ調整系列（食料）") ||
+    nominal.declaredSeriesKeys.filter((key) => key.startsWith("CTIミクロ調整系列（")).length !==
+      10 ||
+    nominal.declaredSeriesKeys.includes("CTIミクロ調整系列（総合・名目）") ||
+    !real.declaredSeriesKeys.includes("CTIミクロ調整系列（総合・実質）") ||
+    real.declaredSeriesKeys.includes("民間最終消費支出（実質）") ||
     publicSeriesCount !== 2 ||
     /GDP名目原値|GDP名目比較指数|GDP実質原値|GDP実質比較指数|四半期raw|原値|比較指数/.test(
       `${nominal.series} ${real.series}`,

@@ -18,8 +18,10 @@ import type {
 } from "@/lib/ctiAdjustedPublicProjection";
 
 export type CtiAdjustedV2PublicationGate = { status: string; accepted: boolean };
+type CtiAdjustedV2SeriesType = "estimated_adjusted" | "official_adjusted" | "unavailable";
 
 export type CtiAdjustedV2PublicMeasurement = SeriesMeasurement & {
+  seriesType: CtiAdjustedV2SeriesType;
   model: CtiAdjustedV2Result["model"];
   estimateVersion: CtiAdjustedV2Result["estimateVersion"];
   year: number;

@@ -24,6 +24,7 @@ import {
   projectTooltipMetadata,
   SUPPORT_SERIES_KEY_NOMINAL,
   SUPPORT_SERIES_KEY_REAL,
+  CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY,
 } from "../../lib/chartConstants";
 import { formatCpiTooltipTotal, formatCpiTooltipValue } from "./CustomTooltip";
 import { useChartTooltipController } from "./charts/useChartTooltipProps";
@@ -182,7 +183,9 @@ export function CpiChartSections({
           ? (getSpendingPresentationLabel(key) ?? getLegendLabel(key))
           : getLegendLabel(key),
         color:
-          key === SUPPORT_SERIES_KEY_NOMINAL || key === SUPPORT_SERIES_KEY_REAL
+          key === SUPPORT_SERIES_KEY_NOMINAL ||
+          key === SUPPORT_SERIES_KEY_REAL ||
+          key === CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY
             ? chartColors.barFill
             : (measurementMetadata?.color ?? chartColorsForSeries[sourceIndex]),
         order,
@@ -316,10 +319,10 @@ export function CpiChartSections({
           chartColors={chartColors}
           {...chartTooltip.bind("section-consumption-real", {
             dataLength: realPublicData.length,
-            showTotal: true,
+            showTotal: false,
             showAllPayload: true,
             seriesMeta: spendingTooltipMeta(realKeysWithSupport, [...realColors, "#94a3b8"], true),
-            showMeasurementNotes: false,
+            showMeasurementNotes: true,
             allowedKeys: spendingAllowedKeys(realKeysWithSupport, realHiddenKeys),
           })}
           isMobile={isMobile}

@@ -47,7 +47,11 @@ export async function loadCtiData(options?: import("./data-loader/cpi").CtiLoadO
   return loadCtiDataInternal(options);
 }
 
-export async function loadCpiData() {
+export async function loadCpiData(options?: { rawIndex?: boolean }) {
+  if (options?.rawIndex) {
+    const { loadCpiIndexDataInternal } = await import("./data-loader/cpi");
+    return loadCpiIndexDataInternal();
+  }
   const { loadCpiDataInternal } = await import("./data-loader/cpi");
   return loadCpiDataInternal();
 }

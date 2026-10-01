@@ -5,11 +5,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
   internalLoadCpiData,
+  internalLoadCpiIndexData,
   internalLoadCtiData,
   internalLoadPopulationData,
   internalLoadTotalEarningData,
 } = vi.hoisted(() => ({
   internalLoadCpiData: vi.fn(),
+  internalLoadCpiIndexData: vi.fn(),
   internalLoadCtiData: vi.fn(),
   internalLoadPopulationData: vi.fn(),
   internalLoadTotalEarningData: vi.fn(),
@@ -22,6 +24,7 @@ vi.mock("../../../../server/lib/data-loader/cpi", async () => {
   return {
     ...actual,
     loadCpiDataInternal: internalLoadCpiData,
+    loadCpiIndexDataInternal: internalLoadCpiIndexData,
     loadCtiDataInternal: internalLoadCtiData,
   };
 });
@@ -85,9 +88,13 @@ describe("server/lib/dataLoader public facade", () => {
     internalLoadCtiData.mockResolvedValue(ctiData);
 
     await expect(facade.loadCpiData()).resolves.toBe(cpiData);
+    internalLoadCpiIndexData.mockResolvedValue(cpiData);
+    await expect(facade.loadCpiData({ rawIndex: true })).resolves.toBe(cpiData);
     await expect(facade.loadCtiData(options)).resolves.toBe(ctiData);
     expect(internalLoadCpiData).toHaveBeenCalledOnce();
     expect(internalLoadCpiData).toHaveBeenCalledWith();
+    expect(internalLoadCpiIndexData).toHaveBeenCalledOnce();
+    expect(internalLoadCpiIndexData).toHaveBeenCalledWith();
     expect(internalLoadCtiData).toHaveBeenCalledOnce();
     expect(internalLoadCtiData).toHaveBeenCalledWith(options);
   });

@@ -11,6 +11,7 @@ import {
   getSpendingSeriesColor,
   SUPPORT_SERIES_KEY_NOMINAL,
   SUPPORT_SERIES_KEY_REAL,
+  CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY,
 } from "../../lib/chartConstants";
 import {
   getSpendingPresentationLabel,
@@ -84,9 +85,11 @@ export function normalizeSpendingChartData(
 ): QuarterlyDataPoint[] {
   const supportKey = keys.includes(SUPPORT_SERIES_KEY_REAL)
     ? SUPPORT_SERIES_KEY_REAL
-    : keys.includes(SUPPORT_SERIES_KEY_NOMINAL)
-      ? SUPPORT_SERIES_KEY_NOMINAL
-      : undefined;
+    : keys.includes(CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY)
+      ? CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY
+      : keys.includes(SUPPORT_SERIES_KEY_NOMINAL)
+        ? SUPPORT_SERIES_KEY_NOMINAL
+        : undefined;
   const ctiKeys = keys.filter((key) => key !== supportKey);
   return data.map((row) => {
     const next = { ...row };
@@ -99,9 +102,11 @@ export function normalizeSpendingChartData(
     if (row.年 < 2018) {
       // Plan39-v2 supplies the pre-2018 expense stack. Keep the legacy support
       // bar unless both expense values and their measurement metadata are present.
-      if (hasPlan39Expense && supportKey) next[supportKey] = null;
+      if (hasPlan39Expense && supportKey && supportKey !== CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY)
+        next[supportKey] = null;
       else if (!hasPlan39Expense) ctiKeys.forEach((key) => (next[key] = null));
-    } else if (supportKey) next[supportKey] = null;
+    } else if (supportKey && supportKey !== CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY)
+      next[supportKey] = null;
     return next;
   });
 }
@@ -136,12 +141,17 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
   } = props;
   const supportKey = keys.includes(SUPPORT_SERIES_KEY_REAL)
     ? SUPPORT_SERIES_KEY_REAL
-    : keys.includes(SUPPORT_SERIES_KEY_NOMINAL)
-      ? SUPPORT_SERIES_KEY_NOMINAL
-      : undefined;
+    : keys.includes(CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY)
+      ? CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY
+      : keys.includes(SUPPORT_SERIES_KEY_NOMINAL)
+        ? SUPPORT_SERIES_KEY_NOMINAL
+        : undefined;
   const ctiKeys = keys.filter((key) => key !== supportKey);
   const hasPreBoundarySupport = data.some(
-    (row) => row.年 < 2018 && supportKey && typeof row[supportKey] === "number",
+    (row) =>
+      supportKey &&
+      (supportKey === CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY || row.年 < 2018) &&
+      typeof row[supportKey] === "number",
   );
   const hasPlan39Measurements = data.some(
     (row) => row.年 < 2018 && ctiKeys.some((key) => row.measurements?.[key] !== undefined),
@@ -171,11 +181,20 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
   const chartData = normalizeSpendingChartData(data, keys);
   const publicKeys = getPublicSpendingKeys(keys);
   const maxHeight = chartData.reduce((max, row) => {
-    const visibleKeys = keys.filter((key) => !hiddenKeys.includes(key));
-    const height = visibleKeys.reduce((sum, key) => {
+    const visibleKeys = keys.filter(
+      (key) => !hiddenKeys.includes(key) && key !== CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY,
+    );
+    const expenseHeight = visibleKeys.reduce((sum, key) => {
       const value = row[key];
       return sum + (typeof value === "number" && Number.isFinite(value) ? value : 0);
     }, 0);
+    const independentTotal = row[CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY];
+    const height =
+      supportKey === CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY &&
+      typeof independentTotal === "number" &&
+      Number.isFinite(independentTotal)
+        ? Math.max(expenseHeight, independentTotal)
+        : expenseHeight;
     return Math.max(max, height);
   }, 0);
   const yAxisMax = Math.round(maxHeight + 3);
@@ -213,7 +232,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
                 className={styles.legendIcon}
                 style={{
                   backgroundColor:
-                    key === SUPPORT_SERIES_KEY_NOMINAL
+                    key === SUPPORT_SERIES_KEY_NOMINAL || key === CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY
                       ? chartColors.barFill || "#94a3b8"
                       : getSpendingSeriesColor(key, keys, colors),
                 }}
@@ -379,6 +398,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
                 data-testid={`spending-series-${supportKey}`}
                 fill={chartColors.barFill || "#94a3b8"}
                 fillOpacity={0.8}
+                stackId={supportKey === CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY ? "total" : undefined}
                 isAnimationActive={false}
               />
             )}

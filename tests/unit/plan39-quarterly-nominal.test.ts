@@ -3,6 +3,7 @@ import {
   CTI_ADJUSTED_V2_PUBLIC_CATEGORIES,
   CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY,
   CTI_ADJUSTED_V2_PUBLIC_KEYS,
+  CTI_NOMINAL_DERIVED_TOTAL_KEY,
 } from "../../src/lib/chartConstants";
 import { buildPlan39V2CtiNominalRows } from "../../server/lib/view-models/quarterlyAggregation";
 import type { CtiBasicRecord } from "../../server/lib/ctiBasicSeries2025LongTerm";
@@ -137,7 +138,8 @@ describe("Plan39-v2 quarterly nominal projection", () => {
     const q1 = rows.find((row) => row.label === "2005Q1")!;
     const q2 = rows.find((row) => row.label === "2005Q2")!;
     expect(q1.kind).toBe("plan40-v2-cost-stack");
-    expect(Object.keys(q1.measurements ?? {})).toEqual(expenseKeys);
+    const internalKeys = [...expenseKeys, CTI_NOMINAL_DERIVED_TOTAL_KEY];
+    expect(Object.keys(q1.measurements ?? {})).toEqual(internalKeys);
     expect(
       Object.keys(q1).filter(
         (key) =>
@@ -148,7 +150,7 @@ describe("Plan39-v2 quarterly nominal projection", () => {
           key !== "kind" &&
           key !== "measurements",
       ),
-    ).toEqual(expenseKeys);
+    ).toEqual(internalKeys);
     expect(q1[foodKey]).toBeCloseTo(10 * (20 / 12.5));
     expect(q2[foodKey]).toBeCloseTo(10 * (10 / 12.5));
     expect(q1.measurements?.[foodKey]).toMatchObject({
@@ -252,7 +254,7 @@ describe("Plan39-v2 quarterly nominal projection", () => {
       sourceDerivedFromColumns: ["J", "K", "L", "M", "N", "O", "P", "Q", "R", "S"],
     });
     expect(getMeasurementNote(otherMeasurement ?? {})).toBe(
-      "公式調整済み四半期値の総合から他9費目を引いた残差（公式公表値ではない）",
+      "公式公表のその他値はなく、公式総合から他9費目を引いた残差（名目指数の公表桁に合わせ0.1単位に丸め）",
     );
   });
 
@@ -277,7 +279,7 @@ describe("Plan39-v2 quarterly nominal projection", () => {
     expect(mean2011 / mean2010).toBeCloseTo(11 / 10);
   });
 
-  it("fails closed for a negative Other residual instead of using direct series 11", () => {
+  it("preserves a negative Other residual instead of clipping it or using direct series 11", () => {
     const records = [
       ...makeRecords(),
       ...Array.from({ length: 12 }, (_, index) => ({
@@ -302,11 +304,11 @@ describe("Plan39-v2 quarterly nominal projection", () => {
     const q1 = rows.find((row) => row.label === "2005Q1")!;
     const otherKey = CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY.その他の消費支出;
     // The historical monthly residual is negative in Q1 and positive otherwise.
-    expect(q1[otherKey]).toBeNull();
+    expect(q1[otherKey]).toBeCloseTo((-1 / 1.625) * 10);
     expect(q1.measurements?.[otherKey]).toMatchObject({
-      status: "unavailable",
-      reason: "invalid_seasonal_input",
-      value: null,
+      status: "available",
+      reason: null,
+      value: expect.any(Number),
     });
     for (const month of ["2005-01", "2005-02", "2005-03"] as const) {
       const total = records.find((record) => record.seriesIndex === 1 && record.month === month);
@@ -348,7 +350,7 @@ describe("Plan39-v2 quarterly nominal projection", () => {
     });
     const baseline = baselineRows.find((row) => row.label === "2005Q1")!;
     const poisoned = poisonedRows.find((row) => row.label === "2005Q1")!;
-    const expectedPublishedKeys = expenseKeys;
+    const expectedPublishedKeys = [...expenseKeys, CTI_NOMINAL_DERIVED_TOTAL_KEY];
 
     expect(
       Object.keys(poisoned).filter(
@@ -360,16 +362,15 @@ describe("Plan39-v2 quarterly nominal projection", () => {
     }
 
     const projected = projectQuarterlyPublicView([poisoned], "nominal")[0]!;
-    expect(expectedPublishedKeys.map((key) => projected[key])).toEqual(
-      expectedPublishedKeys.map((key) => poisoned[key]),
+    expect(expenseKeys.map((key) => projected[key])).toEqual(
+      expenseKeys.map((key) => poisoned[key]),
     );
-    expect(Object.keys(projected.measurements ?? {}).sort()).toEqual(
-      [...expectedPublishedKeys].sort(),
-    );
+    expect(projected[CTI_NOMINAL_DERIVED_TOTAL_KEY]).toBeUndefined();
+    expect(Object.keys(projected.measurements ?? {}).sort()).toEqual([...expenseKeys].sort());
     const csv = buildCsv(
       [projected as unknown as Record<string, unknown>],
-      expectedPublishedKeys,
-      expectedPublishedKeys,
+      expenseKeys,
+      expenseKeys,
     );
     expect(csv).toContain("その他の消費支出");
     expect(csv).not.toContain("その他（直接値）");

@@ -4,6 +4,7 @@ import type { CpiData } from "@/types";
 import Papa from "papaparse";
 import {
   SUPPORT_SERIES_KEY_NOMINAL,
+  CTI_NOMINAL_DERIVED_TOTAL_KEY,
   CONSUMPTION_NOMINAL_KEYS,
   CONSUMPTION_REAL_KEYS,
 } from "@/lib/chartConstants";
@@ -403,7 +404,7 @@ export function buildPlan39V2CtiNominalRows({
           ? "duplicate_month"
           : seasonalValues.some((value) => typeof value !== "number" || !Number.isFinite(value))
             ? "insufficient_months"
-            : seasonalValues.some((value) => (value ?? 0) <= 0)
+            : category !== "その他の消費支出" && seasonalValues.some((value) => (value ?? 0) <= 0)
               ? "invalid_seasonal_input"
               : result.plan40InputValidation && !result.plan40InputValidation.valid
                 ? "v2_annual_anchor_unavailable"
@@ -411,7 +412,7 @@ export function buildPlan39V2CtiNominalRows({
                     annual?.status !== "available" ||
                     typeof anchor !== "number" ||
                     !Number.isFinite(anchor) ||
-                    anchor <= 0
+                    (category !== "その他の消費支出" && anchor <= 0)
                   ? "v2_annual_anchor_unavailable"
                   : null;
         if (invalid)
@@ -424,7 +425,10 @@ export function buildPlan39V2CtiNominalRows({
         const annualMean = yearValues.reduce<number>((sum, value) => sum + (value ?? 0), 0) / 12;
         const quarterMean = quarterValues.reduce<number>((sum, value) => sum + (value ?? 0), 0) / 3;
         const projected =
-          annualMean > 0 && typeof anchor === "number" ? (anchor * quarterMean) / annualMean : null;
+          (category === "その他の消費支出" ? Math.abs(annualMean) > 0 : annualMean > 0) &&
+          typeof anchor === "number"
+            ? (anchor * quarterMean) / annualMean
+            : null;
         return {
           category,
           key: PLAN40_PUBLIC_KEY_BY_CATEGORY[category],
@@ -469,6 +473,62 @@ export function buildPlan39V2CtiNominalRows({
               ...result.plan40InputMetadata?.A,
             };
       }
+      const totalMonths = Array.from(
+        { length: 12 },
+        (_, index) => `${year}-${String(index + 1).padStart(2, "0")}`,
+      );
+      const totalQuarterMonths = [1, 2, 3].map(
+        (offset) => `${year}-${String((quarter - 1) * 3 + offset).padStart(2, "0")}`,
+      );
+      const totalMonthValues = totalMonths.map((month) => bySeriesMonth.get(1)?.get(month));
+      const totalQuarterValues = totalQuarterMonths.map((month) =>
+        bySeriesMonth.get(1)?.get(month),
+      );
+      const totalAnchor = annual?.values.総合;
+      const totalMean = totalMonthValues.reduce<number>((sum, value) => sum + (value ?? 0), 0) / 12;
+      const totalReason = duplicateYears.has(year)
+        ? "duplicate_month"
+        : [...totalMonthValues, ...totalQuarterValues].some(
+              (value) => typeof value !== "number" || !Number.isFinite(value),
+            )
+          ? "insufficient_months"
+          : !result.publicationGate.accepted ||
+              (result.plan40InputValidation && !result.plan40InputValidation.valid) ||
+              annual?.status !== "available" ||
+              typeof totalAnchor !== "number" ||
+              !Number.isFinite(totalAnchor) ||
+              Math.abs(totalMean) <= 0
+            ? "v2_annual_anchor_unavailable"
+            : null;
+      const quarterlyTotal = totalReason
+        ? null
+        : (totalAnchor! *
+            (totalQuarterValues.reduce<number>((sum, value) => sum + (value ?? 0), 0) / 3)) /
+          totalMean;
+      const validQuarterlyTotal =
+        quarterlyTotal !== null && Number.isFinite(quarterlyTotal) ? quarterlyTotal : null;
+      values[CTI_NOMINAL_DERIVED_TOTAL_KEY] = validQuarterlyTotal;
+      measurements[CTI_NOMINAL_DERIVED_TOTAL_KEY] = {
+        key: CTI_NOMINAL_DERIVED_TOTAL_KEY,
+        label: CTI_NOMINAL_DERIVED_TOTAL_KEY,
+        unit: "指数",
+        source: "e-Stat 公式CTI長期artifact 000040499070 / Plan39-v2 bottom-up",
+        valueType: "comparison",
+        value: validQuarterlyTotal,
+        status: validQuarterlyTotal === null ? "unavailable" : "available",
+        reason:
+          validQuarterlyTotal === null ? (totalReason ?? "non_finite_seasonal_projection") : null,
+        frequency: "quarterly",
+        aggregation: "derived_quarterly_mean_seasonal_pattern_anchored_to_plan39_v2_annual",
+        seriesType: "estimated_adjusted",
+        official: false,
+        annualAnchorType: "estimated",
+        quarterlyDerived: true,
+        model: "v2-bottom-up",
+        estimateVersion: "plan39-v2",
+        inputFingerprint: result.inputFingerprint,
+        ...result.plan40InputMetadata?.A,
+      };
       output.push({
         label,
         quarter,
@@ -498,10 +558,40 @@ export function buildPlan39V2CtiNominalRows({
         : null;
     const values: Record<string, number | null> = {};
     const measurements: Record<string, SeriesMeasurement> = {};
+    const nominalTotal =
+      total !== null && typeof total === "number" && Number.isFinite(total) ? total : null;
+    values[CTI_NOMINAL_DERIVED_TOTAL_KEY] = nominalTotal;
+    measurements[CTI_NOMINAL_DERIVED_TOTAL_KEY] = {
+      key: CTI_NOMINAL_DERIVED_TOTAL_KEY,
+      label: CTI_NOMINAL_DERIVED_TOTAL_KEY,
+      unit: "指数",
+      source: sourceLabel,
+      sourceId: "000040499087",
+      statInfId: "000040499087",
+      householdScope: "総世帯",
+      sourceWorkbook: OFFICIAL_QUARTERLY_SOURCE_WORKBOOK,
+      sourceSheet: "総・四(原)",
+      sourceColumn: officialQuarterlySourceColumn("総合"),
+      sourceRole: "official_nominal_total_observation",
+      canonicalSeries: "総合",
+      valueType: "comparison",
+      value: nominalTotal,
+      status: nominalTotal === null ? "unavailable" : "available",
+      reason: nominalTotal === null ? "official_quarterly_value_unavailable" : null,
+      frequency: "quarterly",
+      aggregation: "official_quarterly_adjusted_nominal_total_observation",
+      official: true,
+      annualAnchorType: "official",
+      quarterlyDerived: false,
+      baseYear: 2025,
+    };
     for (const category of PLAN40_PUBLIC_EXPENSE_CATEGORIES) {
       const key = PLAN40_PUBLIC_KEY_BY_CATEGORY[category];
       const value = category === "その他の消費支出" ? residual : official.values[category];
-      const valid = typeof value === "number" && Number.isFinite(value) && value > 0;
+      const valid =
+        typeof value === "number" &&
+        Number.isFinite(value) &&
+        (category === "その他の消費支出" || value > 0);
       values[key] = valid ? value : null;
       measurements[key] = {
         key,

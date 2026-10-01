@@ -104,6 +104,11 @@ it("p45-b-plan24-rendering-88 — 2025 production tables contain Q1/Q4 values an
       period: string;
       supportValue?: string;
       foodValue: string;
+      cpiSeries?: string | null;
+      cpiBaseYear?: string | null;
+      cpiPeriod?: string | null;
+      cpiAggregation?: string | null;
+      nominalSource?: string | null;
       tooltipHasPeriod: boolean;
       tooltipFoodValueVisible: boolean;
       tooltipFoodValue: string;
@@ -124,6 +129,13 @@ it("p45-b-plan24-rendering-88 — 2025 production tables contain Q1/Q4 values an
       expect(period.foodValue.trim()).toBeTruthy();
       expect(period.tooltipHasPeriod).toBe(true);
       expect(period.tooltipFoodValueVisible).toBe(true);
+      if (table.headers.includes("CTIミクロ総合（実質・CPI調整）")) {
+        expect(period.cpiSeries).toBe("食料");
+        expect(period.cpiBaseYear).toBe("2025");
+        expect(period.cpiPeriod).toContain(period.period);
+        expect(period.cpiAggregation).toBe("算術平均（四半期内の3か月）");
+        expect(period.nominalSource).toBeTruthy();
+      }
       const rawTooltipFoodValue = period.tooltipFoodValue.trim();
       const tooltipFoodNumber =
         rawTooltipFoodValue === "" || rawTooltipFoodValue === "—" || rawTooltipFoodValue === "-"
@@ -136,7 +148,9 @@ it("p45-b-plan24-rendering-88 — 2025 production tables contain Q1/Q4 values an
         `table=${JSON.stringify(period.foodValue)}`;
       expect(Number.isFinite(tooltipFoodNumber), tooltipFoodDiagnostic).toBe(true);
       expect(tooltipFoodNumber).toBe(tableFoodNumber);
-      expect(period.tooltipHasCalculatedTotal).toBe(true);
+      expect(period.tooltipHasCalculatedTotal).toBe(
+        !table.headers.includes("CTIミクロ総合（実質・CPI調整）"),
+      );
       expect(period.tooltipHasGdp).toBe(false);
     }
     expect(table.csv).toContain("2025Q1");

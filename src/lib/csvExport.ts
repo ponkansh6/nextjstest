@@ -35,7 +35,7 @@ export interface BuildCsvOptions {
     aggregation?: string;
     status: "valid" | "invalid" | "unavailable" | "available";
     reason: string | null;
-    seriesType?: "estimated_adjusted" | "official_adjusted" | "unavailable";
+    seriesType?: "estimated_adjusted" | "official_adjusted" | "derived_adjusted" | "unavailable";
     official?: boolean;
     annualAnchorType?: "estimated" | "official";
     quarterlyDerived?: boolean;
@@ -56,6 +56,12 @@ export interface BuildCsvOptions {
     targetHouseholdScope?: string;
     bridgeAppliedRange?: { startYear: number; endYear: number };
     bridgeCoefficient?: number;
+    baseYear?: number | null;
+    cpiSeries?: string;
+    cpiPeriod?: string;
+    cpiAggregation?: string;
+    nominalSource?: string;
+    measurementNote?: string;
   }>;
 }
 
@@ -180,6 +186,20 @@ export const buildCsv = (
     rows.some((row) =>
       keys.some((key) => hasSourceArtifactMetadata(rowMeasurementValue(row, key))),
     );
+  const includeCpiMetadata =
+    metadata.some(({ cpiSeries, cpiPeriod, nominalSource }) =>
+      [cpiSeries, cpiPeriod, nominalSource].some((value) => value !== undefined),
+    ) ||
+    rows.some((row) =>
+      keys.some((key) => {
+        const measurement = rowMeasurementValue(row, key);
+        return (
+          measurement?.cpiSeries !== undefined ||
+          measurement?.cpiPeriod !== undefined ||
+          measurement?.nominalSource !== undefined
+        );
+      }),
+    );
   const metadataHeaders = metadata.flatMap(({ key }) => [
     `${key}__label`,
     `${key}__valueType`,
@@ -221,6 +241,16 @@ export const buildCsv = (
           `${key}__sourceRole`,
           `${key}__sourceDerivedFromColumns`,
           `${key}__canonicalSeries`,
+        ]
+      : []),
+    ...(includeCpiMetadata
+      ? [
+          `${key}__baseYear`,
+          `${key}__cpiSeries`,
+          `${key}__cpiPeriod`,
+          `${key}__cpiAggregation`,
+          `${key}__nominalSource`,
+          `${key}__measurementNote`,
         ]
       : []),
   ]);
@@ -274,6 +304,12 @@ export const buildCsv = (
         targetHouseholdScope,
         bridgeAppliedRange,
         bridgeCoefficient,
+        baseYear,
+        cpiSeries,
+        cpiPeriod,
+        cpiAggregation,
+        nominalSource,
+        measurementNote,
       } = measurement;
       const unavailable =
         measurement.seriesType === "unavailable" || measurement.status === "unavailable";
@@ -321,6 +357,16 @@ export const buildCsv = (
               sourceRole ?? "",
               sourceDerivedFromColumns?.join(";") ?? "",
               canonicalSeries ?? "",
+            ]
+          : []),
+        ...(includeCpiMetadata
+          ? [
+              baseYear ?? "",
+              cpiSeries ?? "",
+              cpiPeriod ?? "",
+              cpiAggregation ?? "",
+              nominalSource ?? "",
+              measurementNote ?? "",
             ]
           : []),
       ].map(escapeCsvCell);

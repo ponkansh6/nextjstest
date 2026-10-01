@@ -70,18 +70,37 @@ it("B06 Plan27 ID 9: 52-quarter table and CSV", async () => {
   expect(result.contextEvidence.touchPoints).toBeGreaterThan(0);
   expect(result.contextEvidence.userAgent).toContain("Pixel 7");
   expect(result.postBoundary.length).toBeGreaterThan(0);
-  expect(result.postBoundary.every((row) => row.value === "null")).toBe(true);
-  expect(result.postBoundary.every((row) => row.status === "invalid")).toBe(true);
-  expect(result.postBoundary.every((row) => row.reason === "unavailable")).toBe(true);
-  expect(result.postBoundary.every((row) => row.hasStackedValue)).toBe(true);
+  const newlyCoveredQuarter = result.postBoundary.find((row) => row.period === "2018Q1");
+  expect(newlyCoveredQuarter).toMatchObject({ status: "available" });
+  expect(newlyCoveredQuarter?.value).not.toBe("null");
+  expect(newlyCoveredQuarter?.hasStackedValue).toBe(true);
+  const availablePeriods = result.postBoundary.filter(
+    (row) => row.status === "available" && row.value !== "null",
+  );
+  expect(availablePeriods.length).toBeGreaterThan(0);
+  const latestAvailablePeriod = availablePeriods.at(-1)?.period;
+  expect(latestAvailablePeriod).toBeDefined();
+  const afterLatestAvailable = result.postBoundary.filter(
+    (row) => row.period > latestAvailablePeriod!,
+  );
+  if (afterLatestAvailable.length > 0) {
+    expect(afterLatestAvailable.every((row) => row.value === "null")).toBe(true);
+    expect(afterLatestAvailable.every((row) => row.status === "unavailable")).toBe(true);
+    expect(afterLatestAvailable.every((row) => row.reason.length > 0)).toBe(true);
+  }
   expect(result.barCount).toBeGreaterThan(0);
   expect(result.positiveBarCount).toBeGreaterThan(0);
   expect(result.barCount).toBeLessThanOrEqual(expected.quarterCount);
   expect(result.periods).toHaveLength(expected.quarterCount);
-  expect(result.snapshot.headers.join(" ")).toContain(expected.label);
+  expect(
+    result.snapshot.headers.filter((header) => header.startsWith("CTIミクロ調整系列（")),
+  ).toHaveLength(10);
+  expect(result.snapshot.headers).toContain("CTIミクロ調整系列（食料）");
+  expect(result.snapshot.headers).not.toContain(expected.label);
   expect(result.snapshot.headers.join(" ")).not.toMatch(RETIRED_WAGE_CTI);
   expect(result.snapshot.headers.join(" ")).not.toMatch(/GDP/);
-  expect(result.csv.text).toContain(expected.label);
+  expect(result.csv.text).toContain("CTIミクロ調整系列（食料）");
+  expect(result.csv.text).not.toContain(expected.label);
   expect(result.csv.text).not.toMatch(RETIRED_WAGE_CTI);
   expect(result.csv.text).not.toMatch(/GDP/);
   expect(result.csv.artifactPath).toContain("test-results");
@@ -129,8 +148,16 @@ it("B06 Plan23 ID 26: quarterly public data", async () => {
         text: string;
         firstParagraph: string;
         visible: boolean;
-        totalVisible: boolean;
+        calculatedTotalVisible: boolean;
         tableValue: string;
+        realTotalVisible: boolean;
+        realTotalValue: string;
+        realTotalTableValue: string;
+        realTotalCpiSeries: string | null;
+        realTotalBaseYear: string | null;
+        realTotalCpiPeriod: string | null;
+        realTotalCpiAggregation: string | null;
+        realTotalNominalSource: string | null;
       }>;
     }>;
   };
@@ -142,10 +169,17 @@ it("B06 Plan23 ID 26: quarterly public data", async () => {
   expect(result.nominalText).not.toMatch(INTERNAL_SERIES);
   expect(result.realText).not.toMatch(INTERNAL_SERIES);
   expect(result.charts).toHaveLength(2);
-  expect(result.charts[0]?.keys).toContain("CTIミクロ四半期系列（名目）");
-  expect(result.charts[0]?.rowKeys).toContain("CTIミクロ四半期系列（名目）");
-  expect(result.charts[1]?.keys).toContain("民間最終消費支出（実質）");
-  expect(result.charts[1]?.rowKeys).toContain("民間最終消費支出（実質）");
+  expect(result.charts[0]?.keys).toContain("CTIミクロ調整系列（食料）");
+  expect(result.charts[0]?.rowKeys).toContain("CTIミクロ調整系列（食料）");
+  expect(
+    result.charts[0]?.keys.filter((key) => key.startsWith("CTIミクロ調整系列（")),
+  ).toHaveLength(10);
+  expect(result.charts[0]?.keys).not.toContain("CTIミクロ調整系列（総合・名目）");
+  expect(result.charts[1]?.keys).toContain("CTIミクロ調整系列（総合・実質）");
+  expect(result.charts[1]?.rowKeys).toContain("CTIミクロ調整系列（総合・実質）");
+  expect(result.charts[1]?.keys).not.toContain("民間最終消費支出（実質）");
+  expect(result.charts[1]?.rowKeys).not.toContain("民間最終消費支出（実質）");
+  expect(result.tables[0]?.snapshot.headers).toHaveLength(11);
   for (const chart of result.charts) {
     expect(chart.keys).not.toContain(expect.stringMatching(INTERNAL_SERIES));
     expect(chart.rowKeys).not.toContain(expect.stringMatching(INTERNAL_SERIES));
@@ -168,13 +202,6 @@ it("B06 Plan23 ID 26: quarterly public data", async () => {
       expect(table.snapshot.rows.some((row) => row[0]?.trim() === sample.period)).toBe(true);
       if (/^[—-]$/.test(sample.tableValue)) {
         expect(sample.csvValue).toBe("");
-        if (table.ctiLabel === "CTIミクロ（名目・四半期平均）") {
-          expect(sample.metadata).toContain("単位: -");
-          expect(sample.metadata).toContain("出典: -");
-          expect(sample.metadata).toContain("頻度: quarterly");
-          expect(sample.metadata).toContain("状態: invalid");
-          expect(sample.metadata).toContain("理由: unavailable");
-        }
       } else {
         expect(sample.csvValue).toBe(sample.tableValue);
       }
@@ -188,7 +215,7 @@ it("B06 Plan23 ID 26: quarterly public data", async () => {
     expect(table.csv.rows[0]?.[table.publicColumnIndex]).toContain(table.ctiLabel);
     expect(table.csv.rows[0]?.some((header) => header.includes("GDP"))).toBe(false);
     expect(table.foodColumnIndex).toBeGreaterThanOrEqual(0);
-    if (table.ctiLabel === "CTIミクロ（名目・四半期平均）") {
+    if (table.ctiLabel === "CTIミクロ調整系列（食料）") {
       expect(table.csv.rows[0]?.[table.foodColumnIndex]).toBe("CTIミクロ調整系列（食料）");
       const nominalFoodEvidence = table.foodQuarterRows;
       expect(nominalFoodEvidence).toHaveLength(4);
@@ -225,15 +252,41 @@ it("B06 Plan23 ID 26: quarterly public data", async () => {
       expect(table.csv.rows[0]).not.toContain("CTIミクロ調整系列（食料）");
       expect(table.foodQuarterRows).toEqual([]);
     }
+    const isRealTable = table.ctiLabel === "CTIミクロ総合（実質・CPI調整）";
     for (const tooltip of table.tooltips) {
       expect(tooltip.visible).toBe(true);
-      expect(tooltip.totalVisible).toBe(true);
       expect(tooltip.text).toContain("食料");
-      expect(tooltip.text).toContain("合計");
       expect(tooltip.firstParagraph).toBe(tooltip.period);
-      expect(tooltip.text).toContain(tooltip.tableValue);
       expect(tooltip.text).not.toMatch(INTERNAL_SERIES);
       expect(tooltip.text).not.toContain("GDP");
+      if (isRealTable) {
+        expect(tooltip.calculatedTotalVisible).toBe(false);
+        expect(tooltip.text).not.toContain("合計");
+        expect(tooltip.realTotalVisible).toBe(true);
+        expect(tooltip.realTotalValue).toBe(tooltip.realTotalTableValue);
+        expect(tooltip.realTotalCpiSeries).toBe("持家の帰属家賃を除く総合");
+        expect(tooltip.realTotalBaseYear).toBe("2025");
+        expect(tooltip.realTotalCpiPeriod).toContain(tooltip.period);
+        expect(tooltip.realTotalCpiAggregation).toBe("算術平均（四半期内の3か月）");
+        expect(tooltip.realTotalNominalSource).toBeTruthy();
+      } else {
+        expect(tooltip.calculatedTotalVisible).toBe(true);
+        expect(tooltip.text).toContain("合計");
+        expect(tooltip.text).toContain(tooltip.tableValue);
+        expect(tooltip.realTotalVisible).toBe(false);
+      }
     }
   }
+  const nominalTable = result.tables.find(
+    (table) => table.selector === "#data-table-section-consumption-nominal",
+  );
+  expect(nominalTable).toBeDefined();
+  expect(
+    nominalTable?.snapshot.headers.filter((header) => header.startsWith("CTIミクロ調整系列（")),
+  ).toHaveLength(10);
+  expect(nominalTable?.snapshot.headers).not.toContain("CTIミクロ調整系列（総合・名目）");
+  const realTable = result.tables.find(
+    (table) => table.selector === "#data-table-section-consumption-real",
+  );
+  expect(realTable?.snapshot.headers).toContain("CTIミクロ総合（実質・CPI調整）");
 });

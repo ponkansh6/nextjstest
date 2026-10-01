@@ -83,6 +83,23 @@ export async function loadCpiDataInternal(): Promise<CpiData[]> {
   return transformCpiData(selected.validated);
 }
 
+/** Load raw 2025-base CPI index rows for server-side real CTI derivation. */
+export async function loadCpiIndexDataInternal(): Promise<CpiData[]> {
+  const selected = selectCpiPair();
+  if ("baseYear" in selected) {
+    console.error(`CPI data unavailable: ${selected.reason}`);
+    return [];
+  }
+  if (selected.pair.baseYear !== 2025) {
+    console.error("CPI data unavailable for real CTI projection: 2025-base CPI required");
+    return [];
+  }
+  return selected.validated.data.filter((row) => {
+    const parsed = parseYearMonth(String(row.年月 ?? ""));
+    return parsed !== null && parsed.year >= 2004;
+  });
+}
+
 export async function loadCtiDataInternal(
   options: CtiLoadOptions = {},
 ): Promise<CtiDataWithMetadata> {

@@ -11,6 +11,7 @@ import {
   CTI_ADJUSTED_V2_PUBLIC_CATEGORIES,
   CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY,
   CTI_ADJUSTED_V2_PUBLIC_REGISTRY,
+  CTI_NOMINAL_DERIVED_TOTAL_KEY,
   type CtiAdjustedV2PublicCategory,
   type CtiAdjustedV2PublicKey,
 } from "@/lib/chartConstants";
@@ -58,7 +59,7 @@ const keys: CtiAdjustedV2PublicKey[] = CTI_ADJUSTED_V2_PUBLIC_REGISTRY.filter(
   (entry) => entry.category !== "総合",
 ).map((entry) => entry.key);
 const OFFICIAL_OTHER_RESIDUAL_NOTE =
-  "公式調整済み四半期値の総合から他9費目を引いた残差（公式公表値ではない）";
+  "公式公表のその他値はなく、公式総合から他9費目を引いた残差（名目指数の公表桁に合わせ0.1単位に丸め）";
 const metadata = (artifact: string) => ({
   source: `Plan40 runtime ${artifact}`,
   artifact,
@@ -843,7 +844,9 @@ describe("Plan40 phase-1 runtime evidence", () => {
       QUARTERLY_PUBLIC_KEYS.filter((publicKey) => canonicalNominalKeySet.has(publicKey)),
     ).toHaveLength(10);
     const normalized = defined(normalizePublicChartData([publicRow], [key])[0]);
-    expect(Object.keys(source.measurements ?? {}).sort()).toEqual([...keys].sort());
+    expect(Object.keys(source.measurements ?? {}).sort()).toEqual(
+      [...keys, CTI_NOMINAL_DERIVED_TOTAL_KEY].sort(),
+    );
     const publicMeasurement = measurementFor(publicRow, key);
     expect(publicMeasurement).toMatchObject({
       key,

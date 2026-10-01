@@ -1,6 +1,7 @@
 import { NEXT_ROUTE_POC_BASE_URL } from "./next-route-poc.constants";
 import { buildContextOptions, withIsolatedContext } from "./isolated-route-context";
 import type { BrowserCommand } from "vitest/node";
+import { getSpendingPresentationLabel } from "../../src/lib/spendingSeriesPresentation";
 
 export type Batch3BRouteCase =
   | "tooltip-scroll-dismiss"
@@ -378,14 +379,20 @@ export const inspectBatch3BProductionCase: BrowserCommand<
         case "plan24-2025-table-tooltip": {
           await range(2025, 2025);
           const tableResults: Record<string, unknown>[] = [];
-          for (const [id, tableId, label] of [
+          for (const [id, tableId, label, isIndependentTotal] of [
             [
               "spending-chart-nominal",
               "#data-table-section-consumption-nominal",
-              "CTIミクロ（名目・四半期平均）",
+              "CTIミクロ調整系列（食料）",
+              false,
             ],
-            ["spending-chart-real", "#data-table-section-consumption-real", "民間最終消費"],
-          ]) {
+            [
+              "spending-chart-real",
+              "#data-table-section-consumption-real",
+              "CTIミクロ総合（実質・CPI調整）",
+              true,
+            ],
+          ] as const) {
             const table = page.locator(tableId);
             await table.getByText(/データテーブルを表示/).click();
             const headers = await table.locator("thead th").allTextContents();
@@ -413,10 +420,11 @@ export const inspectBatch3BProductionCase: BrowserCommand<
               const foodValue = cells[valueIndex] ?? "";
               const foodKey = await tableCells.nth(valueIndex).getAttribute("data-series-key");
               if (!foodKey) throw new Error(`Table series key for ${foodLabel} is missing.`);
+              const tooltipLabel = getSpendingPresentationLabel(foodKey) ?? foodLabel;
               const total = cells
                 .slice(1)
                 .map((value, offset) => ({ value: Number(value), index: offset + 1 }))
-                .filter(({ index }) => index !== supportIndex)
+                .filter(({ index }) => !isIndependentTotal || index !== supportIndex)
                 .map(({ value }) => value)
                 .filter(Number.isFinite)
                 .reduce((sum, value) => sum + value, 0)
@@ -425,9 +433,11 @@ export const inspectBatch3BProductionCase: BrowserCommand<
               const tooltip = page.getByTestId(id).locator(".recharts-tooltip-wrapper");
               await tooltip.waitFor({ state: "visible" });
               const tooltipText = await tooltip.innerText();
-              const totalText = (
-                await tooltip.locator('[data-tooltip-total="true"]').innerText()
-              ).replace(/\s+/g, "");
+              const totalElement = tooltip.locator('[data-tooltip-total="true"]');
+              const totalText =
+                (await totalElement.count()) > 0
+                  ? (await totalElement.innerText()).replace(/\s+/g, "")
+                  : "";
               const foodRows = tooltip.locator('[data-tooltip-row="true"]');
               const foodRowIndex = await foodRows.evaluateAll(
                 (rows, target) =>
@@ -436,7 +446,7 @@ export const inspectBatch3BProductionCase: BrowserCommand<
                       row.getAttribute("data-tooltip-key") === target.key &&
                       row.getAttribute("data-tooltip-label") === target.label,
                   ),
-                { key: foodKey, label: foodLabel },
+                { key: foodKey, label: tooltipLabel },
               );
               if (foodRowIndex < 0)
                 throw new Error(`Tooltip row for ${foodKey} (${foodLabel}) is missing.`);
@@ -446,10 +456,20 @@ export const inspectBatch3BProductionCase: BrowserCommand<
                 const valueCell = Array.from(row.querySelectorAll(":scope > span")).at(-1);
                 return valueCell?.textContent?.trim() ?? "";
               });
+              const cpiSeries = await foodRow.getAttribute("data-tooltip-cpi-series");
+              const cpiBaseYear = await foodRow.getAttribute("data-tooltip-base-year");
+              const cpiPeriod = await foodRow.getAttribute("data-tooltip-cpi-period");
+              const cpiAggregation = await foodRow.getAttribute("data-tooltip-cpi-aggregation");
+              const nominalSource = await foodRow.getAttribute("data-tooltip-nominal-source");
               periodResults.push({
                 period,
                 supportValue: cells[supportIndex],
                 foodValue,
+                cpiSeries,
+                cpiBaseYear,
+                cpiPeriod,
+                cpiAggregation,
+                nominalSource,
                 tooltipHasPeriod: tooltipText.includes(period),
                 tooltipFoodValueVisible,
                 tooltipFoodValue,

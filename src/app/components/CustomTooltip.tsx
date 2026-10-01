@@ -29,13 +29,19 @@ type TooltipDisplayPayload = NonNullable<CustomTooltipProps["payload"]>[number] 
   aggregation?: string;
   status?: "valid" | "invalid" | "unavailable" | "available";
   reason?: string | null;
-  seriesType?: "estimated_adjusted" | "official_adjusted" | "unavailable";
+  seriesType?: "estimated_adjusted" | "official_adjusted" | "derived_adjusted" | "unavailable";
   official?: boolean;
   annualAnchorType?: "estimated" | "official";
   quarterlyDerived?: boolean;
   model?: "v2-bottom-up";
   estimateVersion?: "plan39-v2";
   inputFingerprint?: string;
+  baseYear?: number | null;
+  cpiSeries?: string;
+  cpiPeriod?: string;
+  cpiAggregation?: string;
+  nominalSource?: string;
+  measurementNote?: string;
 };
 
 type TooltipMeasurement = Partial<
@@ -69,6 +75,12 @@ type TooltipMeasurement = Partial<
     | "model"
     | "estimateVersion"
     | "inputFingerprint"
+    | "baseYear"
+    | "cpiSeries"
+    | "cpiPeriod"
+    | "cpiAggregation"
+    | "nominalSource"
+    | "measurementNote"
   >
 >;
 
@@ -203,6 +215,12 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
                 model: measurement.model,
                 estimateVersion: measurement.estimateVersion,
                 inputFingerprint: measurement.inputFingerprint,
+                baseYear: measurement.baseYear,
+                cpiSeries: measurement.cpiSeries,
+                cpiPeriod: measurement.cpiPeriod,
+                cpiAggregation: measurement.cpiAggregation,
+                nominalSource: measurement.nominalSource,
+                measurementNote: measurement.measurementNote,
               };
             }),
           ...(canIncludeUnmappedPayload
@@ -377,7 +395,10 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
           </div>
         )}
         {topPayload.map((entry, index) => {
-          const hasProvenance = entry.seriesType !== undefined || entry.official !== undefined;
+          const hasProvenance =
+            entry.seriesType !== undefined ||
+            entry.official !== undefined ||
+            entry.measurementNote !== undefined;
           const measurementNote = hasProvenance
             ? getMeasurementNote({
                 seriesType: entry.seriesType,
@@ -388,6 +409,7 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
                 bridgeCoefficient: entry.bridgeCoefficient,
                 status: entry.status ?? "valid",
                 reason: entry.reason,
+                measurementNote: entry.measurementNote,
               })
             : null;
           return (
@@ -425,6 +447,13 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
               data-tooltip-value-type={entry.valueType}
               data-tooltip-frequency={entry.frequency ?? ""}
               data-tooltip-aggregation={entry.aggregation}
+              data-tooltip-cpi-series={entry.cpiSeries}
+              data-tooltip-base-year={
+                entry.baseYear === undefined ? undefined : String(entry.baseYear)
+              }
+              data-tooltip-cpi-period={entry.cpiPeriod}
+              data-tooltip-cpi-aggregation={entry.cpiAggregation}
+              data-tooltip-nominal-source={entry.nominalSource}
               data-tooltip-status={entry.status}
               data-tooltip-reason={entry.reason ?? ""}
               data-tooltip-series-type={entry.seriesType}
@@ -473,6 +502,18 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
                     style={{ display: "block", opacity: 0.78, fontSize: "0.82em" }}
                   >
                     {measurementNote}
+                  </small>
+                )}
+                {showMeasurementNotes && entry.cpiSeries && (
+                  <small
+                    data-tooltip-cpi-provenance="true"
+                    style={{ display: "block", opacity: 0.78, fontSize: "0.82em" }}
+                  >
+                    CPI: {entry.cpiSeries}（e-Stat {entry.statInfId ?? entry.sourceId ?? "?"}、
+                    {entry.baseYear ?? "基準年不明"}年基準、{entry.cpiPeriod}、
+                    {entry.cpiAggregation}）
+                    <br />
+                    名目出典: {entry.nominalSource ?? "不明"}
                   </small>
                 )}
               </span>

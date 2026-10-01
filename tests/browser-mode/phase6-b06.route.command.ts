@@ -112,30 +112,35 @@ async function nominalPlan27(page: import("@playwright/test").Page, full: boolea
   await section.scrollIntoViewIfNeeded();
   const chart = page.getByTestId("spending-chart-nominal");
   await chart.waitFor({ state: "visible" });
-  const contractRows = chart.locator('[data-testid="chart-data-contract"] [data-chart-data-row]');
+  const realChart = page.getByTestId("spending-chart-real");
+  await realChart.waitFor({ state: "visible", timeout: 15_000 });
+  const contractRows = realChart.locator(
+    '[data-testid="chart-data-contract"] [data-chart-data-row]',
+  );
   const postBoundary = full
     ? await contractRows.evaluateAll((rows) =>
         rows
           .filter((row) => (row.getAttribute("data-period") ?? "") >= "2018Q1")
           .map((row) => {
-            const nominal = row.querySelector('[data-series-key="CTIミクロ四半期系列（名目）"]');
+            const realTotal = row.querySelector(
+              '[data-series-key="CTIミクロ調整系列（総合・実質）"]',
+            );
             const otherValues = [...row.querySelectorAll<HTMLElement>("[data-series-key]")]
               .filter(
-                (cell) => cell.getAttribute("data-series-key") !== "CTIミクロ四半期系列（名目）",
+                (cell) =>
+                  cell.getAttribute("data-series-key") !== "CTIミクロ調整系列（総合・実質）",
               )
               .map((cell) => cell.getAttribute("data-value") ?? "null");
             return {
               period: row.getAttribute("data-period") ?? "",
-              value: nominal?.getAttribute("data-value") ?? "",
-              status: nominal?.getAttribute("data-status") ?? "",
-              reason: nominal?.getAttribute("data-reason") ?? "",
+              value: realTotal?.getAttribute("data-value") ?? "",
+              status: realTotal?.getAttribute("data-status") ?? "",
+              reason: realTotal?.getAttribute("data-reason") ?? "",
               hasStackedValue: otherValues.some((value) => value !== "null"),
             };
           }),
       )
     : [];
-  const realChart = page.getByTestId("spending-chart-real");
-  await realChart.waitFor({ state: "visible", timeout: 15_000 });
   const realTable = page.locator("#data-table-section-consumption-real");
   await openTable(realTable, true);
   const realHeaders = (await tableSnapshot(realTable)).headers;
@@ -465,8 +470,8 @@ async function quarterlyGdp(page: import("@playwright/test").Page) {
   const { nominalText, realText, realLegendBefore } = chartLabels;
 
   const chartSpecs = [
-    [nominal, "CTIミクロ四半期系列（名目）"],
-    [real, "民間最終消費支出（実質）"],
+    [nominal, "CTIミクロ調整系列（食料）"],
+    [real, "CTIミクロ調整系列（総合・実質）"],
   ] as const;
   const charts = await diagnosticStage(id, "extract chart contracts", () =>
     Promise.all(
@@ -530,7 +535,7 @@ async function quarterlyGdp(page: import("@playwright/test").Page) {
       text: string;
       firstParagraph: string;
       visible: boolean;
-      totalVisible: boolean;
+      calculatedTotalVisible: boolean;
       tableValue: string;
     }>;
   }>;
@@ -538,10 +543,14 @@ async function quarterlyGdp(page: import("@playwright/test").Page) {
   for (const [selector, publicHeader, publicKey] of [
     [
       "#data-table-section-consumption-nominal",
-      "CTIミクロ（名目・四半期平均）",
-      "CTIミクロ四半期系列（名目）",
+      "CTIミクロ調整系列（食料）",
+      "CTIミクロ調整系列（食料）",
     ],
-    ["#data-table-section-consumption-real", "民間最終消費", "民間最終消費支出（実質）"],
+    [
+      "#data-table-section-consumption-real",
+      "CTIミクロ総合（実質・CPI調整）",
+      "CTIミクロ調整系列（総合・実質）",
+    ],
   ] as const) {
     const table = page.locator(selector);
     const tableName = selector.includes("nominal") ? "nominal" : "real";
@@ -683,8 +692,16 @@ async function quarterlyGdp(page: import("@playwright/test").Page) {
       text: string;
       firstParagraph: string;
       visible: boolean;
-      totalVisible: boolean;
+      calculatedTotalVisible: boolean;
       tableValue: string;
+      realTotalVisible: boolean;
+      realTotalValue: string;
+      realTotalTableValue: string;
+      realTotalCpiSeries: string | null;
+      realTotalBaseYear: string | null;
+      realTotalCpiPeriod: string | null;
+      realTotalCpiAggregation: string | null;
+      realTotalNominalSource: string | null;
     }>;
     const testId = selector.includes("nominal") ? "spending-chart-nominal" : "spending-chart-real";
     const chart = page.getByTestId(testId);
@@ -700,11 +717,43 @@ async function quarterlyGdp(page: import("@playwright/test").Page) {
           .first()
           .waitFor({ state: "visible", timeout: 5_000 });
         await chart.locator(".recharts-bar-rectangle").nth(index).hover({ timeout: 5_000 });
-        const tooltip = chart.locator(".recharts-tooltip-wrapper");
+        const tooltip = chart
+          .locator('.recharts-tooltip-wrapper:visible [data-custom-tooltip="true"]:visible')
+          .last();
         await tooltip.waitFor({ state: "visible", timeout: 5_000 });
         const text = await tooltip.innerText({ timeout: 5_000 });
         const firstParagraph = await tooltip.locator("p").first().innerText({ timeout: 5_000 });
-        const totalVisible = await tooltip.locator("text=合計").isVisible();
+        const calculatedTotalVisible = await tooltip
+          .locator('[data-tooltip-total="true"]:visible')
+          .evaluateAll((rows) =>
+            rows.some((row) => row.firstElementChild?.textContent?.trim() === "合計"),
+          );
+        const realTotalRow = tooltip.locator(
+          '[data-tooltip-row="true"][data-tooltip-key="CTIミクロ調整系列（総合・実質）"]',
+        );
+        const realTotalVisible =
+          (await realTotalRow.count()) > 0 && (await realTotalRow.isVisible());
+        const realTotalValue = realTotalVisible
+          ? await realTotalRow.evaluate(
+              (row) =>
+                Array.from(row.querySelectorAll(":scope > span")).at(-1)?.textContent?.trim() ?? "",
+            )
+          : "";
+        const realTotalCpiSeries = realTotalVisible
+          ? await realTotalRow.getAttribute("data-tooltip-cpi-series")
+          : null;
+        const realTotalBaseYear = realTotalVisible
+          ? await realTotalRow.getAttribute("data-tooltip-base-year")
+          : null;
+        const realTotalCpiPeriod = realTotalVisible
+          ? await realTotalRow.getAttribute("data-tooltip-cpi-period")
+          : null;
+        const realTotalCpiAggregation = realTotalVisible
+          ? await realTotalRow.getAttribute("data-tooltip-cpi-aggregation")
+          : null;
+        const realTotalNominalSource = realTotalVisible
+          ? await realTotalRow.getAttribute("data-tooltip-nominal-source")
+          : null;
         const tableValue = await table
           .locator("tbody tr")
           .filter({ hasText: period })
@@ -719,13 +768,39 @@ async function quarterlyGdp(page: import("@playwright/test").Page) {
             undefined,
             { timeout: 5_000 },
           );
+        const realTotalColumnIndex = snapshot.headers.indexOf("CTIミクロ総合（実質・CPI調整）");
+        const realTotalTableValue =
+          realTotalColumnIndex >= 0
+            ? await table
+                .locator("tbody tr")
+                .filter({ hasText: period })
+                .locator("td")
+                .nth(realTotalColumnIndex)
+                .evaluate(
+                  (cell) =>
+                    [...cell.childNodes]
+                      .filter((node) => node.nodeType === Node.TEXT_NODE)
+                      .map((node) => node.textContent?.trim() ?? "")
+                      .join(""),
+                  undefined,
+                  { timeout: 5_000 },
+                )
+            : "";
         return {
           period,
           text,
           firstParagraph,
           visible: await tooltip.isVisible(),
-          totalVisible,
+          calculatedTotalVisible,
           tableValue,
+          realTotalVisible,
+          realTotalValue,
+          realTotalTableValue,
+          realTotalCpiSeries,
+          realTotalBaseYear,
+          realTotalCpiPeriod,
+          realTotalCpiAggregation,
+          realTotalNominalSource,
         };
       });
       tooltips.push(observation);

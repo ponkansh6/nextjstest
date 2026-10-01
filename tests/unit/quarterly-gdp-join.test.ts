@@ -7,6 +7,7 @@ import {
 import {
   CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY,
   CTI_ADJUSTED_V2_PUBLIC_REGISTRY,
+  CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY,
   SUPPORT_SERIES_KEY_NOMINAL,
   SUPPORT_SERIES_KEY_REAL,
 } from "../../src/lib/chartConstants";
@@ -103,14 +104,17 @@ describe("quarterly public projection boundary", () => {
     expect(projected.nominal[0]).not.toHaveProperty("GDP名目原値");
     expect(projected.nominal[0]).not.toHaveProperty("GDP名目比較指数");
     expect(projected.nominal[0]).not.toHaveProperty(SUPPORT_SERIES_KEY_REAL);
+    expect(projected.real[0]).not.toHaveProperty(SUPPORT_SERIES_KEY_REAL);
+    expect(projected.real[0]).toHaveProperty(CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY, null);
   });
 
-  it("retains shared rows and publishes null real support when the GDP dataset is unready", () => {
+  it("does not publish the legacy GDP real support series", () => {
     const real = [row(2025, 1)];
     const projected = buildQuarterlyPublicViews([], real, { comparisonReady: false, rows: [] });
-    expect(projected.real).toHaveLength(1);
-    expect(projected.real[0][SUPPORT_SERIES_KEY_REAL]).toBeNull();
+    expect(projected.real).toHaveLength(0);
+    expect(projected.real[0]).toBeUndefined();
     expect(projected.nominal).toHaveLength(0);
+    expect(CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY).not.toBe(SUPPORT_SERIES_KEY_REAL);
   });
 
   it("does not mutate source rows while clearing stale support fields", () => {

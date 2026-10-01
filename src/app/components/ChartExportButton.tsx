@@ -75,6 +75,7 @@ export const ChartExportButton: React.FC<ChartExportButtonProps> = ({
           seriesType:
             current.seriesType === "estimated_adjusted" ||
             current.seriesType === "official_adjusted" ||
+            current.seriesType === "derived_adjusted" ||
             current.seriesType === "unavailable"
               ? current.seriesType
               : undefined,
@@ -89,6 +90,56 @@ export const ChartExportButton: React.FC<ChartExportButtonProps> = ({
           estimateVersion: current.estimateVersion === "plan39-v2" ? "plan39-v2" : undefined,
           inputFingerprint:
             typeof current.inputFingerprint === "string" ? current.inputFingerprint : undefined,
+          sourceId: typeof current.sourceId === "string" ? current.sourceId : undefined,
+          statInfId: typeof current.statInfId === "string" ? current.statInfId : undefined,
+          householdScope:
+            typeof current.householdScope === "string" ? current.householdScope : undefined,
+          sourceWorkbook:
+            typeof current.sourceWorkbook === "string" ? current.sourceWorkbook : undefined,
+          sourceSheet: typeof current.sourceSheet === "string" ? current.sourceSheet : undefined,
+          sourceColumn: typeof current.sourceColumn === "string" ? current.sourceColumn : undefined,
+          sourceRole: typeof current.sourceRole === "string" ? current.sourceRole : undefined,
+          sourceDerivedFromColumns: Array.isArray(current.sourceDerivedFromColumns)
+            ? current.sourceDerivedFromColumns.filter(
+                (value): value is string => typeof value === "string",
+              )
+            : undefined,
+          canonicalSeries:
+            typeof current.canonicalSeries === "string" ? current.canonicalSeries : undefined,
+          seasonalitySourceId:
+            typeof current.seasonalitySourceId === "string"
+              ? current.seasonalitySourceId
+              : undefined,
+          targetSourceId:
+            typeof current.targetSourceId === "string" ? current.targetSourceId : undefined,
+          targetHouseholdScope:
+            typeof current.targetHouseholdScope === "string"
+              ? current.targetHouseholdScope
+              : undefined,
+          bridgeAppliedRange:
+            current.bridgeAppliedRange &&
+            typeof current.bridgeAppliedRange === "object" &&
+            typeof (current.bridgeAppliedRange as Record<string, unknown>).startYear === "number" &&
+            typeof (current.bridgeAppliedRange as Record<string, unknown>).endYear === "number"
+              ? {
+                  startYear: (current.bridgeAppliedRange as { startYear: number }).startYear,
+                  endYear: (current.bridgeAppliedRange as { endYear: number }).endYear,
+                }
+              : undefined,
+          bridgeCoefficient:
+            typeof current.bridgeCoefficient === "number" ? current.bridgeCoefficient : undefined,
+          baseYear:
+            typeof current.baseYear === "number" || current.baseYear === null
+              ? current.baseYear
+              : undefined,
+          cpiSeries: typeof current.cpiSeries === "string" ? current.cpiSeries : undefined,
+          cpiPeriod: typeof current.cpiPeriod === "string" ? current.cpiPeriod : undefined,
+          cpiAggregation:
+            typeof current.cpiAggregation === "string" ? current.cpiAggregation : undefined,
+          nominalSource:
+            typeof current.nominalSource === "string" ? current.nominalSource : undefined,
+          measurementNote:
+            typeof current.measurementNote === "string" ? current.measurementNote : undefined,
         } satisfies NonNullable<BuildCsvOptions["metadata"]>[number],
       ];
     });
@@ -135,6 +186,10 @@ export const ChartExportButton: React.FC<ChartExportButtonProps> = ({
         metadata: [...csvMetadataRows, ...rowMetadata],
         includeProvenanceMetadata:
           csvMetadataRows.some(
+            (measurement) =>
+              measurement.seriesType !== undefined || measurement.official !== undefined,
+          ) ||
+          rowMetadata.some(
             (measurement) =>
               measurement.seriesType !== undefined || measurement.official !== undefined,
           ) ||

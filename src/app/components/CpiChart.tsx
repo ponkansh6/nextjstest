@@ -30,6 +30,7 @@ import {
   stackedKeys,
   SUPPORT_SERIES_KEY_NOMINAL,
   SUPPORT_SERIES_KEY_REAL,
+  CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY,
   targetKeys,
   MIN_DISPLAY_YEAR,
   getLegendLabel,
@@ -197,13 +198,24 @@ export default function CpiChart({
   };
 
   const handleLegendToggle = (dataKey: string) => {
+    if (dataKey === CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY) {
+      setRealHiddenKeys((prev) =>
+        prev.includes(CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY)
+          ? prev.filter((key) => key !== CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY)
+          : [...prev, CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY],
+      );
+      return;
+    }
     // ペアを探す
     const supportPair = {
       nominal: SUPPORT_SERIES_KEY_NOMINAL,
       real: SUPPORT_SERIES_KEY_REAL,
       label: "民間最終消費支出",
     };
-    const adjustedCategory = dataKey.match(/^CTIミクロ調整系列（(.+)）$/)?.[1];
+    const adjustedCategory =
+      dataKey === CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY
+        ? undefined
+        : dataKey.match(/^CTIミクロ調整系列（(.+)）$/)?.[1];
     const legacyNominalKey = adjustedCategory
       ? `${adjustedCategory === "その他の消費支出" ? "その他の消費支出" : adjustedCategory}（名目）`
       : undefined;

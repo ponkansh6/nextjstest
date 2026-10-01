@@ -21,7 +21,8 @@ it("B07 #21: extracts 48 quarterly real-consumption Flight rows and checks endpo
   };
   expect(realRows.length, "2005-2016 should have 48 quarters").toBe(48);
 
-  const supportKey = "民間最終消費支出（実質）";
+  const supportKey = "CTIミクロ調整系列（総合・実質）";
+  expect(realRows.every((row) => !Object.hasOwn(row, "民間最終消費支出（実質）"))).toBe(true);
   for (const row of [realRows[0], realRows[realRows.length - 1]]) {
     expect(row, `${supportKey} should be serialized on the endpoint rows`).toHaveProperty(
       supportKey,

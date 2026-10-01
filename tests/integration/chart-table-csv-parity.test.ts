@@ -12,7 +12,13 @@ import {
   CTI_ADJUSTED_V2_PUBLIC_CATEGORIES,
   CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY,
 } from "@/lib/chartConstants";
-import { QUARTERLY_PUBLIC_NOMINAL_KEYS } from "@/lib/quarterlyPublicProjection";
+import {
+  QUARTERLY_PUBLIC_NOMINAL_KEYS,
+  QUARTERLY_PUBLIC_REAL_KEYS,
+} from "@/lib/quarterlyPublicProjection";
+import { deriveQuarterlyRealRows } from "@server/lib/view-models/quarterlyProjection";
+import type { CpiData } from "@/types";
+import type { QuarterlyRow } from "@server/lib/view-models/quarterlyAggregation";
 import { setupUiMocks } from "../utils/ui-mocks";
 import "../utils/recharts-mock";
 
@@ -39,6 +45,33 @@ const nominalCategories = CTI_ADJUSTED_V2_PUBLIC_CATEGORIES.filter(
 );
 const canonicalNominalKeys = [...QUARTERLY_PUBLIC_NOMINAL_KEYS];
 const otherNominalKey = CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY["その他の消費支出"];
+const parityCpiRows: CpiData[] = [
+  [2017, 10],
+  [2017, 11],
+  [2017, 12],
+  [2018, 1],
+  [2018, 2],
+  [2018, 3],
+].map(([year, month]) => {
+  const n = Number(month);
+  return {
+    年月: `${year}年${n}月`,
+    総合: 106 + n / 10,
+    生鮮食品を除く総合: 105 + n / 10,
+    持家の帰属家賃を除く総合: 107 + n / 10,
+    食料: 112 + n / 10,
+    持家の帰属家賃を除く住居: 101 + n / 10,
+    "光熱・水道": 108 + n / 10,
+    "家具・家事用品": 103 + n / 10,
+    被服及び履物: 99 + n / 10,
+    保健医療: 102 + n / 10,
+    "交通・通信": 104 + n / 10,
+    教育: 100 + n / 10,
+    教養娯楽: 105 + n / 10,
+    "消費支出（参考）": null,
+    "CPI総合(参考)": 106 + n / 10,
+  };
+});
 const plan47Nominal = (section: FixtureSection): FixtureSection => {
   const legacyKeyByCategory: Record<string, string> = {
     食料: "食料（名目）",
@@ -132,6 +165,22 @@ const publicQuarterly = (section: FixtureSection): FixtureSection => ({
         : row,
   ),
 });
+const parityNominalRows = plan47Nominal(matrix.nominal).rows;
+const parityRealRows = deriveQuarterlyRealRows(
+  parityNominalRows as unknown as QuarterlyRow[],
+  parityCpiRows,
+);
+const realFixture: FixtureSection = {
+  keys: [...QUARTERLY_PUBLIC_REAL_KEYS],
+  headers: QUARTERLY_PUBLIC_REAL_KEYS.map(getLegendLabel),
+  rows: parityRealRows,
+  expected: parityRealRows.map((row) => [
+    `${row.年}Q${row.quarter}`,
+    ...QUARTERLY_PUBLIC_REAL_KEYS.map((key) =>
+      typeof row[key] === "number" ? Number(row[key]).toFixed(2) : "",
+    ),
+  ]),
+};
 const CONTRACT = {
   ids: [
     "section-cpi-major",
@@ -146,7 +195,7 @@ const CONTRACT = {
     matrix.cpi,
     matrix.stacked,
     publicQuarterly(plan47Nominal(matrix.nominal)),
-    publicQuarterly(matrix.real),
+    realFixture,
     matrix.earnings,
     matrix.residual,
     {
@@ -179,7 +228,7 @@ const input = () => {
     data: matrix.cpi.rows,
     // Spending quarterly props expose only the regular public keys.
     quarterlyNominalData: quarterly(plan47Nominal(matrix.nominal).rows),
-    quarterlyRealData: quarterly(matrix.real.rows),
+    quarterlyRealData: quarterly(parityRealRows),
     totalEarningData: matrix.earnings.rows,
   };
 };
@@ -392,11 +441,13 @@ describe("Phase 4-4 real chart/table/CSV parity", () => {
       const metadataRegistry =
         i === 2
           ? canonicalNominalKeys.map((key) => ({ key }))
-          : i === 4
-            ? EARNINGS_SERIES_REGISTRY
-            : i === 6
-              ? createComparisonSeriesRegistry()
-              : [];
+          : i === 3
+            ? QUARTERLY_PUBLIC_REAL_KEYS.map((key) => ({ key }))
+            : i === 4
+              ? EARNINGS_SERIES_REGISTRY
+              : i === 6
+                ? createComparisonSeriesRegistry()
+                : [];
       const metadataHeaders = metadataRegistry
         .filter(({ key }) => section.keys.includes(key))
         .flatMap(({ key }) => [
@@ -404,6 +455,7 @@ describe("Phase 4-4 real chart/table/CSV parity", () => {
           `${key}__valueType`,
           `${key}__seriesType`,
           `${key}__official`,
+          ...(i === 3 ? [`${key}__annualAnchorType`, `${key}__quarterlyDerived`] : []),
           ...(i === 2
             ? [
                 `${key}__model`,
@@ -420,6 +472,30 @@ describe("Phase 4-4 real chart/table/CSV parity", () => {
           `${key}__aggregation`,
           `${key}__status`,
           `${key}__reason`,
+          ...(i === 3
+            ? [
+                `${key}__sourceId`,
+                `${key}__statInfId`,
+                `${key}__householdScope`,
+                `${key}__seasonalitySourceId`,
+                `${key}__targetSourceId`,
+                `${key}__targetHouseholdScope`,
+                `${key}__bridgeAppliedRange`,
+                `${key}__bridgeCoefficient`,
+                `${key}__sourceWorkbook`,
+                `${key}__sourceSheet`,
+                `${key}__sourceColumn`,
+                `${key}__sourceRole`,
+                `${key}__sourceDerivedFromColumns`,
+                `${key}__canonicalSeries`,
+                `${key}__baseYear`,
+                `${key}__cpiSeries`,
+                `${key}__cpiPeriod`,
+                `${key}__cpiAggregation`,
+                `${key}__nominalSource`,
+                `${key}__measurementNote`,
+              ]
+            : []),
           ...(i === 2
             ? [
                 `${key}__sourceWorkbook`,
@@ -440,6 +516,23 @@ describe("Phase 4-4 real chart/table/CSV parity", () => {
       );
       if (i === 4) {
         expect(rows[0].slice(section.keys.length + 1)).toEqual(metadataHeaders);
+      }
+      if (i === 3) {
+        for (const key of QUARTERLY_PUBLIC_REAL_KEYS) {
+          const annualAnchorColumn = rows[0].indexOf(`${key}__annualAnchorType`);
+          const quarterlyDerivedColumn = rows[0].indexOf(`${key}__quarterlyDerived`);
+          expect(annualAnchorColumn).toBeGreaterThanOrEqual(0);
+          expect(quarterlyDerivedColumn).toBeGreaterThanOrEqual(0);
+          for (const [rowIndex, row] of rows.slice(1).entries()) {
+            const sourceMeasurement = (
+              realFixture.rows[rowIndex]?.measurements as
+                | Record<string, { annualAnchorType?: string }>
+                | undefined
+            )?.[key];
+            expect(row[annualAnchorColumn]).toBe(sourceMeasurement?.annualAnchorType ?? "");
+            expect(row[quarterlyDerivedColumn]).toBe("true");
+          }
+        }
       }
       if (i === 2) {
         const metadataStart = section.keys.length + 1;
@@ -479,12 +572,26 @@ describe("Phase 4-4 real chart/table/CSV parity", () => {
       const table = container.querySelector(
         `#data-table-section-consumption-${mode}`,
       ) as HTMLElement;
-      const section = mode === "nominal" ? plan47Nominal(matrix.nominal) : matrix.real;
+      const section = mode === "nominal" ? plan47Nominal(matrix.nominal) : realFixture;
       const rows = [...table.querySelectorAll("tbody tr")].map((row) =>
         [...row.querySelectorAll("th,td")].map(tableValueText),
       );
       expect(rows).toEqual(publicQuarterly(section).expected);
       expect(rows.map((row) => row[0])).toEqual(["2017Q4", "2018Q1"]);
+      if (mode === "real") {
+        expect(section.keys).not.toContain("民間最終消費支出（実質）");
+        expect(section.keys).toContain("CTIミクロ調整系列（総合・実質）");
+        expect(
+          (realFixture.rows[0]?.measurements as Record<string, Record<string, unknown>>)?.[
+            "食料（実質）"
+          ],
+        ).toMatchObject({
+          cpiSeries: "食料",
+          baseYear: 2025,
+          cpiAggregation: "算術平均（四半期内の3か月）",
+          nominalSource: expect.any(String),
+        });
+      }
       if (mode === "nominal") {
         expect(CONTRACT.sections[2].keys).toHaveLength(10);
         expect(
@@ -584,7 +691,7 @@ describe("Phase 4-4 real chart/table/CSV parity", () => {
     rendered = await renderChart();
     for (let i = 0; i < modes.length; i++) {
       const current = surface(rendered.container, modes[i]);
-      const fixture = modes[i] === "nominal" ? plan47Nominal(matrix[modes[i]]) : matrix[modes[i]];
+      const fixture = modes[i] === "nominal" ? plan47Nominal(matrix.nominal) : realFixture;
       expect(current.contract).toEqual(regular[modes[i]].contract);
       expect(current.table.map((row) => row.map(normalizeMissingCell))).toEqual(
         regular[modes[i]].table.map((row) => row.map(normalizeMissingCell)),
@@ -596,6 +703,10 @@ describe("Phase 4-4 real chart/table/CSV parity", () => {
           )!,
         ),
       ).toEqual(fixture.keys);
+      if (modes[i] === "real") {
+        expect(fixture.keys).not.toContain("民間最終消費支出（実質）");
+        expect(fixture.keys).toContain("CTIミクロ調整系列（総合・実質）");
+      }
       (
         rendered.container
           .querySelector(`#data-table-section-consumption-${modes[i]}`)!

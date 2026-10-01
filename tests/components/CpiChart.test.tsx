@@ -9,7 +9,7 @@ import CpiChart from "../../src/app/components/CpiChart";
 import type { CpiView, QuarterlyView } from "../../src/types/chart";
 import {
   CONSUMPTION_REAL_KEYS,
-  SUPPORT_SERIES_KEY_REAL,
+  CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY,
   CTI_ADJUSTED_V2_PUBLIC_CATEGORIES,
   CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY,
   stackedKeys,
@@ -262,7 +262,11 @@ describe("CpiChartSections composition", () => {
       "食料",
       "諸雑費・CPI外",
     ];
-    const chartKeys = [...expectedNominalKeys, ...expectedRealKeys, SUPPORT_SERIES_KEY_REAL];
+    const chartKeys = [
+      ...expectedNominalKeys,
+      ...expectedRealKeys,
+      CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY,
+    ];
     const ctiMetadata: SeriesMetadata[] = [...new Set(chartKeys)].map((key, index) => ({
       key,
       color: "#0f766e",
@@ -277,6 +281,16 @@ describe("CpiChartSections composition", () => {
       aggregation: "quarterly_connection_estimate",
       seriesType: "estimated_adjusted",
       official: false,
+      ...(key === CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY
+        ? {
+            cpiSeries: "持家の帰属家賃を除く総合",
+            cpiPeriod: "2016Q4 (10–12月)",
+            cpiAggregation: "算術平均（四半期内の3か月）",
+            baseYear: 2025,
+            nominalSource: "CTI 公開名目四半期系列",
+            measurementNote: "実質総合は名目総合を総合CPIで独立調整",
+          }
+        : {}),
     }));
     const capturedBindings = new Map<string, Record<string, unknown>>();
     const chartTooltip = {
@@ -285,7 +299,7 @@ describe("CpiChartSections composition", () => {
         return sectionProps.chartTooltip.bind(id);
       }) as unknown as typeof sectionProps.chartTooltip.bind,
     };
-    const realKeysWithSupport = [...CONSUMPTION_REAL_KEYS, SUPPORT_SERIES_KEY_REAL];
+    const realKeysWithSupport = [...CONSUMPTION_REAL_KEYS, CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY];
 
     render(
       <CpiChartSections
@@ -309,17 +323,21 @@ describe("CpiChartSections composition", () => {
     expect(nominalMeta.map(({ label }) => label)).toEqual(expectedLabels);
     expect(nominalMeta.map(({ order }) => order)).toEqual(expectedLabels.map((_, index) => index));
     expect(
-      realMeta.filter(({ key }) => key !== SUPPORT_SERIES_KEY_REAL).map(({ key }) => key),
+      realMeta
+        .filter(({ key }) => key !== CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY)
+        .map(({ key }) => key),
     ).toEqual(expectedRealKeys);
     expect(
-      realMeta.filter(({ key }) => key !== SUPPORT_SERIES_KEY_REAL).map(({ label }) => label),
+      realMeta
+        .filter(({ key }) => key !== CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY)
+        .map(({ label }) => label),
     ).toEqual(expectedLabels);
-    expect(realMeta.find(({ key }) => key === SUPPORT_SERIES_KEY_REAL)).toMatchObject({
-      label: "民間最終消費",
+    expect(realMeta.find(({ key }) => key === CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY)).toMatchObject({
+      label: "CTIミクロ総合（実質・CPI調整）",
       order: expectedLabels.length,
     });
     expect(nominalOptions?.showMeasurementNotes).toBe(false);
-    expect(realOptions?.showMeasurementNotes).toBe(false);
+    expect(realOptions?.showMeasurementNotes).toBe(true);
 
     const tooltip = (
       testId: string,
@@ -352,11 +370,14 @@ describe("CpiChartSections composition", () => {
         {tooltip("real-tooltip", realMeta, realOptions ?? {})}
       </>,
     );
-    for (const testId of ["nominal-tooltip", "real-tooltip"]) {
-      expect(
-        screen.getByTestId(testId).querySelectorAll("[data-tooltip-measurement-note]"),
-      ).toHaveLength(0);
-    }
+    expect(
+      screen.getByTestId("nominal-tooltip").querySelectorAll("[data-tooltip-measurement-note]"),
+    ).toHaveLength(0);
+    expect(
+      screen.getByTestId("real-tooltip").querySelectorAll("[data-tooltip-measurement-note]"),
+    ).toHaveLength(realMeta.length);
+    expect(screen.getByText("実質総合は名目総合を総合CPIで独立調整")).not.toBeNull();
+    expect(screen.getByText(/CPI: 持家の帰属家賃を除く総合.*2025年基準/)).not.toBeNull();
   });
 });
 

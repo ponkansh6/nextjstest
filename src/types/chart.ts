@@ -72,9 +72,20 @@ export interface TooltipSeriesMetadata {
   model?: "v2-bottom-up";
   estimateVersion?: "plan39-v2";
   inputFingerprint?: string;
+  baseYear?: number | null;
+  /** CPI source used to deflate a nominal CTI quarterly measurement. */
+  cpiSeries?: string;
+  cpiPeriod?: string;
+  cpiAggregation?: string;
+  nominalSource?: string;
+  measurementNote?: string;
 }
 
-export type SeriesType = "estimated_adjusted" | "official_adjusted" | "unavailable";
+export type SeriesType =
+  | "estimated_adjusted"
+  | "official_adjusted"
+  | "derived_adjusted"
+  | "unavailable";
 export type MeasurementStatus = "valid" | "invalid" | "unavailable" | "available";
 
 /** Public measurement metadata shared by chart, table, tooltip and CSV. */
@@ -118,6 +129,11 @@ export interface SeriesMeasurement {
   estimateVersion?: "plan39-v2";
   /** Fingerprint of the exact B/A/L/Pi input snapshot used for Plan39. */
   inputFingerprint?: string;
+  cpiSeries?: string;
+  cpiPeriod?: string;
+  cpiAggregation?: string;
+  nominalSource?: string;
+  measurementNote?: string;
   /** Plan40 annual-anchor contract provenance for derived quarterly rows. */
   baseYear?: number | null;
   rawRange?: { startYear: number; endYear: number };
@@ -160,6 +176,7 @@ export const getMeasurementNote = (
       | "quarterlyDerived"
       | "bridgeCoefficient"
       | "aggregation"
+      | "measurementNote"
     >
   >,
 ): string | null => {
@@ -173,11 +190,12 @@ export const getMeasurementNote = (
     if (measurement.reason === "outside_period") return "対象期間外";
     return measurement.reason ? `利用不可: ${measurement.reason}` : "利用不可";
   }
+  if (measurement.measurementNote) return measurement.measurementNote;
   if (
     measurement.aggregation ===
     "derived_quarterly_residual_from_official_nominal_total_minus_nine_categories"
   )
-    return "公式調整済み四半期値の総合から他9費目を引いた残差（公式公表値ではない）";
+    return "公式公表のその他値はなく、公式総合から他9費目を引いた残差（名目指数の公表桁に合わせ0.1単位に丸め）";
   if (measurement.quarterlyDerived) {
     if (
       typeof measurement.bridgeCoefficient === "number" &&
