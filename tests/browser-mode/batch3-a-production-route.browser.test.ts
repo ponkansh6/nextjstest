@@ -1,5 +1,6 @@
 import { expect, it, vi } from "vitest";
 import { commands } from "vitest/browser";
+import { CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY } from "../../src/lib/chartConstants";
 import type { Batch3ARouteCase } from "./batch3-a-route.command";
 
 vi.setConfig({ testTimeout: 45_000 });
@@ -114,6 +115,10 @@ for (const [scenario, label, width, height] of [
     }[];
     expect(charts).toHaveLength(2);
     for (const chart of charts) {
+      if (chart.id === "spending-chart-real") {
+        expect(chart.expectedKeys).not.toContain(CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY);
+        expect(chart.payloadKeys).not.toContain(CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY);
+      }
       expect([...chart.payloadKeys].sort()).toEqual([...chart.expectedKeys].sort());
       expect(chart.scrollPosition.scrollTop).toBeGreaterThanOrEqual(
         chart.scrollPosition.scrollHeight - chart.scrollPosition.clientHeight - 1,
