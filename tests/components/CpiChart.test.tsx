@@ -325,6 +325,7 @@ describe("CpiChartSections composition", () => {
     expect(realMeta.map(({ key }) => key)).toEqual(expectedRealKeys);
     expect(realMeta.map(({ label }) => label)).toEqual(expectedLabels);
     expect(realMeta.some(({ key }) => key === CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY)).toBe(false);
+    expect(realOptions?.showTotal).toBe(true);
     expect(nominalOptions?.showMeasurementNotes).toBe(false);
     expect(realOptions?.showMeasurementNotes).toBe(false);
 

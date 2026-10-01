@@ -322,7 +322,7 @@ export function CpiChartSections({
           chartColors={chartColors}
           {...chartTooltip.bind("section-consumption-real", {
             dataLength: realPublicData.length,
-            showTotal: false,
+            showTotal: true,
             showAllPayload: true,
             seriesMeta: spendingTooltipMeta(realTooltipKeys, realColors, true),
             showMeasurementNotes: false,

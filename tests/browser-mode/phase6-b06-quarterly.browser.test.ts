@@ -262,8 +262,8 @@ it("B06 Plan23 ID 26: quarterly public data", async () => {
       expect(tooltip.text).not.toMatch(INTERNAL_SERIES);
       expect(tooltip.text).not.toContain("GDP");
       if (isRealTable) {
-        expect(tooltip.calculatedTotalVisible).toBe(false);
-        expect(tooltip.text).not.toContain("合計");
+        expect(tooltip.calculatedTotalVisible).toBe(true);
+        expect(tooltip.text).toContain("合計");
         expect(tooltip.realTotalVisible).toBe(false);
         expect(tooltip.text).toContain("食料");
         expect(tooltip.realTotalTableValue).toMatch(/^-?\d[\d,]*(?:\.\d+)?$/);

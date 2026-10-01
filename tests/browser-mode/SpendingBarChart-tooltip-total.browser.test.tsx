@@ -69,7 +69,7 @@ function RealTooltipFixture() {
   const { bind } = useChartTooltipController({ suppressed: false, isTouch: false });
   const tooltip = bind("browser-real-simple-tooltip", {
     dataLength: 1,
-    showTotal: false,
+    showTotal: true,
     showMeasurementNotes: false,
     allowedKeys: ["食料（実質）", "住居（実質）"],
     seriesMeta: [
@@ -98,7 +98,7 @@ function RealTooltipFixture() {
             年月: "2025Q1",
             "食料（実質）": 123,
             "住居（実質）": 234,
-            [CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY]: 357,
+            [CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY]: 999,
           },
         ]}
         keys={["食料（実質）", "住居（実質）", CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY]}
@@ -144,7 +144,7 @@ describe("SpendingBarChart nominal tooltip total in Chromium", () => {
     await expect.element(total).toHaveTextContent("357.00");
   });
 
-  it("shows only real category rows without the support total or CPI notes", async () => {
+  it("shows the calculated real category total without the support total or CPI notes", async () => {
     renderBrowserComponent(<RealTooltipFixture />);
 
     const chart = await page.getByTestId("spending-chart-real-simple-tooltip").element();
@@ -165,7 +165,11 @@ describe("SpendingBarChart nominal tooltip total in Chromium", () => {
       "食料（実質）",
       "住居（実質）",
     ]);
-    expect(tooltipElement.querySelector('[data-tooltip-total="true"]')).toBeNull();
+    const totalElement = tooltipElement.querySelector<HTMLElement>('[data-tooltip-total="true"]');
+    if (!totalElement) throw new Error("Real spending tooltip calculated total is missing");
+    expect(totalElement.textContent).toContain("合計");
+    expect(totalElement.textContent).toContain("357.00");
+    expect(totalElement.textContent).not.toContain("999.00");
     expect(tooltipElement.querySelector('[data-tooltip-measurement-note="true"]')).toBeNull();
     expect(tooltipElement.querySelector('[data-tooltip-cpi-provenance="true"]')).toBeNull();
   });
