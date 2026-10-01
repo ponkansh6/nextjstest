@@ -2,11 +2,11 @@ import type { CpiView, QuarterlyView } from "../../src/types/chart";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import CpiChart from "../../src/app/components/CpiChart";
+import { stackedKeys } from "../../src/lib/chartConstants";
 import {
-  CONSUMPTION_NOMINAL_KEYS,
-  CONSUMPTION_REAL_KEYS,
-  stackedKeys,
-} from "../../src/lib/chartConstants";
+  QUARTERLY_PUBLIC_NOMINAL_KEYS,
+  QUARTERLY_PUBLIC_REAL_KEYS,
+} from "../../src/lib/quarterlyPublicProjection";
 import { renderBrowserComponent } from "./renderBrowserComponent";
 
 vi.mock("next/navigation", () => ({
@@ -51,8 +51,8 @@ function quarterlyRows(keys: readonly string[]): QuarterlyView[] {
   );
 }
 
-const nominalData = quarterlyRows(CONSUMPTION_NOMINAL_KEYS);
-const realData = quarterlyRows(CONSUMPTION_REAL_KEYS);
+const nominalData = quarterlyRows(QUARTERLY_PUBLIC_NOMINAL_KEYS);
+const realData = quarterlyRows(QUARTERLY_PUBLIC_REAL_KEYS);
 
 function renderCpiChart() {
   window.__MOUNT_ALL__ = true;

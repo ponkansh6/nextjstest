@@ -83,11 +83,24 @@ it("p45-b-plan24-rendering-71 — production ranges render legacy and CTI data w
   expect(values.nominal2005to2017Headers).toContain("年月");
   expect(values.real2005to2017Headers).toContain("年月");
   expect(values.nominal2005to2017Bars).toBeGreaterThan(0);
+  expect(values.expenseLines2005to2017).toBe(0);
   expect(values.real2005to2017Bars).toBeGreaterThan(0);
-  expect(values.lines2005to2017).toBe(0);
+  const realTotalSupportPeriods2005to2017 = (values.realTotalSupportPeriods2005to2017 as string)
+    .split(",")
+    .map((period) => period.trim())
+    .filter(Boolean);
+  expect(realTotalSupportPeriods2005to2017).toHaveLength(52);
+  expect(values.realTotalMarkers2005to2017).toBe(realTotalSupportPeriods2005to2017.length);
   expect(values.nominal2018Bars).toBeGreaterThan(0);
   expect(values.real2018Bars).toBeGreaterThan(0);
-  expect(values.lines2018).toBe(0);
+  const realTotalSupportPeriods2018 = (values.realTotalSupportPeriods2018 as string)
+    .split(",")
+    .map((period) => period.trim())
+    .filter(Boolean);
+  expect(realTotalSupportPeriods2018).toContain("2018Q1");
+  expect(realTotalSupportPeriods2018).toHaveLength(4);
+  expect(values.realTotalMarkers2018).toBe(realTotalSupportPeriods2018.length);
+  expect(values.realTotalMarkers2018).toBeGreaterThan(0);
   expect(values.nominal2018Headers).not.toContain("GDP");
   expect(values.nominal2018Headers).not.toContain("民間最終消費支出");
   expect(values.real2018Headers).not.toContain("GDP");
@@ -158,6 +171,13 @@ it("p45-b-plan24-rendering-88 — 2025 production tables contain Q1/Q4 values an
     expect(table.csv).not.toContain("GDP");
   }
   expect(tables[0].headers.some((header) => header.includes("民間最終消費"))).toBe(false);
+  expect(
+    tables[0].headers.filter((header) => header.startsWith("CTIミクロ調整系列（")),
+  ).toHaveLength(10);
+  expect(tables[0].headers).not.toContain("CTIミクロ調整系列（総合・名目）");
+  expect(tables[1].headers).toContain("CTIミクロ総合（実質・CPI調整）");
+  expect(tables[1].csv).toContain("CTIミクロ総合（実質・CPI調整）");
+  expect(tables[1].csv).not.toContain("民間最終消費支出（実質）");
 });
 
 it("p45-b-tooltip-stack-total-108-e2e-t9 — production area hover exposes live total and transferred row count", async () => {

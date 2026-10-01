@@ -1,7 +1,16 @@
 "use client";
 
 import React from "react";
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Line,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import type { CpiData } from "@/types";
 import type { SeriesMeasurement } from "@/types/chart";
 import type { SeriesMetadata } from "../../lib/chartConstants";
@@ -153,6 +162,12 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
       (supportKey === CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY || row.年 < 2018) &&
       typeof row[supportKey] === "number",
   );
+  const hasIndependentRealTotal =
+    supportKey === CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY &&
+    data.some((row) => {
+      const value = row[CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY];
+      return typeof value === "number" && Number.isFinite(value);
+    });
   const hasPlan39Measurements = data.some(
     (row) => row.年 < 2018 && ctiKeys.some((key) => row.measurements?.[key] !== undefined),
   );
@@ -177,7 +192,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
         supportKey
       ]?.reason
     : undefined;
-  // CTI is the standalone nominal support before 2018Q1; expense items stack afterwards.
+  // Nominal support remains a bar; the independently deflated real total is a separate marker.
   const chartData = normalizeSpendingChartData(data, keys);
   const publicKeys = getPublicSpendingKeys(keys);
   const maxHeight = chartData.reduce((max, row) => {
@@ -391,17 +406,19 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
               dx={-10}
             />
             <Tooltip {...tooltipProps} />
-            {supportKey && hasPreBoundarySupport && !hiddenKeys.includes(supportKey) && (
-              <Bar
-                dataKey={supportKey}
-                data-key={supportKey}
-                data-testid={`spending-series-${supportKey}`}
-                fill={chartColors.barFill || "#94a3b8"}
-                fillOpacity={0.8}
-                stackId={supportKey === CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY ? "total" : undefined}
-                isAnimationActive={false}
-              />
-            )}
+            {supportKey &&
+              supportKey !== CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY &&
+              hasPreBoundarySupport &&
+              !hiddenKeys.includes(supportKey) && (
+                <Bar
+                  dataKey={supportKey}
+                  data-key={supportKey}
+                  data-testid={`spending-series-${supportKey}`}
+                  fill={chartColors.barFill || "#94a3b8"}
+                  fillOpacity={0.8}
+                  isAnimationActive={false}
+                />
+              )}
             {orderedCtiKeys.map((key) =>
               !hiddenKeys.includes(key) ? (
                 <Bar
@@ -420,6 +437,43 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
                 />
               ) : null,
             )}
+            {supportKey === CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY &&
+              hasIndependentRealTotal &&
+              !hiddenKeys.includes(supportKey) && (
+                <Line
+                  dataKey={supportKey}
+                  data-key={supportKey}
+                  data-testid={`spending-series-${supportKey}`}
+                  stroke="none"
+                  strokeWidth={0}
+                  connectNulls={false}
+                  dot={(dot) => {
+                    const value = dot.payload?.[supportKey];
+                    if (
+                      typeof value !== "number" ||
+                      !Number.isFinite(value) ||
+                      dot.cx == null ||
+                      dot.cy == null
+                    )
+                      return null;
+                    return (
+                      <circle
+                        cx={dot.cx}
+                        cy={dot.cy}
+                        r={4}
+                        fill={chartColors.barFill || "#94a3b8"}
+                        stroke={chartColors.gridStroke}
+                        strokeWidth={1.5}
+                        pointerEvents="none"
+                        data-key={supportKey}
+                        data-testid={`spending-series-marker-${supportKey}`}
+                      />
+                    );
+                  }}
+                  activeDot={false}
+                  isAnimationActive={false}
+                />
+              )}
           </BarChart>
         </ResponsiveContainer>
         {shouldShowEmptyState && (

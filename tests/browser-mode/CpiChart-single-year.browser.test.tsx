@@ -2,11 +2,11 @@ import type { CpiView, QuarterlyView } from "../../src/types/chart";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import CpiChart from "../../src/app/components/CpiChart";
+import { CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY, stackedKeys } from "../../src/lib/chartConstants";
 import {
-  CONSUMPTION_NOMINAL_KEYS,
-  CONSUMPTION_REAL_KEYS,
-  stackedKeys,
-} from "../../src/lib/chartConstants";
+  QUARTERLY_PUBLIC_NOMINAL_KEYS,
+  QUARTERLY_PUBLIC_REAL_KEYS,
+} from "../../src/lib/quarterlyPublicProjection";
 import { renderBrowserComponent } from "./renderBrowserComponent";
 
 vi.mock("next/navigation", () => ({
@@ -51,8 +51,8 @@ function quarterlyRows(keys: readonly string[]): QuarterlyView[] {
   );
 }
 
-const nominalData = quarterlyRows(CONSUMPTION_NOMINAL_KEYS);
-const realData = quarterlyRows(CONSUMPTION_REAL_KEYS);
+const nominalData = quarterlyRows(QUARTERLY_PUBLIC_NOMINAL_KEYS);
+const realData = quarterlyRows(QUARTERLY_PUBLIC_REAL_KEYS);
 
 describe("CpiChart single-year range in Chromium", () => {
   afterEach(() => {
@@ -77,13 +77,16 @@ describe("CpiChart single-year range in Chromium", () => {
     await page.getByRole("button", { name: "表示期間を変更" }).click();
     await userEvent.selectOptions(await page.getByLabelText("終了年:").element(), "2021");
 
-    for (const testId of ["spending-chart-nominal", "spending-chart-real"]) {
+    for (const [testId, isReal] of [
+      ["spending-chart-nominal", false],
+      ["spending-chart-real", true],
+    ] as const) {
       const chart = page.getByTestId(testId);
       const chartElement = await chart.element();
       const contractElement = chartElement.querySelector('[data-testid="chart-data-contract"]');
       const rowElements = contractElement?.querySelectorAll<HTMLElement>("[data-chart-data-row]");
       expect(rowElements?.length).toBe(4);
-      const expectedBarCount = Array.from(rowElements ?? []).reduce(
+      const finiteContractCount = Array.from(rowElements ?? []).reduce(
         (count, row) =>
           count +
           [...row.querySelectorAll<HTMLElement>("[data-series-key]")].filter((cell) => {
@@ -92,9 +95,25 @@ describe("CpiChart single-year range in Chromium", () => {
           }).length,
         0,
       );
+      const totalMarkerCount = isReal
+        ? Array.from(rowElements ?? []).reduce(
+            (count, row) =>
+              count +
+              row.querySelectorAll(
+                `[data-series-key="${CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY}"][data-value-type="number"]`,
+              ).length,
+            0,
+          )
+        : 0;
+      const expectedBarCount = finiteContractCount - totalMarkerCount;
       expect(chartElement.querySelectorAll(".recharts-bar-rectangle").length).toBe(
         expectedBarCount,
       );
+      expect(
+        chartElement.querySelectorAll(
+          `[data-testid="spending-series-marker-${CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY}"]`,
+        ).length,
+      ).toBe(totalMarkerCount);
     }
   });
 
@@ -130,8 +149,18 @@ describe("CpiChart single-year range in Chromium", () => {
         0,
       );
       const bars = chart.querySelectorAll(".recharts-bar-rectangle").length;
+      const realTotalValues =
+        testId === "spending-chart-real"
+          ? chart.querySelectorAll(
+              `[data-series-key="${CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY}"][data-value-type="number"]`,
+            ).length
+          : 0;
+      const totalMarkers = chart.querySelectorAll(
+        `[data-testid="spending-series-marker-${CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY}"]`,
+      ).length;
       expect(contractValues).toBeGreaterThan(0);
-      expect(bars).toBe(contractValues);
+      expect(bars).toBe(contractValues - realTotalValues);
+      expect(totalMarkers).toBe(realTotalValues);
     };
 
     // Use years with available post-boundary expense values in the fixture.

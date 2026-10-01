@@ -356,22 +356,30 @@ export const inspectBatch3BProductionCase: BrowserCommand<
             .allTextContents();
           values.real2005to2017Headers = await realTable.locator("thead th").allTextContents();
           values.nominal2005to2017Bars = await nominal.locator(".recharts-bar-rectangle").count();
+          values.expenseLines2005to2017 = await nominal.locator(".recharts-line-curve").count();
           values.real2005to2017Bars = await page
             .getByTestId("spending-chart-real")
             .locator(".recharts-bar-rectangle")
             .count();
-          values.lines2005to2017 = await page
-            .locator("[data-testid^='spending-chart-'] .recharts-line-curve")
-            .count();
+          values.realTotalSupportPeriods2005to2017 =
+            (await page.getByTestId("spending-chart-real").getAttribute("data-support-periods")) ??
+            "";
+          const realTotalMarker = page
+            .getByTestId("spending-chart-real")
+            .locator(
+              'circle[data-testid="spending-series-marker-CTIミクロ調整系列（総合・実質）"]:visible',
+            );
+          values.realTotalMarkers2005to2017 = await realTotalMarker.count();
           await range(2018, 2018);
+          values.realTotalSupportPeriods2018 =
+            (await page.getByTestId("spending-chart-real").getAttribute("data-support-periods")) ??
+            "";
           values.nominal2018Bars = await nominal.locator(".recharts-bar-rectangle").count();
           values.real2018Bars = await page
             .getByTestId("spending-chart-real")
             .locator(".recharts-bar-rectangle")
             .count();
-          values.lines2018 = await page
-            .locator("[data-testid^='spending-chart-'] .recharts-line-curve")
-            .count();
+          values.realTotalMarkers2018 = await realTotalMarker.count();
           values.nominal2018Headers = await nominalTable.locator("thead th").allTextContents();
           values.real2018Headers = await realTable.locator("thead th").allTextContents();
           break;

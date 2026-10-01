@@ -2,11 +2,11 @@ import type { CpiView, QuarterlyView } from "../../src/types/chart";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { page } from "vitest/browser";
 import CpiChart from "../../src/app/components/CpiChart";
+import { CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY, stackedKeys } from "../../src/lib/chartConstants";
 import {
-  CONSUMPTION_NOMINAL_KEYS,
-  CONSUMPTION_REAL_KEYS,
-  stackedKeys,
-} from "../../src/lib/chartConstants";
+  QUARTERLY_PUBLIC_NOMINAL_KEYS,
+  QUARTERLY_PUBLIC_REAL_KEYS,
+} from "../../src/lib/quarterlyPublicProjection";
 import { renderBrowserComponent } from "./renderBrowserComponent";
 
 vi.mock("next/navigation", () => ({
@@ -52,8 +52,8 @@ function quarterlyRows(keys: readonly string[]): QuarterlyView[] {
   );
 }
 
-const nominalData = quarterlyRows(CONSUMPTION_NOMINAL_KEYS);
-const realData = quarterlyRows(CONSUMPTION_REAL_KEYS);
+const nominalData = quarterlyRows(QUARTERLY_PUBLIC_NOMINAL_KEYS);
+const realData = quarterlyRows(QUARTERLY_PUBLIC_REAL_KEYS);
 
 function contractRenderableCount(chart: HTMLElement) {
   const rows = chart.querySelectorAll('[data-testid="chart-data-contract"] [data-chart-data-row]');
@@ -66,6 +66,12 @@ function contractRenderableCount(chart: HTMLElement) {
       }).length,
     0,
   );
+}
+
+function contractRealTotalCount(chart: HTMLElement) {
+  return chart.querySelectorAll(
+    `[data-series-key="${CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY}"][data-value-type="number"]`,
+  ).length;
 }
 
 describe("CpiChart bars", () => {
@@ -97,7 +103,13 @@ describe("CpiChart bars", () => {
       expect(chart).not.toBeNull();
       if (!chart) throw new Error(`Rendered CpiChart section is unavailable: ${sectionId}`);
       const renderedBars = chart.querySelectorAll(".recharts-bar-rectangle").length;
-      expect(renderedBars).toBe(contractRenderableCount(chart));
+      const realTotalValues =
+        sectionId === "section-consumption-real" ? contractRealTotalCount(chart) : 0;
+      const totalMarkers = chart.querySelectorAll(
+        `[data-testid="spending-series-marker-${CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY}"]`,
+      ).length;
+      expect(renderedBars).toBe(contractRenderableCount(chart) - realTotalValues);
+      expect(totalMarkers).toBe(realTotalValues);
     }
   });
 });

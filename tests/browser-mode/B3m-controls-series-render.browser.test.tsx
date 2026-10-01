@@ -253,7 +253,11 @@ describe("B3m Chromium slices", () => {
     expect(tooltip).not.toBeNull();
     expect(tooltip).toBeVisible();
     expect(tooltip).toHaveTextContent("2025Q1");
-    expect(tooltip!.querySelector('[data-tooltip-row="true"]')).toHaveTextContent("100.00");
+    const expectedFirstKey = QUARTERLY_PLAN40_V2_NOMINAL_KEYS[0];
+    const expectedRow = tooltip!.querySelector(
+      `[data-tooltip-row="true"][data-tooltip-key="${expectedFirstKey}"]`,
+    );
+    expect(expectedRow).toHaveTextContent("100.00");
   });
 
   it("p45-b-tooltip-stack-total-108", async () => {

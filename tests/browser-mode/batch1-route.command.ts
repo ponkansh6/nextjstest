@@ -1,7 +1,11 @@
 import type { BrowserCommand } from "vitest/node";
 import type {} from "@vitest/browser-playwright";
 import { NEXT_ROUTE_POC_BASE_URL } from "./next-route-poc.constants";
-import { CPI_CATEGORIES, getLegendLabel } from "../../src/lib/chartConstants";
+import {
+  CPI_CATEGORIES,
+  CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY,
+  getLegendLabel,
+} from "../../src/lib/chartConstants";
 import { buildContextOptions, withIsolatedContext } from "./isolated-route-context";
 
 export type Batch1RouteCase =
@@ -401,6 +405,16 @@ export const inspectBatch1ProductionCase: BrowserCommand<
               '[data-testid="spending-chart-real"] [data-testid="chart-data-contract"] [data-series-key][data-value-type="number"]',
             )
             .count();
+          values.realTotalProjectedValues = await page
+            .locator(
+              `[data-testid="spending-chart-real"] [data-testid="chart-data-contract"] [data-series-key="${CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY}"][data-value-type="number"]`,
+            )
+            .count();
+          values.realTotalMarkerCount = await page
+            .locator(
+              `[data-testid="spending-chart-real"] [data-testid="spending-series-marker-${CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY}"]`,
+            )
+            .count();
           values.nominalVisible = await page
             .locator('[data-testid="spending-chart-nominal"] .recharts-bar-rectangle')
             .first()
@@ -451,6 +465,16 @@ export const inspectBatch1ProductionCase: BrowserCommand<
           values.realProjectedValues = await page
             .locator(
               '[data-testid="spending-chart-real"] [data-testid="chart-data-contract"] [data-series-key][data-value-type="number"]',
+            )
+            .count();
+          values.realTotalProjectedValues = await page
+            .locator(
+              `[data-testid="spending-chart-real"] [data-testid="chart-data-contract"] [data-series-key="${CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY}"][data-value-type="number"]`,
+            )
+            .count();
+          values.realTotalMarkerCount = await page
+            .locator(
+              `[data-testid="spending-chart-real"] [data-testid="spending-series-marker-${CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY}"]`,
             )
             .count();
           break;

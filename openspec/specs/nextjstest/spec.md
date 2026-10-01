@@ -4533,7 +4533,7 @@ CPI入力はPlan18の検証済み2025年基準月次接続系列（e-Stat CPI統
 
 ### Data Flow
 
-Plan39/公式名目rowのcanonical 10費目および総合 → 同じ四半期の3か月CPI算術平均 → 各名目値 `× 100 / CPI` の変換 → 既存の実質10費目keysと新しい総合key `CTIミクロ調整系列（総合・実質）` を持つ公開row → 共通public projection → `CpiChart` の実質チャート、tooltip、data table、CSV。内部総合名目key `CTIミクロ調整系列（総合・名目）` は2005Q1–2016Q4にPlan39年次総合アンカーとnominal月次seasonalityから、2017Q1以降は公式四半期総合から得て、同じ期間の実質総合計算に使う。
+Plan39/公式名目rowのcanonical 10費目および総合 → 同じ四半期の3か月CPI算術平均 → 各名目値 `× 100 / CPI` の変換 → 既存の実質10費目keysと新しい総合key `CTIミクロ調整系列（総合・実質）` を持つ公開row → 共通public projection → `CpiChart` の実質チャート、tooltip、data table、CSV。実質チャートは10費目を棒で表示し、独立変換した総合は加算対象にしない点マーカーで重ねる。内部総合名目key `CTIミクロ調整系列（総合・名目）` は2005Q1–2016Q4にPlan39年次総合アンカーとnominal月次seasonalityから、2017Q1以降は公式四半期総合から得て、同じ期間の実質総合計算に使う。
 
 四半期は名目表示側で決定済みの期間を保つ。各四半期の実質10費目は同名対応CPI（住居のみ帰属家賃除外系列）で変換し、実質総合は表示名目総合を帰属家賃除外総合CPIで独立して変換する。従って実質総合は費目合計から作らず、異なるデフレーターと分類差により実質10費目の和と一致する保証はない。Otherの残差が負でも値をclampしない。
 
@@ -4541,11 +4541,11 @@ Plan39/公式名目rowのcanonical 10費目および総合 → 同じ四半期�
 
 ### Data Model
 
-実質の既存canonical 10費目keysは維持し、新しい実質総合keyは `CTIミクロ調整系列（総合・実質）` とする。旧 `民間最終消費支出（実質）` はこのCTI公開projectionから除外する。実質measurementは値に加えてstatus/reason、指数単位、2025年基準、四半期頻度・3か月CPI平均という集計方法、変換元nominal source/measurement provenance、CPIの `sourceId` / `statInfId`、CPI系列名・対象期間・集計情報を追跡できる。Otherには一般proxyの限界を示すmeasurement note、総合には独立変換と費目和が一致しない定義を示すmeasurement noteを付ける。GDP比較のraw source、loader、内部型は互換用途として保持するが、実質CTIの値に流用しない。
+実質の既存canonical 10費目keysは維持し、新しい実質総合keyは `CTIミクロ調整系列（総合・実質）` とする。旧 `民間最終消費支出（実質）` はこのCTI公開projectionから除外する。実質measurementは値に加えてstatus/reason、指数単位、2025年基準、四半期頻度・3か月CPI平均という集計方法、変換元nominal source/measurement provenance、CPIの `sourceId` / `statInfId`、CPI系列名・対象期間・集計情報を追跡できる。チャートでは実質10費目だけを棒として表示し、独立した実質総合は点マーカーで示してstack合計や費目値に加算しない。Otherには一般proxyの限界を示すmeasurement note、総合には独立変換と費目和が一致しない定義を示すmeasurement noteを付ける。GDP比較のraw source、loader、内部型は互換用途として保持するが、実質CTIの値に流用しない。
 
 ### Component Tree
 
-検証済みCPI月次系列（`loadCpiIndexData`）とPlan39/公式nominal quarterly aggregation → `quarterlyProjection.ts::deriveQuarterlyRealRows` によるserver側の四半期CPI集計・nominal row実質変換 → `QuarterlyRow` measurement/public projection → `CpiChart` → `SpendingBarChart`（real）/tooltip/data table/CSV。GDP loaderとGDP比較値は互換経路として分離して保持し、実質CTI projectionの入力にはしない。
+検証済みCPI月次系列（`loadCpiIndexData`）とPlan39/公式nominal quarterly aggregation → `quarterlyProjection.ts::deriveQuarterlyRealRows` によるserver側の四半期CPI集計・nominal row実質変換 → `QuarterlyRow` measurement/public projection → `CpiChart` → `SpendingBarChart`（real: 10費目の棒と独立総合の点マーカー）/tooltip/data table/CSV。GDP loaderとGDP比較値は互換経路として分離して保持し、実質CTI projectionの入力にはしない。
 
 ### 実装・検証記録
 
@@ -4563,5 +4563,6 @@ Plan39/公式名目rowのcanonical 10費目および総合 → 同じ四半期�
 - **WHEN** 四半期内CPIの3か月の一つ以上が欠落・重複・非有限・非正値または無効である、**THEN** 対応する実質値を `null` / `unavailable` と理由付きで出し、補間、0補完、前値、別CPIへのfallbackをしない。少なくとも欠月は `cpi_month_missing`、重複月は `duplicate_cpi_month`、非正値・非有限値は `cpi_value_invalid` として識別する。
 - **WHEN** CPI実質値を公開する、**THEN** 2025年基準100を使い出力を再基準化せず、名目値とCPIをともに指数として扱い円建て額とは説明しない。
 - **WHEN** real projection、chart、tooltip、data tableまたはCSVを生成する、**THEN** 旧 `民間最終消費支出（実質）` keyを公開CTI系列から外し、旧GDP実質比較値を実質CTI入力に使わず、新しい実質総合と10費目の値・status/reason・provenanceを表示面間で一致させる。
+- **WHEN** 実質消費チャートを描画する、**THEN** 10費目だけを棒として表示し、独立変換した総合key `CTIミクロ調整系列（総合・実質）` は点マーカーとして重ね、stackの棒や10費目合計に加算しない。
 - **WHEN** 実質CTI経路を切り替える、**THEN** GDP比較のraw source、loader、内部型は独立した互換用途として維持する。
 - **WHEN** 本節の仕様同期を完了扱いにする、**THEN** Data Sources / Data Flow / Data Model / Component Tree / Requirementsが実装と一致し、実装・関連検証が未完了ならその状態を完了済みと記録しない。
