@@ -464,10 +464,22 @@ async function quarterlyGdp(page: import("@playwright/test").Page) {
       const realLegend = real.locator("summary");
       const realLegendBefore = await realLegend.innerText({ timeout: 5_000 });
       await realLegend.click({ timeout: 5_000 });
-      return { nominalText, realText, realLegendBefore };
+      const realTotalLegendItem = real.getByTestId("legend-CTIミクロ調整系列（総合・実質）");
+      const realTotalLegendExists = (await realTotalLegendItem.count()) > 0;
+      const realTotalLegendVisible = realTotalLegendExists
+        ? await realTotalLegendItem.isVisible()
+        : false;
+      return {
+        nominalText,
+        realText,
+        realLegendBefore,
+        realTotalLegendExists,
+        realTotalLegendVisible,
+      };
     },
   );
-  const { nominalText, realText, realLegendBefore } = chartLabels;
+  const { nominalText, realText, realLegendBefore, realTotalLegendExists, realTotalLegendVisible } =
+    chartLabels;
 
   const chartSpecs = [
     [nominal, "CTIミクロ調整系列（食料）"],
@@ -829,7 +841,15 @@ async function quarterlyGdp(page: import("@playwright/test").Page) {
       tooltips,
     });
   }
-  return { nominalText, realText, realLegendBefore, charts, tables };
+  return {
+    nominalText,
+    realText,
+    realLegendBefore,
+    realTotalLegendExists,
+    realTotalLegendVisible,
+    charts,
+    tables,
+  };
 }
 
 export const inspectPhase6B06: BrowserCommand<[id: Phase6B06Id], unknown> = async (

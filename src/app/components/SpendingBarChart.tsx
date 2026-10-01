@@ -163,7 +163,11 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
     ),
   );
   const orderedCtiKeys = orderSpendingPresentationKeys(ctiKeys);
-  const legendKeys = orderSpendingPresentationKeys(hasPreBoundarySupport ? keys : ctiKeys);
+  const legendKeys = orderSpendingPresentationKeys(
+    (hasPreBoundarySupport ? keys : ctiKeys).filter(
+      (key) => testId !== "spending-chart-real" || key !== CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY,
+    ),
+  );
   const selectedLegendCount = legendKeys.filter((key) => !hiddenKeys.includes(key)).length;
   const visibleCtiKeyCount = ctiKeys.filter((key) => !hiddenKeys.includes(key)).length;
   const hasVisibleExpenseSeries = visibleCtiKeyCount > 0;

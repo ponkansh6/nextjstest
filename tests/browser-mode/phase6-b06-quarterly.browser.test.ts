@@ -112,6 +112,8 @@ it("B06 Plan23 ID 26: quarterly public data", async () => {
     nominalText: string;
     realText: string;
     realLegendBefore: string;
+    realTotalLegendExists: boolean;
+    realTotalLegendVisible: boolean;
     charts: Array<{ keys: string[]; rowKeys: string[]; publicKey: string }>;
     tables: Array<{
       selector: string;
@@ -168,6 +170,8 @@ it("B06 Plan23 ID 26: quarterly public data", async () => {
   expect(result.realLegendBefore).toContain("費目・四半期を変更");
   expect(result.realLegendBefore).toMatch(/費目 \d+\/\d+・四半期 \d+\/\d+/);
   expect(result.realLegendBefore).toContain("全選択");
+  expect(result.realTotalLegendExists).toBe(false);
+  expect(result.realTotalLegendVisible).toBe(false);
   expect(result.nominalText).not.toMatch(INTERNAL_SERIES);
   expect(result.realText).not.toMatch(INTERNAL_SERIES);
   expect(result.charts).toHaveLength(2);
