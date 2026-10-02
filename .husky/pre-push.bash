@@ -114,7 +114,7 @@ run_full_profile() {
     -u GIT_COMMON_DIR \
     -u GIT_OBJECT_DIRECTORY \
     -u GIT_ALTERNATE_OBJECT_DIRECTORIES \
-    pnpm run test:all || return $?
+    VITEST_MAX_WORKERS=2 pnpm run test:all || return $?
   hook_gate "test:browser:component:all" pnpm run test:browser:component:all || return $?
   COMPONENT_BROWSER_RAN=1
   hook_gate "build" pnpm run build || return $?

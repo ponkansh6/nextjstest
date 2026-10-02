@@ -244,7 +244,7 @@ describe("husky pre-push full test gate environment", () => {
     const pnpmStub = path.join(binDir, "pnpm");
     fs.writeFileSync(
       pnpmStub,
-      '#!/bin/sh\nprintf "%s\\n" "${GIT_DIR-unset}" "${GIT_WORK_TREE-unset}" "${GIT_INDEX_FILE-unset}" "${GIT_PREFIX-unset}" "${GIT_COMMON_DIR-unset}" "${GIT_OBJECT_DIRECTORY-unset}" "${GIT_ALTERNATE_OBJECT_DIRECTORIES-unset}" "$PRESERVED_MARKER" > "$CHILD_ENV_OUTPUT"\n',
+      '#!/bin/sh\nprintf "%s\\n" "${GIT_DIR-unset}" "${GIT_WORK_TREE-unset}" "${GIT_INDEX_FILE-unset}" "${GIT_PREFIX-unset}" "${GIT_COMMON_DIR-unset}" "${GIT_OBJECT_DIRECTORY-unset}" "${GIT_ALTERNATE_OBJECT_DIRECTORIES-unset}" "${VITEST_MAX_WORKERS-unset}" "$PRESERVED_MARKER" > "$CHILD_ENV_OUTPUT"\n',
     );
     fs.chmodSync(pnpmStub, 0o755);
 
@@ -271,6 +271,7 @@ describe("husky pre-push full test gate environment", () => {
       "unset",
       "unset",
       "unset",
+      "2",
       "kept",
     ]);
     fs.rmSync(repo, { recursive: true, force: true });
