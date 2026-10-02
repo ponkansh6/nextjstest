@@ -16,4 +16,12 @@ fi
 
 # lint-staged owns the staged-file list. Its related Vitest task is allowed to
 # discover zero files and uses --passWithNoTests; this contract is commit-only.
-hook_gate "lint-staged (commit related; zero tests pass)" pnpm exec lint-staged
+hook_gate "lint-staged (commit related; zero tests pass)" env \
+  -u GIT_DIR \
+  -u GIT_WORK_TREE \
+  -u GIT_INDEX_FILE \
+  -u GIT_PREFIX \
+  -u GIT_COMMON_DIR \
+  -u GIT_OBJECT_DIRECTORY \
+  -u GIT_ALTERNATE_OBJECT_DIRECTORIES \
+  pnpm exec lint-staged

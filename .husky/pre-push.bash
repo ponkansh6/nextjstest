@@ -106,7 +106,15 @@ run_full_profile() {
   # Keep this order in sync with test:full. Every gate must stop the hook.
   hook_gate "lint:fast" pnpm run lint:fast || return $?
   hook_gate "type-check" pnpm run type-check || return $?
-  hook_gate "test:all" pnpm run test:all || return $?
+  hook_gate "test:all" env \
+    -u GIT_DIR \
+    -u GIT_WORK_TREE \
+    -u GIT_INDEX_FILE \
+    -u GIT_PREFIX \
+    -u GIT_COMMON_DIR \
+    -u GIT_OBJECT_DIRECTORY \
+    -u GIT_ALTERNATE_OBJECT_DIRECTORIES \
+    pnpm run test:all || return $?
   hook_gate "test:browser:component:all" pnpm run test:browser:component:all || return $?
   COMPONENT_BROWSER_RAN=1
   hook_gate "build" pnpm run build || return $?

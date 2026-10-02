@@ -229,6 +229,54 @@ describe("husky pre-push profile normalization", () => {
   );
 });
 
+describe("husky pre-push full test gate environment", () => {
+  it("clears inherited outer-repository Git variables for test:all only", () => {
+    const hook = fs.readFileSync(path.resolve(process.cwd(), ".husky/pre-push.bash"), "utf8");
+    const gateCommand = hook.match(
+      /^\s*hook_gate "test:all" ([\s\S]*?pnpm run test:all)(?= \|\| return \$\?)/m,
+    )?.[1];
+    expect(gateCommand).toBeDefined();
+
+    const repo = fs.mkdtempSync(path.join(os.tmpdir(), "git-pre-push-test-env-"));
+    const binDir = path.join(repo, "bin");
+    fs.mkdirSync(binDir);
+    const outputPath = path.join(repo, "child-env.txt");
+    const pnpmStub = path.join(binDir, "pnpm");
+    fs.writeFileSync(
+      pnpmStub,
+      '#!/bin/sh\nprintf "%s\\n" "${GIT_DIR-unset}" "${GIT_WORK_TREE-unset}" "${GIT_INDEX_FILE-unset}" "${GIT_PREFIX-unset}" "${GIT_COMMON_DIR-unset}" "${GIT_OBJECT_DIRECTORY-unset}" "${GIT_ALTERNATE_OBJECT_DIRECTORIES-unset}" "$PRESERVED_MARKER" > "$CHILD_ENV_OUTPUT"\n',
+    );
+    fs.chmodSync(pnpmStub, 0o755);
+
+    const env = {
+      ...process.env,
+      PATH: `${binDir}${path.delimiter}${process.env.PATH ?? ""}`,
+      GIT_DIR: "/outer/.git",
+      GIT_WORK_TREE: "/outer",
+      GIT_INDEX_FILE: "/outer/.git/index",
+      GIT_PREFIX: "nested/",
+      GIT_COMMON_DIR: "/outer/.git",
+      GIT_OBJECT_DIRECTORY: "/outer/.git/objects",
+      GIT_ALTERNATE_OBJECT_DIRECTORIES: "/outer/alternate-objects",
+      PRESERVED_MARKER: "kept",
+      CHILD_ENV_OUTPUT: outputPath,
+    };
+    execFileSync("bash", ["-c", gateCommand!], { cwd: repo, env, stdio: "ignore" });
+
+    expect(fs.readFileSync(outputPath, "utf8").trim().split("\n")).toEqual([
+      "unset",
+      "unset",
+      "unset",
+      "unset",
+      "unset",
+      "unset",
+      "unset",
+      "kept",
+    ]);
+    fs.rmSync(repo, { recursive: true, force: true });
+  });
+});
+
 describe("husky pre-push impact classification", () => {
   const impactScriptPath = path.resolve(process.cwd(), ".husky/lib/push-impact.sh");
 
