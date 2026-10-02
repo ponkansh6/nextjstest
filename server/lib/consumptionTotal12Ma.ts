@@ -1,14 +1,16 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import Papa from "papaparse";
+import { loadCtiAdjustedV2Estimate } from "./data-loader/ctiAdjusted";
 
 /**
  * Plan49 Lane C Core Consumption Total 12MA Calculation Layer
  *
  * Implements strict rules from shared_plan/49-newgraph-consumption-total-12ma-plan.md:
- * 1. Historical monthly reconstruction (2005-2016):
+ * 1. Historical monthly reconstruction (2004-2016):
  *    - m[y, m] = A[y] * r[y, m] / meanRaw[y]
- *    - A[y] loaded from B.json (2002-2025) and A.json (2017-2025).
+ *    - 2005-2016 anchors are shared with the Plan39 V2 corrected annual rows.
+ *    - 2004 is a private one-year extension using the same V2 category gamma and official pi2plus.
  *    - r loaded from 000040499070.normalized.csv (series_index === 1,二人以上世帯).
  *    - Strict check: all 12 months finite and meanRaw[y] > 0. If incomplete, whole year is invalid.
  * 2. Official monthly observation (2017-01 onwards):
@@ -112,44 +114,70 @@ function isCsvRow(row: unknown): row is CsvRow {
   return typeof row === "object" && row !== null;
 }
 
+function load2004Pi2Plus(sourceRoot: string): number | undefined {
+  const file = path.join(sourceRoot, "cti-size-composition", "lfs-iv4-2004-pi2plus.csv");
+  if (!fs.existsSync(file)) return undefined;
+  try {
+    const parsed = Papa.parse<Record<string, string>>(fs.readFileSync(file, "utf8"), {
+      header: true,
+      skipEmptyLines: true,
+    });
+    if (parsed.errors.length > 0) return undefined;
+    const rows = parsed.data.filter(
+      (row) => row.year?.trim() === "2004" && row.table?.trim() === "IV-4",
+    );
+    const numeratorRows = rows.filter(
+      (row) => row.household_group?.trim() === "二人以上の一般世帯",
+    );
+    const denominatorRows = rows.filter((row) => row.household_group?.trim() === "総世帯");
+    if (numeratorRows.length !== 1 || denominatorRows.length !== 1) return undefined;
+    const numeratorText = numeratorRows[0].households_ten_thousand?.trim() ?? "";
+    const denominatorText = denominatorRows[0].households_ten_thousand?.trim() ?? "";
+    if (!/^\d+$/.test(numeratorText) || !/^\d+$/.test(denominatorText)) return undefined;
+    const numerator = Number(numeratorText);
+    const denominator = Number(denominatorText);
+    if (!Number.isSafeInteger(numerator) || !Number.isSafeInteger(denominator)) return undefined;
+    if (numerator <= 0 || denominator <= numerator) return undefined;
+    return numerator / denominator;
+  } catch {
+    return undefined;
+  }
+}
+
 export function computeConsumptionTotal12Ma(sourceRoot?: string): ConsumptionTotal12MaResult {
   const root = resolveRoot(sourceRoot);
 
-  // 1. Load annual anchors A[y] from B.json and A.json
-  // Note: B.json covers 2002-2025 (historical reconstruction base), while A.json covers 2017-2025.
-  // We load B.json first, then merge A.json so that A.json (latest official revision) takes precedence for overlapping years (2017-2025).
+  // Plan49 and the quarterly nominal graph share the same composition-corrected Plan39 V2 anchors.
+  // The 2004 extension is computed inside V2 with the same baseCategoryValue/gamma implementation,
+  // but remains outside V2's public rows and years.
   const annualMap = new Map<number, number>();
-  const bPath = path.join(root, "cti-adjusted", "B.json");
-  const aPath = path.join(root, "cti-adjusted", "A.json");
-
-  if (fs.existsSync(bPath)) {
-    try {
-      const bData = JSON.parse(fs.readFileSync(bPath, "utf8")) as {
-        rows?: Array<{ year?: number; values?: Record<string, number> }>;
-      };
-      for (const row of bData.rows || []) {
-        if (typeof row.year === "number" && row.values && typeof row.values.総合 === "number") {
-          annualMap.set(row.year, row.values.総合);
-        }
+  const pi2Plus2004 = load2004Pi2Plus(root);
+  try {
+    const estimate = loadCtiAdjustedV2Estimate({
+      artifactRoot: path.join(root, "cti-adjusted"),
+      contract: "plan39",
+      validatePlan40Inputs: true,
+      ...(pi2Plus2004 !== undefined
+        ? { prehistoryComposition: { year: 2004, pi2Plus: pi2Plus2004 } }
+        : {}),
+    });
+    for (const row of estimate.rows) {
+      if (
+        row.year >= 2005 &&
+        row.year <= 2016 &&
+        row.status === "available" &&
+        typeof row.values.総合 === "number" &&
+        Number.isFinite(row.values.総合)
+      ) {
+        annualMap.set(row.year, row.values.総合);
       }
-    } catch (err) {
-      console.error(`Failed to read or parse B.json at ${bPath}:`, err);
     }
-  }
-
-  if (fs.existsSync(aPath)) {
-    try {
-      const aData = JSON.parse(fs.readFileSync(aPath, "utf8")) as {
-        rows?: Array<{ year?: number; values?: Record<string, number> }>;
-      };
-      for (const row of aData.rows || []) {
-        if (typeof row.year === "number" && row.values && typeof row.values.総合 === "number") {
-          annualMap.set(row.year, row.values.総合);
-        }
-      }
-    } catch (err) {
-      console.error(`Failed to read or parse A.json at ${aPath}:`, err);
+    const anchor2004 = estimate.prehistoryAnchors?.[2004];
+    if (typeof anchor2004 === "number" && Number.isFinite(anchor2004)) {
+      annualMap.set(2004, anchor2004);
     }
+  } catch (err) {
+    console.error("Failed to load Plan39 V2 annual anchors for consumption series:", err);
   }
 
   // 2. Load 000040499070 normalized CSV (historical raw monthly index,二人以上世帯)
@@ -159,6 +187,24 @@ export function computeConsumptionTotal12Ma(sourceRoot?: string): ConsumptionTot
     "000040499070.normalized.csv",
   );
   const nominalMap = new Map<string, number>();
+  const prehistoryCsvPath = path.join(
+    root,
+    "official-cti-2025-long-term",
+    "000040499070.2004-prehistory.csv",
+  );
+  if (fs.existsSync(prehistoryCsvPath)) {
+    try {
+      const content = fs.readFileSync(prehistoryCsvPath, "utf8");
+      const parsed = Papa.parse(content, { header: true, skipEmptyLines: true });
+      for (const row of parsed.data) {
+        if (!isCsvRow(row)) continue;
+        const val = Number(String(row.raw_value || "").replace(/,/g, ""));
+        if (row.month && Number.isFinite(val)) nominalMap.set(String(row.month).trim(), val);
+      }
+    } catch (err) {
+      console.error(`Failed to read 2004 prehistory CSV at ${prehistoryCsvPath}:`, err);
+    }
+  }
   if (fs.existsSync(nominalCsvPath)) {
     try {
       const content = fs.readFileSync(nominalCsvPath, "utf8");
@@ -215,8 +261,8 @@ export function computeConsumptionTotal12Ma(sourceRoot?: string): ConsumptionTot
     { value: number; provenance: ConsumptionMonthlyPoint["provenance"] }
   >();
 
-  // Historical years: 2005 - 2016
-  for (let y = 2005; y <= 2016; y++) {
+  // Historical years: 2004 - 2016. The 2004 values are calculation-only prehistory.
+  for (let y = 2004; y <= 2016; y++) {
     const A_y = annualMap.get(y);
     if (typeof A_y !== "number" || !Number.isFinite(A_y)) {
       for (let m = 1; m <= 12; m++) {
@@ -227,7 +273,7 @@ export function computeConsumptionTotal12Ma(sourceRoot?: string): ConsumptionTot
             sourceId: "000040499070",
             householdScope: "二人以上の世帯",
             seriesType: "historical_estimate",
-            description: "Missing Plan39 annual anchor A[y]",
+            description: "Missing composition-corrected Plan39 V2 annual anchor A[y]",
           },
         });
       }
@@ -289,7 +335,10 @@ export function computeConsumptionTotal12Ma(sourceRoot?: string): ConsumptionTot
           sourceId: "000040499070",
           householdScope: "二人以上の世帯",
           seriesType: "historical_estimate",
-          description: "Plan39 annual anchor +二人以上世帯 raw monthly seasonal weight estimation",
+          description:
+            y === 2004
+              ? "Private 2004 V2 composition-corrected anchor extension + official two-plus raw monthly seasonal weights"
+              : "Plan39 V2 composition-corrected annual anchor +二人以上世帯 raw monthly seasonal weights",
         },
       });
     }
@@ -359,7 +408,7 @@ export function computeConsumptionTotal12Ma(sourceRoot?: string): ConsumptionTot
         frequency: "monthly",
         baseYear: 2025,
         calculation: "12-month moving average of normalized monthly nominal consumption",
-        sources: ["000040499070", "000040499028", "B.json", "A.json"],
+        sources: ["000040499070", "000040499028", "B.json", "A.json", "LFS IV-4 2004"],
       },
     };
   }
@@ -395,7 +444,7 @@ export function computeConsumptionTotal12Ma(sourceRoot?: string): ConsumptionTot
   }
 
   // 5. Build final points with strict MA12 calculation
-  for (const ym of sortedYms) {
+  for (const ym of sortedYms.filter((month) => month >= "2005-01")) {
     const entry = rawLevels.get(ym)!;
     const rawVal = Number.isFinite(entry.value) ? entry.value : null;
     const normVal = rawVal !== null ? (100 * rawVal) / baseYearB : null;
@@ -473,8 +522,8 @@ export function computeConsumptionTotal12Ma(sourceRoot?: string): ConsumptionTot
       frequency: "monthly",
       baseYear: 2025,
       calculation:
-        "Strict 12-month moving average of normalized monthly nominal consumption (2005-2016 historical estimated via Plan39 annual anchor +二人以上世帯 raw seasonal weights; 2017+ official total households monthly distribution adjusted nominal observation)",
-      sources: ["000040499070", "000040499028", "B.json", "A.json"],
+        "Strict 12-month moving average of normalized monthly nominal consumption (2004-2016 private historical reconstruction using composition-corrected Plan39 V2 anchors and official two-plus raw seasonal weights; 2005-2016 anchors match the quarterly V2 series; 2017+ official total-household monthly observation)",
+      sources: ["000040499070", "000040499028", "B.json", "A.json", "LFS IV-4 2004"],
     },
   };
 }

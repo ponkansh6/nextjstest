@@ -130,6 +130,8 @@ export type CtiAdjustedV2Options = {
   connectionYear?: number;
   minBetaObservations?: number;
   householdComposition?: CtiAdjustedV2HouseholdComposition;
+  /** Optional single-year prehistory anchor for a private consumer; never changes public rows/years. */
+  prehistoryComposition?: { year: number; pi2Plus: number };
 };
 export type CtiAdjustedV2HouseholdComposition = {
   historicalPi2Plus: Record<number, number>;
@@ -180,6 +182,8 @@ export type CtiAdjustedV2Result = {
   estimateVersion: "plan39-v2";
   years: readonly number[];
   rows: readonly CtiAdjustedV2Row[];
+  /** Private prehistory calculation requested by a consumer; not part of public estimate rows. */
+  prehistoryAnchors?: Readonly<Record<number, number | null>>;
   categories: Record<CtiAdjustedV2Category, Record<number, number | null>>;
   other: CtiAdjustedV2OtherDiagnostics;
   residual: CtiAdjustedV2ResidualDiagnostics;
@@ -1077,11 +1081,47 @@ export function buildCtiAdjustedV2Estimate(
     ...(gStatus === "invalid" ? ["benchmark_g_invalid"] : []),
     ...(accepted ? [] : ["publication_gate_closed"]),
   ];
+  const prehistory = options.prehistoryComposition;
+  let prehistoryAnchors: Readonly<Record<number, number | null>> | undefined;
+  if (prehistory) {
+    const isValidRequest =
+      Number.isInteger(prehistory.year) &&
+      finite(prehistory.pi2Plus) &&
+      prehistory.pi2Plus > 0 &&
+      prehistory.pi2Plus < 1;
+    const canEstimate =
+      isValidRequest &&
+      compositionAvailable &&
+      contract === "plan39" &&
+      ratio2017 !== null &&
+      otherBeta.status === "available" &&
+      !fixed.length &&
+      validation.B.valid &&
+      validation.A.valid;
+    const components = canEstimate
+      ? ([...CTI_ADJUSTED_MAJOR_CATEGORIES, CTI_ADJUSTED_V2_OTHER_CATEGORY] as const).map(
+          (category) => {
+            const base = baseCategoryValue(prehistory.year, category);
+            const gamma = compositionGamma[category];
+            const pi2017 = historicalPi[2017];
+            return positive(base) && finite(gamma) && positive(pi2017)
+              ? base + gamma * (prehistory.pi2Plus - pi2017)
+              : null;
+          },
+        )
+      : [];
+    const anchor =
+      components.length > 0 && components.every(positive)
+        ? components.reduce((sum, value) => sum + value!, 0)
+        : null;
+    prehistoryAnchors = { [prehistory.year]: anchor };
+  }
   return {
     model: "v2-bottom-up",
     estimateVersion: "plan39-v2",
     years: CTI_ADJUSTED_V2_YEARS,
     rows,
+    ...(prehistoryAnchors ? { prehistoryAnchors } : {}),
     categories: series,
     artifactValidation: validation,
     ...(plan40InputValidation ? { plan40InputValidation } : {}),

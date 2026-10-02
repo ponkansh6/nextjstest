@@ -29,6 +29,8 @@ export type CtiAdjustedLoaderOptions = {
   contract?: "plan39" | "plan40";
   /** Preserve strict annual source integrity checks independently of the estimate contract. */
   validatePlan40Inputs?: boolean;
+  /** Private prehistory extension for Plan49; it is excluded from public rows/years. */
+  prehistoryComposition?: { year: number; pi2Plus: number };
 };
 
 type CtiAdjustedArtifactMetadata = CtiAdjustedInputMetadata & {
@@ -505,6 +507,7 @@ export function loadCtiAdjustedV2Estimate(
       contract: options.contract ?? "plan39",
       validatePlan40Inputs: options.validatePlan40Inputs,
       householdComposition: inputs.householdComposition ?? undefined,
+      prehistoryComposition: options.prehistoryComposition,
     }),
     ...(plan40ExpectedInputFingerprint || plan39ExpectedInputFingerprint
       ? { inputFingerprint: plan40ExpectedInputFingerprint ?? plan39ExpectedInputFingerprint! }

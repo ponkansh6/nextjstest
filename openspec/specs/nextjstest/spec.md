@@ -29,12 +29,12 @@ same-name metadata object cannot overwrite it. This legacy measurement is not
 projected into NewGraph. The salary registry and Plan38 quarterly view do not
 include this monthly key.
 
-For NewGraph comparison, the flow uses `server/lib/consumptionTotal12Ma.ts` which combines 2005–2016 historical estimation (Plan39 annual anchor and two-or-more-person household raw monthly seasonal weights) and 2017-and-later official all-household monthly observations (`000040499028`), with strict 12-month complete moving window rebased to 2025 monthly average `B`.
+For NewGraph comparison, `server/lib/consumptionTotal12Ma.ts` uses the composition-corrected Plan39 V2 annual anchors shared with the quarterly nominal projection for 2005–2016, two-or-more-person-household raw seasonal weights, and official all-household monthly observations (`000040499028`) from 2017 onward. The private 2004 prehistory applies the same V2 category base/gamma correction using the calendar-year 2004 two-plus household share `3459/4915`; it exists only to calculate the first public strict 12MA at 2005-01 and is never emitted as a public point.
 
 ### Component Tree
 
-`B.json`/`A.json` annual anchors + `000040499070` historical monthly seasonality
-and `000040499028` official all-household monthly observations →
+Plan39 V2 composition-corrected annual anchors + `000040499070` historical monthly seasonality
+(including private 2004 prehistory) and `000040499028` official all-household monthly observations →
 `computeConsumptionTotal12Ma()` (historical reconstruction, 2025 monthly
 baseline, strict trailing 12MA, status/reason and provenance) →
 `loadTotalEarningDataInternal` row scalar/measurement → `toEarningsView` →
@@ -64,7 +64,10 @@ not create an additional bar.
 - **WHEN** the comparison graph, legend, tooltip, table, or CSV renders for NewGraph, **THEN**
   the new `消費(総合)` series metadata and value have parity across every public surface.
 - **WHEN** 2005–2016 historical monthly estimation is computed, **THEN**
-  it uses Plan39 annual anchors and two-or-more-person household raw monthly seasonal weights (`m[y,m] = A[y] * r[y,m] / meanRaw[y]`), requiring all 12 months to be finite and `meanRaw[y]` to be positive and finite; any missing month invalidates the entire year.
+  it uses the same composition-corrected Plan39 V2 annual total anchors as the historical quarterly nominal projection and two-or-more-person household raw monthly seasonal weights (`m[y,m] = A[y] * r[y,m] / meanRaw[y]`), requiring all 12 months to be finite and `meanRaw[y]` to be positive and finite; any missing month invalidates the entire year.
+- **WHEN** the Plan49 calculation constructs its 2004 prehistory, **THEN** it uses the official calendar-year IV-4 share `3459/4915`, applies the same V2 per-category base/gamma calculation used for the historical annual anchors, normalizes all twelve `000040499070` raw months to that corrected annual anchor, and keeps these values internal; 2004 is not added to the public V2 rows or quarterly graph.
+- **WHEN** the 2004 IV-4 CSV is missing, duplicated, or contains invalid counts, **THEN** only the 2004 prehistory anchor is unavailable; shared 2005–2016 V2 anchors remain usable, and 2005-01 has no MA12 because its required 2004 months are incomplete.
+- **WHEN** the first public monthly point is computed, **THEN** it is 2005-01 and its strict 12MA window is 2004-02..2005-01; no 2004 point is emitted to NewGraph, tables, or CSV.
 - **WHEN** 2017-and-later monthly values are processed, **THEN**
   official all-household monthly adjusted observations (`000040499028`) are used as-is without quarterly back-filling. The separate Plan49 pre-implementation gate compares available three-month means with official quarterly values (`000040499087`) using its fixed tolerance; that offline check does not modify monthly values and is not a runtime fallback.
 - **WHEN** a 12-month moving average window is computed for NewGraph consumption, **THEN**
@@ -680,11 +683,7 @@ moving average, and then sets the 2025 calendar-year average to 0.
 
 ### Data Sources
 
-NewGraph's consumption comparison is computed from Plan39 annual nominal total
-anchors (`B.json`, with `A.json` taking precedence for overlapping years),
-two-or-more-person-household nominal monthly raw values from CTI artifact
-`000040499070` for 2005–2016, and official all-household adjusted monthly
-observations from `000040499028` for 2017 onward. The displayed series is
+NewGraph's consumption comparison uses the composition-corrected Plan39 V2 annual total anchors also used by the historical quarterly nominal projection for 2005–2016, two-or-more-person-household nominal monthly raw values from CTI artifact `000040499070`, and official all-household adjusted monthly observations from `000040499028` for 2017 onward. A private 2004 anchor is calculated by the same V2 category base/gamma logic using the 2004 calendar-year IV-4 two-plus household share (3,459 / 4,915); its twelve monthly raw values are normalized to that corrected annual anchor and held only as MA prehistory. The official 2004 share source is e-Stat Labor Force Survey annual table IV-4, `statInfId=000000116109`; the source's 2005–2017 historical shares retain their existing vintage caveat. The first public point is 2005-01, whose window is 2004-02 through 2005-01. No 2004 point is included in NewGraph, exported rows, or public V2 quarterly rows. The displayed series is
 `消費(総合)`, unit `指数`, monthly frequency, with the strict 12-month moving
 average rebased to its 2025 monthly average. Series-level status/reason and each
 point's status/reason, source and household-scope provenance are carried in the

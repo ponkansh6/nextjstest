@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "plan49-private-prehistory-v1",
+  "artifacts": [
+    {
+      "path": "../official-cti-2025-long-term/000040499070.2004-prehistory.csv",
+      "sha256": "175dd6a00a17dfdc9cfbedb397e76965ab95d272ee6784a3e1187e432c939b9d",
+      "metadataPath": "../official-cti-2025-long-term/000040499070.2004-prehistory.metadata.json",
+      "metadataSha256": "898b42896823e6ab3de2c9a45b03b8903e0e5bf58d5b28c978977ccc4f595fe4",
+      "sourceId": "000040499070",
+      "sourceRawPath": "../official-cti-2025-long-term/000040499070.raw"
+    },
+    {
+      "path": "lfs-iv4-2004-pi2plus.csv",
+      "sha256": "6d0c1b40674a566a64e23a985456362a4f6950370783c6d37f025934b519e92d",
+      "metadataPath": "lfs-iv4-2004-pi2plus.metadata.json",
+      "metadataSha256": "e61853588b29e0f02f0fd63cf1e380334783adba7d23c858fb888c31dfe865d0",
+      "sourceId": "000000116109",
+      "sourceWorkbookPreserved": false
+    }
+  ]
+}
