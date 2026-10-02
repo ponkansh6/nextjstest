@@ -44,7 +44,7 @@ const CONTRACTS: Record<Phase6B04Id, Contract> = {
     sectionId: "section-new-graph",
     tableId: "data-table-section-new-graph",
     chartName: "給与・消費・物価の推移比較（12MA）グラフ",
-    keys: ["CPI総合(12MA)", "総合(12MA)", "CTI消費支出（参考）", "CTIミクロ基本系列（名目・参考）"],
+    keys: ["CPI総合(12MA)", "総合(12MA)", "消費(総合)"],
   },
 };
 

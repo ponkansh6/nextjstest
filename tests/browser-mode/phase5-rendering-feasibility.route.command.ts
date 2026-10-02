@@ -6,6 +6,7 @@ import {
   desktop1280x800ContextOptions,
   withIsolatedContext,
 } from "./isolated-route-context";
+import { CONSUMPTION_TOTAL_12MA_KEY } from "../../src/lib/chartConstants";
 
 export type Phase5RenderingId =
   | "p45-a-a11y-cagr-trigger-default"
@@ -69,7 +70,7 @@ const PARITY_SECTIONS: Readonly<Record<string, SectionContract>> = {
     section: "section-new-graph",
     table: "data-table-section-new-graph",
     source: "chart-table-csv-parity.e2e.spec.ts:294",
-    keys: ["CPI総合(12MA)", "総合(12MA)", "CTI消費支出（参考）", "CTIミクロ基本系列（名目・参考）"],
+    keys: ["CPI総合(12MA)", "総合(12MA)", CONSUMPTION_TOTAL_12MA_KEY],
   },
   "p45-a-parity-section-residual": {
     section: "section-residual",
@@ -98,11 +99,7 @@ const PARITY_SECTIONS: Readonly<Record<string, SectionContract>> = {
   },
 };
 
-const ADVANCED_SERIES = [
-  "CTIミクロ基本系列（名目・参考）",
-  "CTIミクロ基本系列（名目・参考・延長）",
-  "CTI消費支出（参考）",
-];
+const COMPARISON_SERIES = ["CPI総合(12MA)", "総合(12MA)", CONSUMPTION_TOTAL_12MA_KEY];
 const MONTH_2025_01 = /2025[-年/]0?1/;
 
 async function route(page: import("@playwright/test").Page, pathname: string) {
@@ -434,21 +431,21 @@ async function execute(
       .then(() => true)
       .catch(() => false);
     const reloadedChart = await chartSnapshot(page, "section-new-graph");
-    const requiredAnchors = ["CTIミクロ基本系列(名目・延長)", "CTI消費支出(参考)"];
+    const requiredAnchors = ["物価指数(総合)", "給与(総合)", CONSUMPTION_TOTAL_12MA_KEY];
     const expected = {
       source:
         id === "p45-a-advanced-series-adv-query"
           ? "advanced-series.e2e.spec.ts:29"
           : "chart-table-csv-parity.e2e.spec.ts:324",
       route: "/?adv=1",
-      requiredSeries: ADVANCED_SERIES,
-      expectedAdvancedSeriesCount: 5,
+      requiredSeries: COMPARISON_SERIES,
+      expectedAdvancedSeriesCount: 3,
       requiredTableAnchors: requiredAnchors,
       requiredDownload: true,
     };
     const keySet = (candidate: typeof chart) =>
-      ADVANCED_SERIES.every((key) => candidate.declaredSeriesKeys.includes(key)) &&
-      candidate.declaredSeriesCount === 5;
+      COMPARISON_SERIES.every((key) => candidate.declaredSeriesKeys.includes(key)) &&
+      candidate.declaredSeriesCount === 3;
     const mismatch =
       routeResult.status !== 200 ||
       !chart.contractFound ||

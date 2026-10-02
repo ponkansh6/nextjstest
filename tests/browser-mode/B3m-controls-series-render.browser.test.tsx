@@ -13,9 +13,8 @@ import { useChartTooltipController } from "../../src/app/components/charts/useCh
 import {
   createComparisonSeriesRegistry,
   CPI_CATEGORIES,
-  CTI_BASIC_COMPARISON_KEY,
   CTI_BASIC_EXTENSION_KEY,
-  LEGACY_CTI_COMPARISON_KEY,
+  CONSUMPTION_TOTAL_12MA_KEY,
   SUPPORT_SERIES_KEY_NOMINAL,
   buildCpiTooltipMetadata,
   stackedColors,
@@ -189,12 +188,7 @@ describe("B3m Chromium slices", () => {
     renderBrowserComponent(<ComparisonSeriesFixture />);
     const chart = document.querySelector<HTMLElement>("#b3m-new-graph");
     expect(chart).not.toBeNull();
-    const normalKeys = [
-      "CPI総合(12MA)",
-      "総合(12MA)",
-      LEGACY_CTI_COMPARISON_KEY,
-      CTI_BASIC_COMPARISON_KEY,
-    ];
+    const normalKeys = ["CPI総合(12MA)", "総合(12MA)", CONSUMPTION_TOTAL_12MA_KEY];
     for (const key of normalKeys) {
       const legend = chart!.querySelector<HTMLElement>(`[data-key="${key}"]`);
       expect(legend).not.toBeNull();
@@ -202,7 +196,7 @@ describe("B3m Chromium slices", () => {
     }
     expect(chart!.querySelector(`[data-key="${CTI_BASIC_EXTENSION_KEY}"]`)).toBeNull();
     const renderedLines = chart!.querySelectorAll(".recharts-line-curve");
-    expect(renderedLines).toHaveLength(4);
+    expect(renderedLines).toHaveLength(3);
   });
 
   it("p45-a-cpi-sections", async () => {
