@@ -28,7 +28,7 @@ const CONTRACTS: Array<{ id: Phase6B04Id; keys: string[] }> = [
   },
   {
     id: "p45-a-parity-section-new-graph",
-    keys: ["CPI総合(12MA)", "総合(12MA)", "CTI消費支出（参考）", "CTIミクロ基本系列（名目・参考）"],
+    keys: ["CPI総合(12MA)", "総合(12MA)", "消費(総合)"],
   },
 ];
 
@@ -87,25 +87,55 @@ function assertGenericTypedMetadata(csv: string[][], displayWidth: number) {
     .filter((header) => header.endsWith("__valueType"))
     .map((header) => header.slice(0, -"__valueType".length));
   if (keys.length === 0) return;
-  const expected = keys.flatMap((key) => [
-    `${key}__label`,
-    `${key}__valueType`,
-    `${key}__value`,
-    `${key}__unit`,
-    `${key}__source`,
-    `${key}__frequency`,
-    `${key}__aggregation`,
-    `${key}__status`,
-    `${key}__reason`,
-  ]);
+  const fields = keys.includes("消費(総合)")
+    ? [
+        "label",
+        "valueType",
+        "seriesType",
+        "official",
+        "annualAnchorType",
+        "quarterlyDerived",
+        "value",
+        "unit",
+        "source",
+        "frequency",
+        "aggregation",
+        "status",
+        "reason",
+        "baseYear",
+        "monthlySourceId",
+        "monthlyHouseholdScope",
+        "monthlySeriesType",
+        "monthlyDescription",
+        "ma12WindowStart",
+        "ma12WindowEnd",
+        "ma12Sources",
+        "ma12Statuses",
+      ]
+    : [
+        "label",
+        "valueType",
+        "value",
+        "unit",
+        "source",
+        "frequency",
+        "aggregation",
+        "status",
+        "reason",
+      ];
+  const expected = keys.flatMap((key) => fields.map((field) => `${key}__${field}`));
   expect(headers.slice(displayWidth)).toEqual(expected);
   expect(csv.every((row) => row.length === displayWidth + expected.length)).toBe(true);
   for (const row of csv.slice(1)) {
     for (let index = 0; index < keys.length; index += 1) {
-      const offset = displayWidth + index * 9;
-      expect(row[offset + 1]).toMatch(/^(raw|comparison|-|valid)$/);
-      expect(row[offset + 7]).toMatch(/^(valid|invalid)$/);
-      if (row[offset + 7] === "invalid") expect(row[offset + 8]).not.toBe("-");
+      const offset = displayWidth + index * fields.length;
+      const valueTypeOffset = fields.indexOf("valueType");
+      const statusOffset = fields.indexOf("status");
+      const reasonOffset = fields.indexOf("reason");
+      expect(row[offset + valueTypeOffset]).toMatch(/^(raw|comparison|-|valid)$/);
+      expect(row[offset + statusOffset]).toMatch(/^(valid|invalid)$/);
+      if (row[offset + statusOffset] === "invalid")
+        expect(row[offset + reasonOffset]).not.toBe("-");
     }
   }
 }

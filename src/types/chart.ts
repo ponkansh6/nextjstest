@@ -138,6 +138,20 @@ export interface SeriesMeasurement {
   baseYear?: number | null;
   rawRange?: { startYear: number; endYear: number };
   adoptedRange?: { startYear: number; endYear: number };
+  /** Source and household definition of the monthly level used by consumption 12MA. */
+  monthlyProvenance?: {
+    sourceId: string;
+    householdScope: "二人以上の世帯" | "総世帯";
+    seriesType: "historical_estimate" | "official_monthly_observed" | "unavailable";
+    description: string;
+  };
+  /** Exact inclusive 12-month window and the source/status classes represented in it. */
+  ma12Provenance?: {
+    windowStart: string;
+    windowEnd: string;
+    sources: string[];
+    statuses: string[];
+  };
 }
 
 /** Shared metadata for a declared series that has no observation in a row. */
@@ -161,6 +175,7 @@ export function createMissingSeriesMeasurement(
     frequency: descriptor?.frequency ?? "quarterly",
     aggregation: isPlan39V2 ? (descriptor?.aggregation ?? "") : "",
     seriesType: "unavailable",
+    baseYear: descriptor?.baseYear,
   };
 }
 

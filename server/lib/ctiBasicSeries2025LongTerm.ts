@@ -59,6 +59,11 @@ export const CTI_BASIC_2025_SERIES = {
     statInfId: "000040499082",
     label: "季節調整値",
   },
+  distributionAdjustedNominal: {
+    kind: "distributionAdjustedNominal",
+    statInfId: "000040499028",
+    label: "分布調整値（原数値）",
+  },
 } as const;
 export type CtiBasicSeriesKind = keyof typeof CTI_BASIC_2025_SERIES;
 export type CtiBasicMonth = `${number}-${number}`;
@@ -80,12 +85,12 @@ export type OfficialCtiMetadata = {
   statInfId: string;
   seriesKind: CtiBasicSeriesKind;
   seriesLabel: string;
-  householdScope: "二人以上の世帯";
-  valueType: "原数値" | "季節調整値";
+  householdScope: "二人以上の世帯" | "総世帯";
+  valueType: "原数値" | "季節調整値" | "分布調整値（原数値）";
   sourceTitle: string;
   frequency: "monthly";
-  sourceStart: "2002-01";
-  requestedStart: "2005-01";
+  sourceStart: string;
+  requestedStart: string;
   availabilityStart: string;
   retrieval: { retrievedAt: string; updatedAt: string | null };
   officialUrl: string;
@@ -172,7 +177,10 @@ function csvRows(content: string) {
     throw new Error("CTI CSV has unexpected columns");
   return parsed.data;
 }
-export function normalizeCtiBasicSeriesCsv(content: string): CtiBasicRecord[] {
+export function normalizeCtiBasicSeriesCsv(
+  content: string,
+  expectedStartMonth = "2005-01",
+): CtiBasicRecord[] {
   const rows = csvRows(content);
   const records = rows.map((row, index) => {
     const variant = row.variant as CtiBasicSeriesKind;
@@ -218,7 +226,8 @@ export function normalizeCtiBasicSeriesCsv(content: string): CtiBasicRecord[] {
   let latest: CtiBasicMonth | null = null;
   for (const list of bySeries.values()) {
     list.sort((a, b) => monthNumber(a.month) - monthNumber(b.month));
-    if (list[0].month !== "2005-01") throw new Error("CTI series does not start at 2005-01");
+    if (list[0].month !== expectedStartMonth)
+      throw new Error(`CTI series does not start at ${expectedStartMonth}`);
     for (let i = 1; i < list.length; i += 1)
       if (monthNumber(list[i].month) !== monthNumber(list[i - 1].month) + 1)
         throw new Error(`CTI months are not continuous at ${list[i].month}`);
@@ -263,13 +272,20 @@ export function validateCtiBasicSeriesArtifact(input: {
       metadata.seriesLabel !== expected.label)
   )
     throw new Error("CTI metadata series identity mismatch");
+  const expectedHouseholdScope =
+    kind === "distributionAdjustedNominal" ? "総世帯" : "二人以上の世帯";
+  const expectedSourceStart = kind === "distributionAdjustedNominal" ? "2017-01" : "2002-01";
+  const expectedRequestedStart = kind === "distributionAdjustedNominal" ? "2017-01" : "2005-01";
   if (
-    metadata.householdScope !== "二人以上の世帯" ||
+    metadata.householdScope !== expectedHouseholdScope ||
     metadata.frequency !== "monthly" ||
     metadata.unit !== "指数"
   )
     throw new Error("CTI metadata scope or source identity mismatch");
-  if (metadata.requestedStart !== "2005-01" || metadata.sourceStart !== "2002-01")
+  if (
+    metadata.requestedStart !== expectedRequestedStart ||
+    metadata.sourceStart !== expectedSourceStart
+  )
     throw new Error("CTI metadata source/request boundary mismatch");
   if (
     !/^[a-f0-9]{64}$/.test(metadata.normalizedSha256) ||
@@ -281,7 +297,7 @@ export function validateCtiBasicSeriesArtifact(input: {
     (!/^[a-f0-9]{64}$/.test(metadata.rawSha256) || sha256Hex(rawCsv) !== metadata.rawSha256)
   )
     throw new Error("CTI raw SHA-256 mismatch");
-  const records = normalizeCtiBasicSeriesCsv(normalizedCsv);
+  const records = normalizeCtiBasicSeriesCsv(normalizedCsv, metadata.requestedStart);
   const latest = records
     .map((record) => record.month)
     .sort()
@@ -314,7 +330,15 @@ function validateManifestMetadata(
   const expectedTitle =
     item.seriesKind === "nominal"
       ? "10大費目別 世帯消費動向指数（原数値）"
-      : "10大費目別 世帯消費動向指数（季節調整値）";
+      : item.seriesKind === "seasonallyAdjusted"
+        ? "10大費目別 世帯消費動向指数（季節調整値）"
+        : "10大費目別 世帯消費動向指数 分布調整値（原数値）";
+  const expectedHouseholdScope =
+    item.seriesKind === "distributionAdjustedNominal" ? "総世帯" : "二人以上の世帯";
+  const expectedSourceStart =
+    item.seriesKind === "distributionAdjustedNominal" ? "2017-01" : "2002-01";
+  const expectedRequestedStart =
+    item.seriesKind === "distributionAdjustedNominal" ? "2017-01" : "2005-01";
   const latest = records
     .map((record) => record.month)
     .sort()
@@ -326,7 +350,7 @@ function validateManifestMetadata(
     meta.seriesLabel !== expected.label ||
     meta.valueType !== expected.label ||
     meta.baseYear !== 2025 ||
-    meta.householdScope !== "二人以上の世帯" ||
+    meta.householdScope !== expectedHouseholdScope ||
     meta.frequency !== "monthly" ||
     meta.sourceTitle !== expectedTitle ||
     meta.governmentStatisticsCode !== "00200567" ||
@@ -334,9 +358,9 @@ function validateManifestMetadata(
       `https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=${item.statInfId}` ||
     meta.parserVersion !== "xlsx-0.20.3" ||
     meta.transformVersion !== "cti-basic-2025-long-term-v2" ||
-    meta.availabilityStart !== "2002-01" ||
-    meta.sourceStart !== "2002-01" ||
-    meta.requestedStart !== "2005-01" ||
+    meta.availabilityStart !== expectedSourceStart ||
+    meta.sourceStart !== expectedSourceStart ||
+    meta.requestedStart !== expectedRequestedStart ||
     meta.latestPublishedMonth !== latest ||
     meta.rowCount !== records.length ||
     meta.seriesCount !== 22 ||
@@ -358,13 +382,14 @@ function validateManifestMetadata(
         series.seriesIndex !== index + 1 ||
         series.seriesName !==
           records.find((record) => record.seriesIndex === index + 1)?.seriesName ||
-        series.officialSeriesCode !== (item.seriesKind === "nominal" ? String(index + 1) : null),
+        series.officialSeriesCode !==
+          (item.seriesKind === "seasonallyAdjusted" ? null : String(index + 1)),
     )
   )
     throw new Error("CTI metadata series identity mismatch");
 }
 export function validateCtiBasicManifest(manifest: CtiBasicManifest, root: string): void {
-  if (manifest.schemaVersion !== 1 || !Array.isArray(manifest.files) || manifest.files.length !== 2)
+  if (manifest.schemaVersion !== 1 || !Array.isArray(manifest.files) || manifest.files.length !== 3)
     throw new Error("CTI manifest is incomplete");
   const ids = new Set<string>();
   for (const item of manifest.files) {
@@ -410,7 +435,7 @@ export function validateCtiBasicManifest(manifest: CtiBasicManifest, root: strin
     });
     validateManifestMetadata(meta, item, records, raw, normalized);
   }
-  if ([...ids].sort().join(",") !== "000040499070,000040499082")
+  if ([...ids].sort().join(",") !== "000040499028,000040499070,000040499082")
     throw new Error("CTI manifest has unexpected series IDs");
 }
 export function loadCtiBasicSeries2025(

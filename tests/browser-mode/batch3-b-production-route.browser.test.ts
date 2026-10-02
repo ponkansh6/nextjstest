@@ -30,22 +30,35 @@ it("p45-a-a11y-info-outside-click — production info dialog closes without chan
   );
 });
 
-it("p45-a-advanced-series-normal — production advanced route publishes registry and table series", async () => {
+it("p45-a-advanced-series-normal — production route publishes the Plan49 comparison series", async () => {
   const values = await inspect("advanced-series");
-  expect(values.normalDescriptors).toContain("CTIミクロ基本系列（名目・参考）");
-  expect(values.normalSeries).toContain("CTI消費支出（参考）");
-  expect(values.normalSeries).not.toContain("CTIミクロ基本系列（名目・参考・延長）");
+  const expectedKeys = ["CPI総合(12MA)", "総合(12MA)", "消費(総合)"];
+  expect(JSON.parse(values.normalSeries as string)).toEqual(expectedKeys);
+  expect(JSON.parse(values.advancedSeries as string)).toEqual(expectedKeys);
+  const descriptors = JSON.parse(values.normalDescriptors as string) as Array<{
+    key: string;
+    label?: string;
+    frequency?: string;
+    aggregation?: string;
+    baseYear?: number;
+  }>;
+  expect(descriptors.find(({ key }) => key === "消費(総合)")).toMatchObject({
+    key: "消費(総合)",
+    label: "消費(総合)",
+    frequency: "monthly",
+    aggregation: "strict_12_month_moving_average_rebased_to_2025_monthly_average",
+    baseYear: 2025,
+  });
+  expect(values.normalDescriptors).not.toMatch(/CTI消費支出|CTIミクロ基本系列/);
+  expect(values.advancedDescriptors).not.toMatch(/CTI消費支出|CTIミクロ基本系列/);
   expect(values.normalExtendedLegendVisible).toBe(false);
-  expect(values.advancedDescriptors).toContain("CTIミクロ基本系列（名目・参考）");
-  expect(values.advancedSeries).toContain("CTI消費支出（参考）");
-  expect(values.advancedSeries).toContain("CTIミクロ基本系列（名目・参考・延長）");
-  expect(values.advancedExtendedLegendVisible).toBe(true);
-  expect(values.normalMainLegendVisible).toBe(true);
+  expect(values.advancedExtendedLegendVisible).toBe(false);
+  expect(values.normalMainLegendVisible).toBe(false);
   expect(values.normalSalaryLegendVisible).toBe(true);
   expect(values.normalCpiLegendVisible).toBe(true);
-  expect(values.normalCtiLegendVisible).toBe(true);
-  expect(values.tableText).toContain("CTIミクロ基本系列(名目・延長)");
-  expect(values.tableText).toContain("CTI消費支出(参考)");
+  expect(values.normalCtiLegendVisible).toBe(false);
+  expect(values.tableText).toContain("消費(総合)");
+  expect(values.tableText).not.toMatch(/CTI消費支出|CTIミクロ基本系列/);
 });
 
 it("p45-a-cagr-sheet-01 — production section trigger opens the CAGR dialog", async () => {

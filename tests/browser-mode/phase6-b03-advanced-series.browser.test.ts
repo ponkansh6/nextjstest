@@ -5,13 +5,24 @@ vi.setConfig({ testTimeout: 45_000 });
 
 const INTERNAL = /GDP名目原値|GDP名目比較指数|GDP実質原値|GDP実質比較指数|四半期raw|原値|比較指数/;
 const LEGACY_CTI_RAW = /CTIミクロ基本系列（名目・原数値）/;
-const ADVANCED_KEYS = [
-  "CPI総合(12MA)",
-  "総合(12MA)",
-  "CTI消費支出（参考）",
-  "CTIミクロ基本系列（名目・参考）",
-  "CTIミクロ基本系列（名目・参考・延長）",
-];
+const ADVANCED_KEYS = ["CPI総合(12MA)", "総合(12MA)", "消費(総合)"];
+
+function assertConsumptionDescriptor(attribute: string | null) {
+  const descriptors = JSON.parse(attribute ?? "[]") as Array<{
+    key: string;
+    label?: string;
+    frequency?: string;
+    aggregation?: string;
+    baseYear?: number;
+  }>;
+  expect(descriptors.find(({ key }) => key === "消費(総合)")).toMatchObject({
+    key: "消費(総合)",
+    label: "消費(総合)",
+    frequency: "monthly",
+    aggregation: "strict_12_month_moving_average_rebased_to_2025_monthly_average",
+    baseYear: 2025,
+  });
+}
 
 function assertCompleteSurface(surface: {
   headers: string[];
@@ -66,8 +77,9 @@ function assertPublicContract(
   expect(surface.csv.rows.flat().join(" ")).not.toMatch(INTERNAL);
 }
 
-it("p45-a-advanced-series-adv-query preserves the original advanced-query assertions", async () => {
+it("p45-a-advanced-series-adv-query keeps removed CTI comparisons out of the advanced route", async () => {
   const result = (await commands.inspectPhase6B03("p45-a-advanced-series-adv-query")) as {
+    status: number | null;
     urlAfterReload: string;
     sectionCount: number;
     descriptorAttribute: string | null;
@@ -81,17 +93,16 @@ it("p45-a-advanced-series-adv-query preserves the original advanced-query assert
   };
   expect(new URL(result.urlAfterReload).search).toBe("?adv=1");
   expect(result.sectionCount).toBe(1);
-  expect(result.descriptorAttribute ?? "").toContain("CTIミクロ基本系列（名目・参考）");
-  expect(result.dataAttribute ?? "").toContain("CTI消費支出（参考）");
-  expect(result.dataAttribute ?? "").toContain("CTIミクロ基本系列（名目・参考・延長）");
-  expect(result.buttonVisible).toBe(true);
-  expect(result.tableText).toContain("CTIミクロ基本系列(名目・延長)");
-  expect(result.tableText).toContain("CTI消費支出(参考)");
+  expect(result.status).toBe(200);
+  assertConsumptionDescriptor(result.descriptorAttribute);
+  expect(JSON.parse(result.dataAttribute ?? "[]")).toEqual(ADVANCED_KEYS);
+  expect(result.buttonVisible).toBe(false);
+  expect(result.tableText).toContain("消費(総合)");
+  expect(result.tableText).not.toMatch(/CTI消費支出|CTIミクロ基本系列/);
   expect(result.tableCount).toBe(1);
   expect(result.reloadedChart.keys).toEqual(ADVANCED_KEYS);
-  expect(result.reloadedDescriptorAttribute ?? "").toContain(ADVANCED_KEYS[3]);
-  expect(result.reloadedDataAttribute ?? "").toContain(ADVANCED_KEYS[2]);
-  expect(result.reloadedDataAttribute ?? "").toContain(ADVANCED_KEYS[4]);
+  assertConsumptionDescriptor(result.reloadedDescriptorAttribute);
+  expect(JSON.parse(result.reloadedDataAttribute ?? "[]")).toEqual(ADVANCED_KEYS);
 });
 
 it("p45-a-parity-advanced-anchors preserves complete regular and advanced chart/table/CSV parity", async () => {
@@ -134,7 +145,7 @@ it("p45-a-parity-advanced-anchors preserves complete regular and advanced chart/
     };
     urlAfterAdvancedReload: string;
     reloadedAdvancedChart: { keys: string[] };
-    reloadedAdvanced: { headers: string[] };
+    reloadedAdvanced: { headers: string[]; values: string[][] };
   };
   for (const contract of [result.normalChart, result.advancedChart]) {
     expect(contract.sectionCount).toBe(1);
@@ -151,15 +162,15 @@ it("p45-a-parity-advanced-anchors preserves complete regular and advanced chart/
   assertCompleteSurface(result.advanced);
   expect(new URL(result.urlAfterAdvancedReload).search).toBe("?adv=1");
   expect(result.reloadedAdvancedChart.keys).toEqual(ADVANCED_KEYS);
-  expect(result.reloadedAdvanced.headers).toContain("CTIミクロ基本系列(名目・延長)");
-  expect(result.reloadedAdvanced.headers).toContain("CTI消費支出(参考)");
+  expect(result.reloadedAdvanced.headers).toEqual(result.normal.headers);
+  expect(result.reloadedAdvanced.values).toEqual(result.normal.values);
   expect(result.advanced.count).toBe(1);
   assertPublicContract(result.normalChart, result.normal);
   assertPublicContract(result.advancedChart, result.advanced);
   expect(result.advanced.headers.slice(0, result.normal.headers.length)).toEqual(
     result.normal.headers,
   );
-  expect(result.advanced.headers).toContain("CTIミクロ基本系列(名目・延長)");
+  expect(result.advanced.headers).toEqual(result.normal.headers);
   expect(result.advanced.values).toHaveLength(result.normal.values.length);
   expect(result.advanced.values.map((row) => row[0])).toEqual(
     result.normal.values.map((row) => row[0]),
@@ -171,13 +182,9 @@ it("p45-a-parity-advanced-anchors preserves complete regular and advanced chart/
   expect(
     result.advanced.csv.rows.map((row) => commonCsvIndexes.map((index) => row[index])),
   ).toEqual(result.normal.csv.rows);
-  const extensionIndex = result.advanced.csv.rows[0]!.indexOf("CTIミクロ基本系列(名目・延長)");
-  expect(extensionIndex).toBeGreaterThanOrEqual(0);
-  expect(result.advanced.csv.rows.slice(1).every((row) => row[extensionIndex] !== undefined)).toBe(
-    true,
-  );
   expect(result.advancedChart.keys).toEqual(ADVANCED_KEYS);
-  expect(result.advanced.headers.join(" ")).not.toMatch(LEGACY_CTI_RAW);
+  expect(result.advanced.headers.join(" ")).not.toMatch(/CTI消費支出|CTIミクロ基本系列/);
+  expect(result.advanced.csv.rows.flat().join(" ")).not.toMatch(LEGACY_CTI_RAW);
 });
 
 it("p45-a-parity-hidden-series preserves chart, table, and CSV data when a legend series is hidden", async () => {

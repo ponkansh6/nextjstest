@@ -4,9 +4,11 @@ import { cleanup, render, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import independentFixture from "../fixtures/chart-parity-independent.json";
 import CpiChart from "@/app/components/CpiChart";
+import { CustomTooltip } from "@/app/components/CustomTooltip";
 import { ChartExportButton } from "@/app/components/ChartExportButton";
 import {
   createComparisonSeriesRegistry,
+  projectTooltipMetadata,
   EARNINGS_SERIES_REGISTRY,
   getLegendLabel,
   CTI_ADJUSTED_V2_PUBLIC_CATEGORIES,
@@ -200,13 +202,14 @@ const CONTRACT = {
     matrix.residual,
     {
       ...matrix.comparison,
-      keys: [...matrix.comparison.keys, "CTI消費支出（参考）", "CTIミクロ基本系列（名目・参考）"],
-      headers: [...matrix.comparison.headers, "CTI消費支出(参考)", "CTIミクロ基本系列(名目・総合)"],
-      expected: matrix.comparison.expected.map((row) => [
-        ...row,
-        row[0] === "2018年1月" ? "48.00" : "",
-        "",
-      ]),
+      keys: [...matrix.comparison.keys, "消費(総合)"],
+      headers: [...matrix.comparison.headers, "消費(総合)"],
+      expected: matrix.comparison.expected.map((row) => {
+        const consumption = matrix.earnings.rows.find((entry) => entry.年月 === row[0])?.[
+          "消費(総合)"
+        ];
+        return [...row, typeof consumption === "number" ? consumption.toFixed(2) : ""];
+      }),
     },
   ],
 } as const;
@@ -330,6 +333,46 @@ describe("Phase 4-4 real chart/table/CSV parity", () => {
     window.localStorage.clear();
   });
 
+  it("preserves consumption monthly and MA12 provenance in the NewGraph tooltip payload", () => {
+    const row = matrix.earnings.rows[0];
+    const key = "消費(総合)";
+    const tooltipMetadata = projectTooltipMetadata(createComparisonSeriesRegistry()).filter(
+      (entry) => entry.key === key,
+    );
+    expect(tooltipMetadata[0]?.baseYear).toBe(2025);
+    const rendered = render(
+      createElement(CustomTooltip, {
+        active: true,
+        payload: [
+          {
+            name: key,
+            value: row[key] as number,
+            dataKey: key,
+            payload: row,
+          },
+        ],
+        seriesMeta: tooltipMetadata,
+        label: row.年月 as string,
+        isMobile: false,
+        isTouch: false,
+        tooltipBg: "#fff",
+        tooltipText: "#111",
+        allowedKeys: [key],
+      }),
+    );
+    const tooltipRow = rendered.container.querySelector('[data-tooltip-row="true"]');
+    expect(tooltipRow?.getAttribute("data-tooltip-monthly-source-id")).toBe("000040499070");
+    expect(tooltipRow?.getAttribute("data-tooltip-base-year")).toBe("2025");
+    expect(
+      tooltipRow?.querySelector('[data-tooltip-base-year-provenance="true"]')?.textContent,
+    ).toContain("基準年: 2025年");
+    expect(tooltipRow?.getAttribute("data-tooltip-ma12-window-start")).toBe("2017-01");
+    expect(tooltipRow?.getAttribute("data-tooltip-ma12-window-end")).toBe("2017-12");
+    expect(
+      tooltipRow?.querySelector('[data-tooltip-consumption-provenance="true"]')?.textContent,
+    ).toContain("2017-01〜2017-12");
+  });
+
   it("publishes the canonical ten Plan39 categories with model and fingerprint provenance", async () => {
     expect(canonicalNominalKeys).toEqual(
       nominalCategories.map((category) => CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY[category]),
@@ -429,6 +472,21 @@ describe("Phase 4-4 real chart/table/CSV parity", () => {
       } else {
         expect(nonCtiGdpMetadata).toHaveLength(0);
       }
+      if (i === 6) {
+        const consumptionMetadata = table.querySelector(
+          'td[data-series-key="消費(総合)"] [data-measurement-metadata]',
+        );
+        expect(consumptionMetadata?.getAttribute("data-measurement-monthly-source-id")).toBe(
+          "000040499070",
+        );
+        expect(consumptionMetadata?.getAttribute("data-measurement-base-year")).toBe("2025");
+        expect(consumptionMetadata?.getAttribute("data-measurement-ma12-window-start")).toBe(
+          "2017-01",
+        );
+        expect(consumptionMetadata?.getAttribute("data-measurement-ma12-window-end")).toBe(
+          "2017-12",
+        );
+      }
       (within(table).getByRole("button", { name: /CSVでダウンロード/ }) as HTMLElement).click();
     }
     expect(blobs).toHaveLength(7);
@@ -453,9 +511,13 @@ describe("Phase 4-4 real chart/table/CSV parity", () => {
         .flatMap(({ key }) => [
           `${key}__label`,
           `${key}__valueType`,
-          `${key}__seriesType`,
-          `${key}__official`,
-          ...(i === 3 ? [`${key}__annualAnchorType`, `${key}__quarterlyDerived`] : []),
+          // The normal earnings table has descriptors but no row-level
+          // measurement for those six displayed keys, so retain its legacy
+          // CSV contract without optional provenance columns.
+          ...(i === 4 ? [] : [`${key}__seriesType`, `${key}__official`]),
+          // 消費(総合) は annualAnchorType / quarterlyDerived を持つため、
+          // csvExport の includeDerivedAxisMetadata が全キーへこの2列を広げる。
+          ...(i === 3 || i === 6 ? [`${key}__annualAnchorType`, `${key}__quarterlyDerived`] : []),
           ...(i === 2
             ? [
                 `${key}__model`,
@@ -496,6 +558,19 @@ describe("Phase 4-4 real chart/table/CSV parity", () => {
                 `${key}__measurementNote`,
               ]
             : []),
+          ...(i === 6
+            ? [
+                `${key}__baseYear`,
+                `${key}__monthlySourceId`,
+                `${key}__monthlyHouseholdScope`,
+                `${key}__monthlySeriesType`,
+                `${key}__monthlyDescription`,
+                `${key}__ma12WindowStart`,
+                `${key}__ma12WindowEnd`,
+                `${key}__ma12Sources`,
+                `${key}__ma12Statuses`,
+              ]
+            : []),
           ...(i === 2
             ? [
                 `${key}__sourceWorkbook`,
@@ -511,6 +586,18 @@ describe("Phase 4-4 real chart/table/CSV parity", () => {
       expect(rows.slice(1).map((row) => row.slice(0, section.keys.length + 1))).toEqual(
         section.expected,
       );
+      if (i === 6) {
+        for (const [field, expected] of [
+          ["baseYear", "2025"],
+          ["monthlySourceId", "000040499070"],
+          ["ma12WindowStart", "2017-01"],
+          ["ma12WindowEnd", "2017-12"],
+        ]) {
+          const column = rows[0].indexOf(`消費(総合)__${field}`);
+          expect(column).toBeGreaterThanOrEqual(0);
+          expect(rows[1][column]).toBe(expected);
+        }
+      }
       expect(rows.every((r) => r.length === section.keys.length + 1 + metadataHeaders.length)).toBe(
         true,
       );

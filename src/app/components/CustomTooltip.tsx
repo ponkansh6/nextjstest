@@ -42,6 +42,8 @@ type TooltipDisplayPayload = NonNullable<CustomTooltipProps["payload"]>[number] 
   cpiAggregation?: string;
   nominalSource?: string;
   measurementNote?: string;
+  monthlyProvenance?: SeriesMeasurement["monthlyProvenance"];
+  ma12Provenance?: SeriesMeasurement["ma12Provenance"];
 };
 
 type TooltipMeasurement = Partial<
@@ -81,6 +83,8 @@ type TooltipMeasurement = Partial<
     | "cpiAggregation"
     | "nominalSource"
     | "measurementNote"
+    | "monthlyProvenance"
+    | "ma12Provenance"
   >
 >;
 
@@ -215,12 +219,14 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
                 model: measurement.model,
                 estimateVersion: measurement.estimateVersion,
                 inputFingerprint: measurement.inputFingerprint,
-                baseYear: measurement.baseYear,
+                baseYear: measurement.baseYear ?? meta.baseYear,
                 cpiSeries: measurement.cpiSeries,
                 cpiPeriod: measurement.cpiPeriod,
                 cpiAggregation: measurement.cpiAggregation,
                 nominalSource: measurement.nominalSource,
                 measurementNote: measurement.measurementNote,
+                monthlyProvenance: measurement.monthlyProvenance,
+                ma12Provenance: measurement.ma12Provenance,
               };
             }),
           ...(canIncludeUnmappedPayload
@@ -461,6 +467,13 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
                 entry.official === undefined ? undefined : String(entry.official)
               }
               data-tooltip-note={measurementNote ?? undefined}
+              data-tooltip-monthly-source-id={entry.monthlyProvenance?.sourceId}
+              data-tooltip-monthly-household-scope={entry.monthlyProvenance?.householdScope}
+              data-tooltip-monthly-series-type={entry.monthlyProvenance?.seriesType}
+              data-tooltip-ma12-window-start={entry.ma12Provenance?.windowStart}
+              data-tooltip-ma12-window-end={entry.ma12Provenance?.windowEnd}
+              data-tooltip-ma12-sources={entry.ma12Provenance?.sources.join(";")}
+              data-tooltip-ma12-statuses={entry.ma12Provenance?.statuses.join(";")}
               data-tooltip-color={entry.color}
               data-tooltip-order={entry.order ?? index}
               data-tooltip-group-separator={index === separatorIndex ? "true" : undefined}
@@ -514,6 +527,39 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
                     {entry.cpiAggregation}）
                     <br />
                     名目出典: {entry.nominalSource ?? "不明"}
+                  </small>
+                )}
+                {showMeasurementNotes && entry.baseYear !== undefined && !entry.cpiSeries && (
+                  <small
+                    data-tooltip-base-year-provenance="true"
+                    style={{ display: "block", opacity: 0.78, fontSize: "0.82em" }}
+                  >
+                    基準年: {entry.baseYear}年
+                  </small>
+                )}
+                {showMeasurementNotes && (entry.monthlyProvenance || entry.ma12Provenance) && (
+                  <small
+                    data-tooltip-consumption-provenance="true"
+                    style={{ display: "block", opacity: 0.78, fontSize: "0.82em" }}
+                  >
+                    {entry.monthlyProvenance && (
+                      <>
+                        月次出典: {entry.monthlyProvenance.sourceId}（
+                        {entry.monthlyProvenance.householdScope}、
+                        {entry.monthlyProvenance.seriesType}）
+                        <br />
+                        {entry.monthlyProvenance.description}
+                      </>
+                    )}
+                    {entry.ma12Provenance && (
+                      <>
+                        {entry.monthlyProvenance && <br />}
+                        12MA期間: {entry.ma12Provenance.windowStart}〜
+                        {entry.ma12Provenance.windowEnd}（出典:{" "}
+                        {entry.ma12Provenance.sources.join(", ")}、区分:{" "}
+                        {entry.ma12Provenance.statuses.join(", ")}）
+                      </>
+                    )}
                   </small>
                 )}
               </span>

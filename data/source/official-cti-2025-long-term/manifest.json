@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-17T16:11:50.864Z",
+  "generatedAt": "2026-10-01T23:34:23.365Z",
   "files": [
     {
       "statInfId": "000040499070",
@@ -10,7 +10,7 @@
       "metadataFile": "000040499070.metadata.json",
       "rawSha256": "5377332d3fe5460382a65091d2efa788c6bc62c113cd80d863a1085d47bd7a6e",
       "normalizedSha256": "6a4d72fbf1bbf5df1b6e1e43af33c7fb39ea95d46d9f12d93590e6fd73a7b0b2",
-      "metadataSha256": "e774b412979fc3614e57f782caea792c6f272f87097e98bda988919ca97d783f"
+      "metadataSha256": "38ae9e182d851330910aebe0d95bf89640519e8cc5e43f6c0268f9692721b7d4"
     },
     {
       "statInfId": "000040499082",
@@ -20,7 +20,17 @@
       "metadataFile": "000040499082.metadata.json",
       "rawSha256": "97b54de7905460abc2099a3ac804c17e8c7b61e82d7d1fa02a9e723f7056d53e",
       "normalizedSha256": "fcb422019bfcc78f4451e95afc344d9eaaa4d15605673f965c5230ee35a54408",
-      "metadataSha256": "7ae3a93eace4efbc313d7cbb010265119280654b7c2d4ab9ed171652d970a347"
+      "metadataSha256": "b770459466cfe8f3d334c769cbf96db1c743946f8c52fea5e77e221c07697980"
+    },
+    {
+      "statInfId": "000040499028",
+      "seriesKind": "distributionAdjustedNominal",
+      "rawFile": "000040499028.raw",
+      "normalizedFile": "000040499028.normalized.csv",
+      "metadataFile": "000040499028.metadata.json",
+      "rawSha256": "7224e5eb424c94d90402502f665a4953cfe16377f65f1040a939696ac948ef41",
+      "normalizedSha256": "1b1cae221c36c5ec865d9c057255351766e4b9f195f77ac3efc85129d0b3216b",
+      "metadataSha256": "6b4bf502940dc28df53af2cf69c21e9a5dbeace9f3746bc8e1ee87079c0e10ef"
     }
   ],
   "derivedFiles": [
@@ -30,7 +40,7 @@
     },
     {
       "file": "representative-snapshot.csv",
-      "sha256": "6acdf4070ab9e60344896cd93ad1e2a56cdc3437808c7017bfc0afce1c9bb6f8"
+      "sha256": "fcda123c6e97df0941094afb2170d75f948e93bfa35f9987bf4156f1499d94af"
     }
   ]
 }

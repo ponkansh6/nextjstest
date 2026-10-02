@@ -13,8 +13,7 @@ import {
   targetKeys,
   stackedKeys,
   CTI_BASIC_RAW_KEY,
-  CTI_BASIC_COMPARISON_KEY,
-  LEGACY_CTI_COMPARISON_KEY,
+  CONSUMPTION_TOTAL_12MA_KEY,
 } from "@/lib/chartConstants";
 
 export const revalidate = false;
@@ -26,6 +25,27 @@ export default async function Page() {
     getCpiDataStatus(),
     getCtiBasicConsumptionStatus(),
   ]);
+  const consumptionMeasurement = totalEarningData
+    .map(
+      (row) =>
+        (
+          row as typeof row & {
+            measurements?: Record<
+              string,
+              {
+                source?: string;
+                seriesStatus?: "valid" | "invalid";
+                seriesReason?: string | null;
+              }
+            >;
+          }
+        ).measurements?.[CONSUMPTION_TOTAL_12MA_KEY],
+    )
+    .find((measurement) => measurement !== undefined);
+  const consumptionSeriesState = {
+    status: consumptionMeasurement?.seriesStatus ?? "invalid",
+    reason: consumptionMeasurement?.seriesReason ?? null,
+  } as const;
   const cpiInfoState =
     cpiDataStatus.baseYear === 2025
       ? {
@@ -73,12 +93,13 @@ export default async function Page() {
             reason: null,
           },
           comparison: {
-            key: CTI_BASIC_COMPARISON_KEY,
+            key: CONSUMPTION_TOTAL_12MA_KEY,
             valueType: "comparison" as const,
             unit: "指数",
-            source: "e-Stat 公式CTI長期artifact 000040499070",
-            status: "valid" as const,
-            reason: null,
+            source:
+              consumptionMeasurement?.source ?? "e-Stat CTI長期系列と公式月次消費支出から算出",
+            status: consumptionSeriesState.status,
+            reason: consumptionSeriesState.reason,
           },
         },
       }
@@ -104,16 +125,16 @@ export default async function Page() {
             reason: ctiBasicStatus.reason,
           },
           comparison: {
-            key: CTI_BASIC_COMPARISON_KEY,
+            key: CONSUMPTION_TOTAL_12MA_KEY,
             valueType: "comparison" as const,
             unit: "指数",
-            source: "e-Stat 公式CTI長期artifact 000040499070",
-            status: "invalid" as const,
-            reason: ctiBasicStatus.reason,
+            source:
+              consumptionMeasurement?.source ?? "e-Stat CTI長期系列と公式月次消費支出から算出",
+            status: consumptionSeriesState.status,
+            reason: consumptionSeriesState.reason,
           },
         },
       };
-
   const {
     nominal: projectedQuarterlyNominal,
     real: projectedQuarterlyReal,
@@ -137,9 +158,7 @@ export default async function Page() {
     "CPI総合(参考)",
     "CPI総合(12MA)",
     CTI_BASIC_RAW_KEY,
-    CTI_BASIC_COMPARISON_KEY,
-    LEGACY_CTI_COMPARISON_KEY,
-    "CTIミクロ基本系列（名目・参考・延長）",
+    CONSUMPTION_TOTAL_12MA_KEY,
   ];
 
   const projectedCpiData = toCpiView(cleanData, cpiKeys);
@@ -162,6 +181,7 @@ export default async function Page() {
             maxCpiDate={maxCpiDate}
             cpiInfoState={cpiInfoState}
             ctiInfoState={ctiInfoState}
+            consumptionSeriesState={consumptionSeriesState}
           />
         </Suspense>
       ) : (

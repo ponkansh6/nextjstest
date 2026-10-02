@@ -423,6 +423,7 @@ export function CpiChartSections({
             dataLength: mergedData.length,
             seriesMeta: comparisonProjectedTooltipMeta,
             allowedKeys: comparisonTooltipAllowedKeys,
+            showMeasurementNotes: true,
           })}
         />
       </LazyMount>

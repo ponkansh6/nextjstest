@@ -35,9 +35,14 @@ export function DataTablesSection({ tables }: DataTablesSectionProps) {
       measurements && typeof measurements === "object"
         ? (measurements as Record<string, unknown>)[key]
         : undefined;
-    if (rowMeasurement && typeof rowMeasurement === "object")
-      return rowMeasurement as SeriesMeasurement;
     const descriptor = metadata?.find((entry) => entry.key === key);
+    if (rowMeasurement && typeof rowMeasurement === "object") {
+      const measurement = rowMeasurement as SeriesMeasurement;
+      return {
+        ...measurement,
+        baseYear: measurement.baseYear ?? descriptor?.baseYear,
+      };
+    }
     return descriptor &&
       (key === SUPPORT_SERIES_KEY_NOMINAL ||
         descriptor.estimateVersion === "plan39-v2" ||
@@ -143,6 +148,32 @@ export function DataTablesSection({ tables }: DataTablesSectionProps) {
                                   ? undefined
                                   : String(measurement.official)
                               }
+                              data-measurement-base-year={
+                                measurement.baseYear === undefined
+                                  ? undefined
+                                  : String(measurement.baseYear)
+                              }
+                              data-measurement-monthly-source-id={
+                                measurement.monthlyProvenance?.sourceId
+                              }
+                              data-measurement-monthly-household-scope={
+                                measurement.monthlyProvenance?.householdScope
+                              }
+                              data-measurement-monthly-series-type={
+                                measurement.monthlyProvenance?.seriesType
+                              }
+                              data-measurement-ma12-window-start={
+                                measurement.ma12Provenance?.windowStart
+                              }
+                              data-measurement-ma12-window-end={
+                                measurement.ma12Provenance?.windowEnd
+                              }
+                              data-measurement-ma12-sources={measurement.ma12Provenance?.sources.join(
+                                ";",
+                              )}
+                              data-measurement-ma12-statuses={measurement.ma12Provenance?.statuses.join(
+                                ";",
+                              )}
                             >
                               <span data-measurement-value-type={measurement.valueType} />
                               {getMeasurementNote(measurement) && (
@@ -154,6 +185,33 @@ export function DataTablesSection({ tables }: DataTablesSectionProps) {
                               単位: {measurement.unit || "-"}
                               <br />
                               出典: {measurement.source || "-"}
+                              {measurement.baseYear !== undefined && !measurement.cpiSeries && (
+                                <>
+                                  <br />
+                                  基準年: {measurement.baseYear}年
+                                </>
+                              )}
+                              {measurement.monthlyProvenance && (
+                                <>
+                                  <br />
+                                  月次出典: {measurement.monthlyProvenance.sourceId}（
+                                  {measurement.monthlyProvenance.householdScope}、
+                                  {measurement.monthlyProvenance.seriesType}）
+                                  <br />
+                                  {measurement.monthlyProvenance.description}
+                                </>
+                              )}
+                              {measurement.ma12Provenance && (
+                                <>
+                                  <br />
+                                  12MA期間: {measurement.ma12Provenance.windowStart}〜
+                                  {measurement.ma12Provenance.windowEnd}
+                                  <br />
+                                  期間内出典: {measurement.ma12Provenance.sources.join(", ")}
+                                  <br />
+                                  期間内区分: {measurement.ma12Provenance.statuses.join(", ")}
+                                </>
+                              )}
                               {measurement.cpiSeries && (
                                 <>
                                   <br />

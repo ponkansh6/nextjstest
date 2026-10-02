@@ -13,37 +13,16 @@ import { loadPopulationDataInternal } from "./population";
 import { loadCpiDataInternal, loadCtiDataInternal, type CtiLoadOptions } from "./cpi";
 import { compareYearMonth, parseYearMonth, toCanonicalYearMonth } from "@/lib/yearMonth";
 import { trailingMovingAverage } from "../math/movingAverage";
+import { computeConsumptionTotal12Ma } from "../consumptionTotal12Ma";
 import { loadCtiBasicConsumptionOutput } from "../ctiBasicSeries2025LongTerm";
 import {
-  ctiBasicDescriptors,
+  CONSUMPTION_TOTAL_12MA_KEY,
+  CTI_BASIC_RAW_KEY,
   LEGACY_CTI_COMPARISON_KEY,
   LEGACY_CTI_COMPARISON_SOURCE,
+  ctiBasicDescriptors,
 } from "@/lib/chartConstants";
 import type { SeriesMeasurement } from "@/types/chart";
-
-function computeTrailingMA12(entries: [string, number][]): Map<string, number> {
-  const sorted = entries
-    .filter(([, value]) => Number.isFinite(value))
-    .sort(([a], [b]) => compareYearMonth(a, b));
-  const values = trailingMovingAverage(
-    sorted.map(([, value]) => value),
-    12,
-  );
-  return new Map(sorted.map(([month], index) => [month, values[index]]));
-}
-
-/** Comparison rebasing is only valid for a complete calendar year of raw values. */
-function comparisonAverageForYear(
-  map: Map<string, number>,
-  yearPrefix: string,
-): number | undefined {
-  const values = [...map.entries()]
-    .filter(([ym]) => ym.startsWith(yearPrefix))
-    .map(([, value]) => value);
-  return values.length === 12 && values.every((value) => Number.isFinite(value) && value !== 0)
-    ? values.reduce((sum, value) => sum + value, 0) / 12
-    : undefined;
-}
 
 function hasCompleteWindow(
   endIndex: number,
@@ -88,6 +67,29 @@ function computeMovingAverageToField(
   });
 }
 
+function computeTrailingMA12(entries: [string, number][]): Map<string, number> {
+  const sorted = entries
+    .filter(([, value]) => Number.isFinite(value))
+    .sort(([a], [b]) => compareYearMonth(a, b));
+  const values = trailingMovingAverage(
+    sorted.map(([, value]) => value),
+    12,
+  );
+  return new Map(sorted.map(([month], index) => [month, values[index]]));
+}
+
+function comparisonAverageForYear(
+  map: Map<string, number>,
+  yearPrefix: string,
+): number | undefined {
+  const values = [...map.entries()]
+    .filter(([ym]) => ym.startsWith(yearPrefix))
+    .map(([, value]) => value);
+  return values.length === 12 && values.every((value) => Number.isFinite(value) && value !== 0)
+    ? values.reduce((sum, value) => sum + value, 0) / 12
+    : undefined;
+}
+
 function buildConsumptionMaps(ctiData: CpiData[]) {
   const ctiBasic = loadCtiBasicConsumptionOutput();
   const legacyCtiRawMap = new Map<string, number>();
@@ -98,8 +100,6 @@ function buildConsumptionMaps(ctiData: CpiData[]) {
       legacyCtiRawMap.set(month, value);
     }
   }
-  // This is deliberately separate from the Plan37 artifact. It restores the
-  // historical adjustment series' old loader/data path.
   const legacyCtiRawAverage2025 = comparisonAverageForYear(legacyCtiRawMap, "2025-");
   const legacyCtiFactor =
     legacyCtiRawAverage2025 !== undefined ? 100 / legacyCtiRawAverage2025 : undefined;
@@ -213,6 +213,8 @@ export async function loadTotalEarningDataInternal(
     ctiBasicReason,
     legacyCtiMap,
   } = buildConsumptionMaps(ctiData);
+  const consumptionResult = computeConsumptionTotal12Ma();
+  const consumptionPointMap = new Map(consumptionResult.points.map((p) => [p.yearMonth, p]));
 
   const comparisonYearKeys = [...keys]
     .filter((ym) => ym.startsWith(`${salaryComparisonYear}年`))
@@ -442,17 +444,53 @@ export async function loadTotalEarningDataInternal(
       Number.isFinite(ctiMa)
         ? ctiMa
         : null;
+    const consumptionPoint = ctiMonth ? consumptionPointMap.get(ctiMonth) : undefined;
+    const consumptionValue =
+      consumptionResult.status === "available" &&
+      consumptionPoint?.status === "available" &&
+      typeof consumptionPoint.ma12 === "number" &&
+      Number.isFinite(consumptionPoint.ma12)
+        ? consumptionPoint.ma12
+        : null;
+    const consumptionStatus =
+      consumptionResult.status === "available" && consumptionPoint?.status === "available"
+        ? "valid"
+        : "invalid";
+    const consumptionReason =
+      consumptionResult.status === "invalid"
+        ? consumptionResult.reason
+        : (consumptionPoint?.reason ??
+          (consumptionResult.status === "available" ? null : "unavailable"));
+
+    const consumptionMeasurement: SeriesMeasurement & {
+      seriesStatus: "valid" | "invalid";
+      seriesReason: string | null;
+    } = {
+      key: CONSUMPTION_TOTAL_12MA_KEY,
+      label: consumptionResult.metadata.displayName,
+      unit: consumptionResult.metadata.unit,
+      source: consumptionResult.metadata.sources.join(" / "),
+      valueType: "comparison",
+      value: consumptionValue,
+      status: consumptionStatus,
+      reason: consumptionReason,
+      frequency: consumptionResult.metadata.frequency,
+      aggregation: consumptionResult.metadata.calculation,
+      baseYear: consumptionResult.metadata.baseYear,
+      monthlyProvenance: consumptionPoint?.provenance,
+      ma12Provenance: consumptionPoint?.ma12Provenance,
+      seriesStatus: consumptionResult.status === "available" ? "valid" : "invalid",
+      seriesReason: consumptionResult.reason,
+    };
     const measurements: Record<string, SeriesMeasurement> = Object.fromEntries(
       ctiBasicDescriptors(ctiBasicStatus, ctiBasicReason).map((descriptor) => {
         const value =
-          descriptor.valueType === "raw"
+          descriptor.key === CTI_BASIC_RAW_KEY
             ? (ctiBasicRaw ?? null)
             : (item[descriptor.key] as number | null);
         return [descriptor.key, { ...descriptor, value }];
       }),
     );
-    (item as unknown as { measurements: Record<string, SeriesMeasurement> }).measurements =
-      measurements;
     measurements[LEGACY_CTI_COMPARISON_KEY] = {
       key: LEGACY_CTI_COMPARISON_KEY,
       label: "CTI消費支出(参考)",
@@ -465,9 +503,11 @@ export async function loadTotalEarningDataInternal(
       frequency: "monthly",
       aggregation: "adjustment_12_month_moving_average_rebased_to_2025_raw_average",
     };
-    // Keep the scalar row field separate from its metadata object.  This is
-    // the final assignment because both contracts intentionally share a key.
-    item[LEGACY_CTI_COMPARISON_KEY] = measurements[LEGACY_CTI_COMPARISON_KEY].value;
+    measurements[CONSUMPTION_TOTAL_12MA_KEY] = consumptionMeasurement;
+    (item as unknown as { measurements: Record<string, SeriesMeasurement> }).measurements =
+      measurements;
+    item[CONSUMPTION_TOTAL_12MA_KEY] = consumptionValue;
+    item[LEGACY_CTI_COMPARISON_KEY] = legacyCtiValue;
   });
 
   // Normalize each salary output independently to the same fixed 2025

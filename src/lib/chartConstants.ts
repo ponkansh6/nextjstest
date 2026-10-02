@@ -259,6 +259,7 @@ export const CTI_ADJUSTED_V2_PUBLIC_REGISTRY = CTI_ADJUSTED_V2_PUBLIC_CATEGORIES
     order,
   }),
 );
+export const CONSUMPTION_TOTAL_12MA_KEY = "消費(総合)";
 export const LEGACY_CTI_COMPARISON_KEY = "CTI消費支出（参考）";
 export const CTI_BASIC_SOURCE = "e-Stat 公式CTI長期artifact 000040499070";
 export const CTI_BASIC_UNIT = "指数";
@@ -421,6 +422,8 @@ export interface SeriesMetadata {
   model?: "v2-bottom-up";
   estimateVersion?: "plan39-v2";
   inputFingerprint?: string;
+  /** Normalization anchor year, surfaced in tooltips and exports. */
+  baseYear?: number | null;
   descriptor?: {
     key: string;
     label: string;
@@ -436,6 +439,7 @@ export interface SeriesMetadata {
     official?: boolean;
     annualAnchorType?: "estimated" | "official";
     quarterlyDerived?: boolean;
+    baseYear?: number | null;
   };
 }
 
@@ -460,6 +464,7 @@ export interface TooltipSeriesProjection {
   model?: "v2-bottom-up";
   estimateVersion?: "plan39-v2";
   inputFingerprint?: string;
+  baseYear?: number | null;
 }
 
 /** Project one display contract into the metadata consumed by CustomTooltip. */
@@ -500,6 +505,7 @@ export const projectTooltipMetadata = (
           model,
           estimateVersion,
           inputFingerprint,
+          baseYear,
           descriptor,
         },
         index,
@@ -532,6 +538,9 @@ export const projectTooltipMetadata = (
         ...(model === undefined ? {} : { model }),
         ...(estimateVersion === undefined ? {} : { estimateVersion }),
         ...(inputFingerprint === undefined ? {} : { inputFingerprint }),
+        ...((baseYear ?? descriptor?.baseYear) === undefined
+          ? {}
+          : { baseYear: baseYear ?? descriptor?.baseYear }),
       }),
     );
 };
@@ -626,12 +635,11 @@ export const EARNINGS_TABLE_CONFIGS = EARNINGS_SERIES_REGISTRY;
 export type LineConfig = SeriesMetadata & { displayName: string };
 
 export function createComparisonSeriesRegistry(
-  ctiState: { status: "valid" | "invalid"; reason: string | null } = {
+  consumptionState: { status: "valid" | "invalid"; reason: string | null } = {
     status: "invalid",
     reason: null,
   },
 ): SeriesMetadata[] {
-  const descriptors = ctiBasicDescriptors(ctiState.status, ctiState.reason);
   return [
     {
       key: "CPI総合(12MA)",
@@ -652,50 +660,26 @@ export function createComparisonSeriesRegistry(
       order: 1,
     },
     {
-      key: LEGACY_CTI_COMPARISON_KEY,
+      key: CONSUMPTION_TOTAL_12MA_KEY,
       color: "#0f766e",
-      label: "CTI消費支出(参考)",
-      displayName: "CTI消費支出(参考)",
-      tooltipLabel: "CTI消費支出(参考)",
-      legendLabel: "CTI消費支出(参考)",
+      label: CONSUMPTION_TOTAL_12MA_KEY,
+      displayName: CONSUMPTION_TOTAL_12MA_KEY,
+      tooltipLabel: CONSUMPTION_TOTAL_12MA_KEY,
+      legendLabel: CONSUMPTION_TOTAL_12MA_KEY,
       order: 2,
       unit: CTI_BASIC_UNIT,
-      source: LEGACY_CTI_COMPARISON_SOURCE,
+      source: "e-Stat CTI長期系列と公式月次消費支出から算出",
       valueType: "comparison",
       frequency: "monthly",
-      aggregation: "adjustment_12_month_moving_average_rebased_to_2025_raw_average",
-    },
-    {
-      key: CTI_BASIC_COMPARISON_KEY,
-      color: "#2563eb",
-      label: "CTIミクロ基本系列(名目・総合)",
-      displayName: "CTIミクロ基本系列(名目・総合)",
-      tooltipLabel: "CTIミクロ基本系列(名目・総合)",
-      legendLabel: "CTIミクロ基本系列(名目・総合)",
-      order: 3,
-      unit: CTI_BASIC_UNIT,
-      source: CTI_BASIC_SOURCE,
-      valueType: "comparison",
-      status: descriptors[1].status,
-      reason: descriptors[1].reason,
-      descriptor: descriptors[1],
-    },
-    {
-      key: CTI_BASIC_EXTENSION_KEY,
-      color: "#7dd3fc",
-      label: "CTIミクロ基本系列(名目・延長)",
-      displayName: "CTIミクロ基本系列(名目・延長)",
-      advanced: true,
-      tooltipLabel: "CTIミクロ基本系列(名目・延長)",
-      legendLabel: "CTIミクロ基本系列(名目・延長)",
-      order: 4,
-      strokeDasharray: "6 3",
-      unit: CTI_BASIC_UNIT,
-      source: CTI_BASIC_SOURCE,
-      valueType: "comparison",
-      status: descriptors[2].status,
-      reason: descriptors[2].reason,
-      descriptor: descriptors[2],
+      aggregation: "strict_12_month_moving_average_rebased_to_2025_monthly_average",
+      baseYear: 2025,
+      status: consumptionState.status,
+      reason: consumptionState.reason,
+      value: null,
+      seriesType: "estimated_adjusted",
+      official: false,
+      annualAnchorType: "estimated",
+      quarterlyDerived: false,
     },
   ] satisfies SeriesMetadata[];
 }

@@ -18,6 +18,9 @@ export const SERIES = [
     valueStart: 9,
     valueEnd: 30,
     codeRows: [0, 1],
+    householdScope: "二人以上の世帯",
+    sourceStart: "2002-01",
+    requestedStart: "2005-01",
   },
   {
     kind: "seasonallyAdjusted",
@@ -32,26 +35,40 @@ export const SERIES = [
     valueStart: 2,
     valueEnd: 23,
     codeRows: [],
+    householdScope: "二人以上の世帯",
+    sourceStart: "2002-01",
+    requestedStart: "2005-01",
+  },
+  {
+    kind: "distributionAdjustedNominal",
+    statInfId: "000040499028",
+    label: "分布調整値（原数値）",
+    sheet: "総・月(原)",
+    title: "10大費目別 世帯消費動向指数 分布調整値（原数値）",
+    headerRow: 9,
+    dataRow: 10,
+    timeCodeColumn: 7,
+    monthColumn: 8,
+    valueStart: 9,
+    valueEnd: 30,
+    codeRows: [0, 1],
+    householdScope: "総世帯",
+    sourceStart: "2017-01",
+    requestedStart: "2017-01",
   },
 ];
 export const endpoint = "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0";
 const digest = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const monthNumber = (value) => Number(value.slice(0, 4)) * 12 + Number(value.slice(5));
-const sourceStart = "2002-01";
-const requestedStart = "2005-01";
 export const representativeMonths = ["2005-01", "2020-01", "2026-07"];
 const missing = new Set(["", "-", "…", "na", "n/a"]);
 const zip = Buffer.from([0x50, 0x4b, 0x03, 0x04]);
 const titleBase = "10大費目別世帯消費動向指数";
-const valueTypes = SERIES.map(({ label }) => label);
 const normalizeTitle = (value) => String(value ?? "").replace(/\s/g, "");
 export function isExpectedTitle(value, series) {
   const title = normalizeTitle(value);
-  return (
-    title.includes(titleBase) &&
-    title.includes(series.label) &&
-    valueTypes.filter((label) => label !== series.label).every((label) => !title.includes(label))
-  );
+  const expectedLabel = normalizeTitle(series.label);
+  return title.includes(titleBase) && title.includes(expectedLabel);
 }
 const parseMonth = (value) => {
   const match = String(value)
@@ -92,12 +109,7 @@ export function parseOfficialFile(bytes, series) {
       .filter((cell) => normalizeTitle(cell).includes(titleBase))
       .map((cell) => String(cell).trim()),
   );
-  if (
-    !titleCells.some((title) => isExpectedTitle(title, series)) ||
-    titleCells.some((title) =>
-      valueTypes.some((label) => label !== series.label && normalizeTitle(title).includes(label)),
-    )
-  )
+  if (!titleCells.some((title) => isExpectedTitle(title, series)))
     throw new Error("CTI source title mismatch");
   const sourceTitle = titleCells.find((title) => isExpectedTitle(title, series));
   const header = rows[series.headerRow - 1] ?? [];
@@ -142,20 +154,20 @@ export function parseOfficialFile(bytes, series) {
         ...valueOf(row[series.valueStart + offset], month),
       });
   }
-  if (!records.length || records.some((record) => record.month < sourceStart))
-    throw new Error(`CTI source does not start at ${sourceStart}`);
+  if (!records.length || records.some((record) => record.month < series.sourceStart))
+    throw new Error(`CTI source does not start at ${series.sourceStart}`);
   for (const index of Array.from({ length: 22 }, (_, i) => i + 1)) {
     const list = records
       .filter((record) => record.seriesIndex === index)
       .sort((a, b) => monthNumber(a.month) - monthNumber(b.month));
-    if (list[0]?.month !== sourceStart)
-      throw new Error(`CTI source does not start at ${sourceStart}`);
+    if (list[0]?.month !== series.sourceStart)
+      throw new Error(`CTI source does not start at ${series.sourceStart}`);
     for (let i = 1; i < list.length; i += 1)
       if (monthNumber(list[i].month) !== monthNumber(list[i - 1].month) + 1)
         throw new Error(`CTI source months are not continuous at ${list[i].month}`);
-    const adopted = list.filter((record) => record.month >= requestedStart);
-    if (adopted[0]?.month !== requestedStart)
-      throw new Error(`CTI requested series does not start at ${requestedStart}`);
+    const adopted = list.filter((record) => record.month >= series.requestedStart);
+    if (adopted[0]?.month !== series.requestedStart)
+      throw new Error(`CTI requested series does not start at ${series.requestedStart}`);
     for (let i = 1; i < adopted.length; i += 1)
       if (monthNumber(adopted[i].month) !== monthNumber(adopted[i - 1].month) + 1)
         throw new Error(`CTI requested months are not continuous at ${adopted[i].month}`);
@@ -178,8 +190,8 @@ export function parseOfficialFile(bytes, series) {
   };
 }
 export const parseOfficialXls = parseOfficialFile;
-export function normalizedCsv(records) {
-  const adopted = records.filter((record) => record.month >= "2005-01");
+export function normalizedCsv(records, series) {
+  const adopted = records.filter((record) => record.month >= series.requestedStart);
   return (
     [
       "variant,series_index,official_series_code,series_name,month,raw_value,is_missing",
@@ -229,8 +241,6 @@ export function seriesMapCsv(records) {
 }
 export function representativeSnapshotCsv(records) {
   const selected = records.filter((record) => representativeMonths.includes(record.month));
-  if (selected.length !== 2 * 22 * representativeMonths.length)
-    throw new Error("CTI representative snapshot is incomplete");
   return (
     [
       "variant,series_index,series_name,month,raw_value,is_missing",
@@ -281,7 +291,7 @@ function metadataFor(series, raw, normalized, retrievedAt, parsed, response) {
   const rawFile = `${series.statInfId}.raw`;
   const normalizedFile = `${series.statInfId}.normalized.csv`;
   const metadataFile = `${series.statInfId}.metadata.json`;
-  const adopted = parsed.records.filter((record) => record.month >= "2005-01");
+  const adopted = parsed.records.filter((record) => record.month >= series.requestedStart);
   return {
     status: "ready",
     statisticName: "2025年基準 消費動向指数",
@@ -291,13 +301,13 @@ function metadataFor(series, raw, normalized, retrievedAt, parsed, response) {
     statInfId: series.statInfId,
     seriesKind: series.kind,
     seriesLabel: series.label,
-    householdScope: "二人以上の世帯",
+    householdScope: series.householdScope ?? "二人以上の世帯",
     valueType: series.label,
     sourceTitle: parsed.title,
     frequency: "monthly",
-    sourceStart: "2002-01",
-    requestedStart: "2005-01",
-    availabilityStart: "2002-01",
+    sourceStart: series.sourceStart ?? "2002-01",
+    requestedStart: series.requestedStart ?? "2005-01",
+    availabilityStart: series.sourceStart ?? "2002-01",
     retrieval: { retrievedAt, updatedAt: response.lastModified },
     officialUrl: `${endpoint}&statInfId=${series.statInfId}`,
     encoding: "binary/official",
@@ -366,7 +376,7 @@ export async function buildSnapshot(root, appId, options = {}) {
       );
       const parsed = parseOfficialFile(response.bytes, series);
       allRecords.push(...parsed.records);
-      const normalized = normalizedCsv(parsed.records);
+      const normalized = normalizedCsv(parsed.records, series);
       const meta = metadataFor(series, response.bytes, normalized, retrievedAt, parsed, response);
       await writeFile(path.join(staging, meta.rawFile), response.bytes);
       await writeFile(path.join(staging, meta.normalizedFile), normalized);

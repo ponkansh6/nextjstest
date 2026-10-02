@@ -56,6 +56,7 @@ interface CpiChartProps {
   maxCpiDate: { year: number; month: number };
   cpiInfoState?: CpiChartInfoState;
   ctiInfoState?: CtiChartInfoState;
+  consumptionSeriesState?: { status: "valid" | "invalid"; reason: string | null };
 }
 
 export default function CpiChart({
@@ -65,6 +66,7 @@ export default function CpiChart({
   totalEarningData,
   cpiInfoState,
   ctiInfoState,
+  consumptionSeriesState = { status: "invalid", reason: null },
 }: CpiChartProps) {
   const { isMobile, chartColors } = useChartTheme();
   const cpiMajorInfo = getChartInfoContent("cpi-major", cpiInfoState);
@@ -284,10 +286,10 @@ export default function CpiChart({
   const comparisonSeriesRegistry = useMemo(
     () =>
       createComparisonSeriesRegistry({
-        status: ctiInfoState?.status ?? "invalid",
-        reason: ctiInfoState?.reason ?? ctiInfoState?.unavailableReason ?? null,
+        status: consumptionSeriesState.status,
+        reason: consumptionSeriesState.reason,
       }),
-    [ctiInfoState],
+    [consumptionSeriesState],
   );
   const ctiMetadata: readonly SeriesMetadata[] = (() => {
     const state = ctiInfoState?.series?.raw;

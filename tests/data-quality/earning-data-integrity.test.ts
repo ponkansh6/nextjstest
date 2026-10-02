@@ -15,6 +15,7 @@ import { projectQuarterlyPublicView } from "../../src/lib/quarterlyPublicProject
 import {
   CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY,
   CTI_ADJUSTED_V2_PUBLIC_REGISTRY,
+  CONSUMPTION_TOTAL_12MA_KEY,
   SUPPORT_SERIES_KEY_NOMINAL,
 } from "../../src/lib/chartConstants";
 import { toCanonicalYearMonth } from "../../src/lib/yearMonth";
@@ -642,6 +643,24 @@ describe("Earnings Data Integrity", () => {
     expect(readLegacyCtiAggregation(rows.find((row) => row.年月 === "2025年1月"))).toBe(
       "adjustment_12_month_moving_average_rebased_to_2025_raw_average",
     );
+    const row2018Measurements = (row2018 as CpiDataWithMeasurements | undefined)?.measurements;
+    expect(row2018Measurements?.["CTIミクロ基本系列（名目・原数値）"]).toMatchObject({
+      key: "CTIミクロ基本系列（名目・原数値）",
+      value: row2018?.["CTIミクロ基本系列（名目・原数値）"],
+      valueType: "raw",
+      status: "valid",
+    });
+    expect(row2018Measurements?.["CTIミクロ基本系列（名目・参考・延長）"]).toMatchObject({
+      key: "CTIミクロ基本系列（名目・参考・延長）",
+      value: row2018?.["CTIミクロ基本系列（名目・参考・延長）"],
+      valueType: "comparison",
+      status: "valid",
+    });
+    expect(row2018Measurements?.["CTI消費支出（参考）"]).toMatchObject({
+      value: row2018?.["CTI消費支出（参考）"],
+      aggregation: "adjustment_12_month_moving_average_rebased_to_2025_raw_average",
+      status: "valid",
+    });
     const publicRows = toEarningsView(rows, ["年月", "CTIミクロ基本系列（名目・参考）"]);
     expect(publicRows[0]).not.toHaveProperty("CTI消費支出（参考）");
     expect(publicRows[0]).not.toHaveProperty("measurements.CTI消費支出（参考）");
@@ -657,5 +676,44 @@ describe("Earnings Data Integrity", () => {
       ),
     ).toBe(true);
     expect(rows.some((row) => Object.hasOwn(row, "CTIミクロ四半期系列（名目）"))).toBe(false);
+  });
+
+  it("projects the 2014 Plan49 point with its exact monthly and MA12 provenance", async () => {
+    const rows = await loadTotalEarningDataInternal();
+    const row = rows.find((candidate) => candidate.年月 === "2014年1月");
+    expect(row).toBeDefined();
+    const measurement = (row as CpiDataWithMeasurements).measurements?.[CONSUMPTION_TOTAL_12MA_KEY];
+    expect(measurement?.value).toBe(row?.[CONSUMPTION_TOTAL_12MA_KEY]);
+    expect(measurement?.monthlyProvenance).toMatchObject({
+      sourceId: "000040499070",
+      householdScope: "二人以上の世帯",
+      seriesType: "historical_estimate",
+    });
+    expect(measurement?.ma12Provenance).toEqual({
+      windowStart: "2013-02",
+      windowEnd: "2014-01",
+      sources: ["000040499070"],
+      statuses: ["historical_estimate"],
+    });
+
+    const publicRow = toEarningsView(rows, ["年月", CONSUMPTION_TOTAL_12MA_KEY]).find(
+      (candidate) => candidate.年月 === "2014年1月",
+    );
+    expect(publicRow?.[CONSUMPTION_TOTAL_12MA_KEY]).toBeTypeOf("number");
+    expect(
+      (publicRow as CpiDataWithMeasurements | undefined)?.measurements?.[
+        CONSUMPTION_TOTAL_12MA_KEY
+      ],
+    ).toMatchObject({
+      monthlyProvenance: {
+        sourceId: "000040499070",
+        householdScope: "二人以上の世帯",
+        seriesType: "historical_estimate",
+      },
+      ma12Provenance: {
+        windowStart: "2013-02",
+        windowEnd: "2014-01",
+      },
+    });
   });
 });

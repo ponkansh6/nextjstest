@@ -62,6 +62,18 @@ export interface BuildCsvOptions {
     cpiAggregation?: string;
     nominalSource?: string;
     measurementNote?: string;
+    monthlyProvenance?: {
+      sourceId: string;
+      householdScope: "二人以上の世帯" | "総世帯";
+      seriesType: "historical_estimate" | "official_monthly_observed" | "unavailable";
+      description: string;
+    };
+    ma12Provenance?: {
+      windowStart: string;
+      windowEnd: string;
+      sources: string[];
+      statuses: string[];
+    };
   }>;
 }
 
@@ -89,7 +101,10 @@ function rowMeasurement(
   if (!measurement) {
     return createMissingSeriesMeasurement(metadata.key, metadata);
   }
-  return measurement;
+  return {
+    ...measurement,
+    baseYear: measurement.baseYear ?? metadata.baseYear,
+  };
 }
 
 /**
@@ -200,6 +215,14 @@ export const buildCsv = (
         );
       }),
     );
+  const includeBaseYearMetadata =
+    metadata.some(({ baseYear }) => baseYear !== undefined) ||
+    rows.some((row) => keys.some((key) => rowMeasurementValue(row, key)?.baseYear !== undefined));
+  const hasMa12Provenance = (measurement: Partial<CsvMeasurement> | undefined) =>
+    measurement?.monthlyProvenance !== undefined || measurement?.ma12Provenance !== undefined;
+  const includeMa12Provenance =
+    metadata.some(hasMa12Provenance) ||
+    rows.some((row) => keys.some((key) => hasMa12Provenance(rowMeasurementValue(row, key))));
   const metadataHeaders = metadata.flatMap(({ key }) => [
     `${key}__label`,
     `${key}__valueType`,
@@ -243,14 +266,26 @@ export const buildCsv = (
           `${key}__canonicalSeries`,
         ]
       : []),
+    ...(includeBaseYearMetadata ? [`${key}__baseYear`] : []),
     ...(includeCpiMetadata
       ? [
-          `${key}__baseYear`,
           `${key}__cpiSeries`,
           `${key}__cpiPeriod`,
           `${key}__cpiAggregation`,
           `${key}__nominalSource`,
           `${key}__measurementNote`,
+        ]
+      : []),
+    ...(includeMa12Provenance
+      ? [
+          `${key}__monthlySourceId`,
+          `${key}__monthlyHouseholdScope`,
+          `${key}__monthlySeriesType`,
+          `${key}__monthlyDescription`,
+          `${key}__ma12WindowStart`,
+          `${key}__ma12WindowEnd`,
+          `${key}__ma12Sources`,
+          `${key}__ma12Statuses`,
         ]
       : []),
   ]);
@@ -310,6 +345,8 @@ export const buildCsv = (
         cpiAggregation,
         nominalSource,
         measurementNote,
+        monthlyProvenance,
+        ma12Provenance,
       } = measurement;
       const unavailable =
         measurement.seriesType === "unavailable" || measurement.status === "unavailable";
@@ -359,14 +396,26 @@ export const buildCsv = (
               canonicalSeries ?? "",
             ]
           : []),
+        ...(includeBaseYearMetadata ? [baseYear ?? ""] : []),
         ...(includeCpiMetadata
           ? [
-              baseYear ?? "",
               cpiSeries ?? "",
               cpiPeriod ?? "",
               cpiAggregation ?? "",
               nominalSource ?? "",
               measurementNote ?? "",
+            ]
+          : []),
+        ...(includeMa12Provenance
+          ? [
+              monthlyProvenance?.sourceId ?? "",
+              monthlyProvenance?.householdScope ?? "",
+              monthlyProvenance?.seriesType ?? "",
+              monthlyProvenance?.description ?? "",
+              ma12Provenance?.windowStart ?? "",
+              ma12Provenance?.windowEnd ?? "",
+              ma12Provenance?.sources.join(";") ?? "",
+              ma12Provenance?.statuses.join(";") ?? "",
             ]
           : []),
       ].map(escapeCsvCell);
