@@ -2,6 +2,9 @@ node_modules/
 .next/
 dist/
 build/
+!tests/build/
+tests/build/*
+!tests/build/rsc-payload-parity.test.ts
 .venv/
 .venv-convert/
 package-lock.json

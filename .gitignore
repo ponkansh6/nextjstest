@@ -8,6 +8,9 @@ package-lock.json
 coverage/
 dist/
 build/
+!/tests/build/
+/tests/build/*
+!/tests/build/rsc-payload-parity.test.ts
 *.tsbuildinfo
 
 # Playwright
