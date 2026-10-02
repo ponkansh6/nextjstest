@@ -174,10 +174,10 @@ export const inspectBatch3BProductionCase: BrowserCommand<
             .getByRole("button", { name: "CTIミクロ基本系列(名目・総合)", exact: true })
             .isVisible();
           values.normalSalaryLegendVisible = await section
-            .getByRole("button", { name: "給与(総合)" })
+            .getByTestId("new-graph-legend-総合(12MA)")
             .isVisible();
           values.normalCpiLegendVisible = await section
-            .getByRole("button", { name: "物価指数(総合)" })
+            .getByTestId("new-graph-legend-CPI総合(12MA)")
             .isVisible();
           values.normalCtiLegendVisible = await section
             .getByRole("button", { name: "CTI消費支出(参考)", exact: true })

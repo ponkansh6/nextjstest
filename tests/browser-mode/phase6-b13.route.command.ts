@@ -204,7 +204,7 @@ export const inspectPhase6B13: BrowserCommand<[id: Phase6B13Id], unknown> = asyn
     await stage(id, "scroll CPI-major wrapper into view", 15_000, () =>
       cpiWrapper.scrollIntoViewIfNeeded({ timeout: 10_000 }),
     );
-    const tabButton = page.getByRole("button", { name: "給与", exact: true });
+    const tabButton = page.locator("button[aria-current]").filter({ hasText: /^給与$/ });
     await stage(id, "touch salary tab", 10_000, () => tabButton.tap({ timeout: 8_000 }));
 
     // Source behavior reads the moving wrapper immediately after the tab touch.
