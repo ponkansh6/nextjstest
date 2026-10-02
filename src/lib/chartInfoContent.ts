@@ -224,21 +224,20 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
     ],
   },
   "new-graph": {
-    source:
-      "e-Stat「毎月勤労統計調査」／e-Stat「消費者物価指数」／e-Stat「消費動向指数（CTIミクロ基本系列）」",
+    source: "e-Stat「毎月勤労統計調査」／e-Stat「消費者物価指数」／e-Stat「消費動向指数」",
     url: "https://www.e-stat.go.jp/stat-search/files?page=1&toukei=00200573&tstat=000001150147",
     sections: [
       {
         heading: "表示している系列",
         items: [
           {
-            text: "給与（総合）：所定内給与 + 所定外給与 + 特別給与の12か月移動平均を指数化",
+            text: "給与：月次系列の12か月移動平均",
           },
           {
-            text: "CTIミクロ名目四半期系列：2017年以降は総世帯・調整系列の公式四半期原数値を使用。2005〜2016年は名目年次接続推計を月次パターンで四半期化。",
+            text: "消費：消費支出の12か月移動平均",
           },
           {
-            text: "物価指数（総合）：消費者物価指数総合の月次系列を12か月移動平均で指数化",
+            text: "物価：消費者物価指数の12か月移動平均",
           },
         ],
       },
@@ -247,10 +246,7 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
         items: [
           { text: "給与：月次系列の12か月移動平均" },
           { text: "物価：月次系列の12か月移動平均" },
-          {
-            text: "CTIミクロ名目四半期系列：対象期間は2005Q1〜2016Q4の接続推計と、2017Q1以降の公式調整済み四半期値。",
-          },
-          { text: "2017年以降は最新の完全な公式四半期まで表示します。" },
+          { text: "消費：月次系列の12か月移動平均" },
         ],
       },
     ],

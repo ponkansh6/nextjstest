@@ -370,7 +370,7 @@ describe("Phase 4-4 real chart/table/CSV parity", () => {
     expect(tooltipRow?.getAttribute("data-tooltip-ma12-window-end")).toBe("2017-12");
     expect(
       tooltipRow?.querySelector('[data-tooltip-consumption-provenance="true"]')?.textContent,
-    ).toContain("2017-01〜2017-12");
+    ).toBe("消費支出の12か月移動平均");
   });
 
   it("publishes the canonical ten Plan39 categories with model and fingerprint provenance", async () => {

@@ -31,6 +31,8 @@ include this monthly key.
 
 For NewGraph comparison, `server/lib/consumptionTotal12Ma.ts` uses the composition-corrected Plan39 V2 annual anchors shared with the quarterly nominal projection for 2005–2016, two-or-more-person-household raw seasonal weights, and official all-household monthly observations (`000040499028`) from 2017 onward. The private 2004 prehistory applies the same V2 category base/gamma correction using the calendar-year 2004 two-plus household share `3459/4915`; it exists only to calculate the first public strict 12MA at 2005-01 and is never emitted as a public point.
 
+The 3種比較 display registry uses concise legend labels `物価`, `給与`, and `消費`, with orange, blue, and red series colors respectively. The consumption tooltip shows the short description `消費支出の12か月移動平均`; detailed source and window provenance remains available to table/CSV consumers.
+
 ### Component Tree
 
 Plan39 V2 composition-corrected annual anchors + `000040499070` historical monthly seasonality
@@ -41,6 +43,11 @@ baseline, strict trailing 12MA, status/reason and provenance) →
 NewGraph `COMPARISON_SERIES_REGISTRY` → graph/legend/tooltip/table/CSV. The
 legacy adjustment field remains an internal compatibility path; the salary
 registry and Plan38 quarterly projection remain separate consumers.
+
+The comparison registry owns the legend labels and colors (`物価` / orange,
+`給与` / blue, `消費` / red); tooltip series labels and data contracts retain
+their existing metadata. Consumption tooltip provenance is summarized in one
+short line.
 
 The nominal consumption graph keeps the existing support contract
 `CTIミクロ四半期系列（名目）` (displayed as
@@ -63,6 +70,7 @@ not create an additional bar.
   the old 3 consumption comparison entries are replaced by a single `消費(総合)` entry (`CONSUMPTION_TOTAL_12MA_KEY`, monthly frequency, strict 12-month moving average rebased to 2025 monthly average), while CPI and wage series remain.
 - **WHEN** the comparison graph, legend, tooltip, table, or CSV renders for NewGraph, **THEN**
   the new `消費(総合)` series metadata and value have parity across every public surface.
+- **WHEN** the 3種比較 legend and tooltip render, **THEN** the legend labels are `物価`, `給与`, and `消費` in orange, blue, and red respectively, and the consumption tooltip explanation is the concise `消費支出の12か月移動平均` description.
 - **WHEN** 2005–2016 historical monthly estimation is computed, **THEN**
   it uses the same composition-corrected Plan39 V2 annual total anchors as the historical quarterly nominal projection and two-or-more-person household raw monthly seasonal weights (`m[y,m] = A[y] * r[y,m] / meanRaw[y]`), requiring all 12 months to be finite and `meanRaw[y]` to be positive and finite; any missing month invalidates the entire year.
 - **WHEN** the Plan49 calculation constructs its 2004 prehistory, **THEN** it uses the official calendar-year IV-4 share `3459/4915`, applies the same V2 per-category base/gamma calculation used for the historical annual anchors, normalizes all twelve `000040499070` raw months to that corrected annual anchor, and keeps these values internal; 2004 is not added to the public V2 rows or quarterly graph.
@@ -833,10 +841,11 @@ Chart display metadata is sourced from `src/lib/chartConstants.ts`: the ordered
 交通・自動車等関係費, 通信, 外食以外食料, 外食, 諸雑費; their values are
 validated CPI contribution/display-unit values. `EARNINGS_SERIES_REGISTRY` is the six-series salary registry;
 `tooltipLabel` is the complete tooltip name and `displayName`/`legendLabel` keep
-the existing legend contract. `COMPARISON_SERIES_REGISTRY` is the two-entry
-comparison registry, where `tooltipLabel === legendLabel` is required; each entry
-also owns `color`, `order`, and `advanced`. `projectTooltipMetadata` resolves
-these fields by `key`, never from Recharts `payload.name`.
+the existing legend contract. `COMPARISON_SERIES_REGISTRY` is the three-entry
+comparison registry. Its concise legend labels (`物価`, `給与`, `消費`) are
+independent of the full tooltip labels; each entry owns its `color` and `order`.
+`projectTooltipMetadata` resolves these fields by `key`, never from Recharts
+`payload.name`.
 
 `formatCpiTooltipValue` and `formatCpiTooltipTotal` originate in
 `src/app/components/CustomTooltip.tsx`. They accept CPI display-unit values and
@@ -1647,7 +1656,7 @@ The system SHALL provide explanatory info for each chart/metric.
 - **THEN** it identifies the CTI compatibility set selected by the loader without inferring a series variant from a filename
   - **AND** a validated 2025 set explains the two-or-more-person-household nominal CTI basic series, its 2005-01〜latest range, raw/12MA distinction, and 2025 raw monthly average = 100 basis
   - **AND** it explains the independent GDP reference contract separately from the CTI total and miscellaneous/CPI-external difference in concise user-facing language
-  - **AND** for the 3種比較 panel, it describes the 12-month moving average separately as: 給与（総合） from salary, CTIミクロ基本系列（名目・総合） from nominal raw CTI, and 物価指数（総合） from CPI
+  - **AND** for the 3種比較 panel, it briefly describes the three monthly 12-month moving-average series as: 給与 from salary, 消費 from the monthly consumption total rebased to its 2025 monthly average, and 物価 from CPI
 - **AND** it explains in the lower part of the info panel that the 2018年以降の CTI expense-item continuation is separate from the independent GDP reference contract
 - **AND WHEN** the 2025 set is unavailable, invalid, or no complete compatible set exists
 - **THEN** the panel uses user-facing language to identify the 2020 rollback data or that consumption data cannot currently be displayed, without exposing internal file or validation terminology.

@@ -542,16 +542,18 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
                     data-tooltip-consumption-provenance="true"
                     style={{ display: "block", opacity: 0.78, fontSize: "0.82em" }}
                   >
-                    {entry.monthlyProvenance && (
-                      <>
-                        月次出典: {entry.monthlyProvenance.sourceId}（
-                        {entry.monthlyProvenance.householdScope}、
-                        {entry.monthlyProvenance.seriesType}）
-                        <br />
-                        {entry.monthlyProvenance.description}
-                      </>
-                    )}
-                    {entry.ma12Provenance && (
+                    {entry.dataKey === "消費(総合)"
+                      ? "消費支出の12か月移動平均"
+                      : entry.monthlyProvenance && (
+                          <>
+                            月次出典: {entry.monthlyProvenance.sourceId}（
+                            {entry.monthlyProvenance.householdScope}、
+                            {entry.monthlyProvenance.seriesType}）
+                            <br />
+                            {entry.monthlyProvenance.description}
+                          </>
+                        )}
+                    {entry.dataKey !== "消費(総合)" && entry.ma12Provenance && (
                       <>
                         {entry.monthlyProvenance && <br />}
                         12MA期間: {entry.ma12Provenance.windowStart}〜

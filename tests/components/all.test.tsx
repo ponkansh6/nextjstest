@@ -574,8 +574,8 @@ describe("NewGraph", () => {
         tooltipProps={tooltipProps}
       />,
     );
-    expect(screen.getAllByText("給与(総合)").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("物価指数(総合)").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("給与").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("物価").length).toBeGreaterThan(0);
   });
 
   it("calls onToggle when a legend item is clicked", () => {
@@ -590,8 +590,8 @@ describe("NewGraph", () => {
       />,
     );
     const button =
-      screen.getAllByText("給与(総合)").find((el) => el.closest("button")) ||
-      screen.getAllByText("給与(総合)")[0];
+      screen.getAllByText("給与").find((el) => el.closest("button")) ||
+      screen.getAllByText("給与")[0];
     fireEvent.click(button);
     expect(mockOnToggle).toHaveBeenCalledWith("総合(12MA)");
   });
@@ -609,8 +609,8 @@ describe("NewGraph", () => {
     );
     // The hidden legend item should still be rendered
     // The visible ones should be there too
-    expect(screen.getAllByText("給与(総合)").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("物価指数(総合)").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("給与").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("物価").length).toBeGreaterThan(0);
   });
 
   it("handles empty data gracefully", () => {
@@ -638,6 +638,6 @@ describe("NewGraph", () => {
         tooltipProps={tooltipProps}
       />,
     );
-    expect(screen.getAllByText("消費(総合)").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("消費").length).toBeGreaterThan(0);
   });
 });

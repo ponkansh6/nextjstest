@@ -113,14 +113,14 @@ describe("series registry contracts", () => {
         key: "CPI総合(12MA)",
         label: "物価指数(総合)",
         displayName: "物価指数(総合)",
-        color: "#65a30d",
+        color: "#f97316",
       },
-      { key: "総合(12MA)", label: "給与(総合)", displayName: "給与(総合)", color: "#e11d48" },
+      { key: "総合(12MA)", label: "給与(総合)", displayName: "給与(総合)", color: "#2563eb" },
       {
         key: "消費(総合)",
         label: "消費(総合)",
         displayName: "消費(総合)",
-        color: "#0f766e",
+        color: "#dc2626",
       },
     ]);
   });
@@ -167,8 +167,15 @@ describe("series registry contracts", () => {
       EARNINGS_SERIES_REGISTRY.every((series) => series.tooltipLabel && series.order !== undefined),
     ).toBe(true);
     expect(
-      COMPARISON_SERIES_REGISTRY.every((series) => series.tooltipLabel === series.legendLabel),
-    ).toBe(true);
+      COMPARISON_SERIES_REGISTRY.map(({ tooltipLabel, legendLabel }) => ({
+        tooltipLabel,
+        legendLabel,
+      })),
+    ).toEqual([
+      { tooltipLabel: "物価指数(総合)", legendLabel: "物価" },
+      { tooltipLabel: "給与(総合)", legendLabel: "給与" },
+      { tooltipLabel: "消費(総合)", legendLabel: "消費" },
+    ]);
     expect(new Set(COMPARISON_SERIES_REGISTRY.map((series) => series.order)).size).toBe(
       COMPARISON_SERIES_REGISTRY.length,
     );
@@ -191,24 +198,24 @@ describe("series registry contracts", () => {
       {
         key: "CPI総合(12MA)",
         tooltipLabel: "物価指数(総合)",
-        legendLabel: "物価指数(総合)",
-        color: "#65a30d",
+        legendLabel: "物価",
+        color: "#f97316",
         order: 0,
         advanced: false,
       },
       {
         key: "総合(12MA)",
         tooltipLabel: "給与(総合)",
-        legendLabel: "給与(総合)",
-        color: "#e11d48",
+        legendLabel: "給与",
+        color: "#2563eb",
         order: 1,
         advanced: false,
       },
       {
         key: "消費(総合)",
         tooltipLabel: "消費(総合)",
-        legendLabel: "消費(総合)",
-        color: "#0f766e",
+        legendLabel: "消費",
+        color: "#dc2626",
         order: 2,
         advanced: false,
       },
