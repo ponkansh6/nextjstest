@@ -204,9 +204,15 @@ describe("B3m Chromium slices", () => {
     window.history.replaceState(null, "", `${window.location.pathname}?from=2020&to=2021`);
     renderBrowserComponent(<CpiSectionsFixture />);
     await expect.element(page.getByText("CPI費目別", { exact: true })).toBeInTheDocument();
-    await expect
-      .element(page.getByRole("button", { name: "給与", exact: true }))
-      .toBeInTheDocument();
+    const salaryButtons = await page.getByRole("button", { name: "給与", exact: true }).all();
+    let hasSalarySectionTab = false;
+    for (const button of salaryButtons) {
+      if ((await button.element()).hasAttribute("aria-current")) {
+        hasSalarySectionTab = true;
+        break;
+      }
+    }
+    expect(hasSalarySectionTab).toBe(true);
     const chart = page.getByRole("img", { name: "物価指数 費目別寄与度の積み上げグラフ" });
     await expect.element(chart).toBeVisible();
     const chartElement = await chart.element();
