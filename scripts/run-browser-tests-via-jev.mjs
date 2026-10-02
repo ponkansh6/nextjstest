@@ -7,6 +7,7 @@ import os from "node:os";
 import path from "node:path";
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
+import { makeTestNamePattern } from "./browser-test-name-pattern.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const VITEST = path.join(ROOT, "node_modules/vitest/vitest.mjs");
@@ -731,9 +732,17 @@ function candidateId(config, file, name) {
 
 function parseList(stdout, config) {
   if (!stdout.trim()) fail("Vitest list returned empty output.");
+  const lines = stdout.split(/\r?\n/);
+  const jsonStart = lines.findIndex((line) => {
+    const candidate = line.trimStart();
+    if (!candidate.startsWith("[")) return false;
+    const next = candidate.slice(1).trimStart();
+    return next.length === 0 || '[{"-0123456789tfn'.includes(next[0]);
+  });
+  const jsonOutput = jsonStart === -1 ? stdout : lines.slice(jsonStart).join("\n");
   let entries;
   try {
-    entries = JSON.parse(stdout);
+    entries = JSON.parse(jsonOutput);
   } catch {
     fail("Vitest list returned invalid JSON.");
   }
@@ -969,11 +978,9 @@ function makeSelection(catalog, selected) {
 
 function runSelectedTests(selection, directory) {
   for (const entry of selection.direct) {
-    const pattern = `^(?:${entry.names.map((name) => name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})$`;
-    const filter =
-      entry.config === "vitest.browser.webkit.config.ts"
-        ? `(?=.*webkit)${pattern}`
-        : `^(?!.*-webkit)(?:${entry.names.map((name) => name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})$`;
+    const filter = makeTestNamePattern(entry.names, {
+      webkit: entry.config === "vitest.browser.webkit.config.ts",
+    });
     const result = run(
       process.execPath,
       [VITEST, "run", "--config", entry.config, "--testNamePattern", filter, entry.file],
