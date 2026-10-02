@@ -179,19 +179,20 @@ fi
   }
   const docsOnlyGates = docsOnlyLog.split(/\r?\n/);
   expect(
-    hasExactCommand(docsOnlyLog, "run test:browser:component:all"),
-    "docs/assets-only push skipped the complete component suite",
+    hasExactCommand(docsOnlyLog, "run test:browser:prepush:component"),
+    "docs/assets-only push skipped the pre-push component smoke case",
   );
   expect(hasExactCommand(docsOnlyLog, "run build"), "docs/assets-only push skipped build");
   expect(
-    hasExactCommand(docsOnlyLog, "run test:browser:next-route-poc:built:all"),
-    "docs/assets-only push skipped the complete built route suite",
+    hasExactCommand(docsOnlyLog, "run test:browser:next-route-poc:prepush:built"),
+    "docs/assets-only push skipped the pre-push production-route cases",
   );
   expect(
-    docsOnlyGates.indexOf("run test:browser:component:all") < docsOnlyGates.indexOf("run build") &&
+    docsOnlyGates.indexOf("run test:browser:prepush:component") <
+      docsOnlyGates.indexOf("run build") &&
       docsOnlyGates.indexOf("run build") <
-        docsOnlyGates.indexOf("run test:browser:next-route-poc:built:all"),
-    "docs/assets-only push did not run component Browser Mode, build, and built routes in order",
+        docsOnlyGates.indexOf("run test:browser:next-route-poc:prepush:built"),
+    "docs/assets-only push did not run the selected Browser Mode cases and build in order",
   );
   git(["switch", "main"]);
   git(["merge", "--ff-only", "docs-assets"]);
@@ -316,7 +317,7 @@ fi
   expectRejectedPush(
     ["origin", "changed:main"],
     "changed-profile Browser Mode failure did not block push",
-    { PREPUSH_PROFILE: "changed", HOOK_SMOKE_FAIL_GATE: "test:browser:component:all" },
+    { PREPUSH_PROFILE: "changed", HOOK_SMOKE_FAIL_GATE: "test:browser:prepush:component" },
     ({ stdout, stderr }) => {
       changedPushOutput = `stdout:\n${stdout}\nstderr:\n${stderr}`;
     },
@@ -340,13 +341,13 @@ fi
       `HOOK_SMOKE_LOG:\n${changedBrowserFailureLog}\npush classifier/hook output:\n${changedPushOutput}`,
   );
   expect(
-    hasExactCommand(changedBrowserFailureLog, "run test:browser:component:all"),
-    "changed profile skipped Browser Mode",
+    hasExactCommand(changedBrowserFailureLog, "run test:browser:prepush:component"),
+    "changed profile skipped the pre-push component smoke case",
   );
   for (const laterGate of [
     "run test:all",
     "run build",
-    "run test:browser:next-route-poc:built:all",
+    "run test:browser:next-route-poc:prepush:built",
     "run test:build-parity",
     "run security-check",
   ]) {
@@ -394,8 +395,8 @@ fi
       .split(/\r?\n/)
       .filter(
         (line) =>
-          line === "run test:browser:component:all" ||
-          line === "run test:browser:next-route-poc:built:all",
+          line === "run test:browser:prepush:component" ||
+          line === "run test:browser:next-route-poc:prepush:built",
       ).length;
     expect(
       browserRuns === 2,
@@ -405,9 +406,9 @@ fi
     let previousFallbackGateIndex = -1;
     for (const gate of [
       "run test:all",
-      "run test:browser:component:all",
+      "run test:browser:prepush:component",
       "run build",
-      "run test:browser:next-route-poc:built:all",
+      "run test:browser:next-route-poc:prepush:built",
       "run test:build-parity",
       "run security-check",
     ]) {

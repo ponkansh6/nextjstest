@@ -2329,18 +2329,23 @@ Plan38 rows bypass the GDP join entirely.
 - In the changed profile, safe related candidates are passed to
   `vitest related --run --passWithNoTests --reporter=json`; a non-empty valid
   JSON result allows the changed integration gate to pass, followed by
-  `test:browser:component:all`, `build`, and
-  `test:browser:next-route-poc:built:all`. Documentation/assets-only changes
-  skip related tests but still run the component suite, `build`, and all built
-  production routes. Empty candidates, zero JSON `testResults`,
-  missing/invalid/incompatible JSON, or a related-test failure invoke the full
-  profile exactly once.
+  `test:browser:prepush:component`, `build`, and
+  `test:browser:next-route-poc:prepush:built`. Documentation/assets-only
+  changes skip related tests but still run the component pre-push selection,
+  `build`, and the built production-route pre-push selection. Empty candidates,
+  zero JSON `testResults`, missing/invalid/incompatible JSON, or a related-test
+  failure invoke full non-browser validation exactly once while retaining the
+  fixed Browser Mode selections.
 - The full pre-push profile is ordered `lint:fast` → `type-check` → `test:all`
   → `test:browser:component:all` → `build` →
   `test:browser:next-route-poc:built:all` → `test:build-parity` →
   `security-check`; each gate stops later gates on failure. The changed profile
-  runs the selected related tests and all component Browser Mode cases when
-  applicable, then `build` and all built production-route cases.
+  runs selected related tests and fixed Browser Mode pre-push selections when
+  applicable, then `build` and the fixed built production-route selection.
+  Related-test fallback runs the full non-browser validation profile with the
+  same fixed Browser Mode selections. The fixed selection comprises one
+  BottomSheet focus case and six production-route cases; all-suite commands
+  remain available for explicit full Browser Mode runs.
   Playwright E2E remains a separate command and is not part of the local
   pre-push profile. Production validation remains a separate gate and is
   reported as not run by local pre-push when its URL/network availability is
@@ -2867,14 +2872,32 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, `hid
   `pnpm run test:browser:next-route-poc:built:all` after `build`
 - **WHEN** the changed pre-push profile selects a non-empty related code/test
   set
-- **THEN** it runs those related tests, `pnpm run test:browser:component:all`,
-  `pnpm run build`, and `pnpm run test:browser:next-route-poc:built:all` in
-  that order
+- **THEN** it runs those related tests, the fixed pre-push component Browser
+  Mode selection, `pnpm run build`, and the fixed built production-route
+  Browser Mode selection in that order
+- **AND** the component selection runs only
+  `BottomSheet focus containment in Chromium keeps real browser Tab navigation inside the open sheet`
+- **AND** the production-route selection runs only
+  `Playwright Browser Mode custom command observes a production Next chart interaction`,
+  `p45-b-section-tabs-scroll-82-case01-chromium`,
+  `p45-b-range-change-119-e2e — production spending-chart-nominal data narrows and a visible bar remains after changing the range`,
+  `p45-a-parity-hidden-series preserves chart, table, and CSV data when a legend series is hidden`,
+  `B13 #473: outside-heading touch clears stacked chart cursor and active dots`,
+  and `B14: keyboard Tab reaches the named legend with a visible focus outline`
+- **WHEN** a related-test selection falls back to full validation
+- **THEN** it runs the full non-browser validation gates with the fixed
+  pre-push Browser Mode selection
+- **WHEN** `PREPUSH_PROFILE=full` is selected explicitly or the push-impact
+  classifier selects full
+- **THEN** the full pre-push profile continues to run
+  `pnpm run test:browser:component:all` after `test:all`, then
+  `pnpm run test:browser:next-route-poc:built:all` after `build`
 - **WHEN** a changed-profile push contains only documentation and/or asset
   paths
 - **THEN** it skips related code-test selection and `pnpm run test:all`, while
-  it still runs `pnpm run test:browser:component:all`, `pnpm run build`, and
-  `pnpm run test:browser:next-route-poc:built:all` in that order
+  it still runs the fixed pre-push component Browser Mode selection,
+  `pnpm run build`, and the fixed built production-route Browser Mode
+  selection in that order
 
 #### Scenario Browser Mode catalog and stable case identity
 
@@ -2987,8 +3010,16 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, `hid
 - **AND** the summary has at most 40 entries, reports changed-path and omitted
   file limits in `limits`, and JEV is instructed to treat it as incomplete
   structural context
-- **WHEN** a normal JEV review uses `--request`, `--clarify`, or `--follow-up`
-- **THEN** those existing modes and their validation behavior remain unchanged
+- **WHEN** a new standard JEV checkpoint review starts
+- **THEN** it supplies at least two complete, mutually exclusive, case-specific clarification candidates with `--clarification-candidates PATH` alongside `--request`, and candidate validation completes before any API request
+- **AND** JEV is asked only for the listed choice, confidence, and probability distribution
+- **WHEN** a new standard review receives a valid initial choice other than `valid_as_defined`
+- **THEN** exactly one clarification request asks JEV to select a supplied candidate, and the client maps the selected ID to its locally supplied finding, affected location/requirement, evidence or needed evidence, next action or proposed fix, and remaining uncertainty
+- **AND** the clarification is recorded with `resolution=selected`, `diagnosisSource=provided_candidate`, `diagnosisStatus=complete`, and `effectiveVerdict=requires_revalidation`, while preserving the initial decision and distribution
+- **WHEN** a clarification response is invalid, unavailable, or selects an ID outside the candidate list
+- **THEN** it is unresolved and no clarification is chained
+- **WHEN** `--clarify` or `--follow-up` is used as a compatibility utility
+- **THEN** its existing mode and validation behavior remain unchanged
 
 #### Scenario Selected route-scoped Browser Mode lifecycle
 
@@ -3099,10 +3130,11 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, `hid
   **THEN** unset and `changed` select changed, `full` selects full, and any
   other value selects full.
 - **WHEN** the changed pre-push related runner is tested
-  **THEN** a valid non-empty Vitest JSON result proceeds to the complete
-  component Browser Mode suite, build, and complete built route suite, while
-  empty candidates, zero `testResults`, missing/invalid/incompatible JSON, or
-  a related-test failure invokes the full profile exactly once.
+  **THEN** a valid non-empty Vitest JSON result proceeds to the fixed
+  component Browser Mode selection, build, and fixed built-route Browser Mode
+  selection, while empty candidates, zero `testResults`, missing/invalid/
+  incompatible JSON, or a related-test failure invokes full non-browser
+  validation with the same two fixed browser selections exactly once.
 - **WHEN** full pre-push execution is tested
   **THEN** the gate order is `lint:fast` → `type-check` → `test:all` →
   `test:browser:component:all` → `build` →
@@ -3695,50 +3727,52 @@ production/base calibration は 2018–2025 とし、target/holdout 2017 は cal
 
 ### Data Sources
 
-プラン生成後と実装チェックポイント後のレビューは、リポジトリ内の
+実装チェックポイント後のレビューは、リポジトリ内の
 `skills/jev-review/SKILL.md` と同ディレクトリの汎用クライアントを入力契約とする。
 クライアントは `TYPESAFE_API_KEY`、`TYPESAFE_MODEL`、`TYPESAFE_BASE_URL` を使って TypeSafe API に
-レビュー依頼を送り、対象のプラン、差分、検証結果、制約を渡す。JEV の返答は
-開発記録に保存するが、実在を確認していないレスポンスの verdict enum は契約として
-固定しない。認証には明示指定された `TYPESAFE_API_KEY` を優先し、未指定時は
+レビュー依頼を送り、対象の差分、受入条件、検証結果、制約を渡す。JEV の返答は
+作業中に確認して判断へ反映し、必要または有用な場合にのみローカル保存する。実在を確認していないレスポンスの verdict enum は契約として
+固定しない。新標準フローはJEVから選択肢、confidence、probabilitiesを受け取り、ケース固有の
+理由文をJEVに生成させない。認証には明示指定された `TYPESAFE_API_KEY` を優先し、未指定時は
 リポジトリの `.env.local` にある `TYPESAFE_API_KEY` を既定値として読み込む。
 `TYPESAFE_ENV_FILE` が指定されている場合は、その env ファイルを優先して読み込む。
 認証情報はレビュー本文にも結果記録にも送らず、キーが得られない場合は送信を
 fail-closed にする。今回のユーザー明示依頼により、レビュー文脈・計画・差分要約・
 受入条件・検証結果など認証情報以外のデータは JEV への送信を承認済みとする。
-この承認には、初回の JEV 応答と、ユーザーが選択した実装固有 clarification の質問・回答も含まれる。
+この承認には、初回のJEV応答、Codexが作成する候補付き更問、およびその応答も含まれる。
 認証情報は初回・clarification のいずれにも含めず、過去の別実行記録を現在のレビューへ混ぜない。
-標準の再問い合わせ choices file は実装固有の質問文と選択肢の表示情報だけを含み、認証情報を含めない。
+標準の候補JSONは実装固有の診断と即時アクションだけを含み、認証情報を含めない。
 
 ### Data Flow
 
-`plan/checkpoint context` → `skills/jev-review/SKILL.md` の明示読込 → 汎用 TypeSafe
-API クライアント → JEV 結果の妥当性・修正点・未確定点の記録 → 必要な修正と再レビュー。
+`implementation checkpoint context` → `skills/jev-review/SKILL.md` の明示読込 → 実装証拠と候補JSONの準備
+→ 汎用 TypeSafe API クライアント → JEV初回選択（choice/confidence/probabilities）
+→（有効なnon-pass時のみ一度だけ候補選択）→ ローカル候補詳細の対応づけ → 必要な修正と再レビュー。
 API エラー、タイムアウト、認証失敗、または HTTP 成功だけでは妥当と判定せず、結果が
 得られない場合は未確定として扱う。JEV 判定は既存テスト・型チェック・lint の代替にしない。
 送信時は `.env.local` の `TYPESAFE_API_KEY` を認証専用に使用し、レビュー本文へ
-認証情報を含めない。標準フローでは、正常に検証されたサポート対象の初回結果が
-`indeterminate`、または診断情報が不完全・曖昧な場合に限り、実装固有の質問と2件以上の
-選択肢を準備してユーザーに提示し、`--clarify INITIAL_RESULT --choices-file FILE --choice ID`
-で初回結果から直接 clarification を送る。single-distribution schema では `indeterminate`
-または case-specific finding、affected location/requirement、observed evidence、fix/needed evidence
-の欠落が対象となる。既存の three-question schema では main choice が `valid_as_defined` 以外で、
-main choice が `indeterminate` または診断 choice が indeterminate/missing/unknown/duplicated/
-contradictory のときが対象となる。初回の通信失敗、応答検証失敗、未対応 schema、主回答や
-summary の欠落・曖昧・不一致では clarification を送らず、初回レビューを再送する。
-choices file は `version=1`、空でない `question`、`selectionMode=single|multiple`、2件以上の
-一意な文字列 choices（各要素に空でない `id`、`label`、`description`）を持つ。`single` は
-1件、`multiple` は1件以上を選び、選択肢外 ID と重複 ID は拒否する。Clarification は初回
-結果を redacted な `state.priorReview` として保持し、`sourceStage=initial` および
-`effectiveVerdict=requires_revalidation` を記録する。回答だけで初回判定を合格にせず、未解決でも
-clarification を連鎖させない。追加証拠または修正後に通常の初回 JEV 再判定を行う。
-CLI の generic `--follow-up` と固定理由 ID は互換用ユーティリティとして残すが、標準フローでは使わない。
+認証情報を含めない。新標準フローでは、実コード・要件・テスト・検証証拠から2件以上の
+相互排他的なcase-specific即時アクション候補を初回送信前にCodexが準備し、
+`--clarification-candidates PATH` で初回リクエストと同時に渡す。候補JSONは
+`{ "choices": [...] }` であり、各候補に `id`、`label`、`finding`、`affected`、
+`evidence` または正確な `neededEvidence` の一方、`nextAction` または `proposedFix` の一方、
+`remainingUncertainty` を含める。不足候補はAPI送信前にローカル検証で拒否する。
+正常に検証された新標準初回結果が `valid_as_defined` 以外なら、一度だけ更問リクエストを
+送ってJEVに候補を選ばせる。Codexは候補選択を先取りせず、ユーザーにも選択を求めない。
+初回合格、通信失敗、応答検証失敗、未対応形式、または初回回答の欠落・曖昧・不一致の場合、
+更問は送らない。選択された候補IDは初回と同梱したローカル候補へ対応づけ、その詳細を
+`resolution=selected`、`diagnosisSource=provided_candidate`、`diagnosisStatus=complete` として
+記録する。これはCodexが提示した内容であり、JEV生成理由ではない。初回の `decisionSummary` と
+確率分布を保持し、更問の `effectiveVerdict=requires_revalidation` とし、初回判定を合格へ変更しない。
+失敗、無効応答、または選択肢外IDは未解決として記録し、更問を連鎖させない。追加証拠または
+修正後に通常の初回JEV再判定を行う。候補fileのない旧CLI挙動、手動 `--clarify ... --choice` と
+generic `--follow-up` は互換ユーティリティとして保持する。
 
 ### Component Tree
 
-`AGENTS.md のチェックポイント手順` → `skills/jev-review/SKILL.md` → `skills/jev-review/scripts`
-汎用クライアント → JEV → 初回 review record →（適格な未確定/不完全診断時は実装固有 choices 提示 →
-ユーザー選択 → 初回結果から直接 clarification record）→ 修正対応 → 通常の初回 JEV 再判定。
+`AGENTS.md のチェックポイント手順` → `skills/jev-review/SKILL.md` → 実装証拠と候補JSONの準備
+→ `skills/jev-review/scripts` 汎用クライアント → JEV初回判定 →（有効なnon-pass時のみ候補選択の
+clarification）→ ローカル候補内容を含むclarification record → 修正対応 → 通常の初回JEV再判定。
 初回 record と clarification record は分離し、現在の実行に属する文脈だけを渡す。これは開発補助の経路であり、
 アプリケーションの runtime コンポーネントツリーには含めない。標準フローに generic follow-up の段階は設けず、
 未解決の clarification も連鎖させない。
@@ -3773,7 +3807,7 @@ JEVは既存テスト・型チェック・lintその他の検証の代替とは�
 
 ### Requirements
 
-- **WHEN** プラン生成が完了する、または実装チェックポイントに到達する、**THEN**
+- **WHEN** 実装チェックポイントに到達する、**THEN**
   `skills/jev-review/SKILL.md` を明示的に読み込み、同スキルの汎用クライアントで
   JEV レビューを依頼する。
 - **WHEN** `TYPESAFE_API_KEY` がプロセス環境にない、**THEN** `.env.local` の
@@ -3785,26 +3819,26 @@ JEVは既存テスト・型チェック・lintその他の検証の代替とは�
   範囲に限る。
 - **WHEN** JEV の結果を受け取る、**THEN** 妥当性、修正点、未確定点を記録し、修正点が
   あれば対応して必要に応じて再レビューする。未確認のレスポンス enum を前提にしない。
-- **WHEN** 初回結果が `http-success`、`responseValidation.valid=true`、サポート対象の
-  versioned schema、かつ summary と一致する一意な主回答を持ち、その診断が `indeterminate` または
-  不完全・曖昧である、**THEN** 固定理由 ID ではなく実装固有の質問と2件以上の choices を作り、
-  ユーザーに選択肢を提示して `--clarify INITIAL_RESULT --choices-file FILE --choice ID` で
-  初回結果から直接問い合わせる。single-distribution では indeterminate または必須診断詳細の欠落、
-  three-question schema では非 `valid_as_defined` の主判定と indeterminate/missing/unknown/duplicated/
-  contradictory な診断が対象となる。choices file は `version=1`、空でない `question`、
-  `selectionMode=single|multiple`、2件以上の一意な空でない `id`/`label`/`description` を持つ。
-- **WHEN** 初回応答が通信失敗・検証失敗・未対応 schema である、または主回答/summary が
-  欠落・曖昧・不一致である、**THEN** 更問を送らず、初回 JEV リクエストを再送する。
-- **WHEN** 標準フローで再問い合わせを行う、**THEN** `--follow-up` や固定理由 ID 選択を介さず、
-  実装固有 choices による初回結果への直接 clarification のみを行う。汎用 `--follow-up` と固定理由 ID は
-  CLI の互換用ユーティリティとして保持し、標準手順からは除外する。
-- **WHEN** 初回結果から clarification を送信する、**THEN** 初回結果を redacted な
-  `priorReview` として保持し、質問・全 choices・選択 ID を別記録へ保存する。`sourceStage` は
-  `initial`、`effectiveVerdict` は `requires_revalidation` とし、回答だけで元判定を合格にしない。
-- **WHEN** clarification の回答が未解決である、**THEN** clarification を連鎖させず、必要な追加証拠または
-  修正後に通常の初回 JEV 再判定を行う。
-- **WHEN** 初回または実装固有 clarification を JEV へ送信する、**THEN** 初回応答・ユーザーが
-  選択した clarification の質問・選択肢・回答を含む今回のレビュー文脈は送信承認済みとして扱い、
+- **WHEN** 新標準フローで実装チェックポイントレビューを始める、**THEN** 実コード・要件・テスト・
+  検証証拠に基づく相互排他的なcase-specific候補を2件以上用意し、
+  `--clarification-candidates PATH` で初回 `--request` と同時に渡す。候補JSONの各要素は
+  `id`、`label`、`finding`、`affected`、`evidence` または正確な `neededEvidence` の一方、
+  `nextAction` または `proposedFix` の一方、`remainingUncertainty` を持つ。JEVは選択、confidence、
+  probabilitiesのみを返し、候補不足は送信前にローカル検証で拒否する。
+- **WHEN** 有効な新標準初回応答が `valid_as_defined` を選択する、**THEN** 合格として扱い、自動更問を送らない。
+- **WHEN** 有効な新標準初回応答が `valid_as_defined` 以外を選択する、**THEN** 一度だけ候補選択の
+  clarificationを送る。CodexはJEVの候補選択を先取りせず、ユーザーにも選択を求めない。
+- **WHEN** clarification が候補リスト内の有効な選択を返す、**THEN** 選択IDをローカル候補へ対応づけ、
+  `resolution=selected`、`diagnosisSource=provided_candidate`、`diagnosisStatus=complete` とする。
+  候補詳細はCodexが提示した内容として扱い、JEV生成理由と表示しない。初回 `decisionSummary` と
+  確率分布を保持し、`effectiveVerdict=requires_revalidation` として初回不合格を合格へ変更しない。
+- **WHEN** 初回応答が失敗・無効・未対応または回答が欠落・曖昧・不一致である、**THEN** 自動更問を
+  送らず初回のエラー/未確定動作を維持する。clarificationが失敗・無効または選択肢外IDである場合は
+  未解決として記録し、更問を連鎖させない。追加証拠または修正後に通常の初回JEV再判定を行う。
+- **WHEN** `--clarify ... --choice` または `--follow-up` を互換用途として実行する、**THEN** それらの
+  既存モードと検証動作を保持し、新標準候補フローには混ぜない。
+- **WHEN** 初回または候補付き clarification を JEV へ送信する、**THEN** 初回応答、候補、質問および
+  回答を含む今回のレビュー文脈は送信承認済みとして扱い、
   API キーその他の認証情報は本文・ログ・結果記録へ含めない。
 - **WHEN** API が失敗する、応答が得られない、または HTTP 成功だけが確認できる、
   **THEN** 妥当とは判定せず、レビュー未確定または失敗として記録する。

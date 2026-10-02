@@ -34,6 +34,22 @@ describe("production Browser Mode aggregate runner", () => {
     expect(runner).toContain("JSON profile ${config} -> ${profileJsonPath}");
   });
 
+  it("fails closed when a fixed selection runs zero, missing, or duplicate test results", () => {
+    const runner = fs.readFileSync(path.join(root, "scripts/run-next-route-poc.mjs"), "utf8");
+    const validator = fs.readFileSync(
+      path.join(root, "scripts/browser-selection-validation.mjs"),
+      "utf8",
+    );
+
+    expect(runner).toContain("Object.keys(selection).length === 0");
+    expect(runner).toContain("assertSelectedBrowserCasesPassed(report, selectedFile.names)");
+    expect(runner).toContain('"--reporter=default"');
+    expect(runner).toContain('"--reporter=json"');
+    expect(runner).toContain("if (code === 0 && selectedFile && selectionResultPath)");
+    expect(validator).toContain("Expected exactly one result for");
+    expect(validator).toContain("Selected browser test did not pass");
+  });
+
   it("keeps all Chromium files in Phase6 then production-route order", () => {
     const config = fs.readFileSync(
       path.join(root, "vitest.browser.aggregate-chromium.config.ts"),

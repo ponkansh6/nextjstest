@@ -61,8 +61,8 @@ run_changed_tests() {
   echo "[hook] gate: changed integration tests"
   if ((${#PUSH_IMPACT_RELATED_PATHS[@]} == 0)); then
     echo "[hook] fallback reason: related test candidates were empty or unsafe"
-    echo "[hook] fallback profile: full (lint:fast → type-check → test:all → component Browser Mode → build → all production routes → build-parity → security)"
-    run_full_profile || return $?
+    echo "[hook] fallback profile: full validation with pre-push Browser Mode selection"
+    run_full_profile prepush-browser || return $?
     return
   fi
   if pnpm exec vitest related --run --passWithNoTests --reporter=json --outputFile="$result" "${PUSH_IMPACT_RELATED_PATHS[@]}" >"$log" 2>&1; then
@@ -79,29 +79,30 @@ NODE
     ); then
       if [[ "$related_files" == 0 ]]; then
         echo "[hook] fallback reason: related test set was empty (Vitest JSON testResults=0)"
-        echo "[hook] fallback profile: full (lint:fast → type-check → test:all → component Browser Mode → build → all production routes → build-parity → security)"
-        run_full_profile || return $?
+        echo "[hook] fallback profile: full validation with pre-push Browser Mode selection"
+        run_full_profile prepush-browser || return $?
       else
         echo "[hook] related test files: $related_files"
         echo "[hook] gate passed: changed integration tests"
-        hook_gate "test:browser:component:all" pnpm run test:browser:component:all || return $?
+        hook_gate "test:browser:prepush:component" pnpm run test:browser:prepush:component || return $?
         COMPONENT_BROWSER_RAN=1
       fi
     else
       echo "[hook] fallback reason: related test result was indeterminate (missing, invalid, or incompatible Vitest JSON)"
-      echo "[hook] fallback profile: full (lint:fast → type-check → test:all → component Browser Mode → build → all production routes → build-parity → security)"
-      run_full_profile || return $?
+      echo "[hook] fallback profile: full validation with pre-push Browser Mode selection"
+      run_full_profile prepush-browser || return $?
     fi
   else
     status=$?
     cat -- "$log"
     echo "[hook] fallback reason: related tests failed (exit $status)"
-    echo "[hook] fallback profile: full (lint:fast → type-check → test:all → component Browser Mode → build → all production routes → build-parity → security)"
-    run_full_profile || return $?
+    echo "[hook] fallback profile: full validation with pre-push Browser Mode selection"
+    run_full_profile prepush-browser || return $?
   fi
 }
 
 run_full_profile() {
+  local browser_profile=${1:-all}
   FULL_PROFILE_RAN=1
   # Keep this order in sync with test:full. Every gate must stop the hook.
   hook_gate "lint:fast" pnpm run lint:fast || return $?
@@ -115,10 +116,18 @@ run_full_profile() {
     -u GIT_OBJECT_DIRECTORY \
     -u GIT_ALTERNATE_OBJECT_DIRECTORIES \
     VITEST_MAX_WORKERS=2 pnpm run test:all || return $?
-  hook_gate "test:browser:component:all" pnpm run test:browser:component:all || return $?
+  if [[ "$browser_profile" == prepush-browser ]]; then
+    hook_gate "test:browser:prepush:component" pnpm run test:browser:prepush:component || return $?
+  else
+    hook_gate "test:browser:component:all" pnpm run test:browser:component:all || return $?
+  fi
   COMPONENT_BROWSER_RAN=1
   hook_gate "build" pnpm run build || return $?
-  hook_gate "test:browser:next-route-poc:built:all" pnpm run test:browser:next-route-poc:built:all || return $?
+  if [[ "$browser_profile" == prepush-browser ]]; then
+    hook_gate "test:browser:next-route-poc:prepush:built" pnpm run test:browser:next-route-poc:prepush:built || return $?
+  else
+    hook_gate "test:browser:next-route-poc:built:all" pnpm run test:browser:next-route-poc:built:all || return $?
+  fi
   hook_gate "test:build-parity" pnpm run test:build-parity || return $?
   hook_gate "security-check" pnpm run security-check || return $?
   echo "[hook] production validation: not run (separate gate; PROD_URL/network availability is not established)"
@@ -137,11 +146,11 @@ else
   fi
   if ((FULL_PROFILE_RAN == 0)); then
     if ((COMPONENT_BROWSER_RAN == 0)); then
-      hook_gate "test:browser:component:all" pnpm run test:browser:component:all || exit $?
+      hook_gate "test:browser:prepush:component" pnpm run test:browser:prepush:component || exit $?
       COMPONENT_BROWSER_RAN=1
     fi
     hook_gate "build" pnpm run build || exit $?
-    hook_gate "test:browser:next-route-poc:built:all" pnpm run test:browser:next-route-poc:built:all || exit $?
+    hook_gate "test:browser:next-route-poc:prepush:built" pnpm run test:browser:next-route-poc:prepush:built || exit $?
     echo "[hook] production validation: not run (separate gate; PROD_URL/network availability is not established)"
   fi
 fi

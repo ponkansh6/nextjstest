@@ -5,6 +5,11 @@ import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { validateCatalogSelectionRequest } from "./catalog-selection-request.mjs";
+import {
+  automaticCandidateChoices,
+  diagnosisFromCandidate,
+  validateClarificationCandidates,
+} from "./clarification-candidates.mjs";
 
 const DEFAULT_BASE_URL = "https://api.typesafe.ai/v1/systemone";
 const DEFAULT_TIMEOUT_MS = 120_000;
@@ -76,6 +81,7 @@ function parseArgs(argv) {
     "--catalog-selection-request",
     "--output",
     "--timeout-ms",
+    "--clarification-candidates",
     "--follow-up",
     "--reason",
     "--reasons-file",
@@ -1218,7 +1224,7 @@ function automaticClarificationChoices(initialResult, secret) {
   };
 }
 
-function automaticClarificationRequest(initialResult, choices, secret) {
+function automaticClarificationRequest(initialResult, choices, secret, usesCandidates = false) {
   const prior = { ...initialResult };
   delete prior.generatedAt;
   const safeChoices = redact(choices, secret);
@@ -1234,10 +1240,12 @@ function automaticClarificationRequest(initialResult, choices, secret) {
       implementationQuestion: safeChoices.question,
       availableChoices: safeChoices.choices,
       priorReview: redact(prior, secret),
-      outputRequirement:
-        "Return the selected choice ID and a complete case-specific diagnosis: finding, affected location or requirement, observed evidence or exact neededEvidence, concrete nextAction or proposedFix, and remainingUncertainty (write 'none' explicitly when resolved). Repeat the affected/evidence detail in this answer and tie it to the selected action. If a required detail cannot be established, say so explicitly; do not omit the field or invent evidence.",
-      instruction:
-        "Select exactly one available choice as the best next action for resolving or validating the initial non-pass judgment. Treat the choices and their descriptions as the complete allowed option set; do not invent another choice. Return the selected option ID together with every field required by outputRequirement: a case-specific finding, affected location or requirement, observed evidence or exact neededEvidence, concrete nextAction or proposedFix, and remaining uncertainty (explicitly state 'none' if resolved). Repeat the affected/evidence detail and tie it to the selected action. Explain the evidence and why the selected action is the best next step. This clarification cannot approve or alter the initial verdict. A normal initial JEV review is required after the action; do not issue another clarification.",
+      outputRequirement: usesCandidates
+        ? "Return only the ID of exactly one supplied choice. The supplied candidates already contain the case diagnosis and immediate action. Do not invent or explain a different reason or action."
+        : "Return the selected choice ID and a complete case-specific diagnosis: finding, affected location or requirement, observed evidence or exact neededEvidence, concrete nextAction or proposedFix, and remainingUncertainty (write 'none' explicitly when resolved). Repeat the affected/evidence detail in this answer and tie it to the selected action. If a required detail cannot be established, say so explicitly; do not omit the field or invent evidence.",
+      instruction: usesCandidates
+        ? "Select exactly one supplied mutually exclusive candidate by its ID. Candidate findings, affected locations, evidence, actions, and uncertainty were prepared by Codex and are not JEV findings. Return the ID only; do not add or infer diagnosis details. This clarification cannot approve or alter the initial verdict, and no further clarification will be issued."
+        : "Select exactly one available choice as the best next action for resolving or validating the initial non-pass judgment. Treat the choices and their descriptions as the complete allowed option set; do not invent another choice. Return the selected option ID together with every field required by outputRequirement: a case-specific finding, affected location or requirement, observed evidence or exact neededEvidence, concrete nextAction or proposedFix, and remaining uncertainty (explicitly state 'none' if resolved). Repeat the affected/evidence detail and tie it to the selected action. Explain the evidence and why the selected action is the best next step. This clarification cannot approve or alter the initial verdict. A normal initial JEV review is required after the action; do not issue another clarification.",
     },
     questions: {
       implementation_clarification: {
@@ -1253,9 +1261,16 @@ function automaticClarificationRequest(initialResult, choices, secret) {
   };
 }
 
-async function runAutomaticClarification(initialResult, apiKey, endpoint, timeoutMs) {
-  const choices = automaticClarificationChoices(initialResult, apiKey);
-  const request = automaticClarificationRequest(initialResult, choices, apiKey);
+async function runAutomaticClarification(initialResult, apiKey, endpoint, timeoutMs, candidates) {
+  const choices = candidates
+    ? automaticCandidateChoices(candidates)
+    : automaticClarificationChoices(initialResult, apiKey);
+  const request = automaticClarificationRequest(
+    initialResult,
+    choices,
+    apiKey,
+    Boolean(candidates),
+  );
   const questionIds = Object.keys(request.questions);
   const apiRequest = { ...request };
   delete apiRequest.schemaVersion;
@@ -1319,6 +1334,15 @@ async function runAutomaticClarification(initialResult, apiKey, endpoint, timeou
     result.responseValidation = { valid: true };
     result.selectedChoice = selected.choice;
     result.clarification = redact(selected.answer, apiKey);
+    if (candidates) {
+      const candidate = candidates.choices.find(({ id }) => id === selected.choice);
+      result.diagnosisSource = "provided_candidate";
+      result.diagnosis = redact(diagnosisFromCandidate(candidate), apiKey);
+      result.diagnosisStatus = "complete";
+      result.unresolvedReasons = [];
+      result.resolution = "selected";
+      return result;
+    }
     const finding = answerReason(selected.answer);
     const affected = answerField(selected.answer, [
       "affectedLocation",
@@ -1581,6 +1605,7 @@ async function main() {
   const catalogSelectionRequestFile = args.get("--catalog-selection-request");
   const followUpFile = args.get("--follow-up");
   const clarifyFile = args.get("--clarify");
+  const clarificationCandidatesFile = args.get("--clarification-candidates");
   const modes = [requestFile, catalogSelectionRequestFile, followUpFile, clarifyFile].filter(
     (value) => typeof value === "string",
   );
@@ -1606,6 +1631,8 @@ async function main() {
     (args.has("--reason") || args.has("--reasons-file") || args.has("--follow-up"))
   )
     throw new Error("--reason and --follow-up cannot be used with --clarify");
+  if (clarificationCandidatesFile !== undefined && typeof requestFile !== "string")
+    throw new Error("--clarification-candidates requires --request with a v3 initial review");
   // An explicitly exported key wins for backwards compatibility; otherwise use
   // the repository-local .env.local value without exposing that file to JEV.
   const apiKey = process.env.TYPESAFE_API_KEY || (await readLocalApiKey());
@@ -1628,11 +1655,19 @@ async function main() {
         : JSON.parse(
             await readFile(path.resolve(catalogSelectionRequestFile ?? requestFile), "utf8"),
           );
+  const clarificationCandidates =
+    clarificationCandidatesFile === undefined
+      ? undefined
+      : validateClarificationCandidates(
+          JSON.parse(await readFile(path.resolve(clarificationCandidatesFile), "utf8")),
+        );
   const catalogSelectionMode = typeof catalogSelectionRequestFile === "string";
   const fileRequestMode = typeof requestFile === "string" || catalogSelectionMode;
   const questionIds = catalogSelectionMode
     ? validateCatalogSelectionRequest(request)
     : validateRequest(request);
+  if (clarificationCandidates && request.schemaVersion !== INITIAL_DISTRIBUTION_SCHEMA)
+    throw new Error("--clarification-candidates requires a v3 initial distribution request");
   const timeoutMs = Number(args.get("--timeout-ms") ?? DEFAULT_TIMEOUT_MS);
   if (!Number.isInteger(timeoutMs) || timeoutMs <= 0)
     throw new Error("--timeout-ms must be a positive integer");
@@ -1729,6 +1764,7 @@ async function main() {
         apiKey,
         endpoint,
         timeoutMs,
+        clarificationCandidates,
       );
     }
   } else if (catalogSelectionMode) {

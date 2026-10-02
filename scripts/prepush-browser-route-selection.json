@@ -1,0 +1,38 @@
+{
+  "vitest.browser.aggregate-chromium.config.ts": [
+    {
+      "file": "tests/browser-mode/next-route-poc.browser.test.ts",
+      "names": [
+        "Playwright Browser Mode custom command observes a production Next chart interaction"
+      ]
+    },
+    {
+      "file": "tests/browser-mode/batch5-lazy-tabs-chromium-production-route.browser.test.ts",
+      "names": ["p45-b-section-tabs-scroll-82-case01-chromium"]
+    },
+    {
+      "file": "tests/browser-mode/batch4-b-production-route.browser.test.ts",
+      "names": [
+        "p45-b-range-change-119-e2e — production spending-chart-nominal data narrows and a visible bar remains after changing the range"
+      ]
+    },
+    {
+      "file": "tests/browser-mode/phase6-b03-advanced-series.browser.test.ts",
+      "names": [
+        "p45-a-parity-hidden-series preserves chart, table, and CSV data when a legend series is hidden"
+      ]
+    },
+    {
+      "file": "tests/browser-mode/phase6-b13-tooltip-dismiss.browser.test.ts",
+      "names": [
+        "B13 #473: outside-heading touch clears stacked chart cursor and active dots"
+      ]
+    },
+    {
+      "file": "tests/browser-mode/phase6-b14-residual-accessibility.browser.test.ts",
+      "names": [
+        "B14: keyboard Tab reaches the named legend with a visible focus outline"
+      ]
+    }
+  ]
+}

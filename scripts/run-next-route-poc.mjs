@@ -1,10 +1,12 @@
 import { spawn } from "node:child_process";
 import { createServer } from "node:net";
 import { setTimeout as delay } from "node:timers/promises";
-import { existsSync, mkdirSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { randomUUID } from "node:crypto";
+import { assertSelectedBrowserCasesPassed } from "./browser-selection-validation.mjs";
 
 const PROJECT_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const NEXT_CLI = path.join(PROJECT_ROOT, "node_modules", "next", "dist", "bin", "next");
@@ -45,6 +47,8 @@ function parseRunnerArgs(args) {
     const selection = JSON.parse(readFileSync(selectionFile, "utf8"));
     if (!selection || typeof selection !== "object" || Array.isArray(selection))
       throw new Error("Browser selection must be a config-to-files object.");
+    if (Object.keys(selection).length === 0)
+      throw new Error("Browser selection must contain at least one config and test.");
     const allowedConfigs = new Set(VITEST_CONFIGS.all);
     for (const [config, files] of Object.entries(selection)) {
       if (!allowedConfigs.has(config) || !Array.isArray(files) || files.length === 0)
@@ -63,6 +67,8 @@ function parseRunnerArgs(args) {
           throw new Error(`Unsafe browser test path: ${entry.file}`);
         if (entry.names.some((name) => typeof name !== "string" || !name.length))
           throw new Error(`Invalid test name for ${entry.file}.`);
+        if (new Set(entry.names).size !== entry.names.length)
+          throw new Error(`Duplicate test name for ${entry.file}.`);
       }
     }
     return { configs: Object.keys(selection), profileJson, selection };
@@ -375,6 +381,9 @@ function runVitestConfig(port, config, timeoutMs, browserApiPort, profileJsonPat
       return;
     }
     const startedAt = Date.now();
+    const selectionResultPath = selectedFile
+      ? path.join(os.tmpdir(), `next-route-selection-${process.pid}-${randomUUID()}.json`)
+      : undefined;
     console.log(`[browser-mode] start ${config}`);
     const childEnv = { ...process.env, NEXT_ROUTE_POC_PORT: String(port) };
     delete childEnv.NEXT_ROUTE_POC_BROWSER_API_PORT;
@@ -393,6 +402,11 @@ function runVitestConfig(port, config, timeoutMs, browserApiPort, profileJsonPat
             ? pattern
             : `^(?!.*-webkit)(?:${selectedFile.names.map(escapeRegexLiteral).join("|")})$`;
       vitestArgs.push("--testNamePattern", constrainedPattern, selectedFile.file);
+      vitestArgs.push(
+        "--reporter=default",
+        "--reporter=json",
+        `--outputFile.json=${selectionResultPath}`,
+      );
     }
     if (profileJsonPath) {
       console.log(`[browser-mode] JSON profile ${config} -> ${profileJsonPath}`);
@@ -413,10 +427,23 @@ function runVitestConfig(port, config, timeoutMs, browserApiPort, profileJsonPat
       if (settled) return;
       settled = true;
       clearTimeout(timeout);
+      let finalCode = code;
+      if (code === 0 && selectedFile && selectionResultPath) {
+        try {
+          const report = JSON.parse(readFileSync(selectionResultPath, "utf8"));
+          assertSelectedBrowserCasesPassed(report, selectedFile.names);
+        } catch (error) {
+          console.error(
+            `[browser-mode] could not verify selected test results for ${selectedFile.file}: ${error instanceof Error ? error.message : error}`,
+          );
+          finalCode = 1;
+        }
+      }
+      if (selectionResultPath) rmSync(selectionResultPath, { force: true });
       console.log(
-        `[browser-mode] finish ${config} elapsed=${((Date.now() - startedAt) / 1_000).toFixed(2)}s exit=${code}`,
+        `[browser-mode] finish ${config} elapsed=${((Date.now() - startedAt) / 1_000).toFixed(2)}s exit=${finalCode}`,
       );
-      resolve(code);
+      resolve(finalCode);
     };
     const timeout = setTimeout(() => {
       timedOut = true;

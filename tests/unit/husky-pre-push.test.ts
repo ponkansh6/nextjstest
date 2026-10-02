@@ -375,9 +375,35 @@ printf 'reasons=%s\\n' "\${PUSH_IMPACT_REASONS[*]-}"`,
 
   it("connects the hook to the filtered candidates and keeps unsafe diff classes conservative", () => {
     const hook = fs.readFileSync(path.resolve(process.cwd(), ".husky/pre-push.bash"), "utf8");
+    const packageScripts = JSON.parse(
+      fs.readFileSync(path.resolve(process.cwd(), "package.json"), "utf8"),
+    ).scripts as Record<string, string>;
+    const routeSelection = JSON.parse(
+      fs.readFileSync(
+        path.resolve(process.cwd(), "scripts/prepush-browser-route-selection.json"),
+        "utf8",
+      ),
+    ) as Record<string, Array<{ file: string; names: string[] }>>;
     expect(hook).toContain('"${PUSH_IMPACT_RELATED_PATHS[@]}"');
+    expect(hook).toContain("pnpm run test:browser:prepush:component");
+    expect(hook).toContain("pnpm run test:browser:next-route-poc:prepush:built");
     expect(hook).toContain("pnpm run test:browser:component:all");
     expect(hook).toContain("pnpm run test:browser:next-route-poc:built:all");
+    expect(packageScripts["test:browser:prepush:component"]).toBe(
+      "node scripts/run-prepush-component-browser.mjs",
+    );
+    expect(routeSelection["vitest.browser.aggregate-chromium.config.ts"]).toHaveLength(6);
+    expect(
+      Object.values(routeSelection)
+        .flat()
+        .every((entry) => entry.names.length === 1),
+    ).toBe(true);
+    expect(packageScripts["test:browser:component:all"]).toBe(
+      "vitest run --config vitest.browser.config.ts",
+    );
+    expect(packageScripts["test:browser:next-route-poc:built:all"]).toBe(
+      "node scripts/run-next-route-poc.mjs",
+    );
     expect(hook).not.toContain("jev");
     expect(hook).toContain("run_full_profile");
 
