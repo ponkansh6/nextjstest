@@ -124,26 +124,18 @@ describe("server/lib/dataLoader", () => {
       expect(data[0].総合).toBe(100);
     });
 
-    it("falls back only to the complete 2020 pair when the 2025 pair is incomplete", async () => {
-      const fallbackCpi = "年月,総合\n2020年1月,100";
-      const fallbackWeights = "類・品目,総合\nウエイト(2020年指数以降),10000";
+    it("fails closed when the 2025 pair is incomplete", async () => {
       (fs.existsSync as any).mockImplementation(
         (path: string) => !path.includes("cpi_data2025_long.csv"),
       );
-      (fs.readFileSync as any).mockImplementation((path: string) => {
-        if (path.includes("cpi_data.csv")) return fallbackCpi;
-        if (path.includes("contribution.csv")) return fallbackWeights;
-        return "";
-      });
+      (fs.readFileSync as any).mockReturnValue("");
 
-      const data = await loadCpiData();
-
-      expect(data).toHaveLength(1);
-      expect(data[0]).toMatchObject({ 年月: "2020年1月", 総合: 100 });
+      await expect(loadCpiData()).resolves.toEqual([]);
       await expect(getCpiDataStatus()).resolves.toMatchObject({
-        baseYear: 2020,
-        pair: "2020",
-        valid: true,
+        baseYear: null,
+        pair: null,
+        valid: false,
+        reason: "cpi_source_missing",
       });
     });
 
@@ -151,6 +143,7 @@ describe("server/lib/dataLoader", () => {
       [
         "a changed CSV hash",
         (metadata: Record<string, unknown>) => ({ ...metadata, csvSha256: "0".repeat(64) }),
+        "cpi_hash_mismatch",
       ],
       [
         "an invalid monthly row count",
@@ -158,57 +151,56 @@ describe("server/lib/dataLoader", () => {
           ...metadata,
           period: { ...(metadata.period as Record<string, unknown>), monthlyRows: 678 },
         }),
+        "cpi_metadata_invalid",
       ],
       [
         "an invalid series count",
         (metadata: Record<string, unknown>) => ({ ...metadata, seriesCount: 77 }),
+        null,
       ],
-    ])("falls back to the complete 2020 pair for %s", async (_description, alterMetadata) => {
+    ])("fails closed for %s", async (_description, alterMetadata, expectedReason) => {
       const fixture = build2025Fixture();
-      const fallbackCpi = "年月,総合\n2020年1月,100";
-      const fallbackWeights = "類・品目,総合\nウエイト(2020年指数以降),10000";
       (fs.existsSync as any).mockReturnValue(true);
       (fs.readFileSync as any).mockImplementation((filePath: string) => {
         if (filePath.includes("cpi_data2025_long.csv")) return fixture.cpi;
         if (filePath.includes("contribution2025.csv")) return fixture.contribution;
         if (filePath.includes("metadata.json"))
           return JSON.stringify(alterMetadata(JSON.parse(fixture.metadata)));
-        if (filePath.includes("cpi_data.csv")) return fallbackCpi;
-        if (filePath.includes("contribution.csv")) return fallbackWeights;
         return "";
       });
 
-      await expect(loadCpiData()).resolves.toMatchObject([{ 年月: "2020年1月", 総合: 100 }]);
-      await expect(getCpiDataStatus()).resolves.toMatchObject({
-        baseYear: 2020,
-        pair: "2020",
-        valid: true,
-      });
+      await expect(loadCpiData()).resolves.toEqual([]);
+      const expectedStatus: Record<string, unknown> = {
+        baseYear: null,
+        pair: null,
+        valid: false,
+      };
+      if (expectedReason !== null) {
+        expectedStatus.reason = expectedReason;
+      }
+      await expect(getCpiDataStatus()).resolves.toMatchObject(expectedStatus);
     });
 
-    it("rejects a metadata-inconsistent 2025 pair instead of mixing it with 2020 inputs", async () => {
-      const cpi = "年月,総合\n2025年1月,100";
-      const weights = "類・品目,総合\nウエイト(2025年指数以降),10000";
+    it("rejects a metadata-inconsistent 2025 pair", async () => {
+      const fixture = build2025Fixture();
       (fs.existsSync as any).mockReturnValue(true);
       (fs.readFileSync as any).mockImplementation((path: string) => {
+        if (path.includes("cpi_data2025_long.csv")) return fixture.cpi;
+        if (path.includes("contribution2025.csv")) return fixture.contribution;
         if (path.includes("metadata.json"))
           return JSON.stringify({
-            status: "ready",
+            ...JSON.parse(fixture.metadata),
             baseYear: 2020,
-            indexFile: "cpi_data2025_long.csv",
-            contributionFile: "contribution2025.csv",
           });
-        if (path.includes("cpi_data2025_long.csv") || path.includes("cpi_data.csv")) return cpi;
-        if (path.includes("contribution2025.csv") || path.includes("contribution.csv"))
-          return weights;
         return "";
       });
 
-      await expect(loadCpiData()).resolves.toHaveLength(1);
+      await expect(loadCpiData()).resolves.toEqual([]);
       await expect(getCpiDataStatus()).resolves.toMatchObject({
-        baseYear: 2020,
-        pair: "2020",
-        valid: true,
+        baseYear: null,
+        pair: null,
+        valid: false,
+        reason: "cpi_metadata_invalid",
       });
     });
 

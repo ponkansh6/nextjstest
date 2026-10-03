@@ -167,32 +167,22 @@ describe("loader fixture comparison gate", () => {
   });
 
   it.each([
-    ["CPI", cpiPaths.main, loadCpiData, getCpiDataStatus],
-    ["CTI", ctiPaths.candidateMain, loadCtiData, getCtiDataStatus],
-  ] as const)(
-    "uses the 2020 rollback when %s 2025 is invalid",
-    async (_name, file, load, status) => {
-      blockFiles(file);
-      const observed = await observeLoader(load, status);
-      expect(observed.value).not.toEqual([]);
-      expect(observed.status).toMatchObject({
-        valid: true,
-        baseYear: 2020,
-        pair: "2020",
-      });
-    },
-  );
+    ["CPI", cpiPaths.main, () => observeLoader(loadCpiData, getCpiDataStatus)],
+    ["CTI", ctiPaths.candidateMain, () => observeLoader(loadCtiData, getCtiDataStatus)],
+  ] as const)("fails closed when %s 2025 is invalid", async (_name, file, observe) => {
+    blockFiles(file);
+    const observed = await observe();
+    expect(observed.value).toEqual([]);
+    expect(observed.status).toMatchObject({ valid: false, baseYear: null, pair: null });
+    expect(observed.status?.reason).toEqual(expect.any(String));
+    expect(observed.status?.reason).not.toEqual("");
+  });
 
   it("fails closed and exposes a classified reason when all CPI/CTI source pairs are invalid", async () => {
     blockFiles(
       cpiPaths.main,
       cpiPaths.contribution,
-      cpiPaths.fallbackMain,
-      cpiPaths.fallbackContribution,
       ctiPaths.candidateMain,
-      ctiPaths.main,
-      ctiPaths.supportNominal,
-      ctiPaths.supportReal,
       ctiPaths.candidateDistributionAdjusted,
       ctiPaths.candidateDistributionAdjustedMetadata,
       ctiPaths.seriesMap,
@@ -207,14 +197,14 @@ describe("loader fixture comparison gate", () => {
       baseYear: null,
       pair: null,
     });
-    expect(cpi.status?.reason).toEqual(expect.stringContaining("pair"));
+    expect(cpi.status?.reason).toEqual("cpi_source_missing");
     expect(cti.value).toEqual([]);
     expect(cti.status).toMatchObject({
       valid: false,
       baseYear: null,
       pair: null,
     });
-    expect(cti.status?.reason).toEqual(expect.stringContaining("pair"));
+    expect(cti.status?.reason).toEqual("cti_source_missing");
   });
 
   it("publishes annual GDP raw and comparison values through the public monthly loader (not-applicable: no runtime cache wrapper)", async () => {

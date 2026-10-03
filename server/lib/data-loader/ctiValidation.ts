@@ -6,19 +6,28 @@ import { buildCtiFilePaths } from "../dataIo";
 import { parseYearMonth } from "@/lib/yearMonth";
 import { calculateQuarterLabel } from "@/lib/math/quarter";
 
-export type CtiLoadOptions = { source?: "auto" | "rollback-2020" };
+export type CtiLoadOptions = { source?: "auto" };
 export type CtiPair = {
-  baseYear: 2020 | 2025;
-  pair: "2020" | "2025";
+  baseYear: 2025;
+  pair: "2025";
   mainPath: string;
   supportNominalPath: string;
   supportRealPath: string;
 };
+export type CtiReasonCode =
+  | "cti_source_missing"
+  | "cti_metadata_invalid"
+  | "cti_hash_mismatch"
+  | "cti_schema_invalid"
+  | "cti_period_invalid"
+  | "cti_required_support_unavailable"
+  | "cti_fail_closed";
+
 export type CtiDataStatus = {
-  baseYear: 2020 | 2025 | null;
-  pair: "2020" | "2025" | null;
+  baseYear: 2025 | null;
+  pair: "2025" | null;
   valid: boolean;
-  reason?: string;
+  reason?: CtiReasonCode;
 };
 
 export function isContinuousMonths(months: string[]): boolean {
@@ -167,20 +176,16 @@ export function validateCtiPair(
   pair: CtiPair,
   paths: ReturnType<typeof buildCtiFilePaths>,
 ): string | CtiPair {
-  const required =
-    pair.baseYear === 2020
-      ? [pair.mainPath, pair.supportNominalPath, pair.supportRealPath]
-      : [pair.mainPath];
-  if (pair.baseYear === 2025)
-    required.push(
-      paths.seriesMap,
-      paths.officialSnapshot,
-      paths.metadata,
-      paths.candidateDistributionAdjusted,
-      paths.candidateDistributionAdjustedMetadata,
-      paths.candidateDistributionAdjustedQuarterly,
-      paths.candidateDistributionAdjustedQuarterlyMetadata,
-    );
+  const required = [
+    pair.mainPath,
+    paths.seriesMap,
+    paths.officialSnapshot,
+    paths.metadata,
+    paths.candidateDistributionAdjusted,
+    paths.candidateDistributionAdjustedMetadata,
+    paths.candidateDistributionAdjustedQuarterly,
+    paths.candidateDistributionAdjustedQuarterlyMetadata,
+  ];
   if (required.some((filePath) => !fs.existsSync(filePath))) return "missing required CTI set file";
   const content = fs.readFileSync(pair.mainPath, "utf8");
   const parsed = Papa.parse<string[]>(content, { header: false, skipEmptyLines: true }).data;
@@ -213,14 +218,6 @@ export function validateCtiPair(
     )
   )
     return "invalid CTI required numeric value";
-  if (pair.baseYear === 2020) {
-    const support = validateCtiLegacySupportPair(
-      fs.readFileSync(pair.supportNominalPath, "utf8"),
-      fs.readFileSync(pair.supportRealPath, "utf8"),
-    );
-    if (typeof support === "string") return support;
-    return pair;
-  }
   // CtiPair only permits 2020 or 2025; the 2020 contract returns above.
   const readHeaders = (filePath: string) =>
     Papa.parse<string[]>(fs.readFileSync(filePath, "utf8"), {
@@ -407,30 +404,69 @@ export function validateCtiPair(
   return values2025.length === 12 ? pair : "incomplete 2025 CTI calendar year";
 }
 
-export function selectCtiPair(options: CtiLoadOptions = {}): { pair: CtiPair } | CtiDataStatus {
-  const paths = buildCtiFilePaths();
-  const pairs: CtiPair[] = [
-    {
-      baseYear: 2025,
-      pair: "2025",
-      mainPath: paths.candidateMain,
-      supportNominalPath: paths.candidateSupportNominal,
-      supportRealPath: paths.candidateSupportReal,
-    },
-    {
-      baseYear: 2020,
-      pair: "2020",
-      mainPath: paths.main,
-      supportNominalPath: paths.supportNominal,
-      supportRealPath: paths.supportReal,
-    },
-  ].filter((pair) => options.source !== "rollback-2020" || pair.baseYear === 2020) as CtiPair[];
-  let lastReason = "no complete CTI set";
-  for (const pair of pairs) {
-    const validation = validateCtiPair(pair, paths);
-    if (typeof validation !== "string") return { pair };
-    lastReason = `${pair.pair} pair: ${validation}`;
-    console.error(`CTI data pair validation failed (${lastReason})`);
+export function mapCtiReasonToCode(validationMsg: string): CtiReasonCode {
+  switch (validationMsg) {
+    case "missing metadata":
+    case "missing required CTI set file":
+    case "missing CTI 年月 header":
+      return "cti_source_missing";
+
+    case "metadata is not ready for 2025":
+    case "metadata file pairing mismatch":
+    case "invalid metadata":
+    case "invalid 2025 series map headers":
+    case "invalid 2025 official snapshot headers":
+    case "2025 CTI metadata basis fields are missing":
+      return "cti_metadata_invalid";
+
+    case "metadata SHA-256 is missing or invalid":
+    case "metadata SHA-256 mismatch":
+      return "cti_hash_mismatch";
+
+    case "invalid or duplicate CTI support period":
+    case "invalid CTI support value":
+    case "CTI nominal/real support period set mismatch":
+    case "missing required CTI total headers":
+    case "invalid CTI required numeric value":
+    case "invalid or duplicate 2025 series map rows":
+    case "invalid or duplicate 2025 official snapshot rows":
+    case "2025 series map and official snapshot code set mismatch":
+      return "cti_schema_invalid";
+
+    case "CTI support periods are not continuous":
+    case "invalid or discontinuous CTI 年月":
+    case "invalid or duplicate CTI 年月":
+    case "2025 CTI metadata period mismatch":
+    case "incomplete 2025 CTI calendar year":
+      return "cti_period_invalid";
+
+    case "missing CTI support period or series header":
+    case "CTI support contains no values":
+    case "missing official quarterly source workbook":
+      return "cti_required_support_unavailable";
+
+    default:
+      return "cti_fail_closed";
   }
-  return { baseYear: null, pair: null, valid: false, reason: lastReason };
+}
+
+export function selectCtiPair(_options: CtiLoadOptions = {}): { pair: CtiPair } | CtiDataStatus {
+  const paths = buildCtiFilePaths();
+  const pair: CtiPair = {
+    baseYear: 2025,
+    pair: "2025",
+    mainPath: paths.candidateMain,
+    supportNominalPath: paths.candidateSupportNominal,
+    supportRealPath: paths.candidateSupportReal,
+  };
+  const validation = validateCtiPair(pair, paths);
+  if (typeof validation !== "string") return { pair };
+  const rawReason = `2025 pair: ${validation}`;
+  console.error(`CTI data pair validation failed (${rawReason})`);
+  return {
+    baseYear: null,
+    pair: null,
+    valid: false,
+    reason: mapCtiReasonToCode(validation),
+  };
 }

@@ -169,19 +169,23 @@ describe("new-graph and residual chart info wording", () => {
 
 /**
  * CPI の説明は、静的な CHART_INFO をそのまま利用できることを保ちつつ、
- * 実際に選択された長期系列（2025年基準 / 2020年基準）で解決される必要がある。
- *
- * 現在は cpi_data2025_long.csv が未配置なので、画面に渡す解決済み説明は
- * 2020年基準を明示しなければならない。このテストは、
- * CPI ローダーの選択状態を受け取る chart-info の公開 API を対象にする。
+ * 2025年基準の単独入力や unavailable の理由コードに基づいた動的説明文で解決される必要がある。
+ * このテストは、CPI ローダーの選択状態を受け取る chart-info の公開 API を対象にする。
  */
 describe("CPI chart info data-source state", () => {
-  it("2020年基準では e-Stat 出典と固定ウェイト試算を維持し、2020年基準を明示する", async () => {
+  it.each([
+    ["cpi_metadata_invalid", "CPIデータのメタデータが不正です。"],
+    ["cpi_hash_mismatch", "CPIデータの整合性チェックに失敗しました。"],
+    ["cpi_schema_invalid", "CPIデータの形式が不正です。"],
+    ["cpi_period_invalid", "CPIデータの期間が不正です。"],
+    ["cpi_value_invalid", "CPIデータの値が不正です。"],
+    ["unknown_reason", "CPIデータは現在利用できません。"],
+  ])("shows the safe unavailable label for %s", async (reason, expectedLabel) => {
     const { getChartInfoContent } = await import("@/lib/chartInfoContent");
-
     const info = getChartInfoContent("cpi-major", {
-      baseYear: 2020,
-      dataState: "2020-fallback",
+      baseYear: null,
+      sourceMode: "unavailable",
+      reason,
     });
     const text = [
       info.source,
@@ -190,13 +194,51 @@ describe("CPI chart info data-source state", () => {
       ),
     ].join("\n");
 
-    expect(info.source).toContain("e-Stat");
-    expect(text).toContain("2020年基準");
-    expect(text).toContain("2020年基準の指数データ");
+    expect(text).toContain(expectedLabel);
+  });
+
+  it("unavailable では reason code 由来の利用者向け文言を表示する", async () => {
+    const { getChartInfoContent } = await import("@/lib/chartInfoContent");
+
+    const info = getChartInfoContent("cpi-major", {
+      baseYear: null,
+      sourceMode: "unavailable",
+      reason: "cpi_source_missing",
+    });
+    const text = [
+      info.source,
+      ...info.sections.flatMap((section) =>
+        section.items.flatMap((item) => [item.text, ...(item.subItems ?? [])]),
+      ),
+    ].join("\n");
+
+    expect(text).toContain("CPIデータ未取得");
+    expect(text).toContain("CPIデータの元ファイルが見つかりません。");
+    expect(text).not.toContain("2020年基準");
     expect(text).not.toMatch(/フォールバック|fallback/i);
-    expect(text).not.toContain("2025年平均=100の公式接続指数を表示");
-    expect(text).toContain("固定して適用した試算");
-    expect(info.url).toContain("tstat=000001150147");
+  });
+
+  it("理由がある CPI unavailable 状態では利用者向け理由を追加表示する", async () => {
+    const { getChartInfoContent } = await import("@/lib/chartInfoContent");
+    const info = getChartInfoContent("cpi-major", {
+      baseYear: null,
+      sourceMode: "unavailable",
+      reason: "cpi_hash_mismatch",
+    });
+    const stateItems = info.sections[0]?.items.map((item) => item.text);
+
+    expect(info.sections[0]?.heading).toBe("データ状態");
+    expect(stateItems).toEqual(["CPIデータ未取得", "CPIデータの整合性チェックに失敗しました。"]);
+  });
+
+  it("理由未指定の CPI unavailable 状態では未取得表示だけにする", async () => {
+    const { getChartInfoContent } = await import("@/lib/chartInfoContent");
+    const info = getChartInfoContent("cpi-major", {
+      baseYear: null,
+      sourceMode: "unavailable",
+    });
+
+    expect(info.sections[0]?.items).toEqual([{ text: "CPIデータ未取得" }]);
   });
 
   it("2025 long が選択された場合は 2025年基準の公式接続指数として説明する", async () => {
@@ -204,7 +246,7 @@ describe("CPI chart info data-source state", () => {
 
     const info = getChartInfoContent("stacked-area", {
       baseYear: 2025,
-      dataState: "2025-long",
+      sourceMode: "official-long",
     });
     const text = [
       info.source,
@@ -227,12 +269,14 @@ describe("CPI chart info data-source state", () => {
     const info = getChartInfoContent("cpi-major", {
       baseYear: null,
       sourceMode: "unavailable",
+      reason: "cpi_source_missing",
     });
     const text = info.sections
       .flatMap((section) => section.items.map((item) => item.text))
       .join("\n");
 
     expect(text).toContain("CPIデータ未取得");
+    expect(text).toContain("CPIデータの元ファイルが見つかりません。");
     expect(text).not.toContain("2020年基準");
     expect(text).not.toMatch(/フォールバック|fallback/i);
   });

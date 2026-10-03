@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   loadTotalEarningData: vi.fn(),
   getCpiDataStatus: vi.fn(),
   getCtiBasicConsumptionStatus: vi.fn(),
+  getCpiUnavailableLabel: vi.fn(),
   toCpiView: vi.fn(),
   toEarningsView: vi.fn(),
   loadQuarterlyPublicData: vi.fn(),
@@ -30,6 +31,10 @@ vi.mock("../../server/lib/view-models/dashboard", () => ({
 
 vi.mock("../../server/lib/view-models/quarterlyProjection", () => ({
   loadQuarterlyPublicData: mocks.loadQuarterlyPublicData,
+}));
+
+vi.mock("@/lib/chartInfoContent", () => ({
+  getCpiUnavailableLabel: mocks.getCpiUnavailableLabel,
 }));
 
 vi.mock("../../src/app/components/CpiChart", () => ({
@@ -167,9 +172,9 @@ describe("home page public status and rendering branches", () => {
     );
   });
 
-  it("uses the 2020 fallback label and exposes invalid CTI plus missing comparison state", async () => {
+  it("uses the 2025 official CPI label and exposes invalid CTI plus missing comparison state", async () => {
     setLoaderState({
-      cpiStatus: { baseYear: 2020, pair: "2020", valid: true },
+      cpiStatus: { baseYear: 2025, pair: "2025", valid: true },
       cti: ctiStatus({ valid: false, reason: null, artifactStatus: "unavailable" }),
       consumptionRows: [{ ...cpiRows[0] }],
     });
@@ -178,9 +183,9 @@ describe("home page public status and rendering branches", () => {
 
     expect(screen.getByTestId("cpi-chart")).toBeTruthy();
     expect(chartProps().cpiInfoState).toEqual({
-      baseYear: 2020,
-      sourceMode: "fallback",
-      label: "2020年基準の互換データ",
+      baseYear: 2025,
+      sourceMode: "official-long",
+      label: "2025年基準の公式接続指数",
     });
     expect(chartProps().ctiInfoState).toEqual(
       expect.objectContaining({
@@ -204,6 +209,29 @@ describe("home page public status and rendering branches", () => {
 
     expect(screen.getByRole("heading", { name: "物価・賃金・消費の推移" })).toBeTruthy();
     expect(screen.queryByTestId("cpi-chart")).toBeNull();
+  });
+
+  it("uses the generic CPI fallback when the unavailable label is missing", async () => {
+    mocks.getCpiUnavailableLabel.mockReturnValue(undefined);
+    setLoaderState({
+      cpiStatus: { baseYear: null, pair: null, valid: false },
+    });
+
+    render(await Page());
+
+    expect(screen.getByText("CPIデータは現在利用できません。")).toBeTruthy();
+  });
+
+  it("uses the generic CPI fallback in the error state when the unavailable label is missing", async () => {
+    mocks.getCpiUnavailableLabel.mockReturnValue(undefined);
+    setLoaderState({
+      cpiStatus: { baseYear: null, pair: null, valid: false },
+      cpiView: [],
+    });
+
+    render(await Page());
+
+    expect(screen.getAllByText("CPIデータは現在利用できません。")).toHaveLength(2);
   });
 
   it("preserves explicit CTI and comparison validation reasons", async () => {
@@ -272,7 +300,7 @@ describe("home page public status and rendering branches", () => {
 
   it("renders the CPI unavailable empty-data message in production", async () => {
     setLoaderState({
-      cpiStatus: { baseYear: null, pair: null, valid: false, reason: "no CPI pair" },
+      cpiStatus: { baseYear: null, pair: null, valid: false, reason: "cpi_fail_closed" },
       cpiView: [],
     });
 
@@ -286,10 +314,24 @@ describe("home page public status and rendering branches", () => {
     expect(screen.queryByTestId("cpi-chart")).toBeNull();
   });
 
+  it("uses the default unavailable label when the CPI status has no reason", async () => {
+    setLoaderState({
+      cpiStatus: { baseYear: null, pair: null, valid: false },
+      cpiView: [],
+    });
+
+    render(await Page());
+
+    expect(screen.getAllByText("CPIデータは現在利用できません。")).toHaveLength(2);
+    expect(
+      screen.getByText("CPIデータを確認中です。時間をおいて再度お試しください。"),
+    ).toBeTruthy();
+  });
+
   it("shows the development diagnostic when CPI is unavailable", async () => {
     vi.stubEnv("NODE_ENV", "development");
     setLoaderState({
-      cpiStatus: { baseYear: null, pair: null, valid: false, reason: "no CPI pair" },
+      cpiStatus: { baseYear: null, pair: null, valid: false, reason: "cpi_fail_closed" },
       cpiView: [],
     });
 

@@ -3,9 +3,8 @@ import { createHash } from "node:crypto";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { tmpdir } from "node:os";
-import { loadCpiData } from "../../server/lib/dataLoader";
 import { loadCtiBasicConsumptionOutput } from "../../server/lib/ctiBasicSeries2025LongTerm";
-import { loadEarning2020RollbackFixture } from "../utils/cti-2020-rollback-fixture";
+import { loadCpiData, loadTotalEarningData } from "../../server/lib/dataLoader";
 import type { CpiData } from "../../src/types";
 import minkanFixture from "../fixtures/minkan-extension-anchors.json";
 import { parseCsvWithHeader } from "../../server/lib/dataIo";
@@ -105,7 +104,7 @@ const readLegacyCtiAggregation = (row: CpiData | undefined): string | undefined 
 describe("Earnings Data Integrity", () => {
   /*
    * Historical skips retained here are named contracts only: the GDP-backed
-   * NewGraph, annual GDP normalization, and the 2020 rollback fixture are
+   * NewGraph, annual GDP normalization, and the 2025 auto-loading are
    * retired/independent contracts; their replacements must not be interpreted
    * as Plan37 coverage. The five Plan37 boundary/anchor checks below are active
    * and use the official CTI basic raw/12MA keys.
@@ -114,7 +113,7 @@ describe("Earnings Data Integrity", () => {
   let cpiData: CpiData[];
 
   beforeAll(async () => {
-    earningData = await loadEarning2020RollbackFixture();
+    earningData = await loadTotalEarningData();
     cpiData = await loadCpiData();
   });
 

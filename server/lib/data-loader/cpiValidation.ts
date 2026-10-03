@@ -10,8 +10,8 @@ const isFiniteNumber = (value: unknown): value is number =>
   typeof value === "number" && Number.isFinite(value);
 
 export type CpiPair = {
-  baseYear: 2020 | 2025;
-  pair: "2020" | "2025";
+  baseYear: 2025;
+  pair: "2025";
   mainPath: string;
   contributionPath: string;
 };

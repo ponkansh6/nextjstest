@@ -5,8 +5,8 @@ import { validateCpiFiles, type CpiPair } from "../../../../server/lib/data-load
 vi.mock("node:fs", () => ({ existsSync: vi.fn(), readFileSync: vi.fn() }));
 
 const pair: CpiPair = {
-  baseYear: 2020,
-  pair: "2020",
+  baseYear: 2025,
+  pair: "2025",
   mainPath: "index.csv",
   contributionPath: "contribution.csv",
 };

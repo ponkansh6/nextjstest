@@ -57,17 +57,8 @@ export function buildEarningsFilePaths() {
   };
 }
 
-export function buildCtiRollback2020FilePaths() {
-  return {
-    main: path.join(process.cwd(), "data/source", "cti_data.csv"),
-    supportNominal: path.join(process.cwd(), "data/source", "cti_support_nominal.csv"),
-    supportReal: path.join(process.cwd(), "data/source", "cti_support_real.csv"),
-  };
-}
-
 export function buildCtiFilePaths() {
   return {
-    ...buildCtiRollback2020FilePaths(),
     candidateMain: path.join(process.cwd(), "data/source", "cti_data2025.csv"),
     candidateDistributionAdjusted: path.join(
       process.cwd(),
@@ -159,12 +150,9 @@ export function buildCtiFilePaths() {
 
 export function buildCpiFilePaths() {
   return {
-    // The 2025-base long connected series is intentionally a new file: do not
-    // overwrite the existing 2020-base long series, which remains a fallback.
+    // 2025年基準ロング系列が唯一のruntime入力である。
     main: path.join(process.cwd(), "data/source", "cpi_data2025_long.csv"),
-    fallbackMain: path.join(process.cwd(), "data/source", "cpi_data.csv"),
     contribution: path.join(process.cwd(), "data/source", "contribution2025.csv"),
-    fallbackContribution: path.join(process.cwd(), "data/source", "contribution.csv"),
     metadata: path.join(process.cwd(), "data/source", "cpi_data2025_long.metadata.json"),
   };
 }

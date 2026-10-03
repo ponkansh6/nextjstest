@@ -83,7 +83,7 @@ describe("server/lib/dataLoader public facade", () => {
   it("delegates successful CPI and CTI loads through the dynamic wrappers", async () => {
     const cpiData = [{ 年月: "2025年1月", 総合: 100 }];
     const ctiData = [{ 年月: "2025年1月", 総合: 101 }];
-    const options = { source: "rollback-2020" as const };
+    const options = { source: "auto" as const };
     internalLoadCpiData.mockResolvedValue(cpiData);
     internalLoadCtiData.mockResolvedValue(ctiData);
 
@@ -102,7 +102,7 @@ describe("server/lib/dataLoader public facade", () => {
   it("delegates successful population and total earning loads through the dynamic wrappers", async () => {
     const populationData = [{ 年月: "2025年1月", 総数: 100 }];
     const totalEarningData = [{ 年月: "2025年1月", 総合: 101 }];
-    const options = { source: "rollback-2020" as const };
+    const options = { source: "auto" as const };
     internalLoadPopulationData.mockResolvedValue(populationData);
     internalLoadTotalEarningData.mockResolvedValue(totalEarningData);
 
@@ -164,7 +164,7 @@ describe("server/lib/dataLoader public facade", () => {
   );
 
   it("forwards total earning options and omitted options in rejection and undefined cases", async () => {
-    const options = { source: "rollback-2020" as const };
+    const options = { source: "auto" as const };
     const error = new Error("total earning failed");
     internalLoadTotalEarningData.mockRejectedValueOnce(error);
 

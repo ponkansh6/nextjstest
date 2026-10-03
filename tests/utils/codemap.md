@@ -10,7 +10,7 @@ Vitest/Testing Libraryの実行環境、ブラウザ・Recharts・filesystem・A
 
 ## Flow
 
-テスト → setup/mock適用 → loader・hook・component実行 → DOM、CSV、Flight payload、例外を検証。`cti-2020-rollback-fixture.ts`は既存`server/lib/dataLoader`の2020 rollback入力を提供し、console抑制系はノイズを隔離する。
+テスト → setup/mock適用 → loader・hook・component実行 → DOM、CSV、Flight payload、例外を検証。console抑制系はノイズを隔離する。
 
 ## Integration
 

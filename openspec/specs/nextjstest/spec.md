@@ -812,7 +812,7 @@ Static CSV files (not publicly served) stored in `data/source/`:
 - `data/source/cpi_data2025_long.metadata.json` — Required provenance and readiness metadata for the 2025 pair; it identifies the index and contribution files, base year, source identifiers, expected row/series counts, covered period, generated-file SHA-256, source-original SHA-256, and official-snapshot SHA-256.
 - `data/source/cpi-2025-official-series.csv` — Minimal offline snapshot of official series codes and names derived from the long-source CSV identified by `statInfId=000040482945`; it is retained for deterministic mapping verification and is not selected as a dashboard input.
 - `data/source/cpi-2025-series-map.csv` — 78-series mapping table that records official series codes, dashboard keys, classification/missing-data handling, and mapping evidence; its code and name fields are verified against `cpi-2025-official-series.csv`, not merely against a hash of the mapping table itself.
-- `data/source/cpi_data.csv` / `data/source/contribution.csv` — Compatible 2020-base fallback pair. They are selected together only when the complete 2025 pair cannot be validated; the 2020 source basis is normalized to the 2025 display basis and is never presented as the display base year.
+- `data/source/cpi_data.csv` / `data/source/contribution.csv` — Historical 2020-base pair removed from the repository; the runtime never resolves them. The dashboard CPI input is the complete 2025 pair alone, and any missing or invalid 2025 input returns an unavailable status with a machine-readable reason code.
 - `data/source/cpi_data2025.csv` — Saved 2025-base raw monthly data beginning in 2025; it is not a long connected series and MUST NOT be selected as the dashboard CPI input.
 - `data/source/cti_data2025.csv` / `cti_data2025_distribution_adjusted.csv` — 2025-base CTI candidate CSVs, each covering 2017年1月〜2026年7月. They are not selected until the adopted variant, official map, and snapshot are complete.
 - Plan36専用長期成果物: `data/source/official-cti-2025-long-term/` のe-Stat current 2025年基準 CTIミクロ基本系列（二人以上世帯）。原数値 `statInfId=000040499070`、季節調整値 `statInfId=000040499082`、公式 `fileKind=0` URL、raw 2002-01〜2026-07、normalized adopted 2005-01〜2026-07、2 variant各22系列×259月=5698 rows。raw XLSX 2、normalized CSV 2、metadata 2、manifest、series-map 44 rows、representative-snapshot 132 rowsを保存し、SHA-256/manifest相互参照を検証する。normalized columnsは `variant,series_index,official_series_code,series_name,month,raw_value,is_missing`。季節調整のofficial_series_codeは公式コード行がないためnull、`-`と数値0は区別し、補間・丸め・異基準接続は行わない。既存loader採用経路とは分離し、既存2025 loader dataは変更しない。
@@ -827,7 +827,7 @@ Static CSV files (not publicly served) stored in `data/source/`:
 - `tests/fixtures/loader-comparison/golden.json` — fixed fixture-comparison contract for the validated CPI/CTI loaders, annual GDP, and quarterly GDP. The observation golden digests are CPI `d6490cfbb88a94eef4c6bc150a6b5698acbfa30c3e2bf8a5fae68648663f9f5e`, CTI `e44939cc5f6afeab444a69f3e499d30b1333f05d7d1d5c0357cd23c86869e3dd`, annual GDP `0c13f58a050723be8bafe6cd2fe13f42825f8d48749703d15535aa7613ad748c`, and quarterly GDP `147a57a94678246f9f697a9bda1c7f7f6e8ec39f23b6bb8e456fe4955a1b9b3b`. Volatile metadata timestamps are excluded from the digest contract; array ordering remains significant.
 - The annual GDP golden source-artifact SHA-256 contract is: nominal CSV `9a6331e1cc0ff0f4acb8da67dbdf5ed0c2b1457122b1a1b8c990911dbce2038f`, real CSV `0c6973e2b4a2686b94a7954a5a55058a5101de05ebed316066f7d0b517e6e744`, nominal metadata `8e482d34a253360918e0acdd1c2c054e969cc3ff278761b4df9263bebed24d2f`, real metadata `b01785b1f7dc7022baddf1628b2fd16e985ef95e308a1bb1c7bb9775b537cb69`, and annual normalization JSON `359e02b2ac1b46e80de9234ac965f2d41cf915cd039a872baf1713887ad836a9`.
 - The quarterly GDP golden source-artifact SHA-256 contract is: nominal CSV `0b5b4b21fcc03071973c96e4c7dfffba02eb63ee600c19de023aef1c345a49a7` and real CSV `4454cc36abdd556210e0bdea1f32055c1716d799d69368e883a39f445f1ef855`. Quarterly comparison factors are calculated from the validated 2025 Q1–Q4 CSV observations; no quarterly normalization JSON is an input artifact.
-- `data/source/cti_data.csv` / `cti_support_nominal.csv` / `cti_support_real.csv` — Complete compatible 2020-base CTI rollback set for the historical CTI loader contract. It remains separately testable and is never selected, displayed, or used as fallback by the Plan37 long-term target line; if its legacy consumer path is selected, 2020 is source/compatibility provenance only and is normalized to the 2025 display basis.
+- `data/source/cti_data.csv` / `cti_support_nominal.csv` / `cti_support_real.csv` — Historical 2020-base set removed from the repository; the runtime never resolves them. When a required 2025 CTI artifact is unavailable or invalid the loader returns unavailable with a machine-readable reason code instead of any 2020 selection.
 - CTI monthly observations are the source of truth for quarterly consumption completeness: from 2018Q1, all three normalized `YYYY年M月` records and every nominal/real consumption key must contain finite numeric values. A valid zero is retained; a missing or non-finite observation is not converted to zero.
 - `data/source/total_earning.csv` — Total earnings
 - `data/source/contractual_earnings.csv` — Contractual earnings
@@ -965,7 +965,7 @@ independent and may still be null at the existing 2017Q4/2018Q1 boundary.
 - `data/source/employment_indices.metadata.json` — `employment_indices.csv` の公式長期指数系列（statInfId `000032189777`、TL/T/0、取得元は2020年平均=100）の出典・抽出条件・SHA-256。取得元の2020年基準は表示基準ではなく、断面 `hon-mks202606.xls` はこの系列へ混在させない。
 - `data/source/earnings_method_b_202606.metadata.json` — 方式Bの取得元URL、統計表ID、シート、表頭、対象区分、単位、確報状態、SHA-256、系列対応表を記録する。
 - 方式Bの断面抽出は公式履歴CSVと単位・期間が互換でないため、履歴入力へ自動連結せず、5月・6月など未取得月を補完しない。履歴ファイルが対象系列・対象区分・単位・改訂状態を満たすまで、既存の検証済み履歴と表示範囲を維持する。
-- `data/source/cti_support_nominal.csv` / `data/source/cti_support_real.csv` — CTI supporting series
+- `data/source/cti_support_nominal.csv` / `data/source/cti_support_real.csv`（2020基準・削除済み）— historical CTI supporting series
 
 Plan36取得基盤による追加なし。成果物は既存loader/API、公開データモデル、画面へ接続しない。
 
@@ -1356,7 +1356,7 @@ The system SHALL load and process CSV data on the server before rendering.
 #### Scenario R3a1: CPI Loader Responsibility Boundaries
 
 - **WHEN** CPI source selection is performed
-- **THEN** `cpiSource.ts` resolves the candidate paths, resolves and validates 2025 metadata, validates each index/contribution pair, and owns the selection order 2025 first, complete 2020 fallback second, and fail-closed when neither pair validates
+- **THEN** `cpiSource.ts` resolves the candidate paths, resolves and validates 2025 metadata, validates each index/contribution pair, and owns 2025-only pair validation and selection: it resolves only the complete 2025 pair and fails closed with a machine-readable reason code when that pair does not validate, never resolving 2020 paths
 - **AND WHEN** a validated pair is handed to the CPI transformation path
 - **THEN** `cpiLoader.ts` owns pure CPI conversion: the 2004-and-later filter, weight denominators, missing-value propagation, derived series, and removal of unnecessary series
 - **AND** `cpiValidation.ts` owns CPI index/contribution CSV parsing plus header and content validation
@@ -1370,10 +1370,10 @@ The system SHALL load and process CSV data on the server before rendering.
 - **AND** source candidate-path resolution, metadata resolution/validation, and pair selection are performed by `cpiSource.ts`
 - **AND** CPI CSV/contribution parsing and header/content validation are performed by `cpiValidation.ts`
 - **AND** pure CPI conversion and row mapping are performed by `cpiLoader.ts`, while `cpi.ts` provides the internal status/load adapter behind `dataLoader.ts`
-- **WHEN** the 2025 candidate is missing or invalid and the complete compatible 2020 pair validates
-- **THEN** the same public `loadCpiData()` contract returns rows from the 2020 fallback pair without mixing base years
-- **WHEN** neither the 2025 pair nor the complete 2020 pair validates
-- **THEN** the same public adapter returns no CPI rows and `getCpiDataStatus()` reports `valid: false` with no selected base year or pair
+- **WHEN** the 2025 candidate is missing or invalid or incomplete
+- **THEN** the same public `loadCpiData()` contract returns no CPI rows and `getCpiDataStatus()` reports `valid: false` with the machine-readable reason code, without accessing any 2020 input
+- **WHEN** the 2025 pair does not validate
+- **THEN** the same public adapter returns no CPI rows and `getCpiDataStatus()` reports `valid: false` with no selected base year or pair and the machine-readable reason code
 - **AND** CTI, annual GDP, and quarterly GDP source selection, transformation, status, and public projection contracts remain unchanged in all three outcomes
 
 #### Scenario R3ab: 2025 Series Mapping
@@ -1403,7 +1403,7 @@ The system SHALL load and process CSV data on the server before rendering.
 #### Scenario R3g: CPI CSV Fallback and Fail-Closed Behavior
 
 - **WHEN** the 2025 pair is missing or fails any pair validation
-- **THEN** the loader selects the complete, validated 2020 pair (`cpi_data.csv` and `contribution.csv`) only
+- **THEN** the loader fails closed: it returns `valid: false` with the mapped machine-readable reason code and reads no 2020 file
 - **AND** it never combines an index CSV from one base year with weights from another base year
 - **AND WHEN** neither complete pair validates
 - **THEN** the loader returns no CPI rows and `getCpiDataStatus()` reports an invalid status with no selected base year, rather than serving mixed or partially validated CPI data
@@ -1412,7 +1412,7 @@ The system SHALL load and process CSV data on the server before rendering.
 
 - **WHEN** the dashboard page loads CPI data
 - **THEN** it also obtains `getCpiDataStatus()` and passes the selected base year and source mode to the CPI information UI
-- **AND** the UI identifies a validated 2025 pair as the official connected series, a validated 2020 pair as the fallback CSV, and does not describe either state as another base year
+- **AND** the UI identifies a validated 2025 pair as the official connected series, and for an unavailable or invalid 2025 pair it shows user-facing unavailable wording derived from the reason code, never describing a 2020 fallback state
 
 #### Scenario R3h1: Unchanged CTI, GDP, and Quarterly Contracts
 
@@ -1424,13 +1424,13 @@ The system SHALL load and process CSV data on the server before rendering.
 #### Scenario R3b: Legacy CTI / Earnings / Consumption Data Loading
 
 - **WHEN** the historical `loadCtiData()` / consumption map builder contract is called
-- **THEN** it selects a complete, verified 2025 CTI candidate only when its candidate CSV, metadata, official map, and snapshot validate; otherwise it may select the complete compatible 2020 rollback set
+- **THEN** it selects a complete, verified 2025 CTI candidate only when its candidate CSV, metadata, official map, and snapshot validate; otherwise it returns unavailable with the mapped machine-readable reason code without opening any 2020 input
 - **AND** it validates the CTI set and the nominal/real GDP comparison set independently and never treats GDP availability or a CTI base year as a condition for CTI selection
 - **AND** it matches every adopted CTI map row to the official snapshot row-by-row, including official code, name, and representative values
 - **AND** it returns an explicit unavailable state when neither complete set is valid
 - **AND** missing CTI inputs remain missing; they are not converted to zero, and a derived residual is missing when any required component is missing.
 
-When the legacy CTI map/snapshot or another candidate input fails validation, the complete 2020 CTI rollback may be selected for that legacy contract. This rule does not govern Plan37: its dedicated long-term line always uses only the fixed 2025 nominal series and fails closed without GDP, seasonal-adjusted, real, or rollback fallback. When the annual nominal/real GDP pair passes its independent validation, `getGdpSupportStatus()` reports available GDP comparison normalization without affecting either CTI contract.
+When the legacy CTI map/snapshot or another candidate input fails validation, that contract returns unavailable with the mapped machine-readable reason code; no 2020 rollback is selected. This rule does not govern Plan37: its dedicated long-term line always uses only the fixed 2025 nominal series and fails closed without GDP, seasonal-adjusted, real, or rollback fallback. When the annual nominal/real GDP pair passes its independent validation, `getGdpSupportStatus()` reports available GDP comparison normalization without affecting either CTI contract.
 
 #### Scenario R3b-validation: Duplicate CTI month diagnosis
 
@@ -1502,7 +1502,7 @@ When the legacy CTI map/snapshot or another candidate input fails validation, th
 - **AND** the annual GDP nominal/real CSVs, metadata files, and annual normalization JSON, and the quarterly nominal/real CSVs plus their metadata, official snapshots, and e-Stat snapshots match their recorded source artifact SHA-256 values
 - **AND** value, status, and load/status-error observations are compared independently, with normal observations reporting the expected valid/ready state
 - **WHEN** the 2025 CPI or legacy CTI candidate is unavailable or invalid
-- **THEN** the complete validated 2020 pair/set is selected only for that legacy loader contract, without mixing base years; the rollback remains covered by the fixture gate and is not a Plan37 line input
+- **THEN** the legacy loader contract fails closed with the mapped machine-readable reason code, selects no 2020 pair/set, and the fixture gate covers the reason-coded fail-closed behavior instead of any rollback; it is not a Plan37 line input
 - **WHEN** any annual GDP source artifact is missing or invalid, or annual coverage is not continuous for every year 1994–2025
 - **THEN** GDP validation fails closed and none of `民間最終消費支出（名目）`, `民間最終消費支出（実質）`, `民間最終消費支出（名目・原値）`, `民間最終消費支出（実質・原値）`, `民間最終消費支出（名目・比較指数）`, or `民間最終消費支出（実質・比較指数）` is emitted
 - **WHEN** quarterly GDP artifacts are missing, contain duplicate/non-continuous periods, or contain non-finite values
@@ -1680,7 +1680,7 @@ The system SHALL provide explanatory info for each chart/metric.
   - **AND** for the 3種比較 panel, it briefly describes the three monthly 12-month moving-average series as: 給与 from salary, 消費 from the monthly consumption total rebased to its 2025 monthly average, and 物価 from CPI
 - **AND** it explains in the lower part of the info panel that the 2018年以降の CTI expense-item continuation is separate from the independent GDP reference contract
 - **AND WHEN** the 2025 set is unavailable, invalid, or no complete compatible set exists
-- **THEN** the panel uses user-facing language to identify the 2020 rollback data or that consumption data cannot currently be displayed, without exposing internal file or validation terminology.
+- **THEN** the panel shows user-facing unavailable wording derived from the reason code, without exposing internal file or validation terminology and without mentioning any 2020 rollback.
 
 #### Scenario R6d: GDP and CTI Comparison Explanation
 
@@ -2239,8 +2239,7 @@ hydration — tests must wait for them rather than reading the initial markup.
 Server-side loader responsibilities are split by domain: `server/lib/dataLoader.ts` is the sole
 public loader/status facade at the Server boundary. `server/lib/data-loader/cpi.ts` is an internal
 adapter and is not a public entry point. `server/lib/data-loader/cpiSource.ts`
-owns CPI candidate-path resolution, metadata resolution/validation, and the 2025-first → complete
-2020 fallback → fail-closed selection policy. `server/lib/data-loader/cpiValidation.ts` owns CPI
+owns CPI candidate-path resolution, metadata resolution/validation, and the 2025-only fail-closed selection policy with machine-readable reason codes. `server/lib/data-loader/cpiValidation.ts` owns CPI
 index/contribution CSV parsing and header/content validation. `server/lib/data-loader/cpiLoader.ts`
 owns pure CPI transformation: filtering to 2004年以降, fixed-weight denominators, missing-value
 propagation, derived series, and removal of unnecessary output series. The public
@@ -2435,7 +2434,7 @@ Plan38 rows bypass the GDP join entirely.
 - Legend/rendering and tooltip collections use the same hidden-key registry projection even when data is unavailable: legends and comparison tooltips retain defined all-null CPI, salary, and `消費(総合)` series, while registered missing values render as `—`. `adv` does not expose CTI normal/extension monthly entries.
 - Missing, ended, unready, or failed-validation GDP comparison values remain `null` only in the real/legacy compatibility projection and are hidden at the chart boundary; the Plan38 nominal public projection emits no GDP key, name, value, measurement, or placeholder. GDP is never zero-filled, copied, interpolated, or rescaled at the boundary.
 - The fixture comparison gate independently observes loader data, status, and load/status errors, compares each observation to the fixed golden digest, and verifies every declared GDP source artifact path and SHA-256 before treating the normal path as valid. The annual public loader has no runtime cache wrapper; cache behavior is therefore N/A and is not a required comparison dimension.
-- The gate's invalid-input paths remain fail-closed: missing or malformed CPI/CTI 2025 inputs select the complete compatible 2020 pair when it validates, while invalid annual GDP omits every annual GDP raw/comparison key. Invalid quarterly artifacts return no quarterly rows with `comparisonReady: false`; validated raw quarterly rows are retained when independent confirmation is pending or failed, but comparison values are not generated or published, with no annual-data fallback. The readiness predicate is metadata-only, and never makes unready raw rows comparison-ready. CTI rows may remain present when GDP is unavailable.
+- The gate's invalid-input paths remain fail-closed: missing or malformed CPI/CTI 2025 inputs fail closed with the mapped machine-readable reason code and never select a 2020 pair, while invalid annual GDP omits every annual GDP raw/comparison key. Invalid quarterly artifacts return no quarterly rows with `comparisonReady: false`; validated raw quarterly rows are retained when independent confirmation is pending or failed, but comparison values are not generated or published, with no annual-data fallback. The readiness predicate is metadata-only, and never makes unready raw rows comparison-ready. CTI rows may remain present when GDP is unavailable.
 - Quarterly GDP is accepted only as the complete continuous `2005-Q1` through `2025-Q4` sequence (84 rows), with both independent nominal and real series and valid comparison confirmation; duplicate, missing, non-continuous, non-numeric, or absent source artifacts fail closed.
 - The annual GDP path used by NewGraph is separate from the quarterly public path: validated nominal raw annual observations are expanded onto calendar months, normalized by the independently validated 2025 annual factor, and then passed through a consecutive 12-month window. Raw amounts remain available for table/CSV contracts that request them, while the comparison line receives only normalized values.
 - Consumption presentation state is client-side: hidden quarters, selected categories, and detail expansion control each chart without changing source-basis values, table values, or CSV values.
@@ -2472,11 +2471,10 @@ e-Stat official CPI long connected CSV (`statInfId=000040482945`) + source-origi
   → cpi-2025-series-map.csv (unconditional 78-series official-code/name verification against snapshot; classification and missing-data rules)
   → data/source/cpi_data2025_long.csv + cpi_data2025_long.metadata.json (generated 2025 index and ready metadata)
 data/source/contribution2025.csv (published 2025-base weights per 10,000)
-data/source/cpi_data.csv + data/source/contribution.csv (compatible 2020 fallback pair)
   → server/lib/dataIo.ts (CPI file paths)
       → server/lib/data-loader/cpiSource.ts (candidate paths, metadata resolution/validation, pair selection)
         → server/lib/data-loader/cpiValidation.ts (CPI CSV/contribution parsing, header/content validation)
-      → select complete 2025 pair; otherwise select complete 2020 pair; otherwise fail closed with invalid `getCpiDataStatus()`
+      → select the complete 2025 pair only; otherwise fail closed with a machine-readable reason code and invalid `getCpiDataStatus()`
         → server/lib/data-loader/cpiLoader.ts (pure 2004年以降 filter, weight denominators, missing propagation, derived series, unnecessary-series removal)
           → server/lib/dataLoader.ts (sole public status/load facade)
             → server/lib/data-loader/cpi.ts (internal status/load adapter)
@@ -2484,9 +2482,8 @@ data/source/cpi_data.csv + data/source/contribution.csv (compatible 2020 fallbac
           → derive `外食以外食料 = weighted 食料 − weighted 外食`; propagate source missing values to all dependent values
 official all-household CTI micro CSV → official-code snapshot + series map + candidate metadata
 data/source/cti_data2025.csv / data/source/cti_data2025_distribution_adjusted.csv (candidates)
-data/source/cti_data.csv + cti_support_nominal.csv + cti_support_real.csv (complete 2020 rollback set)
   → `server/lib/dataLoader.ts` facade → `server/lib/data-loader/cpi.ts` internal CTI loader path
-    → match every map row to the official snapshot row-by-row; select the verified 2025 candidate or complete 2020 rollback; preserve source-basis values and missing values
+    → match every map row to the official snapshot row-by-row; select the verified 2025 candidate, otherwise return unavailable with the mapped reason code; preserve source-basis values and missing values
 GDP nominal/real annual CSVs + ready metadata + independent annual-2025 factors
   → `server/lib/dataLoader.ts` facade → `server/lib/data-loader/cpi.ts` internal annual GDP loader path
     → validate both price concepts and their one 2025 annual value as one comparison set
@@ -2514,7 +2511,7 @@ Plan21 quarterly nominal/real CSVs (2005Q1–2025Q4) + metadata + official/e-Sta
   (independent from Plan38's quarterly public CTI artifact and `CTIミクロ四半期系列（名目）` key)
 Loader fixture comparison gate
   → tests/fixtures/loader-comparison/golden.json (fixed CPI/CTI/annual-GDP/quarterly-GDP observation digests and GDP artifact SHA-256 values)
-    → tests/unit/server/lib/data-fixture-comparison.test.ts (independent value/status/error comparison, complete 2020 rollback, GDP-key omission, annual and quarterly fail-closed checks)
+    → tests/unit/server/lib/data-fixture-comparison.test.ts (independent value/status/error comparison, 2025-only fail-closed checks, GDP-key omission, annual and quarterly fail-closed checks)
 data/source/{total_earning,contractual_earnings,scheduled_earnings,total_worked_hours,population_statistics,employment_indices}.csv
   → server/lib/dataIo.ts
     → server/lib/data-loader/{earnings,population}.ts (domain-specific loading + caching)
@@ -2578,7 +2575,7 @@ type-check成功、lint 0 errors / 5 warnings、最終静的監査合格と記�
 
 - **WHEN** Phase 2-3の実装・監査が完了している
 - **THEN** CTI validation、GDP年次validation、GDP四半期validationは責務として分離され、CTI名目/実質、GDP raw/比較、projection、既存の検証エラーと公開戻り値が維持される
-- **AND** CTI公式map/snapshotの独立確認が`ready`の場合だけ2025候補を採用し、不成立時は完全な2020 rollbackを検証する
+- **AND** CTI公式map/snapshotの独立確認が`ready`の場合だけ2025候補を採用し、不成立時はreason付きのunavailableを返し、2020入力には到達しない
 - **AND** GDP年次とGDP四半期は相互に独立してvalidationされ、各price conceptのraw/比較値を分離する
 - **AND** 四半期は独立確認が`ready`でない場合に比較値をfail-closedとし、年次GDPへfallbackしない
 - **AND** 関連60 tests / 全403 tests、typecheck、lint 0 errors / 5 warnings、最終静的監査が合格として記録され、Phase 2-4（四半期変換・連続性検証）の完了記録へ接続される
@@ -3251,7 +3248,7 @@ next to the ignore; broad file or line exclusions do not qualify.
 - **WHEN** CPI loading is tested through the public `server/lib/dataLoader.ts` adapter
   **THEN** it preserves the public `loadCpiData()` rows and status contract while delegating source resolution and pair selection to `cpiSource.ts`, CSV/contribution parsing and header/content validation to `cpiValidation.ts`, and pure CPI conversion/row mapping to `cpiLoader.ts`
   **AND** `cpi.ts` remains the internal status/load adapter behind `dataLoader.ts` and retains CTI, annual GDP, and quarterly GDP responsibilities
-  **AND** tests cover 2025-first selection, complete compatible 2020 fallback, and fail-closed behavior when neither pair validates through that public adapter
+  **AND** tests cover 2025-only selection and reason-coded fail-closed behavior when the 2025 pair does not validate through that public adapter, asserting that no 2020 file is read
 - **WHEN** the CPI source/transformation responsibility split is regression-tested
   **THEN** CTI, annual GDP, and quarterly GDP loader/status/public-projection contracts remain unchanged, including independent GDP validation and quarterly fail-closed behavior without annual fallback.
 
@@ -3272,15 +3269,15 @@ These regression requirements do not add requirements for a new `popstate` liste
 
 - Unit tests for data loading, transformation, and data quality/integrity (`tests/unit/`, `tests/data-quality/`)
 - CPI pair integrity tests MUST unconditionally validate the 78 mapping records against `data/source/cpi-2025-official-series.csv`, including official code and name; they MUST validate the metadata-recorded source-original and snapshot SHA-256 values rather than relying only on a mapping-table hash.
-- CPI loader tests MUST cover runtime validation of metadata row/series counts, period, generated-file SHA-256, monthly continuity, and 2025 all-items annual average, plus complete 2020-pair fallback when 2025 validation fails.
-- CTI tests MUST require the map and snapshot to exist and MUST unconditionally match every official map row against the snapshot by official code, name, and representative values before selecting the 2025 candidate; otherwise the complete 2020 rollback is selected.
+- CPI loader tests MUST cover runtime validation of metadata row/series counts, period, generated-file SHA-256, monthly continuity, and 2025 all-items annual average, plus reason-coded fail-closed behavior when 2025 validation fails, asserting no 2020 access.
+- CTI tests MUST require the map and snapshot to exist and MUST unconditionally match every official map row against the snapshot by official code, name, and representative values before selecting the 2025 candidate; otherwise the loader fails closed with the mapped machine-readable reason code.
 - GDP tests MUST require continuous annual observations for every year 1994–2025, valid metadata/CSV/normalization-JSON hashes, and one finite non-zero 2025 value per price concept before generating raw and comparison values. They MUST verify raw and normalized values remain separate in table, CSV, and tooltip projections, MUST NOT mix price concepts or substitute a 2020/CTI factor, and MUST assert fail-closed omission when validation fails.
 - Plan21 tests MUST require both 84-row quarterly artifacts, `YYYY-Qn` continuity from 2005Q1, metadata SHA-256 agreement, separate nominal/real 2025Q1–Q4 factors, and fail-closed comparison readiness for `pending-independent-confirmation`; validated raw rows remain available in that state while comparison values remain absent. The metadata-only `isQuarterlyComparisonReady` predicate MUST inspect only confirmation/comparison metadata and MUST NOT inspect or transform rows. They MUST also retain the annual `getGdpSupportStatus()` regression contract.
 - The fixture comparison gate MUST compare the normal CPI, CTI, annual GDP, and quarterly GDP observations to the fixed golden digests in `tests/fixtures/loader-comparison/golden.json` (`d6490cfbb88a94eef4c6bc150a6b5698acbfa30c3e2bf8a5fae68648663f9f5e`, `e44939cc5f6afeab444a69f3e499d30b1333f05d7d1d5c0357cd23c86869e3dd`, `0c13f58a050723be8bafe6cd2fe13f42825f8d48749703d15535aa7613ad748c`, and `147a57a94678246f9f697a9bda1c7f7f6e8ec39f23b6bb8e456fe4955a1b9b3b3`) and MUST independently compare data, status, and errors.
-- The gate MUST verify every annual and quarterly source artifact against the fixed SHA-256 values recorded by the golden fixture, cover the complete 2020 CPI/CTI rollback when a 2025 candidate is invalid, assert omission of all six annual GDP keys when any annual artifact or continuity check fails, and assert quarterly fail-closed behavior for missing, duplicate, non-continuous, or non-finite inputs without annual fallback.
+- The gate MUST verify every annual and quarterly source artifact against the fixed SHA-256 values recorded by the golden fixture, assert reason-coded fail-closed behavior when a 2025 candidate is invalid with no 2020 access, assert omission of all six annual GDP keys when any annual artifact or continuity check fails, and assert quarterly fail-closed behavior for missing, duplicate, non-continuous, or non-finite inputs without annual fallback.
 - The gate MUST assert the exact quarterly sequence `2005-Q1` through `2025-Q4` (84 rows), quarter-specific nominal/real values, separate 2025Q1–Q4 factors, and `not-applicable: no runtime cache wrapper`; it MUST NOT introduce a runtime cache wrapper as part of fixture comparison.
 - Plan21 tests MUST verify that `page.tsx` obtains `getQuarterlyGdpSupportStatus()` and propagates `granularity`, `comparisonReady`, and `independentConfirmation` to chart info, while public quarterly chart/table/CSV projections contain only the existing nominal/real private-consumption keys and none of the four GDP raw/comparison keys. Internal loader validation and the annual rollback path MUST remain available. `tests/e2e/quarterly-gdp.e2e.spec.ts` provides the public projection smoke; E2E/build execution is environment-dependent and must be recorded when not run.
-- Tests that use 2020 as a prerequisite MUST be limited to the CTI rollback path; 2020 MUST NOT be used as a general GDP normalization or continuity assumption.
+- Tests MUST NOT use any 2020 runtime input as a prerequisite; 2020 references are limited to historical provenance documentation, and 2020 MUST NOT be used as a general GDP normalization or continuity assumption.
 - Component tests for chart rendering and interaction (`tests/components/`)
 - Chart component tests MUST verify that MajorIndicesChart, StackedAreaChart, SpendingBarChart, EarningsBreakdownChart, ResidualAreaChart, and NewGraph use displayed-value maximum + 3 for the Y-axis upper bound; stacked tests MUST use per-time visible-series totals, hidden-series tests MUST exclude hidden values, and ResidualAreaChart tests MUST retain its lower-bound behavior.
 - Integration tests for data mapping and computation accuracy (`tests/data-mapping/`, `tests/computation-contract/`)

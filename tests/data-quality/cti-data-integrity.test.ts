@@ -7,13 +7,13 @@ import {
 } from "../../src/lib/chartConstants";
 import type { CpiData } from "../../src/types";
 import { computeChartData } from "../../src/lib/clientCalculations";
-import { loadCti2020RollbackFixture } from "../utils/cti-2020-rollback-fixture";
+import { loadCtiData } from "../../server/lib/dataLoader";
 
 describe("CTI Data Integrity", () => {
   let ctiData: CpiData[];
 
   beforeAll(async () => {
-    ctiData = await loadCti2020RollbackFixture();
+    ctiData = await loadCtiData();
   });
 
   describe("Basic Integrity", () => {
@@ -32,8 +32,9 @@ describe("CTI Data Integrity", () => {
     );
 
     it("should verify that consumption keys exist in the data (Mismatch Verification)", () => {
-      const firstRow = ctiData[0];
-      const dataKeys = Object.keys(firstRow);
+      const firstRow = ctiData.find((row) => parseInt(String(row.年月).slice(0, 4), 10) >= 2017);
+      expect(firstRow).toBeDefined();
+      const dataKeys = Object.keys(firstRow!);
 
       [...CONSUMPTION_NOMINAL_KEYS, ...CONSUMPTION_REAL_KEYS].forEach((key) => {
         expect(dataKeys, `Key '${key}' should exist in data`).toContain(key);

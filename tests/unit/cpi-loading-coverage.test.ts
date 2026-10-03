@@ -20,8 +20,6 @@ vi.mock("../../server/lib/dataIo", async (importOriginal) => {
       main: "/fixture/cpi_data2025_long.csv",
       contribution: "/fixture/contribution2025.csv",
       metadata: "/fixture/cpi_data2025_long.metadata.json",
-      fallbackMain: "/fixture/cpi_data.csv",
-      fallbackContribution: "/fixture/contribution.csv",
     }),
   };
 });
@@ -36,11 +34,6 @@ vi.mock("../../server/lib/data-loader/gdpSupport", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../server/lib/data-loader/gdpSupport")>();
   return { ...actual, getGdpSupportStatus: getGdpSupportStatusMock };
 });
-
-const legacyPairFixture = {
-  index: "年月,総合,食料\n2020年1月,100,110\n2020年2月,101,111",
-  contribution: "類・品目,総合,食料\nウエイト(2020年指数以降),10000,2000",
-};
 
 function build2025PairFixture(
   overrides: { csv?: string; metadata?: Record<string, unknown> } = {},
@@ -123,13 +116,15 @@ describe("CPI loading public contract edge coverage", () => {
     vi.restoreAllMocks();
   });
 
-  it("accepts a legacy fallback and keeps its status aligned with transformed monthly data", async () => {
+  it("fails closed and keeps public outputs empty when 2025 metadata is invalid", async () => {
     vi.mocked(fs.existsSync).mockReturnValue(true);
     vi.mocked(fs.readFileSync).mockImplementation(((filePath: fs.PathOrFileDescriptor) => {
       const path = String(filePath);
+      if (path.endsWith("cpi_data2025_long.csv"))
+        return "年月,総合,食料\n2025年1月,100,110\n2025年2月,101,111";
+      if (path.endsWith("contribution2025.csv"))
+        return "類・品目,総合,食料\nウエイト(2025年指数以降),10000,2000";
       if (path.endsWith("cpi_data2025_long.metadata.json")) return "invalid metadata";
-      if (path.endsWith("cpi_data.csv")) return legacyPairFixture.index;
-      if (path.endsWith("contribution.csv")) return legacyPairFixture.contribution;
       return "";
     }) as typeof fs.readFileSync);
 
@@ -141,9 +136,13 @@ describe("CPI loading public contract edge coverage", () => {
       loadCpiIndexDataInternal(),
     ]);
 
-    expect(status).toEqual({ baseYear: 2020, pair: "2020", valid: true });
-    expect(data).toHaveLength(2);
-    expect(data[0]).toMatchObject({ 年月: "2020年1月", 総合: 100, 食料: 22 });
+    expect(status).toEqual({
+      baseYear: null,
+      pair: null,
+      valid: false,
+      reason: "cpi_metadata_invalid",
+    });
+    expect(data).toEqual([]);
     expect(rawIndex).toEqual([]);
   });
 
@@ -160,7 +159,7 @@ describe("CPI loading public contract edge coverage", () => {
     ]);
 
     expect(status).toMatchObject({ baseYear: null, pair: null, valid: false });
-    expect(status.reason).toContain("2020 pair: missing index or contribution file");
+    expect(status.reason).toBe("cpi_source_missing");
     expect(data).toEqual([]);
     expect(rawIndex).toEqual([]);
     expect(error).toHaveBeenCalledWith(expect.stringContaining("CPI data unavailable:"));
@@ -196,8 +195,8 @@ describe("CPI loading public contract edge coverage", () => {
 
     const invalidStatus = { baseYear: null, pair: null, valid: false, reason: "no pair" };
     selectCtiPairMock.mockReturnValue(invalidStatus);
-    await expect(getCtiDataStatus({ source: "rollback-2020" })).resolves.toEqual(invalidStatus);
-    expect(selectCtiPairMock).toHaveBeenLastCalledWith({ source: "rollback-2020" });
+    await expect(getCtiDataStatus({ source: "auto" })).resolves.toEqual(invalidStatus);
+    expect(selectCtiPairMock).toHaveBeenLastCalledWith({ source: "auto" });
   });
 
   it("returns validated 2025 CPI index rows from 2004 onward", async () => {
@@ -221,6 +220,39 @@ describe("CPI loading public contract edge coverage", () => {
     expect(rows).toHaveLength(271);
   });
 
+  it("skips a missing CTI value cell in a short CSV row", async () => {
+    await configureCti2025Fixture({ cti: "月,消費支出（名目）\n2025年1月" });
+    const { loadCtiDataInternal } = await import("../../server/lib/data-loader/cpi");
+
+    const rows = await loadCtiDataInternal();
+    const january = rows.find((row) => row.年月 === "2025年1月");
+
+    expect(january).toBeDefined();
+    expect(january?.["消費支出（名目）"]).toBeUndefined();
+  });
+
+  it("preserves an alternate 年月 header without a 月 header", async () => {
+    await configureCti2025Fixture({ cti: "年月,消費支出（名目）\n2025年1月,100" });
+    const { loadCtiDataInternal } = await import("../../server/lib/data-loader/cpi");
+
+    const rows = await loadCtiDataInternal();
+
+    expect(rows.find((row) => row.年月 === "2025年1月")).toMatchObject({
+      年月: "2025年1月",
+      "消費支出（名目）": 100,
+    });
+  });
+
+  it("drops CTI rows with no 年月 value", async () => {
+    await configureCti2025Fixture({ cti: "月別,消費支出（名目）\n2025年1月,100" });
+    const { loadCtiDataInternal } = await import("../../server/lib/data-loader/cpi");
+
+    const rows = await loadCtiDataInternal();
+
+    expect(rows.some((row) => row["消費支出（名目）"] === 100)).toBe(false);
+    expect(rows.every((row) => Boolean(row.年月))).toBe(true);
+  });
+
   it("rejects contribution files without the required aggregate series", async () => {
     const { validateContribution } = await import("../../server/lib/data-loader/cpiSource");
 
@@ -236,8 +268,8 @@ describe("CPI loading public contract edge coverage", () => {
 
     expect(
       validateCpiFiles({
-        baseYear: 2020,
-        pair: "2020",
+        baseYear: 2025,
+        pair: "2025",
         mainPath: "index.csv",
         contributionPath: "contribution.csv",
       }),
@@ -254,8 +286,8 @@ describe("CPI loading public contract edge coverage", () => {
 
     expect(
       validateCpiFiles({
-        baseYear: 2020,
-        pair: "2020",
+        baseYear: 2025,
+        pair: "2025",
         mainPath: "index.csv",
         contributionPath: "contribution.csv",
       }),
@@ -272,8 +304,8 @@ describe("CPI loading public contract edge coverage", () => {
 
     expect(
       validateCpiFiles({
-        baseYear: 2020,
-        pair: "2020",
+        baseYear: 2025,
+        pair: "2025",
         mainPath: "index.csv",
         contributionPath: "contribution.csv",
       }),
@@ -334,8 +366,8 @@ describe("CPI loading public contract edge coverage", () => {
 
     expect(
       validateCpiFiles({
-        baseYear: 2020,
-        pair: "2020",
+        baseYear: 2025,
+        pair: "2025",
         mainPath: "index.csv",
         contributionPath: "contribution.csv",
       }),
@@ -430,11 +462,11 @@ describe("CPI loading public contract edge coverage", () => {
     );
   });
 
-  it("loads legacy CTI rows with absent support headers and zeroes malformed values", async () => {
+  it("drops malformed values and keeps row without them when values are malformed", async () => {
     vi.mocked(fs.existsSync).mockReturnValue(false);
     const pair = {
-      baseYear: 2020 as const,
-      pair: "2020" as const,
+      baseYear: 2025 as const,
+      pair: "2025" as const,
       mainPath: "/fixture/cti.csv",
       supportNominalPath: "/fixture/nominal.csv",
       supportRealPath: "/fixture/real.csv",
@@ -448,19 +480,19 @@ describe("CPI loading public contract edge coverage", () => {
 
     const data = await loadCtiDataInternal();
 
-    expect(data.find((row) => row.年月 === "2004年1月")).toMatchObject({
-      "消費支出（名目）": 0,
-      "食料（名目）": 0,
-    });
+    const row = data.find((r) => r.年月 === "2004年1月");
+    expect(row).toBeDefined();
+    expect(row).not.toHaveProperty("消費支出（名目）");
+    expect(row).not.toHaveProperty("食料（名目）");
     expect(data.some((row) => row.年月 === "not-a-month")).toBe(false);
   });
 
-  it("returns no legacy CTI rows when the index has no recognizable header", async () => {
+  it("returns no CTI rows when the index has no recognizable header", async () => {
     vi.mocked(fs.existsSync).mockReturnValue(false);
     selectCtiPairMock.mockReturnValue({
       pair: {
-        baseYear: 2020,
-        pair: "2020",
+        baseYear: 2025,
+        pair: "2025",
         mainPath: "/fixture/cti.csv",
         supportNominalPath: "/fixture/nominal.csv",
         supportRealPath: "/fixture/real.csv",

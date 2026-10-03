@@ -9,6 +9,7 @@ import { toCpiView, toEarningsView } from "../../server/lib/view-models/dashboar
 import { loadQuarterlyPublicData } from "../../server/lib/view-models/quarterlyProjection";
 import CpiChart from "./components/CpiChart";
 import styles from "./page.module.css";
+import { getCpiUnavailableLabel } from "@/lib/chartInfoContent";
 import {
   targetKeys,
   stackedKeys,
@@ -53,21 +54,15 @@ export default async function Page() {
           sourceMode: "official-long" as const,
           label: "2025年基準の公式接続指数",
         }
-      : cpiDataStatus.baseYear === 2020
-        ? {
-            baseYear: 2020 as const,
-            sourceMode: "fallback" as const,
-            // 利用者向けの表示では、ファイル選択の内部用語を出さない。
-            label: "2020年基準の互換データ",
-          }
-        : {
-            baseYear: null,
-            sourceMode: "unavailable" as const,
-            label: "CPIデータは現在利用できません",
-          };
+      : {
+          baseYear: null,
+          sourceMode: "unavailable" as const,
+          label: getCpiUnavailableLabel(cpiDataStatus.reason),
+          reason: cpiDataStatus.reason ?? null,
+        };
   const cpiSummary =
     cpiInfoState.baseYear === null
-      ? "CPIデータは現在利用できません。"
+      ? (cpiInfoState.label ?? "CPIデータは現在利用できません。")
       : "各指標は2025年平均=100の指数で表示しています。凡例クリックで系列を切替可能。";
   const ctiInfoState = ctiBasicStatus.valid
     ? {
@@ -188,7 +183,7 @@ export default async function Page() {
         <div className={styles.errorContainer}>
           <p className={styles.errorMessage}>
             {cpiInfoState.baseYear === null
-              ? "CPIデータは現在利用できません。"
+              ? (cpiInfoState.label ?? "CPIデータは現在利用できません。")
               : "データの読み込みに失敗したか、データが空です。"}
           </p>
           <p className={styles.errorSubMessage}>
@@ -198,9 +193,8 @@ export default async function Page() {
           </p>
           {process.env.NODE_ENV === "development" && (
             <p className={styles.errorSubMessage}>
-              data/source/cpi_data2025_long.csv と
-              data/source/cpi_data2025_long.metadata.json（利用できない場合は
-              data/source/cpi_data.csv）を確認してください。
+              data/source/cpi_data2025_long.csv と data/source/cpi_data2025_long.metadata.json
+              を確認してください。
             </p>
           )}
         </div>

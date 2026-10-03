@@ -16,11 +16,10 @@ export interface ChartInfoContent {
 
 /** CPI loader state passed from the Server Component to the chart information UI. */
 export interface CpiChartInfoState {
-  baseYear: 2020 | 2025 | null;
-  sourceMode?: "fallback" | "official-long" | "unavailable";
+  baseYear: 2025 | null;
+  sourceMode?: "official-long" | "unavailable";
   label?: string;
-  /** Compatibility with the initial chart-info contract. */
-  dataState?: "2020-fallback" | "2025-long";
+  reason?: string | null;
 }
 
 /**
@@ -275,18 +274,24 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
   },
 };
 
-const fallbackCpiText = (text: string) =>
-  text
-    .replace(
-      "全国・月次の2025年平均=100の公式接続指数を表示",
-      "全国・月次の2020年平均=100の指数データを表示",
-    )
-    .replace(/2025年基準ウェイト/g, "2020年基準ウェイト")
-    .replace(
-      /基準年：2025年（2025年平均 = 100、2024年以前は接続指数）/,
-      "基準年：2020年（2020年平均 = 100）",
-    )
-    .replace(/基準年：2025年（2025年平均 = 100）/, "基準年：2020年（2020年平均 = 100）");
+export function getCpiUnavailableLabel(reason?: string | null): string {
+  switch (reason) {
+    case "cpi_source_missing":
+      return "CPIデータの元ファイルが見つかりません。";
+    case "cpi_metadata_invalid":
+      return "CPIデータのメタデータが不正です。";
+    case "cpi_hash_mismatch":
+      return "CPIデータの整合性チェックに失敗しました。";
+    case "cpi_schema_invalid":
+      return "CPIデータの形式が不正です。";
+    case "cpi_period_invalid":
+      return "CPIデータの期間が不正です。";
+    case "cpi_value_invalid":
+      return "CPIデータの値が不正です。";
+    default:
+      return "CPIデータは現在利用できません。";
+  }
+}
 
 /**
  * Resolves CPI explanatory text from the same source selection used by the
@@ -305,34 +310,23 @@ export function getChartInfoContent(
 
   const isUnavailable = cpiState.sourceMode === "unavailable" || cpiState.baseYear === null;
   if (isUnavailable) {
-    const label = "CPIデータ未取得";
+    const items: ChartInfoItem[] = [{ text: "CPIデータ未取得" }];
+    if (cpiState.reason) {
+      items.push({ text: getCpiUnavailableLabel(cpiState.reason) });
+    }
     return {
       ...content,
-      sections: [{ heading: "データ状態", items: [{ text: label }] }],
+      sections: [{ heading: "データ状態", items }],
     };
   }
 
-  const isFallback = cpiState.sourceMode === "fallback" || cpiState.dataState === "2020-fallback";
-  const label = isFallback ? "2020年基準の指数データ" : "2025年基準の公式接続指数";
-  const sections = content.sections.map((section) => ({
-    ...section,
-    items: section.items
-      .filter((item) => !isFallback || !item.text.startsWith("2024年以前は旧基準"))
-      .map((item) => ({
-        ...item,
-        text: isFallback ? fallbackCpiText(item.text) : item.text,
-        subItems: item.subItems?.map((subItem) =>
-          isFallback ? fallbackCpiText(subItem) : subItem,
-        ),
-      })),
-  }));
+  const label = "2025年基準の公式接続指数";
+  const sections = content.sections;
 
   return {
     ...content,
-    source: `${isFallback ? content.source.replace("（2025年基準）", "（2020年基準）") : content.source}（${label}）`,
-    url: isFallback
-      ? "https://www.e-stat.go.jp/stat-search/files?page=1&toukei=00200573&tstat=000001150147"
-      : content.url,
+    source: `${content.source}（${label}）`,
+    url: content.url,
     sections: [{ heading: "データ状態", items: [{ text: label }] }, ...sections],
   };
 }

@@ -158,23 +158,29 @@ describe("public chart utility contracts", () => {
     expect(projectTooltipMetadata([{ key: "one", color: "blue", label: "one" }], [])).toEqual([]);
   });
 
-  it("uses the selected CPI source state and includes nested fallback item descriptions", () => {
-    const fallback = getChartInfoContent("stacked-area", {
-      baseYear: 2020,
-      sourceMode: "fallback",
+  it("uses the selected CPI source state and describes unavailable state from its reason code", () => {
+    const officialLong = getChartInfoContent("stacked-area", {
+      baseYear: 2025,
+      sourceMode: "official-long",
     });
-    const itemText = fallback.sections.flatMap((section) =>
+    const itemText = officialLong.sections.flatMap((section) =>
       section.items.flatMap((item) => [item.text, ...(item.subItems ?? [])]),
     );
-    expect(fallback.source).toContain("2020年基準");
-    expect(itemText.some((text) => text.includes("2020年基準ウェイト"))).toBe(true);
-    const majorFallback = getChartInfoContent("cpi-major", {
-      baseYear: 2020,
-      dataState: "2020-fallback",
+    expect(officialLong.source).toContain("2025年基準");
+    expect(itemText.some((text) => text.includes("2025年基準ウェイト"))).toBe(true);
+
+    const majorUnavailable = getChartInfoContent("cpi-major", {
+      baseYear: null,
+      sourceMode: "unavailable",
+      reason: "cpi_hash_mismatch",
     });
-    expect(
-      majorFallback.sections.flatMap(({ items }) => items.map(({ text }) => text)),
-    ).not.toContain("2024年以前は旧基準の公表指数を2025年基準へ換算して接続した系列を使用");
+    const majorUnavailableText = majorUnavailable.sections.flatMap(({ items }) =>
+      items.map(({ text }) => text),
+    );
+    expect(majorUnavailableText).not.toContain(
+      "2024年以前は旧基準の公表指数を2025年基準へ換算して接続した系列を使用",
+    );
+    expect(majorUnavailableText).toContain("CPIデータの整合性チェックに失敗しました。");
     expect(getChartInfoContent("cpi-major").sections).toBe(CHART_INFO_CPI_SECTIONS);
   });
 
