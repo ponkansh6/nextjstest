@@ -9,6 +9,65 @@ source "$HOOK_DIR/lib/push-impact.sh"
 # shellcheck source=/dev/null
 source "$HOOK_DIR/lib/prepush-profile.sh"
 
+PREPUSH_TIMING_ROWS=()
+PREPUSH_TIMING_ENABLED=0
+PREPUSH_TIMING_PROFILE=unclassified
+PREPUSH_TIMING_GATE_START_NS=0
+PREPUSH_TIMING_GATE_START_UTC=
+if [[ -n "${PREPUSH_TIMING_FILE:-}" ]]; then
+  PREPUSH_TIMING_ENABLED=1
+  PREPUSH_TIMING_START_NS=$(date +%s%N)
+  PREPUSH_TIMING_START_UTC=$(date -u '+%Y-%m-%dT%H:%M:%S.%3NZ')
+fi
+
+prepush_timing_clean_field() {
+  local value="$1"
+  value=${value//$'\t'/ }
+  value=${value//$'\r'/ }
+  value=${value//$'\n'/ }
+  printf '%s' "$value"
+}
+
+prepush_timing_gate_begin() {
+  (( PREPUSH_TIMING_ENABLED )) || return 0
+  PREPUSH_TIMING_GATE_START_NS=$(date +%s%N)
+  PREPUSH_TIMING_GATE_START_UTC=$(date -u '+%Y-%m-%dT%H:%M:%S.%3NZ')
+}
+
+prepush_timing_record_gate() {
+  local gate="$1" status="$2" end_ns end_utc duration
+  (( PREPUSH_TIMING_ENABLED )) || return 0
+  end_ns=$(date +%s%N)
+  end_utc=$(date -u '+%Y-%m-%dT%H:%M:%S.%3NZ')
+  duration=$(( (end_ns - PREPUSH_TIMING_GATE_START_NS) / 1000000 ))
+  PREPUSH_TIMING_ROWS+=("$(printf 'gate\t%s\t%s\t%s\t%s\t%s' "$(prepush_timing_clean_field "$gate")" "$PREPUSH_TIMING_GATE_START_UTC" "$end_utc" "$duration" "$status")")
+}
+
+prepush_timing_finish() {
+  local status="$1" end_ns end_utc duration row scenario cache_condition
+  local -a fields=()
+  (( PREPUSH_TIMING_ENABLED )) || return 0
+  end_ns=$(date +%s%N)
+  end_utc=$(date -u '+%Y-%m-%dT%H:%M:%S.%3NZ')
+  duration=$(( (end_ns - PREPUSH_TIMING_START_NS) / 1000000 ))
+  scenario=$(prepush_timing_clean_field "${PREPUSH_TIMING_SCENARIO:-unspecified}")
+  cache_condition=$(prepush_timing_clean_field "${PREPUSH_CACHE_CONDITION:-unspecified}")
+  {
+    if [[ ! -s "$PREPUSH_TIMING_FILE" ]]; then
+      printf 'record_type\tscenario\tprofile\tcache_condition\tgate\tstarted_at_utc\tended_at_utc\tduration_ms\texit_code\n'
+    fi
+    for row in "${PREPUSH_TIMING_ROWS[@]}"; do
+      IFS=$'\t' read -r -a fields <<<"$row"
+      printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+        "${fields[0]}" "$scenario" "$PREPUSH_TIMING_PROFILE" "$cache_condition" \
+        "${fields[1]}" "${fields[2]}" "${fields[3]}" "${fields[4]}" "${fields[5]}"
+    done
+    printf 'total\t%s\t%s\t%s\t\t%s\t%s\t%s\t%s\n' \
+      "$scenario" "$PREPUSH_TIMING_PROFILE" "$cache_condition" \
+      "$PREPUSH_TIMING_START_UTC" "$end_utc" "$duration" "$status"
+  } >>"$PREPUSH_TIMING_FILE" 2>/dev/null || true
+}
+
 # Do not let local-only fixes make validation pass when they are not part of
 # the commit snapshot sent to the remote build.
 hook_gate "clean worktree check" bash "$HOOK_DIR/check-clean-worktree.sh" || exit $?
@@ -24,13 +83,30 @@ PUSH_FILES=$(printf '%s\n' "${PUSH_IMPACT_PATHS[@]:-}")
 FULL_PROFILE_RAN=0
 COMPONENT_BROWSER_RAN=0
 PREPUSH_PROFILE_NORMALIZED=$(push_profile_normalize_env)
+if [[ "$PREPUSH_PROFILE_NORMALIZED" == full || "$PUSH_IMPACT_FULL" == 1 ]]; then
+  PREPUSH_TIMING_PROFILE=full
+else
+  PREPUSH_TIMING_PROFILE=changed
+fi
 if [[ -v PREPUSH_PROFILE ]] && [[ "$PREPUSH_PROFILE_NORMALIZED" == full ]] && [[ "$PREPUSH_PROFILE" != full ]]; then
   echo "[hook] fallback reason: PREPUSH_PROFILE was not full or changed; using full profile"
 fi
 
 # --- Spec staleness check ---
-if grep -qE "^(src/|server/|tests/)" <<<"$PUSH_FILES"; then
-  if grep -qE "^openspec/specs/.*/spec\.md$" <<<"$PUSH_FILES"; then
+has_src_server_tests=0
+has_spec_md=0
+while IFS= read -r line; do
+  [[ -z "$line" ]] && continue
+  if [[ "$line" =~ ^(src/|server/|tests/) ]]; then
+    has_src_server_tests=1
+  fi
+  if [[ "$line" =~ ^openspec/specs/.*/spec\.md$ ]]; then
+    has_spec_md=1
+  fi
+done <<< "$PUSH_FILES" || true
+
+if (( has_src_server_tests )); then
+  if (( has_spec_md )); then
     echo "Spec file updated."
   else
     echo ""
@@ -41,8 +117,20 @@ if grep -qE "^(src/|server/|tests/)" <<<"$PUSH_FILES"; then
 fi
 
 # --- Test file staleness check ---
-if grep -qE "^src/" <<<"$PUSH_FILES"; then
-  if grep -qE "^tests/" <<<"$PUSH_FILES"; then
+has_src=0
+has_tests=0
+while IFS= read -r line; do
+  [[ -z "$line" ]] && continue
+  if [[ "$line" =~ ^src/ ]]; then
+    has_src=1
+  fi
+  if [[ "$line" =~ ^tests/ ]]; then
+    has_tests=1
+  fi
+done <<< "$PUSH_FILES" || true
+
+if (( has_src )); then
+  if (( has_tests )); then
     echo "Test files updated."
   else
     echo ""
@@ -65,7 +153,9 @@ run_changed_tests() {
     run_full_profile prepush-browser || return $?
     return
   fi
+  prepush_timing_gate_begin
   if pnpm exec vitest related --run --passWithNoTests --reporter=json --outputFile="$result" "${PUSH_IMPACT_RELATED_PATHS[@]}" >"$log" 2>&1; then
+    prepush_timing_record_gate "changed integration tests" 0
     cat -- "$log"
     if related_files=$(node - "$result" <<'NODE'
 const fs = require('node:fs');
@@ -94,6 +184,7 @@ NODE
     fi
   else
     status=$?
+    prepush_timing_record_gate "changed integration tests" "$status"
     cat -- "$log"
     echo "[hook] fallback reason: related tests failed (exit $status)"
     echo "[hook] fallback profile: full validation with pre-push Browser Mode selection"
@@ -104,6 +195,7 @@ NODE
 run_full_profile() {
   local browser_profile=${1:-all}
   FULL_PROFILE_RAN=1
+  PREPUSH_TIMING_PROFILE=full
   # Keep this order in sync with test:full. Every gate must stop the hook.
   hook_gate "lint:fast" pnpm run lint:fast || return $?
   hook_gate "type-check" pnpm run type-check || return $?
@@ -137,7 +229,7 @@ if [[ "$PREPUSH_PROFILE_NORMALIZED" == full || "${PUSH_IMPACT_FULL}" == 1 ]]; th
   if [[ -v PREPUSH_PROFILE ]] && [[ "$PREPUSH_PROFILE" == full ]]; then
     echo "[hook] explicit full profile requested"
   fi
-  run_full_profile || exit $?
+  run_full_profile prepush-browser || exit $?
 else
   if ((PUSH_IMPACT_HAS_RELATED_INPUT)); then
     run_changed_tests || exit $?

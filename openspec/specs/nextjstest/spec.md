@@ -1201,6 +1201,43 @@ The Plan37 target skip count is therefore zero in both the audit log and this sp
 - **THEN** the audit exits non-zero and preserves failure details when the
   artifact can be written
 
+#### Scenario R-Hooks-6: Isolated pre-push timing harness
+
+- **WHEN** the isolated pre-push timing harness runs a scenario in its
+  temporary Git fixture
+- **THEN** it supplies the fixture hook with pre-push stdin ref lines and
+  associated paths, does not invoke `git push`, and records the expected and
+  observed profile, exit code, required gates, and gate order for assertion
+- **AND** each run records its cold/warm state, per-gate start/end times and
+  wall times, total wall time, and exit code; environment metadata may be
+  recorded once for the benchmark invocation and referenced by each run
+- **AND** CPU usage and peak RSS are recorded as whole-hook measurements only
+  when `/usr/bin/time` is available; otherwise both are explicitly marked
+  unavailable
+- **AND** cold setup removes the fixture's `.next` and Vite cache, while warm
+  runs exclude warmup executions of the same scenario and profile; OS/page
+  cache and browser cache state are uncontrolled and are identified as such
+- **AND** successful completion time and failure-detection time are reported
+  as separate aggregates
+- **AND** when a selected Browser Mode gate fails, only artifacts associated
+  with that exact failed gate are considered: filtered PNG screenshots and,
+  for a failed component gate, a fixed-schema sanitized summary when available
+- **AND** raw Playwright traces and raw test reports are omitted because they
+  may contain request headers, cookies, or DOM data; metadata records this
+  omission reason
+- **AND** retained artifacts are written under that run's benchmark artifact
+  directory before fixture cleanup; capture preserves the hook's nonzero
+  failure status and does not copy environment variables, credentials, parent
+  index/worktree/`.next` contents, or symlink inputs
+- **AND** environment variables and secrets are isolated from the fixture,
+  symlink paths are excluded from fixture inputs, and parent index, worktree,
+  and `.next` invariants are checked before and after the benchmark
+- **AND** the harness verifies that instrumentation preserves profile
+  selection, gate order, fallback behavior, and failure propagation
+- **AND WHEN** an observed profile, exit code, required-gate set, gate order,
+  or before/after invariant differs from its expected result
+- **THEN** the harness reports the assertion failure and exits non-zero
+
 ### R4-4: Public chart data contract and export parity
 
 - **WHEN** any of the seven chart/table/CSV targets is rendered or exported
@@ -2192,8 +2229,9 @@ Manual Browser Mode selection uses active Vitest Browser Mode catalog
 discovery → JEV case selection → strict selected-ID validation → configured
 component or production-route runner. The catalog is keyed by config, file,
 and full test name; the selector does not execute model-supplied commands or
-paths. Pre-push does not invoke the selector: it runs all component Browser
-Mode cases and all production-route cases. Playwright E2E remains on its
+paths. Pre-push does not invoke the selector: it runs the fixed pre-push
+Browser Mode selections (`test:browser:prepush:component` and
+`test:browser:next-route-poc:prepush:built`). Playwright E2E remains on its
 separate runner.
 The normal `test:browser:next-route-poc` and `test:browser:next-route-poc:built`
 commands use the route selector. Raw unfiltered route execution is reserved
@@ -2207,9 +2245,32 @@ the Bash implementations in `.husky/pre-commit.bash` and
 interpret Bash-only syntax. The Bash implementations run `lint:fast`, staged
 typecheck, commit-scoped `lint-staged`, detached-HEAD validation,
 clean-worktree validation, actual-push-ref impact classification, related-test
-selection, all component Browser Mode cases, `build`, all built production
-route cases, and the remaining full-profile gates. Production validation is a
+selection, the fixed pre-push component Browser Mode selection, `build`, the
+fixed built production-route Browser Mode selection, and the remaining
+full-profile gates. Production validation is a
 separate gate and is not implied by the local pre-push hook.
+The isolated pre-push timing harness runs the existing hook route in a
+temporary Git fixture using fixture stdin/ref/path data, without `git push`.
+It captures per-run gate/total wall times and exit codes, with environment
+metadata shared across runs when captured once per benchmark. CPU and peak RSS
+are whole-hook values from `/usr/bin/time` when available and otherwise are
+marked unavailable. Cold setup removes fixture `.next` and Vite caches; warm
+measurements exclude same-scenario/profile warmups. OS/page and browser caches
+are uncontrolled. The harness isolates environment variables/secrets and
+symlink paths, asserts expected profile/exit/required gates/order, and checks
+parent index/worktree/`.next` invariants before and after the benchmark.
+Success-completion and failure-detection times are aggregated separately.
+Instrumentation is checked for unchanged profile selection, gate order,
+fallback behavior, and failure propagation.
+When a selected Browser Mode gate fails, only artifacts associated with that
+exact failed gate are considered: filtered PNG
+screenshots and, for a failed component gate, a fixed-schema sanitized summary
+when available. Raw Playwright traces and raw test reports are intentionally
+omitted because they may contain request headers, cookies, or DOM data, and the
+metadata records that omission reason. Retained artifacts stay under that
+run's benchmark artifact directory and are written before fixture cleanup.
+Capture preserves the hook's nonzero result and does not include environment
+variables, credentials, parent repository state, or symlink inputs.
 
 `CpiChart` remains the composition root. The static seven-section definition is owned by the typed `CPI_CHART_SECTIONS` in `src/app/components/cpiChartConfig.ts`; its existing ids and order are `section-cpi-major`, `section-stacked`, `section-consumption-nominal`, `section-consumption-real`, `section-earnings`, `section-residual`, and `section-new-graph`. `CpiChart` passes this same array to the active-section initial value, `SectionTabs`, and DOM/scroll observation.
 
@@ -2286,8 +2347,30 @@ Plan38 rows bypass the GDP join entirely.
   conservative full-profile inputs. Ordinary source/server/test changes retain
   safe related candidates and use the changed profile. The classifier unions
   all pushed refs before selecting a profile.
-  Browser Mode gates run the complete configured suites and do not pass push
-  paths or ref ranges to the JEV selector.
+  Browser Mode gates run the fixed pre-push component and production-route
+  selections and do not pass push paths or ref ranges to the JEV selector.
+- The isolated timing harness flow is `parent-state invariant snapshot` →
+  temporary Git fixture and environment/secret/symlink isolation → scenario,
+  expected profile, and cold/warm setup → fixture pre-push stdin/ref/path →
+  existing pre-push hook route without `git push` → per-run gate and total wall
+  time, exit code, and expected/observed profile/gates/order assertions →
+  optional whole-hook CPU/peak-RSS capture via `/usr/bin/time` → parent-state
+  invariant check → separate success-completion and failure-detection
+  aggregates. Environment metadata may be captured once per benchmark and
+  referenced by its runs. Cold setup removes the fixture `.next` and Vite
+  cache; warm measurements exclude same-scenario/profile warmups. OS/page and
+  browser caches are uncontrolled. CPU and peak RSS are explicitly
+  unavailable when `/usr/bin/time` cannot be used. The harness checks that
+  parent index, worktree, and `.next` invariants hold before and after the run;
+  on a failed selected Browser Mode gate it considers only artifacts associated
+  with that exact failed gate, retaining filtered PNG screenshots and, for a
+  failed component gate, a fixed-schema sanitized summary when available under
+  the per-run benchmark artifact directory before fixture cleanup. It omits
+  raw Playwright traces and raw test reports because they may contain request
+  headers, cookies, or DOM data, and records the omission reason in metadata.
+  It does not copy environment variables, credentials, parent repository
+  state, or symlink inputs, and does not change profile selection, gate order,
+  fallback behavior, or failure propagation.
 - Browser selection sends its per-case catalog request through the dedicated
   catalog-selection mode in `skills/jev-review/scripts/jev-request.mjs`:
   active Vitest catalog + automatically detected and explicit paths + bounded,
@@ -2367,8 +2450,8 @@ Plan38 rows bypass the GDP join entirely.
   failure invoke full non-browser validation exactly once while retaining the
   fixed Browser Mode selections.
 - The full pre-push profile is ordered `lint:fast` → `type-check` → `test:coverage`
-  → `test:browser:component:all` → `build` →
-  `test:browser:next-route-poc:built:all` → `test:build-parity` →
+  → `test:browser:prepush:component` → `build` →
+  `test:browser:next-route-poc:prepush:built` → `test:build-parity` →
   `security-check`; each gate stops later gates on failure. The changed profile
   runs selected related tests and fixed Browser Mode pre-push selections when
   applicable, then `build` and the fixed built production-route selection.
@@ -2899,8 +2982,8 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, `hid
   JEV to select from that gate's current eligible Vitest Browser Mode catalog
   and run only the selected catalog IDs
 - **WHEN** the full pre-push profile reaches its Browser Mode gates
-- **THEN** it runs `pnpm run test:browser:component:all` after `test:coverage`, then
-  `pnpm run test:browser:next-route-poc:built:all` after `build`
+  - **THEN** it runs `pnpm run test:browser:prepush:component` after `test:coverage`, then
+    `pnpm run test:browser:next-route-poc:prepush:built` after `build`
 - **WHEN** the changed pre-push profile selects a non-empty related code/test
   set
 - **THEN** it runs those related tests, the fixed pre-push component Browser
@@ -2920,9 +3003,9 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, `hid
   pre-push Browser Mode selection
 - **WHEN** `PREPUSH_PROFILE=full` is selected explicitly or the push-impact
   classifier selects full
-- **THEN** the full pre-push profile continues to run
-  `pnpm run test:browser:component:all` after `test:coverage`, then
-  `pnpm run test:browser:next-route-poc:built:all` after `build`
+  - **THEN** the full pre-push profile continues to run
+    `pnpm run test:browser:prepush:component` after `test:coverage`, then
+    `pnpm run test:browser:next-route-poc:prepush:built` after `build`
 - **WHEN** a changed-profile push contains only documentation and/or asset
   paths
 - **THEN** it skips related code-test selection and `pnpm run test:all`, while
@@ -3217,11 +3300,11 @@ next to the ignore; broad file or line exclusions do not qualify.
   incompatible JSON, or a related-test failure invokes full non-browser
   validation with the same two fixed browser selections exactly once.
 - **WHEN** full pre-push execution is tested
-  **THEN** the gate order is `lint:fast` → `type-check` → `test:coverage` →
-  `test:browser:component:all` → `build` →
-  `test:browser:next-route-poc:built:all` → `test:build-parity` →
-  `security-check`, and a failed gate prevents later gates; production
-  validation remains a separately reported gate.
+  - **THEN** the gate order is `lint:fast` → `type-check` → `test:coverage` →
+    `test:browser:prepush:component` → `build` →
+    `test:browser:next-route-poc:prepush:built` → `test:build-parity` →
+    `security-check`, and a failed gate prevents later gates; production
+    validation remains a separately reported gate.
 
 #### Phase 1 regression requirements
 
@@ -3283,11 +3366,12 @@ These regression requirements do not add requirements for a new `popstate` liste
 - Integration tests for data mapping and computation accuracy (`tests/data-mapping/`, `tests/computation-contract/`)
 - Constant/fixture tests for expected data quality (`tests/constants/`, `tests/fixtures/`)
 - Performance checkpoint tests (`tests/perf-checkpoint.test.ts`)
-- **Husky pre-push hook verification** (`tests/unit/husky-pre-push.test.ts`):
-  - T1–T3: `check-detached-leftover.sh` detects and blocks detached HEAD commits not reachable from origin/main
-  - T4–T5: Pre-push wrapper (using subprocess call, not source) correctly propagates exit codes and allows full validation sequence to run when safe
-  - T6–T8: `check-clean-worktree.sh` blocks tracked differences and untracked `src/`/`server/`/`tests/` files, while allowing a clean tree with unrelated local artifacts
-  - launcher contract: both hook wrappers remain POSIX-compatible and point to their `.bash` implementations
+  - **Husky pre-push hook verification** (`tests/unit/husky-pre-push.test.ts`):
+    - T1–T3: `check-detached-leftover.sh` detects and blocks detached HEAD commits not reachable from origin/main
+    - T4–T5: Pre-push wrapper (using subprocess call, not source) correctly propagates exit codes and allows full validation sequence to run when safe
+    - T6–T8: `check-clean-worktree.sh` blocks tracked differences and untracked `src/`/`server/`/`tests/` files, while allowing a clean tree with unrelated local artifacts
+    - launcher contract: both hook wrappers remain POSIX-compatible and point to their `.bash` implementations
+  - component selection wrapper: `tests/unit/prepush-component-browser-runner.test.ts` pins `scripts/run-prepush-component-browser.mjs` fail-closed wiring (JSON result assertion, nonzero exit on verification failure, anchored `--testNamePattern`, `--reporter=json`) and asserts the selected case's file exists and its `describe` + `it` titles assemble to the pinned full test name
 - E2E against a real build/server (`tests/e2e/`, Playwright) across three projects:
   `chromium` (Desktop Chrome), `chromium-dark` (dark mode), `mobile-pixel` (Pixel 7 / Chromium)
   - `range-change.e2e.spec.ts` — year-range filtering changes the rendered bars

@@ -19,6 +19,7 @@ const remote = join(smokeRoot, "remote.git");
 const work = join(smokeRoot, "work");
 const bin = join(smokeRoot, "bin");
 const log = join(smokeRoot, "pnpm.log");
+const timingFile = join(smokeRoot, "prepush-timing.tsv");
 
 function run(args, cwd = work, extraEnv = {}) {
   return execFileSync("git", args, {
@@ -27,6 +28,9 @@ function run(args, cwd = work, extraEnv = {}) {
       ...process.env,
       PATH: `${bin}:${process.env.PATH ?? ""}`,
       HOOK_SMOKE_LOG: log,
+      PREPUSH_TIMING_FILE: timingFile,
+      PREPUSH_TIMING_SCENARIO: "hook-smoke-fixture",
+      PREPUSH_CACHE_CONDITION: "fixture-stub",
       ...extraEnv,
     },
     stdio: ["ignore", "pipe", "pipe"],
@@ -250,9 +254,9 @@ fi
     "run lint:fast",
     "run type-check",
     "run test:coverage",
-    "run test:browser:component:all",
+    "run test:browser:prepush:component",
     "run build",
-    "run test:browser:next-route-poc:built:all",
+    "run test:browser:next-route-poc:prepush:built",
     "run test:build-parity",
     "run security-check",
   ]) {
@@ -273,7 +277,7 @@ fi
     "full-profile production-route Browser Mode failure did not block push",
     {
       PREPUSH_PROFILE: "full",
-      HOOK_SMOKE_FAIL_GATE: "test:browser:next-route-poc:built:all",
+      HOOK_SMOKE_FAIL_GATE: "test:browser:next-route-poc:prepush:built",
     },
   );
   expect(
@@ -282,11 +286,11 @@ fi
   );
   const fullBrowserFailureLog = readFileSync(log, "utf8").slice(fullBrowserFailureLogStart);
   expect(
-    hasExactCommand(fullBrowserFailureLog, "run test:browser:component:all"),
+    hasExactCommand(fullBrowserFailureLog, "run test:browser:prepush:component"),
     "full profile skipped component Browser Mode",
   );
   expect(
-    hasExactCommand(fullBrowserFailureLog, "run test:browser:next-route-poc:built:all"),
+    hasExactCommand(fullBrowserFailureLog, "run test:browser:next-route-poc:prepush:built"),
     "full profile skipped production-route Browser Mode",
   );
   for (const laterGate of ["run test:build-parity", "run security-check"]) {
@@ -431,6 +435,40 @@ fi
     git(["switch", "main"]);
     git(["merge", "--ff-only", branch]);
   }
+
+  const timingRows = readFileSync(timingFile, "utf8")
+    .trim()
+    .split(/\r?\n/)
+    .map((line) => line.split("\t"));
+  const [timingHeader, ...timingRecords] = timingRows;
+  expect(
+    timingHeader.join("\t") ===
+      "record_type\tscenario\tprofile\tcache_condition\tgate\tstarted_at_utc\tended_at_utc\tduration_ms\texit_code",
+    "pre-push timing output did not use the expected TSV schema",
+  );
+  expect(
+    timingRecords.some(
+      (record) =>
+        record[0] === "gate" &&
+        record[1] === "hook-smoke-fixture" &&
+        ["changed", "full"].includes(record[2]) &&
+        record[3] === "fixture-stub" &&
+        record[4] === "build" &&
+        record[8] === "91",
+    ),
+    "pre-push timing output missed the failing build gate and exit code",
+  );
+  expect(
+    timingRecords.some(
+      (record) =>
+        record[0] === "total" &&
+        record[1] === "hook-smoke-fixture" &&
+        ["changed", "full"].includes(record[2]) &&
+        /^\d+$/.test(record[7]) &&
+        /^\d+$/.test(record[8]),
+    ),
+    "pre-push timing output missed total duration or exit code",
+  );
 
   console.log(
     "hook smoke passed: initial, normal, docs-only skip, multi-ref, deletion, failure atomicity, full profile, Browser Mode failure/fallback gates",

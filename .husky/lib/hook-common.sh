@@ -12,6 +12,10 @@ hook_cleanup() {
   local status=$?
   local pid log
 
+  if declare -F prepush_timing_finish >/dev/null; then
+    prepush_timing_finish "$status"
+  fi
+
   if (( HOOK_COMMON_CLEANED == 1 )); then
     return "$status"
   fi
@@ -46,15 +50,23 @@ trap 'hook_interrupt TERM' TERM
 
 hook_gate() {
   local gate="$1"
+  local status
   shift
+  if declare -F prepush_timing_gate_begin >/dev/null; then
+    prepush_timing_gate_begin
+  fi
   echo "[hook] gate: $gate"
   if "$@"; then
+    status=0
     echo "[hook] gate passed: $gate"
   else
-    local status=$?
+    status=$?
     echo "[hook] gate failed: $gate (exit $status)" >&2
-    return "$status"
   fi
+  if declare -F prepush_timing_record_gate >/dev/null; then
+    prepush_timing_record_gate "$gate" "$status"
+  fi
+  return "$status"
 }
 
 hook_start_parallel_gate() {

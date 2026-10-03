@@ -328,10 +328,13 @@ exit 0
       expect(fullCalls).not.toContain("exec vitest related");
       expect(fullCalls).not.toContain("run test:e2e");
       expect(fullCalls).not.toContain("run test:e2e:clean");
-      const fullComponentCalls = callsForGate(fullCalls, "run test:browser:component:all");
-      const fullRouteCalls = callsForGate(fullCalls, "run test:browser:next-route-poc:built:all");
-      expect(fullComponentCalls).toEqual(["run test:browser:component:all"]);
-      expect(fullRouteCalls).toEqual(["run test:browser:next-route-poc:built:all"]);
+      const fullComponentCalls = callsForGate(fullCalls, "run test:browser:prepush:component");
+      const fullRouteCalls = callsForGate(
+        fullCalls,
+        "run test:browser:next-route-poc:prepush:built",
+      );
+      expect(fullComponentCalls).toEqual(["run test:browser:prepush:component"]);
+      expect(fullRouteCalls).toEqual(["run test:browser:next-route-poc:prepush:built"]);
       expect(fullCalls.indexOf(fullComponentCalls[0])).toBeGreaterThan(
         fullCalls.indexOf("run test:all"),
       );
@@ -342,12 +345,12 @@ exit 0
       fs.writeFileSync(fixture.log, "");
       const failed = runHook(fixture, {
         PREPUSH_PROFILE: "full",
-        MOCK_FAIL_GATE: "test:browser:next-route-poc:built:all",
+        MOCK_FAIL_GATE: "test:browser:next-route-poc:prepush:built",
       });
       expect(failed.status).toBe(23);
-      expect(failed.output).toContain("gate failed: test:browser:next-route-poc:built:all");
+      expect(failed.output).toContain("gate failed: test:browser:next-route-poc:prepush:built");
       const failedCalls = fs.readFileSync(fixture.log, "utf8");
-      expect(failedCalls).toContain("run test:browser:component:all");
+      expect(failedCalls).toContain("run test:browser:prepush:component");
       expect(failedCalls).toContain("run build");
       expect(failedCalls).not.toContain("run test:build-parity");
       expect(failedCalls).not.toContain("run security-check");
