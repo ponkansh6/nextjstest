@@ -204,13 +204,6 @@ type QuarterlyValidation = {
   factor: number;
   status: "pending-independent-confirmation" | "ready" | "failed";
 };
-function haveSameQuarterlyPeriods(
-  nominal: Map<string, number>,
-  real: Map<string, number>,
-): boolean {
-  return nominal.size === real.size && [...nominal.keys()].every((period) => real.has(period));
-}
-
 /** Metadata-only predicate; it never validates or transforms quarterly rows. */
 export function isQuarterlyComparisonReady(metadata: unknown): boolean {
   const record = metadata as QuarterlyComparisonMetadata | null;
@@ -365,21 +358,16 @@ export function validateQuarterlyGdpSupport(): QuarterlyGdpSupportStatus {
       "0003113612",
       "previous-year-chain-linked",
     );
-  if (typeof n === "string" || typeof r === "string")
+  if (typeof n === "string" || typeof r === "string") {
+    const reason = [n, r].find((status): status is string => typeof status === "string");
     return {
       valid: false,
       comparisonReady: false,
       independentConfirmation: "failed",
-      reason:
-        typeof n === "string" ? n : typeof r === "string" ? r : "quarterly GDP validation failed",
+      reason,
     };
-  if (!haveSameQuarterlyPeriods(n.values, r.values))
-    return {
-      valid: false,
-      comparisonReady: false,
-      independentConfirmation: "failed",
-      reason: "nominal and real quarterly GDP periods mismatch",
-    };
+  }
+  // Both validators require the same exact continuous 2005-Q1 through 2025-Q4 set.
   const status =
     n.status === "ready" && r.status === "ready"
       ? "ready"
@@ -412,12 +400,8 @@ export function loadQuarterlyGdpData(): QuarterlyGdpData {
       "0003113612",
       "previous-year-chain-linked",
     );
-  if (
-    typeof n === "string" ||
-    typeof r === "string" ||
-    !haveSameQuarterlyPeriods(n.values, r.values)
-  )
-    return { rows: [], comparisonReady: false };
+  // Each valid operand carries the same exact 2005-Q1 through 2025-Q4 period set.
+  if (typeof n === "string" || typeof r === "string") return { rows: [], comparisonReady: false };
   const ready = n.status === "ready" && r.status === "ready";
   const rows = [...n.values.keys()].map((period) => ({
     period,

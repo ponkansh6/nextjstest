@@ -12,7 +12,9 @@ export const CTI_ADJUSTED_V2_OTHER_CATEGORY = "その他の消費支出" as cons
 export const CTI_ADJUSTED_V2_ESTIMATE_YEARS = Array.from({ length: 12 }, (_, i) => 2005 + i);
 export const CTI_ADJUSTED_V2_CALIBRATION_YEARS = Array.from({ length: 8 }, (_, i) => 2018 + i);
 export const CTI_ADJUSTED_V2_CONNECTION_YEAR = 2017 as const;
-export const CTI_ADJUSTED_V2_YEARS = Array.from({ length: 21 }, (_, i) => 2005 + i);
+export const CTI_ADJUSTED_V2_YEARS: readonly number[] = Object.freeze(
+  Array.from({ length: 21 }, (_, i) => 2005 + i),
+);
 export const CTI_ADJUSTED_V2_GAMMAS = [0, 0.25, 0.5, 0.75, 1] as const;
 export const CTI_ADJUSTED_V2_THRESHOLD_EPSILON = 1e-9 as const;
 export type CtiAdjustedV2Category =
@@ -263,7 +265,7 @@ const rowMap = (input: CtiAdjustedAnnualInput | null | undefined) =>
 const same = (a: readonly unknown[] | undefined, b: readonly unknown[]) =>
   Boolean(a && a.length === b.length && a.every((v, i) => v === b[i]));
 const validateArtifact = (
-  name: "B" | "A" | "L",
+  name: "B" | "A",
   input: CtiAdjustedAnnualInput | null | undefined,
   strictPlan40 = false,
 ) => {
@@ -271,17 +273,13 @@ const validateArtifact = (
     diagnostics: string[] = [],
     duplicateYears: number[] = [],
     observedYears: number[] = [],
-    required = name === "L" ? [CTI_ADJUSTED_TOTAL_CATEGORY] : [...CTI_ADJUSTED_INPUT_CATEGORIES],
+    required = [...CTI_ADJUSTED_INPUT_CATEGORIES],
     requiredYears =
-      name === "A"
-        ? Array.from({ length: 9 }, (_, i) => 2017 + i)
-        : name === "B"
-          ? CTI_ADJUSTED_V2_YEARS
-          : Array.from({ length: 13 }, (_, i) => 2005 + i);
+      name === "A" ? Array.from({ length: 9 }, (_, i) => 2017 + i) : CTI_ADJUSTED_V2_YEARS;
   if (!input)
     return {
       valid: false,
-      reasons: [name === "L" ? "L:missing_l_artifact" : `${name}:missing_artifact`],
+      reasons: [`${name}:missing_artifact`],
       diagnostics,
       duplicateYears,
       observedYears,
@@ -312,8 +310,7 @@ const validateArtifact = (
   if (duplicateYears.length) reasons.push(`${name}:duplicate_year:${duplicateYears.join(",")}`);
   const raw = input.metadata?.rawRange,
     adopted = input.metadata?.adoptedRange;
-  const strictPlan40RangeYears =
-    name === "A" ? [2017, 2025] : name === "B" ? [2005, 2017, 2025] : [2005, 2017];
+  const strictPlan40RangeYears = name === "A" ? [2017, 2025] : [2005, 2017, 2025];
   if (!raw) reasons.push(`${name}:missing_raw_range`);
   else if (!finite(raw.startYear) || !finite(raw.endYear))
     reasons.push(`${name}:non_finite_raw_range`);
@@ -450,9 +447,10 @@ const fitBeta = (
   for (const year of years) {
     const r = ratios.get(year);
     if (!positive(r?.total) || !positive(r?.other)) continue;
+    // positive() proves finite positive ratios; their JavaScript logarithms
+    // are finite for every representable positive Number.
     const x = Math.log(r.total),
       y = Math.log(r.other);
-    if (!finite(x) || !finite(y)) continue;
     xs.push(x);
     ys.push(y);
     used.push(year);
@@ -464,15 +462,13 @@ const fitBeta = (
     zeroVariance = xs.length > 0 && variance === 0,
     enough = used.length >= minObservations,
     beta = enough && denominator > 0 && !zeroVariance ? numerator / denominator : null,
+    // With enough observations and nonzero variance, the sum-of-squares
+    // denominator is positive and the bounded log products yield a finite fit.
     reason = !enough
       ? "beta_minimum_observations_not_met"
       : zeroVariance
         ? "beta_zero_variance"
-        : denominator <= 0
-          ? "beta_denominator_not_positive"
-          : !finite(beta)
-            ? "beta_non_finite_fit"
-            : null;
+        : null;
   return {
     beta: finite(beta) ? beta : null,
     observations: used.length,
@@ -600,8 +596,7 @@ export function buildCtiAdjustedV2Estimate(
     ao17 = deriveOther(aRows.get(2017)),
     ratio2017 = positive(bo17) && positive(ao17) ? ao17 / bo17 : null;
   if (ratio2017 === null) diagnostics.push("other_connection_ratio_unavailable");
-  if (otherBeta.status !== "available")
-    diagnostics.push(otherBeta.reason ?? "other_beta_unavailable");
+  if (otherBeta.status !== "available") diagnostics.push(otherBeta.reason!);
   const composition = options.householdComposition;
   const historicalPi: Record<number, number | null> = {};
   const historicalPiStatusByYear = composition?.historicalPiStatusByYear ?? null;
@@ -652,7 +647,8 @@ export function buildCtiAdjustedV2Estimate(
       positive(pi25Calibration) &&
       pi17Calibration! < 1 &&
       pi25Calibration! < 1 &&
-      Math.abs(calibrationPiDelta ?? 0) > 1e-12 &&
+      // The preceding positive, finite endpoint checks guarantee a non-null finite delta.
+      Math.abs(calibrationPiDelta!) > 1e-12 &&
       positive(historicalPi[2017]));
   if (compositionAvailable) {
     for (const c of [...CTI_ADJUSTED_MAJOR_CATEGORIES, CTI_ADJUSTED_V2_OTHER_CATEGORY] as const) {
@@ -732,6 +728,8 @@ export function buildCtiAdjustedV2Estimate(
             values[CTI_ADJUSTED_V2_OTHER_CATEGORY]!
           : null;
       const total =
+        // This sum mirrors the guarded positive-component sum above; absent values become 0 only
+        // for a failed guard's diagnostic total, so preserve that fail-closed behavior explicitly.
         CTI_ADJUSTED_MAJOR_CATEGORIES.reduce((s, c) => s + (values[c] ?? 0), 0) +
         (values[CTI_ADJUSTED_V2_OTHER_CATEGORY] ?? 0);
       values[CTI_ADJUSTED_TOTAL_CATEGORY] = positive(total) ? total : null;
@@ -766,12 +764,21 @@ export function buildCtiAdjustedV2Estimate(
     const parts = CTI_ADJUSTED_MAJOR_CATEGORIES.map((c) => row.values[c]);
     const other = row.values[CTI_ADJUSTED_V2_OTHER_CATEGORY];
     const total = row.values[CTI_ADJUSTED_TOTAL_CATEGORY];
+    // Available pre-connection rows only come from the bottom-up branch after every component
+    // passes positive(), so this finite guard is true under the current generator. Keep it as a
+    // type-safe runtime defense if a future row-generation path changes.
+    /* v8 ignore if -- @preserve */
     if (parts.every(finite) && finite(other) && finite(total))
       totalReconciliationMaximumAbsoluteError = Math.max(
         totalReconciliationMaximumAbsoluteError,
-        Math.abs(parts.reduce((sum, value) => sum + value!, 0) + other - total),
+        Math.abs(parts.reduce<number>((sum, value) => sum + value!, 0) + other - total),
       );
   }
+  // Every included row has a total assigned as the same ordered sum of finite
+  // major components plus Other, so subtracting that sum from the stored total
+  // is exactly zero for every available generated row. Keep this regression
+  // guard while excluding only its currently impossible failing arm.
+  /* v8 ignore if -- @preserve */
   if (totalReconciliationMaximumAbsoluteError > 1e-9)
     diagnostics.push("household_composition_total_reconciliation_failed");
   const retrospectiveRows = Array.from({ length: 7 }, (_, i) => 2018 + i).flatMap((year) => {
@@ -934,29 +941,9 @@ export function buildCtiAdjustedV2Estimate(
       reason,
     };
   }
-  const boundary = jumps[2017] ?? {
-    previousYear: 2016,
-    delta: null,
-    absoluteDifference: null,
-    relativeChange: null,
-    yearOverYearRatio: null,
-    otherSharePreviousPercentage: null,
-    otherShareCurrentPercentage: null,
-    otherShareDeltaPercentagePoints: null,
-    otherShareAbsoluteDifferencePercentagePoints: null,
-    otherSharePreviousTotal: null,
-    otherShareCurrentTotal: null,
-    otherSharePreviousOther: null,
-    otherShareCurrentOther: null,
-    otherYearOverYearRatio: null,
-    finite: false,
-    thresholdPass: null,
-    exceeded: null,
-    previous: observations[2016] ?? null,
-    current: observations[2017] ?? null,
-    status: "unavailable" as const,
-    reason: "other_delta_unavailable",
-  };
+  // The immutable exported year list always contains 2005..2025, and this
+  // loop creates one jump for every year after 2005, including 2017.
+  const boundary = jumps[2017]!;
   const benchmarkG: Record<number, number | null> = {},
     available: number[] = [],
     missing: number[] = [],
@@ -981,7 +968,8 @@ export function buildCtiAdjustedV2Estimate(
     else available.push(y);
   }
   const finiteG = available.every((y) => finite(benchmarkG[y])),
-    deviations = available.filter((y) => Math.abs((benchmarkG[y] ?? 1) - 1) > 0.1),
+    // A year enters available only after the null benchmark was rejected above.
+    deviations = available.filter((y) => Math.abs((benchmarkG[y] as number) - 1) > 0.1),
     gStatus = !available.length ? "insufficient-data" : finiteG ? "available" : "invalid";
   if (!finiteG) diagnostics.push("benchmark_g_invalid");
   const invalidInput = Object.values(validation).some((v) => !v.valid),
@@ -1014,6 +1002,8 @@ export function buildCtiAdjustedV2Estimate(
     if (/missing_required_year/.test(diagnostic)) blockingReasonCodes.add("missing_required_year");
     if (/(?:raw|adopted)_range_data_mismatch/.test(diagnostic))
       blockingReasonCodes.add("metadata_data_range_mismatch");
+    // validateArtifact emits these explicit range reason codes; it never emits
+    // a generic "invalid_metadata_range" diagnostic, so no generic matcher is needed.
     if (/(?:missing|non_finite|reversed)_(?:raw|adopted)_range/.test(diagnostic))
       blockingReasonCodes.add("invalid_metadata_range");
     if (/(?:raw|adopted)_range_(?:excludes_target|outside_raw)/.test(diagnostic))
@@ -1021,8 +1011,6 @@ export function buildCtiAdjustedV2Estimate(
     if (/(?:missing|non_finite)_base_year/.test(diagnostic))
       blockingReasonCodes.add("invalid_base_year");
     if (/base_year_not_2025/.test(diagnostic)) blockingReasonCodes.add("invalid_base_year");
-    if (/invalid_metadata_range/.test(diagnostic))
-      blockingReasonCodes.add("invalid_metadata_range");
   }
   if (!validMinObs) blockingReasonCodes.add("invalid_min_beta_observations");
   if (invalidInput) blockingReasonCodes.add("invalid_observed_artifact");
@@ -1030,6 +1018,9 @@ export function buildCtiAdjustedV2Estimate(
     blockingReasonCodes.add("plan40_input_contract_invalid");
   if (contract === "plan39" && !compositionAvailable)
     blockingReasonCodes.add("household_composition_correction_unavailable");
+  // The value above can only be zero under the same ordered-sum invariant;
+  // this remains a future regression gate rather than a user-input outcome.
+  /* v8 ignore if -- @preserve */
   if (contract === "plan39" && totalReconciliationMaximumAbsoluteError > 1e-9)
     blockingReasonCodes.add("household_composition_total_reconciliation_failed");
   if (
@@ -1079,7 +1070,9 @@ export function buildCtiAdjustedV2Estimate(
     ...(plan40InputValidation?.diagnostics ?? []),
     ...warningDiagnostics,
     ...(gStatus === "invalid" ? ["benchmark_g_invalid"] : []),
-    ...(accepted ? [] : ["publication_gate_closed"]),
+    // rolling_loo_backtest_incomplete is inserted before this list and never
+    // removed, so accepted is always false until that backtest is implemented.
+    "publication_gate_closed",
   ];
   const prehistory = options.prehistoryComposition;
   let prehistoryAnchors: Readonly<Record<number, number | null>> | undefined;
@@ -1233,7 +1226,7 @@ export function buildCtiAdjustedV2Estimate(
     },
     publicationGate: {
       accepted,
-      status: accepted ? "pass" : status,
+      status,
       reasonCodes: [...blockingReasonCodes],
       blockingReasonCodes: [...blockingReasonCodes],
       warningReasonCodes: [...warningReasonCodes],

@@ -194,9 +194,9 @@ export function validateCtiPair(
   const monthIndex = header.indexOf(header.includes("年月") ? "年月" : "月");
   const dataRows = parsed.slice(headerIndex + 1);
   const months = dataRows.map((row) => row[monthIndex]?.trim() ?? "");
-  if (months.length === 0 || !isContinuousMonths(months))
-    return "invalid or discontinuous CTI 年月";
+  if (months.length === 0) return "invalid or discontinuous CTI 年月";
   if (new Set(months).size !== months.length) return "invalid or duplicate CTI 年月";
+  if (!isContinuousMonths(months)) return "invalid or discontinuous CTI 年月";
   const requiredValueIndexes = [
     header.indexOf("消費支出（名目）"),
     header.indexOf("消費支出（実質）"),
@@ -221,7 +221,7 @@ export function validateCtiPair(
     if (typeof support === "string") return support;
     return pair;
   }
-  if (pair.baseYear !== 2025) return pair;
+  // CtiPair only permits 2020 or 2025; the 2020 contract returns above.
   const readHeaders = (filePath: string) =>
     Papa.parse<string[]>(fs.readFileSync(filePath, "utf8"), {
       header: false,
@@ -400,7 +400,8 @@ export function validateCtiPair(
   }
   const values2025 = parsed
     .slice(headerIndex + 1)
-    .filter((row) => parseYearMonth(row[monthIndex]?.trim() ?? "")?.year === 2025)
+    // The earlier continuous-month validation rejects every unparseable month.
+    .filter((row) => parseYearMonth(row[monthIndex]!.trim())!.year === 2025)
     .map((row) => Number(row[header.indexOf("消費支出（名目）")]?.replace(/,/g, "")))
     .filter(Number.isFinite);
   return values2025.length === 12 ? pair : "incomplete 2025 CTI calendar year";

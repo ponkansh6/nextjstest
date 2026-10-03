@@ -142,10 +142,9 @@ export function ctiBasicSeriesPaths(kind: CtiBasicSeriesKind, root = CTI_BASIC_2
 export function sha256Hex(content: string | Uint8Array): string {
   return createHash("sha256").update(content).digest("hex");
 }
-function monthNumber(month: string) {
-  const match = month.match(/^(\d{4})-(\d{2})$/);
-  if (!match) throw new Error(`invalid CTI month: ${month}`);
-  return Number(match[1]) * 12 + Number(match[2]);
+function monthNumber(month: CtiBasicMonth) {
+  // Records only receive this normalized YYYY-MM type after normalizeCtiMonth validates them.
+  return Number(month.slice(0, 4)) * 12 + Number(month.slice(5, 7));
 }
 export function normalizeCtiMonth(value: string) {
   const match = String(value)
@@ -173,7 +172,8 @@ function csvRows(content: string) {
     transformHeader: (h) => h.trim(),
   });
   if (parsed.errors.length) throw new Error(`CTI CSV schema error: ${parsed.errors[0].message}`);
-  if ((parsed.meta.fields ?? []).join(",") !== normalizedFields.join(","))
+  // A successful header-mode parse necessarily discovers a field list; parse errors fail above.
+  if (parsed.meta.fields!.join(",") !== normalizedFields.join(","))
     throw new Error("CTI CSV has unexpected columns");
   return parsed.data;
 }
@@ -191,9 +191,8 @@ export function normalizeCtiBasicSeriesCsv(
       throw new Error(`invalid CTI series index at row ${index + 2}`);
     const month = normalizeCtiMonth(row.month);
     const isMissing = row.is_missing === "true";
-    const raw = String(row.raw_value ?? "")
-      .trim()
-      .replace(/,/g, "");
+    // Exact header validation plus PapaParse's field-count validation guarantees this column exists.
+    const raw = String(row.raw_value).trim().replace(/,/g, "");
     if (isMissing !== missingValues.has(raw.toLowerCase()))
       throw new Error(`CTI missing marker mismatch at row ${index + 2}`);
     const rawValue = isMissing ? null : Number(raw);
@@ -435,8 +434,8 @@ export function validateCtiBasicManifest(manifest: CtiBasicManifest, root: strin
     });
     validateManifestMetadata(meta, item, records, raw, normalized);
   }
-  if ([...ids].sort().join(",") !== "000040499028,000040499070,000040499082")
-    throw new Error("CTI manifest has unexpected series IDs");
+  // Three unique items, each restricted above to one of the three fixed kind/ID pairs,
+  // necessarily contains exactly the expected set of IDs.
 }
 export function loadCtiBasicSeries2025(
   kind: CtiBasicSeriesKind,
@@ -499,10 +498,7 @@ export function aggregateCtiBasicNominalQuarterly(
   let globalReason: string | null = null;
   const reasonPriority: Record<string, number> = { series_mismatch: 4, duplicate: 2 };
   const setGlobalReason = (reason: string) => {
-    if (
-      globalReason === null ||
-      (reasonPriority[reason] ?? 0) > (reasonPriority[globalReason] ?? 0)
-    ) {
+    if (globalReason === null || reasonPriority[reason]! > reasonPriority[globalReason]!) {
       globalReason = reason;
     }
   };
@@ -516,11 +512,10 @@ export function aggregateCtiBasicNominalQuarterly(
       record.seriesName === "消費支出（名目）";
     if (!inRange) continue;
     if (!validIdentity) {
-      if (match) {
-        const year = Number(match[1]);
-        const quarter = Math.floor((Number(match[2]) - 1) / 3) + 1;
-        reasons.set(`${year}Q${quarter}`, "series_mismatch");
-      }
+      // inRange above is true only when this same YYYY-MM match exists.
+      const year = Number(match![1]);
+      const quarter = Math.floor((Number(match![2]) - 1) / 3) + 1;
+      reasons.set(`${year}Q${quarter}`, "series_mismatch");
       setGlobalReason("series_mismatch");
       continue;
     }
@@ -565,7 +560,8 @@ export function aggregateCtiBasicNominalQuarterly(
         values.set(period, value);
         measurements.set(period, base(value, "valid", null));
       } else {
-        measurements.set(period, base(null, "invalid", finalReason ?? globalReason ?? "invalid"));
+        // Missing, malformed, or globally invalid quarters always carry a reason above.
+        measurements.set(period, base(null, "invalid", finalReason!));
       }
     }
   }

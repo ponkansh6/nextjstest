@@ -75,7 +75,7 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
       <div className={styles.legendContainer}>
         <div className={styles.legendSection}>
           <div className={styles.legendItems}>
-            {configs.map(({ key, displayName, color }) => (
+            {configs.map(({ key, color }) => (
               <button
                 key={key}
                 data-testid={`legend-${key}`}
@@ -85,7 +85,8 @@ export const EarningsBreakdownChart: React.FC<EarningsBreakdownChartProps> = ({
               >
                 <span className={styles.legendIcon} style={{ backgroundColor: color }} />
                 <span className={styles.legendLabel}>
-                  {getLegendLabel(key) || displayName || key}
+                  {/* getLegendLabel always preserves unknown keys as their own label. */}
+                  {getLegendLabel(key)}
                 </span>
               </button>
             ))}

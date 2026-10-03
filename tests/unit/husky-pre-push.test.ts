@@ -230,10 +230,10 @@ describe("husky pre-push profile normalization", () => {
 });
 
 describe("husky pre-push full test gate environment", () => {
-  it("clears inherited outer-repository Git variables for test:all only", () => {
+  it("clears inherited outer-repository Git variables for test:coverage only", () => {
     const hook = fs.readFileSync(path.resolve(process.cwd(), ".husky/pre-push.bash"), "utf8");
     const gateCommand = hook.match(
-      /^\s*hook_gate "test:all" ([\s\S]*?pnpm run test:all)(?= \|\| return \$\?)/m,
+      /^\s*hook_gate "test:coverage" ([\s\S]*?pnpm run test:coverage)(?= \|\| return \$\?)/m,
     )?.[1];
     expect(gateCommand).toBeDefined();
 

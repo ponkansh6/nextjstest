@@ -14,14 +14,22 @@ const CTI_ADJUSTED_V2_QUARTERLY_EXPENSE_KEYS = CTI_ADJUSTED_V2_PUBLIC_CATEGORIES
 // The registry is the public ordering contract for the ten Plan40 expenses.
 // Keep the assertion close to the projection so a registry/key drift cannot silently
 // expose the total or a v1/internal key on the quarterly route.
-if (
-  CTI_ADJUSTED_V2_QUARTERLY_EXPENSE_KEYS.join("\u0000") !==
-  CTI_ADJUSTED_V2_PUBLIC_REGISTRY.filter((entry) => entry.category !== "総合")
-    .map((entry) => entry.key)
-    .join("\u0000")
-) {
-  throw new Error("Plan40 quarterly public registry/key order mismatch");
+/** Keep the module-level registry tripwire independently checkable. */
+export function assertQuarterlyPublicRegistryOrder(
+  expectedKeys: readonly string[],
+  registeredKeys: readonly string[],
+): void {
+  if (expectedKeys.join("\u0000") !== registeredKeys.join("\u0000")) {
+    throw new Error("Plan40 quarterly public registry/key order mismatch");
+  }
 }
+
+assertQuarterlyPublicRegistryOrder(
+  CTI_ADJUSTED_V2_QUARTERLY_EXPENSE_KEYS,
+  CTI_ADJUSTED_V2_PUBLIC_REGISTRY.filter((entry) => entry.category !== "総合").map(
+    (entry) => entry.key,
+  ),
+);
 
 /** Public quarterly nominal stack: exactly the ten canonical expense series. */
 export const QUARTERLY_PUBLIC_NOMINAL_KEYS = [...CTI_ADJUSTED_V2_QUARTERLY_EXPENSE_KEYS] as const;

@@ -169,7 +169,7 @@ fi
     PREPUSH_PROFILE: "changed",
   });
   const docsOnlyLog = readFileSync(log, "utf8").slice(docsOnlyLogStart);
-  for (const codeGate of ["exec vitest related", "run test:all"]) {
+  for (const codeGate of ["exec vitest related", "run test:all", "run test:coverage"]) {
     expect(
       codeGate === "exec vitest related"
         ? !docsOnlyLog.split(/\r?\n/).some((line) => line.startsWith(`${codeGate} `))
@@ -249,7 +249,7 @@ fi
   for (const gate of [
     "run lint:fast",
     "run type-check",
-    "run test:all",
+    "run test:coverage",
     "run test:browser:component:all",
     "run build",
     "run test:browser:next-route-poc:built:all",
@@ -344,8 +344,12 @@ fi
     hasExactCommand(changedBrowserFailureLog, "run test:browser:prepush:component"),
     "changed profile skipped the pre-push component smoke case",
   );
+  expect(
+    !hasExactCommand(changedBrowserFailureLog, "run test:coverage"),
+    "changed profile ran full test coverage",
+  );
   for (const laterGate of [
-    "run test:all",
+    "run test:coverage",
     "run build",
     "run test:browser:next-route-poc:prepush:built",
     "run test:build-parity",
@@ -388,7 +392,7 @@ fi
       `${relatedMode} selection did not run related tests`,
     );
     expect(
-      hasExactCommand(fallbackLog, "run test:all"),
+      hasExactCommand(fallbackLog, "run test:coverage"),
       `${relatedMode} selection did not fall back to the full profile`,
     );
     const browserRuns = fallbackLog
@@ -405,7 +409,7 @@ fi
     const fallbackGates = fallbackLog.split(/\r?\n/);
     let previousFallbackGateIndex = -1;
     for (const gate of [
-      "run test:all",
+      "run test:coverage",
       "run test:browser:prepush:component",
       "run build",
       "run test:browser:next-route-poc:prepush:built",

@@ -30,11 +30,9 @@ export default function ChartInfoButton({
     if (!open) return;
 
     const handlePointerDown = (e: PointerEvent) => {
-      // Don't close if clicking inside the wrapper or the popup
-      if (
-        wrapperRef.current?.contains(e.target as Node) ||
-        popupRef.current?.contains(e.target as Node)
-      ) {
+      // The backdrop and popup are descendants of the wrapper span returned below,
+      // so this contains check already covers every internal pointer target.
+      if (wrapperRef.current?.contains(e.target as Node)) {
         return;
       }
       setOpen(false);

@@ -44,6 +44,9 @@ importers:
       '@playwright/test':
         specifier: ^1.62.1
         version: 1.62.1
+      '@secretlint/secretlint-rule-preset-recommend':
+        specifier: 13.0.4
+        version: 13.0.4
       '@testing-library/jest-dom':
         specifier: ^7.0.1
         version: 7.0.1(@testing-library/dom@10.4.2)(vitest@4.1.11)
@@ -1366,6 +1369,10 @@ packages:
 
   '@secretlint/resolver@13.0.4':
     resolution: {integrity: sha512-+s4fRFctBlAbHu4H8lRLj/e6dyDIGpIM2QLAJWgaMJUn9bFxetjRBQEv/HD2U4ohpGHYURLMkDcnS3iZdSTmGg==}
+
+  '@secretlint/secretlint-rule-preset-recommend@13.0.4':
+    resolution: {integrity: sha512-Nbcr7tvyKuRF4BKh7RQSCEOaif4gFPH/qjK2ajcoUDGL7HAY/C6PzcsmVR1Y0qQCRqrBuMuXn1onXE+wxNNNsw==}
+    engines: {node: '>=22.0.0'}
 
   '@secretlint/source-creator@13.0.4':
     resolution: {integrity: sha512-YfVVY7GHbHV6CN/tLIf1BGiONVjX2fvmJyvCv2MhonUiWtLPVU4fnOQIrWMLFakeRJ/GVoV8FfqvPW3jnUHfVA==}
@@ -5385,6 +5392,8 @@ snapshots:
   '@secretlint/profiler@13.0.4': {}
 
   '@secretlint/resolver@13.0.4': {}
+
+  '@secretlint/secretlint-rule-preset-recommend@13.0.4': {}
 
   '@secretlint/source-creator@13.0.4':
     dependencies:

@@ -31,7 +31,8 @@ function hasCompleteWindow(
 ): boolean {
   if (endIndex < 11) return false;
   const window = dates.slice(endIndex - 11, endIndex + 1);
-  if (window.length !== 12) return false;
+  // Callers pass an in-range array index. With endIndex >= 11, this slice is
+  // necessarily the twelve entries ending at that index.
   for (let i = 1; i < window.length; i++) {
     const previous = parseYearMonth(window[i - 1]);
     const current = parseYearMonth(window[i]);
@@ -194,7 +195,8 @@ export async function loadTotalEarningDataInternal(
   const ctiData = await loadCtiDataInternal(ctiOptions);
   const cpiMap = new Map<string, number>();
   cpiData.forEach((d) => {
-    if (typeof d.総合 === "number") cpiMap.set(d.年月, d.総合);
+    // The CPI loader only returns validated CpiData rows, whose total is numeric.
+    cpiMap.set(d.年月, d.総合);
   });
   // Salary indices have an explicit, independent base year. This must not
   // follow CTI/CPI/GDP availability or their compatibility rollback year.
@@ -252,8 +254,9 @@ export async function loadTotalEarningDataInternal(
 
   const findPopulationTotal = (ym: string): number | undefined => {
     if (populationDataMap.has(ym)) return populationDataMap.get(ym)?.total;
-    const parsed = parseYearMonth(ym);
-    if (!parsed) return undefined;
+    // `keys` comes exclusively from parseIndexSection, which constructs valid
+    // four-digit-year/month keys, so this fallback always receives a valid month.
+    const parsed = parseYearMonth(ym)!;
     const padded = `${parsed.year}年${String(parsed.month).padStart(2, "0")}月`;
     const unpadded = `${parsed.year}年${parsed.month}月`;
     return populationDataMap.get(padded)?.total ?? populationDataMap.get(unpadded)?.total;
@@ -382,7 +385,8 @@ export async function loadTotalEarningDataInternal(
       }
       count++;
     }
-    const denom = count > 0 ? count : 1;
+    // The inclusive loop always visits at least the current result index.
+    const denom = count;
     const smoothedHours = sumHours / denom;
     const smoothedEmp = sumEmp / denom;
     const smoothedPop = populationWindowComplete ? sumPop / denom : Number.NaN;
@@ -412,18 +416,17 @@ export async function loadTotalEarningDataInternal(
     const cpiMa = cpiMAMap.get(item.年月);
     item["CPI総合(12MA)"] =
       cpiFactor !== undefined && cpiMa !== undefined ? cpiMa * cpiFactor : null;
-    const ctiMonth = toCanonicalYearMonth(item.年月);
-    const ctiMa = ctiMonth ? minkanMap.get(ctiMonth) : undefined;
-    const ctiBasicRaw = ctiMonth ? ctiBasicRawMap.get(ctiMonth) : undefined;
-    const minkanNominalRaw = ctiMonth ? minkanNominalRawMap.get(ctiMonth) : undefined;
-    const minkanNominalComparison = ctiMonth ? minkanNominalComparisonMap.get(ctiMonth) : undefined;
-    const parsedYear = parseYearMonth(item.年月)?.year;
-    const legacyCtiMa = ctiMonth ? legacyCtiMap.get(ctiMonth) : undefined;
+    // Output months are the union of keys produced by parseIndexSection, so
+    // every date here is a valid year-month accepted by both normalizers.
+    const ctiMonth = toCanonicalYearMonth(item.年月)!;
+    const ctiMa = minkanMap.get(ctiMonth);
+    const ctiBasicRaw = ctiBasicRawMap.get(ctiMonth);
+    const minkanNominalRaw = minkanNominalRawMap.get(ctiMonth);
+    const minkanNominalComparison = minkanNominalComparisonMap.get(ctiMonth);
+    const parsedYear = parseYearMonth(item.年月)!.year;
+    const legacyCtiMa = legacyCtiMap.get(ctiMonth);
     const legacyCtiValue =
-      parsedYear !== undefined &&
-      parsedYear >= 2018 &&
-      legacyCtiMa !== undefined &&
-      Number.isFinite(legacyCtiMa)
+      parsedYear >= 2018 && legacyCtiMa !== undefined && Number.isFinite(legacyCtiMa)
         ? legacyCtiMa
         : null;
     if (minkanNominalRaw !== undefined) item["民間最終消費支出（名目・原値）"] = minkanNominalRaw;
@@ -431,20 +434,10 @@ export async function loadTotalEarningDataInternal(
     item["民間最終消費支出（名目・比較指数）"] =
       hasGdpComparison && minkanNominalComparison !== undefined ? minkanNominalComparison : null;
     item["CTIミクロ基本系列（名目・参考）"] =
-      parsedYear !== undefined &&
-      parsedYear <= 2017 &&
-      ctiMa !== undefined &&
-      Number.isFinite(ctiMa)
-        ? ctiMa
-        : null;
+      parsedYear <= 2017 && ctiMa !== undefined && Number.isFinite(ctiMa) ? ctiMa : null;
     item["CTIミクロ基本系列（名目・参考・延長）"] =
-      parsedYear !== undefined &&
-      parsedYear >= 2018 &&
-      ctiMa !== undefined &&
-      Number.isFinite(ctiMa)
-        ? ctiMa
-        : null;
-    const consumptionPoint = ctiMonth ? consumptionPointMap.get(ctiMonth) : undefined;
+      parsedYear >= 2018 && ctiMa !== undefined && Number.isFinite(ctiMa) ? ctiMa : null;
+    const consumptionPoint = consumptionPointMap.get(ctiMonth);
     const consumptionValue =
       consumptionResult.status === "available" &&
       consumptionPoint?.status === "available" &&
@@ -459,8 +452,7 @@ export async function loadTotalEarningDataInternal(
     const consumptionReason =
       consumptionResult.status === "invalid"
         ? consumptionResult.reason
-        : (consumptionPoint?.reason ??
-          (consumptionResult.status === "available" ? null : "unavailable"));
+        : (consumptionPoint?.reason ?? null);
 
     const consumptionMeasurement: SeriesMeasurement & {
       seriesStatus: "valid" | "invalid";

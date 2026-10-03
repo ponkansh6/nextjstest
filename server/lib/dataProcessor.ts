@@ -23,8 +23,10 @@ export function processPopulationData(
       const yearMatch = yearStr.match(/(\d{4})|(\d+)年/);
       if (yearMatch) {
         if (yearMatch[1]) currentYear = parseInt(yearMatch[1], 10);
-        else if (yearMatch[2]) {
-          const eraYear = parseInt(yearMatch[2], 10);
+        else {
+          // The regex has exactly these two alternatives; a successful match without capture 1
+          // necessarily has capture 2, so handle that era/year form directly.
+          const eraYear = parseInt(yearMatch[2]!, 10);
           if (yearStr.includes("令和")) currentYear = 2018 + eraYear;
           else if (yearStr.includes("平成")) currentYear = 1988 + eraYear;
           else if (yearStr.includes("昭和")) currentYear = 1925 + eraYear;

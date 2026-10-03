@@ -90,7 +90,7 @@ function resolveRoot(customRoot?: string): string {
     }
     return customRoot;
   }
-  let current = path.resolve(__dirname, "../../..");
+  let current = path.resolve(__dirname, "../..");
   while (true) {
     const candidate = path.join(current, "data", "source");
     if (fs.existsSync(candidate) && fs.existsSync(path.join(current, "package.json"))) {
@@ -100,18 +100,6 @@ function resolveRoot(customRoot?: string): string {
     if (parent === current) return path.resolve("data", "source");
     current = parent;
   }
-}
-
-type CsvRow = {
-  series_index?: string;
-  series_name?: string;
-  is_missing?: string;
-  raw_value?: string;
-  month?: string;
-};
-
-function isCsvRow(row: unknown): row is CsvRow {
-  return typeof row === "object" && row !== null;
 }
 
 function load2004Pi2Plus(sourceRoot: string): number | undefined {
@@ -195,9 +183,12 @@ export function computeConsumptionTotal12Ma(sourceRoot?: string): ConsumptionTot
   if (fs.existsSync(prehistoryCsvPath)) {
     try {
       const content = fs.readFileSync(prehistoryCsvPath, "utf8");
-      const parsed = Papa.parse(content, { header: true, skipEmptyLines: true });
+      const parsed = Papa.parse<Record<string, string>>(content, {
+        header: true,
+        skipEmptyLines: true,
+      });
       for (const row of parsed.data) {
-        if (!isCsvRow(row)) continue;
+        // PapaParse's header mode emits object rows for every non-empty CSV record.
         const val = Number(String(row.raw_value || "").replace(/,/g, ""));
         if (row.month && Number.isFinite(val)) nominalMap.set(String(row.month).trim(), val);
       }
@@ -208,9 +199,12 @@ export function computeConsumptionTotal12Ma(sourceRoot?: string): ConsumptionTot
   if (fs.existsSync(nominalCsvPath)) {
     try {
       const content = fs.readFileSync(nominalCsvPath, "utf8");
-      const parsed = Papa.parse(content, { header: true, skipEmptyLines: true });
+      const parsed = Papa.parse<Record<string, string>>(content, {
+        header: true,
+        skipEmptyLines: true,
+      });
       for (const row of parsed.data) {
-        if (!isCsvRow(row)) continue;
+        // PapaParse's header mode emits object rows for every non-empty CSV record.
         if (
           (String(row.series_index) === "1" || row.series_name === "消費支出（名目）") &&
           row.is_missing !== "true"
@@ -236,9 +230,12 @@ export function computeConsumptionTotal12Ma(sourceRoot?: string): ConsumptionTot
   if (fs.existsSync(officialMonthlyPath)) {
     try {
       const content = fs.readFileSync(officialMonthlyPath, "utf8");
-      const parsed = Papa.parse(content, { header: true, skipEmptyLines: true });
+      const parsed = Papa.parse<Record<string, string>>(content, {
+        header: true,
+        skipEmptyLines: true,
+      });
       for (const row of parsed.data) {
-        if (!isCsvRow(row)) continue;
+        // PapaParse's header mode emits object rows for every non-empty CSV record.
         if (
           (String(row.series_index) === "1" || row.series_name === "消費支出（名目）") &&
           row.is_missing !== "true"
@@ -427,10 +424,9 @@ export function computeConsumptionTotal12Ma(sourceRoot?: string): ConsumptionTot
 
   // Helper to get 12 consecutive calendar months ending at target ym
   function getConsecutiveWindow(targetYm: string): string[] {
-    const match = targetYm.match(/^(\d{4})-(\d{2})$/);
-    if (!match) return [];
-    let y = Number(match[1]);
-    let m = Number(match[2]);
+    // Callers pass only keys created by the fixed YYYY-MM year/month loops above.
+    let y = Number(targetYm.slice(0, 4));
+    let m = Number(targetYm.slice(5, 7));
     const window: string[] = [];
     for (let i = 0; i < 12; i++) {
       window.unshift(`${y}-${String(m).padStart(2, "0")}`);
@@ -450,28 +446,27 @@ export function computeConsumptionTotal12Ma(sourceRoot?: string): ConsumptionTot
     const normVal = rawVal !== null ? (100 * rawVal) / baseYearB : null;
 
     const windowMonths = getConsecutiveWindow(ym);
-    let windowComplete = windowMonths.length === 12;
+    // getConsecutiveWindow appends exactly 12 months for every generated YYYY-MM key.
+    let windowComplete = true;
     let windowSum = 0;
     const windowSources = new Set<string>();
     const windowStatuses = new Set<string>();
 
-    if (windowComplete) {
-      for (const wm of windowMonths) {
-        const nVal = normalizedMap.get(wm);
-        const wEntry = rawLevels.get(wm);
-        if (
-          nVal === undefined ||
-          !Number.isFinite(nVal) ||
-          !wEntry ||
-          !Number.isFinite(wEntry.value)
-        ) {
-          windowComplete = false;
-          break;
-        }
-        windowSum += nVal;
-        windowSources.add(wEntry.provenance.sourceId);
-        windowStatuses.add(wEntry.provenance.seriesType);
+    for (const wm of windowMonths) {
+      const nVal = normalizedMap.get(wm);
+      const wEntry = rawLevels.get(wm);
+      if (
+        nVal === undefined ||
+        !Number.isFinite(nVal) ||
+        !wEntry ||
+        !Number.isFinite(wEntry.value)
+      ) {
+        windowComplete = false;
+        break;
       }
+      windowSum += nVal;
+      windowSources.add(wEntry.provenance.sourceId);
+      windowStatuses.add(wEntry.provenance.seriesType);
     }
 
     const ma12 = windowComplete ? windowSum / 12 : null;

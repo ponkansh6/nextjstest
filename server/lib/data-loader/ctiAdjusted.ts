@@ -69,33 +69,6 @@ const STATISTICAL_CODE = "00200567";
 const NOMINAL_ANNUAL_VALUE_TYPE = "原数値（名目指数）";
 const HASH_PATTERN = /^[a-f0-9]{64}$/i;
 
-const names: Record<"B" | "A" | "L", string[]> = {
-  B: [
-    "B.json",
-    "B.csv",
-    "cti_adjusted_B.json",
-    "cti_adjusted_B.csv",
-    "cti-adjusted-B.json",
-    "cti-adjusted-B.csv",
-  ],
-  A: [
-    "A.json",
-    "A.csv",
-    "cti_adjusted_A.json",
-    "cti_adjusted_A.csv",
-    "cti-adjusted-A.json",
-    "cti-adjusted-A.csv",
-  ],
-  L: [
-    "L.json",
-    "L.csv",
-    "cti_adjusted_L.json",
-    "cti_adjusted_L.csv",
-    "cti-adjusted-L.json",
-    "cti-adjusted-L.csv",
-  ],
-};
-
 const categories = [...CTI_ADJUSTED_INPUT_CATEGORIES, "残差"];
 const invalidMetadata = (): CtiAdjustedInputMetadata => ({
   source: "",
@@ -190,9 +163,11 @@ function loadProductionPi2Plus(root: string): CtiAdjustedV2HouseholdComposition 
         createHash("sha256").update(fs.readFileSync(file)).digest("hex") === expected
       );
     };
-    for (const source of Object.values(manifest.inputs ?? {}))
+    // Exact-key validation above rejects a missing or partial inputs section.
+    for (const source of Object.values(manifest.inputs!))
       if (!source.path || !source.sha256 || !verifyHash(source.path, source.sha256)) return null;
-    for (const source of Object.values(manifest.sourceRawFiles ?? {}))
+    // The matching exact-key validation also guarantees sourceRawFiles exists.
+    for (const source of Object.values(manifest.sourceRawFiles!))
       if (!source.path || !source.sha256 || !verifyHash(source.path, source.sha256)) return null;
     const artifactPath = manifest.artifact?.path;
     if (artifactPath !== "production-pi2plus.json" || !manifest.artifact?.sha256) return null;
@@ -272,12 +247,9 @@ function loadProductionPi2Plus(root: string): CtiAdjustedV2HouseholdComposition 
   }
 }
 
-function readManifest(root: string, manifestBytes?: Buffer): CtiAdjustedManifest {
-  const file = path.join(root, "manifest.json");
-  if (!fs.existsSync(file)) throw new Error("missing CTI adjusted manifest");
-  const value = (
-    manifestBytes ? JSON.parse(manifestBytes.toString("utf8")) : readJson(file)
-  ) as Partial<CtiAdjustedManifest>;
+function readManifest(manifestBytes: Buffer): CtiAdjustedManifest {
+  // The only caller has already read manifest.json successfully.
+  const value = JSON.parse(manifestBytes.toString("utf8")) as Partial<CtiAdjustedManifest>;
   if (
     value.schemaVersion === undefined ||
     typeof value.revision !== "string" ||
@@ -339,14 +311,14 @@ function validateMetadata(
     extended.schemaVersion !== manifestArtifact.schemaVersion
   )
     return false;
-  if (manifestArtifact?.revision !== undefined && extended.revision !== manifestArtifact.revision)
-    return false;
+  // expectedRevision above already uses the artifact revision when present.
   return true;
 }
 
-function parseValue(value: unknown): number | null {
+function parseValue(value: string | null | undefined): number | null {
   if (value === null || value === undefined || value === "" || value === "-") return null;
-  const parsed = typeof value === "number" ? value : Number(String(value).replace(/,/g, "").trim());
+  // Papa.parse without dynamicTyping supplies CSV cells as strings.
+  const parsed = Number(value.replace(/,/g, "").trim());
   return Number.isFinite(parsed) ? parsed : Number.NaN;
 }
 
@@ -354,10 +326,9 @@ function parseArtifact(
   file: string,
   manifest: CtiAdjustedManifest | null,
   kind: "B" | "A" | "L",
-  artifactBytes?: Buffer,
+  artifactBytes: Buffer,
 ): CtiAdjustedAnnualInput {
-  const contentBytes = artifactBytes ?? fs.readFileSync(file);
-  const content = contentBytes.toString("utf8");
+  const content = artifactBytes.toString("utf8");
   if (file.endsWith(".json")) {
     const data = JSON.parse(content) as { metadata?: unknown; rows?: unknown };
     const metadata = metadataFrom(data);
@@ -383,9 +354,10 @@ function parseArtifact(
     throw new Error(metadataValidationReason(metadata));
   return {
     categoryOrder: Object.keys(first).filter((key) => key !== yearKey),
-    metadata: metadata ?? invalidMetadata(),
+    metadata,
     rows: records.map((record) => ({
-      year: Number(record[yearKey ?? "year"]),
+      // A recognized year header is required to produce a parseable annual row.
+      year: Number(record[yearKey!]),
       values: Object.fromEntries(
         categories
           .filter((category) => category in record)
@@ -404,9 +376,9 @@ function locate(
   if (explicit) return path.resolve(explicit);
   const manifestPath = manifest?.artifacts[kind]?.path;
   if (manifestPath) return path.resolve(root, manifestPath);
-  if (manifest) return null;
-  const file = names[kind].find((name) => fs.existsSync(path.join(root, name)));
-  return file ? path.join(root, file) : null;
+  // The loader reaches this helper only after manifest validation; it never
+  // scans unlisted filenames as substitutes for manifest entries.
+  return null;
 }
 
 function empty(): null {
@@ -418,28 +390,17 @@ function invalidArtifact(): CtiAdjustedAnnualInput {
 }
 
 function validateArtifactHash(
-  file: string,
-  input: CtiAdjustedAnnualInput | null,
+  input: CtiAdjustedAnnualInput,
   manifest: CtiAdjustedManifest | null,
   kind: "B" | "A" | "L",
-  artifactBytes?: Buffer,
-): CtiAdjustedAnnualInput | null {
-  if (!input) return null;
-  const metadata = input.metadata as CtiAdjustedArtifactMetadata;
-  // The manifest hash covers the saved JSON/CSV artifact. Metadata hashes identify
-  // the downloaded source and must not create a self-referential JSON hash.
-  const expected =
-    manifest?.artifacts[kind]?.sha256 ??
-    manifest?.artifacts[kind]?.hash ??
-    metadata?.sha256 ??
-    metadata?.csvSha256 ??
-    metadata?.hash;
+  artifactBytes: Buffer,
+): CtiAdjustedAnnualInput {
+  // parseArtifact either returns a validated input or throws, never null.
+  // Only manifest digests identify the saved artifact bytes. Metadata digests
+  // identify downloaded sources/CSVs and cannot substitute for this artifact hash.
+  const expected = manifest?.artifacts[kind]?.sha256 ?? manifest?.artifacts[kind]?.hash;
   if (!expected || !HASH_PATTERN.test(expected)) throw new Error("missing artifact hash");
-  if (
-    createHash("sha256")
-      .update(artifactBytes ?? fs.readFileSync(file))
-      .digest("hex") !== expected
-  )
+  if (createHash("sha256").update(artifactBytes).digest("hex") !== expected)
     throw new Error("artifact hash mismatch");
   return input;
 }
@@ -540,8 +501,8 @@ export function loadCtiAdjustedV2Estimate(
       rollingLoo,
       evidenceSchema: CTI_ADJUSTED_PUBLICATION_GATE_SCHEMA,
       evidenceInputFingerprint,
-      expectedInputFingerprint:
-        plan40ExpectedInputFingerprint ?? "missing_expected_cti_adjusted_input_fingerprint",
+      // This branch is entered only for Plan40, which computed a fingerprint above.
+      expectedInputFingerprint: plan40ExpectedInputFingerprint!,
     });
     return {
       ...result,
@@ -746,19 +707,16 @@ function deriveCtiAdjustedInputFingerprint(artifactRoot: string): string | null 
 }
 
 /** Fingerprint the exact validated in-memory inputs consumed by both Plan40 builders. */
-function fingerprintLoadedCtiAdjustedInputs(inputs: LoadedCtiAdjustedInputs): string | null {
-  try {
-    const serialized = JSON.stringify({
-      B: inputs.B,
-      A: inputs.A,
-      L: inputs.L,
-      householdComposition: inputs.householdComposition,
-    });
-    if (serialized === undefined) return null;
-    return `sha256:${createHash("sha256").update(serialized).digest("hex")}`;
-  } catch {
-    return null;
-  }
+function fingerprintLoadedCtiAdjustedInputs(inputs: LoadedCtiAdjustedInputs): string {
+  // These values are freshly built from parsed CSV/JSON data and cannot contain
+  // cycles or BigInt; this object literal therefore always serializes to text.
+  const serialized = JSON.stringify({
+    B: inputs.B,
+    A: inputs.A,
+    L: inputs.L,
+    householdComposition: inputs.householdComposition,
+  }) as string;
+  return `sha256:${createHash("sha256").update(serialized).digest("hex")}`;
 }
 
 export function loadCtiAdjustedInputs(
@@ -771,7 +729,7 @@ export function loadCtiAdjustedInputs(
   let manifestInvalid = false;
   try {
     manifestBytes = fs.readFileSync(path.join(root, "manifest.json"));
-    manifest = readManifest(root, manifestBytes);
+    manifest = readManifest(manifestBytes);
   } catch {
     manifestInvalid = true;
   }
@@ -796,8 +754,8 @@ export function loadCtiAdjustedInputs(
     try {
       const bytes = fs.readFileSync(file);
       const input = parseArtifact(file, manifest, kind, bytes);
-      const validated = validateArtifactHash(file, input, manifest, kind, bytes);
-      if (validated) artifactHashes[kind] = createHash("sha256").update(bytes).digest("hex");
+      const validated = validateArtifactHash(input, manifest, kind, bytes);
+      artifactHashes[kind] = createHash("sha256").update(bytes).digest("hex");
       return validated;
     } catch (error) {
       const reason =

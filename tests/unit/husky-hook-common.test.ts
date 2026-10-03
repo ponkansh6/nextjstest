@@ -1,4 +1,5 @@
 import { execFileSync } from "node:child_process";
+import { generateKeyPairSync } from "node:crypto";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
@@ -193,5 +194,60 @@ describe("lint-staged related contract", () => {
     expect(config).toContain("commit-only contract");
     expect(config).toContain("pre-push never treats unknown/empty diffs as");
     expect(config).toContain("success and does not call lint-staged");
+  });
+
+  it("scans staged files for secrets, ignores untracked files, and masks findings", () => {
+    const root = process.cwd();
+    const repo = fs.mkdtempSync(path.join(os.tmpdir(), "staged-secret-scan-test-"));
+    const lintStagedConfig = path.join(repo, "lint-staged.config.js");
+    const secretlintConfig = path.join(repo, ".secretlintrc.json");
+    const { privateKey } = generateKeyPairSync("rsa", {
+      modulusLength: 1024,
+      privateKeyEncoding: { format: "pem", type: "pkcs8" },
+      publicKeyEncoding: { format: "pem", type: "spki" },
+    });
+    const secret = privateKey.trim();
+
+    try {
+      execFileSync("git", ["init", "-b", "main"], { cwd: repo, stdio: "ignore" });
+      execFileSync("git", ["config", "user.name", "Test User"], { cwd: repo });
+      execFileSync("git", ["config", "user.email", "test@example.com"], { cwd: repo });
+      fs.symlinkSync(path.join(root, "node_modules"), path.join(repo, "node_modules"), "dir");
+      fs.copyFileSync(path.join(root, "lint-staged.config.js"), lintStagedConfig);
+      fs.copyFileSync(path.join(root, ".secretlintrc.json"), secretlintConfig);
+
+      fs.writeFileSync(path.join(repo, "safe.txt"), "ordinary staged content\n");
+      fs.writeFileSync(path.join(repo, "untracked.txt"), secret);
+      fs.writeFileSync(path.join(repo, ".gitignore"), ".env.local\n");
+      execFileSync("git", ["add", "--", "safe.txt"], { cwd: repo });
+
+      const lintStagedBin = path.join(root, "node_modules/lint-staged/bin/lint-staged.js");
+      const runLintStaged = () =>
+        execFileSync(process.execPath, [lintStagedBin, "--config", lintStagedConfig], {
+          cwd: repo,
+          env: {
+            ...process.env,
+            PATH: `${path.join(root, "node_modules/.bin")}${path.delimiter}${process.env.PATH ?? ""}`,
+          },
+          encoding: "utf8",
+          stdio: "pipe",
+        });
+
+      expect(() => runLintStaged()).not.toThrow();
+
+      fs.writeFileSync(path.join(repo, ".env.local"), secret);
+      execFileSync("git", ["add", "--force", "--", ".env.local"], { cwd: repo });
+      let output = "";
+      try {
+        runLintStaged();
+      } catch (error) {
+        const result = error as { stdout?: Buffer | string; stderr?: Buffer | string };
+        output = `${result.stdout ?? ""}${result.stderr ?? ""}`;
+      }
+      expect(output).toContain("@secretlint/secretlint-rule-privatekey");
+      expect(output.includes(secret)).toBe(false);
+    } finally {
+      fs.rmSync(repo, { recursive: true, force: true });
+    }
   });
 });

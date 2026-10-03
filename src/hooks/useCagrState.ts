@@ -17,8 +17,8 @@ export function useCagrState({
   stackedHiddenKeys,
   stackedKeys,
 }: UseCagrStateProps) {
-  const [cagrStartYear, setCagrStartYear] = useState<number>(() => initialStartYear ?? 2025);
-  const [cagrEndYear, setCagrEndYear] = useState<number>(() => initialEndYear ?? 2025);
+  const [cagrStartYear, setCagrStartYear] = useState<number>(initialStartYear);
+  const [cagrEndYear, setCagrEndYear] = useState<number>(initialEndYear);
   const [cagrMonth, setCagrMonth] = useState<number>(1);
   const [cagrResult, setCagrResult] = useState<number | null>(null);
   const [cagrError, setCagrError] = useState<string | null>(null);
@@ -30,9 +30,9 @@ export function useCagrState({
     stackedHiddenKeys,
   });
   if (
-    prevCagrDeps.cagrStartYear !== cagrStartYear ||
-    prevCagrDeps.cagrEndYear !== cagrEndYear ||
-    prevCagrDeps.cagrMonth !== cagrMonth ||
+    !Object.is(prevCagrDeps.cagrStartYear, cagrStartYear) ||
+    !Object.is(prevCagrDeps.cagrEndYear, cagrEndYear) ||
+    !Object.is(prevCagrDeps.cagrMonth, cagrMonth) ||
     prevCagrDeps.stackedHiddenKeys !== stackedHiddenKeys
   ) {
     setPrevCagrDeps({ cagrStartYear, cagrEndYear, cagrMonth, stackedHiddenKeys });

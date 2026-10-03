@@ -30,6 +30,7 @@ projected into NewGraph. The salary registry and Plan38 quarterly view do not
 include this monthly key.
 
 For NewGraph comparison, `server/lib/consumptionTotal12Ma.ts` uses the composition-corrected Plan39 V2 annual anchors shared with the quarterly nominal projection for 2005–2016, two-or-more-person-household raw seasonal weights, and official all-household monthly observations (`000040499028`) from 2017 onward. The private 2004 prehistory applies the same V2 category base/gamma correction using the calendar-year 2004 two-plus household share `3459/4915`; it exists only to calculate the first public strict 12MA at 2005-01 and is never emitted as a public point.
+When no source root is supplied, the loader resolves `data/source` relative to the repository root derived from its module location; an existing explicit source root remains supported, with the current-working-directory fallback retained if module-relative discovery cannot find a package root.
 
 The 3種比較 display registry uses concise legend labels `物価`, `給与`, and `消費`, with orange, blue, and red series colors respectively. The consumption tooltip shows the short description `消費支出の12か月移動平均`; detailed source and window provenance remains available to table/CSV consumers.
 
@@ -1110,6 +1111,17 @@ The Plan37 target skip count is therefore zero in both the audit log and this sp
 - **AND** a zero-test result is tolerated only by the commit-scoped
   lint-staged related-test task
 
+#### Scenario R-Hooks-1b: Staged secret detection
+
+- **WHEN** a staged file contains a secret recognized by the recommended
+  Secretlint preset, including a Git-ignored path explicitly added to the
+  index
+- **THEN** commit-scoped `lint-staged` fails before the commit and reports the
+  finding with the default masked output
+- **AND WHEN** a synthetic secret exists only in an untracked file while the
+  staged files contain no detected secret
+- **THEN** the staged secret scan succeeds without scanning the untracked file
+
 #### Scenario R-Hooks-1a: Pre-push clean worktree guard
 
 - **WHEN** a push is attempted from a repository with tracked changes that
@@ -1156,7 +1168,7 @@ The Plan37 target skip count is therefore zero in both the audit log and this sp
 - **WHEN** the changed profile succeeds
 - **THEN** `build` runs before `test:e2e:clean` and `test:e2e`
 - **WHEN** the full profile runs
-- **THEN** gates execute in order: `lint:fast`, `type-check`, `test:all`,
+- **THEN** gates execute in order: `lint:fast`, `type-check`, `test:coverage`,
   `build`, `test:build-parity`, `security-check`, `test:e2e:clean`, and
   `test:e2e`
 - **AND WHEN** any gate fails
@@ -1420,6 +1432,13 @@ The system SHALL load and process CSV data on the server before rendering.
 
 When the legacy CTI map/snapshot or another candidate input fails validation, the complete 2020 CTI rollback may be selected for that legacy contract. This rule does not govern Plan37: its dedicated long-term line always uses only the fixed 2025 nominal series and fails closed without GDP, seasonal-adjusted, real, or rollback fallback. When the annual nominal/real GDP pair passes its independent validation, `getGdpSupportStatus()` reports available GDP comparison normalization without affecting either CTI contract.
 
+#### Scenario R3b-validation: Duplicate CTI month diagnosis
+
+- **WHEN** a legacy CTI main file contains repeated `年月` values, including a repeated month that also breaks chronological continuity
+- **THEN** validation returns `invalid or duplicate CTI 年月` before checking continuity
+- **AND WHEN** all month values are unique but their chronological sequence has a gap
+- **THEN** validation returns `invalid or discontinuous CTI 年月`
+
 #### Scenario R3b-plan36: Long-Term CTI Acquisition Foundation
 
 - **WHEN** plan36 retrieves the official current 2025-base CTI micro basic-series XLSX for two-or-more-person households from the official `fileKind=0` URLs
@@ -1438,6 +1457,8 @@ When the legacy CTI map/snapshot or another candidate input fails validation, th
 
 #### Scenario R3d: Plan37 CTI Basic Source Basis, 12MA, and Comparison Rebase
 
+- **WHEN** `computeConsumptionTotal12Ma()` is called without an explicit source root
+- **THEN** it resolves `data/source` from the repository root relative to its module location, retaining the current-working-directory fallback only when that root cannot be discovered; an explicit existing source root is used directly
 - **WHEN** the Plan37 long-term CTI basic loader is used for internal monthly data
 - **THEN** it selects only `series_index=1`, `official_series_code=1`, nominal raw `消費支出（名目）` from the 2025 long-term artifact and retains raw separately from its normal/extension 12MA compatibility fields; NewGraph comparison uses Plan49 `消費(総合)`
 - **AND** Plan37 internal CTI basic fields use only the official 2025 long-term input, with no GDP, seasonal-adjusted, real, 2020 rollback, or other fallback, and adopt the artifact's published latest month dynamically
@@ -2082,6 +2103,11 @@ so that part of the chart stays visible while the user adjusts and reads the CAG
 - **WHEN** the user changes one of the three selects
 - **THEN** the sheet stays open and the previously calculated result is cleared
 
+#### Scenario R18e: Invalid Year State Falls Back to the Caller’s Initial Year
+
+- **WHEN** the caller provides valid initial start and end years and a CAGR year setter receives `NaN`
+- **THEN** rendering settles without a state-update loop, and calculation uses the corresponding configured initial year for the invalid selection
+
 #### Scenario R14a: Manual Theme Toggle
 
 - **WHEN** the user selects a theme via `ThemeToggle`
@@ -2247,7 +2273,12 @@ Plan38 rows bypass the GDP join entirely.
   Typecheck is required for TypeScript, type-boundary/shared/generated/config
   changes and for deletion/rename or unavailable-decision cases; documentation,
   assets, and other non-type changes may skip it. The lint-staged related test
-  task may pass with zero tests only within the commit hook.
+  task may pass with zero tests only within the commit hook. lint-staged formats
+  supported staged files and runs their related tests, while Secretlint scans
+  every staged path with `--no-gitignore`; unstaged and untracked files are not
+  scan inputs. `.secretlintrc.json` enables
+  `@secretlint/secretlint-rule-preset-recommend`, and Secretlint's default
+  masked findings are retained.
 - Pre-push flow is `clean worktree guard` → `Git pre-push ref protocol` → actual
   ref diff collection and path/category classification → `PREPUSH_PROFILE`
   normalization. Configuration,
@@ -2336,7 +2367,7 @@ Plan38 rows bypass the GDP join entirely.
   zero JSON `testResults`, missing/invalid/incompatible JSON, or a related-test
   failure invoke full non-browser validation exactly once while retaining the
   fixed Browser Mode selections.
-- The full pre-push profile is ordered `lint:fast` → `type-check` → `test:all`
+- The full pre-push profile is ordered `lint:fast` → `type-check` → `test:coverage`
   → `test:browser:component:all` → `build` →
   `test:browser:next-route-poc:built:all` → `test:build-parity` →
   `security-check`; each gate stops later gates on failure. The changed profile
@@ -2350,6 +2381,9 @@ Plan38 rows bypass the GDP join entirely.
   pre-push profile. Production validation remains a separate gate and is
   reported as not run by local pre-push when its URL/network availability is
   not established.
+- The pre-commit Secretlint gate rejects detected secrets in staged content,
+  including paths force-added despite `.gitignore`; normal Git-ignored files
+  outside the index are not scanned. Findings use Secretlint's masked output.
 - The normal GitHub build job grants only `contents: read` and runs the full
   dependency `pnpm audit --audit-level=high` plus secretlint on every push and
   pull request; the dispatch-only full validation repeats its all-dependency
@@ -2868,7 +2902,7 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, `hid
   JEV to select from that gate's current eligible Vitest Browser Mode catalog
   and run only the selected catalog IDs
 - **WHEN** the full pre-push profile reaches its Browser Mode gates
-- **THEN** it runs `pnpm run test:browser:component:all` after `test:all`, then
+- **THEN** it runs `pnpm run test:browser:component:all` after `test:coverage`, then
   `pnpm run test:browser:next-route-poc:built:all` after `build`
 - **WHEN** the changed pre-push profile selects a non-empty related code/test
   set
@@ -2890,7 +2924,7 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, `hid
 - **WHEN** `PREPUSH_PROFILE=full` is selected explicitly or the push-impact
   classifier selects full
 - **THEN** the full pre-push profile continues to run
-  `pnpm run test:browser:component:all` after `test:all`, then
+  `pnpm run test:browser:component:all` after `test:coverage`, then
   `pnpm run test:browser:next-route-poc:built:all` after `build`
 - **WHEN** a changed-profile push contains only documentation and/or asset
   paths
@@ -3058,7 +3092,7 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, `hid
 
 - **WHEN** related-test selection in the changed profile is empty, invalid, or
   indeterminate
-- **THEN** it falls back to the full profile, running `pnpm run test:all`
+- **THEN** it falls back to the full profile, running `pnpm run test:coverage`
   followed by the full component and production-route Browser Mode suites
   exactly once, with `build` between them
 
@@ -3099,7 +3133,7 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, `hid
 #### Scenario Manual full validation scope
 
 - **WHEN** `workflow_dispatch` runs `full-validation`
-- **THEN** it runs build, build-parity, security, and E2E validation with `contents: read` permissions and records timings in `GITHUB_STEP_SUMMARY` plus logs/reports as artifacts
+- **THEN** it runs `test:coverage`, build, build-parity, security, and E2E validation with `contents: read` permissions, uses coverage in place of `test:all` for full validation, and records timings in `GITHUB_STEP_SUMMARY` plus logs/reports as artifacts
 - **AND** when `run_production=true`, production validation is attempted in an independent step with `always()` even if build, build-parity, security, or E2E failed; when `run_production=false`, it is not run
 - **AND** production validation requires the external secret `PROD_URL` and network access, passes `PROD_URL` only to that production step, and explicitly fails when the secret is unset
 
@@ -3114,6 +3148,56 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, `hid
 - Phase 1-1〜1-3 does not change public UI behavior, the public data model, loader/API responses, API routes, URL format, storage keys, or the Server/Client boundary. Internal types introduced by the new hooks are not public data-model changes.
 
 ## Test Requirements
+
+#### Source coverage policy
+
+`pnpm run test:coverage` (`VITEST_MAX_WORKERS=2 vitest run --maxWorkers=2
+--coverage`) measures every `src/**/*.{ts,tsx}` and `server/**/*.ts`
+file, including files not imported by a test, and requires 100% statements,
+branches, functions, and lines for every in-scope file and overall. Its text,
+JSON summary, full JSON, and HTML reports make uncovered code visible. The
+coverage command runs unit tests and is used by `test:full`, the full pre-push
+profile, and the manual GitHub `full-validation` job in place of `test:all`,
+so full-only profiles do not run unit tests twice. Ordinary push/pull-request
+CI continues to run `test:all`; changed/fast pre-push validation runs related
+tests and does not run coverage.
+
+The only source exclusions are declaration files (`**/*.d.ts`) and these
+documented boundaries:
+
+- `src/types/data.ts` and `src/types/index.ts` contain type-only declarations.
+- `src/app/layout.tsx` is a Next framework entry that composes `next/font`,
+  metadata, and global CSS; production build and browser-route checks exercise
+  the framework integration.
+- `src/app/components/CtiAdjustedSeriesSection.tsx` is the unimported legacy
+  Plan40 section. Its active calculation, loader, and projection modules remain
+  in coverage.
+- `server/lib/ctiAdjustedSensitivity.ts` is a Plan39 analysis entry point
+  imported by its analysis script and unit tests, but not by the application
+  runtime.
+- `src/app/components/SectionTabs.tsx` owns scroll and effect behavior covered
+  by the SectionTabsTargets, SectionTabsB3m, and B3m Browser Mode assertions.
+- `src/app/components/LazyMount.tsx` owns IntersectionObserver mounting
+  behavior covered by the dedicated LazyMount and B3m Browser Mode assertions.
+
+Scripts, generated output, and static assets are outside the source include
+patterns because they are not application runtime modules. Adding runtime
+behavior to an excluded file requires revisiting its exclusion. Low coverage
+or testing difficulty alone is not a reason to exclude a file. A branch may be
+ignored only when a code invariant makes that branch unreachable through the
+public contract and the invariant is documented next to the narrow ignore;
+low coverage or an inconvenient test setup is not sufficient justification.
+
+**WHEN** the explicit source coverage task runs, **THEN** the complete source
+set is measured against 100% in all four metrics, apart from the explicitly
+listed boundaries; missing tests or coverage fail the task. **WHEN**
+application runtime code is added, **THEN** it enters the coverage denominator
+unless its exclusion is explicitly justified here.
+
+**WHEN** a branch inside an in-scope source file is excluded from the coverage
+result, **THEN** the exclusion is limited to a narrow branch made unreachable
+by a documented invariant of the public contract, with the invariant recorded
+next to the ignore; broad file or line exclusions do not qualify.
 
 #### Hook execution architecture
 
@@ -3136,7 +3220,7 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, `hid
   incompatible JSON, or a related-test failure invokes full non-browser
   validation with the same two fixed browser selections exactly once.
 - **WHEN** full pre-push execution is tested
-  **THEN** the gate order is `lint:fast` → `type-check` → `test:all` →
+  **THEN** the gate order is `lint:fast` → `type-check` → `test:coverage` →
   `test:browser:component:all` → `build` →
   `test:browser:next-route-poc:built:all` → `test:build-parity` →
   `security-check`, and a failed gate prevents later gates; production

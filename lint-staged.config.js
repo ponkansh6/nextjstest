@@ -4,6 +4,7 @@ const lintStagedConfig = {
   // success and does not call lint-staged.
   "*.{ts,tsx}": ["oxfmt --write", "vitest related --passWithNoTests"],
   "*.{js,jsx,json,md,mjs,cjs,css}": "oxfmt --write --no-error-on-unmatched-pattern",
+  "*": "secretlint --no-gitignore",
 };
 
 export default lintStagedConfig;

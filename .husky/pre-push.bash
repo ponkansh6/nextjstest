@@ -107,7 +107,7 @@ run_full_profile() {
   # Keep this order in sync with test:full. Every gate must stop the hook.
   hook_gate "lint:fast" pnpm run lint:fast || return $?
   hook_gate "type-check" pnpm run type-check || return $?
-  hook_gate "test:all" env \
+  hook_gate "test:coverage" env \
     -u GIT_DIR \
     -u GIT_WORK_TREE \
     -u GIT_INDEX_FILE \
@@ -115,7 +115,7 @@ run_full_profile() {
     -u GIT_COMMON_DIR \
     -u GIT_OBJECT_DIRECTORY \
     -u GIT_ALTERNATE_OBJECT_DIRECTORIES \
-    VITEST_MAX_WORKERS=2 pnpm run test:all || return $?
+    VITEST_MAX_WORKERS=2 pnpm run test:coverage || return $?
   if [[ "$browser_profile" == prepush-browser ]]; then
     hook_gate "test:browser:prepush:component" pnpm run test:browser:prepush:component || return $?
   else

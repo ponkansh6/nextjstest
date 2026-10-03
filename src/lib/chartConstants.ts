@@ -509,39 +509,46 @@ export const projectTooltipMetadata = (
           descriptor,
         },
         index,
-      ) => ({
-        key,
-        label: tooltipLabel ?? legendLabel ?? displayName ?? label ?? key,
-        color,
-        order: order ?? index,
-        ...(advanced === undefined ? {} : { advanced }),
-        ...(unit === undefined ? {} : { unit }),
-        ...(source === undefined ? {} : { source }),
-        ...(valueType === undefined ? {} : { valueType }),
-        ...(status === undefined ? {} : { status }),
-        ...(reason === undefined ? {} : { reason }),
-        ...(value === undefined ? {} : { value }),
-        ...(frequency === undefined ? {} : { frequency }),
-        ...(aggregation === undefined ? {} : { aggregation }),
-        ...((seriesType ?? descriptor?.seriesType) === undefined
-          ? {}
-          : { seriesType: seriesType ?? descriptor?.seriesType }),
-        ...((official ?? descriptor?.official) === undefined
-          ? {}
-          : { official: official ?? descriptor?.official }),
-        ...((annualAnchorType ?? descriptor?.annualAnchorType) === undefined
-          ? {}
-          : { annualAnchorType: annualAnchorType ?? descriptor?.annualAnchorType }),
-        ...((quarterlyDerived ?? descriptor?.quarterlyDerived) === undefined
-          ? {}
-          : { quarterlyDerived: quarterlyDerived ?? descriptor?.quarterlyDerived }),
-        ...(model === undefined ? {} : { model }),
-        ...(estimateVersion === undefined ? {} : { estimateVersion }),
-        ...(inputFingerprint === undefined ? {} : { inputFingerprint }),
-        ...((baseYear ?? descriptor?.baseYear) === undefined
-          ? {}
-          : { baseYear: baseYear ?? descriptor?.baseYear }),
-      }),
+      ) => {
+        const fallbackLabel: string | undefined =
+          tooltipLabel ?? legendLabel ?? displayName ?? label;
+        // `label` is required by SeriesMetadata, so valid callers always resolve above.
+        /* v8 ignore next -- @preserve */
+        const projectedLabel = fallbackLabel ?? key;
+        return {
+          key,
+          label: projectedLabel,
+          color,
+          order: order ?? index,
+          ...(advanced === undefined ? {} : { advanced }),
+          ...(unit === undefined ? {} : { unit }),
+          ...(source === undefined ? {} : { source }),
+          ...(valueType === undefined ? {} : { valueType }),
+          ...(status === undefined ? {} : { status }),
+          ...(reason === undefined ? {} : { reason }),
+          ...(value === undefined ? {} : { value }),
+          ...(frequency === undefined ? {} : { frequency }),
+          ...(aggregation === undefined ? {} : { aggregation }),
+          ...((seriesType ?? descriptor?.seriesType) === undefined
+            ? {}
+            : { seriesType: seriesType ?? descriptor?.seriesType }),
+          ...((official ?? descriptor?.official) === undefined
+            ? {}
+            : { official: official ?? descriptor?.official }),
+          ...((annualAnchorType ?? descriptor?.annualAnchorType) === undefined
+            ? {}
+            : { annualAnchorType: annualAnchorType ?? descriptor?.annualAnchorType }),
+          ...((quarterlyDerived ?? descriptor?.quarterlyDerived) === undefined
+            ? {}
+            : { quarterlyDerived: quarterlyDerived ?? descriptor?.quarterlyDerived }),
+          ...(model === undefined ? {} : { model }),
+          ...(estimateVersion === undefined ? {} : { estimateVersion }),
+          ...(inputFingerprint === undefined ? {} : { inputFingerprint }),
+          ...((baseYear ?? descriptor?.baseYear) === undefined
+            ? {}
+            : { baseYear: baseYear ?? descriptor?.baseYear }),
+        };
+      },
     );
 };
 

@@ -1,7 +1,8 @@
-import { expect, it, describe, beforeAll } from "vitest";
+import { expect, it, describe, beforeAll, vi } from "vitest";
 import { createHash } from "node:crypto";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { join, resolve } from "node:path";
+import { tmpdir } from "node:os";
 import { loadCpiData } from "../../server/lib/dataLoader";
 import { loadCtiBasicConsumptionOutput } from "../../server/lib/ctiBasicSeries2025LongTerm";
 import { loadEarning2020RollbackFixture } from "../utils/cti-2020-rollback-fixture";
@@ -10,18 +11,89 @@ import minkanFixture from "../fixtures/minkan-extension-anchors.json";
 import { parseCsvWithHeader } from "../../server/lib/dataIo";
 import { loadTotalEarningDataInternal } from "../../server/lib/data-loader/earnings";
 import { loadCtiDataInternal } from "../../server/lib/data-loader/cpi";
-import { buildCtiFilePaths } from "../../server/lib/dataIo";
+import {
+  buildCtiFilePaths,
+  buildEarningsFilePaths,
+  parseIndexSection,
+} from "../../server/lib/dataIo";
 import { projectQuarterlyPublicView } from "../../src/lib/quarterlyPublicProjection";
 import {
   CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY,
   CTI_ADJUSTED_V2_PUBLIC_REGISTRY,
   CONSUMPTION_TOTAL_12MA_KEY,
+  LEGACY_CTI_COMPARISON_KEY,
   SUPPORT_SERIES_KEY_NOMINAL,
 } from "../../src/lib/chartConstants";
 import { toCanonicalYearMonth } from "../../src/lib/yearMonth";
 import { toEarningsView } from "../../server/lib/view-models/dashboard";
+import type { ConsumptionTotal12MaResult } from "../../server/lib/consumptionTotal12Ma";
 import type { SeriesMeasurement } from "../../src/types/chart";
 import Papa from "papaparse";
+
+const { earningsPathOverride } = vi.hoisted(() => ({
+  earningsPathOverride: { current: null as Record<string, string> | null },
+}));
+const { earningsLoaderOverrides } = vi.hoisted(() => ({
+  earningsLoaderOverrides: {
+    cpi: null as unknown[] | null,
+    cti: null as unknown[] | null,
+    population: null as Map<string, unknown> | null,
+  },
+}));
+const { consumptionResultOverride } = vi.hoisted(() => ({
+  consumptionResultOverride: { current: null as ConsumptionTotal12MaResult | null },
+}));
+
+vi.mock("../../server/lib/dataIo", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../server/lib/dataIo")>();
+  return {
+    ...actual,
+    buildEarningsFilePaths: () => earningsPathOverride.current ?? actual.buildEarningsFilePaths(),
+  };
+});
+
+vi.mock("../../server/lib/data-loader/cpi", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../server/lib/data-loader/cpi")>();
+  return {
+    ...actual,
+    loadCpiDataInternal: (...args: Parameters<typeof actual.loadCpiDataInternal>) =>
+      earningsLoaderOverrides.cpi === null
+        ? actual.loadCpiDataInternal(...args)
+        : Promise.resolve(
+            earningsLoaderOverrides.cpi as Awaited<ReturnType<typeof actual.loadCpiDataInternal>>,
+          ),
+    loadCtiDataInternal: (...args: Parameters<typeof actual.loadCtiDataInternal>) =>
+      earningsLoaderOverrides.cti === null
+        ? actual.loadCtiDataInternal(...args)
+        : Promise.resolve(
+            earningsLoaderOverrides.cti as Awaited<ReturnType<typeof actual.loadCtiDataInternal>>,
+          ),
+  };
+});
+
+vi.mock("../../server/lib/data-loader/population", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../server/lib/data-loader/population")>();
+  return {
+    ...actual,
+    loadPopulationDataInternal: () =>
+      earningsLoaderOverrides.population === null
+        ? actual.loadPopulationDataInternal()
+        : Promise.resolve(
+            earningsLoaderOverrides.population as Awaited<
+              ReturnType<typeof actual.loadPopulationDataInternal>
+            >,
+          ),
+  };
+});
+
+vi.mock("../../server/lib/consumptionTotal12Ma", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../server/lib/consumptionTotal12Ma")>();
+  return {
+    ...actual,
+    computeConsumptionTotal12Ma: () =>
+      consumptionResultOverride.current ?? actual.computeConsumptionTotal12Ma(),
+  };
+});
 
 type CpiDataWithMeasurements = CpiData & {
   measurements?: Record<string, SeriesMeasurement>;
@@ -44,6 +116,243 @@ describe("Earnings Data Integrity", () => {
   beforeAll(async () => {
     earningData = await loadEarning2020RollbackFixture();
     cpiData = await loadCpiData();
+  });
+
+  it.each([
+    ["no calibration total row", "unrelated,header\nvalue,value"],
+    ["zero calibration total", ["T", "T", "T", ...Array(9).fill("x"), "0", "50", "60"].join(",")],
+  ])("keeps neutral salary conversion factors with %s", async (_label, calibrationCsv) => {
+    const paths = buildEarningsFilePaths();
+    const root = mkdtempSync(join(tmpdir(), "earnings-neutral-factor-"));
+    const honMks = join(root, "hon-mks.csv");
+    writeFileSync(honMks, calibrationCsv);
+    earningsPathOverride.current = { ...paths, honMks };
+
+    try {
+      const rows = await loadTotalEarningDataInternal();
+      const contractualIndex = parseIndexSection(readFileSync(paths.contractual, "utf8"));
+      expect(rows.find((row) => row.年月 === "2025年12月")?._契約給与).toBe(
+        contractualIndex.get("2025年12月"),
+      );
+    } finally {
+      earningsPathOverride.current = null;
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("keeps the hourly-derived wage unavailable when an input month is missing", async () => {
+    const paths = buildEarningsFilePaths();
+    const hoursContent = readFileSync(paths.hours, "utf8");
+    const missingJanuary = hoursContent.replace(/^2025,([^\r\n]*)$/m, (_row, values: string) => {
+      const cells = values.split(",");
+      cells[8] = "-";
+      return `2025,${cells.join(",")}`;
+    });
+    expect(missingJanuary).not.toBe(hoursContent);
+
+    const root = mkdtempSync(join(tmpdir(), "earnings-incomplete-input-"));
+    const hours = join(root, "hours.csv");
+    writeFileSync(hours, missingJanuary);
+    earningsPathOverride.current = { ...paths, hours };
+
+    try {
+      const rows = await loadTotalEarningDataInternal();
+      expect(rows.find((row) => row.年月 === "2025年12月")?.["時間当たり給与"]).toBeNull();
+    } finally {
+      earningsPathOverride.current = null;
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("preserves a missing scheduled-pay month instead of manufacturing an index", async () => {
+    const paths = buildEarningsFilePaths();
+    const scheduledContent = readFileSync(paths.scheduled, "utf8");
+    const missingJuly = scheduledContent.replace(/^2025,([^\r\n]*)$/m, (_row, values: string) => {
+      const cells = values.split(",");
+      // The year is outside `values`; zero-based offset 13 maps to July's row[14].
+      cells[13] = "-";
+      return `2025,${cells.join(",")}`;
+    });
+    expect(missingJuly).not.toBe(scheduledContent);
+
+    const root = mkdtempSync(join(tmpdir(), "earnings-missing-scheduled-month-"));
+    const scheduled = join(root, "scheduled.csv");
+    writeFileSync(scheduled, missingJuly);
+    earningsPathOverride.current = { ...buildEarningsFilePaths(), scheduled };
+
+    try {
+      const rows = await loadTotalEarningDataInternal();
+      const july = rows.find((row) => row.年月 === "2025年7月");
+      expect(july).toBeDefined();
+      expect(july?.所定内給与).toBeNull();
+    } finally {
+      earningsPathOverride.current = null;
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("uses the total-relative calibration fallback when December contractual index is absent", async () => {
+    const paths = buildEarningsFilePaths();
+    const originalContractual = readFileSync(paths.contractual, "utf8");
+    const missingDecember = originalContractual.replace(
+      /^2025,([^\r\n]*)$/m,
+      (_row, values: string) => {
+        const cells = values.split(",");
+        // `values` excludes the year column; parseIndexSection reads December
+        // from row[19], which is values[18] after the year has been removed.
+        cells[18] = "-";
+        return `2025,${cells.join(",")}`;
+      },
+    );
+    expect(missingDecember).not.toBe(originalContractual);
+
+    const calibrationRow = Papa.parse<string[]>(readFileSync(paths.honMks, "utf8"), {
+      header: false,
+      skipEmptyLines: false,
+    }).data.find((row) => row[0] === "T" && row[1] === "T" && row[2] === "T");
+    expect(calibrationRow).toBeDefined();
+    const totalReal = Number(calibrationRow?.[12]?.replace(/,/g, "") ?? NaN);
+    const contractualReal = Number(calibrationRow?.[13]?.replace(/,/g, "") ?? NaN);
+    const factor = contractualReal / totalReal;
+    const originalIndex = parseIndexSection(originalContractual).get("2025年11月");
+    expect(Number.isFinite(originalIndex)).toBe(true);
+
+    const root = mkdtempSync(join(tmpdir(), "earnings-calibration-fallback-"));
+    const contractual = join(root, "contractual.csv");
+    writeFileSync(contractual, missingDecember);
+    earningsPathOverride.current = { ...paths, contractual };
+
+    try {
+      const rows = await loadTotalEarningDataInternal();
+      expect(rows.find((row) => row.年月 === "2025年11月")?._契約給与).toBeCloseTo(
+        (originalIndex ?? 0) * factor,
+      );
+    } finally {
+      earningsPathOverride.current = null;
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("does not smooth derived wages across a missing calendar month", async () => {
+    const paths = buildEarningsFilePaths();
+    const root = mkdtempSync(join(tmpdir(), "earnings-calendar-gap-"));
+    const overrides: Record<string, string> = { ...paths };
+    for (const key of ["contractual", "scheduled", "total", "hours", "employment"] as const) {
+      const original = readFileSync(paths[key], "utf8");
+      const withoutJanuary = original.replace(/^2025,([^\r\n]*)$/m, (_row, values: string) => {
+        const cells = values.split(",");
+        cells[8] = "-";
+        return `2025,${cells.join(",")}`;
+      });
+      expect(withoutJanuary).not.toBe(original);
+      const file = join(root, `${key}.csv`);
+      writeFileSync(file, withoutJanuary);
+      overrides[key] = file;
+    }
+    earningsPathOverride.current = overrides;
+
+    try {
+      const rows = await loadTotalEarningDataInternal();
+      const december = rows.find((row) => row.年月 === "2025年12月");
+      expect(december).toBeDefined();
+      expect(december?.["時間当たり給与"]).toBeNull();
+    } finally {
+      earningsPathOverride.current = null;
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("keeps the CPI/CTI and per-capita outputs unavailable when source rows are incomplete", async () => {
+    earningsLoaderOverrides.cpi = [{ ...cpiData[0], 総合: Number.NaN }];
+    earningsLoaderOverrides.cti = [{ ...cpiData[0], 年月: "not-a-month" }];
+    earningsLoaderOverrides.population = new Map();
+
+    try {
+      const rows = await loadTotalEarningDataInternal();
+      const row = rows.find((item) => item.年月 === "2025年12月");
+      expect(row?.["CPI総合(参考)"]).toBeNull();
+      expect(row?.["CPI総合(12MA)"]).toBeNull();
+      expect(row?.["15歳以上国民当たり給与"]).toBeNull();
+      expect(row?.["CTI消費支出（参考）"]).toBeNull();
+      expect(row?.["CTIミクロ基本系列（名目・参考）"]).toBeNull();
+    } finally {
+      earningsLoaderOverrides.cpi = null;
+      earningsLoaderOverrides.cti = null;
+      earningsLoaderOverrides.population = null;
+    }
+  });
+
+  it("preserves an invalid consumption-source reason on derived earnings rows", async () => {
+    consumptionResultOverride.current = {
+      status: "invalid",
+      reason: "fixture consumption source is invalid",
+      baseYearB: null,
+      points: [],
+      metadata: {
+        displayName: "Consumption total",
+        unit: "index",
+        frequency: "monthly",
+        baseYear: 2025,
+        calculation: "12-month average",
+        sources: ["fixture"],
+      },
+    };
+
+    try {
+      const rows = await loadTotalEarningDataInternal();
+      const row = rows.find((item) => item.年月 === "2025年12月") as
+        | CpiDataWithMeasurements
+        | undefined;
+      expect(row?.measurements?.[CONSUMPTION_TOTAL_12MA_KEY]).toMatchObject({
+        status: "invalid",
+        seriesStatus: "invalid",
+        reason: "fixture consumption source is invalid",
+        seriesReason: "fixture consumption source is invalid",
+      });
+    } finally {
+      consumptionResultOverride.current = null;
+    }
+  });
+
+  it("does not publish a non-finite legacy CTI moving average from finite source values", async () => {
+    earningsLoaderOverrides.cti = Array.from({ length: 12 }, (_, index) => ({
+      ...cpiData[0],
+      年月: `2025年${index + 1}月`,
+      "消費支出（名目）": 1e308,
+    }));
+
+    try {
+      const rows = await loadTotalEarningDataInternal();
+      const february = rows.find((item) => item.年月 === "2025年2月");
+      expect(february?.[LEGACY_CTI_COMPARISON_KEY]).toBeNull();
+    } finally {
+      earningsLoaderOverrides.cti = null;
+    }
+  });
+
+  it("keeps salary special pay null when a finite source window overflows its moving average", async () => {
+    const paths = buildEarningsFilePaths();
+    const totalContent = readFileSync(paths.total, "utf8");
+    const inflated2025 = totalContent.replace(/^2025,([^\r\n]*)$/m, (_row, values: string) => {
+      const cells = values.split(",");
+      for (let month = 0; month < 12; month++) cells[7 + month] = "1e308";
+      return `2025,${cells.join(",")}`;
+    });
+    expect(inflated2025).not.toBe(totalContent);
+    const root = mkdtempSync(join(tmpdir(), "earnings-overflow-window-"));
+    const total = join(root, "total.csv");
+    const honMks = join(root, "hon-mks.csv");
+    writeFileSync(total, inflated2025);
+    writeFileSync(honMks, "unrelated,header\nvalue,value");
+    earningsPathOverride.current = { ...paths, total, honMks };
+
+    try {
+      const rows = await loadTotalEarningDataInternal();
+      expect(rows.find((item) => item.年月 === "2025年12月")?.特別給与).toBeNull();
+    } finally {
+      earningsPathOverride.current = null;
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 
   it("should preserve nulls for incomplete, short, and trailing 12-month windows", () => {

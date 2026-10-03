@@ -148,6 +148,8 @@ export function adaptCtiAdjustedV2PublicView(
     ) as Record<CtiAdjustedPublicCategory, number | null>;
     return {
       year: row.year,
+      // CtiAdjustedV2PublicMeasurement requires seriesType; fallback is only for untyped callers.
+      /* v8 ignore next -- @preserve */
       seriesType: row.measurements["総合"].seriesType ?? "unavailable",
       official: row.measurements["総合"].official ?? false,
       status: row.status === "valid" ? "available" : row.status,

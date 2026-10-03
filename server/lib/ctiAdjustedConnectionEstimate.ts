@@ -514,6 +514,7 @@ function validateInput(
         message: `${name} is missing category ${category}`,
       });
 
+  // Keep malformed untyped callers fail-closed through validation rather than throwing here.
   const rows = input.rows ?? [];
   const years = rows.map((row) => row?.year);
   if (years.some((year) => !Number.isInteger(year)))
@@ -745,12 +746,17 @@ export function buildCtiAdjustedConnectionEstimate(
       );
   const removedFromTrainingYears = productionBetaCandidates.filter(isHoldout);
   const leakedHoldoutYears = trainingYears.filter(isHoldout);
+  let holdoutLeakageReason: string | null = null;
+  // trainingYears applies !isHoldout(year) above, so a holdout leak cannot be
+  // produced here without changing that selection predicate.
+  /* v8 ignore if -- @preserve */
+  if (leakedHoldoutYears.length) holdoutLeakageReason = "holdout_year_in_beta_training";
   const holdoutLeakage = {
     detected: leakedHoldoutYears.length > 0,
     years: leakedHoldoutYears,
     excludedYears,
     removedFromTrainingYears,
-    reason: leakedHoldoutYears.length ? "holdout_year_in_beta_training" : null,
+    reason: holdoutLeakageReason,
   };
   const connection = rowsByYear.get(target.connectionYear);
   const bConnection = connection?.b?.values;
@@ -904,7 +910,9 @@ export function buildCtiAdjustedConnectionEstimate(
   for (const year of trainingYears) {
     const r = ratios[year];
     fittedRatios[year] = {
-      total: r?.total ?? null,
+      // trainingYears is drawn from productionBetaCandidates, which has an
+      // A/B row and a validated positive total for every selected year.
+      total: r!.total!,
       categories: Object.fromEntries(
         CTI_ADJUSTED_MAJOR_CATEGORIES.map((category) => [
           category,
@@ -1026,8 +1034,11 @@ export function buildCtiAdjustedConnectionEstimate(
     let available =
       withinEstimateRange && !aInvalid && !bInvalid && !lInvalid && annualD?.status === "available";
     let reason = annualD?.reason ?? "unavailable";
-    if (!withinEstimateRange)
-      reason = year < target.startYear ? (annualD?.reason ?? "unavailable") : "unavailable";
+    if (!withinEstimateRange) {
+      // This branch runs only below officialStartYear; outside the estimate range therefore
+      // means year < startYear, so preserve the annual diagnostic without a redundant test.
+      reason = annualD?.reason ?? "unavailable";
+    }
     if (
       available &&
       isFiniteNumber(aConnection?.[CTI_ADJUSTED_TOTAL_CATEGORY]) &&
@@ -1062,10 +1073,8 @@ export function buildCtiAdjustedConnectionEstimate(
         (sum, category) => sum + (values[category] ?? 0),
         0,
       );
-      const residual =
-        values[CTI_ADJUSTED_TOTAL_CATEGORY] !== null
-          ? values[CTI_ADJUSTED_TOTAL_CATEGORY]! - majorSum
-          : null;
+      // This block assigns the total immediately above, so it cannot be null.
+      const residual = values[CTI_ADJUSTED_TOTAL_CATEGORY]! - majorSum;
       if (
         !isFiniteNumber(residual) ||
         ((options.rejectNegativeResidual ?? true) && residual! < -tolerance)

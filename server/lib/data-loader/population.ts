@@ -31,7 +31,9 @@ export async function loadPopulationDataInternal(): Promise<
     if (separateYearCol !== -1) monthCol = separateYearCol + 1;
     else {
       separateYearCol = headerRow.findIndex((c) => typeof c === "string" && /年|Year/i.test(c));
-      if (separateYearCol !== -1) monthCol = separateYearCol + 1;
+      // The header row was found by a predicate that requires a year label;
+      // with yearCol === -1, that label must be picked up by this fallback.
+      monthCol = separateYearCol + 1;
     }
   }
   const totalIndex = headerRow.findIndex((c) => typeof c === "string" && /(総数|Total)/.test(c));

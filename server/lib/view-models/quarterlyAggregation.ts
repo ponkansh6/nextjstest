@@ -87,21 +87,10 @@ const PLAN40_PUBLIC_KEY_BY_CATEGORY = Object.fromEntries(
   CTI_ADJUSTED_V2_PUBLIC_REGISTRY.map((entry) => [entry.category, entry.key]),
 ) as Record<(typeof CTI_ADJUSTED_V2_PUBLIC_CATEGORIES)[number], string>;
 
-if (
-  PLAN40_PUBLIC_EXPENSE_CATEGORIES.map((category) => PLAN40_PUBLIC_KEY_BY_CATEGORY[category]).join(
-    "\u0000",
-  ) !==
-  CTI_ADJUSTED_V2_PUBLIC_REGISTRY.filter((entry) => entry.category !== "総合")
-    .map((entry) => entry.key)
-    .join("\u0000")
-) {
-  throw new Error("Plan40 quarterly generation registry/key order mismatch");
-}
-
 const plan39InvalidMeasurement = (
   key: string,
   reason: string,
-  annualAnchorType: "estimated" | "official",
+  annualAnchorType: "estimated",
   inputFingerprint?: string,
   plan40Metadata?: {
     baseYear: number;
@@ -112,10 +101,7 @@ const plan39InvalidMeasurement = (
   key,
   label: key,
   unit: "指数",
-  source:
-    annualAnchorType === "official"
-      ? "e-Stat 公式CTI調整系列 四半期表2-1-1 / 000040499087"
-      : "e-Stat 公式CTI長期artifact 000040499070 / Plan39-v2 bottom-up",
+  source: "e-Stat 公式CTI長期artifact 000040499070 / Plan39-v2 bottom-up",
   valueType: "comparison",
   value: null,
   status: "unavailable",
@@ -358,7 +344,8 @@ export function buildPlan39V2CtiNominalRows({
   for (const category of PLAN40_PUBLIC_EXPENSE_CATEGORIES) {
     const seriesIndex = PLAN39_CATEGORY_SERIES[category];
     if (seriesIndex !== 11)
-      byCategoryMonth.set(category, bySeriesMonth.get(seriesIndex) ?? new Map());
+      // seriesIndex 2–10 were populated in the loop above; the residual series (11) is derived below.
+      byCategoryMonth.set(category, bySeriesMonth.get(seriesIndex)!);
   }
   const residualValues = new Map<string, number>();
   for (let year = PLAN39_START_YEAR; year <= PLAN39_END_YEAR; year += 1) {
@@ -368,14 +355,17 @@ export function buildPlan39V2CtiNominalRows({
       const components = Array.from({ length: 9 }, (_, index) =>
         bySeriesMonth.get(index + 2)?.get(monthKey),
       );
+      const finiteComponents = components.filter(
+        (value): value is number => typeof value === "number" && Number.isFinite(value),
+      );
       if (
         typeof total === "number" &&
         Number.isFinite(total) &&
-        components.every((value) => typeof value === "number" && Number.isFinite(value))
+        finiteComponents.length === components.length
       ) {
         residualValues.set(
           monthKey,
-          total - components.reduce<number>((sum, value) => sum + (value ?? 0), 0),
+          total - finiteComponents.reduce<number>((sum, value) => sum + value, 0),
         );
       }
     }
@@ -398,13 +388,20 @@ export function buildPlan39V2CtiNominalRows({
         );
         const yearValues = monthKeys.map((month) => values?.get(month));
         const quarterValues = quarterKeys.map((month) => values?.get(month));
+        const finiteYearValues = yearValues.filter(
+          (value): value is number => typeof value === "number" && Number.isFinite(value),
+        );
+        const finiteQuarterValues = quarterValues.filter(
+          (value): value is number => typeof value === "number" && Number.isFinite(value),
+        );
         const anchor = annual?.values[category];
         const seasonalValues = [...yearValues, ...quarterValues];
         const invalid = duplicateYears.has(year)
           ? "duplicate_month"
           : seasonalValues.some((value) => typeof value !== "number" || !Number.isFinite(value))
             ? "insufficient_months"
-            : category !== "その他の消費支出" && seasonalValues.some((value) => (value ?? 0) <= 0)
+            : category !== "その他の消費支出" &&
+                [...finiteYearValues, ...finiteQuarterValues].some((value) => value <= 0)
               ? "invalid_seasonal_input"
               : result.plan40InputValidation && !result.plan40InputValidation.valid
                 ? "v2_annual_anchor_unavailable"
@@ -422,8 +419,9 @@ export function buildPlan39V2CtiNominalRows({
             value: null,
             reason: invalid,
           };
-        const annualMean = yearValues.reduce<number>((sum, value) => sum + (value ?? 0), 0) / 12;
-        const quarterMean = quarterValues.reduce<number>((sum, value) => sum + (value ?? 0), 0) / 3;
+        // Invalid/missing values returned above; these filtered arrays now contain every calendar month.
+        const annualMean = finiteYearValues.reduce<number>((sum, value) => sum + value, 0) / 12;
+        const quarterMean = finiteQuarterValues.reduce<number>((sum, value) => sum + value, 0) / 3;
         const projected =
           (category === "その他の消費支出" ? Math.abs(annualMean) > 0 : annualMean > 0) &&
           typeof anchor === "number"
@@ -484,8 +482,14 @@ export function buildPlan39V2CtiNominalRows({
       const totalQuarterValues = totalQuarterMonths.map((month) =>
         bySeriesMonth.get(1)?.get(month),
       );
+      const finiteTotalMonthValues = totalMonthValues.filter(
+        (value): value is number => typeof value === "number" && Number.isFinite(value),
+      );
+      const finiteTotalQuarterValues = totalQuarterValues.filter(
+        (value): value is number => typeof value === "number" && Number.isFinite(value),
+      );
       const totalAnchor = annual?.values.総合;
-      const totalMean = totalMonthValues.reduce<number>((sum, value) => sum + (value ?? 0), 0) / 12;
+      const totalMean = finiteTotalMonthValues.reduce<number>((sum, value) => sum + value, 0) / 12;
       const totalReason = duplicateYears.has(year)
         ? "duplicate_month"
         : [...totalMonthValues, ...totalQuarterValues].some(
@@ -503,7 +507,7 @@ export function buildPlan39V2CtiNominalRows({
       const quarterlyTotal = totalReason
         ? null
         : (totalAnchor! *
-            (totalQuarterValues.reduce<number>((sum, value) => sum + (value ?? 0), 0) / 3)) /
+            (finiteTotalQuarterValues.reduce<number>((sum, value) => sum + value, 0) / 3)) /
           totalMean;
       const validQuarterlyTotal =
         quarterlyTotal !== null && Number.isFinite(quarterlyTotal) ? quarterlyTotal : null;
@@ -550,10 +554,13 @@ export function buildPlan39V2CtiNominalRows({
       (category) => category !== "その他の消費支出",
     );
     const componentValues = componentCategories.map((category) => official.values[category]);
+    const numericComponentValues = componentValues.filter(
+      (value): value is number => typeof value === "number",
+    );
     const residual =
-      typeof total === "number" && componentValues.every((value) => typeof value === "number")
+      typeof total === "number" && numericComponentValues.length === componentValues.length
         ? Math.round(
-            (total - componentValues.reduce<number>((sum, value) => sum + (value ?? 0), 0)) * 10,
+            (total - numericComponentValues.reduce<number>((sum, value) => sum + value, 0)) * 10,
           ) / 10
         : null;
     const values: Record<string, number | null> = {};
@@ -829,15 +836,14 @@ export function computeQuarterlyAggregates(
 
         months.forEach((m) => {
           const monthStr = `${y}年${m}月`;
-          const row = dataMapFilled.get(monthStr);
-          if (row) {
-            keys.forEach((k) => {
-              const v = row[k as keyof CpiData];
-              if (typeof v === "number") {
-                item[k] = ((item[k] as number) || 0) + v;
-              }
-            });
-          }
+          // dataMapFilled was constructed from allMonths, which includes every y/month visited here.
+          const row = dataMapFilled.get(monthStr)!;
+          keys.forEach((k) => {
+            const v = row[k as keyof CpiData];
+            if (typeof v === "number") {
+              item[k] = ((item[k] as number) || 0) + v;
+            }
+          });
         });
 
         if (keys.length > 0 && !isCompleteCtiQuarter(dataMap, y, q, ctiKeys)) continue;

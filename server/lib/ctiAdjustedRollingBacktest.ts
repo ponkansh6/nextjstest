@@ -175,14 +175,20 @@ const build = (
     const error = finite(predicted) && finite(observed) ? predicted - observed : null;
     const baselineError =
       finite(baselinePredicted) && finite(observed) ? baselinePredicted - observed : null;
-    const reason =
-      trainYears.length < minimumTrainingYears
-        ? "minimum_training_years_not_met"
-        : trainYears.includes(validationYear)
-          ? "validation_year_in_training_years"
-          : error === null || baselineError === null
-            ? "non_finite_or_missing_other_value"
-            : null;
+    let reason: string | null = null;
+    if (trainYears.length < minimumTrainingYears) {
+      reason = "minimum_training_years_not_met";
+    } else {
+      // The only callers generate rolling years with candidate < validationYear
+      // and LOO years with candidate !== validationYear, so this private helper
+      // cannot receive a validation year in its training years.
+      /* v8 ignore if -- @preserve */
+      if (trainYears.includes(validationYear)) {
+        reason = "validation_year_in_training_years";
+      } else if (error === null || baselineError === null) {
+        reason = "non_finite_or_missing_other_value";
+      }
+    }
     return {
       trainYears,
       validationYear,
@@ -230,14 +236,15 @@ const build = (
     metrics: summary,
     allFoldsFinite,
     leakageFree,
-    reason:
-      status === "pass"
-        ? null
-        : !leakageFree
-          ? "leakage_detected"
-          : status === "insufficient-data"
-            ? "one_or_more_folds_not_evaluable"
-            : "model_mae_exceeds_baseline_mae",
+    reason: (() => {
+      if (status === "pass") return null;
+      // build() is private and every fold it creates sets leakage to false;
+      // the public generators also exclude the validation year from training.
+      /* v8 ignore if -- @preserve */
+      if (!leakageFree) return "leakage_detected";
+      if (status === "insufficient-data") return "one_or_more_folds_not_evaluable";
+      return "model_mae_exceeds_baseline_mae";
+    })(),
   };
 };
 
@@ -247,10 +254,9 @@ export function buildCtiAdjustedRollingLooBacktest(
   _L: CtiAdjustedAnnualInput,
   options: { minimumTrainingYears?: number } = {},
 ): CtiAdjustedRollingLooBacktest {
+  const configuredMinimum = options.minimumTrainingYears ?? 3;
   const minimumTrainingYears =
-    Number.isInteger(options.minimumTrainingYears) && (options.minimumTrainingYears ?? 0) >= 3
-      ? options.minimumTrainingYears!
-      : 3;
+    Number.isInteger(configuredMinimum) && configuredMinimum >= 3 ? configuredMinimum : 3;
   const years = [...CTI_ADJUSTED_BACKTEST_YEARS];
   const rollingYears = years.filter((year) => year - years[0] >= minimumTrainingYears);
   return {

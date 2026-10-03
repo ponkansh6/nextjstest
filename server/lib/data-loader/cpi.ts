@@ -95,8 +95,8 @@ export async function loadCpiIndexDataInternal(): Promise<CpiData[]> {
     return [];
   }
   return selected.validated.data.filter((row) => {
-    const parsed = parseYearMonth(String(row.年月 ?? ""));
-    return parsed !== null && parsed.year >= 2004;
+    const parsed = parseYearMonth(String(row.年月));
+    return parsed!.year >= 2004;
   });
 }
 
@@ -130,7 +130,7 @@ export async function loadCtiDataInternal(
         Array.isArray(row) && row.some((c) => typeof c === "string" && /民間最終消費支出/.test(c)),
     );
     if (headerIndex === -1) return;
-    const header = rows[headerIndex].map((c) => (typeof c === "string" ? c.trim() : c));
+    const header = rows[headerIndex].map((c) => c.trim());
     const ymIndex = header.indexOf("時間軸（四半期）");
     const valueIndex = header.findIndex((h) => h === "民間最終消費支出");
     rows.slice(headerIndex + 1).forEach((row) => {
@@ -154,15 +154,12 @@ export async function loadCtiDataInternal(
     skipEmptyLines: false,
   }).data;
   const headerIndex = rows.findIndex(
-    (row: (string | undefined)[]) =>
+    (row: string[]) =>
       Array.isArray(row) &&
-      row.some(
-        (c: string | undefined) =>
-          typeof c === "string" && (c.trim() === "月" || c.trim().includes("消費支出（名目）")),
-      ),
+      row.some((c) => c.trim() === "月" || c.trim().includes("消費支出（名目）")),
   );
   if (headerIndex === -1) return [];
-  const header = rows[headerIndex].map((c: string | undefined) => (c ?? "").trim());
+  const header = rows[headerIndex].map((c) => c.trim());
   const dataRows = rows.slice(headerIndex + 1);
   const mapped = dataRows
     .map((row: (string | undefined)[]) => {
@@ -306,7 +303,7 @@ export async function loadCtiDataInternal(
       const real = loadAnnual(paths.candidateSupportReal);
       const factors = gdpStatus.normalizationFactors;
       for (const row of mapped) {
-        const year = String(parseYearMonth(String(row.年月))?.year ?? "");
+        const year = String(parseYearMonth(String(row.年月))!.year);
         const nominalRaw = nominal.get(year);
         const realRaw = real.get(year);
         if (nominalRaw !== undefined && realRaw !== undefined) {

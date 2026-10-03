@@ -54,7 +54,7 @@ export function validateCpiFiles(pair: CpiPair): ValidatedCpiPair | string {
     header: true,
     skipEmptyLines: true,
   });
-  const headers = (meta.fields ?? []).map((header) => header.trim());
+  const headers = meta.fields!.map((header) => header.trim());
   if (!headers.includes(CPI_DATE_HEADER))
     return `missing required index header: ${CPI_DATE_HEADER}`;
   if (new Set(headers).size !== headers.length) return "duplicate index headers";

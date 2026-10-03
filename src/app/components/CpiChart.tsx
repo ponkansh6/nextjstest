@@ -92,7 +92,9 @@ export default function CpiChart({
   // popstate による再読込や localStorage との競合解決は行わない。
   // 初期値がNaNやundefinedにならないよう、確実に数値(0含む)を返すように修正
   const initialStartYear = allYears.find((y) => y >= MIN_DISPLAY_YEAR) ?? allYears[0] ?? 2025;
-  const initialEndYear = (allYears.length > 0 ? allYears[allYears.length - 1] : 2025) ?? 2025;
+  // The empty case is literal 2025 and the non-empty case indexes the final
+  // Set entry, so both arms already produce a number.
+  const initialEndYear = allYears.length > 0 ? allYears[allYears.length - 1] : 2025;
 
   const {
     from,
@@ -214,26 +216,17 @@ export default function CpiChart({
       real: SUPPORT_SERIES_KEY_REAL,
       label: "民間最終消費支出",
     };
-    const adjustedCategory =
-      dataKey === CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY
-        ? undefined
-        : dataKey.match(/^CTIミクロ調整系列（(.+)）$/)?.[1];
-    const legacyNominalKey = adjustedCategory
-      ? `${adjustedCategory === "その他の消費支出" ? "その他の消費支出" : adjustedCategory}（名目）`
-      : undefined;
-    const legacyRealKey = legacyNominalKey?.replace("（名目）", "（実質）");
-    const allPairs = [
-      ...keyPairs,
-      ...(legacyNominalKey && legacyRealKey
-        ? [{ nominal: legacyNominalKey, real: legacyRealKey, label: adjustedCategory ?? dataKey }]
-        : []),
-      supportPair,
-    ];
+    // The derived-total key returned above; all remaining CTI-prefixed keys
+    // have a category captured by this expression.
+    const adjustedCategory = dataKey.match(/^CTIミクロ調整系列（(.+)）$/)?.[1];
+    // Adjusted CTI keys take the explicit pair below, so this registry only
+    // needs the legacy pairs and the public support pair.
+    const allPairs = [...keyPairs, supportPair];
 
     const pair = adjustedCategory
       ? {
           nominal: dataKey,
-          real: legacyRealKey ?? dataKey.replace("（名目）", "（実質）"),
+          real: `${adjustedCategory}（実質）`,
           label: adjustedCategory,
         }
       : allPairs.find((p) => p.nominal === dataKey || p.real === dataKey);
@@ -242,10 +235,9 @@ export default function CpiChart({
     const nominalKey = pair.nominal;
     const realKey = pair.real;
 
-    const nominalToggleKeys =
-      adjustedCategory && !nominalKey.includes("CTIミクロ調整系列")
-        ? [nominalKey, dataKey]
-        : [nominalKey];
+    // adjustedCategory is captured only from the CTI key prefix, so its
+    // nominalKey is already the canonical adjusted key and needs no alias.
+    const nominalToggleKeys = [nominalKey];
     setNominalHiddenKeys((prev) => {
       const next = new Set(prev);
       const shouldHide = nominalToggleKeys.some((key) => !next.has(key));
@@ -340,10 +332,10 @@ export default function CpiChart({
     return [...expense, ...support];
   })();
 
-  const visibleLineConfigs = useMemo(
-    () => comparisonSeriesRegistry.filter((c) => !c.advanced || showAdvanced),
-    [comparisonSeriesRegistry, showAdvanced],
-  );
+  // This request-scoped registry only comes from createComparisonSeriesRegistry,
+  // whose entries never carry the advanced flag. Advanced filtering belongs to
+  // CpiChartSections, which also accepts caller-provided registries.
+  const visibleLineConfigs = comparisonSeriesRegistry;
 
   const dataTables: DataTableSpec[] = [
     {
@@ -380,7 +372,8 @@ export default function CpiChart({
       title: "給与指標と関連指標",
       data: earningsData as unknown as Record<string, unknown>[],
       keys: EARNINGS_SERIES_REGISTRY.map((c) => c.key),
-      headers: EARNINGS_SERIES_REGISTRY.map((c) => c.displayName ?? c.label ?? c.key),
+      // Every entry in the fixed earnings registry declares displayName.
+      headers: EARNINGS_SERIES_REGISTRY.map((c) => c.displayName!),
       metadata: EARNINGS_SERIES_REGISTRY,
     },
     {
@@ -395,7 +388,8 @@ export default function CpiChart({
       title: "給与・消費・物価の推移比較(12MA)",
       data: mergedData as unknown as Record<string, unknown>[],
       keys: visibleLineConfigs.map((c) => c.key),
-      headers: visibleLineConfigs.map((c) => c.displayName ?? c.label),
+      // createComparisonSeriesRegistry supplies displayName for every row.
+      headers: visibleLineConfigs.map((c) => c.displayName!),
       metadata: comparisonSeriesRegistry,
     },
   ];

@@ -106,6 +106,13 @@ jobs:
           trap 'status=$?; finished=$(date +%s); echo "- install dependencies: $((finished - started))s (exit $status)" >> "$GITHUB_STEP_SUMMARY"' EXIT
           pnpm install --frozen-lockfile 2>&1 | tee artifacts/validation-logs/install.log
 
+      - name: Test coverage
+        run: |
+          started=$(date +%s)
+          set -o pipefail
+          trap 'status=$?; finished=$(date +%s); echo "- test coverage: $((finished - started))s (exit $status)" >> "$GITHUB_STEP_SUMMARY"' EXIT
+          pnpm run test:coverage 2>&1 | tee artifacts/validation-logs/test-coverage.log
+
       - name: Build with Next.js
         run: |
           started=$(date +%s)

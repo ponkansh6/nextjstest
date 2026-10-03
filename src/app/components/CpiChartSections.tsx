@@ -170,21 +170,20 @@ export function CpiChartSections({
   const realTooltipKeys = realKeysWithSupport.filter(
     (key) => key !== CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY,
   );
+  // Both spending chart call sites use the public presentation ordering and
+  // labels; there is no non-presentation mode for this local helper.
   const spendingTooltipMeta = (
     keys: string[],
     chartColorsForSeries: string[],
-    useSpendingPresentation = false,
   ): TooltipSeriesProjection[] => {
-    const displayKeys = useSpendingPresentation ? orderSpendingPresentationKeys(keys) : keys;
+    const displayKeys = orderSpendingPresentationKeys(keys);
     return displayKeys.map((key, order): TooltipSeriesProjection => {
       const measurementMetadata = ctiMetadata.find((metadata) => metadata.key === key);
       const sourceIndex = keys.indexOf(key);
       return {
         ...measurementMetadata,
         key,
-        label: useSpendingPresentation
-          ? (getSpendingPresentationLabel(key) ?? getLegendLabel(key))
-          : getLegendLabel(key),
+        label: getSpendingPresentationLabel(key) ?? getLegendLabel(key),
         color:
           key === SUPPORT_SERIES_KEY_NOMINAL ||
           key === SUPPORT_SERIES_KEY_REAL ||
@@ -283,7 +282,7 @@ export function CpiChartSections({
             dataLength: nominalPublicData.length,
             showTotal: true,
             showAllPayload: true,
-            seriesMeta: spendingTooltipMeta(nominalKeysWithSupport, nominalColorsWithSupport, true),
+            seriesMeta: spendingTooltipMeta(nominalKeysWithSupport, nominalColorsWithSupport),
             showMeasurementNotes: false,
             allowedKeys: spendingAllowedKeys(nominalKeysWithSupport, nominalHiddenKeys),
           })}
@@ -324,7 +323,7 @@ export function CpiChartSections({
             dataLength: realPublicData.length,
             showTotal: true,
             showAllPayload: true,
-            seriesMeta: spendingTooltipMeta(realTooltipKeys, realColors, true),
+            seriesMeta: spendingTooltipMeta(realTooltipKeys, realColors),
             showMeasurementNotes: false,
             allowedKeys: spendingAllowedKeys(realTooltipKeys, realHiddenKeys),
           })}

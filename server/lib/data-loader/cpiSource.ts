@@ -60,8 +60,7 @@ export function validate2025Metadata(metadataPath: string): Cpi2025Metadata | st
       return "2025 metadata period mismatch";
     }
     if (metadata.seriesCount !== 78) return "2025 metadata seriesCount mismatch";
-    if (!/^[a-f0-9]{64}$/.test(metadata.csvSha256 ?? ""))
-      return "2025 metadata CSV SHA-256 mismatch";
+    if (!/^[a-f0-9]{64}$/.test(metadata.csvSha256)) return "2025 metadata CSV SHA-256 mismatch";
     return metadata;
   } catch {
     return "invalid 2025 metadata";
@@ -83,7 +82,7 @@ export function validateCpiPair(pair: CpiPair, metadataPath: string): ValidatedC
   if (createHash("sha256").update(cpiContent).digest("hex") !== metadata.csvSha256)
     return "2025 CSV SHA-256 mismatch";
   const rows = baseValidation.data;
-  const headers = Object.keys(rows[0] ?? {});
+  const headers = Object.keys(rows[0]!);
   const months = rows
     .map((row) => row["年月"])
     .filter((month): month is string => typeof month === "string");
