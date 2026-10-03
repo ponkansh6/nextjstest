@@ -25,6 +25,7 @@ import {
   SUPPORT_SERIES_KEY_NOMINAL,
   SUPPORT_SERIES_KEY_REAL,
   CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY,
+  CONSUMPTION_TOTAL_12MA_KEY,
 } from "../../lib/chartConstants";
 import { formatCpiTooltipTotal, formatCpiTooltipValue } from "./CustomTooltip";
 import { useChartTooltipController } from "./charts/useChartTooltipProps";
@@ -423,6 +424,7 @@ export function CpiChartSections({
             seriesMeta: comparisonProjectedTooltipMeta,
             allowedKeys: comparisonTooltipAllowedKeys,
             showMeasurementNotes: true,
+            suppressMeasurementNotesForKeys: [CONSUMPTION_TOTAL_12MA_KEY],
           })}
         />
       </LazyMount>

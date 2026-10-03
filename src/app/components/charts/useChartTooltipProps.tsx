@@ -32,6 +32,7 @@ export interface ChartTooltipBindOptions {
   };
   showAllPayload?: boolean;
   showMeasurementNotes?: boolean;
+  suppressMeasurementNotesForKeys?: string[];
   seriesMeta?: TooltipSeriesMetadata[];
   allowedKeys?: string[] | ((label?: string) => string[]);
   includeUnmappedPayload?: boolean;
@@ -296,6 +297,7 @@ export const useChartTooltipController = ({
               separatorBetweenGroups={options?.separatorBetweenGroups}
               showAllPayload={options?.showAllPayload}
               showMeasurementNotes={options?.showMeasurementNotes}
+              suppressMeasurementNotesForKeys={options?.suppressMeasurementNotesForKeys}
               seriesMeta={options?.seriesMeta}
               allowedKeys={options?.allowedKeys}
               includeUnmappedPayload={options?.includeUnmappedPayload}

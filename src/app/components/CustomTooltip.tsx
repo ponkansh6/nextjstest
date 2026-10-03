@@ -112,6 +112,7 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
     separatorBetweenGroups,
     showAllPayload = false,
     showMeasurementNotes = true,
+    suppressMeasurementNotesForKeys = [],
     seriesMeta,
     allowedKeys,
     includeUnmappedPayload = false,
@@ -401,6 +402,11 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
           </div>
         )}
         {topPayload.map((entry, index) => {
+          // In the three-kind comparison, the consumption label already
+          // identifies the series. Keep its measurement/provenance details
+          // available in regular consumption tooltips, but omit them here.
+          const showEntryMeasurementNotes =
+            showMeasurementNotes && !suppressMeasurementNotesForKeys.includes(entry.dataKey ?? "");
           const hasProvenance =
             entry.seriesType !== undefined ||
             entry.official !== undefined ||
@@ -466,7 +472,9 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
               data-tooltip-official={
                 entry.official === undefined ? undefined : String(entry.official)
               }
-              data-tooltip-note={measurementNote ?? undefined}
+              data-tooltip-note={
+                showEntryMeasurementNotes ? (measurementNote ?? undefined) : undefined
+              }
               data-tooltip-monthly-source-id={entry.monthlyProvenance?.sourceId}
               data-tooltip-monthly-household-scope={entry.monthlyProvenance?.householdScope}
               data-tooltip-monthly-series-type={entry.monthlyProvenance?.seriesType}
@@ -509,7 +517,7 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
                 }}
               >
                 {entry.name}
-                {showMeasurementNotes && measurementNote && (
+                {showEntryMeasurementNotes && measurementNote && (
                   <small
                     data-tooltip-measurement-note="true"
                     style={{ display: "block", opacity: 0.78, fontSize: "0.82em" }}
@@ -517,7 +525,7 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
                     {measurementNote}
                   </small>
                 )}
-                {showMeasurementNotes && entry.cpiSeries && (
+                {showEntryMeasurementNotes && entry.cpiSeries && (
                   <small
                     data-tooltip-cpi-provenance="true"
                     style={{ display: "block", opacity: 0.78, fontSize: "0.82em" }}
@@ -529,7 +537,7 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
                     名目出典: {entry.nominalSource ?? "不明"}
                   </small>
                 )}
-                {showMeasurementNotes && entry.baseYear !== undefined && !entry.cpiSeries && (
+                {showEntryMeasurementNotes && entry.baseYear !== undefined && !entry.cpiSeries && (
                   <small
                     data-tooltip-base-year-provenance="true"
                     style={{ display: "block", opacity: 0.78, fontSize: "0.82em" }}
@@ -537,7 +545,7 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
                     基準年: {entry.baseYear}年
                   </small>
                 )}
-                {showMeasurementNotes && (entry.monthlyProvenance || entry.ma12Provenance) && (
+                {showEntryMeasurementNotes && (entry.monthlyProvenance || entry.ma12Provenance) && (
                   <small
                     data-tooltip-consumption-provenance="true"
                     style={{ display: "block", opacity: 0.78, fontSize: "0.82em" }}

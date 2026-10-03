@@ -32,6 +32,7 @@ import {
   COMPARISON_SERIES_REGISTRY,
   EARNINGS_SERIES_REGISTRY,
   EARNINGS_TOTAL_KEYS,
+  createComparisonSeriesRegistry,
   projectTooltipMetadata,
 } from "../../src/lib/chartConstants";
 import { useChartTooltipController } from "../../src/app/components/charts/useChartTooltipProps";
@@ -152,6 +153,117 @@ describe("chart tooltip and legend shared contract", () => {
       });
     },
   );
+
+  it("matches the three comparison tooltip labels to the legend and hides only its consumption notes", () => {
+    const registry = createComparisonSeriesRegistry({ status: "valid", reason: null });
+    const consumptionKey = "消費(総合)";
+    const tooltipMeta = projectTooltipMetadata(registry).map((meta) => ({
+      ...meta,
+      measurementNote:
+        meta.key === consumptionKey ? "消費支出の12か月移動平均" : `${meta.label}の測定メモ`,
+    }));
+    const row = {
+      年月: "2025年1月",
+      総合: 100,
+      生鮮食品を除く総合: 100,
+      持家の帰属家賃を除く総合: 100,
+      "消費支出（参考）": null,
+      "CPI総合(参考)": null,
+      [registry[0].key]: 101.25,
+      [registry[1].key]: 102.5,
+      [consumptionKey]: 103.75,
+    };
+    const renderTooltip = (suppressConsumptionNotes: boolean) => (
+      <CustomTooltip
+        active
+        isMobile={false}
+        isTouch={false}
+        label={row.年月}
+        payload={registry.map(({ key }) => ({
+          dataKey: key,
+          name: key,
+          value: row[key as keyof typeof row] as number,
+          payload: row,
+        }))}
+        seriesMeta={tooltipMeta}
+        suppressMeasurementNotesForKeys={suppressConsumptionNotes ? [consumptionKey] : undefined}
+        showAllPayload
+        tooltipBg="#000"
+        tooltipText="#fff"
+      />
+    );
+
+    const view = render(
+      <>
+        <NewGraph
+          data={[row]}
+          hiddenKeys={[]}
+          onToggle={vi.fn()}
+          chartColors={{ gridStroke: "#ddd", axisText: "#111" }}
+          isMobile={false}
+          tooltipProps={{
+            cursor: { stroke: "#ddd", strokeWidth: 1, strokeOpacity: 0.6 },
+            trigger: "hover",
+            content: <div />,
+          }}
+        />
+        {renderTooltip(true)}
+      </>,
+    );
+    const tooltipRows = [
+      ...view.container.querySelectorAll<HTMLElement>('[data-tooltip-row="true"]'),
+    ];
+    expect(tooltipRows.map((tooltipRow) => tooltipRow.getAttribute("data-tooltip-label"))).toEqual(
+      registry.map(({ legendLabel }) => legendLabel),
+    );
+    for (const { key, legendLabel } of registry) {
+      const legend = view.container.querySelector(`[data-testid="new-graph-legend-${key}"]`);
+      expect(legend?.textContent).toContain(legendLabel);
+      expect(view.container.querySelector(`[data-tooltip-key="${key}"]`)?.textContent).toContain(
+        legendLabel,
+      );
+    }
+
+    const consumptionRow = view.container.querySelector(
+      `[data-tooltip-key="${consumptionKey}"]`,
+    ) as HTMLElement;
+    expect(view.container.querySelector('[data-tooltip-root="true"]')?.textContent).toContain(
+      "2025年1月",
+    );
+    expect(consumptionRow.textContent).toContain("103.75");
+    const consumptionMetadata = registry.find(({ key }) => key === consumptionKey)!;
+    expect(consumptionRow.getAttribute("data-tooltip-source")).toBe(consumptionMetadata.source);
+    expect(consumptionRow.getAttribute("data-tooltip-aggregation")).toBe(
+      consumptionMetadata.aggregation,
+    );
+    for (const omittedNote of [
+      "基準年",
+      consumptionMetadata.source,
+      consumptionMetadata.aggregation,
+      "月次出典:",
+      "12MA期間:",
+      "消費支出の12か月移動平均",
+    ]) {
+      expect(consumptionRow.textContent).not.toContain(omittedNote);
+    }
+    expect(
+      view.container.querySelector('[data-tooltip-key="CPI総合(12MA)"]')?.textContent,
+    ).toContain("物価の測定メモ");
+    expect(view.container.querySelector('[data-tooltip-key="総合(12MA)"]')?.textContent).toContain(
+      "給与の測定メモ",
+    );
+
+    view.unmount();
+    const genericView = render(renderTooltip(false));
+    const genericConsumptionRow = genericView.container.querySelector(
+      `[data-tooltip-key="${consumptionKey}"]`,
+    ) as HTMLElement;
+    expect(screen.getByText("消費支出の12か月移動平均")).toBeDefined();
+    expect(
+      genericConsumptionRow.querySelector('[data-tooltip-base-year-provenance="true"]')
+        ?.textContent,
+    ).toContain("基準年: 2025年");
+  });
 
   it("keeps comparison legend entries for all-null data, filters hidden keys, and drops unknown payload", () => {
     const hiddenKey = COMPARISON_SERIES_REGISTRY[1].key;

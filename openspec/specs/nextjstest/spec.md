@@ -32,7 +32,7 @@ include this monthly key.
 For NewGraph comparison, `server/lib/consumptionTotal12Ma.ts` uses the composition-corrected Plan39 V2 annual anchors shared with the quarterly nominal projection for 2005–2016, two-or-more-person-household raw seasonal weights, and official all-household monthly observations (`000040499028`) from 2017 onward. The private 2004 prehistory applies the same V2 category base/gamma correction using the calendar-year 2004 two-plus household share `3459/4915`; it exists only to calculate the first public strict 12MA at 2005-01 and is never emitted as a public point.
 When no source root is supplied, the loader resolves `data/source` relative to the repository root derived from its module location; an existing explicit source root remains supported, with the current-working-directory fallback retained if module-relative discovery cannot find a package root.
 
-The 3種比較 display registry uses concise legend labels `物価`, `給与`, and `消費`, with orange, blue, and red series colors respectively. The consumption tooltip shows the short description `消費支出の12か月移動平均`; detailed source and window provenance remains available to table/CSV consumers.
+The 3種比較 display registry uses concise labels `物価`, `給与`, and `消費` for both legend and tooltip rows, with orange, blue, and red series colors respectively. Its consumption tooltip row keeps the period and value but suppresses measurement notes such as base year, source, aggregation, and the 12-month-average explanation. This suppression is scoped to the comparison tooltip; generic consumption tooltips retain their existing notes. Detailed source and window provenance remains available to table/CSV consumers.
 
 ### Component Tree
 
@@ -45,10 +45,11 @@ NewGraph `COMPARISON_SERIES_REGISTRY` → graph/legend/tooltip/table/CSV. The
 legacy adjustment field remains an internal compatibility path; the salary
 registry and Plan38 quarterly projection remain separate consumers.
 
-The comparison registry owns the legend labels and colors (`物価` / orange,
-`給与` / blue, `消費` / red); tooltip series labels and data contracts retain
-their existing metadata. Consumption tooltip provenance is summarized in one
-short line.
+The comparison registry owns the legend and tooltip row labels and colors
+(`物価` / orange, `給与` / blue, `消費` / red). Tooltip data contracts retain
+their metadata, while the comparison consumption row suppresses measurement
+notes and keeps its period/value. This suppression does not apply to generic
+consumption tooltips.
 
 The nominal consumption graph keeps the existing support contract
 `CTIミクロ四半期系列（名目）` (displayed as
@@ -71,7 +72,8 @@ not create an additional bar.
   the old 3 consumption comparison entries are replaced by a single `消費(総合)` entry (`CONSUMPTION_TOTAL_12MA_KEY`, monthly frequency, strict 12-month moving average rebased to 2025 monthly average), while CPI and wage series remain.
 - **WHEN** the comparison graph, legend, tooltip, table, or CSV renders for NewGraph, **THEN**
   the new `消費(総合)` series metadata and value have parity across every public surface.
-- **WHEN** the 3種比較 legend and tooltip render, **THEN** the legend labels are `物価`, `給与`, and `消費` in orange, blue, and red respectively, and the consumption tooltip explanation is the concise `消費支出の12か月移動平均` description.
+- **WHEN** the 3種比較 legend and tooltip render, **THEN** the three tooltip row labels match the legend labels `物価`, `給与`, and `消費` in orange, blue, and red respectively; the consumption row retains its period and value and omits base-year, source, aggregation, and 12-month-average notes, while measurement notes for other comparison rows remain available.
+- **WHEN** a generic consumption tooltip renders outside 3種比較, **THEN** its existing measurement notes, including the concise `消費支出の12か月移動平均` explanation when applicable, remain unchanged.
 - **WHEN** 2005–2016 historical monthly estimation is computed, **THEN**
   it uses the same composition-corrected Plan39 V2 annual total anchors as the historical quarterly nominal projection and two-or-more-person household raw monthly seasonal weights (`m[y,m] = A[y] * r[y,m] / meanRaw[y]`), requiring all 12 months to be finite and `meanRaw[y]` to be positive and finite; any missing month invalidates the entire year.
 - **WHEN** the Plan49 calculation constructs its 2004 prehistory, **THEN** it uses the official calendar-year IV-4 share `3459/4915`, applies the same V2 per-category base/gamma calculation used for the historical annual anchors, normalizes all twelve `000040499070` raw months to that corrected annual anchor, and keeps these values internal; 2004 is not added to the public V2 rows or quarterly graph.

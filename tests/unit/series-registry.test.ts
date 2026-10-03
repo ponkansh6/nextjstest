@@ -172,9 +172,9 @@ describe("series registry contracts", () => {
         legendLabel,
       })),
     ).toEqual([
-      { tooltipLabel: "物価指数(総合)", legendLabel: "物価" },
-      { tooltipLabel: "給与(総合)", legendLabel: "給与" },
-      { tooltipLabel: "消費(総合)", legendLabel: "消費" },
+      { tooltipLabel: "物価", legendLabel: "物価" },
+      { tooltipLabel: "給与", legendLabel: "給与" },
+      { tooltipLabel: "消費", legendLabel: "消費" },
     ]);
     expect(new Set(COMPARISON_SERIES_REGISTRY.map((series) => series.order)).size).toBe(
       COMPARISON_SERIES_REGISTRY.length,
@@ -197,7 +197,7 @@ describe("series registry contracts", () => {
     ).toEqual([
       {
         key: "CPI総合(12MA)",
-        tooltipLabel: "物価指数(総合)",
+        tooltipLabel: "物価",
         legendLabel: "物価",
         color: "#f97316",
         order: 0,
@@ -205,7 +205,7 @@ describe("series registry contracts", () => {
       },
       {
         key: "総合(12MA)",
-        tooltipLabel: "給与(総合)",
+        tooltipLabel: "給与",
         legendLabel: "給与",
         color: "#2563eb",
         order: 1,
@@ -213,7 +213,7 @@ describe("series registry contracts", () => {
       },
       {
         key: "消費(総合)",
-        tooltipLabel: "消費(総合)",
+        tooltipLabel: "消費",
         legendLabel: "消費",
         color: "#dc2626",
         order: 2,
