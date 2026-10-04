@@ -1317,6 +1317,8 @@ The system SHALL display economic indicators as interactive Recharts-based chart
 - **WHEN** MajorIndicesChart, StackedAreaChart, SpendingBarChart, or EarningsBreakdownChart is rendered
 - **THEN** its Y-axis upper bound is the nearest integer to the maximum displayed value plus 3
 - **AND** hidden series are excluded from that maximum
+- **AND** nominal and real consumption charts calculate their bounds independently using the same rule: sum the visible stacked bar series at each time point after chart-data normalization, then add 3 to the largest sum and round to the nearest integer
+- **AND** the real-only independent aggregate series is excluded from the bound when it is not rendered as a bar; hidden category series do not contribute
 - **AND** for StackedAreaChart, the candidate maximum at each time point is the sum of the visible series at that time, and the nearest integer to the largest such sum plus 3 is used
 - **AND** for ResidualAreaChart (給与物価差) and NewGraph (3種比較), the existing automatic Y-axis maximum behavior is preserved
 - **AND** non-finite and missing values do not contribute to the maximum

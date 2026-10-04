@@ -79,6 +79,25 @@ interface SpendingBarChartProps {
   descriptors?: readonly SeriesMetadata[];
 }
 
+export function computeSpendingYAxisMax(
+  data: QuarterlyDataPoint[],
+  keys: string[],
+  hiddenKeys: string[],
+): number {
+  const chartData = normalizeSpendingChartData(data, keys);
+  const visibleKeys = keys.filter(
+    (key) => !hiddenKeys.includes(key) && key !== CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY,
+  );
+  const maxHeight = chartData.reduce((max, row) => {
+    const height = visibleKeys.reduce((sum, key) => {
+      const value = row[key];
+      return sum + (typeof value === "number" && Number.isFinite(value) ? value : 0);
+    }, 0);
+    return Math.max(max, height);
+  }, 0);
+  return Math.round(maxHeight + 3);
+}
+
 export function normalizeSpendingChartData(
   data: QuarterlyDataPoint[],
   keys: string[],
@@ -184,24 +203,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
   // Nominal support remains a bar; the independently deflated real total stays in the data series.
   const chartData = normalizeSpendingChartData(data, keys);
   const publicKeys = getPublicSpendingKeys(keys);
-  const maxHeight = chartData.reduce((max, row) => {
-    const visibleKeys = keys.filter(
-      (key) => !hiddenKeys.includes(key) && key !== CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY,
-    );
-    const expenseHeight = visibleKeys.reduce((sum, key) => {
-      const value = row[key];
-      return sum + (typeof value === "number" && Number.isFinite(value) ? value : 0);
-    }, 0);
-    const independentTotal = row[CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY];
-    const height =
-      supportKey === CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY &&
-      typeof independentTotal === "number" &&
-      Number.isFinite(independentTotal)
-        ? Math.max(expenseHeight, independentTotal)
-        : expenseHeight;
-    return Math.max(max, height);
-  }, 0);
-  const yAxisMax = Math.round(maxHeight + 3);
+  const yAxisMax = computeSpendingYAxisMax(data, keys, hiddenKeys);
 
   const renderLegend = () => (
     <div className={styles.legendContainer}>
