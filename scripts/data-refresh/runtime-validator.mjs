@@ -114,7 +114,7 @@ export const PINNED_PROJECT_FILES = Object.freeze({
   "tsconfig.json": "9f3692ef19cf5112726f18e7b095c4b6e53eac251d73687c79135e67f35889c7",
   "vitest.config.ts": "face3801831e94e12e5b6b2ab619df49dbf59333cd0a501b1e5b7cc61c635317",
   "scripts/fetch-cti-basic-series-2025.mjs":
-    "1a38d0f1282692cf65b96fb546d1d50d54586687cbaa7a27462bbad09a6b1e0e",
+    "5330a7b1ec343d4cf7ada3a8f568ad9a1f2189d2112621f99ee6010424471df0",
   "server/lib/consumptionTotal12Ma.ts":
     "131e7eb594dc33e4550359fbe1fb6b2c26fe5b585499fb1fcbcff15381d2788b",
   "server/lib/ctiAdjustedConnectionEstimate.ts":
@@ -140,7 +140,7 @@ export const PINNED_PROJECT_FILES = Object.freeze({
   "server/lib/data-loader/ctiAdjusted.ts":
     "3b25056feb091a914fcf4efd5c8986d663b0506538230f2fe99cd206703ff262",
   "server/lib/data-loader/ctiValidation.ts":
-    "d880678fd0a7897b6e0d34770e47839c9c57bb8c682dd71b1353d3227cc5d3da",
+    "6800b594f791d838832b36d55cad03fdb01f6dea0263c241b185f441a0cb23e5",
   "server/lib/data-loader/earnings.ts":
     "fab285cc37d79800d71c7d356f9b66271ec4a0c21c2f65e04f87e7fc99090f7e",
   "server/lib/data-loader/gdpSupport.ts":

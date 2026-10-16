@@ -1,7 +1,8 @@
 # Plan52: e-Statデータの一括再取得・再生成CLI
 
 作成日: 2026-10-16  
-状態: 実装途中。賃金source contract、6系列mapping、employment/part-time移行は実装・検証済み。sourceは21列CP932（Windows-31J）CSV、`種別=指数`、TL/T/0で、439件の月次行と36件の `CY` 年次行を含む。全6系列のcanonical値identityを1990-01〜2026-06の438か月で照合し、6系列を2026-07まで更新した。年次値は `CY` 行から採用し、不完全な半期・四半期・年度値は空欄を維持する。旧 `employment_indices.csv` の438件は公式常用雇用指数へ移行し、従来のパート比率値は `part_time_worker_ratio.csv` に全件保持した。focused 84/84、全体1389 passed/4 skipped、lint、type-check、build、browser smokeは合格。`pnpm data:refresh --check` はcanonical移行ファイルの未コミット変更により `canonical-edited` でtransport前に停止したため、実source CLI fetch/staging、全46成果物のstaged runtime suite、publish/recoveryは未確認。Plan全体は未完了。
+状態: 実装途中。賃金source contract、6系列mapping、employment/part-time移行は実装・検証済み。sourceは21列CP932（Windows-31J）CSV、`種別=指数`、TL/T/0で、439件の月次行と36件の `CY` 年次行を含む。全6系列のcanonical値identityを1990-01〜2026-06の438か月で照合し、6系列を2026-07まで更新した。年次値は `CY` 行から採用し、不完全な半期・四半期・年度値は空欄を維持する。旧 `employment_indices.csv` の438件は公式常用雇用指数へ移行し、従来のパート比率値は `part_time_worker_ratio.csv` に全件保持した。`pnpm exec vitest run tests/scripts/data-refresh` は85/85 passed、`pnpm run test:all` は123 files passed・1390 passed / 4 skipped（exit 0）。lint、type-check、buildも合格。前回の `pnpm data:refresh --check` はcanonical移行ファイルの未コミット変更により `canonical-edited` でtransport前に停止したため、実source CLI fetch/staging、全46成果物のstaged runtime suite、publish/recoveryは未確認。Plan全体は未完了。
+最新のpost-commit実行では、`pnpm data:refresh --check` は source `cpi-long` の `table-list` で e-Stat `RESULT.STATUS=102`（`api-business-error`）により失敗した。status 102の意味は未確定である。この実行ではsource staging、publish、recoveryの受入を確認していない。browser gateの合否もこの記録からは判定しない。
 対象環境: Node.js 24.x / pnpm 11（既存package.jsonに準拠）
 
 ## 目的と範囲
@@ -92,24 +93,24 @@ lock取得
 | 6 | publish journal・rollback・recovery | **完了（fixture検証範囲）。** backup、journal、rollback/recovery経路のfixtureを含む全suiteが合格。実canonical publish/recoveryは未実施。 | backup、durable journal、rename順、例外rollback、kill後の通常run復旧をfixtureで確認し、読者停止条件を文書化する。 |
 | 7 | CTI adapter統合 | **一部完了。** 5論理file identity、31 outputs、既存parser/builder、revision/history auditのfixtureとadapter testsが合格。公式候補解決・取得、31出力staging、runtime suiteは未実施。 | Plan36 parser/validatorとruntime依存であるraw/normalized/manifest/hash成果を一括DAGから利用し、現役CTI依存群をすべて処理する。既存単独更新の契約を整理する。 |
 | 8 | CPI adapter | **一部完了。** CPIのAPI/file identity候補解決、2025基準・月次条件、5成果物生成・検査のfixture testsは合格。実候補・履歴照合・staging生成は未実施。 | CPIのAPI/file ID、統計表、分類、基準年、runtime conversion outputsを照合し、long CSVと現役派生map/contribution/snapshotをstagingから再現できる。 |
-| 9 | 賃金adapter群（系列ごとに小タスク） | **完了（source contract/identity/migration）。** 21列CP932（Windows-31J）source、`種別=指数`、TL/T/0、439月次+36 `CY` 年次行のparserと6系列mappingを実装した。canonical 438か月の値同一性を確認し、employment index移行、従来438パート比率の保存、2026-07までの6系列を検証済み。年次値はCYから採用し、不完全な半期/四半期/年度は空欄に保つ。focused 84/84/full 1389 passed・4 skipped等の最新ゲートも合格。runtime CLI fetch/staging/publish/recoveryは未確認であり、WU11/13の受入に残る。 |
+| 9 | 賃金adapter群（系列ごとに小タスク） | **完了（source contract/identity/migration）。** 21列CP932（Windows-31J）source、`種別=指数`、TL/T/0、439月次+36 `CY` 年次行のparserと6系列mappingを実装した。canonical 438か月の値同一性を確認し、employment index移行、従来438パート比率の保存、2026-07までの6系列を検証済み。年次値はCYから採用し、不完全な半期/四半期/年度は空欄に保つ。`pnpm exec vitest run tests/scripts/data-refresh` は85/85 passed、`pnpm run test:all` は123 files passed・1390 passed / 4 skipped（exit 0）等の最新ゲートも合格。runtime CLI fetch/staging/publish/recoveryは未確認であり、WU11/13の受入に残る。 |
 | 10 | 人口 adapter | **一部完了。** `population_statistics.csv` と `lt01-b10.xlsx` のruntime利用を特定し、workbook SHA-256、2026年5月=10976・6月=10969、7月=10950と以降の欠測を確認した。adapterとisolated fixture testsはあるが、全source refreshでのadapter実行・staging検証は未実施。 |
 | 11 | data-loader staging root・品質検査接続 | **一部完了。** 固定runtime project/dependencyとpinned inputの隔離、staged outputs、canonical fallback拒否の実装とisolated fixture testsは合格。earnings adapter登録後の全source stagingとstaged runtime suiteは未実施。 |
 | 12 | 仕様・実行文書・旧経路整理 | **完了（文書同期・最終照合）。** OpenSpec、Plan 52、旧shellの失敗伝播などを最終実装・監査結果と照合した。 |
-| 13 | 検証ゲートと手動実行手順 | **一部完了。** latest focused 84/84、全体test 1389 passed/4 skipped、lint、type-check、build、browser smokeは合格。`pnpm data:refresh --check` はmigration対象canonicalファイルが未コミットのため `canonical-edited` でtransport前に停止した。実source CLI fetch、全staged runtime suites、publish/recoveryは未確認。 |
+| 13 | 検証ゲートと手動実行手順 | **一部完了。** `pnpm exec vitest run tests/scripts/data-refresh` は85/85 passed、`pnpm run test:all` は123 files passed・1390 passed / 4 skipped（exit 0）。lint、type-check、buildも合格。前回の `pnpm data:refresh --check` はmigration対象canonicalファイルが未コミットのため `canonical-edited` でtransport前に停止した。実source CLI fetch、全staged runtime suites、publish/recoveryは未確認。 |
 
 ### 技術的キーポイントの実装・受入状況
 
-以下はコード上の実装有無と受入証拠を分けて記す。最新検証ではfocused suite 84/84、全体test 1389 passed・4 skipped、lint/type-check/build/browser smokeが合格した。これらはadapter/source contractとrepository品質の証拠であり、実sourceのCLI fetchやstaged quality合格を意味しない。`pnpm data:refresh --check` はmigration対象canonicalファイルの未コミット変更を `canonical-edited` として検知しtransport前に停止した。
+以下はコード上の実装有無と受入証拠を分けて記す。最新の検証では`pnpm exec vitest run tests/scripts/data-refresh` は85/85 passed、`pnpm run test:all` は123 files passed・1390 passed / 4 skipped（exit 0）。lint、type-check、buildも合格した。これらはadapter/source contractとrepository品質の証拠であり、実sourceのCLI fetchやstaged quality合格を意味しない。前回の `pnpm data:refresh --check` はmigration対象canonicalファイルの未コミット変更を `canonical-edited` として検知しtransport前に停止した。
 
 1. **意味的identity・候補解決 — 一部達成:** identity分離とcandidate selection fixture/testsは全件合格。実カタログ/APIでの候補確定、改定/基準変更の実source照合は未実施。
 2. **API全件取得・検査 — 一部達成:** paging・件数・継続性・業務status・timeout・retryのfixture testsは合格。実API全件取得は未実施。
 3. **file取得・秘密取扱 — 一部達成:** HTTPS allowlist、redirect拒否、bounded retry、安全なerror/reportのfixture testsは合格。実配布file取得と実source応答に対する漏洩確認は未実施。
-4. **staging・全件再生成 — 一部達成:** allowlist、staging、CPI 5/CTI 31/earnings 8/人口2 outputs、隔離runtime validatorの実装・fixture testsはある。46件はrequired output契約であり生成数ではない。`--check` は未コミットcanonical移行差分を検出し `canonical-edited` でtransport前に停止したため、全件stagingとstaged runtime validationは未実施。
-5. **fingerprint・check・raw lineage — 一部達成:** semantic fingerprint、`--check` no-publish、no-op/raw hash挙動のfixture testsは合格。latest `--check` は `canonical-edited` でtransport前に停止し、実データのno-op/revision受入は未実施。
+4. **staging・全件再生成 — 一部達成:** allowlist、staging、CPI 5/CTI 31/earnings 8/人口2 outputs、隔離runtime validatorの実装・fixture testsはある。46件はrequired output契約であり生成数ではない。前回の `--check` は未コミットcanonical移行差分を検出し `canonical-edited` でtransport前に停止したため、全件stagingとstaged runtime validationは未実施。
+5. **fingerprint・check・raw lineage — 一部達成:** semantic fingerprint、`--check` no-publish、no-op/raw hash挙動のfixture testsは合格。前回の `--check` は `canonical-edited` でtransport前に停止し、実データのno-op/revision受入は未実施。
 6. **journal・rollback・recovery — 一部達成:** allowlist付きjournal、backup、rollback/recoveryのfixture testsは合格。実canonical publish、実障害復旧は未実施。
-7. **運用境界 — 一部達成:** `run_all_conversions.sh` の事前確認・失敗伝播と手動CLI境界を実装し、全test/build/smoke等のrepository gateが合格。初回source取得、publish/recoveryの実地確認は未実施。
-8. **品質証拠 — 一部達成:** latest focused suite 84/84、全体test 1389 passed・4 skipped、lint、type-check、build、browser smokeは合格。21列CP932 source、6系列mapping、CY annual handling、employment/part-time migrationは実装・検証済み。`--check` は `canonical-edited` のためtransport前に停止し、実source CLI fetch、全46 outputsのstaged runtime suite、publish/recoveryは未実施。Plan52全体は未完了。
+7. **運用境界 — 一部達成:** `run_all_conversions.sh` の事前確認・失敗伝播と手動CLI境界を実装した。独立実行の `pnpm run test:browser:next-route-poc:prepush:built` はexit 0で、選択caseは設定済みskipを伴って通過した。一方、`pnpm run test:all` 自体はexit 0だが、内包するprepush browser JSON reporterは `Vitest JSON did not contain testResults` を出力してexit 23を記録したため、内包browser gateの成功とは扱わない。外部source取得、staging、publish/recoveryの実地確認も未実施であり、KP7は一部達成のままとする。
+8. **品質証拠 — 一部達成:** `pnpm exec vitest run tests/scripts/data-refresh` は85/85 passed、`pnpm run test:all` は123 files passed・1390 passed / 4 skipped（exit 0）。lint、type-check、buildも合格。21列CP932 source、6系列mapping、CY annual handling、employment/part-time migrationは実装・検証済み。前回の `--check` は `canonical-edited` のためtransport前に停止し、実source CLI fetch、全46 outputsのstaged runtime suite、publish/recoveryは未実施。Plan52全体は未完了。
 
 ### 受入シナリオ例
 
@@ -165,7 +166,7 @@ lock取得
 ## 内部調査で解決する事項
 
 - CPIの意味的候補解決と既存long CSV・派生出力のsource mappingはコード化済み。実API候補と実取得データによる最終照合は未実施。
-- 公式e-Statの21列CP932/Windows-31J CSV（`種別=指数`、TL/T/0）と6系列のcanonical 438/438か月値対応を照合・実装済み。raw 439月次+36 `CY` 年次行をparseし、年次値はCYから採用、不完全な半期/四半期/年度値は空欄に保持する。employment indexを正し、元438パート比率を別CSVに保存した。`pnpm data:refresh --check` はmigration対象canonicalの未コミット差分を理由に `canonical-edited` でtransport前に停止。残るのは通常状態での実source CLI fetch/staging、staged consumer suite、publish/recoveryの受入である。`hon-mks202512.csv`、`hon-mks202606.xls`、`earnings_method_b_202606.csv` は別定義の成果物として相互関係を確認するまで混在させない。
+- 公式e-Statの21列CP932/Windows-31J CSV（`種別=指数`、TL/T/0）と6系列のcanonical 438/438か月値対応を照合・実装済み。raw 439月次+36 `CY` 年次行をparseし、年次値はCYから採用、不完全な半期/四半期/年度値は空欄に保持する。employment indexを正し、元438パート比率を別CSVに保存した。前回の `pnpm data:refresh --check` はmigration対象canonicalの未コミット差分を理由に `canonical-edited` でtransport前に停止。残るのは通常状態での実source CLI fetch/staging、staged consumer suite、publish/recoveryの受入である。`hon-mks202512.csv`、`hon-mks202606.xls`、`earnings_method_b_202606.csv` は別定義の成果物として相互関係を確認するまで混在させない。
 - 人口CSVと `lt01-b10.xlsx` のローカル出典・runtime consumer・adapter責任は特定済み。公式sourceからの再取得とstagingでの内容突合は未実施。
 - cti-size-composition内の各rawの発行元と、どのderivedがe-Stat変更で再計算されるか。家計調査等の非e-Stat入力は初版で固定してよいか、hash照合契約。
 - 旧変換binary/shellの現存利用者、出力、廃止時の互換要否。

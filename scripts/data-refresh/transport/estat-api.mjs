@@ -11,6 +11,23 @@ function safeStatus(response) {
   return `HTTP ${response.status}`;
 }
 
+function apiBusinessError(phase, result, operation) {
+  const error = new RefreshError(
+    "api-business-error",
+    `e-Stat ${operation} API reported a business error.`,
+  );
+  error.apiPhase = phase;
+  const statusValue = result?.STATUS;
+  const status =
+    typeof statusValue === "number"
+      ? statusValue
+      : typeof statusValue === "string" && /^-?\d{1,12}$/.test(statusValue)
+        ? Number(statusValue)
+        : undefined;
+  if (Number.isSafeInteger(status) && status !== 0) error.apiStatus = status;
+  return error;
+}
+
 function asArray(value) {
   if (Array.isArray(value)) return value;
   return value && typeof value === "object" ? [value] : [];
@@ -228,10 +245,7 @@ export async function fetchDataCatalog({
     const root = payload.GET_DATA_CATALOG;
     const result = root?.RESULT;
     if (!result || String(result.STATUS) !== "0")
-      throw new RefreshError(
-        "api-business-error",
-        `e-Stat data-catalog API reported a business status ${String(result?.STATUS ?? "missing")}.`,
-      );
+      throw apiBusinessError("data-catalog", result, "data-catalog");
     const catalog = root.DATA_CATALOG ?? root.CATALOG_INF ?? root;
     const resultInf = catalog?.RESULT_INF ?? root.RESULT_INF;
     if (!resultInf || typeof resultInf !== "object")
@@ -373,10 +387,7 @@ export async function fetchStatsList({
     const root = payload.GET_STATS_LIST;
     const result = root?.RESULT;
     if (!result || String(result.STATUS) !== "0")
-      throw new RefreshError(
-        "api-business-error",
-        `e-Stat table-list API reported a business status ${String(result?.STATUS ?? "missing")}.`,
-      );
+      throw apiBusinessError("table-list", result, "table-list");
     const list = root?.DATALIST_INF;
     const resultInf = list?.RESULT_INF;
     if (!list || typeof list !== "object" || !resultInf || typeof resultInf !== "object")
@@ -517,10 +528,7 @@ export async function fetchStatsData({
       throw new RefreshError("api-invalid-schema", "e-Stat API response has an unexpected schema.");
     const result = payload?.GET_STATS_DATA?.RESULT;
     if (!result || String(result.STATUS) !== "0")
-      throw new RefreshError(
-        "api-business-error",
-        `e-Stat API reported a business status ${String(result?.STATUS ?? "missing")}.`,
-      );
+      throw apiBusinessError("stats-data", result, "statistics data");
     const statisticalData = payload?.GET_STATS_DATA?.STATISTICAL_DATA;
     const dataInf = statisticalData?.DATA_INF;
     const resultInf = statisticalData?.RESULT_INF;
@@ -645,10 +653,7 @@ export async function fetchMetaInfo({
   const result = payload?.GET_META_INFO?.RESULT;
   const metadata = payload?.GET_META_INFO?.METADATA_INF;
   if (!result || String(result.STATUS) !== "0")
-    throw new RefreshError(
-      "api-business-error",
-      `e-Stat metadata API reported a business status ${String(result?.STATUS ?? "missing")}.`,
-    );
+    throw apiBusinessError("metadata", result, "metadata");
   if (!metadata || typeof metadata !== "object")
     throw new RefreshError(
       "api-invalid-schema",

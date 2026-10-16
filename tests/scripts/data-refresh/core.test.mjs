@@ -179,7 +179,7 @@ describe("e-Stat transport", () => {
             headers: { "content-type": "application/json" },
           }),
       }),
-    ).rejects.toMatchObject({ code: "api-business-error" });
+    ).rejects.toMatchObject({ code: "api-business-error", apiPhase: "stats-data", apiStatus: 100 });
     await expect(
       fetchOfficialFile({
         url: "https://example.invalid/file",
@@ -668,6 +668,42 @@ describe("refresh core", () => {
       }),
     ).rejects.toMatchObject({ code: "runtime-quality-suite-failed" });
     expect(await readFile(path.join(root, "canonical/data.csv"), "utf8")).toBe("canonical-before");
+  });
+
+  it("serializes only safe API phase and numeric status diagnostics", async () => {
+    const root = await temporaryRoot();
+    const failure = Object.assign(new Error("safe failure"), {
+      code: "api-business-error",
+      apiPhase: "stats-data",
+      apiStatus: 123,
+      requestUrl: "https://api.example/?appId=secret",
+      responseBody: "credential-secret",
+    });
+    let thrown;
+    try {
+      await runRefresh({
+        root,
+        registry: makeRegistry(),
+        adapters: new Map([
+          [
+            "fixture",
+            async () => {
+              throw failure;
+            },
+          ],
+        ]),
+        validate: fixtureQualityValidator,
+        preflightChanges: async () => false,
+      });
+    } catch (error) {
+      thrown = error;
+    }
+    expect(thrown).toBe(failure);
+    const reportText = await readFile(path.join(root, thrown.reportPath), "utf8");
+    const report = JSON.parse(reportText);
+    expect(report.sources[0].apiFailure).toEqual({ phase: "stats-data", status: 123 });
+    expect(reportText).not.toContain("appId=secret");
+    expect(reportText).not.toContain("credential-secret");
   });
 
   it("preserves canonical raw and metadata on semantic no-op and check mode never publishes", async () => {

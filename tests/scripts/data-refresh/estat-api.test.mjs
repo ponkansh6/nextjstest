@@ -360,7 +360,8 @@ describe("e-Stat API transport v3 response contract", () => {
     } catch (caught) {
       error = caught;
     }
-    expect(error?.message).toMatch(/123/);
+    expect(error).toMatchObject({ apiPhase: "metadata", apiStatus: 123 });
+    expect(error?.message).not.toMatch(/123/);
     expect(error?.message).not.toContain("fixture-secret");
   });
 });

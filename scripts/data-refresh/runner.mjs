@@ -272,6 +272,7 @@ export async function runRefresh({
       sourceId,
       result: "blocked",
       sourceCandidate: { status: "pending", reasonCode },
+      apiFailure: safeApiFailure(error),
     });
     outcome = { report, error, exitCode: 1 };
   } finally {
@@ -375,6 +376,18 @@ function safeLabel(value) {
 
 function safeErrorCode(value) {
   return typeof value === "string" && /^[a-z][a-z0-9-]{0,79}$/.test(value) ? value : undefined;
+}
+
+function safeApiFailure(error) {
+  const phases = new Set(["data-catalog", "table-list", "stats-data", "metadata"]);
+  if (
+    !phases.has(error?.apiPhase) ||
+    !Number.isSafeInteger(error?.apiStatus) ||
+    error.apiStatus === 0
+  ) {
+    return undefined;
+  }
+  return { phase: error.apiPhase, status: error.apiStatus };
 }
 
 function safeObject(value) {
