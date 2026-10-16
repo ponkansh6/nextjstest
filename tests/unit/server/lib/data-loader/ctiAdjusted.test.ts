@@ -3,7 +3,10 @@ import { createHash } from "node:crypto";
 import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { loadCtiAdjustedConnectionEstimate } from "../../../../../server/lib/data-loader/ctiAdjusted";
+import {
+  loadCtiAdjustedConnectionEstimate,
+  loadCtiAdjustedV2Estimate,
+} from "../../../../../server/lib/data-loader/ctiAdjusted";
 
 describe("Plan39 adjusted artifact loader", () => {
   it("uses artifacts under process.cwd when no loader root is supplied", () => {
@@ -29,6 +32,123 @@ describe("Plan39 adjusted artifact loader", () => {
       expect(result.audit.validation.reasons).toEqual(expect.arrayContaining(["invalid_metadata"]));
     } finally {
       process.chdir(originalCwd);
+    }
+  });
+
+  it("ignores a saved analysis when its input artifact digest is stale", () => {
+    const root = mkdtempSync(path.join(tmpdir(), "plan39-stale-analysis-"));
+    const artifactMetadata = (kind: string) => ({
+      schemaVersion: "plan39-annual-v1",
+      revision: "fixture-r1",
+      statisticalCode: "00200567",
+      source: "test",
+      artifact: `${kind}.json`,
+      retrievedAt: "2026-01-01",
+      baseYear: 2025,
+      unit: "指数",
+      valueType: "原数値（名目指数）",
+      householdScope: "総世帯",
+      frequency: "annual",
+      rawRange: { startYear: 2020, endYear: 2020 },
+      adoptedRange: { startYear: 2020, endYear: 2020 },
+      missingRepresentation: "null",
+      sha256: "a".repeat(64),
+    });
+    const artifactHashes: Record<string, string> = {};
+    const manifestArtifacts: Record<string, unknown> = {};
+    for (const kind of ["B", "A", "L"] as const) {
+      const bytes = Buffer.from(
+        JSON.stringify({
+          metadata: artifactMetadata(kind),
+          categoryOrder: ["総合"],
+          rows: [{ year: 2020, values: { 総合: 100 } }],
+        }),
+      );
+      writeFileSync(path.join(root, `${kind}.json`), bytes);
+      const hash = createHash("sha256").update(bytes).digest("hex");
+      artifactHashes[kind] = hash;
+      manifestArtifacts[kind] = { path: `${kind}.json`, sha256: hash };
+    }
+    const manifestBytes = Buffer.from(
+      JSON.stringify({
+        schemaVersion: "plan39-annual-v1",
+        revision: "fixture-r1",
+        statisticalCode: "00200567",
+        artifacts: manifestArtifacts,
+      }),
+    );
+    const auditBytes = Buffer.from(JSON.stringify({ reviewed: true }));
+    writeFileSync(path.join(root, "manifest.json"), manifestBytes);
+    writeFileSync(path.join(root, "audit.json"), auditBytes);
+    const fingerprint = `sha256:${createHash("sha256")
+      .update(
+        JSON.stringify({
+          manifest: createHash("sha256").update(manifestBytes).digest("hex"),
+          audit: createHash("sha256").update(auditBytes).digest("hex"),
+          artifacts: artifactHashes,
+          householdComposition: null,
+        }),
+      )
+      .digest("hex")}`;
+    const analysisPath = path.join(root, "analysis.json");
+    writeFileSync(
+      analysisPath,
+      JSON.stringify({
+        schemaVersion: "plan39-analysis-v1",
+        inputFingerprint: fingerprint,
+        rollingLoo: { sentinel: "stale-analysis" },
+        v2: {
+          model: "v2-bottom-up",
+          version: "plan39-v2",
+          publicationGate: {},
+        },
+        inputs: {
+          artifacts: {
+            B: { path: "B.json", sha256: "0".repeat(64) },
+            A: { path: "A.json", sha256: artifactHashes.A },
+            L: { path: "L.json", sha256: artifactHashes.L },
+          },
+        },
+      }),
+    );
+
+    const previousAnalysisFile = process.env.CTI_ADJUSTED_ANALYSIS_FILE;
+    process.env.CTI_ADJUSTED_ANALYSIS_FILE = analysisPath;
+    try {
+      const result = loadCtiAdjustedV2Estimate({ artifactRoot: root });
+      expect(JSON.stringify(result)).not.toContain("stale-analysis");
+
+      writeFileSync(
+        analysisPath,
+        JSON.stringify({
+          schemaVersion: "plan39-analysis-v1",
+          inputFingerprint: fingerprint,
+          rollingLoo: {
+            rolling: { status: "pass", pass: true, allFoldsFinite: true, leakageFree: true },
+            loo: { status: "pass", pass: true, allFoldsFinite: true, leakageFree: true },
+            sentinel: "matching-analysis",
+          },
+          v2: {
+            model: "v2-bottom-up",
+            version: "plan39-v2",
+            publicationGate: { rollingLooEvidence: { schema: "plan39-publication-gate-v1" } },
+          },
+          inputs: {
+            artifacts: {
+              B: { path: "B.json", sha256: artifactHashes.B },
+              A: { path: "A.json", sha256: artifactHashes.A },
+              L: { path: "L.json", sha256: artifactHashes.L },
+            },
+          },
+        }),
+      );
+      const matchingResult = loadCtiAdjustedV2Estimate({ artifactRoot: root });
+      expect(matchingResult.publicationGate).toMatchObject({
+        evidence: { accepted: true, inputFingerprint: fingerprint },
+      });
+    } finally {
+      if (previousAnalysisFile === undefined) delete process.env.CTI_ADJUSTED_ANALYSIS_FILE;
+      else process.env.CTI_ADJUSTED_ANALYSIS_FILE = previousAnalysisFile;
     }
   });
 

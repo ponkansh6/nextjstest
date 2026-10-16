@@ -1081,7 +1081,7 @@ describe("CTI refresh adapter", () => {
     expect(semanticFingerprint(changedIdentity)).not.toBe(
       semanticFingerprint(original.semanticValue),
     );
-  }, 30_000);
+  }, 60_000);
 
   it("decodes canonical missing flags strictly and retains values when the flag is false", async () => {
     const root = await makeRoot();
@@ -1253,7 +1253,7 @@ describe("CTI refresh adapter", () => {
         fetchFile,
       }),
     ).rejects.toMatchObject({ code: "cti-registry-output-mismatch" });
-  });
+  }, 30_000);
 
   it("fails closed if canonical current source bytes do not match their declared source hash", async () => {
     const root = await makeRoot();

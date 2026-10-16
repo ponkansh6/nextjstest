@@ -111,6 +111,16 @@ describe("cpiSource boundary", () => {
 
   it.each([
     [
+      "a missing start month",
+      { period: { end: "2026年8月", monthlyRows: 680 } },
+      "2025 metadata period mismatch",
+    ],
+    [
+      "a missing end month",
+      { period: { start: "1970年1月", monthlyRows: 680 } },
+      "2025 metadata period mismatch",
+    ],
+    [
       "a malformed end month",
       { period: { start: "1970年1月", end: "2026年8月x", monthlyRows: 680 } },
       "2025 metadata period mismatch",

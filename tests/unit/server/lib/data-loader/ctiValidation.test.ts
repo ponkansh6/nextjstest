@@ -1,4 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { createHash } from "node:crypto";
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { buildCtiFilePaths } from "../../../../../server/lib/dataIo";
 import {
   isContinuousMonths,
@@ -9,6 +13,34 @@ import {
   validateCtiPair,
   mapCtiReasonToCode,
 } from "../../../../../server/lib/data-loader/ctiValidation";
+
+function validateWithDerivedFiles(
+  metadataOverrides: Record<string, unknown> = {},
+  mapTransform: (csv: string) => string = (csv) => csv,
+) {
+  const paths = buildCtiFilePaths();
+  const root = mkdtempSync(path.join(tmpdir(), "cti-derived-validation-"));
+  const metadata = JSON.parse(readFileSync(paths.metadata, "utf8")) as Record<string, unknown>;
+  const map = mapTransform(readFileSync(paths.seriesMap, "utf8"));
+  const snapshot = readFileSync(paths.officialSnapshot, "utf8");
+  const metadataPath = path.join(root, "metadata.json");
+  const mapPath = path.join(root, "series-map.csv");
+  const snapshotPath = path.join(root, "official-series.csv");
+  writeFileSync(mapPath, map);
+  writeFileSync(snapshotPath, snapshot);
+  writeFileSync(metadataPath, JSON.stringify({ ...metadata, ...metadataOverrides }));
+
+  return validateCtiPair(
+    {
+      baseYear: 2025,
+      pair: "2025",
+      mainPath: paths.candidateMain,
+      supportNominalPath: paths.candidateSupportNominal,
+      supportRealPath: paths.candidateSupportReal,
+    },
+    { ...paths, metadata: metadataPath, seriesMap: mapPath, officialSnapshot: snapshotPath },
+  );
+}
 
 describe("CTI validation boundary", () => {
   it("rejects a discontinuous candidate before selection", () => {
@@ -113,6 +145,33 @@ describe("CTI validation boundary", () => {
       ]),
     });
     expect(validateCtiPair(pair, paths)).toEqual(pair);
+  });
+
+  it.each([
+    ["missing series map digest", { officialSeriesMapSha256: undefined }],
+    ["mismatched series map digest", { officialSeriesMapSha256: "f".repeat(64) }],
+    ["mismatched snapshot digest", { officialSeriesSnapshotSha256: "f".repeat(64) }],
+    ["mismatched snapshot source identity", { officialSeriesSnapshotSourceStatInfId: "wrong" }],
+    ["mismatched source digest identity", { officialSeriesSnapshotSourceSha256: "f".repeat(64) }],
+  ] as const)("rejects derived CTI artifacts with %s", (_label, overrides) => {
+    expect(validateWithDerivedFiles(overrides)).toBe(
+      "2025 CTI derived map/snapshot identity or SHA-256 mismatch",
+    );
+  });
+
+  it("rejects a map source identity mismatch even when its declared digest is updated", () => {
+    const paths = buildCtiFilePaths();
+    const map = readFileSync(paths.seriesMap, "utf8").replace(
+      "00401-01,消費支出（名目）,000040499069",
+      "00401-01,消費支出（名目）,000000000000",
+    );
+
+    expect(
+      validateWithDerivedFiles(
+        { officialSeriesMapSha256: createHash("sha256").update(map).digest("hex") },
+        () => map,
+      ),
+    ).toBe("2025 series map source identity mismatch");
   });
 
   it.each([
