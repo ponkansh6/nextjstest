@@ -421,7 +421,7 @@ export const PINNED_RUNTIME_INPUTS = Object.freeze({
 // what the staged suites execute.
 export const PINNED_PROJECT_FILES = Object.freeze({
   "package.json": "fa7aa0a7ff191d0e76145ced4efc8bbd12c7bae87652f7d37a093e1d118f5931",
-  "pnpm-lock.yaml": "9f8f222877a06b72c0448dd01dc1666b70e8c30ca5aad244ac2ba42c0ed6108e",
+  "pnpm-lock.yaml": "286565a22c116351e1fb0623accdba27b213bdd6e5495ac53ce224da1bd97a42",
   "tsconfig.json": "9f3692ef19cf5112726f18e7b095c4b6e53eac251d73687c79135e67f35889c7",
   "vitest.config.ts": "face3801831e94e12e5b6b2ab619df49dbf59333cd0a501b1e5b7cc61c635317",
   "scripts/fetch-cti-basic-series-2025.mjs":
