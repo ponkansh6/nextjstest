@@ -61,6 +61,7 @@ tests/test_perm.txt
 log/
 .vercel
 .env.local
+/.data-refresh/
 
 # Local browser investigation artifacts and phase6 experiments
 /.vitest-attachments/

@@ -452,7 +452,7 @@ describe("Earnings Data Integrity", () => {
     expect(data.at(-1)?.["民間最終消費支出（参考）"] ?? null).toBeNull();
   });
 
-  it("audits employment index provenance, target selectors, and May/June 2026 continuity", () => {
+  it("audits employment index provenance and preserves the separate part-time ratio series", () => {
     const root = resolve(process.cwd());
     const csvPath = resolve(root, "data/source/employment_indices.csv");
     const metadata = JSON.parse(
@@ -473,7 +473,7 @@ describe("Earnings Data Integrity", () => {
     expect(createHash("sha256").update(csv).digest("hex")).toBe(metadata.normalizedCsvSha256);
     expect(metadata).toMatchObject({
       statInfId: "000032189777",
-      sourceSha256: "825c8b31dd045187ed4dac378e83018e9e6a307eb0994c7ff5b2747c2ea62e12",
+      sourceSha256: "ff0575f4a3294c6a350cb2c5164f8f0b0f8f2474babe4b2c30755ed387d85fe8",
       excludedCrossSection: "data/source/hon-mks202606.xls",
       extraction: {
         industry: "TL",
@@ -488,7 +488,7 @@ describe("Earnings Data Integrity", () => {
       .filter((line) => /^202[56],/.test(line));
     expect(rows).toHaveLength(2);
     const mayJune = rows[1].split(",").slice(12, 14);
-    expect(mayJune).toEqual(["31.3", "31.35"]);
+    expect(mayJune).toEqual(["106.9", "107.1"]);
     expect(
       rows[1]
         .split(",")
@@ -496,6 +496,14 @@ describe("Earnings Data Integrity", () => {
         .every((value) => value !== ""),
     ).toBe(true);
     expect(metadata.extraction.unit).toContain("指数");
+
+    const partTimeCsv = readFileSync(resolve(root, "data/source/part_time_worker_ratio.csv"));
+    const partTimeRows = partTimeCsv
+      .toString("utf8")
+      .split(/\r?\n/)
+      .filter((line) => /^202[56],/.test(line));
+    expect(partTimeRows).toHaveLength(2);
+    expect(partTimeRows[1].split(",").slice(12, 14)).toEqual(["31.3", "31.35"]);
   });
 
   describe("Basic Integrity", () => {

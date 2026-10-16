@@ -259,6 +259,375 @@ export function representativeSnapshotCsv(records) {
     ].join("\n") + "\n"
   );
 }
+const CURRENT_SERIES = Object.freeze({
+  basic: {
+    statInfId: "000040499069",
+    tableCode: "00401",
+    tableTitle: "第１－１－１表",
+    classification: "基本系列（原数値）",
+    titleMarker: "原数値",
+  },
+  distributionAdjusted: {
+    statInfId: "000040499087",
+    tableCode: "00501",
+    tableTitle: "第２－１－１表",
+    classification: "調整系列・分布調整値（原数値）",
+    titleMarker: "分布調整値（原数値）",
+  },
+});
+const sourceIdentityMetadata = (logicalStatInfId, identity, semantic = {}) =>
+  identity
+    ? {
+        kind: "estat-catalog-resource",
+        logicalSourceStatInfId: logicalStatInfId,
+        catalogResourceId: identity.catalogResourceId,
+        legacyStatInfId: identity.legacyStatInfId ?? null,
+        downloadUrlHash: digest(Buffer.from(identity.url)),
+        title: semantic.title ?? null,
+        resourceTitle: semantic.resourceTitle ?? null,
+        format: semantic.format ?? null,
+        releaseDate: semantic.releaseDate ?? null,
+        lastModifiedDate: semantic.lastModifiedDate ?? null,
+        identityMarkers:
+          semantic.table || semantic.category || semantic.period || semantic.year
+            ? {
+                table: semantic.table ?? [],
+                category: semantic.category ?? [],
+                period: semantic.period ?? [],
+                year: semantic.year ?? [],
+              }
+            : null,
+      }
+    : {
+        kind: "legacy-stat-inf-id",
+        logicalSourceStatInfId: logicalStatInfId,
+        legacyStatInfId: logicalStatInfId,
+      };
+const currentCategories = Object.freeze([
+  "消費支出",
+  "食料",
+  "住居",
+  "光熱・水道",
+  "家具・家事用品",
+  "被服及び履物",
+  "保健医療",
+  "交通・通信",
+  "教育",
+  "教養娯楽",
+  "その他の消費支出",
+]);
+
+/** Parse the official all-households monthly sheet; distinct from the 2+ long-term parser above. */
+export function parseCtiCurrentHouseholdMonthly(bytes, { kind, now = new Date() } = {}) {
+  const source = CURRENT_SERIES[kind];
+  if (!source) throw new Error("unknown current CTI monthly source kind");
+  if (!Buffer.isBuffer(bytes) && !(bytes instanceof Uint8Array))
+    throw new Error("CTI current source is not binary");
+  const buffer = Buffer.from(bytes);
+  if (!buffer.subarray(0, 4).equals(zip)) throw new Error("CTI current source is not an XLSX file");
+  const workbook = XLSX.read(buffer, { type: "buffer", raw: false, cellDates: false, WTF: true });
+  const sheetName = "総・月(原)";
+  if (!workbook.SheetNames.includes(sheetName))
+    throw new Error(`${kind}: missing expected current monthly sheet`);
+  const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {
+    header: 1,
+    raw: true,
+    defval: "",
+  });
+  const title = String(rows[5]?.[8] ?? "").replace(/\s/g, "");
+  if (
+    !title.includes("10大費目別世帯消費動向指数") ||
+    !title.includes(source.titleMarker.replace(/\s/g, ""))
+  )
+    throw new Error(`${kind}: current monthly title mismatch`);
+  if (String(rows[4]?.[8] ?? "").replace(/\s/g, "") !== source.tableTitle.replace(/\s/g, ""))
+    throw new Error(`${kind}: current monthly table identity mismatch`);
+  if (
+    String(rows[6]?.[7] ?? "").trim() !== "総世帯" ||
+    !String(rows[7]?.[7] ?? "").includes("2025年消費支出平均月額=100")
+  )
+    throw new Error(`${kind}: current monthly household/baseline mismatch`);
+  const header = rows[8] ?? [];
+  const names = header.slice(9, 31).map((value) => String(value).trim());
+  const expectedNames = [
+    ...currentCategories.map((value) => `${value}（名目）`),
+    ...currentCategories.map((value) => `${value}（実質）`),
+  ];
+  if (names.length !== 22 || names.some((name, index) => !name || name !== expectedNames[index]))
+    throw new Error(`${kind}: current monthly series identity/order mismatch`);
+  for (const codeRow of [0, 1]) {
+    for (let index = 0; index < 22; index += 1) {
+      if (String(rows[codeRow]?.[9 + index] ?? "").trim() !== String(index + 1))
+        throw new Error(`${kind}: current monthly series code/order mismatch`);
+    }
+  }
+  const dataRows = rows.filter((row) => String(row[0] ?? "").trim() === source.tableCode);
+  if (!dataRows.length) throw new Error(`${kind}: current monthly table code is missing`);
+  const periodLikeRows = rows.filter(
+    (row) =>
+      /^\d{6}B\s*$/.test(String(row[1] ?? "")) ||
+      /^\d{4}年\d{1,2}月$/.test(String(row[8] ?? "").trim()),
+  );
+  if (
+    periodLikeRows.length !== dataRows.length ||
+    periodLikeRows.some((row) => String(row[0] ?? "").trim() !== source.tableCode)
+  )
+    throw new Error(`${kind}: unexpected current monthly observation rows`);
+  const observations = [];
+  for (const row of dataRows) {
+    const eStatPeriod = String(row[1] ?? "").trim();
+    const periodMatch = eStatPeriod.match(/^(\d{4})(0[1-9]|1[0-2])B$/);
+    const label = String(row[8] ?? "").trim();
+    const labelMatch = label.match(/^(\d{4})年([0-9]{1,2})月$/);
+    if (
+      !periodMatch ||
+      !labelMatch ||
+      periodMatch[1] !== labelMatch[1] ||
+      Number(periodMatch[2]) !== Number(labelMatch[2])
+    )
+      throw new Error(`${kind}: current monthly period identity mismatch`);
+    const year = Number(periodMatch[1]),
+      month = Number(periodMatch[2]);
+    const timeCode = String(row[7] ?? "").trim();
+    const expectedTimeCode = `${year}00${String(month).padStart(2, "0")}${String(month).padStart(2, "0")}`;
+    if (timeCode !== expectedTimeCode)
+      throw new Error(`${kind}: current monthly time code mismatch at ${label}`);
+    const values = row.slice(9, 31).map((value) => {
+      const text = String(value ?? "").trim();
+      if (missing.has(text.toLowerCase())) return "-";
+      const number = Number(text.replace(/,/g, ""));
+      if (!Number.isFinite(number))
+        throw new Error(`${kind}: current monthly value is not numeric at ${label}`);
+      return text.replace(/,/g, "");
+    });
+    if (values.length !== 22)
+      throw new Error(`${kind}: current monthly row must contain 22 series at ${label}`);
+    observations.push({ year, month, label, eStatPeriod, timeCode, values });
+  }
+  observations.sort((a, b) => a.year * 12 + a.month - (b.year * 12 + b.month));
+  if (observations[0]?.label !== "2017年1月")
+    throw new Error(`${kind}: current monthly source must start in 2017年1月`);
+  for (let index = 1; index < observations.length; index += 1) {
+    const previous = observations[index - 1],
+      current = observations[index];
+    if (current.year * 12 + current.month !== previous.year * 12 + previous.month + 1)
+      throw new Error(`${kind}: current monthly periods are not continuous at ${current.label}`);
+  }
+  const last = observations.at(-1);
+  if (last.year * 12 + last.month < 2026 * 12 + 7)
+    throw new Error(`${kind}: current monthly source coverage regressed before 2026年7月`);
+  if (last.year * 12 + last.month > now.getFullYear() * 12 + now.getMonth())
+    throw new Error(`${kind}: current monthly source contains a future period`);
+  return {
+    statInfId: source.statInfId,
+    tableCode: source.tableCode,
+    sheetName,
+    title: String(rows[5][8]).trim(),
+    classification: source.classification,
+    series: names,
+    observations,
+  };
+}
+
+const currentCsvCell = (value) => {
+  const text = String(value ?? "");
+  return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+};
+const currentHeader = [
+  "時間軸コード",
+  "月",
+  ...currentCategories.map((value) => `${value}（名目）`),
+  ...currentCategories.map((value) => `${value}（実質）`),
+];
+function currentMonthlyCsv(parsed) {
+  return [
+    currentHeader,
+    ...parsed.observations.map((item) => [item.timeCode, item.label, ...item.values]),
+  ]
+    .map((row) => row.map(currentCsvCell).join(","))
+    .join("\n");
+}
+function currentSeriesMapCsv(parsed) {
+  const lines = [
+    "official_code,official_name,source_stat_inf_id,source_variant,dashboard_key,value_type,transform,coverage_start,missing_policy,evidence",
+  ];
+  parsed.series.forEach((name, index) => {
+    const valueType = index < 11 ? "名目" : "実質";
+    lines.push(
+      [
+        `00401-${String(index + 1).padStart(2, "0")}`,
+        name,
+        parsed.statInfId,
+        "基本系列・原数値・総世帯",
+        name,
+        valueType,
+        "direct",
+        parsed.observations[0].label,
+        "preserve_missing",
+        `公式Excel「総・月(原)」表コード00401・列コード${index + 1}`,
+      ]
+        .map(currentCsvCell)
+        .join(","),
+    );
+  });
+  return `${lines.join("\n")}\n`;
+}
+function currentOfficialSnapshotCsv(parsed) {
+  const representative = parsed.observations.find(({ label }) => label === "2025年1月");
+  if (!representative)
+    throw new Error("current monthly source lacks representative month 2025年1月");
+  const lines = [
+    "official_code,official_name,table_code,series_code,representative_month,representative_value",
+  ];
+  parsed.series.forEach((name, index) =>
+    lines.push(
+      [
+        `00401-${String(index + 1).padStart(2, "0")}`,
+        name,
+        "00401",
+        String(index + 1),
+        representative.label,
+        representative.values[index],
+      ]
+        .map(currentCsvCell)
+        .join(","),
+    ),
+  );
+  return `${lines.join("\n")}\n`;
+}
+
+/** Build the current all-households monthly outputs from explicit source bytes. */
+export function buildCtiCurrentMonthlyArtifacts(
+  sourceBytes,
+  {
+    stageRoot,
+    retrievedAt = new Date().toISOString(),
+    now = new Date(retrievedAt),
+    revisionAudit = {},
+    sourceIdentities = {},
+  } = {},
+) {
+  if (typeof stageRoot !== "string" || !stageRoot)
+    throw new Error("explicit CTI staging root is required");
+  const basicBytes = Buffer.from(sourceBytes?.["000040499069"] ?? []);
+  const adjustedBytes = Buffer.from(sourceBytes?.["000040499087"] ?? []);
+  if (!basicBytes.length || !adjustedBytes.length)
+    throw new Error("missing current CTI monthly workbook bytes for 000040499069 or 000040499087");
+  const basic = parseCtiCurrentHouseholdMonthly(basicBytes, { kind: "basic", now });
+  const adjusted = parseCtiCurrentHouseholdMonthly(adjustedBytes, {
+    kind: "distributionAdjusted",
+    now,
+  });
+  if (
+    basic.observations.length !== adjusted.observations.length ||
+    basic.observations.some((row, index) => row.label !== adjusted.observations[index].label)
+  )
+    throw new Error("basic and distribution-adjusted CTI monthly periods differ");
+  const basicCsv = Buffer.from(currentMonthlyCsv(basic));
+  const mapCsv = Buffer.from(currentSeriesMapCsv(basic));
+  const snapshotCsv = Buffer.from(currentOfficialSnapshotCsv(basic));
+  const adjustedCsv = Buffer.from(currentMonthlyCsv(adjusted));
+  const basicMetadata = {
+    status: "ready",
+    baseYear: 2025,
+    outputFile: "cti_data2025.csv",
+    statInfId: basic.statInfId,
+    sourceIdentity: sourceIdentityMetadata(
+      basic.statInfId,
+      sourceIdentities[basic.statInfId],
+      sourceIdentities[basic.statInfId]?.semantic,
+    ),
+    retrievedAt: retrievedAt.slice(0, 10),
+    sourceFile: "official-cti-2025/cti-basic-000040499069.xlsx",
+    sourceFileSha256: digest(basicBytes),
+    csvSha256: digest(basicCsv),
+    officialSeriesMapFile: "cti-2025-series-map.csv",
+    officialSeriesMapSha256: digest(mapCsv),
+    officialSeriesSnapshotFile: "cti-2025-official-series.csv",
+    officialSeriesSnapshotSha256: digest(snapshotCsv),
+    officialSeriesSnapshotSourceStatInfId: basic.statInfId,
+    officialSeriesSnapshotSourceSha256: digest(basicBytes),
+    revisionAudit: revisionAudit[basic.statInfId] ?? null,
+    sourceBasis: "2025年消費支出平均月額=100の公式基本系列（原数値・総世帯）",
+    comparisonNormalization: "なし。cti_data2025.csvは公式指数値をそのまま保持する。",
+    officialSeriesSnapshot: {
+      sourceSheet: "総・月(原)",
+      tableCode: basic.tableCode,
+      seriesCount: 22,
+      representativeMonth: "2025年1月",
+      identifier:
+        "official_code is the official table code and column code joined as 00401-01 through 00401-22",
+    },
+    seriesClassification: "基本系列（原数値）",
+    tableTitle: `${basic.title.replace(/\s+/g, " ")} 総世帯`,
+    householdScope: "総世帯",
+    frequency: "月次",
+    valueType: "指数",
+    period: {
+      start: basic.observations[0].label,
+      end: basic.observations.at(-1).label,
+      monthlyRows: basic.observations.length,
+    },
+    extraction:
+      "公式Excelの「総・月(原)」シートから、総世帯の月次指数列（時間軸コード・月・10大費目別の名目値/実質値）を列順・値表記を保持して抽出。",
+  };
+  const adjustedMetadata = {
+    status: "ready",
+    baseYear: 2025,
+    outputFile: "cti_data2025_distribution_adjusted.csv",
+    statInfId: adjusted.statInfId,
+    sourceIdentity: sourceIdentityMetadata(
+      adjusted.statInfId,
+      sourceIdentities[adjusted.statInfId],
+      sourceIdentities[adjusted.statInfId]?.semantic,
+    ),
+    retrievedAt: retrievedAt.slice(0, 10),
+    sourceFile: "official-cti-2025/cti-distribution-adjusted-000040499087.xlsx",
+    sourceFileSha256: digest(adjustedBytes),
+    csvSha256: digest(adjustedCsv),
+    revisionAudit: revisionAudit[adjusted.statInfId] ?? null,
+    seriesClassification: adjusted.classification,
+    tableTitle: `${adjusted.title.replace(/\s+/g, " ")} 総世帯`,
+    householdScope: "総世帯",
+    frequency: "月次",
+    valueType: "指数",
+    period: {
+      start: adjusted.observations[0].label,
+      end: adjusted.observations.at(-1).label,
+      monthlyRows: adjusted.observations.length,
+    },
+    extraction:
+      "公式Excelの「総・月(原)」シートから、総世帯の分布調整値の月次指数列（時間軸コード・月・10大費目別の名目値/実質値）を列順・値表記を保持して抽出。",
+  };
+  const outputs = [
+    ["data/source/cti_data2025.csv", basicCsv],
+    [
+      "data/source/cti_data2025.metadata.json",
+      Buffer.from(`${JSON.stringify(basicMetadata, null, 2)}\n`),
+    ],
+    ["data/source/cti-2025-series-map.csv", mapCsv],
+    ["data/source/cti-2025-official-series.csv", snapshotCsv],
+    ["data/source/cti_data2025_distribution_adjusted.csv", adjustedCsv],
+    [
+      "data/source/cti_data2025_distribution_adjusted.metadata.json",
+      Buffer.from(`${JSON.stringify(adjustedMetadata, null, 2)}\n`),
+    ],
+  ].map(([outputPath, bytes]) => ({ path: outputPath, bytes }));
+  return {
+    artifacts: outputs,
+    parsed: { basic, adjusted },
+    semanticValue: {
+      basicCsvSha256: digest(basicCsv),
+      adjustedCsvSha256: digest(adjustedCsv),
+      period: basicMetadata.period,
+    },
+    rawSourceLineage: {
+      basic: { statInfId: basic.statInfId, sha256: digest(basicBytes) },
+      adjusted: { statInfId: adjusted.statInfId, sha256: digest(adjustedBytes) },
+    },
+    coverage: basicMetadata.period,
+  };
+}
 async function download(url, timeoutMs, retries, fetcher = fetch) {
   let lastError;
   for (let attempt = 0; attempt <= retries; attempt += 1) {
@@ -299,6 +668,13 @@ function metadataFor(series, raw, normalized, retrievedAt, parsed, response) {
     baseYear: 2025,
     unit: "指数",
     statInfId: series.statInfId,
+    logicalSourceStatInfId: series.statInfId,
+    legacyStatInfId: response.sourceIdentity?.legacyStatInfId ?? null,
+    sourceIdentity: sourceIdentityMetadata(
+      series.statInfId,
+      response.sourceIdentity,
+      response.sourceIdentity?.semantic,
+    ),
     seriesKind: series.kind,
     seriesLabel: series.label,
     householdScope: series.householdScope ?? "二人以上の世帯",
@@ -309,6 +685,9 @@ function metadataFor(series, raw, normalized, retrievedAt, parsed, response) {
     requestedStart: series.requestedStart ?? "2005-01",
     availabilityStart: series.sourceStart ?? "2002-01",
     retrieval: { retrievedAt, updatedAt: response.lastModified },
+    downloadUrlHash: response.sourceIdentity?.url
+      ? digest(Buffer.from(response.sourceIdentity.url))
+      : digest(Buffer.from(`${endpoint}&statInfId=${series.statInfId}`)),
     officialUrl: `${endpoint}&statInfId=${series.statInfId}`,
     encoding: "binary/official",
     rawFile,
@@ -334,6 +713,103 @@ function metadataFor(series, raw, normalized, retrievedAt, parsed, response) {
       checks: ["identity", "format", "schema", "period", "continuity", "duplicates", "sha256"],
     },
     unavailable: { periods: [], reason: null },
+  };
+}
+
+/** Build long-term CTI artifacts without writing or publishing files. */
+export function buildCtiBasicArtifacts(
+  sourceBytes,
+  {
+    stageRoot,
+    retrievedAt = new Date().toISOString(),
+    responseMetadata = {},
+    revisionAudit = {},
+  } = {},
+) {
+  if (typeof stageRoot !== "string" || !stageRoot)
+    throw new Error("explicit CTI staging root is required");
+  const allRecords = [];
+  const artifacts = [];
+  const files = [];
+  for (const series of SERIES) {
+    const bytes = sourceBytes[series.statInfId];
+    if (!bytes) throw new Error(`missing CTI source bytes for ${series.statInfId}`);
+    const raw = Buffer.from(bytes);
+    const parsed = parseOfficialFile(raw, series);
+    allRecords.push(...parsed.records);
+    const normalized = normalizedCsv(parsed.records, series);
+    const meta = metadataFor(series, raw, normalized, retrievedAt, parsed, {
+      contentType: responseMetadata[series.statInfId]?.contentType ?? "application/octet-stream",
+      contentDisposition: responseMetadata[series.statInfId]?.contentDisposition ?? null,
+      lastModified: responseMetadata[series.statInfId]?.lastModified ?? null,
+      sourceIdentity: responseMetadata[series.statInfId]?.sourceIdentity,
+    });
+    meta.revisionAudit = revisionAudit[series.statInfId] ?? null;
+    const metadata = Buffer.from(`${JSON.stringify(meta, null, 2)}\n`);
+    const rawPath = `data/source/official-cti-2025-long-term/${meta.rawFile}`;
+    const normalizedPath = `data/source/official-cti-2025-long-term/${meta.normalizedFile}`;
+    const metadataPath = `data/source/official-cti-2025-long-term/${meta.metadataFile}`;
+    artifacts.push(
+      { path: rawPath, bytes: raw },
+      { path: normalizedPath, bytes: Buffer.from(normalized) },
+      { path: metadataPath, bytes: metadata },
+    );
+    files.push({
+      statInfId: series.statInfId,
+      seriesKind: series.kind,
+      rawFile: meta.rawFile,
+      normalizedFile: meta.normalizedFile,
+      metadataFile: meta.metadataFile,
+      rawSha256: digest(raw),
+      normalizedSha256: digest(Buffer.from(normalized)),
+      metadataSha256: digest(metadata),
+    });
+  }
+  const derivedFiles = [];
+  for (const [file, content] of [
+    ["series-map.csv", seriesMapCsv(allRecords)],
+    ["representative-snapshot.csv", representativeSnapshotCsv(allRecords)],
+  ]) {
+    const bytes = Buffer.from(content);
+    artifacts.push({ path: `data/source/official-cti-2025-long-term/${file}`, bytes });
+    derivedFiles.push({
+      file,
+      sha256: digest(bytes),
+      sourceIdentities: files.map(({ statInfId, rawSha256 }) => ({
+        statInfId,
+        sourceSha256: rawSha256,
+      })),
+    });
+  }
+  const auditSummary = Object.fromEntries(
+    Object.entries(revisionAudit).map(([id, audit]) => [
+      id,
+      {
+        changedObservationCount: audit.changedObservationCount,
+        changedValueCount: audit.changedValueCount,
+        changedSample: audit.changedSample,
+        sha256: audit.sha256,
+        previousSha256: audit.previousSha256,
+        sourceSha256: audit.sourceSha256,
+      },
+    ]),
+  );
+  const manifest = Buffer.from(
+    `${JSON.stringify({ schemaVersion: 1, generatedAt: retrievedAt, files, derivedFiles, revisionAudit: auditSummary }, null, 2)}\n`,
+  );
+  artifacts.push({
+    path: "data/source/official-cti-2025-long-term/manifest.json",
+    bytes: manifest,
+  });
+  return {
+    artifacts,
+    manifest,
+    files,
+    derivedFiles,
+    semanticValue: {
+      files: files.map(({ statInfId, normalizedSha256 }) => ({ statInfId, normalizedSha256 })),
+    },
+    rawSourceLineage: files.map(({ statInfId, rawSha256 }) => ({ statInfId, rawSha256 })),
   };
 }
 async function publishAtomically(root, staging) {

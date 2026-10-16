@@ -232,17 +232,45 @@ const parseLegacy = (bytes) => {
     throw new Error("L: missing annual index value");
   return { rows: parsed, rawRange: { startYear: 1981, endYear: 2018 }, missingCount: 0 };
 };
-const metadata = (kind, source, bytes, parsed, artifact) => ({
+const metadata = (
+  kind,
+  source,
+  bytes,
+  parsed,
+  artifact,
+  revisionValue = revision,
+  retrievedAt = new Date().toISOString(),
+  sourceIdentity = null,
+) => ({
   schemaVersion: "plan39-annual-v1",
-  revision,
+  revision: revisionValue,
   statisticalCode: "00200567",
   source: kind === "L" ? "総務省統計局 家計調査 長期時系列" : "総務省統計局 e-Stat CTI",
   artifact,
   artifactIdentifier: SOURCES[kind].statInfId ?? "lev-jnb.xls",
   officialPageUrl: SOURCES[kind].url,
   downloadUrl: SOURCES[kind].url,
+  downloadUrlHash: sourceHash(Buffer.from(sourceIdentity?.url ?? SOURCES[kind].url)),
   statInfId: SOURCES[kind].statInfId,
-  retrievedAt: new Date().toISOString(),
+  legacyStatInfId: sourceIdentity?.legacyStatInfId ?? null,
+  logicalSourceStatInfId: SOURCES[kind].statInfId,
+  sourceIdentity: sourceIdentity
+    ? {
+        kind: "estat-catalog-resource",
+        catalogResourceId: sourceIdentity.catalogResourceId,
+        legacyStatInfId: sourceIdentity.legacyStatInfId ?? null,
+        downloadUrlHash: sourceHash(Buffer.from(sourceIdentity.url)),
+        title: sourceIdentity.semantic?.title ?? null,
+        format: sourceIdentity.semantic?.format ?? null,
+        releaseDate: sourceIdentity.semantic?.releaseDate ?? null,
+        lastModifiedDate: sourceIdentity.semantic?.lastModifiedDate ?? null,
+      }
+    : {
+        kind: "legacy-stat-inf-id",
+        logicalSourceStatInfId: SOURCES[kind].statInfId,
+        legacyStatInfId: SOURCES[kind].statInfId,
+      },
+  retrievedAt,
   baseYear: 2025,
   unit: "指数",
   valueType: kind === "L" ? "原指数" : "原数値（名目指数）",
@@ -256,6 +284,242 @@ const metadata = (kind, source, bytes, parsed, artifact) => ({
   sourceSha256: sourceHash(bytes),
   sourceFormat: kind === "L" ? "xls" : "xlsx",
 });
+
+/** Pure Plan39 CTI artifact builder for callers that own a staging root. */
+export function buildPlan39CtiArtifacts({
+  stageRoot,
+  sources,
+  pinnedLegacyArtifactBytes,
+  revision: revisionValue,
+  retrievedAt = new Date().toISOString(),
+  sourceRevisionAudit = {},
+  sourceIdentities = {},
+} = {}) {
+  if (typeof stageRoot !== "string" || !stageRoot)
+    throw new Error("explicit Plan39 staging root is required");
+  if (!revisionValue || !/^\d{4}-\d{2}-\d{2}$/.test(revisionValue))
+    throw new Error("Plan39 revision must be YYYY-MM-DD");
+  const artifacts = [];
+  const manifest = {
+    schemaVersion: "plan39-annual-v1",
+    revision: revisionValue,
+    statisticalCode: "00200567",
+    artifacts: {},
+    definitions: {
+      B: "表1-1-1 基本系列・名目 年平均・総世帯・2025年消費支出平均月額=100",
+      A: "表2-1-1 調整系列・名目 年平均・総世帯・2025年消費支出平均月額=100",
+      L: "消費水準指数（世帯人員及び世帯主の年齢分布調整済）二人以上の世帯・原指数年平均・V2計算非使用",
+    },
+  };
+  const audit = {
+    revision: revisionValue,
+    retrievedAt,
+    sources: {},
+    sourceRevisionAudit,
+    validation: { status: "ready", reasons: [] },
+  };
+  for (const kind of ["B", "A"]) {
+    const bytes = Buffer.from(sources?.[kind] ?? []);
+    if (!bytes.length) throw new Error(`missing Plan39 source bytes for ${kind}`);
+    const parsed = parseCti(kind, bytes);
+    const artifact = `${kind}.json`;
+    const sourceId = SOURCES[kind].statInfId;
+    const identity = sourceIdentities[sourceId] ?? null;
+    const sourceMeta = metadata(
+      kind,
+      SOURCES[kind],
+      bytes,
+      parsed,
+      artifact,
+      revisionValue,
+      retrievedAt,
+      identity,
+    );
+    const body = {
+      metadata: { ...sourceMeta, sourceRevisionAudit: sourceRevisionAudit[sourceId] ?? null },
+      categoryOrder: categories,
+      rows: parsed.rows,
+    };
+    const encoded = Buffer.from(`${JSON.stringify(body, null, 2)}\n`);
+    const sha256 = sourceHash(encoded);
+    artifacts.push({ path: `data/source/cti-adjusted/${artifact}`, bytes: encoded });
+    manifest.artifacts[kind] = {
+      path: artifact,
+      sha256,
+      revision: revisionValue,
+      statInfId: sourceId,
+      logicalSourceStatInfId: sourceId,
+      catalogResourceId: identity?.catalogResourceId ?? null,
+      legacyStatInfId: identity?.legacyStatInfId ?? null,
+      downloadUrlHash: sourceHash(Buffer.from(identity?.url ?? SOURCES[kind].url)),
+      status: "ready",
+    };
+    audit.sources[kind] = {
+      catalogResourceId: identity?.catalogResourceId ?? null,
+      legacyStatInfId: identity?.legacyStatInfId ?? null,
+      logicalSourceStatInfId: sourceId,
+      downloadUrlHash: sourceHash(Buffer.from(identity?.url ?? SOURCES[kind].url)),
+      sourceFormat: "xlsx",
+      sourceSha256: sourceHash(bytes),
+      artifactSha256: sha256,
+      rawRange: parsed.rawRange,
+      rows: parsed.rows.length,
+      missingValues: parsed.missingCount,
+    };
+  }
+  const legacyBytes = Buffer.from(pinnedLegacyArtifactBytes ?? []);
+  if (
+    !legacyBytes.length ||
+    sourceHash(legacyBytes) !== "26902849c7d835a1dcf3db130384600d0f853907fac927e7942fb806e2eec076"
+  )
+    throw new Error("pinned Plan39 L artifact is missing or has an unknown hash");
+  const legacy = JSON.parse(legacyBytes.toString("utf8"));
+  if (legacy.metadata?.artifact !== "L.json" || legacy.metadata?.statInfId !== null)
+    throw new Error("pinned Plan39 L artifact identity mismatch");
+  artifacts.push({ path: "data/source/cti-adjusted/L.json", bytes: legacyBytes });
+  manifest.artifacts.L = {
+    path: "L.json",
+    sha256: sourceHash(legacyBytes),
+    statInfId: null,
+    sourceUrl: "https://www.stat.go.jp/data/kakei/longtime/zuhyou/lev-jnb.xls",
+    status: "ready",
+    revision: legacy.metadata.revision ?? "2026-09-20",
+  };
+  audit.sources.L = {
+    sourceUrl: "https://www.stat.go.jp/data/kakei/longtime/zuhyou/lev-jnb.xls",
+    sourceFormat: "pinned-json-artifact",
+    sourceSha256: legacy.metadata.sourceSha256,
+    artifactSha256: sourceHash(legacyBytes),
+    rawRange: legacy.metadata.rawRange,
+    rows: legacy.rows?.length ?? 0,
+    missingValues: 0,
+  };
+  const aBytes = Buffer.from(sources?.A ?? []);
+  if (!aBytes.length) throw new Error("missing Plan39 source bytes for A");
+  const quarterly = parseCtiQuarterly(aBytes);
+  const quarterlyCsv = Buffer.from(
+    [
+      ["period", ...quarterlyCategories].map(csvCell).join(","),
+      ...quarterly.rows.map(({ label, values }) =>
+        [label, ...quarterlyCategories.map((category) => values[category])].map(csvCell).join(","),
+      ),
+    ].join("\n") + "\n",
+  );
+  const quarterlyMetadata = {
+    schemaVersion: "plan39-quarterly-nominal-v1",
+    revision: revisionValue,
+    statisticalCode: "00200567",
+    source: "総務省統計局 e-Stat CTI",
+    artifact: "cti_data2025_distribution_adjusted_quarterly.csv",
+    artifactIdentifier: SOURCES.A.statInfId,
+    officialPageUrl: SOURCES.A.url,
+    downloadUrl: SOURCES.A.url,
+    downloadUrlHash: sourceHash(
+      Buffer.from(sourceIdentities[SOURCES.A.statInfId]?.url ?? SOURCES.A.url),
+    ),
+    statInfId: SOURCES.A.statInfId,
+    legacyStatInfId: sourceIdentities[SOURCES.A.statInfId]?.legacyStatInfId ?? null,
+    logicalSourceStatInfId: SOURCES.A.statInfId,
+    sourceIdentity: sourceIdentities[SOURCES.A.statInfId]
+      ? {
+          kind: "estat-catalog-resource",
+          catalogResourceId: sourceIdentities[SOURCES.A.statInfId].catalogResourceId,
+          legacyStatInfId: sourceIdentities[SOURCES.A.statInfId].legacyStatInfId ?? null,
+          downloadUrlHash: sourceHash(Buffer.from(sourceIdentities[SOURCES.A.statInfId].url)),
+          title: sourceIdentities[SOURCES.A.statInfId].semantic?.title ?? null,
+          format: sourceIdentities[SOURCES.A.statInfId].semantic?.format ?? null,
+          releaseDate: sourceIdentities[SOURCES.A.statInfId].semantic?.releaseDate ?? null,
+          lastModifiedDate:
+            sourceIdentities[SOURCES.A.statInfId].semantic?.lastModifiedDate ?? null,
+        }
+      : {
+          kind: "legacy-stat-inf-id",
+          logicalSourceStatInfId: SOURCES.A.statInfId,
+          legacyStatInfId: SOURCES.A.statInfId,
+        },
+    retrievedAt,
+    baseYear: 2025,
+    unit: "指数",
+    valueType: "原数値（名目指数）",
+    seriesClassification: "調整系列・分布調整値（原数値）",
+    householdScope: "総世帯",
+    frequency: "quarterly",
+    rawRange: quarterly.rawRange,
+    adoptedRange: quarterly.rawRange,
+    missingRepresentation:
+      "- は未公表値。補完・補間なし。その他は公式表の未公表値を補完せず、表示時に総合−他9費目の残差として導出。",
+    sha256: sourceHash(aBytes),
+    sourceSha256: sourceHash(aBytes),
+    csvSha256: sourceHash(quarterlyCsv),
+    sourceFormat: "xlsx",
+    sourceSheet: SOURCES.A.quarterlySheet,
+    sourceWorkbook: {
+      path: "data/source/official-cti-2025/cti-distribution-adjusted-000040499087.xlsx",
+      fileName: "cti-distribution-adjusted-000040499087.xlsx",
+    },
+    columnMapping: quarterlyColumnMapping,
+    sourceRevisionAudit: sourceRevisionAudit[SOURCES.A.statInfId] ?? null,
+  };
+  const quarterlyMetadataBytes = Buffer.from(`${JSON.stringify(quarterlyMetadata, null, 2)}\n`);
+  const csvHash = sourceHash(quarterlyCsv),
+    metadataHash = sourceHash(quarterlyMetadataBytes);
+  artifacts.push({
+    path: "data/source/cti_data2025_distribution_adjusted_quarterly.csv",
+    bytes: quarterlyCsv,
+  });
+  artifacts.push({
+    path: "data/source/cti_data2025_distribution_adjusted_quarterly.metadata.json",
+    bytes: quarterlyMetadataBytes,
+  });
+  const quarterlyIdentity = sourceIdentities[SOURCES.A.statInfId];
+  manifest.artifacts.quarterlyNominal = {
+    path: "../cti_data2025_distribution_adjusted_quarterly.csv",
+    metadataPath: "../cti_data2025_distribution_adjusted_quarterly.metadata.json",
+    sha256: csvHash,
+    metadataSha256: metadataHash,
+    revision: revisionValue,
+    statInfId: SOURCES.A.statInfId,
+    logicalSourceStatInfId: SOURCES.A.statInfId,
+    catalogResourceId: quarterlyIdentity?.catalogResourceId ?? null,
+    legacyStatInfId: quarterlyIdentity?.legacyStatInfId ?? null,
+    downloadUrlHash: sourceHash(Buffer.from(quarterlyIdentity?.url ?? SOURCES.A.url)),
+    sourceSha256: sourceHash(aBytes),
+    status: "ready",
+  };
+  audit.sources.quarterlyNominal = {
+    catalogResourceId: quarterlyIdentity?.catalogResourceId ?? null,
+    legacyStatInfId: quarterlyIdentity?.legacyStatInfId ?? null,
+    logicalSourceStatInfId: SOURCES.A.statInfId,
+    downloadUrlHash: sourceHash(Buffer.from(quarterlyIdentity?.url ?? SOURCES.A.url)),
+    sourceFormat: "xlsx",
+    sourceSheet: SOURCES.A.quarterlySheet,
+    sourceSha256: sourceHash(aBytes),
+    artifactSha256: csvHash,
+    metadataSha256: metadataHash,
+    rawRange: quarterly.rawRange,
+    rows: quarterly.rows.length,
+    missingValues: quarterly.missingCount,
+  };
+  artifacts.push({
+    path: "data/source/cti-adjusted/audit.json",
+    bytes: Buffer.from(`${JSON.stringify(audit, null, 2)}\n`),
+  });
+  artifacts.push({
+    path: "data/source/cti-adjusted/manifest.json",
+    bytes: Buffer.from(`${JSON.stringify(manifest, null, 2)}\n`),
+  });
+  return {
+    artifacts,
+    manifest,
+    audit,
+    semanticValue: {
+      revision: revisionValue,
+      artifacts: Object.fromEntries(
+        Object.entries(manifest.artifacts).map(([key, item]) => [key, item.sha256]),
+      ),
+    },
+  };
+}
 const main = async () => {
   await mkdir(outputDir, { recursive: true });
   const manifest = {
@@ -424,7 +688,9 @@ const main = async () => {
     await writeJsonAtomic(path.join(outputDir, "manifest.json"), manifest);
   }
 };
-main().catch((error) => {
-  console.error(error instanceof Error ? error.message : error);
-  process.exitCode = 1;
-});
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch((error) => {
+    console.error(error instanceof Error ? error.message : error);
+    process.exitCode = 1;
+  });
+}

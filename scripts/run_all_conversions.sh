@@ -17,11 +17,21 @@ TOOLS=(
 
 for tool in "${TOOLS[@]}"; do
     path="$DIST_DIR/$tool"
-    if [ -f "$path" ]; then
-        echo "Running $tool..."
-        "$path"
+    if [ ! -f "$path" ] || [ ! -x "$path" ]; then
+        echo "Error: required converter is missing or not executable: $path" >&2
+        exit 1
+    fi
+done
+
+for tool in "${TOOLS[@]}"; do
+    path="$DIST_DIR/$tool"
+    echo "Running $tool..."
+    if "$path"; then
+        :
     else
-        echo "Error: $tool not found in $DIST_DIR"
+        status=$?
+        echo "Error: $tool failed with exit status $status" >&2
+        exit "$status"
     fi
 done
 

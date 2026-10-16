@@ -8,6 +8,7 @@
   "baseYear": 2025,
   "indexFile": "cpi_data2025_long.csv",
   "contributionFile": "contribution2025.csv",
+  "contributionSha256": "1984336abd4ac7616abea124ebf49c0fbe5229bbcc45f0c5cd591fcc4f204030",
   "apiEndpoint": "https://api.e-stat.go.jp/rest/3.0/app/getSimpleStatsData",
   "apiRetrievalConditions": {
     "statsDataId": "0004052037",

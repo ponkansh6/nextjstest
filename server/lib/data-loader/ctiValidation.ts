@@ -243,6 +243,18 @@ export function validateCtiPair(
     typeof metadata.comparisonNormalization !== "string"
   )
     return "2025 CTI metadata basis fields are missing";
+  const mapBytes = fs.readFileSync(paths.seriesMap);
+  const snapshotBytes = fs.readFileSync(paths.officialSnapshot);
+  if (
+    typeof metadata.officialSeriesMapSha256 !== "string" ||
+    createHash("sha256").update(mapBytes).digest("hex") !== metadata.officialSeriesMapSha256 ||
+    typeof metadata.officialSeriesSnapshotSha256 !== "string" ||
+    createHash("sha256").update(snapshotBytes).digest("hex") !==
+      metadata.officialSeriesSnapshotSha256 ||
+    metadata.officialSeriesSnapshotSourceStatInfId !== metadata.statInfId ||
+    metadata.officialSeriesSnapshotSourceSha256 !== metadata.sourceFileSha256
+  )
+    return "2025 CTI derived map/snapshot identity or SHA-256 mismatch";
   const period = metadata.period as Record<string, unknown> | undefined;
   if (
     !period ||
@@ -362,6 +374,8 @@ export function validateCtiPair(
     const code = row.official_code;
     if (!code || mapByCode.has(code) || !row.official_name || !row.dashboard_key)
       return "invalid or duplicate 2025 series map rows";
+    if (row.source_stat_inf_id !== metadata.statInfId)
+      return "2025 series map source identity mismatch";
     if (!header.includes(row.dashboard_key))
       return `2025 series map column missing: ${row.dashboard_key}`;
     mapByCode.set(code, row);

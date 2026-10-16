@@ -1316,19 +1316,26 @@ describe("2025 CTI candidate pair validation", () => {
       supportNominalPath: paths.candidateSupportNominal,
       supportRealPath: paths.candidateSupportReal,
     };
-    const mappedName =
-      "official_code,official_name,dashboard_key,value_type\nc1,Series,消費支出（名目）,observed\n";
+    const sourceMetadata = JSON.parse(readFileSync(paths.metadata, "utf8"));
+    const mapHeader = "official_code,official_name,dashboard_key,value_type,source_stat_inf_id\n";
+    const mappedName = `${mapHeader}c1,Series,消費支出（名目）,observed,${sourceMetadata.statInfId}\n`;
     const snapshot = `official_code,official_name,representative_month,representative_value\n${officialRow}`;
     const mapCsv =
       _label === "empty series map code"
-        ? "official_code,official_name,dashboard_key,value_type\n,,,observed\n"
+        ? `${mapHeader},,,observed,${sourceMetadata.statInfId}\n`
         : _label === "unmapped dashboard column"
-          ? "official_code,official_name,dashboard_key,value_type\nc1,Series,not-a-source-column,observed\n"
+          ? `${mapHeader}c1,Series,not-a-source-column,observed,${sourceMetadata.statInfId}\n`
           : mappedName;
+    const metadataText = JSON.stringify({
+      ...sourceMetadata,
+      officialSeriesMapSha256: createHash("sha256").update(mapCsv).digest("hex"),
+      officialSeriesSnapshotSha256: createHash("sha256").update(snapshot).digest("hex"),
+    });
 
     const overrides = new Map([
       [paths.seriesMap, mapCsv],
       [paths.officialSnapshot, snapshot],
+      [paths.metadata, metadataText],
     ]);
     const result = withFileReadOverrides(overrides, () => validateCtiPair(pair, paths));
     expect(result).toBe(expected);

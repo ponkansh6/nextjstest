@@ -38,7 +38,7 @@
 ## 実行モード
 
 - 確認を求めず最後まで自律実行。軽微な修正は連続実行。完了または重大エラーのみ報告。
-- 実装チェックポイントでは、環境の自動検出に依存せず `skills/jev-review/SKILL.md` を明示的に読み、JEV で妥当性を判定する。プラン策定・プランレビューはこのスキルの対象外とする。レビュー結果は作業中に確認して判断へ反映し、監査ドキュメントとしての保存は必須としない。必要または有用な場合に限り `--output` 等でローカル保存する。新規標準レビューでは、実コード・要件・テスト・検証証拠に基づく相互排他的なcase-specific即時アクション候補を2件以上、初回リクエスト前に作成し、JSON `{ "choices": [...] }` を `--clarification-candidates PATH` で同時に渡す。各候補は `id`、`label`、`finding`、`affected`、`evidence` または正確な `neededEvidence` の一方、`nextAction` または `proposedFix` の一方、`remainingUncertainty` を備える。候補の不足は送信前に拒否する。JEVには初回・更問とも選択、confidence、probabilitiesだけを求め、理由生成を求めない。初回応答が有効で `valid_as_defined` 以外なら、一度だけ更問し、JEVの選択IDをローカル候補へ対応づける。Codexは候補を選ばず、ユーザーにも選択を求めない。選択候補は `resolution: "selected"`、`diagnosisSource: "provided_candidate"`、`diagnosisStatus: "complete"` として扱い、診断内容はCodexが提示した候補に由来する。初回の `decisionSummary` と確率分布を保持し、更問の `effectiveVerdict` は必ず `requires_revalidation` とする。更問が失敗・無効・選択肢外なら未解決とし、手動更問も含め連鎖させない。初回合格または初回API/応答失敗・無効・未対応時は自動更問しない。追加証拠または修正後に通常の初回JEV再判定を行う。候補fileなしの旧CLI挙動、手動 `--clarify ... --choice`、非標準 `--follow-up` は互換ユーティリティとして保持する。TypeSafe API は明示指定した `TYPESAFE_API_KEY` を優先し、未指定時は現在ディレクトリまたはスクリプト位置の祖先にある `.env.local` の `TYPESAFE_API_KEY` をデフォルト利用する（`TYPESAFE_ENV_FILE` で明示指定可、キーがなければ送信を fail-closed）。JEV へ送るレビュー文脈・実装差分・検証結果など認証情報以外のデータ送信はユーザーが承認済みとする。認証情報は送信せず、承認対象にも含めない。`TYPESAFE_MODEL`、`TYPESAFE_BASE_URL` は任意指定とする。API 失敗やHTTP成功だけを妥当と扱わず、JEV判定は既存テスト・型チェック・lintの代替にしない。
+- プラン策定・プランレビューは対象外とする。レビュー結果は作業中に判断へ反映し、監査保存は任意とする。JEV判定はテスト・型チェック・lintの代替にしない。
 
 <!-- BEGIN:nextjs-agent-rules -->
 
