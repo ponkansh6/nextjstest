@@ -98,6 +98,9 @@ export async function ctiAdapter({
           Array.isArray(contract.resourceIncludes) &&
           Array.isArray(contract.tableIncludes) &&
           Array.isArray(contract.categoryIncludes) &&
+          (!["000040499069", "000040499082", "000040499028", "000040499087"].includes(id) ||
+            (Array.isArray(contract.subCategory1Includes) &&
+              contract.subCategory1Includes.length > 0)) &&
           Array.isArray(contract.periodIncludes) &&
           Array.isArray(contract.yearIncludes),
       ),
@@ -160,6 +163,7 @@ export async function ctiAdapter({
         resourceIncludes: contract.resourceIncludes || [],
         tableIncludes: contract.tableIncludes || [],
         categoryIncludes: contract.categoryIncludes || [],
+        subCategory1Includes: contract.subCategory1Includes || [],
         periodIncludes: contract.periodIncludes || [],
         yearIncludes: contract.yearIncludes || [],
       });
@@ -179,6 +183,7 @@ export async function ctiAdapter({
       identityMarkers: {
         table: contract.tableIncludes,
         category: contract.categoryIncludes,
+        subCategory1: contract.subCategory1Includes || [],
         period: contract.periodIncludes,
         year: contract.yearIncludes,
       },
@@ -384,7 +389,13 @@ export async function ctiAdapter({
   return {
     artifacts,
     semanticValue: {
-      // Fingerprint normalized observations and classifications, never container bytes.
+      // Version 2 fingerprints normalized source outputs, selected catalog identities,
+      // and pins. revisionAudit is intentionally absent: its hashes/counts/samples
+      // describe differences against the mutable canonical baseline, not the source.
+      // Existing v1 state is not migrated because it lacks raw hashes; its fingerprint
+      // naturally differs.
+      semanticFingerprintVersion: 2,
+      sourceIdentities,
       longTerm: semanticCsvHashes([
         ...SERIES.map(({ statInfId }) => `${LONG_TERM_PATH}/${statInfId}.normalized.csv`),
         `${LONG_TERM_PATH}/series-map.csv`,
@@ -400,9 +411,6 @@ export async function ctiAdapter({
           "data/source/cti_data2025_distribution_adjusted_quarterly.csv",
         ]),
       },
-      revisionAudit: Object.fromEntries(
-        Object.entries(revisionAudit).map(([id, value]) => [id, value.sha256]),
-      ),
       pinnedSemantic: semanticCsvHashes(
         immutableArtifacts.map(({ path: artifactPath }) => artifactPath),
       ),
@@ -422,6 +430,7 @@ export async function ctiAdapter({
       currentHouseholdMonths: monthlyCurrent.coverage.monthlyRows,
       pinnedDependencies: pinned.size,
       quarterlyNominal: true,
+      semanticFingerprintVersion: 2,
       revisedSourceCount: revisionStats.revisedSourceCount,
       revisionChangedObservations: revisionStats.changedObservations,
       revisionChangedValues: revisionStats.changedValues,
@@ -733,7 +742,13 @@ function parseNormalizedRows(bytes, sourceId) {
         "cti-canonical-schema-invalid",
         `Existing CTI normalized data has a duplicate: ${sourceId}`,
       );
-    rows.set(key, normalizedValue(row.raw_value, row.is_missing));
+    const missingFlag = String(row.is_missing ?? "").trim();
+    if (missingFlag !== "true" && missingFlag !== "false")
+      throw new RefreshError(
+        "cti-canonical-schema-invalid",
+        `Existing CTI normalized missing flag is invalid: ${sourceId}`,
+      );
+    rows.set(key, normalizedValue(row.raw_value, missingFlag === "true"));
   }
   return rows;
 }

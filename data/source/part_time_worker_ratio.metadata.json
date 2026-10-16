@@ -1,24 +1,90 @@
 {
   "source": "e-Stat 毎月勤労統計調査 長期時系列（実数・指数累積データ）",
-  "sourceUrl": "https://www.e-stat.go.jp/stat-search/files?layout=datalist&lid=000001020001&page=1&stat_infid=000032189777",
+  "sourceUrl": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=1&statInfId=000032189777",
   "statInfId": "000032189777",
   "sourceSha256": "ff0575f4a3294c6a350cb2c5164f8f0b0f8f2474babe4b2c30755ed387d85fe8",
   "extraction": {
     "industry": "TL",
     "establishmentSize": "T",
     "employmentType": "0",
+    "sourceType": "指数",
     "unit": "％",
     "series": "パートタイム労働者比率",
-    "period": "1990-01 through 2026-07",
-    "missingDataPolicy": "公式の欠測セルは欠測のまま保持し、0や推測値で補完しない",
-    "sourceEncoding": "CP932",
     "sourceColumn": "パートタイム労働者比率",
+    "sourceEncoding": "CP932",
+    "period": "1990-01 through 2026-07",
     "monthlyCoverage": "1990-01 through 2026-07",
     "preMonthlyCoverage": "1952-01 through 1989-12 is not available in the source and is represented by -",
-    "aggregation": "existing annual and period aggregates preserved; official July 2026 monthly value added",
-    "sourceType": "指数"
+    "aggregation": "calendar-year average copied from official CY rows; half-year, quarter, and fiscal-year averages emitted only when every constituent month is present",
+    "missingDataPolicy": "official missing values remain missing; no zero or inferred values are introduced"
   },
   "normalizedCsv": "data/source/part_time_worker_ratio.csv",
-  "normalizedCsvSha256": "9b9e330a7f70fabc8643d5009fc359bf16fd4a9176d890f1d4d81a5458ca3700",
-  "excludedCrossSection": "data/source/hon-mks202606.xls"
+  "normalizedCsvSha256": "ff0a8ddc181b7c2afdd7d9291766d4ef69e868ba9d1dc1d854cd37e0a155e9f2",
+  "excludedCrossSection": "data/source/hon-mks202606.xls",
+  "period": {
+    "start": "1990-01",
+    "end": "2026-07",
+    "monthlyRows": 439
+  },
+  "retrievedAt": "2026-10-16T18:24:49.618Z",
+  "revisionAudit": {
+    "overlapCount": 439,
+    "annualOverlapCount": 36,
+    "changedValueCount": 0,
+    "changedSample": [],
+    "acceptedAnnualRoundingAdjustmentCount": 34,
+    "acceptedAnnualRoundingAdjustmentSample": [
+      {
+        "series": "part_time_worker_ratio",
+        "year": "1990",
+        "oldValue": 13,
+        "newValue": 12.97,
+        "reason": "official-cy-matches-monthly-mean-at-higher-precision"
+      },
+      {
+        "series": "part_time_worker_ratio",
+        "year": "1991",
+        "oldValue": 13.5,
+        "newValue": 13.47,
+        "reason": "official-cy-matches-monthly-mean-at-higher-precision"
+      },
+      {
+        "series": "part_time_worker_ratio",
+        "year": "1992",
+        "oldValue": 13.8,
+        "newValue": 13.82,
+        "reason": "official-cy-matches-monthly-mean-at-higher-precision"
+      },
+      {
+        "series": "part_time_worker_ratio",
+        "year": "1993",
+        "oldValue": 14.4,
+        "newValue": 14.38,
+        "reason": "official-cy-matches-monthly-mean-at-higher-precision"
+      },
+      {
+        "series": "part_time_worker_ratio",
+        "year": "1994",
+        "oldValue": 14.4,
+        "newValue": 14.44,
+        "reason": "official-cy-matches-monthly-mean-at-higher-precision"
+      }
+    ]
+  },
+  "semanticMigration": {
+    "kind": "employment-series-semantic-correction",
+    "intentional": true,
+    "from": {
+      "output": "employment_indices.csv",
+      "series": "part_time_worker_ratio"
+    },
+    "to": {
+      "output": "part_time_worker_ratio.csv",
+      "series": "part_time_worker_ratio"
+    },
+    "correctedOutput": "employment_indices.csv",
+    "preservedPreMigrationMonthlyRows": 438,
+    "verifiedPartTimeOverlapRows": 439,
+    "verifiedEmploymentOverlapRows": 439
+  }
 }

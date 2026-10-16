@@ -18,13 +18,18 @@
     "startTime": "197001",
     "endTime": "202607",
     "limit": 100000,
-    "startPosition": [1, 100001, 200001, 300001, 400001]
+    "startPosition": [
+      1,
+      100001,
+      200001,
+      300001,
+      400001
+    ]
   },
   "sourceFileUrl": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=1&statInfId=000040482945",
-  "artifactUpdatedAt": "2026-09-09",
-  "retrievedAt": "2026-09-09T14:55:48+09:00",
-  "csvSha256": "c5d1c58a29ec506b8800a6c66ce25fdb0aa3d9c7aece10488310729fe4c64723",
-  "sourceResponseSha256": "9e538bb82998b09824708cb1976161ec9c2e7fbf49799e12f79a2ec50cad180f",
+  "artifactUpdatedAt": "2026-10-16",
+  "retrievedAt": "2026-10-16T18:24:18.155Z",
+  "csvSha256": "b44ab11e7c9aa7a5d9ef440b6dc3c7ce50f73bd2aefb7804b3b97f91c1a45229",
   "officialSeriesMapFile": "cpi-2025-series-map.csv",
   "officialSeriesMapSha256": "d60244de9f459fc9561cbbf91bc224a590fdddc5898ee7de3e73229aaf21b76e",
   "officialSeriesSnapshotFile": "cpi-2025-official-series.csv",
@@ -33,18 +38,261 @@
   "officialSeriesSnapshotSourceSha256": "2e6335c191b459f3446e7f93cf38f4df9814c90371c794aac9d58efa337ee51b",
   "period": {
     "start": "1970年1月",
-    "end": "2026年7月",
-    "monthlyRows": 679
+    "end": "2026年8月",
+    "monthlyRows": 680
   },
   "seriesCount": 78,
   "extraction": {
     "area": "全国 (cdArea=00000)",
-    "frequency": "月次（年次・年度値を除外）",
-    "measure": "指数 (cdTab=1)",
-    "categories": "contribution2025.csv の類・品目78系列",
-    "sourceRows": 54286,
-    "pages": 5,
-    "apiTotalNumber": 479417,
-    "missingValuePolicy": "公式値 *** は空欄として保持"
+    "frequency": "月次",
+    "measure": "2025年=100 (2025年=100)",
+    "categories": "2025年基準品目78系列",
+    "sourceRows": 60709,
+    "monthlyObservationCount": 52188,
+    "nonMonthlyObservationCount": 8521,
+    "pages": 1,
+    "apiTotalNumber": 60709,
+    "missingValuePolicy": "API明示欠測値は空欄として保持"
+  },
+  "selectedDistributionStatInfId": "000040482945",
+  "sourceLineage": {
+    "previousStatsDataId": "0004052037",
+    "previousStatInfId": "000040482945"
+  },
+  "selectedApiSourceIdentity": {
+    "statsDataId": "0004052037",
+    "title": "消費者物価指数（2025年基準）",
+    "statistics": "消費者物価指数",
+    "cycle": "-",
+    "surveyDate": "0",
+    "updatedDate": "2026-10-02",
+    "openDate": "2026-10-02",
+    "unit": "2025年=100",
+    "unitEvidence": "historical-overlap-plus-2025-base-year",
+    "classification": "nationwide index; tab 1; 78 cat01 series",
+    "classificationsSha256": "953f1c4bbddf56170176ce808beff05fe53da69e8b33fcc0b281d159186a4347"
+  },
+  "refreshApiEndpoint": "https://api.e-stat.go.jp/rest/3.0/app/json/getStatsData",
+  "refreshApiRetrievalConditions": {
+    "statsDataId": "0004052037",
+    "format": "JSON",
+    "cdArea": "00000",
+    "cdTab": "1",
+    "cdTimeFrom": "1970000101",
+    "cdCat01": "0001,0161,0163,0166,0178,0168,0002,0157,0172,0003,0008,0009,0013,0016,0021,0022,0027,0028,0030,0033,0034,0037,0041,0042,0045,0164,0046,0165,0051,0054,0056,0057,0058,0059,0060,0061,0066,0070,0073,0077,0081,0082,0083,0084,0085,0089,0090,0094,0098,0103,0106,0107,0108,0109,0110,0111,0112,0113,0117,0118,0119,0120,0121,0122,0123,0128,0134,0138,0145,0146,0147,0151,0155,0156,0167,0162,0173,0169",
+    "latestReturnedTime": "202608",
+    "limit": 100000
+  },
+  "distributionSourceIdentity": {
+    "kind": "estat-catalog-resource",
+    "catalogResourceId": "000010948379",
+    "logicalSourceStatInfId": "000040482945",
+    "legacyStatInfId": "000040482945",
+    "downloadUrlHash": "4303a18f13c016ec7954c3026ae6c1998df3681d11ef33fe4bee1fb6fd7b8cb9",
+    "title": "2025年基準消費者物価指数_長期時系列データ_品目別価格指数_全国_月次_2026年8月",
+    "resourceTitle": "全国_1_品目別価格指数（1970年1月～最新月）",
+    "format": "CSV",
+    "releaseDate": "2026-09-18",
+    "lastModifiedDate": "2026-09-18",
+    "identityMarkers": {
+      "table": [
+        "品目別価格指数（1970年1月～最新月）"
+      ],
+      "category": [
+        "2025年基準"
+      ],
+      "period": [
+        "月次"
+      ],
+      "year": [
+        "2025"
+      ]
+    }
+  },
+  "distributionFileSha256": "58b1340e2e64758cff8284fbde142f1ebd05fe6c1da1d298b3d9699f3cd15e4e",
+  "distributionFileByteLength": 2152253,
+  "distributionApiIdentity": {
+    "startMonth": "197001",
+    "endMonth": "202608",
+    "periodCount": 680,
+    "seriesCount": 78,
+    "comparedValueCount": 53040,
+    "mismatchCount": 0,
+    "sha256": "4ce45c819fb821223398d65d7837f6fd5be8d9724615e416347a80a53695207f"
+  },
+  "revisionSummary": {
+    "count": 679,
+    "samples": [
+      {
+        "month": "197001",
+        "code": "0042",
+        "series": "外食",
+        "previous": "18.3",
+        "current": "18.7"
+      },
+      {
+        "month": "197002",
+        "code": "0042",
+        "series": "外食",
+        "previous": "18.3",
+        "current": "18.7"
+      },
+      {
+        "month": "197003",
+        "code": "0042",
+        "series": "外食",
+        "previous": "18.4",
+        "current": "18.9"
+      },
+      {
+        "month": "197004",
+        "code": "0042",
+        "series": "外食",
+        "previous": "18.6",
+        "current": "19.1"
+      },
+      {
+        "month": "197005",
+        "code": "0042",
+        "series": "外食",
+        "previous": "18.8",
+        "current": "19.2"
+      },
+      {
+        "month": "197006",
+        "code": "0042",
+        "series": "外食",
+        "previous": "18.9",
+        "current": "19.4"
+      },
+      {
+        "month": "197007",
+        "code": "0042",
+        "series": "外食",
+        "previous": "19",
+        "current": "19.4"
+      },
+      {
+        "month": "197008",
+        "code": "0042",
+        "series": "外食",
+        "previous": "19.1",
+        "current": "19.5"
+      },
+      {
+        "month": "197009",
+        "code": "0042",
+        "series": "外食",
+        "previous": "19.2",
+        "current": "19.6"
+      },
+      {
+        "month": "197010",
+        "code": "0042",
+        "series": "外食",
+        "previous": "19.5",
+        "current": "19.9"
+      },
+      {
+        "month": "197011",
+        "code": "0042",
+        "series": "外食",
+        "previous": "19.8",
+        "current": "20.2"
+      },
+      {
+        "month": "197012",
+        "code": "0042",
+        "series": "外食",
+        "previous": "20.1",
+        "current": "20.5"
+      },
+      {
+        "month": "197101",
+        "code": "0042",
+        "series": "外食",
+        "previous": "20.4",
+        "current": "20.8"
+      },
+      {
+        "month": "197102",
+        "code": "0042",
+        "series": "外食",
+        "previous": "20.5",
+        "current": "21"
+      },
+      {
+        "month": "197103",
+        "code": "0042",
+        "series": "外食",
+        "previous": "20.7",
+        "current": "21.1"
+      },
+      {
+        "month": "197104",
+        "code": "0042",
+        "series": "外食",
+        "previous": "20.8",
+        "current": "21.3"
+      },
+      {
+        "month": "197105",
+        "code": "0042",
+        "series": "外食",
+        "previous": "20.9",
+        "current": "21.4"
+      },
+      {
+        "month": "197106",
+        "code": "0042",
+        "series": "外食",
+        "previous": "21",
+        "current": "21.5"
+      },
+      {
+        "month": "197107",
+        "code": "0042",
+        "series": "外食",
+        "previous": "21.1",
+        "current": "21.6"
+      },
+      {
+        "month": "197108",
+        "code": "0042",
+        "series": "外食",
+        "previous": "21.2",
+        "current": "21.7"
+      }
+    ],
+    "sha256": "0f3abaa10cf7867cd6a2cf4639a7247a65831b4bc1de154ec3eb89463322bdfb",
+    "comparedValueCount": 52962,
+    "startMonth": "197001",
+    "endMonth": "202607",
+    "revisionStartMonth": "197001",
+    "revisionEndMonth": "202607"
+  },
+  "valueIdentityEvidence": {
+    "comparedValueCount": 52962,
+    "startMonth": "197001",
+    "endMonth": "202607",
+    "mismatchCount": 679
+  },
+  "sourceCandidate": {
+    "candidateCount": 1,
+    "statsDataId": "0004052037",
+    "title": "消費者物価指数（2025年基準）",
+    "updatedDate": "2026-10-02",
+    "openDate": "2026-10-02",
+    "fileCandidate": {
+      "identityStatInfId": "000040482945",
+      "catalogResourceId": "000010948379",
+      "legacyStatInfId": "000040482945",
+      "title": "2025年基準消費者物価指数_長期時系列データ_品目別価格指数_全国_月次_2026年8月",
+      "resourceTitle": "全国_1_品目別価格指数（1970年1月～最新月）",
+      "format": "CSV",
+      "releaseDate": "2026-09-18",
+      "lastModifiedDate": "2026-09-18",
+      "candidateCount": 1
+    }
   }
 }

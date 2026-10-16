@@ -5,6 +5,34 @@
   "baseYear": 2025,
   "unit": "指数",
   "statInfId": "000040499028",
+  "logicalSourceStatInfId": "000040499028",
+  "legacyStatInfId": "000040513277",
+  "sourceIdentity": {
+    "kind": "estat-catalog-resource",
+    "logicalSourceStatInfId": "000040499028",
+    "catalogResourceId": "000010963020",
+    "legacyStatInfId": "000040513277",
+    "downloadUrlHash": "bee1c6d9ff6b0d8b177c60d8f9cdc22046090cbee46f6201dfcca5325d7708d8",
+    "title": "2025年基準消費動向指数_統計表_月次_2026年8月",
+    "resourceTitle": "世帯消費動向指数_2-1-1_調整系列 分布調整値（原数値）_総世帯、総世帯のうち勤労者世帯",
+    "format": "XLSX",
+    "releaseDate": "2026-10-09",
+    "lastModifiedDate": "2026-10-09",
+    "identityMarkers": {
+      "table": [
+        "調整系列 分布調整値（原数値）"
+      ],
+      "category": [
+        "世帯消費動向指数"
+      ],
+      "period": [
+        "月次"
+      ],
+      "year": [
+        "2025"
+      ]
+    }
+  },
   "seriesKind": "distributionAdjustedNominal",
   "seriesLabel": "分布調整値（原数値）",
   "householdScope": "総世帯",
@@ -15,27 +43,28 @@
   "requestedStart": "2017-01",
   "availabilityStart": "2017-01",
   "retrieval": {
-    "retrievedAt": "2026-10-01T23:34:23.365Z",
+    "retrievedAt": "2026-10-16T18:24:44.540Z",
     "updatedAt": null
   },
+  "downloadUrlHash": "bee1c6d9ff6b0d8b177c60d8f9cdc22046090cbee46f6201dfcca5325d7708d8",
   "officialUrl": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499028",
   "encoding": "binary/official",
   "rawFile": "000040499028.raw",
   "normalizedFile": "000040499028.normalized.csv",
   "metadataFile": "000040499028.metadata.json",
-  "rawBytes": 200451,
-  "normalizedBytes": 196541,
+  "rawBytes": 201288,
+  "normalizedBytes": 198254,
   "parserVersion": "xlsx-0.20.3",
   "transformVersion": "cti-basic-2025-long-term-v2",
   "sourceHeaders": {
     "contentType": "application/octet-stream",
-    "contentDisposition": "attachment; filename=test.xlsx",
+    "contentDisposition": null,
     "lastModified": null
   },
-  "rawSha256": "7224e5eb424c94d90402502f665a4953cfe16377f65f1040a939696ac948ef41",
-  "normalizedSha256": "1b1cae221c36c5ec865d9c057255351766e4b9f195f77ac3efc85129d0b3216b",
-  "latestPublishedMonth": "2026-07",
-  "rowCount": 2530,
+  "rawSha256": "5089bece9c815944df57d3f5552e5d7ae9f5ee1c2f091ae5246dbd0ac8be1c67",
+  "normalizedSha256": "2d2292d20646c627f44dc66192eaee69afc7846b166908bcd82c7239968ef1e3",
+  "latestPublishedMonth": "2026-08",
+  "rowCount": 2552,
   "seriesCount": 22,
   "series": [
     {
@@ -164,5 +193,15 @@
   "unavailable": {
     "periods": [],
     "reason": null
+  },
+  "revisionAudit": {
+    "sourceId": "000040499028",
+    "overlapCount": 2530,
+    "changedObservationCount": 0,
+    "changedValueCount": 0,
+    "changedSample": [],
+    "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "previousSha256": "7224e5eb424c94d90402502f665a4953cfe16377f65f1040a939696ac948ef41",
+    "sourceSha256": "5089bece9c815944df57d3f5552e5d7ae9f5ee1c2f091ae5246dbd0ac8be1c67"
   }
 }

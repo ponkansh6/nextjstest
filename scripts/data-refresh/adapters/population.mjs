@@ -11,6 +11,16 @@ const METADATA_PATH = "data/source/population_statistics.metadata.json";
 const CSV_PATH = "data/source/population_statistics.csv";
 const SOURCE_URL = `https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=${STAT_INF_ID}`;
 const EXPECTED_SHEET = "原数値";
+const OPTIONAL_SHEETS = new Set(["原数値 (沖縄県除く1968-1972)", "※注_Notes"]);
+const SOURCE_CONTRACT = Object.freeze({
+  statInfId: STAT_INF_ID,
+  tableId: "1-b-1",
+  title: "15歳以上人口（年齢階級（10歳階級）別）",
+  frequency: "monthly",
+  unit: "万人",
+  baseline: "not-applicable",
+  series: "nationwide-original-values",
+});
 
 export async function populationAdapter({
   source,
@@ -31,43 +41,70 @@ export async function populationAdapter({
     );
   }
   validateMetadata(previousMetadata);
-
-  const { bytes } = await fetchFile({ url: SOURCE_URL, allowedHosts: OFFICIAL_ESTAT_FILE_HOSTS });
-  const sourceHash = sha256(bytes);
-  if (sourceHash !== previousMetadata.sha256) {
-    throw provenanceMismatch(
-      "Downloaded workbook hash does not match the locally verified source hash.",
+  let retainedWorkbook;
+  try {
+    retainedWorkbook = await readFile(path.join(root, previousMetadata.file));
+  } catch {
+    throw new RefreshError(
+      "population-retained-source-missing",
+      "The retained population workbook is missing.",
     );
   }
+  invariant(
+    retainedWorkbook.byteLength === previousMetadata.fileSizeBytes &&
+      sha256(retainedWorkbook) === previousMetadata.sha256,
+    "population-retained-source-mismatch",
+    "Population metadata does not match the retained local workbook.",
+  );
+
+  const { bytes, contentType } = await fetchFile({
+    url: SOURCE_URL,
+    allowedHosts: OFFICIAL_ESTAT_FILE_HOSTS,
+  });
+  const normalizedContentType = validateWorkbookMediaType(contentType);
+  const sourceHash = sha256(bytes);
 
   const { rows, headers, sheetCount } = readPopulationWorkbook(bytes);
   const observations = readRuntimeObservations(rows);
-  for (const [period, expected] of Object.entries(previousMetadata.verifiedObservations)) {
-    if (observations.get(period) !== expected) {
-      throw provenanceMismatch(
-        `Downloaded workbook does not match the verified ${period} observation.`,
-      );
-    }
-  }
-
   const coverage = validateCoverage(observations);
+  validateCoverageAgainstBaseline(coverage, previousMetadata.period);
+  const priorObservations = await readPriorObservations(
+    root,
+    previousMetadata.verifiedObservations,
+  );
+  const retrievedAt = now().toISOString();
+  const revisionAudit = {
+    ...auditVerifiedObservations(observations, priorObservations),
+    previousSha256: previousMetadata.lastFetchedSource?.sha256 ?? previousMetadata.sha256,
+    currentSha256: sourceHash,
+    previousRetrievedAt:
+      previousMetadata.lastFetchedSource?.retrievedAt ?? previousMetadata.retrievedAt ?? null,
+    retrievedAt,
+  };
   const csv = buildConverterCsv(rows, headers);
   validateCsv(csv, rows, headers, coverage, observations);
   const resultHash = sha256(Buffer.from(csv, "utf8"));
-  const retrievedAt = now().toISOString();
   const metadata = {
     ...previousMetadata,
     sourceUrl: SOURCE_URL,
-    statInfId: STAT_INF_ID,
-    tableId: "1-b-1",
-    title: "15歳以上人口（年齢階級（10歳階級）別）",
-    unit: "万人",
-    retrievedAt,
+    ...SOURCE_CONTRACT,
+    baselineDefinition: SOURCE_CONTRACT.baseline,
     file: "data/source/economics_source/lt01-b10.xlsx",
-    fileSizeBytes: bytes.byteLength,
-    sha256: sourceHash,
+    lastFetchedSource: {
+      sourceUrl: SOURCE_URL,
+      sha256: sourceHash,
+      fileSizeBytes: bytes.byteLength,
+      contentType: normalizedContentType,
+      retrievedAt,
+    },
     resultSha256: resultHash,
     period: { start: coverage.start, end: coverage.end, monthlyRows: coverage.monthlyRows },
+    baselineEvidence: previousMetadata.baselineEvidence ?? {
+      sha256: previousMetadata.sha256,
+      period: previousMetadata.period,
+      verifiedObservations: previousMetadata.verifiedObservations,
+    },
+    revisionAudit,
   };
 
   return {
@@ -78,15 +115,22 @@ export async function populationAdapter({
     semanticValue: {
       statInfId: STAT_INF_ID,
       tableId: "1-b-1",
+      frequency: SOURCE_CONTRACT.frequency,
+      unit: SOURCE_CONTRACT.unit,
+      baseline: SOURCE_CONTRACT.baseline,
+      series: SOURCE_CONTRACT.series,
       period: coverage,
       resultSha256: resultHash,
     },
     rawFetches: [{ name: "population-xlsx", bytes }],
     coverage,
+    revisionAudit: { population: revisionAudit },
     validationSummary: {
       sheetCount,
       monthlyRows: coverage.monthlyRows,
       verifiedObservations: Object.keys(previousMetadata.verifiedObservations).length,
+      overlapCompared: revisionAudit.comparedObservationCount,
+      revisedObservations: revisionAudit.changedObservationCount,
     },
   };
 }
@@ -95,7 +139,17 @@ function validateIdentity(source) {
   invariant(
     source?.identity?.kind === "file" &&
       source.identity.statInfId === STAT_INF_ID &&
-      source.identity.format === "xlsx",
+      source.identity.format === "xlsx" &&
+      source.title ===
+        "Labor Force Survey table 1-b-1, nationwide monthly population aged 15 or older" &&
+      JSON.stringify(source.classifications) ===
+        JSON.stringify(["total population aged 15 or older"]) &&
+      source.frequency === SOURCE_CONTRACT.frequency &&
+      source.unit === SOURCE_CONTRACT.unit &&
+      source.baseline === SOURCE_CONTRACT.baseline &&
+      source.revision === "full-history-revision-required" &&
+      source.period?.from === "2004-01" &&
+      source.period?.through === "latest-published",
     "population-identity-mismatch",
     "Population file identity does not match the verified statInfId.",
   );
@@ -111,7 +165,14 @@ function validateMetadata(metadata) {
     metadata.statInfId === STAT_INF_ID &&
       metadata.tableId === "1-b-1" &&
       metadata.sourceUrl === SOURCE_URL &&
+      metadata.file === "data/source/economics_source/lt01-b10.xlsx" &&
+      Number.isInteger(metadata.fileSizeBytes) &&
+      metadata.fileSizeBytes > 0 &&
+      metadata.title === SOURCE_CONTRACT.title &&
       metadata.unit === "万人" &&
+      (metadata.frequency === undefined || metadata.frequency === SOURCE_CONTRACT.frequency) &&
+      (metadata.baselineDefinition === undefined ||
+        metadata.baselineDefinition === SOURCE_CONTRACT.baseline) &&
       typeof metadata.sha256 === "string" &&
       /^[a-f0-9]{64}$/.test(metadata.sha256) &&
       metadata.verifiedObservations &&
@@ -122,11 +183,120 @@ function validateMetadata(metadata) {
   );
   for (const [period, value] of Object.entries(metadata.verifiedObservations)) {
     invariant(
-      /^\d{4}-(0[1-9]|1[0-2])$/.test(period) && Number.isFinite(value) && value > 0,
+      /^\d{4}-(0[1-9]|1[0-2])$/.test(period) && Number.isInteger(value) && value > 0,
       "population-metadata-contract-mismatch",
       "Population metadata contains an invalid verified observation.",
     );
   }
+  if (metadata.period !== undefined) validateBaselinePeriod(metadata.period);
+  if (metadata.lastFetchedSource !== undefined) {
+    invariant(
+      metadata.lastFetchedSource?.sourceUrl === SOURCE_URL &&
+        /^[a-f0-9]{64}$/.test(metadata.lastFetchedSource.sha256 ?? "") &&
+        Number.isInteger(metadata.lastFetchedSource.fileSizeBytes) &&
+        metadata.lastFetchedSource.fileSizeBytes > 0 &&
+        typeof metadata.lastFetchedSource.retrievedAt === "string" &&
+        [
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          "application/vnd.ms-excel",
+          "application/octet-stream",
+          "application/zip",
+        ].includes(metadata.lastFetchedSource.contentType),
+      "population-metadata-contract-mismatch",
+      "Population metadata contains invalid last-fetch evidence.",
+    );
+  }
+  if (metadata.baselineEvidence !== undefined) {
+    invariant(
+      metadata.baselineEvidence &&
+        /^[a-f0-9]{64}$/.test(metadata.baselineEvidence.sha256 ?? "") &&
+        metadata.baselineEvidence.verifiedObservations &&
+        typeof metadata.baselineEvidence.verifiedObservations === "object" &&
+        Object.keys(metadata.baselineEvidence.verifiedObservations).length >= 2,
+      "population-metadata-contract-mismatch",
+      "Population metadata contains invalid preserved baseline evidence.",
+    );
+    if (metadata.baselineEvidence.period) validateBaselinePeriod(metadata.baselineEvidence.period);
+  }
+}
+
+function validateBaselinePeriod(period) {
+  const [year, month] = /^\d{4}-(\d{2})$/.test(period?.end ?? "")
+    ? [Number(period.end.slice(0, 4)), Number(period.end.slice(5, 7))]
+    : [0, 0];
+  invariant(
+    period &&
+      period.start === "2004-01" &&
+      /^\d{4}-(0[1-9]|1[0-2])$/.test(period.end) &&
+      period.end >= period.start &&
+      Number.isInteger(period.monthlyRows) &&
+      period.monthlyRows === (year - 2004) * 12 + month,
+    "population-metadata-contract-mismatch",
+    "Population metadata contains an invalid baseline coverage period.",
+  );
+}
+
+function validateWorkbookMediaType(contentType) {
+  const mediaType =
+    typeof contentType === "string" ? contentType.split(";", 1)[0].trim().toLowerCase() : "";
+  invariant(
+    [
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "application/vnd.ms-excel",
+      "application/octet-stream",
+      "application/zip",
+    ].includes(mediaType),
+    "population-workbook-invalid",
+    "Population download does not have an accepted XLSX media type.",
+  );
+  return mediaType;
+}
+
+function validateCoverageAgainstBaseline(coverage, baseline) {
+  if (!baseline) return;
+  validateBaselinePeriod(baseline);
+  invariant(
+    coverage.start === baseline.start &&
+      coverage.end >= baseline.end &&
+      coverage.monthlyRows >= baseline.monthlyRows,
+    "population-coverage-regression",
+    "Population source coverage regressed from the previously verified monthly range.",
+  );
+}
+
+async function readPriorObservations(root, verifiedObservations) {
+  let csv;
+  try {
+    csv = await readFile(path.join(root, CSV_PATH), "utf8");
+  } catch (error) {
+    if (error?.code !== "ENOENT") throw error;
+  }
+  let prior = new Map();
+  if (csv) {
+    const parsed = Papa.parse(csv, { header: false });
+    invariant(
+      !parsed.errors.length,
+      "population-metadata-contract-mismatch",
+      "Existing population CSV baseline cannot be parsed for revision comparison.",
+    );
+    prior = readRuntimeObservationsFromCsv(parsed.data);
+  }
+  for (const [period, value] of Object.entries(verifiedObservations)) {
+    if (!prior.has(period)) prior.set(period, value);
+  }
+  return prior;
+}
+
+function auditVerifiedObservations(observations, priorObservations) {
+  const overlap = [...priorObservations].filter(([period]) => observations.has(period));
+  const revisions = overlap
+    .filter(([period, previous]) => observations.get(period) !== previous)
+    .map(([period, previous]) => ({ period, previous, current: observations.get(period) }));
+  return {
+    comparedObservationCount: overlap.length,
+    changedObservationCount: revisions.length,
+    changedSample: revisions.slice(0, 10),
+  };
 }
 
 function readPopulationWorkbook(bytes) {
@@ -139,10 +309,15 @@ function readPopulationWorkbook(bytes) {
       "Population source is not a readable XLSX workbook.",
     );
   }
+  const sheetNames = workbook.SheetNames;
   invariant(
-    workbook.SheetNames?.[0] === EXPECTED_SHEET,
+    Array.isArray(sheetNames) &&
+      sheetNames.length > 0 &&
+      sheetNames[0] === EXPECTED_SHEET &&
+      new Set(sheetNames).size === sheetNames.length &&
+      sheetNames.slice(1).every((name) => OPTIONAL_SHEETS.has(name)),
     "population-workbook-contract-mismatch",
-    "Population workbook first sheet does not match the verified original-series sheet.",
+    "Population workbook sheets do not match the verified original-series sheet contract.",
   );
   const rows = XLSX.utils.sheet_to_json(workbook.Sheets[EXPECTED_SHEET], { header: 1 });
   const title = rows[0]?.[4];
@@ -176,7 +351,7 @@ function readPopulationWorkbook(bytes) {
     "population-workbook-contract-mismatch",
     "Population workbook column count changed.",
   );
-  return { rows, headers: buildHeaders(rows, columnCount), sheetCount: workbook.SheetNames.length };
+  return { rows, headers: buildHeaders(rows, columnCount), sheetCount: sheetNames.length };
 }
 
 function buildHeaders(rows, columnCount) {
@@ -240,7 +415,8 @@ function readRuntimeObservations(rows) {
       .trim()
       .match(/(\d+)月/);
     const total = row[4];
-    if (!monthMatch || typeof total !== "number" || !Number.isFinite(total) || total <= 0) continue;
+    if (!monthMatch || typeof total !== "number" || !Number.isInteger(total) || total <= 0)
+      continue;
     const month = Number(monthMatch[1]);
     if (month < 1 || month > 12) continue;
     const period = `${year}-${String(month).padStart(2, "0")}`;
@@ -355,9 +531,9 @@ function readRuntimeObservationsFromCsv(rows) {
       .trim()
       .replaceAll(",", "");
     if (!monthMatch || !totalText || totalText === "-" || totalText === "…") continue;
-    const total = Number.parseFloat(totalText);
+    const total = Number(totalText);
     const month = Number(monthMatch[1]);
-    if (!Number.isFinite(total) || total <= 0 || month < 1 || month > 12) continue;
+    if (!Number.isInteger(total) || total <= 0 || month < 1 || month > 12) continue;
     const period = `${year}-${String(month).padStart(2, "0")}`;
     invariant(
       !observations.has(period),
@@ -367,10 +543,6 @@ function readRuntimeObservationsFromCsv(rows) {
     observations.set(period, total);
   }
   return observations;
-}
-
-function provenanceMismatch(message) {
-  return new RefreshError("population-source-provenance-mismatch", message);
 }
 
 function sha256(value) {

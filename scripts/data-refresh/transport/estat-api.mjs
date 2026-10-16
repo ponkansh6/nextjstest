@@ -6,6 +6,26 @@ const DEFAULT_ENDPOINT = "https://api.e-stat.go.jp/rest/3.0/app/json/getStatsDat
 const DEFAULT_META_ENDPOINT = "https://api.e-stat.go.jp/rest/3.0/app/json/getMetaInfo";
 const DEFAULT_LIST_ENDPOINT = "https://api.e-stat.go.jp/rest/3.0/app/json/getStatsList";
 const DEFAULT_CATALOG_ENDPOINT = "https://api.e-stat.go.jp/rest/3.0/app/json/getDataCatalog";
+const EMPTY_CATALOG_CANDIDATE_COUNTS = Object.freeze({
+  catalogRows: 0,
+  datasetRows: 0,
+  resourceRows: 0,
+  expectedIdMatches: 0,
+  allowedFormatMatches: 0,
+  httpsOfficialHostMatches: 0,
+  datasetTitleMarkerMatches: 0,
+  resourceTitleMarkerMatches: 0,
+  parseableDateMatches: 0,
+  fullMatches: 0,
+  latestTieCount: 0,
+});
+
+function catalogCandidateError(message, candidateDiagnostics = EMPTY_CATALOG_CANDIDATE_COUNTS) {
+  const error = new RefreshError("candidate-resolution-pending", message);
+  error.apiPhase = "catalog";
+  error.candidateDiagnostics = candidateDiagnostics;
+  return error;
+}
 
 function safeStatus(response) {
   return `HTTP ${response.status}`;
@@ -28,6 +48,13 @@ function apiBusinessError(phase, result, operation) {
   return error;
 }
 
+function apiSchemaError(phase, message, schemaFailureCode) {
+  const error = new RefreshError("api-invalid-schema", message);
+  error.apiPhase = phase;
+  if (schemaFailureCode) error.apiSchemaFailureCode = schemaFailureCode;
+  return error;
+}
+
 function asArray(value) {
   if (Array.isArray(value)) return value;
   return value && typeof value === "object" ? [value] : [];
@@ -42,12 +69,27 @@ function listRecordsFrom(payload) {
   return asArray(value);
 }
 
-function catalogDatasetsFrom(payload) {
-  const root =
-    payload?.GET_DATA_CATALOG?.DATA_CATALOG ??
-    payload?.GET_DATA_CATALOG?.CATALOG_INF ??
-    payload?.GET_DATA_CATALOG;
-  return asArray(root?.DATASET ?? root?.DATASET_INF ?? root?.CATALOG);
+function catalogEntriesFrom(payload) {
+  return asArray(payload?.GET_DATA_CATALOG?.DATA_CATALOG_LIST_INF?.DATA_CATALOG_INF);
+}
+
+function normalizeCatalogEntries(entries) {
+  return entries.map((entry) => {
+    const dataset = entry?.DATASET;
+    const resources = asArray(entry?.RESOURCES?.RESOURCE);
+    if (
+      !dataset ||
+      typeof dataset !== "object" ||
+      Array.isArray(dataset) ||
+      resources.length === 0 ||
+      resources.some(
+        (resource) => !resource || typeof resource !== "object" || Array.isArray(resource),
+      )
+    ) {
+      throw apiSchemaError("catalog", "e-Stat data-catalog entry has an unexpected schema.");
+    }
+    return { ...dataset, RESOURCE: resources };
+  });
 }
 
 /** Resolve an official file resource by semantic identity, keeping catalog and legacy IDs distinct. */
@@ -55,19 +97,27 @@ export function resolveCatalogResource(
   datasets,
   {
     statInfId,
+    requiredStatInfId,
     expectedFormat,
     titleIncludes = [],
     datasetIncludes = [],
     resourceIncludes = [],
     tableIncludes = [],
     categoryIncludes = [],
+    subCategory1Includes = [],
     periodIncludes = [],
     yearIncludes = [],
   } = {},
 ) {
+  const candidateDiagnostics = { ...EMPTY_CATALOG_CANDIDATE_COUNTS };
+  candidateDiagnostics.catalogRows = Array.isArray(datasets) ? datasets.length : 0;
   if (
     !Array.isArray(datasets) ||
     (statInfId !== undefined && !/^\d{8,16}$/.test(statInfId)) ||
+    (requiredStatInfId !== undefined && !/^\d{8,16}$/.test(requiredStatInfId)) ||
+    (requiredStatInfId !== undefined &&
+      statInfId !== undefined &&
+      requiredStatInfId !== statInfId) ||
     !["CSV", "XLS", "XLSX"].includes(String(expectedFormat).toUpperCase()) ||
     ![
       titleIncludes,
@@ -75,23 +125,37 @@ export function resolveCatalogResource(
       resourceIncludes,
       tableIncludes,
       categoryIncludes,
+      subCategory1Includes,
       periodIncludes,
       yearIncludes,
     ].every(Array.isArray)
   ) {
-    throw new RefreshError(
-      "candidate-resolution-pending",
+    throw catalogCandidateError(
       "Data-catalog identity contract is incomplete.",
+      candidateDiagnostics,
     );
   }
+  if (subCategory1Includes.length) candidateDiagnostics.subCategory1MarkerMatches = 0;
   const semantic = [];
   for (const dataset of datasets) {
+    if (!dataset || typeof dataset !== "object" || Array.isArray(dataset)) continue;
+    candidateDiagnostics.datasetRows += 1;
     const datasetTitle = catalogTitle(dataset?.TITLE);
     const releaseDate = catalogText(dataset?.RELEASE_DATE);
     const lastModifiedDate = catalogText(dataset?.LAST_MODIFIED_DATE);
     const resources = asArray(dataset?.RESOURCE);
+    const datasetMarkerMatch =
+      Boolean(datasetTitle) && datasetIncludes.every((marker) => datasetTitle.includes(marker));
     for (const resource of resources) {
+      candidateDiagnostics.resourceRows += 1;
+      if (!resource || typeof resource !== "object" || Array.isArray(resource)) continue;
       const title = catalogTitle(resource?.TITLE);
+      const tableTitle = catalogTitle(
+        resource?.TITLE?.TABLE_NAME ?? resource?.TABLE_NAME ?? resource?.TITLE,
+      );
+      const subCategory1Title = catalogTitle(
+        resource?.TITLE?.TABLE_SUB_CATEGORY1 ?? resource?.TABLE_SUB_CATEGORY1,
+      );
       const url = catalogText(resource?.URL);
       const format = catalogText(resource?.FORMAT).toUpperCase();
       const normalizedFormat =
@@ -100,14 +164,39 @@ export function resolveCatalogResource(
       try {
         parsed = new URL(url);
       } catch {
-        continue;
+        parsed = undefined;
       }
-      const combinedTitle = `${datasetTitle} ${title}`;
-      const legacyStatInfId = parsed.searchParams.get("statInfId");
+      const combinedTitle = `${datasetTitle} ${title} ${tableTitle}`;
+      const legacyStatInfId = parsed?.searchParams.get("statInfId") ?? null;
+      const expectedStatInfId = requiredStatInfId ?? statInfId;
+      if (legacyStatInfId === expectedStatInfId && expectedStatInfId !== undefined)
+        candidateDiagnostics.expectedIdMatches += 1;
+      const formatMatch = normalizedFormat === String(expectedFormat).toUpperCase();
+      if (formatMatch) candidateDiagnostics.allowedFormatMatches += 1;
+      const officialHostMatch =
+        parsed?.protocol === "https:" && OFFICIAL_RESOURCE_HOSTS.includes(parsed.hostname);
+      if (officialHostMatch) candidateDiagnostics.httpsOfficialHostMatches += 1;
+      const resourceMarkerMatch =
+        Boolean(title) && resourceIncludes.every((marker) => title.includes(marker));
+      const tableMarkerMatch =
+        Boolean(tableTitle) && tableIncludes.every((marker) => tableTitle.includes(marker));
+      const subCategory1MarkerMatch =
+        !subCategory1Includes.length ||
+        (Boolean(subCategory1Title) &&
+          subCategory1Includes.every(
+            (marker) =>
+              normalizedCatalogValue(subCategory1Title) === normalizedCatalogValue(marker),
+          ));
+      if (subCategory1Includes.length && subCategory1MarkerMatch)
+        candidateDiagnostics.subCategory1MarkerMatches += 1;
+      if (datasetMarkerMatch) candidateDiagnostics.datasetTitleMarkerMatches += 1;
+      if (resourceMarkerMatch) candidateDiagnostics.resourceTitleMarkerMatches += 1;
+      const parseableDates =
+        Number.isFinite(dateValue(releaseDate)) && Number.isFinite(dateValue(lastModifiedDate));
+      if (parseableDates) candidateDiagnostics.parseableDateMatches += 1;
       const resourceId = catalogText(resource?.["@id"] ?? resource?.ID);
       const fullTitleMarkers = [
         ...titleIncludes,
-        ...tableIncludes,
         ...categoryIncludes,
         ...periodIncludes,
         ...yearIncludes,
@@ -116,21 +205,25 @@ export function resolveCatalogResource(
         (legacyStatInfId !== null && !/^\d{8,16}$/.test(legacyStatInfId)) ||
         !resourceId ||
         !/^[A-Za-z0-9._-]{1,128}$/.test(resourceId) ||
-        normalizedFormat !== String(expectedFormat).toUpperCase() ||
+        !formatMatch ||
         !datasetTitle ||
         !title ||
         !releaseDate ||
         !lastModifiedDate ||
         !fullTitleMarkers.every((marker) => combinedTitle.includes(marker)) ||
-        !datasetIncludes.every((marker) => datasetTitle.includes(marker)) ||
-        !resourceIncludes.every((marker) => title.includes(marker))
+        !datasetMarkerMatch ||
+        !resourceMarkerMatch ||
+        !tableMarkerMatch ||
+        !subCategory1MarkerMatch
       )
         continue;
-      if (parsed.protocol !== "https:" || !OFFICIAL_RESOURCE_HOSTS.includes(parsed.hostname))
-        continue;
+      if (!officialHostMatch) continue;
+      if (requiredStatInfId !== undefined && legacyStatInfId !== requiredStatInfId) continue;
+      candidateDiagnostics.fullMatches += 1;
       semantic.push({
         datasetTitle,
         resourceTitle: title,
+        tableTitle,
         url: parsed.toString(),
         format: normalizedFormat,
         catalogFormat: format,
@@ -142,23 +235,24 @@ export function resolveCatalogResource(
     }
   }
   if (!semantic.length)
-    throw new RefreshError(
-      "candidate-resolution-pending",
+    throw catalogCandidateError(
       "No DataCatalog resource matches the complete semantic file identity and format.",
+      candidateDiagnostics,
     );
   const latestDate = (candidate) =>
     Math.max(dateValue(candidate.releaseDate), dateValue(candidate.lastModifiedDate));
   if (semantic.some((candidate) => !Number.isFinite(latestDate(candidate))))
-    throw new RefreshError(
-      "candidate-resolution-pending",
+    throw catalogCandidateError(
       "DataCatalog candidate dates are not comparable.",
+      candidateDiagnostics,
     );
   semantic.sort((a, b) => latestDate(b) - latestDate(a));
   const newest = semantic.filter((candidate) => latestDate(candidate) === latestDate(semantic[0]));
+  candidateDiagnostics.latestTieCount = newest.length;
   if (newest.length !== 1)
-    throw new RefreshError(
-      "candidate-resolution-pending",
+    throw catalogCandidateError(
       "Multiple equally recent DataCatalog resources match the required file identity.",
+      candidateDiagnostics,
     );
   const selected = newest[0];
   return { ...selected, candidateCount: semantic.length };
@@ -173,8 +267,19 @@ function catalogText(value) {
   return text.length <= 500 && !hasControl ? text : "";
 }
 
+function normalizedCatalogValue(value) {
+  return String(value ?? "")
+    .normalize("NFKC")
+    .replace(/\s+/gu, "")
+    .trim();
+}
+
 function catalogTitle(value) {
-  const text = catalogText(value);
+  const titleValue =
+    value && typeof value === "object" && !Array.isArray(value) && Object.hasOwn(value, "NAME")
+      ? value.NAME
+      : value;
+  const text = catalogText(titleValue);
   return text && !/(?:https?:\/\/|appId\s*=|api.?key|token\s*=)/i.test(text) ? text : "";
 }
 
@@ -238,46 +343,68 @@ export async function fetchDataCatalog({
         `e-Stat data-catalog request failed (${safeStatus(response)}).`,
       );
     if (!payload || typeof payload !== "object" || Array.isArray(payload))
-      throw new RefreshError(
-        "api-invalid-schema",
+      throw apiSchemaError(
+        "catalog",
         "e-Stat data-catalog response has an unexpected schema.",
+        "payload-not-object",
       );
     const root = payload.GET_DATA_CATALOG;
     const result = root?.RESULT;
     if (!result || String(result.STATUS) !== "0")
-      throw apiBusinessError("data-catalog", result, "data-catalog");
-    const catalog = root.DATA_CATALOG ?? root.CATALOG_INF ?? root;
-    const resultInf = catalog?.RESULT_INF ?? root.RESULT_INF;
-    if (!resultInf || typeof resultInf !== "object")
-      throw new RefreshError(
-        "api-invalid-schema",
+      throw apiBusinessError("catalog", result, "data-catalog");
+    const catalogList = root?.DATA_CATALOG_LIST_INF;
+    const resultInf = catalogList?.RESULT_INF;
+    if (
+      !catalogList ||
+      typeof catalogList !== "object" ||
+      Array.isArray(catalogList) ||
+      !resultInf ||
+      typeof resultInf !== "object" ||
+      Array.isArray(resultInf)
+    )
+      throw apiSchemaError(
+        "catalog",
         "e-Stat data-catalog response is missing paging metadata.",
+        "paging-metadata-missing",
       );
-    const total = Number(resultInf.TOTAL_NUMBER);
+    const rawTotal = catalogList.NUMBER;
+    const total =
+      typeof rawTotal === "number" || (typeof rawTotal === "string" && /^\d+$/.test(rawTotal))
+        ? Number(rawTotal)
+        : Number.NaN;
     if (
       !Number.isSafeInteger(total) ||
       total < 0 ||
       (expectedTotal !== undefined && total !== expectedTotal)
     )
-      throw new RefreshError(
-        "api-invalid-schema",
+      throw apiSchemaError(
+        "catalog",
         "e-Stat data-catalog total is invalid or changed between pages.",
+        "total-invalid",
       );
     expectedTotal = total;
-    const page = catalogDatasetsFrom(payload);
-    if (page.length > limit)
+    const rawCatalogPage = catalogList.DATA_CATALOG_INF;
+    if (
+      rawCatalogPage !== undefined &&
+      rawCatalogPage !== null &&
+      typeof rawCatalogPage !== "object"
+    )
+      throw apiSchemaError("catalog", "e-Stat data-catalog entries have an unexpected schema.");
+    const catalogPage = catalogEntriesFrom(payload);
+    if (catalogPage.length > limit)
       throw new RefreshError(
         "api-limit-exceeded",
         "e-Stat data-catalog returned more datasets than requested.",
       );
+    const page = normalizeCatalogEntries(catalogPage);
     const from = Number(resultInf.FROM_NUMBER);
     const to = Number(resultInf.TO_NUMBER);
     if (
-      page.length &&
+      catalogPage.length &&
       (!Number.isSafeInteger(from) ||
         !Number.isSafeInteger(to) ||
         from !== startPosition ||
-        to !== startPosition + page.length - 1)
+        to !== startPosition + catalogPage.length - 1)
     )
       throw new RefreshError(
         "api-page-range-mismatch",
@@ -292,8 +419,8 @@ export async function fetchDataCatalog({
       const nextPosition = Number(next);
       if (
         !Number.isSafeInteger(nextPosition) ||
-        nextPosition !== startPosition + page.length ||
-        page.length === 0
+        nextPosition !== startPosition + catalogPage.length ||
+        catalogPage.length === 0
       )
         throw new RefreshError(
           "api-invalid-next-key",
@@ -380,9 +507,10 @@ export async function fetchStatsList({
         `e-Stat table-list request failed (${safeStatus(response)}).`,
       );
     if (!payload || typeof payload !== "object" || Array.isArray(payload))
-      throw new RefreshError(
-        "api-invalid-schema",
+      throw apiSchemaError(
+        "table-list",
         "e-Stat table-list response has an unexpected schema.",
+        "payload-not-object",
       );
     const root = payload.GET_STATS_LIST;
     const result = root?.RESULT;
@@ -391,19 +519,21 @@ export async function fetchStatsList({
     const list = root?.DATALIST_INF;
     const resultInf = list?.RESULT_INF;
     if (!list || typeof list !== "object" || !resultInf || typeof resultInf !== "object")
-      throw new RefreshError(
-        "api-invalid-schema",
+      throw apiSchemaError(
+        "table-list",
         "e-Stat table-list response is missing paging metadata.",
+        "paging-metadata-missing",
       );
-    const total = Number(resultInf.TOTAL_NUMBER);
+    const total = Number(list.NUMBER);
     if (
       !Number.isSafeInteger(total) ||
       total < 0 ||
       (expectedTotal !== undefined && total !== expectedTotal)
     )
-      throw new RefreshError(
-        "api-invalid-schema",
+      throw apiSchemaError(
+        "table-list",
         "e-Stat table-list total is invalid or changed between pages.",
+        "total-invalid",
       );
     expectedTotal = total;
     const page = listRecordsFrom(payload);
@@ -525,7 +655,7 @@ export async function fetchStatsData({
     if (contentType && !/json/i.test(contentType))
       throw new RefreshError("api-invalid-content", "e-Stat API returned a non-JSON response.");
     if (!payload || typeof payload !== "object" || Array.isArray(payload))
-      throw new RefreshError("api-invalid-schema", "e-Stat API response has an unexpected schema.");
+      throw apiSchemaError("stats-data", "e-Stat API response has an unexpected schema.");
     const result = payload?.GET_STATS_DATA?.RESULT;
     if (!result || String(result.STATUS) !== "0")
       throw apiBusinessError("stats-data", result, "statistics data");
@@ -533,17 +663,14 @@ export async function fetchStatsData({
     const dataInf = statisticalData?.DATA_INF;
     const resultInf = statisticalData?.RESULT_INF;
     if (!dataInf || typeof dataInf !== "object" || !resultInf || typeof resultInf !== "object")
-      throw new RefreshError(
-        "api-invalid-schema",
+      throw apiSchemaError(
+        "stats-data",
         "e-Stat API response is missing statistical data or paging metadata.",
       );
     const records = recordsFrom(payload);
     const total = Number(resultInf.TOTAL_NUMBER);
     if (!Number.isSafeInteger(total) || total < 0)
-      throw new RefreshError(
-        "api-invalid-schema",
-        "e-Stat API returned an invalid filtered total count.",
-      );
+      throw apiSchemaError("stats-data", "e-Stat API returned an invalid filtered total count.");
     if (expectedTotal !== undefined && total !== expectedTotal)
       throw new RefreshError(
         "api-inconsistent-total",
@@ -655,10 +782,7 @@ export async function fetchMetaInfo({
   if (!result || String(result.STATUS) !== "0")
     throw apiBusinessError("metadata", result, "metadata");
   if (!metadata || typeof metadata !== "object")
-    throw new RefreshError(
-      "api-invalid-schema",
-      "e-Stat metadata response has an unexpected schema.",
-    );
+    throw apiSchemaError("metadata", "e-Stat metadata response has an unexpected schema.");
   return payload;
 }
 

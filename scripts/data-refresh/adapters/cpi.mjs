@@ -1,6 +1,8 @@
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import iconv from "iconv-lite";
+import Papa from "papaparse";
 import {
   fetchDataCatalog,
   fetchMetaInfo,
@@ -8,6 +10,7 @@ import {
   fetchStatsList,
   resolveCatalogResource,
 } from "../transport/estat-api.mjs";
+import { fetchOfficialFile, OFFICIAL_ESTAT_FILE_HOSTS } from "../transport/file.mjs";
 import { RefreshError, invariant } from "../lib/errors.mjs";
 
 const API_STATS_DATA_ID = "0004052037";
@@ -26,6 +29,7 @@ export async function cpiAdapter({
   now = () => new Date(),
   transportConfig = {},
   fetchImpl = fetch,
+  fetchFile = fetchOfficialFile,
   fetchApi,
   getMetaInfo,
   getStatsList,
@@ -98,6 +102,7 @@ export async function cpiAdapter({
   const series = parseCsv(mapBytes.toString("utf8"));
   const snapshot = parseCsv(snapshotBytes.toString("utf8"));
   validateLocalSeries(series, snapshot);
+  const categoryFilter = series.map(({ official_code }) => official_code).join(",");
   const canonicalBytes = await readFile(path.join(root, "data/source/cpi_data2025_long.csv"));
   const canonical = validateCanonicalCsv(canonicalBytes, meta, series);
 
@@ -166,6 +171,8 @@ export async function cpiAdapter({
       );
     const datasets = Array.isArray(catalogResult) ? catalogResult : catalogResult?.datasets;
     fileCandidate = resolveCatalogResource(datasets, {
+      statInfId: source.candidateIdentity?.fileStatInfId,
+      requiredStatInfId: source.candidateIdentity?.fileStatInfId,
       expectedFormat: distributionCandidateIdentity.format,
       titleIncludes: distributionCandidateIdentity.titleIncludes,
       datasetIncludes: distributionCandidateIdentity.datasetIncludes,
@@ -194,8 +201,15 @@ export async function cpiAdapter({
     );
   }
   const table = unwrapTable(metadataPayload, selectedStatsDataId);
-  const classifications = classMap(table);
-  validateOfficialMetadata(table, classifications, series, selected);
+  const metadataRoot = metadataPayload?.GET_META_INFO?.METADATA_INF ?? metadataPayload;
+  const classifications = classMap(table, metadataRoot?.CLASS_INF);
+  const timeMapping = validateOfficialMetadata(table, classifications, series, selected, snapshot);
+  const startTimeCode = timeMapping.monthlyCodeByPeriod.get("197001");
+  invariant(
+    startTimeCode,
+    "cpi-meta-time-unproven",
+    "e-Stat metadata has no official time code for January 1970.",
+  );
 
   const usesDefaultDataTransport = !fetchApi;
   const fetched = await (
@@ -207,9 +221,19 @@ export async function cpiAdapter({
         fetchImpl: captureFetch,
         endpoint: DATA_ENDPOINT,
         limit: apiLimit,
-        filters: { cdArea: "00000", cdTab: "1", cdTimeFrom: "197001" },
+        filters: {
+          cdArea: "00000",
+          cdTab: "1",
+          cdTimeFrom: startTimeCode,
+          cdCat01: categoryFilter,
+        },
       }))
-  )(selectedStatsDataId, { cdArea: "00000", cdTab: "1", cdTimeFrom: "197001" });
+  )(selectedStatsDataId, {
+    cdArea: "00000",
+    cdTab: "1",
+    cdTimeFrom: startTimeCode,
+    cdCat01: categoryFilter,
+  });
   const records = Array.isArray(fetched) ? fetched : fetched?.records;
   invariant(
     Array.isArray(records) && records.length > 0,
@@ -232,15 +256,47 @@ export async function cpiAdapter({
       "cpi-api-raw-capture-incomplete",
       "CPI API page response hash evidence is incomplete.",
     );
+    invariant(
+      Number.isSafeInteger(fetched.declaredTotal) && fetched.declaredTotal === records.length,
+      "cpi-api-page-count-mismatch",
+      "CPI API pagination did not account for every returned observation row.",
+    );
   }
-  const { rows, coverage, unit } = buildRows(records, classifications, series);
+  const { rows, coverage, unit: declaredUnit } = buildRows(records, series, timeMapping);
   invariant(
     coverage.endCode >= canonical.endCode,
     "cpi-period-regression",
     "The current CPI API period regresses behind the validated canonical history.",
   );
+  const distributionResponse = await fetchFile({
+    url: fileCandidate.url,
+    allowedHosts: OFFICIAL_ESTAT_FILE_HOSTS,
+    fetchImpl,
+  });
+  const distributionBytes = distributionResponse?.bytes;
+  invariant(
+    distributionBytes instanceof Uint8Array && distributionBytes.byteLength > 0,
+    "cpi-distribution-file-invalid",
+    "The selected CPI distribution file returned no byte content.",
+  );
+  const distribution = parseCpiDistributionCsv(distributionBytes, series);
+  const distributionApiIdentity = compareApiToDistribution(rows, series, distribution, {
+    byteLength: distributionBytes.byteLength,
+    sha256: sha256(distributionBytes),
+  });
   const revisionSummary = compareOverlappingHistory(rows, canonical, series);
+  invariant(
+    revisionSummary.comparedValueCount === canonical.records.size * series.length,
+    "cpi-canonical-overlap-incomplete",
+    "The CPI source did not compare every canonical overlap cell.",
+  );
   validateBaseYearIndex(rows, series);
+  const unit = declaredUnit || timeMapping.metadataUnit || "2025年=100";
+  const unitEvidence = timeMapping.metadataUnitDeclared
+    ? "official-metadata"
+    : declaredUnit
+      ? "official-value-rows"
+      : "historical-overlap-plus-2025-base-year";
   const csvBytes = Buffer.from(`${rows.map((row) => row.map(csvCell).join(",")).join("\n")}\n`);
   const snapshotBytesOut = createSeriesSnapshot(rows, series);
   const stamp = now().toISOString().slice(0, 10);
@@ -261,6 +317,7 @@ export async function cpiAdapter({
       updatedDate: selected.updatedDate,
       openDate: selected.openDate,
       unit,
+      unitEvidence,
       classification: "nationwide index; tab 1; 78 cat01 series",
       classificationsSha256: sha256(
         Buffer.from(
@@ -276,7 +333,8 @@ export async function cpiAdapter({
       format: "JSON",
       cdArea: "00000",
       cdTab: "1",
-      cdTimeFrom: "197001",
+      cdTimeFrom: startTimeCode,
+      cdCat01: categoryFilter,
       latestReturnedTime: coverage.endCode,
       limit: apiLimit,
     },
@@ -305,6 +363,9 @@ export async function cpiAdapter({
     contributionFile: "contribution2025.csv",
     contributionSha256: sha256(contributionBytes),
     officialSeriesSnapshotSha256: sha256(snapshotBytesOut),
+    distributionFileSha256: sha256(distributionBytes),
+    distributionFileByteLength: distributionBytes.byteLength,
+    distributionApiIdentity,
     period: {
       start: "1970年1月",
       end: japaneseMonth(coverage.endCode),
@@ -312,6 +373,12 @@ export async function cpiAdapter({
     },
     seriesCount: series.length,
     revisionSummary,
+    valueIdentityEvidence: {
+      comparedValueCount: revisionSummary.comparedValueCount,
+      startMonth: revisionSummary.startMonth,
+      endMonth: revisionSummary.endMonth,
+      mismatchCount: revisionSummary.count,
+    },
     extraction: {
       area: "全国 (cdArea=00000)",
       frequency: "月次",
@@ -357,7 +424,14 @@ export async function cpiAdapter({
     "cpi-api-raw-fetches-invalid",
     "CPI API transport returned malformed raw response evidence.",
   );
-  const rawFetches = [...capturedResponses, ...(fetched?.rawFetches ?? [])];
+  const rawFetches = [
+    ...capturedResponses,
+    ...(fetched?.rawFetches ?? []),
+    {
+      name: `estat-cpi-file-${fileCandidate.legacyStatInfId ?? source.distributionIdentity.statInfId}`,
+      bytes: distributionBytes,
+    },
+  ];
   invariant(
     rawFetches.every((item) => typeof item?.name === "string" && item.bytes instanceof Uint8Array),
     "cpi-api-raw-fetches-invalid",
@@ -381,6 +455,20 @@ export async function cpiAdapter({
       exactSeriesMap: true,
       uniqueMonthlyRows: true,
       missingValuesPreserved: true,
+      actualValuePeriodValidated: true,
+      distributionApiIdentityValidated: true,
+      distributionComparedValueCount: distributionApiIdentity.comparedValueCount,
+      distributionMismatchCount: distributionApiIdentity.mismatchCount,
+      unitEvidence,
+      overlapComparedValueCount: revisionSummary.comparedValueCount,
+      overlapStartMonth: revisionSummary.startMonth,
+      overlapEndMonth: revisionSummary.endMonth,
+      overlapMismatchCount: revisionSummary.count,
+      metadataTimeDimensionFound: timeMapping.diagnostics.timeDimensionFound,
+      metadataTimeRowCount: timeMapping.diagnostics.rowCount,
+      metadataTimeMonthlyPeriodCount: timeMapping.diagnostics.monthlyPeriodCount,
+      metadataTimeAnnualPeriodCount: timeMapping.diagnostics.annualPeriodCount,
+      metadataTimeMonthlyContinuity: timeMapping.diagnostics.monthlyContinuity,
       revisions: revisionSummary.count,
     },
     reportSummary: {
@@ -405,7 +493,7 @@ export async function cpiAdapter({
       fileFormat: fileCandidate.format,
       fileReleaseDate: fileCandidate.releaseDate,
       fileLastModifiedDate: fileCandidate.lastModifiedDate,
-      filters: { cdArea: "00000", cdTab: "1", cdTimeFrom: "197001" },
+      filters: { cdArea: "00000", cdTab: "1", cdTimeFrom: startTimeCode, cdCat01: categoryFilter },
       table: selected.title,
       classification: "CPI 2025 base; nationwide monthly index; 78 cat01 series",
       retrievedAt: newMeta.retrievedAt,
@@ -414,9 +502,12 @@ export async function cpiAdapter({
       coverageCount: rows.length - 1,
       revisionCount: revisionSummary.count,
       revisionHash: sha256(Buffer.from(JSON.stringify(revisionSummary))),
+      revisionStartMonth: revisionSummary.revisionStartMonth,
+      revisionEndMonth: revisionSummary.revisionEndMonth,
+      revisionComparedValueCount: revisionSummary.comparedValueCount,
       revisionSamples: revisionSummary.samples
         .slice(0, 10)
-        .map(({ seriesIndex, month }) => ({ seriesId: series[seriesIndex]?.official_code, month })),
+        .map(({ code, month }) => ({ seriesId: code, month })),
       outputHashes: artifacts.map(({ path: output, bytes }) => ({
         path: output,
         newSha256: sha256(bytes),
@@ -458,80 +549,103 @@ export function resolveCpiCandidate(candidates, source) {
   );
   const contract = source?.candidateIdentity || {
     expectedStatsDataId: source?.identity?.statsDataId,
-    statisticsIncludes: "消費者物価指数",
+    expectedTitle: "消費者物価指数（2025年基準）",
+    expectedStatisticsName: "消費者物価指数",
     titleIncludes: ["消費者物価指数", "2025年基準"],
     cycleIncludes: ["月次", "毎月"],
     surveyYear: "2025",
   };
   invariant(
-    Array.isArray(contract.titleIncludes) &&
-      contract.titleIncludes.length > 0 &&
-      Array.isArray(contract.cycleIncludes) &&
-      contract.cycleIncludes.length > 0 &&
-      typeof contract.surveyYear === "string" &&
-      /^\d{4}$/.test(contract.surveyYear),
+    /^\d{8,16}$/.test(String(contract.expectedStatsDataId || "")) &&
+      contract.expectedStatsDataId === source?.identity?.statsDataId &&
+      typeof contract.expectedTitle === "string" &&
+      contract.expectedTitle.length > 0 &&
+      typeof contract.expectedStatisticsName === "string" &&
+      contract.expectedStatisticsName.length > 0 &&
+      Array.isArray(contract.titleIncludes) &&
+      contract.titleIncludes.length > 0,
     "cpi-candidate-contract-invalid",
     "CPI candidate semantic identity contract is incomplete.",
   );
-  const semantic = candidates
-    .map((candidate) => {
-      const id = safeCandidateText(candidate?.["@id"] ?? candidate?.ID ?? candidate?.statsDataId);
-      const title = safeCandidateText(candidate?.TITLE);
-      const statistics = safeCandidateText(candidate?.STAT_NAME ?? candidate?.STATISTICS_NAME);
-      const cycle = safeCandidateText(candidate?.CYCLE);
-      const surveyDate = safeCandidateText(candidate?.SURVEY_DATE);
-      const updatedDate = safeCandidateText(candidate?.UPDATED_DATE);
-      const openDate = safeCandidateText(candidate?.OPEN_DATE);
-      const unit = safeCandidateText(candidate?.UNIT);
-      return { id, title, statistics, cycle, surveyDate, updatedDate, openDate, unit };
-    })
-    .filter(
-      (candidate) =>
-        /^\d{8,16}$/.test(candidate.id) &&
-        candidate.title &&
-        candidate.statistics &&
-        candidate.updatedDate &&
-        (contract.titleIncludes || []).every((part) => candidate.title.includes(part)) &&
-        candidate.statistics.includes(contract.statisticsIncludes || "消費者物価指数") &&
-        (contract.cycleIncludes || []).some((part) => candidate.cycle.includes(part)) &&
-        candidate.surveyDate.includes(contract.surveyYear || "2025"),
-    );
-  invariant(
-    semantic.length > 0,
-    "cpi-candidate-not-found",
-    "No e-Stat table candidate proves the required 2025-base monthly CPI identity.",
-  );
-  const dateValue = (value) => {
-    const japanese = /^(\d{4})年(\d{1,2})月(?:\d{1,2}日)?$/.exec(value);
-    const normalized = japanese ? `${japanese[1]}-${japanese[2].padStart(2, "0")}-01` : value;
-    const parsed = Date.parse(normalized);
-    return Number.isFinite(parsed) ? parsed : Number.NaN;
+  const diagnosticCycleIncludes = Array.isArray(contract.cycleIncludes)
+    ? contract.cycleIncludes.filter((value) => typeof value === "string" && value.length > 0)
+    : ["月次", "毎月"];
+  const diagnosticSurveyYear =
+    typeof contract.surveyYear === "string" && /^\d{4}$/.test(contract.surveyYear)
+      ? contract.surveyYear
+      : "2025";
+  const candidateRows = candidates.map((candidate) => {
+    const id = safeCandidateText(candidate?.["@id"] ?? candidate?.ID ?? candidate?.statsDataId);
+    const title = safeCandidateText(candidate?.TITLE);
+    const statistics = safeCandidateText(candidate?.STAT_NAME ?? candidate?.STATISTICS_NAME);
+    const cycle = safeCandidateText(candidate?.CYCLE);
+    const surveyDate = safeCandidateText(candidate?.SURVEY_DATE);
+    const updatedDate = safeCandidateText(candidate?.UPDATED_DATE);
+    const openDate = safeCandidateText(candidate?.OPEN_DATE);
+    const unit = safeCandidateText(candidate?.UNIT);
+    return { id, title, statistics, cycle, surveyDate, updatedDate, openDate, unit };
+  });
+  const hasRequiredIdentityFields = (candidate) =>
+    /^\d{8,16}$/.test(candidate.id) && Boolean(candidate.title && candidate.statistics);
+  const hasTitleAndStatNameIdentity = (candidate) =>
+    hasRequiredIdentityFields(candidate) &&
+    candidate.title === contract.expectedTitle &&
+    candidate.statistics === contract.expectedStatisticsName;
+  const hasMonthlyFrequency = (candidate) =>
+    hasRequiredIdentityFields(candidate) &&
+    diagnosticCycleIncludes.some((part) => candidate.cycle.includes(part));
+  const hasSurveyDate2025 = (candidate) =>
+    hasRequiredIdentityFields(candidate) && candidate.surveyDate.includes(diagnosticSurveyYear);
+  const titleAndStatNameMatches = candidateRows.filter(hasTitleAndStatNameIdentity);
+  const cycleCategory = (value) => {
+    if (!value) return "missing";
+    if (/(月次|毎月|monthly)/i.test(value)) return "monthly";
+    if (/(年次|毎年|年刊|annual)/i.test(value)) return "annual";
+    if (/(四半期|quarter)/i.test(value)) return "quarterly";
+    return "other";
   };
-  if (
-    semantic.some(
-      (candidate) =>
-        !Number.isFinite(dateValue(candidate.updatedDate)) ||
-        (candidate.openDate && !Number.isFinite(dateValue(candidate.openDate))),
-    )
-  ) {
-    throw new RefreshError("cpi-candidate-date-invalid", "CPI candidate dates are not comparable.");
-  }
-  const openValue = (candidate) =>
-    candidate.openDate ? dateValue(candidate.openDate) : Number.NEGATIVE_INFINITY;
-  semantic.sort(
-    (a, b) => dateValue(b.updatedDate) - dateValue(a.updatedDate) || openValue(b) - openValue(a),
-  );
-  const newest = semantic.filter(
+  const surveyYears = (value) => {
+    const years = new Set();
+    for (const match of value.matchAll(/(?:^|[^\d])(\d{4})(?!\d)/g)) {
+      const year = Number(match[1]);
+      if (year >= 1900 && year <= 2100) years.add(match[1]);
+    }
+    return [...years].sort((a, b) => Number(a) - Number(b));
+  };
+  const semantic = candidateRows.filter(
     (candidate) =>
-      dateValue(candidate.updatedDate) === dateValue(semantic[0].updatedDate) &&
-      openValue(candidate) === openValue(semantic[0]),
+      candidate.id === contract.expectedStatsDataId && hasTitleAndStatNameIdentity(candidate),
   );
+  if (semantic.length === 0) {
+    const error = new RefreshError(
+      "cpi-candidate-not-found",
+      "No e-Stat table candidate matches the configured CPI API identity.",
+    );
+    error.candidateDiagnostics = {
+      rowsReturned: candidateRows.length,
+      requiredIdentityFields: candidateRows.filter(hasRequiredIdentityFields).length,
+      titleAndStatNameIdentityMatch: candidateRows.filter(hasTitleAndStatNameIdentity).length,
+      monthlyFrequencyMatch: candidateRows.filter(hasMonthlyFrequency).length,
+      surveyDate2025Match: candidateRows.filter(hasSurveyDate2025).length,
+      fullMatch: semantic.length,
+      identityCandidates: titleAndStatNameMatches.slice(0, 3).map((candidate) => ({
+        statsDataId: candidate.id,
+        cycleCategory: cycleCategory(candidate.cycle),
+        surveyYears: surveyYears(candidate.surveyDate),
+      })),
+    };
+    throw error;
+  }
   invariant(
-    newest.length === 1,
+    semantic.length === 1,
     "cpi-candidate-ambiguous",
-    "Multiple equally recent e-Stat tables match the required 2025-base monthly CPI identity.",
+    "Multiple e-Stat tables match the configured CPI API identity.",
   );
-  return { ...newest[0], candidateCount: semantic.length, identityMarkers: contract.titleIncludes };
+  return {
+    ...semantic[0],
+    candidateCount: semantic.length,
+    identityMarkers: contract.titleIncludes,
+  };
 }
 
 function safeCandidateText(value) {
@@ -657,8 +771,13 @@ function unwrapTable(payload, statsDataId = API_STATS_DATA_ID) {
   return tables[0];
 }
 
-function classMap(table) {
-  const objects = asArray(table?.CLASS_INF?.CLASS_OBJ ?? table?.CLASS_INF);
+function classMap(table, siblingClassInf) {
+  const objects = asArray(
+    siblingClassInf?.CLASS_OBJ ??
+      siblingClassInf ??
+      table?.CLASS_INF?.CLASS_OBJ ??
+      table?.CLASS_INF,
+  );
   const result = new Map();
   for (const obj of objects) {
     const id = String(obj?.["@id"] ?? obj?.id ?? "");
@@ -667,7 +786,7 @@ function classMap(table) {
   return result;
 }
 
-function validateOfficialMetadata(table, classes, series, selected) {
+function validateOfficialMetadata(table, classes, series, selected, canonicalSnapshot) {
   const titleField = table.TITLE ?? table.STAT_NAME ?? table.STATISTICS_NAME ?? "";
   const title = String(titleField?.$ ?? titleField);
   invariant(
@@ -682,79 +801,270 @@ function validateOfficialMetadata(table, classes, series, selected) {
       table.STATISTICS_NAME ??
       title,
   );
-  const cycle = String(table.CYCLE?.$ ?? table.CYCLE ?? "");
-  const surveyDate = String(table.SURVEY_DATE?.$ ?? table.SURVEY_DATE ?? "");
-  const unit = String(table.UNIT?.$ ?? table.UNIT ?? "");
-  const normalizeTitle = (value) => value.replace(/\s+/g, " ").trim();
-  invariant(
-    selected &&
-      String(table?.["@id"] ?? table?.ID ?? "") === selected.id &&
-      normalizeTitle(title).includes(normalizeTitle(selected.title)) &&
-      selected.identityMarkers.every((marker) => title.includes(marker)) &&
-      statistics.includes(selected.statistics) &&
-      (!cycle || cycle.includes(selected.cycle) || selected.cycle.includes(cycle)) &&
-      (!surveyDate ||
-        surveyDate.includes(selected.surveyDate) ||
-        selected.surveyDate.includes(surveyDate)) &&
-      (!unit || unit.replaceAll("＝", "=").includes("2025年=100")) &&
-      (!selected.unit ||
-        !unit ||
-        unit.replaceAll("＝", "=").includes(selected.unit.replaceAll("＝", "="))),
-    "cpi-meta-candidate-mismatch",
-    "e-Stat metadata title, classification, unit, or ID does not match the selected CPI candidate.",
-  );
-  const area = classes.get("area") || classes.get("地域");
-  invariant(
-    area?.some((row) => codeOf(row) === "00000" && String(row["@name"] ?? row.name) === "全国"),
-    "cpi-meta-area-unproven",
-    "e-Stat metadata does not prove area 00000 is 全国.",
-  );
   const tab = classes.get("tab") || classes.get("表章項目");
   const index = tab?.find((row) => codeOf(row) === "1");
+  const normalizeTitle = (value) => value.replace(/\s+/g, " ").trim();
+  const candidateDiagnostics = {
+    selectedPresent: Boolean(selected),
+    idExact: Boolean(selected) && String(table?.["@id"] ?? table?.ID ?? "") === selected.id,
+    titleContainsSelectedTitle:
+      Boolean(selected) && normalizeTitle(title).includes(normalizeTitle(selected.title)),
+    identityMarkers:
+      Boolean(selected) &&
+      Array.isArray(selected.identityMarkers) &&
+      selected.identityMarkers.every((marker) => title.includes(marker)),
+    statisticsName: Boolean(selected) && statistics.includes(selected.statistics),
+  };
+  if (Object.values(candidateDiagnostics).some((passed) => !passed)) {
+    const error = new RefreshError(
+      "cpi-meta-candidate-mismatch",
+      "e-Stat metadata title, classification, or ID does not match the selected CPI candidate.",
+    );
+    error.candidateDiagnostics = candidateDiagnostics;
+    throw error;
+  }
+  const area = classes.get("area") || classes.get("地域");
+  const areaRows = Array.isArray(area) ? area : [];
+  const nationalCode00000Found = areaRows.some((row) => codeOf(row) === "00000");
+  const nationalNameNationalFound = areaRows.some(
+    (row) => String(row?.["@name"] ?? row?.name ?? "") === "全国",
+  );
+  const nationalCodeAndNameSameClass = areaRows.some(
+    (row) => codeOf(row) === "00000" && String(row?.["@name"] ?? row?.name ?? "") === "全国",
+  );
+  const cpiMetadataAreaDiagnostics = {
+    areaDimensionFound: Boolean(area),
+    nationalCode00000Found,
+    nationalNameNationalFound,
+    nationalCodeAndNameSameClass,
+  };
+  if (!nationalCodeAndNameSameClass) {
+    const error = new RefreshError(
+      "cpi-meta-area-unproven",
+      "e-Stat metadata does not prove area 00000 is 全国.",
+    );
+    error.cpiMetadataAreaDiagnostics = cpiMetadataAreaDiagnostics;
+    throw error;
+  }
   invariant(
     index && /指数/.test(String(index["@name"] ?? index.name ?? "")),
     "cpi-meta-tab-unproven",
     "e-Stat metadata does not prove tab 1 is the index item.",
   );
-  const categories = classes.get("cat01");
-  invariant(
-    categories?.length,
-    "cpi-meta-classification-unproven",
-    "e-Stat metadata is missing cat01 classifications.",
-  );
-  const official = new Map(
-    categories.map((row) => [codeOf(row), String(row["@name"] ?? row.name ?? "")]),
-  );
-  invariant(
-    official.size === 78 &&
-      series.every((row) => official.get(row.official_code) === row.display_name),
-    "cpi-meta-series-mismatch",
-    "e-Stat cat01 categories do not exactly match all 78 pinned official series.",
-  );
-  const times = classes.get("time");
-  invariant(
-    times?.length && times.some((row) => codeOf(row) === "197001"),
-    "cpi-meta-time-unproven",
-    "e-Stat metadata does not prove monthly coverage begins at 197001.",
-  );
-  for (const item of times) {
-    const code = codeOf(item);
-    if (/^\d{6}$/.test(code))
-      invariant(
-        isMonthCode(code),
-        "cpi-meta-time-unproven",
-        "e-Stat metadata contains an invalid monthly time code.",
-      );
+  const metadataUnitDeclared = Boolean(index && Object.hasOwn(index, "@unit"));
+  const metadataUnit = metadataUnitDeclared ? normalizeCpiUnit(index["@unit"]) : undefined;
+  if (metadataUnitDeclared) {
+    invariant(
+      metadataUnit === "2025年=100",
+      "cpi-meta-unit-unproven",
+      "e-Stat metadata does not declare the exact 2025=100 CPI unit.",
+    );
   }
+  const categoryClassObjFound = classes.has("cat01");
+  const categories = classes.get("cat01") || [];
+  const expectedNames = new Map(canonicalSnapshot.map((row) => [row.code, row.name]));
+  const categoryCodes = categories.map(codeOf);
+  const nonEmptyCategoryCodes = categoryCodes.filter(Boolean);
+  const rawCategoryName = (row) => row?.["@name"] ?? row?.name;
+  const normalizedCategoryName = (value, code) => {
+    const unwrapped =
+      value && typeof value === "object" && !Array.isArray(value) && Object.hasOwn(value, "$")
+        ? value.$
+        : value;
+    if (typeof unwrapped !== "string" && typeof unwrapped !== "number") return "";
+    let name = String(unwrapped);
+    if (code) {
+      const exactCodePrefix = String(code);
+      const remainingName = name.slice(exactCodePrefix.length);
+      if (name.startsWith(exactCodePrefix) && /^\s/u.test(remainingName)) {
+        name = remainingName.replace(/^\s+/u, "");
+      }
+    }
+    return name.normalize("NFKC").replace(/\s/gu, "");
+  };
+  const expectedCodeRows = categories.filter((row) => expectedNames.has(codeOf(row)));
+  const categoryDiagnostics = {
+    categoryClassObjFound,
+    rowCount: categories.length,
+    uniqueCodeCount: new Set(nonEmptyCategoryCodes).size,
+    expectedCodeMatchCount: categoryCodes.filter((code) => expectedNames.has(code)).length,
+    exactNameMatchCount: categories.filter(
+      (row) => expectedNames.get(codeOf(row)) === String(row?.["@name"] ?? row?.name ?? ""),
+    ).length,
+    namePrimitiveCount: categories.filter((row) => {
+      const value = rawCategoryName(row);
+      return (
+        value !== null &&
+        value !== undefined &&
+        typeof value !== "object" &&
+        typeof value !== "function" &&
+        String(value).trim() !== ""
+      );
+    }).length,
+    nameDollarWrappedCount: categories.filter((row) => {
+      const value = rawCategoryName(row);
+      return (
+        value !== null &&
+        typeof value === "object" &&
+        !Array.isArray(value) &&
+        Object.hasOwn(value, "$")
+      );
+    }).length,
+    nameMissingCount: categories.filter(
+      (row) => normalizedCategoryName(rawCategoryName(row)) === "",
+    ).length,
+    normalizedNameMatchCount: expectedCodeRows.filter(
+      (row) =>
+        normalizedCategoryName(rawCategoryName(row), codeOf(row)) ===
+        normalizedCategoryName(expectedNames.get(codeOf(row))),
+    ).length,
+    expectedCodeNamePresentCount: expectedCodeRows.filter(
+      (row) => normalizedCategoryName(rawCategoryName(row), codeOf(row)) !== "",
+    ).length,
+  };
+  if (
+    !categoryDiagnostics.categoryClassObjFound ||
+    categoryDiagnostics.rowCount !== categoryDiagnostics.uniqueCodeCount ||
+    categoryDiagnostics.expectedCodeMatchCount !== 78 ||
+    categoryDiagnostics.normalizedNameMatchCount !== 78
+  ) {
+    const error = new RefreshError(
+      "cpi-meta-series-mismatch",
+      "e-Stat cat01 categories do not contain all 78 expected CPI code/name identities uniquely.",
+    );
+    error.cpiMetadataCategoryDiagnostics = categoryDiagnostics;
+    throw error;
+  }
+  return {
+    ...mapOfficialTimeClasses(classes),
+    metadataUnit,
+    metadataUnitDeclared,
+  };
 }
 
-function buildRows(records, classes, series) {
+function mapOfficialTimeClasses(classes) {
+  const rows = classes.get("time") || [];
+  const byCode = new Map();
+  const monthlyCodeByPeriod = new Map();
+  const annualCodeByBasisYear = new Map();
+  const diagnostics = {
+    timeDimensionFound: classes.has("time"),
+    rowCount: rows.length,
+    monthlyPeriodCount: 0,
+    annualPeriodCount: 0,
+    malformedLabelCount: 0,
+    monthLabelPatternCount: 0,
+    calendarYearLabelPatternCount: 0,
+    fiscalYearLabelPatternCount: 0,
+    annualAverageLabelPatternCount: 0,
+    blankLabelCount: 0,
+    otherLabelPatternCount: 0,
+    malformedUniqueCodeCount: 0,
+    duplicateCodeCount: 0,
+    duplicatePeriodCount: 0,
+    requiredStartMonthFound: false,
+    monthlyContinuity: false,
+  };
+  for (const row of rows) {
+    const code = codeOf(row);
+    const rawName = row?.["@name"] ?? row?.name;
+    const name =
+      rawName && typeof rawName === "object" && !Array.isArray(rawName) ? rawName.$ : rawName;
+    const label = typeof name === "string" || typeof name === "number" ? String(name) : "";
+    const monthLabelPattern = /^\d{4}年\d{1,2}月$/.test(label);
+    const calendarYearLabelPattern = /^\d{4}年$/.test(label);
+    const fiscalYearLabelPattern = /^\d{4}年度$/.test(label);
+    const annualAverageLabelPattern = /^\d{4}(?:年|年度)平均$/.test(label);
+    if (monthLabelPattern) diagnostics.monthLabelPatternCount += 1;
+    else if (calendarYearLabelPattern) diagnostics.calendarYearLabelPatternCount += 1;
+    else if (fiscalYearLabelPattern) diagnostics.fiscalYearLabelPatternCount += 1;
+    else if (annualAverageLabelPattern) diagnostics.annualAverageLabelPatternCount += 1;
+    else if (!label.trim()) diagnostics.blankLabelCount += 1;
+    else diagnostics.otherLabelPatternCount += 1;
+
+    const monthMatch = /^(\d{4})年(\d{1,2})月$/.exec(label);
+    const calendarAnnualMatch = /^(\d{4})年(?:平均)?$/.exec(label);
+    const fiscalAnnualMatch = /^(\d{4})年度$/.exec(label);
+    const codeWasUnique = Boolean(code) && !byCode.has(code);
+    if (!codeWasUnique) {
+      diagnostics.duplicateCodeCount += code ? 1 : 0;
+      if (!code) diagnostics.malformedLabelCount += 1;
+      continue;
+    }
+    if (monthMatch && Number(monthMatch[2]) >= 1 && Number(monthMatch[2]) <= 12) {
+      const period = `${monthMatch[1]}${monthMatch[2].padStart(2, "0")}`;
+      if (monthlyCodeByPeriod.has(period)) {
+        diagnostics.duplicatePeriodCount += 1;
+        byCode.set(code, { kind: "invalid" });
+        continue;
+      }
+      const mapping = { kind: "monthly", period };
+      byCode.set(code, mapping);
+      monthlyCodeByPeriod.set(period, code);
+      diagnostics.monthlyPeriodCount += 1;
+      continue;
+    }
+    const annualMatch = calendarAnnualMatch || fiscalAnnualMatch;
+    if (annualMatch) {
+      const year = annualMatch[1];
+      const basis = fiscalAnnualMatch ? "fiscal" : "calendar";
+      const basisYear = `${basis}:${year}`;
+      if (annualCodeByBasisYear.has(basisYear)) {
+        diagnostics.duplicatePeriodCount += 1;
+        byCode.set(code, { kind: "invalid" });
+        continue;
+      }
+      byCode.set(code, { kind: "annual", basis, year });
+      annualCodeByBasisYear.set(basisYear, code);
+      diagnostics.annualPeriodCount += 1;
+      continue;
+    }
+    byCode.set(code, { kind: "invalid" });
+    diagnostics.malformedLabelCount += 1;
+    diagnostics.malformedUniqueCodeCount += 1;
+  }
+  const monthlyPeriods = [...monthlyCodeByPeriod.keys()].sort();
+  diagnostics.requiredStartMonthFound = monthlyPeriods[0] === "197001";
+  diagnostics.monthlyContinuity =
+    monthlyPeriods.length > 0 &&
+    diagnostics.requiredStartMonthFound &&
+    monthlyPeriods.every(
+      (period, index) =>
+        index === 0 || monthIndex(period) === monthIndex(monthlyPeriods[index - 1]) + 1,
+    );
+  if (
+    !diagnostics.timeDimensionFound ||
+    diagnostics.malformedLabelCount > 0 ||
+    diagnostics.duplicateCodeCount > 0 ||
+    diagnostics.duplicatePeriodCount > 0 ||
+    !diagnostics.monthlyContinuity
+  ) {
+    const error = new RefreshError(
+      "cpi-meta-time-unproven",
+      "e-Stat time classifications do not provide a unique, continuous monthly code map.",
+    );
+    error.cpiMetadataTimeDiagnostics = diagnostics;
+    throw error;
+  }
+  return {
+    byCode,
+    monthlyPeriods,
+    monthlyCodeByPeriod,
+    latestMonth: monthlyPeriods.at(-1),
+    diagnostics,
+  };
+}
+
+function buildRows(records, series, timeMapping) {
   const seriesByCode = new Map(series.map((row) => [row.official_code, row.existing_key]));
   const data = new Map();
-  let endCode = "";
+  const categoryMonths = new Map(series.map((row) => [row.official_code, new Set()]));
+  const annualRecords = new Set();
   let unit;
+  let valueUnitDeclaredCount = 0;
+  let valueUnitMissingCount = 0;
   let nonMonthlyObservationCount = 0;
-  const knownTimes = new Set((classes.get("time") || []).map(codeOf));
+  const recordDiagnostics = cpiApiRecordDiagnostics(records, seriesByCode, timeMapping);
   for (const record of records) {
     const area = attr(record, "area");
     const tab = attr(record, "tab");
@@ -765,12 +1075,43 @@ function buildRows(records, classes, series) {
       "cpi-api-dimension-mismatch",
       "e-Stat returned a CPI record outside the verified nationwide index dimensions.",
     );
-    invariant(
-      seriesByCode.has(code) && knownTimes.has(time),
-      "cpi-api-record-invalid",
-      "e-Stat returned an unexpected CPI category or unclassified time code.",
-    );
-    if (!isMonthCode(time)) {
+    const timePeriod = timeMapping.byCode.get(time);
+    const monthCode = timePeriod?.kind === "monthly" ? timePeriod.period : null;
+    const annualTime = timePeriod?.kind === "annual";
+    if (!seriesByCode.has(code) || (!monthCode && !annualTime)) {
+      const error = new RefreshError(
+        "cpi-api-record-invalid",
+        "e-Stat returned an unexpected CPI category or unsupported time code.",
+      );
+      error.cpiApiRecordDiagnostics = recordDiagnostics;
+      throw error;
+    }
+    const valueUnitDeclared = Object.hasOwn(record ?? {}, "@unit");
+    if (valueUnitDeclared) {
+      valueUnitDeclaredCount += 1;
+      const normalizedUnit = normalizeCpiUnit(record["@unit"]);
+      invariant(
+        unit === undefined || normalizedUnit === unit,
+        "cpi-api-unit-mismatch",
+        "e-Stat CPI value units changed within the returned series.",
+      );
+      invariant(
+        normalizedUnit === "2025年=100",
+        "cpi-api-unit-unproven",
+        "e-Stat CPI values do not declare the exact 2025=100 index unit.",
+      );
+      unit = normalizedUnit;
+    } else {
+      valueUnitMissingCount += 1;
+    }
+    if (annualTime) {
+      const annualKey = `${time}\0${code}`;
+      invariant(
+        !annualRecords.has(annualKey),
+        "cpi-api-duplicate",
+        "e-Stat returned duplicate CPI annual observations.",
+      );
+      annualRecords.add(annualKey);
       nonMonthlyObservationCount += 1;
       continue;
     }
@@ -780,20 +1121,7 @@ function buildRows(records, classes, series) {
       "cpi-api-value-invalid",
       "e-Stat CPI record has no scalar value.",
     );
-    const recordUnit = String(record?.["@unit"] ?? "").trim();
-    const normalizedUnit = recordUnit.replaceAll("＝", "=").replace(/\s/g, "");
-    invariant(
-      normalizedUnit === "2025年=100",
-      "cpi-api-unit-unproven",
-      "e-Stat CPI values do not declare the exact 2025=100 index unit.",
-    );
-    if (unit === undefined) unit = recordUnit;
-    invariant(
-      recordUnit === unit,
-      "cpi-api-unit-mismatch",
-      "e-Stat CPI value units changed within the returned series.",
-    );
-    const key = `${time}\0${code}`;
+    const key = `${monthCode}\0${code}`;
     invariant(
       !data.has(key),
       "cpi-api-duplicate",
@@ -806,50 +1134,100 @@ function buildRows(records, classes, series) {
       "e-Stat CPI record contains an invalid index value.",
     );
     data.set(key, normalized === "***" || normalized === "-" ? "" : normalized);
-    if (time > endCode) endCode = time;
+    categoryMonths.get(code).add(monthCode);
   }
-  const timeClasses = classes.get("time") || [];
-  const allMonthlyTimes = timeClasses
-    .map(codeOf)
-    .filter((code) => /^\d{6}$/.test(code))
-    .sort();
-  const latestMetadataTime = allMonthlyTimes.at(-1);
-  const expectedTimes = allMonthlyTimes.filter((code) => code >= "197001" && code <= endCode);
   invariant(
-    expectedTimes.length &&
-      expectedTimes[0] === "197001" &&
-      expectedTimes.every(
-        (time, i) => i === 0 || monthIndex(time) === monthIndex(expectedTimes[i - 1]) + 1,
-      ),
-    "cpi-api-time-coverage",
-    "e-Stat monthly time metadata is discontinuous or incomplete.",
+    valueUnitDeclaredCount === 0 || valueUnitMissingCount === 0,
+    "cpi-api-unit-unproven",
+    "e-Stat CPI values inconsistently omit their unit declaration.",
   );
+  const monthlyTimesByCategory = new Map(
+    series.map((item) => [item.official_code, [...categoryMonths.get(item.official_code)].sort()]),
+  );
+  const observedLatestMonths = series.map((item) =>
+    monthlyTimesByCategory.get(item.official_code).at(-1),
+  );
+  const observedLatestMonth = observedLatestMonths[0];
+  const outputPeriods = timeMapping.monthlyPeriods.filter(
+    (period) => period <= observedLatestMonth,
+  );
+  const metadataAxisComplete =
+    outputPeriods.length > 0 &&
+    outputPeriods[0] === "197001" &&
+    outputPeriods.every(
+      (period, index) =>
+        index === 0 || monthIndex(period) === monthIndex(outputPeriods[index - 1]) + 1,
+    );
+  const categoryCoverageComplete = series.every((item) => {
+    const observed = monthlyTimesByCategory.get(item.official_code);
+    if (!observed.length || observed.at(-1) !== observedLatestMonth) return false;
+    const firstObserved = observed[0];
+    return outputPeriods
+      .filter((period) => period >= firstObserved)
+      .every((period) => categoryMonths.get(item.official_code).has(period));
+  });
   invariant(
-    expectedTimes.at(-1) === endCode && latestMetadataTime === endCode,
+    metadataAxisComplete &&
+      observedLatestMonth &&
+      observedLatestMonth <= timeMapping.latestMonth &&
+      observedLatestMonths.every((period) => period === observedLatestMonth) &&
+      categoryCoverageComplete,
     "cpi-api-time-coverage",
-    "e-Stat data does not reach the latest monthly metadata period.",
+    "e-Stat CPI category observations have an internal gap, lack the latest month, or fall outside the metadata time axis.",
   );
   const header = ["年月", ...series.map((item) => item.existing_key)];
   const rows = [header];
-  for (const time of expectedTimes) {
+  for (const time of outputPeriods) {
     const row = [japaneseMonth(time)];
     for (const item of series) {
       const key = `${time}\0${item.official_code}`;
-      invariant(
-        data.has(key),
-        "cpi-api-observation-missing",
-        "e-Stat omitted a month/category observation instead of providing an explicit value.",
-      );
-      row.push(data.get(key));
+      const firstObserved = monthlyTimesByCategory.get(item.official_code)[0];
+      if (time < firstObserved) row.push("");
+      else {
+        invariant(
+          data.has(key),
+          "cpi-api-observation-missing",
+          "e-Stat omitted a month/category observation after its first observation.",
+        );
+        row.push(data.get(key));
+      }
     }
     rows.push(row);
   }
-  invariant(unit, "cpi-api-unit-unproven", "e-Stat CPI values do not declare a unit.");
   return {
     rows,
-    coverage: { endCode, monthlyObservationCount: data.size, nonMonthlyObservationCount },
+    coverage: {
+      endCode: observedLatestMonth,
+      monthlyObservationCount: data.size,
+      nonMonthlyObservationCount,
+    },
     unit,
   };
+}
+
+function cpiApiRecordDiagnostics(records, seriesByCode, timeMapping) {
+  const diagnostics = {
+    totalRows: records.length,
+    unknownCategoryCount: 0,
+    unrecognizedTimeCount: 0,
+    bothInvalidCount: 0,
+  };
+  for (const record of records) {
+    const categoryKnown = seriesByCode.has(attr(record, "cat01"));
+    const time = attr(record, "time");
+    const timeKnown =
+      timeMapping.byCode.has(time) && timeMapping.byCode.get(time)?.kind !== "invalid";
+    if (!categoryKnown) diagnostics.unknownCategoryCount += 1;
+    if (!timeKnown) diagnostics.unrecognizedTimeCount += 1;
+    if (!categoryKnown && !timeKnown) diagnostics.bothInvalidCount += 1;
+  }
+  return diagnostics;
+}
+
+function normalizeCpiUnit(value) {
+  return String(value ?? "")
+    .normalize("NFKC")
+    .replace(/\s/gu, "");
 }
 
 function createSeriesSnapshot(rows, series) {
@@ -912,6 +1290,219 @@ function validateCanonicalCsv(bytes, metadata, series) {
   };
 }
 
+function parseCpiDistributionCsv(bytes, series) {
+  const decoded = iconv.decode(Buffer.from(bytes), "windows-31j");
+  invariant(
+    !decoded.includes("\uFFFD"),
+    "cpi-distribution-encoding-invalid",
+    "The selected CPI distribution file is not valid CP932 text.",
+  );
+  const parsed = Papa.parse(decoded.replace(/^\uFEFF/, ""), {
+    header: false,
+    dynamicTyping: false,
+    skipEmptyLines: false,
+  });
+  invariant(
+    !parsed.errors?.length,
+    "cpi-distribution-csv-invalid",
+    "The selected CPI distribution file is not valid CSV.",
+  );
+  const rows = parsed.data;
+  while (rows.length && rows.at(-1).every((value) => String(value ?? "").trim() === "")) rows.pop();
+  invariant(
+    rows.length > 4 && rows[2]?.[0]?.trim() === "類・品目符号(Group/Item code)",
+    "cpi-distribution-schema-invalid",
+    "The selected CPI distribution file does not match the verified four-row header schema.",
+  );
+  const codeRow = rows[2];
+  const codes = codeRow.slice(1).map((code) => String(code ?? "").trim());
+  const expectedCodes = new Set(series.map((item) => item.official_code));
+  const uniqueCodeCount = new Set(codes.filter(Boolean)).size;
+  const expectedCodeMatchCount = codes.filter((code) => expectedCodes.has(code)).length;
+  const codeDiagnostics = {
+    codeRowColumnCount: codeRow.length,
+    totalCodeCount: codes.length,
+    nonEmptyCodeCount: codes.filter(Boolean).length,
+    uniqueCodeCount,
+    emptyCodeCount: codes.filter((code) => !code).length,
+    duplicateCodeCount: codes.filter(Boolean).length - uniqueCodeCount,
+    expectedCodeMatchCount,
+    supplementalCodeCount: codes.filter((code) => Boolean(code) && !expectedCodes.has(code)).length,
+    missingExpectedCodeCount:
+      expectedCodes.size - new Set(codes.filter((code) => expectedCodes.has(code))).size,
+  };
+  const failSeriesIdentity = () => {
+    const error = new RefreshError(
+      "cpi-distribution-series-invalid",
+      "The selected CPI distribution file does not contain a unique superset of required CPI codes.",
+    );
+    error.cpiDistributionSeriesDiagnostics = codeDiagnostics;
+    throw error;
+  };
+  invariant(
+    rows[3]?.length === codeRow.length,
+    "cpi-distribution-schema-invalid",
+    "The selected CPI distribution file has an inconsistent series name row width.",
+  );
+  if (
+    codeDiagnostics.emptyCodeCount > 0 ||
+    codeDiagnostics.duplicateCodeCount > 0 ||
+    codeDiagnostics.missingExpectedCodeCount > 0 ||
+    codeDiagnostics.expectedCodeMatchCount !== expectedCodes.size
+  ) {
+    failSeriesIdentity();
+  }
+  const columnByCode = new Map(
+    codes.map((code, index) => [code, index + 1]).filter(([code]) => expectedCodes.has(code)),
+  );
+  const periods = [];
+  const valuesByPeriod = new Map();
+  const expectedWeightRows = ["ウエイト(Weight)", "ウエイト１万分比(Weight per 10000)"];
+  for (let offset = 0; offset < expectedWeightRows.length; offset += 1) {
+    const row = rows[4 + offset];
+    invariant(
+      row?.length === codeRow.length && String(row[0] ?? "").trim() === expectedWeightRows[offset],
+      "cpi-distribution-schema-invalid",
+      "The selected CPI distribution file does not start with the verified weight metadata rows.",
+    );
+  }
+  for (let rowIndex = 6; rowIndex < rows.length; rowIndex += 1) {
+    const row = rows[rowIndex];
+    invariant(
+      row.length === codeRow.length,
+      "cpi-distribution-row-invalid",
+      "The selected CPI distribution file has a row with an unexpected width.",
+    );
+    const period = String(row[0] ?? "").trim();
+    invariant(
+      !expectedWeightRows.includes(period),
+      "cpi-distribution-schema-invalid",
+      "The selected CPI distribution file contains duplicate or misplaced weight metadata rows.",
+    );
+    invariant(
+      /^\d{6}$/.test(period) && Number(period.slice(4)) >= 1 && Number(period.slice(4)) <= 12,
+      "cpi-distribution-period-invalid",
+      "The selected CPI distribution file has an invalid monthly key.",
+    );
+    invariant(
+      !valuesByPeriod.has(period),
+      "cpi-distribution-period-duplicate",
+      "The selected CPI distribution file has duplicate monthly keys.",
+    );
+    const values = new Map();
+    for (const { official_code: code } of series) {
+      const raw = String(row[columnByCode.get(code)] ?? "").trim();
+      if (raw === "" || raw === "-" || raw === "***") {
+        values.set(code, "");
+      } else {
+        const value = Number(raw);
+        invariant(
+          Number.isFinite(value),
+          "cpi-distribution-value-invalid",
+          "The selected CPI distribution file contains a non-finite or malformed value.",
+        );
+        values.set(code, String(value));
+      }
+    }
+    periods.push(period);
+    valuesByPeriod.set(period, values);
+  }
+  invariant(
+    periods.length > 0 &&
+      periods[0] === "197001" &&
+      periods.every(
+        (period, index) => index === 0 || monthIndex(period) === monthIndex(periods[index - 1]) + 1,
+      ),
+    "cpi-distribution-period-coverage",
+    "The selected CPI distribution file does not provide continuous monthly coverage from 197001.",
+  );
+  return { periods, codes, valuesByPeriod, columnByCode };
+}
+
+function compareApiToDistribution(apiRows, series, distribution, fileProvenance) {
+  const apiPeriods = apiRows.slice(1).map((row) => monthCodeFromJapanese(row[0]));
+  const alignedLength = Math.min(distribution.periods.length, apiPeriods.length);
+  let positionalMismatchCount = 0;
+  let firstMismatchIndex = null;
+  for (let index = 0; index < alignedLength; index += 1) {
+    if (distribution.periods[index] !== apiPeriods[index]) {
+      positionalMismatchCount += 1;
+      if (firstMismatchIndex === null) firstMismatchIndex = index;
+    }
+  }
+  const missingApiPeriodCount = apiPeriods.filter(
+    (period) => !distribution.valuesByPeriod.has(period),
+  ).length;
+  const periodDiagnostics = {
+    apiPeriodCount: apiPeriods.length,
+    apiStartMonth: apiPeriods[0] ?? null,
+    apiEndMonth: apiPeriods.at(-1) ?? null,
+    distributionPeriodCount: distribution.periods.length,
+    distributionStartMonth: distribution.periods[0] ?? null,
+    distributionEndMonth: distribution.periods.at(-1) ?? null,
+    distributionFileByteLength: fileProvenance.byteLength,
+    distributionFileSha256: fileProvenance.sha256,
+    positionalMismatchCount,
+    firstMismatchIndex,
+    firstMismatchApiMonth:
+      firstMismatchIndex === null ? null : (apiPeriods[firstMismatchIndex] ?? null),
+    firstMismatchDistributionMonth:
+      firstMismatchIndex === null ? null : (distribution.periods[firstMismatchIndex] ?? null),
+    missingApiPeriodCount,
+  };
+  const failPeriodIdentity = () => {
+    const error = new RefreshError(
+      "cpi-distribution-api-period-mismatch",
+      "The selected CPI distribution file and API do not cover identical months.",
+    );
+    error.cpiDistributionPeriodDiagnostics = periodDiagnostics;
+    throw error;
+  };
+  if (
+    distribution.periods.length !== apiPeriods.length ||
+    positionalMismatchCount > 0 ||
+    missingApiPeriodCount > 0
+  ) {
+    failPeriodIdentity();
+  }
+  const digest = createHash("sha256");
+  const summary = {
+    startMonth: apiPeriods[0],
+    endMonth: apiPeriods.at(-1),
+    periodCount: apiPeriods.length,
+    seriesCount: series.length,
+    comparedValueCount: 0,
+    mismatchCount: 0,
+  };
+  for (let rowIndex = 0; rowIndex < apiPeriods.length; rowIndex += 1) {
+    const period = apiPeriods[rowIndex];
+    const distributionValues = distribution.valuesByPeriod.get(period);
+    if (!distributionValues) failPeriodIdentity();
+    for (let seriesIndex = 0; seriesIndex < series.length; seriesIndex += 1) {
+      const code = series[seriesIndex].official_code;
+      const apiValue = String(apiRows[rowIndex + 1][seriesIndex + 1] ?? "");
+      const fileValue = distributionValues.get(code);
+      summary.comparedValueCount += 1;
+      digest.update(`${period}\0${code}\0${apiValue}\0${fileValue}\n`);
+      const same =
+        apiValue === "" || fileValue === ""
+          ? apiValue === fileValue
+          : Number(apiValue) === Number(fileValue);
+      if (!same) summary.mismatchCount += 1;
+    }
+  }
+  summary.sha256 = digest.digest("hex");
+  if (summary.mismatchCount > 0) {
+    const error = new RefreshError(
+      "cpi-distribution-api-mismatch",
+      "CPI API values do not match the selected official distribution file.",
+    );
+    error.cpiDistributionApiDiagnostics = summary;
+    throw error;
+  }
+  return summary;
+}
+
 function compareOverlappingHistory(refreshedRows, canonical, series) {
   const refreshed = new Map(
     refreshedRows.slice(1).map((row) => [monthCodeFromJapanese(row[0]), row]),
@@ -919,6 +1510,9 @@ function compareOverlappingHistory(refreshedRows, canonical, series) {
   const digest = createHash("sha256");
   const samples = [];
   let count = 0;
+  let comparedValueCount = 0;
+  let revisionStartMonth;
+  let revisionEndMonth;
   for (const [month, previousRow] of canonical.records) {
     const currentRow = refreshed.get(month);
     invariant(
@@ -930,18 +1524,30 @@ function compareOverlappingHistory(refreshedRows, canonical, series) {
       const key = series[index].existing_key;
       const previous = previousRow[key];
       const current = currentRow[index + 1];
+      comparedValueCount += 1;
       const same =
         previous === "" || current === ""
           ? previous === current
           : Number(previous) === Number(current);
       if (same) continue;
       count += 1;
+      revisionStartMonth ??= month;
+      revisionEndMonth = month;
       digest.update(`${month}\0${series[index].official_code}\0${previous}\0${current}\n`);
       if (samples.length < 20)
         samples.push({ month, code: series[index].official_code, series: key, previous, current });
     }
   }
-  return { count, samples, sha256: digest.digest("hex") };
+  return {
+    count,
+    samples,
+    sha256: digest.digest("hex"),
+    comparedValueCount,
+    startMonth: canonical.records.keys().next().value,
+    endMonth: [...canonical.records.keys()].at(-1),
+    revisionStartMonth,
+    revisionEndMonth,
+  };
 }
 
 function validateBaseYearIndex(rows, series) {
@@ -1029,9 +1635,6 @@ function codeOf(row) {
 }
 function attr(record, name) {
   return String(record?.[`@${name}`] ?? record?.[name] ?? "");
-}
-function isMonthCode(value) {
-  return /^\d{6}$/.test(value) && Number(value.slice(4)) >= 1 && Number(value.slice(4)) <= 12;
 }
 function monthIndex(value) {
   return Number(value.slice(0, 4)) * 12 + Number(value.slice(4));

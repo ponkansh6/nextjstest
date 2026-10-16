@@ -3,11 +3,11 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import iconv from "iconv-lite";
 import Papa from "papaparse";
-import { invariant } from "../lib/errors.mjs";
+import { invariant, RefreshError } from "../lib/errors.mjs";
 import { fetchOfficialFile, OFFICIAL_ESTAT_FILE_HOSTS } from "../transport/file.mjs";
 
 export const EARNINGS_SOURCE_ID = "000032189777";
-export const EARNINGS_SOURCE_URL = `https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=${EARNINGS_SOURCE_ID}`;
+export const EARNINGS_SOURCE_URL = `https://www.e-stat.go.jp/stat-search/file-download?fileKind=1&statInfId=${EARNINGS_SOURCE_ID}`;
 export const EARNINGS_CLASSIFICATIONS = Object.freeze({
   type: "指数",
   industry: "TL",
@@ -59,6 +59,9 @@ const METADATA_PATHS = Object.freeze({
   part_time_worker_ratio: "data/source/part_time_worker_ratio.metadata.json",
 });
 const VERIFIED_PRE_MIGRATION_MONTHS = 438;
+const VERIFIED_ANNUAL_ROUNDING_CASES = Object.freeze({ total_earning: new Set(["1991", "2010"]) });
+const ANNUAL_ROUNDING_RULE = "official-cy-upper-rounding-at-monthly-midpoint";
+const ANNUAL_PRECISION_RULE = "official-cy-matches-monthly-mean-at-higher-precision";
 const YEAR_HEADERS = Object.freeze([
   "年",
   "1-12",
@@ -323,10 +326,19 @@ export async function earningsAdapter({
   return {
     artifacts,
     semanticValue: {
+      semanticFingerprintVersion: 2,
+      identity: {
+        kind: source.identity.kind,
+        statInfId: source.identity.statInfId,
+        format: source.identity.format,
+        url: source.identity.url ?? EARNINGS_SOURCE_URL,
+      },
       statInfId: EARNINGS_SOURCE_ID,
       sourceSha256: parsed.sourceSha256,
       coverage: parsed.coverage,
-      revisionAudit,
+      normalizedOutputSha256: Object.fromEntries(
+        Object.entries(csvBySeries).map(([series, bytes]) => [series, digest(bytes)]),
+      ),
     },
     rawFetches: [{ name: "earnings-estat-csv", bytes }],
     coverage: parsed.coverage,
@@ -393,18 +405,34 @@ function parseLegacyMonthlyCsv(bytes, series) {
     "earnings-canonical-invalid",
     `Canonical ${series} CSV could not be parsed.`,
   );
-  const header = parsed.data[0];
+  const headerRows = parsed.data
+    .map((row, index) => ({ row, index }))
+    .filter(({ row }) => row?.[0]?.trim() === "年");
+  const isValidHeader = (row) =>
+    Array.isArray(row) &&
+    row.length === 21 &&
+    row[0]?.trim() === "年" &&
+    row.slice(8, 20).every((v, i) => v?.trim() === String(i + 1));
+  const [firstHeader, secondHeader] = headerRows;
   invariant(
-    header?.length === 21 &&
-      header[0]?.trim() === "年" &&
-      header.slice(8, 20).every((v, i) => v?.trim() === String(i + 1)),
+    (headerRows.length === 1 || headerRows.length === 2) &&
+      isValidHeader(firstHeader?.row) &&
+      (headerRows.length === 1 ||
+        (isValidHeader(secondHeader?.row) &&
+          firstHeader.row.every((cell, index) => cell.trim() === secondHeader.row[index].trim()))),
     "earnings-canonical-invalid",
-    `Canonical ${series} CSV does not match the monthly earnings layout.`,
+    `Canonical ${series} CSV does not contain one valid monthly earnings header or two matching valid headers.`,
   );
+  const headerIndex = firstHeader.index;
   const values = new Map();
   const annualValues = new Map();
-  for (const row of parsed.data.slice(4)) {
+  for (const row of parsed.data.slice(headerIndex + 1, secondHeader?.index ?? parsed.data.length)) {
     if (!row?.[0] || !/^\d{4}$/.test(row[0].trim())) continue;
+    invariant(
+      row.length === 21,
+      "earnings-canonical-invalid",
+      `Canonical ${series} year row does not contain exactly 21 columns.`,
+    );
     const year = row[0].trim();
     const annualRaw = row[1]?.trim() ?? "";
     if (annualRaw !== "" && annualRaw !== "-") {
@@ -454,6 +482,8 @@ function compareMonthlyOverlap(series, previous, observations, sourceAnnualValue
     `Earnings source changed ${revisions.length} overlapping ${series} values; revision evidence is required.`,
   );
   let annualOverlapCount = 0;
+  const annualRevisions = [];
+  const acceptedAnnualRoundingAdjustments = [];
   for (const [year, oldValue] of previous.annualValues) {
     const current = sourceAnnualValues[year]?.[series];
     invariant(
@@ -461,14 +491,160 @@ function compareMonthlyOverlap(series, previous, observations, sourceAnnualValue
       "earnings-annual-overlap-missing",
       `Earnings source has no official CY value for canonical ${series} year ${year}.`,
     );
-    invariant(
-      current === oldValue,
-      "earnings-annual-overlap-revision-unverified",
-      `Earnings source changed the overlapping ${series} CY value for ${year}.`,
-    );
+    if (current !== oldValue) {
+      const adjustment = isVerifiedAnnualRoundingAdjustment({
+        series,
+        year,
+        oldValue,
+        newValue: current,
+        previousMonthlyValues: previous.monthlyValues,
+        sourceByPeriod: byPeriod,
+      });
+      const precisionAdjustment = isVerifiedPartTimeAnnualPrecisionAdjustment({
+        series,
+        year,
+        oldValue,
+        newValue: current,
+        previousMonthlyValues: previous.monthlyValues,
+        sourceByPeriod: byPeriod,
+      });
+      if (adjustment) acceptedAnnualRoundingAdjustments.push(adjustment);
+      else if (precisionAdjustment) acceptedAnnualRoundingAdjustments.push(precisionAdjustment);
+      else annualRevisions.push({ year, oldValue, newValue: current });
+    }
     annualOverlapCount += 1;
   }
-  return { overlapCount, annualOverlapCount, changedValueCount: 0, changedSample: [] };
+  if (annualRevisions.length > 0) {
+    const error = new RefreshError(
+      "earnings-annual-overlap-revision-unverified",
+      `Earnings source changed ${annualRevisions.length} overlapping ${series} CY values; revision evidence is required.`,
+    );
+    error.earningsAnnualOverlapDiagnostics = {
+      series,
+      mismatchCount: annualRevisions.length,
+      sample: annualRevisions.slice(0, 5).map(({ year, oldValue, newValue }) => ({
+        year,
+        oldValue,
+        newValue,
+      })),
+    };
+    throw error;
+  }
+  return {
+    overlapCount,
+    annualOverlapCount,
+    changedValueCount: 0,
+    changedSample: [],
+    acceptedAnnualRoundingAdjustmentCount: acceptedAnnualRoundingAdjustments.length,
+    acceptedAnnualRoundingAdjustmentSample: acceptedAnnualRoundingAdjustments.slice(0, 5),
+  };
+}
+
+function isVerifiedPartTimeAnnualPrecisionAdjustment({
+  series,
+  year,
+  oldValue,
+  newValue,
+  previousMonthlyValues,
+  sourceByPeriod,
+}) {
+  if (series !== "part_time_worker_ratio") return null;
+  const oldTenths = toScaledInteger(oldValue, 1);
+  const newHundredths = toScaledInteger(newValue, 2);
+  if (oldTenths === null || newHundredths === null) return null;
+  const periods = Array.from(
+    { length: 12 },
+    (_, index) => `${year}${String(index + 1).padStart(2, "0")}`,
+  );
+  const monthlyValues = [];
+  for (const period of periods) {
+    if (!previousMonthlyValues.has(period) || !sourceByPeriod.has(period)) return null;
+    const canonical = previousMonthlyValues.get(period);
+    const source = sourceByPeriod.get(period);
+    if (canonical === null || source === null || canonical !== source) return null;
+    monthlyValues.push(canonical);
+  }
+  const scaleDigits = Math.max(0, ...monthlyValues.map(decimalPlaces));
+  if (scaleDigits > 9) return null;
+  const scale = 10n ** BigInt(scaleDigits);
+  const scaledMonths = monthlyValues.map((value) => toScaledInteger(value, scaleDigits));
+  if (scaledMonths.some((value) => value === null)) return null;
+  const sum = scaledMonths.reduce((total, value) => total + value, 0n);
+  if (
+    roundPositiveRatio(sum * 10n, 12n * scale) !== BigInt(oldTenths) ||
+    roundPositiveRatio(sum * 100n, 12n * scale) !== BigInt(newHundredths)
+  ) {
+    return null;
+  }
+  return { series, year, oldValue, newValue, reason: ANNUAL_PRECISION_RULE };
+}
+
+function decimalPlaces(value) {
+  const text = String(value).toLowerCase();
+  const [coefficient, exponentText] = text.split("e");
+  const exponent = Number(exponentText ?? 0);
+  const decimals = (coefficient.split(".")[1] ?? "").length - exponent;
+  return Math.max(0, decimals);
+}
+
+function toScaledInteger(value, decimalPlacesCount) {
+  if (!Number.isFinite(value) || value < 0) return null;
+  const text = String(value).toLowerCase();
+  const [coefficient, exponentText] = text.split("e");
+  const exponent = Number(exponentText ?? 0);
+  const [whole, fraction = ""] = coefficient.split(".");
+  const digits = `${whole}${fraction}`;
+  const places = fraction.length - exponent;
+  if (places > decimalPlacesCount) return null;
+  return BigInt(digits) * 10n ** BigInt(decimalPlacesCount - places);
+}
+
+function roundPositiveRatio(numerator, denominator) {
+  return (numerator * 2n + denominator) / (denominator * 2n);
+}
+
+function isVerifiedAnnualRoundingAdjustment({
+  series,
+  year,
+  oldValue,
+  newValue,
+  previousMonthlyValues,
+  sourceByPeriod,
+}) {
+  if (!VERIFIED_ANNUAL_ROUNDING_CASES[series]?.has(year)) return null;
+  const toTenths = (value) => {
+    const tenths = Math.round(value * 10);
+    return Math.abs(value * 10 - tenths) < 1e-8 ? tenths : null;
+  };
+  const oldTenths = toTenths(oldValue);
+  const newTenths = toTenths(newValue);
+  if (oldTenths === null || newTenths !== oldTenths + 1) return null;
+
+  const months = Array.from(
+    { length: 12 },
+    (_, index) => `${year}${String(index + 1).padStart(2, "0")}`,
+  );
+  const monthlyTenths = [];
+  for (const period of months) {
+    if (!previousMonthlyValues.has(period)) return null;
+    const canonical = previousMonthlyValues.get(period);
+    const source = sourceByPeriod.get(period);
+    const canonicalTenths = toTenths(canonical);
+    const sourceTenths = toTenths(source);
+    if (canonicalTenths === null || sourceTenths === null || canonical !== source) return null;
+    monthlyTenths.push(sourceTenths);
+  }
+  const sumTenths = monthlyTenths.reduce((sum, value) => sum + value, 0);
+  if (sumTenths % 12 !== 6) return null;
+  const lowerMidpointTenths = Math.floor(sumTenths / 12);
+  if (oldTenths !== lowerMidpointTenths || newTenths !== lowerMidpointTenths + 1) return null;
+  return {
+    series,
+    year,
+    oldValue,
+    newValue,
+    reason: ANNUAL_ROUNDING_RULE,
+  };
 }
 
 function buildLegacyWideCsv(observations, series, annualValues = {}) {
@@ -487,7 +663,12 @@ function buildLegacyWideCsv(observations, series, annualValues = {}) {
       "第２四半期",
       "第３四半期",
       "第４四半期",
-      ...Array.from({ length: 12 }, (_, i) => `${i + 1}月`),
+      ...Array.from({ length: 12 }, (_, i) => {
+        const month = String(i + 1).replace(/\d/g, (digit) =>
+          String.fromCharCode(digit.charCodeAt(0) + 0xfee0),
+        );
+        return `${month}月`;
+      }),
       "年度平均",
     ],
     [

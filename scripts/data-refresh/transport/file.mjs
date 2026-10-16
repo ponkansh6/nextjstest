@@ -80,16 +80,9 @@ export async function fetchOfficialFile({
         );
         continue;
       }
-      throw new RefreshError(
-        "file-http-error",
-        `Official file download failed after retries (HTTP ${lastStatus}).`,
-      );
+      throw fileHttpError(lastStatus, attempt, maxRetries, true);
     }
-    if (!response.ok)
-      throw new RefreshError(
-        "file-http-error",
-        `Official file download failed (HTTP ${response.status}).`,
-      );
+    if (!response.ok) throw fileHttpError(response.status, attempt, maxRetries, false);
     try {
       const contentType = response.headers?.get?.("content-type") || "";
       if (/text\/html/i.test(contentType))
@@ -135,6 +128,23 @@ function retryAfterMs(header, now) {
   if (Number.isFinite(seconds) && seconds >= 0) return seconds * 1000;
   const date = Date.parse(header);
   return Number.isFinite(date) ? Math.max(0, date - now) : undefined;
+}
+
+function fileHttpError(status, attempt, maxRetries, retryable) {
+  const error = new RefreshError(
+    "file-http-error",
+    retryable
+      ? `Official file download failed after retries (HTTP ${status}).`
+      : `Official file download failed (HTTP ${status}).`,
+  );
+  error.fileFailure = {
+    status,
+    attempt: attempt + 1,
+    maxAttempts: maxRetries + 1,
+    retryable,
+    retriesExhausted: retryable && attempt === maxRetries,
+  };
+  return error;
 }
 
 async function readBounded(response, maxBytes) {

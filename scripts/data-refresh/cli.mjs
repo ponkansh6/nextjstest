@@ -6,18 +6,31 @@ import { RefreshError } from "./lib/errors.mjs";
 import { validateStagedRuntimeData } from "./runtime-validator.mjs";
 
 const args = process.argv.slice(2);
-if (
-  args.some((argument) => argument !== "--check") ||
-  args.filter((argument) => argument === "--check").length > 1
-) {
-  process.stderr.write("Usage: pnpm data:refresh [--check]\n");
+const verifyFlag = "--verify-last-publish-noop";
+const rebaselineArg = args.find((arg) => arg.startsWith("--rebaseline-semantic-state="));
+const rebaselineHash = rebaselineArg?.slice("--rebaseline-semantic-state=".length);
+const supportedArgs = new Set(["--check", verifyFlag]);
+const validArgs =
+  args.length <= 2 &&
+  args.every((arg) => arg === rebaselineArg || supportedArgs.has(arg)) &&
+  new Set(args).size === args.length &&
+  (!rebaselineArg || /^[a-f0-9]{64}$/.test(rebaselineHash)) &&
+  !(args.includes(verifyFlag) && rebaselineArg) &&
+  (!args.includes(verifyFlag) || args.length === 1) &&
+  (!args.includes("--check") || args.length <= 2);
+if (!validArgs) {
+  process.stderr.write(
+    "Usage: pnpm data:refresh [--check | --verify-last-publish-noop] [--rebaseline-semantic-state=<sha256>]\n",
+  );
   process.exitCode = 2;
 } else {
   try {
     const report = await runRefresh({
       registry,
       adapters,
-      check: args.includes("--check"),
+      check: args.includes("--check") || args.includes(verifyFlag),
+      verifyLastPublishNoop: args.includes(verifyFlag),
+      rebaselineSemanticStateHash: rebaselineHash,
       validate: validateStagedRuntimeData,
     });
     process.stdout.write(

@@ -1,6 +1,6 @@
 {
-  "cpi": { "period": "2025年1月", "総合": 99.3, "status": { "valid": true, "baseYear": 2025, "pair": "2025" }, "observation": { "digest": "d6490cfbb88a94eef4c6bc150a6b5698acbfa30c3e2bf8a5fae68648663f9f5e", "metadata": { "version": 1, "volatileKeys": ["createdAt", "generatedAt", "retrievedAt", "timestamp", "updatedAt"], "unorderedArrayPaths": [] } } },
-  "cti": { "period": "2025年1月", "名目": 97.9965, "実質": 98.7868, "status": { "valid": true, "baseYear": 2025, "pair": "2025" }, "observation": { "digest": "e44939cc5f6afeab444a69f3e499d30b1333f05d7d1d5c0357cd23c86869e3dd", "metadata": { "version": 1, "volatileKeys": ["createdAt", "generatedAt", "retrievedAt", "timestamp", "updatedAt"], "unorderedArrayPaths": [] } } },
+  "cpi": { "period": "2025年1月", "総合": 99.3, "status": { "valid": true, "baseYear": 2025, "pair": "2025" }, "observation": { "digest": "bf6f55d1e3613a8ac91359b73f2e8588f6749cd056c4f6800f8f2b3c1dd65ad0", "metadata": { "version": 1, "volatileKeys": ["createdAt", "generatedAt", "retrievedAt", "timestamp", "updatedAt"], "unorderedArrayPaths": [] } } },
+  "cti": { "period": "2025年1月", "名目": 97.9965, "実質": 98.7868, "status": { "valid": true, "baseYear": 2025, "pair": "2025" }, "observation": { "digest": "a603a587d5b1742a9fcfff801617411c8fbf41befabf142281564d55c4a1a31c", "metadata": { "version": 1, "volatileKeys": ["createdAt", "generatedAt", "retrievedAt", "timestamp", "updatedAt"], "unorderedArrayPaths": [] } } },
   "annualGdp": {
     "years": ["1994","1995","1996","1997","1998","1999","2000","2001","2002","2003","2004","2005","2006","2007","2008","2009","2010","2011","2012","2013","2014","2015","2016","2017","2018","2019","2020","2021","2022","2023","2024","2025"],
     "nominal": {
@@ -16,7 +16,7 @@
     "status": { "valid": true },
     "sourceMode": "official-connected",
     "errors": { "load": null, "status": null },
-    "observation": { "digest": "0c13f58a050723be8bafe6cd2fe13f42825f8d48749703d15535aa7613ad748c", "metadata": { "version": 1, "volatileKeys": ["createdAt", "generatedAt", "retrievedAt", "timestamp", "updatedAt"], "unorderedArrayPaths": [] } },
+    "observation": { "digest": "be781cd1181e71c0838af8d7778f5c8897550a032256e5cc86751a40b251abb0", "metadata": { "version": 1, "volatileKeys": ["createdAt", "generatedAt", "retrievedAt", "timestamp", "updatedAt"], "unorderedArrayPaths": [] } },
     "sourceArtifacts": {
       "nominalCsvSha256": "9a6331e1cc0ff0f4acb8da67dbdf5ed0c2b1457122b1a1b8c990911dbce2038f",
       "realCsvSha256": "0c6973e2b4a2686b94a7954a5a55058a5101de05ebed316066f7d0b517e6e744",

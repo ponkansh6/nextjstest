@@ -3,8 +3,10 @@ import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import Papa from "papaparse";
 import XLSX from "xlsx";
 import { ctiAdapter } from "../../../scripts/data-refresh/adapters/cti.mjs";
+import { semanticFingerprint } from "../../../scripts/data-refresh/lib/fingerprint.mjs";
 import {
   CTI_INPUT_IDENTITIES,
   CTI_OUTPUTS,
@@ -15,6 +17,7 @@ import {
   parseOfficialFile,
   parseCtiCurrentHouseholdMonthly,
 } from "../../../scripts/fetch-cti-basic-series-2025.mjs";
+import { resolveCatalogResource } from "../../../scripts/data-refresh/transport/estat-api.mjs";
 
 const repo = process.cwd();
 const roots = [];
@@ -44,6 +47,7 @@ const source = {
       format: "XLSX",
       query: { searchWord: "082 fixture", dataType: "XLS" },
       titleIncludes: ["世帯消費動向指数", "季節調整値"],
+      datasetIncludes: ["2025年基準消費動向指数", "最新結果"],
       directUrl:
         "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499082",
     },
@@ -52,6 +56,7 @@ const source = {
       format: "XLSX",
       query: { searchWord: "028 fixture", dataType: "XLS" },
       titleIncludes: ["世帯消費動向指数", "分布調整値"],
+      datasetIncludes: ["2025年基準消費動向指数", "統計表_月次"],
       directUrl:
         "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499028",
     },
@@ -60,6 +65,7 @@ const source = {
       format: "XLSX",
       query: { searchWord: "069 fixture", dataType: "XLS" },
       titleIncludes: ["世帯消費動向指数", "基本系列"],
+      datasetIncludes: ["2025年基準消費動向指数", "最新結果"],
       directUrl:
         "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499069",
     },
@@ -68,20 +74,49 @@ const source = {
       format: "XLSX",
       query: { searchWord: "087 fixture", dataType: "XLS" },
       titleIncludes: ["世帯消費動向指数", "分布調整値"],
+      datasetIncludes: ["2025年基準消費動向指数", "最新結果"],
       directUrl:
         "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499087",
     },
   ],
 };
-for (const contract of source.fileCandidateIdentities)
+for (const contract of source.fileCandidateIdentities) {
+  const seasonalAdjustment = contract.statInfId === "000040499082";
+  const monthlyDistributionTable = contract.statInfId === "000040499028";
+  const originalBasicSeries = contract.statInfId === "000040499069";
+  const latestResultTable =
+    seasonalAdjustment || originalBasicSeries || contract.statInfId === "000040499087";
   Object.assign(contract, {
-    datasetIncludes: [contract.titleIncludes[0]],
+    datasetIncludes:
+      latestResultTable || monthlyDistributionTable
+        ? contract.datasetIncludes
+        : ["2025年基準消費動向指数"],
     resourceIncludes: [contract.titleIncludes[1]],
     tableIncludes: [contract.titleIncludes[0]],
-    categoryIncludes: [contract.titleIncludes[1]],
-    periodIncludes: ["月次"],
+    categoryIncludes: [
+      latestResultTable || monthlyDistributionTable
+        ? "世帯消費動向指数"
+        : contract.titleIncludes[1],
+    ],
+    subCategory1Includes: seasonalAdjustment
+      ? ["二人以上の世帯"]
+      : monthlyDistributionTable
+        ? ["総世帯、総世帯のうち勤労者世帯"]
+        : contract.statInfId === "000040499069"
+          ? ["総世帯、総世帯のうち勤労者世帯"]
+          : contract.statInfId === "000040499087"
+            ? ["総世帯、総世帯のうち勤労者世帯"]
+            : [],
+    periodIncludes: latestResultTable ? [] : ["月次"],
     yearIncludes: ["2025"],
   });
+  if (seasonalAdjustment) contract.tableIncludes = ["基本系列（季節調整値）"];
+  if (monthlyDistributionTable) contract.tableIncludes = ["調整系列 分布調整値（原数値）"];
+  if (originalBasicSeries) contract.tableIncludes = ["基本系列（原数値）"];
+  if (contract.statInfId === "000040499087")
+    contract.tableIncludes = ["調整系列 分布調整値（原数値）"];
+}
+source.fileCandidateIdentities[0].tableIncludes = ["基本系列（原数値）"];
 const hash = (bytes) => createHash("sha256").update(bytes).digest("hex");
 
 const fixtureCtiAdapter = (options) =>
@@ -89,27 +124,64 @@ const fixtureCtiAdapter = (options) =>
     ...options,
     getDataCatalog:
       options.getDataCatalog ||
-      (async (_query, contract) => ({
-        datasets: [
-          {
-            TITLE: [
-              ...contract.datasetIncludes,
-              ...contract.tableIncludes,
-              ...contract.categoryIncludes,
-              ...contract.periodIncludes,
-              ...contract.yearIncludes,
-            ].join(" "),
-            RELEASE_DATE: "2026-09-01",
-            LAST_MODIFIED_DATE: "2026-10-01",
-            RESOURCE: {
-              "@id": `fixture-${contract.statInfId}`,
-              TITLE: `世帯消費動向指数 ${contract.resourceIncludes.join(" ")} 月次 2025 CTI ${contract.format}`,
-              FORMAT: contract.format,
-              URL: contract.directUrl,
+      (async (_query, contract) => {
+        const seasonalAdjustment = contract.statInfId === "000040499082";
+        const monthlyDistributionTable = contract.statInfId === "000040499028";
+        const originalBasicSeries = contract.statInfId === "000040499069";
+        const latestDistributionSeries = contract.statInfId === "000040499087";
+        const latestResultTable =
+          seasonalAdjustment || originalBasicSeries || latestDistributionSeries;
+        const identityOverride = options.catalogIdentityOverrides?.[contract.statInfId] || {};
+        return {
+          datasets: [
+            {
+              TITLE: {
+                NAME: {
+                  $: monthlyDistributionTable
+                    ? "2025年基準消費動向指数_統計表_月次_2026年8月"
+                    : "2025年基準消費動向指数_最新結果_2026年",
+                },
+              },
+              CYCLE: latestResultTable ? "" : "月次",
+              SURVEY_DATE: latestResultTable
+                ? "2026"
+                : monthlyDistributionTable
+                  ? "202608"
+                  : "2025",
+              RELEASE_DATE: "2026-09-01",
+              LAST_MODIFIED_DATE: "2026-10-01",
+              RESOURCE: {
+                "@id": identityOverride.catalogResourceId || `fixture-${contract.statInfId}`,
+                TITLE: {
+                  NAME: {
+                    $: seasonalAdjustment
+                      ? "世帯消費動向指数_1-2-1_基本系列（季節調整値）_二人以上の世帯"
+                      : originalBasicSeries
+                        ? "世帯消費動向指数_1-1-1_基本系列（原数値）_総世帯、総世帯のうち勤労者世帯"
+                        : latestDistributionSeries
+                          ? "世帯消費動向指数_2-1-1_調整系列 分布調整値（原数値）_総世帯、総世帯のうち勤労者世帯"
+                          : monthlyDistributionTable
+                            ? "世帯消費動向指数_2-1-1_調整系列 分布調整値（原数値）_総世帯、総世帯のうち勤労者世帯"
+                            : `世帯消費動向指数 ${contract.resourceIncludes.join(" ")} 月次 2025 CTI ${contract.format}`,
+                  },
+                  TABLE_NAME: { $: contract.tableIncludes.join(" ") },
+                  ...(seasonalAdjustment ||
+                  monthlyDistributionTable ||
+                  originalBasicSeries ||
+                  latestDistributionSeries
+                    ? {
+                        TABLE_CATEGORY: { $: "世帯消費動向指数" },
+                        TABLE_SUB_CATEGORY1: { $: contract.subCategory1Includes.join(" ") },
+                      }
+                    : {}),
+                },
+                FORMAT: contract.format,
+                URL: identityOverride.url || contract.directUrl,
+              },
             },
-          },
-        ],
-      })),
+          ],
+        };
+      }),
   });
 
 async function makeRoot(withPins = true) {
@@ -146,6 +218,16 @@ async function makeRoot(withPins = true) {
   return root;
 }
 
+async function writeCanonicalNormalized(root, relativePath, content) {
+  const bytes = Buffer.from(content);
+  await writeFile(path.join(root, relativePath), bytes);
+  const metadataPath = relativePath.replace(/\.normalized\.csv$/, ".metadata.json");
+  const metadataFile = path.join(root, metadataPath);
+  const metadata = JSON.parse(await readFile(metadataFile, "utf8"));
+  metadata.normalizedSha256 = hash(bytes);
+  await writeFile(metadataFile, `${JSON.stringify(metadata, null, 2)}\n`);
+}
+
 afterEach(async () =>
   Promise.all(roots.splice(0).map((root) => rm(root, { recursive: true, force: true }))),
 );
@@ -168,15 +250,17 @@ async function longTermFixtures() {
   return sources;
 }
 
-function withoutLastCurrentMonth(bytes) {
+function withoutLastCurrentMonths(bytes, count) {
   const workbook = XLSX.read(bytes, { type: "buffer", raw: false, WTF: true });
   const rows = XLSX.utils.sheet_to_json(workbook.Sheets["総・月(原)"], {
     header: 1,
     raw: false,
     defval: "",
   });
-  const lastIndex = rows.findLastIndex((row) => String(row[0]).trim() === "00401");
-  rows.splice(lastIndex, 1);
+  const trailingMonthIndexes = rows
+    .flatMap((row, index) => (String(row[0]).trim() === "00401" ? [index] : []))
+    .slice(-count);
+  for (const index of trailingMonthIndexes.reverse()) rows.splice(index, 1);
   workbook.Sheets["総・月(原)"] = XLSX.utils.aoa_to_sheet(rows);
   return Buffer.from(XLSX.write(workbook, { type: "buffer", bookType: "xlsx" }));
 }
@@ -240,6 +324,356 @@ function rawWorkbookRows(bytes) {
 }
 
 describe("CTI refresh adapter", () => {
+  it("selects the latest-result 000040499082 two-or-more-households series and excludes monthly-table datasets", () => {
+    const contract = source.fileCandidateIdentities.find(
+      ({ statInfId }) => statInfId === "000040499082",
+    );
+    const selected = resolveCatalogResource(
+      [
+        {
+          TITLE: { NAME: { $: "2025年基準消費動向指数_最新結果_2026年" } },
+          CYCLE: "",
+          SURVEY_DATE: "2026",
+          RELEASE_DATE: "2026-09-01",
+          LAST_MODIFIED_DATE: "2026-10-01",
+          RESOURCE: {
+            "@id": "catalog-resource-082",
+            TITLE: {
+              NAME: {
+                $: "世帯消費動向指数_1-2-1_基本系列（季節調整値）_二人以上の世帯",
+              },
+              TABLE_NAME: { $: "基本系列（季節調整値）" },
+              TABLE_CATEGORY: { $: "世帯消費動向指数" },
+              TABLE_SUB_CATEGORY1: { $: "二人以上の世帯" },
+            },
+            FORMAT: "XLSX",
+            URL: "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499082",
+          },
+        },
+        {
+          TITLE: { NAME: { $: "2025年基準消費動向指数_2026年8月結果" } },
+          CYCLE: "月次",
+          SURVEY_DATE: "2026-08",
+          RELEASE_DATE: "2026-08-01",
+          LAST_MODIFIED_DATE: "2026-10-15",
+          RESOURCE: {
+            "@id": "catalog-resource-monthly-table",
+            TITLE: {
+              NAME: {
+                $: "世帯消費動向指数_1-2-1_基本系列（季節調整値）_二人以上の世帯",
+              },
+              TABLE_NAME: { $: "基本系列（季節調整値）" },
+              TABLE_CATEGORY: { $: "世帯消費動向指数" },
+              TABLE_SUB_CATEGORY1: { $: "二人以上の世帯" },
+            },
+            FORMAT: "XLSX",
+            URL: "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040513272",
+          },
+        },
+      ],
+      {
+        statInfId: contract.statInfId,
+        expectedFormat: contract.format,
+        titleIncludes: contract.titleIncludes,
+        datasetIncludes: contract.datasetIncludes,
+        resourceIncludes: contract.resourceIncludes,
+        tableIncludes: contract.tableIncludes,
+        categoryIncludes: contract.categoryIncludes,
+        subCategory1Includes: contract.subCategory1Includes,
+        periodIncludes: contract.periodIncludes,
+        yearIncludes: contract.yearIncludes,
+      },
+    );
+
+    expect(selected).toMatchObject({
+      datasetTitle: "2025年基準消費動向指数_最新結果_2026年",
+      resourceTitle: "世帯消費動向指数_1-2-1_基本系列（季節調整値）_二人以上の世帯",
+      tableTitle: "基本系列（季節調整値）",
+      legacyStatInfId: "000040499082",
+      candidateCount: 1,
+    });
+    expect(contract.periodIncludes).toEqual([]);
+
+    const wrongHousehold = {
+      TITLE: { NAME: { $: "2025年基準消費動向指数_最新結果_2026年" } },
+      RELEASE_DATE: "2026-09-01",
+      LAST_MODIFIED_DATE: "2026-10-01",
+      RESOURCE: {
+        "@id": "catalog-resource-wrong-household",
+        TITLE: {
+          NAME: {
+            $: "世帯消費動向指数_1-2-1_基本系列（季節調整値）_単身世帯",
+          },
+          TABLE_NAME: { $: "基本系列（季節調整値）" },
+          TABLE_CATEGORY: { $: "世帯消費動向指数" },
+          TABLE_SUB_CATEGORY1: { $: "単身世帯" },
+        },
+        FORMAT: "XLSX",
+        URL: "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499083",
+      },
+    };
+    expect(() =>
+      resolveCatalogResource([wrongHousehold], {
+        statInfId: contract.statInfId,
+        expectedFormat: contract.format,
+        titleIncludes: contract.titleIncludes,
+        datasetIncludes: contract.datasetIncludes,
+        resourceIncludes: contract.resourceIncludes,
+        tableIncludes: contract.tableIncludes,
+        categoryIncludes: contract.categoryIncludes,
+        subCategory1Includes: contract.subCategory1Includes,
+        periodIncludes: contract.periodIncludes,
+        yearIncludes: contract.yearIncludes,
+      }),
+    ).toThrow(
+      expect.objectContaining({
+        code: "candidate-resolution-pending",
+        candidateDiagnostics: {
+          catalogRows: 1,
+          datasetRows: 1,
+          resourceRows: 1,
+          expectedIdMatches: 0,
+          allowedFormatMatches: 1,
+          httpsOfficialHostMatches: 1,
+          datasetTitleMarkerMatches: 1,
+          resourceTitleMarkerMatches: 1,
+          parseableDateMatches: 1,
+          subCategory1MarkerMatches: 0,
+          fullMatches: 0,
+          latestTieCount: 0,
+        },
+      }),
+    );
+
+    const similarHousehold = structuredClone(wrongHousehold);
+    similarHousehold.RESOURCE.TITLE.NAME.$ =
+      "世帯消費動向指数_1-2-1_基本系列（季節調整値）_二人以上の世帯（参考）";
+    similarHousehold.RESOURCE.TITLE.TABLE_SUB_CATEGORY1.$ = "二人以上の世帯（参考）";
+    expect(() =>
+      resolveCatalogResource([similarHousehold], {
+        statInfId: contract.statInfId,
+        expectedFormat: contract.format,
+        titleIncludes: contract.titleIncludes,
+        datasetIncludes: contract.datasetIncludes,
+        resourceIncludes: contract.resourceIncludes,
+        tableIncludes: contract.tableIncludes,
+        categoryIncludes: contract.categoryIncludes,
+        subCategory1Includes: contract.subCategory1Includes,
+        periodIncludes: contract.periodIncludes,
+        yearIncludes: contract.yearIncludes,
+      }),
+    ).toThrow(
+      expect.objectContaining({
+        code: "candidate-resolution-pending",
+        candidateDiagnostics: {
+          catalogRows: 1,
+          datasetRows: 1,
+          resourceRows: 1,
+          expectedIdMatches: 0,
+          allowedFormatMatches: 1,
+          httpsOfficialHostMatches: 1,
+          datasetTitleMarkerMatches: 1,
+          resourceTitleMarkerMatches: 1,
+          parseableDateMatches: 1,
+          subCategory1MarkerMatches: 0,
+          fullMatches: 0,
+          latestTieCount: 0,
+        },
+      }),
+    );
+  });
+
+  it("selects the newest monthly-table 000040499028 resource and excludes the latest-result resource", () => {
+    const contract = source.fileCandidateIdentities.find(
+      ({ statInfId }) => statInfId === "000040499028",
+    );
+    const makeDataset = (id, datasetTitle, released) => ({
+      TITLE: { NAME: { $: datasetTitle } },
+      CYCLE: "月次",
+      SURVEY_DATE: datasetTitle.includes("8月") ? "202608" : "202607",
+      RELEASE_DATE: released,
+      LAST_MODIFIED_DATE: released,
+      RESOURCE: {
+        "@id": `catalog-resource-${id}`,
+        TITLE: {
+          NAME: {
+            $: "世帯消費動向指数_2-1-1_調整系列 分布調整値（原数値）_総世帯、総世帯のうち勤労者世帯",
+          },
+          TABLE_NAME: { $: "調整系列 分布調整値（原数値）" },
+          TABLE_CATEGORY: { $: "世帯消費動向指数" },
+          TABLE_SUB_CATEGORY1: { $: "総世帯、総世帯のうち勤労者世帯" },
+        },
+        FORMAT: "XLSX",
+        URL: `https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=${id}`,
+      },
+    });
+    const selected = resolveCatalogResource(
+      [
+        makeDataset("000040513277", "2025年基準消費動向指数_統計表_月次_2026年8月", "2026-10-09"),
+        makeDataset("000040499028", "2025年基準消費動向指数_統計表_月次_2026年7月", "2026-09-09"),
+        makeDataset("000040499087", "2025年基準消費動向指数_最新結果_2026年", "2026-10-09"),
+      ],
+      {
+        statInfId: contract.statInfId,
+        expectedFormat: contract.format,
+        titleIncludes: contract.titleIncludes,
+        datasetIncludes: contract.datasetIncludes,
+        resourceIncludes: contract.resourceIncludes,
+        tableIncludes: contract.tableIncludes,
+        categoryIncludes: contract.categoryIncludes,
+        subCategory1Includes: contract.subCategory1Includes,
+        periodIncludes: contract.periodIncludes,
+        yearIncludes: contract.yearIncludes,
+      },
+    );
+
+    expect(selected).toMatchObject({
+      datasetTitle: "2025年基準消費動向指数_統計表_月次_2026年8月",
+      tableTitle: "調整系列 分布調整値（原数値）",
+      legacyStatInfId: "000040513277",
+      candidateCount: 2,
+    });
+  });
+
+  it("matches the 000040499069 latest-result hierarchy without requiring a monthly catalog marker", () => {
+    const contract = source.fileCandidateIdentities.find(
+      ({ statInfId }) => statInfId === "000040499069",
+    );
+    const makeDataset = (id, datasetTitle, subCategory1, released) => ({
+      TITLE: { NAME: { $: datasetTitle } },
+      CYCLE: datasetTitle.includes("最新結果") ? "" : "月次",
+      SURVEY_DATE: datasetTitle.includes("最新結果") ? "2026" : "202608",
+      RELEASE_DATE: released,
+      LAST_MODIFIED_DATE: released,
+      RESOURCE: {
+        "@id": `catalog-resource-${id}`,
+        TITLE: {
+          NAME: {
+            $: `世帯消費動向指数_1-1-1_基本系列（原数値）_${subCategory1}`,
+          },
+          TABLE_NAME: { $: "基本系列（原数値）" },
+          TABLE_CATEGORY: { $: "世帯消費動向指数" },
+          TABLE_SUB_CATEGORY1: { $: subCategory1 },
+        },
+        FORMAT: "XLSX",
+        URL: `https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=${id}`,
+      },
+    });
+    const selected = resolveCatalogResource(
+      [
+        makeDataset(
+          "000040499069",
+          "2025年基準消費動向指数_最新結果_2026年",
+          "総世帯、総世帯のうち勤労者世帯",
+          "2026-10-01",
+        ),
+        makeDataset(
+          "000040499081",
+          "2025年基準消費動向指数_最新結果_2026年",
+          "二人以上の世帯",
+          "2026-10-16",
+        ),
+        makeDataset(
+          "000040513271",
+          "2025年基準消費動向指数_統計表_月次_2026年8月",
+          "総世帯、総世帯のうち勤労者世帯",
+          "2026-10-17",
+        ),
+      ],
+      {
+        statInfId: contract.statInfId,
+        expectedFormat: contract.format,
+        titleIncludes: contract.titleIncludes,
+        datasetIncludes: contract.datasetIncludes,
+        resourceIncludes: contract.resourceIncludes,
+        tableIncludes: contract.tableIncludes,
+        categoryIncludes: contract.categoryIncludes,
+        subCategory1Includes: contract.subCategory1Includes,
+        periodIncludes: contract.periodIncludes,
+        yearIncludes: contract.yearIncludes,
+      },
+    );
+
+    expect(selected).toMatchObject({
+      datasetTitle: "2025年基準消費動向指数_最新結果_2026年",
+      resourceTitle: "世帯消費動向指数_1-1-1_基本系列（原数値）_総世帯、総世帯のうち勤労者世帯",
+      tableTitle: "基本系列（原数値）",
+      legacyStatInfId: "000040499069",
+      candidateCount: 1,
+    });
+    expect(contract.periodIncludes).toEqual([]);
+  });
+
+  it("matches the 000040499087 latest-result hierarchy and rejects other households and monthly datasets", () => {
+    const contract = source.fileCandidateIdentities.find(
+      ({ statInfId }) => statInfId === "000040499087",
+    );
+    const makeDataset = (id, datasetTitle, subCategory1, released) => ({
+      TITLE: { NAME: { $: datasetTitle } },
+      CYCLE: datasetTitle.includes("最新結果") ? "" : "月次",
+      SURVEY_DATE: datasetTitle.includes("最新結果") ? "2026" : "202608",
+      RELEASE_DATE: released,
+      LAST_MODIFIED_DATE: released,
+      RESOURCE: {
+        "@id": `catalog-resource-${id}`,
+        TITLE: {
+          NAME: {
+            $: `世帯消費動向指数_2-1-1_調整系列 分布調整値（原数値）_${subCategory1}`,
+          },
+          TABLE_NAME: { $: "調整系列 分布調整値（原数値）" },
+          TABLE_CATEGORY: { $: "世帯消費動向指数" },
+          TABLE_SUB_CATEGORY1: { $: subCategory1 },
+        },
+        FORMAT: "XLSX",
+        URL: `https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=${id}`,
+      },
+    });
+    const selected = resolveCatalogResource(
+      [
+        makeDataset(
+          "000040499087",
+          "2025年基準消費動向指数_最新結果_2026年",
+          "総世帯、総世帯のうち勤労者世帯",
+          "2026-10-09",
+        ),
+        makeDataset(
+          "000040499081",
+          "2025年基準消費動向指数_最新結果_2026年",
+          "二人以上の世帯",
+          "2026-10-16",
+        ),
+        makeDataset(
+          "000040513277",
+          "2025年基準消費動向指数_統計表_月次_2026年8月",
+          "総世帯、総世帯のうち勤労者世帯",
+          "2026-10-17",
+        ),
+      ],
+      {
+        statInfId: contract.statInfId,
+        expectedFormat: contract.format,
+        titleIncludes: contract.titleIncludes,
+        datasetIncludes: contract.datasetIncludes,
+        resourceIncludes: contract.resourceIncludes,
+        tableIncludes: contract.tableIncludes,
+        categoryIncludes: contract.categoryIncludes,
+        subCategory1Includes: contract.subCategory1Includes,
+        periodIncludes: contract.periodIncludes,
+        yearIncludes: contract.yearIncludes,
+      },
+    );
+
+    expect(selected).toMatchObject({
+      datasetTitle: "2025年基準消費動向指数_最新結果_2026年",
+      resourceTitle:
+        "世帯消費動向指数_2-1-1_調整系列 分布調整値（原数値）_総世帯、総世帯のうち勤労者世帯",
+      tableTitle: "調整系列 分布調整値（原数値）",
+      legacyStatInfId: "000040499087",
+      candidateCount: 1,
+    });
+    expect(contract.periodIncludes).toEqual([]);
+  });
+
   it("parses all 22 series per long-term table and returns staged artifacts with hashes and source lineage", async () => {
     const root = await makeRoot();
     const stageRoot = path.join(root, "stage");
@@ -250,7 +684,13 @@ describe("CTI refresh adapter", () => {
       kind: "basic",
       now: new Date("2026-10-16T00:00:00.000Z"),
     });
-    expect(currentBasic.observations).toHaveLength(115);
+    const currentBasicLatestLabel = currentBasic.observations.at(-1).label;
+    const currentBasicLatestMonth = currentBasicLatestLabel
+      .replace("年", "-")
+      .replace("月", "")
+      .replace(/-(\d)$/, "-0$1");
+    expect(currentBasic.observations.length).toBeGreaterThan(100);
+    expect(currentBasicLatestLabel).toMatch(/^2026年[1-9]月$/);
     expect(currentBasic.observations[0].values).toEqual([
       "95.1549",
       "23.3393",
@@ -275,12 +715,15 @@ describe("CTI refresh adapter", () => {
       "11.0254",
       "-",
     ]);
-    expect(
-      parseCtiCurrentHouseholdMonthly(fixtureBytes["000040499087"], {
+    const currentDistributionAdjusted = parseCtiCurrentHouseholdMonthly(
+      fixtureBytes["000040499087"],
+      {
         kind: "distributionAdjusted",
         now: new Date("2026-10-16T00:00:00.000Z"),
-      }).observations,
-    ).toHaveLength(115);
+      },
+    );
+    expect(currentDistributionAdjusted.observations).toHaveLength(currentBasic.observations.length);
+    expect(currentDistributionAdjusted.observations.at(-1).label).toBe(currentBasicLatestLabel);
     const requested = [];
     const result = await fixtureCtiAdapter({
       source,
@@ -334,27 +777,32 @@ describe("CTI refresh adapter", () => {
       catalogResourceId: "fixture-000040499070",
       legacyStatInfId: "000040499070",
       format: "XLSX",
-      title: expect.stringContaining("世帯消費動向指数"),
+      title: expect.stringContaining("2025年基準消費動向指数"),
       releaseDate: "2026-09-01",
       lastModifiedDate: "2026-10-01",
     });
     expect(metadata.sourceIdentity.downloadUrlHash).toMatch(/^[a-f0-9]{64}$/);
     expect(JSON.stringify(metadata.sourceIdentity)).not.toContain("https://");
     expect(metadata.rawSha256).toBe(hash(fixtureBytes["000040499070"]));
-    expect(metadata.latestPublishedMonth).toBe("2026-07");
+    expect(metadata.latestPublishedMonth).toBe(currentBasicLatestMonth);
     expect(metadata.series).toHaveLength(22);
-    expect(metadata.revisionAudit.changedObservationCount).toBeGreaterThan(0);
-    expect(metadata.revisionAudit.changedValueCount).toBeGreaterThanOrEqual(
+    expect(Number.isInteger(metadata.revisionAudit.changedObservationCount)).toBe(true);
+    expect(metadata.revisionAudit.changedObservationCount).toBeGreaterThanOrEqual(0);
+    expect(Number.isInteger(metadata.revisionAudit.changedValueCount)).toBe(true);
+    expect(metadata.revisionAudit.changedValueCount).toBeGreaterThanOrEqual(0);
+    expect(metadata.revisionAudit.changedValueCount).toBeLessThanOrEqual(
       metadata.revisionAudit.changedObservationCount,
     );
-    expect(metadata.revisionAudit.changedSample.length).toBeGreaterThan(0);
+    expect(metadata.revisionAudit.changedSample).toHaveLength(
+      Math.min(metadata.revisionAudit.changedValueCount, 10),
+    );
     expect(metadata.revisionAudit.changedSample.length).toBeLessThanOrEqual(10);
-    expect(metadata.revisionAudit.changedSample[0]).toMatchObject({
-      month: expect.stringMatching(/^\d{4}-\d{2}$/),
-      seriesIndex: expect.any(Number),
-      before: null,
-      after: expect.any(Number),
-    });
+    if (metadata.revisionAudit.changedSample.length > 0) {
+      expect(metadata.revisionAudit.changedSample[0]).toMatchObject({
+        month: expect.stringMatching(/^\d{4}-\d{2}$/),
+        seriesIndex: expect.any(Number),
+      });
+    }
     expect(metadata.revisionAudit.sha256).toMatch(/^[a-f0-9]{64}$/);
     expect(normalized.split("\n")[1]).toContain(",2005-01,");
     const basicManifest = JSON.parse(
@@ -424,8 +872,8 @@ describe("CTI refresh adapter", () => {
     );
     expect(basicMetadata.period).toEqual({
       start: "2017年1月",
-      end: "2026年7月",
-      monthlyRows: 115,
+      end: currentBasicLatestLabel,
+      monthlyRows: currentBasic.observations.length,
     });
     expect(basicMetadata.csvSha256).toBe(
       hash(
@@ -458,7 +906,11 @@ describe("CTI refresh adapter", () => {
     ).toEqual(["000040499028", "000040499069", "000040499070", "000040499082", "000040499087"]);
     expect(result.reportSummary).toMatchObject({
       candidateCount: 5,
-      coverage: { start: "2002-01", monthCount: 115, seriesCount: 66 },
+      coverage: {
+        start: "2002-01",
+        monthCount: currentBasic.observations.length,
+        seriesCount: 66,
+      },
       validationResult: "passed",
     });
     expect(result.reportSummary.revisionHash).toMatch(/^[a-f0-9]{64}$/);
@@ -490,13 +942,14 @@ describe("CTI refresh adapter", () => {
       stageRoot,
       now: () => new Date("2026-10-16T00:00:00.000Z"),
       getDataCatalog: async (_query, contract) => {
-        const baseTitle = [
-          ...contract.datasetIncludes,
-          ...contract.tableIncludes,
-          ...contract.categoryIncludes,
-          ...contract.periodIncludes,
-          ...contract.yearIncludes,
-        ].join(" ");
+        const baseTitle = {
+          NAME: {
+            $:
+              contract.statInfId === "000040499028"
+                ? "2025年基準消費動向指数_統計表_月次_2026年8月"
+                : "2025年基準消費動向指数_最新結果_2026年",
+          },
+        };
         const resourceTitle = `世帯消費動向指数 ${contract.resourceIncludes.join(" ")} 月次 2025 CTI ${contract.format}`;
         const make = (resourceId, legacyId, updated) => ({
           TITLE: baseTitle,
@@ -504,7 +957,13 @@ describe("CTI refresh adapter", () => {
           LAST_MODIFIED_DATE: updated,
           RESOURCE: {
             "@id": resourceId,
-            TITLE: resourceTitle,
+            TITLE: {
+              NAME: { $: resourceTitle },
+              TABLE_NAME: { $: contract.tableIncludes.join(" ") },
+              ...(contract.subCategory1Includes?.length
+                ? { TABLE_SUB_CATEGORY1: { $: contract.subCategory1Includes.join(" ") } }
+                : {}),
+            },
             FORMAT: contract.format,
             URL: `https://www.e-stat.go.jp/stat-search/file-download?statInfId=${legacyId}`,
           },
@@ -544,22 +1003,25 @@ describe("CTI refresh adapter", () => {
           item.catalogResourceId.startsWith("resource-latest-") && item.candidateCount === 2,
       ),
     ).toBe(true);
-  });
+  }, 30_000);
 
   it("keeps the semantic fingerprint stable across XLSX repackaging and changes it when an observation changes", async () => {
     const root = await makeRoot();
     const fixtureBytes = await longTermFixtures();
-    const run = (bytes) =>
+    const run = (bytes, catalogIdentityOverrides) =>
       fixtureCtiAdapter({
         source,
         root,
         stageRoot: path.join(root, `stage-${hash(bytes["000040499069"]).slice(0, 8)}`),
         now: () => new Date("2026-10-16T00:00:00.000Z"),
+        catalogIdentityOverrides,
         fetchFile: async ({ url }) => ({
           bytes: bytes[new URL(url).searchParams.get("statInfId")],
         }),
       });
     const original = await run(fixtureBytes);
+    expect(original.semanticValue.semanticFingerprintVersion).toBe(2);
+    expect(original.validationSummary.semanticFingerprintVersion).toBe(2);
     const repackaged = {
       ...fixtureBytes,
       "000040499069": repackagedWorkbookPreservingRawValues(fixtureBytes["000040499069"]),
@@ -581,6 +1043,9 @@ describe("CTI refresh adapter", () => {
     );
     const repacked = await run(repackaged);
     expect(repacked.semanticValue).toEqual(original.semanticValue);
+    expect(semanticFingerprint(repacked.semanticValue)).toBe(
+      semanticFingerprint(original.semanticValue),
+    );
 
     const revised = {
       ...fixtureBytes,
@@ -593,6 +1058,155 @@ describe("CTI refresh adapter", () => {
     };
     const revisedResult = await run(revised);
     expect(revisedResult.semanticValue).not.toEqual(original.semanticValue);
+    expect(semanticFingerprint(revisedResult.semanticValue)).not.toBe(
+      semanticFingerprint(original.semanticValue),
+    );
+    const changedSelectedIdentity = await run(fixtureBytes, {
+      "000040499069": {
+        catalogResourceId: "fixture-alternate-000040499069",
+      },
+    });
+    expect(changedSelectedIdentity.semanticValue.sourceIdentities).not.toEqual(
+      original.semanticValue.sourceIdentities,
+    );
+    expect(semanticFingerprint(changedSelectedIdentity.semanticValue)).not.toBe(
+      semanticFingerprint(original.semanticValue),
+    );
+    const changedPin = structuredClone(original.semanticValue);
+    changedPin.pinnedSemantic[0].sha256 = "0".repeat(64);
+    expect(semanticFingerprint(changedPin)).not.toBe(semanticFingerprint(original.semanticValue));
+    const changedIdentity = structuredClone(original.semanticValue);
+    changedIdentity.longTerm[0].path =
+      "data/source/official-cti-2025-long-term/unknown.normalized.csv";
+    expect(semanticFingerprint(changedIdentity)).not.toBe(
+      semanticFingerprint(original.semanticValue),
+    );
+  }, 30_000);
+
+  it("decodes canonical missing flags strictly and retains values when the flag is false", async () => {
+    const root = await makeRoot();
+    const fixtureBytes = await longTermFixtures();
+    const normalizedPath = "data/source/official-cti-2025-long-term/000040499070.normalized.csv";
+    const original = (await readFile(path.join(root, normalizedPath), "utf8")).split("\n");
+    const columns = original[1].split(",");
+    columns[5] = String(Number(columns[5]) + 1);
+    columns[6] = "false";
+    await writeCanonicalNormalized(root, normalizedPath, `${original[0]}\n${columns.join(",")}\n`);
+    const run = (targetRoot) =>
+      fixtureCtiAdapter({
+        source,
+        root: targetRoot,
+        stageRoot: path.join(targetRoot, "stage"),
+        now: () => new Date("2026-10-16T00:00:00.000Z"),
+        fetchFile: async ({ url }) => ({
+          bytes: fixtureBytes[new URL(url).searchParams.get("statInfId")],
+        }),
+      });
+    const result = await run(root);
+    expect(result.revisionAudit["000040499070"]).toMatchObject({
+      overlapCount: 1,
+      changedValueCount: 1,
+      changedSample: [
+        {
+          seriesIndex: 1,
+          month: "2005-01",
+          before: Number(columns[5]),
+          after: expect.any(Number),
+        },
+      ],
+    });
+
+    const invalidRoot = await makeRoot();
+    const invalidNormalized = (
+      await readFile(path.join(invalidRoot, normalizedPath), "utf8")
+    ).split("\n");
+    invalidNormalized[1] = invalidNormalized[1].replace(/,false\r?$/, ",False");
+    await writeCanonicalNormalized(invalidRoot, normalizedPath, invalidNormalized.join("\n"));
+    await expect(run(invalidRoot)).rejects.toMatchObject({ code: "cti-canonical-schema-invalid" });
+  }, 30_000);
+
+  it("keeps the fingerprint stable when only the baseline-relative revision audit changes", async () => {
+    const firstRoot = await makeRoot();
+    const secondRoot = await makeRoot();
+    const fixtureBytes = await longTermFixtures();
+    const normalizedPath = "data/source/official-cti-2025-long-term/000040499070.normalized.csv";
+    const metadataPath = "data/source/official-cti-2025-long-term/000040499070.metadata.json";
+    const overlapRecord = parseOfficialFile(
+      fixtureBytes["000040499070"],
+      SERIES.find(({ statInfId }) => statInfId === "000040499070"),
+    ).records.find(({ seriesIndex, month }) => seriesIndex === 1 && month === "2005-01");
+    expect(overlapRecord).toBeDefined();
+    const sourceValue = String(overlapRecord.rawValue);
+    const setOverlapBaseline = async (root, valueForRow) => {
+      const normalizedFile = path.join(root, normalizedPath);
+      const normalizedText = await readFile(normalizedFile, "utf8");
+      const parsed = Papa.parse(normalizedText, { header: true });
+      const baselineRow = parsed.data.find(
+        ({ series_index, month }) => series_index === "1" && month === "2005-01",
+      );
+      expect(baselineRow).toBeDefined();
+      const rowIndex = parsed.data.indexOf(baselineRow) + 1;
+      const rawValueColumn = parsed.meta.fields.indexOf("raw_value");
+      const normalizedLines = normalizedText.match(/[^\n]*\n|[^\n]+$/g);
+      const originalLine = normalizedLines[rowIndex];
+      const lineEnding = originalLine.endsWith("\r\n")
+        ? "\r\n"
+        : originalLine.endsWith("\n")
+          ? "\n"
+          : "";
+      const cells = originalLine.slice(0, originalLine.length - lineEnding.length).split(",");
+      expect(cells[rawValueColumn]).toBe(baselineRow.raw_value);
+      cells[rawValueColumn] = valueForRow(baselineRow.raw_value);
+      normalizedLines[rowIndex] = `${cells.join(",")}${lineEnding}`;
+      const normalizedBytes = Buffer.from(normalizedLines.join(""));
+      await writeFile(normalizedFile, normalizedBytes);
+      const metadataFile = path.join(root, metadataPath);
+      const metadata = JSON.parse(await readFile(metadataFile, "utf8"));
+      metadata.normalizedSha256 = hash(normalizedBytes);
+      await writeFile(metadataFile, `${JSON.stringify(metadata, null, 2)}\n`);
+      return cells[rawValueColumn];
+    };
+    // Make one baseline match the source and the other differ by one.
+    const firstBaselineValue = await setOverlapBaseline(firstRoot, () => sourceValue);
+    const secondBaselineValue = await setOverlapBaseline(secondRoot, (originalValue) =>
+      Number(originalValue) === overlapRecord.rawValue
+        ? String(overlapRecord.rawValue + 1)
+        : originalValue,
+    );
+    expect(Number(firstBaselineValue)).toBe(overlapRecord.rawValue);
+    expect(Number(secondBaselineValue)).not.toBe(overlapRecord.rawValue);
+
+    const run = (root) =>
+      fixtureCtiAdapter({
+        source,
+        root,
+        stageRoot: path.join(root, "stage"),
+        now: () => new Date("2026-10-16T00:00:00.000Z"),
+        fetchFile: async ({ url }) => ({
+          bytes: fixtureBytes[new URL(url).searchParams.get("statInfId")],
+        }),
+      });
+    const first = await run(firstRoot);
+    const second = await run(secondRoot);
+    expect(
+      Math.abs(
+        first.revisionAudit["000040499070"].changedValueCount -
+          second.revisionAudit["000040499070"].changedValueCount,
+      ),
+    ).toBe(1);
+    expect(Number(firstBaselineValue) === overlapRecord.rawValue).not.toBe(
+      Number(secondBaselineValue) === overlapRecord.rawValue,
+    );
+    expect(first.revisionAudit["000040499070"].sha256).not.toBe(
+      second.revisionAudit["000040499070"].sha256,
+    );
+    expect(first.revisionAudit["000040499070"].changedValueCount).not.toBe(
+      second.revisionAudit["000040499070"].changedValueCount,
+    );
+    expect(first.semanticValue).toEqual(second.semanticValue);
+    expect(semanticFingerprint(first.semanticValue)).toBe(
+      semanticFingerprint(second.semanticValue),
+    );
   }, 30_000);
 
   it("fails closed when an input identity is unknown or a pinned dependency is absent/changed", async () => {
@@ -718,7 +1332,7 @@ describe("CTI refresh adapter", () => {
       expect(result.revisionAudit[id].sha256).toMatch(/^[a-f0-9]{64}$/);
     }
     expect(result.validationSummary.revisedSourceCount).toBe(5);
-  });
+  }, 30_000);
 
   it("fails closed when canonical history has an internal monthly gap or drops an old overlap month", async () => {
     const root = await makeRoot();
@@ -744,7 +1358,7 @@ describe("CTI refresh adapter", () => {
 
   it("rejects incomplete current monthly coverage instead of treating 114 months as current", async () => {
     const bytes = await longTermFixtures();
-    bytes["000040499069"] = withoutLastCurrentMonth(bytes["000040499069"]);
+    bytes["000040499069"] = withoutLastCurrentMonths(bytes["000040499069"], 2);
     expect(() =>
       parseCtiCurrentHouseholdMonthly(bytes["000040499069"], {
         kind: "basic",

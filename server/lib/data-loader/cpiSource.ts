@@ -58,8 +58,30 @@ export function validate2025Metadata(metadataPath: string): Cpi2025Metadata | st
     if (metadata.indexFile !== "cpi_data2025_long.csv") return "2025 metadata indexFile mismatch";
     if (metadata.contributionFile !== "contribution2025.csv")
       return "2025 metadata contributionFile mismatch";
-    if (metadata.period?.monthlyRows !== 679) return "2025 metadata monthlyRows mismatch";
-    if (metadata.period?.start !== "1970年1月" || metadata.period?.end !== "2026年7月") {
+    const start = parseYearMonth(metadata.period?.start ?? "");
+    const end = parseYearMonth(metadata.period?.end ?? "");
+    if (
+      !start ||
+      !end ||
+      metadata.period?.start !== "1970年1月" ||
+      metadata.period?.end !== `${end.year}年${end.month}月`
+    ) {
+      return "2025 metadata period mismatch";
+    }
+    const declaredRows = (end.year - start.year) * 12 + end.month - start.month + 1;
+    if (
+      !Number.isInteger(metadata.period.monthlyRows) ||
+      metadata.period.monthlyRows !== declaredRows
+    ) {
+      return "2025 metadata monthlyRows mismatch";
+    }
+    // This runtime supports the checked-in July baseline and the current August refresh.
+    // Keep the lower bound to reject replayed older metadata and the upper bound to
+    // prevent a syntactically valid but unsupported future period from being selected.
+    const supportedMinimum = 2026 * 12 + 7;
+    const supportedMaximum = 2026 * 12 + 8;
+    const endOrdinal = end.year * 12 + end.month;
+    if (endOrdinal < supportedMinimum || endOrdinal > supportedMaximum) {
       return "2025 metadata period mismatch";
     }
     if (metadata.seriesCount !== 78) return "2025 metadata seriesCount mismatch";

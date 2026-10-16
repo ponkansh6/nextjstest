@@ -3,11 +3,44 @@
   "baseYear": 2025,
   "outputFile": "cti_data2025_distribution_adjusted.csv",
   "statInfId": "000040499087",
-  "sourceUrl": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499087",
-  "retrievedAt": "2026-09-09",
+  "sourceIdentity": {
+    "kind": "estat-catalog-resource",
+    "logicalSourceStatInfId": "000040499087",
+    "catalogResourceId": "000010962974",
+    "legacyStatInfId": "000040499087",
+    "downloadUrlHash": "a6f3b269245a45ae8dbe3677a985cd49ca44c52b45644aad80252443d06ad2ef",
+    "title": "2025年基準消費動向指数_最新結果_2026年",
+    "resourceTitle": "世帯消費動向指数_2-1-1_調整系列 分布調整値（原数値）_総世帯、総世帯のうち勤労者世帯",
+    "format": "XLSX",
+    "releaseDate": "2026-10-09",
+    "lastModifiedDate": "2026-10-09",
+    "identityMarkers": {
+      "table": [
+        "調整系列 分布調整値（原数値）"
+      ],
+      "category": [
+        "世帯消費動向指数"
+      ],
+      "period": [],
+      "year": [
+        "2025"
+      ]
+    }
+  },
+  "retrievedAt": "2026-10-16",
   "sourceFile": "official-cti-2025/cti-distribution-adjusted-000040499087.xlsx",
-  "sourceFileSha256": "7224e5eb424c94d90402502f665a4953cfe16377f65f1040a939696ac948ef41",
-  "csvSha256": "6fd12df575b4a7700a737707f24a16479ead43f7c692ff1e3145d74cad87dfd9",
+  "sourceFileSha256": "5089bece9c815944df57d3f5552e5d7ae9f5ee1c2f091ae5246dbd0ac8be1c67",
+  "csvSha256": "e577694a4070de453dc56b6040acbb2816bf411445803e370f0b1f650111d173",
+  "revisionAudit": {
+    "sourceId": "000040499087",
+    "overlapCount": 2530,
+    "changedObservationCount": 0,
+    "changedValueCount": 0,
+    "changedSample": [],
+    "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "previousSha256": "7224e5eb424c94d90402502f665a4953cfe16377f65f1040a939696ac948ef41",
+    "sourceSha256": "5089bece9c815944df57d3f5552e5d7ae9f5ee1c2f091ae5246dbd0ac8be1c67"
+  },
   "seriesClassification": "調整系列・分布調整値（原数値）",
   "tableTitle": "10大費目別 世帯消費動向指数 分布調整値（原数値） 総世帯",
   "householdScope": "総世帯",
@@ -15,8 +48,8 @@
   "valueType": "指数",
   "period": {
     "start": "2017年1月",
-    "end": "2026年7月",
-    "monthlyRows": 115
+    "end": "2026年8月",
+    "monthlyRows": 116
   },
-  "extraction": "公式Excelの「総・月(原)」シートから、総世帯の月次指数列（時間軸コード・月・10大費目別の名目値/実質値）を列順・値表記を保持して抽出。"
+  "extraction": "公式Excelの「総・月(原)」シートから、総世帯の分布調整値の月次指数列（時間軸コード・月・10大費目別の名目値/実質値）を列順・値表記を保持して抽出。"
 }

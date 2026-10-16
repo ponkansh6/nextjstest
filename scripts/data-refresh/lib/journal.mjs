@@ -100,10 +100,15 @@ export async function publishArtifacts({
   backupRoot,
   artifacts,
   registry,
+  transactionId = randomUUID(),
   onRename = async () => {},
 }) {
   const sourceAllowlist = registrySnapshot(registry);
-  const transactionId = randomUUID();
+  invariant(
+    ID_PATTERN.test(transactionId),
+    "journal-invalid",
+    "Publish transaction id is invalid.",
+  );
   const entries = [];
   const seenTargets = new Set();
   const seenStaged = new Set();

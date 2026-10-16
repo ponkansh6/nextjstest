@@ -1,12 +1,15 @@
 {
-  "revision": "2026-09-29",
-  "retrievedAt": "2026-09-29T08:01:02.835Z",
+  "revision": "2026-10-16",
+  "retrievedAt": "2026-10-16T18:24:44.540Z",
   "sources": {
     "B": {
-      "sourceUrl": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499069",
+      "catalogResourceId": "000010962956",
+      "legacyStatInfId": "000040499069",
+      "logicalSourceStatInfId": "000040499069",
+      "downloadUrlHash": "ffeb37eb3693fbe998a4ade14b59b6d76380c87ac51b66d6b2bb7a794a7b8d6d",
       "sourceFormat": "xlsx",
-      "sourceSha256": "5e99cf3c61e26ba90bcde12b3311eb553458f97e5624258712d7414bed53197b",
-      "artifactSha256": "5c9ff35ccf52f730b0c7c2fdf0296a8fd099d9285ba24aa3759661d695888faf",
+      "sourceSha256": "7df9ce47c4b7545bd7366f0e6e2527509adfbe4ff381cc8e6d0ef50c63a44f67",
+      "artifactSha256": "2636e78afb492fa988b40e3009fec07027ec648ed55802f5bf4c1ed0e8de8903",
       "rawRange": {
         "startYear": 2002,
         "endYear": 2025
@@ -15,10 +18,13 @@
       "missingValues": 0
     },
     "A": {
-      "sourceUrl": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499087",
+      "catalogResourceId": "000010962974",
+      "legacyStatInfId": "000040499087",
+      "logicalSourceStatInfId": "000040499087",
+      "downloadUrlHash": "a6f3b269245a45ae8dbe3677a985cd49ca44c52b45644aad80252443d06ad2ef",
       "sourceFormat": "xlsx",
-      "sourceSha256": "7224e5eb424c94d90402502f665a4953cfe16377f65f1040a939696ac948ef41",
-      "artifactSha256": "938994386cc56a35318213fbc7099e68eb376c5a2dab40daab2524bcf8e8a9fd",
+      "sourceSha256": "5089bece9c815944df57d3f5552e5d7ae9f5ee1c2f091ae5246dbd0ac8be1c67",
+      "artifactSha256": "b657cf04591e9cb56fc1bd934a930d0c21ea31ccf81b128b221d6a6805e4524f",
       "rawRange": {
         "startYear": 2017,
         "endYear": 2025
@@ -28,7 +34,7 @@
     },
     "L": {
       "sourceUrl": "https://www.stat.go.jp/data/kakei/longtime/zuhyou/lev-jnb.xls",
-      "sourceFormat": "xls",
+      "sourceFormat": "pinned-json-artifact",
       "sourceSha256": "9e98ca7b379bbce9d2354b8aa97014dbcfdff570e96ef0f62fef66b5e0f53c42",
       "artifactSha256": "26902849c7d835a1dcf3db130384600d0f853907fac927e7942fb806e2eec076",
       "rawRange": {
@@ -39,12 +45,15 @@
       "missingValues": 0
     },
     "quarterlyNominal": {
-      "sourceUrl": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499087",
+      "catalogResourceId": "000010962974",
+      "legacyStatInfId": "000040499087",
+      "logicalSourceStatInfId": "000040499087",
+      "downloadUrlHash": "a6f3b269245a45ae8dbe3677a985cd49ca44c52b45644aad80252443d06ad2ef",
       "sourceFormat": "xlsx",
       "sourceSheet": "総・四(原)",
-      "sourceSha256": "7224e5eb424c94d90402502f665a4953cfe16377f65f1040a939696ac948ef41",
+      "sourceSha256": "5089bece9c815944df57d3f5552e5d7ae9f5ee1c2f091ae5246dbd0ac8be1c67",
       "artifactSha256": "e32f7e3627718874cd85cae386216b370563b6ef7dba3ff686a5b456cba4dd78",
-      "metadataSha256": "bdaa4a6bd252b08218895d1b12678653833a0d3e00a5a048db130f80095c2cda",
+      "metadataSha256": "d335d566fe2dfea05aa3369bc7c858c5310bbcddb9ce9de55540faa7d68cd98f",
       "rawRange": {
         "start": "2017Q1",
         "end": "2026Q2",
@@ -52,6 +61,58 @@
       },
       "rows": 38,
       "missingValues": 12
+    }
+  },
+  "sourceRevisionAudit": {
+    "000040499070": {
+      "sourceId": "000040499070",
+      "overlapCount": 5698,
+      "changedObservationCount": 0,
+      "changedValueCount": 0,
+      "changedSample": [],
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "previousSha256": "5377332d3fe5460382a65091d2efa788c6bc62c113cd80d863a1085d47bd7a6e",
+      "sourceSha256": "f1fb03c7923d2fb46d3061cad6a6a0f662c2b89ecf898360c571e20c34f8b42c"
+    },
+    "000040499082": {
+      "sourceId": "000040499082",
+      "overlapCount": 5698,
+      "changedObservationCount": 0,
+      "changedValueCount": 0,
+      "changedSample": [],
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "previousSha256": "97b54de7905460abc2099a3ac804c17e8c7b61e82d7d1fa02a9e723f7056d53e",
+      "sourceSha256": "0d98b71f8b3192331f822d907eb15327879d8ec52a5e9a450fc923c0f81ff2b9"
+    },
+    "000040499028": {
+      "sourceId": "000040499028",
+      "overlapCount": 2530,
+      "changedObservationCount": 0,
+      "changedValueCount": 0,
+      "changedSample": [],
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "previousSha256": "7224e5eb424c94d90402502f665a4953cfe16377f65f1040a939696ac948ef41",
+      "sourceSha256": "5089bece9c815944df57d3f5552e5d7ae9f5ee1c2f091ae5246dbd0ac8be1c67"
+    },
+    "000040499069": {
+      "sourceId": "000040499069",
+      "overlapCount": 2530,
+      "changedObservationCount": 0,
+      "changedValueCount": 0,
+      "changedSample": [],
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "previousSha256": "5e99cf3c61e26ba90bcde12b3311eb553458f97e5624258712d7414bed53197b",
+      "sourceSha256": "7df9ce47c4b7545bd7366f0e6e2527509adfbe4ff381cc8e6d0ef50c63a44f67"
+    },
+    "000040499087": {
+      "sourceId": "000040499087",
+      "overlapCount": 2530,
+      "changedObservationCount": 0,
+      "changedValueCount": 0,
+      "changedSample": [],
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "previousSha256": "7224e5eb424c94d90402502f665a4953cfe16377f65f1040a939696ac948ef41",
+      "sourceSha256": "5089bece9c815944df57d3f5552e5d7ae9f5ee1c2f091ae5246dbd0ac8be1c67"
     }
   },
   "validation": {

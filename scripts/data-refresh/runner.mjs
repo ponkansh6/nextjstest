@@ -6,28 +6,62 @@ import { semanticFingerprint, rawSha256 } from "./lib/fingerprint.mjs";
 import { acquireExclusiveLock } from "./lib/lock.mjs";
 import {
   preflightCanonicalEdits,
+  snapshotPublishedManagedOutputs,
+  verifyUnstagedManagedChanges,
   ensureSameFilesystem,
   resolveContainedPath,
   createDirectoriesSafely,
   normalizeRelativeOutput,
+  verifyCleanTrackedOutputsAtHead,
+  verifyNoRebaselineResidue,
 } from "./lib/fs-safety.mjs";
 import { readJournal, recoverJournal, publishArtifacts } from "./lib/journal.mjs";
 import { validateRegistry, topologicallyOrderSources } from "./registry/schema.mjs";
 import { loadRefreshEnv } from "./transport/env.mjs";
+import { RUNTIME_FAILURE_REPORT_STATUSES, RUNTIME_QUALITY_TESTS } from "./runtime-validator.mjs";
 
 const SAFE_ROOT_FILES = [".data-refresh/semantic-state.json"];
+const EARNINGS_OUTPUT_SERIES_IDS = new Set([
+  "total_earning",
+  "contractual_earnings",
+  "scheduled_earnings",
+  "total_worked_hours",
+  "employment_indices",
+  "part_time_worker_ratio",
+]);
+const TRANSACTION_ID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export async function runRefresh({
   root = process.cwd(),
   registry,
   adapters = new Map(),
   check = false,
+  verifyLastPublishNoop = false,
+  rebaselineSemanticStateHash,
   validate,
   now = () => new Date(),
   preflightChanges,
   publish = publishArtifacts,
 } = {}) {
   validateRegistry(registry);
+  invariant(
+    !verifyLastPublishNoop || check,
+    "verify-noop-check-only",
+    "Last-publish no-op verification is available only in check mode.",
+  );
+  invariant(
+    rebaselineSemanticStateHash === undefined ||
+      (typeof rebaselineSemanticStateHash === "string" &&
+        /^[a-f0-9]{64}$/.test(rebaselineSemanticStateHash)),
+    "rebaseline-hash-invalid",
+    "Semantic-state rebaseline requires an expected SHA-256 hash.",
+  );
+  invariant(
+    !verifyLastPublishNoop || rebaselineSemanticStateHash === undefined,
+    "rebaseline-noop-conflict",
+    "Semantic-state rebaseline cannot be combined with last-publish no-op verification.",
+  );
   invariant(
     typeof validate === "function",
     "quality-validator-required",
@@ -60,7 +94,7 @@ export async function runRefresh({
   const report = {
     version: 1,
     runId,
-    mode: check ? "check" : "publish",
+    mode: verifyLastPublishNoop ? "verify-last-publish-noop" : check ? "check" : "publish",
     startedAt: now().toISOString(),
     sources: [],
     status: "running",
@@ -70,9 +104,28 @@ export async function runRefresh({
   const statePath = path.join(workRoot, "semantic-state.json");
   let outcome;
   let activeSourceId = "refresh-core";
+  let canonicalOutputStates = null;
+  let candidateEvaluationStarted = false;
+  let rebaselineOldStateHash;
+  const stagedCandidates = new Map();
   try {
     await ensureSameFilesystem(absoluteRoot, stageRoot);
     const pendingJournal = await readJournal(journalPath);
+    if (rebaselineSemanticStateHash !== undefined) {
+      invariant(
+        !pendingJournal,
+        "rebaseline-recovery-required",
+        "A pending publish journal prevents semantic-state rebaseline.",
+      );
+      await verifyNoRebaselineResidue({
+        root: absoluteRoot,
+        stagingRoot: path.join(workRoot, "staging"),
+        currentStageName: runId,
+        backupRoot,
+        outputs: managedOutputsForRegistry(registry),
+      });
+      await verifyCleanTrackedOutputsAtHead(absoluteRoot, managedOutputsForRegistry(registry));
+    }
     if (pendingJournal && check)
       throw new RefreshError(
         "recovery-required",
@@ -87,14 +140,72 @@ export async function runRefresh({
     ]);
     for (const output of allowed) await resolveContainedPath(absoluteRoot, output);
     const canonicalOutputs = registry.sources.flatMap((source) => source.outputs);
-    await preflightCanonicalEdits(absoluteRoot, canonicalOutputs, {
-      checkChanges: preflightChanges,
-    });
+    const managedOutputs = [...new Set(canonicalOutputs)].sort();
+    canonicalOutputStates = check ? await readOutputStates(absoluteRoot, managedOutputs) : null;
+    let publishedHashes;
+    let beforeSnapshot;
+    if (verifyLastPublishNoop) {
+      let state;
+      try {
+        state = await readJsonIfExists(statePath, null);
+      } catch (error) {
+        if (error?.code === "semantic-state-invalid") {
+          throw new RefreshError(
+            "verify-noop-state-invalid",
+            "Last-publish semantic state is malformed.",
+            { cause: error },
+          );
+        }
+        throw error;
+      }
+      invariant(state, "verify-noop-state-missing", "Last-publish semantic state is missing.");
+      publishedHashes = validatePublishedState(state, registry);
+      beforeSnapshot = await snapshotPublishedManagedOutputs(
+        absoluteRoot,
+        managedOutputs,
+        publishedHashes,
+      );
+      verifyUnstagedManagedChanges(absoluteRoot, managedOutputs, beforeSnapshot);
+    } else {
+      await preflightCanonicalEdits(absoluteRoot, canonicalOutputs, {
+        checkChanges: preflightChanges,
+      });
+    }
 
     const transportConfig = await loadRefreshEnv({ cwd: absoluteRoot });
-    const oldState = await readJsonIfExists(statePath, { fingerprints: {} });
+    const storedState = await readJsonIfExists(statePath, { fingerprints: {} });
+    let oldState = storedState;
+    if (rebaselineSemanticStateHash !== undefined) {
+      let stateBytes;
+      try {
+        stateBytes = await readFile(statePath);
+      } catch (error) {
+        if (error?.code === "ENOENT")
+          throw new RefreshError(
+            "rebaseline-state-missing",
+            "Semantic state is required for rebaseline.",
+          );
+        throw error;
+      }
+      const oldStateHash = rawSha256(stateBytes);
+      invariant(
+        oldStateHash === rebaselineSemanticStateHash,
+        "rebaseline-state-hash-mismatch",
+        "Semantic state does not match the expected rebaseline hash.",
+      );
+      validatePublishedState(storedState, registry);
+      rebaselineOldStateHash = oldStateHash;
+      report.semanticStateRebaseline = {
+        reason: "explicit-hash-pinned-state-transition",
+        oldStateSha256: oldStateHash,
+        oldStateVersion: storedState.version,
+        candidateFingerprints: {},
+        candidateOutputHashes: {},
+      };
+      oldState = { fingerprints: {}, outputs: {} };
+    }
     const nextState = {
-      version: 1,
+      version: rebaselineSemanticStateHash !== undefined || storedState.version === 2 ? 2 : 1,
       fingerprints: { ...oldState.fingerprints },
       outputs: { ...oldState.outputs },
     };
@@ -125,6 +236,12 @@ export async function runRefresh({
       );
       const fingerprint = semanticFingerprint(result.semanticValue);
       const unchanged = oldState.fingerprints[source.id] === fingerprint;
+      if (verifyLastPublishNoop && !unchanged) {
+        throw new RefreshError(
+          "verify-noop-semantic-change",
+          `Source ${source.id} differs semantically from the last published state.`,
+        );
+      }
       const rawEvidence = (result.rawFetches || []).map((item) => ({
         name: safeLabel(item.name),
         sha256: rawSha256(item.bytes),
@@ -142,7 +259,11 @@ export async function runRefresh({
       });
       sourceResults.push({ source, result });
       nextState.fingerprints[source.id] = fingerprint;
+      if (report.semanticStateRebaseline) {
+        report.semanticStateRebaseline.candidateFingerprints[source.id] = fingerprint;
+      }
       const sourceArtifacts = new Map();
+      candidateEvaluationStarted = true;
       for (const artifact of result.artifacts) {
         const relative = normalizeRelativeOutput(artifact.path);
         invariant(
@@ -167,6 +288,15 @@ export async function runRefresh({
         );
         seenOutputs.add(relative);
         sourceArtifacts.set(relative, artifact.bytes);
+        if (check) {
+          const stagedPath = await writeStagedCandidate(
+            absoluteRoot,
+            stageRelative,
+            relative,
+            artifact.bytes,
+          );
+          stagedCandidates.set(relative, stagedPath);
+        }
       }
       for (const requiredOutput of source.outputs) {
         invariant(
@@ -209,13 +339,15 @@ export async function runRefresh({
       const outputHashes = {};
       for (const [relative, bytes] of sourceArtifacts) {
         const stagedPath = `${stageRelative}/artifacts/${relative}`;
-        const stagedAbsolute = await resolveContainedPath(absoluteRoot, stagedPath);
-        await mkdir(path.dirname(stagedAbsolute), { recursive: true });
-        await writeFile(stagedAbsolute, bytes, { flag: "wx", mode: 0o600 });
+        if (!check) await writeStagedCandidate(absoluteRoot, stageRelative, relative, bytes);
         stagedArtifacts.push({ path: relative, stagedPath });
+        stagedCandidates.set(relative, stagedPath);
         outputHashes[relative] = rawSha256(bytes);
       }
       nextState.outputs[source.id] = outputHashes;
+      if (report.semanticStateRebaseline) {
+        report.semanticStateRebaseline.candidateOutputHashes[source.id] = { ...outputHashes };
+      }
     }
 
     const quality = await validate({
@@ -232,10 +364,56 @@ export async function runRefresh({
     );
     report.quality = safeObject(quality);
 
+    if (verifyLastPublishNoop) {
+      verifyUnstagedManagedChanges(absoluteRoot, managedOutputs, beforeSnapshot);
+      const afterSnapshot = await snapshotPublishedManagedOutputs(
+        absoluteRoot,
+        managedOutputs,
+        publishedHashes,
+      );
+      invariant(
+        JSON.stringify(beforeSnapshot) === JSON.stringify(afterSnapshot),
+        "verify-noop-managed-change",
+        "Managed outputs changed during no-op verification.",
+      );
+    }
+
     report.finishedAt = now().toISOString();
     report.status = "validated";
     report.outputsChanged = stagedArtifacts.map(({ path: output }) => output);
+    if (check) {
+      report.outputDiffs = await buildOutputDiffs(
+        absoluteRoot,
+        managedOutputs,
+        canonicalOutputStates,
+        stagedCandidates,
+        candidateEvaluationStarted,
+      );
+    }
     if (!check && stagedArtifacts.length > 0) {
+      if (rebaselineSemanticStateHash !== undefined) {
+        const latestStateHash = rawSha256(await readFile(statePath));
+        invariant(
+          latestStateHash === rebaselineOldStateHash,
+          "rebaseline-state-changed",
+          "Semantic state changed during rebaseline; refusing to publish.",
+        );
+        await verifyCleanTrackedOutputsAtHead(absoluteRoot, managedOutputs);
+        await verifyNoRebaselineResidue({
+          root: absoluteRoot,
+          stagingRoot: path.join(workRoot, "staging"),
+          currentStageName: runId,
+          backupRoot,
+          outputs: managedOutputs,
+        });
+        invariant(
+          !(await readJournal(journalPath)),
+          "rebaseline-recovery-required",
+          "A pending publish journal prevents semantic-state rebaseline.",
+        );
+      }
+      const transactionId = randomUUID();
+      nextState.publishTransactionId = transactionId;
       const stateStage = `${stageRelative}/semantic-state.json`;
       const stateAbsolute = await resolveContainedPath(absoluteRoot, stateStage);
       await writeFile(stateAbsolute, `${JSON.stringify(nextState, null, 2)}\n`, {
@@ -250,6 +428,7 @@ export async function runRefresh({
         backupRoot,
         artifacts: stagedArtifacts,
         registry,
+        transactionId,
       });
       report.status = stagedArtifacts.length > 1 ? "published" : "unchanged";
       report.outputsPublished = stagedArtifacts
@@ -261,6 +440,23 @@ export async function runRefresh({
     outcome = { report, exitCode: 0 };
   } catch (error) {
     report.finishedAt = now().toISOString();
+    if (check) {
+      try {
+        const outputs = registry.sources.flatMap((source) => source.outputs);
+        const managedOutputs = [...new Set(outputs)].sort();
+        const canonicalStates =
+          canonicalOutputStates ?? (await readOutputStates(absoluteRoot, managedOutputs));
+        report.outputDiffs = await buildOutputDiffs(
+          absoluteRoot,
+          managedOutputs,
+          canonicalStates,
+          stagedCandidates,
+          candidateEvaluationStarted,
+        );
+      } catch {
+        // Output diagnostics are best effort; never replace the sanitized refresh failure.
+      }
+    }
     const reasonCode = safeErrorCode(error?.code) ?? "source-worker-failed";
     const sourceId =
       typeof error?.sourceId === "string" && /^[a-z0-9][a-z0-9-]{0,79}$/.test(error.sourceId)
@@ -271,8 +467,70 @@ export async function runRefresh({
     report.sources.push({
       sourceId,
       result: "blocked",
-      sourceCandidate: { status: "pending", reasonCode },
+      sourceCandidate: {
+        status: "pending",
+        reasonCode,
+        ...(error?.earningsAnnualOverlapDiagnostics
+          ? {
+              earningsAnnualOverlapDiagnostics: safeEarningsAnnualOverlapDiagnostics(
+                error.earningsAnnualOverlapDiagnostics,
+              ),
+            }
+          : {}),
+        ...(reasonCode === "runtime-quality-suite-failed"
+          ? {
+              runtimeQualityDiagnostics: safeRuntimeQualityDiagnostics(
+                error?.runtimeQualityDiagnostics,
+              ),
+            }
+          : {}),
+        ...(reasonCode === "cpi-candidate-not-found"
+          ? { candidateDiagnostics: safeCandidateDiagnostics(error?.candidateDiagnostics) }
+          : {}),
+        ...(reasonCode === "cpi-meta-candidate-mismatch"
+          ? { candidateDiagnostics: safeCpiMetadataDiagnostics(error?.candidateDiagnostics) }
+          : {}),
+      },
+      ...(reasonCode === "cpi-meta-area-unproven"
+        ? {
+            cpiMetadataAreaDiagnostics: safeCpiMetadataAreaDiagnostics(
+              error?.cpiMetadataAreaDiagnostics,
+            ),
+          }
+        : {}),
+      ...(reasonCode === "cpi-meta-series-mismatch"
+        ? {
+            cpiMetadataCategoryDiagnostics: safeCpiMetadataCategoryDiagnostics(
+              error?.cpiMetadataCategoryDiagnostics,
+            ),
+          }
+        : {}),
+      ...(reasonCode === "cpi-distribution-series-invalid"
+        ? {
+            cpiDistributionSeriesDiagnostics: safeCpiDistributionSeriesDiagnostics(
+              error?.cpiDistributionSeriesDiagnostics,
+            ),
+          }
+        : {}),
+      ...(reasonCode === "cpi-distribution-api-period-mismatch"
+        ? {
+            cpiDistributionPeriodDiagnostics: safeCpiDistributionPeriodDiagnostics(
+              error?.cpiDistributionPeriodDiagnostics,
+            ),
+          }
+        : {}),
+      ...(reasonCode === "cpi-meta-time-unproven"
+        ? {
+            cpiMetadataTimeDiagnostics: safeCpiMetadataTimeDiagnostics(
+              error?.cpiMetadataTimeDiagnostics,
+            ),
+          }
+        : {}),
+      ...(reasonCode === "cpi-api-record-invalid"
+        ? { cpiApiRecordDiagnostics: safeCpiApiRecordDiagnostics(error?.cpiApiRecordDiagnostics) }
+        : {}),
       apiFailure: safeApiFailure(error),
+      fileFailure: safeFileFailure(error),
     });
     outcome = { report, error, exitCode: 1 };
   } finally {
@@ -293,6 +551,120 @@ export async function runRefresh({
   }
   if (outcome.error) throw outcome.error;
   return outcome.report;
+}
+
+async function writeStagedCandidate(root, stageRelative, relative, bytes) {
+  const stagedPath = `${stageRelative}/artifacts/${relative}`;
+  const stagedAbsolute = await resolveContainedPath(root, stagedPath);
+  await mkdir(path.dirname(stagedAbsolute), { recursive: true });
+  await writeFile(stagedAbsolute, bytes, { flag: "wx", mode: 0o600 });
+  return stagedPath;
+}
+
+async function readOutputStates(root, outputs) {
+  const states = new Map();
+  for (const output of outputs) {
+    try {
+      const bytes = await readFile(
+        await resolveContainedPath(root, output, { allowMissingLeaf: false }),
+      );
+      states.set(output, outputState(bytes));
+    } catch (error) {
+      if (error?.code === "ENOENT") states.set(output, absentOutputState());
+      else throw error;
+    }
+  }
+  return states;
+}
+
+async function buildOutputDiffs(
+  root,
+  outputs,
+  canonicalStates,
+  stagedCandidates,
+  candidateEvaluationStarted,
+) {
+  const diffs = [];
+  for (const output of outputs) {
+    const prior = canonicalStates.get(output) ?? absentOutputState();
+    const stagedPath = stagedCandidates.get(output);
+    let post = absentOutputState();
+    if (stagedPath) {
+      try {
+        const bytes = await readFile(
+          await resolveContainedPath(root, stagedPath, { allowMissingLeaf: false }),
+        );
+        post = outputState(bytes);
+      } catch (error) {
+        if (error?.code !== "ENOENT") throw error;
+      }
+    }
+    const status = !candidateEvaluationStarted
+      ? "not-evaluated"
+      : !prior.exists && !post.exists
+        ? "missing"
+        : !prior.exists
+          ? "added"
+          : !post.exists
+            ? "removed"
+            : prior.sha256 === post.sha256
+              ? "unchanged"
+              : "changed";
+    diffs.push({ path: output, canonicalPrior: prior, stagedPost: post, status });
+  }
+  return diffs;
+}
+
+function outputState(bytes) {
+  return { exists: true, sha256: rawSha256(bytes), byteLength: bytes.byteLength };
+}
+
+function absentOutputState() {
+  return { exists: false, sha256: null, byteLength: null };
+}
+
+function validatePublishedState(state, registry) {
+  invariant(
+    state &&
+      (state.version === 1 || state.version === 2) &&
+      state.fingerprints &&
+      typeof state.fingerprints === "object" &&
+      !Array.isArray(state.fingerprints) &&
+      state.outputs &&
+      typeof state.outputs === "object" &&
+      !Array.isArray(state.outputs) &&
+      TRANSACTION_ID_PATTERN.test(state.publishTransactionId || ""),
+    "verify-noop-state-invalid",
+    "Last-publish semantic state or transaction id is invalid.",
+  );
+  const hashes = {};
+  const requiredSources = registry.sources.filter((source) => source.required);
+  invariant(
+    Object.keys(state.fingerprints).length === requiredSources.length &&
+      Object.keys(state.outputs).length === requiredSources.length,
+    "verify-noop-state-invalid",
+    "Last-publish semantic state is incomplete.",
+  );
+  for (const source of requiredSources) {
+    const fingerprint = state.fingerprints[source.id];
+    const sourceHashes = state.outputs[source.id];
+    invariant(
+      typeof fingerprint === "string" &&
+        /^[a-f0-9]{64}$/.test(fingerprint) &&
+        sourceHashes &&
+        typeof sourceHashes === "object" &&
+        !Array.isArray(sourceHashes) &&
+        Object.keys(sourceHashes).length === source.outputs.length &&
+        source.outputs.every(
+          (output) =>
+            typeof sourceHashes[output] === "string" && /^[a-f0-9]{64}$/.test(sourceHashes[output]),
+        ),
+      "verify-noop-state-invalid",
+      `Last-publish output hash manifest is incomplete for ${source.id}.`,
+    );
+    for (const output of source.outputs) hashes[output] = sourceHashes[output];
+  }
+  return hashes;
 }
 
 async function writeBlockedReport({ absoluteRoot, sources, timestamp, reportId }) {
@@ -358,7 +730,10 @@ async function readJsonIfExists(file, fallback) {
   try {
     const value = JSON.parse(await readFile(file, "utf8"));
     invariant(
-      value && value.version === 1 && value.fingerprints && typeof value.fingerprints === "object",
+      value &&
+        (value.version === 1 || value.version === 2) &&
+        value.fingerprints &&
+        typeof value.fingerprints === "object",
       "semantic-state-invalid",
       "Semantic state file is invalid.",
     );
@@ -370,6 +745,10 @@ async function readJsonIfExists(file, fallback) {
   }
 }
 
+function managedOutputsForRegistry(registry) {
+  return [...new Set(registry.sources.flatMap((source) => source.outputs))].sort();
+}
+
 function safeLabel(value) {
   return typeof value === "string" && /^[a-zA-Z0-9._-]{1,80}$/.test(value) ? value : "source-bytes";
 }
@@ -379,15 +758,81 @@ function safeErrorCode(value) {
 }
 
 function safeApiFailure(error) {
-  const phases = new Set(["data-catalog", "table-list", "stats-data", "metadata"]);
+  const phases = new Set(["table-list", "catalog", "metadata", "stats-data"]);
+  if (!phases.has(error?.apiPhase)) return undefined;
+  const failure = { phase: error.apiPhase };
+  if (error?.code === "candidate-resolution-pending" && error.apiPhase === "catalog") {
+    const candidateCountKeys = [
+      "catalogRows",
+      "datasetRows",
+      "resourceRows",
+      "expectedIdMatches",
+      "allowedFormatMatches",
+      "httpsOfficialHostMatches",
+      "datasetTitleMarkerMatches",
+      "resourceTitleMarkerMatches",
+      "parseableDateMatches",
+      "fullMatches",
+      "latestTieCount",
+    ];
+    const optionalCandidateCountKeys = ["subCategory1MarkerMatches"];
+    const diagnostics = error.candidateDiagnostics;
+    if (diagnostics && typeof diagnostics === "object" && !Array.isArray(diagnostics)) {
+      const candidateCounts = {};
+      for (const key of candidateCountKeys) {
+        const value = diagnostics[key];
+        if (!Number.isSafeInteger(value) || value < 0) return failure;
+        candidateCounts[key] = value;
+      }
+      for (const key of optionalCandidateCountKeys) {
+        if (!Object.hasOwn(diagnostics, key)) continue;
+        const value = diagnostics[key];
+        if (!Number.isSafeInteger(value) || value < 0) return failure;
+        candidateCounts[key] = value;
+      }
+      failure.candidateCounts = candidateCounts;
+    }
+    return failure;
+  }
+  if (error?.code === "api-invalid-schema") {
+    const schemaFailureCodes = new Set([
+      "payload-not-object",
+      "paging-metadata-missing",
+      "total-invalid",
+    ]);
+    if (schemaFailureCodes.has(error.apiSchemaFailureCode)) {
+      failure.schemaCode = error.apiSchemaFailureCode;
+    }
+    return failure;
+  }
+  if (Number.isSafeInteger(error?.apiStatus) && error.apiStatus !== 0) {
+    failure.status = error.apiStatus;
+  } else {
+    return undefined;
+  }
+  return failure;
+}
+
+function safeFileFailure(error) {
+  const value = error?.fileFailure;
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const { status, attempt, maxAttempts, retryable, retriesExhausted } = value;
   if (
-    !phases.has(error?.apiPhase) ||
-    !Number.isSafeInteger(error?.apiStatus) ||
-    error.apiStatus === 0
+    !Number.isSafeInteger(status) ||
+    status < 100 ||
+    status > 599 ||
+    !Number.isSafeInteger(attempt) ||
+    attempt < 1 ||
+    !Number.isSafeInteger(maxAttempts) ||
+    maxAttempts < 1 ||
+    attempt > maxAttempts ||
+    typeof retryable !== "boolean" ||
+    typeof retriesExhausted !== "boolean" ||
+    (retriesExhausted && (!retryable || attempt !== maxAttempts))
   ) {
     return undefined;
   }
-  return { phase: error.apiPhase, status: error.apiStatus };
+  return { status, attempt, maxAttempts, retryable, retriesExhausted };
 }
 
 function safeObject(value) {
@@ -396,6 +841,308 @@ function safeObject(value) {
   for (const [key, entry] of Object.entries(value)) {
     if (/^[a-zA-Z0-9._-]{1,60}$/.test(key) && ["number", "boolean"].includes(typeof entry))
       result[key] = entry;
+  }
+  return result;
+}
+
+function containsControlCodePoint(value) {
+  for (const character of value) {
+    const codePoint = character.codePointAt(0);
+    if ((codePoint >= 0x00 && codePoint <= 0x1f) || (codePoint >= 0x7f && codePoint <= 0x9f))
+      return true;
+  }
+  return false;
+}
+
+function safeRuntimeQualityDiagnostics(value) {
+  const hasCounts =
+    Object.hasOwn(value ?? {}, "testResultCount") ||
+    Object.hasOwn(value ?? {}, "failedAssertionCount");
+  if (
+    !value ||
+    typeof value !== "object" ||
+    Array.isArray(value) ||
+    !Number.isSafeInteger(value.exitCode) ||
+    value.exitCode < 0 ||
+    value.exitCode > 255 ||
+    !RUNTIME_FAILURE_REPORT_STATUSES.includes(value.reportStatus) ||
+    !Number.isSafeInteger(value.reportBytes) ||
+    value.reportBytes < 0 ||
+    value.reportBytes > 10 * 1024 * 1024 ||
+    (hasCounts &&
+      (!Number.isSafeInteger(value.testResultCount) ||
+        value.testResultCount < 0 ||
+        value.testResultCount > 1_000_000 ||
+        !Number.isSafeInteger(value.failedAssertionCount) ||
+        value.failedAssertionCount < 0 ||
+        value.failedAssertionCount > 1_000_000)) ||
+    !Array.isArray(value.failedTestSamples) ||
+    value.failedTestSamples.length > 12
+  )
+    return undefined;
+  const samples = [];
+  for (const sample of value.failedTestSamples) {
+    if (
+      !sample ||
+      typeof sample !== "object" ||
+      Array.isArray(sample) ||
+      !RUNTIME_QUALITY_TESTS.includes(sample.file) ||
+      Object.keys(sample).some((key) => !["file", "title"].includes(key))
+    )
+      return undefined;
+    if (Object.hasOwn(sample, "title")) {
+      if (
+        typeof sample.title !== "string" ||
+        sample.title.length < 1 ||
+        sample.title.length > 240 ||
+        containsControlCodePoint(sample.title) ||
+        /https?:\/\/\S+|(?:password|passwd|secret|token|authorization|api[_-]?key)\s*[:=]\s*[^\s,;]+|(?:[A-Za-z]:\\|\\\\|\/)(?:[^\s"'<>|,;]+[\\/]?)+/i.test(
+          sample.title,
+        )
+      )
+        return undefined;
+      samples.push({ file: sample.file, title: sample.title });
+    } else {
+      samples.push({ file: sample.file });
+    }
+  }
+  return {
+    exitCode: value.exitCode,
+    reportStatus: value.reportStatus,
+    reportBytes: value.reportBytes,
+    ...(value.reportStatus !== "report-failures-found" &&
+    typeof value.startupError === "string" &&
+    value.startupError.length >= 1 &&
+    value.startupError.length <= 240 &&
+    (/^(?:error\b|(?:type|syntax|reference|range|uri)error\s*:|failed\b|cannot\b|unhandled\b)/i.test(
+      value.startupError,
+    ) ||
+      /^(?:✘\s*)?(?:\[error\]\s*)?(?:could not (?:resolve|load)\b|failed to resolve import\b|enoent\b)/i.test(
+        value.startupError,
+      ) ||
+      /\b(?:failed to load config|failed to resolve import|error when starting|vite server startup)\b/i.test(
+        value.startupError,
+      )) &&
+    !containsControlCodePoint(value.startupError) &&
+    !/https?:\/\/\S+|(?:password|passwd|secret|token|authorization|api[_-]?key)\s*[:=]\s*(?!\[redacted\])[^\s,;]+|(?:[A-Za-z]:\\|\\\\|\/)(?:[^\s"'<>|,;]+[\\/]?)+/i.test(
+      value.startupError,
+    )
+      ? { startupError: value.startupError }
+      : {}),
+    ...(hasCounts
+      ? { testResultCount: value.testResultCount, failedAssertionCount: value.failedAssertionCount }
+      : {}),
+    failedTestSamples: samples,
+  };
+}
+
+function safeCandidateDiagnostics(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const cycleCategories = new Set(["monthly", "annual", "quarterly", "other", "missing"]);
+  const identityCandidates = value.identityCandidates;
+  if (!Array.isArray(identityCandidates) || identityCandidates.length > 3) return undefined;
+  const safeIdentityCandidates = [];
+  for (const candidate of identityCandidates) {
+    if (
+      !candidate ||
+      typeof candidate !== "object" ||
+      typeof candidate.statsDataId !== "string" ||
+      !/^\d{8,16}$/.test(candidate.statsDataId) ||
+      !cycleCategories.has(candidate.cycleCategory) ||
+      !Array.isArray(candidate.surveyYears) ||
+      candidate.surveyYears.length > 60 ||
+      candidate.surveyYears.some(
+        (year) =>
+          typeof year !== "string" ||
+          !/^\d{4}$/.test(year) ||
+          Number(year) < 1900 ||
+          Number(year) > 2100,
+      ) ||
+      new Set(candidate.surveyYears).size !== candidate.surveyYears.length
+    ) {
+      return undefined;
+    }
+    safeIdentityCandidates.push({
+      statsDataId: candidate.statsDataId,
+      cycleCategory: candidate.cycleCategory,
+      surveyYears: [...candidate.surveyYears],
+    });
+  }
+  const keys = [
+    "rowsReturned",
+    "requiredIdentityFields",
+    "titleAndStatNameIdentityMatch",
+    "monthlyFrequencyMatch",
+    "surveyDate2025Match",
+    "fullMatch",
+  ];
+  const result = {};
+  for (const key of keys) {
+    const count = value[key];
+    if (Number.isSafeInteger(count) && count >= 0) result[key] = count;
+  }
+  if (Object.keys(result).length !== keys.length) return undefined;
+  result.identityCandidates = safeIdentityCandidates;
+  return result;
+}
+
+function safeCpiMetadataDiagnostics(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const keys = [
+    "selectedPresent",
+    "idExact",
+    "titleContainsSelectedTitle",
+    "identityMarkers",
+    "statisticsName",
+  ];
+  const result = {};
+  for (const key of keys) {
+    if (typeof value[key] !== "boolean") return undefined;
+    result[key] = value[key];
+  }
+  return result;
+}
+
+function safeCpiMetadataAreaDiagnostics(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const keys = [
+    "areaDimensionFound",
+    "nationalCode00000Found",
+    "nationalNameNationalFound",
+    "nationalCodeAndNameSameClass",
+  ];
+  const result = {};
+  for (const key of keys) {
+    if (typeof value[key] !== "boolean") return undefined;
+    result[key] = value[key];
+  }
+  return result;
+}
+
+function safeCpiMetadataCategoryDiagnostics(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  if (typeof value.categoryClassObjFound !== "boolean") return undefined;
+  const result = { categoryClassObjFound: value.categoryClassObjFound };
+  for (const key of [
+    "rowCount",
+    "uniqueCodeCount",
+    "expectedCodeMatchCount",
+    "exactNameMatchCount",
+    "namePrimitiveCount",
+    "nameDollarWrappedCount",
+    "nameMissingCount",
+    "normalizedNameMatchCount",
+    "expectedCodeNamePresentCount",
+  ]) {
+    if (!Number.isSafeInteger(value[key]) || value[key] < 0) return undefined;
+    result[key] = value[key];
+  }
+  return result;
+}
+
+function safeCpiDistributionSeriesDiagnostics(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const keys = [
+    "codeRowColumnCount",
+    "totalCodeCount",
+    "nonEmptyCodeCount",
+    "uniqueCodeCount",
+    "emptyCodeCount",
+    "duplicateCodeCount",
+    "expectedCodeMatchCount",
+    "supplementalCodeCount",
+    "missingExpectedCodeCount",
+  ];
+  const result = {};
+  for (const key of keys) {
+    if (!Number.isSafeInteger(value[key]) || value[key] < 0) return undefined;
+    result[key] = value[key];
+  }
+  return result;
+}
+
+function safeCpiDistributionPeriodDiagnostics(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const countKeys = [
+    "apiPeriodCount",
+    "distributionPeriodCount",
+    "distributionFileByteLength",
+    "positionalMismatchCount",
+    "missingApiPeriodCount",
+  ];
+  const monthKeys = [
+    "apiStartMonth",
+    "apiEndMonth",
+    "distributionStartMonth",
+    "distributionEndMonth",
+    "firstMismatchApiMonth",
+    "firstMismatchDistributionMonth",
+  ];
+  const result = {};
+  for (const key of countKeys) {
+    if (!Number.isSafeInteger(value[key]) || value[key] < 0) return undefined;
+    result[key] = value[key];
+  }
+  if (
+    typeof value.distributionFileSha256 !== "string" ||
+    !/^[a-f0-9]{64}$/.test(value.distributionFileSha256)
+  ) {
+    return undefined;
+  }
+  result.distributionFileSha256 = value.distributionFileSha256;
+  if (
+    value.firstMismatchIndex !== null &&
+    (!Number.isSafeInteger(value.firstMismatchIndex) || value.firstMismatchIndex < 0)
+  ) {
+    return undefined;
+  }
+  result.firstMismatchIndex = value.firstMismatchIndex;
+  for (const key of monthKeys) {
+    if (value[key] !== null && (typeof value[key] !== "string" || !/^\d{6}$/.test(value[key]))) {
+      return undefined;
+    }
+    result[key] = value[key];
+  }
+  return result;
+}
+
+function safeCpiMetadataTimeDiagnostics(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const booleanKeys = ["timeDimensionFound", "requiredStartMonthFound", "monthlyContinuity"];
+  const countKeys = [
+    "rowCount",
+    "monthlyPeriodCount",
+    "annualPeriodCount",
+    "malformedLabelCount",
+    "monthLabelPatternCount",
+    "calendarYearLabelPatternCount",
+    "fiscalYearLabelPatternCount",
+    "annualAverageLabelPatternCount",
+    "blankLabelCount",
+    "otherLabelPatternCount",
+    "malformedUniqueCodeCount",
+    "duplicateCodeCount",
+    "duplicatePeriodCount",
+  ];
+  const result = {};
+  for (const key of booleanKeys) {
+    if (typeof value[key] !== "boolean") return undefined;
+    result[key] = value[key];
+  }
+  for (const key of countKeys) {
+    if (!Number.isSafeInteger(value[key]) || value[key] < 0) return undefined;
+    result[key] = value[key];
+  }
+  return result;
+}
+
+function safeCpiApiRecordDiagnostics(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const keys = ["totalRows", "unknownCategoryCount", "unrecognizedTimeCount", "bothInvalidCount"];
+  const result = {};
+  for (const key of keys) {
+    if (!Number.isSafeInteger(value[key]) || value[key] < 0) return undefined;
+    result[key] = value[key];
   }
   return result;
 }
@@ -478,6 +1225,17 @@ function safeSourceCandidate(value) {
         : undefined,
     revisionHash: /^[a-f0-9]{64}$/.test(value.revisionHash || "") ? value.revisionHash : undefined,
     validationResult: value.validationResult === "passed" ? "passed" : undefined,
+    revisionStartMonth: /^\d{4}(0[1-9]|1[0-2])$/.test(value.revisionStartMonth || "")
+      ? value.revisionStartMonth
+      : undefined,
+    revisionEndMonth: /^\d{4}(0[1-9]|1[0-2])$/.test(value.revisionEndMonth || "")
+      ? value.revisionEndMonth
+      : undefined,
+    revisionComparedValueCount:
+      Number.isSafeInteger(value.revisionComparedValueCount) &&
+      value.revisionComparedValueCount >= 0
+        ? value.revisionComparedValueCount
+        : undefined,
   };
   if (Array.isArray(value.fileCandidates))
     safe.fileCandidates = value.fileCandidates.slice(0, 10).flatMap((item) => {
@@ -555,16 +1313,26 @@ function safeSourceCandidate(value) {
   if (value.classification === "CPI 2025 base; nationwide monthly index; 78 cat01 series")
     safe.classification = value.classification;
   if (Array.isArray(value.revisionSamples))
-    safe.revisionSamples = value.revisionSamples
-      .slice(0, 10)
-      .flatMap((sample) =>
-        sample &&
-        typeof sample.seriesId === "string" &&
-        /^\d{4}$/.test(sample.seriesId) &&
-        /^\d{4}-\d\d$/.test(sample.month || "")
-          ? [{ seriesId: sample.seriesId, month: sample.month }]
-          : [],
-      );
+    safe.revisionSamples = value.revisionSamples.slice(0, 10).flatMap((sample) => {
+      if (
+        !sample ||
+        typeof sample.seriesId !== "string" ||
+        !/^[A-Za-z0-9._-]{1,80}$/.test(sample.seriesId)
+      )
+        return [];
+      const month = /^\d{4}(0[1-9]|1[0-2])$/.test(sample.month || "")
+        ? `${sample.month.slice(0, 4)}-${sample.month.slice(4)}`
+        : /^\d{4}-(0[1-9]|1[0-2])$/.test(sample.month || "")
+          ? sample.month
+          : undefined;
+      return month ? [{ seriesId: sample.seriesId, month }] : [];
+    });
+  if (value.earningsAnnualOverlapDiagnostics) {
+    const diagnostics = safeEarningsAnnualOverlapDiagnostics(
+      value.earningsAnnualOverlapDiagnostics,
+    );
+    if (diagnostics) safe.earningsAnnualOverlapDiagnostics = diagnostics;
+  }
   if (Array.isArray(value.outputHashes))
     safe.outputHashes = value.outputHashes.slice(0, 20).flatMap((item) => {
       if (
@@ -583,6 +1351,43 @@ function safeSourceCandidate(value) {
   return Object.fromEntries(Object.entries(safe).filter(([, entry]) => entry !== undefined));
 }
 
+function safeEarningsAnnualOverlapDiagnostics(value) {
+  if (
+    !value ||
+    typeof value !== "object" ||
+    Array.isArray(value) ||
+    !EARNINGS_OUTPUT_SERIES_IDS.has(value.series) ||
+    !Number.isSafeInteger(value.mismatchCount) ||
+    value.mismatchCount < 0 ||
+    value.mismatchCount > 1_000_000
+  )
+    return undefined;
+  const samples = Array.isArray(value.sample)
+    ? value.sample.slice(0, 5).flatMap((sample) =>
+        sample &&
+        /^\d{4}$/.test(String(sample.year ?? "")) &&
+        Number.isInteger(Number(sample.year)) &&
+        Number(sample.year) >= 1900 &&
+        Number(sample.year) <= 2100 &&
+        Number.isFinite(sample.oldValue) &&
+        sample.oldValue >= 0 &&
+        sample.oldValue <= 1_000_000 &&
+        Number.isFinite(sample.newValue) &&
+        sample.newValue >= 0 &&
+        sample.newValue <= 1_000_000
+          ? [
+              {
+                year: String(sample.year),
+                oldValue: sample.oldValue,
+                newValue: sample.newValue,
+              },
+            ]
+          : [],
+      )
+    : [];
+  return { series: value.series, mismatchCount: value.mismatchCount, sample: samples };
+}
+
 function safeRevisionAudit(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
   const safeHash = (entry) =>
@@ -591,24 +1396,109 @@ function safeRevisionAudit(value) {
   for (const [sourceId, entry] of Object.entries(value).slice(0, 100)) {
     if (!/^[a-zA-Z0-9._-]{1,80}$/.test(sourceId) || !entry || typeof entry !== "object") continue;
     const record = { sourceId };
-    for (const key of ["overlapCount", "changedObservationCount", "changedValueCount"]) {
+    for (const key of [
+      "overlapCount",
+      "comparedObservationCount",
+      "changedObservationCount",
+      "changedValueCount",
+    ]) {
       if (Number.isSafeInteger(entry[key]) && entry[key] >= 0) record[key] = entry[key];
     }
-    for (const key of ["sha256", "previousSha256", "sourceSha256"]) {
+    if (
+      Number.isSafeInteger(entry.acceptedAnnualRoundingAdjustmentCount) &&
+      entry.acceptedAnnualRoundingAdjustmentCount >= 0 &&
+      entry.acceptedAnnualRoundingAdjustmentCount <= 1_000_000
+    ) {
+      record.acceptedAnnualRoundingAdjustmentCount = entry.acceptedAnnualRoundingAdjustmentCount;
+    }
+    if (Array.isArray(entry.acceptedAnnualRoundingAdjustmentSample)) {
+      record.acceptedAnnualRoundingAdjustmentSample = entry.acceptedAnnualRoundingAdjustmentSample
+        .slice(0, 5)
+        .flatMap((sample) =>
+          sample &&
+          EARNINGS_OUTPUT_SERIES_IDS.has(sample.series) &&
+          /^\d{4}$/.test(String(sample.year ?? "")) &&
+          Number(sample.year) >= 1900 &&
+          Number(sample.year) <= 2100 &&
+          Number.isFinite(sample.oldValue) &&
+          sample.oldValue >= 0 &&
+          sample.oldValue <= 1_000_000 &&
+          Number.isFinite(sample.newValue) &&
+          sample.newValue >= 0 &&
+          sample.newValue <= 1_000_000 &&
+          [
+            "official-cy-upper-rounding-at-monthly-midpoint",
+            "official-cy-matches-monthly-mean-at-higher-precision",
+          ].includes(sample.reason)
+            ? [
+                {
+                  series: sample.series,
+                  year: String(sample.year),
+                  oldValue: sample.oldValue,
+                  newValue: sample.newValue,
+                  reason: sample.reason,
+                },
+              ]
+            : [],
+        );
+    }
+    for (const key of ["sha256", "previousSha256", "sourceSha256", "currentSha256"]) {
       const hash = safeHash(entry[key]);
       if (hash) record[key] = hash;
     }
+    const safeTimestamp = (candidate) =>
+      typeof candidate === "string" &&
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?(?:Z|[+-]\d{2}:\d{2})$/.test(candidate) &&
+      Number.isFinite(Date.parse(candidate));
+    for (const key of ["previousRetrievedAt", "retrievedAt"]) {
+      if (safeTimestamp(entry[key])) record[key] = entry[key];
+    }
     if (Array.isArray(entry.changedSample)) {
+      const populationSamples = sourceId === "population" ? [] : undefined;
       record.changedSample = entry.changedSample.slice(0, 10).flatMap((sample) => {
+        if (!sample) return [];
+        if (sourceId === "population") {
+          if (
+            populationSamples.length > 0 ||
+            typeof sample.period !== "string" ||
+            !/^\d{4}-(0[1-9]|1[0-2])$/.test(sample.period) ||
+            !Number.isFinite(sample.previous) ||
+            sample.previous < 0 ||
+            sample.previous > 100_000 ||
+            !Number.isFinite(sample.current) ||
+            sample.current < 0 ||
+            sample.current > 100_000
+          ) {
+            return [];
+          }
+          const safeSample = {
+            period: sample.period,
+            previous: sample.previous,
+            current: sample.current,
+          };
+          populationSamples.push(safeSample);
+          return [safeSample];
+        }
         if (
-          !sample ||
-          !Number.isSafeInteger(sample.seriesIndex) ||
-          sample.seriesIndex < 0 ||
-          typeof sample.month !== "string" ||
-          !/^\d{4}-\d{2}$/.test(sample.month)
-        )
-          return [];
-        return [{ seriesIndex: sample.seriesIndex, month: sample.month }];
+          Number.isSafeInteger(sample.seriesIndex) &&
+          sample.seriesIndex >= 0 &&
+          typeof sample.month === "string" &&
+          /^\d{4}-(0[1-9]|1[0-2])$/.test(sample.month)
+        ) {
+          return [{ seriesIndex: sample.seriesIndex, month: sample.month }];
+        }
+        if (
+          sourceId !== "population" &&
+          typeof sample.period === "string" &&
+          /^\d{4}-(0[1-9]|1[0-2])$/.test(sample.period) &&
+          Number.isSafeInteger(sample.previous) &&
+          sample.previous > 0 &&
+          Number.isSafeInteger(sample.current) &&
+          sample.current > 0
+        ) {
+          return [{ period: sample.period, previous: sample.previous, current: sample.current }];
+        }
+        return [];
       });
     }
     sources.push(record);

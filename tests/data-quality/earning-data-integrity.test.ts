@@ -10,6 +10,7 @@ import minkanFixture from "../fixtures/minkan-extension-anchors.json";
 import { parseCsvWithHeader } from "../../server/lib/dataIo";
 import { loadTotalEarningDataInternal } from "../../server/lib/data-loader/earnings";
 import { loadCtiDataInternal } from "../../server/lib/data-loader/cpi";
+import { loadCtiAdjustedV2Estimate } from "../../server/lib/data-loader/ctiAdjusted";
 import {
   buildCtiFilePaths,
   buildEarningsFilePaths,
@@ -24,7 +25,7 @@ import {
   SUPPORT_SERIES_KEY_NOMINAL,
 } from "../../src/lib/chartConstants";
 import { toCanonicalYearMonth } from "../../src/lib/yearMonth";
-import { toEarningsView } from "../../server/lib/view-models/dashboard";
+import { toEarningsView, type EarningsView } from "../../server/lib/view-models/dashboard";
 import type { ConsumptionTotal12MaResult } from "../../server/lib/consumptionTotal12Ma";
 import type { SeriesMeasurement } from "../../src/types/chart";
 import Papa from "papaparse";
@@ -994,42 +995,154 @@ describe("Earnings Data Integrity", () => {
     expect(rows.some((row) => Object.hasOwn(row, "CTIミクロ四半期系列（名目）"))).toBe(false);
   });
 
-  it("projects the 2014 Plan49 point with its exact monthly and MA12 provenance", async () => {
-    const rows = await loadTotalEarningDataInternal();
-    const row = rows.find((candidate) => candidate.年月 === "2014年1月");
-    expect(row).toBeDefined();
-    const measurement = (row as CpiDataWithMeasurements).measurements?.[CONSUMPTION_TOTAL_12MA_KEY];
-    expect(measurement?.value).toBe(row?.[CONSUMPTION_TOTAL_12MA_KEY]);
-    expect(measurement?.monthlyProvenance).toMatchObject({
-      sourceId: "000040499070",
-      householdScope: "二人以上の世帯",
-      seriesType: "historical_estimate",
-    });
-    expect(measurement?.ma12Provenance).toEqual({
-      windowStart: "2013-02",
-      windowEnd: "2014-01",
-      sources: ["000040499070"],
-      statuses: ["historical_estimate"],
+  describe("2014 Plan49 point", () => {
+    let row: CpiData | undefined;
+    let measurement: SeriesMeasurement | undefined;
+    let publicRow: EarningsView | undefined;
+    let annualAnchors: Map<number, number>;
+    let finiteRawMonthCounts: Map<number, number>;
+    let sharedGateEstimate: ReturnType<typeof loadCtiAdjustedV2Estimate>;
+
+    beforeAll(async () => {
+      const rows = await loadTotalEarningDataInternal();
+      row = rows.find((candidate) => candidate.年月 === "2014年1月");
+      measurement = (row as CpiDataWithMeasurements | undefined)?.measurements?.[
+        CONSUMPTION_TOTAL_12MA_KEY
+      ];
+      publicRow = toEarningsView(rows, ["年月", CONSUMPTION_TOTAL_12MA_KEY]).find(
+        (candidate) => candidate.年月 === "2014年1月",
+      );
+
+      const estimate = loadCtiAdjustedV2Estimate({
+        contract: "plan39",
+        validatePlan40Inputs: true,
+      });
+      sharedGateEstimate = estimate;
+      annualAnchors = new Map(
+        estimate.rows
+          .filter(
+            (candidate) =>
+              [2013, 2014].includes(candidate.year) &&
+              candidate.status === "available" &&
+              typeof candidate.values.総合 === "number" &&
+              Number.isFinite(candidate.values.総合),
+          )
+          .map((candidate) => [candidate.year, candidate.values.総合 as number]),
+      );
+
+      const rawCsvPath = resolve(
+        process.cwd(),
+        "data/source/official-cti-2025-long-term/000040499070.normalized.csv",
+      );
+      const rawRows = Papa.parse<Record<string, string>>(readFileSync(rawCsvPath, "utf8"), {
+        header: true,
+        skipEmptyLines: true,
+      }).data;
+      finiteRawMonthCounts = new Map(
+        [2013, 2014].map((year) => {
+          const count = rawRows.filter((candidate) => {
+            const month = candidate.month?.trim() ?? "";
+            const value = Number((candidate.raw_value ?? "").replace(/,/g, ""));
+            return (
+              (candidate.series_index === "1" || candidate.series_name === "消費支出（名目）") &&
+              candidate.is_missing !== "true" &&
+              month.startsWith(`${year}-`) &&
+              Number.isFinite(value)
+            );
+          }).length;
+          return [year, count];
+        }),
+      );
     });
 
-    const publicRow = toEarningsView(rows, ["年月", CONSUMPTION_TOTAL_12MA_KEY]).find(
-      (candidate) => candidate.年月 === "2014年1月",
-    );
-    expect(publicRow?.[CONSUMPTION_TOTAL_12MA_KEY]).toBeTypeOf("number");
-    expect(
-      (publicRow as CpiDataWithMeasurements | undefined)?.measurements?.[
-        CONSUMPTION_TOTAL_12MA_KEY
-      ],
-    ).toMatchObject({
-      monthlyProvenance: {
+    it("Plan49 diagnostic: 2013 Plan39 annual anchor is available", () => {
+      expect(annualAnchors.get(2013), "2013 finite Plan39 総合 annual anchor").toBeTypeOf("number");
+    });
+
+    it("Plan49 diagnostic: 2014 Plan39 annual anchor is available", () => {
+      expect(annualAnchors.get(2014), "2014 finite Plan39 総合 annual anchor").toBeTypeOf("number");
+    });
+
+    it("Plan49 diagnostic: 2013 CTI raw-month availability is 12/12", () => {
+      expect(finiteRawMonthCounts.get(2013), "finite 2013 raw months").toBe(12);
+    });
+
+    it("Plan49 diagnostic: 2014 CTI raw-month availability is 12/12", () => {
+      expect(finiteRawMonthCounts.get(2014), "finite 2014 raw months").toBe(12);
+    });
+
+    it("Plan49 diagnostic: Plan39 A/B artifact validation is valid", () => {
+      expect(
+        sharedGateEstimate.artifactValidation.A.valid &&
+          sharedGateEstimate.artifactValidation.B.valid,
+      ).toBe(true);
+    });
+
+    it("Plan49 diagnostic: Plan40 input validation is valid", () => {
+      expect(sharedGateEstimate.plan40InputValidation?.valid).toBe(true);
+    });
+
+    it("Plan49 diagnostic: 2017 ratio and other beta are available", () => {
+      expect(
+        typeof sharedGateEstimate.other.ratio2017 === "number" &&
+          Number.isFinite(sharedGateEstimate.other.ratio2017) &&
+          sharedGateEstimate.other.beta.status === "available" &&
+          typeof sharedGateEstimate.other.beta.beta === "number" &&
+          Number.isFinite(sharedGateEstimate.other.beta.beta),
+      ).toBe(true);
+    });
+
+    it("Plan49 diagnostic: household composition is available", () => {
+      expect(sharedGateEstimate.householdComposition.status).toBe("available");
+    });
+
+    it("has a 2014-01 row", () => {
+      expect(row).toBeDefined();
+    });
+
+    it("retains the exact monthly provenance", () => {
+      expect(measurement?.value).toBe(row?.[CONSUMPTION_TOTAL_12MA_KEY]);
+      expect(measurement?.monthlyProvenance).toMatchObject({
         sourceId: "000040499070",
         householdScope: "二人以上の世帯",
         seriesType: "historical_estimate",
-      },
-      ma12Provenance: {
+      });
+    });
+
+    it("retains the exact MA12 provenance, window, and source set", () => {
+      expect(measurement?.ma12Provenance).toEqual({
         windowStart: "2013-02",
         windowEnd: "2014-01",
-      },
+        sources: ["000040499070"],
+        statuses: ["historical_estimate"],
+      });
+    });
+
+    it("has a numeric finite MA12 value", () => {
+      expect(publicRow?.[CONSUMPTION_TOTAL_12MA_KEY]).toBeTypeOf("number");
+      expect(Number.isFinite(publicRow?.[CONSUMPTION_TOTAL_12MA_KEY])).toBe(true);
+    });
+
+    it("preserves the same provenance and value in the public projection", () => {
+      const internalValue = row?.[CONSUMPTION_TOTAL_12MA_KEY];
+      expect(publicRow?.[CONSUMPTION_TOTAL_12MA_KEY]).toBe(
+        typeof internalValue === "number" ? Number(internalValue.toFixed(2)) : internalValue,
+      );
+      expect(
+        (publicRow as CpiDataWithMeasurements | undefined)?.measurements?.[
+          CONSUMPTION_TOTAL_12MA_KEY
+        ],
+      ).toMatchObject({
+        monthlyProvenance: {
+          sourceId: "000040499070",
+          householdScope: "二人以上の世帯",
+          seriesType: "historical_estimate",
+        },
+        ma12Provenance: {
+          windowStart: "2013-02",
+          windowEnd: "2014-01",
+        },
+      });
     });
   });
 });

@@ -333,7 +333,7 @@ describe("CPI loading public contract edge coverage", () => {
     ],
     [
       "period end",
-      { period: { start: "1970年1月", end: "2026年6月", monthlyRows: 679 } },
+      { period: { start: "1970年1月", end: "2026年6月", monthlyRows: 678 } },
       "2025 metadata period mismatch",
     ],
     ["series count", { seriesCount: 77 }, "2025 metadata seriesCount mismatch"],

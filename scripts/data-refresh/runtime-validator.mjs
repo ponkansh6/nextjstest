@@ -1,5 +1,17 @@
-import { createHash } from "node:crypto";
-import { lstat, mkdir, readFile, readdir, symlink, writeFile } from "node:fs/promises";
+import { createHash, randomUUID } from "node:crypto";
+import {
+  lstat,
+  mkdir,
+  mkdtemp,
+  readFile,
+  readdir,
+  rm,
+  stat,
+  symlink,
+  unlink,
+  writeFile,
+} from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import { spawn } from "node:child_process";
 import { RefreshError } from "./lib/errors.mjs";
@@ -66,6 +78,275 @@ export const RUNTIME_QUALITY_TESTS = Object.freeze([
   "tests/data-quality/plan21-quarterly-gdp.test.ts",
 ]);
 
+const RUNTIME_FAILURE_SAMPLE_LIMIT = 12;
+const RUNTIME_FAILURE_LINE_LIMIT = 240;
+const RUNTIME_STARTUP_OUTPUT_LIMIT = 32 * 1024;
+const RUNTIME_FAILURE_REPORT_LIMIT = 10 * 1024 * 1024;
+export const RUNTIME_FAILURE_REPORT_STATUSES = Object.freeze([
+  "report-missing",
+  "report-oversize",
+  "report-invalid-json",
+  "report-no-allowlisted-failures",
+  "report-failures-found",
+]);
+
+/** Extract only allowlisted file names and sanitized assertion titles from Vitest JSON. */
+export function extractRuntimeFailureDiagnostics({
+  exitCode,
+  report,
+  reportStatus,
+  reportBytes,
+  startupError,
+  runtimeRoot,
+  testFiles = RUNTIME_QUALITY_TESTS,
+} = {}) {
+  if (!Number.isSafeInteger(exitCode) || exitCode < 0 || exitCode > 255) return undefined;
+  if (!Array.isArray(testFiles) || testFiles.some((file) => !RUNTIME_QUALITY_TESTS.includes(file)))
+    return undefined;
+  if (reportStatus === "report-missing")
+    return withStartupError(
+      { exitCode, reportStatus, reportBytes: 0, failedTestSamples: [] },
+      startupError,
+    );
+  if (reportStatus === "report-oversize") {
+    const bytes =
+      Number.isSafeInteger(reportBytes) && reportBytes >= 0
+        ? Math.min(reportBytes, RUNTIME_FAILURE_REPORT_LIMIT)
+        : RUNTIME_FAILURE_REPORT_LIMIT;
+    return withStartupError(
+      { exitCode, reportStatus, reportBytes: bytes, failedTestSamples: [] },
+      startupError,
+    );
+  }
+  if (!Buffer.isBuffer(report) && !(report instanceof Uint8Array)) return undefined;
+  const byteCount = Math.min(report.byteLength, RUNTIME_FAILURE_REPORT_LIMIT);
+  if (report.byteLength > RUNTIME_FAILURE_REPORT_LIMIT) {
+    return withStartupError(
+      {
+        exitCode,
+        reportStatus: "report-oversize",
+        reportBytes: RUNTIME_FAILURE_REPORT_LIMIT,
+        failedTestSamples: [],
+      },
+      startupError,
+    );
+  }
+  if (typeof runtimeRoot !== "string") return undefined;
+  let parsed;
+  try {
+    parsed = JSON.parse(Buffer.from(report).toString("utf8"));
+  } catch {
+    return withStartupError(
+      {
+        exitCode,
+        reportStatus: "report-invalid-json",
+        reportBytes: byteCount,
+        failedTestSamples: [],
+      },
+      startupError,
+    );
+  }
+  if (!parsed || !Array.isArray(parsed.testResults)) {
+    return withStartupError(
+      {
+        exitCode,
+        reportStatus: "report-invalid-json",
+        reportBytes: byteCount,
+        failedTestSamples: [],
+      },
+      startupError,
+    );
+  }
+  const allowed = new Set(RUNTIME_QUALITY_TESTS);
+  const safeResults = [];
+  let allResultsAllowlisted = true;
+  for (const result of parsed.testResults) {
+    if (!result || typeof result.name !== "string") {
+      return withStartupError(
+        {
+          exitCode,
+          reportStatus: "report-invalid-json",
+          reportBytes: byteCount,
+          failedTestSamples: [],
+        },
+        startupError,
+      );
+    }
+    const file = resolveRuntimeTestFile(runtimeRoot, result.name);
+    if (!file || !allowed.has(file)) {
+      allResultsAllowlisted = false;
+      continue;
+    }
+    safeResults.push({ result, file });
+  }
+  const samples = [];
+  let failedAssertionCount = 0;
+  for (const { result, file } of safeResults) {
+    if (result.status !== "failed") continue;
+    if (!Array.isArray(result.assertionResults)) {
+      if (samples.length < RUNTIME_FAILURE_SAMPLE_LIMIT) samples.push({ file });
+      continue;
+    }
+    let resultFailedAssertionCount = 0;
+    for (const assertion of result.assertionResults) {
+      if (assertion?.status !== "failed") continue;
+      failedAssertionCount += 1;
+      resultFailedAssertionCount += 1;
+      if (samples.length < RUNTIME_FAILURE_SAMPLE_LIMIT) {
+        const title =
+          typeof assertion.title === "string"
+            ? sanitizeRuntimeFailureTitle(assertion.title)
+            : undefined;
+        samples.push(title ? { file, title } : { file });
+      }
+    }
+    if (resultFailedAssertionCount === 0 && samples.length < RUNTIME_FAILURE_SAMPLE_LIMIT) {
+      samples.push({ file });
+    }
+  }
+  const status = samples.length > 0 ? "report-failures-found" : "report-no-allowlisted-failures";
+  return withStartupError(
+    {
+      exitCode,
+      reportStatus: status,
+      reportBytes: byteCount,
+      ...(allResultsAllowlisted
+        ? { testResultCount: safeResults.length, failedAssertionCount }
+        : {}),
+      failedTestSamples: samples,
+    },
+    startupError,
+  );
+}
+
+function withStartupError(diagnostics, value) {
+  const safe = sanitizeRuntimeStartupError(value);
+  return safe && diagnostics.reportStatus !== "report-failures-found"
+    ? { ...diagnostics, startupError: safe }
+    : diagnostics;
+}
+
+/** Select one allowlisted startup line from child output; raw output is never returned. */
+export function extractRuntimeStartupError(value) {
+  if (typeof value !== "string") return undefined;
+  const bounded = value.slice(0, RUNTIME_STARTUP_OUTPUT_LIMIT);
+  let generic;
+  for (const candidate of bounded.split(/[\r\n]+/)) {
+    const line = sanitizeRuntimeStartupError(candidate);
+    if (!line) continue;
+    if (/\bfailed to load config from\b/i.test(line)) {
+      generic ??= line;
+      continue;
+    }
+    if (isSpecificRuntimeStartupError(line)) return line;
+    generic ??= line;
+  }
+  return generic;
+}
+
+function isSpecificRuntimeStartupError(line) {
+  if (/^error:\s*build failed with \d+ errors?:?$/i.test(line)) return false;
+  if (
+    /^(?:✘\s*)?(?:\[error\]\s*)?(?:could not (?:resolve|load)\b|failed to resolve import\b|enoent\b)/i.test(
+      line,
+    )
+  )
+    return true;
+  return (
+    /^(?:[A-Za-z]*Error\b|ERR_[A-Z0-9_]+\b|cannot\b|unhandled\b)/i.test(line) ||
+    /\bnot defined\b/i.test(line) ||
+    /\bfailed to resolve import\b/i.test(line)
+  );
+}
+
+function sanitizeRuntimeStartupError(value) {
+  if (typeof value !== "string") return undefined;
+  let line = stripAnsiAndControls(value).trim();
+  const stageOnly = line.match(
+    /^Error: canonical project and runtime data fallback is forbidden \(target=(canonical-data|canonical-server|canonical-tests|canonical-scripts|canonical-package-manifest|canonical-tsconfig|canonical-vitest-config|canonical-dependency|canonical-other), operation=(readFileSync|readFile|openSync|open|createReadStream|statSync|lstatSync|accessSync|readdirSync|readdir|realpath|copyFileSync|copyFile|realpathSync|realpathSync\.native|promises\.(?:readFile|open|stat|lstat|access|readdir|realpath|copyFile))\)$/,
+  );
+  if (stageOnly)
+    return `Error: canonical project and runtime data fallback is forbidden (target=${stageOnly[1]}, operation=${stageOnly[2]})`;
+  if (/canonical project and runtime data fallback is forbidden/i.test(line)) return undefined;
+  if (
+    !line ||
+    (!/^(?:[A-Za-z]*Error\b|ERR_[A-Z0-9_]+\b|failed\b|cannot\b|unhandled\b)/i.test(line) &&
+      !/^(?:✘\s*)?(?:\[error\]\s*)?(?:could not (?:resolve|load)\b|failed to resolve import\b|enoent\b)/i.test(
+        line,
+      ) &&
+      !/\bnot defined\b/i.test(line) &&
+      !/\b(?:failed to load config|failed to resolve import|error when starting|vite server startup)\b/i.test(
+        line,
+      ))
+  )
+    return undefined;
+  line = line
+    .replace(/https?:\/\/\S+/gi, "[url]")
+    .replace(
+      /\b(?:password|passwd|secret|token|authorization|api[_-]?key)\s*[:=]\s*[^\s,;]+/gi,
+      "[redacted]",
+    )
+    .replace(QUOTED_ABSOLUTE_PATH, (_match, quote) => `${quote}[path]${quote}`)
+    .replace(UNQUOTED_ABSOLUTE_PATH, "[path]")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, RUNTIME_FAILURE_LINE_LIMIT);
+  return line || undefined;
+}
+
+function resolveRuntimeTestFile(runtimeRoot, name) {
+  const resolvedRoot = path.resolve(runtimeRoot);
+  const resolvedName = path.resolve(resolvedRoot, name);
+  const relative = path.relative(resolvedRoot, resolvedName);
+  if (!relative || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative))
+    return undefined;
+  const normalized = relative.split(path.sep).join("/");
+  return RUNTIME_QUALITY_TESTS.includes(normalized) ? normalized : undefined;
+}
+
+function stripAnsiAndControls(value) {
+  let output = "";
+  for (let index = 0; index < value.length;) {
+    const code = value.charCodeAt(index);
+    if (code === 0x1b && value.charCodeAt(index + 1) === 0x5b) {
+      let cursor = index + 2;
+      while (value.charCodeAt(cursor) >= 0x30 && value.charCodeAt(cursor) <= 0x3f) cursor += 1;
+      while (value.charCodeAt(cursor) >= 0x20 && value.charCodeAt(cursor) <= 0x2f) cursor += 1;
+      const finalCode = value.charCodeAt(cursor);
+      if (finalCode >= 0x40 && finalCode <= 0x7e) {
+        index = cursor + 1;
+        continue;
+      }
+    }
+    output += isControlCodePoint(code) ? " " : value[index];
+    index += 1;
+  }
+  return output;
+}
+
+function isControlCodePoint(codePoint) {
+  return (codePoint >= 0x00 && codePoint <= 0x1f) || (codePoint >= 0x7f && codePoint <= 0x9f);
+}
+
+// Quoted paths can contain spaces; unquoted matching stays token based so prose
+// containing a slash does not consume the rest of the diagnostic line.
+const QUOTED_ABSOLUTE_PATH = /(["'])(?:(?:[A-Za-z]:[\\/]|\\\\|\/)[^"']*)\1/g;
+const UNQUOTED_ABSOLUTE_PATH = /(?:[A-Za-z]:\\|\\\\|\/)(?:[^\s"'<>|,;()]+[\\/]?)+/g;
+
+function sanitizeRuntimeFailureTitle(value) {
+  const line = stripAnsiAndControls(value)
+    .replace(/https?:\/\/\S+/gi, "[url]")
+    .replace(
+      /\b(?:password|passwd|secret|token|authorization|api[_-]?key)\s*[:=]\s*[^\s,;]+/gi,
+      "[redacted]",
+    )
+    .replace(QUOTED_ABSOLUTE_PATH, (_match, quote) => `${quote}[path]${quote}`)
+    .replace(UNQUOTED_ABSOLUTE_PATH, "[path]")
+    .trim()
+    .slice(0, RUNTIME_FAILURE_LINE_LIMIT);
+  return line || undefined;
+}
+
 // Non-refresh inputs used by the listed suites and their loaders. Their digests pin the
 // precise canonical baseline before any byte is copied into the isolated validation root.
 export const PINNED_RUNTIME_INPUTS = Object.freeze({
@@ -101,6 +382,36 @@ export const PINNED_RUNTIME_INPUTS = Object.freeze({
     "6fdb57885ccea31f78d51c6f090df5ad6e6dc8fd80ab95bc32081cf024f403ad",
   "data/source/hon-mks202606.xls":
     "bdb5b5ad4f79030728c89502d1f27c2d3234c30b09a8f287900016eb89ab61c8",
+  "data/source/cti-size-composition/production-pi2plus-manifest.json":
+    "e002ecec397c07691ccdfe8e69817debb5fc0c9e2a054ca276eaa8eb837a5e00",
+  "data/source/cti-size-composition/production-pi2plus.json":
+    "f0e716f980a2129df163034b2a480f8e948e0c5f352f1b406ac41a4978d17a63",
+  "data/source/cti-size-composition/weights.csv":
+    "2098287276fa564d0280c9c7c29a336548d634bd20db739bbd1582ad71e1fcd2",
+  "data/source/cti-size-composition/weights-source-manifest.json":
+    "2f709fb82b5b974ef0b0463d41689d55c458148e38cfbc4fb12abde14db4dd5c",
+  "data/source/cti-size-composition/two-plus-share-backtest/lfs-national-shares.csv":
+    "7b2a71c97b4662bdb121246825534051f30b6959f8f3f83b7b74c7374e474c91",
+  "data/source/cti-size-composition/two-plus-share-backtest/source-trace.json":
+    "eb7d72929443dd984667395b71e2faeb1a9f425f26c4a341e72ecb2d31db087f",
+  "data/source/cti-size-composition/raw/lfs-special-jan/2017-setai-n.xls":
+    "78dfeb79a9c39495ade1f8dee2469da5e3ba8a94d81c48621590e4c3bc8e7682",
+  "data/source/cti-size-composition/raw/lfs-special-jan/2018-setai-n.xls":
+    "7032cd9d7b06f26f2cea9b6de00c9a9e22527ae08d98ecfa4a8e2af88a665928",
+  "data/source/cti-size-composition/raw/lfs-special-jan/2019-setai-n.xls":
+    "52fb89bbf360c5ca72f6cbe65ccf09342736bf0077d3938c7df78ee86ccab1d8",
+  "data/source/cti-size-composition/raw/lfs-special-jan/2020-setai-n.xls":
+    "b5e541674119e5dfdae8b69c0801bf7561b36bc8567e67ab86f2d1921363e92e",
+  "data/source/cti-size-composition/raw/lfs-special-jan/2021-setai-n.xls":
+    "558ec9b2abe88e10e6b18cd17d9071efc719d556f5369fbaf5443a3e89398579",
+  "data/source/cti-size-composition/raw/lfs-special-jan/2022-setai-n.xls":
+    "6bdb29720ded3ce0e6f49a28fdc004af7b67549726b61aae87dc2c73989910e3",
+  "data/source/cti-size-composition/raw/lfs-special-jan/2023-setai-n.xls":
+    "64101813896c485c4584f1b4881a75435cddb0bfa3b4321367fa727315894e3b",
+  "data/source/cti-size-composition/raw/lfs-special-jan/2024-setai-n.xls":
+    "ad0c9e8cdc0c3cb04f6d830006ddab7c999840ababd5dd6ada78b6fd9ccb1c46",
+  "data/source/cti-size-composition/raw/lfs-special-jan/2025-setai-n.xlsx":
+    "6dac12725446a8cf1e8e8325fd0ce7cec3b0f55f897fc9edeb416503631d4a22",
   "tests/fixtures/csv/minkan-extension-raw.csv":
     "1683e03aa9bb0b0e2ed53a470bdf21e78ca3ac65efe7d0b0b1164cf3ee20aacd",
 });
@@ -134,7 +445,7 @@ export const PINNED_PROJECT_FILES = Object.freeze({
   "server/lib/data-loader/cpiLoader.ts":
     "11219c314ed787a8f6f0fd9ac68a2018cc468208289c643cb27d8c8ff0ee3948",
   "server/lib/data-loader/cpiSource.ts":
-    "59badc77cdfbb8ee2f8b6b2cb59b060628fcd5b2ffa735f33394b236dc433a77",
+    "4f0112d0a22e62c5feb8f9633a509b4edafe96c8bebca1a7fb079361587487e0",
   "server/lib/data-loader/cpiValidation.ts":
     "d5810e1f9c608c8f81f33164e9d86b113746c9e3905bfaed9447106374debf3a",
   "server/lib/data-loader/ctiAdjusted.ts":
@@ -187,11 +498,11 @@ export const PINNED_PROJECT_FILES = Object.freeze({
   "tests/data-quality/cti-gdp-source-integrity.test.ts":
     "4afcf61c67850b24a31c8521acffc6dea31652ad958831636f72567abce28870",
   "tests/data-quality/earning-data-integrity.test.ts":
-    "a4884d3e47cf50f9d22fbd60de46768233d508173e5eed7b45eaa7982842e983",
+    "8c848057ac457a0cb160dd50d01a9d8f68f613e671202b2d2649bae5818c6f02",
   "tests/data-quality/plan21-quarterly-gdp.test.ts":
     "5c02fcad8c1eb81d39e4879456f2658fcfe1eebe951d1f1cc8b3fda6f5e40873",
   "tests/data-quality/population-data-integrity.test.ts":
-    "68da0adf24b44df23fe05c9919515a731038dc71e2f3aad72a22e69eccf47086",
+    "6441a64043461a8b8fa6388dfebc1aeecd47a2668c9ad3ce305ab5527f25e1ad",
   "tests/fixtures/minkan-extension-anchors.json":
     "68809b55b1ed6e98ce0e9a8c87238641135fcb85a56d9d88f1b2cef4e20fa357",
 });
@@ -212,19 +523,66 @@ function isCanonicalForbiddenPath(value) {
     return resolved === blockedRoot || resolved.startsWith(blockedRoot + path.sep);
   }) || ['package.json', 'pnpm-lock.yaml', 'tsconfig.json', 'vitest.config.ts'].some((file) => resolved === path.join(canonicalRoot, file));
 }
+function isCanonicalDataPath(value) {
+  if (value instanceof URL) value = fileURLToPath(value);
+  if (typeof value !== 'string' && !Buffer.isBuffer(value)) return false;
+  const resolved = path.resolve(String(value));
+  const dataRoot = path.join(canonicalRoot, 'data');
+  return resolved === dataRoot || resolved.startsWith(dataRoot + path.sep);
+}
+function canonicalArea(file) {
+  if (file instanceof URL) file = fileURLToPath(file);
+  if (typeof file !== 'string' && !Buffer.isBuffer(file)) return 'canonical-other';
+  const resolved = path.resolve(String(file));
+  const relative = path.relative(canonicalRoot, resolved);
+  if (!relative || relative.startsWith('..' + path.sep) || path.isAbsolute(relative)) return 'canonical-other';
+  const [area] = relative.split(path.sep);
+  if (['data', 'server', 'tests', 'scripts'].includes(area)) return 'canonical-' + area;
+  if (area === 'pnpm-lock.yaml' || area === 'node_modules') return 'canonical-dependency';
+  if (relative === 'package.json') return 'canonical-package-manifest';
+  if (relative === 'tsconfig.json') return 'canonical-tsconfig';
+  if (relative === 'vitest.config.ts') return 'canonical-vitest-config';
+  return 'canonical-other';
+}
+function stageOnlyError(file, operation) {
+  const target = canonicalArea(file);
+  return Object.assign(
+    new Error('canonical project and runtime data fallback is forbidden (target=' + target + ', operation=' + operation + ')'),
+    { code: 'ESTAGEONLY' },
+  );
+}
 const existsSync = fs.existsSync.bind(fs);
 fs.existsSync = (file, ...args) => isCanonicalForbiddenPath(file) ? false : existsSync(file, ...args);
-for (const name of ['readFileSync', 'readFile', 'openSync', 'open', 'createReadStream', 'statSync', 'lstatSync', 'accessSync', 'readdirSync', 'readdir', 'realpathSync', 'realpath', 'copyFileSync', 'copyFile']) {
+for (const name of ['readFileSync', 'readFile', 'openSync', 'open', 'createReadStream', 'statSync', 'lstatSync', 'accessSync', 'readdirSync', 'readdir', 'realpath', 'copyFileSync', 'copyFile']) {
   const original = fs[name].bind(fs);
   fs[name] = function(file, ...args) {
-    if (isCanonicalForbiddenPath(file)) throw Object.assign(new Error('canonical project and runtime data fallback is forbidden'), { code: 'ESTAGEONLY' });
+    if (isCanonicalForbiddenPath(file)) throw stageOnlyError(file, name);
     return original(file, ...args);
   };
 }
+const originalRealpathSync = fs.realpathSync.bind(fs);
+const originalRealpathSyncNative = fs.realpathSync.native.bind(fs);
+function denyCanonicalRealpath(file, operation) {
+  if (isCanonicalForbiddenPath(file)) throw stageOnlyError(file, operation);
+}
+const guardedRealpathSync = function(file, ...args) {
+  denyCanonicalRealpath(file, 'realpathSync');
+  const resolved = originalRealpathSync(file, ...args);
+  if (isCanonicalDataPath(resolved)) throw stageOnlyError(resolved, 'realpathSync');
+  return resolved;
+};
+const guardedRealpathSyncNative = function(file, ...args) {
+  denyCanonicalRealpath(file, 'realpathSync.native');
+  const resolved = originalRealpathSyncNative(file, ...args);
+  if (isCanonicalDataPath(resolved)) throw stageOnlyError(resolved, 'realpathSync.native');
+  return resolved;
+};
+guardedRealpathSync.native = guardedRealpathSyncNative;
+fs.realpathSync = guardedRealpathSync;
 for (const name of ['readFile', 'open', 'stat', 'lstat', 'access', 'readdir', 'realpath', 'copyFile']) {
   const original = fs.promises[name].bind(fs.promises);
   fs.promises[name] = function(file, ...args) {
-    if (isCanonicalForbiddenPath(file)) throw Object.assign(new Error('canonical project and runtime data fallback is forbidden'), { code: 'ESTAGEONLY' });
+    if (isCanonicalForbiddenPath(file)) throw stageOnlyError(file, 'promises.' + name);
     return original(file, ...args);
   };
 }
@@ -298,131 +656,154 @@ export async function validateStagedRuntimeData({
     );
   }
   await auditQualitySuiteInventory(root, RUNTIME_QUALITY_TESTS);
-  const runtimeRoot = path.join(stageRoot, "runtime-root");
-  await mkdir(runtimeRoot, { recursive: true, mode: 0o700 });
-  const stagedPaths = new Set();
-
-  for (const [relative, expectedHash] of Object.entries(PINNED_PROJECT_FILES)) {
-    const canonical = assertContainedRuntimePath(root, relative);
-    await assertNoSymlinkPath(root, relative, "runtime-quality-project-invalid");
-    const stat = await lstat(canonical).catch(() => null);
-    if (!stat || stat.isSymbolicLink() || !stat.isFile()) {
-      throw new RefreshError(
-        "runtime-quality-project-invalid",
-        `Pinned runtime project file is missing or unsafe: ${relative}.`,
-      );
-    }
-    const bytes = await readFile(canonical);
-    if (sha256(bytes) !== expectedHash) {
-      throw new RefreshError(
-        "runtime-quality-project-hash-mismatch",
-        `Pinned runtime project file changed: ${relative}.`,
-      );
-    }
-    const target = assertContainedRuntimePath(runtimeRoot, relative);
-    await mkdir(path.dirname(target), { recursive: true, mode: 0o700 });
-    await writeFile(target, bytes, { mode: 0o600, flag: "wx" });
-  }
-  const dependencyLink = path.join(runtimeRoot, "node_modules");
-  await symlink(path.join(root, "node_modules"), dependencyLink, "dir");
-
-  for (const [relative, expectedHash] of Object.entries(PINNED_RUNTIME_INPUTS)) {
-    const target = assertContainedRuntimePath(runtimeRoot, relative);
-    const canonical = assertContainedRuntimePath(root, relative);
-    await assertNoSymlinkPath(root, relative, "runtime-quality-underlay-invalid");
-    const stat = await lstat(canonical).catch(() => null);
-    if (!stat || stat.isSymbolicLink() || !stat.isFile()) {
-      throw new RefreshError(
-        "runtime-quality-underlay-invalid",
-        `Pinned runtime input is missing or unsafe: ${relative}.`,
-      );
-    }
-    const bytes = await readFile(canonical);
-    if (sha256(bytes) !== expectedHash) {
-      throw new RefreshError(
-        "runtime-quality-underlay-hash-mismatch",
-        `Pinned runtime input hash changed: ${relative}.`,
-      );
-    }
-    await mkdir(path.dirname(target), { recursive: true, mode: 0o700 });
-    await writeFile(target, bytes, { mode: 0o600, flag: "wx" });
-    stagedPaths.add(relative);
-  }
-
-  const declaredOutputs = new Set(
-    (registry?.sources ?? []).flatMap((source) => source.outputs ?? []),
-  );
-  let stagedOutputCount = 0;
-  for (const { source, result } of sourceResults) {
-    if (!source || !Array.isArray(source.outputs) || !result || !Array.isArray(result.artifacts)) {
-      throw new RefreshError(
-        "quality-validator-incomplete",
-        "A source result is missing its declared staged outputs.",
-      );
-    }
-    const artifacts = new Map(result.artifacts.map((artifact) => [artifact.path, artifact.bytes]));
-    if (artifacts.size !== result.artifacts.length || artifacts.size !== source.outputs.length) {
-      throw new RefreshError(
-        "quality-validator-output-invalid",
-        `Source ${source.id} returned duplicate staged paths.`,
-      );
-    }
-    for (const output of source.outputs) {
-      if (!declaredOutputs.has(output)) {
-        throw new RefreshError(
-          "quality-validator-output-invalid",
-          `Source ${source.id} returned an undeclared output.`,
-        );
-      }
-      const bytes = artifacts.get(output);
-      if (!(bytes instanceof Uint8Array) && !Buffer.isBuffer(bytes)) {
-        throw new RefreshError(
-          "quality-validator-incomplete",
-          `Runtime validation lacks staged output ${output}.`,
-        );
-      }
-      if (stagedPaths.has(output)) {
-        throw new RefreshError(
-          "quality-validator-output-collision",
-          `Refresh output collides with a pinned runtime input: ${output}.`,
-        );
-      }
-      const target = assertContainedRuntimePath(runtimeRoot, output);
-      await mkdir(path.dirname(target), { recursive: true, mode: 0o700 });
-      await writeFile(target, bytes, { mode: 0o600, flag: "wx" });
-      stagedPaths.add(output);
-      stagedOutputCount += 1;
-    }
-  }
-
-  if (stagedPaths.size !== Object.keys(PINNED_RUNTIME_INPUTS).length + declaredOutputs.size) {
+  const runtimeRoot = await mkdtemp(path.join(os.tmpdir(), "data-refresh-runtime-"));
+  const canonicalRoot = path.resolve(root);
+  const resolvedRuntimeRoot = path.resolve(runtimeRoot);
+  if (
+    resolvedRuntimeRoot === canonicalRoot ||
+    resolvedRuntimeRoot.startsWith(`${canonicalRoot}${path.sep}`) ||
+    canonicalRoot.startsWith(`${resolvedRuntimeRoot}${path.sep}`)
+  ) {
+    await rm(runtimeRoot, { recursive: true, force: true });
     throw new RefreshError(
-      "quality-validator-incomplete",
-      "Staged runtime inputs do not exactly cover the pinned and declared allowlist.",
+      "runtime-quality-root-invalid",
+      "The isolated runtime root must be outside the canonical project tree.",
     );
   }
-  const audit = { ...coverage, stagedOutputCount, stagedInputCount: stagedPaths.size };
-  const preloadPath = await writeDenyCanonicalPreload(stageRoot);
-  const configPath = await writeVitestWrapper(runtimeRoot);
-  await runSuites({
-    root,
-    runtimeRoot,
-    stageRoot,
-    testFiles: RUNTIME_QUALITY_TESTS,
-    preloadPath,
-    configPath,
-  });
-  return {
-    validator: "runtime-data-quality-suites-v1",
-    cpi: true,
-    cti: true,
-    population: true,
-    earnings: true,
-    qualitySuiteCount: RUNTIME_QUALITY_TESTS.length,
-    stagedOutputCount: audit.stagedOutputCount,
-    pinnedInputCount: audit.pinnedInputCount,
-    projectFileCount: audit.projectFileCount,
-  };
+  try {
+    const stagedPaths = new Set();
+
+    for (const [relative, expectedHash] of Object.entries(PINNED_PROJECT_FILES)) {
+      const canonical = assertContainedRuntimePath(root, relative);
+      await assertNoSymlinkPath(root, relative, "runtime-quality-project-invalid");
+      const stat = await lstat(canonical).catch(() => null);
+      if (!stat || stat.isSymbolicLink() || !stat.isFile()) {
+        throw new RefreshError(
+          "runtime-quality-project-invalid",
+          `Pinned runtime project file is missing or unsafe: ${relative}.`,
+        );
+      }
+      const bytes = await readFile(canonical);
+      if (sha256(bytes) !== expectedHash) {
+        throw new RefreshError(
+          "runtime-quality-project-hash-mismatch",
+          `Pinned runtime project file changed: ${relative}.`,
+        );
+      }
+      const target = assertContainedRuntimePath(runtimeRoot, relative);
+      await mkdir(path.dirname(target), { recursive: true, mode: 0o700 });
+      await writeFile(target, bytes, { mode: 0o600, flag: "wx" });
+    }
+    const dependencyLink = path.join(runtimeRoot, "node_modules");
+    await symlink(path.join(root, "node_modules"), dependencyLink, "dir");
+
+    for (const [relative, expectedHash] of Object.entries(PINNED_RUNTIME_INPUTS)) {
+      const target = assertContainedRuntimePath(runtimeRoot, relative);
+      const canonical = assertContainedRuntimePath(root, relative);
+      await assertNoSymlinkPath(root, relative, "runtime-quality-underlay-invalid");
+      const stat = await lstat(canonical).catch(() => null);
+      if (!stat || stat.isSymbolicLink() || !stat.isFile()) {
+        throw new RefreshError(
+          "runtime-quality-underlay-invalid",
+          `Pinned runtime input is missing or unsafe: ${relative}.`,
+        );
+      }
+      const bytes = await readFile(canonical);
+      if (sha256(bytes) !== expectedHash) {
+        throw new RefreshError(
+          "runtime-quality-underlay-hash-mismatch",
+          `Pinned runtime input hash changed: ${relative}.`,
+        );
+      }
+      await mkdir(path.dirname(target), { recursive: true, mode: 0o700 });
+      await writeFile(target, bytes, { mode: 0o600, flag: "wx" });
+      stagedPaths.add(relative);
+    }
+
+    const declaredOutputs = new Set(
+      (registry?.sources ?? []).flatMap((source) => source.outputs ?? []),
+    );
+    let stagedOutputCount = 0;
+    for (const { source, result } of sourceResults) {
+      if (
+        !source ||
+        !Array.isArray(source.outputs) ||
+        !result ||
+        !Array.isArray(result.artifacts)
+      ) {
+        throw new RefreshError(
+          "quality-validator-incomplete",
+          "A source result is missing its declared staged outputs.",
+        );
+      }
+      const artifacts = new Map(
+        result.artifacts.map((artifact) => [artifact.path, artifact.bytes]),
+      );
+      if (artifacts.size !== result.artifacts.length || artifacts.size !== source.outputs.length) {
+        throw new RefreshError(
+          "quality-validator-output-invalid",
+          `Source ${source.id} returned duplicate staged paths.`,
+        );
+      }
+      for (const output of source.outputs) {
+        if (!declaredOutputs.has(output)) {
+          throw new RefreshError(
+            "quality-validator-output-invalid",
+            `Source ${source.id} returned an undeclared output.`,
+          );
+        }
+        const bytes = artifacts.get(output);
+        if (!(bytes instanceof Uint8Array) && !Buffer.isBuffer(bytes)) {
+          throw new RefreshError(
+            "quality-validator-incomplete",
+            `Runtime validation lacks staged output ${output}.`,
+          );
+        }
+        if (stagedPaths.has(output)) {
+          throw new RefreshError(
+            "quality-validator-output-collision",
+            `Refresh output collides with a pinned runtime input: ${output}.`,
+          );
+        }
+        const target = assertContainedRuntimePath(runtimeRoot, output);
+        await mkdir(path.dirname(target), { recursive: true, mode: 0o700 });
+        await writeFile(target, bytes, { mode: 0o600, flag: "wx" });
+        stagedPaths.add(output);
+        stagedOutputCount += 1;
+      }
+    }
+
+    if (stagedPaths.size !== Object.keys(PINNED_RUNTIME_INPUTS).length + declaredOutputs.size) {
+      throw new RefreshError(
+        "quality-validator-incomplete",
+        "Staged runtime inputs do not exactly cover the pinned and declared allowlist.",
+      );
+    }
+    const audit = { ...coverage, stagedOutputCount, stagedInputCount: stagedPaths.size };
+    const preloadPath = await writeDenyCanonicalPreload(stageRoot);
+    const configPath = await writeVitestWrapper(runtimeRoot);
+    await runSuites({
+      root,
+      runtimeRoot,
+      stageRoot,
+      testFiles: RUNTIME_QUALITY_TESTS,
+      preloadPath,
+      configPath,
+    });
+    return {
+      validator: "runtime-data-quality-suites-v1",
+      cpi: true,
+      cti: true,
+      population: true,
+      earnings: true,
+      qualitySuiteCount: RUNTIME_QUALITY_TESTS.length,
+      stagedOutputCount: audit.stagedOutputCount,
+      pinnedInputCount: audit.pinnedInputCount,
+      projectFileCount: audit.projectFileCount,
+    };
+  } finally {
+    await rm(runtimeRoot, { recursive: true, force: true });
+  }
 }
 
 export function assertContainedRuntimePath(root, relative) {
@@ -472,7 +853,15 @@ function sha256(bytes) {
   return createHash("sha256").update(bytes).digest("hex");
 }
 
-function runRuntimeQualitySuites({ root, runtimeRoot, testFiles, preloadPath, configPath }) {
+export function runRuntimeQualitySuites({
+  root,
+  runtimeRoot,
+  stageRoot,
+  testFiles,
+  preloadPath,
+  configPath,
+  spawnProcess = spawn,
+}) {
   if (!Array.isArray(testFiles) || testFiles.length === 0) {
     return Promise.reject(
       new RefreshError(
@@ -482,6 +871,7 @@ function runRuntimeQualitySuites({ root, runtimeRoot, testFiles, preloadPath, co
     );
   }
   const testPaths = testFiles.map((file) => assertContainedRuntimePath(runtimeRoot, file));
+  const reportPath = path.join(stageRoot, `vitest-${randomUUID()}.json`);
   const args = [
     path.join(runtimeRoot, "node_modules/vitest/vitest.mjs"),
     "run",
@@ -489,10 +879,12 @@ function runRuntimeQualitySuites({ root, runtimeRoot, testFiles, preloadPath, co
     runtimeRoot,
     "--config",
     configPath,
+    "--reporter=json",
+    `--outputFile.json=${reportPath}`,
     ...testPaths,
   ];
   return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, args, {
+    const child = spawnProcess(process.execPath, args, {
       cwd: runtimeRoot,
       env: {
         PATH: process.env.PATH ?? "",
@@ -500,14 +892,30 @@ function runRuntimeQualitySuites({ root, runtimeRoot, testFiles, preloadPath, co
         TMPDIR: process.env.TMPDIR ?? "/tmp",
         TSX_TSCONFIG_PATH: path.join(runtimeRoot, "tsconfig.json"),
         CTI_BASIC_ARTIFACT_ROOT: path.join(runtimeRoot, "data/source/official-cti-2025-long-term"),
+        CTI_ADJUSTED_ARTIFACT_ROOT: path.join(runtimeRoot, "data/source/cti-adjusted"),
+        CTI_ADJUSTED_ANALYSIS_ROOT: path.join(runtimeRoot, "results/plan39"),
         DATA_REFRESH_CANONICAL_ROOT: path.resolve(root),
         NODE_OPTIONS: `--require=${preloadPath}`,
       },
-      stdio: ["ignore", "ignore", "ignore"],
+      stdio: ["ignore", "pipe", "pipe"],
     });
+    const capture = (stream) => {
+      let captured = "";
+      stream?.on("data", (chunk) => {
+        if (captured.length < RUNTIME_STARTUP_OUTPUT_LIMIT) {
+          captured += Buffer.from(chunk)
+            .toString("utf8")
+            .slice(0, RUNTIME_STARTUP_OUTPUT_LIMIT - captured.length);
+        }
+      });
+      return () => captured;
+    };
+    const stdout = capture(child.stdout);
+    const stderr = capture(child.stderr);
     const timer = setTimeout(() => child.kill("SIGKILL"), 300_000);
     child.once("error", (error) => {
       clearTimeout(timer);
+      void unlink(reportPath).catch(() => {});
       reject(
         new RefreshError(
           "runtime-quality-suite-unavailable",
@@ -519,14 +927,73 @@ function runRuntimeQualitySuites({ root, runtimeRoot, testFiles, preloadPath, co
     child.once("close", (code) => {
       clearTimeout(timer);
       if (code !== 0) {
-        reject(
-          new RefreshError(
-            "runtime-quality-suite-failed",
-            `A staged data-quality suite failed (exit ${code}).`,
-          ),
-        );
+        const diagnosticExitCode =
+          Number.isSafeInteger(code) && code >= 0 && code <= 255 ? code : 255;
+        const startupError = extractRuntimeStartupError(`${stderr()}\n${stdout()}`);
+        void (async () => {
+          let diagnostics;
+          try {
+            const reportStat = await stat(reportPath);
+            if (!reportStat.isFile()) {
+              diagnostics = extractRuntimeFailureDiagnostics({
+                exitCode: diagnosticExitCode,
+                reportStatus: "report-missing",
+                startupError,
+                runtimeRoot,
+                testFiles,
+              });
+            } else if (reportStat.size > RUNTIME_FAILURE_REPORT_LIMIT) {
+              diagnostics = extractRuntimeFailureDiagnostics({
+                exitCode: diagnosticExitCode,
+                reportStatus: "report-oversize",
+                reportBytes: reportStat.size,
+                startupError,
+                runtimeRoot,
+                testFiles,
+              });
+            } else {
+              diagnostics = extractRuntimeFailureDiagnostics({
+                exitCode: diagnosticExitCode,
+                report: await readFile(reportPath),
+                startupError,
+                runtimeRoot,
+                testFiles,
+              });
+            }
+          } catch (error) {
+            if (error?.code === "ENOENT") {
+              diagnostics = extractRuntimeFailureDiagnostics({
+                exitCode: diagnosticExitCode,
+                reportStatus: "report-missing",
+                startupError,
+                runtimeRoot,
+                testFiles,
+              });
+            } else if (!diagnostics) {
+              diagnostics = extractRuntimeFailureDiagnostics({
+                exitCode: diagnosticExitCode,
+                report: Buffer.alloc(0),
+                startupError,
+                runtimeRoot,
+                testFiles,
+              });
+            }
+          } finally {
+            await unlink(reportPath).catch(() => {});
+          }
+          reject(
+            Object.assign(
+              new RefreshError(
+                "runtime-quality-suite-failed",
+                `A staged data-quality suite failed (exit ${code}).`,
+              ),
+              diagnostics ? { runtimeQualityDiagnostics: diagnostics } : {},
+            ),
+          );
+        })();
         return;
       }
+      void unlink(reportPath).catch(() => {});
       resolve();
     });
   });

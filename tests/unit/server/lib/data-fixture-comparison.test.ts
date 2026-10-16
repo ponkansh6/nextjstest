@@ -141,8 +141,20 @@ describe("loader fixture comparison gate", () => {
   it("compares normal CPI and CTI data/status with independent golden values", async () => {
     const cpi = await observeLoader(loadCpiData, getCpiDataStatus);
     const cti = await observeLoader(loadCtiData, getCtiDataStatus);
-    expect(compareObservationToGolden(cpi, golden.cpi.observation).matches).toBe(true);
-    expect(compareObservationToGolden(cti, golden.cti.observation).matches).toBe(true);
+    const cpiComparison = compareObservationToGolden(cpi, golden.cpi.observation);
+    const ctiComparison = compareObservationToGolden(cti, golden.cti.observation);
+    expect.soft(cpiComparison).toEqual({
+      matches: true,
+      digest: golden.cpi.observation.digest,
+      expectedDigest: golden.cpi.observation.digest,
+      metadataMatches: true,
+    });
+    expect.soft(ctiComparison).toEqual({
+      matches: true,
+      digest: golden.cti.observation.digest,
+      expectedDigest: golden.cti.observation.digest,
+      metadataMatches: true,
+    });
     expect(cpi.status).toMatchObject(golden.cpi.status);
     expect(cpi.value).toEqual(
       expect.arrayContaining([
@@ -218,7 +230,13 @@ describe("loader fixture comparison gate", () => {
       ctiPaths.gdpDisplayNormalization,
     ];
     expect(annualPaths.every((file) => actualFs.existsSync(file))).toBe(true);
-    expect(compareObservationToGolden(observed, golden.annualGdp.observation).matches).toBe(true);
+    const annualComparison = compareObservationToGolden(observed, golden.annualGdp.observation);
+    expect(annualComparison).toEqual({
+      matches: true,
+      digest: golden.annualGdp.observation.digest,
+      expectedDigest: golden.annualGdp.observation.digest,
+      metadataMatches: true,
+    });
     const gdpKeys = [
       "民間最終消費支出（名目）",
       "民間最終消費支出（実質）",

@@ -14,5 +14,44 @@
     "2026-05": 10976,
     "2026-06": 10969
   },
-  "missingDataPolicy": "公式セルが空欄・記号の場合は欠測のまま保持し、0や推測値で補完しない。"
+  "missingDataPolicy": "公式セルが空欄・記号の場合は欠測のまま保持し、0や推測値で補完しない。",
+  "frequency": "monthly",
+  "baseline": "not-applicable",
+  "series": "nationwide-original-values",
+  "baselineDefinition": "not-applicable",
+  "lastFetchedSource": {
+    "sourceUrl": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000031831366",
+    "sha256": "3cf561db7bcf72e36d900021a2f682cbb30f8340a6a22e4444f9d97c446658f3",
+    "fileSizeBytes": 162483,
+    "contentType": "application/octet-stream",
+    "retrievedAt": "2026-10-16T18:24:50.032Z"
+  },
+  "resultSha256": "71a3d5ec20c0247b8f44d25a9ad1d4fbe5ba049da668990ed3c772c6b9315144",
+  "period": {
+    "start": "2004-01",
+    "end": "2026-08",
+    "monthlyRows": 272
+  },
+  "baselineEvidence": {
+    "sha256": "6a52583bc331d50d5cfb314b7ce7b5c6c0e6162861cd9f7eec7efb45207cc6d0",
+    "verifiedObservations": {
+      "2026-05": 10976,
+      "2026-06": 10969
+    }
+  },
+  "revisionAudit": {
+    "comparedObservationCount": 271,
+    "changedObservationCount": 1,
+    "changedSample": [
+      {
+        "period": "2026-05",
+        "previous": 10976,
+        "current": 10960
+      }
+    ],
+    "previousSha256": "6a52583bc331d50d5cfb314b7ce7b5c6c0e6162861cd9f7eec7efb45207cc6d0",
+    "currentSha256": "3cf561db7bcf72e36d900021a2f682cbb30f8340a6a22e4444f9d97c446658f3",
+    "previousRetrievedAt": "2026-09-12T11:14:39+09:00",
+    "retrievedAt": "2026-10-16T18:24:50.032Z"
+  }
 }
