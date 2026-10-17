@@ -424,11 +424,11 @@ export const PINNED_PROJECT_FILES = Object.freeze({
   "server/lib/data-loader/ctiValidation.ts":
     "2bd130036d9351436933211c54f8d2fc24aadd8c678699a5767aeb1bc7111cc1",
   "server/lib/data-loader/earnings.ts":
-    "d38f007baa3474046a62659aa0c90f809be051cf7cc3d6d738dfae92346bc886",
+    "dc813aa80d299241a57c8906c3d68172732d5d200d0b36565e8350d73cb5f96d",
   "server/lib/data-loader/population.ts":
     "19f6fa5ce0d1d1ee73e0500cece46bd7910d51071075b5f70034652bb34b873b",
   "server/lib/dataIo.ts": "8639c37d61f6b6d15aa270fb51810ff6d4bd614aeedce6bdcf681eea867dd51c",
-  "server/lib/dataLoader.ts": "2e84d57f5e6850481e4b630a0ca1ae5e8b26b3fcab6731f11ad052a2700e8078",
+  "server/lib/dataLoader.ts": "c0689bdcd6c3e854633f5f87a0028fbc5ce1ed98ad20a57e45fdc072292df522",
   "server/lib/dataProcessor.ts": "94b89883dc2db4b6e6c8a98845d12158d6fba241bc81be6179f249e29bb13f10",
   "server/lib/math/movingAverage.ts":
     "dd98ae00c94ac1c55e4f734271a46009565330e4a17ab31493739bc46799340e",
@@ -459,13 +459,13 @@ export const PINNED_PROJECT_FILES = Object.freeze({
   "tests/data-quality/cti-basic-series-2025.test.ts":
     "9d0fe65f2b9816d3bd37cb601666043ed09d5a1f6fc486a87fd946019352edc3",
   "tests/data-quality/cti-data-integrity.test.ts":
-    "edee2d3582864ede5bdf504d4a84670b420f18d95673e5b02c262f47c4db590d",
+    "85f15163e32ffc7c69be4782dcba2cca27768bf9a39967e10fe07084bddc580a",
   "tests/data-quality/cti-source-integrity.test.ts":
-    "c43d27799c15d0a13c326c6df786b211d7ee97a946ce1ec3fdb0d73830c75b2b",
+    "ba5ff619a5c0cf50a4b27f3d363792da88f954caab1d5904427426963f9a03d5",
   "tests/data-quality/cti-source-artifacts.test.ts":
-    "6219c833f491db20b7add87c1a729734a81a8e3ac6d67fb23f8f52ad751013de",
+    "ec743a0e30c47f19e573246f111b60f620e017566ec2ba6fc18ce1667cf836f8",
   "tests/data-quality/earning-data-integrity.test.ts":
-    "b4f547d12599163f99121d8d1b8dfdca778a68ad7b82ba78054b7d077ae31e54",
+    "0dc5df0bacf1d2d3c2ae58f647b88b046750900cd955104274fe358b0a1dd01f",
   "tests/data-quality/population-data-integrity.test.ts":
     "6441a64043461a8b8fa6388dfebc1aeecd47a2668c9ad3ce305ab5527f25e1ad",
   "tests/fixtures/minkan-extension-anchors.json":
