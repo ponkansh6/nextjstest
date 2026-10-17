@@ -507,6 +507,15 @@ describe("CPI loading public contract edge coverage", () => {
     expect(data.find((row) => row.年月 === "2025年1月")).toMatchObject({ 年月: "2025年1月" });
   });
 
+  it("prefers the explicit CTI runtime unit when valueType is also present", async () => {
+    await configureCti2025Fixture({ metadata: { unit: "人あたり", valueType: "指数" } });
+    const { loadCtiDataInternal } = await import("../../server/lib/data-loader/cpi");
+
+    const data = await loadCtiDataInternal();
+
+    expect(data.ctiMetadata).toMatchObject({ unit: "人あたり", valueType: "指数" });
+  });
+
   it("defaults absent optional CTI metadata fields and ranges", async () => {
     await configureCti2025Fixture({ metadata: { period: {} } });
     const { loadCtiDataInternal } = await import("../../server/lib/data-loader/cpi");

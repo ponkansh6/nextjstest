@@ -126,4 +126,17 @@ describe("useUrlState current URL state contract", () => {
     expect(replaceState).toHaveBeenCalledTimes(1);
     replaceState.mockRestore();
   });
+
+  it("does not rewrite the current history entry when legacy adv is absent", () => {
+    window.history.replaceState({ marker: "keep" }, "", "/dashboard?from=2012&keep=1#chart");
+    const replaceState = vi.spyOn(window.history, "replaceState");
+
+    renderHook(() => useUrlState(2005, 2026));
+
+    expect(window.location.search).toBe("?from=2012&keep=1");
+    expect(window.location.hash).toBe("#chart");
+    expect(window.history.state).toEqual({ marker: "keep" });
+    expect(replaceState).not.toHaveBeenCalled();
+    replaceState.mockRestore();
+  });
 });

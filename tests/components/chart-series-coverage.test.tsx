@@ -62,7 +62,8 @@ import {
   CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY,
   createComparisonSeriesRegistry,
 } from "@/lib/chartConstants";
-import { SpendingBarChart } from "@/app/components/SpendingBarChart";
+import { normalizeSpendingChartData, SpendingBarChart } from "@/app/components/SpendingBarChart";
+import { QUARTERLY_PUBLIC_NOMINAL_KEYS } from "@/lib/quarterlyPublicProjection";
 
 const TEST_SYNTHETIC_KEY = "Synthetic normalized value";
 afterEach(cleanup);
@@ -76,6 +77,57 @@ const chartColors = {
 const tooltipProps = {} as React.ComponentProps<typeof EarningsBreakdownChart>["tooltipProps"];
 
 describe("chart series public-data edge cases", () => {
+  it("hides pre-2018 Plan40 values when no Plan39 expense measurement is available", () => {
+    const key = QUARTERLY_PUBLIC_NOMINAL_KEYS[0]!;
+    const rows = [
+      { label: "2017Q4", 年: 2017, quarter: 4, 年月: "2017Q4", [key]: 42 },
+      {
+        label: "2017Q3",
+        年: 2017,
+        quarter: 3,
+        年月: "2017Q3",
+        [key]: 37,
+        measurements: { [key]: { key, status: "valid" } },
+      },
+    ] as any;
+
+    expect(normalizeSpendingChartData(rows, [key]).map((row) => row[key])).toEqual([null, 37]);
+  });
+
+  it("renders the derived real-total legend color fallback and toggle callback", () => {
+    const onToggle = vi.fn();
+    render(
+      <SpendingBarChart
+        title="derived real total"
+        data={
+          [
+            {
+              label: "2017Q4",
+              年: 2017,
+              quarter: 4,
+              年月: "2017Q4",
+              [CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY]: 25,
+            },
+          ] as any
+        }
+        keys={[CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY]}
+        colors={[]}
+        hiddenKeys={[]}
+        onToggle={onToggle}
+        chartColors={{ gridStroke: "#ddd", axisText: "#111" }}
+        tooltipProps={tooltipProps}
+        hiddenQuarters={[]}
+        onToggleQuarter={vi.fn()}
+        onReset={vi.fn()}
+      />,
+    );
+
+    const legend = screen.getByTestId(`legend-${CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY}`);
+    expect((legend.querySelector("span") as HTMLElement).style.backgroundColor).toBe("#94a3b8");
+    fireEvent.click(legend);
+    expect(onToggle).toHaveBeenCalledWith(CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY);
+  });
+
   it("renders earnings area and line series, skipping hidden and non-finite values in its public maximum", () => {
     const data = [
       { 年月: "2024年1月", 所定内給与: 10, 所定外給与: Number.NaN, 時間当たり給与: 12 },

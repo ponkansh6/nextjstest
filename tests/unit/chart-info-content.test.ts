@@ -58,6 +58,35 @@ describe("new-graph chart info data-source state", () => {
     expect(text).not.toContain("2020年基準");
     expect(text).not.toMatch(/metadata|CSV|fallback/i);
   });
+
+  it("reports missing CTI state and supports omitted official labels and optional support details", async () => {
+    const { getChartInfoContent } = await import("@/lib/chartInfoContent");
+    const missing = getChartInfoContent("consumption-expenditure");
+    expect(missing.sections[0]?.items[0]?.text).toBe("消費データは現在利用できません。");
+
+    const official = getChartInfoContent("consumption-expenditure", undefined, {
+      baseYear: 2025,
+      sourceMode: "official-connected",
+      status: "invalid",
+    });
+    const officialState = official.sections[0]?.items.map((item) => item.text).join("\n");
+    expect(official.source).toContain("2025年基準・名目原数値／12MA、2025年raw平均=100");
+    expect(officialState).toContain("選択済みの公式系列");
+    expect(officialState).toContain("CTI名目四半期系列の状態：invalid、理由：、単位：指数");
+    expect(officialState).not.toContain("CTI基本系列の状態");
+
+    const rollback = getChartInfoContent("consumption-expenditure", undefined, {
+      baseYear: 2020,
+      sourceMode: "rollback",
+      reason: "fixture reason",
+      supportLabel: "Plan39接続系列",
+    });
+    const rollbackState = rollback.sections[0]?.items.map((item) => item.text).join("\n");
+    expect(rollback.source).toContain("利用不可");
+    expect(rollbackState).toContain("fixture reason");
+    expect(rollbackState).toContain("単位：指数、出典：e-Stat 公式CTI長期artifact 000040499070");
+    expect(rollbackState).toContain("Plan39接続系列");
+  });
 });
 
 describe("new-graph and residual chart info wording", () => {

@@ -492,11 +492,11 @@ describe("CPI chart sections tooltip contracts", () => {
       isMobile: false,
       hiddenKeys: [],
       stackedHiddenKeys: [],
-      nominalHiddenKeys: [expenseKey],
+      nominalHiddenKeys: [expenseKey, CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY],
       realHiddenKeys: [],
       maHiddenKeys: [],
       nominalColorsWithSupport: ["#nominal", "#fallback"],
-      nominalKeysWithSupport: [expenseKey, foodKey],
+      nominalKeysWithSupport: [expenseKey, foodKey, CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY],
       realKeysWithSupport: ["住居（実質）", CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY],
       realColors: ["#real"],
       hiddenQuarters: [],
@@ -544,11 +544,21 @@ describe("CPI chart sections tooltip contracts", () => {
     expect(nominalAllowed()).toEqual([]);
     expect(nominalAllowed("2018Q1")).toEqual([foodKey]);
     const nominalMeta = nominal.seriesMeta as Array<Record<string, any>>;
-    expect(nominalMeta.map(({ key }) => key)).toEqual([expenseKey, foodKey]);
+    expect(nominalMeta.map(({ key }) => key)).toEqual([
+      expenseKey,
+      foodKey,
+      CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY,
+    ]);
     expect(nominalMeta[0]).toMatchObject({ label: "住居", color: "#abc", order: 0 });
     expect(nominalMeta.find(({ key }) => key === foodKey)).toMatchObject({
       color: "#fallback",
     });
+    expect(nominalMeta.find(({ key }) => key === CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY)).toMatchObject(
+      {
+        label: "CTIミクロ総合（実質・CPI調整）",
+        color: "#bar",
+      },
+    );
     expect(
       (captured.get("section-consumption-real")!.seriesMeta as Array<Record<string, any>>).map(
         ({ key }) => key,

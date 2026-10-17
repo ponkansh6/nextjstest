@@ -422,7 +422,7 @@ export const PINNED_PROJECT_FILES = Object.freeze({
   "server/lib/data-loader/ctiAdjusted.ts":
     "3b25056feb091a914fcf4efd5c8986d663b0506538230f2fe99cd206703ff262",
   "server/lib/data-loader/ctiValidation.ts":
-    "2923ddf9c7f9263ce3caebbde6ff922cdd420d2bdc93702dfb5ac73076ed7f1a",
+    "2bd130036d9351436933211c54f8d2fc24aadd8c678699a5767aeb1bc7111cc1",
   "server/lib/data-loader/earnings.ts":
     "d38f007baa3474046a62659aa0c90f809be051cf7cc3d6d738dfae92346bc886",
   "server/lib/data-loader/population.ts":
