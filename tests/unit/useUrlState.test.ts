@@ -2,9 +2,14 @@ import { describe, it, expect, vi } from "vitest";
 import { renderHook } from "@testing-library/react";
 import { useUrlState } from "../../src/hooks/useUrlState";
 
+const mockSearchParams = vi.hoisted(() => vi.fn());
+
 // Mock next/navigation useSearchParams
 vi.mock("next/navigation", () => ({
   useSearchParams: () => {
+    const mockedParams = mockSearchParams();
+    if (mockedParams) return mockedParams;
+
     const search = window.location.search;
     const params = new URLSearchParams(search);
     return {
@@ -138,5 +143,23 @@ describe("useUrlState current URL state contract", () => {
     expect(window.history.state).toEqual({ marker: "keep" });
     expect(replaceState).not.toHaveBeenCalled();
     replaceState.mockRestore();
+  });
+
+  it("does not rewrite when Next still reports legacy adv but the current URL no longer has it", () => {
+    window.history.replaceState({ marker: "keep" }, "", "/dashboard?from=2012&keep=1#chart");
+    mockSearchParams.mockReturnValue({
+      get: (key: string) => (key === "from" ? "2012" : null),
+      has: (key: string) => key === "adv",
+    });
+    const replaceState = vi.spyOn(window.history, "replaceState");
+
+    renderHook(() => useUrlState(2005, 2026));
+
+    expect(window.location.search).toBe("?from=2012&keep=1");
+    expect(window.location.hash).toBe("#chart");
+    expect(window.history.state).toEqual({ marker: "keep" });
+    expect(replaceState).not.toHaveBeenCalled();
+    replaceState.mockRestore();
+    mockSearchParams.mockReset();
   });
 });

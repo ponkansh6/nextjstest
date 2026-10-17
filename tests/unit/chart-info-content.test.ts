@@ -87,6 +87,44 @@ describe("new-graph chart info data-source state", () => {
     expect(rollbackState).toContain("単位：指数、出典：e-Stat 公式CTI長期artifact 000040499070");
     expect(rollbackState).toContain("Plan39接続系列");
   });
+
+  it.each([
+    ["理由あり", "feed unavailable", "理由：feed unavailable"],
+    ["理由なし", null, "理由："],
+  ])(
+    "unavailable CTI state includes raw series details (%s)",
+    async (_label, reason, expectedReason) => {
+      const { getChartInfoContent } = await import("@/lib/chartInfoContent");
+      const info = getChartInfoContent("consumption-expenditure", undefined, {
+        baseYear: null,
+        sourceMode: "unavailable",
+        series: {
+          raw: {
+            key: "cti_nominal_raw",
+            valueType: "raw",
+            unit: "指数",
+            source: "e-Stat CTI",
+            status: "invalid",
+            reason,
+          },
+          comparison: {
+            key: "cti_nominal_comparison",
+            valueType: "comparison",
+            unit: "指数",
+            source: "e-Stat CTI",
+            status: "invalid",
+            reason: null,
+          },
+        },
+      });
+      const stateItems = info.sections[0]?.items.map((item) => item.text);
+
+      expect(stateItems).toContain("消費データは現在利用できません。");
+      expect(stateItems).toContain(
+        `CTI基本系列の状態：invalid、${expectedReason}、単位：指数、出典：e-Stat CTI`,
+      );
+    },
+  );
 });
 
 describe("new-graph and residual chart info wording", () => {
