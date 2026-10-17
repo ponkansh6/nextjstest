@@ -5,14 +5,9 @@ import {
   loadCpiData,
   loadTotalEarningData,
   loadPopulationData,
-  loadCtiData,
   clearTestCache,
 } from "../../../../server/lib/dataLoader";
-import {
-  getCpiDataStatus,
-  getCpiMajorWeightTotal,
-  getGdpSupportStatus,
-} from "../../../../server/lib/data-loader/cpi";
+import { getCpiDataStatus, getCpiMajorWeightTotal } from "../../../../server/lib/data-loader/cpi";
 
 vi.mock("node:fs", () => ({
   existsSync: vi.fn(),
@@ -49,17 +44,6 @@ describe("server/lib/dataLoader", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     clearTestCache();
-  });
-
-  describe("getGdpSupportStatus", () => {
-    it("reports an unavailable GDP comparison independently when its validated set is absent", async () => {
-      (fs.existsSync as any).mockReturnValue(false);
-
-      await expect(getGdpSupportStatus()).resolves.toEqual({
-        valid: false,
-        reason: "missing GDP display set file",
-      });
-    });
   });
 
   describe("loadCpiData", () => {
@@ -300,102 +284,6 @@ Year and month ,,,,,,Total aged 15+,,,
       const result = await loadPopulationData();
       expect(result.has("2026年1月")).toBeTruthy();
       expect(result.get("2026年1月")?.total).toBe(109_530_000);
-    });
-  });
-
-  describe("loadCtiData", () => {
-    it("should return empty array if file does not exist", async () => {
-      (fs.existsSync as any).mockReturnValue(false);
-      const data = await loadCtiData();
-      expect(data).toEqual([]);
-    });
-
-    it("should ensure民間最終消費支出 is populated when support data exists for the quarter", async () => {
-      const mockCtiCsv = `月,消費支出（名目）,消費支出（実質）
-2005年1月,1000,1000
-2005年2月,1000,1000
-2005年3月,1000,1000`;
-      const mockSupportCsv = `
-時間軸（四半期）,民間最終消費支出
-2005年1～3月期,100`;
-
-      (fs.existsSync as any).mockImplementation((path: any) => {
-        if (typeof path === "string" && path.includes("cti_data.csv")) return true;
-        if (typeof path === "string" && path.includes("cti_support_nominal.csv")) return true;
-        if (typeof path === "string" && path.includes("cti_support_real.csv")) return true;
-        return false;
-      });
-
-      (fs.readFileSync as any).mockImplementation((path: any) => {
-        if (typeof path === "string" && path.includes("cti_data.csv")) return mockCtiCsv;
-        if (typeof path === "string" && path.includes("cti_support_nominal.csv"))
-          return mockSupportCsv;
-        if (typeof path === "string" && path.includes("cti_support_real.csv"))
-          return mockSupportCsv;
-        return "";
-      });
-
-      const data = await loadCtiData();
-
-      data.forEach((row: any) => {
-        if (String(row.年月).startsWith("2005年")) {
-          const month = parseInt(String(row.年月).match(/(\d+)月/)?.[1] || "0", 10);
-          if (month <= 3) {
-            expect(
-              row["民間最終消費支出（名目）"],
-              `Row ${row.年月} should have populated expenditure`,
-            ).toBeGreaterThan(0);
-          } else expect(row["民間最終消費支出（名目）"]).toBe(0);
-        }
-      });
-    });
-
-    it("should ensure 民間最終消費支出（実質） is populated when real support data exists for the quarter", async () => {
-      const mockCtiCsv = `月,消費支出（名目）,消費支出（実質）
-2005年1月,1000,1000
-2005年2月,1000,1000
-2005年3月,1000,1000`;
-      const mockSupportNominalCsv = `時間軸（四半期）,民間最終消費支出
-2005年1～3月期,100`;
-      const mockSupportRealCsv = `時間軸（四半期）,民間最終消費支出
-2005年1～3月期,200`;
-
-      (fs.existsSync as any).mockImplementation((path: any) => {
-        if (typeof path === "string" && path.includes("cti_data.csv")) return true;
-        if (typeof path === "string" && path.includes("cti_support_nominal.csv")) return true;
-        if (typeof path === "string" && path.includes("cti_support_real.csv")) return true;
-        return false;
-      });
-
-      (fs.readFileSync as any).mockImplementation((path: any) => {
-        if (typeof path === "string" && path.includes("cti_data.csv")) return mockCtiCsv;
-        if (typeof path === "string" && path.includes("cti_support_nominal.csv"))
-          return mockSupportNominalCsv;
-        if (typeof path === "string" && path.includes("cti_support_real.csv"))
-          return mockSupportRealCsv;
-        return "";
-      });
-
-      const data = await loadCtiData();
-
-      data.forEach((row: any) => {
-        if (String(row.年月).startsWith("2005年")) {
-          const month = parseInt(String(row.年月).match(/(\d+)月/)?.[1] || "0", 10);
-          if (month <= 3) {
-            expect(
-              row["民間最終消費支出（名目）"],
-              `Row ${row.年月} should have populated nominal expenditure`,
-            ).toBe(100);
-            expect(
-              row["民間最終消費支出（実質）"],
-              `Row ${row.年月} should have populated real expenditure`,
-            ).toBe(200);
-          } else {
-            expect(row["民間最終消費支出（名目）"]).toBe(0);
-            expect(row["民間最終消費支出（実質）"]).toBe(0);
-          }
-        }
-      });
     });
   });
 });

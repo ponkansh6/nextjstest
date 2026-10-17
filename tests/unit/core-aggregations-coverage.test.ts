@@ -9,7 +9,6 @@ import {
   type ConsumptionMonthlyPoint,
 } from "../../server/lib/consumptionTotal12Ma";
 import {
-  aggregateCtiBasicNominalQuarterly,
   buildCtiBasicConsumptionOutput,
   CTI_BASIC_2025_SERIES,
   ctiBasicSeriesPaths,
@@ -757,85 +756,6 @@ describe("core aggregation edge contracts", () => {
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }
-  });
-
-  it("aggregates quarterly CTI only when all three calendar months are usable", () => {
-    const records: CtiBasicRecord[] = [
-      nominalRecord("2005-01", { rawValue: 90 }),
-      nominalRecord("2005-02", { rawValue: 100 }),
-      nominalRecord("2005-03", { rawValue: 110 }),
-      nominalRecord("2005-04", { rawValue: null, isMissing: true }),
-      nominalRecord("2005-05", { rawValue: 100 }),
-      nominalRecord("2005-06", { rawValue: 110 }),
-      nominalRecord("2005-07", { rawValue: Number.NaN }),
-      nominalRecord("2005-08", { rawValue: 100 }),
-      nominalRecord("2005-09", { rawValue: 110 }),
-      nominalRecord("2018-01"),
-      nominalRecord("invalid-month"),
-    ];
-    const result = aggregateCtiBasicNominalQuarterly(records);
-    expect(result.values.get("2005Q1")).toBe(100);
-    expect(result.measurements.get("2005Q2")).toMatchObject({
-      status: "invalid",
-      reason: "missing",
-    });
-    expect(result.measurements.get("2005Q3")).toMatchObject({
-      status: "invalid",
-      reason: "non_finite",
-    });
-    expect(result.measurements.get("2005Q4")).toMatchObject({
-      status: "invalid",
-      reason: "insufficient_months",
-    });
-    expect(result.measurements.size).toBe(52);
-    expect(result.reason).toBe("missing");
-  });
-
-  it("prioritizes an identity mismatch and marks the affected quarter", () => {
-    const records = [
-      nominalRecord("2005-01", { seriesName: "wrong series" }),
-      nominalRecord("2005-02"),
-      nominalRecord("2005-03"),
-      nominalRecord("2006-01", { variant: "seasonallyAdjusted" }),
-    ];
-    const result = aggregateCtiBasicNominalQuarterly(records);
-    expect(result.status).toBe("invalid");
-    expect(result.reason).toBe("series_mismatch");
-    expect(result.measurements.get("2005Q1")).toMatchObject({
-      status: "invalid",
-      reason: "series_mismatch",
-    });
-    expect(result.measurements.get("2006Q1")?.reason).toBe("series_mismatch");
-  });
-
-  it("keeps duplicate-month failures local to their quarter while retaining valid quarters", () => {
-    const records = [
-      nominalRecord("2005-01"),
-      nominalRecord("2005-01", { rawValue: 999 }),
-      nominalRecord("2005-02"),
-      nominalRecord("2005-03"),
-      nominalRecord("2005-04"),
-      nominalRecord("2005-05"),
-      nominalRecord("2005-06"),
-    ];
-    const result = aggregateCtiBasicNominalQuarterly(records);
-    expect(result.measurements.get("2005Q1")?.reason).toBe("duplicate");
-    expect(result.measurements.get("2005Q2")).toMatchObject({
-      status: "valid",
-      value: 120,
-    });
-    expect(result.reason).toBe("duplicate");
-  });
-
-  it("gives an identity failure priority over a duplicate in the global CTI status", () => {
-    const result = aggregateCtiBasicNominalQuarterly([
-      nominalRecord("2005-01"),
-      nominalRecord("2005-01", { rawValue: 121 }),
-      nominalRecord("2006-01", { seriesIndex: 2 }),
-    ]);
-    expect(result.reason).toBe("series_mismatch");
-    expect(result.measurements.get("2005Q1")?.reason).toBe("duplicate");
-    expect(result.measurements.get("2006Q1")?.reason).toBe("series_mismatch");
   });
 
   it("builds a comparison series from strict moving-average windows and a complete positive base", () => {

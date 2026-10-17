@@ -80,71 +80,9 @@ export function buildCtiFilePaths() {
       "data/source",
       "cti_data2025_distribution_adjusted_quarterly.metadata.json",
     ),
-    candidateSupportNominal: path.join(process.cwd(), "data/source", "cti_support_nominal2025.csv"),
-    candidateSupportReal: path.join(process.cwd(), "data/source", "cti_support_real2025.csv"),
     seriesMap: path.join(process.cwd(), "data/source", "cti-2025-series-map.csv"),
     officialSnapshot: path.join(process.cwd(), "data/source", "cti-2025-official-series.csv"),
     metadata: path.join(process.cwd(), "data/source", "cti_data2025.metadata.json"),
-    supportNominalMetadata: path.join(
-      process.cwd(),
-      "data/source",
-      "cti_support_nominal2025.metadata.json",
-    ),
-    supportRealMetadata: path.join(
-      process.cwd(),
-      "data/source",
-      "cti_support_real2025.metadata.json",
-    ),
-    gdpDisplayNormalization: path.join(
-      process.cwd(),
-      "data/source",
-      "cti-gdp-display-normalization2025.json",
-    ),
-    quarterlySupportNominal: path.join(
-      process.cwd(),
-      "data/source",
-      "cti_support_nominal_quarterly2025.csv",
-    ),
-    quarterlySupportReal: path.join(
-      process.cwd(),
-      "data/source",
-      "cti_support_real_quarterly2025.csv",
-    ),
-    quarterlySupportNominalMetadata: path.join(
-      process.cwd(),
-      "data/source",
-      "cti_support_nominal_quarterly2025.metadata.json",
-    ),
-    quarterlySupportRealMetadata: path.join(
-      process.cwd(),
-      "data/source",
-      "cti_support_real_quarterly2025.metadata.json",
-    ),
-    quarterlyOfficialNominal: path.join(
-      process.cwd(),
-      "data/source",
-      "cti_support_nominal_quarterly2025.official.csv",
-    ),
-    quarterlyOfficialReal: path.join(
-      process.cwd(),
-      "data/source",
-      "cti_support_real_quarterly2025.official.csv",
-    ),
-    quarterlyEstatNominal: path.join(
-      process.cwd(),
-      "data/source",
-      "cti_support_nominal_quarterly2025.estat.csv",
-    ),
-    quarterlyEstatReal: path.join(
-      process.cwd(),
-      "data/source",
-      "cti_support_real_quarterly2025.estat.csv",
-    ),
-    quarterlyNormalization: path.join(
-      process.cwd(),
-      "data/source",
-      "cti-gdp-quarterly-display-normalization2025.json",
-    ),
   };
 }
 

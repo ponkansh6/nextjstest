@@ -165,12 +165,9 @@ export const buildCpiTooltipMetadata = (
 export const CANONICAL_NOMINAL_KEY = "その他の消費支出（名目）";
 export const CANONICAL_REAL_KEY = "その他の消費支出（実質）";
 
-export const SUPPORT_SERIES_KEY_NOMINAL = "CTIミクロ四半期系列（名目）";
 export const CTI_NOMINAL_DERIVED_TOTAL_KEY = "CTIミクロ調整系列（総合・名目）";
 /** Public real total derived from the published CTI nominal total and CPI. */
 export const CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY = "CTIミクロ調整系列（総合・実質）";
-/** Legacy GDP-support key retained for internal raw-source compatibility only. */
-export const SUPPORT_SERIES_KEY_REAL = "民間最終消費支出（実質）";
 export const CTI_BASIC_RAW_KEY = "CTIミクロ基本系列（名目・原数値）";
 export const CTI_BASIC_COMPARISON_KEY = "CTIミクロ基本系列（名目・参考）";
 export const CTI_BASIC_EXTENSION_KEY = "CTIミクロ基本系列（名目・参考・延長）";
@@ -340,21 +337,10 @@ export function ctiBasicDescriptors(status: "valid" | "invalid", reason: string 
     value: null,
   }));
 }
-export const QUARTERLY_GDP_RAW_NOMINAL_KEY = "GDP名目原値";
-export const QUARTERLY_GDP_RAW_REAL_KEY = "GDP実質原値";
-export const QUARTERLY_GDP_COMPARISON_NOMINAL_KEY = "GDP名目比較指数";
-export const QUARTERLY_GDP_COMPARISON_REAL_KEY = "GDP実質比較指数";
-
 export const DISPLAY_LABEL_OVERRIDES: Record<string, string> = {
   [CANONICAL_NOMINAL_KEY]: "諸雑費・CPI外",
   [CANONICAL_REAL_KEY]: "諸雑費・CPI外",
-  [SUPPORT_SERIES_KEY_NOMINAL]: "CTIミクロ（名目・四半期平均）",
   [CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY]: "CTIミクロ総合（実質・CPI調整）",
-  [SUPPORT_SERIES_KEY_REAL]: "民間最終消費",
-  [QUARTERLY_GDP_RAW_NOMINAL_KEY]: "GDP名目原値",
-  [QUARTERLY_GDP_RAW_REAL_KEY]: "GDP実質原値",
-  [QUARTERLY_GDP_COMPARISON_NOMINAL_KEY]: "GDP名目比較指数（2025Q1-Q4平均=100）",
-  [QUARTERLY_GDP_COMPARISON_REAL_KEY]: "GDP実質比較指数（2025Q1-Q4平均=100）",
   [CTI_BASIC_RAW_KEY]: CTI_BASIC_RAW_KEY,
   [CTI_BASIC_COMPARISON_KEY]: "CTIミクロ基本系列(名目・総合)",
   [CTI_BASIC_EXTENSION_KEY]: "CTIミクロ基本系列(名目・延長)",

@@ -83,76 +83,70 @@ describe("chart tooltip and legend shared contract", () => {
     expect(result.current.bind("one").tooltipProps.active).toBeFalsy();
   });
 
-  it.each([false, true])(
-    "projects every comparison registry entry to matching legend/tooltip DOM with advanced=%s",
-    (showAdvanced) => {
-      const visibleRegistry = COMPARISON_SERIES_REGISTRY.filter(
-        ({ advanced }) => !advanced || showAdvanced,
-      );
-      const metadata = projectTooltipMetadata(visibleRegistry);
-      const data = [
-        {
-          年月: "2018年1月",
-          総合: 100,
-          生鮮食品を除く総合: 100,
-          持家の帰属家賃を除く総合: 100,
-          "消費支出（参考）": null,
-          "CPI総合(参考)": null,
-          ...Object.fromEntries(visibleRegistry.map(({ key }) => [key, null])),
-        },
-      ];
+  it("projects the fixed comparison registry to matching legend/tooltip DOM", () => {
+    const visibleRegistry = COMPARISON_SERIES_REGISTRY;
+    const metadata = projectTooltipMetadata(visibleRegistry);
+    const data = [
+      {
+        年月: "2018年1月",
+        総合: 100,
+        生鮮食品を除く総合: 100,
+        持家の帰属家賃を除く総合: 100,
+        "消費支出（参考）": null,
+        "CPI総合(参考)": null,
+        ...Object.fromEntries(visibleRegistry.map(({ key }) => [key, null])),
+      },
+    ];
 
-      const { container } = render(
-        <>
-          <NewGraph
-            data={data}
-            hiddenKeys={[]}
-            onToggle={vi.fn()}
-            chartColors={{ gridStroke: "#ddd", axisText: "#111" }}
-            isMobile={false}
-            tooltipProps={{
-              cursor: { stroke: "#ddd", strokeWidth: 1, strokeOpacity: 0.6 },
-              trigger: "hover",
-              content: <div />,
-            }}
-            showAdvanced={showAdvanced}
-          />
-          <CustomTooltip
-            active
-            isMobile={false}
-            isTouch={false}
-            label="2018年1月"
-            payload={visibleRegistry.map(({ key }) => ({ dataKey: key, name: "raw", value: null }))}
-            seriesMeta={metadata}
-            showAllPayload
-            tooltipBg="#000"
-            tooltipText="#fff"
-          />
-        </>,
-      );
+    const { container } = render(
+      <>
+        <NewGraph
+          data={data}
+          hiddenKeys={[]}
+          onToggle={vi.fn()}
+          chartColors={{ gridStroke: "#ddd", axisText: "#111" }}
+          isMobile={false}
+          tooltipProps={{
+            cursor: { stroke: "#ddd", strokeWidth: 1, strokeOpacity: 0.6 },
+            trigger: "hover",
+            content: <div />,
+          }}
+        />
+        <CustomTooltip
+          active
+          isMobile={false}
+          isTouch={false}
+          label="2018年1月"
+          payload={visibleRegistry.map(({ key }) => ({ dataKey: key, name: "raw", value: null }))}
+          seriesMeta={metadata}
+          showAllPayload
+          tooltipBg="#000"
+          tooltipText="#fff"
+        />
+      </>,
+    );
 
-      const legendItems = [...container.querySelectorAll("[data-testid^='new-graph-legend-']")];
-      expect(legendItems).toHaveLength(visibleRegistry.length);
-      expect(container.querySelectorAll("[data-testid^='new-graph-line-']")).toHaveLength(
-        visibleRegistry.length,
+    const legendItems = [...container.querySelectorAll("[data-testid^='new-graph-legend-']")];
+    expect(legendItems).toHaveLength(visibleRegistry.length);
+    expect(container.querySelectorAll("[data-testid^='new-graph-line-']")).toHaveLength(
+      visibleRegistry.length,
+    );
+    visibleRegistry.forEach(({ key, legendLabel, color, order }) => {
+      const legend = container.querySelector(
+        `[data-testid="new-graph-legend-${key}"]`,
+      ) as HTMLElement;
+      expect(legend.textContent).toContain(legendLabel);
+      expect(legend.querySelector('[style*="background-color"]')?.getAttribute("style")).toContain(
+        color,
       );
-      visibleRegistry.forEach(({ key, legendLabel, color, order }) => {
-        const legend = container.querySelector(
-          `[data-testid="new-graph-legend-${key}"]`,
-        ) as HTMLElement;
-        expect(legend.textContent).toContain(legendLabel);
-        expect(
-          legend.querySelector('[style*="background-color"]')?.getAttribute("style"),
-        ).toContain(color);
-        const row = container.querySelector(`[data-tooltip-key="${key}"]`) as HTMLElement;
-        expect(row.textContent).toContain(legendLabel);
-        expect(row.getAttribute("data-tooltip-order")).toBe(String(order));
-        expect(row.querySelector("[data-tooltip-color]")?.getAttribute("data-tooltip-color")).toBe(
-          color,
-        );
-      });
-    },
-  );
+      const row = container.querySelector(`[data-tooltip-key="${key}"]`) as HTMLElement;
+      expect(row.textContent).toContain(legendLabel);
+      expect(row.getAttribute("data-tooltip-order")).toBe(String(order));
+      expect(row.querySelector("[data-tooltip-color]")?.getAttribute("data-tooltip-color")).toBe(
+        color,
+      );
+    });
+  });
 
   it("matches the three comparison tooltip labels to the legend and hides only its consumption notes", () => {
     const registry = createComparisonSeriesRegistry({ status: "valid", reason: null });
@@ -318,12 +312,12 @@ describe("chart tooltip and legend shared contract", () => {
         label="2024年1月"
         payload={[
           { name: "食料", dataKey: "食料", value: 10, color: "red" },
-          { name: "GDP", dataKey: "GDP", value: 90, color: "blue" },
+          { name: "Synthetic support", dataKey: "Synthetic support", value: 90, color: "blue" },
         ]}
         tooltipBg="#000"
         tooltipText="#fff"
         showTotal
-        totalExcludedKeys={["GDP"]}
+        totalExcludedKeys={["Synthetic support"]}
       />,
     );
     const total = screen.getByText("合計").parentElement as HTMLElement;

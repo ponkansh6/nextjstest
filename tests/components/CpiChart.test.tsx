@@ -164,8 +164,6 @@ const sectionProps: React.ComponentProps<typeof CpiChartSections> = {
   realKeysWithSupport: [],
   realColors: [],
   hiddenQuarters: [],
-  showAdvanced: false,
-  setShowAdvanced: vi.fn(),
   handleLegendClick: vi.fn(),
   handleStackedLegendClick: vi.fn(),
   handleLegendToggle: vi.fn(),

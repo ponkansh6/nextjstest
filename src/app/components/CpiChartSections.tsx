@@ -22,8 +22,6 @@ import {
   type SeriesMetadata,
   type TooltipSeriesProjection,
   projectTooltipMetadata,
-  SUPPORT_SERIES_KEY_NOMINAL,
-  SUPPORT_SERIES_KEY_REAL,
   CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY,
   CONSUMPTION_TOTAL_12MA_KEY,
 } from "../../lib/chartConstants";
@@ -74,8 +72,6 @@ interface CpiChartSectionsProps {
   realKeysWithSupport: string[];
   realColors: string[];
   hiddenQuarters: number[];
-  showAdvanced: boolean;
-  setShowAdvanced: Dispatch<SetStateAction<boolean>>;
   handleLegendClick: (key: string) => void;
   handleStackedLegendClick: (key: string) => void;
   handleLegendToggle: (key: string) => void;
@@ -121,8 +117,6 @@ export function CpiChartSections({
   realKeysWithSupport,
   realColors,
   hiddenQuarters,
-  showAdvanced,
-  setShowAdvanced,
   handleLegendClick,
   handleStackedLegendClick,
   handleLegendToggle,
@@ -156,7 +150,6 @@ export function CpiChartSections({
     EARNINGS_SERIES_REGISTRY.filter(({ key }) => !hiddenKeys.includes(key)).map(({ key }) => key),
   );
   const comparisonVisibleKeys = comparisonSeriesRegistry
-    .filter(({ advanced }) => !advanced || showAdvanced)
     .filter(({ key }) => !maHiddenKeys.includes(key))
     .map(({ key }) => key);
   const comparisonProjectedTooltipMeta = projectTooltipMetadata(
@@ -186,8 +179,6 @@ export function CpiChartSections({
         key,
         label: getSpendingPresentationLabel(key) ?? getLegendLabel(key),
         color:
-          key === SUPPORT_SERIES_KEY_NOMINAL ||
-          key === SUPPORT_SERIES_KEY_REAL ||
           key === CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY
             ? chartColors.barFill
             : (measurementMetadata?.color ?? chartColorsForSeries[sourceIndex]),
@@ -387,38 +378,6 @@ export function CpiChartSections({
           isMobile={isMobile}
           chartKey="new-graph"
           chartInfoContent={newGraphInfo}
-          showAdvanced={showAdvanced}
-          advancedToggle={
-            <div
-              style={{
-                marginTop: "1rem",
-                borderTop: "1px solid var(--border, #e2e8f0)",
-                paddingTop: "0.75rem",
-              }}
-            >
-              <div style={{ fontSize: "0.875rem", fontWeight: 600, marginBottom: "0.5rem" }}>
-                参考・延長系列
-              </div>
-              <label
-                htmlFor="adv-toggle"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.5rem",
-                  cursor: "pointer",
-                  fontSize: "0.875rem",
-                }}
-              >
-                <input
-                  id="adv-toggle"
-                  type="checkbox"
-                  checked={showAdvanced}
-                  onChange={(e) => setShowAdvanced(e.target.checked)}
-                />
-                <span>参考・延長系列を表示する</span>
-              </label>
-            </div>
-          }
           {...chartTooltip.bind("section-new-graph", {
             dataLength: mergedData.length,
             seriesMeta: comparisonProjectedTooltipMeta,

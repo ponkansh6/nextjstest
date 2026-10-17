@@ -110,22 +110,8 @@ function buildConsumptionMaps(ctiData: CpiData[]) {
       if (Number.isFinite(value)) legacyCtiMap.set(month, value * legacyCtiFactor);
     });
   }
-  const minkanNominalRawMap = new Map<string, number>();
-  const minkanNominalComparisonMap = new Map<string, number>();
-  for (const row of ctiData) {
-    const ym = toCanonicalYearMonth(row.年月);
-    if (!ym) continue;
-    const raw = row["民間最終消費支出（名目・原値）"];
-    const comparison = row["民間最終消費支出（名目・比較指数）"];
-    if (typeof raw === "number" && Number.isFinite(raw)) minkanNominalRawMap.set(ym, raw);
-    if (typeof comparison === "number" && Number.isFinite(comparison)) {
-      minkanNominalComparisonMap.set(ym, comparison);
-    }
-  }
   return {
     minkanMap: ctiBasic.comparison,
-    minkanNominalRawMap,
-    minkanNominalComparisonMap,
     ctiBasicRawMap: ctiBasic.raw,
     ctiBasicStatus: ctiBasic.status,
     ctiBasicReason: ctiBasic.reason,
@@ -199,22 +185,10 @@ export async function loadTotalEarningDataInternal(
     cpiMap.set(d.年月, d.総合);
   });
   // Salary indices have an explicit, independent base year. This must not
-  // follow CTI/CPI/GDP availability or their compatibility rollback year.
+  // follow CTI/CPI availability or their compatibility rollback year.
   const salaryComparisonYear = 2025;
-  const hasGdpComparison = ctiData.some(
-    (item) =>
-      typeof item["民間最終消費支出（名目・比較指数）"] === "number" &&
-      Number.isFinite(item["民間最終消費支出（名目・比較指数）"]),
-  );
-  const {
-    minkanMap,
-    minkanNominalRawMap,
-    minkanNominalComparisonMap,
-    ctiBasicRawMap,
-    ctiBasicStatus,
-    ctiBasicReason,
-    legacyCtiMap,
-  } = buildConsumptionMaps(ctiData);
+  const { minkanMap, ctiBasicRawMap, ctiBasicStatus, ctiBasicReason, legacyCtiMap } =
+    buildConsumptionMaps(ctiData);
   const consumptionResult = computeConsumptionTotal12Ma();
   const consumptionPointMap = new Map(consumptionResult.points.map((p) => [p.yearMonth, p]));
 
@@ -421,18 +395,13 @@ export async function loadTotalEarningDataInternal(
     const ctiMonth = toCanonicalYearMonth(item.年月)!;
     const ctiMa = minkanMap.get(ctiMonth);
     const ctiBasicRaw = ctiBasicRawMap.get(ctiMonth);
-    const minkanNominalRaw = minkanNominalRawMap.get(ctiMonth);
-    const minkanNominalComparison = minkanNominalComparisonMap.get(ctiMonth);
     const parsedYear = parseYearMonth(item.年月)!.year;
     const legacyCtiMa = legacyCtiMap.get(ctiMonth);
     const legacyCtiValue =
       parsedYear >= 2018 && legacyCtiMa !== undefined && Number.isFinite(legacyCtiMa)
         ? legacyCtiMa
         : null;
-    if (minkanNominalRaw !== undefined) item["民間最終消費支出（名目・原値）"] = minkanNominalRaw;
     if (ctiBasicRaw !== undefined) item["CTIミクロ基本系列（名目・原数値）"] = ctiBasicRaw;
-    item["民間最終消費支出（名目・比較指数）"] =
-      hasGdpComparison && minkanNominalComparison !== undefined ? minkanNominalComparison : null;
     item["CTIミクロ基本系列（名目・参考）"] =
       parsedYear <= 2017 && ctiMa !== undefined && Number.isFinite(ctiMa) ? ctiMa : null;
     item["CTIミクロ基本系列（名目・参考・延長）"] =
@@ -504,7 +473,7 @@ export async function loadTotalEarningDataInternal(
 
   // Normalize each salary output independently to the same fixed 2025
   // calendar-year average. This accounts for the distinct 12-month windows
-  // used by hourly and per-capita denominators without touching CPI/CTI/GDP.
+  // used by hourly and per-capita denominators without touching CPI/CTI.
   for (const field of ["総合", "時間当たり給与", "15歳以上国民当たり給与"] as const) {
     const baseValues = result
       .filter((item) => item.年月.startsWith("2025年"))

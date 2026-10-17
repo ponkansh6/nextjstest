@@ -9,12 +9,13 @@ vi.mock("next/navigation", () => ({
     const params = new URLSearchParams(search);
     return {
       get: (key: string) => params.get(key),
+      has: (key: string) => params.has(key),
     };
   },
 }));
 
 describe("useUrlState current URL state contract", () => {
-  it("restores the current from/to/hidden/adv URL contract as one state", () => {
+  it("reads from/to/hidden while ignoring legacy adv links", () => {
     window.history.replaceState({}, "", "/?from=2012&to=2024&hidden=食料,,住居&adv=1");
 
     const { result } = renderHook(() => useUrlState(2005, 2026));
@@ -23,11 +24,10 @@ describe("useUrlState current URL state contract", () => {
       from: 2012,
       to: 2024,
       hiddenKeys: ["食料", "住居"],
-      adv: true,
     });
   });
 
-  it("uses the existing defaults when from/to/hidden/adv are omitted", () => {
+  it("uses the existing defaults when from/to/hidden are omitted", () => {
     window.history.replaceState({}, "", "/");
 
     const { result } = renderHook(() => useUrlState(2005, 2026));
@@ -36,7 +36,6 @@ describe("useUrlState current URL state contract", () => {
       from: 2005,
       to: 2026,
       hiddenKeys: [],
-      adv: false,
     });
   });
 
@@ -52,7 +51,6 @@ describe("useUrlState current URL state contract", () => {
     expect(result.current.from).toBeNaN();
     expect(result.current.to).toBe(2024);
     expect(result.current.hiddenKeys).toEqual(["食料"]);
-    expect(result.current.adv).toBe(false);
 
     window.history.replaceState({}, "", "/?from=1900&to=9999");
     const outOfRange = renderHook(() => useUrlState(2005, 2026));
@@ -61,23 +59,23 @@ describe("useUrlState current URL state contract", () => {
     expect(outOfRange.result.current.to).toBe(9999);
   });
 
-  it("writes the current from/to/hidden/adv URL contract together", () => {
+  it("writes from/to/hidden and removes deprecated adv while preserving other params", () => {
     window.history.replaceState({}, "", "/?keep=1");
     const { result } = renderHook(() => useUrlState(2005, 2026));
 
-    result.current.updateUrl(2012, 2024, ["食料", "住居"], true);
+    result.current.updateUrl(2012, 2024, ["食料", "住居"]);
 
     expect(window.location.search).toBe(
-      "?keep=1&from=2012&to=2024&hidden=%E9%A3%9F%E6%96%99%2C%E4%BD%8F%E5%B1%85&adv=1",
+      "?keep=1&from=2012&to=2024&hidden=%E9%A3%9F%E6%96%99%2C%E4%BD%8F%E5%B1%85",
     );
   });
 
   it("retains existing query parameters while synchronizing with replaceState", () => {
-    window.history.replaceState({}, "", "/dashboard?keep=1");
+    window.history.replaceState({}, "", "/dashboard?keep=1&adv=1");
     const { result } = renderHook(() => useUrlState(2005, 2026));
     const replaceState = vi.spyOn(window.history, "replaceState");
 
-    result.current.updateUrl(2012, 2024, [], false);
+    result.current.updateUrl(2012, 2024, []);
 
     expect(window.location.pathname).toBe("/dashboard");
     expect(window.location.search).toBe("?keep=1&from=2012&to=2024");
@@ -96,33 +94,36 @@ describe("useUrlState current URL state contract", () => {
     expect(result.current).toMatchObject({
       from: 2012,
       to: 2024,
-      adv: true,
     });
   });
 
-  it("reads adv=1 as true", () => {
+  it("removes a legacy adv param on URL synchronization", () => {
     window.history.replaceState({}, "", "/?adv=1");
     const { result } = renderHook(() => useUrlState(2005, 2026));
-    expect(result.current.adv).toBe(true);
-  });
-
-  it("reads missing adv as false", () => {
-    window.history.replaceState({}, "", "/");
-    const { result } = renderHook(() => useUrlState(2005, 2026));
-    expect(result.current.adv).toBe(false);
-  });
-
-  it("updates url with adv=1 when updateUrl is called with true", () => {
-    window.history.replaceState({}, "", "/");
-    const { result } = renderHook(() => useUrlState(2005, 2026));
-    result.current.updateUrl(2005, 2026, [], true);
-    expect(window.location.search).toContain("adv=1");
-  });
-
-  it("removes adv from url when updateUrl is called with false", () => {
-    window.history.replaceState({}, "", "/?adv=1");
-    const { result } = renderHook(() => useUrlState(2005, 2026));
-    result.current.updateUrl(2005, 2026, [], false);
+    result.current.updateUrl(2005, 2026, []);
     expect(window.location.search).not.toContain("adv");
+  });
+
+  it("normalizes legacy adv on initial load without changing shared state", () => {
+    window.history.replaceState(
+      { marker: "keep" },
+      "",
+      "/dashboard?from=2012&to=2024&hidden=食料&keep=1&adv=1#chart",
+    );
+    const replaceState = vi.spyOn(window.history, "replaceState");
+
+    const { result } = renderHook(() => useUrlState(2005, 2026));
+
+    expect(result.current).toMatchObject({
+      from: 2012,
+      to: 2024,
+      hiddenKeys: ["食料"],
+    });
+    expect(window.location.pathname).toBe("/dashboard");
+    expect(window.location.search).toBe("?from=2012&to=2024&hidden=%E9%A3%9F%E6%96%99&keep=1");
+    expect(window.location.hash).toBe("#chart");
+    expect(window.history.state).toEqual({ marker: "keep" });
+    expect(replaceState).toHaveBeenCalledTimes(1);
+    replaceState.mockRestore();
   });
 });

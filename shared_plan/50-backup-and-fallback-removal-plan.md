@@ -4,6 +4,8 @@
 > 状態: **Phase 1 完了・Phase 2 進行中**。参照台帳は確定。spec/config先行更新は全39行分類＋config.yaml:31を含め適用完了（未コミット、spec.md 1505/2478行の旧文言等も修正済み）。実装コードは runtime 4ファイル（server/lib/data-loader/cpi.ts, cpiSource.ts, cpiValidation.ts, ctiValidation.ts）に変更あり（reason code union導入・2025型縮小・rollback-2020 option除去・isLegacy2020分岐削除等、未コミット）。テスト群は型不整合（24 errors）で未追随。<br>
 > 対象: CPI/CTI対象runtimeにおける2020基準計算入力・fallback・rollbackの廃止と、CTI旧月次互換経路の棚卸し。
 
+> **2026-10-18 superseding audit:** This document is a historical Plan50 record. Its former statements that annual/quarterly GDP support is active, retained for compatibility, or required by refresh/tests are superseded: GDP loader/status/join/normalization APIs and GDP-only source/test assets are retired because no downstream consumer exists. Current quarterly CTI is Plan40's ten-category output; Plan37 monthly CTI remains. Historical implementation and audit notes below do not define current runtime or refresh dependencies.
+
 ## 目的
 
 **2020年基準を使わないことは決定済み**であり、この計画では再評価・承認待ちにしない。対象となるCPI/CTI実行経路は検証済みの2025年基準入力だけを使い、欠落・不整合・検証失敗時は旧基準へ切り替えず、`unavailable` と機械可読な理由を返してfail closedにする。実装対象の2020年runtime入力、resolver、status/API契約、専用metadata・fixture・テストを依存関係に沿って除去する。
@@ -27,7 +29,7 @@
 - `server/lib/dataIo.ts` の `buildCtiRollback2020FilePaths()` は `cti_data.csv`、`cti_support_nominal.csv`、`cti_support_real.csv` を返し、共通の `buildCtiFilePaths()` に統合される。この既存rollback bundleと、現行コードが2025 CTI計算で実際に必要とするartifact bundleは別々に台帳化し、2025側の正確なpath・役割・依存consumerをPhase 1で確定する。
 - `server/lib/data-loader/ctiValidation.ts` の `CtiLoadOptions` と `selectCtiPair()` に `rollback-2020` 選択肢がある。`server/lib/data-loader/cpi.ts` は選択sourceに応じてCTI本体および名目/実質supportを読む。対象APIから2020 source optionと専用support読込を除去する。
 - `tests/utils/cti-2020-rollback-fixture.ts` は旧loaderを `source: "rollback-2020"` で明示呼び出しする。これを使うテストには `tests/data-quality/cti-data-integrity.test.ts`、`tests/data-quality/earning-data-integrity.test.ts`、`tests/server/support-map-join.test.ts` などがある。したがって、resolverだけを先に消すことはしない。
-- 旧CTI系列・support資産を参照するテストやデータ品質検査、GDP/四半期supportの読込経路が残り得る。`buildCtiFilePaths()` は現行2025系列やGDP supportにも使われるため、オブジェクト全体や同名の全ファイルを一括削除しない。
+- 旧CTI系列・support資産を参照するテストやデータ品質検査が残り得る。`buildCtiFilePaths()` はPlan40/Plan37の現行CTI入力にも使われるため、現行CTIを調べず一括削除しない。
 - Plan49ではNewGraphの旧CTI月次比較registry 3項目を `消費(総合)` 1項目へ置換し、旧月次fieldsをmerged loader dataに残す場合もNewGraphへ登録・投影しない契約となった。これはNewGraphにおける非使用の証拠であって、loader全体や他の公開面で未使用という証拠ではない。
 - `shared_plan/19-cti-micro-2025-base-plan.md` は2025 artifactセット不成立時に完全な2020セットへ切り替える決定を記録している。本計画の対象runtimeではこれを**明示的に置き換え**、必要な2025 artifactのいずれかが不成立なら該当consumerをunavailableとする。Plan19は歴史記録として保持し、現行specと実装契約を同期する。
 
@@ -46,7 +48,7 @@
 
 - 対象外の過去資料、履歴データ、別統計に含まれる2020年の表示ラベル・provenance。対象CPI/CTI runtime以外から2020基準情報を一律に削除しない。
 - CPI/CTIの現行2025公式入力、来歴metadata、series map、検証に必要な原本・スナップショット。
-- 対象CTI runtime bundleとしてPhase 1で特定されないCTI四半期系列、独立したGDP比較support、名目/実質の四半期support、Plan38等が現在使う公開/API契約。旧rollbackと同じ `buildCtiFilePaths()` に含まれるという理由だけで削除しない。ただし対象CTI計算の2020 sourceを補う入力として参照される部分はこの除外に含めず、2025 runtimeから切り離す。
+- 対象CTI runtime bundleとしてPhase 1で特定されないCTI四半期系列、独立したGDP比較support、名目/実質の四半期supportなどの現行公開/API契約。Plan38専用CTI四半期APIはproduction callerがなく廃止済みであり、削除対象に含める。旧rollbackと同じ `buildCtiFilePaths()` に含まれるという理由だけで現行契約を削除しない。ただし対象CTI計算の2020 sourceを補う入力として参照される部分はこの除外に含めず、2025 runtimeから切り離す。
 - UIの汎用fallback、null-safety、tooltip/payload契約、任意値への防御処理。
 - 旧仕様・完了計画における履歴としての説明。実装と現在のOpenSpec要件を区別する。
 
@@ -85,9 +87,9 @@ CPI/CTIの状態表示・説明を2025単独入力と利用不能理由に同期
 - **Single source / fail closed:** 各loaderの候補型とresolverを2025 source一つに絞る。2020ファイルが存在しても探索・open/stat/hash・再試行しない。CPI両CSVを一つのpairとして扱う。CTI artifactの組み合わせはPhase 1台帳に記録したpath・役割・consumer contractに従い、実コードで確認されていない三点bundleを仮定しない。必須artifactの欠落や不整合を部分データで補完しない。対象CPI/CTI計算で2020データから基準係数や通常値を算出する分岐も除去し、2025基準値の検証が失敗すれば計算結果を公開しない。
 - **Artifact / metadata validation:** runtime validationは成果物の存在、原本・生成物SHA-256、metadataのsource ID/URL・期間・行数・系列数、schema/header・必須コード、月重複と連続性、代表値/基準年検査を照合する。CTI supportは周波数・名目実質・単位・期間・接続条件も確認する。hashだけの一致でschemaやsemantic checksを省略しない。失敗は安定した機械可読reasonへ分類する。
 - **Status/error propagation:** status型とerror reasonをloaderからAPI/page props、view-model、chart/info、table/CSVまで追跡する。空配列やゼロ値へ変換して正常扱いせず、利用不能の系列を部分的に表示しない。画面の基準・source説明は実際の2025 source contractとvalidation結果に一致させる。
-- **Shared builders and consumers:** `buildCtiFilePaths()` や共用loaderを変更する際は、四半期CTI、GDP support、Plan38等の呼び出し元とNewGraph外の全公開consumerを一覧化する。対象外の有効pathを専用builder/型へ切り出し、共通オブジェクトの削除で壊さない。旧月次fieldの削除はconsumer移行完了後に限る。
+- **Shared builders and consumers:** `buildCtiFilePaths()` や共用loaderを変更する際は、現行のPlan40四半期CTI、Plan37月次CTI、NewGraph外の全公開consumerを一覧化する。Plan38専用CTI四半期APIとGDP support APIは廃止済みで、現行consumerとして扱わない。旧月次fieldの削除はconsumer移行完了後に限る。
 - **Fixtures, tests, lineage:** `tests/utils/cti-2020-rollback-fixture.ts` と全利用テストのassertionを列挙する。2025 fixtureへ置換した検査は公式snapshot/metadataと独立に照合し、source pairing、support join、row integrityを引き続き検証する。削除対象にはruntime専用の2020 CPI/CTI CSV・support・metadata・fixture・source enum/API分岐・生成/取得scriptを含め、参照台帳と照合してから削除する。CI参照も調べ、historical provenanceと対象外統計のデータ来歴は保持する。
-- **Spec/config synchronization:** 実装コードに先行して現行spec/configへ固定決定・runtime境界・status/reason要件を記述し、同一変更セットの実装完了時に最終同期する。`openspec/config.yaml` のspec rulesに従い、各要件をWHEN/THENで書き、2020 runtime計算/fallback/rollback禁止、unavailableのreason伝搬、残す四半期/GDP経路を明記する。Plan18/19本文は履歴記録として保持し、現行契約の根拠にしない。
+- **Spec/config synchronization:** 実装コードに先行して現行spec/configへ固定決定・runtime境界・status/reason要件を記述し、同一変更セットの実装完了時に最終同期する。`openspec/config.yaml` のspec rulesに従い、各要件をWHEN/THENで書き、2020 runtime計算/fallback/rollback禁止、unavailableのreason伝搬、残すPlan40/Plan37経路を明記する。Plan18/19本文は履歴記録として保持し、現行契約の根拠にしない。
 
 ## 受け入れ条件
 
@@ -98,7 +100,7 @@ CPI/CTIの状態表示・説明を2025単独入力と利用不能理由に同期
 - WHEN CTI計算に必要な2025入力が未提供または検証不成立 THEN 2020基準CTI/GDP値や2020基準化係数で通常値を計算せず、該当するCTI consumerを理由付きunavailableにする。独立したGDP consumerは別source contractのまま維持する。
 - WHEN 対象経路の2020入力・API・旧資産・fixtureを削除する THEN 全参照を台帳化し、公開APIと各データ品質assertionを2025検査へ置換済みである。歴史来歴だけの参照があれば、データを無差別に消さず境界を記録する。
 - WHEN 旧CTI月次fieldをloaderから除く THEN NewGraph以外の全consumerを監査し、各consumerの移行・廃止を完了している。NewGraphにprojectionがないことだけを根拠にしない。
-- WHEN `buildCtiFilePaths()` や共用loaderを整理する THEN Phase 1台帳に記録した現行CTI 2025 artifact、四半期CTI、独立GDP supportのpath/validation/公開結果がconsumer contractどおり維持される。
+- WHEN `buildCtiFilePaths()` や共用loaderを整理する THEN Phase 1台帳に記録した現行CTI 2025 artifact、Plan40四半期CTI、Plan37月次CTIのpath/validation/公開結果がconsumer contractどおり維持され、GDP-only paths/APIs are absent.
 - WHEN UI汎用fallback/null-safetyを変更候補とする THEN データ資産fallbackと別の根拠・対象契約を示せない変更は含めない。
 - WHEN OpenSpecを更新する THEN Data Sources / Data Flow / Component Tree / Requirementsが実装に同期し、各変更要件にWHEN/THENがある。
 
@@ -126,10 +128,10 @@ CPI/CTIの状態表示・説明を2025単独入力と利用不能理由に同期
 
 `openspec/specs/nextjstest/spec.md` の以下を実装と同時に更新する。
 
-- **Data Sources:** CPI/CTIの2025-only runtime入力とmetadata、対象runtimeから除去した2020入力・専用資産、歴史来歴として残す2020ラベル、維持するCTI 2025・quarterly/GDP supportを区別する。
+- **Data Sources:** CPI/CTIの2025-only runtime入力とmetadata、対象runtimeから除去した2020入力・専用資産、歴史来歴として残す2020ラベル、維持するPlan40 quarterly/Plan37 monthly CTI入力を区別する。GDP-only assets are retired.
 - **Data Flow:** CPI単一候補の検証からunavailableへ至る経路、CTI 2025のfail-closed、削除後の各公開/API consumer経路を記述する。
 - **Component Tree:** CPI status/info文とCTI公開面の状態伝搬を実装に合わせる。
-- **Requirements:** 対象CPI/CTI runtimeにおける2020計算入力・fallback・rollback禁止、理由付きunavailable、旧経路削除後のデータ品質検査、現行四半期/GDP契約と汎用UI fallbackの維持をWHEN/THENで定義する。
+- **Requirements:** 対象CPI/CTI runtimeにおける2020計算入力・fallback・rollback禁止、理由付きunavailable、旧経路削除後のデータ品質検査、現行Plan40/Plan37 CTI契約と汎用UI fallbackの維持、およびGDP-only経路の退役をWHEN/THENで定義する。
 
 `openspec/config.yaml` のspec規則に従い、要件変更ごとに具体的なWHEN/THENシナリオを置く。完了済みPlan18/37/49等の経緯や将来計画の記述を、実装要件と取り違えない。
 

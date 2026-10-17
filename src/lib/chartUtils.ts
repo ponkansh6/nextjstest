@@ -76,10 +76,8 @@ export const mergeChartData = (
 
     if (map.has(row.年月)) {
       const item = map.get(row.年月)!;
-      // Keep every CPI/GDP comparison field on the shared row.  NewGraph,
-      // its tooltip, and the data table/CSV all consume this same merged
-      // object; copying only the CPI total silently dropped the historical
-      // private-consumption series before it reached the table.
+      // Preserve every loaded CPI field on the shared row. NewGraph, its
+      // tooltip, and the data table/CSV consume this same merged object.
       Object.entries(row).forEach(([key, value]) => {
         if (value !== undefined) {
           item[key] = value;

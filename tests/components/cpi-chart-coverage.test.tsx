@@ -3,11 +3,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import CpiChart from "../../src/app/components/CpiChart";
 import { CustomTooltip } from "../../src/app/components/CustomTooltip";
-import {
-  CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY,
-  SUPPORT_SERIES_KEY_NOMINAL,
-  stackedKeys,
-} from "../../src/lib/chartConstants";
+import { CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY, stackedKeys } from "../../src/lib/chartConstants";
 import { QUARTERLY_PUBLIC_NOMINAL_KEYS } from "../../src/lib/quarterlyPublicProjection";
 
 const mocks = vi.hoisted(() => ({
@@ -22,7 +18,7 @@ vi.mock("../../src/hooks/useChartTheme", () => ({
   useChartTheme: () => ({ isMobile: false, isTouch: false, chartColors: { barFill: "#789" } }),
 }));
 vi.mock("../../src/hooks/useUrlState", () => ({
-  useUrlState: () => ({ from: 2020, to: 2021, hiddenKeys: [], adv: false, updateUrl: vi.fn() }),
+  useUrlState: () => ({ from: 2020, to: 2021, hiddenKeys: [], updateUrl: vi.fn() }),
 }));
 vi.mock("../../src/hooks/useCpiChartData", () => ({
   useCpiChartData: () => ({ hiddenQuarters: [], toggleQuarter: vi.fn() }),
@@ -43,7 +39,6 @@ vi.mock("../../src/app/components/charts/useChartTooltipProps", () => ({
 vi.mock("../../src/app/components/SpendingBarChart", () => ({
   normalizeSpendingChartData: (rows: unknown[]) => rows,
 }));
-vi.mock("../../src/hooks/useAdvancedPreference", () => ({ useAdvancedPreference: vi.fn() }));
 vi.mock("../../src/app/components/CpiChartSections", () => ({
   CpiChartSections: (props: Record<string, any>) => {
     mocks.sectionsProps = props;
@@ -53,14 +48,10 @@ vi.mock("../../src/app/components/CpiChartSections", () => ({
           derived
         </button>
         <button onClick={() => props.handleLegendToggle("unknown-series")}>unknown</button>
-        <button onClick={() => props.handleLegendToggle("食料（名目）")}>legacy</button>
+        <button onClick={() => props.handleLegendToggle("食料（名目）")}>nominal-expense</button>
         <button onClick={() => props.handleLegendToggle("CTIミクロ調整系列（住居）")}>
           adjusted
         </button>
-        <button onClick={() => props.handleLegendToggle(SUPPORT_SERIES_KEY_NOMINAL)}>
-          support
-        </button>
-        <button onClick={() => props.setShowAdvanced(true)}>enable-advanced</button>
       </div>
     );
   },
@@ -90,8 +81,7 @@ vi.mock("../../src/app/components/BottomSheet", () => ({
 }));
 vi.mock("../../src/app/components/DataTablesSection", () => ({ DataTablesSection: () => null }));
 vi.mock("next/dynamic", () => ({
-  default: () => (props: Record<string, unknown>) =>
-    "advancedToggle" in props ? <>{props.advancedToggle as React.ReactNode}</> : null,
+  default: () => (props: Record<string, unknown>) => null,
 }));
 vi.mock("../../src/app/components/LazyMount", () => ({
   LazyMount: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -111,7 +101,7 @@ vi.mock("../../src/app/components/EarningsBreakdownChart", () => ({
 }));
 vi.mock("../../src/app/components/ResidualAreaChart", () => ({ ResidualAreaChart: () => null }));
 vi.mock("../../src/app/components/NewGraph", () => ({
-  NewGraph: ({ advancedToggle }: { advancedToggle: React.ReactNode }) => <>{advancedToggle}</>,
+  NewGraph: () => null,
 }));
 
 const measurement = (key: string) => ({
@@ -155,7 +145,7 @@ function renderCpiChart(options: { data?: any[]; ctiInfoState?: any } = {}) {
 }
 
 describe("CPI chart component callback contracts", () => {
-  it("pairs canonical, legacy, adjusted, and support legends and ignores unknown keys", () => {
+  it("pairs nominal/real expense and adjusted legends, ignoring unknown keys", () => {
     renderCpiChart();
     const props = () => mocks.sectionsProps!;
     fireEvent.click(screen.getByRole("button", { name: "derived" }));
@@ -167,21 +157,16 @@ describe("CPI chart component callback contracts", () => {
     fireEvent.click(screen.getByRole("button", { name: "unknown" }));
     expect(props().nominalHiddenKeys).toEqual(initialNominal);
 
-    fireEvent.click(screen.getByRole("button", { name: "legacy" }));
+    fireEvent.click(screen.getByRole("button", { name: "nominal-expense" }));
     expect(props().nominalHiddenKeys).toContain("食料（名目）");
     expect(props().realHiddenKeys).toContain("食料（実質）");
-    fireEvent.click(screen.getByRole("button", { name: "legacy" }));
+    fireEvent.click(screen.getByRole("button", { name: "nominal-expense" }));
     expect(props().nominalHiddenKeys).not.toContain("食料（名目）");
     expect(props().realHiddenKeys).not.toContain("食料（実質）");
 
     fireEvent.click(screen.getByRole("button", { name: "adjusted" }));
     expect(props().nominalHiddenKeys).toContain("CTIミクロ調整系列（住居）");
     expect(props().realHiddenKeys).toContain("住居（実質）");
-    fireEvent.click(screen.getByRole("button", { name: "support" }));
-    expect(props().nominalHiddenKeys).toContain(SUPPORT_SERIES_KEY_NOMINAL);
-    fireEvent.click(screen.getByRole("button", { name: "enable-advanced" }));
-    expect(props().showAdvanced).toBe(true);
-
     fireEvent.click(screen.getByRole("button", { name: "range" }));
     fireEvent.click(screen.getByRole("button", { name: "start-year" }));
     expect(screen.queryByRole("button", { name: "start-year" })).toBeNull();
@@ -190,7 +175,8 @@ describe("CPI chart component callback contracts", () => {
     expect(screen.queryByRole("button", { name: "end-year" })).toBeNull();
   });
 
-  it("uses safe default ranges for empty and malformed date inputs and retains CTI source metadata", () => {
+  it("uses safe default ranges and prefers quarterly row measurement metadata", () => {
+    const publicCtiKey = QUARTERLY_PUBLIC_NOMINAL_KEYS[0];
     const ctiInfoState = {
       baseYear: 2025,
       sourceMode: "official-connected",
@@ -198,7 +184,7 @@ describe("CPI chart component callback contracts", () => {
       reason: "fixture invalid",
       series: {
         raw: {
-          key: SUPPORT_SERIES_KEY_NOMINAL,
+          key: publicCtiKey,
           valueType: "raw",
           unit: "万円",
           source: "source",
@@ -219,18 +205,18 @@ describe("CPI chart component callback contracts", () => {
     expect(mocks.sectionsProps?.ctiMetadata).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          key: SUPPORT_SERIES_KEY_NOMINAL,
-          reason: "fixture invalid",
-          color: "#789",
+          key: publicCtiKey,
+          status: "valid",
+          source: "fixture",
+          color: "var(--nominal-food)",
         }),
       ]),
     );
     renderCpiChart({ data: [{ 年月: "not a date", 総合: 100 }], ctiInfoState });
     expect(
-      mocks.sectionsProps?.ctiMetadata.find(
-        (item: { key: string }) => item.key === SUPPORT_SERIES_KEY_NOMINAL,
-      ).reason,
-    ).toBe("fixture invalid");
+      mocks.sectionsProps?.ctiMetadata.find((item: { key: string }) => item.key === publicCtiKey)
+        .status,
+    ).toBe("valid");
     renderCpiChart({
       data: [],
       ctiInfoState: {
@@ -239,10 +225,9 @@ describe("CPI chart component callback contracts", () => {
       },
     });
     expect(
-      mocks.sectionsProps?.ctiMetadata.find(
-        (item: { key: string }) => item.key === SUPPORT_SERIES_KEY_NOMINAL,
-      ).reason,
-    ).toBeNull();
+      mocks.sectionsProps?.ctiMetadata.find((item: { key: string }) => item.key === publicCtiKey)
+        .status,
+    ).toBe("valid");
   });
 
   it("keeps unmapped payload opt-in, limits default rows, and formats finite/non-finite values", () => {
@@ -487,12 +472,12 @@ describe("CPI chart sections tooltip contracts", () => {
     const ActualSections = CpiChartSections;
     const { CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY } = await import("../../src/lib/chartConstants");
     const expenseKey = CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY.住居;
-    const supportKey = SUPPORT_SERIES_KEY_NOMINAL;
+    const foodKey = QUARTERLY_PUBLIC_NOMINAL_KEYS.find((key) => key.includes("食料"))!;
     const captured = new Map<string, Record<string, any>>();
     const noop = vi.fn();
     const comparisonSeriesRegistry = [
       { key: "CPI総合(12MA)", label: "CPI", displayName: "CPI display", order: 0 },
-      { key: "総合(12MA)", label: "総合", order: 1, advanced: true },
+      { key: "総合(12MA)", label: "総合", order: 1 },
       { key: "消費(総合)", label: "消費", order: 2 },
     ];
     const meta = { key: expenseKey, label: "住居", color: "#abc", unit: "万円", status: "valid" };
@@ -510,13 +495,11 @@ describe("CPI chart sections tooltip contracts", () => {
       nominalHiddenKeys: [expenseKey],
       realHiddenKeys: [],
       maHiddenKeys: [],
-      nominalColorsWithSupport: ["#nominal", "#fallback", "#support"],
-      nominalKeysWithSupport: [expenseKey, "食料（名目）", supportKey],
+      nominalColorsWithSupport: ["#nominal", "#fallback"],
+      nominalKeysWithSupport: [expenseKey, foodKey],
       realKeysWithSupport: ["住居（実質）", CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY],
       realColors: ["#real"],
       hiddenQuarters: [],
-      showAdvanced: false,
-      setShowAdvanced: noop,
       handleLegendClick: noop,
       handleStackedLegendClick: noop,
       handleLegendToggle: noop,
@@ -547,24 +530,24 @@ describe("CPI chart sections tooltip contracts", () => {
 
     const comparison = captured.get("section-new-graph")!;
     const comparisonAllowed = comparison.allowedKeys as (label?: string) => string[];
-    expect(comparisonAllowed("not-quarterly")).toEqual(["CPI総合(12MA)", "消費(総合)"]);
-    expect(comparisonAllowed()).toEqual(["CPI総合(12MA)", "消費(総合)"]);
-    expect(comparisonAllowed("2020Q1")).toEqual(["CPI総合(12MA)"]);
+    expect(comparisonAllowed("not-quarterly")).toEqual([
+      "CPI総合(12MA)",
+      "総合(12MA)",
+      "消費(総合)",
+    ]);
+    expect(comparisonAllowed()).toEqual(["CPI総合(12MA)", "総合(12MA)", "消費(総合)"]);
+    expect(comparisonAllowed("2020Q1")).toEqual(["CPI総合(12MA)", "総合(12MA)"]);
 
     const nominal = captured.get("section-consumption-nominal")!;
     const nominalAllowed = nominal.allowedKeys as (label?: string) => string[];
     expect(nominalAllowed("not-quarterly")).toEqual([]);
     expect(nominalAllowed()).toEqual([]);
-    expect(nominalAllowed("2018Q1")).toEqual(["食料（名目）", supportKey]);
+    expect(nominalAllowed("2018Q1")).toEqual([foodKey]);
     const nominalMeta = nominal.seriesMeta as Array<Record<string, any>>;
-    expect(nominalMeta.map(({ key }) => key)).toEqual([expenseKey, "食料（名目）", supportKey]);
+    expect(nominalMeta.map(({ key }) => key)).toEqual([expenseKey, foodKey]);
     expect(nominalMeta[0]).toMatchObject({ label: "住居", color: "#abc", order: 0 });
-    expect(nominalMeta.find(({ key }) => key === "食料（名目）")).toMatchObject({
+    expect(nominalMeta.find(({ key }) => key === foodKey)).toMatchObject({
       color: "#fallback",
-    });
-    expect(nominalMeta.find(({ key }) => key === supportKey)).toMatchObject({
-      color: "#bar",
-      order: 2,
     });
     expect(
       (captured.get("section-consumption-real")!.seriesMeta as Array<Record<string, any>>).map(
@@ -578,17 +561,9 @@ describe("CPI chart sections tooltip contracts", () => {
     expect(resetUpdater([]).length).toBeGreaterThan(0);
     expect(resetUpdater([...stackedKeys])).toEqual([]);
 
-    const advancedInfoButton = screen.queryByRole("button", {
-      name: "給与・消費・物価の推移比較のデータソースを表示",
-    });
-    if (advancedInfoButton) fireEvent.click(advancedInfoButton);
-    fireEvent.click(screen.getByRole("checkbox", { name: "参考・延長系列を表示する" }));
-    expect(noop).toHaveBeenCalledWith(true);
-
-    view.rerender(<ActualSections {...props} showAdvanced />);
     expect(
       (captured.get("section-new-graph")!.allowedKeys as (label?: string) => string[])("2020Q1"),
     ).toEqual(["CPI総合(12MA)", "総合(12MA)"]);
-    view.rerender(<ActualSections {...props} showAdvanced isMobile />);
+    view.rerender(<ActualSections {...props} isMobile />);
   });
 });

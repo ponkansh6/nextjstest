@@ -4,7 +4,6 @@ import type { Phase6B04Id } from "./phase6-b04.route.command";
 
 vi.setConfig({ testTimeout: 45_000 });
 
-const INTERNAL = /GDP名目原値|GDP名目比較指数|GDP実質原値|GDP実質比較指数|四半期raw|原値|比較指数/;
 const CONTRACTS: Array<{ id: Phase6B04Id; keys: string[] }> = [
   {
     id: "p45-a-parity-section-cpi-major",
@@ -169,8 +168,5 @@ for (const spec of CONTRACTS) {
     expect(chartMatrix(chart)).toEqual(surface.values.map((row) => [row[0], ...row.slice(1)]));
     expect(surface.values.map((row) => row[0])).toContain("2025年1月");
     expect(surface.headers.slice(1)).toHaveLength(spec.keys.length);
-    expect(JSON.stringify(chart)).not.toMatch(INTERNAL);
-    expect(surface.tableText).not.toMatch(INTERNAL);
-    expect(surface.csv.rows.flat().join(" ")).not.toMatch(INTERNAL);
   });
 }

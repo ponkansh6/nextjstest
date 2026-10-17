@@ -2,9 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as fs from "node:fs";
 import { createHash } from "node:crypto";
 
-const { selectCtiPairMock, getGdpSupportStatusMock } = vi.hoisted(() => ({
+const { selectCtiPairMock } = vi.hoisted(() => ({
   selectCtiPairMock: vi.fn(),
-  getGdpSupportStatusMock: vi.fn(),
 }));
 
 vi.mock("node:fs", () => ({
@@ -28,11 +27,6 @@ vi.mock("../../server/lib/data-loader/ctiValidation", async (importOriginal) => 
   const actual =
     await importOriginal<typeof import("../../server/lib/data-loader/ctiValidation")>();
   return { ...actual, selectCtiPair: selectCtiPairMock };
-});
-
-vi.mock("../../server/lib/data-loader/gdpSupport", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../server/lib/data-loader/gdpSupport")>();
-  return { ...actual, getGdpSupportStatus: getGdpSupportStatusMock };
 });
 
 function build2025PairFixture(
@@ -70,23 +64,13 @@ function build2025PairFixture(
 async function configureCti2025Fixture(options: {
   cti?: string;
   metadata?: Record<string, unknown> | string;
-  nominal?: string;
-  real?: string;
-  normalizationFactors?: { nominal: number; real: number };
 }) {
   const pair = {
     baseYear: 2025 as const,
     pair: "2025" as const,
     mainPath: "/fixture/cti2025.csv",
-    supportNominalPath: "/fixture/unused-nominal.csv",
-    supportRealPath: "/fixture/unused-real.csv",
   };
   selectCtiPairMock.mockReturnValue({ pair });
-  getGdpSupportStatusMock.mockResolvedValue(
-    options.normalizationFactors
-      ? { valid: true, normalizationFactors: options.normalizationFactors }
-      : { valid: false },
-  );
   const { buildCtiFilePaths } = await import("../../server/lib/dataIo");
   const paths = buildCtiFilePaths();
   vi.mocked(fs.existsSync).mockImplementation((filePath) => String(filePath) === paths.metadata);
@@ -97,8 +81,6 @@ async function configureCti2025Fixture(options: {
       return typeof options.metadata === "string"
         ? options.metadata
         : JSON.stringify(options.metadata ?? {});
-    if (path === paths.candidateSupportNominal) return options.nominal ?? "";
-    if (path === paths.candidateSupportReal) return options.real ?? "";
     return "";
   }) as typeof fs.readFileSync);
   return pair;
@@ -109,7 +91,6 @@ describe("CPI loading public contract edge coverage", () => {
     vi.resetModules();
     vi.clearAllMocks();
     selectCtiPairMock.mockReset();
-    getGdpSupportStatusMock.mockReset().mockResolvedValue({ valid: false });
   });
 
   afterEach(() => {
@@ -165,25 +146,12 @@ describe("CPI loading public contract edge coverage", () => {
     expect(error).toHaveBeenCalledWith(expect.stringContaining("CPI data unavailable:"));
   });
 
-  it("forwards the quarterly GDP validation result through the CPI module export", async () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-    const { validateQuarterlyGdpSupport, getQuarterlyGdpSupportStatus, loadQuarterlyGdpData } =
-      await import("../../server/lib/data-loader/cpi");
-
-    const validated = validateQuarterlyGdpSupport();
-    expect(validated).toMatchObject({ valid: false });
-    await expect(getQuarterlyGdpSupportStatus()).resolves.toEqual(validated);
-    expect(loadQuarterlyGdpData()).toEqual({ rows: [], comparisonReady: false });
-  });
-
   it("returns valid and invalid CTI source status from the public loader", async () => {
     const { getCtiDataStatus } = await import("../../server/lib/data-loader/cpi");
     const validPair = {
       baseYear: 2025 as const,
       pair: "2025" as const,
       mainPath: "/fixture/cti2025.csv",
-      supportNominalPath: "/fixture/unused-nominal.csv",
-      supportRealPath: "/fixture/unused-real.csv",
     };
     selectCtiPairMock.mockReturnValue({ pair: validPair });
 
@@ -468,8 +436,6 @@ describe("CPI loading public contract edge coverage", () => {
       baseYear: 2025 as const,
       pair: "2025" as const,
       mainPath: "/fixture/cti.csv",
-      supportNominalPath: "/fixture/nominal.csv",
-      supportRealPath: "/fixture/real.csv",
     };
     selectCtiPairMock.mockReturnValue({ pair });
     vi.mocked(fs.readFileSync).mockImplementation(((filePath: fs.PathOrFileDescriptor) =>
@@ -494,8 +460,6 @@ describe("CPI loading public contract edge coverage", () => {
         baseYear: 2025,
         pair: "2025",
         mainPath: "/fixture/cti.csv",
-        supportNominalPath: "/fixture/nominal.csv",
-        supportRealPath: "/fixture/real.csv",
       },
     });
     vi.mocked(fs.readFileSync).mockReturnValue("unrecognized header\n2004年1月,100" as never);
@@ -509,8 +473,6 @@ describe("CPI loading public contract edge coverage", () => {
       baseYear: 2025 as const,
       pair: "2025" as const,
       mainPath: "/fixture/cti2025.csv",
-      supportNominalPath: "/fixture/unused-nominal.csv",
-      supportRealPath: "/fixture/unused-real.csv",
     };
     selectCtiPairMock.mockReturnValue({ pair });
     const { buildCtiFilePaths } = await import("../../server/lib/dataIo");
@@ -528,50 +490,8 @@ describe("CPI loading public contract edge coverage", () => {
     expect(data.ctiMetadata).toBeUndefined();
   });
 
-  it("applies matched annual GDP values and projects complete CTI source metadata", async () => {
+  it("uses valueType as the CTI runtime unit and ignores malformed optional ranges", async () => {
     await configureCti2025Fixture({
-      cti: "月,消費支出（名目）\n2024年1月,10\n2025年1月,11",
-      nominal: "補助,時間軸（暦年）,民間最終消費支出\nx\n,x,\nx,2024,100\nx,2025,200",
-      real: "補助,時間軸（暦年）,民間最終消費支出\nx,2024,50\nx,2025",
-      normalizationFactors: { nominal: 2, real: 3 },
-      metadata: {
-        statInfId: "0000000000",
-        householdScope: "二人以上の世帯",
-        unit: "指数",
-        frequency: "monthly",
-        sourceFile: "cti_data2025.csv",
-        valueType: "index",
-        period: { start: "1970年1月", end: "2026年7月" },
-      },
-    });
-    const { loadCtiDataInternal } = await import("../../server/lib/data-loader/cpi");
-
-    const data = await loadCtiDataInternal();
-    const row2024 = data.find((row) => row.年月 === "2024年1月");
-
-    expect(row2024).toMatchObject({
-      "民間最終消費支出（名目・原値）": 100,
-      "民間最終消費支出（実質・原値）": 50,
-      "民間最終消費支出（名目）": 200,
-      "民間最終消費支出（実質）": 150,
-    });
-    expect(data.ctiMetadata).toMatchObject({
-      statInfId: "0000000000",
-      householdScope: "二人以上の世帯",
-      unit: "指数",
-      frequency: "monthly",
-      sourceFile: "cti_data2025.csv",
-      valueType: "index",
-      rawRange: { startYear: 1970, endYear: 2026 },
-      adoptedRange: { startYear: 1970, endYear: 2026 },
-    });
-  });
-
-  it("uses valueType as the runtime unit and tolerates an empty annual GDP file", async () => {
-    await configureCti2025Fixture({
-      nominal: "",
-      real: "時間軸（暦年）,民間最終消費支出\n2024,50",
-      normalizationFactors: { nominal: 1, real: 1 },
       metadata: {
         unit: 12,
         valueType: "指数",
@@ -584,9 +504,7 @@ describe("CPI loading public contract edge coverage", () => {
 
     expect(data.ctiMetadata).toMatchObject({ unit: "指数", valueType: "指数" });
     expect(data.ctiMetadata?.rawRange).toBeUndefined();
-    expect(data.find((row) => row.年月 === "2025年1月")).not.toHaveProperty(
-      "民間最終消費支出（名目・原値）",
-    );
+    expect(data.find((row) => row.年月 === "2025年1月")).toMatchObject({ 年月: "2025年1月" });
   });
 
   it("defaults absent optional CTI metadata fields and ranges", async () => {

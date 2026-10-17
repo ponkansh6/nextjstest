@@ -16,8 +16,6 @@ import { CpiData } from "../../src/types/data";
 import {
   CONSUMPTION_NOMINAL_KEYS,
   CONSUMPTION_REAL_KEYS,
-  SUPPORT_SERIES_KEY_NOMINAL,
-  SUPPORT_SERIES_KEY_REAL,
   targetKeys,
   stackedKeys,
   stackedColors,
@@ -26,6 +24,8 @@ import { setupUiMocks } from "../utils/ui-mocks";
 import "../utils/recharts-mock";
 import { beforeAll, describe, it, expect, vi } from "vitest";
 
+const TEST_SUPPORT_NOMINAL_KEY = "民間最終消費支出（名目）";
+const TEST_SUPPORT_REAL_KEY = "民間最終消費支出（実質）";
 beforeAll(() => {
   setupUiMocks();
 });
@@ -36,8 +36,8 @@ const createMockDataPoint = (year: number, month: number) => {
   [
     ...CONSUMPTION_NOMINAL_KEYS,
     ...CONSUMPTION_REAL_KEYS,
-    SUPPORT_SERIES_KEY_NOMINAL,
-    SUPPORT_SERIES_KEY_REAL,
+    TEST_SUPPORT_NOMINAL_KEY,
+    TEST_SUPPORT_REAL_KEY,
   ].forEach((k) => {
     data[k] = 100;
   });

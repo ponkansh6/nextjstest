@@ -5,11 +5,6 @@ import { buildCtiFilePaths } from "../dataIo";
 import { parseYearMonth, compareYearMonth } from "@/lib/yearMonth";
 import { selectCpiPair, type CpiDataStatus } from "./cpiSource";
 import { transformCpiData } from "./cpiLoader";
-import {
-  getGdpSupportStatus as getGdpSupportStatusInternal,
-  loadQuarterlyGdpData as loadQuarterlyGdpDataInternal,
-  validateQuarterlyGdpSupport as validateQuarterlyGdpSupportInternal,
-} from "./gdpSupport";
 import { selectCtiPair, type CtiDataStatus, type CtiLoadOptions } from "./ctiValidation";
 
 export type { CpiDataStatus } from "./cpiSource";
@@ -26,14 +21,6 @@ export type CtiRuntimeMetadata = {
   valueType?: string;
 };
 export type CtiDataWithMetadata = CpiData[] & { ctiMetadata?: CtiRuntimeMetadata };
-export type {
-  GdpMetadata,
-  GdpSupportStatus,
-  QuarterlyGdpData,
-  QuarterlyGdpRow,
-  QuarterlyGdpSupportStatus,
-} from "./gdpSupport";
-
 export async function getCpiDataStatus(): Promise<CpiDataStatus> {
   const selected = selectCpiPair();
   if ("baseYear" in selected) return selected;
@@ -45,24 +32,6 @@ export async function getCpiDataStatus(): Promise<CpiDataStatus> {
 }
 
 export { getCpiMajorWeightTotal } from "./cpiLoader";
-
-export async function getGdpSupportStatus(): Promise<import("./gdpSupport").GdpSupportStatus> {
-  return getGdpSupportStatusInternal();
-}
-
-export function validateQuarterlyGdpSupport(): import("./gdpSupport").QuarterlyGdpSupportStatus {
-  return validateQuarterlyGdpSupportInternal();
-}
-
-export async function getQuarterlyGdpSupportStatus(): Promise<
-  import("./gdpSupport").QuarterlyGdpSupportStatus
-> {
-  return validateQuarterlyGdpSupportInternal();
-}
-
-export function loadQuarterlyGdpData(): import("./gdpSupport").QuarterlyGdpData {
-  return loadQuarterlyGdpDataInternal();
-}
 
 export async function getCtiDataStatus(options: CtiLoadOptions = {}): Promise<CtiDataStatus> {
   const selected = selectCtiPair(options);
@@ -187,42 +156,6 @@ export async function loadCtiDataInternal(
     }
   }
 
-  // Apply validated annual GDP values after recovery rows are present.
-  const gdpStatus = await getGdpSupportStatus();
-  if (gdpStatus.valid && gdpStatus.normalizationFactors) {
-    const loadAnnual = (filePath: string) => {
-      const rows = Papa.parse<string[]>(fs.readFileSync(filePath, "utf8"), {
-        header: false,
-        skipEmptyLines: true,
-      }).data;
-      const header = rows[0] ?? [];
-      const yearIndex = header.indexOf("時間軸（暦年）");
-      const valueIndex = header.indexOf("民間最終消費支出");
-      return new Map(
-        rows
-          .slice(1)
-          .map((row) => [row[yearIndex], Number(row[valueIndex]?.replace(/,/g, ""))] as const)
-          .filter(([year, value]) => /^\d{4}$/.test(year ?? "") && Number.isFinite(value)),
-      );
-    };
-    const nominal = loadAnnual(paths.candidateSupportNominal);
-    const real = loadAnnual(paths.candidateSupportReal);
-    const factors = gdpStatus.normalizationFactors;
-    for (const row of mapped) {
-      const parsedYm = parseYearMonth(String(row.年月));
-      const year = String(parsedYm!.year);
-      const nominalRaw = nominal.get(year);
-      const realRaw = real.get(year);
-      if (nominalRaw !== undefined && realRaw !== undefined) {
-        row["民間最終消費支出（名目・原値）"] = nominalRaw;
-        row["民間最終消費支出（実質・原値）"] = realRaw;
-        row["民間最終消費支出（名目・比較指数）"] = nominalRaw * factors.nominal;
-        row["民間最終消費支出（実質・比較指数）"] = realRaw * factors.real;
-        row["民間最終消費支出（名目）"] = nominalRaw * factors.nominal;
-        row["民間最終消費支出（実質）"] = realRaw * factors.real;
-      }
-    }
-  }
   mapped.sort((a, b) => compareYearMonth(String(a.年月), String(b.年月)));
   let ctiMetadata: CtiRuntimeMetadata | undefined;
   if (fs.existsSync(paths.metadata)) {

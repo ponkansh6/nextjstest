@@ -414,7 +414,7 @@ describe("staged runtime quality validator", () => {
       assertionResults: [{ status: "failed", title: `safe failure ${file}` }],
     }));
     largerTestResults[0].assertionResults.push({ status: "failed", title: "safe extra failure" });
-    for (let index = 0; index < 4; index += 1) {
+    for (let index = 0; index < 5; index += 1) {
       largerTestResults[1].assertionResults.push({
         status: "failed",
         title: `safe additional ${index}`,

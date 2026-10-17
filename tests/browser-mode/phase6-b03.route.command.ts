@@ -191,11 +191,8 @@ export const inspectPhase6B03: BrowserCommand<[id: Phase6B03Id], unknown> = asyn
       const dataAttribute = await section
         .getByTestId("chart-data-contract")
         .getAttribute("data-series");
-      const button = section.getByRole("button", {
-        name: "CTIミクロ基本系列(名目・延長)",
-        exact: true,
-      });
-      const buttonVisible = await button.isVisible();
+      const button = section.getByRole("checkbox", { name: "参考・延長系列を表示する" });
+      const buttonVisible = await button.isVisible().catch(() => false);
       const tableSurface = await table(page, "data-table-section-new-graph", true);
       const tableText = await page.getByTestId("data-table-section-new-graph").innerText();
       await page.reload({ waitUntil: "domcontentloaded" });

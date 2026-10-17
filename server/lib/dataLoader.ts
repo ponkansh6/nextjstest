@@ -2,29 +2,11 @@ import { clearTestCache } from "./data-loader/cache";
 
 export { clearTestCache };
 
-// Keep all public CPI/CTI/GDP status and data entry points behind this
-// compatibility facade. The implementation remains in the domain loader.
-export {
-  getCpiDataStatus,
-  getCpiMajorWeightTotal,
-  getCtiDataStatus,
-  getGdpSupportStatus,
-  getQuarterlyGdpSupportStatus,
-  loadQuarterlyGdpData,
-  validateQuarterlyGdpSupport,
-} from "./data-loader/cpi";
+// Keep all public CPI/CTI status and data entry points behind this compatibility facade.
+export { getCpiDataStatus, getCpiMajorWeightTotal, getCtiDataStatus } from "./data-loader/cpi";
 export { getCtiBasicConsumptionStatus } from "./ctiBasicSeries2025LongTerm";
 export type { CtiBasicConsumptionStatus } from "./ctiBasicSeries2025LongTerm";
-export type {
-  CpiDataStatus,
-  CtiDataStatus,
-  CtiLoadOptions,
-  GdpMetadata,
-  GdpSupportStatus,
-  QuarterlyGdpData,
-  QuarterlyGdpRow,
-  QuarterlyGdpSupportStatus,
-} from "./data-loader/cpi";
+export type { CpiDataStatus, CtiDataStatus, CtiLoadOptions } from "./data-loader/cpi";
 export {
   loadCtiAdjustedConnectionEstimate,
   loadCtiAdjustedV2Estimate,

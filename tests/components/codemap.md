@@ -6,7 +6,7 @@ Clientチャートと操作UIの描画・操作契約を検証する。`BottomSh
 
 ## Design
 
-Testing LibraryとVitestでDOM、props、ユーザー操作、tooltip・凡例・期間表示を検証し、`minimal.test.tsx`、`all.test.tsx`、`plan24-rendering-fixture.test.tsx`は軽量/統合的な描画fixtureを提供する。`real-consumption-support-series.test.tsx`と`chart-y-axis-domain.test.tsx`は消費系列固有の境界を固定する。
+Testing LibraryとVitestでDOM、props、ユーザー操作、tooltip・凡例・期間表示を検証し、`minimal.test.tsx`、`all.test.tsx`、`synthetic-support-rendering-fixture.test.tsx`は軽量/統合的な描画fixtureを提供する。`real-consumption-support-series.test.tsx`と`chart-y-axis-domain.test.tsx`は消費系列固有の境界を固定する。
 
 ## Flow
 

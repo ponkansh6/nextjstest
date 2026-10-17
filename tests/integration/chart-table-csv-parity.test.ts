@@ -29,6 +29,7 @@ vi.mock("next/navigation", () => ({
     const params = new URLSearchParams(window.location.search);
     return {
       get: (key: string) => params.get(key),
+      has: (key: string) => params.has(key),
     };
   },
 }));
@@ -451,9 +452,6 @@ describe("Phase 4-4 real chart/table/CSV parity", () => {
         section.expected,
       );
       const hasCanonicalNominal = i === 2;
-      const nonCtiGdpMetadata = [
-        ...table.querySelectorAll('td[data-series-key^="GDP"] [data-measurement-metadata]'),
-      ];
       if (hasCanonicalNominal) {
         for (const key of canonicalNominalKeys) {
           const metadataRows = [...table.querySelectorAll(`[data-measurement-metadata="${key}"]`)];
@@ -469,8 +467,6 @@ describe("Phase 4-4 real chart/table/CSV parity", () => {
         expect(
           table.querySelector('[data-measurement-metadata="民間最終消費支出（名目）"]'),
         ).toBeNull();
-      } else {
-        expect(nonCtiGdpMetadata).toHaveLength(0);
       }
       if (i === 6) {
         const consumptionMetadata = table.querySelector(
@@ -654,7 +650,6 @@ describe("Phase 4-4 real chart/table/CSV parity", () => {
     expect(CONTRACT.sections[2].keys).toEqual(canonicalNominalKeys);
     expect(CONTRACT.sections[2].keys).not.toContain("民間最終消費支出（名目）");
     expect(CONTRACT.sections[2].keys).toHaveLength(10);
-    expect(CONTRACT.sections[2].keys.some((key) => key.startsWith("GDP"))).toBe(false);
     for (const mode of ["nominal", "real"] as const) {
       const table = container.querySelector(
         `#data-table-section-consumption-${mode}`,

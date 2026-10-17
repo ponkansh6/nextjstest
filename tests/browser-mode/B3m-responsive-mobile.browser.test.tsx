@@ -6,17 +6,15 @@ import { SpendingBarChart } from "../../src/app/components/SpendingBarChart";
 import pageLayout from "../../src/app/page.module.css";
 import { useChartTooltipController } from "../../src/app/components/charts/useChartTooltipProps";
 import { CPI_CHART_SECTIONS } from "../../src/app/components/cpiChartConfig";
-import {
-  getColorForNominalKey,
-  SUPPORT_SERIES_KEY_NOMINAL,
-  SUPPORT_SERIES_KEY_REAL,
-} from "../../src/lib/chartConstants";
+import { getColorForNominalKey } from "../../src/lib/chartConstants";
 import {
   QUARTERLY_PLAN40_V2_NOMINAL_KEYS,
   QUARTERLY_PUBLIC_REAL_KEYS,
 } from "../../src/lib/quarterlyPublicProjection";
 import { renderBrowserComponent } from "./renderBrowserComponent";
 
+const TEST_SUPPORT_NOMINAL_KEY = "民間最終消費支出（名目）";
+const TEST_SUPPORT_REAL_KEY = "民間最終消費支出（実質）";
 vi.mock("next/navigation", () => ({
   default: {},
   useSearchParams: () => new URLSearchParams("from=2020&to=2022"),
@@ -45,8 +43,8 @@ function createSpendingData(): ComponentProps<typeof SpendingBarChart>["data"] {
     for (const [keyIndex, key] of keys.entries()) {
       row[key] = 10 + index + keyIndex;
     }
-    row[SUPPORT_SERIES_KEY_NOMINAL] = null;
-    row[SUPPORT_SERIES_KEY_REAL] = null;
+    row[TEST_SUPPORT_NOMINAL_KEY] = null;
+    row[TEST_SUPPORT_REAL_KEY] = null;
     return row as ComponentProps<typeof SpendingBarChart>["data"][number];
   }) as ComponentProps<typeof SpendingBarChart>["data"];
 }

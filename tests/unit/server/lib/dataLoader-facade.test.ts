@@ -46,17 +46,13 @@ const expectedRuntimeExports = [
   "getCpiMajorWeightTotal",
   "getCtiDataStatus",
   "getCtiBasicConsumptionStatus",
-  "getGdpSupportStatus",
-  "getQuarterlyGdpSupportStatus",
   "loadCtiAdjustedConnectionEstimate",
   "loadCtiAdjustedData",
   "loadCtiAdjustedV2Estimate",
   "loadCpiData",
   "loadCtiData",
   "loadPopulationData",
-  "loadQuarterlyGdpData",
   "loadTotalEarningData",
-  "validateQuarterlyGdpSupport",
 ].sort();
 
 describe("server/lib/dataLoader public facade", () => {
@@ -69,15 +65,11 @@ describe("server/lib/dataLoader public facade", () => {
     expect(Object.keys(facade).some((name) => /Internal$/.test(name))).toBe(false);
   });
 
-  it("keeps direct CPI/CTI/GDP exports identical to the domain loader entry points", () => {
+  it("keeps direct CPI/CTI exports identical to the domain loader entry points", () => {
     expect(facade.getCpiDataStatus).toBe(cpi.getCpiDataStatus);
     expect(facade.getCpiMajorWeightTotal).toBe(cpi.getCpiMajorWeightTotal);
     expect(facade.getCtiDataStatus).toBe(cpi.getCtiDataStatus);
     expect(facade.getCtiBasicConsumptionStatus).toBeDefined();
-    expect(facade.getGdpSupportStatus).toBe(cpi.getGdpSupportStatus);
-    expect(facade.getQuarterlyGdpSupportStatus).toBe(cpi.getQuarterlyGdpSupportStatus);
-    expect(facade.loadQuarterlyGdpData).toBe(cpi.loadQuarterlyGdpData);
-    expect(facade.validateQuarterlyGdpSupport).toBe(cpi.validateQuarterlyGdpSupport);
   });
 
   it("delegates successful CPI and CTI loads through the dynamic wrappers", async () => {

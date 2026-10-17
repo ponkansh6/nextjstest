@@ -1,3 +1,5 @@
+> **Historical / superseded plan (2026-10-18):** Retained as an audit record only. The annual and quarterly GDP values described here have no downstream consumer and their loaders, joins, keys, fixtures, and refresh dependencies have been retired. This document does not describe current runtime behavior. Plan40 quarterly CTI and Plan37 monthly CTI remain current.
+
 # GDP民間最終消費支出・四半期系列化計画
 
 ## 調査状況（2026-09-10）

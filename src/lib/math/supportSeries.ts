@@ -8,14 +8,6 @@ export interface SupportSeriesRow {
   年: number;
 }
 
-/** A GDP comparison base is valid only when its annual raw observation exists. */
-export function calculateGdp2025NormalizationFactor(values: number[]): number | undefined {
-  if (values.length !== 1 || values.some((value) => !Number.isFinite(value) || value === 0)) {
-    return undefined;
-  }
-  return values[0] > 0 ? 100 / values[0] : undefined;
-}
-
 /**
  * Normalize finite support-series values from 2005 through 2016 without
  * changing either the input array or its rows. Missing and non-finite values,

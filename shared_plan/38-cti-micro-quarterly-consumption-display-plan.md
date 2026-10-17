@@ -1,3 +1,5 @@
+> **Historical / superseded plan (2026-10-18):** Retained as an audit record only. The dedicated Plan38 quarterly CTI builder, key, projection, and controls described here have been retired. This document does not describe the current quarterly runtime contract: Plan40 publishes ten nominal expense categories with Plan39 measurements, while Plan37 monthly CTI remains separate.
+
 # Plan38: CTIミクロを賃金比較から外し、名目消費支出の四半期表示へ移設する計画
 
 作成日: 2026-09-18

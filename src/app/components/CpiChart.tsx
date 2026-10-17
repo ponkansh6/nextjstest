@@ -13,7 +13,6 @@ import { useCpiChartDisplayData } from "../../hooks/useCpiChartDisplayData";
 import { useCagrState } from "../../hooks/useCagrState";
 import { useToggleSet } from "../../hooks/useToggleSet";
 import { useUrlState } from "../../hooks/useUrlState";
-import { useAdvancedPreference } from "../../hooks/useAdvancedPreference";
 import { CpiChartSections } from "./CpiChartSections";
 import { BottomSheet } from "./BottomSheet";
 import {
@@ -25,11 +24,8 @@ import {
 import {
   keyPairs,
   getColorForNominalKey,
-  CONSUMPTION_NOMINAL_KEYS,
   CONSUMPTION_REAL_KEYS,
   stackedKeys,
-  SUPPORT_SERIES_KEY_NOMINAL,
-  SUPPORT_SERIES_KEY_REAL,
   CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY,
   targetKeys,
   MIN_DISPLAY_YEAR,
@@ -72,7 +68,7 @@ export default function CpiChart({
   const cpiMajorInfo = getChartInfoContent("cpi-major", cpiInfoState);
   const stackedAreaInfo = getChartInfoContent("stacked-area", cpiInfoState);
   const consumptionInfo = getChartInfoContent("consumption-expenditure", undefined, ctiInfoState);
-  const newGraphInfo = getChartInfoContent("new-graph", undefined, ctiInfoState);
+  const newGraphInfo = getChartInfoContent("new-graph");
 
   // 全ての年を抽出
   const allYears = useMemo(() => {
@@ -100,17 +96,11 @@ export default function CpiChart({
     from,
     to,
     hiddenKeys: urlHiddenKeys,
-    adv,
     updateUrl,
   } = useUrlState(initialStartYear, initialEndYear);
 
   const [startYear, setStartYear] = useState(from);
   const [endYear, setEndYear] = useState(to);
-  // 初期表示は URL の ?adv=1 のみで判定する（R11c）。
-  // localStorage は過去のセッションの値を保持しているだけなので、
-  // ここで読み込むと ?adv=1 の付かない通常アクセス時にも
-  // 前回 ON にした状態が復元され、adv=1 が勝手に URL へ書き戻されてしまう。
-  const [showAdvanced, setShowAdvanced] = useState<boolean>(adv);
 
   // 表示・非表示を管理するステート。積み上げ系列だけがURLの hiddenを
   // 初期値として受け取り、変更後はURLへ返す。その他の凡例stateはReactのみ。
@@ -119,12 +109,10 @@ export default function CpiChart({
     useToggleSet<string>(urlHiddenKeys);
   const [maHiddenKeys, handleMaLegendClick] = useToggleSet<string>();
 
-  useAdvancedPreference(showAdvanced, startYear, endYear, stackedHiddenKeys);
-
   // URL sync when state changes
   useEffect(() => {
-    updateUrl(startYear, endYear, stackedHiddenKeys, showAdvanced);
-  }, [startYear, endYear, stackedHiddenKeys, showAdvanced, updateUrl]);
+    updateUrl(startYear, endYear, stackedHiddenKeys);
+  }, [startYear, endYear, stackedHiddenKeys, updateUrl]);
 
   // 四半期の表示/非表示を管理するステート（消費支出グラフの Q1〜Q4 トグル用）
   const { hiddenQuarters, toggleQuarter } = useCpiChartData();
@@ -211,17 +199,10 @@ export default function CpiChart({
       return;
     }
     // ペアを探す
-    const supportPair = {
-      nominal: SUPPORT_SERIES_KEY_NOMINAL,
-      real: SUPPORT_SERIES_KEY_REAL,
-      label: "民間最終消費支出",
-    };
     // The derived-total key returned above; all remaining CTI-prefixed keys
     // have a category captured by this expression.
     const adjustedCategory = dataKey.match(/^CTIミクロ調整系列（(.+)）$/)?.[1];
-    // Adjusted CTI keys take the explicit pair below, so this registry only
-    // needs the legacy pairs and the public support pair.
-    const allPairs = [...keyPairs, supportPair];
+    const allPairs = [...keyPairs];
 
     const pair = adjustedCategory
       ? {
@@ -284,30 +265,6 @@ export default function CpiChart({
     [consumptionSeriesState],
   );
   const ctiMetadata: readonly SeriesMetadata[] = (() => {
-    const state = ctiInfoState?.series?.raw;
-    const support: SeriesMetadata[] = state
-      ? [
-          {
-            key: SUPPORT_SERIES_KEY_NOMINAL,
-            label: getLegendLabel(SUPPORT_SERIES_KEY_NOMINAL),
-            unit: state.unit,
-            source: state.source,
-            valueType: state.valueType,
-            value: null,
-            status: state.status,
-            reason: state.reason ?? null,
-            frequency: "quarterly",
-            aggregation: "simple_mean_of_three_calendar_months",
-            color: chartColors.barFill,
-            displayName: getLegendLabel(SUPPORT_SERIES_KEY_NOMINAL),
-            tooltipLabel: getLegendLabel(SUPPORT_SERIES_KEY_NOMINAL),
-            legendLabel: getLegendLabel(SUPPORT_SERIES_KEY_NOMINAL),
-            kind: "line",
-            type: "line",
-            order: CONSUMPTION_NOMINAL_KEYS.length,
-          },
-        ]
-      : [];
     const expense = nominalKeysWithSupport.flatMap((key, order) => {
       const row = nominalPublicData.find(
         (candidate) =>
@@ -329,12 +286,10 @@ export default function CpiChart({
         } satisfies SeriesMetadata,
       ];
     });
-    return [...expense, ...support];
+    return expense;
   })();
 
-  // This request-scoped registry only comes from createComparisonSeriesRegistry,
-  // whose entries never carry the advanced flag. Advanced filtering belongs to
-  // CpiChartSections, which also accepts caller-provided registries.
+  // The comparison registry is fixed to the three public comparison series.
   const visibleLineConfigs = comparisonSeriesRegistry;
 
   const dataTables: DataTableSpec[] = [
@@ -437,8 +392,6 @@ export default function CpiChart({
         realKeysWithSupport={realKeysWithSupport}
         realColors={realColors}
         hiddenQuarters={hiddenQuarters}
-        showAdvanced={showAdvanced}
-        setShowAdvanced={setShowAdvanced}
         handleLegendClick={handleLegendClick}
         handleStackedLegendClick={handleStackedLegendClick}
         handleLegendToggle={handleLegendToggle}

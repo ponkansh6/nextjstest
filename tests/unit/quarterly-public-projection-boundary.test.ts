@@ -8,7 +8,6 @@ import {
   CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY,
   CTI_ADJUSTED_V2_PUBLIC_KEYS,
   CTI_ADJUSTED_V2_PUBLIC_REGISTRY,
-  SUPPORT_SERIES_KEY_NOMINAL,
 } from "../../src/lib/chartConstants";
 import {
   projectQuarterlyPublicView,
@@ -17,6 +16,7 @@ import {
   QUARTERLY_PUBLIC_REAL_KEYS,
 } from "../../src/lib/quarterlyPublicProjection";
 
+const RETIRED_NOMINAL_SUPPORT_KEY = "民間最終消費支出（名目）";
 const projectionPath = resolve("src/lib/quarterlyPublicProjection.ts");
 const aggregationPath = resolve("server/lib/view-models/quarterlyAggregation.ts");
 
@@ -88,7 +88,7 @@ describe("quarterly client/server type boundary", () => {
       年月: "2017年10月",
       kind: "legacy-cti" as const,
       ...canonicalFields,
-      [SUPPORT_SERIES_KEY_NOMINAL]: 999,
+      [RETIRED_NOMINAL_SUPPORT_KEY]: 999,
     };
     const officialMeasurement: SeriesMeasurement = {
       key: foodKey,
@@ -124,7 +124,7 @@ describe("quarterly client/server type boundary", () => {
       年月: "2017年10月",
       kind: "plan40-v2-cost-stack" as const,
       ...canonicalFields,
-      [SUPPORT_SERIES_KEY_NOMINAL]: 999,
+      [RETIRED_NOMINAL_SUPPORT_KEY]: 999,
       measurements: {
         [foodKey]: officialMeasurement,
         [housingKey]: historicalMeasurement,
@@ -140,8 +140,8 @@ describe("quarterly client/server type boundary", () => {
     expect(publicDataKeys([plan40Nominal])).toEqual(expenseKeys);
     expect(legacyNominal[foodKey]).toBe(101);
     expect(plan40Nominal[foodKey]).toBe(101);
-    expect(legacyNominal).not.toHaveProperty(SUPPORT_SERIES_KEY_NOMINAL);
-    expect(plan40Nominal).not.toHaveProperty(SUPPORT_SERIES_KEY_NOMINAL);
+    expect(legacyNominal).not.toHaveProperty(RETIRED_NOMINAL_SUPPORT_KEY);
+    expect(plan40Nominal).not.toHaveProperty(RETIRED_NOMINAL_SUPPORT_KEY);
     expect(plan40Nominal.measurements?.[foodKey]).toBe(officialMeasurement);
     expect(plan40Nominal.measurements?.[housingKey]).toBe(historicalMeasurement);
     expect(plan40Nominal.measurements?.[foodKey]).toMatchObject({
@@ -157,7 +157,7 @@ describe("quarterly client/server type boundary", () => {
     });
   });
 
-  it("does not map the legacy support alias to a canonical key", () => {
+  it("does not map the retired support alias to a canonical key", () => {
     const foodKey = CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY.食料;
     const row = projectQuarterlyPublicView([
       {
@@ -165,15 +165,15 @@ describe("quarterly client/server type boundary", () => {
         quarter: 4,
         label: "2017Q4",
         年月: "2017年10月",
-        [SUPPORT_SERIES_KEY_NOMINAL]: 999,
+        [RETIRED_NOMINAL_SUPPORT_KEY]: 999,
       },
     ])[0]!;
     expect(row[foodKey]).toBeNull();
-    expect(row).not.toHaveProperty(SUPPORT_SERIES_KEY_NOMINAL);
+    expect(row).not.toHaveProperty(RETIRED_NOMINAL_SUPPORT_KEY);
     expect(QUARTERLY_PUBLIC_NOMINAL_KEYS).toContain(foodKey);
   });
 
-  it("keeps a poisoned legacy alias separate from a bare canonical key", () => {
+  it("keeps a poisoned retired support alias separate from a bare canonical key", () => {
     const foodKey = CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY.食料;
     const row = projectQuarterlyPublicView([
       {
@@ -182,11 +182,11 @@ describe("quarterly client/server type boundary", () => {
         label: "2017Q4",
         年月: "2017年10月",
         [foodKey]: 101,
-        [SUPPORT_SERIES_KEY_NOMINAL]: 999,
+        [RETIRED_NOMINAL_SUPPORT_KEY]: 999,
       },
     ])[0]!;
     expect(row[foodKey]).toBe(101);
-    expect(row).not.toHaveProperty(SUPPORT_SERIES_KEY_NOMINAL);
+    expect(row).not.toHaveProperty(RETIRED_NOMINAL_SUPPORT_KEY);
   });
 
   it("excludes rows whose quarter is outside 1–4 or whose label disagrees with its period", () => {

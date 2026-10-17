@@ -3,12 +3,14 @@ import { describe, expect, it } from "vitest";
 import { DataTablesSection } from "../../src/app/components/DataTablesSection";
 import { ChartDataContract } from "../../src/app/components/ChartDataContract";
 import { CustomTooltip } from "../../src/app/components/CustomTooltip";
-import { SUPPORT_SERIES_KEY_NOMINAL } from "../../src/lib/chartConstants";
 import { buildCsv } from "../../src/lib/csvExport";
+import { QUARTERLY_PUBLIC_NOMINAL_KEYS } from "../../src/lib/quarterlyPublicProjection";
+
+const SERIES_KEY = "テスト用四半期系列";
 
 const measurement = {
-  key: SUPPORT_SERIES_KEY_NOMINAL,
-  label: "CTIミクロ（名目・四半期平均）",
+  key: SERIES_KEY,
+  label: "テスト用四半期系列",
   color: "#0f766e",
   unit: "指数",
   source: "e-Stat 公式CTI長期artifact 000040499070",
@@ -25,46 +27,59 @@ const expectAttribute = (element: Element | null, name: string, value: string) =
   expect(element.getAttribute(name)).toBe(value);
 };
 
-describe("Plan38 public measurement metadata", () => {
-  it("renders Plan40 v2 boundary fallback as 対象期間外", () => {
-    const key = "CTIミクロ調整系列（食料）";
+describe("quarterly public measurement metadata", () => {
+  it("keeps an official Plan40 measurement in the quarterly table", () => {
+    const key = QUARTERLY_PUBLIC_NOMINAL_KEYS[0];
+    const officialMeasurement = {
+      ...measurement,
+      key,
+      label: "住居",
+      source: "Plan40 official quarterly source",
+      value: 125,
+      status: "available" as const,
+      reason: null,
+      valueType: "comparison" as const,
+      seriesType: "official_adjusted" as const,
+      official: true,
+    };
     render(
       <DataTablesSection
         tables={[
           {
-            chartSectionId: "plan40-boundary",
+            chartSectionId: "plan40-official",
             title: "Plan40",
-            data: [{ 年月: "2018Q1", [key]: null }],
+            data: [{ 年月: "2018Q1", [key]: 125, measurements: { [key]: officialMeasurement } }],
             keys: [key],
-            metadata: [
-              {
-                key,
-                label: "食料",
-                color: "#000",
-                unit: "指数",
-                source: "Plan40",
-                valueType: "comparison",
-                status: "available",
-                reason: null,
-                frequency: "quarterly",
-                aggregation: "derived",
-                estimateVersion: "plan39-v2",
-              },
-            ],
+            metadata: [officialMeasurement],
           },
         ]}
       />,
     );
-    const cell = screen
-      .getByTestId("data-table-plan40-boundary")
-      .querySelector("td[data-series-key]");
-    expect(cell?.textContent).toContain("対象期間外");
-    expect(cell?.textContent).toContain("状態: unavailable");
-    expect(cell?.textContent).toContain("理由: outside_period");
+    const table = screen.getByTestId("data-table-plan40-official");
+    const cell = table.querySelector("td[data-series-key]");
+    expect(cell?.textContent).toContain("125");
+    expect(cell?.textContent).toContain("Plan40 official quarterly source");
+    expect(
+      cell
+        ?.querySelector("[data-measurement-series-type]")
+        ?.getAttribute("data-measurement-series-type"),
+    ).toBe("official_adjusted");
   });
 
-  it("uses the same Plan40 v2 boundary fallback in the tooltip", () => {
-    const key = "CTIミクロ調整系列（食料）";
+  it("keeps an official Plan40 measurement in the quarterly tooltip", () => {
+    const key = QUARTERLY_PUBLIC_NOMINAL_KEYS[0];
+    const officialMeasurement = {
+      ...measurement,
+      key,
+      label: "住居",
+      source: "Plan40 official quarterly source",
+      value: 125,
+      status: "available" as const,
+      reason: null,
+      valueType: "comparison" as const,
+      seriesType: "official_adjusted" as const,
+      official: true,
+    };
     render(
       <CustomTooltip
         active
@@ -73,48 +88,26 @@ describe("Plan38 public measurement metadata", () => {
         label="2018Q1"
         payload={[
           {
-            name: key,
+            name: "住居",
             dataKey: key,
-            value: null,
+            value: 125,
             payload: {
-              [key]: null,
-              measurements: {
-                [key]: {
-                  key,
-                  label: "食料",
-                  value: null,
-                  unit: "指数",
-                  source: "Plan39",
-                  valueType: "comparison",
-                  status: "available",
-                  reason: null,
-                  frequency: "quarterly",
-                  aggregation: "derived",
-                  seriesType: "official_adjusted",
-                  estimateVersion: "plan39-v2",
-                },
-              },
+              年月: "2018Q1",
+              [key]: 125,
+              measurements: { [key]: officialMeasurement },
             },
           },
         ]}
-        seriesMeta={[
-          {
-            key,
-            label: "食料",
-            color: "#000",
-            estimateVersion: "plan39-v2",
-          },
-        ]}
+        seriesMeta={[{ key, label: "住居", color: "#000", order: 0 }]}
         showAllPayload
         tooltipBg="#fff"
         tooltipText="#000"
       />,
     );
-    const row = screen.getByText("食料").closest("[data-tooltip-row]");
-    expect(row?.getAttribute("data-tooltip-status")).toBe("unavailable");
-    expect(row?.getAttribute("data-tooltip-reason")).toBe("outside_period");
-    expect(row?.getAttribute("data-tooltip-source")).toBe("");
-    expect(row?.getAttribute("data-tooltip-note")).toBe("対象期間外");
+    const row = screen.getByText("住居").closest("[data-tooltip-row]");
+    expect(row?.getAttribute("data-tooltip-status")).toBe("available");
+    expect(row?.getAttribute("data-tooltip-source")).toBe("Plan40 official quarterly source");
+    expect(row?.getAttribute("data-tooltip-series-type")).toBe("official_adjusted");
   });
 
   it("renders the row measurement metadata and invalid reason in the table", () => {
@@ -127,13 +120,13 @@ describe("Plan38 public measurement metadata", () => {
             data: [
               {
                 年月: "2005Q1",
-                [SUPPORT_SERIES_KEY_NOMINAL]: null,
+                [SERIES_KEY]: null,
                 measurements: {
-                  [SUPPORT_SERIES_KEY_NOMINAL]: measurement,
+                  [SERIES_KEY]: measurement,
                 },
               },
             ],
-            keys: [SUPPORT_SERIES_KEY_NOMINAL],
+            keys: [SERIES_KEY],
             metadata: [measurement],
           },
         ]}
@@ -142,7 +135,7 @@ describe("Plan38 public measurement metadata", () => {
 
     const cell = screen
       .getByTestId("data-table-section-consumption-nominal")
-      .querySelector(`[data-measurement-metadata="${SUPPORT_SERIES_KEY_NOMINAL}"]`);
+      .querySelector(`[data-measurement-metadata="${SERIES_KEY}"]`);
     if (!cell) throw new Error("measurement metadata cell was not rendered");
     expect(cell.textContent).toContain("指数");
     expectAttribute(
@@ -198,17 +191,17 @@ describe("Plan38 public measurement metadata", () => {
               data: [
                 {
                   年月: "2017Q4",
-                  [SUPPORT_SERIES_KEY_NOMINAL]: 100,
-                  measurements: { [SUPPORT_SERIES_KEY_NOMINAL]: measurement },
+                  [SERIES_KEY]: 100,
+                  measurements: { [SERIES_KEY]: measurement },
                 },
-                { 年月: "2018Q1", [SUPPORT_SERIES_KEY_NOMINAL]: null },
+                { 年月: "2018Q1", [SERIES_KEY]: null },
                 {
                   年月: "invalidQ",
-                  [SUPPORT_SERIES_KEY_NOMINAL]: null,
-                  measurements: { [SUPPORT_SERIES_KEY_NOMINAL]: laterMeasurement },
+                  [SERIES_KEY]: null,
+                  measurements: { [SERIES_KEY]: laterMeasurement },
                 },
               ],
-              keys: [SUPPORT_SERIES_KEY_NOMINAL],
+              keys: [SERIES_KEY],
               metadata: [measurement],
             },
           ]}
@@ -223,7 +216,7 @@ describe("Plan38 public measurement metadata", () => {
               name: measurement.label,
               dataKey: measurement.key,
               value: null,
-              payload: { 年月: "2018Q1", [SUPPORT_SERIES_KEY_NOMINAL]: null },
+              payload: { 年月: "2018Q1", [SERIES_KEY]: null },
             },
           ]}
           seriesMeta={[measurement]}
@@ -235,9 +228,7 @@ describe("Plan38 public measurement metadata", () => {
     );
 
     const table = screen.getByTestId("data-table-boundary");
-    expect(
-      table.querySelectorAll(`[data-measurement-metadata="${SUPPORT_SERIES_KEY_NOMINAL}"]`),
-    ).toHaveLength(3);
+    expect(table.querySelectorAll(`[data-measurement-metadata="${SERIES_KEY}"]`)).toHaveLength(3);
     const metadataCells = [...table.querySelectorAll("[data-measurement-metadata]")];
     expect(
       metadataCells.filter((cell) => cell.textContent?.includes(measurement.source)),
@@ -246,7 +237,9 @@ describe("Plan38 public measurement metadata", () => {
       metadataCells.filter((cell) => cell.textContent?.includes(laterMeasurement.source)),
     ).toHaveLength(1);
     expect(table.textContent).toContain("理由: unavailable");
-    const tooltipRow = screen.getByText(measurement.label).closest("[data-tooltip-row]");
+    const tooltipRow = document.querySelector(
+      `[data-tooltip-row="true"][data-tooltip-label="${measurement.label}"]`,
+    );
     if (!tooltipRow) throw new Error("tooltip row was not rendered");
     expect(tooltipRow.getAttribute("data-tooltip-status")).toBe("invalid");
     expect(tooltipRow.getAttribute("data-tooltip-reason")).toBe("unavailable");
@@ -294,23 +287,23 @@ describe("Plan38 public measurement metadata", () => {
         data={[
           {
             年月: "2017Q4",
-            [SUPPORT_SERIES_KEY_NOMINAL]: 100,
-            measurements: { [SUPPORT_SERIES_KEY_NOMINAL]: measurement },
+            [SERIES_KEY]: 100,
+            measurements: { [SERIES_KEY]: measurement },
           },
           {
             年月: "2018Q1",
-            [SUPPORT_SERIES_KEY_NOMINAL]: null,
+            [SERIES_KEY]: null,
             measurements: {
-              [SUPPORT_SERIES_KEY_NOMINAL]: {
+              [SERIES_KEY]: {
                 ...measurement,
                 status: "invalid",
                 reason: "insufficient_months",
               },
             },
           },
-          { 年月: "2018Q2", [SUPPORT_SERIES_KEY_NOMINAL]: null },
+          { 年月: "2018Q2", [SERIES_KEY]: null },
         ]}
-        keys={[SUPPORT_SERIES_KEY_NOMINAL]}
+        keys={[SERIES_KEY]}
         descriptors={[measurement]}
       />,
     );
@@ -339,19 +332,19 @@ describe("Plan38 public measurement metadata", () => {
       [
         {
           年月: "2017Q4",
-          [SUPPORT_SERIES_KEY_NOMINAL]: 100,
-          measurements: { [SUPPORT_SERIES_KEY_NOMINAL]: measurement },
+          [SERIES_KEY]: 100,
+          measurements: { [SERIES_KEY]: measurement },
         },
         {
           年月: "2018Q1",
-          [SUPPORT_SERIES_KEY_NOMINAL]: null,
+          [SERIES_KEY]: null,
           measurements: {
-            [SUPPORT_SERIES_KEY_NOMINAL]: { ...measurement, reason: "insufficient_months" },
+            [SERIES_KEY]: { ...measurement, reason: "insufficient_months" },
           },
         },
-        { 年月: "2018Q2", [SUPPORT_SERIES_KEY_NOMINAL]: null },
+        { 年月: "2018Q2", [SERIES_KEY]: null },
       ],
-      [SUPPORT_SERIES_KEY_NOMINAL],
+      [SERIES_KEY],
       [measurement.label],
       { metadata: [measurement] },
     );

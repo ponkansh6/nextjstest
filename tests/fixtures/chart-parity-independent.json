@@ -19,6 +19,5 @@
     "residual": {"keys":["残差"],"headers":["残差"],"rows":[{"年月":"2017年12月","残差":45},{"年月":"2018年1月","残差":null}],"expected":[["2017年12月","45.00"],["2018年1月",""]]},
     "comparison": {"keys":["CPI総合(12MA)","総合(12MA)"],"headers":["物価指数(総合)","給与(総合)"],"rows":[{"年月":"2017年12月","CPI総合(12MA)":41,"総合(12MA)":42},{"年月":"2018年1月","CPI総合(12MA)":46,"総合(12MA)":47}],"expected":[["2017年12月","41.00","42.00"],["2018年1月","46.00","47.00"]]}
   },
-  "cases": {"hidden":{"series":"住居","unchanged":true},"nominal-real":{"modes":["nominal","real"],"boundary":["2017年10-12月","2018年1-3月"]},"missing":{"value":null},"csv-special":{"value":"a,\"b\r\nc"},"gdp-boundary":{"before":"2017Q4","after":"2018Q1"}},
-  "gdpBoundaryExpected": {"nominal":{"2017Q4":"89.44","2018Q1":"-"},"real":{"2017Q4":"103.43","2018Q1":"-"}}
+  "cases": {"hidden":{"series":"住居","unchanged":true},"nominal-real":{"modes":["nominal","real"],"boundary":["2017年10-12月","2018年1-3月"]},"missing":{"value":null},"csv-special":{"value":"a,\"b\r\nc"}}
 }

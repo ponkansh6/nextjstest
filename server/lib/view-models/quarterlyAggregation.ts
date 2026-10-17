@@ -3,7 +3,6 @@ import fs from "node:fs";
 import type { CpiData } from "@/types";
 import Papa from "papaparse";
 import {
-  SUPPORT_SERIES_KEY_NOMINAL,
   CTI_NOMINAL_DERIVED_TOTAL_KEY,
   CONSUMPTION_NOMINAL_KEYS,
   CONSUMPTION_REAL_KEYS,
@@ -11,15 +10,8 @@ import {
 import { normalizeYearMonth } from "@/lib/yearMonth";
 import { calculateQuarter } from "@/lib/math/quarter";
 import type { QuarterlyRow } from "@/types/chart";
-import type { QuarterlyGdpData } from "@server/lib/data-loader/cpi";
-import { joinQuarterlyGdpRows } from "./quarterlyGdpTransform";
 import { isCompleteCtiQuarter } from "@/lib/math/quarterlyCompleteness";
-import {
-  aggregateCtiBasicNominalQuarterly,
-  loadCtiBasicSeries2025,
-  type CtiBasicRecord,
-  type CtiQuarterlyAggregation,
-} from "../ctiBasicSeries2025LongTerm";
+import { loadCtiBasicSeries2025, type CtiBasicRecord } from "../ctiBasicSeries2025LongTerm";
 import {
   CTI_ADJUSTED_V2_PUBLIC_CATEGORIES,
   CTI_ADJUSTED_V2_PUBLIC_REGISTRY,
@@ -30,36 +22,6 @@ import type { SeriesMeasurement } from "@/types/chart";
 import { buildCtiFilePaths } from "../dataIo";
 
 export type { QuarterlyRow } from "@/types/chart";
-
-const PLAN38_START_YEAR = 2005;
-const PLAN38_END_YEAR = 2017;
-
-/** Build the fixed 52-row Plan38 nominal support projection without GDP or zero-fill. */
-export function buildPlan38CtiNominalRows(quarterly: CtiQuarterlyAggregation): QuarterlyRow[] {
-  const rows: QuarterlyRow[] = [];
-  for (let year = PLAN38_START_YEAR; year <= PLAN38_END_YEAR; year += 1) {
-    for (let quarter = 1; quarter <= 4; quarter += 1) {
-      const label = `${year}Q${quarter}`;
-      const measurement = quarterly.measurements.get(label)!;
-      rows.push({
-        label,
-        quarter,
-        年: year,
-        年月: `${year}年${(quarter - 1) * 3 + 1}月`,
-        kind: "legacy-cti",
-        [SUPPORT_SERIES_KEY_NOMINAL]: measurement.value,
-        measurements: { [SUPPORT_SERIES_KEY_NOMINAL]: measurement },
-      } as QuarterlyRow);
-    }
-  }
-  return rows;
-}
-
-export function buildPlan38CtiNominalRowsFromRecords(
-  records: readonly CtiBasicRecord[],
-): QuarterlyRow[] {
-  return buildPlan38CtiNominalRows(aggregateCtiBasicNominalQuarterly(records));
-}
 
 const PLAN39_START_YEAR = 2005;
 const PLAN39_END_YEAR = 2016;
@@ -746,15 +708,6 @@ export function coalesceQuarterlyRowsByPeriod(rows: readonly QuarterlyRow[]): Qu
   return merged;
 }
 
-/** Existing adapter name retained for callers of the aggregation module. */
-export function mergeQuarterlyGdpRows(
-  nominalRows: QuarterlyRow[],
-  realRows: QuarterlyRow[],
-  gdp: QuarterlyGdpData,
-): { nominal: QuarterlyRow[]; real: QuarterlyRow[] } {
-  return joinQuarterlyGdpRows(nominalRows, realRows, gdp);
-}
-
 /**
  * Compute quarterly aggregates from monthly CTI data.
  * This is the server-side extraction of computeChartData logic (formerly client-side).
@@ -798,8 +751,6 @@ export function computeQuarterlyAggregates(
   }
 
   // Fill missing monthly category values for the legacy expense stack only.
-  // The pre-2018 CTI nominal support line is built from the dedicated artifact
-  // below and must never pass through this compatibility path.
   const filledData: CpiData[] = allMonths.map((yearMonth) => {
     if (dataMap.has(yearMonth)) {
       return dataMap.get(yearMonth)!;
@@ -859,9 +810,7 @@ export function computeQuarterlyAggregates(
   };
 
   const legacyNominalRows = getQuarterlyData(nominalKeys);
-  const nominalRows = legacyNominalRows.filter(
-    (row) => row.年 < PLAN38_START_YEAR || row.年 > PLAN38_END_YEAR,
-  );
+  const nominalRows = legacyNominalRows;
   const realRows = getQuarterlyData(realKeys);
 
   nominalRows.push(

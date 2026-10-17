@@ -6,7 +6,7 @@
 
 ## Design
 
-`data.ts`は`CpiData`、人口、CSV parsed row、GDP raw/normalized/null許容値、`chart.ts`は`CpiView`、`QuarterlyView`、`EarningsView`、tooltip propsを定義し、`index.ts`は主要型を再exportする。データの欠損は型上明示し、loaderの内部検証結果とClient公開viewを同一型として扱わない。
+`data.ts`は`CpiData`、人口、CSV parsed rowなど現行loader用の型、`chart.ts`は`CpiView`、Plan40の`QuarterlyView`、`EarningsView`、tooltip propsを定義し、`index.ts`は主要型を再exportする。GDP raw/normalized/null許容モデルとPlan38専用四半期型は退役済み。データの欠損は型上明示し、loaderの内部検証結果とClient公開viewを同一型として扱わない。
 
 ## Flow
 

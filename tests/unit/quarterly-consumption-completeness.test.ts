@@ -1,12 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { CpiData } from "../../src/types";
 import {
-  CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY,
   CONSUMPTION_NOMINAL_KEYS,
   CONSUMPTION_REAL_KEYS,
-  SUPPORT_SERIES_KEY_NOMINAL,
-  SUPPORT_SERIES_KEY_REAL,
+  CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY,
 } from "../../src/lib/chartConstants";
+import { QUARTERLY_PUBLIC_NOMINAL_KEYS } from "../../src/lib/quarterlyPublicProjection";
 import { computeQuarterlyAggregates } from "../../server/lib/view-models/quarterlyAggregation";
 import { buildQuarterlyPublicViews } from "../../server/lib/view-models/quarterlyProjection";
 
@@ -28,7 +27,7 @@ describe("2018年以降のCTI四半期完全性", () => {
     expect(result.real.filter((row) => row.年 >= 2018).map((row) => row.label)).toEqual(["2018Q1"]);
     const mergedNominal = nominal[0]!;
     expect(mergedNominal.kind).toBe("plan40-official-quarterly");
-    // The monthly legacy result remains available alongside the preferred official series.
+    // The monthly consumption value remains available alongside Plan40 official measurements.
     expect(mergedNominal[CONSUMPTION_NOMINAL_KEYS[0]]).toBe(0);
     expect(
       mergedNominal.measurements?.[CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY["食料"]],
@@ -63,30 +62,32 @@ describe("2018年以降のCTI四半期完全性", () => {
     expect(result.real.filter((row) => row.年 >= 2018)).toEqual([]);
   });
 
-  it("2017Q4以前の固定CTI行とserver public projection境界を維持する", () => {
-    const data = [
-      { 年月: "2017年10月", [SUPPORT_SERIES_KEY_NOMINAL]: 100 },
-      { 年月: "2017年11月", [SUPPORT_SERIES_KEY_NOMINAL]: 100 },
-      { 年月: "2017年12月", [SUPPORT_SERIES_KEY_NOMINAL]: 100 },
-      makeMonth(1),
-      makeMonth(2),
-      makeMonth(3),
-    ] as CpiData[];
+  it("projects a complete Plan40 official quarter through the public boundary", () => {
+    const data = [makeMonth(1), makeMonth(2), makeMonth(3)];
     const serverResult = computeQuarterlyAggregates(data, { year: 2018, month: 3 });
-    const row2017Q4 = serverResult.nominal.find((row) => row.label === "2017Q4");
     const combined2018Rows = serverResult.nominal.filter((row) => row.label === "2018Q1");
-    const combined2018 = combined2018Rows[0];
-    expect(row2017Q4).toBeDefined();
-    expect(combined2018?.kind).toBe("plan40-official-quarterly");
-    expect(combined2018).not.toHaveProperty(SUPPORT_SERIES_KEY_NOMINAL);
     expect(combined2018Rows).toHaveLength(1);
+    expect(combined2018Rows[0]?.kind).toBe("plan40-official-quarterly");
 
-    const projected = buildQuarterlyPublicViews(serverResult.nominal, serverResult.real, {
-      comparisonReady: false,
-      rows: [],
-    });
+    const projected = buildQuarterlyPublicViews(serverResult.nominal);
     const public2018 = projected.nominal.find((row) => row.label === "2018Q1");
-    expect(public2018).toHaveProperty(CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY["食料"]);
-    expect(public2018).not.toHaveProperty(SUPPORT_SERIES_KEY_REAL);
+    expect(public2018).toBeDefined();
+    const publicKeySet = new Set<string>(QUARTERLY_PUBLIC_NOMINAL_KEYS);
+    expect(Object.keys(public2018!).filter((key) => publicKeySet.has(key))).toEqual([
+      ...QUARTERLY_PUBLIC_NOMINAL_KEYS,
+    ]);
+    for (const key of QUARTERLY_PUBLIC_NOMINAL_KEYS) {
+      expect(public2018?.[key]).toBe(
+        serverResult.nominal.find((row) => row.label === "2018Q1")?.measurements?.[key]?.value,
+      );
+      expect(public2018?.measurements?.[key]).toMatchObject({
+        status: "available",
+        frequency: "quarterly",
+        seriesType:
+          key === CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY["その他の消費支出"]
+            ? "estimated_adjusted"
+            : "official_adjusted",
+      });
+    }
   });
 });

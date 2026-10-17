@@ -20,10 +20,7 @@ export type Phase5RenderingId =
   | "p45-a-parity-section-earnings"
   | "p45-a-parity-section-new-graph"
   | "p45-a-parity-section-residual"
-  | "p45-a-parity-section-stacked"
-  | "p45-b-plan27-private-consumption-79-plan27-38-cti-nominal-cti-key-is-distinct-from-the-real"
-  | "p45-b-plan27-private-consumption-9-plan27-38-cti-2005q1-2017q4-52-graph-table-csv-cti-regi"
-  | "p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders-";
+  | "p45-a-parity-section-stacked";
 
 type ProbeOutcome = "observed" | "product-or-contract-mismatch" | "probe-error-unclassified";
 export interface Phase5RenderingObservation {
@@ -452,13 +449,13 @@ async function execute(
       !keySet(chart) ||
       !keySet(reloadedChart) ||
       !requiredAnchors.every((anchor) => table.headers.some((header) => header.includes(anchor))) ||
-      new URL(page.url()).search !== "?adv=1";
+      new URL(page.url()).search !== "";
     return result(
       id,
       expected,
       {
         route: routeResult,
-        queryPreservedOnReload: new URL(page.url()).search === "?adv=1",
+        legacyQueryRemovedOnReload: new URL(page.url()).search === "",
         reloadStatus: response?.status() ?? null,
         reloadNetworkIdle: reloadIdle,
         chart,
@@ -592,290 +589,7 @@ async function execute(
     );
   }
 
-  if (
-    id ===
-      "p45-b-plan27-private-consumption-79-plan27-38-cti-nominal-cti-key-is-distinct-from-the-real" ||
-    id ===
-      "p45-b-plan27-private-consumption-9-plan27-38-cti-2005q1-2017q4-52-graph-table-csv-cti-regi"
-  ) {
-    const routeResult = await route(page, "/");
-    const nominalChart = await chartSnapshot(page, "section-consumption-nominal");
-    const nominalBarLocator = page
-      .getByTestId("spending-chart-nominal")
-      .locator(".recharts-bar")
-      .first()
-      .locator(".recharts-bar-rectangle");
-    const nominalBarGeometry = await nominalBarLocator
-      .evaluateAll((rectangles) =>
-        rectangles.map((rectangle) => {
-          const box = rectangle.getBoundingClientRect();
-          const style = getComputedStyle(rectangle);
-          return {
-            x: box.x,
-            y: box.y,
-            width: box.width,
-            height: box.height,
-            display: style.display,
-            visibility: style.visibility,
-            opacity: style.opacity,
-            fill: style.fill,
-            positiveBox: box.width > 0 && box.height > 0,
-          };
-        }),
-      )
-      .catch(() => []);
-    const nominalBars = nominalBarGeometry.length;
-    const positiveNominalBars = nominalBarGeometry.filter((bar) => bar.positiveBox).length;
-    const realChart = await chartSnapshot(page, "section-consumption-real");
-    const nominalTable = await tableSnapshot(page, "data-table-section-consumption-nominal");
-    const realTable = await tableSnapshot(page, "data-table-section-consumption-real");
-    const context = await page.evaluate(() => ({
-      viewport: { width: innerWidth, height: innerHeight },
-      screen: { width: screen.width, height: screen.height },
-      deviceScaleFactor: devicePixelRatio,
-      touchPoints: navigator.maxTouchPoints,
-      userAgent: navigator.userAgent,
-      isMobile: matchMedia("(pointer: coarse)").matches,
-    }));
-    const full = id.includes("-9-plan27-");
-    let postBoundaryEvidence: Array<{
-      period: string | null;
-      nominalValue: string | null;
-      status: string | null;
-      reason: string | null;
-      hasStackedValue: boolean;
-    }> = [];
-    let nominalCsv: Awaited<ReturnType<typeof captureCsv>> | null = null;
-    let periods: string[] = [];
-    let realTableHeaders: string[] = [];
-    let csvExpectedPayload = false;
-    let latestAvailableRealPeriod: string | null = null;
-    let rowsAfterLatestCpi: typeof postBoundaryEvidence = [];
-    if (full) {
-      const contractRows = page
-        .getByTestId("spending-chart-real")
-        .locator('[data-testid="chart-data-contract"] [data-chart-data-row]');
-      postBoundaryEvidence = await contractRows.evaluateAll(
-        (rows, seriesKey) =>
-          rows
-            .filter((row) => (row.getAttribute("data-period") ?? "") >= "2018Q1")
-            .map((row) => {
-              const realTotal = row.querySelector(`[data-series-key="${seriesKey}"]`);
-              const stackedValues = [...row.querySelectorAll<HTMLElement>("[data-series-key]")]
-                .filter((cell) => cell.getAttribute("data-series-key") !== seriesKey)
-                .map((cell) => cell.getAttribute("data-value") ?? "null");
-              return {
-                period: row.getAttribute("data-period"),
-                nominalValue: realTotal?.getAttribute("data-value") ?? null,
-                status: realTotal?.getAttribute("data-status") ?? null,
-                reason: realTotal?.getAttribute("data-reason") ?? null,
-                hasStackedValue: stackedValues.some((value) => value !== "null"),
-              };
-            }),
-        "CTIミクロ調整系列（総合・実質）",
-      );
-      periods = nominalTable.rows
-        .map((row) => row[0] ?? "")
-        .filter((period) => /^200[5-9]Q[1-4]$|^201[0-7]Q[1-4]$/.test(period));
-      realTableHeaders = realTable.headers;
-      nominalCsv = await captureCsv(page, "data-table-section-consumption-nominal");
-      const csvText = nominalCsv.csv?.text ?? "";
-      csvExpectedPayload =
-        csvText.includes("CTIミクロ調整系列（食料）") &&
-        !csvText.includes("CTIミクロ（名目・四半期平均）") &&
-        !/CTIミクロ基本系列（名目・(?:原数値|参考|参考・延長)）/.test(csvText) &&
-        !/GDP/.test(csvText);
-      const availableRealRows = postBoundaryEvidence.filter(
-        (row) => row.status === "available" && row.nominalValue !== "null",
-      );
-      latestAvailableRealPeriod = availableRealRows.at(-1)?.period ?? null;
-      rowsAfterLatestCpi = latestAvailableRealPeriod
-        ? postBoundaryEvidence.filter(
-            (row) => row.period !== null && row.period > latestAvailableRealPeriod!,
-          )
-        : [];
-    }
-    const expected = {
-      source: full
-        ? "plan27-private-consumption.e2e.spec.ts:9"
-        : "plan27-private-consumption.e2e.spec.ts:79",
-      route: "/",
-      deviceProject: "mobile-pixel",
-      viewport: { width: 412, height: 915 },
-      deviceScaleFactor: 2.625,
-      touchPointsRequired: true,
-      nominalSelector: "[data-testid='spending-chart-nominal']",
-      realSelector: "[data-testid='spending-chart-real']",
-      nominalSeries: "CTIミクロ調整系列（食料）",
-      nominalLabel: "CTIミクロ調整系列（食料）",
-      expectedPeriodRange: "2005Q1-2017Q4",
-      expectedQuarterCount: full ? 52 : undefined,
-      fullOnly: full
-        ? {
-            post2018: "2018Q1 newly available; rows after latest covered CPI quarter unavailable",
-            barSelector:
-              "[data-testid='spending-chart-nominal'] .recharts-bar:first .recharts-bar-rectangle",
-            barCount: "1..52",
-            positiveBoundingBoxCount: ">0",
-            tableRows: 52,
-            rejectHeaders: ["wage CTI", "GDP"],
-            csvIncludes: "canonical nominal expense key",
-            csvExcludes: ["wage CTI", "GDP"],
-          }
-        : undefined,
-      keyOnly: full
-        ? undefined
-        : {
-            realChartVisible: true,
-            realTableMustInclude: "CTIミクロ総合（実質・CPI調整）",
-            realTableMustExclude: "民間最終消費支出（実質）",
-          },
-    };
-    const commonMismatch =
-      routeResult.status !== 200 ||
-      !nominalChart.chartFound ||
-      !realChart.chartFound ||
-      !realChart.chartVisible;
-    const fullMismatch =
-      full &&
-      (!nominalChart.declaredSeriesKeys.includes("CTIミクロ調整系列（食料）") ||
-        nominalTable.headers.filter((header) => header.startsWith("CTIミクロ調整系列（")).length !==
-          10 ||
-        nominalTable.headers.includes("CTIミクロ調整系列（総合・名目）") ||
-        /CTIミクロ基本系列（名目・(?:原数値|参考|参考・延長)）|GDP/.test(
-          nominalTable.headers.join(" "),
-        ) ||
-        periods.length !== 52 ||
-        nominalBars <= 0 ||
-        nominalBars > 52 ||
-        positiveNominalBars <= 0 ||
-        !realChart.declaredSeriesKeys.includes("CTIミクロ調整系列（総合・実質）") ||
-        realChart.declaredSeriesKeys.includes("民間最終消費支出（実質）") ||
-        !realTable.headers.includes("CTIミクロ総合（実質・CPI調整）") ||
-        realTable.headers.includes("民間最終消費支出（実質）") ||
-        postBoundaryEvidence.length === 0 ||
-        latestAvailableRealPeriod === null ||
-        !postBoundaryEvidence.some(
-          (row) =>
-            row.period === "2018Q1" &&
-            row.nominalValue !== "null" &&
-            row.status === "available" &&
-            row.hasStackedValue,
-        ) ||
-        !postBoundaryEvidence.some((row) => row.status === "available") ||
-        !rowsAfterLatestCpi.every(
-          (row) =>
-            row.nominalValue === "null" && row.status === "unavailable" && Boolean(row.reason),
-        ) ||
-        !csvExpectedPayload);
-    const keyMismatch =
-      !full &&
-      (!realTable.headers.join(" ").includes("CTIミクロ総合（実質・CPI調整）") ||
-        realTable.headers.join(" ").includes("民間最終消費支出（実質）"));
-    return result(
-      id,
-      expected,
-      {
-        route: routeResult,
-        context,
-        nominalChart,
-        realChart,
-        nominalTable,
-        realTable,
-        ...(full
-          ? {
-              nominalBars,
-              positiveNominalBars,
-              nominalBarGeometry,
-              postBoundaryEvidence,
-              periods2005to2017: periods,
-              csvPayloadChecks: {
-                expectedLabelPresent: (nominalCsv?.csv?.text ?? "").includes(
-                  "CTIミクロ調整系列（食料）",
-                ),
-                retiredNominalSupportAbsent: !(nominalCsv?.csv?.text ?? "").includes(
-                  "CTIミクロ（名目・四半期平均）",
-                ),
-                retiredWageSeriesAbsent:
-                  !/CTIミクロ基本系列（名目・(?:原数値|参考|参考・延長)）/.test(
-                    nominalCsv?.csv?.text ?? "",
-                  ),
-                gdpAbsent: !/GDP/.test(nominalCsv?.csv?.text ?? ""),
-                csv: nominalCsv,
-              },
-            }
-          : { realTableHeaders }),
-      },
-      commonMismatch || fullMismatch || keyMismatch,
-      context.touchPoints < 1 || (full && !nominalCsv?.captured),
-    );
-  }
-
-  const routeResult = await route(page, "/");
-  const shell = await page.evaluate(() => ({
-    readyState: document.readyState,
-    heading: document.querySelector("h1")?.textContent?.trim() ?? null,
-    loadingText: [...document.querySelectorAll("body *")].some(
-      (node) => /読み込み中|Loading/i.test(node.textContent ?? "") && node.children.length === 0,
-    ),
-    nextFlightScriptCount: [...document.scripts].filter((script) =>
-      script.textContent?.includes("quarterlyRealData"),
-    ).length,
-    nextFlightPushScripts: [...document.scripts]
-      .filter((script) => script.textContent?.includes("__next_f.push"))
-      .map((script) => ({
-        chars: script.textContent?.length ?? 0,
-        hasQuarterlyData: script.textContent?.includes("quarterlyRealData") ?? false,
-      })),
-    resourceUrls: performance
-      .getEntriesByType("resource")
-      .map((entry) => entry.name)
-      .filter((name) => name.includes("_rsc") || name.includes("flight")),
-  }));
-  const nominal = await chartSnapshot(page, "section-consumption-nominal");
-  const real = await chartSnapshot(page, "section-consumption-real");
-  const publicSeriesCount = [nominal, real].reduce(
-    (count, chart) =>
-      count +
-      chart.declaredSeriesKeys.filter(
-        (key) => key === "CTIミクロ調整系列（食料）" || key === "CTIミクロ調整系列（総合・実質）",
-      ).length,
-    0,
-  );
-  const expected = {
-    source: "quarterly-gdp.e2e.spec.ts:26",
-    route: "/",
-    shellSelector: "production dashboard h1",
-    requiredNominalSeries: "CTIミクロ調整系列（食料）",
-    requiredNominalSeriesCount: 10,
-    requiredRealSeries: "CTIミクロ調整系列（総合・実質）",
-    expectedPublicSeriesCount: 2,
-    forbiddenSeries:
-      "GDP名目原値|GDP名目比較指数|GDP実質原値|GDP実質比較指数|四半期raw|原値|比較指数",
-  };
-  const mismatch =
-    routeResult.status !== 200 ||
-    !routeResult.headingFound ||
-    shell.readyState !== "complete" ||
-    shell.loadingText ||
-    !nominal.chartFound ||
-    !real.chartFound ||
-    !nominal.declaredSeriesKeys.includes("CTIミクロ調整系列（食料）") ||
-    nominal.declaredSeriesKeys.filter((key) => key.startsWith("CTIミクロ調整系列（")).length !==
-      10 ||
-    nominal.declaredSeriesKeys.includes("CTIミクロ調整系列（総合・名目）") ||
-    !real.declaredSeriesKeys.includes("CTIミクロ調整系列（総合・実質）") ||
-    real.declaredSeriesKeys.includes("民間最終消費支出（実質）") ||
-    publicSeriesCount !== 2 ||
-    /GDP名目原値|GDP名目比較指数|GDP実質原値|GDP実質比較指数|四半期raw|原値|比較指数/.test(
-      `${nominal.series} ${real.series}`,
-    );
-  return result(
-    id,
-    expected,
-    { route: routeResult, shell, nominal, real, publicSeriesCount },
-    mismatch,
-  );
+  throw new Error(`Unsupported phase5 rendering probe: ${id}`);
 }
 
 export const inspectPhase5Rendering: BrowserCommand<
@@ -898,19 +612,8 @@ export const inspectPhase5Rendering: BrowserCommand<
       error: "Playwright Browser is unavailable",
     };
   const dark = id.endsWith("-dark");
-  const mobileViewport = id.includes("plan27-private-consumption");
   const options = buildContextOptions(
-    mobileViewport
-      ? {
-          viewport: { width: 412, height: 915 },
-          screen: { width: 412, height: 915 },
-          deviceScaleFactor: 2.625,
-          isMobile: true,
-          hasTouch: true,
-          userAgent:
-            "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
-        }
-      : desktop1280x800ContextOptions(),
+    desktop1280x800ContextOptions(),
     dark ? { colorScheme: "dark" } : {},
   );
   return withIsolatedContext(browser, options, async (isolated) => {

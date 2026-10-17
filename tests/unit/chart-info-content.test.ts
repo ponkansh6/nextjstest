@@ -3,117 +3,46 @@ import { CHART_INFO } from "@/lib/chartInfoContent";
 
 /**
  * 3種比較（new-graph）の info 説明文が、実際のデータソースと一致していることを検証する。
- * Plan38の名目CTIは固定artifactを四半期平均した公開系列である。
  */
 describe("new-graph chart info (3種比較)", () => {
   const info = CHART_INFO["new-graph"];
 
-  it("source に CTIの出典を記載している", () => {
-    expect(info.source).toContain("消費動向指数");
+  it("source に毎月勤労統計・CPI長期時系列・Plan49月次データを記載している", () => {
+    expect(info.source).toContain("毎月勤労統計調査");
+    expect(info.source).toContain("消費者物価指数 長期時系列データ");
+    expect(info.source).toContain("Plan49月次データ");
   });
 
-  it("3種比較の各系列を月次12か月移動平均として説明する", () => {
+  it("3種比較の生成元と基準化の実態を説明する", () => {
     const items = info.sections.flatMap((s) => s.items);
     const text = items.map((item) => item.text).join("\n");
-    expect(text).toContain("給与：月次系列の12か月移動平均");
-    expect(text).toContain("消費：消費支出の12か月移動平均");
-    expect(text).toContain("物価：消費者物価指数の12か月移動平均");
+    expect(text).toContain("Plan49の月次合計「消費(総合)」");
+    expect(text).toContain("2025年の月次平均=100");
+    expect(text).toContain("連続12暦月の厳密な移動平均");
+    expect(text).toContain("所定内給与・所定外給与・特別給与");
+    expect(text).toContain("各12か月移動平均に共通の係数を適用");
+    expect(text).toContain("全国CPI総合の12か月移動平均");
+    expect(text).toContain("CPI生値の2025暦年平均が100となる係数");
+    expect(text).toContain("基準係数は移動平均から算出しない");
+    expect(text).not.toContain("消費動向指数");
   });
 });
 
-describe("CTI chart info data-source state", () => {
+describe("new-graph chart info data-source state", () => {
   it("検証済み2025セットでは採用系列と三調査合成を説明する", async () => {
     const { getChartInfoContent } = await import("@/lib/chartInfoContent");
     const info = getChartInfoContent("new-graph", undefined, {
       baseYear: 2025,
       sourceMode: "official-connected",
       seriesLabel: "基本系列（原数値）",
-      supportLabel: "CTIミクロ名目四半期系列を公開します。",
-      comparisonNormalization: "2025-annual-average",
     });
     const text = [info.source, ...info.sections.flatMap((s) => s.items.map((i) => i.text))].join(
       "\n",
     );
 
-    expect(text).toContain("公式CTI名目原数値");
-    expect(text).toContain("基本系列（原数値）");
-    expect(text).toContain(
-      "二人以上の世帯の公式CTI名目原数値を、基本系列（原数値）として2005Q1〜2017Q4の四半期平均で使用しています。",
-    );
-    expect(text).toContain("CTIミクロ名目四半期系列を公開します。");
-  });
-
-  it("GDP比較の利用不可状態と理由はCTIが利用不可でも表示する", async () => {
-    const { getChartInfoContent } = await import("@/lib/chartInfoContent");
-    const info = getChartInfoContent("new-graph", undefined, {
-      baseYear: null,
-      sourceMode: "unavailable",
-      gdp: {
-        availability: "unavailable",
-        reason: "GDP比較に必要な2025年の四半期値または確認情報がそろっていません。",
-      },
-    });
-    const text = info.sections.flatMap((s) => s.items.map((i) => i.text)).join("\n");
-
-    expect(text).toContain("GDP比較線は利用できません");
-    expect(text).toContain("2025年の四半期値または確認情報がそろっていません");
-    expect(text).not.toMatch(/fallback|metadata|CSV/i);
-  });
-
-  it("旧rollback状態でもPlan37線を互換データと誤表示しない", async () => {
-    const { getChartInfoContent } = await import("@/lib/chartInfoContent");
-    const info = getChartInfoContent("new-graph", undefined, {
-      baseYear: 2020,
-      sourceMode: "rollback",
-      gdp: { availability: "available", displayNormalizationYear: 2025 },
-    });
-    const text = info.sections.flatMap((s) => s.items.map((i) => i.text)).join("\n");
-
-    expect(text).toContain("CTIミクロ名目四半期系列は現在利用できません");
-    expect(text).toContain(
-      "GDP比較線は、名目・実質の元データを2025年平均=100の比較指数として表示します。",
-    );
-  });
-
-  it("四半期GDPの独立照合中をinfoへ反映する", async () => {
-    const { getChartInfoContent } = await import("@/lib/chartInfoContent");
-    const info = getChartInfoContent("new-graph", undefined, {
-      baseYear: 2025,
-      sourceMode: "official-connected",
-      gdp: {
-        availability: "available",
-        quarterlyStatus: {
-          availability: "pending",
-          comparisonReady: false,
-          granularity: "quarterly",
-          independentConfirmation: "pending-independent-confirmation",
-        },
-      },
-    });
-    const text = info.sections.flatMap((s) => s.items.map((i) => i.text)).join("\n");
-    expect(text).toContain("独立照合が確認中");
-    expect(text).not.toContain("pending");
-    expect(text).toContain("四半期GDP比較線は独立照合が確認中のため表示しません。");
-  });
-
-  it("四半期GDPが利用可能な場合は利用可能状態を説明する", async () => {
-    const { getChartInfoContent } = await import("@/lib/chartInfoContent");
-    const info = getChartInfoContent("new-graph", undefined, {
-      baseYear: 2025,
-      sourceMode: "official-connected",
-      gdp: {
-        availability: "available",
-        quarterlyStatus: {
-          availability: "available",
-          comparisonReady: true,
-          granularity: "quarterly",
-          independentConfirmation: "ready",
-        },
-      },
-    });
-    const text = info.sections.flatMap((s) => s.items.map((i) => i.text)).join("\n");
-
-    expect(text).toContain("四半期GDP比較線は利用可能です。");
+    expect(text).toContain("消費(総合)");
+    expect(text).not.toContain("公式CTI名目原数値");
+    expect(text).not.toContain("2005Q1〜2017Q4");
   });
 
   it("データなしでは利用者向けの状態だけを表示し、基準年を推測しない", async () => {
@@ -144,17 +73,20 @@ describe("new-graph and residual chart info wording", () => {
     expect(text).toContain("非公式");
   });
 
-  it("describes the three comparison series as 12-month moving averages", () => {
+  it("describes the actual comparison series and does not substitute quarterly CTI wording", () => {
     const text = [
       ...CHART_INFO["new-graph"].sections.flatMap((section) =>
         section.items.map((item) => item.text),
       ),
     ].join("\n");
 
-    expect(text).toContain("給与：月次系列の12か月移動平均");
-    expect(text).toContain("物価：月次系列の12か月移動平均");
-    expect(text).toContain("消費：消費支出の12か月移動平均");
-    expect(text).not.toContain("GDP参考値：四半期値を月次化");
+    expect(text).toContain("Plan49の月次合計「消費(総合)」");
+    expect(text).toContain("2025年の月次平均=100");
+    expect(text).toContain("全国CPI総合");
+    expect(text).toContain("所定内給与・所定外給与・特別給与");
+    expect(text).toContain("各12か月移動平均に共通の係数を適用");
+    expect(text).toContain("CPI生値の2025暦年平均が100となる係数");
+    expect(text).toContain("基準係数は移動平均から算出しない");
     expect(text).not.toMatch(/Plan22|raw値|内部保持|月次原系列|9大費目（/);
   });
 

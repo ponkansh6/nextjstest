@@ -51,12 +51,10 @@ it("p45-a-advanced-series-normal — production route publishes the Plan49 compa
   });
   expect(values.normalDescriptors).not.toMatch(/CTI消費支出|CTIミクロ基本系列/);
   expect(values.advancedDescriptors).not.toMatch(/CTI消費支出|CTIミクロ基本系列/);
-  expect(values.normalExtendedLegendVisible).toBe(false);
-  expect(values.advancedExtendedLegendVisible).toBe(false);
-  expect(values.normalMainLegendVisible).toBe(false);
   expect(values.normalSalaryLegendVisible).toBe(true);
   expect(values.normalCpiLegendVisible).toBe(true);
-  expect(values.normalCtiLegendVisible).toBe(false);
+  expect(new URL(values.legacyAdvUrlAfterSync as string).search).toBe("");
+  expect(values.extensionToggleVisible).toBe(false);
   expect(values.tableText).toContain("消費(総合)");
   expect(values.tableText).not.toMatch(/CTI消費支出|CTIミクロ基本系列/);
 });
@@ -91,36 +89,7 @@ it("p45-a-cpi-sections — production CPI section renders an area path", async (
   expect(values.hiddenHousingRowCount).toBe(0);
 });
 
-it("p45-b-plan24-rendering-71 — production ranges render legacy and CTI data without GDP headers", async () => {
-  const values = await inspect("plan24-legacy-gdp");
-  expect(values.nominal2005to2017Headers).toContain("年月");
-  expect(values.real2005to2017Headers).toContain("年月");
-  expect(values.nominal2005to2017Bars).toBeGreaterThan(0);
-  expect(values.expenseLines2005to2017).toBe(0);
-  expect(values.real2005to2017Bars).toBeGreaterThan(0);
-  const realTotalSupportPeriods2005to2017 = (values.realTotalSupportPeriods2005to2017 as string)
-    .split(",")
-    .map((period) => period.trim())
-    .filter(Boolean);
-  expect(realTotalSupportPeriods2005to2017).toHaveLength(52);
-  expect(values.realTotalMarkers2005to2017).toBe(0);
-  expect(values.nominal2018Bars).toBeGreaterThan(0);
-  expect(values.real2018Bars).toBeGreaterThan(0);
-  const realTotalSupportPeriods2018 = (values.realTotalSupportPeriods2018 as string)
-    .split(",")
-    .map((period) => period.trim())
-    .filter(Boolean);
-  expect(realTotalSupportPeriods2018).toContain("2018Q1");
-  expect(realTotalSupportPeriods2018).toHaveLength(4);
-  expect(values.realTotalMarkers2018).toBe(0);
-  expect(values.nominal2018Headers).not.toContain("GDP");
-  expect(values.nominal2018Headers).not.toContain("民間最終消費支出");
-  expect(values.real2018Headers).not.toContain("GDP");
-  expect(values.nominal2018Headers).toContain("年月");
-  expect(values.real2018Headers).toContain("年月");
-});
-
-it("p45-b-plan24-rendering-88 — 2025 production tables contain Q1/Q4 values and tooltips omit GDP", async () => {
+it("Plan40 production tables retain Q1/Q4 values and tooltip/table parity", async () => {
   const tables = (await inspect("plan24-2025-table-tooltip")).tables as {
     headers: string[];
     supportIndex: number;
@@ -138,14 +107,12 @@ it("p45-b-plan24-rendering-88 — 2025 production tables contain Q1/Q4 values an
       tooltipFoodValueVisible: boolean;
       tooltipFoodValue: string;
       tooltipHasCalculatedTotal: boolean;
-      tooltipHasGdp: boolean;
       calculatedTotal: string;
     }[];
     csv: string;
   }[];
   expect(tables).toHaveLength(2);
   for (const table of tables) {
-    expect(table.headers.some((header) => /GDP|民間最終消費支出/.test(header))).toBe(false);
     expect(table.supportIndex).toBeGreaterThanOrEqual(0);
     expect(table.foodLabel).toContain("食料");
     expect(table.periods).toHaveLength(2);
@@ -176,11 +143,9 @@ it("p45-b-plan24-rendering-88 — 2025 production tables contain Q1/Q4 values an
       expect(period.tooltipHasCalculatedTotal).toBe(
         !table.headers.includes("CTIミクロ総合（実質・CPI調整）"),
       );
-      expect(period.tooltipHasGdp).toBe(false);
     }
     expect(table.csv).toContain("2025Q1");
     expect(table.csv).toContain("2025Q4");
-    expect(table.csv).not.toContain("GDP");
   }
   expect(tables[0].headers.some((header) => header.includes("民間最終消費"))).toBe(false);
   expect(

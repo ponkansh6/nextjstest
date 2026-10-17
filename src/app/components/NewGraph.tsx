@@ -23,8 +23,6 @@ interface NewGraphProps {
   onPointerDown?: React.PointerEventHandler<HTMLDivElement>;
   onPointerMove?: React.PointerEventHandler<HTMLDivElement>;
   activeDot?: boolean;
-  showAdvanced?: boolean;
-  advancedToggle?: React.ReactNode;
   chartInfoContent?: ChartInfoContent;
   comparisonSeriesRegistry?: readonly SeriesMetadata[];
 }
@@ -42,15 +40,10 @@ export const NewGraph: React.FC<NewGraphProps> = ({
   onPointerDown,
   onPointerMove,
   activeDot,
-  showAdvanced,
-  advancedToggle,
   chartInfoContent,
   comparisonSeriesRegistry = createComparisonSeriesRegistry(),
 }) => {
-  const isAdvanced = showAdvanced ?? false;
-  const visibleLineConfigs = comparisonSeriesRegistry.filter(
-    (config) => !config.advanced || isAdvanced,
-  );
+  const visibleLineConfigs = comparisonSeriesRegistry;
   // Keep the established legend and line contracts even when a series is
   // entirely null. Recharts simply has no path to paint for that series.
   const renderedLineConfigs = visibleLineConfigs;
@@ -63,7 +56,6 @@ export const NewGraph: React.FC<NewGraphProps> = ({
             chartKey={chartKey as never}
             content={chartInfoContent}
             ariaLabel="給与・消費・物価の推移比較のデータソースを表示"
-            footer={advancedToggle}
           />
         )}
       </div>

@@ -2,16 +2,14 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { SpendingBarChart } from "../../src/app/components/SpendingBarChart";
-import {
-  CONSUMPTION_REAL_KEYS,
-  SUPPORT_SERIES_KEY_NOMINAL,
-  SUPPORT_SERIES_KEY_REAL,
-} from "../../src/lib/chartConstants";
+import { CONSUMPTION_REAL_KEYS } from "../../src/lib/chartConstants";
 import { setupUiMocks } from "../utils/ui-mocks";
 import "../utils/recharts-mock";
 
+const SYNTHETIC_NOMINAL_KEY = "Synthetic nominal support";
+
 describe("real consumption public contract", () => {
-  it("does not pass nominal Plan38 CTI into the real chart", () => {
+  it("renders the ten public real expense keys and omits unrelated synthetic input", () => {
     setupUiMocks();
     const data = [
       {
@@ -19,16 +17,8 @@ describe("real consumption public contract", () => {
         年: 2017,
         quarter: 4,
         年月: "2017Q4",
-        [SUPPORT_SERIES_KEY_REAL]: 98,
-        [SUPPORT_SERIES_KEY_NOMINAL]: 101,
-      },
-      {
-        label: "2018Q1",
-        年: 2018,
-        quarter: 1,
-        年月: "2018Q1",
-        [SUPPORT_SERIES_KEY_REAL]: null,
-        [SUPPORT_SERIES_KEY_NOMINAL]: 102,
+        ...Object.fromEntries(CONSUMPTION_REAL_KEYS.map((key, index) => [key, 20 + index])),
+        [SYNTHETIC_NOMINAL_KEY]: 101,
       },
     ];
 
@@ -36,8 +26,8 @@ describe("real consumption public contract", () => {
       <SpendingBarChart
         title="消費支出（実質）"
         data={data as any}
-        keys={[...CONSUMPTION_REAL_KEYS, SUPPORT_SERIES_KEY_REAL]}
-        colors={[...CONSUMPTION_REAL_KEYS.map(() => "#64748b"), "#94a3b8"]}
+        keys={CONSUMPTION_REAL_KEYS}
+        colors={CONSUMPTION_REAL_KEYS.map(() => "#64748b")}
         hiddenKeys={[]}
         onToggle={vi.fn()}
         chartColors={{ barFill: "#94a3b8", gridStroke: "#e2e8f0", axisText: "#64748b" }}
@@ -52,62 +42,15 @@ describe("real consumption public contract", () => {
       />,
     );
 
-    const rows = screen
-      .getByTestId("chart-data-contract")
-      .querySelectorAll("[data-chart-data-row]");
-    const beforeBoundary = rows[0] as HTMLElement;
-    const afterBoundary = rows[1] as HTMLElement;
-    expect(rows[0]?.getAttribute("data-period")).toBe("2017Q4");
-    expect(
-      beforeBoundary
-        .querySelector(`[data-series-key="${SUPPORT_SERIES_KEY_REAL}"]`)
-        ?.getAttribute("data-value"),
-    ).toBe("98");
-    expect(
-      beforeBoundary.querySelector(`[data-series-key="${SUPPORT_SERIES_KEY_NOMINAL}"]`),
-    ).toBeNull();
-    expect(rows[1]?.getAttribute("data-period")).toBe("2018Q1");
-    expect(
-      afterBoundary
-        .querySelector(`[data-series-key="${SUPPORT_SERIES_KEY_REAL}"]`)
-        ?.getAttribute("data-value"),
-    ).toBe("null");
-    expect(
-      afterBoundary.querySelector(`[data-series-key="${SUPPORT_SERIES_KEY_NOMINAL}"]`),
-    ).toBeNull();
-  });
-
-  it("keeps the legacy real support boundary at 2018Q1", () => {
-    setupUiMocks();
-    const data = [
-      { label: "2018Q1", 年: 2018, quarter: 1, 年月: "2018Q1", [SUPPORT_SERIES_KEY_REAL]: null },
-    ];
-    render(
-      <SpendingBarChart
-        title="消費支出（実質）"
-        data={data as any}
-        keys={[...CONSUMPTION_REAL_KEYS, SUPPORT_SERIES_KEY_REAL]}
-        colors={[...CONSUMPTION_REAL_KEYS.map(() => "#64748b"), "#94a3b8"]}
-        hiddenKeys={[]}
-        onToggle={vi.fn()}
-        chartColors={{ barFill: "#94a3b8", gridStroke: "#e2e8f0", axisText: "#64748b" }}
-        tooltipProps={{
-          cursor: { stroke: "#000", strokeWidth: 1, strokeOpacity: 0.6 },
-          trigger: "hover",
-          content: <div />,
-        }}
-        hiddenQuarters={[]}
-        onToggleQuarter={vi.fn()}
-        onReset={vi.fn()}
-      />,
+    const contract = screen.getByTestId("chart-data-contract");
+    expect(JSON.parse(contract.getAttribute("data-series") ?? "[]")).toEqual(CONSUMPTION_REAL_KEYS);
+    const row = contract.querySelector('[data-chart-data-row][data-period="2017Q4"]');
+    const cells = [...(row?.querySelectorAll("[data-series-key]") ?? [])];
+    expect(cells).toHaveLength(10);
+    expect(cells.map((cell) => cell.getAttribute("data-series-key"))).toEqual(
+      CONSUMPTION_REAL_KEYS,
     );
-    const row = screen
-      .getByTestId("chart-data-contract")
-      .querySelector('[data-chart-data-row][data-period="2018Q1"]') as HTMLElement;
-    expect(
-      row
-        .querySelector(`[data-series-key="${SUPPORT_SERIES_KEY_REAL}"]`)
-        ?.getAttribute("data-value"),
-    ).toBe("null");
+    expect(cells[0]?.getAttribute("data-value")).toBe("20");
+    expect(contract.querySelector(`[data-series-key="${SYNTHETIC_NOMINAL_KEY}"]`)).toBeNull();
   });
 });

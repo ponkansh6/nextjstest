@@ -3,13 +3,15 @@ import { describe, expect, it } from "vitest";
 import { page } from "vitest/browser";
 import { SpendingBarChart } from "../../src/app/components/SpendingBarChart";
 import { useChartTooltipController } from "../../src/app/components/charts/useChartTooltipProps";
-import { SUPPORT_SERIES_KEY_NOMINAL, SUPPORT_SERIES_KEY_REAL } from "../../src/lib/chartConstants";
+
 import {
   QUARTERLY_PLAN40_V2_NOMINAL_KEYS,
   QUARTERLY_PUBLIC_REAL_KEYS,
 } from "../../src/lib/quarterlyPublicProjection";
 import { renderBrowserComponent } from "./renderBrowserComponent";
 
+const TEST_SUPPORT_NOMINAL_KEY = "民間最終消費支出（名目）";
+const TEST_SUPPORT_REAL_KEY = "民間最終消費支出（実質）";
 type ChartKind = "nominal" | "real";
 const CHART_KEYS: Record<ChartKind, string[]> = {
   nominal: [...QUARTERLY_PLAN40_V2_NOMINAL_KEYS],
@@ -35,7 +37,7 @@ const FIXTURE_GLOBAL_CSS = `
 
 function createQuarterlyData(kind: ChartKind): ComponentProps<typeof SpendingBarChart>["data"] {
   const keys = CHART_KEYS[kind];
-  const supportKey = kind === "nominal" ? SUPPORT_SERIES_KEY_NOMINAL : SUPPORT_SERIES_KEY_REAL;
+  const supportKey = kind === "nominal" ? TEST_SUPPORT_NOMINAL_KEY : TEST_SUPPORT_REAL_KEY;
   // Match the route's 84-quarter period span and full public key contract.
   return Array.from({ length: 84 }, (_, index) => {
     const actualYear = 2005 + Math.floor(index / 4);

@@ -1,63 +1,27 @@
 import { describe, expect, it } from "vitest";
-import expected from "../fixtures/plan27-private-consumption.json";
-import {
-  aggregateCtiBasicNominalQuarterly,
-  loadCtiBasicSeries2025,
-} from "../../server/lib/ctiBasicSeries2025LongTerm";
+import { loadCtiBasicSeries2025 } from "../../server/lib/ctiBasicSeries2025LongTerm";
 import {
   CTI_ADJUSTED_V2_PUBLIC_REGISTRY,
   COMPARISON_SERIES_REGISTRY,
   CTI_BASIC_RAW_KEY,
   CTI_BASIC_SERIES_DESCRIPTORS,
   EARNINGS_SERIES_REGISTRY,
-  SUPPORT_SERIES_KEY_NOMINAL,
 } from "../../src/lib/chartConstants";
 import { QUARTERLY_PUBLIC_NOMINAL_KEYS } from "../../src/lib/quarterlyPublicProjection";
 
-describe("Plan27 private-consumption source contract", () => {
-  it("projects the official raw CTI artifact into the fixed 52-quarter window", () => {
+describe("CTI monthly source and Plan40 public contract", () => {
+  it("retains the Plan37 monthly raw CTI artifact", () => {
     const sourceRecords = loadCtiBasicSeries2025("nominal").filter(
       (record) => record.seriesIndex === 1,
     );
-    const quarterly = aggregateCtiBasicNominalQuarterly(sourceRecords);
-    const periods = [...quarterly.measurements.keys()];
-
-    expect(quarterly.status).toBe("valid");
-    expect(periods).toHaveLength(expected.quarterCount);
-    expect(periods[0]).toBe("2005Q1");
-    expect(periods.at(-1)).toBe("2017Q4");
-    expect(periods.every((period) => /^20(?:0[5-9]|1[0-7])Q[1-4]$/.test(period))).toBe(true);
-    expect(quarterly.values.has("2018Q1")).toBe(false);
-
-    const firstMeasurement = quarterly.measurements.get("2005Q1");
-    expect(firstMeasurement).toMatchObject({
-      key: expected.series,
-      label: expected.label,
-      unit: "指数",
-      source: "e-Stat 公式CTI長期artifact 000040499070",
-      frequency: "quarterly",
-      aggregation: "simple_mean_of_three_calendar_months",
-      status: "valid",
-      reason: null,
-    });
-    expect(firstMeasurement?.value).toBe((98.3 + 90.3 + 108.4) / 3);
-  });
-
-  it("keeps the nominal quarterly support key separate from wage and comparison registries", () => {
+    const periods = sourceRecords.map(({ month }) => month);
     const sourceDescriptor = CTI_BASIC_SERIES_DESCRIPTORS.find(
       (descriptor) => descriptor.key === CTI_BASIC_RAW_KEY,
     );
-    const wageAndComparisonKeys = [...EARNINGS_SERIES_REGISTRY, ...COMPARISON_SERIES_REGISTRY].map(
-      ({ key }) => key,
-    );
 
-    expect(expected.series).toBe(SUPPORT_SERIES_KEY_NOMINAL);
-    const canonicalNominalKeys = CTI_ADJUSTED_V2_PUBLIC_REGISTRY.filter(
-      (entry) => entry.category !== "総合",
-    ).map((entry) => entry.key);
-    expect(QUARTERLY_PUBLIC_NOMINAL_KEYS).toEqual(canonicalNominalKeys);
-    expect(QUARTERLY_PUBLIC_NOMINAL_KEYS).toHaveLength(10);
-    expect(QUARTERLY_PUBLIC_NOMINAL_KEYS).not.toContain(expected.series);
+    expect(sourceRecords.length).toBeGreaterThan(0);
+    expect(sourceRecords.every((record) => record.variant === "nominal")).toBe(true);
+    expect(periods).toContain("2025-12");
     expect(sourceDescriptor).toMatchObject({
       key: CTI_BASIC_RAW_KEY,
       unit: "指数",
@@ -65,7 +29,18 @@ describe("Plan27 private-consumption source contract", () => {
       valueType: "raw",
       frequency: "monthly",
     });
-    expect(wageAndComparisonKeys).not.toContain(expected.series);
+  });
+
+  it("keeps Plan40's ten quarterly keys separate from wage and comparison registries", () => {
+    const wageAndComparisonKeys = [...EARNINGS_SERIES_REGISTRY, ...COMPARISON_SERIES_REGISTRY].map(
+      ({ key }) => key,
+    );
+    const canonicalNominalKeys = CTI_ADJUSTED_V2_PUBLIC_REGISTRY.filter(
+      (entry) => entry.category !== "総合",
+    ).map((entry) => entry.key);
+
+    expect(QUARTERLY_PUBLIC_NOMINAL_KEYS).toEqual(canonicalNominalKeys);
+    expect(QUARTERLY_PUBLIC_NOMINAL_KEYS).toHaveLength(10);
     expect(wageAndComparisonKeys).not.toContain(CTI_BASIC_RAW_KEY);
   });
 });

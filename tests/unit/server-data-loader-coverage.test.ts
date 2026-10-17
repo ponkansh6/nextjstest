@@ -47,193 +47,12 @@ import {
   loadCtiAdjustedInputs,
   loadCtiAdjustedV2Estimate,
 } from "../../server/lib/data-loader/ctiAdjusted";
-import { validateGdpSupport } from "../../server/lib/data-loader/gdpSupport";
 import {
   isContinuousMonths,
   selectCtiPair,
   validateCtiPair,
   type CtiPair,
 } from "../../server/lib/data-loader/ctiValidation";
-import {
-  validateQuarterlyGdpSupport,
-  loadQuarterlyGdpData,
-} from "../../server/lib/data-loader/gdpSupport";
-
-type GdpPaths = {
-  candidateSupportNominal: string;
-  candidateSupportReal: string;
-  supportNominalMetadata: string;
-  supportRealMetadata: string;
-  gdpDisplayNormalization: string;
-  quarterlySupportNominal: string;
-  quarterlySupportNominalMetadata: string;
-  quarterlyOfficialNominal: string;
-  quarterlyEstatNominal: string;
-  quarterlySupportReal: string;
-  quarterlySupportRealMetadata: string;
-  quarterlyOfficialReal: string;
-  quarterlyEstatReal: string;
-};
-
-const quarterlyRowsFor = (
-  priceMeasure: "current-prices" | "previous-year-chain-linked",
-  value: number,
-  periodOffset = 0,
-) =>
-  [
-    "period,value,series,priceMeasure",
-    ...Array.from({ length: 84 }, (_, index) => {
-      const absoluteQuarter = index + periodOffset;
-      const year = 2005 + Math.floor(absoluteQuarter / 4);
-      const quarter = (absoluteQuarter % 4) + 1;
-      return `${year}-Q${quarter},${value},private-final-consumption-expenditure,${priceMeasure}`;
-    }),
-  ].join("\n");
-
-function writeGdpFixture() {
-  const root = mkdtempSync(path.join(tmpdir(), "gdp-support-contract-"));
-  const paths: GdpPaths = {
-    candidateSupportNominal: path.join(root, "nominal.csv"),
-    candidateSupportReal: path.join(root, "real.csv"),
-    supportNominalMetadata: path.join(root, "nominal.metadata.json"),
-    supportRealMetadata: path.join(root, "real.metadata.json"),
-    gdpDisplayNormalization: path.join(root, "normalization.json"),
-    quarterlySupportNominal: path.join(root, "quarterly-nominal.csv"),
-    quarterlySupportNominalMetadata: path.join(root, "quarterly-nominal.metadata.json"),
-    quarterlyOfficialNominal: path.join(root, "quarterly-nominal-official.csv"),
-    quarterlyEstatNominal: path.join(root, "quarterly-nominal-estat.csv"),
-    quarterlySupportReal: path.join(root, "quarterly-real.csv"),
-    quarterlySupportRealMetadata: path.join(root, "quarterly-real.metadata.json"),
-    quarterlyOfficialReal: path.join(root, "quarterly-real-official.csv"),
-    quarterlyEstatReal: path.join(root, "quarterly-real-estat.csv"),
-  };
-  const csvFor = (value = 100) =>
-    [
-      "時間軸（暦年）,民間最終消費支出",
-      ...Array.from({ length: 32 }, (_, index) => `${1994 + index},${value}`),
-    ].join("\n");
-  const nominal = csvFor();
-  const real = csvFor(80);
-  const hash = (value: string) => createHash("sha256").update(value).digest("hex");
-  writeFileSync(paths.candidateSupportNominal, nominal);
-  writeFileSync(paths.candidateSupportReal, real);
-  const metadataFor = (
-    content: string,
-    measure: "current-prices" | "previous-year-chain-linked",
-  ) => ({
-    status: "ready",
-    seriesConcept: "private-final-consumption-expenditure",
-    seriesCode: "12",
-    seriesName: "民間最終消費支出",
-    priceMeasure: measure,
-    displayNormalizationYear: 2025,
-    unit: "10億円",
-    rawValuePreserved: true,
-    csvSha256: hash(content),
-    sourceFrequency: "annual",
-    period: { start: "1994", end: "2025", annualRows: 32 },
-  });
-  writeJson(paths.supportNominalMetadata, metadataFor(nominal, "current-prices"));
-  writeJson(paths.supportRealMetadata, metadataFor(real, "previous-year-chain-linked"));
-  writeJson(paths.gdpDisplayNormalization, {
-    displayNormalizationYear: 2025,
-    nominal: { csv: path.basename(paths.candidateSupportNominal), csvSha256: hash(nominal) },
-    real: { csv: path.basename(paths.candidateSupportReal), csvSha256: hash(real) },
-    factors: { nominal: 1, real: 1.25 },
-  });
-  const writeQuarterly = (
-    measure: "current-prices" | "previous-year-chain-linked",
-    id: string,
-    key: "Nominal" | "Real",
-    value: number,
-  ) => {
-    const csv = quarterlyRowsFor(measure, value);
-    const csvSha256 = hash(csv);
-    const support = paths[`quarterlySupport${key}`];
-    const official = paths[`quarterlyOfficial${key}`];
-    const estat = paths[`quarterlyEstat${key}`];
-    const metaPath = paths[`quarterlySupport${key}Metadata`];
-    writeFileSync(support, csv);
-    writeFileSync(official, csv);
-    writeFileSync(estat, csv);
-    writeJson(metaPath, {
-      frequency: "quarterly",
-      period: { start: "2005-Q1", end: "2025-Q4", rows: 84 },
-      csvSha256,
-      status: "ready",
-      seriesConcept: "private-final-consumption-expenditure",
-      priceMeasure: measure,
-      unit: "billion-yen",
-      seasonalAdjustment: "original",
-      independentConfirmation: "ready",
-      estatSource: {
-        provider: "e-Stat",
-        statsDataId: id,
-        seriesCode: "fixture-series",
-        seriesName: "private final consumption expenditure",
-        unit: "billion-yen",
-        retrievedAt: "2026-01-01",
-        jsonSha256: "a".repeat(64),
-        comparison: { status: "ready", rowsCompared: 84, mismatches: 0 },
-        snapshotFile: path.basename(estat),
-        snapshotCsvSha256: hash(csv),
-      },
-    });
-  };
-  writeQuarterly("current-prices", "0003113633", "Nominal", 100);
-  writeQuarterly("previous-year-chain-linked", "0003113612", "Real", 80);
-  buildCtiFilePathsMock.mockReturnValue(paths);
-  return { paths, nominal, real };
-}
-
-function replaceGdpNominalCsv(paths: GdpPaths, csv: string): void {
-  writeFileSync(paths.candidateSupportNominal, csv);
-  const csvSha256 = createHash("sha256").update(csv).digest("hex");
-  const metadata = JSON.parse(readFileSync(paths.supportNominalMetadata, "utf8"));
-  writeJson(paths.supportNominalMetadata, { ...metadata, csvSha256 });
-  const normalization = JSON.parse(readFileSync(paths.gdpDisplayNormalization, "utf8"));
-  writeJson(paths.gdpDisplayNormalization, {
-    ...normalization,
-    nominal: { ...normalization.nominal, csvSha256 },
-  });
-}
-
-function replaceGdpRealCsv(paths: GdpPaths, csv: string): void {
-  writeFileSync(paths.candidateSupportReal, csv);
-  const csvSha256 = createHash("sha256").update(csv).digest("hex");
-  const metadata = JSON.parse(readFileSync(paths.supportRealMetadata, "utf8"));
-  writeJson(paths.supportRealMetadata, { ...metadata, csvSha256 });
-  const normalization = JSON.parse(readFileSync(paths.gdpDisplayNormalization, "utf8"));
-  writeJson(paths.gdpDisplayNormalization, {
-    ...normalization,
-    real: { ...normalization.real, csvSha256 },
-  });
-}
-
-function replaceQuarterlySupportCsv(
-  paths: GdpPaths,
-  measure: "current-prices" | "previous-year-chain-linked",
-  csv: string,
-): void {
-  const kind = measure === "current-prices" ? "Nominal" : "Real";
-  const support = paths[`quarterlySupport${kind}`];
-  const official = paths[`quarterlyOfficial${kind}`];
-  const estat = paths[`quarterlyEstat${kind}`];
-  const metadataPath = paths[`quarterlySupport${kind}Metadata`];
-  writeFileSync(support, csv);
-  writeFileSync(official, csv);
-  writeFileSync(estat, csv);
-  const metadata = JSON.parse(readFileSync(metadataPath, "utf8"));
-  const csvSha256 = createHash("sha256").update(csv).digest("hex");
-  writeJson(metadataPath, {
-    ...metadata,
-    csvSha256,
-    estatSource: {
-      ...metadata.estatSource,
-      snapshotCsvSha256: csvSha256,
-    },
-  });
-}
 
 function writeJson(file: string, value: unknown): Buffer {
   const bytes = Buffer.from(JSON.stringify(value));
@@ -256,8 +75,6 @@ function write2025CtiValidationFixture(mainCsv: string) {
     baseYear: 2025,
     pair: "2025",
     mainPath: path.join(root, "main.csv"),
-    supportNominalPath: "unused-nominal.csv",
-    supportRealPath: "unused-real.csv",
   };
   writeFileSync(pair.mainPath, mainCsv);
   for (const file of Object.values(paths)) writeFileSync(file, "placeholder");
@@ -1023,8 +840,6 @@ describe("2025 CTI candidate pair validation", () => {
       baseYear: 2025,
       pair: "2025",
       mainPath: paths.candidateMain,
-      supportNominalPath: paths.candidateSupportNominal,
-      supportRealPath: paths.candidateSupportReal,
     };
     buildCtiFilePathsMock.mockReturnValue(paths);
 
@@ -1040,8 +855,6 @@ describe("2025 CTI candidate pair validation", () => {
       baseYear: 2025,
       pair: "2025",
       mainPath: paths.candidateMain,
-      supportNominalPath: paths.candidateSupportNominal,
-      supportRealPath: paths.candidateSupportReal,
     };
     const quarterlyCsv = readFileSync(paths.candidateDistributionAdjustedQuarterly, "utf8").replace(
       /^2018Q2(?=,)/m,
@@ -1080,8 +893,6 @@ describe("2025 CTI candidate pair validation", () => {
       baseYear: 2025,
       pair: "2025",
       mainPath: paths.candidateMain,
-      supportNominalPath: paths.candidateSupportNominal,
-      supportRealPath: paths.candidateSupportReal,
     };
     const quarterlyCsv = readFileSync(paths.candidateDistributionAdjustedQuarterly, "utf8").replace(
       /^period,/m,
@@ -1120,8 +931,6 @@ describe("2025 CTI candidate pair validation", () => {
       baseYear: 2025,
       pair: "2025",
       mainPath: paths.candidateMain,
-      supportNominalPath: paths.candidateSupportNominal,
-      supportRealPath: paths.candidateSupportReal,
     };
     const sourceLines = readFileSync(paths.candidateMain, "utf8").split(/\r?\n/);
     const decemberIndex = sourceLines.findIndex((line) => line.split(",")[1] === "2025年12月");
@@ -1155,8 +964,6 @@ describe("2025 CTI candidate pair validation", () => {
       baseYear: 2025,
       pair: "2025",
       mainPath: paths.candidateMain,
-      supportNominalPath: paths.candidateSupportNominal,
-      supportRealPath: paths.candidateSupportReal,
     };
     const originalRead = readFileSyncMock.getMockImplementation()!;
     readFileSyncMock.mockImplementation((file, options) => {
@@ -1185,8 +992,6 @@ describe("2025 CTI candidate pair validation", () => {
       baseYear: 2025,
       pair: "2025",
       mainPath: paths.candidateMain,
-      supportNominalPath: paths.candidateSupportNominal,
-      supportRealPath: paths.candidateSupportReal,
     };
     const manifestPath = path.join(process.cwd(), "data/source/cti-adjusted/manifest.json");
     const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
@@ -1239,8 +1044,6 @@ describe("2025 CTI candidate pair validation", () => {
       baseYear: 2025,
       pair: "2025",
       mainPath: path.join(root, "main.csv"),
-      supportNominalPath: "unused-nominal.csv",
-      supportRealPath: "unused-real.csv",
     };
 
     expect(validateCtiPair(pair, missingPaths as never)).toBe("missing required CTI set file");
@@ -1313,8 +1116,6 @@ describe("2025 CTI candidate pair validation", () => {
       baseYear: 2025,
       pair: "2025",
       mainPath: paths.candidateMain,
-      supportNominalPath: paths.candidateSupportNominal,
-      supportRealPath: paths.candidateSupportReal,
     };
     const sourceMetadata = JSON.parse(readFileSync(paths.metadata, "utf8"));
     const mapHeader = "official_code,official_name,dashboard_key,value_type,source_stat_inf_id\n";
@@ -1361,8 +1162,6 @@ describe("2025 CTI candidate pair validation", () => {
       baseYear: 2025,
       pair: "2025",
       mainPath: paths.candidateMain,
-      supportNominalPath: paths.candidateSupportNominal,
-      supportRealPath: paths.candidateSupportReal,
     };
     const metadataPath =
       defect === "adjusted-hash" || defect === "adjusted-not-ready"
@@ -1395,8 +1194,6 @@ describe("2025 CTI candidate pair validation", () => {
         baseYear: 2025,
         pair: "2025",
         mainPath: paths.candidateMain,
-        supportNominalPath: paths.candidateSupportNominal,
-        supportRealPath: paths.candidateSupportReal,
       };
       const file =
         kind === "quarterly-metadata"
@@ -1409,365 +1206,4 @@ describe("2025 CTI candidate pair validation", () => {
       expect(result).toBe("invalid official quarterly metadata or Plan39 manifest");
     },
   );
-});
-
-describe("annual GDP support validation", () => {
-  beforeEach(() => buildCtiFilePathsMock.mockReset());
-
-  it("accepts continuous 1994–2025 annual inputs with matching hashes and factors", () => {
-    writeGdpFixture();
-
-    const result = validateGdpSupport();
-
-    expect(result).toMatchObject({
-      factors: { nominal: 1, real: 1.25 },
-    });
-    if (typeof result !== "string") {
-      expect(result.nominal.size).toBe(32);
-      expect(result.real.size).toBe(32);
-      expect(result.nominal.get(2025)).toBe(100);
-      expect(result.real.get(2025)).toBe(80);
-    }
-  });
-
-  it("ignores blank annual CSV rows while retaining the declared year range", () => {
-    const { paths, nominal } = writeGdpFixture();
-    replaceGdpNominalCsv(paths, nominal.replace("1995,100", "\n1995,100"));
-
-    const result = validateGdpSupport();
-    expect(typeof result).not.toBe("string");
-    if (typeof result !== "string") expect(result.nominal.size).toBe(32);
-  });
-
-  it.each([
-    ["missing header", "Year,Other\n2025,1", "missing GDP year or private-consumption header"],
-    ["invalid year", "時間軸（暦年）,民間最終消費支出\nnot-a-year,1", "invalid GDP year or value"],
-    ["invalid value", "時間軸（暦年）,民間最終消費支出\n2025,NaN", "invalid GDP year or value"],
-    ["duplicate year", "時間軸（暦年）,民間最終消費支出\n2025,1\n2025,2", "duplicate GDP year"],
-    ["empty values", "時間軸（暦年）,民間最終消費支出", "GDP support contains no values"],
-  ])("rejects annual CSV with %s", (_label, csv, expected) => {
-    const { paths } = writeGdpFixture();
-    replaceGdpNominalCsv(paths, csv);
-
-    expect(validateGdpSupport()).toBe(expected);
-  });
-
-  it.each([
-    ["wrong identity", { status: "draft" }, "GDP metadata identity is missing"],
-    [
-      "wrong measure",
-      { priceMeasure: "previous-year-chain-linked" },
-      "GDP metadata measure, frequency, or normalization year mismatch",
-    ],
-    ["missing unit", { unit: "" }, "GDP metadata unit, raw-value, or period is missing"],
-    ["missing hash", { csvSha256: undefined }, "GDP metadata SHA-256 is invalid"],
-    ["invalid hash", { csvSha256: "bad" }, "GDP metadata SHA-256 is invalid"],
-    [
-      "wrong period count",
-      { period: { start: "1994", end: "2025", annualRows: 31 } },
-      "GDP metadata period mismatch",
-    ],
-  ])("rejects annual metadata with %s", (_label, override, expected) => {
-    const { paths } = writeGdpFixture();
-    const metadata = JSON.parse(readFileSync(paths.supportNominalMetadata, "utf8"));
-    writeJson(paths.supportNominalMetadata, { ...metadata, ...override });
-
-    expect(validateGdpSupport()).toBe(expected);
-  });
-
-  it("rejects a support series that is not continuous from 1994 through 2025", () => {
-    const { paths } = writeGdpFixture();
-    const gap = [
-      "時間軸（暦年）,民間最終消費支出",
-      ...Array.from({ length: 32 }, (_, index) => `${1994 + index + (index > 10 ? 1 : 0)},100`),
-    ].join("\n");
-    replaceGdpNominalCsv(paths, gap);
-
-    expect(validateGdpSupport()).toBe(
-      "GDP support years must be continuous from 1994 through 2025",
-    );
-  });
-
-  it("fails the annual set gate for missing metadata and validates a malformed real series", () => {
-    const { paths } = writeGdpFixture();
-    unlinkSync(paths.supportNominalMetadata);
-    expect(validateGdpSupport()).toBe("missing GDP display set file");
-
-    const fresh = writeGdpFixture();
-    const malformed = "時間軸（暦年）,民間最終消費支出\n2025,NaN";
-    replaceGdpRealCsv(fresh.paths, malformed);
-    expect(validateGdpSupport()).toBe("invalid GDP year or value");
-  });
-
-  it("reports metadata disappearing after the complete display set preflight", () => {
-    const { paths } = writeGdpFixture();
-    const metadataPath = paths.supportNominalMetadata;
-    const originalExistsSync = existsSyncMock.getMockImplementation()!;
-    let removed = false;
-    existsSyncMock.mockImplementation((file) => {
-      if (file === metadataPath && !removed) {
-        removed = true;
-        unlinkSync(metadataPath);
-        return true;
-      }
-      return originalExistsSync(file);
-    });
-
-    try {
-      expect(validateGdpSupport()).toBe("missing GDP metadata");
-    } finally {
-      existsSyncMock.mockImplementation(originalExistsSync);
-    }
-  });
-
-  it("rejects malformed annual metadata JSON", () => {
-    const { paths } = writeGdpFixture();
-    writeFileSync(paths.supportNominalMetadata, "{");
-
-    expect(validateGdpSupport()).toBe("invalid GDP metadata");
-  });
-
-  const invalidNormalizationCases: Array<[string, Record<string, unknown>, string]> = [
-    [
-      "wrong normalization year",
-      { displayNormalizationYear: 2020 },
-      "GDP normalization year mismatch",
-    ],
-    [
-      "wrong CSV reference",
-      { nominal: { csv: "other.csv" } },
-      "GDP normalization nominal CSV reference mismatch",
-    ],
-    ["wrong factor", { factors: { nominal: 2, real: 1 } }, "GDP normalization factors mismatch"],
-  ];
-  it.each(invalidNormalizationCases)("rejects normalization with %s", (_label, patch, expected) => {
-    const { paths } = writeGdpFixture();
-    const normalization = JSON.parse(readFileSync(paths.gdpDisplayNormalization, "utf8"));
-    const nested = patch as {
-      nominal?: Record<string, unknown>;
-      factors?: Record<string, number>;
-    };
-    writeJson(paths.gdpDisplayNormalization, {
-      ...normalization,
-      ...patch,
-      nominal: { ...normalization.nominal, ...nested.nominal },
-      factors: { ...normalization.factors, ...nested.factors },
-    });
-
-    expect(validateGdpSupport()).toBe(expected);
-  });
-
-  it("rejects malformed normalization JSON and a zero 2025 normalization base", () => {
-    const { paths } = writeGdpFixture();
-    writeFileSync(paths.gdpDisplayNormalization, "{");
-    expect(validateGdpSupport()).toBe("invalid GDP normalization record");
-
-    const { paths: zeroBasePaths } = writeGdpFixture();
-    const zeroBase = [
-      "時間軸（暦年）,民間最終消費支出",
-      ...Array.from({ length: 32 }, (_, index) => `${1994 + index},${index === 31 ? 0 : 100}`),
-    ].join("\n");
-    replaceGdpNominalCsv(zeroBasePaths, zeroBase);
-    expect(validateGdpSupport()).toBe("missing or invalid 2025 annual GDP value");
-  });
-
-  it("reports a missing annual support file before reading metadata", () => {
-    const { paths } = writeGdpFixture();
-    unlinkSync(paths.candidateSupportNominal);
-
-    expect(validateGdpSupport()).toBe("missing GDP display set file");
-  });
-});
-
-describe("quarterly GDP support validation", () => {
-  beforeEach(() => buildCtiFilePathsMock.mockReset());
-
-  it("validates and converts a full independent quarterly comparison set", () => {
-    writeGdpFixture();
-
-    expect(validateQuarterlyGdpSupport()).toMatchObject({
-      valid: true,
-      comparisonReady: true,
-      independentConfirmation: "ready",
-      normalizationFactors: { nominal: 1, real: 1.25 },
-    });
-    const data = loadQuarterlyGdpData();
-    expect(data.rows).toHaveLength(84);
-    expect(data.comparisonReady).toBe(true);
-    expect(data.rows[0]).toMatchObject({ nominalRaw: 100, realRaw: 80 });
-    expect(data.rows[0]).toHaveProperty("nominalComparison");
-    expect(data.rows[0]).toHaveProperty("realComparison");
-  });
-
-  it("retains validated raw rows until independent confirmation is ready", () => {
-    const { paths } = writeGdpFixture();
-    const metadata = JSON.parse(readFileSync(paths.quarterlySupportNominalMetadata, "utf8"));
-    metadata.independentConfirmation = "pending-independent-confirmation";
-    metadata.estatSource.comparison.status = "pending";
-    writeJson(paths.quarterlySupportNominalMetadata, metadata);
-    const validation = validateQuarterlyGdpSupport();
-
-    expect(validation).toMatchObject({ valid: true, comparisonReady: false });
-    expect(loadQuarterlyGdpData()).toMatchObject({
-      comparisonReady: false,
-      rows: expect.arrayContaining([expect.objectContaining({ nominalRaw: 100, realRaw: 80 })]),
-    });
-    expect(loadQuarterlyGdpData().rows[0]).not.toHaveProperty("nominalComparison");
-  });
-
-  it.each([
-    ["missing metadata file", "missing-meta"],
-    ["missing real series metadata", "real-missing-meta"],
-    ["malformed metadata JSON", "bad-meta-json"],
-    ["mismatched CSV digest", "bad-hash"],
-    ["wrong quarterly period declaration", "wrong-period"],
-    ["wrong e-Stat series identity", "wrong-source"],
-    ["unsupported row count", "short-data"],
-    ["invalid data period", "bad-row-period"],
-    ["zero data value", "zero-row-value"],
-    ["duplicate data period", "duplicate-row-period"],
-    ["snapshot digest mismatch", "snapshot-hash"],
-    ["snapshot header shape", "snapshot-shape"],
-    ["snapshot data comparison", "snapshot-compare"],
-    ["noncontinuous quarter sequence", "period-gap"],
-    ["zero-average comparison base", "zero-quarterly-base"],
-    ["invalid confirmation state", "bad-confirmation"],
-    ["failed independent confirmation", "failed-confirmation"],
-    ["failed ready comparison", "failed-ready-comparison"],
-  ])("fails closed for quarterly input with %s", (_label, defect) => {
-    const { paths } = writeGdpFixture();
-    const nominalCsv = quarterlyRowsFor("current-prices", 100);
-    if (defect === "missing-meta") unlinkSync(paths.quarterlySupportNominalMetadata);
-    if (defect === "real-missing-meta") unlinkSync(paths.quarterlySupportRealMetadata);
-    if (defect === "bad-meta-json") writeFileSync(paths.quarterlySupportNominalMetadata, "{");
-    if (defect === "bad-hash") {
-      const metadata = JSON.parse(readFileSync(paths.quarterlySupportNominalMetadata, "utf8"));
-      writeJson(paths.quarterlySupportNominalMetadata, { ...metadata, csvSha256: "0".repeat(64) });
-    }
-    if (defect === "wrong-period") {
-      const metadata = JSON.parse(readFileSync(paths.quarterlySupportNominalMetadata, "utf8"));
-      writeJson(paths.quarterlySupportNominalMetadata, {
-        ...metadata,
-        period: { ...metadata.period, start: "2006-Q1" },
-      });
-    }
-    if (defect === "wrong-source") {
-      const metadata = JSON.parse(readFileSync(paths.quarterlySupportNominalMetadata, "utf8"));
-      writeJson(paths.quarterlySupportNominalMetadata, {
-        ...metadata,
-        estatSource: { ...metadata.estatSource, statsDataId: "wrong-id" },
-      });
-    }
-    if (defect === "short-data") {
-      replaceQuarterlySupportCsv(
-        paths,
-        "current-prices",
-        nominalCsv.split("\n").slice(0, -1).join("\n"),
-      );
-    }
-    if (defect === "bad-row-period") {
-      replaceQuarterlySupportCsv(paths, "current-prices", nominalCsv.replace("2005-Q1", "2005-Q0"));
-    }
-    if (defect === "zero-row-value") {
-      replaceQuarterlySupportCsv(
-        paths,
-        "current-prices",
-        nominalCsv.replace("2005-Q1,100", "2005-Q1,0"),
-      );
-    }
-    if (defect === "duplicate-row-period") {
-      replaceQuarterlySupportCsv(
-        paths,
-        "current-prices",
-        nominalCsv.replace("2005-Q1,100", "2005-Q2,100"),
-      );
-    }
-    if (defect === "snapshot-hash") {
-      writeFileSync(paths.quarterlyOfficialNominal, "tampered snapshot");
-    }
-    if (defect === "snapshot-shape") {
-      const shape = nominalCsv.replace("period,value,series,priceMeasure", "period,value");
-      writeFileSync(paths.quarterlySupportNominal, shape);
-      writeFileSync(paths.quarterlyOfficialNominal, shape);
-      writeFileSync(paths.quarterlyEstatNominal, shape);
-      const metadata = JSON.parse(readFileSync(paths.quarterlySupportNominalMetadata, "utf8"));
-      const hash = createHash("sha256").update(shape).digest("hex");
-      writeJson(paths.quarterlySupportNominalMetadata, {
-        ...metadata,
-        csvSha256: hash,
-        estatSource: { ...metadata.estatSource, snapshotCsvSha256: hash },
-      });
-    }
-    if (defect === "snapshot-compare") {
-      const wrongSeries = nominalCsv.replaceAll(
-        "private-final-consumption-expenditure",
-        "other-series",
-      );
-      replaceQuarterlySupportCsv(paths, "current-prices", wrongSeries);
-    }
-    if (defect === "period-gap") {
-      const gap = [
-        "period,value,series,priceMeasure",
-        ...Array.from({ length: 84 }, (_, index) => {
-          const shifted = index >= 8 ? index + 1 : index;
-          const year = 2005 + Math.floor(shifted / 4);
-          const quarter = (shifted % 4) + 1;
-          return `${year}-Q${quarter},100,private-final-consumption-expenditure,current-prices`;
-        }),
-      ].join("\n");
-      replaceQuarterlySupportCsv(paths, "current-prices", gap);
-    }
-    if (defect === "zero-quarterly-base") {
-      const zeroBase = nominalCsv.replace(
-        "2025-Q1,100,private-final-consumption-expenditure,current-prices\n2025-Q2,100,private-final-consumption-expenditure,current-prices\n2025-Q3,100,private-final-consumption-expenditure,current-prices\n2025-Q4,100,private-final-consumption-expenditure,current-prices",
-        "2025-Q1,1,private-final-consumption-expenditure,current-prices\n2025-Q2,-1,private-final-consumption-expenditure,current-prices\n2025-Q3,1,private-final-consumption-expenditure,current-prices\n2025-Q4,-1,private-final-consumption-expenditure,current-prices",
-      );
-      replaceQuarterlySupportCsv(paths, "current-prices", zeroBase);
-    }
-    if (defect === "bad-confirmation") {
-      const metadata = JSON.parse(readFileSync(paths.quarterlySupportNominalMetadata, "utf8"));
-      writeJson(paths.quarterlySupportNominalMetadata, {
-        ...metadata,
-        independentConfirmation: "unknown",
-      });
-    }
-    if (defect === "failed-confirmation") {
-      const metadata = JSON.parse(readFileSync(paths.quarterlySupportNominalMetadata, "utf8"));
-      writeJson(paths.quarterlySupportNominalMetadata, {
-        ...metadata,
-        independentConfirmation: "failed",
-        estatSource: {
-          ...metadata.estatSource,
-          comparison: { ...metadata.estatSource.comparison, status: "failed" },
-        },
-      });
-    }
-    if (defect === "failed-ready-comparison") {
-      const metadata = JSON.parse(readFileSync(paths.quarterlySupportNominalMetadata, "utf8"));
-      writeJson(paths.quarterlySupportNominalMetadata, {
-        ...metadata,
-        estatSource: {
-          ...metadata.estatSource,
-          comparison: { ...metadata.estatSource.comparison, mismatches: 1 },
-        },
-      });
-    }
-
-    const result = validateQuarterlyGdpSupport();
-    if (defect === "failed-confirmation") {
-      expect(result).toMatchObject({
-        valid: true,
-        comparisonReady: false,
-        independentConfirmation: "failed",
-      });
-      const data = loadQuarterlyGdpData();
-      expect(data.rows).toHaveLength(84);
-      expect(data.comparisonReady).toBe(false);
-      expect(data.rows[0]).not.toHaveProperty("nominalComparison");
-      return;
-    }
-    expect(result.valid).toBe(false);
-    expect(result.reason).toBeTruthy();
-    expect(loadQuarterlyGdpData()).toEqual({ rows: [], comparisonReady: false });
-  });
 });

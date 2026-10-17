@@ -8,8 +8,6 @@ import { loadCtiAdjustedInputs } from "../../server/lib/data-loader/ctiAdjusted"
 import { buildCtiFilePaths } from "../../server/lib/dataIo";
 import {
   isContinuousMonths,
-  validateCtiLegacySupport,
-  validateCtiLegacySupportPair,
   validateCtiMetadata,
   validateCtiPair,
   selectCtiPair,
@@ -211,22 +209,10 @@ describe("CTI adjusted loader validation coverage", () => {
   });
 });
 
-const supportHeader = "時間軸（四半期）,民間最終消費支出";
-const validSupport = [supportHeader, "2020年1～3月期,100", "2020年4～6月期,101"].join("\n");
-
-function writeLegacyPair(
-  root: string,
-  main: string,
-  nominal = validSupport,
-  real = validSupport,
-): CtiPair {
+function writeCtiPairFixture(root: string, main: string): CtiPair {
   mkdirSync(root, { recursive: true });
   const mainPath = path.join(root, "main.csv");
-  const supportNominalPath = path.join(root, "support-nominal.csv");
-  const supportRealPath = path.join(root, "support-real.csv");
   writeFileSync(mainPath, main);
-  writeFileSync(supportNominalPath, nominal);
-  writeFileSync(supportRealPath, real);
 
   const p = pathsFor(root);
   writeFileSync(p.seriesMap, "");
@@ -237,7 +223,7 @@ function writeLegacyPair(
   writeFileSync(p.candidateDistributionAdjustedQuarterly, "");
   writeFileSync(p.candidateDistributionAdjustedQuarterlyMetadata, "");
 
-  return { baseYear: 2025, pair: "2025", mainPath, supportNominalPath, supportRealPath };
+  return { baseYear: 2025, pair: "2025", mainPath };
 }
 
 function pathsFor(root: string): Parameters<typeof validateCtiPair>[1] {
@@ -249,7 +235,7 @@ function pathsFor(root: string): Parameters<typeof validateCtiPair>[1] {
   return res as Parameters<typeof validateCtiPair>[1];
 }
 
-describe("CTI legacy input validation coverage", () => {
+describe("current CTI input validation coverage", () => {
   it("selects the verified 2025 CTI pair from the current source set", () => {
     expect(selectCtiPair()).toMatchObject({
       pair: { baseYear: 2025, pair: "2025" },
@@ -273,46 +259,6 @@ describe("CTI legacy input validation coverage", () => {
 
   it("treats an empty month list as continuous by the validator's vacuous rule", () => {
     expect(isContinuousMonths([])).toBe(true);
-  });
-
-  it.each([
-    ["missing header", "統計名,系列\n2020,1", "missing CTI support period or series header"],
-    ["empty period", `${supportHeader}\n,100`, "invalid or duplicate CTI support period"],
-    ["malformed period", `${supportHeader}\n2020Q1,100`, "invalid or duplicate CTI support period"],
-    [
-      "duplicate period",
-      `${supportHeader}\n2020年1～3月期,100\n2020年1～3月期,101`,
-      "invalid or duplicate CTI support period",
-    ],
-    ["dash value", `${supportHeader}\n2020年1～3月期,-`, "invalid CTI support value"],
-    ["non-numeric value", `${supportHeader}\n2020年1～3月期,NaN`, "invalid CTI support value"],
-    ["no data", supportHeader, "CTI support contains no values"],
-    [
-      "discontinuous quarters",
-      `${supportHeader}\n2020年1～3月期,100\n2020年7～9月期,101`,
-      "CTI support periods are not continuous",
-    ],
-  ])("returns the specific support-input error for %s", (_label, content, expected) => {
-    expect(validateCtiLegacySupport(content)).toBe(expected);
-  });
-
-  it("rejects the nominal support error before inspecting real support", () => {
-    expect(validateCtiLegacySupportPair("bad", "bad")).toBe(
-      "missing CTI support period or series header",
-    );
-  });
-
-  it("returns the real support validation error after nominal support passes", () => {
-    expect(validateCtiLegacySupportPair(validSupport, `${supportHeader}\n,100`)).toBe(
-      "invalid or duplicate CTI support period",
-    );
-  });
-
-  it("rejects pair support with a missing matching period", () => {
-    const real = `${supportHeader}\n2020年4～6月期,100\n2020年7～9月期,101`;
-    expect(validateCtiLegacySupportPair(validSupport, real)).toBe(
-      "CTI nominal/real support period set mismatch",
-    );
   });
 
   it.each([
@@ -358,20 +304,20 @@ describe("CTI legacy input validation coverage", () => {
     expect(validateCtiMetadata(metadataPath, "x.csv")).toEqual(value);
   });
 
-  it("rejects legacy pairs at each main-file validation boundary", () => {
+  it("rejects malformed current CTI pairs at each main-file validation boundary", () => {
     const root = temporaryDirectory("cti-pair-boundary-");
-    const missingHeader = writeLegacyPair(root, "title,other\n2020,1");
+    const missingHeader = writeCtiPairFixture(root, "title,other\n2020,1");
     expect(validateCtiPair(missingHeader, pathsFor(root))).toBe("missing CTI 年月 header");
 
-    const missingTotals = writeLegacyPair(root, "年月,総合\n2020年1月,1");
+    const missingTotals = writeCtiPairFixture(root, "年月,総合\n2020年1月,1");
     expect(validateCtiPair(missingTotals, pathsFor(root))).toBe(
       "missing required CTI total headers",
     );
 
-    const noMonths = writeLegacyPair(root, "年月,消費支出（名目）,消費支出（実質）\n");
+    const noMonths = writeCtiPairFixture(root, "年月,消費支出（名目）,消費支出（実質）\n");
     expect(validateCtiPair(noMonths, pathsFor(root))).toBe("invalid or discontinuous CTI 年月");
 
-    const brokenSequence = writeLegacyPair(
+    const brokenSequence = writeCtiPairFixture(
       root,
       "年月,消費支出（名目）,消費支出（実質）\n2020年1月,1,1\n2020年3月,1,1",
     );
@@ -379,13 +325,13 @@ describe("CTI legacy input validation coverage", () => {
       "invalid or discontinuous CTI 年月",
     );
 
-    const duplicateMonth = writeLegacyPair(
+    const duplicateMonth = writeCtiPairFixture(
       root,
       "年月,消費支出（名目）,消費支出（実質）\n2020年1月,1,1\n2020年1月,1,1",
     );
     expect(validateCtiPair(duplicateMonth, pathsFor(root))).toBe("invalid or duplicate CTI 年月");
 
-    const invalidValue = writeLegacyPair(
+    const invalidValue = writeCtiPairFixture(
       root,
       "年月,消費支出（名目）,消費支出（実質）\n2020年1月,-,1",
     );

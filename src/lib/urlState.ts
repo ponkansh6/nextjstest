@@ -2,7 +2,6 @@ export interface UrlStateValues {
   from: number;
   to: number;
   hidden: string[];
-  adv: boolean;
 }
 
 /**
@@ -32,11 +31,9 @@ export function serializeUrlState(
   } else {
     params.delete("hidden");
   }
-  if (values.adv) {
-    params.set("adv", "1");
-  } else {
-    params.delete("adv");
-  }
+  // `adv` was used by the retired NewGraph extension toggle. Remove legacy
+  // links while preserving all unrelated query parameters.
+  params.delete("adv");
 
   return params;
 }

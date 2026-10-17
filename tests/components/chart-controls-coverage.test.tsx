@@ -7,9 +7,11 @@ import { ChartFilters } from "@/app/components/ChartFilters";
 import ChartInfoButton from "@/app/components/ChartInfoButton";
 import ChartInfoContentRenderer from "@/app/components/ChartInfoContentRenderer";
 import { DataTablesSection } from "@/app/components/DataTablesSection";
-import { SUPPORT_SERIES_KEY_NOMINAL, type SeriesMetadata } from "@/lib/chartConstants";
+import { type SeriesMetadata } from "@/lib/chartConstants";
 import type { ChartInfoContent } from "@/lib/chartInfoContent";
 
+const TEST_SUPPORT_NOMINAL_KEY = "民間最終消費支出（名目）";
+const TEST_SUPPORT_REAL_KEY = "民間最終消費支出（実質）";
 vi.mock("@/app/components/CpiChart.module.css", () => ({
   default: new Proxy({}, { get: (_target, key) => key }),
 }));
@@ -300,8 +302,8 @@ describe("chart control coverage contracts", () => {
       <>
         <ChartExportButton
           title="Nominal"
-          data={[{ 年月: "2025Q1", [SUPPORT_SERIES_KEY_NOMINAL]: 10 }]}
-          keys={[SUPPORT_SERIES_KEY_NOMINAL]}
+          data={[{ 年月: "2025Q1", [TEST_SUPPORT_NOMINAL_KEY]: 10 }]}
+          keys={[TEST_SUPPORT_NOMINAL_KEY]}
         />
         <ChartExportButton
           title="Legacy"
@@ -342,7 +344,7 @@ describe("chart control coverage contracts", () => {
               "series",
               "missing",
               "legacy",
-              SUPPORT_SERIES_KEY_NOMINAL,
+              TEST_SUPPORT_NOMINAL_KEY,
               "CTIミクロ調整系列（食料）",
               "cpi-all",
               "cpi-source",
@@ -457,7 +459,7 @@ describe("chart control coverage contracts", () => {
               descriptor,
               { ...descriptor, key: "missing", estimateVersion: "plan39-v2" },
               { ...descriptor, key: "legacy", baseYear: 2020 },
-              { ...descriptor, key: SUPPORT_SERIES_KEY_NOMINAL },
+              { ...descriptor, key: TEST_SUPPORT_NOMINAL_KEY },
               { ...descriptor, key: "CTIミクロ調整系列（食料）" },
             ],
           },

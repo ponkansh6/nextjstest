@@ -3,7 +3,10 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import React from "react";
 import { SpendingBarChart } from "@/app/components/SpendingBarChart";
-import { SUPPORT_SERIES_KEY_NOMINAL } from "@/lib/chartConstants";
+import { QUARTERLY_PUBLIC_NOMINAL_KEYS } from "@/lib/quarterlyPublicProjection";
+import type { SeriesMeasurement } from "@/types/chart";
+
+const TEST_SYNTHETIC_KEY = "Synthetic normalized value";
 
 // Mock Recharts components because JSDOM cannot render SVG / layout
 vi.mock("recharts", () => ({
@@ -84,7 +87,7 @@ describe("SpendingBarChart component legendMode tests", () => {
       <SpendingBarChart
         title="消費支出"
         data={mockData}
-        keys={["食料", SUPPORT_SERIES_KEY_NOMINAL]}
+        keys={mockKeys}
         colors={mockColors}
         hiddenKeys={[]}
         onToggle={vi.fn()}
@@ -97,109 +100,73 @@ describe("SpendingBarChart component legendMode tests", () => {
       />,
     );
 
-  it("Plan24: renders the pre-2018 GDP series as a Bar and never renders a GDP Line", () => {
-    renderChart({
-      data: [
-        {
-          label: "2017Q4",
-          年: 2017,
-          quarter: 4,
-          年月: "2017Q4",
-          [SUPPORT_SERIES_KEY_NOMINAL]: 100,
-        },
-      ],
-      keys: [SUPPORT_SERIES_KEY_NOMINAL],
-    });
-
-    expect(screen.getAllByTestId("bar-mock").map((node) => node.getAttribute("data-key"))).toEqual([
-      SUPPORT_SERIES_KEY_NOMINAL,
-    ]);
-    expect(screen.queryAllByTestId("line-mock")).toHaveLength(0);
-  });
-
-  it("annotates the Plan39 quarterly nominal series boundary", () => {
-    renderChart({
-      data: [
-        {
-          label: "2017Q4",
-          年: 2017,
-          quarter: 4,
-          年月: "2017Q4",
-          [SUPPORT_SERIES_KEY_NOMINAL]: 100,
-        },
-        {
-          label: "2018Q1",
-          年: 2018,
-          quarter: 1,
-          年月: "2018Q1",
-          食料: 30,
-        },
-      ],
-    });
-
-    const note = screen.getByTestId("spending-series-switch-note");
-    expect(note.getAttribute("data-series-switch")).toBe(
-      "plan39-v2-bottom-up-to-official-adjusted-quarters",
-    );
-    expect(note.textContent).toContain("2005Q1〜2016Q4：名目接続推計を月次パターンで四半期化。");
-    expect(note.textContent).toContain("2017Q1以降：総世帯・調整系列の公式名目四半期値");
-  });
-
-  it("does not show the legacy missing-support message when Plan39 measurements exist", () => {
-    renderChart({
-      data: [
-        {
-          label: "2005Q1",
-          年: 2005,
-          quarter: 1,
-          年月: "2005Q1",
-          食料: 30,
-          measurements: {
-            食料: {
-              key: "食料",
-              label: "食料",
-              unit: "指数",
-              source: "Plan39-v2",
-              valueType: "comparison",
-              value: 30,
-              status: "available",
-              reason: null,
-              frequency: "quarterly",
-              aggregation: "derived",
-              seriesType: "estimated_adjusted",
-              official: false,
-              annualAnchorType: "estimated",
-              quarterlyDerived: true,
-            },
-          },
-        },
-      ],
-    });
-
-    expect(screen.queryByText(/CTIミクロ名目四半期系列は利用できません/)).toBeNull();
-  });
-
-  it("keeps the regular GDP series public contract unchanged with or without the advanced flag", () => {
+  it("renders all ten Plan40 nominal expense keys with Plan39 boundary measurements", () => {
     const data = [
-      {
-        label: "2017Q4",
-        年: 2017,
-        quarter: 4,
-        年月: "2017Q4",
-        [SUPPORT_SERIES_KEY_NOMINAL]: 100,
-      },
-      {
-        label: "2018Q1",
-        年: 2018,
-        quarter: 1,
-        年月: "2018Q1",
-        [SUPPORT_SERIES_KEY_NOMINAL]: 200,
-      },
+      { label: "2016Q4", 年: 2016, quarter: 4, 年月: "2016Q4" },
+      { label: "2017Q1", 年: 2017, quarter: 1, 年月: "2017Q1" },
+    ].map((row, rowIndex) => ({
+      ...row,
+      ...Object.fromEntries(QUARTERLY_PUBLIC_NOMINAL_KEYS.map((key) => [key, 100 + rowIndex])),
+      measurements: Object.fromEntries(
+        QUARTERLY_PUBLIC_NOMINAL_KEYS.map((key) => [
+          key,
+          {
+            key,
+            label: key,
+            unit: "円",
+            source: "Plan40-quarterly-public",
+            valueType: "comparison" as const,
+            value: 100 + rowIndex,
+            status: "available" as const,
+            reason: null,
+            frequency: "quarterly" as const,
+            aggregation: "derived",
+            seriesType:
+              rowIndex === 0 ? ("estimated_adjusted" as const) : ("official_adjusted" as const),
+            official: rowIndex === 1,
+            annualAnchorType: rowIndex === 0 ? ("estimated" as const) : ("official" as const),
+            quarterlyDerived: rowIndex === 0,
+          },
+        ]),
+      ) as Record<string, SeriesMeasurement>,
+    }));
+
+    const { container } = renderChart({ data, keys: [...QUARTERLY_PUBLIC_NOMINAL_KEYS] });
+    const chartData = JSON.parse(
+      container.querySelector("[data-testid='barchart']")?.getAttribute("data-rows") || "[]",
+    );
+    expect(container.querySelectorAll("[data-testid='bar-mock']")).toHaveLength(10);
+    expect(
+      chartData.map((row: Record<string, unknown>) => row[QUARTERLY_PUBLIC_NOMINAL_KEYS[0]]),
+    ).toEqual([100, 101]);
+    expect(chartData[0].measurements[QUARTERLY_PUBLIC_NOMINAL_KEYS[0]].seriesType).toBe(
+      "estimated_adjusted",
+    );
+    expect(chartData[1].measurements[QUARTERLY_PUBLIC_NOMINAL_KEYS[0]].seriesType).toBe(
+      "official_adjusted",
+    );
+  });
+
+  it("keeps a synthetic series only when it has a normalized public value", () => {
+    const { container } = renderChart({
+      data: [{ label: "2018Q1", 年: 2018, quarter: 1, 年月: "2018Q1", [TEST_SYNTHETIC_KEY]: 100 }],
+      keys: [TEST_SYNTHETIC_KEY],
+    });
+    const contract = container.querySelector("[data-testid='chart-data-contract']");
+    expect(contract?.getAttribute("data-series")).toContain(TEST_SYNTHETIC_KEY);
+    const value = container.querySelector(`[data-series-key="${TEST_SYNTHETIC_KEY}"]`);
+    expect(value?.getAttribute("data-value")).toBe("100");
+  });
+
+  it("keeps normalized expense output unchanged with or without the advanced flag", () => {
+    const data = [
+      { label: "2017Q4", 年: 2017, quarter: 4, 年月: "2017Q4", 食料: 100 },
+      { label: "2018Q1", 年: 2018, quarter: 1, 年月: "2018Q1", 食料: 200 },
     ];
     const baseProps = {
       title: "消費支出",
       data,
-      keys: [SUPPORT_SERIES_KEY_NOMINAL],
+      keys: ["食料"],
       colors: mockColors,
       hiddenKeys: [],
       onToggle: vi.fn(),
@@ -209,77 +176,27 @@ describe("SpendingBarChart component legendMode tests", () => {
       onToggleQuarter: vi.fn(),
       onReset: vi.fn(),
     } satisfies React.ComponentProps<typeof SpendingBarChart>;
-    const readContract = (container: HTMLElement) => ({
-      keys: container
-        .querySelector("[data-testid='chart-data-contract']")
-        ?.getAttribute("data-series"),
-      rows: Array.from(container.querySelectorAll("[data-chart-data-row]")).map((row) => ({
-        period: row.getAttribute("data-period"),
-        values: Array.from(row.querySelectorAll("[data-series-key]")).map((value) => [
-          value.getAttribute("data-series-key"),
-          value.getAttribute("data-value"),
-        ]),
-      })),
-    });
-    const renderWithFlag = (showAdvanced: boolean) =>
-      render(
-        <SpendingBarChart
-          {...({ ...baseProps, showAdvanced } as React.ComponentProps<typeof SpendingBarChart>)}
-        />,
+    const readRows = (container: HTMLElement) =>
+      JSON.parse(
+        container.querySelector("[data-testid='barchart']")?.getAttribute("data-rows") || "[]",
       );
-
-    const regular = renderWithFlag(false);
-    const regularContract = readContract(regular.container);
-    const regularRows = JSON.parse(
-      regular.container.querySelector("[data-testid='barchart']")?.getAttribute("data-rows") ||
-        "[]",
+    const regular = render(
+      <SpendingBarChart
+        {...({ ...baseProps, showAdvanced: false } as React.ComponentProps<
+          typeof SpendingBarChart
+        >)}
+      />,
     );
+    const regularRows = readRows(regular.container);
     regular.unmount();
 
-    const advanced = renderWithFlag(true);
-    expect(readContract(advanced.container)).toEqual(regularContract);
-    const advancedRows = JSON.parse(
-      advanced.container.querySelector("[data-testid='barchart']")?.getAttribute("data-rows") ||
-        "[]",
+    const advanced = render(
+      <SpendingBarChart
+        {...({ ...baseProps, showAdvanced: true } as React.ComponentProps<typeof SpendingBarChart>)}
+      />,
     );
-    expect(advancedRows).toEqual(regularRows);
-    expect(JSON.stringify(advancedRows)).not.toContain("（延長）");
+    expect(readRows(advanced.container)).toEqual(regularRows);
     expect(advanced.container.querySelectorAll("[data-testid='line-mock']")).toHaveLength(0);
-  });
-
-  it("Plan24: switches at 2018Q1 without filling, copying, or interpolating the boundary", () => {
-    renderChart({
-      data: [
-        {
-          label: "2017Q4",
-          年: 2017,
-          quarter: 4,
-          年月: "2017Q4",
-          [SUPPORT_SERIES_KEY_NOMINAL]: 100,
-          食料: 20,
-        },
-        {
-          label: "2018Q1",
-          年: 2018,
-          quarter: 1,
-          年月: "2018Q1",
-          [SUPPORT_SERIES_KEY_NOMINAL]: 200,
-          食料: 30,
-          住居: 20,
-        },
-      ],
-      keys: ["食料", "住居", SUPPORT_SERIES_KEY_NOMINAL],
-    });
-
-    const rows = JSON.parse(screen.getByTestId("barchart").getAttribute("data-rows") || "[]");
-    expect(rows).toHaveLength(2);
-    expect(rows[0][SUPPORT_SERIES_KEY_NOMINAL]).toBe(100);
-    expect(rows[0].食料).toBeNull();
-    expect(rows[1][SUPPORT_SERIES_KEY_NOMINAL]).toBeNull();
-    expect(rows[1].食料).toBe(30);
-    expect(rows[1].住居).toBe(20);
-    expect(rows[1][SUPPORT_SERIES_KEY_NOMINAL]).not.toBe(0);
-    expect(screen.queryAllByTestId("line-mock")).toHaveLength(0);
   });
 
   // U1: legendMode 未指定（既定 expanded）で <details> が描画されず、凡例が直接表示される

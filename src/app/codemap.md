@@ -6,7 +6,7 @@ Server Componentのページ入口、Clientのダッシュボードcomposition r
 
 ## Design
 
-`page.tsx`は`server/lib/dataLoader.ts`公開facadeを呼び出し、その先の`server/lib/view-models/`実装経路を通じてserializableなview-modelを`CpiChart`へ渡す。`CpiChart`は`CPI_CHART_SECTIONS`、表示用hook、CAGR、URL初期snapshotとReact state、advanced保存、セクションhookを組み立て、7チャートを描画する。URL同期は`useUrlState`の`replaceState`、advancedのlocalStorage保存は`useAdvancedPreference`が担当し、popstate再同期は行わない。遅延対象は`LazyMount`で境界化する。
+`page.tsx`は`server/lib/dataLoader.ts`公開facadeを呼び出し、その先の`server/lib/view-models/`実装経路を通じてserializableなview-modelを`CpiChart`へ渡す。`CpiChart`は`CPI_CHART_SECTIONS`、表示用hook、CAGR、URLのrange stateやlegend hidden state等を組み立て、7チャートを描画する。URL同期は`useUrlState`の`replaceState`が担当し、旧`adv`を削除する。遅延対象は`LazyMount`で境界化する。
 
 ## Flow
 

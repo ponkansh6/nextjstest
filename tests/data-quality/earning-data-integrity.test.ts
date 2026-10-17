@@ -11,18 +11,13 @@ import { parseCsvWithHeader } from "../../server/lib/dataIo";
 import { loadTotalEarningDataInternal } from "../../server/lib/data-loader/earnings";
 import { loadCtiDataInternal } from "../../server/lib/data-loader/cpi";
 import { loadCtiAdjustedV2Estimate } from "../../server/lib/data-loader/ctiAdjusted";
-import {
-  buildCtiFilePaths,
-  buildEarningsFilePaths,
-  parseIndexSection,
-} from "../../server/lib/dataIo";
+import { buildEarningsFilePaths, parseIndexSection } from "../../server/lib/dataIo";
 import { projectQuarterlyPublicView } from "../../src/lib/quarterlyPublicProjection";
 import {
   CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY,
   CTI_ADJUSTED_V2_PUBLIC_REGISTRY,
   CONSUMPTION_TOTAL_12MA_KEY,
   LEGACY_CTI_COMPARISON_KEY,
-  SUPPORT_SERIES_KEY_NOMINAL,
 } from "../../src/lib/chartConstants";
 import { toCanonicalYearMonth } from "../../src/lib/yearMonth";
 import { toEarningsView, type EarningsView } from "../../server/lib/view-models/dashboard";
@@ -104,11 +99,9 @@ const readLegacyCtiAggregation = (row: CpiData | undefined): string | undefined 
 
 describe("Earnings Data Integrity", () => {
   /*
-   * Historical skips retained here are named contracts only: the GDP-backed
-   * NewGraph, annual GDP normalization, and the 2025 auto-loading are
-   * retired/independent contracts; their replacements must not be interpreted
-   * as Plan37 coverage. The five Plan37 boundary/anchor checks below are active
-   * and use the official CTI basic raw/12MA keys.
+   * Historical skips retained here are named legacy checks; the active Plan37
+   * boundary and anchor assertions below use the official CTI basic raw/12MA
+   * keys and do not cover retired GDP loader behavior.
    */
   let earningData: CpiData[];
   let cpiData: CpiData[];
@@ -379,80 +372,6 @@ describe("Earnings Data Integrity", () => {
     expect(month(complete[12].年月) - month(complete[11].年月)).toBe(1);
   });
 
-  it.skip("legacy: verifies the regular 2025 GDP-backed NewGraph series independently", async () => {
-    const paths = buildCtiFilePaths();
-    const readGdp = (file: string) => {
-      const rows = Papa.parse<string[]>(readFileSync(file, "utf8"), {
-        skipEmptyLines: true,
-      }).data;
-      const headerIndex = rows.findIndex((row) => row.includes("時間軸（暦年）"));
-      const header = rows[headerIndex];
-      const yearIndex = header.indexOf("時間軸（暦年）");
-      const valueIndex = header.indexOf("民間最終消費支出");
-      return new Map(
-        rows.slice(headerIndex + 1).flatMap((row) => {
-          const year = Number(row[yearIndex]?.replace("年", ""));
-          const value = Number(row[valueIndex]?.replace(/,/g, ""));
-          return Number.isFinite(year) && Number.isFinite(value) ? [[year, value] as const] : [];
-        }),
-      );
-    };
-    const nominal = readGdp(paths.candidateSupportNominal);
-    const normalization = JSON.parse(readFileSync(paths.gdpDisplayNormalization, "utf8")) as {
-      nominal: { factor: number };
-    };
-    const expectedRaw = nominal.get(2005)!;
-    expect(expectedRaw).toBeGreaterThan(0);
-    expect(nominal.get(2014)).toBeGreaterThan(0);
-    expect(nominal.get(2016)).toBeGreaterThan(0);
-
-    const data = await loadTotalEarningDataInternal();
-    const gdpDisplayValues = data
-      .filter((row) => row.年月.startsWith("2025年"))
-      .map((row) => row["民間最終消費支出（名目・比較指数）"])
-      .filter((value): value is number => typeof value === "number" && Number.isFinite(value));
-    expect(gdpDisplayValues).toHaveLength(12);
-    expect(
-      gdpDisplayValues.reduce((sum, value) => sum + value, 0) / gdpDisplayValues.length,
-    ).toBeCloseTo(100, 6);
-    const regular = data.filter((row) => {
-      const year = Number(row.年月.slice(0, 4));
-      return year >= 2005 && year <= 2017;
-    });
-    expect(regular).toHaveLength(156);
-    expect(
-      regular.every((row) => {
-        const value = row["民間最終消費支出（参考）"];
-        return typeof value === "number" && Number.isFinite(value) && value > 0;
-      }),
-    ).toBe(true);
-
-    const factor = normalization.nominal.factor;
-    const raw = expectedRaw * factor;
-    const firstWindow = [nominal.get(2004)!, nominal.get(2005)!];
-    const expectedFirstMa = ((firstWindow[0] * 11 + firstWindow[1]) / 12) * factor;
-    expect(factor).toBe(100 / nominal.get(2025)!);
-    expect(raw).toBeGreaterThan(0);
-    expect(firstWindow.every(Number.isFinite)).toBe(true);
-    expect(
-      regular.find((row) => row.年月 === "2005年1月")?.["民間最終消費支出（名目・原値）"],
-    ).toBe(expectedRaw);
-    expect(
-      regular.find((row) => row.年月 === "2005年1月")?.["民間最終消費支出（参考）"],
-    ).toBeCloseTo(expectedFirstMa, 10);
-    expect(
-      regular.find((row) => row.年月 === "2014年6月")?.["民間最終消費支出（名目・原値）"],
-    ).toBe(nominal.get(2014));
-    expect(
-      regular.find((row) => row.年月 === "2016年12月")?.["民間最終消費支出（名目・原値）"],
-    ).toBe(nominal.get(2016));
-    expect(data.find((row) => row.年月 === "2018年1月")).toBeDefined();
-    expect(
-      data.find((row) => row.年月 === "2018年1月")?.["民間最終消費支出（参考）"] ?? null,
-    ).toBeNull();
-    expect(data.at(-1)?.["民間最終消費支出（参考）"] ?? null).toBeNull();
-  });
-
   it("audits employment index provenance and preserves the separate part-time ratio series", () => {
     const root = resolve(process.cwd());
     const csvPath = resolve(root, "data/source/employment_indices.csv");
@@ -718,7 +637,7 @@ describe("Earnings Data Integrity", () => {
       });
     });
 
-    it("Plan38: keeps the quarterly public projection free of legacy CTI/GDP/consumption keys", () => {
+    it("Plan40: keeps the quarterly public projection free of legacy CTI/consumption keys", () => {
       const foodKey = CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY.食料;
       const foodMeasurement: SeriesMeasurement = {
         key: foodKey,
@@ -744,19 +663,13 @@ describe("Earnings Data Integrity", () => {
           label: "2017Q4",
           年月: "2017年10月",
           [foodKey]: 100,
-          [SUPPORT_SERIES_KEY_NOMINAL]: 999,
           "CTIミクロ基本系列（名目・原数値）": 101,
           "CTIミクロ基本系列（名目・参考）": 102,
           "CTIミクロ基本系列（名目・参考・延長）": 103,
-          GDP名目原値: 104,
-          GDP名目比較指数: 105,
-          "民間最終消費支出（名目・原値）": 106,
-          "民間最終消費支出（名目・比較指数）": 107,
           measurements: { [foodKey]: foodMeasurement },
         },
       ] as never)[0];
       expect(projected).toHaveProperty(foodKey, 100);
-      expect(projected).not.toHaveProperty(SUPPORT_SERIES_KEY_NOMINAL);
       expect(projected.measurements?.[foodKey]).toMatchObject({
         source:
           "e-Stat 公式Excel cti-distribution-adjusted-000040499087.xlsx / 総・四(原) / 000040499087",
@@ -773,47 +686,7 @@ describe("Earnings Data Integrity", () => {
         "CTIミクロ基本系列（名目・参考）",
         "CTIミクロ基本系列（名目・参考・延長）",
       ];
-      for (const key of [
-        ...retiredCtiKeys,
-        "GDP名目原値",
-        "GDP名目比較指数",
-        SUPPORT_SERIES_KEY_NOMINAL,
-        "民間最終消費支出（名目・原値）",
-        "民間最終消費支出（名目・比較指数）",
-      ])
-        expect(projected).not.toHaveProperty(key);
-    });
-
-    it.skip("legacy: 年次GDP値に基づく2025基準の表示値を検証", async () => {
-      expect(earningData.length).toBeGreaterThan(0);
-      const d2014 = earningData.find((d) => d.年月 === "2014年6月");
-      const d2017 = earningData.find((d) => d.年月 === "2017年12月");
-
-      expect(d2014).toBeDefined();
-      expect(d2017).toBeDefined();
-
-      const val2014 = d2014!["民間最終消費支出（参考）" as keyof CpiData] as number;
-      const val2017 = d2017!["民間最終消費支出（参考）" as keyof CpiData] as number;
-
-      expect(val2014).toBeCloseTo(85.09, 1);
-      expect(val2017).toBeCloseTo(86.41, 1);
-
-      const displayData = await loadTotalEarningDataInternal();
-      const gdp2025 = displayData.find((d) => d.年月 === "2025年1月");
-      const annualRaw = gdp2025?.["民間最終消費支出（名目・原値）" as keyof CpiData];
-      const comparison = gdp2025?.["民間最終消費支出（名目・比較指数）" as keyof CpiData];
-      const normalization = JSON.parse(
-        readFileSync(buildCtiFilePaths().gdpDisplayNormalization, "utf8"),
-      ) as { nominal: { factor: number } };
-
-      expect(typeof annualRaw).toBe("number");
-      expect(typeof comparison).toBe("number");
-      expect(annualRaw as number).toBeGreaterThan(0);
-      expect(comparison as number).toBeCloseTo(
-        (annualRaw as number) * normalization.nominal.factor,
-        10,
-      );
-      expect((annualRaw as number) * normalization.nominal.factor).toBeCloseTo(100, 10);
+      for (const key of retiredCtiKeys) expect(projected).not.toHaveProperty(key);
     });
 
     it.skip("legacy: should base displayed index series on the 2025 calendar-year average", () => {
@@ -842,7 +715,6 @@ describe("Earnings Data Integrity", () => {
       expect(averageFor("CPI総合(参考)" as keyof CpiData)).toBeCloseTo(100, 6);
       expect(Number(dec2025!["CPI総合(12MA)"])).toBeCloseTo(100, 1);
       expect(Number(dec2025!["CTI消費支出（参考）"])).toBeCloseTo(100, 1);
-      expect(Number(dec2025!["民間最終消費支出（参考・延長）"])).toBeCloseTo(100, 1);
 
       // 2020年の行も、互換データの取得元基準ではなく2025年表示基準で評価する。
       const cpi2025Average =
@@ -897,21 +769,9 @@ describe("Earnings Data Integrity", () => {
         expect(Number(row?.raw)).toBeCloseTo(anchor.raw, 6);
       }
     });
-
-    // This 2020 assumption is intentionally limited to the rollback fixture.
-    it.skip("legacy: should keep 2020 fixed scaling rollback-only and leave GDP 2025 comparison keys unset", () => {
-      const rollbackRows = earningData.filter((d) => d.年月.startsWith("2020年"));
-      expect(rollbackRows.length).toBeGreaterThan(0);
-
-      rollbackRows.forEach((row) => {
-        expect(row["民間最終消費支出（名目・比較指数）" as keyof CpiData]).toBeNull();
-        expect(row["民間最終消費支出（名目・原値）" as keyof CpiData]).toBeUndefined();
-        expect(row).toHaveProperty("民間最終消費支出（参考）");
-      });
-    });
   });
 
-  it("restores the legacy CTI comparison contract without leaking into salary or Plan38 data", async () => {
+  it("restores the legacy CTI comparison contract without leaking into salary or quarterly data", async () => {
     const rows = await loadTotalEarningDataInternal();
     const row2017 = rows.find((row) => row.年月 === "2017年12月");
     const row2018 = rows.find((row) => row.年月 === "2018年1月");

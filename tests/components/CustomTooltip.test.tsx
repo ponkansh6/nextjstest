@@ -1,14 +1,20 @@
 import { render, screen, fireEvent, within } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
-import { CustomTooltip } from "../../src/app/components/CustomTooltip";
-import { SUPPORT_SERIES_KEY_NOMINAL } from "../../src/lib/chartConstants";
-import { CPI_CATEGORIES, getDisplayLabel, stackedColors } from "../../src/lib/chartConstants";
-import { EARNINGS_SERIES_REGISTRY, EARNINGS_TOTAL_KEYS } from "../../src/lib/chartConstants";
 import {
+  CustomTooltip,
   formatCpiTooltipTotal,
   formatCpiTooltipValue,
 } from "../../src/app/components/CustomTooltip";
+import {
+  CPI_CATEGORIES,
+  EARNINGS_SERIES_REGISTRY,
+  EARNINGS_TOTAL_KEYS,
+  getDisplayLabel,
+  stackedColors,
+} from "../../src/lib/chartConstants";
 
+const TEST_SUPPORT_NOMINAL_KEY = "Synthetic nominal support";
+const TEST_SUPPORT_REAL_KEY = "Synthetic real support";
 const payload = [{ name: "総合", value: 112.5, color: "#1d4ed8" }];
 
 describe("CustomTooltip", () => {
@@ -133,12 +139,12 @@ describe("CustomTooltip", () => {
         isTouch={false}
         payload={[
           { dataKey: "CPI総合", name: "CPI総合", value: 100 },
-          { dataKey: SUPPORT_SERIES_KEY_NOMINAL, name: "CTIミクロ名目四半期", value: 101 },
+          { dataKey: TEST_SUPPORT_NOMINAL_KEY, name: "Synthetic nominal support", value: 101 },
           { dataKey: "総合(12MA)", name: "給与(総合)", value: 102 },
         ]}
         seriesMeta={[
           { key: "CPI総合", label: "CPI総合", order: 0 },
-          { key: SUPPORT_SERIES_KEY_NOMINAL, label: "CTIミクロ名目四半期", order: 1 },
+          { key: TEST_SUPPORT_NOMINAL_KEY, label: "Synthetic nominal support", order: 1 },
           { key: "総合(12MA)", label: "給与(総合)", order: 2 },
         ]}
         showAllPayload
@@ -360,12 +366,12 @@ describe("CustomTooltip", () => {
     ).toBeDefined();
   });
 
-  it("uses the nominal CTI projection before 2018Q1 and legacy categories after it", () => {
-    const ctiKey = SUPPORT_SERIES_KEY_NOMINAL;
+  it("filters a synthetic support key at a generic quarter boundary", () => {
+    const ctiKey = TEST_SUPPORT_NOMINAL_KEY;
     const legacyKey = "食料（名目）";
     const hiddenKey = "給与(12MA)";
     const payload = [
-      { name: "CTI名目四半期", dataKey: ctiKey, value: 100 },
+      { name: "Synthetic nominal support", dataKey: ctiKey, value: 100 },
       { name: "legacy費目", dataKey: legacyKey, value: 10 },
       { name: "境界外", dataKey: "outside", value: 50 },
       { name: "非表示系列", dataKey: hiddenKey, value: 25 },
@@ -381,7 +387,7 @@ describe("CustomTooltip", () => {
           label={label}
           payload={payload}
           seriesMeta={[
-            { key: ctiKey, label: "CTIミクロ（名目・四半期平均）", color: "#38bdf8", order: 0 },
+            { key: ctiKey, label: "Synthetic nominal support", color: "#38bdf8", order: 0 },
             { key: legacyKey, label: "legacy費目", color: "#2563eb", order: 1 },
           ]}
           allowedKeys={allowedKeys}
@@ -394,7 +400,7 @@ describe("CustomTooltip", () => {
       );
 
     const legacy = renderBoundary("2017Q4");
-    expect(screen.getByText("CTIミクロ（名目・四半期平均）")).toBeDefined();
+    expect(screen.getByText("Synthetic nominal support")).toBeDefined();
     expect(screen.queryByText("legacy費目")).toBeNull();
     expect(screen.queryByText("境界外")).toBeNull();
     expect(screen.queryByText("非表示系列")).toBeNull();
@@ -405,7 +411,7 @@ describe("CustomTooltip", () => {
 
     renderBoundary("2018Q1");
     expect(screen.getByText("legacy費目")).toBeDefined();
-    expect(screen.queryByText("CTIミクロ（名目・四半期平均）")).toBeNull();
+    expect(screen.queryByText("Synthetic nominal support")).toBeNull();
     expect(screen.queryByText("境界外")).toBeNull();
     expect(screen.queryByText("非表示系列")).toBeNull();
     expect(
@@ -621,13 +627,18 @@ describe("CustomTooltip", () => {
     expect(within(totalRow).getByText("150.00")).toBeDefined();
   });
 
-  it("Plan24: excludes GDP comparison values from the CTI total", () => {
+  it("excludes a synthetic support value from the CTI total", () => {
     render(
       <CustomTooltip
         active
         payload={[
           { name: "食料", dataKey: "食料", value: 100, color: "#f00" },
-          { name: "GDP", dataKey: SUPPORT_SERIES_KEY_NOMINAL, value: 200, color: "#0ff" },
+          {
+            name: "Synthetic support",
+            dataKey: TEST_SUPPORT_NOMINAL_KEY,
+            value: 200,
+            color: "#0ff",
+          },
         ]}
         label="2025年1月"
         isMobile={false}
@@ -635,15 +646,15 @@ describe("CustomTooltip", () => {
         tooltipBg="#1e293b"
         tooltipText="#f1f5f9"
         showTotal
-        totalExcludedKeys={[SUPPORT_SERIES_KEY_NOMINAL]}
+        totalExcludedKeys={[TEST_SUPPORT_NOMINAL_KEY]}
       />,
     );
 
     const itemRow = screen.getByText("食料").parentElement as HTMLElement;
     expect(within(itemRow).getByText("100.00")).toBeDefined();
     expect(screen.queryByText("300.00")).toBeNull();
-    const gdpRow = screen.getByText("GDP").parentElement as HTMLElement;
-    expect(within(gdpRow).getByText("200.00")).toBeDefined();
+    const supportRow = screen.getByText("Synthetic support").parentElement as HTMLElement;
+    expect(within(supportRow).getByText("200.00")).toBeDefined();
   });
 
   it("採用: showAllPayload renders every mobile value without the collapsed remainder", () => {
@@ -804,9 +815,9 @@ describe("CustomTooltip", () => {
   it.each(["2017Q4", "2018Q1"] as const)(
     "applies the Spending detail boundary at %s without changing the legend contract",
     (label) => {
-      const gdpKey = SUPPORT_SERIES_KEY_NOMINAL;
+      const supportKey = TEST_SUPPORT_NOMINAL_KEY;
       const ctiKey = "食料（名目）";
-      const allowedKeys = label === "2017Q4" ? [gdpKey] : [ctiKey];
+      const allowedKeys = label === "2017Q4" ? [supportKey] : [ctiKey];
       render(
         <CustomTooltip
           active
@@ -814,11 +825,11 @@ describe("CustomTooltip", () => {
           isTouch={false}
           label={label}
           payload={[
-            { name: "CTI名目", dataKey: gdpKey, value: 100 },
+            { name: "CTI名目", dataKey: supportKey, value: 100 },
             { name: "誤表示CTI", dataKey: ctiKey, value: 25 },
           ]}
           seriesMeta={[
-            { key: gdpKey, label: "CTIミクロ（名目・四半期平均）", color: "#aaa", order: 0 },
+            { key: supportKey, label: "Synthetic nominal support", color: "#aaa", order: 0 },
             { key: ctiKey, label: "食料", color: "#bbb", order: 1 },
           ]}
           allowedKeys={allowedKeys}
@@ -830,11 +841,11 @@ describe("CustomTooltip", () => {
       );
       expect(screen.getByText(label)).toBeDefined();
       if (label === "2017Q4") {
-        expect(screen.getByText("CTIミクロ（名目・四半期平均）")).toBeDefined();
+        expect(screen.getByText("Synthetic nominal support")).toBeDefined();
         expect(screen.queryByText("食料")).toBeNull();
       } else {
         expect(screen.getByText("食料")).toBeDefined();
-        expect(screen.queryByText("CTIミクロ（名目・四半期平均）")).toBeNull();
+        expect(screen.queryByText("Synthetic nominal support")).toBeNull();
       }
       expect(
         within(screen.getByText("合計").parentElement as HTMLElement).getByText(

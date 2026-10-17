@@ -4,15 +4,12 @@ import path from "node:path";
 import Papa from "papaparse";
 import { buildCtiFilePaths } from "../dataIo";
 import { parseYearMonth } from "@/lib/yearMonth";
-import { calculateQuarterLabel } from "@/lib/math/quarter";
 
 export type CtiLoadOptions = { source?: "auto" };
 export type CtiPair = {
   baseYear: 2025;
   pair: "2025";
   mainPath: string;
-  supportNominalPath: string;
-  supportRealPath: string;
 };
 export type CtiReasonCode =
   | "cti_source_missing"
@@ -94,64 +91,6 @@ const OFFICIAL_QUARTERLY_COLUMN_MAPPING = [
     derivation: "J (official total) minus K:S (nine official nominal categories)",
   },
 ];
-
-export function validateCtiLegacySupport(content: string): string | Map<string, number> {
-  const rows = Papa.parse<string[]>(content, { header: false, skipEmptyLines: true }).data;
-  const headerIndex = rows.findIndex(
-    (row) => row.includes("時間軸（四半期）") && row.includes("民間最終消費支出"),
-  );
-  if (headerIndex < 0) return "missing CTI support period or series header";
-  const header = rows[headerIndex].map((cell) => cell.trim());
-  const periodIndex = header.indexOf("時間軸（四半期）");
-  const valueIndex = header.indexOf("民間最終消費支出");
-  const values = new Map<string, number>();
-  for (const row of rows.slice(headerIndex + 1)) {
-    const rawPeriod = row[periodIndex]?.trim();
-    if (!rawPeriod) return "invalid or duplicate CTI support period";
-    const periodMatch = rawPeriod.match(/^(\d{4})年(1～3|4～6|7～9|10～12)月期$/);
-    if (!periodMatch) return "invalid or duplicate CTI support period";
-    const period = calculateQuarterLabel(
-      Number(periodMatch[1]),
-      ["1～3", "4～6", "7～9", "10～12"].indexOf(periodMatch[2]) + 1,
-    );
-    if (values.has(period)) return "invalid or duplicate CTI support period";
-    const rawValue = row[valueIndex]?.trim();
-    const value = Number(rawValue?.replace(/,/g, ""));
-    if (!rawValue || rawValue === "-" || !Number.isFinite(value))
-      return "invalid CTI support value";
-    values.set(period, value);
-  }
-  if (values.size === 0) return "CTI support contains no values";
-  const supportPeriods = [...values.keys()];
-  if (
-    supportPeriods.some((period, index) => {
-      if (index === 0) return false;
-      const previous = supportPeriods[index - 1].match(/^(\d{4})年(\d+)～/);
-      const current = period.match(/^(\d{4})年(\d+)～/);
-      return (
-        !previous ||
-        !current ||
-        Number(current[1]) * 4 + Math.ceil(Number(current[2]) / 3) !==
-          Number(previous[1]) * 4 + Math.ceil(Number(previous[2]) / 3) + 1
-      );
-    })
-  )
-    return "CTI support periods are not continuous";
-  return values;
-}
-
-export function validateCtiLegacySupportPair(
-  nominalContent: string,
-  realContent: string,
-): string | { nominal: Map<string, number>; real: Map<string, number> } {
-  const nominal = validateCtiLegacySupport(nominalContent);
-  const real = validateCtiLegacySupport(realContent);
-  if (typeof nominal === "string") return nominal;
-  if (typeof real === "string") return real;
-  if (nominal.size !== real.size || [...nominal.keys()].some((period) => !real.has(period)))
-    return "CTI nominal/real support period set mismatch";
-  return { nominal, real };
-}
 
 export function validateCtiMetadata(
   metadataPath: string,
@@ -437,9 +376,6 @@ export function mapCtiReasonToCode(validationMsg: string): CtiReasonCode {
     case "metadata SHA-256 mismatch":
       return "cti_hash_mismatch";
 
-    case "invalid or duplicate CTI support period":
-    case "invalid CTI support value":
-    case "CTI nominal/real support period set mismatch":
     case "missing required CTI total headers":
     case "invalid CTI required numeric value":
     case "invalid or duplicate 2025 series map rows":
@@ -447,15 +383,12 @@ export function mapCtiReasonToCode(validationMsg: string): CtiReasonCode {
     case "2025 series map and official snapshot code set mismatch":
       return "cti_schema_invalid";
 
-    case "CTI support periods are not continuous":
     case "invalid or discontinuous CTI 年月":
     case "invalid or duplicate CTI 年月":
     case "2025 CTI metadata period mismatch":
     case "incomplete 2025 CTI calendar year":
       return "cti_period_invalid";
 
-    case "missing CTI support period or series header":
-    case "CTI support contains no values":
     case "missing official quarterly source workbook":
       return "cti_required_support_unavailable";
 
@@ -470,8 +403,6 @@ export function selectCtiPair(_options: CtiLoadOptions = {}): { pair: CtiPair } 
     baseYear: 2025,
     pair: "2025",
     mainPath: paths.candidateMain,
-    supportNominalPath: paths.candidateSupportNominal,
-    supportRealPath: paths.candidateSupportReal,
   };
   const validation = validateCtiPair(pair, paths);
   if (typeof validation !== "string") return { pair };

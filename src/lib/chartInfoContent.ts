@@ -46,8 +46,6 @@ export interface CtiChartInfoState {
     raw: CtiPublicSeriesState;
     comparison: CtiPublicSeriesState;
   };
-  /** GDP comparison state is independently validated by the server loader. */
-  gdp?: GdpChartInfoState;
 }
 
 export interface CtiPublicSeriesState {
@@ -57,19 +55,6 @@ export interface CtiPublicSeriesState {
   source: string;
   status: "valid" | "invalid";
   reason: string | null;
-}
-
-export interface GdpChartInfoState {
-  availability: "available" | "unavailable";
-  displayNormalizationYear?: 2025;
-  reason?: string;
-  quarterlyStatus?: {
-    availability: "available" | "pending" | "unavailable";
-    comparisonReady: boolean;
-    granularity: "quarterly";
-    independentConfirmation?: "pending-independent-confirmation" | "ready" | "failed";
-    reason?: string;
-  };
 }
 
 export const CHART_INFO: Record<string, ChartInfoContent> = {
@@ -223,29 +208,39 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
     ],
   },
   "new-graph": {
-    source: "e-Stat「毎月勤労統計調査」／e-Stat「消費者物価指数」／e-Stat「消費動向指数」",
+    source:
+      "e-Stat「毎月勤労統計調査」／e-Stat「消費者物価指数 長期時系列データ」／消費系列のPlan49月次データ",
     url: "https://www.e-stat.go.jp/stat-search/files?page=1&toukei=00200573&tstat=000001150147",
     sections: [
       {
         heading: "表示している系列",
         items: [
           {
-            text: "給与：月次系列の12か月移動平均",
+            text: "給与：所定内給与・所定外給与・特別給与の各12か月移動平均に共通の係数を適用し、合計した系列",
           },
           {
-            text: "消費：消費支出の12か月移動平均",
+            text: "消費：Plan49の月次合計「消費(総合)」を2025年の月次平均=100に基準化した系列の、連続12暦月の厳密な移動平均",
           },
           {
-            text: "物価：消費者物価指数の12か月移動平均",
+            text: "物価：全国CPI総合の12か月移動平均に、CPI生値の2025年平均=100となる係数を適用した系列",
           },
         ],
       },
       {
         heading: "データ加工",
         items: [
-          { text: "給与：月次系列の12か月移動平均" },
-          { text: "物価：月次系列の12か月移動平均" },
-          { text: "消費：月次系列の12か月移動平均" },
+          {
+            text: "給与：所定内給与・所定外給与の月次値と特別給与の12か月移動平均を合計した総合の2025年平均から共通係数を算出し、各給与系列の12か月移動平均に適用して合計",
+          },
+          {
+            text: "物価：CPI総合の月次生値から12か月移動平均を計算し、CPI生値の2025暦年平均が100となる係数を適用（基準係数は移動平均から算出しない）",
+          },
+          {
+            text: "消費：Plan49の月次消費合計を先に2025年の12か月平均=100へ基準化し、その後、欠損のない連続12暦月だけを平均",
+          },
+          {
+            text: "消費の2016年以前はPlan39 V2の年次anchorと世帯別月次季節パターンによる推計、2017年以降はe-Stat公式月次系列を使用",
+          },
         ],
       },
     ],
@@ -303,8 +298,8 @@ export function getChartInfoContent(
   ctiState?: CtiChartInfoState,
 ): ChartInfoContent {
   const content = CHART_INFO[chartKey];
-  if (chartKey === "consumption-expenditure" || chartKey === "new-graph") {
-    return resolveCtiChartInfo(content, ctiState, chartKey === "new-graph");
+  if (chartKey === "consumption-expenditure") {
+    return resolveCtiChartInfo(content, ctiState);
   }
   if (!cpiState || (chartKey !== "cpi-major" && chartKey !== "stacked-area")) return content;
 
@@ -334,9 +329,7 @@ export function getChartInfoContent(
 function resolveCtiChartInfo(
   content: ChartInfoContent,
   ctiState: CtiChartInfoState | undefined,
-  isComparison: boolean,
 ): ChartInfoContent {
-  const gdpItem = ctiState?.gdp ? getGdpComparisonInfoItem(ctiState.gdp) : undefined;
   if (!ctiState || ctiState.sourceMode === "unavailable" || ctiState.baseYear === null) {
     const state = ctiState?.series;
     return {
@@ -359,8 +352,6 @@ function resolveCtiChartInfo(
               : []),
           ],
         },
-        ...(gdpItem ? [{ heading: "GDP比較の状態", items: [gdpItem] }] : []),
-        ...(isComparison ? content.sections : []),
       ],
     };
   }
@@ -380,42 +371,10 @@ function resolveCtiChartInfo(
     });
   }
   if (ctiState.supportLabel) stateItems.push({ text: ctiState.supportLabel });
-  if (gdpItem) stateItems.push(gdpItem);
 
   return {
     ...content,
     source: `${content.source}（${isOfficial ? "2025年基準・名目原数値／12MA、2025年raw平均=100" : "利用不可"}）`,
     sections: [{ heading: "データ状態", items: stateItems }, ...content.sections],
-  };
-}
-
-function getGdpComparisonInfoItem(gdpState: GdpChartInfoState | undefined): ChartInfoItem {
-  const quarterly = gdpState?.quarterlyStatus;
-  if (quarterly?.availability === "pending") {
-    return {
-      text: "四半期GDP比較線は独立照合が確認中のため表示しません。",
-    };
-  }
-  if (quarterly?.availability === "unavailable") {
-    return {
-      text: quarterly.reason
-        ? `四半期GDP比較線は利用できません。${quarterly.reason}`
-        : "四半期GDP比較線は利用できません。",
-    };
-  }
-  if (quarterly?.availability === "available") {
-    return {
-      text: "四半期GDP比較線は利用可能です。",
-    };
-  }
-  if (gdpState?.availability === "available") {
-    return {
-      text: "GDP比較線は、名目・実質の元データを2025年平均=100の比較指数として表示します。",
-    };
-  }
-  return {
-    text: gdpState?.reason
-      ? `GDP比較線は利用できません。${gdpState.reason}`
-      : "GDP比較線は利用できません。GDP比較に必要なデータを確認中です。",
   };
 }

@@ -1,20 +1,13 @@
 import { mkdir, readFile } from "node:fs/promises";
 import path from "node:path";
-import { devices } from "@playwright/test";
 import type { BrowserCommand } from "vitest/node";
 import type {} from "@vitest/browser-playwright";
-import {
-  buildContextOptions,
-  desktop1280x720ContextOptions,
-  withIsolatedContext,
-} from "./isolated-route-context";
+import { desktop1280x720ContextOptions, withIsolatedContext } from "./isolated-route-context";
 import { NEXT_ROUTE_POC_BASE_URL } from "./next-route-poc.constants";
 
 export type Phase6B06Id =
-  | "p45-b-plan27-private-consumption-79-plan27-38-cti-nominal-cti-key-is-distinct-from-the-real"
-  | "p45-b-plan27-private-consumption-9-plan27-38-cti-2005q1-2017q4-52-graph-table-csv-cti-regi"
   | "p45-b-plan40-nominal-stacked-total-range-dom-contract"
-  | "p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders-";
+  | "p45-b-plan40-quarterly-public-output-contract";
 
 type CsvArtifact = { text: string; rows: string[][]; artifactPath: string };
 type TableSnapshot = { headers: string[]; rows: string[][] };
@@ -103,96 +96,6 @@ async function tableSnapshot(table: import("@playwright/test").Locator): Promise
       [...row.querySelectorAll("td")].map((cell) => cell.textContent ?? ""),
     ),
   }));
-}
-
-async function nominalPlan27(page: import("@playwright/test").Page, full: boolean) {
-  await page.goto(`${NEXT_ROUTE_POC_BASE_URL}/`);
-  const section = page.locator("#section-consumption-nominal");
-  await section.waitFor({ state: "visible", timeout: 15_000 });
-  await section.scrollIntoViewIfNeeded();
-  const chart = page.getByTestId("spending-chart-nominal");
-  await chart.waitFor({ state: "visible" });
-  const realChart = page.getByTestId("spending-chart-real");
-  await realChart.waitFor({ state: "visible", timeout: 15_000 });
-  const contractRows = realChart.locator(
-    '[data-testid="chart-data-contract"] [data-chart-data-row]',
-  );
-  const postBoundary = full
-    ? await contractRows.evaluateAll((rows) =>
-        rows
-          .filter((row) => (row.getAttribute("data-period") ?? "") >= "2018Q1")
-          .map((row) => {
-            const realTotal = row.querySelector(
-              '[data-series-key="CTIミクロ調整系列（総合・実質）"]',
-            );
-            const otherValues = [...row.querySelectorAll<HTMLElement>("[data-series-key]")]
-              .filter(
-                (cell) =>
-                  cell.getAttribute("data-series-key") !== "CTIミクロ調整系列（総合・実質）",
-              )
-              .map((cell) => cell.getAttribute("data-value") ?? "null");
-            return {
-              period: row.getAttribute("data-period") ?? "",
-              value: realTotal?.getAttribute("data-value") ?? "",
-              status: realTotal?.getAttribute("data-status") ?? "",
-              reason: realTotal?.getAttribute("data-reason") ?? "",
-              hasStackedValue: otherValues.some((value) => value !== "null"),
-            };
-          }),
-      )
-    : [];
-  const realTable = page.locator("#data-table-section-consumption-real");
-  await openTable(realTable, true);
-  const realHeaders = (await tableSnapshot(realTable)).headers;
-  if (!full) return { postBoundary, realHeaders };
-
-  const openRange = async () => {
-    if (
-      !(await page
-        .locator("#startYear")
-        .isVisible()
-        .catch(() => false))
-    ) {
-      await page.getByRole("button", { name: "表示期間を変更" }).click();
-      await page.locator("#startYear").waitFor({ state: "visible", timeout: 10_000 });
-    }
-  };
-  await openRange();
-  await page.locator("#startYear").selectOption("2005");
-  await openRange();
-  await page.locator("#endYear").selectOption("2017");
-  await page.waitForFunction(
-    () => {
-      const chart = document.querySelector('[data-testid="spending-chart-nominal"]');
-      return (
-        chart?.querySelector(".recharts-bar")?.querySelectorAll(".recharts-bar-rectangle")
-          .length === 52
-      );
-    },
-    undefined,
-    { timeout: 15_000 },
-  );
-
-  const barCount = await chart
-    .locator(".recharts-bar")
-    .first()
-    .locator(".recharts-bar-rectangle")
-    .count();
-  const positiveBarCount = await chart.locator(".recharts-bar-rectangle").evaluateAll(
-    (nodes) =>
-      nodes.filter((node) => {
-        const rect = node.getBoundingClientRect();
-        return rect.width > 0 && rect.height > 0;
-      }).length,
-  );
-  const nominalTable = page.locator("#data-table-section-consumption-nominal");
-  await openTable(nominalTable, true);
-  const snapshot = await tableSnapshot(nominalTable);
-  const periods = snapshot.rows
-    .map((row) => row[0] ?? "")
-    .filter((period) => /^200[5-9]Q[1-4]$|^201[0-7]Q[1-4]$/.test(period));
-  const csv = await downloadCsv(page, nominalTable, true);
-  return { postBoundary, realHeaders, barCount, positiveBarCount, snapshot, periods, csv };
 }
 
 async function nominalStackedTotalRange(page: import("@playwright/test").Page) {
@@ -443,9 +346,8 @@ async function nominalStackedTotalRange(page: import("@playwright/test").Page) {
   };
 }
 
-async function quarterlyGdp(page: import("@playwright/test").Page) {
-  const id: Phase6B06Id =
-    "p45-b-quarterly-gdp-26-plan23-quarterly-public-projection-ready-state-renders-";
+async function plan40QuarterlyPublicOutput(page: import("@playwright/test").Page) {
+  const id: Phase6B06Id = "p45-b-plan40-quarterly-public-output-contract";
   await diagnosticStage(id, "navigate and wait for charts", async () => {
     await page.goto(`${NEXT_ROUTE_POC_BASE_URL}/`, { timeout: 20_000 });
     await Promise.all([
@@ -860,33 +762,15 @@ export const inspectPhase6B06: BrowserCommand<[id: Phase6B06Id], unknown> = asyn
     throw new Error(`Requires Playwright provider; received ${provider.name}`);
   const browser = context.browser();
   if (!browser) throw new Error("Playwright Browser is unavailable");
-  const mobile = id.includes("plan27-private-consumption");
-  const options = mobile
-    ? buildContextOptions(devices["Pixel 7"])
-    : desktop1280x720ContextOptions();
+  const options = desktop1280x720ContextOptions();
   return withIsolatedContext(browser, options, async (isolated) => {
     const page = await isolated.newPage();
     await page.addInitScript(() => {
       (window as Window & { __MOUNT_ALL__?: boolean }).__MOUNT_ALL__ = true;
     });
-    if (id.startsWith("p45-b-plan27-private-consumption-")) {
-      const contextEvidence = mobile
-        ? await (async () => {
-            const runtimeEvidence = await page.evaluate(() => ({
-              innerViewport: { width: innerWidth, height: innerHeight },
-              screen: { width: screen.width, height: screen.height },
-              deviceScaleFactor: devicePixelRatio,
-              touchPoints: navigator.maxTouchPoints,
-              userAgent: navigator.userAgent,
-            }));
-            return { effectiveViewport: page.viewportSize(), ...runtimeEvidence };
-          })()
-        : null;
-      return { contextEvidence, ...(await nominalPlan27(page, id.includes("-9-plan27-"))) };
-    }
     if (id === "p45-b-plan40-nominal-stacked-total-range-dom-contract")
       return nominalStackedTotalRange(page);
-    return await quarterlyGdp(page);
+    return await plan40QuarterlyPublicOutput(page);
   });
 };
 

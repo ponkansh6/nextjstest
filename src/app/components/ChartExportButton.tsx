@@ -4,7 +4,7 @@ import React from "react";
 import styles from "./CpiChart.module.css";
 import { buildCsv, toFileName, withBom } from "../../lib/csvExport";
 import type { BuildCsvOptions } from "../../lib/csvExport";
-import { SUPPORT_SERIES_KEY_NOMINAL, type SeriesMetadata } from "../../lib/chartConstants";
+import { type SeriesMetadata } from "../../lib/chartConstants";
 
 interface ChartExportButtonProps {
   /** ダウンロードファイル名の元になるグラフ名 */
@@ -193,7 +193,6 @@ export const ChartExportButton: React.FC<ChartExportButtonProps> = ({
             (measurement) =>
               measurement.seriesType !== undefined || measurement.official !== undefined,
           ) ||
-          keys.includes(SUPPORT_SERIES_KEY_NOMINAL) ||
           !data.some((row) => row.measurements && typeof row.measurements === "object"),
       }),
     );

@@ -15,7 +15,6 @@ import {
   CPI_CATEGORIES,
   CTI_BASIC_EXTENSION_KEY,
   CONSUMPTION_TOTAL_12MA_KEY,
-  SUPPORT_SERIES_KEY_NOMINAL,
   buildCpiTooltipMetadata,
   stackedColors,
   stackedKeys,
@@ -29,6 +28,8 @@ import type { CpiData } from "../../src/types";
 import type { CpiView, QuarterlyView } from "../../src/types/chart";
 import { renderBrowserComponent } from "./renderBrowserComponent";
 
+const TEST_SUPPORT_NOMINAL_KEY = "民間最終消費支出（名目）";
+const TEST_SUPPORT_REAL_KEY = "民間最終消費支出（実質）";
 vi.mock("next/navigation", () => ({
   default: {},
   useSearchParams: () => new URLSearchParams("from=2020&to=2021"),
@@ -80,7 +81,6 @@ function ComparisonSeriesFixture() {
         isMobile={false}
         tooltipProps={tooltip.tooltipProps}
         comparisonSeriesRegistry={registry}
-        showAdvanced={false}
       />
     </div>
   );
@@ -100,7 +100,7 @@ function CpiSectionsFixture() {
 
 function createQuarterlyData(periods: { year: number; quarter: number }[]): QuarterlyView[] {
   const keys = [...QUARTERLY_PLAN40_V2_NOMINAL_KEYS, ...QUARTERLY_PUBLIC_REAL_KEYS];
-  const supportKey = SUPPORT_SERIES_KEY_NOMINAL;
+  const supportKey = TEST_SUPPORT_NOMINAL_KEY;
   return periods.map(({ year, quarter }, rowIndex) => {
     const label = `${year}Q${quarter}`;
     const row = { label, 年: year, quarter, 年月: label };

@@ -18,11 +18,6 @@ export interface EarningsView {
   [key: string]: string | number | null;
 }
 
-const PLAN37_FORBIDDEN_KEYS = new Set([
-  "民間最終消費支出（名目・原値）",
-  "民間最終消費支出（名目・比較指数）",
-]);
-
 export interface QuarterlyView {
   label: string;
   quarter: number;
@@ -54,10 +49,6 @@ export function toCtiView(rows: CpiData[], selectedKeys: string[]): CtiView[] {
 }
 
 export function toEarningsView(rows: CpiData[], selectedKeys: string[]): EarningsView[] {
-  const forbidden = selectedKeys.filter((key) => PLAN37_FORBIDDEN_KEYS.has(key));
-  if (forbidden.length > 0) {
-    throw new Error(`Plan37 public projection contains legacy keys: ${forbidden.join(", ")}`);
-  }
   const selectedKeySet = new Set(selectedKeys);
   return rows.map((r) => {
     const out: EarningsView = { 年月: r.年月 };
@@ -79,18 +70,6 @@ export function toEarningsView(rows: CpiData[], selectedKeys: string[]): Earning
   });
 }
 
-/** Explicit compatibility projection for GDP/2020 rollback consumers. */
-export function toLegacyEarningsView(rows: CpiData[], selectedKeys: string[]): EarningsView[] {
-  return rows.map((r) => {
-    const out: EarningsView = { 年月: r.年月 };
-    for (const key of selectedKeys) {
-      const value = r[key];
-      out[key] = typeof value === "number" && Number.isFinite(value) ? round2(value) : null;
-    }
-    return out;
-  });
-}
-
 export function toQuarterlyView(rows: QuarterlyRow[], selectedKeys: string[]): QuarterlyView[] {
   return rows.map((r) => {
     const out: QuarterlyView = { label: r.label, quarter: r.quarter, 年: r.年, 年月: r.年月 };
@@ -102,20 +81,4 @@ export function toQuarterlyView(rows: QuarterlyRow[], selectedKeys: string[]): Q
     }
     return out;
   });
-}
-
-export function mergeQuarterlyGdpView(
-  rows: QuarterlyView[],
-  gdpRows: Array<{
-    period: string;
-    nominalRaw: number;
-    realRaw: number;
-    nominalComparison?: number;
-    realComparison?: number;
-  }>,
-): QuarterlyView[] {
-  // GDP raw/comparison values remain an internal loader contract and never
-  // cross the public quarterly view boundary.
-  void gdpRows;
-  return rows;
 }

@@ -9,14 +9,13 @@ import styles from "./CpiChart.module.css";
 import {
   getLegendLabel,
   getSpendingSeriesColor,
-  SUPPORT_SERIES_KEY_NOMINAL,
-  SUPPORT_SERIES_KEY_REAL,
   CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY,
 } from "../../lib/chartConstants";
 import {
   getSpendingPresentationLabel,
   orderSpendingPresentationKeys,
 } from "../../lib/spendingSeriesPresentation";
+import { QUARTERLY_PUBLIC_NOMINAL_KEYS } from "../../lib/quarterlyPublicProjection";
 import type { ChartTooltipProps } from "./charts/useChartTooltipProps";
 import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
 import { CHART_INFO, type ChartInfoContent } from "../../lib/chartInfoContent";
@@ -102,30 +101,22 @@ export function normalizeSpendingChartData(
   data: QuarterlyDataPoint[],
   keys: string[],
 ): QuarterlyDataPoint[] {
-  const supportKey = keys.includes(SUPPORT_SERIES_KEY_REAL)
-    ? SUPPORT_SERIES_KEY_REAL
-    : keys.includes(CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY)
-      ? CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY
-      : keys.includes(SUPPORT_SERIES_KEY_NOMINAL)
-        ? SUPPORT_SERIES_KEY_NOMINAL
-        : undefined;
-  const ctiKeys = keys.filter((key) => key !== supportKey);
+  const plan40Keys = keys.filter((key) =>
+    (QUARTERLY_PUBLIC_NOMINAL_KEYS as readonly string[]).includes(key),
+  );
   return data.map((row) => {
     const next = { ...row };
-    const hasPlan39Expense = ctiKeys.some(
+    const hasPlan39Expense = plan40Keys.some(
       (key) =>
         typeof row[key] === "number" &&
         Number.isFinite(row[key]) &&
         row.measurements?.[key] !== undefined,
     );
     if (row.年 < 2018) {
-      // Plan39-v2 supplies the pre-2018 expense stack. Keep the legacy support
-      // bar unless both expense values and their measurement metadata are present.
-      if (hasPlan39Expense && supportKey && supportKey !== CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY)
-        next[supportKey] = null;
-      else if (!hasPlan39Expense) ctiKeys.forEach((key) => (next[key] = null));
-    } else if (supportKey && supportKey !== CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY)
-      next[supportKey] = null;
+      // Plan39-v2 supplies the pre-2018 expense stack when its measurement
+      // metadata is present; otherwise hide the unavailable expense values.
+      if (!hasPlan39Expense) plan40Keys.forEach((key) => (next[key] = null));
+    }
     return next;
   });
 }
@@ -158,28 +149,12 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
     isMobile = false,
     descriptors = [],
   } = props;
-  const supportKey = keys.includes(SUPPORT_SERIES_KEY_REAL)
-    ? SUPPORT_SERIES_KEY_REAL
-    : keys.includes(CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY)
-      ? CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY
-      : keys.includes(SUPPORT_SERIES_KEY_NOMINAL)
-        ? SUPPORT_SERIES_KEY_NOMINAL
-        : undefined;
+  const supportKey = keys.includes(CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY)
+    ? CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY
+    : undefined;
   const ctiKeys = keys.filter((key) => key !== supportKey);
   const hasPreBoundarySupport = data.some(
-    (row) =>
-      supportKey &&
-      (supportKey === CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY || row.年 < 2018) &&
-      typeof row[supportKey] === "number",
-  );
-  const hasPlan39Measurements = data.some(
-    (row) => row.年 < 2018 && ctiKeys.some((key) => row.measurements?.[key] !== undefined),
-  );
-  const officialQuarterlyUnavailable = data.some((row) =>
-    Object.values(row.measurements ?? {}).some(
-      (measurement) =>
-        measurement?.reason === "official_quarterly_source_unavailable_latest_period_unknown",
-    ),
+    (row) => supportKey && typeof row[supportKey] === "number",
   );
   const orderedCtiKeys = orderSpendingPresentationKeys(ctiKeys);
   const legendKeys = orderSpendingPresentationKeys(
@@ -195,12 +170,6 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
   const shouldShowEmptyState = !hasVisibleExpenseSeries && !hasVisibleSupportSeries;
   const selectedQuarterCount = [1, 2, 3, 4].filter((q) => !hiddenQuarters.includes(q)).length;
   const hasActiveLegendFilter = selectedLegendCount < legendKeys.length || selectedQuarterCount < 4;
-  const supportReason = supportKey
-    ? data.find((row) => row.measurements?.[supportKey]?.status === "invalid")?.measurements?.[
-        supportKey
-      ]?.reason
-    : undefined;
-  // Nominal support remains a bar; the independently deflated real total stays in the data series.
   const chartData = normalizeSpendingChartData(data, keys);
   const publicKeys = getPublicSpendingKeys(keys);
   const yAxisMax = computeSpendingYAxisMax(data, keys, hiddenKeys);
@@ -238,7 +207,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
                 className={styles.legendIcon}
                 style={{
                   backgroundColor:
-                    key === SUPPORT_SERIES_KEY_NOMINAL || key === CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY
+                    key === CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY
                       ? chartColors.barFill || "#94a3b8"
                       : getSpendingSeriesColor(key, keys, colors),
                 }}
@@ -279,27 +248,6 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
           />
         )}
       </h2>
-      {supportKey === SUPPORT_SERIES_KEY_NOMINAL &&
-        !hasPreBoundarySupport &&
-        !hasPlan39Measurements && (
-          <p role="status" className={styles.chartNote}>
-            CTIミクロ名目四半期系列は利用できません（{supportReason ?? "unavailable"}）。
-          </p>
-        )}
-      {supportKey === SUPPORT_SERIES_KEY_NOMINAL && (
-        <p
-          className={styles.chartNote}
-          data-testid="spending-series-switch-note"
-          data-series-switch="plan39-v2-bottom-up-to-official-adjusted-quarters"
-        >
-          2005Q1〜2016Q4：名目接続推計を月次パターンで四半期化。2017Q1以降：総世帯・調整系列の公式名目四半期値（最新公表期まで）。
-        </p>
-      )}
-      {supportKey === SUPPORT_SERIES_KEY_NOMINAL && officialQuarterlyUnavailable && (
-        <p role="status" className={styles.chartNote}>
-          2005Q1〜2016Q4の名目接続推計は表示しています。2017Q1以降の公式調整済み名目四半期データを検証できず、公式期間と最新対象期は不明です。
-        </p>
-      )}
       <ChartDataContract data={chartData} keys={publicKeys} descriptors={descriptors} />
 
       {legendMode === "collapsible" && (
@@ -397,19 +345,6 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
               dx={-10}
             />
             <Tooltip {...tooltipProps} />
-            {supportKey &&
-              supportKey !== CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY &&
-              hasPreBoundarySupport &&
-              !hiddenKeys.includes(supportKey) && (
-                <Bar
-                  dataKey={supportKey}
-                  data-key={supportKey}
-                  data-testid={`spending-series-${supportKey}`}
-                  fill={chartColors.barFill || "#94a3b8"}
-                  fillOpacity={0.8}
-                  isAnimationActive={false}
-                />
-              )}
             {orderedCtiKeys.map((key) =>
               !hiddenKeys.includes(key) ? (
                 <Bar
@@ -418,11 +353,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
                   data-key={key}
                   data-testid={`spending-series-${key}`}
                   stackId="a"
-                  fill={
-                    key === SUPPORT_SERIES_KEY_NOMINAL
-                      ? chartColors.barFill || "#94a3b8"
-                      : getSpendingSeriesColor(key, keys, colors)
-                  }
+                  fill={getSpendingSeriesColor(key, keys, colors)}
                   fillOpacity={0.8}
                   isAnimationActive={false}
                 />

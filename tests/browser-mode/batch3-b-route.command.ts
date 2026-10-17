@@ -9,7 +9,6 @@ export type Batch3BRouteCase =
   | "advanced-series"
   | "cagr-sheet"
   | "cpi-area"
-  | "plan24-legacy-gdp"
   | "plan24-2025-table-tooltip"
   | "t9-total"
   | "boundary-768"
@@ -166,21 +165,11 @@ export const inspectBatch3BProductionCase: BrowserCommand<
           const normalContract = section.getByTestId("chart-data-contract");
           values.normalDescriptors = await normalContract.getAttribute("data-descriptors");
           values.normalSeries = await normalContract.getAttribute("data-series");
-          values.normalExtendedLegendVisible = await section
-            .getByRole("button", { name: "CTIミクロ基本系列(名目・延長)", exact: true })
-            .isVisible()
-            .catch(() => false);
-          values.normalMainLegendVisible = await section
-            .getByRole("button", { name: "CTIミクロ基本系列(名目・総合)", exact: true })
-            .isVisible();
           values.normalSalaryLegendVisible = await section
             .getByTestId("new-graph-legend-総合(12MA)")
             .isVisible();
           values.normalCpiLegendVisible = await section
             .getByTestId("new-graph-legend-CPI総合(12MA)")
-            .isVisible();
-          values.normalCtiLegendVisible = await section
-            .getByRole("button", { name: "CTI消費支出(参考)", exact: true })
             .isVisible();
           await page.goto(NEXT_ROUTE_POC_BASE_URL + "/?adv=1", { waitUntil: "domcontentloaded" });
           await page.locator("#section-new-graph").waitFor({ state: "visible" });
@@ -188,9 +177,11 @@ export const inspectBatch3BProductionCase: BrowserCommand<
           const contract = advSection.getByTestId("chart-data-contract");
           values.advancedDescriptors = await contract.getAttribute("data-descriptors");
           values.advancedSeries = await contract.getAttribute("data-series");
-          values.advancedExtendedLegendVisible = await advSection
-            .getByRole("button", { name: "CTIミクロ基本系列(名目・延長)", exact: true })
-            .isVisible();
+          values.legacyAdvUrlAfterSync = page.url();
+          values.extensionToggleVisible = await advSection
+            .getByRole("checkbox", { name: "参考・延長系列を表示する" })
+            .isVisible()
+            .catch(() => false);
           const table = page.locator("#data-table-section-new-graph");
           await table.locator("summary").click();
           values.tableText = await table.innerText();
@@ -341,49 +332,6 @@ export const inspectBatch3BProductionCase: BrowserCommand<
             .count();
           break;
         }
-        case "plan24-legacy-gdp": {
-          await range(2005, 2017);
-          for (const quarter of ["Q1", "Q2", "Q3", "Q4"]) {
-            const button = nominal.getByRole("button", { name: quarter, exact: true });
-            if ((await button.getAttribute("aria-pressed")) !== "true") await button.click();
-          }
-          const nominalTable = page.locator("#data-table-section-consumption-nominal");
-          const realTable = page.locator("#data-table-section-consumption-real");
-          await nominalTable.locator("summary").click();
-          await realTable.locator("summary").click();
-          values.nominal2005to2017Headers = await nominalTable
-            .locator("thead th")
-            .allTextContents();
-          values.real2005to2017Headers = await realTable.locator("thead th").allTextContents();
-          values.nominal2005to2017Bars = await nominal.locator(".recharts-bar-rectangle").count();
-          values.expenseLines2005to2017 = await nominal.locator(".recharts-line-curve").count();
-          values.real2005to2017Bars = await page
-            .getByTestId("spending-chart-real")
-            .locator(".recharts-bar-rectangle")
-            .count();
-          values.realTotalSupportPeriods2005to2017 =
-            (await page.getByTestId("spending-chart-real").getAttribute("data-support-periods")) ??
-            "";
-          const realTotalMarker = page
-            .getByTestId("spending-chart-real")
-            .locator(
-              'circle[data-testid="spending-series-marker-CTIミクロ調整系列（総合・実質）"]:visible',
-            );
-          values.realTotalMarkers2005to2017 = await realTotalMarker.count();
-          await range(2018, 2018);
-          values.realTotalSupportPeriods2018 =
-            (await page.getByTestId("spending-chart-real").getAttribute("data-support-periods")) ??
-            "";
-          values.nominal2018Bars = await nominal.locator(".recharts-bar-rectangle").count();
-          values.real2018Bars = await page
-            .getByTestId("spending-chart-real")
-            .locator(".recharts-bar-rectangle")
-            .count();
-          values.realTotalMarkers2018 = await realTotalMarker.count();
-          values.nominal2018Headers = await nominalTable.locator("thead th").allTextContents();
-          values.real2018Headers = await realTable.locator("thead th").allTextContents();
-          break;
-        }
         case "plan24-2025-table-tooltip": {
           await range(2025, 2025);
           const tableResults: Record<string, unknown>[] = [];
@@ -482,7 +430,6 @@ export const inspectBatch3BProductionCase: BrowserCommand<
                 tooltipFoodValueVisible,
                 tooltipFoodValue,
                 tooltipHasCalculatedTotal: totalText.includes("合計" + total),
-                tooltipHasGdp: tooltipText.includes("GDP"),
                 calculatedTotal: total,
                 tooltipText,
               });

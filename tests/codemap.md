@@ -16,4 +16,4 @@ fixture/factory → loader・計算・component → 期待値/DOM/payloadを検�
 
 ## Integration
 
-Phase 1の回帰契約は`unit/useCpiChartData.test.ts`（表示用派生の境界）と`unit/useUrlState.test.ts`（`from`/`to`/`hidden`/`adv`のURL同期）を中心に、既存の7チャート、公開props、データモデル、API、storageキーを不変として検証する。四半期GDP、消費支出、loader検証はdata-quality/server/unitにも分散して保持する。
+Phase 1の回帰契約は`unit/useCpiChartData.test.ts`（表示用派生の境界）と`unit/useUrlState.test.ts`（`from`/`to`/`hidden`のURL同期と旧`adv`削除）を中心に、既存の7チャート、公開props、データモデル、APIを検証する。Plan40四半期CTIとPlan37月次CTIの契約をdata-quality/server/unitで検証する。旧Plan38/Plan21 GDP専用契約のテストは退役済み。

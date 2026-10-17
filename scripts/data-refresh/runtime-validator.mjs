@@ -70,12 +70,11 @@ export const REQUIRED_RUNTIME_REFRESH_OUTPUTS = Object.freeze([
 export const RUNTIME_QUALITY_TESTS = Object.freeze([
   "tests/data-quality/cpi-data-integrity.test.ts",
   "tests/data-quality/cti-data-integrity.test.ts",
-  "tests/data-quality/cti-gdp-source-integrity.test.ts",
-  "tests/data-quality/cti-gdp-source-artifacts.test.ts",
+  "tests/data-quality/cti-source-integrity.test.ts",
+  "tests/data-quality/cti-source-artifacts.test.ts",
   "tests/data-quality/cti-basic-series-2025.test.ts",
   "tests/data-quality/population-data-integrity.test.ts",
   "tests/data-quality/earning-data-integrity.test.ts",
-  "tests/data-quality/plan21-quarterly-gdp.test.ts",
 ]);
 
 const RUNTIME_FAILURE_SAMPLE_LIMIT = 12;
@@ -350,34 +349,6 @@ function sanitizeRuntimeFailureTitle(value) {
 // Non-refresh inputs used by the listed suites and their loaders. Their digests pin the
 // precise canonical baseline before any byte is copied into the isolated validation root.
 export const PINNED_RUNTIME_INPUTS = Object.freeze({
-  "data/source/cti_support_nominal2025.csv":
-    "9a6331e1cc0ff0f4acb8da67dbdf5ed0c2b1457122b1a1b8c990911dbce2038f",
-  "data/source/cti_support_nominal2025.metadata.json":
-    "8e482d34a253360918e0acdd1c2c054e969cc3ff278761b4df9263bebed24d2f",
-  "data/source/cti_support_real2025.csv":
-    "0c6973e2b4a2686b94a7954a5a55058a5101de05ebed316066f7d0b517e6e744",
-  "data/source/cti_support_real2025.metadata.json":
-    "b01785b1f7dc7022baddf1628b2fd16e985ef95e308a1bb1c7bb9775b537cb69",
-  "data/source/cti-gdp-display-normalization2025.json":
-    "359e02b2ac1b46e80de9234ac965f2d41cf915cd039a872baf1713887ad836a9",
-  "data/source/cti_support_nominal_quarterly2025.csv":
-    "0b5b4b21fcc03071973c96e4c7dfffba02eb63ee600c19de023aef1c345a49a7",
-  "data/source/cti_support_nominal_quarterly2025.metadata.json":
-    "a10c93720b9beb53b9cf19655313b14fc992d23ac25844db708db10fcd14d694",
-  "data/source/cti_support_nominal_quarterly2025.official.csv":
-    "0b5b4b21fcc03071973c96e4c7dfffba02eb63ee600c19de023aef1c345a49a7",
-  "data/source/cti_support_nominal_quarterly2025.estat.csv":
-    "0b5b4b21fcc03071973c96e4c7dfffba02eb63ee600c19de023aef1c345a49a7",
-  "data/source/cti_support_real_quarterly2025.csv":
-    "4454cc36abdd556210e0bdea1f32055c1716d799d69368e883a39f445f1ef855",
-  "data/source/cti_support_real_quarterly2025.metadata.json":
-    "b47258a0d7cf836680d40171a2f8bd0beae5044772874187eebe7087ad6c2840",
-  "data/source/cti_support_real_quarterly2025.official.csv":
-    "4454cc36abdd556210e0bdea1f32055c1716d799d69368e883a39f445f1ef855",
-  "data/source/cti_support_real_quarterly2025.estat.csv":
-    "4454cc36abdd556210e0bdea1f32055c1716d799d69368e883a39f445f1ef855",
-  "data/source/cti-gdp-quarterly-display-normalization2025.json":
-    "850c401688d75ab24c9fc726f66fa37e03894f8aabe74ee88dc7e2ef452ad960",
   "data/source/hon-mks202512.csv":
     "6fdb57885ccea31f78d51c6f090df5ad6e6dc8fd80ab95bc32081cf024f403ad",
   "data/source/hon-mks202606.xls":
@@ -437,11 +408,11 @@ export const PINNED_PROJECT_FILES = Object.freeze({
   "server/lib/ctiAdjustedRollingBacktest.ts":
     "66f7aead91c00101e6ad7732fecf3aedb2ecd08be10b88bb321079d1cc96d38f",
   "server/lib/ctiBasicSeries2025LongTerm.ts":
-    "24a7f70e89c440bf623b4941c8157028cbce99413cff511e87ce5421c1c0910e",
+    "378ed1cfa196a47a48ff49691b9c9f53ad82aff5d4eb50b508155fde96557515",
   "server/lib/data-loader/cache.ts":
     "cf438d8340004453b68b5d25c3f23b41e8556f7f2951fb622f6ebe845386e112",
   "server/lib/data-loader/cpi.ts":
-    "01487c045a9ff34a9d4c04060dcac3ef6ca844f9a5d0e42714dbeb64be7e9b3b",
+    "671ff69b2b286f86342ba0b74d56313be285552b85475750354a4483579d9510",
   "server/lib/data-loader/cpiLoader.ts":
     "11219c314ed787a8f6f0fd9ac68a2018cc468208289c643cb27d8c8ff0ee3948",
   "server/lib/data-loader/cpiSource.ts":
@@ -451,27 +422,23 @@ export const PINNED_PROJECT_FILES = Object.freeze({
   "server/lib/data-loader/ctiAdjusted.ts":
     "3b25056feb091a914fcf4efd5c8986d663b0506538230f2fe99cd206703ff262",
   "server/lib/data-loader/ctiValidation.ts":
-    "6800b594f791d838832b36d55cad03fdb01f6dea0263c241b185f441a0cb23e5",
+    "2923ddf9c7f9263ce3caebbde6ff922cdd420d2bdc93702dfb5ac73076ed7f1a",
   "server/lib/data-loader/earnings.ts":
-    "fab285cc37d79800d71c7d356f9b66271ec4a0c21c2f65e04f87e7fc99090f7e",
-  "server/lib/data-loader/gdpSupport.ts":
-    "e1d1a5016fa6e76bf72c511ab3d10a74a86189916acf6474cfc27db9b1e059bf",
+    "d38f007baa3474046a62659aa0c90f809be051cf7cc3d6d738dfae92346bc886",
   "server/lib/data-loader/population.ts":
     "19f6fa5ce0d1d1ee73e0500cece46bd7910d51071075b5f70034652bb34b873b",
-  "server/lib/dataIo.ts": "635318bf522812234820c60fbc96c20940be7a56c1fde1a4b5125432902c8ced",
-  "server/lib/dataLoader.ts": "153317724f9d86199b06e75cf8761c5a797fc227eb63c9d67c7bd96265459ef7",
+  "server/lib/dataIo.ts": "8639c37d61f6b6d15aa270fb51810ff6d4bd614aeedce6bdcf681eea867dd51c",
+  "server/lib/dataLoader.ts": "2e84d57f5e6850481e4b630a0ca1ae5e8b26b3fcab6731f11ad052a2700e8078",
   "server/lib/dataProcessor.ts": "94b89883dc2db4b6e6c8a98845d12158d6fba241bc81be6179f249e29bb13f10",
   "server/lib/math/movingAverage.ts":
     "dd98ae00c94ac1c55e4f734271a46009565330e4a17ab31493739bc46799340e",
   "server/lib/serverCalculations.ts":
     "c123fb31b739e0ca3be82a3a569784a782e581e18890e2c131ea3dd2d7856a4d",
   "server/lib/view-models/dashboard.ts":
-    "d83a62f5ea34d25926d667dd429394fc6c8db77bcbb7ee43df4bb97ffa59b3bb",
+    "3fa933e666789b9bfd8f21054ff005f09077c001ec996176daf5db86c45241ed",
   "server/lib/view-models/quarterlyAggregation.ts":
-    "ba5ce7c891c37229de6cda162995b8106a1574047de25421611cd17da69a517c",
-  "server/lib/view-models/quarterlyGdpTransform.ts":
-    "867276118929f75994895e7cc42613fffd4ce713cae4ffdd12ea2a70ec7e509d",
-  "src/lib/chartConstants.ts": "d6ef6bbb3e5dad75b298b1992edffa553edac03fce42ee193ad81c0119ea06de",
+    "682c913a253513b573c66f2db879f603e31ce8d1513fce2eee583778645376e2",
+  "src/lib/chartConstants.ts": "7cf0e8f1700a8ac7ec733fd131c15e38024ec41150aea42e1c63ddc869746f48",
   "src/lib/clientCalculations.ts":
     "ae4d02d14284fd10fc202de7bf95ec3885ec16a1ed2f621f4aca7d8ed9b213e0",
   "src/lib/math/clientCalculations.ts":
@@ -480,27 +447,25 @@ export const PINNED_PROJECT_FILES = Object.freeze({
   "src/lib/math/quarterlyCompleteness.ts":
     "756050907a879fb5f5715ae04ae044893c7b0e8c2fae574c0f6818b974e54943",
   "src/lib/math/supportSeries.ts":
-    "7d1d5a2569ec46d3633897d9390c749e1b90df9913330c11b0f1528bc269f4bc",
+    "b9078ee6ea6d2651026701ee81622b9c721b3e1c71bf2c8bbc182372ba015c1d",
   "src/lib/quarterlyPublicProjection.ts":
     "479999c2759f45593bad89bcbb47c6321435df45654cc4fed5fdac6a54ceebd8",
   "src/lib/yearMonth.ts": "c1bf9750552d656186d0cbfd32f73a647e9ea16b65feb6128b5b2cc6a496a515",
   "src/types/chart.ts": "bf58649af4649d3f6146f73d9fddf4cad7879e2d1670c90cf95cd41011c2113f",
-  "src/types/data.ts": "aca5f6232a9410f3e6ada54b22d31038cb4ec0c20bf5b89ed39e57ee8045814f",
+  "src/types/data.ts": "6994b0f7bd5efee76c75900ce64da3def963f3ef0a50814c45f311356613e2b1",
   "src/types/index.ts": "5e28c21699001dc63aa8a38fd8868164823d4fb7e49d27e71e6684d9a28509a6",
   "tests/data-quality/cpi-data-integrity.test.ts":
     "710da37e1256c08ca2ad897d8a256c34d655b780f2bec7d2a6683c6b84d33005",
   "tests/data-quality/cti-basic-series-2025.test.ts":
     "9d0fe65f2b9816d3bd37cb601666043ed09d5a1f6fc486a87fd946019352edc3",
   "tests/data-quality/cti-data-integrity.test.ts":
-    "35032601930550234be2475e9690057ee7b41890b2bcf2cd7d610d366135717e",
-  "tests/data-quality/cti-gdp-source-artifacts.test.ts":
-    "78527d6e5856523a4ec1add91a45cf6ac128dda0ea4fb3d9df27e455117f3611",
-  "tests/data-quality/cti-gdp-source-integrity.test.ts":
-    "4afcf61c67850b24a31c8521acffc6dea31652ad958831636f72567abce28870",
+    "edee2d3582864ede5bdf504d4a84670b420f18d95673e5b02c262f47c4db590d",
+  "tests/data-quality/cti-source-integrity.test.ts":
+    "c43d27799c15d0a13c326c6df786b211d7ee97a946ce1ec3fdb0d73830c75b2b",
+  "tests/data-quality/cti-source-artifacts.test.ts":
+    "6219c833f491db20b7add87c1a729734a81a8e3ac6d67fb23f8f52ad751013de",
   "tests/data-quality/earning-data-integrity.test.ts":
-    "8c848057ac457a0cb160dd50d01a9d8f68f613e671202b2d2649bae5818c6f02",
-  "tests/data-quality/plan21-quarterly-gdp.test.ts":
-    "5c02fcad8c1eb81d39e4879456f2658fcfe1eebe951d1f1cc8b3fda6f5e40873",
+    "b4f547d12599163f99121d8d1b8dfdca778a68ad7b82ba78054b7d077ae31e54",
   "tests/data-quality/population-data-integrity.test.ts":
     "6441a64043461a8b8fa6388dfebc1aeecd47a2668c9ad3ce305ab5527f25e1ad",
   "tests/fixtures/minkan-extension-anchors.json":

@@ -3,7 +3,6 @@ import { commands } from "vitest/browser";
 
 vi.setConfig({ testTimeout: 45_000 });
 
-const INTERNAL = /GDP名目原値|GDP名目比較指数|GDP実質原値|GDP実質比較指数|四半期raw|原値|比較指数/;
 const LEGACY_CTI_RAW = /CTIミクロ基本系列（名目・原数値）/;
 const ADVANCED_KEYS = ["CPI総合(12MA)", "総合(12MA)", "消費(総合)"];
 
@@ -71,13 +70,9 @@ function assertPublicContract(
   surface: { headers: string[]; values: string[][]; csv: { rows: string[][] } },
 ) {
   expect(chartMatrix(chart)).toEqual(surface.values.map((row) => [row[0], ...row.slice(1)]));
-  expect(JSON.stringify(chart)).not.toMatch(INTERNAL);
-  expect(surface.headers.join(" ")).not.toMatch(INTERNAL);
-  expect(surface.values.flat().join(" ")).not.toMatch(INTERNAL);
-  expect(surface.csv.rows.flat().join(" ")).not.toMatch(INTERNAL);
 }
 
-it("p45-a-advanced-series-adv-query keeps removed CTI comparisons out of the advanced route", async () => {
+it("p45-a-advanced-series-adv-query ignores and removes the deprecated query", async () => {
   const result = (await commands.inspectPhase6B03("p45-a-advanced-series-adv-query")) as {
     status: number | null;
     urlAfterReload: string;
@@ -91,7 +86,7 @@ it("p45-a-advanced-series-adv-query keeps removed CTI comparisons out of the adv
     reloadedDescriptorAttribute: string | null;
     reloadedDataAttribute: string | null;
   };
-  expect(new URL(result.urlAfterReload).search).toBe("?adv=1");
+  expect(new URL(result.urlAfterReload).search).toBe("");
   expect(result.sectionCount).toBe(1);
   expect(result.status).toBe(200);
   assertConsumptionDescriptor(result.descriptorAttribute);
@@ -160,7 +155,7 @@ it("p45-a-parity-advanced-anchors preserves complete regular and advanced chart/
   expect(result.normal.count).toBe(1);
   assertCsvDownloadCRLF(result.normal.csv.text);
   assertCompleteSurface(result.advanced);
-  expect(new URL(result.urlAfterAdvancedReload).search).toBe("?adv=1");
+  expect(new URL(result.urlAfterAdvancedReload).search).toBe("");
   expect(result.reloadedAdvancedChart.keys).toEqual(ADVANCED_KEYS);
   expect(result.reloadedAdvanced.headers).toEqual(result.normal.headers);
   expect(result.reloadedAdvanced.values).toEqual(result.normal.values);

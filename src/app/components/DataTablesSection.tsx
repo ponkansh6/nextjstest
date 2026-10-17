@@ -2,7 +2,7 @@ import React from "react";
 import styles from "./CpiChart.module.css";
 import { ChartExportButton } from "./ChartExportButton";
 import { normalizePublicChartData } from "./ChartDataContract";
-import { SUPPORT_SERIES_KEY_NOMINAL, type SeriesMetadata } from "../../lib/chartConstants";
+import { type SeriesMetadata } from "../../lib/chartConstants";
 import {
   createMissingSeriesMeasurement,
   getMeasurementNote,
@@ -44,7 +44,7 @@ export function DataTablesSection({ tables }: DataTablesSectionProps) {
       };
     }
     return descriptor &&
-      (key === SUPPORT_SERIES_KEY_NOMINAL ||
+      (descriptor.frequency === "quarterly" ||
         descriptor.estimateVersion === "plan39-v2" ||
         key.startsWith("CTIミクロ調整系列（"))
       ? createMissingSeriesMeasurement(key, descriptor)

@@ -89,7 +89,7 @@ describe("shared math dependency boundaries", () => {
     }
   });
 
-  it("keeps client and server on their allowed shared math boundaries", () => {
+  it("keeps client calculations on the shared math boundary", () => {
     const clientCalculations = source("src/lib/clientCalculations.ts");
     expect(clientCalculations).toMatch(/from\s+["']\.\/math\/clientCalculations["']/);
     expect(clientCalculations).not.toMatch(/from\s+["'][^"']*supportSeries[^"']*["']/);
@@ -99,17 +99,6 @@ describe("shared math dependency boundaries", () => {
       expect(content, file).not.toMatch(
         /from\s+["'][^"']*(?:clientCalculations|server\/)[^"']*["']|import\s+["'][^"']*(?:clientCalculations|server\/)[^"']*["']/,
       );
-    }
-
-    for (const file of [
-      "server/lib/data-loader/gdpSupport.ts",
-      "server/lib/math/supportSeries.ts",
-    ]) {
-      const content = source(file);
-      expect(content, file).toMatch(
-        /(?:\.\.\/)+\.\.\/src\/lib\/math\/supportSeries|@\/lib\/math\/supportSeries/,
-      );
-      expect(content, file).not.toMatch(/from\s+["'][^"']*server\/lib\/math\/supportSeries/);
     }
   });
 });

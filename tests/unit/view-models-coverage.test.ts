@@ -9,15 +9,12 @@ import {
   CTI_NOMINAL_DERIVED_TOTAL_KEY,
   CONSUMPTION_NOMINAL_KEYS,
   CONSUMPTION_REAL_KEYS,
-  SUPPORT_SERIES_KEY_REAL,
 } from "../../src/lib/chartConstants";
 import {
   toCpiView,
   toCtiView,
   toEarningsView,
-  toLegacyEarningsView,
   toQuarterlyView,
-  mergeQuarterlyGdpView,
 } from "../../server/lib/view-models/dashboard";
 import {
   buildPlan39V2CtiNominalRows,
@@ -26,12 +23,6 @@ import {
   loadPlan39V2CtiNominalRows,
 } from "../../server/lib/view-models/quarterlyAggregation";
 import { buildCtiFilePaths } from "../../server/lib/dataIo";
-import {
-  calculateQuarterlyComparisonFactor,
-  convertQuarterlyRawRows,
-  hasContinuousQuarterlyPeriods,
-  joinQuarterlyGdpRows,
-} from "../../server/lib/view-models/quarterlyGdpTransform";
 import { deriveQuarterlyRealRows } from "../../server/lib/view-models/quarterlyProjection";
 import { loadQuarterlyPublicData } from "../../server/lib/view-models/quarterlyProjection";
 import type {
@@ -209,68 +200,12 @@ describe("server view-model boundary coverage", () => {
     expect(earnings[0]?.measurements).toEqual({ a: { value: 1 }, b: { value: 2 } });
     expect(Object.keys(earnings[0]!)).toContain("measurements");
     expect(toEarningsView([makeCpiData("2025年2月")], ["a"])[0]?.measurements).toBeUndefined();
-    expect(() => toEarningsView(rows, ["民間最終消費支出（名目・原値）"])).toThrow(
-      "Plan37 public projection contains legacy keys: 民間最終消費支出（名目・原値）",
-    );
-    expect(toLegacyEarningsView(rows, ["a", "b"])).toEqual([
-      { 年月: "2025年1月", a: 1.24, b: null },
-    ]);
     expect(
       toQuarterlyView(
         [{ label: "2025Q1", quarter: 1, 年: 2025, 年月: "2025年1月", n: 2.345, bad: "x" }],
         ["n", "bad"],
       ),
     ).toEqual([{ label: "2025Q1", quarter: 1, 年: 2025, 年月: "2025年1月", n: 2.35 }]);
-    const quarterly = [{ label: "2025Q1", quarter: 1, 年: 2025, 年月: "2025年1月" }];
-    expect(
-      mergeQuarterlyGdpView(quarterly, [{ period: "2025-Q1", nominalRaw: 2, realRaw: 1 }]),
-    ).toBe(quarterly);
-  });
-
-  it("validates GDP quarters, rejects malformed factors, and joins only matching finite real comparisons", () => {
-    expect(hasContinuousQuarterlyPeriods([], "2025-Q1", "2025-Q1")).toBe(false);
-    expect(hasContinuousQuarterlyPeriods(["2025-Q1"], "bad", "2025-Q1")).toBe(false);
-    expect(calculateQuarterlyComparisonFactor([1, 2, 3, 4])).toBe(40);
-    expect(calculateQuarterlyComparisonFactor([1, 2, 3, -6])).toBeUndefined();
-    expect(calculateQuarterlyComparisonFactor([1, 2, 3, Number.NaN])).toBeUndefined();
-    expect(
-      convertQuarterlyRawRows([{ period: "2025-Q1", nominalRaw: 2, realRaw: 3 }], {
-        nominal: Number.NaN,
-        real: 2,
-      }),
-    ).toEqual([{ period: "2025-Q1", nominalRaw: 2, realRaw: 3, realComparison: 6 }]);
-
-    const realRows = [
-      { label: "2025Q1", quarter: 1, 年: 2025, 年月: "2025年1月", [SUPPORT_SERIES_KEY_REAL]: 9 },
-      { label: "bad", quarter: 1, 年: 2025, 年月: "2025年1月", [SUPPORT_SERIES_KEY_REAL]: 8 },
-      {
-        label: "invalid-year",
-        quarter: 1,
-        年: 99,
-        年月: "0099年1月",
-        [SUPPORT_SERIES_KEY_REAL]: 7,
-      },
-      {
-        label: "invalid-quarter",
-        quarter: 5,
-        年: 2025,
-        年月: "2025年13月",
-        [SUPPORT_SERIES_KEY_REAL]: 6,
-      },
-    ];
-    const joined = joinQuarterlyGdpRows([], realRows, {
-      comparisonReady: true,
-      rows: [
-        { period: "bad", nominalRaw: 1, realRaw: 1, realComparison: 7 },
-        { period: "2025-Q1", nominalRaw: 1, realRaw: 1, realComparison: Number.NaN },
-        { period: "2025-Q1", nominalRaw: 1, realRaw: 1, realComparison: 6 },
-      ],
-    });
-    expect(joined.real[0]?.[SUPPORT_SERIES_KEY_REAL]).toBe(6);
-    expect(joined.real[1]).not.toHaveProperty(SUPPORT_SERIES_KEY_REAL);
-    expect(joined.real[2]).not.toHaveProperty(SUPPORT_SERIES_KEY_REAL);
-    expect(joined.real[3]).not.toHaveProperty(SUPPORT_SERIES_KEY_REAL);
-    expect(realRows[0]?.[SUPPORT_SERIES_KEY_REAL]).toBe(9);
   });
 
   it("returns unavailable real series for duplicate, malformed, invalid, and overflow CPI inputs", () => {

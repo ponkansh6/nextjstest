@@ -1,12 +1,6 @@
 import { expect, it, describe, beforeAll } from "vitest";
-import {
-  CONSUMPTION_NOMINAL_KEYS,
-  CONSUMPTION_REAL_KEYS,
-  SUPPORT_SERIES_KEY_NOMINAL,
-  SUPPORT_SERIES_KEY_REAL,
-} from "../../src/lib/chartConstants";
+import { CONSUMPTION_NOMINAL_KEYS, CONSUMPTION_REAL_KEYS } from "../../src/lib/chartConstants";
 import type { CpiData } from "../../src/types";
-import { computeChartData } from "../../src/lib/clientCalculations";
 import { loadCtiData } from "../../server/lib/dataLoader";
 
 describe("CTI Data Integrity", () => {
@@ -54,44 +48,13 @@ describe("CTI Data Integrity", () => {
 
       expect(recentCtiRows.length).toBeGreaterThan(0);
 
-      const allKeys = Object.keys(ctiData[0]);
-      // サポート系列（民間最終消費支出）は四半期GDPデータ由来で最新四半期が未更新の場合0になるため除外
-      const targetKeys = allKeys.filter(
-        (key) =>
-          key !== "年月" &&
-          key !== "月" &&
-          key !== "" &&
-          key !== SUPPORT_SERIES_KEY_NOMINAL &&
-          key !== SUPPORT_SERIES_KEY_REAL,
-      );
-
-      expect(targetKeys.length).toBeGreaterThan(0);
+      const targetKeys = [...CONSUMPTION_NOMINAL_KEYS, ...CONSUMPTION_REAL_KEYS];
 
       recentCtiRows.forEach((row) => {
         targetKeys.forEach((key) => {
           const val = Number(row[key]);
           expect(val, `${key} in ${row.年月} should be > 0 (2017 onwards)`).toBeGreaterThan(0);
         });
-      });
-    });
-
-    describe("server-owned support-series projection", () => {
-      it("should not recalculate or synthesize support values in the client adapter", async () => {
-        const props = {
-          data: ctiData,
-          endYear: 2026,
-          maxCpiDate: { month: 12, year: 2026 },
-          nominalData: ctiData,
-          nominalKeys: CONSUMPTION_NOMINAL_KEYS,
-          realKeys: CONSUMPTION_REAL_KEYS,
-          startYear: 2005,
-        };
-
-        const result = computeChartData(props, []);
-        for (const row of [...result.quarterlyNominalData, ...result.quarterlyRealData]) {
-          expect(row).not.toHaveProperty(SUPPORT_SERIES_KEY_NOMINAL);
-          expect(row).not.toHaveProperty(SUPPORT_SERIES_KEY_REAL);
-        }
       });
     });
 
@@ -124,31 +87,6 @@ describe("CTI Data Integrity", () => {
             nominalOther,
             `その他の消費支出（名目） at ${row.年月} should be < 消費支出（名目）`,
           ).toBeLessThan(nominalTotal);
-        }
-      });
-    });
-
-    describe("server-owned support-series projection", () => {
-      it("should not retain private consumption expenditure in client calculations", () => {
-        /**
-         * Unit test for computeChartData function's support series scaling.
-         * Verifies that 2005-2016 years have non-zero values after computeChartData processes them.
-         * Note: computeChartData is not used in the production UI pipeline; this is a contract test for the function itself.
-         */
-        const props = {
-          data: ctiData,
-          endYear: 2026,
-          maxCpiDate: { month: 12, year: 2026 },
-          nominalData: ctiData,
-          nominalKeys: CONSUMPTION_NOMINAL_KEYS,
-          realKeys: CONSUMPTION_REAL_KEYS,
-          startYear: 2005,
-        };
-
-        const result = computeChartData(props, []);
-        for (const row of [...result.quarterlyNominalData, ...result.quarterlyRealData]) {
-          expect(row).not.toHaveProperty(SUPPORT_SERIES_KEY_NOMINAL);
-          expect(row).not.toHaveProperty(SUPPORT_SERIES_KEY_REAL);
         }
       });
     });

@@ -1,7 +1,6 @@
 import { loadCpiData, loadCtiData } from "../dataLoader";
 import { computeQuarterlyAggregates, type QuarterlyRow } from "./quarterlyAggregation";
 import { projectQuarterlyPublicView } from "../../../src/lib/quarterlyPublicProjection";
-import type { QuarterlyGdpData } from "../dataLoader";
 import type { QuarterlyView, SeriesMeasurement } from "@/types/chart";
 import type { CpiData } from "@/types";
 import {
@@ -175,11 +174,9 @@ export function deriveQuarterlyRealRows(
   });
 }
 
-/** Project fixed nominal rows and CPI-derived real rows; GDP is not a public real source. */
+/** Project fixed nominal rows and CPI-derived real rows. */
 export function buildQuarterlyPublicViews(
   nominalRows: QuarterlyRow[],
-  _realRows: QuarterlyRow[],
-  _gdp: QuarterlyGdpData | undefined,
   monthlyCpiRows: CpiData[] = [],
 ): { nominal: QuarterlyView[]; real: QuarterlyView[] } {
   return {
@@ -212,7 +209,7 @@ export async function loadQuarterlyPublicData(): Promise<{
     month: maxCpiMonth,
   });
   return {
-    ...buildQuarterlyPublicViews(aggregated.nominal, aggregated.real, undefined, cpiData),
+    ...buildQuarterlyPublicViews(aggregated.nominal, cpiData),
     maxCpiDate: { year: maxCpiYear, month: maxCpiMonth },
   };
 }

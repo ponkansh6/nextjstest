@@ -4,12 +4,6 @@ import {
   EARNINGS_SERIES_REGISTRY,
   EARNINGS_TABLE_CONFIGS,
   LINE_CONFIGS,
-  QUARTERLY_GDP_COMPARISON_NOMINAL_KEY,
-  QUARTERLY_GDP_COMPARISON_REAL_KEY,
-  QUARTERLY_GDP_RAW_NOMINAL_KEY,
-  QUARTERLY_GDP_RAW_REAL_KEY,
-  SUPPORT_SERIES_KEY_NOMINAL,
-  SUPPORT_SERIES_KEY_REAL,
   CPI_CATEGORIES,
   createComparisonSeriesRegistry,
   getDisplayLabel,
@@ -37,13 +31,11 @@ const projectMetadata = (series: readonly SeriesMetadata[]) =>
   );
 
 describe("series registry contracts", () => {
-  it("keeps Plan37 CTI keys and Plan38 quarterly keys in separate contracts", () => {
+  it("keeps Plan37 monthly CTI keys out of salary and comparison registries", () => {
     const earningsKeys = EARNINGS_SERIES_REGISTRY.map(({ key }) => key);
     const comparisonKeys = COMPARISON_SERIES_REGISTRY.map(({ key }) => key);
     expect(earningsKeys).not.toContain("CTIミクロ基本系列（名目・原数値）");
-    expect(earningsKeys).not.toContain(SUPPORT_SERIES_KEY_NOMINAL);
     expect(comparisonKeys).toEqual(expect.arrayContaining(["消費(総合)"]));
-    expect(comparisonKeys).not.toContain(SUPPORT_SERIES_KEY_NOMINAL);
     expect(comparisonKeys).not.toContain("CTI消費支出（参考）");
     expect(comparisonKeys).not.toContain("CTIミクロ基本系列（名目・参考）");
     expect(comparisonKeys).not.toContain("CTIミクロ基本系列（名目・参考・延長）");
@@ -141,25 +133,10 @@ describe("series registry contracts", () => {
     ]);
   });
 
-  it("does not mix GDP internal series or SpendingBarChart-only series into these registries", () => {
-    const keys = [...EARNINGS_SERIES_REGISTRY, ...COMPARISON_SERIES_REGISTRY].map(({ key }) => key);
-    const forbiddenKeys = [
-      QUARTERLY_GDP_RAW_NOMINAL_KEY,
-      QUARTERLY_GDP_RAW_REAL_KEY,
-      QUARTERLY_GDP_COMPARISON_NOMINAL_KEY,
-      QUARTERLY_GDP_COMPARISON_REAL_KEY,
-      SUPPORT_SERIES_KEY_NOMINAL,
-      SUPPORT_SERIES_KEY_REAL,
-    ];
-    for (const forbiddenKey of forbiddenKeys) {
-      expect(keys).not.toContain(forbiddenKey);
-    }
-  });
-
-  it("keeps the CTI extension opt-in while retaining the normal CTI series", () => {
-    const normalSeries = COMPARISON_SERIES_REGISTRY.filter(({ advanced }) => !advanced);
-    expect(normalSeries).toHaveLength(3);
-    expect(normalSeries.map(({ key }) => key)).toContain("消費(総合)");
+  it("keeps the comparison registry fixed to its three non-advanced entries", () => {
+    expect(COMPARISON_SERIES_REGISTRY).toHaveLength(3);
+    expect(COMPARISON_SERIES_REGISTRY.map(({ key }) => key)).toContain("消費(総合)");
+    expect(COMPARISON_SERIES_REGISTRY.every(({ advanced }) => advanced === undefined)).toBe(true);
   });
 
   it("exposes stable tooltip/legend labels and unique numeric order", () => {
@@ -182,18 +159,15 @@ describe("series registry contracts", () => {
     expect(COMPARISON_SERIES_REGISTRY.map(({ order }) => order)).toEqual([0, 1, 2]);
   });
 
-  it("keeps comparison tooltip labels, colors, order, and advanced visibility synchronized", () => {
+  it("keeps comparison tooltip labels, colors, order, and non-advanced metadata synchronized", () => {
     expect(
-      COMPARISON_SERIES_REGISTRY.map(
-        ({ key, tooltipLabel, legendLabel, color, order, advanced }) => ({
-          key,
-          tooltipLabel,
-          legendLabel,
-          color,
-          order,
-          advanced: advanced ?? false,
-        }),
-      ),
+      COMPARISON_SERIES_REGISTRY.map(({ key, tooltipLabel, legendLabel, color, order }) => ({
+        key,
+        tooltipLabel,
+        legendLabel,
+        color,
+        order,
+      })),
     ).toEqual([
       {
         key: "CPI総合(12MA)",
@@ -201,7 +175,6 @@ describe("series registry contracts", () => {
         legendLabel: "物価",
         color: "#f97316",
         order: 0,
-        advanced: false,
       },
       {
         key: "総合(12MA)",
@@ -209,7 +182,6 @@ describe("series registry contracts", () => {
         legendLabel: "給与",
         color: "#2563eb",
         order: 1,
-        advanced: false,
       },
       {
         key: "消費(総合)",
@@ -217,7 +189,6 @@ describe("series registry contracts", () => {
         legendLabel: "消費",
         color: "#dc2626",
         order: 2,
-        advanced: false,
       },
     ]);
   });
