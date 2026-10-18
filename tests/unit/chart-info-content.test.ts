@@ -128,7 +128,7 @@ describe("new-graph chart info data-source state", () => {
 });
 
 describe("new-graph and residual chart info wording", () => {
-  it("identifies 2016-and-earlier nominal values as unofficial connection estimates", () => {
+  it("explains the pre-2017 connection estimate and post-2017 official series in clear terms", () => {
     const info = CHART_INFO["consumption-expenditure"];
     const text = [
       info.source,
@@ -136,8 +136,14 @@ describe("new-graph and residual chart info wording", () => {
     ].join("\n");
 
     expect(text).toContain("2016Q4以前");
-    expect(text).toContain("接続推計");
+    expect(text).toContain("各費目のCTI基本系列の年次値");
+    expect(text).toContain("2017年の「調整系列の年次値÷基本系列の年次値」の比率");
+    expect(text).toContain("世帯構成別の月次季節パターン");
     expect(text).toContain("非公式");
+    expect(text).toContain("2017Q1以降");
+    expect(text).toContain("調整系列・分布調整値（原数値）の公式名目四半期値");
+    expect(text).not.toContain("A/B");
+    expect(text).not.toContain("名目B");
   });
 
   it("describes the actual comparison series and does not substitute quarterly CTI wording", () => {
