@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { coalesceQuarterlyRowsByPeriod } from "../../server/lib/view-models/quarterlyAggregation";
-import type { QuarterlyRow, SeriesMeasurement } from "../../src/types/chart";
+import {
+  normalizeQuarterlyRowKind,
+  type QuarterlyRow,
+  type SeriesMeasurement,
+} from "../../src/types/chart";
 
 const measurement = (
   key: string,
@@ -24,6 +28,29 @@ const measurement = (
 });
 
 describe("quarterly row coalescing", () => {
+  it("normalizes legacy cost-stack kinds while coalescing to a canonical official row", () => {
+    const legacy: QuarterlyRow = {
+      label: "2025Q1",
+      年: 2025,
+      quarter: 1,
+      年月: "2025年1月",
+      kind: "plan40-v2-cost-stack",
+    };
+    const official: QuarterlyRow = {
+      label: "2025Q1",
+      年: 2025,
+      quarter: 1,
+      年月: "2025年1月",
+      kind: "official-quarterly-adjusted",
+    };
+
+    const merged = coalesceQuarterlyRowsByPeriod([legacy, official]);
+
+    expect(normalizeQuarterlyRowKind(legacy.kind)).toBe("estimated-cost-stack-v2");
+    expect(merged).toHaveLength(1);
+    expect(merged[0]?.kind).toBe("official-quarterly-adjusted");
+  });
+
   it("keeps fields from multiple legacy rows and preserves explicit official nulls", () => {
     const firstLegacyOnlyKey = "CTI legacy field A";
     const secondLegacyOnlyKey = "CTI legacy field B";

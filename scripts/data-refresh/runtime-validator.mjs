@@ -398,17 +398,17 @@ export const PINNED_PROJECT_FILES = Object.freeze({
   "scripts/fetch-cti-basic-series-2025.mjs":
     "5330a7b1ec343d4cf7ada3a8f568ad9a1f2189d2112621f99ee6010424471df0",
   "server/lib/consumptionTotal12Ma.ts":
-    "131e7eb594dc33e4550359fbe1fb6b2c26fe5b585499fb1fcbcff15381d2788b",
+    "91c5b4647a952a3c571c990ffea00dc5bc759d63d1abbf097b35db818489e395",
   "server/lib/ctiAdjustedConnectionEstimate.ts":
-    "6af9307392f34eab4f94297b4dd5a5a96f28f0d2e7664fd35165b606774f5cb0",
+    "55552d8278649623cab51444f5338d69c1e4ccdaf4ebaf8b9ebe973044372564",
   "server/lib/ctiAdjustedConnectionEstimateV2.ts":
-    "c76da93e63164654f1b0ece5b905e58c1c3bd56d587dbf21ad4690ef65ca8f68",
+    "6235893097cd261c3d56698dcc5bb8dce37874feb3a6f32fa3f103a9fd613b31",
   "server/lib/ctiAdjustedPublicationGate.ts":
-    "22792a46236a2cf177ed39379c934d0ba44409ff943408eda4120707959dcdde",
+    "1da399c15e1d35f23d129cea8c2646ae153a1d126e0bee92e0d3cf347d0599b1",
   "server/lib/ctiAdjustedRollingBacktest.ts":
-    "66f7aead91c00101e6ad7732fecf3aedb2ecd08be10b88bb321079d1cc96d38f",
+    "d3834d184b375649bc258a7e40f0033b143f4cd0c88b203bd2f2b494ec23a20e",
   "server/lib/ctiBasicSeries2025LongTerm.ts":
-    "378ed1cfa196a47a48ff49691b9c9f53ad82aff5d4eb50b508155fde96557515",
+    "fbed1a59460db451c287673510d2f08e557ed68cdac71f18352cac309589bf59",
   "server/lib/data-loader/cache.ts":
     "cf438d8340004453b68b5d25c3f23b41e8556f7f2951fb622f6ebe845386e112",
   "server/lib/data-loader/cpi.ts":
@@ -420,9 +420,9 @@ export const PINNED_PROJECT_FILES = Object.freeze({
   "server/lib/data-loader/cpiValidation.ts":
     "d5810e1f9c608c8f81f33164e9d86b113746c9e3905bfaed9447106374debf3a",
   "server/lib/data-loader/ctiAdjusted.ts":
-    "3b25056feb091a914fcf4efd5c8986d663b0506538230f2fe99cd206703ff262",
+    "afe725dfd5db19c6533817802e83fdd6e2d43f5312ed24a265ee630d88bd9a35",
   "server/lib/data-loader/ctiValidation.ts":
-    "2bd130036d9351436933211c54f8d2fc24aadd8c678699a5767aeb1bc7111cc1",
+    "91ea069093940bc4128fbd61543975010abf8514f96b6c5cec84926fb8a0e924",
   "server/lib/data-loader/earnings.ts":
     "dc813aa80d299241a57c8906c3d68172732d5d200d0b36565e8350d73cb5f96d",
   "server/lib/data-loader/population.ts":
@@ -437,8 +437,8 @@ export const PINNED_PROJECT_FILES = Object.freeze({
   "server/lib/view-models/dashboard.ts":
     "3fa933e666789b9bfd8f21054ff005f09077c001ec996176daf5db86c45241ed",
   "server/lib/view-models/quarterlyAggregation.ts":
-    "682c913a253513b573c66f2db879f603e31ce8d1513fce2eee583778645376e2",
-  "src/lib/chartConstants.ts": "7cf0e8f1700a8ac7ec733fd131c15e38024ec41150aea42e1c63ddc869746f48",
+    "781aa4c2e971795ee69e3ba1d58e0a6fa0294ff1ddc6698f9d39aac7e4fa6da9",
+  "src/lib/chartConstants.ts": "93c51e597337c7538c4d4f116f73d5e35ab0bf495a3392993989cf42defd2fa4",
   "src/lib/clientCalculations.ts":
     "ae4d02d14284fd10fc202de7bf95ec3885ec16a1ed2f621f4aca7d8ed9b213e0",
   "src/lib/math/clientCalculations.ts":
@@ -449,9 +449,9 @@ export const PINNED_PROJECT_FILES = Object.freeze({
   "src/lib/math/supportSeries.ts":
     "b9078ee6ea6d2651026701ee81622b9c721b3e1c71bf2c8bbc182372ba015c1d",
   "src/lib/quarterlyPublicProjection.ts":
-    "479999c2759f45593bad89bcbb47c6321435df45654cc4fed5fdac6a54ceebd8",
+    "224ed0fbf1ff036d5cdc7c41e40d94defaa5703e59696d0154e7cfa553dfa874",
   "src/lib/yearMonth.ts": "c1bf9750552d656186d0cbfd32f73a647e9ea16b65feb6128b5b2cc6a496a515",
-  "src/types/chart.ts": "bf58649af4649d3f6146f73d9fddf4cad7879e2d1670c90cf95cd41011c2113f",
+  "src/types/chart.ts": "5ebf88072173e893ad28e06ef4103e6aa116e0468ba6e5bba9e8c9cde93bcb08",
   "src/types/data.ts": "6994b0f7bd5efee76c75900ce64da3def963f3ef0a50814c45f311356613e2b1",
   "src/types/index.ts": "5e28c21699001dc63aa8a38fd8868164823d4fb7e49d27e71e6684d9a28509a6",
   "tests/data-quality/cpi-data-integrity.test.ts":
@@ -465,7 +465,7 @@ export const PINNED_PROJECT_FILES = Object.freeze({
   "tests/data-quality/cti-source-artifacts.test.ts":
     "ec743a0e30c47f19e573246f111b60f620e017566ec2ba6fc18ce1667cf836f8",
   "tests/data-quality/earning-data-integrity.test.ts":
-    "0dc5df0bacf1d2d3c2ae58f647b88b046750900cd955104274fe358b0a1dd01f",
+    "f6b84e3e77fb92ac5415d27e6c60a940320f1ad56b9bdd8f1c88b64c8deceda9",
   "tests/data-quality/population-data-integrity.test.ts":
     "6441a64043461a8b8fa6388dfebc1aeecd47a2668c9ad3ce305ab5527f25e1ad",
   "tests/fixtures/minkan-extension-anchors.json":
