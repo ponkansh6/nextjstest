@@ -136,8 +136,8 @@ category totals reconcile as follows:
 | `openspec-current-retired` |             1 |            393 | Current requirements plus preserved historical/spec evidence and stable anchors.                                                                                                                                   |
 | `results-evidence`         |           262 |          1,335 | Saved requests, results, screenshots/logs, and verification evidence. Preserve filenames and bytes for traceability; do not treat as current runtime naming.                                                       |
 | `scripts-tooling`          |            18 |             85 | Stable operator paths, report names, and legacy artifact readers/writers. `scripts/plan39/` remains a compatibility path; emitted schema values were migrated.                                                     |
-| `server-src-runtime`       |             9 |             47 | Runtime compatibility types, public metadata literals, and UI consumers. Current comments and codemaps were updated to feature names.                                                                              |
-| `tests-fixtures`           |            54 |            311 | Test names, descriptions, fixture schemas and expected compatibility values. Keep old names when they identify the behavior/schema under test; update current descriptions only when current behavior is asserted. |
+| `server-src-runtime`       |            10 |             51 | Runtime compatibility types, public metadata literals, and UI consumers. Current comments and codemaps were updated to feature names.                                                                              |
+| `tests-fixtures`           |            53 |            307 | Test names, descriptions, fixture schemas and expected compatibility values. Keep old names when they identify the behavior/schema under test; update current descriptions only when current behavior is asserted. |
 
 `shared_plan/**` and `shared_plan*` remain dated planning/evidence documents;
 Plan54 is tallied separately above. The generator and ledger are excluded to
