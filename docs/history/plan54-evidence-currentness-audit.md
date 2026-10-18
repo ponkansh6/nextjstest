@@ -53,9 +53,7 @@ pre-canonical active-set snapshot
 `a1e71f1f5f0d0c77a122dd7a8559d8d340e1325e6e5134cda63de166159be981` captured
 before artifact regeneration, and the post-canonical snapshot
 `f8027e1d571402cbeafcf9c64ce2f0fc15eb5d3a3bf7c97bd334a6e5f14e3fed`. Older
-pre-existing snapshots and result files remain preserved. The analysis run and `--check`,
-rollback verifier, focused suite (22 files, 296 passed, 1 skipped), lint, and
-type-check passed. The final numbered vocabulary generator produced 403 files /
+pre-existing snapshots and result files remain preserved. The earlier focused suite was a separate run (22 files, 296 passed, 1 skipped). After refreshing `PINNED_PROJECT_FILES` for 13 Plan54-touched paths and adding a test for `plan40-v2-cost-stack` normalization, the focused runtime-validator plus row-coalescing tests passed 22/22. The full `pnpm test:coverage` run passed 122 files, 1,399 tests, and 1 skipped, with 100% statements, branches, functions, and lines. `pnpm lint:fast`, `pnpm type-check`, the analysis run and `--check`, and the rollback verifier also passed. A separate pre-push built next-route POC gate failed with exit 23 because its `testResults` JSON report was empty or missing; this does not establish that the complete pre-push or push passed. The final numbered vocabulary generator produced 403 files /
 2,366 matching lines, with Plan54 tallied separately as 1 file / 52 lines and
 0 safe rename candidates. The bare-plan validator passed with 1,281
 occurrences, 1,039 distinct lines, and 190 files (356 historical, 827 generic,
@@ -66,7 +64,7 @@ UI/chart/tooltip, or refresh workflow results.
 
 ### Reproducibility commands
 
-The focused verification invocation and adjacent gates recorded for this
+The earlier focused verification invocation and adjacent gates recorded for this
 checkpoint are:
 
 ```sh
@@ -79,15 +77,14 @@ node scripts/plan39/rollback.mjs --verify
 node scripts/plan54/generate-vocabulary-ledger.mjs
 node scripts/plan54/verify-bare-plan-ledger.mjs
 git diff --check
+# Later follow-up verification after the 13 PINNED_PROJECT_FILES updates:
+pnpm exec vitest run tests/scripts/data-refresh/runtime-validator.test.mjs tests/unit/quarterly-row-coalescing.test.ts
+pnpm test:coverage
+# The separate built next-route pre-push POC command failed (exit 23):
+pnpm run test:browser:next-route-poc:prepush:built
 ```
 
-The focused Vitest command was recorded at 22 files / 296 passed / 1 skipped;
-lint, type-check, both analysis commands, and rollback verification passed in
-the implementation run. The numbered vocabulary generator produced the
-current totals recorded in Plan54. The bare-plan validator and `git diff --check`
-passed on the final ledger and documentation state. Historical JEV,
-UI/chart/tooltip, and
-refresh workflows remain unrun.
+That earlier focused Vitest command was a separate run at 22 files / 296 passed / 1 skipped. In the later verification, after refreshing the 13 Plan54-touched `PINNED_PROJECT_FILES` hashes and adding the `plan40-v2-cost-stack` normalization test, focused runtime-validator + row-coalescing tests passed 22/22 and full `pnpm test:coverage` passed 122 files / 1,399 passed / 1 skipped with 100% statements, branches, functions, and lines. `pnpm lint:fast`, `pnpm type-check`, both analysis commands, and rollback verification passed. A separate pre-push built next-route POC gate failed with exit 23 because the `testResults` JSON report was empty or missing, so the complete pre-push/push is not recorded as passing. The numbered vocabulary generator produced the current totals recorded in Plan54. The bare-plan validator and `git diff --check` passed on the final ledger and documentation state. Historical JEV, UI/chart/tooltip, and refresh workflows remain unrun.
 
 ## Record-by-record disposition
 
