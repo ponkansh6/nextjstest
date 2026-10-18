@@ -39,7 +39,7 @@ const measurementFor = (
   unit: "万円",
   source:
     seriesType === "estimated_adjusted"
-      ? "Plan39-v2 bottom-up connection estimate"
+      ? "年次基準値と世帯構成別の月次パターンによる接続推計"
       : "公式CTIミクロ調整系列",
   valueType: "raw" as const,
   value: 10 + index,

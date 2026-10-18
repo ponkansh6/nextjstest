@@ -7,16 +7,16 @@ import { CHART_INFO } from "@/lib/chartInfoContent";
 describe("new-graph chart info (3種比較)", () => {
   const info = CHART_INFO["new-graph"];
 
-  it("source に毎月勤労統計・CPI長期時系列・Plan49月次データを記載している", () => {
+  it("source に毎月勤労統計・CPI長期時系列・消費の月次データを記載している", () => {
     expect(info.source).toContain("毎月勤労統計調査");
     expect(info.source).toContain("消費者物価指数 長期時系列データ");
-    expect(info.source).toContain("Plan49月次データ");
+    expect(info.source).toContain("消費系列の月次データ（家計調査およびe-Stat公式系列）");
   });
 
   it("3種比較の生成元と基準化の実態を説明する", () => {
     const items = info.sections.flatMap((s) => s.items);
     const text = items.map((item) => item.text).join("\n");
-    expect(text).toContain("Plan49の月次合計「消費(総合)」");
+    expect(text).toContain("家計調査・e-Stat公式系列を用いた月次消費合計「消費(総合)」");
     expect(text).toContain("2025年の月次平均=100");
     expect(text).toContain("連続12暦月の厳密な移動平均");
     expect(text).toContain("所定内給与・所定外給与・特別給与");
@@ -147,7 +147,7 @@ describe("new-graph and residual chart info wording", () => {
       ),
     ].join("\n");
 
-    expect(text).toContain("Plan49の月次合計「消費(総合)」");
+    expect(text).toContain("家計調査・e-Stat公式系列を用いた月次消費合計「消費(総合)」");
     expect(text).toContain("2025年の月次平均=100");
     expect(text).toContain("全国CPI総合");
     expect(text).toContain("所定内給与・所定外給与・特別給与");

@@ -65,7 +65,7 @@ const unavailableEstimatedQuarterlyMeasurement = (
   key,
   label: key,
   unit: "指数",
-  source: "e-Stat 公式CTI長期artifact 000040499070 / Plan39-v2 bottom-up",
+  source: "e-Stat CTI長期系列（000040499070）を使った年次基準値・世帯構成別月次パターンによる推計",
   valueType: "comparison",
   value: null,
   status: "unavailable",
@@ -421,7 +421,8 @@ export function buildCompositionAdjustedQuarterlyRows({
               key: candidate.key,
               label: candidate.key,
               unit: "指数",
-              source: "e-Stat 公式CTI長期artifact 000040499070 / Plan39-v2 bottom-up",
+              source:
+                "e-Stat CTI長期系列（000040499070）を使った年次基準値・世帯構成別月次パターンによる推計",
               valueType: "comparison",
               value: candidate.value,
               status: "available",
@@ -483,7 +484,8 @@ export function buildCompositionAdjustedQuarterlyRows({
         key: CTI_NOMINAL_DERIVED_TOTAL_KEY,
         label: CTI_NOMINAL_DERIVED_TOTAL_KEY,
         unit: "指数",
-        source: "e-Stat 公式CTI長期artifact 000040499070 / Plan39-v2 bottom-up",
+        source:
+          "e-Stat CTI長期系列（000040499070）を使った年次基準値・世帯構成別月次パターンによる推計",
         valueType: "comparison",
         value: validQuarterlyTotal,
         status: validQuarterlyTotal === null ? "unavailable" : "available",

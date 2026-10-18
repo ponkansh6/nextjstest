@@ -111,7 +111,8 @@ describe("quarterly client/server type boundary", () => {
       ...officialMeasurement,
       key: housingKey,
       label: housingKey,
-      source: "e-Stat 公式CTI長期artifact 000040499070 / Plan39-v2 bottom-up",
+      source:
+        "e-Stat CTI長期系列（000040499070）を使った年次基準値・世帯構成別月次パターンによる推計",
       aggregation: "cti_adjusted_v2_bottom_up_estimate",
       annualAnchorType: "estimated",
       seriesType: "estimated_adjusted",
@@ -151,7 +152,8 @@ describe("quarterly client/server type boundary", () => {
       official: true,
     });
     expect(plan40Nominal.measurements?.[housingKey]).toMatchObject({
-      source: "e-Stat 公式CTI長期artifact 000040499070 / Plan39-v2 bottom-up",
+      source:
+        "e-Stat CTI長期系列（000040499070）を使った年次基準値・世帯構成別月次パターンによる推計",
       seriesType: "estimated_adjusted",
       official: false,
     });

@@ -90,7 +90,9 @@ export function projectCtiAdjustedV2PublicView(
           key,
           label: key,
           unit: "指数",
-          source: official ? "公式CTIミクロ調整系列 A" : "Plan39-v2 bottom-up connection estimate",
+          source: official
+            ? "公式CTIミクロ調整系列 A"
+            : "年次基準値と世帯構成別の月次パターンによる接続推計",
           valueType: "comparison" as const,
           value: values[category],
           status,
