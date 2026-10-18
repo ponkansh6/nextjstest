@@ -101,21 +101,21 @@ export function normalizeSpendingChartData(
   data: QuarterlyDataPoint[],
   keys: string[],
 ): QuarterlyDataPoint[] {
-  const plan40Keys = keys.filter((key) =>
+  const quarterlyExpenseKeys = keys.filter((key) =>
     (QUARTERLY_PUBLIC_NOMINAL_KEYS as readonly string[]).includes(key),
   );
   return data.map((row) => {
     const next = { ...row };
-    const hasPlan39Expense = plan40Keys.some(
+    const hasCompositionAdjustedExpense = quarterlyExpenseKeys.some(
       (key) =>
         typeof row[key] === "number" &&
         Number.isFinite(row[key]) &&
         row.measurements?.[key] !== undefined,
     );
     if (row.年 < 2018) {
-      // Plan39-v2 supplies the pre-2018 expense stack when its measurement
-      // metadata is present; otherwise hide the unavailable expense values.
-      if (!hasPlan39Expense) plan40Keys.forEach((key) => (next[key] = null));
+      // Composition-adjusted measurements supply the pre-2018 expense stack;
+      // otherwise hide the unavailable expense values.
+      if (!hasCompositionAdjustedExpense) quarterlyExpenseKeys.forEach((key) => (next[key] = null));
     }
     return next;
   });

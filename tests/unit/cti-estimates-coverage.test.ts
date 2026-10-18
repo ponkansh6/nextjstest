@@ -7,7 +7,7 @@ import {
 import {
   buildCtiAdjustedV2Estimate,
   generateCtiAdjustedV2GammaCases,
-  validateCtiAdjustedV2Plan40Inputs,
+  validateAnnualAnchorInputs,
 } from "@server/lib/ctiAdjustedConnectionEstimateV2";
 
 const years = Array.from({ length: 21 }, (_, i) => 2005 + i);
@@ -504,7 +504,7 @@ describe("CTI estimate remaining input boundaries", () => {
 
   it("validates complete Plan40 provenance and rejects invalid annual anchors", () => {
     const { b, a } = fixture();
-    const valid = validateCtiAdjustedV2Plan40Inputs(b, a);
+    const valid = validateAnnualAnchorInputs(b, a);
     expect(valid).toMatchObject({ valid: true, normalizedBaseYear: 2025 });
   });
 
@@ -528,7 +528,7 @@ describe("CTI estimate remaining input boundaries", () => {
         row.year === 2025 ? { ...row, values: { ...row.values, 総合: 0 } } : row,
       ),
     };
-    const invalid = validateCtiAdjustedV2Plan40Inputs(malformed, missingAnchor);
+    const invalid = validateAnnualAnchorInputs(malformed, missingAnchor);
     expect(invalid.valid).toBe(false);
     expect(invalid.reasonCodes).toEqual(
       expect.arrayContaining([
@@ -542,7 +542,7 @@ describe("CTI estimate remaining input boundaries", () => {
       ]),
     );
     const rejected = buildCtiAdjustedV2Estimate(malformed, missingAnchor, undefined, {
-      validatePlan40Inputs: true,
+      requireAnnualAnchorValidation: true,
     });
     expect(rejected.publicationGate.reasonCodes).toContain("invalid_metadata_range");
   });
@@ -553,8 +553,8 @@ describe("CTI estimate remaining input boundaries", () => {
       ...b,
       metadata: { ...b.metadata, rawRange: undefined, adoptedRange: undefined },
     } as unknown as CtiAdjustedAnnualInput;
-    const missingInput = validateCtiAdjustedV2Plan40Inputs(undefined, a);
-    const invalidRange = validateCtiAdjustedV2Plan40Inputs(missingRange, a);
+    const missingInput = validateAnnualAnchorInputs(undefined, a);
+    const invalidRange = validateAnnualAnchorInputs(missingRange, a);
     expect(missingInput.reasonCodes).toContain("B:missing_artifact");
     expect(invalidRange.reasonCodes).toEqual(
       expect.arrayContaining(["B:missing_raw_range", "B:missing_adopted_range"]),
@@ -564,7 +564,7 @@ describe("CTI estimate remaining input boundaries", () => {
   it("builds the Plan40 bottom-up series from valid annual inputs", () => {
     const { b, a } = fixture();
     const plan40 = buildCtiAdjustedV2Estimate(b, a, undefined, { contract: "plan40" });
-    expect(plan40.plan40InputValidation?.valid).toBe(true);
+    expect(plan40.annualAnchorInputValidation?.valid).toBe(true);
     expect(plan40.rows.find((row) => row.year === 2010)).toMatchObject({
       seriesType: "estimated_bottom_up",
       status: "available",

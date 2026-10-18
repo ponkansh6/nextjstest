@@ -1,6 +1,6 @@
 # Specification: Economic Indicators Dashboard (nextjstest)
 
-> **Current contract notice (2026-10-18):** Plan40's ten-category quarterly CTI output and Plan37's monthly CTI source remain current. Dedicated Plan38 quarterly CTI and annual/quarterly GDP support loaders, joins, keys, refresh pins, and GDP-only fixtures are retired because they have no downstream consumer. The explicit retired-contract sections below supersede older Plan21/Plan38 implementation descriptions and refresh audit records retained for historical traceability.
+> **Current contract notice (2026-10-18):** The integrated ten-category quarterly CTI projection and the basic monthly CTI source remain current. Their implementation uses the composition-adjusted-v2 algorithm with separate annual-public and quarterly-annual-anchor input boundaries. Internal row kinds use estimated-cost-stack and official-quarterly meanings. Historical plan-number schema values remain accepted only by the artifact readers that validate their matching manifest/metadata family; public measurement identifiers and JSON shape remain unchanged. Dedicated legacy quarterly CTI and annual/quarterly GDP support paths are retired. The canonical current sections are [Data Sources](#current-data-sources), [Data Flow](#current-data-flow), [Component Tree](#current-component-tree), and [Requirements](#current-requirements). See [the CTI identifier map](../../../docs/history/cti-contract-evolution.md) for old-name and requirement-anchor traceability, and the [Plan54 evidence currentness audit](../../../docs/history/plan54-evidence-currentness-audit.md) for the 2026-10-18 artifact, analysis, rollback, and dated-record disposition evidence.
 
 ## Legacy CTI monthly compatibility field
 
@@ -68,83 +68,36 @@ not create an additional bar. The dedicated Plan38 support key is retired.
 
 ### Requirements
 
-- **WHEN** the old CTI loader has finite raw `消費支出（名目）` values, **THEN**
-  the legacy adjustment uses its 12-month trailing window and does not use
-  Plan37 derived values or Plan40 quarterly values.
-- **WHEN** a monthly row is before 2018-01, **THEN**
-  `CTI消費支出（参考）` is `null`/not displayable; **WHEN** it is 2018-01 or
-  later and the 12-month window is complete, **THEN** it is
-  `12MA(raw) * 100 / average(raw CTI 2025 months)`, and the 2025 monthly
-  comparison average is 100.
-- **WHEN** the comparison registry or its public projection is created for NewGraph, **THEN**
-  the old 3 consumption comparison entries are replaced by a single `消費(総合)` entry (`CONSUMPTION_TOTAL_12MA_KEY`, monthly frequency, strict 12-month moving average rebased to 2025 monthly average), while CPI and wage series remain.
-- **WHEN** the comparison graph, legend, tooltip, table, or CSV renders for NewGraph, **THEN**
-  the new `消費(総合)` series metadata and value have parity across every public surface.
-- **WHEN** the 3種比較 legend and tooltip render, **THEN** the three tooltip row labels match the legend labels `物価`, `給与`, and `消費` in orange, blue, and red respectively; the consumption row retains its period and value and omits base-year, source, aggregation, and 12-month-average notes, while measurement notes for other comparison rows remain available.
-- **WHEN** a generic consumption tooltip renders outside 3種比較, **THEN** its existing measurement notes, including the concise `消費支出の12か月移動平均` explanation when applicable, remain unchanged.
-- **WHEN** 2005–2016 historical monthly estimation is computed, **THEN**
-  it uses the same composition-corrected Plan39 V2 annual total anchors as the historical quarterly nominal projection and two-or-more-person household raw monthly seasonal weights (`m[y,m] = A[y] * r[y,m] / meanRaw[y]`), requiring all 12 months to be finite and `meanRaw[y]` to be positive and finite; any missing month invalidates the entire year.
-- **WHEN** the Plan49 calculation constructs its 2004 prehistory, **THEN** it uses the official calendar-year IV-4 share `3459/4915`, applies the same V2 per-category base/gamma calculation used for the historical annual anchors, normalizes all twelve `000040499070` raw months to that corrected annual anchor, and keeps these values internal; 2004 is not added to the public V2 rows or quarterly graph.
-- **WHEN** the 2004 IV-4 CSV is missing, duplicated, or contains invalid counts, **THEN** only the 2004 prehistory anchor is unavailable; shared 2005–2016 V2 anchors remain usable, and 2005-01 has no MA12 because its required 2004 months are incomplete.
-- **WHEN** the first public monthly point is computed, **THEN** it is 2005-01 and its strict 12MA window is 2004-02..2005-01; no 2004 point is emitted to NewGraph, tables, or CSV.
-- **WHEN** 2017-and-later monthly values are processed, **THEN**
-  official all-household monthly adjusted observations (`000040499028`) are used as-is without quarterly back-filling. The separate Plan49 pre-implementation gate compares available three-month means with official quarterly values (`000040499087`) using its fixed tolerance; that offline check does not modify monthly values and is not a runtime fallback.
-- **WHEN** a 12-month moving average window is computed for NewGraph consumption, **THEN**
-  all 12 consecutive calendar months must be finite and complete; partial windows or missing months yield `null`.
-- **WHEN** the NewGraph consumption value for 2014-01 is computed, **THEN**
-  the 12MA uses 2013-02 through 2014-01, with the required 2013 input retained so all 2014 display months can use complete windows.
-- **WHEN** the salary graph/table/CSV or Plan40 quarterly view renders, **THEN**
-  legacy internal compatibility requirements remain unaffected.
+The current WHEN/THEN requirements are consolidated under [Requirements](#current-requirements), in the subsection [Legacy monthly CTI compatibility requirements](#legacy-monthly-compatibility-requirements).
+The current monthly comparison contract is also tracked in [SharedPlan 49](../../../shared_plan/49-newgraph-consumption-total-12ma-plan.md).
 
 ## Retired Plan38 quarterly CTI route
 
-The dedicated Plan38 route is retired because `buildPlan38CtiNominalRows*` and
-`aggregateCtiBasicNominalQuarterly` had no production callers. Its historical
-implementation and verification record remain in `shared_plan/38-*` and are not
-a runtime contract. The old key `CTIミクロ四半期系列（名目）`, its fixed
-2005Q1–2017Q4 projection, and its dedicated metadata/public-surface behavior
-are not emitted or required by the application. This retirement supersedes
-older Plan38 requirements, data-flow descriptions, and test inventories in this
-specification; those passages are historical records only.
-
-The active quarterly nominal public output is Plan40's integrated ten-category
-CTI series: Plan39-v2 estimates for 2005Q1–2016Q4 and official adjusted
-quarterly nominal observations from 2017Q1 onward. Plan21 GDP support and its compatibility artifacts are retired because no
-downstream consumer exists. Plan37 monthly CTI source/artifact support remains
-available for monthly consumers.
+The retired route history and former scenarios have moved to the
+[CTI contract history](../../../docs/history/cti-contract-evolution.md#retired-plan38-quarterly-cti-route).
+The current quarterly contract is described in the integrated quarterly CTI
+specification and the canonical data-flow sections below. This heading remains
+as a compatibility anchor for existing links.
 
 ### Requirements
 
-- **WHEN** quarterly nominal CTI data is loaded for the application, **THEN**
-  the Plan40 ten-category integrated output is the quarterly public contract and
-  no dedicated Plan38 key or 52-row CTI projection is produced.
-- **WHEN** the Plan37 monthly raw CTI artifact is loaded, **THEN** it remains a
-  monthly source and is not projected through the retired Plan38 quarterly
-  aggregation API.
+Former Plan38 scenarios are archived with their original WHEN/THEN text in the
+[CTI contract history](../../../docs/history/cti-contract-evolution.md#retired-plan38-quarterly-cti-route).
 
 ## Retired annual and quarterly GDP support
 
-Annual GDP comparison values and Plan21 quarterly GDP support had no downstream
-consumer after the server loader; page and dashboard projections already omitted
-them. The GDP loader/status APIs, quarterly join/transform, public GDP keys,
-normalization artifacts, and GDP-specific source fixtures are retired. Old audit
-and phase-history sections below record the former design only and do not define
-current behavior or refresh dependencies.
-
-Plan40 remains the active quarterly public contract with its ten CTI expense
-series. Plan37's monthly CTI source remains available to monthly consumers. The
-retired GDP inputs are not a fallback or source for either contract.
+The retired GDP route and former scenarios have moved to the
+[CTI contract history](../../../docs/history/cti-contract-evolution.md#retired-annual-and-quarterly-gdp-support).
+Current source dependencies and active CTI contracts are described in the
+canonical data-source, data-flow, and requirement sections. This heading
+remains as a compatibility anchor for existing links.
 
 ### Requirements
 
-- **WHEN** dashboard monthly rows are loaded or projected, **THEN** they contain
-  no annual GDP raw/comparison values, GDP status, or GDP normalization output.
-- **WHEN** quarterly spending rows are loaded or projected, **THEN** no Plan21
-  GDP loader, status API, join, raw value, or comparison value participates; the
-  Plan40 ten-category output remains unchanged.
-- **WHEN** CTI source refresh dependencies are assembled, **THEN** GDP support
-  CSVs, snapshots, normalization files, and GDP-only fixture pins are excluded,
-  while Plan40 source inputs and Plan37 monthly CTI artifacts remain.
+Former GDP support scenarios are archived with their original WHEN/THEN text in
+the [CTI contract history](../../../docs/history/cti-contract-evolution.md#retired-annual-and-quarterly-gdp-support).
+
+<a id="current-annual-adjusted-cti-contract"></a>
 
 ## SharedPlan 39: annual adjusted public contract
 
@@ -319,96 +272,7 @@ unavailable row into an official row.
 
 ### Requirements
 
-- **WHEN** the nominal B and A artifacts have valid schema, metadata, SHA-256
-  references, source identity, units, and complete required annual coverage,
-  **THEN** the annual contract is eligible for calculation and retains the
-  artifact identity and hash references in the audit record.
-- **WHEN** the artifact manifest is missing or invalid, **THEN** the loader does
-  not discover candidate CSV/JSON files and the public route fails closed with
-  `invalid_manifest` and `unavailable` status.
-- **WHEN** `CTI_ADJUSTED_ARTIFACT_ROOT` is unset and a Next production bundle
-  invokes the page loader, **THEN** the loader uses
-  `cwd/data/source/cti-adjusted` before bundle-relative candidates, does not
-  mistake `.next/package.json` for the artifact root, and proceeds only when
-  that root's manifest validates; otherwise the public route is
-  `unavailable` with the existing machine-readable reason.
-- **WHEN** `CTI_ADJUSTED_ARTIFACT_ROOT` is set, **THEN** its absolute root is
-  preferred for manifest and artifact resolution, and the same validation
-  failure remains `unavailable` rather than falling back to another root.
-- **WHEN** a valid manifest declares a required nominal B/A artifact as
-  missing, **THEN** the corresponding `missing_b_artifact` or
-  `missing_a_artifact` reason is retained and no candidate artifact replaces
-  the declared missing input. The real-only L artifact is not a required input
-  to this nominal estimate.
-- **WHEN** any required nominal B/A artifact, metadata record, hash, annual period, or required
-  value is missing, malformed, duplicated, non-finite, or inconsistent,
-  **THEN** the public adjusted measurement is `null` with status
-  `unavailable` and a machine-readable reason; no fallback or partial public
-  estimate is emitted.
-- **WHEN** the annual contract is validated, **THEN** official A observations
-  are complete and authoritative for every year from 2017 onward, while
-  2005–2016 is eligible for an estimated path only after the overall verdict
-  is accepted and is never labeled official.
-- **WHEN** the nominal core calculation runs, **THEN** it preserves applicable
-  nominal connection parameters and residual diagnostics as internal/audit data,
-  excludes real-only L-derived D from the estimate, and exposes only the
-  adjusted A-key measurement and its status metadata.
-- **WHEN** fitting or validating the model for the 2017 boundary, **THEN**
-  2018–2025 observations are used for calibration/training, 2017 is the
-  holdout/target and is excluded from calibration, and the audit verifies
-  `leakage=false`; backtest pass alone does not authorize publication.
-- **WHEN** a 2005–2016 estimate has finite validated nominal B/A inputs,
-  **THEN** the public status is `estimated_adjusted` only when the overall
-  audit verdict is accepted; **WHEN** the verdict is `insufficient-data` or
-  `accepted=false`, **THEN** 2005–2016 is `null`/`unavailable`.
-  Missing/invalid real-only L does not affect the nominal estimate; missing
-  required nominal B/A input fails the estimate closed.
-- **WHEN** a valid official distribution-adjusted nominal A observation is available from 2017 onward,
-  **THEN** the public projection preserves that official value and status even
-  if the estimate path is unavailable; estimation MUST NOT
-  overwrite official A.
-- **WHEN** backtest passes but sensitivity or another adoption gate is not
-  evaluable or fails, **THEN** backtest success alone does not permit public
-  estimated values.
-- **WHEN** the superseded legacy v1 residual-boundary diagnostic is evaluated,
-  **THEN** its historical provisional level-based threshold `1.4` and former
-  2018–2025 maximum are retained only as legacy audit data; they do not define
-  the current Plan39-v2 gate, which uses the official-A Other-share threshold
-  specified in the active Plan39-v2 requirement below.
-- **WHEN** the loader reads Plan39 nominal estimate artifacts, **THEN** it consumes only
-  manifest-declared nominal B/A artifacts, validates `sourceUrl`/`downloadUrl` and
-  SHA-256 hashes, and fails closed without candidate discovery on any mismatch.
-- **WHEN** the public projection is created, **THEN** B inputs, real-only L,
-  R, beta, D, residuals, and intermediate diagnostics are absent from the public
-  A-only payload; they remain available only to the permitted audit contract.
-- **WHEN** graph, table, tooltip, or CSV output renders the same annual
-  measurement, **THEN** value, label, unit, source, frequency, aggregation,
-  status, reason, and period are identical across all four surfaces, including
-  `estimated_adjusted`, `official_adjusted`, and `unavailable` states.
-- **WHEN** the Plan39-v2 projection produces a public annual measurement,
-  **THEN** graph, table, tooltip, display note, and CSV metadata use the same
-  `seriesType`, `status`, `reason`, `value`, `official`, `model`, and
-  `estimateVersion`; the display note is `2016年以前は接続推計。公式遡及値ではない`
-  only for `estimated_adjusted`, `公式調整値` only for
-  `official_adjusted`/official values, and `利用不可: <reason>` for
-  `unavailable`.
-- **WHEN** a Plan39-v2 row is `unavailable` or has a non-available status,
-  **THEN** every public category measurement has `value: null`,
-  `seriesType: unavailable`, a non-empty reason, and `official: false`; it is
-  never labeled or annotated as an official adjusted value, and CSV value cells
-  remain empty while the status/seriesType/reason metadata columns are kept.
-- **WHEN** the legacy consumption-level index is requested, **THEN** it is
-  sourced only from the validated official annual artifact and its declared
-  annual basis; unsupported monthly aggregation or an otherwise ungrounded
-  monthly fallback is rejected and fails closed.
-- **WHEN** an audit artifact is serialized, **THEN** the result is JSON-safe
-  and preserves validation outcome, source metadata, hashes, status, reasons,
-  holdout boundaries, and model diagnostics without exposing non-serializable
-  values or secrets.
-- **WHEN** rollback is requested, **THEN** snapshot, metadata, manifest, and
-  hash validation is read-only by default; restoration requires an explicit
-  force condition and never fetches, synthesizes, interpolates, or silently
-  replaces an artifact.
+The current WHEN/THEN requirements are consolidated under [Requirements](#current-requirements), in the subsection [Plan39 annual adjusted public contract requirements](#plan39-annual-contract-requirements).
 
 ### Final Plan39 audit synchronization (period-unified)
 
@@ -480,52 +344,7 @@ mismatch fails closed and preserves `unavailable` estimated rows.
 
 #### Requirements
 
-- **WHEN** the v2 publication gate is rejected, **THEN** all twelve
-  2005–2016 estimated rows are `null`/`unavailable` with the gate reason, and
-  official A rows from 2017 onward remain available.
-- **WHEN** the v2 publication gate is accepted, **THEN** all twelve
-  2005–2016 rows are available and marked `estimated_adjusted`, while 2017+
-  rows remain `official_adjusted` and official.
-- **WHEN** the page adapter maps v2 rows, **THEN** chart, table, tooltip, and
-  CSV use the same adapted measurement value and metadata, including
-  `model=v2-bottom-up`, `estimateVersion=plan39-v2`, status, reason, and
-  official/estimated provenance; an unavailable measurement remains
-  `unavailable` and does not receive an official note or source.
-- **WHEN** a v1 consumer requests the legacy route, **THEN** its loader,
-  projection, and public API remain unchanged.
-
-- **WHEN** production, backtest, or training calibration is recorded,
-  **THEN** its period is 2018–2025; sensitivity baseline calibration is also
-  2018–2025, while sensitivity alternative calibration is 2018–2024. The
-  target/holdout is 2017, excluded from calibration, and `leakage=false`.
-- **WHEN** a mandatory nominal-input Other/bottom-up, 2017 connection, rolling/LOO
-  backtest, input-reconciliation, or threshold audit is incomplete or fails,
-  **THEN** a future evaluation is `insufficient-data`, `accepted=false`, and
-  no estimated row is public. Sensitivity coverage and G are retained for
-  audit and do not independently determine the gate; the former real-input
-  audit's pass state does not establish the nominal gate.
-- **WHEN** the former real-input legacy-v1 residual boundary has `exceeded=false` under threshold `1.4`,
-  **THEN** it is retained as a passing audit result and remains non-blocking
-  historical evidence; it does not establish current nominal publication readiness.
-- **WHEN** the nominal v2 publication gate is evaluated, **THEN** its accepted
-  analysis fingerprint must match selected nominal B/A inputs; absent this
-  nominal-specific evidence, 2005–2016 estimates remain unavailable, while
-  official distribution-adjusted nominal A rows from 2017 onward remain official.
-- **WHEN** the v2 loader and UI projection are connected, **THEN** chart,
-  table, tooltip, and CSV use the same projected values and metadata.
-- **WHEN** runtime publication evaluates rolling/LOO evidence from an analysis
-  artifact, **THEN** it uses the same publication gate as analysis and requires
-  the current evidence schema plus an identical input fingerprint; old schema,
-  missing evidence, or mismatch yields `unavailable` estimated rows and does
-  not publish estimates.
-- **WHEN** `CTI_ADJUSTED_ANALYSIS_FILE` is set, **THEN** that explicit file is
-  resolved first; **WHEN** it is unset and `CTI_ADJUSTED_ANALYSIS_ROOT` is set,
-  **THEN** matching analysis artifacts are resolved from that root; otherwise
-  the default root is `results/plan39`. Any selected artifact that fails the
-  schema or fingerprint contract keeps the public gate closed.
-- **WHEN** optional audit strengthening is considered, **THEN** it may expand
-  gamma comparisons, G thresholds, or warning wording only; no mandatory task
-  remains, and L has no 2019+ extrapolation.
+The current WHEN/THEN requirements are consolidated under [Requirements](#current-requirements), in the subsection [Plan39-v2 public route requirements](#plan39-v2-publication-requirements).
 
 ## Purpose
 
@@ -563,13 +382,10 @@ The shared data type with an index signature `[key: string]: string | number` fo
 
 ### Retired Plan38 quarterly public measurement contract
 
-The dedicated Plan38 key and its public measurement/projection contract have
-been removed because the aggregation API had no production callers. Historical
-metadata examples in older sections describe the former implementation only.
-Plan40 remains the current quarterly CTI public contract; Plan21 GDP support is
-retired, and Plan37 remains a monthly source. The
-Plan49 `消費(総合)` monthly key is the sole CTI-derived consumption entry in the
-NewGraph comparison registry.
+This historical measurement contract has moved to the [CTI contract
+history](../../../docs/history/cti-contract-evolution.md#retired-plan38-quarterly-public-measurement-contract).
+The heading is retained at its former anchor. Current quarterly and monthly
+contracts are specified in the canonical sections.
 
 **Major runtime-added fields per data loader:**
 
@@ -597,17 +413,37 @@ moving average, and then sets the 2025 calendar-year average to 0.
 | index | number | Indexed value    |
 | ma    | number | Moving average   |
 
+## Current dashboard contract
+
+This is the entry point for current behavior. The three sections below define
+the dashboard-wide data sources, data flow, and component tree. Domain-specific
+requirements remain at their established anchors and are indexed under
+[Requirements](#current-requirements); evidence/checkpoint sections elsewhere
+in this document do not override these current contracts.
+
+| Domain                                                           | Current detailed contract                                                                                                                                                                                                                        |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Monthly basic CTI source and strict total-consumption comparison | [Legacy CTI monthly compatibility field](#legacy-cti-monthly-compatibility-field). Its opening compatibility-field paragraphs are internal legacy behavior; the Plan49 single-series NewGraph paragraphs and scenarios are current.              |
+| Annual composition-adjusted CTI                                  | [SharedPlan 39 annual adjusted public contract](#current-annual-adjusted-cti-contract), with [annual public-layer details](#current-annual-public-layer-details)                                                                                 |
+| Integrated quarterly nominal CTI                                 | [SharedPlan 40 integrated quarterly contract](#current-quarterly-nominal-cti-contract), extended by [official quarterly connection](#current-official-quarterly-connection) and [ten-category registry contract](#current-ten-category-registry) |
+| Derived real quarterly CTI                                       | [Real CTI from displayed nominal consumption](#current-real-quarterly-cti-contract)                                                                                                                                                              |
+| e-Stat refresh and artifact generation                           | [Batch refresh CLI contract](#current-estat-refresh-contract)                                                                                                                                                                                    |
+
+<a id="current-data-sources"></a>
+
 ### Data Sources
 
-NewGraph's consumption comparison uses the composition-corrected Plan39 V2 annual total anchors also used by the historical quarterly nominal projection for 2005–2016, two-or-more-person-household nominal monthly raw values from CTI artifact `000040499070`, and official all-household adjusted monthly observations from `000040499028` for 2017 onward. A private 2004 anchor is calculated by the same V2 category base/gamma logic using the 2004 calendar-year IV-4 two-plus household share (3,459 / 4,915); its twelve monthly raw values are normalized to that corrected annual anchor and held only as MA prehistory. The official 2004 share source is e-Stat Labor Force Survey annual table IV-4, `statInfId=000000116109`; the source's 2005–2017 historical shares retain their existing vintage caveat. The first public point is 2005-01, whose window is 2004-02 through 2005-01. No 2004 point is included in NewGraph, exported rows, or public V2 quarterly rows. The displayed series is
+NewGraph's consumption comparison uses the composition-adjusted-v2 annual total anchors also used by the historical quarterly nominal projection for 2005–2016, two-or-more-person-household nominal monthly raw values from CTI artifact `000040499070`, and official all-household adjusted monthly observations from `000040499028` for 2017 onward. A private 2004 anchor is calculated by the same V2 category base/gamma logic using the 2004 calendar-year IV-4 two-plus household share (3,459 / 4,915); its twelve monthly raw values are normalized to that corrected annual anchor and held only as MA prehistory. The official 2004 share source is e-Stat Labor Force Survey annual table IV-4, `statInfId=000000116109`; the source's 2005–2017 historical shares retain their existing vintage caveat. The first public point is 2005-01, whose window is 2004-02 through 2005-01. No 2004 point is included in NewGraph, exported rows, or public V2 quarterly rows. The displayed series is
 `消費(総合)`, unit `指数`, monthly frequency, with the strict 12-month moving
 average rebased to its 2025 monthly average. Series-level status/reason and each
 point's status/reason, source and household-scope provenance are carried in the
 measurement; an available MA also identifies its inclusive window and the
 source/status classes represented in that window. The CTI basic normal and
 extension comparison fields may remain in internal merged rows, but are not
-NewGraph public comparison entries. Plan40 supplies the separate integrated
-quarterly CTI contract; the Plan38 dedicated key is retired.
+NewGraph public comparison entries. The annual-public input boundary supplies
+annual anchors to the monthly consumer, while the quarterly-annual-anchor
+boundary additionally requires strict annual-anchor validation for quarterly
+projection. The dedicated legacy quarterly key is retired.
 
 Browser state sources are explicit and remain separate from server data
 sources: `from`, `to`, and `hidden` are read from the URL by `useUrlState`,
@@ -770,6 +606,13 @@ Chart info は `src/lib/chartInfoContent.ts` の指標別説明を表示する�
 給与・CTI・CPIそれぞれの12か月移動平均を説明する。実装用のPlan22、raw値、
 内部検証保持、四半期の月範囲、9大費目の列挙はユーザー向け説明に含めない。
 
+Public `estimateVersion` の literal と TypeScript type は client-safe な
+`shared/cti-estimate-contract.ts` を唯一の定義元とする。server metadata、public
+JSON、およびquarterly row metadataはこの共有契約を参照し、chart/CSV consumerも
+同じ literal/typeで値を認識する。
+
+<a id="current-data-flow"></a>
+
 ### Data Flow
 
 Source/compatibility data flows through normalization before public display:
@@ -788,6 +631,13 @@ retired Plan38 2005Q1–2017Q4 nominal artifact projection or load/join GDP
 support. Plan37's monthly CTI source remains a separate monthly contract.
 Client calculations do not aggregate quarterly CTI values or reconstruct
 either retired projection.
+
+The public estimate-version contract flows from
+`shared/cti-estimate-contract.ts` to server CTI domain metadata and public JSON,
+including quarterly row metadata. Client chart descriptor/type guards,
+`ChartExportButton`, and CSV export/recognition import the same shared literal
+and type so the `plan39-v2` marker stays consistent across the server/client
+boundary.
 
 `CpiChart` creates one request-scoped CPI/salary comparison registry and passes it
 to `CpiChartSections`, `NewGraph`, tooltip projection, and the
@@ -847,6 +697,8 @@ calls `withIsolatedContext(browser, options, callback)`. The command retains
 route navigation, page creation, assertions, and result handling; the shared
 helper only creates and closes the independent `BrowserContext`.
 
+<a id="current-component-tree"></a>
+
 ### Component Tree
 
 `CpiChart` → `CpiChartSections` → `NewGraph`, `EarningsBreakdownChart`, and
@@ -857,6 +709,8 @@ additionally retains defined legend entries for all-null data and has no
 advanced-series toggle/filter.
 Drawing, legend, tooltip, table, and CSV bind to the same metadata keys while retaining
 each chart's existing renderer.
+`shared/cti-estimate-contract.ts` is a client-safe shared type/value module and
+adds no UI component; this component tree is unchanged.
 Plan37の専用loaderはraw/normal/extension CTI basic fieldsとtyped
 `SeriesDescriptor`/`SeriesMeasurement`を内部互換用に保持する。これらのnormal/extension
 keysはNewGraphのcomparison registryへは投影しない。NewGraphはPlan49の
@@ -936,9 +790,612 @@ Plan40 quarterly CTI and Plan37 monthly CTI do not depend on GDP support calcula
 - **AND** Plan40's ten quarterly CTI categories and the Plan37 monthly CTI source remain independent of GDP
 - **AND** the established 2025 display basis and rounding are preserved; a 2020 source or compatibility basis remains provenance and is not treated as the display basis
 
+<a id="current-requirements"></a>
+
 ## Requirements
 
+This index identifies the current requirement groups without moving their
+existing headings or scenario anchors. Older superseded records remain in
+place for traceability and are labeled as historical where applicable.
+The current requirements and domain contracts linked here are normative;
+dated JEV results, implementation checkpoints, superseded audits, and retired
+scenario descriptions elsewhere in the file are evidence only and do not
+override them.
+
+| Current contract                                                 | Canonical requirement group                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Dashboard behavior and component contracts                       | [R1](#current-r1) · [R2](#current-r2) · [R3](#current-r3) · [R4](#current-r4) · [R5](#current-r5) · [R6](#current-r6) · [R7](#current-r7) · [R8](#current-r8) · [R9](#current-r9) · [R10](#current-r10) · [R11](#current-r11) · [R12](#current-r12) · [R13](#current-r13) · [R14](#current-r14) · [R15](#current-r15) · [R16](#current-r16) · [R17](#current-r17) · [R18](#current-r18) · [R19](#current-r19) · [R20](#current-r20) · [R21](#current-r21) |
+| Public chart data and export parity                              | [R4-4](#current-r4-4)                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| Monthly basic CTI loader compatibility                           | [R-Plan37](#current-r-plan37); [Plan49 monthly contract](#legacy-monthly-compatibility-requirements)                                                                                                                                                                                                                                                                                                                                                      |
+| Canonical CTI names and artifact compatibility                   | [R-CTI-Domain-Identifiers](#current-cti-domain-identifiers-requirement)                                                                                                                                                                                                                                                                                                                                                                                   |
+| Hook execution requirements                                      | [R-Hooks](#current-r-hooks)                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| Annual composition-adjusted publication                          | [Plan39 annual](#plan39-annual-contract-requirements); [Plan39-v2 public route](#plan39-v2-publication-requirements); [audit requirements](#plan39-current-analysis-requirements)                                                                                                                                                                                                                                                                         |
+| Integrated quarterly nominal publication and official connection | [Plan40](#plan40-quarterly-contract-requirements); [Plan41](#plan41-official-quarterly-requirements)                                                                                                                                                                                                                                                                                                                                                      |
+| Ten-category nominal series registry                             | [Plan47](#plan47-canonical-series-requirements)                                                                                                                                                                                                                                                                                                                                                                                                           |
+| Derived real quarterly CTI                                       | [Plan48](#plan48-real-cti-requirements)                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| e-Stat refresh and artifact generation                           | [Plan52](#plan52-refresh-requirements)                                                                                                                                                                                                                                                                                                                                                                                                                    |
+
 ### R-Plan37: CTI basic series loader compatibility (NewGraph projection superseded by Plan49)
+
+The current requirement body is consolidated under [the canonical Requirements group](#current-r-plan37).
+
+#### Historical Plan37 test-ledger note (superseded)
+
+An earlier audit recorded Plan37対象skip=0 and legacy skip=4 before GDP-only
+test removal and the current Plan40 quarterly contract were established. Those
+counts and the deleted test descriptions are historical audit evidence only;
+they are not current test requirements or a current skip-count assertion.
+Current quarterly CTI coverage follows Plan40's ten public expense keys and
+Plan39's measured historical values. Current Plan37 coverage concerns its
+monthly CTI source and the Plan49 NewGraph projection only.
+
+### R-Hooks: Commit and Push Validation Architecture
+
+The current requirement body is consolidated under [the canonical Requirements group](#current-r-hooks).
+
+#### Scenario R-Hooks-0: Husky `sh` launcher reaches Bash implementations
+
+Scenario body is consolidated under [the canonical requirement group](#current-r-hooks).
+
+#### Scenario R-Hooks-1: Staged pre-commit typecheck decision
+
+Scenario body is consolidated under [the canonical requirement group](#current-r-hooks).
+
+#### Scenario R-Hooks-1b: Staged secret detection
+
+Scenario body is consolidated under [the canonical requirement group](#current-r-hooks).
+
+#### Scenario R-Hooks-1a: Pre-push clean worktree guard
+
+Scenario body is consolidated under [the canonical requirement group](#current-r-hooks).
+
+#### Scenario R-Hooks-2: Actual pre-push ref classification
+
+Scenario body is consolidated under [the canonical requirement group](#current-r-hooks).
+
+#### Scenario R-Hooks-3: Pre-push profile normalization and related fallback
+
+Scenario body is consolidated under [the canonical requirement group](#current-r-hooks).
+
+#### Scenario R-Hooks-4: Full and changed gate order
+
+Scenario body is consolidated under [the canonical requirement group](#current-r-hooks).
+
+#### Scenario R-Hooks-5: Isolated validation-detection audit
+
+Scenario body is consolidated under [the canonical requirement group](#current-r-hooks).
+
+#### Scenario R-Hooks-6: Isolated pre-push timing harness
+
+Scenario body is consolidated under [the canonical requirement group](#current-r-hooks).
+
+### R4-4: Public chart data contract and export parity
+
+The current requirement body is consolidated under [the canonical Requirements group](#current-r4-4).
+
+### R1: Dashboard Page (SSR)
+
+The current requirement body is consolidated under [the canonical Requirements group](#current-r1).
+
+#### Scenario R1a: View Dashboard
+
+Scenario body is consolidated under [the canonical requirement group](#current-r1).
+
+#### Scenario R1b: Data Loading Error
+
+Scenario body is consolidated under [the canonical requirement group](#current-r1).
+
+### R2: Chart Visualization
+
+The current requirement body is consolidated under [the canonical Requirements group](#current-r2).
+
+#### Scenario R2a: CPI Chart
+
+Scenario body is consolidated under [the canonical requirement group](#current-r2).
+
+#### Scenario R2b: CTI / Earnings / Breakdown Charts
+
+Scenario body is consolidated under [the canonical requirement group](#current-r2).
+
+#### Scenario R2c: Data-driven earnings derivation
+
+Scenario body is consolidated under [the canonical requirement group](#current-r2).
+
+#### Scenario R2ba: Displayed-value Y-axis upper bounds
+
+Scenario body is consolidated under [the canonical requirement group](#current-r2).
+
+#### Historical Scenario R2c (retired Plan38 contract; superseded by Plan40)
+
+- **Historical contract only; this scenario records the retired Plan38-era implementation and is not a current runtime requirement.**
+- **WHEN** this historical scenario described nominal consumption rendering in `SpendingBarChart`
+- **THEN** it recorded the then-current boundary between estimated and official quarterly values; current published output is governed by the Plan40 contract above
+- **AND** 公式四半期値はe-Stat table 2-1-1の原数値と費目構成を保持する
+- **AND** GDPとCTIを同一四半期に同時表示・合算せず、GDP専用key/value/nameは公開しない
+- **AND** nominal CTI data, legend, and tooltip exclude GDP comparison values for every period
+- **AND** CTI欠損を0埋めせず、境界で値の複製・補間・表示用係数合わせをしない
+- **AND** 消費支出グラフはモバイル専用の余白・safe-area、棒幅・間隔を適用し、横overflowを発生させない
+- **AND** tooltipはモバイルでも全費目を内部スクロール付きで表示する
+
+#### Historical Scenario R2c-missing-data (retired Plan38 quarterly extension contract)
+
+- **Historical contract only; this completeness scenario described the retired Plan38 extension and is not a current runtime requirement.**
+- **WHEN** a 2005Q1〜2017Q4 Plan38 quarter lacked any of its three monthly records, or a value was missing or non-finite
+- **THEN** the then-current shared nominal row remained present with a null value and a reason; this behavior does not define the current Plan40 quarterly output
+- **AND** the chart, tooltip, data table, and CSV expose the same remaining quarter labels
+- **AND WHEN** all three monthly observations are present and a consumption value is zero
+- **THEN** the quarter remains visible as a valid zero-valued quarter
+- **AND WHEN** `hiddenQuarters` or the displayed year range is changed
+- **THEN** filtering is applied to the already-complete row set and cannot restore an omitted quarter
+- **AND** no retired GDP loading or null handling path affects CTI row retention
+
+#### Scenario R2c-axis: Spending chart quarterly X-axis ticks
+
+Scenario body is consolidated under [the canonical requirement group](#current-r2).
+
+#### Scenario R2c-axis-mobile: Spending chart mobile endpoint labels
+
+Scenario body is consolidated under [the canonical requirement group](#current-r2).
+
+### R3: Data Transformation (Server-Side)
+
+The current requirement body is consolidated under [the canonical Requirements group](#current-r3).
+
+#### Scenario R3p: Official Population Data and Missing Values
+
+Scenario body is consolidated under [the canonical requirement group](#current-r3).
+
+#### Scenario R3a: CPI Pair Selection and Data Loading
+
+Scenario body is consolidated under [the canonical requirement group](#current-r3).
+
+#### Scenario R3aa: CPI Pair Validation
+
+Scenario body is consolidated under [the canonical requirement group](#current-r3).
+
+#### Scenario R3a1: CPI Loader Responsibility Boundaries
+
+Scenario body is consolidated under [the canonical requirement group](#current-r3).
+
+#### Scenario R3a2: Public CPI Adapter Compatibility and Selection Outcomes
+
+Scenario body is consolidated under [the canonical requirement group](#current-r3).
+
+#### Scenario R3ab: 2025 Series Mapping
+
+Scenario body is consolidated under [the canonical requirement group](#current-r3).
+
+#### Scenario R3e: CPI Fixed-Weight Derivation
+
+Scenario body is consolidated under [the canonical requirement group](#current-r3).
+
+#### Scenario R3f: CPI Derived Values and Missing Data
+
+Scenario body is consolidated under [the canonical requirement group](#current-r3).
+
+#### Scenario R3g: CPI CSV Fallback and Fail-Closed Behavior
+
+Scenario body is consolidated under [the canonical requirement group](#current-r3).
+
+#### Scenario R3h: CPI Data Status for the UI
+
+Scenario body is consolidated under [the canonical requirement group](#current-r3).
+
+#### Scenario R3h1: CTI Contract and Retired GDP Routes
+
+Scenario body is consolidated under [the canonical requirement group](#current-r3).
+
+#### Scenario R3b: Legacy CTI / Earnings / Consumption Data Loading
+
+Scenario body is consolidated under [the canonical requirement group](#current-r3).
+
+#### Scenario R3b-validation: Duplicate CTI month diagnosis
+
+Scenario body is consolidated under [the canonical requirement group](#current-r3).
+
+#### Scenario R3b-plan36: Long-Term CTI Acquisition Foundation
+
+Scenario body is consolidated under [the canonical requirement group](#current-r3).
+
+#### Scenario R3d: Plan37 CTI Basic Source Basis, 12MA, and Comparison Rebase
+
+Scenario body is consolidated under [the canonical requirement group](#current-r3).
+
+#### Scenario R3d-advanced: Plan37 internal monthly extension compatibility
+
+Scenario body is consolidated under [the canonical requirement group](#current-r3).
+
+#### Scenario GDP Support Retirement
+
+Scenario body is consolidated under [the canonical requirement group](#current-r3).
+
+#### Scenario R3c: Data Processing & Projection
+
+Scenario body is consolidated under [the canonical requirement group](#current-r3).
+
+### R19: e-Stat API Connection Foundation
+
+The current requirement body is consolidated under [the canonical Requirements group](#current-r19).
+
+#### Scenario R19a: Server-Only Application ID and Shared Client
+
+Scenario body is consolidated under [the canonical requirement group](#current-r19).
+
+#### Scenario R19b: Statistics List Proxy
+
+Scenario body is consolidated under [the canonical requirement group](#current-r19).
+
+#### Scenario R19c: Metadata Proxy
+
+Scenario body is consolidated under [the canonical requirement group](#current-r19).
+
+#### Scenario R19d: Statistics Data Proxy
+
+Scenario body is consolidated under [the canonical requirement group](#current-r19).
+
+#### Scenario R19e: Invalid Requests and Upstream Errors
+
+Scenario body is consolidated under [the canonical requirement group](#current-r19).
+
+#### Scenario R19f: Timeout Handling
+
+Scenario body is consolidated under [the canonical requirement group](#current-r19).
+
+#### Scenario R19g: CSV Fallback Continuity
+
+Scenario body is consolidated under [the canonical requirement group](#current-r19).
+
+#### Scenario R19h: e-Stat Attribution
+
+Scenario body is consolidated under [the canonical requirement group](#current-r19).
+
+### R4: Interactive Legend
+
+The current requirement body is consolidated under [the canonical Requirements group](#current-r4).
+
+#### Scenario R4a: Toggle Series
+
+Scenario body is consolidated under [the canonical requirement group](#current-r4).
+
+#### Scenario R4b: Legend State Persistence
+
+Scenario body is consolidated under [the canonical requirement group](#current-r4).
+
+#### Scenario R4c: Collapsed Legend Accordion (Mobile Consumption)
+
+Scenario body is consolidated under [the canonical requirement group](#current-r4).
+
+#### Scenario R4e: Desktop Legend Preservation
+
+Scenario body is consolidated under [the canonical requirement group](#current-r4).
+
+#### Scenario R4f: Modernized Accordion Summary Header (Tonal Pill)
+
+Scenario body is consolidated under [the canonical requirement group](#current-r4).
+
+### R5: Chart Filters
+
+The current requirement body is consolidated under [the canonical Requirements group](#current-r5).
+
+#### Scenario R5a: Apply Filter
+
+Scenario body is consolidated under [the canonical requirement group](#current-r5).
+
+#### Scenario R5b: Uniform Select Width on Mobile
+
+Scenario body is consolidated under [the canonical requirement group](#current-r5).
+
+#### Scenario R5c: Mobile Filter Row Horizontal Invariant
+
+Scenario body is consolidated under [the canonical requirement group](#current-r5).
+
+### R6: Chart Information
+
+The current requirement body is consolidated under [the canonical Requirements group](#current-r6).
+
+#### Scenario R6a: View Chart Info
+
+Scenario body is consolidated under [the canonical requirement group](#current-r6).
+
+#### Scenario R6b: CPI Calculation Explanation
+
+Scenario body is consolidated under [the canonical requirement group](#current-r6).
+
+#### Scenario R6c: CTI Data-State Explanation
+
+Scenario body is consolidated under [the canonical requirement group](#current-r6).
+
+#### Scenario R6d: Retired GDP explanation
+
+Scenario body is consolidated under [the canonical requirement group](#current-r6).
+
+### R7: Responsive Layout
+
+The current requirement body is consolidated under [the canonical Requirements group](#current-r7).
+
+#### Scenario R7a: Responsive Charts
+
+Scenario body is consolidated under [the canonical requirement group](#current-r7).
+
+#### Scenario R7b: Single Mobile Breakpoint
+
+Scenario body is consolidated under [the canonical requirement group](#current-r7).
+
+#### Scenario R7c: Fluid Typography
+
+Scenario body is consolidated under [the canonical requirement group](#current-r7).
+
+#### Scenario R7d: No Horizontal Overflow
+
+Scenario body is consolidated under [the canonical requirement group](#current-r7).
+
+#### Scenario R7e: Viewport-Linked Chart Height
+
+Scenario body is consolidated under [the canonical requirement group](#current-r7).
+
+### R20: Mobile Consumption Readability
+
+The current requirement body is consolidated under [the canonical Requirements group](#current-r20).
+
+#### Scenario R20a: Mobile Chart Geometry, Axis, and Bars
+
+Scenario body is consolidated under [the canonical requirement group](#current-r20).
+
+#### Scenario R20b: Preserved Boundary Contract
+
+Scenario body is consolidated under [the canonical requirement group](#current-r20).
+
+#### Scenario R20c: Mobile Details
+
+Scenario body is consolidated under [the canonical requirement group](#current-r20).
+
+#### Scenario R20e: Consumption Tooltip Full Payload
+
+Scenario body is consolidated under [the canonical requirement group](#current-r20).
+
+#### Scenario R20d: Mobile Empty and Accessibility States
+
+Scenario body is consolidated under [the canonical requirement group](#current-r20).
+
+### R21: Chart Tooltip and Legend Display Contract
+
+The current requirement body is consolidated under [the canonical Requirements group](#current-r21).
+
+#### Scenario R21a: CPI rows and total
+
+Scenario body is consolidated under [the canonical requirement group](#current-r21).
+
+#### Scenario R21b: Earnings full labels on mobile
+
+Scenario body is consolidated under [the canonical requirement group](#current-r21).
+
+#### Scenario R21e: Earnings category total
+
+Scenario body is consolidated under [the canonical requirement group](#current-r21).
+
+#### Scenario R21f: Earnings group separator
+
+Scenario body is consolidated under [the canonical requirement group](#current-r21).
+
+#### Historical Scenario R21c (retired opt-in quarterly extension behavior)
+
+- **Historical contract only; this scenario records former Plan38-era test behavior and does not define the current comparison registry or Plan40 public quarterly contract.**
+- **WHEN** the former comparison-display contract was rendered at the `2017Q4`/`2018Q1` boundary with hidden keys
+  **THEN** its drawing, tooltip, and legend used the then-current visible registry projection; its opt-in quarterly extension behavior is retired.
+- **WHEN** an unregistered comparison key reached that historical tooltip
+  **THEN** the former contract excluded it when `allowedKeys` was present; this archived behavior does not restore a GDP/CTI boundary or opt-in Plan38 key.
+
+#### Scenario R21d: Interaction compatibility
+
+Scenario body is consolidated under [the canonical requirement group](#current-r21).
+
+### R15: Touch Tooltip Interaction & Scroll Suppression
+
+The current requirement body is consolidated under [the canonical Requirements group](#current-r15).
+
+#### Scenario R15a: Touch Pointer Trigger
+
+Scenario body is consolidated under [the canonical requirement group](#current-r15).
+
+#### Scenario R15b: Fine Pointer Hover
+
+Scenario body is consolidated under [the canonical requirement group](#current-r15).
+
+#### Scenario R15c: Re-taping Dismissed Tooltip
+
+Scenario body is consolidated under [the canonical requirement group](#current-r15).
+
+#### Scenario R15d: Programmatic Scroll Suppression
+
+Scenario body is consolidated under [the canonical requirement group](#current-r15).
+
+#### Scenario R15e: No Late Tooltip After Suppression Release
+
+Scenario body is consolidated under [the canonical requirement group](#current-r15).
+
+#### Scenario R15f: Outside Tap Dismissal
+
+Scenario body is consolidated under [the canonical requirement group](#current-r15).
+
+#### Scenario R15g: Single Guide Line Across Charts
+
+Scenario body is consolidated under [the canonical requirement group](#current-r15).
+
+#### Scenario R15h: Guide Line Dismissal with Close / Scroll
+
+Scenario body is consolidated under [the canonical requirement group](#current-r15).
+
+#### Scenario R15i: Active Dot Dismissal
+
+Scenario body is consolidated under [the canonical requirement group](#current-r15).
+
+#### Scenario R15j: Tooltip Overlay Input Interception
+
+Scenario body is consolidated under [the canonical requirement group](#current-r15).
+
+#### Scenario R15k: Touch Scroll Dismissal Threshold
+
+Scenario body is consolidated under [the canonical requirement group](#current-r15).
+
+#### Scenario R15l: Existing Tooltip Interaction Preservation
+
+Scenario body is consolidated under [the canonical requirement group](#current-r15).
+
+### R8: Accessibility
+
+The current requirement body is consolidated under [the canonical Requirements group](#current-r8).
+
+#### Scenario R8a: Chart Labels
+
+Scenario body is consolidated under [the canonical requirement group](#current-r8).
+
+#### Scenario R8b: Tap Targets
+
+Scenario body is consolidated under [the canonical requirement group](#current-r8).
+
+#### Scenario R8c: Pointer-Aware Hover
+
+Scenario body is consolidated under [the canonical requirement group](#current-r8).
+
+#### Scenario R8d: Focus and Motion
+
+Scenario body is consolidated under [the canonical requirement group](#current-r8).
+
+#### Scenario R8e: Modal Focus Management
+
+Scenario body is consolidated under [the canonical requirement group](#current-r8).
+
+### R10: Section Navigation
+
+The current requirement body is consolidated under [the canonical Requirements group](#current-r10).
+
+#### Scenario R10a: Sticky Section Tabs
+
+Scenario body is consolidated under [the canonical requirement group](#current-r10).
+
+#### Scenario R10b: Range Display and Picker
+
+Scenario body is consolidated under [the canonical requirement group](#current-r10).
+
+#### Scenario R10c: Horizontal Tab Scroll
+
+Scenario body is consolidated under [the canonical requirement group](#current-r10).
+
+### R11: Shareable State
+
+The current requirement body is consolidated under [the canonical Requirements group](#current-r11).
+
+#### Scenario R11a: Stacked-Series URL Synchronization
+
+Scenario body is consolidated under [the canonical requirement group](#current-r11).
+
+### R16: Chart Tooltip Stack Total
+
+The current requirement body is consolidated under [the canonical Requirements group](#current-r16).
+
+#### Scenario R16a: Consumption Expenditure Tooltip Total
+
+Scenario body is consolidated under [the canonical requirement group](#current-r16).
+
+#### Scenario R16b: CPI Stacked Tooltip Total
+
+Scenario body is consolidated under [the canonical requirement group](#current-r16).
+
+#### Scenario R11c: Deprecated comparison extension query
+
+Scenario body is consolidated under [the canonical requirement group](#current-r16).
+
+#### Scenario R11b: Scroll Position Preservation
+
+Scenario body is consolidated under [the canonical requirement group](#current-r16).
+
+#### Scenario R11d: State ownership and one-way synchronization
+
+Scenario body is consolidated under [the canonical requirement group](#current-r16).
+
+### R12: Deferred Chart Mounting
+
+The current requirement body is consolidated under [the canonical Requirements group](#current-r12).
+
+#### Scenario R12a: Lazy Mount on Approach
+
+Scenario body is consolidated under [the canonical requirement group](#current-r12).
+
+#### Scenario R12b: Test Override
+
+Scenario body is consolidated under [the canonical requirement group](#current-r12).
+
+### R13: Data Export
+
+The current requirement body is consolidated under [the canonical Requirements group](#current-r13).
+
+#### Scenario R13a: CSV Download
+
+Scenario body is consolidated under [the canonical requirement group](#current-r13).
+
+### R17: Max Period Button
+
+The current requirement body is consolidated under [the canonical Requirements group](#current-r17).
+
+#### Scenario R17a: Max Period Activation
+
+Scenario body is consolidated under [the canonical requirement group](#current-r17).
+
+### R18: CAGR Compact Sheet Under the Contribution Chart
+
+The current requirement body is consolidated under [the canonical Requirements group](#current-r18).
+
+#### Scenario R18a: Entry Point
+
+Scenario body is consolidated under [the canonical requirement group](#current-r18).
+
+#### Scenario R18b: Self-Contained Sheet
+
+Scenario body is consolidated under [the canonical requirement group](#current-r18).
+
+#### Scenario R18c: Chart Remains Visible
+
+Scenario body is consolidated under [the canonical requirement group](#current-r18).
+
+#### Scenario R18d: Sheet Stays Open While Editing
+
+Scenario body is consolidated under [the canonical requirement group](#current-r18).
+
+#### Scenario R18e: Invalid Year State Falls Back to the Caller’s Initial Year
+
+Scenario body is consolidated under [the canonical requirement group](#current-r18).
+
+#### Scenario R14a: Manual Theme Toggle
+
+Scenario body is consolidated under [R14 current requirement](#current-r14).
+
+#### Scenario R14b: Theme-Aware Series Palette & Visual Enhancements
+
+Scenario body is consolidated under [R14 current requirement](#current-r14).
+
+### R9: Page Metadata and Header
+
+The current requirement body is consolidated under [the canonical Requirements group](#current-r9).
+
+#### Scenario R9a: Layout Metadata
+
+Scenario body is consolidated under [the canonical requirement group](#current-r9).
+
+#### Scenario R11e: NewGraph comparison data parity
+
+Scenario body is consolidated under [the canonical requirement group](#current-r9).
+
+#### Scenario R9b: Page Header Description
+
+Scenario body is consolidated under [the canonical requirement group](#current-r9).
+
+### Consolidated current requirements
+
+These domain-specific requirement bodies are the single current source of truth.
+
+<a id="current-r-plan37"></a>
+
+### Canonical requirement group: R-Plan37: CTI basic series loader compatibility (NewGraph projection superseded by Plan49)
 
 The legacy monthly raw/12MA wording below is retained only for internal
 loader compatibility. Plan49 is authoritative for NewGraph monthly comparison
@@ -966,19 +1423,11 @@ chart, table, tooltip, and CSV contract.
 - **WHEN** the NewGraph table or CSV is produced
 - **THEN** its `DataTableSpec.metadata`, `DataTablesSection`, `ChartExportButton`, and CSV columns contain the same ordered CPI12MA, salary12MA, and Plan49 `消費(総合)` registry entries
 
-#### Historical Plan37 test-ledger note (superseded)
+<a id="current-r-hooks"></a>
 
-An earlier audit recorded Plan37対象skip=0 and legacy skip=4 before GDP-only
-test removal and the current Plan40 quarterly contract were established. Those
-counts and the deleted test descriptions are historical audit evidence only;
-they are not current test requirements or a current skip-count assertion.
-Current quarterly CTI coverage follows Plan40's ten public expense keys and
-Plan39's measured historical values. Current Plan37 coverage concerns its
-monthly CTI source and the Plan49 NewGraph projection only.
+### Canonical requirement group: R-Hooks: Commit and Push Validation Architecture
 
-### R-Hooks: Commit and Push Validation Architecture
-
-#### Scenario R-Hooks-0: Husky `sh` launcher reaches Bash implementations
+#### Canonical scenario — Scenario R-Hooks-0: Husky `sh` launcher reaches Bash implementations
 
 - **WHEN** Husky invokes either hook through its generated `sh -e` launcher
 - **THEN** `.husky/pre-commit` and `.husky/pre-push` are POSIX-compatible thin
@@ -988,7 +1437,7 @@ monthly CTI source and the Plan49 NewGraph projection only.
   `.husky/pre-commit.bash` and `.husky/pre-push.bash`, respectively
 - **AND** the generated `.husky/_/*` files are not edited
 
-#### Scenario R-Hooks-1: Staged pre-commit typecheck decision
+#### Canonical scenario — Scenario R-Hooks-1: Staged pre-commit typecheck decision
 
 - **WHEN** a commit is attempted
 - **THEN** `lint:fast` runs first, the staged path classifier requires full
@@ -1001,7 +1450,7 @@ monthly CTI source and the Plan49 NewGraph projection only.
 - **AND** a zero-test result is tolerated only by the commit-scoped
   lint-staged related-test task
 
-#### Scenario R-Hooks-1b: Staged secret detection
+#### Canonical scenario — Scenario R-Hooks-1b: Staged secret detection
 
 - **WHEN** a staged file contains a secret recognized by the recommended
   Secretlint preset, including a Git-ignored path explicitly added to the
@@ -1012,7 +1461,7 @@ monthly CTI source and the Plan49 NewGraph projection only.
   staged files contain no detected secret
 - **THEN** the staged secret scan succeeds without scanning the untracked file
 
-#### Scenario R-Hooks-1a: Pre-push clean worktree guard
+#### Canonical scenario — Scenario R-Hooks-1a: Pre-push clean worktree guard
 
 - **WHEN** a push is attempted from a repository with tracked changes that
   differ from `HEAD`
@@ -1026,7 +1475,7 @@ monthly CTI source and the Plan49 NewGraph projection only.
 - **THEN** the pre-push hook continues to detached-HEAD and push-impact checks;
   unrelated local artifacts remain outside this guard
 
-#### Scenario R-Hooks-2: Actual pre-push ref classification
+#### Canonical scenario — Scenario R-Hooks-2: Actual pre-push ref classification
 
 - **WHEN** a push is attempted
 - **THEN** every Git pre-push ref line is validated and its remote-oid to
@@ -1040,7 +1489,7 @@ monthly CTI source and the Plan49 NewGraph projection only.
   present
 - **THEN** the `changed` profile may select those candidates for related tests
 
-#### Scenario R-Hooks-3: Pre-push profile normalization and related fallback
+#### Canonical scenario — Scenario R-Hooks-3: Pre-push profile normalization and related fallback
 
 - **WHEN** `PREPUSH_PROFILE` is unset, `changed` is selected; **WHEN** it is
   `full` or `changed`, that profile is used; **WHEN** it has any other value,
@@ -1053,7 +1502,7 @@ monthly CTI source and the Plan49 NewGraph projection only.
   incompatible, `testResults` is empty, or related execution fails
 - **THEN** the full profile runs exactly once
 
-#### Scenario R-Hooks-4: Full and changed gate order
+#### Canonical scenario — Scenario R-Hooks-4: Full and changed gate order
 
 - **WHEN** the changed profile succeeds
 - **THEN** `build` runs before `test:e2e:clean` and `test:e2e`
@@ -1067,7 +1516,7 @@ monthly CTI source and the Plan49 NewGraph projection only.
   local pre-push validation when production URL/network availability is not
   established
 
-#### Scenario R-Hooks-5: Isolated validation-detection audit
+#### Canonical scenario — Scenario R-Hooks-5: Isolated validation-detection audit
 
 - **WHEN** `pnpm run audit:validation-detection -- --output /tmp/plan31-validation-detection.json` is invoked
 - **THEN** it creates and removes an OS-temporary fixture, emits schema
@@ -1091,7 +1540,7 @@ monthly CTI source and the Plan49 NewGraph projection only.
 - **THEN** the audit exits non-zero and preserves failure details when the
   artifact can be written
 
-#### Scenario R-Hooks-6: Isolated pre-push timing harness
+#### Canonical scenario — Scenario R-Hooks-6: Isolated pre-push timing harness
 
 - **WHEN** the isolated pre-push timing harness runs a scenario in its
   temporary Git fixture
@@ -1128,7 +1577,9 @@ monthly CTI source and the Plan49 NewGraph projection only.
   or before/after invariant differs from its expected result
 - **THEN** the harness reports the assertion failure and exits non-zero
 
-### R4-4: Public chart data contract and export parity
+<a id="current-r4-4"></a>
+
+### Canonical requirement group: R4-4: Public chart data contract and export parity
 
 - **WHEN** any of the seven chart/table/CSV targets is rendered or exported
 - **THEN** it SHALL expose the normalized data actually passed to its chart through `data-testid="chart-data-contract"`, `data-series`, `data-points`, and child `data-period`, `data-series-key`, `data-value`, and `data-value-type` attributes
@@ -1148,32 +1599,36 @@ monthly CTI source and the Plan49 NewGraph projection only.
 - **AND** nominal and real SHALL be distinguished by their owning section context and public `ChartDataContract` keys, while each table retains the public label `民間最終消費`; header text SHALL NOT be required to contain `名目` or `実質`
 - **AND** Phase 4-4 is complete (implementation, audit, and verification): `pnpm test` passed with 55 files / 486 tests, the targeted Chromium E2E passed 5/5, `pnpm test:build-parity` passed 3/3, `pnpm type-check` passed, `pnpm lint` passed with 0 errors / 5 warnings, `pnpm build` passed, and `git diff --check` passed
 
-### R1: Dashboard Page (SSR)
+<a id="current-r1"></a>
+
+### Canonical requirement group: R1: Dashboard Page (SSR)
 
 The system SHALL render the main dashboard as a server-rendered page at `/`.
 
-#### Scenario R1a: View Dashboard
+#### Canonical scenario — Scenario R1a: View Dashboard
 
 - **WHEN** user visits `/`
 - **THEN** the server loads CPI, CTI, and earnings data from CSV files
 - **AND** renders the dashboard with charts and indicators
 
-#### Scenario R1b: Data Loading Error
+#### Canonical scenario — Scenario R1b: Data Loading Error
 
 - **WHEN** CSV data fails to load or is empty
 - **THEN** the system displays a descriptive error message with guidance to the current `data/source/` CPI input paths
 - **AND** it does not direct operators to the obsolete `public/cpi_data.csv` path
 
-### R2: Chart Visualization
+<a id="current-r2"></a>
+
+### Canonical requirement group: R2: Chart Visualization
 
 The system SHALL display economic indicators as interactive Recharts-based charts; CPI and CTI select only complete compatible base-year sets, and comparison-only fields are normalized independently from their official source basis.
 
-#### Scenario R2a: CPI Chart
+#### Canonical scenario — Scenario R2a: CPI Chart
 
 - **WHEN** the dashboard renders
 - **THEN** a CPI multi-series line chart is displayed showing "総合", "生鮮食品を除く総合", "持家の帰属家賃を除く総合", and reference series
 
-#### Scenario R2b: CTI / Earnings / Breakdown Charts
+#### Canonical scenario — Scenario R2b: CTI / Earnings / Breakdown Charts
 
 - **WHEN** data is available
 - **THEN** the following charts are rendered:
@@ -1193,14 +1648,14 @@ The system SHALL display economic indicators as interactive Recharts-based chart
   - Time-series charts render the first/last (start year / end year) tick label in `--foreground` via the shared `XAxisEdgeTick` component (`src/app/components/charts/XAxisEdgeTick.tsx`), while other tick labels use the default `--chart-text` color. MajorIndicesChart, ResidualAreaChart, NewGraph, EarningsBreakdownChart, and StackedAreaChart delegate their XAxis configuration to `TimeSeriesXAxis`.
   - Time-series charts use the shared period-based tick policy for their year/month axis. MajorIndicesChart, ResidualAreaChart, NewGraph, EarningsBreakdownChart, and StackedAreaChart use `TimeSeriesXAxis`; its boundary-tick policy is equivalent to `includeBoundaryTicks: false` for these charts. The axis displays only the start/end labels and data-present round-number milestones (2010/1, 2015/1, 2020/1, 2025/1); non-round series-boundary labels such as 2017/12・2018/1 are omitted because the hand-off remains visible through reference lines. The shared selector preserves endpoints, de-duplicates label values, and suppresses milestone candidates within the configured period distance of either endpoint; endpoint labels retain the existing centered `text-anchor="middle"` behavior. On mobile, `XAxisEdgeTick` avoids rendering an interior tick close enough to overlap an endpoint label.
 
-#### Scenario R2c: Data-driven earnings derivation
+#### Canonical scenario — Scenario R2c: Data-driven earnings derivation
 
 - **WHEN** the five earnings inputs (three wage series, worked hours, and employment) and population observations share compatible target, unit, and revision metadata, have a complete consecutive 12-month window, and the 2025 calendar-year factors can be calculated
 - **THEN** hourly and per-capita earnings are calculated from those observations, including 2026年5月 and 2026年6月 when their current CSV values are complete
 - **WHEN** any required observation, metadata match, 12-month window, or 2025 factor is missing
 - **THEN** the affected derived value is `null`; no date-based cutoff, zero substitution, or gap filling is applied, and legitimate zero inputs remain zero
 
-#### Scenario R2ba: Displayed-value Y-axis upper bounds
+#### Canonical scenario — Scenario R2ba: Displayed-value Y-axis upper bounds
 
 - **WHEN** MajorIndicesChart, StackedAreaChart, SpendingBarChart, or EarningsBreakdownChart is rendered
 - **THEN** its Y-axis upper bound is the nearest integer to the maximum displayed value plus 3
@@ -1211,31 +1666,7 @@ The system SHALL display economic indicators as interactive Recharts-based chart
 - **AND** for ResidualAreaChart (給与物価差) and NewGraph (3種比較), the existing automatic Y-axis maximum behavior is preserved
 - **AND** non-finite and missing values do not contribute to the maximum
 
-#### Historical Scenario R2c (retired Plan38 contract; superseded by Plan40)
-
-- **Historical contract only; this scenario records the retired Plan38-era implementation and is not a current runtime requirement.**
-- **WHEN** this historical scenario described nominal consumption rendering in `SpendingBarChart`
-- **THEN** it recorded the then-current boundary between estimated and official quarterly values; current published output is governed by the Plan40 contract above
-- **AND** 公式四半期値はe-Stat table 2-1-1の原数値と費目構成を保持する
-- **AND** GDPとCTIを同一四半期に同時表示・合算せず、GDP専用key/value/nameは公開しない
-- **AND** nominal CTI data, legend, and tooltip exclude GDP comparison values for every period
-- **AND** CTI欠損を0埋めせず、境界で値の複製・補間・表示用係数合わせをしない
-- **AND** 消費支出グラフはモバイル専用の余白・safe-area、棒幅・間隔を適用し、横overflowを発生させない
-- **AND** tooltipはモバイルでも全費目を内部スクロール付きで表示する
-
-#### Historical Scenario R2c-missing-data (retired Plan38 quarterly extension contract)
-
-- **Historical contract only; this completeness scenario described the retired Plan38 extension and is not a current runtime requirement.**
-- **WHEN** a 2005Q1〜2017Q4 Plan38 quarter lacked any of its three monthly records, or a value was missing or non-finite
-- **THEN** the then-current shared nominal row remained present with a null value and a reason; this behavior does not define the current Plan40 quarterly output
-- **AND** the chart, tooltip, data table, and CSV expose the same remaining quarter labels
-- **AND WHEN** all three monthly observations are present and a consumption value is zero
-- **THEN** the quarter remains visible as a valid zero-valued quarter
-- **AND WHEN** `hiddenQuarters` or the displayed year range is changed
-- **THEN** filtering is applied to the already-complete row set and cannot restore an omitted quarter
-- **AND** no retired GDP loading or null handling path affects CTI row retention
-
-#### Scenario R2c-axis: Spending chart quarterly X-axis ticks
+#### Canonical scenario — Scenario R2c-axis: Spending chart quarterly X-axis ticks
 
 - **WHEN** `SpendingBarChart` renders quarterly data
 - **THEN** its candidate ticks are selected by the shared period-based tick core using the Q1 rows for fixed calendar years 2010, 2015, 2020, and 2025, limited to years present in the data range
@@ -1244,7 +1675,7 @@ The system SHALL display economic indicators as interactive Recharts-based chart
 - **AND** labels with the same value are emitted only once, even when distinct data objects share that label
 - **AND** every emitted label uses the `YYYYQn` format
 
-#### Scenario R2c-axis-mobile: Spending chart mobile endpoint labels
+#### Canonical scenario — Scenario R2c-axis-mobile: Spending chart mobile endpoint labels
 
 - **WHEN** `SpendingBarChart` renders on a mobile viewport (≤768px)
 - **THEN** its `XAxisEdgeTick` receives `avoidEndpointOverlap`
@@ -1252,9 +1683,11 @@ The system SHALL display economic indicators as interactive Recharts-based chart
 - **AND** the mobile selector does not impose a fixed candidate-count cap; eligible milestones remain subject to the shared endpoint-gap and duplicate-label rules
 - **AND** no collision detection is added between interior tick labels
 
-### R3: Data Transformation (Server-Side)
+<a id="current-r3"></a>
 
-#### Scenario R3p: Official Population Data and Missing Values
+### Canonical requirement group: R3: Data Transformation (Server-Side)
+
+#### Canonical scenario — Scenario R3p: Official Population Data and Missing Values
 
 - **WHEN** population statistics are loaded
 - **THEN** the source is the official nationwide, both-sexes, original-value series in table 1-b-1 and its provenance metadata is present
@@ -1266,7 +1699,7 @@ The system SHALL display economic indicators as interactive Recharts-based chart
 
 The system SHALL load and process CSV data on the server before rendering.
 
-#### Scenario R3a: CPI Pair Selection and Data Loading
+#### Canonical scenario — Scenario R3a: CPI Pair Selection and Data Loading
 
 - **WHEN** `loadCpiData()` is called
 - **THEN** the public loader contract in `server/lib/dataLoader.ts` delegates to the internal CPI loader without changing its public name, arguments, return shape, or server-only execution boundary
@@ -1275,7 +1708,7 @@ The system SHALL load and process CSV data on the server before rendering.
 - **AND** the selected index and contribution CSV always have the same base year
 - **AND** the loader retains the dashboard display range of 2005 through the latest available month
 
-#### Scenario R3aa: CPI Pair Validation
+#### Canonical scenario — Scenario R3aa: CPI Pair Validation
 
 - **WHEN** a CPI pair is considered for selection
 - **THEN** the loader requires both index and contribution files, the `年月` index header, a row with a valid year-month, unique contribution headers including `総合`, and finite weights for every declared contribution header
@@ -1284,7 +1717,7 @@ The system SHALL load and process CSV data on the server before rendering.
 - **AND** it verifies the metadata-declared row count, series count, covered period, and SHA-256 against the generated index CSV
 - **AND** it verifies unique, gap-free monthly keys and that the all-items 2025 calendar-year average is approximately 100 within the documented rounding tolerance
 
-#### Scenario R3a1: CPI Loader Responsibility Boundaries
+#### Canonical scenario — Scenario R3a1: CPI Loader Responsibility Boundaries
 
 - **WHEN** CPI source selection is performed
 - **THEN** `cpiSource.ts` resolves the candidate paths, resolves and validates 2025 metadata, validates each index/contribution pair, and owns 2025-only pair validation and selection: it resolves only the complete 2025 pair and fails closed with a machine-readable reason code when that pair does not validate, never resolving 2020 paths
@@ -1294,7 +1727,7 @@ The system SHALL load and process CSV data on the server before rendering.
 - **AND** `cpi.ts` owns the internal CPI/CTI status/load adapter; GDP loading responsibilities are retired, and `dataLoader.ts` owns the public facade
 - **AND** no CPI source-resolution, pair-selection, CSV-validation, or pure CPI-transformation responsibility is moved back into `cpi.ts`
 
-#### Scenario R3a2: Public CPI Adapter Compatibility and Selection Outcomes
+#### Canonical scenario — Scenario R3a2: Public CPI Adapter Compatibility and Selection Outcomes
 
 - **WHEN** the public `loadCpiData()` adapter is called with a valid 2025 candidate pair
 - **THEN** it preserves the existing public rows and status contract and returns rows transformed from the validated 2025 pair
@@ -1307,14 +1740,14 @@ The system SHALL load and process CSV data on the server before rendering.
 - **THEN** the same public adapter returns no CPI rows and `getCpiDataStatus()` reports `valid: false` with no selected base year or pair and the machine-readable reason code
 - **AND** active CTI source selection and transformation remain unchanged; retired GDP source selection, status, transformation, and projections are not restored
 
-#### Scenario R3ab: 2025 Series Mapping
+#### Canonical scenario — Scenario R3ab: 2025 Series Mapping
 
 - **WHEN** the 2025 long connected index is generated or maintained
 - **THEN** `cpi-2025-series-map.csv` provides a traceable mapping for all 78 supported official series, including official series code, dashboard key, classification or derivation handling, start month, missing-data policy, and source evidence
 - **AND** every mapping code and official name is unconditionally checked against `cpi-2025-official-series.csv`, whose SHA-256 and its `statInfId=000040482945` source-original SHA-256 are recorded in the metadata; the verification MUST NOT be conditionally skipped or replaced by a hash of the mapping table itself
 - **AND** an official series with no confirmed equivalent is retained as missing rather than fabricated as zero or substituted by name alone
 
-#### Scenario R3e: CPI Fixed-Weight Derivation
+#### Canonical scenario — Scenario R3e: CPI Fixed-Weight Derivation
 
 - **WHEN** CPI category values are transformed for display
 - **THEN** `cpiLoader.ts` filters input rows to 2004年以降 and each available official index is multiplied by the published weight from the selected same-base pair
@@ -1323,7 +1756,7 @@ The system SHALL load and process CSV data on the server before rendering.
 - **AND** the resulting values are fixed-weighted index levels displayed on the 2025 calendar-year average = 100 basis, not official month-on-month or year-on-year contribution measures
 - **AND** the pure transformation does not perform source discovery, metadata resolution, or CSV validation
 
-#### Scenario R3f: CPI Derived Values and Missing Data
+#### Canonical scenario — Scenario R3f: CPI Derived Values and Missing Data
 
 - **WHEN** both weighted `食料` and weighted `外食` are available for a month
 - **THEN** `外食以外食料` equals weighted `食料` minus weighted `外食`, so weighted `食料 = 外食以外食料 + 外食`
@@ -1331,7 +1764,7 @@ The system SHALL load and process CSV data on the server before rendering.
 - **THEN** the dependent weighted and derived values remain missing and are never replaced with zero
 - **AND** `cpiLoader.ts` removes the unnecessary `教養娯楽サービス`, `教養娯楽用品`, `交通`, and `自動車等関係費` output series after deriving the combined series
 
-#### Scenario R3g: CPI CSV Fallback and Fail-Closed Behavior
+#### Canonical scenario — Scenario R3g: CPI CSV Fallback and Fail-Closed Behavior
 
 - **WHEN** the 2025 pair is missing or fails any pair validation
 - **THEN** the loader fails closed: it returns `valid: false` with the mapped machine-readable reason code and reads no 2020 file
@@ -1339,19 +1772,19 @@ The system SHALL load and process CSV data on the server before rendering.
 - **AND WHEN** neither complete pair validates
 - **THEN** the loader returns no CPI rows and `getCpiDataStatus()` reports an invalid status with no selected base year, rather than serving mixed or partially validated CPI data
 
-#### Scenario R3h: CPI Data Status for the UI
+#### Canonical scenario — Scenario R3h: CPI Data Status for the UI
 
 - **WHEN** the dashboard page loads CPI data
 - **THEN** it also obtains `getCpiDataStatus()` and passes the selected base year and source mode to the CPI information UI
 - **AND** the UI identifies a validated 2025 pair as the official connected series, and for an unavailable or invalid 2025 pair it shows user-facing unavailable wording derived from the reason code, never describing a 2020 fallback state
 
-#### Scenario R3h1: CTI Contract and Retired GDP Routes
+#### Canonical scenario — Scenario R3h1: CTI Contract and Retired GDP Routes
 
 - **WHEN** the CPI source-responsibility split is used
 - **THEN** active CTI source contracts remain unchanged, with Plan40 as the quarterly public output and Plan37 as the monthly source
 - **AND** retired annual and quarterly GDP loaders, status APIs, joins, and output fields are not restored
 
-#### Scenario R3b: Legacy CTI / Earnings / Consumption Data Loading
+#### Canonical scenario — Scenario R3b: Legacy CTI / Earnings / Consumption Data Loading
 
 - **WHEN** the historical `loadCtiData()` / consumption map builder contract is called
 - **THEN** it selects a complete, verified 2025 CTI candidate only when its candidate CSV, metadata, official map, and snapshot validate; otherwise it returns unavailable with the mapped machine-readable reason code without opening any 2020 input
@@ -1362,14 +1795,14 @@ The system SHALL load and process CSV data on the server before rendering.
 
 When the legacy CTI map/snapshot or another candidate input fails validation, that contract returns unavailable with the mapped machine-readable reason code; no 2020 rollback is selected. This rule does not govern Plan37: its dedicated long-term line uses only the fixed 2025 nominal monthly series and fails closed without seasonal-adjusted, real, or rollback fallback. GDP loader/status behavior described in older audit text is retired.
 
-#### Scenario R3b-validation: Duplicate CTI month diagnosis
+#### Canonical scenario — Scenario R3b-validation: Duplicate CTI month diagnosis
 
 - **WHEN** a legacy CTI main file contains repeated `年月` values, including a repeated month that also breaks chronological continuity
 - **THEN** validation returns `invalid or duplicate CTI 年月` before checking continuity
 - **AND WHEN** all month values are unique but their chronological sequence has a gap
 - **THEN** validation returns `invalid or discontinuous CTI 年月`
 
-#### Scenario R3b-plan36: Long-Term CTI Acquisition Foundation
+#### Canonical scenario — Scenario R3b-plan36: Long-Term CTI Acquisition Foundation
 
 - **WHEN** plan36 retrieves the official current 2025-base CTI micro basic-series XLSX for two-or-more-person households from the official `fileKind=0` URLs
 - **THEN** raw `statInfId=000040499070` is recorded as original values and raw `statInfId=000040499082` as seasonally adjusted values, each covering 2002-01 through 2026-07; each variant has 22 series × 259 months = 5698 normalized rows for the adopted 2005-01 through 2026-07 range
@@ -1385,7 +1818,7 @@ When the legacy CTI map/snapshot or another candidate input fails validation, th
 - **THEN** secrets/appId values are never emitted, and periods not provided by the official source are explicitly identified
 - **AND** this plan36 long-term artifact remains separate from the existing 2025 candidate/2020 rollback loader adoption path; it does not connect a loader, UI, API, or component tree
 
-#### Scenario R3d: Plan37 CTI Basic Source Basis, 12MA, and Comparison Rebase
+#### Canonical scenario — Scenario R3d: Plan37 CTI Basic Source Basis, 12MA, and Comparison Rebase
 
 - **WHEN** `computeConsumptionTotal12Ma()` is called without an explicit source root
 - **THEN** it resolves `data/source` from the repository root relative to its module location, retaining the current-working-directory fallback only when that root cannot be discovered; an explicit existing source root is used directly
@@ -1395,14 +1828,14 @@ When the legacy CTI map/snapshot or another candidate input fails validation, th
 - **AND** CTI 12MA is calculated as a complete 12-calendar-month simple average of raw values first, then rebased by the average of the 12 finite 2025 raw monthly values; the comparison field is invalid/null with a reason when that raw baseline cannot be verified from 12 finite months or is non-positive
 - **AND** no retired GDP loader or projection contributes values to the Plan37 monthly source.
 
-#### Scenario R3d-advanced: Plan37 internal monthly extension compatibility
+#### Canonical scenario — Scenario R3d-advanced: Plan37 internal monthly extension compatibility
 
 - **WHEN** the Plan37 internal extension compatibility field is generated
 - **THEN** it uses the same official CTI raw/12MA maps as the normal field, with 2018-01 onward under the internal extension key; GDP availability never changes the values, and these keys are not NewGraph registry entries
 - **AND** when a following month is absent from the artifact it is absent/null and never synthesized
 - **AND** the normal/extension measurement metadata is taken from the same period row; internal compatibility export must not reuse the first row's metadata for later or invalid months
 
-#### Scenario GDP Support Retirement
+#### Canonical scenario — Scenario GDP Support Retirement
 
 Older R3i/R3j/R3l/R3k scenarios below are superseded history; they described
 GDP loaders, quarterly joins, and validation requirements that are no longer
@@ -1414,7 +1847,7 @@ part of the application.
 - **AND** Plan40's ten quarterly CTI categories and Plan37's monthly CTI source
   remain available independently of GDP
 
-#### Scenario R3c: Data Processing & Projection
+#### Canonical scenario — Scenario R3c: Data Processing & Projection
 
 - **WHEN** raw data is loaded
 - **THEN** `dataProcessor.ts` applies server-side calculations (indexing, moving averages, smoothing)
@@ -1423,77 +1856,81 @@ part of the application.
 - **AND** the projected data (as `CpiView[]`, `CtiView[]`, `EarningsView[]`) is passed to the client component instead of raw `CpiData[]`
 - **THEN** the RSC payload size is reduced by ~56% (1,169 KB → 505 KB uncompressed)
 
-### R19: e-Stat API Connection Foundation
+<a id="current-r19"></a>
+
+### Canonical requirement group: R19: e-Stat API Connection Foundation
 
 The system SHALL provide server-mediated access to e-Stat statistics search, metadata,
 and data operations while protecting the e-Stat application ID and preserving existing
 CSV-backed dashboard data as a fallback.
 
-#### Scenario R19a: Server-Only Application ID and Shared Client
+#### Canonical scenario — Scenario R19a: Server-Only Application ID and Shared Client
 
 - **WHEN** an e-Stat proxy route makes an upstream request
 - **THEN** it obtains the `appId` only from server-side environment configuration
 - **AND** it uses the common e-Stat client for request construction and response handling
 - **AND** the `appId` is absent from route responses, browser-visible configuration, and client bundles
 
-#### Scenario R19b: Statistics List Proxy
+#### Canonical scenario — Scenario R19b: Statistics List Proxy
 
 - **WHEN** a client requests `/api/estat/stats-list` with supported statistics-search parameters
 - **THEN** the route requests the corresponding e-Stat StatsList resource through the common client
 - **AND** it returns the normalized upstream result without exposing the server-side `appId`
 
-#### Scenario R19c: Metadata Proxy
+#### Canonical scenario — Scenario R19c: Metadata Proxy
 
 - **WHEN** a client requests `/api/estat/meta` for a statistics table identifier
 - **THEN** the route requests the corresponding e-Stat MetaInfo resource through the common client
 - **AND** it returns the metadata required to interpret that table
 
-#### Scenario R19d: Statistics Data Proxy
+#### Canonical scenario — Scenario R19d: Statistics Data Proxy
 
 - **WHEN** a client requests `/api/estat/data` for a statistics table identifier and supported filters
 - **THEN** the route requests the corresponding e-Stat StatsData resource through the common client
 - **AND** it returns the resulting statistical values and associated response metadata
 
-#### Scenario R19e: Invalid Requests and Upstream Errors
+#### Canonical scenario — Scenario R19e: Invalid Requests and Upstream Errors
 
 - **WHEN** an e-Stat proxy request is missing required input, has invalid input, or e-Stat returns an error response
 - **THEN** the route returns a consistent error response with an appropriate HTTP status
 - **AND** it does not disclose the `appId`, upstream credentials, or internal implementation details
 
-#### Scenario R19f: Timeout Handling
+#### Canonical scenario — Scenario R19f: Timeout Handling
 
 - **WHEN** an e-Stat upstream request exceeds the configured request timeout
 - **THEN** the common client cancels the upstream request
 - **AND** the proxy route returns a timeout error response that clients can distinguish from a successful result
 
-#### Scenario R19g: CSV Fallback Continuity
+#### Canonical scenario — Scenario R19g: CSV Fallback Continuity
 
 - **WHEN** e-Stat cannot be reached, times out, or returns an error for a dynamic query
 - **THEN** existing dashboard loading continues to use the compatible server-side CSV datasets in `data/source/`
 - **AND** no e-Stat failure makes previously available CSV-backed dashboard indicators unavailable
 
-#### Scenario R19h: e-Stat Attribution
+#### Canonical scenario — Scenario R19h: e-Stat Attribution
 
 - **WHEN** e-Stat-sourced statistics or metadata are presented to a user
 - **THEN** the interface displays an e-Stat credit identifying e-Stat as the source
 - **AND** the credit remains available alongside the presented e-Stat-derived content
 
-### R4: Interactive Legend
+<a id="current-r4"></a>
+
+### Canonical requirement group: R4: Interactive Legend
 
 The system SHALL allow users to toggle chart series visibility.
 
-#### Scenario R4a: Toggle Series
+#### Canonical scenario — Scenario R4a: Toggle Series
 
 - **WHEN** user clicks a legend item
 - **THEN** the corresponding series is hidden/shown on the chart
 - **AND** other series re-scale to fill the chart area
 
-#### Scenario R4b: Legend State Persistence
+#### Canonical scenario — Scenario R4b: Legend State Persistence
 
 - **WHEN** legend state changes
 - **THEN** the state is managed via `useToggleSet` hook (React state)
 
-#### Scenario R4c: Collapsed Legend Accordion (Mobile Consumption)
+#### Canonical scenario — Scenario R4c: Collapsed Legend Accordion (Mobile Consumption)
 
 - **WHEN** either 消費支出（名目） or 消費支出（実質） section renders on a mobile viewport (≤768px)
 - **THEN** its legend is placed in a native `<details>` accordion that is **closed by default**
@@ -1503,12 +1940,12 @@ The system SHALL allow users to toggle chart series visibility.
 - **AND WHEN** the user opens the accordion
 - **THEN** the same quarter and category controls as the nominal chart become operable
 
-#### Scenario R4e: Desktop Legend Preservation
+#### Canonical scenario — Scenario R4e: Desktop Legend Preservation
 
 - **WHEN** either consumption section renders on a viewport wider than 768px
 - **THEN** the existing desktop legend behavior remains available without the mobile collapsed-summary contract
 
-#### Scenario R4f: Modernized Accordion Summary Header (Tonal Pill)
+#### Canonical scenario — Scenario R4f: Modernized Accordion Summary Header (Tonal Pill)
 
 - **WHEN** either 消費支出（名目） or 消費支出（実質） legend accordion renders
 - **THEN** the `<summary>` element uses the `.legendAccordionSummary` tonal pill class with `--cta-tonal-bg` / `--cta-tonal-text` tokens
@@ -1517,46 +1954,50 @@ The system SHALL allow users to toggle chart series visibility.
 - **AND WHEN** the accordion is open (`details[open]`)
 - **THEN** the chevron rotates 180° via CSS transition
 
-### R5: Chart Filters
+<a id="current-r5"></a>
+
+### Canonical requirement group: R5: Chart Filters
 
 The system SHALL provide date range and indicator filters.
 
-#### Scenario R5a: Apply Filter
+#### Canonical scenario — Scenario R5a: Apply Filter
 
 - **WHEN** user adjusts a filter control
 - **THEN** the visible date range or indicator set updates accordingly
 
-#### Scenario R5b: Uniform Select Width on Mobile
+#### Canonical scenario — Scenario R5b: Uniform Select Width on Mobile
 
 - **WHEN** user views period selection filters on a mobile viewport (≤768px)
 - **THEN** start year select and end year select have uniform width (both `width: 70px` via the shared `.select` rule, `flex: 1 1 70px`) to eliminate layout asymmetry caused by the adjacent max range button
 - **AND** start year item, end year item, and max range button are all laid out in a single horizontal row (same baseline Y coordinate) without overflowing a 375px viewport
 
-#### Scenario R5c: Mobile Filter Row Horizontal Invariant
+#### Canonical scenario — Scenario R5c: Mobile Filter Row Horizontal Invariant
 
 - **WHEN** the period selection filters are displayed on a mobile viewport (≤768px)
 - **THEN** the start year select, end year select, and max range button share the same row (Y-coordinate difference below the element height threshold)
 - **AND** they are ordered left-to-right as start year select → end year select → max range button
 - **AND** the start year select and end year select widths match within 4px
 
-### R6: Chart Information
+<a id="current-r6"></a>
+
+### Canonical requirement group: R6: Chart Information
 
 The system SHALL provide explanatory info for each chart/metric.
 
-#### Scenario R6a: View Chart Info
+#### Canonical scenario — Scenario R6a: View Chart Info
 
 - **WHEN** user clicks the info button on a chart
 - **THEN** a tooltip/modal displays the definition, source, and calculation method for the indicator
 - **AND** the content is retrieved based on the `chartKey` defined in `src/lib/chartInfoContent.ts` (supported charts: `cpi-major`, `stacked-area`, `earnings`, `residual`, `consumption-expenditure`, `new-graph`)
 
-#### Scenario R6b: CPI Calculation Explanation
+#### Canonical scenario — Scenario R6b: CPI Calculation Explanation
 
 - **WHEN** a user opens the `cpi-major` or `stacked-area` information panel
 - **THEN** it identifies the base year and source mode returned by `getCpiDataStatus()`; for a validated 2025 pair, it identifies the nationwide monthly 2025 annual average = 100 connected CPI series and explains that pre-2025 values are connected from earlier base years
 - **AND** it explains that category values use the selected pair's fixed-base weights rather than official contribution measures
 - **AND** the stacked-area explanation identifies `外食以外食料` as a weighted difference and describes the major-category normalization (10002 for the 2025 pair)
 
-#### Scenario R6c: CTI Data-State Explanation
+#### Canonical scenario — Scenario R6c: CTI Data-State Explanation
 
 - **WHEN** a user opens the consumption-expenditure or 3種比較 information panel
 - **THEN** it identifies the CTI compatibility set selected by the loader without inferring a series variant from a filename
@@ -1567,48 +2008,52 @@ The system SHALL provide explanatory info for each chart/metric.
 - **AND WHEN** the 2025 set is unavailable, invalid, or no complete compatible set exists
 - **THEN** the panel shows user-facing unavailable wording derived from the reason code, without exposing internal file or validation terminology and without mentioning any 2020 rollback.
 
-#### Scenario R6d: Retired GDP explanation
+#### Canonical scenario — Scenario R6d: Retired GDP explanation
 
 - **WHEN** a user opens a spending or 3種比較 information panel
 - **THEN** the panel describes current CTI and CPI series only and does not describe GDP comparison values or support status
 
-### R7: Responsive Layout
+<a id="current-r7"></a>
+
+### Canonical requirement group: R7: Responsive Layout
 
 The system SHALL adapt to viewport size for mobile and desktop, designed mobile-first.
 
-#### Scenario R7a: Responsive Charts
+#### Canonical scenario — Scenario R7a: Responsive Charts
 
 - **WHEN** viewport width changes
 - **THEN** charts resize to fit available space without overflow or clipping
 
-#### Scenario R7b: Single Mobile Breakpoint
+#### Canonical scenario — Scenario R7b: Single Mobile Breakpoint
 
 - **WHEN** JavaScript and CSS both decide "is this mobile?"
 - **THEN** both derive the boundary from `MOBILE_BREAKPOINT_PX = 768` in `src/lib/breakpoints.ts`
 - **AND** no viewport band exists where JS treats the client as mobile while CSS treats it as desktop
 
-#### Scenario R7c: Fluid Typography
+#### Canonical scenario — Scenario R7c: Fluid Typography
 
 - **WHEN** viewport width crosses 768px
 - **THEN** font sizes and spacing scale continuously via `clamp()` with no step change
 - **AND** only layout switches (`.chartWrapper` aspect ratio) remain in a `min-width: 769px` media query
 
-#### Scenario R7d: No Horizontal Overflow
+#### Canonical scenario — Scenario R7d: No Horizontal Overflow
 
 - **WHEN** the page is rendered at 375px width
 - **THEN** `document.documentElement.scrollWidth` does not exceed `clientWidth`
 - **AND** the overflow is genuinely absent rather than hidden by `overflow-x: hidden`
 
-#### Scenario R7e: Viewport-Linked Chart Height
+#### Canonical scenario — Scenario R7e: Viewport-Linked Chart Height
 
 - **WHEN** the device is held in landscape with a short viewport
 - **THEN** chart height follows the viewport (`svh`/`dvh` units) instead of a fixed 500px
 
-### R20: Mobile Consumption Readability
+<a id="current-r20"></a>
+
+### Canonical requirement group: R20: Mobile Consumption Readability
 
 The system SHALL make the nominal and real consumption charts readable and operable on narrow viewports while preserving the Plan24 data and rendering contract.
 
-#### Scenario R20a: Mobile Chart Geometry, Axis, and Bars
+#### Canonical scenario — Scenario R20a: Mobile Chart Geometry, Axis, and Bars
 
 - **WHEN** a consumption chart is rendered at 320–430px width
 - **THEN** its dedicated mobile layout preserves a zero-based Y axis, keeps the largest labels visible, uses a chart right margin of 8–12px with a measured Y-axis width of approximately 40–48px, and uses mobile-specific bar width and spacing
@@ -1617,13 +2062,13 @@ The system SHALL make the nominal and real consumption charts readable and opera
 - **AND** browser acceptance checks obtain the painted native X-axis `text` nodes from `.recharts-xAxis-tick-labels`, measure viewport CSS-pixel rectangles with `getBoundingClientRect()`, and verify every label is finite and non-zero and remains vertically within the chart SVG display rectangle; endpoint labels may extend horizontally beyond the SVG, and collision detection between interior labels is neither required nor guaranteed
 - **AND** no new horizontal scrolling is introduced
 
-#### Scenario R20b: Preserved Boundary Contract
+#### Canonical scenario — Scenario R20b: Preserved Boundary Contract
 
 - **WHEN** the user views the consumption charts on mobile
 - **THEN** no new 「直近5年」/「全期間」 period control or selected-quarter emphasis is introduced
 - **AND** the 2017Q4/2018Q1 boundary remains a standalone CTI artifact bar followed by CTI stacked bars, with no GDP overlap, interpolation, or independent GDP line
 
-#### Scenario R20c: Mobile Details
+#### Canonical scenario — Scenario R20c: Mobile Details
 
 - **WHEN** the user taps a consumption bar
 - **THEN** the tooltip/detail view shows all applicable category values, with category names at least 14px, the total at least 16px, and right-aligned numeric values
@@ -1631,13 +2076,13 @@ The system SHALL make the nominal and real consumption charts readable and opera
 - **AND** the detail content accounts for safe-area insets, scrolls internally when expanded, and keeps the close control reachable
 - **AND** after scrolling the detail content to its internal bottom, the entire tooltip and its close control remain within the viewport on portrait and landscape mobile viewports
 
-#### Scenario R20e: Consumption Tooltip Full Payload
+#### Canonical scenario — Scenario R20e: Consumption Tooltip Full Payload
 
 - **WHEN** a nominal or real consumption chart requests `showAllPayload=true`
 - **THEN** its tooltip displays every applicable category value on mobile and desktop regardless of touch state
 - **AND** when `showAllPayload` is not specified, the existing mobile/desktop payload omission behavior remains unchanged
 
-#### Scenario R20d: Mobile Empty and Accessibility States
+#### Canonical scenario — Scenario R20d: Mobile Empty and Accessibility States
 
 - **WHEN** the user clears every category or enlarges text/uses landscape/dark mode
 - **THEN** when every supplied expense series is hidden and no support series is available, the chart exposes its empty-state message in a `role="status"` region: `表示する系列がありません。凡例から費目を1つ以上選択してください。`
@@ -1645,11 +2090,13 @@ The system SHALL make the nominal and real consumption charts readable and opera
 - **AND** category names, selected/focused states, and close/reopen actions remain understandable without relying on color alone
 - **AND** the page has no horizontal overflow at 375px
 
-### R21: Chart Tooltip and Legend Display Contract
+<a id="current-r21"></a>
+
+### Canonical requirement group: R21: Chart Tooltip and Legend Display Contract
 
 The system SHALL resolve tooltip display rows from chart-side series metadata while preserving the existing tooltip interaction controller.
 
-#### Scenario R21a: CPI rows and total
+#### Canonical scenario — Scenario R21a: CPI rows and total
 
 - **WHEN** a CPI category has value `0`, null/undefined, or is absent from the Recharts payload
   **THEN** the applicable visible category row remains in registry order, `0` uses the existing two-decimal formatter, null/undefined/missing renders as `—`, and only finite numeric values contribute to `合計`.
@@ -1658,12 +2105,12 @@ The system SHALL resolve tooltip display rows from chart-side series metadata wh
 - **WHEN** a CPI stacked tooltip is shown before or after a legend visibility change
   **THEN** its shared tooltip root contains 12 visible expense rows plus `合計` initially, and 11 rows with `住居` absent after hiding `住居`.
 
-#### Scenario R21b: Earnings full labels on mobile
+#### Canonical scenario — Scenario R21b: Earnings full labels on mobile
 
 - **WHEN** a salary tooltip is displayed at 375px or 430px
   **THEN** its date, salary category/item, and complete registry tooltip labels are visible without ellipsis, nowrap, fixed-width truncation, or horizontal scrolling; labels wrap naturally and the numeric value column remains readable.
 
-#### Scenario R21e: Earnings category total
+#### Canonical scenario — Scenario R21e: Earnings category total
 
 - **WHEN** a salary tooltip is displayed
   **THEN** it contains the six existing registry rows in their existing label, color, and order, plus `給与区分合計（所定内＋所定外＋特別）`, calculated only from visible finite 2025年平均=100 display values for `所定内給与`, `所定外給与`, and `特別給与`.
@@ -1674,7 +2121,7 @@ The system SHALL resolve tooltip display rows from chart-side series metadata wh
 - **WHEN** the tooltip is shown at 375px or 430px
   **THEN** the six rows and explicit total label/value remain within the viewport and readable, while existing hover/click/touch/dismiss/scroll behavior remains unchanged.
 
-#### Scenario R21f: Earnings group separator
+#### Canonical scenario — Scenario R21f: Earnings group separator
 
 - **WHEN** a salary tooltip has at least one visible category from `所定内給与`・`所定外給与`・`特別給与` and at least one visible auxiliary series from `時間当たり給与`・`15歳以上国民当たり給与`・`CPI総合(参考)`
   **THEN** exactly one decorative separator is rendered on the first visible auxiliary row, including after hidden-series metadata projection, and the 375px/430px mobile tooltip retains readable row spacing and viewport fit
@@ -1683,15 +2130,7 @@ The system SHALL resolve tooltip display rows from chart-side series metadata wh
 - **WHEN** a CPI, consumption-expenditure, or comparison tooltip is displayed
   **THEN** no separator metadata or separator CSS is applied and the decorative line adds no screen-reader/read-aloud content
 
-#### Historical Scenario R21c (retired opt-in quarterly extension behavior)
-
-- **Historical contract only; this scenario records former Plan38-era test behavior and does not define the current comparison registry or Plan40 public quarterly contract.**
-- **WHEN** the former comparison-display contract was rendered at the `2017Q4`/`2018Q1` boundary with hidden keys
-  **THEN** its drawing, tooltip, and legend used the then-current visible registry projection; its opt-in quarterly extension behavior is retired.
-- **WHEN** an unregistered comparison key reached that historical tooltip
-  **THEN** the former contract excluded it when `allowedKeys` was present; this archived behavior does not restore a GDP/CTI boundary or opt-in Plan38 key.
-
-#### Scenario R21d: Interaction compatibility
+#### Canonical scenario — Scenario R21d: Interaction compatibility
 
 - **WHEN** users use hover, click, touch, close/Escape dismissal, or page/programmatic scrolling
   **THEN** the existing trigger, active dot, guide line, dismissal, and scroll-suppression behavior remains unchanged while only display metadata and row formatting differ.
@@ -1724,16 +2163,18 @@ The system SHALL resolve tooltip display rows from chart-side series metadata wh
   suppression/re-tap path; `tests/hooks/useChartTooltipController.test.tsx`
   remains the focused controller regression contract.
 
-### R15: Touch Tooltip Interaction & Scroll Suppression
+<a id="current-r15"></a>
+
+### Canonical requirement group: R15: Touch Tooltip Interaction & Scroll Suppression
 
 The system SHALL ensure that chart tooltips on touch devices open only on explicit taps and do not trigger during vertical scrolling or programmatic scroll animations.
 
-#### Scenario R15a: Touch Pointer Trigger
+#### Canonical scenario — Scenario R15a: Touch Pointer Trigger
 
 - **WHEN** the device has coarse pointer (`pointer: coarse`)
 - **THEN** chart tooltip trigger is set to `"click"` and tooltips never open during touchmove / vertical scrolling.
 
-#### Scenario R15b: Fine Pointer Hover
+#### Canonical scenario — Scenario R15b: Fine Pointer Hover
 
 - **WHEN** the device has fine pointer (`pointer: fine`)
 - **THEN** chart tooltip trigger remains `"hover"`.
@@ -1748,133 +2189,141 @@ The system SHALL ensure that chart tooltips on touch devices open only on explic
   leaving the chart records the exit so the next chart move can clear that
   dismissal state.
 
-#### Scenario R15c: Re-taping Dismissed Tooltip
+#### Canonical scenario — Scenario R15c: Re-taping Dismissed Tooltip
 
 - **WHEN** a tooltip is closed via the close button on a touch device
 - **THEN** tapping the same point again re-opens the tooltip.
 
-#### Scenario R15d: Programmatic Scroll Suppression
+#### Canonical scenario — Scenario R15d: Programmatic Scroll Suppression
 
 - **WHEN** a section tab is pressed triggering programmatic scroll
 - **THEN** tooltips are suppressed during the scroll animation.
 
-#### Scenario R15e: No Late Tooltip After Suppression Release
+#### Canonical scenario — Scenario R15e: No Late Tooltip After Suppression Release
 
 - **WHEN** a tap occurs during programmatic scroll suppression and the suppression is then released
 - **THEN** the tooltip does not appear afterwards without a new legitimate tap, because taps during suppression do not update the `activeChartId` display state.
 - **AND** a legitimate tap after the suppression is released still opens the tooltip.
 
-#### Scenario R15f: Outside Tap Dismissal
+#### Canonical scenario — Scenario R15f: Outside Tap Dismissal
 
 - **WHEN** the user taps outside the chart (outside `.recharts-wrapper`) on a touch device while a tooltip is shown
 - **THEN** both the tooltip and the guide line (`.recharts-tooltip-cursor`) disappear.
 
-#### Scenario R15g: Single Guide Line Across Charts
+#### Canonical scenario — Scenario R15g: Single Guide Line Across Charts
 
 - **WHEN** the user taps a second chart while the first chart's tooltip is shown
 - **THEN** the first chart's guide line disappears and at most one guide line is visible at a time.
 
-#### Scenario R15h: Guide Line Dismissal with Close / Scroll
+#### Canonical scenario — Scenario R15h: Guide Line Dismissal with Close / Scroll
 
 - **WHEN** the user closes the tooltip via the close button or scrolls 40px or more on a touch device
 - **THEN** the guide line disappears together with the tooltip.
 
-#### Scenario R15i: Active Dot Dismissal
+#### Canonical scenario — Scenario R15i: Active Dot Dismissal
 
 - **WHEN** the user dismisses a tooltip on a touch device (close button, outside tap, or scroll) on an area or line chart
 - **THEN** the active data point dots (`.recharts-active-dot`) disappear together with the guide line and tooltip.
 
-#### Scenario R15j: Tooltip Overlay Input Interception
+#### Canonical scenario — Scenario R15j: Tooltip Overlay Input Interception
 
 - **WHEN** the user performs a real touch at coordinates that are inside both the visible tooltip body and the chart note link identified by the dedicated `data-chart-note-link` attribute
 - **THEN** the tooltip receives the input, remains visible, and the link does not navigate to the nominal consumption section
 
-#### Scenario R15k: Touch Scroll Dismissal Threshold
+#### Canonical scenario — Scenario R15k: Touch Scroll Dismissal Threshold
 
 - **WHEN** the user has a visible tooltip on a touch device and the page scroll position changes by 40px or more
 - **THEN** the tooltip, guide line, and active data point dots are dismissed
 
-#### Scenario R15l: Existing Tooltip Interaction Preservation
+#### Canonical scenario — Scenario R15l: Existing Tooltip Interaction Preservation
 
 - **WHEN** the user presses Escape while a tooltip is visible, without moving the mouse or finger beforehand
 - **THEN** the tooltip is dismissed immediately, and the next valid pointerdown or pointermove can show it again
 - **WHEN** the user interacts through the desktop `chromium` project or the touch-enabled `mobile-pixel` project
 - **THEN** the existing outside-tap, close, desktop-hover, and mobile-tap tooltip behaviors remain unchanged
 
-### R8: Accessibility
+<a id="current-r8"></a>
+
+### Canonical requirement group: R8: Accessibility
 
 The system SHALL be navigable and interpretable by assistive technologies.
 
-#### Scenario R8a: Chart Labels
+#### Canonical scenario — Scenario R8a: Chart Labels
 
 - **WHEN** a screen reader encounters a chart
 - **THEN** the chart wrapper exposes `role="img"` with a descriptive `aria-label`
 - **AND** a collapsible `<details>` data table provides the underlying values
 
-#### Scenario R8b: Tap Targets
+#### Canonical scenario — Scenario R8b: Tap Targets
 
 - **WHEN** an interactive control is rendered
 - **THEN** its hit area is at least 44x44px (WCAG 2.5.8 AAA / Apple HIG)
 
-#### Scenario R8c: Pointer-Aware Hover
+#### Canonical scenario — Scenario R8c: Pointer-Aware Hover
 
 - **WHEN** the device has no fine pointer (`hover: none`)
 - **THEN** hover styles are not applied and `:active` provides press feedback instead
 
-#### Scenario R8d: Focus and Motion
+#### Canonical scenario — Scenario R8d: Focus and Motion
 
 - **WHEN** a control receives keyboard focus
 - **THEN** a `:focus-visible` outline is shown
 - **AND WHEN** the user requests reduced motion
 - **THEN** animations and transitions are suppressed
 
-#### Scenario R8e: Modal Focus Management
+#### Canonical scenario — Scenario R8e: Modal Focus Management
 
 - **WHEN** a `BottomSheet` or `ChartInfoButton` popup opens
 - **THEN** focus moves to the first focusable element inside it and `Tab` / `Shift+Tab` cycle within it (`useFocusTrap`)
 - **AND WHEN** it closes
 - **THEN** focus returns to the trigger via `focus({ preventScroll: true })` so the scroll position is preserved
 
-### R10: Section Navigation
+<a id="current-r10"></a>
+
+### Canonical requirement group: R10: Section Navigation
 
 The system SHALL let users move between the seven chart sections without unbounded scrolling.
 
-#### Scenario R10a: Sticky Section Tabs
+#### Canonical scenario — Scenario R10a: Sticky Section Tabs
 
 - **WHEN** the user scrolls the dashboard
 - **THEN** `SectionTabs` stays pinned and marks the section in view with `aria-current`
 - **AND WHEN** a tab is selected
 - **THEN** the page smooth-scrolls to that section
 
-#### Scenario R10b: Range Display and Picker
+#### Canonical scenario — Scenario R10b: Range Display and Picker
 
 - **WHEN** the user is anywhere on the page
 - **THEN** the tab bar shows the active year range (e.g. `2000–2026`)
 - **AND WHEN** the range label is tapped
 - **THEN** a `BottomSheet` opens with start-year / end-year selects
 
-#### Scenario R10c: Horizontal Tab Scroll
+#### Canonical scenario — Scenario R10c: Horizontal Tab Scroll
 
 - **WHEN** the tab row content overflows the viewport width
 - **THEN** the tab row scrolls horizontally without showing a native scrollbar (`scrollbar-width: none` / `::-webkit-scrollbar { display: none }`)
 - **AND** a right-edge fade (`mask-image`) indicates that more tabs are available
 
-### R11: Shareable State
+<a id="current-r11"></a>
+
+### Canonical requirement group: R11: Shareable State
 
 The system SHALL keep view state in the URL so it survives reload and can be shared.
 
-#### Scenario R11a: Stacked-Series URL Synchronization
+#### Canonical scenario — Scenario R11a: Stacked-Series URL Synchronization
 
 - **WHEN** the year range or stacked-series visibility changes
 - **THEN** `useUrlState` writes the applicable `?from`, `?to`, or `?hidden` value via `window.history.replaceState`; `?hidden` contains only `stackedHiddenKeys` and deprecated `adv` is removed
 - **AND WHEN** the page is opened with those params
 - **THEN** the dashboard restores that range and stacked-series visibility; normal legend (`hiddenKeys`), moving-average legend (`maHiddenKeys`), and nominal/real series state remain React-owned.
 
-### R16: Chart Tooltip Stack Total
+<a id="current-r16"></a>
+
+### Canonical requirement group: R16: Chart Tooltip Stack Total
 
 The system SHALL display the sum of active series in stacked chart tooltips when requested.
 
-#### Scenario R16a: Consumption Expenditure Tooltip Total
+#### Canonical scenario — Scenario R16a: Consumption Expenditure Tooltip Total
 
 - **WHEN** the user taps or hovers over a data point in the Consumption Expenditure (nominal/real) charts
 - **THEN** the tooltip displays the sum of currently visible series as `合計` right below the date label
@@ -1885,26 +2334,26 @@ The system SHALL display the sum of active series in stacked chart tooltips when
 - **AND WHEN** an unrelated non-stacked chart is viewed
 - **THEN** no total row is rendered.
 
-#### Scenario R16b: CPI Stacked Tooltip Total
+#### Canonical scenario — Scenario R16b: CPI Stacked Tooltip Total
 
 - **WHEN** the user hovers over a data point in the CPI `StackedAreaChart`
 - **THEN** the tooltip renders all 12 visible CPI expense rows in registry order and a `合計` row in the same root
 - **AND WHEN** the user hides the `住居` series through its legend
 - **THEN** the tooltip renders the remaining 11 rows, excludes `住居`, and recalculates `合計` from only those visible rows
 
-#### Scenario R11c: Deprecated comparison extension query
+#### Canonical scenario — Scenario R11c: Deprecated comparison extension query
 
 - **WHEN** 3種比較 is opened with a legacy `?adv=1` query
 - **THEN** the chart still renders exactly its CPI, salary, and Plan49 monthly consumption registry entries, with no “参考・延長系列” control
 - **AND** the next URL synchronization removes `adv` using `history.replaceState` while preserving unrelated query parameters and the current history entry
 
-#### Scenario R11b: Scroll Position Preservation
+#### Canonical scenario — Scenario R11b: Scroll Position Preservation
 
 - **WHEN** the user filters stacked series via its legend click or changes the year range
 - **THEN** URL parameters (`?from`, `?to`, `?hidden`) are synchronized using `window.history.replaceState`, with `?hidden` limited to stacked-series visibility
 - **AND** the page scroll position is preserved without resetting to the top of the page.
 
-#### Scenario R11d: State ownership and one-way synchronization
+#### Canonical scenario — Scenario R11d: State ownership and one-way synchronization
 
 - **WHEN** the dashboard is initialized
 - **THEN** `useUrlState` supplies the URL snapshot for `from`, `to`, and `hidden` (stacked-series `stackedHiddenKeys` only), while CpiChart owns the live React state for those values
@@ -1912,37 +2361,43 @@ The system SHALL display the sum of active series in stacked chart tooltips when
 - **AND** section navigation, quarter visibility, normal legend (`hiddenKeys`), moving-average legend (`maHiddenKeys`), nominal/real state, and CAGR remain React-owned
 - **AND** no new `popstate` listener or URL/localStorage precedence rule is introduced
 
-### R12: Deferred Chart Mounting
+<a id="current-r12"></a>
+
+### Canonical requirement group: R12: Deferred Chart Mounting
 
 The system SHALL defer off-screen chart mounting to protect mobile responsiveness.
 
-#### Scenario R12a: Lazy Mount on Approach
+#### Canonical scenario — Scenario R12a: Lazy Mount on Approach
 
 - **WHEN** a chart wrapped in `LazyMount` is more than 200px outside the viewport
 - **THEN** its Recharts subtree is not mounted, and a placeholder of equal height reserves the space
 - **AND WHEN** the user scrolls it into range
 - **THEN** the chart mounts
 
-#### Scenario R12b: Test Override
+#### Canonical scenario — Scenario R12b: Test Override
 
 - **WHEN** `window.__MOUNT_ALL__` is set before page scripts run
 - **THEN** every `LazyMount` mounts immediately, so E2E tests can address all charts
 
-### R13: Data Export
+<a id="current-r13"></a>
+
+### Canonical requirement group: R13: Data Export
 
 The system SHALL let users take the displayed data with them.
 
-#### Scenario R13a: CSV Download
+#### Canonical scenario — Scenario R13a: CSV Download
 
 - **WHEN** the user opens a chart's data table and activates the CSV button
 - **THEN** a UTF-8 BOM CSV of the currently filtered rows and series downloads
 - **AND** the file name derives from the chart title
 
-### R17: Max Period Button
+<a id="current-r17"></a>
+
+### Canonical requirement group: R17: Max Period Button
 
 The system SHALL provide a "最大期間" button within the range filter sheet to quickly reset the date range to 2005 through the latest available year.
 
-#### Scenario R17a: Max Period Activation
+#### Canonical scenario — Scenario R17a: Max Period Activation
 
 - **WHEN** the user opens the range filter and clicks the "最大期間" button
 - **THEN** the start year is set to 2005 and the end year is set to the latest available year in `allYears`
@@ -1951,12 +2406,14 @@ The system SHALL provide a "最大期間" button within the range filter sheet t
 - **AND WHEN** the range is already set to the maximum period and the button is clicked again
 - **THEN** the range remains unchanged (idempotent).
 
-### R18: CAGR Compact Sheet Under the Contribution Chart
+<a id="current-r18"></a>
+
+### Canonical requirement group: R18: CAGR Compact Sheet Under the Contribution Chart
 
 The system SHALL expose CAGR as a compact bottom sheet anchored to the 費目別寄与度 chart,
 so that part of the chart stays visible while the user adjusts and reads the CAGR.
 
-#### Scenario R18a: Entry Point
+#### Canonical scenario — Scenario R18a: Entry Point
 
 - **WHEN** the user views the 費目別寄与度 chart
 - **THEN** a tonal pill button appears between the chart and the "データテーブルを表示" link,
@@ -1964,29 +2421,33 @@ so that part of the chart stays visible while the user adjusts and reads the CAG
 - **AND** its label and text contrast meet WCAG AA (4.5:1) in both light and dark themes
 - **AND** no standalone CAGR section or `CPI年率` tab exists
 
-#### Scenario R18b: Self-Contained Sheet
+#### Canonical scenario — Scenario R18b: Self-Contained Sheet
 
 - **WHEN** the link is tapped
 - **THEN** a compact `BottomSheet` opens containing start-year / end-year / evaluation-month
   selects on one row, the 計算する button, and the result or error
 - **AND** none of these controls are rendered outside the sheet
 
-#### Scenario R18c: Chart Remains Visible
+#### Canonical scenario — Scenario R18c: Chart Remains Visible
 
 - **WHEN** the sheet is open on a 375x667 viewport
 - **THEN** at least 120px of the contribution chart's plot area remains visible above the sheet
 
-#### Scenario R18d: Sheet Stays Open While Editing
+#### Canonical scenario — Scenario R18d: Sheet Stays Open While Editing
 
 - **WHEN** the user changes one of the three selects
 - **THEN** the sheet stays open and the previously calculated result is cleared
 
-#### Scenario R18e: Invalid Year State Falls Back to the Caller’s Initial Year
+#### Canonical scenario — Scenario R18e: Invalid Year State Falls Back to the Caller’s Initial Year
 
 - **WHEN** the caller provides valid initial start and end years and a CAGR year setter receives `NaN`
 - **THEN** rendering settles without a state-update loop, and calculation uses the corresponding configured initial year for the invalid selection
 
-#### Scenario R14a: Manual Theme Toggle
+<a id="current-r14"></a>
+
+### Canonical requirement group: R14 manual theme behavior
+
+#### Canonical scenario — Scenario R14a: Manual Theme Toggle
 
 - **WHEN** the user selects a theme via `ThemeToggle`
 - **THEN** `light` or `dark` is saved under the `theme` key, or the key is removed for `system`; `data-theme` is set for `light`/`dark` and removed for `system`
@@ -1995,7 +2456,7 @@ so that part of the chart stays visible while the user adjusts and reads the CAG
 - **THEN** the layout inline script applies the stored theme before paint to avoid FOUC
 - **AND** actual reload behavior is not claimed as tested by the current component tests
 
-#### Scenario R14b: Theme-Aware Series Palette & Visual Enhancements
+#### Canonical scenario — Scenario R14b: Theme-Aware Series Palette & Visual Enhancements
 
 - **WHEN** the dashboard renders in light or dark mode
 - **THEN** `--series-1` through `--series-12` CSS custom properties are applied from `globals.css`
@@ -2004,28 +2465,747 @@ so that part of the chart stays visible while the user adjusts and reads the CAG
 - **AND** hidden legend items (`.legendItem.hidden`) display enhanced borders and swatches with rings
 - **AND** each `globals.css` theme scope (`:root` / `@media (prefers-color-scheme: dark)` / `:root[data-theme="dark"]`) applies the validated palette values (`PALETTES.light` / `PALETTES.dark` in `scripts/validate-palette.mjs`) to `--series-1` through `--series-12`, and the two dark scopes remain identical
 
-### R9: Page Metadata and Header
+<a id="current-r9"></a>
+
+### Canonical requirement group: R9: Page Metadata and Header
 
 The system SHALL provide SEO-friendly metadata and descriptive headers.
 
-#### Scenario R9a: Layout Metadata
+#### Canonical scenario — Scenario R9a: Layout Metadata
 
 - **THEN** `layout.tsx` defines:
   - `title`: "日本の経済指標ダッシュボード | 物価・賃金・消費の長期推移"
   - `description`: "物価指数・現金給与総額・消費支出を一画面で比較。給与は共通の2025年平均基準で比較し、CPIとCTIはそれぞれの現行系列・公開基準で表示。費目別寄与度・年率上昇率・給与と物価の乖離を可視化。凡例クリックで系列の表示/非表示を切替可能。"
 
-#### Scenario R11e: NewGraph comparison data parity
+#### Canonical scenario — Scenario R11e: NewGraph comparison data parity
 
 - **WHEN** the browser renders NewGraph for the full period or a 2014-centered range
 - **THEN** the fixed CPI, salary, and Plan49 consumption series use the same displayed values in the graph, tooltip, table, and CSV.
 - **AND** the Plan49 series uses its strict 12-month monthly calculation and 2025 monthly-average basis; GDP raw/comparison fields and quarterly CTI extension fields do not enter this comparison registry.
 - **AND** an information panel interaction does not change the selected comparison keys or their values.
 
-#### Scenario R9b: Page Header Description
+#### Canonical scenario — Scenario R9b: Page Header Description
 
 - **THEN** `page.tsx` header displays:
   - "すべての指標を2025年平均=100で表示。凡例クリックで系列の表示/非表示を切替可能。"
 - **AND** the header does not render the `経済指標ダッシュボード` badge
+
+<a id="current-cti-domain-identifiers-requirement"></a>
+
+### Canonical CTI identifiers and artifact compatibility
+
+- **WHEN** the composition-adjusted estimator receives an annual-public or quarterly-annual-anchor input boundary, **THEN** it resolves the boundary independently from the model identifier, artifact schema, public estimateVersion, and row kind; annual-anchor validation remains an independent strict condition.
+- **WHEN** the estimator loader receives an unknown inputContract or conflicting canonical/legacy contract options, **THEN** it returns unavailable before reading artifacts, computing fingerprints, or loading/building evidence; it does not treat the unknown value as annual-public.
+- **WHEN** an annual or quarterly CTI artifact reader encounters an approved legacy schema value or its canonical schema value, **THEN** it resolves the value to the corresponding internal schema descriptor only when schema family, manifest, metadata, revision, and content hashes remain consistent.
+- **WHEN** an artifact reader encounters an unknown schema, an annual/quarterly schema mix, or metadata whose manifest or hash binding is inconsistent, **THEN** it rejects the artifact without treating name normalization as proof of integrity.
+- **WHEN** quarterly rows are created or projected, **THEN** estimated-cost-stack and official-quarterly row kinds remain internal and are omitted from the public JSON shape; accepted legacy row-kind aliases resolve only at the internal boundary.
+- **WHEN** an artifact writer creates current annual or quarterly CTI data, **THEN** it writes the canonical schema identifier, recomputes manifest/hash bindings, and preserves the established values, series order, input fingerprint semantics, and public JSON shape.
+- **WHEN** a consumer uses an existing public measurement or export, **THEN** the established `model`, `estimateVersion`, numeric values, fingerprint field, and JSON layout remain stable until an explicit public schema migration is specified.
+- **WHEN** server metadata, public JSON, or quarterly row metadata emits the public `estimateVersion`, **THEN** its literal and type come from the client-safe `shared/cti-estimate-contract.ts`, and client chart and CSV recognizers use that same shared contract.
+
+<a id="legacy-monthly-compatibility-requirements"></a>
+
+### Legacy monthly CTI compatibility requirements
+
+- **WHEN** the old CTI loader has finite raw `消費支出（名目）` values, **THEN**
+  the legacy adjustment uses its 12-month trailing window and does not use
+  Plan37 derived values or Plan40 quarterly values.
+- **WHEN** a monthly row is before 2018-01, **THEN**
+  `CTI消費支出（参考）` is `null`/not displayable; **WHEN** it is 2018-01 or
+  later and the 12-month window is complete, **THEN** it is
+  `12MA(raw) * 100 / average(raw CTI 2025 months)`, and the 2025 monthly
+  comparison average is 100.
+- **WHEN** the comparison registry or its public projection is created for NewGraph, **THEN**
+  the old 3 consumption comparison entries are replaced by a single `消費(総合)` entry (`CONSUMPTION_TOTAL_12MA_KEY`, monthly frequency, strict 12-month moving average rebased to 2025 monthly average), while CPI and wage series remain.
+- **WHEN** the comparison graph, legend, tooltip, table, or CSV renders for NewGraph, **THEN**
+  the new `消費(総合)` series metadata and value have parity across every public surface.
+- **WHEN** the 3種比較 legend and tooltip render, **THEN** the three tooltip row labels match the legend labels `物価`, `給与`, and `消費` in orange, blue, and red respectively; the consumption row retains its period and value and omits base-year, source, aggregation, and 12-month-average notes, while measurement notes for other comparison rows remain available.
+- **WHEN** a generic consumption tooltip renders outside 3種比較, **THEN** its existing measurement notes, including the concise `消費支出の12か月移動平均` explanation when applicable, remain unchanged.
+- **WHEN** 2005–2016 historical monthly estimation is computed, **THEN**
+  it uses the same composition-corrected Plan39 V2 annual total anchors as the historical quarterly nominal projection and two-or-more-person household raw monthly seasonal weights (`m[y,m] = A[y] * r[y,m] / meanRaw[y]`), requiring all 12 months to be finite and `meanRaw[y]` to be positive and finite; any missing month invalidates the entire year.
+- **WHEN** the Plan49 calculation constructs its 2004 prehistory, **THEN** it uses the official calendar-year IV-4 share `3459/4915`, applies the same V2 per-category base/gamma calculation used for the historical annual anchors, normalizes all twelve `000040499070` raw months to that corrected annual anchor, and keeps these values internal; 2004 is not added to the public V2 rows or quarterly graph.
+- **WHEN** the 2004 IV-4 CSV is missing, duplicated, or contains invalid counts, **THEN** only the 2004 prehistory anchor is unavailable; shared 2005–2016 V2 anchors remain usable, and 2005-01 has no MA12 because its required 2004 months are incomplete.
+- **WHEN** the first public monthly point is computed, **THEN** it is 2005-01 and its strict 12MA window is 2004-02..2005-01; no 2004 point is emitted to NewGraph, tables, or CSV.
+- **WHEN** 2017-and-later monthly values are processed, **THEN**
+  official all-household monthly adjusted observations (`000040499028`) are used as-is without quarterly back-filling. The separate Plan49 pre-implementation gate compares available three-month means with official quarterly values (`000040499087`) using its fixed tolerance; that offline check does not modify monthly values and is not a runtime fallback.
+- **WHEN** a 12-month moving average window is computed for NewGraph consumption, **THEN**
+  all 12 consecutive calendar months must be finite and complete; partial windows or missing months yield `null`.
+- **WHEN** the NewGraph consumption value for 2014-01 is computed, **THEN**
+  the 12MA uses 2013-02 through 2014-01, with the required 2013 input retained so all 2014 display months can use complete windows.
+- **WHEN** the salary graph/table/CSV or Plan40 quarterly view renders, **THEN**
+  legacy internal compatibility requirements remain unaffected.
+
+<a id="r-plan38"></a>
+
+<a id="plan39-annual-contract-requirements"></a>
+
+### Plan39 annual adjusted public contract requirements
+
+- **WHEN** the nominal B and A artifacts have valid schema, metadata, SHA-256
+  references, source identity, units, and complete required annual coverage,
+  **THEN** the annual contract is eligible for calculation and retains the
+  artifact identity and hash references in the audit record.
+- **WHEN** the artifact manifest is missing or invalid, **THEN** the loader does
+  not discover candidate CSV/JSON files and the public route fails closed with
+  `invalid_manifest` and `unavailable` status.
+- **WHEN** `CTI_ADJUSTED_ARTIFACT_ROOT` is unset and a Next production bundle
+  invokes the page loader, **THEN** the loader uses
+  `cwd/data/source/cti-adjusted` before bundle-relative candidates, does not
+  mistake `.next/package.json` for the artifact root, and proceeds only when
+  that root's manifest validates; otherwise the public route is
+  `unavailable` with the existing machine-readable reason.
+- **WHEN** `CTI_ADJUSTED_ARTIFACT_ROOT` is set, **THEN** its absolute root is
+  preferred for manifest and artifact resolution, and the same validation
+  failure remains `unavailable` rather than falling back to another root.
+- **WHEN** a valid manifest declares a required nominal B/A artifact as
+  missing, **THEN** the corresponding `missing_b_artifact` or
+  `missing_a_artifact` reason is retained and no candidate artifact replaces
+  the declared missing input. The real-only L artifact is not a required input
+  to this nominal estimate.
+- **WHEN** any required nominal B/A artifact, metadata record, hash, annual period, or required
+  value is missing, malformed, duplicated, non-finite, or inconsistent,
+  **THEN** the public adjusted measurement is `null` with status
+  `unavailable` and a machine-readable reason; no fallback or partial public
+  estimate is emitted.
+- **WHEN** the annual contract is validated, **THEN** official A observations
+  are complete and authoritative for every year from 2017 onward, while
+  2005–2016 is eligible for an estimated path only after the overall verdict
+  is accepted and is never labeled official.
+- **WHEN** the nominal core calculation runs, **THEN** it preserves applicable
+  nominal connection parameters and residual diagnostics as internal/audit data,
+  excludes real-only L-derived D from the estimate, and exposes only the
+  adjusted A-key measurement and its status metadata.
+- **WHEN** fitting or validating the model for the 2017 boundary, **THEN**
+  2018–2025 observations are used for calibration/training, 2017 is the
+  holdout/target and is excluded from calibration, and the audit verifies
+  `leakage=false`; backtest pass alone does not authorize publication.
+- **WHEN** a 2005–2016 estimate has finite validated nominal B/A inputs,
+  **THEN** the public status is `estimated_adjusted` only when the overall
+  audit verdict is accepted; **WHEN** the verdict is `insufficient-data` or
+  `accepted=false`, **THEN** 2005–2016 is `null`/`unavailable`.
+  Missing/invalid real-only L does not affect the nominal estimate; missing
+  required nominal B/A input fails the estimate closed.
+- **WHEN** a valid official distribution-adjusted nominal A observation is available from 2017 onward,
+  **THEN** the public projection preserves that official value and status even
+  if the estimate path is unavailable; estimation MUST NOT
+  overwrite official A.
+- **WHEN** backtest passes but sensitivity or another adoption gate is not
+  evaluable or fails, **THEN** backtest success alone does not permit public
+  estimated values.
+- **WHEN** the superseded legacy v1 residual-boundary diagnostic is evaluated,
+  **THEN** its historical provisional level-based threshold `1.4` and former
+  2018–2025 maximum are retained only as legacy audit data; they do not define
+  the current Plan39-v2 gate, which uses the official-A Other-share threshold
+  specified in the active Plan39-v2 requirement below.
+- **WHEN** the loader reads Plan39 nominal estimate artifacts, **THEN** it consumes only
+  manifest-declared nominal B/A artifacts, validates `sourceUrl`/`downloadUrl` and
+  SHA-256 hashes, and fails closed without candidate discovery on any mismatch.
+- **WHEN** the public projection is created, **THEN** B inputs, real-only L,
+  R, beta, D, residuals, and intermediate diagnostics are absent from the public
+  A-only payload; they remain available only to the permitted audit contract.
+- **WHEN** graph, table, tooltip, or CSV output renders the same annual
+  measurement, **THEN** value, label, unit, source, frequency, aggregation,
+  status, reason, and period are identical across all four surfaces, including
+  `estimated_adjusted`, `official_adjusted`, and `unavailable` states.
+- **WHEN** the Plan39-v2 projection produces a public annual measurement,
+  **THEN** graph, table, tooltip, display note, and CSV metadata use the same
+  `seriesType`, `status`, `reason`, `value`, `official`, `model`, and
+  `estimateVersion`; the display note is `2016年以前は接続推計。公式遡及値ではない`
+  only for `estimated_adjusted`, `公式調整値` only for
+  `official_adjusted`/official values, and `利用不可: <reason>` for
+  `unavailable`.
+- **WHEN** a Plan39-v2 row is `unavailable` or has a non-available status,
+  **THEN** every public category measurement has `value: null`,
+  `seriesType: unavailable`, a non-empty reason, and `official: false`; it is
+  never labeled or annotated as an official adjusted value, and CSV value cells
+  remain empty while the status/seriesType/reason metadata columns are kept.
+- **WHEN** the legacy consumption-level index is requested, **THEN** it is
+  sourced only from the validated official annual artifact and its declared
+  annual basis; unsupported monthly aggregation or an otherwise ungrounded
+  monthly fallback is rejected and fails closed.
+- **WHEN** an audit artifact is serialized, **THEN** the result is JSON-safe
+  and preserves validation outcome, source metadata, hashes, status, reasons,
+  holdout boundaries, and model diagnostics without exposing non-serializable
+  values or secrets.
+- **WHEN** rollback is requested, **THEN** snapshot, metadata, manifest, and
+  hash validation is read-only by default; restoration requires an explicit
+  force condition and never fetches, synthesizes, interpolates, or silently
+  replaces an artifact.
+
+<a id="plan39-v2-publication-requirements"></a>
+
+### Plan39-v2 public route requirements
+
+- **WHEN** the v2 publication gate is rejected, **THEN** all twelve
+  2005–2016 estimated rows are `null`/`unavailable` with the gate reason, and
+  official A rows from 2017 onward remain available.
+- **WHEN** the v2 publication gate is accepted, **THEN** all twelve
+  2005–2016 rows are available and marked `estimated_adjusted`, while 2017+
+  rows remain `official_adjusted` and official.
+- **WHEN** the page adapter maps v2 rows, **THEN** chart, table, tooltip, and
+  CSV use the same adapted measurement value and metadata, including
+  `model=v2-bottom-up`, `estimateVersion=plan39-v2`, status, reason, and
+  official/estimated provenance; an unavailable measurement remains
+  `unavailable` and does not receive an official note or source.
+- **WHEN** a v1 consumer requests the legacy route, **THEN** its loader,
+  projection, and public API remain unchanged.
+
+- **WHEN** production, backtest, or training calibration is recorded,
+  **THEN** its period is 2018–2025; sensitivity baseline calibration is also
+  2018–2025, while sensitivity alternative calibration is 2018–2024. The
+  target/holdout is 2017, excluded from calibration, and `leakage=false`.
+- **WHEN** a mandatory nominal-input Other/bottom-up, 2017 connection, rolling/LOO
+  backtest, input-reconciliation, or threshold audit is incomplete or fails,
+  **THEN** a future evaluation is `insufficient-data`, `accepted=false`, and
+  no estimated row is public. Sensitivity coverage and G are retained for
+  audit and do not independently determine the gate; the former real-input
+  audit's pass state does not establish the nominal gate.
+- **WHEN** the former real-input legacy-v1 residual boundary has `exceeded=false` under threshold `1.4`,
+  **THEN** it is retained as a passing audit result and remains non-blocking
+  historical evidence; it does not establish current nominal publication readiness.
+- **WHEN** the nominal v2 publication gate is evaluated, **THEN** its accepted
+  analysis fingerprint must match selected nominal B/A inputs; absent this
+  nominal-specific evidence, 2005–2016 estimates remain unavailable, while
+  official distribution-adjusted nominal A rows from 2017 onward remain official.
+- **WHEN** the v2 loader and UI projection are connected, **THEN** chart,
+  table, tooltip, and CSV use the same projected values and metadata.
+- **WHEN** runtime publication evaluates rolling/LOO evidence from an analysis
+  artifact, **THEN** it uses the same publication gate as analysis and requires
+  the current evidence schema plus an identical input fingerprint; old schema,
+  missing evidence, or mismatch yields `unavailable` estimated rows and does
+  not publish estimates.
+- **WHEN** `CTI_ADJUSTED_ANALYSIS_FILE` is set, **THEN** that explicit file is
+  resolved first; **WHEN** it is unset and `CTI_ADJUSTED_ANALYSIS_ROOT` is set,
+  **THEN** matching analysis artifacts are resolved from that root; otherwise
+  the default root is `results/plan39`. Any selected artifact that fails the
+  schema or fingerprint contract keeps the public gate closed.
+- **WHEN** optional audit strengthening is considered, **THEN** it may expand
+  gamma comparisons, G thresholds, or warning wording only; no mandatory task
+  remains, and L has no 2019+ extrapolation.
+
+<a id="plan39-current-analysis-requirements"></a>
+
+### Plan39 research-only backtest requirements
+
+- **WHEN** the v2 public registry is created, **THEN** it contains
+  `CTIミクロ調整系列（その他の消費支出）`, while the v1 registry retains
+  `CTIミクロ調整系列（残差）` and its category/display array is unchanged.
+- **WHEN** v2 Other is derived, **THEN** the derivation is bottom-up from total
+  minus the major categories and is published as Other, never as v1 residual.
+- **WHEN** the nominal estimate is calculated, **THEN** it selects nominal
+  columns from B and A, excludes their real columns, and does not require the
+  real-only L artifact or L-derived D household-composition correction.
+- **WHEN** the endpoint correction is calibrated or retrospectively compared,
+  **THEN** it uses the saved nominal B/A annual JSON artifact precision (one
+  decimal), records this in result diagnostics, and does not substitute the
+  higher-precision research-only raw-workbook backtest values.
+- **WHEN** the analysis-only 2017/2018 education stability diagnostic runs,
+  **THEN** it verifies and reads the raw basic/adjusted CTI annual XLSX cells
+  (2017 A row 10/B row 25; 2018 A row 11/B row 26; nominal J:T), records file
+  hashes and raw values, and does not derive a published Other ratio from the
+  T-column dash; **AND** if raw source identity, year row, header, or hash
+  fails, the diagnostic stops without emitting a new result.
+- **WHEN** the 2018 holdout is compared with the historical-lambda prediction,
+  **THEN** lambda is fit only to the 2005–2016 household-survey panel excluding
+  2011, the 2017 A/B ratio is only a level anchor, 2018 A/B is held out until
+  post-prediction comparison, and the 2018 ledger-format revision plus
+  setai-n special-weight definition are stated as limitations.
+- **WHEN** the separate two-year 2017/2018 anchor scenario is calculated,
+  **THEN** `log(Q2018,total/Q2017,total)` is the denominator, any small-denominator
+  estimate is retained with an instability flag, and the scenario is labeled
+  in-sample rather than validation.
+- **WHEN** the external real-only L benchmark is used by a separate audit,
+  **THEN** it remains diagnostic only and is not extrapolated or interpolated
+  for 2019 onward; it does not affect nominal estimate values or publication.
+- **WHEN** γ cases are compared, **THEN** they are recorded as non-blocking
+  sensitivity analysis and γ is not fixed as a production parameter.
+- **WHEN** G is evaluated, **THEN** it is recorded as an external audit
+  benchmark and is not used as a standalone public stop condition.
+- **WHEN** model calibration is performed, **THEN** calibration is fixed to
+  2018–2025, 2017 is a holdout/connection year, and residual diagnostics are
+  separate from public measurements.
+- **WHEN** `publicationGate.status === "pass" && accepted === true`, **THEN**
+  finite v2 estimates may be `estimated_adjusted` only when the accepted
+  analysis fingerprint matches the selected nominal B/A inputs; **WHEN** the
+  gate or fingerprint check fails, **THEN** estimated values are null/unavailable
+  with a reason and are not publicly emitted.
+- **WHEN** an official distribution-adjusted nominal A value from 2017 onward exists, **THEN** its value and
+  official status are retained regardless of the estimated publication gate.
+- **WHEN** chart, tooltip, table, or CSV renders v2 Other, **THEN** all surfaces
+  resolve the same v2 key, measurement, model/version, source, year, value,
+  status, and reason; v1 mapping is not reused.
+- **WHEN** the Plan39 annual table renders a measurement, **THEN** the cell
+  displays `推計`, `公式`, or `利用不可` from that measurement's
+  `seriesType`/provenance, without deriving the label from a hard-coded year.
+- **WHEN** Plan39 public data contains an official measurement, **THEN** the
+  chart/table context displays the first official year detected from the data
+  as the estimate-to-official boundary; **WHEN** no official measurement is
+  present, **THEN** it states that no official adjusted value is available.
+- **WHEN** the Plan39 CSV is offered for download, **THEN** the surrounding
+  UI states that per-series value-type metadata is included, and the CSV
+  retains the machine-readable `seriesType` columns for each series.
+- **WHEN** the former real-input v2 artifact is inspected, **THEN** its
+  coverage, γ cases, β_other, G coverage, boundary result, gate, and reason
+  codes remain historical audit evidence only; they do not validate nominal
+  estimates or establish a currently accepted nominal publication gate.
+- **WHEN** nominal v2 publication is evaluated, **THEN** nominal-input
+  backtests, Other/β stability, and the 2017 connection must be evaluated using
+  an input-matched analysis artifact before estimates can be published.
+  Historical real-input diagnostics do not satisfy these conditions.
+- **WHEN** the household-size candidate is calculated, **THEN** required years,
+  source IDs/URLs, raw hashes, normalized CSV hashes, and declared weight
+  vintage/status are verified before calculating; **WHEN** any provenance check
+  fails, **THEN** candidate coefficients and annual estimates are not emitted.
+- **WHEN** weights have unverified benchmark connections or the raw national 2011 weight is missing,
+  **THEN** a 2011 diagnostic row may be produced only from normalized 2010/2012 size shares by linear interpolation and renormalization; its manifest and rows identify it as derived, not observed, and the result remains `legacy_unharmonized_weights` and cannot satisfy the production publication gate. The 2010 and 2012 endpoint benchmark bases are not verified as connected, and the 2011 44-prefecture table is not a national substitute.
+- **WHEN** annual R is calculated for 2011, **THEN** the interpolated distribution is included, lambda fitting continues to exclude 2011, and annual-candidate output includes 2010/2012 endpoint alternatives and their candidate range.
+- **WHEN** the 2017 A/B ratio is used as an anchor, **THEN** its identity is not counted as fit or backtest evidence.
+- **WHEN** Plan39-v2 estimates are built, **THEN** the loader verifies the
+  dedicated `production-pi2plus` artifact and source hashes, applies endpoint
+  corrections only to 2005–2016, keeps 2017–2025 official A unchanged, derives
+  total as corrected categories' sum, and records coefficient/source
+  diagnostics; **AND** missing or invalid required sources make the estimate
+  unavailable and close the publication gate.
+- **WHEN** the 2018–2024 retrospective validation is reported, **THEN** it
+  identifies 2025 as the endpoint calibration year and labels the result
+  retrospective and non-causal, not independent forecast evidence.
+- **WHEN** historical IV-4 shares are applied, **THEN** their source/vintage is
+  identified as distinct from January `setai-n` and centered on their own 2017
+  value; 2011 is identified as synthetic interpolation and remains provisional.
+
+#### Current Research-only education-share 2+ backtest and production share source
+
+This supplemental diagnostic is separate from the Plan39 production estimator,
+loader, publication gate, quarterly values, and the prior 2017/2018 education
+stability artifact. It reads the retained raw official 2025-base CTI B/A
+workbooks and annual January `setai-n` special-tabulation files for 2017–2025.
+For each year, national size shares are each exact published size-bin count
+divided by the reported 1,000,000-part national denominator; `pi2plus` is
+`1 - pi1`. It preserves file URLs and SHA-256 hashes, reported year, sheet,
+denominator, raw values, and extraction row/cell evidence. The special files
+are each year's January tabulation, while the Household Survey design defines
+the correction distribution for a month using the preceding/trailing 12-month
+LFS distribution. January therefore serves only as an annual proxy, not a
+calendar-year average. The 2018 Household Survey redesign and LFS population
+benchmark changes to the 2015 Census base in January 2017 and 2020 Census base
+in January 2022 are comparability caveats.
+
+Calibration uses only 2017:
+`K = (pAedu_2017 / pBedu_2017) / pi2plus_2017`, where
+`pAedu=A_education/A_total` and `pBedu=B_education/B_total` come from exact raw
+CTI XLSX cells. The candidate is
+`pHat_Aedu_t = pBedu_t * pi2plus_t * K`; the anchor baseline is
+`pHat_Aedu_t = pBedu_t * (pAedu_2017/pBedu_2017)`. Validation excludes 2017
+and compares per-year residuals and aggregate MAE/RMSE/bias over 2018–2025.
+The reproducible script is `scripts/plan39/two-plus-share-backtest.mjs`;
+trace and results are stored under `data/source/cti-size-composition/two-plus-share-backtest/`
+and `results/plan39/two-plus-share-backtest/`.
+
+- **WHEN** the 2+ share backtest runs, **THEN** it reads unrounded annual CTI
+  education/total values from the retained raw official A/B workbooks and
+  validates each annual January `setai-n` file's year, national rows, and
+  reported denominator before extracting 1/2/3/4/5+ shares; **AND** if a
+  validation-year source check fails, that year is omitted and the failure is
+  recorded in coverage; a missing/invalid 2017 calibration input stops without
+  a new backtest result.
+- **WHEN** the model is calibrated, **THEN** only 2017 determines `K`, and
+  2017 is excluded from validation; the 2018–2025 results report each model's
+  annual prediction/residual, `n`/coverage, MAE, RMSE, and bias against official
+  adjusted A education share.
+- **WHEN** the January LFS special shares are interpreted, **THEN** the result
+  states that they proxy one January distribution rather than a calendar-year
+  average of the preceding/trailing 12-month correction distribution, and
+  records the 2018 Household Survey redesign and the January 2017/January 2022
+  LFS benchmark changes.
+- **WHEN** Plan39 production estimators run, **THEN** they do not consume this
+  backtest's education formula, K, predictions, validation rows, or summary;
+  they consume only the separately generated, manifest-validated
+  `production-pi2plus.json`, whose January source shares are independently
+  hash-checked and used in the endpoint-residual correction specified above.
+- **WHEN** loaders, publication gates, quarterly values, or the previous
+  2017/2018 stability analysis run, **THEN** the research backtest's calculated
+  predictions and results do not affect their formulas or acceptance state.
+
+#### Current Research-only 2017-anchor-only category-share backtest
+
+This supplemental diagnostic reads exact raw cells from the retained 2025-base
+CTI basic B (`000040499069`) and adjusted A (`000040499087`) workbooks, sheet
+`総・年`, for 2017–2025. It maps the nine published nominal categories by exact
+header and includes Other as a tenth category: use the workbook's numeric Other
+cell when present, and derive total minus the nine published categories when
+the cell is `-`. The source status and exact cell coordinates are retained per
+series/year. Numeric Other values occur from 2020 onward; the 2020 switch from
+residual to official values is a comparability caveat, with the maximum
+official-minus-residual difference reported for each workbook.
+
+For each category, `pB[t,c]=B[t,c]/B[t,total]`,
+`pA[t,c]=A[t,c]/A[t,total]`, and the only calibration is
+`q[c]=pA[2017,c]/pB[2017,c]`. The requested raw prediction is
+`pHatRaw[t,c]=pB[t,c]*q[c]`. A separate coherent variant is
+`pHatNorm[t,c]=pHatRaw[t,c]/sum_j(pHatRaw[t,j])`; it is reported distinctly and
+does not replace the raw formula. Validation uses only 2018–2025. Per-category
+MAE, RMSE, and bias are reported in percentage points, along with unweighted
+macro metrics, annual actual/predicted/errors, and annual sums of raw predicted
+shares. The script is `scripts/plan39/anchor-only-category-backtest.mjs`; its
+summary and annual rows are saved under
+`results/plan39/anchor-only-category-backtest/`.
+
+`raw B/A CTI cells` → exact header/year validation → ten annual category shares
+→ 2017 category anchors → raw predictions and separately normalized variant
+→ 2018–2025 category/overall metrics and source-traced result files.
+
+- **WHEN** the category-share backtest runs, **THEN** it extracts exact raw
+  annual nominal values from the retained B/A XLSX files, records workbook
+  hashes and cell evidence, derives `q[c]` only from 2017, and reports both the
+  requested unnormalized formula and the separately labeled normalized
+  variant over 2018–2025; **AND** if a year, required category header/value,
+  total, or anchor cannot be identified unambiguously, it fails closed for the
+  affected input instead of silently substituting another category.
+- **WHEN** category metrics are emitted, **THEN** they include per-category
+  MAE/RMSE/bias in percentage points, overall macro metrics, per-year
+  predicted/actual/error values, and each year's raw predicted category-share
+  sum; Other's per-year source status and direct-versus-residual maximum
+  difference are included so the 2020 source-method boundary is auditable.
+- **WHEN** Plan39 production estimators, loaders, publication gates, or
+  quarterly values run, **THEN** this backtest's files and values are not
+  consumed and do not alter production formulas.
+
+<a id="plan39-current-period-requirements"></a>
+
+### Plan39 period-unified audit requirements
+
+- production/base calibration は 2018–2025 でなければならない。
+- sensitivity の calibration は baseline 2018–2025 と alternative 2018–2024 に分け、target/holdout 2017 をいずれの calibration にも含めてはならない。
+- sensitivity の比較は baseline 2018–2025 と alternative 2018–2024 を、target/holdout 2017・同一 L ルールで行わなければならない。
+- L は `official_annual` のみを使用し、`calendar_year_average` を採用してはならない。
+- audit には期間、対象年、除外年、入力 coverage、leakage 判定を保存し、不足時は `insufficient-data` として fail-closed にしなければならない。
+- 上記のthreshold、backtest、Other/β安定性、2017接続監査のpass記録と `1.4` のthresholdは旧real入力に対する歴史的監査記録であり、現行nominal推計の合格根拠にしない。
+- 現行nominal推計の受入には、名目B/Aを入力として再生成しruntime artifact fingerprintと一致する監査結果が必要である。監査未実施時は2005–2016推計を公開しない。
+
+<a id="plan40-evidence-requirements"></a>
+
+### Plan40 evidence and checkpoint requirements
+
+- **WHEN** 実装チェックポイントに到達する、**THEN**
+  `skills/jev-review/SKILL.md` を明示的に読み込み、同スキルの汎用クライアントで
+  JEV レビューを依頼する。
+- **WHEN** `TYPESAFE_API_KEY` がプロセス環境にない、**THEN** `.env.local` の
+  `TYPESAFE_API_KEY` を認証専用の既定値として読み込み、キーが得られなければ
+  リクエストを送信せず fail-closed にする。
+- **WHEN** JEV へレビューを送信する、**THEN** 今回のユーザー明示依頼で承認済みの
+  計画、レビュー文脈、差分要約、受入条件、検証結果など認証情報以外のデータだけを
+  送信し、API キーその他の認証情報は本文に含めない。この承認は今回の明示依頼の
+  範囲に限る。
+- **WHEN** JEV の結果を受け取る、**THEN** 妥当性、修正点、未確定点を記録し、修正点が
+  あれば対応して必要に応じて再レビューする。未確認のレスポンス enum を前提にしない。
+- **WHEN** 新標準フローで実装チェックポイントレビューを始める、**THEN** 実コード・要件・テスト・
+  検証証拠に基づく相互排他的なcase-specific候補を2件以上用意し、
+  `--clarification-candidates PATH` で初回 `--request` と同時に渡す。候補JSONの各要素は
+  `id`、`label`、`finding`、`affected`、`evidence` または正確な `neededEvidence` の一方、
+  `nextAction` または `proposedFix` の一方、`remainingUncertainty` を持つ。JEVは選択、confidence、
+  probabilitiesのみを返し、候補不足は送信前にローカル検証で拒否する。
+- **WHEN** 有効な新標準初回応答が `valid_as_defined` を選択する、**THEN** 合格として扱い、自動更問を送らない。
+- **WHEN** 有効な新標準初回応答が `valid_as_defined` 以外を選択する、**THEN** 一度だけ候補選択の
+  clarificationを送る。CodexはJEVの候補選択を先取りせず、ユーザーにも選択を求めない。
+- **WHEN** clarification が候補リスト内の有効な選択を返す、**THEN** 選択IDをローカル候補へ対応づけ、
+  `resolution=selected`、`diagnosisSource=provided_candidate`、`diagnosisStatus=complete` とする。
+  候補詳細はCodexが提示した内容として扱い、JEV生成理由と表示しない。初回 `decisionSummary` と
+  確率分布を保持し、`effectiveVerdict=requires_revalidation` として初回不合格を合格へ変更しない。
+- **WHEN** 初回応答が失敗・無効・未対応または回答が欠落・曖昧・不一致である、**THEN** 自動更問を
+  送らず初回のエラー/未確定動作を維持する。clarificationが失敗・無効または選択肢外IDである場合は
+  未解決として記録し、更問を連鎖させない。追加証拠または修正後に通常の初回JEV再判定を行う。
+- **WHEN** `--clarify ... --choice` または `--follow-up` を互換用途として実行する、**THEN** それらの
+  既存モードと検証動作を保持し、新標準候補フローには混ぜない。
+- **WHEN** 初回または候補付き clarification を JEV へ送信する、**THEN** 初回応答、候補、質問および
+  回答を含む今回のレビュー文脈は送信承認済みとして扱い、
+  API キーその他の認証情報は本文・ログ・結果記録へ含めない。
+- **WHEN** API が失敗する、応答が得られない、または HTTP 成功だけが確認できる、
+  **THEN** 妥当とは判定せず、レビュー未確定または失敗として記録する。
+- **WHEN** JEV レビューを行う、**THEN** その判定を既存テスト・型チェック・lint の代替にせず、
+  アプリケーション runtime のデータソースやコンポーネントとして組み込まない。
+
+<a id="plan40-quarterly-contract-requirements"></a>
+
+### Plan40 integrated quarterly CTI requirements
+
+- **WHEN** the production nominal stacked chart renders real data rows, **THEN**
+  its DOM contract contains all ten `CTIミクロ調整系列（費目）` public expense
+  keys with finite numeric values, `status=available`, and series type `official_adjusted` or
+  `estimated_adjusted`, and the sum of those categories for every row is within
+  the inclusive range 50–150. The Browser Mode command returns every hidden
+  contract row; after validating that every row has a `YYYYQn` DOM `data-period`,
+  the test targets rows whose period is 2005Q1 or later, beginning at 2005Q1 and
+  continuing through the last contract period. Period alone selects target rows;
+  the 2005–2016 Plan39 estimated stack is included, and missing metadata,
+  null/non-finite values, or unavailable status are failures. Only the
+  legacy/support-only 1994–2004 rows are outside this check. The test verifies
+  uniqueness and quarterly continuity and confirms each category's Recharts bar
+  and at least one visible rectangle are rendered.
+- **WHEN** 2005–2016の既存名目歴史推計の対象月が一意で有限である、
+  **THEN** 既存の名目B/A接続推計と名目月次profileの式・値を維持する。
+- **WHEN** SharedPlan40の年次・月次・四半期値を生成する、**THEN** Plan39世帯人数構成候補や
+  legacy unharmonized weight（2011年linear-share interpolationを含む）、2017/2018教育安定性診断のsetai-n特別集計weight、
+  または2018様式改正年の世帯人数プロフィールを適用して既存推計、季節profile、四半期値を補正または再スケールしない。
+- **WHEN** 2005–2016歴史推計の対象月が欠損、重複、非有限、または3か月未満である、**THEN**
+  その四半期の全10カテゴリを一括して `value=null`、`status=unavailable`、非空の
+  機械可読 `reason` とし、不完全なstackを表示せず、補間、0補完、重複マージ、
+  別系列フォールバックを行わない。
+- **WHEN** 年次meanに使う2005–2016の対象年の月次入力に1件でも重複月がある、
+  **THEN** その対象年の全Plan40四半期行・全10カテゴリを同じ
+  `duplicate_month`、`value=null`、`status=unavailable` とし、重複が存在しない別四半期を
+  正常値として公開しない。この判定は公式四半期source（2017Q1以降）には適用しない。
+- **WHEN** `cti-distribution-adjusted-000040499087.xlsx` の `総・四(原)` に2017Q1以降の完全な
+  名目四半期値がある、**THEN** 主要9費目の公式原数値を使い、Otherを公式総合−主要9費目の
+  derived residualとして計算する。月次平均、年次Aアンカー、または別CTI入力で再計算・置換しない。
+- **WHEN** 公式四半期sourceの対象期、費目系列または名目原数値が欠落・重複・非有限である、
+  **THEN** 2005–2016年推計を保持し、2017Q1に `official_quarterly_source_unavailable_latest_period_unknown`
+  reasonの `unavailable` / `value=null` markerを公開する。グラフ注記、tooltip、表、CSVへreasonを伝播し、
+  2017Q1以降の値がなく最新対象期も不明であることを示す。月次profileや推計値へfallbackしない。
+- **WHEN** 公式四半期normalized CSV、sidecar metadata、manifest entryまたはsource/artifact hash pairが
+  欠落・不一致である、**THEN** 2005–2016の歴史推計は保持し、2017Q1に
+  `value=null`、`status=unavailable`、reason `official_quarterly_source_unavailable_latest_period_unknown`
+  のmarkerを公開する。UIは2017Q1以降の公式値がunavailableで最新対象期が不明と伝え、
+  月次値、推計値、legacy CTIへfallbackしない。
+- **WHEN** 2005–2016の年次契約が有効で対象月だけが不備である、**THEN** 月次 failure matrix の
+  `insufficient_months` または `duplicate_month` などを reason とし、年次アンカー不備の
+  reason に置き換えない。**WHEN** Plan40 の入力契約自体が不備である、**THEN** 別ケースとして
+  全10カテゴリを同一の機械可読年次契約 reason、`value=null`、`status=unavailable` とする。
+- **WHEN** nominal B/A、費目別β、またはOtherの年次anchorが欠損・重複・不正である、
+  **THEN** その対象四半期の全10カテゴリを一括fail-closedにし、不完全なstackを表示しない。
+- **WHEN** 2005Q1–2016Q4を表示する、**THEN** 月次から派生した名目推計であることを
+  `quarterlyDerived=true`、`annualAnchorType=estimated`、metadata、noteに示す。
+- **WHEN** 2017Q1以降の完全な公式四半期値を表示する、**THEN** `frequency=quarterly`,
+  `aggregation=official_quarterly_original_value`, `official=true`, `annualAnchorType=official`,
+  `quarterlyDerived=false`、専用の `kind=plan40-official-quarterly` を9費目の公式観測に記録する。
+  Other residualは同じrow kindを使うが、`derived_quarterly_residual_from_official_nominal_total_minus_nine_categories`、
+  `seriesType=estimated_adjusted`、`official=false`、`quarterlyDerived=true` とし、10費目の合計を公式総合に一致させる。
+- **WHEN** Plan39-v2 の名目歴史推計を計算する、**THEN** B/Aの名目列を使い、実質列、
+  実質のみのL、およびL由来Dを推計入力にせず、既存の名目B/A接続による2005–2016推計と
+  Other専用導出を維持する。2017年Aアンカーは歴史推計の接続に使い、公式四半期値の代替にしない。
+- **WHEN** 2005–2016の名目推計を作る、**THEN** 実質Lから導く長期世帯構成補正を
+  適用せず、名目Bを名目A/Bの2017重複年で接続する。
+- **WHEN** 名目グラフを描画する、**THEN** 2005–2016は既存の推計10カテゴリ、2017Q1以降は
+  `総・四(原)` の9公式名目四半期原数値と総合−主要9費目のOther residualを積み上げる。
+- **WHEN** 名目グラフを描画する、**THEN** Plan39専用年次セクションを表示せず、
+  既存名目グラフの共通凡例とregistryへ統合する。
+- **WHEN** 2016Q4から2017Q1へ遷移する、**THEN** 既存歴史推計から公式調整済み四半期原数値への
+  入力切替を注記で明示する。
+- **WHEN** chart、tooltip、data table、CSVの同一行を出力する、**THEN**
+  measurement metadata（source、unit、frequency、aggregation、status、reason、
+  `seriesType`、`official`、`annualAnchorType`、`quarterlyDerived`、note）と数値が
+  一致し、推計／公式の状態も全て同じである。
+- **WHEN** 推計値、公式値、または unavailable 値を表示する、**THEN** 注記、tooltip、
+  表、CSVで同一の状態を示し、unavailable の数値セルは空欄とする。
+- **WHEN** 2005–2016の月次検証またはbottom-up必須入力/anchor検証が失敗する、**THEN**
+  対象四半期の全10カテゴリを一括fail-closedにし、不完全なstackを表示せず、公式Aや
+  別期間の既存CTIを推計値へ置換しない。
+- **WHEN** Plan40 の nominal B/A 入力に 2005–2017 の対象年、10入力カテゴリ、source/artifact
+  metadata のいずれかが欠落する、または値が非有限・非正値である、**THEN**
+  年次アンカー契約を invalid とし、四半期計算層は対象期間の全10カテゴリを
+  `value=null`、`status=unavailable`、非空の reason 付きで扱う。欠損年を別系列、0、補間で
+  埋めない。失敗measurementも正常measurementと同じ `model=v2-bottom-up`、
+  `estimateVersion=plan39-v2`、source、unit、frequency、aggregation、
+  `annualAnchorType`、`quarterlyDerived` を保持する。
+- **WHEN** Plan40 の `baseYear`、`adoptedRange`、または A の2025 anchor のいずれかが不備である、
+  **THEN** 対象四半期の全10カテゴリを同一の年次契約 reason で
+  `value=null`、`status=unavailable` とし、カテゴリごとに正常値や別の failure reason を混在させない。
+- **WHEN** Plan39 の既存 artifact/runtime publication gate を評価する、**THEN** `contract: "plan39"`
+  の通常検証と publication gate を維持し、Plan40 の厳格な対象年検証を Plan39 の正常契約へ
+  適用しない。
+- **WHEN** Plan40 の必須 rolling/LOO evidence を生成する、**THEN** Plan40 input validation を通過した
+  同一の nominal B/A input snapshotから計算し、canonical evidence schemaとsnapshotのinput fingerprintを
+  evidenceへ記録して既存の共有publication gateに渡す。別snapshot、旧real/Plan39 evidence、または
+  fingerprint不一致のevidenceを代用しない。
+- **WHEN** Plan40 rolling/LOO evidenceが欠落・不正・canonical schema不一致・input fingerprint不一致である、
+  または別の必須Plan40 input、anchor、月次検証に失敗がある、**THEN** 共有publication gateを通過扱いにせず、
+  対象値を既存の fail-closed `unavailable` / `value=null` 契約で扱う。
+- **WHEN** Plan40 の全必須入力、anchor、月次検証およびrolling/LOO evidenceが有効で、共有publication gateが
+  `accepted=true` を返す、**THEN** 2005–2016の歴史的費目値を `estimated_adjusted` として公開可能にし、
+  公開範囲内の他の有効なPlan40費目値も欠損扱いにしない。
+- **WHEN** nominal B/A の `adoptedRange` が Plan40対象年を包含しない、実データ行を包含しない、
+  または `rawRange` の外側にある、**THEN** 同じ fail-closed reason体系で年次アンカー契約を
+  invalid とし、対象measurementを `value=null`、`status=unavailable` とする。
+- **WHEN** 実質のみのLの実データ行が欠損する、**THEN** 名目推計値と公式名目A年を
+  unavailable にせず、Lの状態を名目計算から独立した監査情報として扱う。
+- **WHEN** nominal A の metadata が `baseYear=2025` を宣言し、2025年の公式名目A総合アンカーが
+  有限かつ正である、**THEN** Plan40 は 2025年基準化契約を満たすものとして扱い、
+  四半期値を2025年四半期平均で再正規化しない。**WHEN** この不変条件を検証できない、
+  **THEN** 契約は fail-closed となり、理由 `A:base_year_not_2025` または
+  `A:missing_or_non_positive_2025_anchor` を返す。
+- **WHEN** 2005–2016の年次アンカー検証に成功する、**THEN** 名目B/A接続推計から得る
+  四半期値を `estimated_adjusted`／`annualAnchorType=estimated`／`quarterlyDerived=true` とする。
+- **WHEN** 2017Q1以降の公式四半期原数値を公開する、**THEN** Excel sheet `総・四(原)` の
+  9費目名目列をそのまま使用し、`official_adjusted`／`official=true`／`quarterlyDerived=false` とする。
+  Otherは公式総合−主要9費目から計算し、`derived_quarterly_residual_from_official_nominal_total_minus_nine_categories`／
+  `estimated_adjusted`／`official=false`／`quarterlyDerived=true` とする。年次Aアンカー、Tの月次平均、
+  またはその他の系列から公式四半期値を再計算しない。
+- **WHEN** 実 runtime の月次検証または Plan40 年次入力契約が失敗する、**THEN** 対象四半期の
+  10費目すべてを同じ reason の `value=null`、`status=unavailable` とし、正常経路と同じ
+  measurement 契約（source、unit、frequency、aggregation、seriesType、official、
+  annualAnchorType、quarterlyDerived、model、estimateVersion、note）を保持する。
+- **WHEN** unavailable measurement が公開 projection に渡される、**THEN** chart、tooltip、
+  table、CSV は同じ registry/measurement の値と metadata を参照し、表示側で値や metadataを
+  再計算しない。Plan40 の `baseYear`、`rawRange`、`adoptedRange` は対象年と整合する provenance
+  として追跡可能である。
+- **WHEN** 欠損、重複、非有限値、3か月未満、または anchor 不備を runtime 入力へ与える、
+  **THEN** それぞれを fail-closed failure matrix として固定し、別系列、0補完、補間を行わない。
+- **WHEN** Plan40 の `2017Q4` v2 行を公開する、**THEN** 10費目すべてを既存の名目四半期
+  グラフへ同じ measurement 契約で渡し、専用年次セクションへ分岐しない。
+- **WHEN** 公開期間が `2017Q1` に進む、**THEN** v2歴史推計から公式四半期Excel経路へ
+  切り替え、公式sheetの名目原数値を使う。
+- **WHEN** `projectQuarterlyPublicView()` が `legacy-cti` 行を受け取る、**THEN**
+  年に関係なく既存22キーだけを投影し、v2 10キーを出力しない。
+- **WHEN** `projectQuarterlyPublicView()` が `plan40-v2-cost-stack` 行を受け取る、
+  **THEN** 年を推測せず、既存名目キーとregistry由来v2 10キーを投影する。
+- **WHEN** `projectQuarterlyPublicView()` が `quarter` が1〜4の整数ではない行、または
+  `label` が `${row.年}Q${row.quarter}` と一致しない行を受け取る、**THEN** その行を公開projection
+  の結果から除外し、他の有効な四半期行は返す。正規データ生成と有効行の投影結果は変更しない。
+- **WHEN** 2016Q4から2017Q1へ行を差し替える、**THEN** aggregationは歴史推計側へ
+  `plan40-v2-cost-stack`、公式データ側へ専用の公式quarterly source kindを設定し、projectionは
+  年だけから入力経路を再推定しない。
+- **WHEN** 2017Q1以降の公式四半期measurementを公開する、**THEN** 9公式費目は `official=true`、
+  `quarterlyDerived=false` とし、Other residualは `official=false`、`quarterlyDerived=true` とする。
+  両者で元のsource mappingとderived formulaをmeasurement provenanceに保持する。
+- **WHEN** Plan40 の同一行を chart、tooltip、data table、CSV に投影する、**THEN**
+  数値と全 measurement metadata の状態を同一 registry から参照し、全 surface で parity を保つ。
+- **WHEN** 同一の Plan40 公式四半期fixtureを各 surface adapter へ渡す、
+  **THEN** registry の全10 v2カテゴリで key 集合、value、status、reason、source、unit、frequency、
+  aggregation、seriesType、official、quarterlyDerived、note、model（9公式費目のofficial metadataとOtherの
+  derived residual metadataの違いを含む）、
+  estimateVersion、baseYear、rawRange、adoptedRange が measurement 基準と一致し、table の状態・理由・注記、
+  tooltip payload/metadata、CSV の `key__status`、`key__reason`、
+  `key__quarterlyDerived` 等も同じ値を示す。Recharts の実 DOM 描画はこの adapter-contract parity の対象外とする。
+- **WHEN** 同じ fixture を unavailable にした場合、**THEN** 全10カテゴリを `value=null`、
+  `status=unavailable`、同一の非空 reason とし、全 surface の数値セル／CSV 数値セルを空欄にする。
+- **WHEN** legacy `2018Q1` fixture を同じ公開投影へ渡す、**THEN** v2 10キーとその metadata は
+  chart、table、CSV のいずれにも出力しない。
+- **WHEN** Plan40 の通常表示経路を描画する、**THEN** `CtiAdjustedSeriesSection` は
+  表示せず、Plan39 の年次 measurement 契約、loader、projection、旧契約テストは存続させる。
+
+<a id="current-official-quarterly-connection"></a>
+
+<a id="plan41-official-quarterly-requirements"></a>
+
+### Plan41 official quarterly connection requirements
+
+- **WHEN** nominal B/Aから作るH、選択済みnominal Tの2017年12か月、nominal Mの対象年12か月、および10費目の対応が検証済みである、
+  **THEN** 費目ごとに固定 `s_i` を一度だけ計算し、2005–2016の既存歴史推計へ適用する。
+- **WHEN** 2005–2016を四半期化する、**THEN** nominal Mの同年12か月平均を季節比分母に用い、年次平均は
+  `s_i H_i,y` と一致させる。Hはnominal B/A接続値で、real-only L由来の長期世帯構成補正を含まない。
+- Mの名目月次プロファイルは四半期内の形状に使い、Mを2017年の水準または季節性に使わない。
+- **WHEN** `s_i` を計算する、**THEN** `mean(T_i,2017) / H_i,2017` を使い、Hの2017値は
+  公式分布調整済み名目A/B接続アンカーである。この係数は2005–2016歴史推計の維持にのみ使う。
+- **WHEN** 2017Q1以降を表示する、**THEN** Excel `総・四(原)` の公式調整済み名目四半期原数値を
+  直接使い、T月次平均や `s_i` で再計算しない。
+- **WHEN** 歴史推計の10費目と公式四半期系列を構築する、**THEN** 2005–2016年HのOtherは既存
+  `result.other` 推計値、過去の接続計算で必要な2017年HのOtherは公式分布調整済み名目A総合−主要9費目、
+  T/M月次のOtherは各々の総合−主要9費目とする。2017Q1以降の公開Otherは公式四半期総合から
+  主要9費目を差し引いたderived residualとし、10費目の合計を公式総合に一致させる。
+  歴史推計の総合は10費目の合算とし、残差には丸めやゼロ下限を
+  適用せず恒等式を保つ。ただし負または非正の季節性入力は`invalid_seasonal_input`でfail-closedにし、
+  負のquarter outputを表示しない。独立した総合係数やseries 11を生成・使用しない。
+- **WHEN** 2005–2016の補正値を投影する、**THEN** 元source、先source、seasonal source、係数、基準年、単位、
+  世帯範囲、適用期間をprovenanceへ記録し、四半期measurementは `official=false` とする。
+- **WHEN** 2017Q1以降の公式measurementを投影する、**THEN** Excel filename, sheet, statInfId,
+  workbook relative path, period, nominal source column, original-value type, household scope, base year,
+  source/artifact hashes, and source-column-to-canonical mapping are recorded in measurement provenance.
+  The 9 official expenses have `official=true`, `annualAnchorType=official`, `quarterlyDerived=false`;
+  Other has aggregation `derived_quarterly_residual_from_official_nominal_total_minus_nine_categories`,
+  `seriesType=estimated_adjusted`, `official=false`, `quarterlyDerived=true`. The row kind is
+  `plan40-official-quarterly`.
+- **WHEN** official quarterly source CSV, sidecar, manifest entry, or source/artifact hash pair is missing or invalid,
+  **THEN** historical estimates for 2005–2016 remain intact and a 2017Q1 marker is emitted with
+  `value=null`, `status=unavailable`, and reason `official_quarterly_source_unavailable_latest_period_unknown`.
+  The chart, tooltip, table, and CSV explain that 2017Q1 onward is unavailable and the latest target period is unknown;
+  no monthly, estimated, or legacy fallback is allowed.
+- **WHEN** T/M/Hまたは公式四半期sheetのmetadata、費目対応、単位、基準年、頻度、期間の完全性、値の有限性・正値を
+  検証できない、**THEN** 対象費目または対象期間を `value=null`、`status=unavailable` とし、機械可読な
+  reasonを全projectionへ伝播する。0補完、補間、重複マージ、別loader選択、月次値や旧supportへのfallbackをしない。
+- **WHEN** 歴史推計用runtime Tの検証に失敗する、**THEN** 欠損月は `runtime_t_insufficient_months`、重複月は
+  `duplicate_month`、値の不正は `runtime_t_invalid`、metadata不一致は
+  `runtime_t_metadata_mismatch` として対象期間をfail-closedにする。Hの年次アンカー不正は
+  `v2_annual_anchor_unavailable` とする。
+- **WHEN** 選択済みTへ付与された `ctiMetadata` を伝播する、**THEN** 同じTのsourceId、statInfId、
+  householdScope、seasonalitySourceId、targetSourceId、targetHouseholdScope、bridgeAppliedRange、
+  bridgeCoefficientをchart、tooltip、data table、CSVへ保持し、loaderで別sourceを再選択しない。
+- **WHEN** 2016Q4と2017Q1を比較する、**THEN** 2017Q1の公式sourceへの切替をprovenanceで明示し、
+  Mから公式四半期sourceへの境界で値連続性は要求しない。
+- **WHEN** chart、tooltip、data table、CSVへ同じ行を投影する、**THEN** 数値、状態、理由、出所、
+  `official`、季節source、係数、注記が同一measurementと一致する。
+
+<a id="plan47-canonical-series-requirements"></a>
+
+### Plan47 canonical ten-category requirements
+
+- **WHEN** 2005Q1–2016Q4の年次アンカーを公開候補として計算する、**THEN** nominal B/A接続値に既存Plan39のPi世帯構成補正を適用し、Plan40の無補正baseを採用値として使わない。
+- **WHEN** 有効な歴史年次アンカーと対象年の12か月季節入力が揃う、**THEN** 各四半期値を「補正済み年次アンカー × 当該四半期3か月平均 ÷ 同年12か月平均」で算出し、同年の四半期平均が年次アンカーと一致する。
+- **WHEN** 2017Q1以降の公式四半期行が有効である、**THEN** 9費目はe-Stat公式四半期値をそのまま採り、月次平均・Plan39推定値・旧名目値を加算またはfallbackしない。
+- **WHEN** 公式四半期のOtherを構成する、**THEN** 公式総合から公式9費目を引いた残差とし、measurementにderived provenanceを付けて `official=false` と識別する。10費目合計は丸め許容内で公式総合に一致し、総合自体をstack費目に含めない。
+- **WHEN** 名目公開row、projection、chart stack、tableまたはCSVを生成する、**THEN** 期間ごとにcanonical 10費目だけを一度ずつ含め、旧名目aliasとv2/互換名キーの二重投影を行わない。aliasへpoison値を設定してもcanonical 10値とstack合計は変わらず、追加stack keyが公開されない。
+- **WHEN** Plan39モデルと現在のB/A/L/Pi・manifest fingerprintが保存analysisに一致しない、またはinput-integrity/publication gateの必須条件を確認できない、**THEN** 対象推定値を`null`/`unavailable`と機械可読reasonで公開し、無補正Plan40値やlegacy aliasで穴埋めしない。必要な分析を対応するモデル・入力で再評価する。
+- **WHEN** 公式artifact、sidecar、manifest、hash、必要期間、category mappingまたは公式行が欠損・不正である、**THEN** 公式期間を推定値・月次値・legacy aliasで埋めず、既存のunavailable marker、`null`、status/reasonを保持する。
+- **WHEN** chart、tooltip、data table、CSVで同一期間・費目を表示する、**THEN** 値、canonical category、status/reason、source、model、official/derived区分、単位、frequency、aggregationおよびprovenanceが同じmeasurementに基づき一致する。
+- **WHEN** `CpiChart` が2018Q1以降の正式系列を描画する、**THEN** 棒の表示順と凡例の表示順を、canonical key「住居、家具・家事用品、被服及び履物、保健医療、教育、光熱・水道、教養娯楽、交通・通信、食料、その他の消費支出」に対応する可視ラベル「住居、家具・家事用品、被服履物、保健医療、教育、光熱水道、教養娯楽、交通通信、食料、諸雑費・CPI外」の順にする。変更対象はレンダリング時の系列・棒の表示順と凡例のラベル・表示順に限り、canonical data keys、row/objectのキー順、およびinput projectionの順序は変更しない。
+- **WHEN** `CpiChart` の名目または実質消費tooltipとチャート情報を表示する、**THEN** tooltip項目は凡例と同じ「住居、家具・家事用品、被服履物、保健医療、教育、光熱水道、教養娯楽、交通通信、食料、諸雑費・CPI外」の順・ラベルで表示し、各費目に繰り返す歴史系列の非公式注記は省く。チャート情報には「2016Q4以前の接続推定値は非公式」であることを明記する（2016年を含む）。
+- **WHEN** 2016Q4から2017Q1へ移る、**THEN** 2016Q4まではPlan39補正済み歴史推定、2017Q1からは公式四半期sourceと明示し、接続点の再基準化・平滑化や公式値への補正式適用を暗黙に行わない。
+
+<a id="current-real-quarterly-cti-contract"></a>
+
+<a id="plan48-real-cti-requirements"></a>
+
+### Plan48 real quarterly CTI requirements
+
+- **WHEN** 2005Q1–2016Q4の実質系列を生成する、**THEN** Plan39の補正済み名目canonical値を同じ四半期の9対応CPIで変換し、名目10費目・総合の対象期間と対応を維持する。
+- **WHEN** 2017Q1以降の実質系列を生成する、**THEN** SharedPlan 47の公式調整名目canonical値に同じCPI変換規則を適用し、公式CTI実質列、GDP値または別のCTI系列へ入力を切り替えない。
+- **WHEN** 各実質canonical費目を計算する、**THEN** 当該四半期の3か月CPI平均を用いて `nominal × 100 / CPI` とし、9費目は同名CPIに対応させ、住居は `持家の帰属家賃を除く住居` を使う。
+- **WHEN** Otherの実質値を計算する、**THEN** 名目側のsigned residualを変更せず、`持家の帰属家賃を除く総合` を広義のproxyとして使い、CPI「諸雑費」との分類同等性を主張しない。
+- **WHEN** 実質総合を計算する、**THEN** 同じ四半期の内部総合名目key `CTIミクロ調整系列（総合・名目）` を `持家の帰属家賃を除く総合` で独立変換し、新key `CTIミクロ調整系列（総合・実質）` へ格納する。総合を費目合計から再構成せず、実質総合と費目和の一致を前提にしない。
+- **WHEN** 四半期内CPIの3か月の一つ以上が欠落・重複・非有限・非正値または無効である、**THEN** 対応する実質値を `null` / `unavailable` と理由付きで出し、補間、0補完、前値、別CPIへのfallbackをしない。少なくとも欠月は `cpi_month_missing`、重複月は `duplicate_cpi_month`、非正値・非有限値は `cpi_value_invalid` として識別する。
+- **WHEN** CPI実質値を公開する、**THEN** 2025年基準100を使い出力を再基準化せず、名目値とCPIをともに指数として扱い円建て額とは説明しない。
+- **WHEN** real projection、chart、tooltip、data tableまたはCSVを生成する、**THEN** 旧 `民間最終消費支出（実質）` keyを公開CTI系列から外し、旧GDP実質比較値を実質CTI入力に使わず、新しい実質総合と10費目の値・status/reason・provenanceをchart data、table、CSVの契約に保持する。
+- **WHEN** 実質消費チャートを描画する、**THEN** 10費目だけを棒および凡例に表示し、独立変換した総合key `CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY`（`CTIミクロ調整系列（総合・実質）`）は凡例に含めず、点マーカーも描かず、stackの棒や10費目合計にも加算しない。総合keyの値とstatus/reason/provenanceはchart data、table、CSVの契約に保持する。
+- **WHEN** 実質消費のツールチップを表示する、**THEN** 名目と同じ簡潔な費目行と、表示対象の費目値を足し上げた `合計` を表示する。独立した実質総合の行およびCPIの計測・出典に関するmeasurement note/provenanceは表示せず、ツールチップの合計と独立実質総合の一致を前提にしない。
+- **WHEN** 実質CTI経路を切り替える、**THEN** retired GDP比較のraw source、loader、内部型は再導入しない。
+- **WHEN** 本節の仕様同期を完了扱いにする、**THEN** Data Sources / Data Flow / Data Model / Component Tree / Requirementsが実装と一致し、実装・関連検証が未完了ならその状態を完了済みと記録しない。
+
+<a id="current-estat-refresh-contract"></a>
+
+<a id="plan52-refresh-requirements"></a>
+
+### Plan52 data refresh requirements
+
+- **WHEN** `pnpm data:refresh --check` のstaged runtime検証を実行する、**THEN** runtime cloneをcanonical projectから分離した一時rootで起動し、hash-pinned runtime/test underlaysを区分して含め、canonical fallbackをdenyしたまま所定quality suitesをすべて実行する。成功・失敗を問わずcloneをcleanupし、check-onlyではcanonical publishを行わない。
+- **WHEN** Plan52 G1〜G6の受入結果を記録する、**THEN** reportのsource metrics、staged quality、canonical publish/no-op evidence、journal recovery fixtureと通常run/startup recoveryを分けて記録し、check-only成功をpublish/recoveryの証明として扱わない。KP1〜KP8の照合結果もプランに個別記録する。
+- **WHEN** `pnpm data:refresh --check` が全宣言outputのcandidateをstageする、**THEN** cleanup前にcanonical/candidateの`exists`・SHA-256・byte lengthと`unchanged` / `changed` / `added` / `removed` / `missing` statusをoutputごとにsafe `outputDiffs`へ記録し、file contentsを含めずcanonical filesを変更しない。preflightで比較されなかったoutputは`not-evaluated`とする。テストで各statusとcanonical immutabilityを確認する。実装・test・CLI検証とfresh reportでの受入確認が完了するまではG6達成としない。
+
+- **WHEN** CPI・CTI・賃金・人口のsource identityをregistryに記録する、**THEN** API `statsDataId` と配布 `statInfId` を別variantとして保持し、未照合の分類・単位・基準年・期間・revisionを確定値として扱わない。
+- **WHEN** refresh対象を確定する、**THEN** 現行画面・計算および必須data-quality検査から到達するsourceと全下流成果だけを対象とし、未使用GDPや動的proxyの任意検索可能表を含めない。人口をearnings parserなどから到達するruntime dependencyとして含める。
+- **WHEN** required sourceに `blockedReason` がある、adapterが未登録、mappingが曖昧、候補が複数、またはschema/分類/基準が変化している、**THEN** `--check` を含めsource取得より前にfail closedとし、canonical成果物を変更しない。現在earnings adapterは登録済みで、source契約を満たす場合にmapping済み6系列を処理する。人口sourceはsource/table/dimension/frequency/unit/baseline identityとschemaを固定する。prior SHA-256とverified observationsはbaseline証拠として保持し、hash一致だけを受入根拠にせず、変更hashや値も無条件受理しない。identity/schema不一致、series mixing、coverage後退はfail closedとする。
+- **WHEN** CPI adapterを単独実行できる条件が成立する、**THEN** 78系列の2025基準分類、API filter、unit、月次coverage、paging/件数、canonical CSV metadata hash、履歴overlapとrevisionを検査し、5成果物をallowlistどおりstagingへ出力する。
+- **WHEN** CTI adapterを単独実行できる条件が成立する、**THEN** file IDsと各表分類・期間・派生lineageを検査し、raw/normalized、snapshot/map、canonical monthly/distribution-adjusted、Plan39 A/B/L、quarterly、pinned 2004 inputs等の31成果物を契約どおりstagingへ出力する。pinned non-e-Stat bytesを取得・改変しない。
+- **WHEN** earnings sourceをparseして6系列を生成する、**THEN** 21列Windows-31J、`種別=指数`、TL/T/0を検査し、36件の `CY` 年次行と439件の月次行を正しく扱う。`CY` の年キーを `YYYYMM` として拒否せず、公式の年/半期/四半期値を月次平均から再計算して置き換えない。1990-01〜2026-06のcanonical 438か月値照合はその重複期間内での移行証拠として保持し、重複外期間や過去の分類コード遷移をまたぐ意味的同等性の証明には使わない。source全体coverageと6 mapped fieldsの開始時期は同一視せず、最新G1 check-onlyで選択行identity、coverage、mapped valuesと最新月をadapter validationで確認し、8 quality suites successを得た。employment indexへの移行後も旧パート比率438値を `part_time_worker_ratio.csv` に保つ。mapping/coverage/value検査に失敗したら6系列とmetadata 2件をpublishせず、他adapterのpartial resultsもpublishしない。人口workbookのidentity/schema不一致またはcoverage後退ならadapterが停止しcanonical成果物を保持する。identityを保つ公式revisionはprior verified observationsとの差分auditを作り、追加月と合わせて全履歴へ反映する。
+- **WHEN** adapter outputsが揃いstaged runtime quality validationを開始する、**THEN** runtime project/dependency/pinned input inventoryをhash検証し、canonical runtime data fallbackをdenyした隔離rootで所定のdata-quality suitesを全実行する。suite未実行・失敗・coverage不一致を品質合格と扱わない。
+- **WHEN** API sourceを取得する、**THEN** paginationを最終ページまで処理し、HTTP/API業務status、応答形式、件数・継続性を検査する。file sourceではHTTPS配布を検査し、API用app IDを一律要求しない。
+- **WHEN** `--check` を実行する、**THEN** source取得・normalize・派生生成・staging検証と差分reportを行うがcanonicalファイルをpublishしない。未完了journalがあればcanonical recoveryを行わず `recovery-required` で停止する。 Check/publish `outputsChanged`はlegacy listとして全staged pathsを列挙し、変更判定は`outputDiffs`を使う。no-opでは`outputsChanged=[]`、46 output diffsはunchanged。
+- **WHEN** 人口adapterが履歴revisionを比較する、**THEN** 既存canonical CSVの値をprior baselineとして優先し、metadataの `verifiedObservations` はCSVにない月だけを補う。受理した改訂後のCSVが次回比較でstale metadataより優先される。
+- **WHEN** 人口source fetchが完了するがXLSXがregistry outputに含まれない、**THEN** metadataの `file` / `sha256` / `fileSizeBytes` は保持local workbookとの対応を保ち、今回取得rawのSHA-256/size/media type/timeを `lastFetchedSource` とrun reportに記録してXLSXを更新済みと主張しない。
+- **WHEN** 人口adapterがfetch前に保持中のXLSXを確認する、**THEN** metadataのpath/size/SHA-256と実fileが一致しない場合はsource取得前に停止する。
+- **WHEN** 人口workbookのhashが前回と同じ、**THEN** hash一致だけで受理せず、registry identity・workbook schema・連続coverageを検査する。
+- **WHEN** 人口workbookが同じstatInfId/table/dimension/frequency/unit/baseline identityを保ち、公式revisionで既知月の値が変わる、**THEN** prior hashとverified observationsをbaseline証拠として残し、差分をrevision auditに記録して全履歴を生成する。
+- **WHEN** 人口workbookが既存identityのまま連続した新しい月を追加する、**THEN** coverageを拡張してconverter互換成果物を生成する。既存末尾よりcoverageが後退する、または月が欠ける場合は停止する。
+- **WHEN** 人口workbookでtable/dimension/frequency/unit/baseline identityが変わる、**THEN** 新hashや値にかかわらずfail closedとしcanonical成果物を保持する。
+- **WHEN** sourceや派生の処理中に失敗する、**THEN** publish前は既存canonical一式を保持し、publish中の失敗はjournalとbackupからrollbackまたはrecovery-requiredとして停止する。 SIGKILL recovery testでは子プロセスを最初のdurable rename後に停止し、隔離temp root上の通常`runRefresh`を起動する。stub adapterは最初のadapter実行時に全canonical bytesがoriginal contentsへ復元済みであることをassertし、新しいstaged outputsを返す。testはpublish完了とjournal/backups cleanupを確認する。このfixtureは電源断/OS crash試験ではない。
+- **WHEN** 複数canonical fileのpublishを開始する、**THEN** exclusive CLI lockを保持し、Next.js等のreaderが停止している開発運用条件を適用する。lockだけでreader停止を保証したとみなさない。
+- **WHEN** source内容に意味的差分がなく取得時刻だけが変わる、**THEN** semantic fingerprintでunchanged/no-opとし、追跡canonical raw・metadataを更新しない。今回取得raw hashとvolatile実行証跡はgitignore対象reportへ記録する。
+- **WHEN** report、log、metadata、manifest、raw artifactを生成する、**THEN** API key、認証付きURL、秘密を含み得るresponse bodyを出力しない。エラーは安全な分類・statusに限定する。
+- **WHEN** staged runtime quality suiteの起動に失敗し、Vitest JSON reportが生成されない、**THEN** refresh reportは固定status・byte/count boundsとallowlistに従い、安全なcategory/operation/targetなどの短いdiagnosticだけを記録する。raw stdout/stderr、response body、stack、任意のfailure messageは保存しない。過去runでは`target=canonical-project, operation=readFileSync`を記録してassertion前に停止したが、最新G1 reportではstatus=validatedで8 quality suitesすべて成功した。
+- **WHEN** staged runtime quality suiteがVitest assertion failuresを返す、**THEN** refresh reportは固定allowlistのfile/titleを件数・byte上限内（title sample最大12件）で記録し、failure messageやstackを含めない。sample上限を超えた未掲載failureも合格扱いにせずG1を失敗とする。最新G1では8 suitesがsuccessとなった。Plan49の要件別KP達成度は最終KP1〜KP8監査で確認する。
+- **WHEN** staged runtime cloneでhousehold compositionを読む、**THEN** production manifest closureに属する正確な15ファイルをhash pinしてruntime inputsとして複製し、output artifactsに追加せず、canonical fallbackなしで必要データを読む。focused suite 12 files/297 passed/4 skipped (301 total)に含まれるclosure/tamper testで確認した。
+- **WHEN** 公式file downloadがHTTP errorで失敗する、**THEN** structured refresh reportはHTTP status、1始まりのattempt、maxAttempts、retryable、retriesExhaustedだけを安全なfile failure diagnosticsとして記録し、URL/query、headers、response body、secret値を含めない。既存の `file-http-error` codeとsafe messageを維持する。
+- **WHEN** データrefreshを運用する、**THEN** 開発者が明示実行するローカルCLIのみとし、自動schedule、アプリ内fetch、Git commit/pushを行わない。refresh後のcommit/push判断は通常の開発者手順に委ねる。
+- **WHEN** 旧 `scripts/run_all_conversions.sh` が起動され、6つのrequired dist executableのいずれかが存在しない・実行不可、またはいずれかが失敗する、**THEN** 成功を表示せず非ゼロ終了を返す。全required adapterと検証ゲートが完了するまではこのbundled入口を新CLIで置換しない。上記の個別converter、CTI pure parser/builders、Plan39 `--quarterly-only`、固定列earnings updater、およびobsolete Python build pathsは、consumer移行を確認するまで互換・手動経路として識別し、削除済み・廃止済みと主張しない。
+- **WHEN** e-Stat由来の変更が検証済みcanonical成果へ反映される、**THEN** 影響する全下流系列・metadata・manifest・snapshotを依存順に再生成し、未使用または由来未確定のsourceを推測で混合しない。
+- **WHEN** SharedPlan 52の実装を完了扱いにする、**THEN** CPI/CTI/賃金/人口のrequired mapping/provenance、fixture・source検証、staged runtime quality suites、必要なlint/type-check/test/build gate、運用境界、canonical publish/no-op/recoveryとKP1〜KP8の照合証拠を確認する。G1 report `.data-refresh/2026-10-16T17-32-16.322Z-f64fb8ac-c230-453c-9cf0-ab495fe0da6d.json`は4 source、8 suites、46 staged outputs、32 pinned inputs、49 project filesを記録。G6 check `.data-refresh/2026-10-16T18-23-09.209Z-40c10784-107a-495d-819e-3403d48cfd0a.json`、publish `.data-refresh/2026-10-16T18-24-04.865Z-6543eb6a-c82a-4f77-8b47-29d8a2c5bbd3.json`、no-op `.data-refresh/2026-10-16T18-43-06.992Z-42ac1d88-ec2c-419b-be9f-c2baa2505534.json`はcheck/publish/no-opを記録する。no-opでは46 output diffsがunchanged、`outputsChanged=[]`。check→publishで変わったCTI A/B JSON bytesは`retrievedAt`由来で、semantic fingerprint/source bytes/auditは一致。focused suiteは12 files/297 passed/4 skipped、lint、type-check、API proxy suite 1 file/15 passed、buildは成功。recoveryはdurable rename後SIGKILLの子プロセスfixtureで検証し、電源断/OS crashは試験していない。広域`pnpm test -- ...`の修正前failureは履歴として区別し、`test:all`をPlan52の恒常gateとしない。
 
 ## Architecture
 
@@ -3221,6 +4401,8 @@ These regression requirements do not add requirements for a new `popstate` liste
 
 ## 期間統一方針（Plan39同期）
 
+<a id="current-annual-public-layer-details"></a>
+
 ## Plan39-v2 公開層
 
 ### Data Sources
@@ -3444,188 +4626,15 @@ household-size estimate. Recompute and review the gate whenever inputs change.
 
 ### Requirements
 
-- **WHEN** the v2 public registry is created, **THEN** it contains
-  `CTIミクロ調整系列（その他の消費支出）`, while the v1 registry retains
-  `CTIミクロ調整系列（残差）` and its category/display array is unchanged.
-- **WHEN** v2 Other is derived, **THEN** the derivation is bottom-up from total
-  minus the major categories and is published as Other, never as v1 residual.
-- **WHEN** the nominal estimate is calculated, **THEN** it selects nominal
-  columns from B and A, excludes their real columns, and does not require the
-  real-only L artifact or L-derived D household-composition correction.
-- **WHEN** the endpoint correction is calibrated or retrospectively compared,
-  **THEN** it uses the saved nominal B/A annual JSON artifact precision (one
-  decimal), records this in result diagnostics, and does not substitute the
-  higher-precision research-only raw-workbook backtest values.
-- **WHEN** the analysis-only 2017/2018 education stability diagnostic runs,
-  **THEN** it verifies and reads the raw basic/adjusted CTI annual XLSX cells
-  (2017 A row 10/B row 25; 2018 A row 11/B row 26; nominal J:T), records file
-  hashes and raw values, and does not derive a published Other ratio from the
-  T-column dash; **AND** if raw source identity, year row, header, or hash
-  fails, the diagnostic stops without emitting a new result.
-- **WHEN** the 2018 holdout is compared with the historical-lambda prediction,
-  **THEN** lambda is fit only to the 2005–2016 household-survey panel excluding
-  2011, the 2017 A/B ratio is only a level anchor, 2018 A/B is held out until
-  post-prediction comparison, and the 2018 ledger-format revision plus
-  setai-n special-weight definition are stated as limitations.
-- **WHEN** the separate two-year 2017/2018 anchor scenario is calculated,
-  **THEN** `log(Q2018,total/Q2017,total)` is the denominator, any small-denominator
-  estimate is retained with an instability flag, and the scenario is labeled
-  in-sample rather than validation.
-- **WHEN** the external real-only L benchmark is used by a separate audit,
-  **THEN** it remains diagnostic only and is not extrapolated or interpolated
-  for 2019 onward; it does not affect nominal estimate values or publication.
-- **WHEN** γ cases are compared, **THEN** they are recorded as non-blocking
-  sensitivity analysis and γ is not fixed as a production parameter.
-- **WHEN** G is evaluated, **THEN** it is recorded as an external audit
-  benchmark and is not used as a standalone public stop condition.
-- **WHEN** model calibration is performed, **THEN** calibration is fixed to
-  2018–2025, 2017 is a holdout/connection year, and residual diagnostics are
-  separate from public measurements.
-- **WHEN** `publicationGate.status === "pass" && accepted === true`, **THEN**
-  finite v2 estimates may be `estimated_adjusted` only when the accepted
-  analysis fingerprint matches the selected nominal B/A inputs; **WHEN** the
-  gate or fingerprint check fails, **THEN** estimated values are null/unavailable
-  with a reason and are not publicly emitted.
-- **WHEN** an official distribution-adjusted nominal A value from 2017 onward exists, **THEN** its value and
-  official status are retained regardless of the estimated publication gate.
-- **WHEN** chart, tooltip, table, or CSV renders v2 Other, **THEN** all surfaces
-  resolve the same v2 key, measurement, model/version, source, year, value,
-  status, and reason; v1 mapping is not reused.
-- **WHEN** the Plan39 annual table renders a measurement, **THEN** the cell
-  displays `推計`, `公式`, or `利用不可` from that measurement's
-  `seriesType`/provenance, without deriving the label from a hard-coded year.
-- **WHEN** Plan39 public data contains an official measurement, **THEN** the
-  chart/table context displays the first official year detected from the data
-  as the estimate-to-official boundary; **WHEN** no official measurement is
-  present, **THEN** it states that no official adjusted value is available.
-- **WHEN** the Plan39 CSV is offered for download, **THEN** the surrounding
-  UI states that per-series value-type metadata is included, and the CSV
-  retains the machine-readable `seriesType` columns for each series.
-- **WHEN** the former real-input v2 artifact is inspected, **THEN** its
-  coverage, γ cases, β_other, G coverage, boundary result, gate, and reason
-  codes remain historical audit evidence only; they do not validate nominal
-  estimates or establish a currently accepted nominal publication gate.
-- **WHEN** nominal v2 publication is evaluated, **THEN** nominal-input
-  backtests, Other/β stability, and the 2017 connection must be evaluated using
-  an input-matched analysis artifact before estimates can be published.
-  Historical real-input diagnostics do not satisfy these conditions.
-- **WHEN** the household-size candidate is calculated, **THEN** required years,
-  source IDs/URLs, raw hashes, normalized CSV hashes, and declared weight
-  vintage/status are verified before calculating; **WHEN** any provenance check
-  fails, **THEN** candidate coefficients and annual estimates are not emitted.
-- **WHEN** weights have unverified benchmark connections or the raw national 2011 weight is missing,
-  **THEN** a 2011 diagnostic row may be produced only from normalized 2010/2012 size shares by linear interpolation and renormalization; its manifest and rows identify it as derived, not observed, and the result remains `legacy_unharmonized_weights` and cannot satisfy the production publication gate. The 2010 and 2012 endpoint benchmark bases are not verified as connected, and the 2011 44-prefecture table is not a national substitute.
-- **WHEN** annual R is calculated for 2011, **THEN** the interpolated distribution is included, lambda fitting continues to exclude 2011, and annual-candidate output includes 2010/2012 endpoint alternatives and their candidate range.
-- **WHEN** the 2017 A/B ratio is used as an anchor, **THEN** its identity is not counted as fit or backtest evidence.
-- **WHEN** Plan39-v2 estimates are built, **THEN** the loader verifies the
-  dedicated `production-pi2plus` artifact and source hashes, applies endpoint
-  corrections only to 2005–2016, keeps 2017–2025 official A unchanged, derives
-  total as corrected categories' sum, and records coefficient/source
-  diagnostics; **AND** missing or invalid required sources make the estimate
-  unavailable and close the publication gate.
-- **WHEN** the 2018–2024 retrospective validation is reported, **THEN** it
-  identifies 2025 as the endpoint calibration year and labels the result
-  retrospective and non-causal, not independent forecast evidence.
-- **WHEN** historical IV-4 shares are applied, **THEN** their source/vintage is
-  identified as distinct from January `setai-n` and centered on their own 2017
-  value; 2011 is identified as synthetic interpolation and remains provisional.
+The current WHEN/THEN requirements are consolidated under [Requirements](#current-requirements), in the subsection [Plan39 research-only backtest requirements](#plan39-current-analysis-requirements).
 
 #### Research-only education-share 2+ backtest and production share source
 
-This supplemental diagnostic is separate from the Plan39 production estimator,
-loader, publication gate, quarterly values, and the prior 2017/2018 education
-stability artifact. It reads the retained raw official 2025-base CTI B/A
-workbooks and annual January `setai-n` special-tabulation files for 2017–2025.
-For each year, national size shares are each exact published size-bin count
-divided by the reported 1,000,000-part national denominator; `pi2plus` is
-`1 - pi1`. It preserves file URLs and SHA-256 hashes, reported year, sheet,
-denominator, raw values, and extraction row/cell evidence. The special files
-are each year's January tabulation, while the Household Survey design defines
-the correction distribution for a month using the preceding/trailing 12-month
-LFS distribution. January therefore serves only as an annual proxy, not a
-calendar-year average. The 2018 Household Survey redesign and LFS population
-benchmark changes to the 2015 Census base in January 2017 and 2020 Census base
-in January 2022 are comparability caveats.
-
-Calibration uses only 2017:
-`K = (pAedu_2017 / pBedu_2017) / pi2plus_2017`, where
-`pAedu=A_education/A_total` and `pBedu=B_education/B_total` come from exact raw
-CTI XLSX cells. The candidate is
-`pHat_Aedu_t = pBedu_t * pi2plus_t * K`; the anchor baseline is
-`pHat_Aedu_t = pBedu_t * (pAedu_2017/pBedu_2017)`. Validation excludes 2017
-and compares per-year residuals and aggregate MAE/RMSE/bias over 2018–2025.
-The reproducible script is `scripts/plan39/two-plus-share-backtest.mjs`;
-trace and results are stored under `data/source/cti-size-composition/two-plus-share-backtest/`
-and `results/plan39/two-plus-share-backtest/`.
-
-- **WHEN** the 2+ share backtest runs, **THEN** it reads unrounded annual CTI
-  education/total values from the retained raw official A/B workbooks and
-  validates each annual January `setai-n` file's year, national rows, and
-  reported denominator before extracting 1/2/3/4/5+ shares; **AND** if a
-  validation-year source check fails, that year is omitted and the failure is
-  recorded in coverage; a missing/invalid 2017 calibration input stops without
-  a new backtest result.
-- **WHEN** the model is calibrated, **THEN** only 2017 determines `K`, and
-  2017 is excluded from validation; the 2018–2025 results report each model's
-  annual prediction/residual, `n`/coverage, MAE, RMSE, and bias against official
-  adjusted A education share.
-- **WHEN** the January LFS special shares are interpreted, **THEN** the result
-  states that they proxy one January distribution rather than a calendar-year
-  average of the preceding/trailing 12-month correction distribution, and
-  records the 2018 Household Survey redesign and the January 2017/January 2022
-  LFS benchmark changes.
-- **WHEN** Plan39 production estimators run, **THEN** they do not consume this
-  backtest's education formula, K, predictions, validation rows, or summary;
-  they consume only the separately generated, manifest-validated
-  `production-pi2plus.json`, whose January source shares are independently
-  hash-checked and used in the endpoint-residual correction specified above.
-- **WHEN** loaders, publication gates, quarterly values, or the previous
-  2017/2018 stability analysis run, **THEN** the research backtest's calculated
-  predictions and results do not affect their formulas or acceptance state.
+The scenario contract is consolidated in [the current Requirements block](#current-requirements).
 
 #### Research-only 2017-anchor-only category-share backtest
 
-This supplemental diagnostic reads exact raw cells from the retained 2025-base
-CTI basic B (`000040499069`) and adjusted A (`000040499087`) workbooks, sheet
-`総・年`, for 2017–2025. It maps the nine published nominal categories by exact
-header and includes Other as a tenth category: use the workbook's numeric Other
-cell when present, and derive total minus the nine published categories when
-the cell is `-`. The source status and exact cell coordinates are retained per
-series/year. Numeric Other values occur from 2020 onward; the 2020 switch from
-residual to official values is a comparability caveat, with the maximum
-official-minus-residual difference reported for each workbook.
-
-For each category, `pB[t,c]=B[t,c]/B[t,total]`,
-`pA[t,c]=A[t,c]/A[t,total]`, and the only calibration is
-`q[c]=pA[2017,c]/pB[2017,c]`. The requested raw prediction is
-`pHatRaw[t,c]=pB[t,c]*q[c]`. A separate coherent variant is
-`pHatNorm[t,c]=pHatRaw[t,c]/sum_j(pHatRaw[t,j])`; it is reported distinctly and
-does not replace the raw formula. Validation uses only 2018–2025. Per-category
-MAE, RMSE, and bias are reported in percentage points, along with unweighted
-macro metrics, annual actual/predicted/errors, and annual sums of raw predicted
-shares. The script is `scripts/plan39/anchor-only-category-backtest.mjs`; its
-summary and annual rows are saved under
-`results/plan39/anchor-only-category-backtest/`.
-
-`raw B/A CTI cells` → exact header/year validation → ten annual category shares
-→ 2017 category anchors → raw predictions and separately normalized variant
-→ 2018–2025 category/overall metrics and source-traced result files.
-
-- **WHEN** the category-share backtest runs, **THEN** it extracts exact raw
-  annual nominal values from the retained B/A XLSX files, records workbook
-  hashes and cell evidence, derives `q[c]` only from 2017, and reports both the
-  requested unnormalized formula and the separately labeled normalized
-  variant over 2018–2025; **AND** if a year, required category header/value,
-  total, or anchor cannot be identified unambiguously, it fails closed for the
-  affected input instead of silently substituting another category.
-- **WHEN** category metrics are emitted, **THEN** they include per-category
-  MAE/RMSE/bias in percentage points, overall macro metrics, per-year
-  predicted/actual/error values, and each year's raw predicted category-share
-  sum; Other's per-year source status and direct-versus-residual maximum
-  difference are included so the 2020 source-method boundary is auditable.
-- **WHEN** Plan39 production estimators, loaders, publication gates, or
-  quarterly values run, **THEN** this backtest's files and values are not
-  consumed and do not alter production formulas.
+The scenario contract is consolidated in [the current Requirements block](#current-requirements).
 
 ### Data Flow
 
@@ -3633,13 +4642,7 @@ production/base calibration は 2018–2025 とし、target/holdout 2017 は cal
 
 ### Requirements
 
-- production/base calibration は 2018–2025 でなければならない。
-- sensitivity の calibration は baseline 2018–2025 と alternative 2018–2024 に分け、target/holdout 2017 をいずれの calibration にも含めてはならない。
-- sensitivity の比較は baseline 2018–2025 と alternative 2018–2024 を、target/holdout 2017・同一 L ルールで行わなければならない。
-- L は `official_annual` のみを使用し、`calendar_year_average` を採用してはならない。
-- audit には期間、対象年、除外年、入力 coverage、leakage 判定を保存し、不足時は `insufficient-data` として fail-closed にしなければならない。
-- 上記のthreshold、backtest、Other/β安定性、2017接続監査のpass記録と `1.4` のthresholdは旧real入力に対する歴史的監査記録であり、現行nominal推計の合格根拠にしない。
-- 現行nominal推計の受入には、名目B/Aを入力として再生成しruntime artifact fingerprintと一致する監査結果が必要である。監査未実施時は2005–2016推計を公開しない。
+The current WHEN/THEN requirements are consolidated under [Requirements](#current-requirements), in the subsection [Plan39 period-unified audit requirements](#plan39-current-period-requirements).
 
 ### WHEN-THEN
 
@@ -3734,43 +4737,7 @@ JEVは既存テスト・型チェック・lintその他の検証の代替とは�
 
 ### Requirements
 
-- **WHEN** 実装チェックポイントに到達する、**THEN**
-  `skills/jev-review/SKILL.md` を明示的に読み込み、同スキルの汎用クライアントで
-  JEV レビューを依頼する。
-- **WHEN** `TYPESAFE_API_KEY` がプロセス環境にない、**THEN** `.env.local` の
-  `TYPESAFE_API_KEY` を認証専用の既定値として読み込み、キーが得られなければ
-  リクエストを送信せず fail-closed にする。
-- **WHEN** JEV へレビューを送信する、**THEN** 今回のユーザー明示依頼で承認済みの
-  計画、レビュー文脈、差分要約、受入条件、検証結果など認証情報以外のデータだけを
-  送信し、API キーその他の認証情報は本文に含めない。この承認は今回の明示依頼の
-  範囲に限る。
-- **WHEN** JEV の結果を受け取る、**THEN** 妥当性、修正点、未確定点を記録し、修正点が
-  あれば対応して必要に応じて再レビューする。未確認のレスポンス enum を前提にしない。
-- **WHEN** 新標準フローで実装チェックポイントレビューを始める、**THEN** 実コード・要件・テスト・
-  検証証拠に基づく相互排他的なcase-specific候補を2件以上用意し、
-  `--clarification-candidates PATH` で初回 `--request` と同時に渡す。候補JSONの各要素は
-  `id`、`label`、`finding`、`affected`、`evidence` または正確な `neededEvidence` の一方、
-  `nextAction` または `proposedFix` の一方、`remainingUncertainty` を持つ。JEVは選択、confidence、
-  probabilitiesのみを返し、候補不足は送信前にローカル検証で拒否する。
-- **WHEN** 有効な新標準初回応答が `valid_as_defined` を選択する、**THEN** 合格として扱い、自動更問を送らない。
-- **WHEN** 有効な新標準初回応答が `valid_as_defined` 以外を選択する、**THEN** 一度だけ候補選択の
-  clarificationを送る。CodexはJEVの候補選択を先取りせず、ユーザーにも選択を求めない。
-- **WHEN** clarification が候補リスト内の有効な選択を返す、**THEN** 選択IDをローカル候補へ対応づけ、
-  `resolution=selected`、`diagnosisSource=provided_candidate`、`diagnosisStatus=complete` とする。
-  候補詳細はCodexが提示した内容として扱い、JEV生成理由と表示しない。初回 `decisionSummary` と
-  確率分布を保持し、`effectiveVerdict=requires_revalidation` として初回不合格を合格へ変更しない。
-- **WHEN** 初回応答が失敗・無効・未対応または回答が欠落・曖昧・不一致である、**THEN** 自動更問を
-  送らず初回のエラー/未確定動作を維持する。clarificationが失敗・無効または選択肢外IDである場合は
-  未解決として記録し、更問を連鎖させない。追加証拠または修正後に通常の初回JEV再判定を行う。
-- **WHEN** `--clarify ... --choice` または `--follow-up` を互換用途として実行する、**THEN** それらの
-  既存モードと検証動作を保持し、新標準候補フローには混ぜない。
-- **WHEN** 初回または候補付き clarification を JEV へ送信する、**THEN** 初回応答、候補、質問および
-  回答を含む今回のレビュー文脈は送信承認済みとして扱い、
-  API キーその他の認証情報は本文・ログ・結果記録へ含めない。
-- **WHEN** API が失敗する、応答が得られない、または HTTP 成功だけが確認できる、
-  **THEN** 妥当とは判定せず、レビュー未確定または失敗として記録する。
-- **WHEN** JEV レビューを行う、**THEN** その判定を既存テスト・型チェック・lint の代替にせず、
-  アプリケーション runtime のデータソースやコンポーネントとして組み込まない。
+The current WHEN/THEN requirements are consolidated under [Requirements](#current-requirements), in the subsection [Plan40 evidence and checkpoint requirements](#plan40-evidence-requirements).
 
 ## Plan38 historical/legacy contract and Plan40 replacement contract
 
@@ -3792,6 +4759,8 @@ in this document describe the retired implementation only.
   active chart sections, table, tooltip, and CSV surfaces remain, the dedicated
   Plan39 annual section is hidden, and the legacy annual component API remains
   available to its unit/legacy contract tests.
+
+<a id="current-quarterly-nominal-cti-contract"></a>
 
 ## SharedPlan 40: CTI adjusted quarterly nominal graph (current integrated contract)
 
@@ -3935,7 +4904,7 @@ data table、CSV の契約境界を検証する。Recharts の実ブラウザ描
 `existing nominal series registry` → `CpiChart` / nominal graph →
 shared tooltip・data table・CSV projection。
 
-Plan40 の年次アンカー入力は `validateCtiAdjustedV2Plan40Inputs` で、2005–2017 の対象年、
+年次アンカー入力は `validateAnnualAnchorInputs` で、2005–2017 の対象年、
 10入力カテゴリ、有限かつ正の名目値、nominal B/A の source/artifact metadata、`adoptedRange` が
 Plan40対象年と実データ行および `rawRange` に整合することを先に検証する。
 検証失敗は既存の `unavailable` / reason 経路へ渡し、四半期表示層で別系列、0補完、補間を
@@ -3952,159 +4921,7 @@ snapshotから生成する。evidence recordにはcanonical schema識別子とsn
 
 ### Requirements
 
-- **WHEN** the production nominal stacked chart renders real data rows, **THEN**
-  its DOM contract contains all ten `CTIミクロ調整系列（費目）` public expense
-  keys with finite numeric values, `status=available`, and series type `official_adjusted` or
-  `estimated_adjusted`, and the sum of those categories for every row is within
-  the inclusive range 50–150. The Browser Mode command returns every hidden
-  contract row; after validating that every row has a `YYYYQn` DOM `data-period`,
-  the test targets rows whose period is 2005Q1 or later, beginning at 2005Q1 and
-  continuing through the last contract period. Period alone selects target rows;
-  the 2005–2016 Plan39 estimated stack is included, and missing metadata,
-  null/non-finite values, or unavailable status are failures. Only the
-  legacy/support-only 1994–2004 rows are outside this check. The test verifies
-  uniqueness and quarterly continuity and confirms each category's Recharts bar
-  and at least one visible rectangle are rendered.
-- **WHEN** 2005–2016の既存名目歴史推計の対象月が一意で有限である、
-  **THEN** 既存の名目B/A接続推計と名目月次profileの式・値を維持する。
-- **WHEN** SharedPlan40の年次・月次・四半期値を生成する、**THEN** Plan39世帯人数構成候補や
-  legacy unharmonized weight（2011年linear-share interpolationを含む）、2017/2018教育安定性診断のsetai-n特別集計weight、
-  または2018様式改正年の世帯人数プロフィールを適用して既存推計、季節profile、四半期値を補正または再スケールしない。
-- **WHEN** 2005–2016歴史推計の対象月が欠損、重複、非有限、または3か月未満である、**THEN**
-  その四半期の全10カテゴリを一括して `value=null`、`status=unavailable`、非空の
-  機械可読 `reason` とし、不完全なstackを表示せず、補間、0補完、重複マージ、
-  別系列フォールバックを行わない。
-- **WHEN** 年次meanに使う2005–2016の対象年の月次入力に1件でも重複月がある、
-  **THEN** その対象年の全Plan40四半期行・全10カテゴリを同じ
-  `duplicate_month`、`value=null`、`status=unavailable` とし、重複が存在しない別四半期を
-  正常値として公開しない。この判定は公式四半期source（2017Q1以降）には適用しない。
-- **WHEN** `cti-distribution-adjusted-000040499087.xlsx` の `総・四(原)` に2017Q1以降の完全な
-  名目四半期値がある、**THEN** 主要9費目の公式原数値を使い、Otherを公式総合−主要9費目の
-  derived residualとして計算する。月次平均、年次Aアンカー、または別CTI入力で再計算・置換しない。
-- **WHEN** 公式四半期sourceの対象期、費目系列または名目原数値が欠落・重複・非有限である、
-  **THEN** 2005–2016年推計を保持し、2017Q1に `official_quarterly_source_unavailable_latest_period_unknown`
-  reasonの `unavailable` / `value=null` markerを公開する。グラフ注記、tooltip、表、CSVへreasonを伝播し、
-  2017Q1以降の値がなく最新対象期も不明であることを示す。月次profileや推計値へfallbackしない。
-- **WHEN** 公式四半期normalized CSV、sidecar metadata、manifest entryまたはsource/artifact hash pairが
-  欠落・不一致である、**THEN** 2005–2016の歴史推計は保持し、2017Q1に
-  `value=null`、`status=unavailable`、reason `official_quarterly_source_unavailable_latest_period_unknown`
-  のmarkerを公開する。UIは2017Q1以降の公式値がunavailableで最新対象期が不明と伝え、
-  月次値、推計値、legacy CTIへfallbackしない。
-- **WHEN** 2005–2016の年次契約が有効で対象月だけが不備である、**THEN** 月次 failure matrix の
-  `insufficient_months` または `duplicate_month` などを reason とし、年次アンカー不備の
-  reason に置き換えない。**WHEN** Plan40 の入力契約自体が不備である、**THEN** 別ケースとして
-  全10カテゴリを同一の機械可読年次契約 reason、`value=null`、`status=unavailable` とする。
-- **WHEN** nominal B/A、費目別β、またはOtherの年次anchorが欠損・重複・不正である、
-  **THEN** その対象四半期の全10カテゴリを一括fail-closedにし、不完全なstackを表示しない。
-- **WHEN** 2005Q1–2016Q4を表示する、**THEN** 月次から派生した名目推計であることを
-  `quarterlyDerived=true`、`annualAnchorType=estimated`、metadata、noteに示す。
-- **WHEN** 2017Q1以降の完全な公式四半期値を表示する、**THEN** `frequency=quarterly`,
-  `aggregation=official_quarterly_original_value`, `official=true`, `annualAnchorType=official`,
-  `quarterlyDerived=false`、専用の `kind=plan40-official-quarterly` を9費目の公式観測に記録する。
-  Other residualは同じrow kindを使うが、`derived_quarterly_residual_from_official_nominal_total_minus_nine_categories`、
-  `seriesType=estimated_adjusted`、`official=false`、`quarterlyDerived=true` とし、10費目の合計を公式総合に一致させる。
-- **WHEN** Plan39-v2 の名目歴史推計を計算する、**THEN** B/Aの名目列を使い、実質列、
-  実質のみのL、およびL由来Dを推計入力にせず、既存の名目B/A接続による2005–2016推計と
-  Other専用導出を維持する。2017年Aアンカーは歴史推計の接続に使い、公式四半期値の代替にしない。
-- **WHEN** 2005–2016の名目推計を作る、**THEN** 実質Lから導く長期世帯構成補正を
-  適用せず、名目Bを名目A/Bの2017重複年で接続する。
-- **WHEN** 名目グラフを描画する、**THEN** 2005–2016は既存の推計10カテゴリ、2017Q1以降は
-  `総・四(原)` の9公式名目四半期原数値と総合−主要9費目のOther residualを積み上げる。
-- **WHEN** 名目グラフを描画する、**THEN** Plan39専用年次セクションを表示せず、
-  既存名目グラフの共通凡例とregistryへ統合する。
-- **WHEN** 2016Q4から2017Q1へ遷移する、**THEN** 既存歴史推計から公式調整済み四半期原数値への
-  入力切替を注記で明示する。
-- **WHEN** chart、tooltip、data table、CSVの同一行を出力する、**THEN**
-  measurement metadata（source、unit、frequency、aggregation、status、reason、
-  `seriesType`、`official`、`annualAnchorType`、`quarterlyDerived`、note）と数値が
-  一致し、推計／公式の状態も全て同じである。
-- **WHEN** 推計値、公式値、または unavailable 値を表示する、**THEN** 注記、tooltip、
-  表、CSVで同一の状態を示し、unavailable の数値セルは空欄とする。
-- **WHEN** 2005–2016の月次検証またはbottom-up必須入力/anchor検証が失敗する、**THEN**
-  対象四半期の全10カテゴリを一括fail-closedにし、不完全なstackを表示せず、公式Aや
-  別期間の既存CTIを推計値へ置換しない。
-- **WHEN** Plan40 の nominal B/A 入力に 2005–2017 の対象年、10入力カテゴリ、source/artifact
-  metadata のいずれかが欠落する、または値が非有限・非正値である、**THEN**
-  年次アンカー契約を invalid とし、四半期計算層は対象期間の全10カテゴリを
-  `value=null`、`status=unavailable`、非空の reason 付きで扱う。欠損年を別系列、0、補間で
-  埋めない。失敗measurementも正常measurementと同じ `model=v2-bottom-up`、
-  `estimateVersion=plan39-v2`、source、unit、frequency、aggregation、
-  `annualAnchorType`、`quarterlyDerived` を保持する。
-- **WHEN** Plan40 の `baseYear`、`adoptedRange`、または A の2025 anchor のいずれかが不備である、
-  **THEN** 対象四半期の全10カテゴリを同一の年次契約 reason で
-  `value=null`、`status=unavailable` とし、カテゴリごとに正常値や別の failure reason を混在させない。
-- **WHEN** Plan39 の既存 artifact/runtime publication gate を評価する、**THEN** `contract: "plan39"`
-  の通常検証と publication gate を維持し、Plan40 の厳格な対象年検証を Plan39 の正常契約へ
-  適用しない。
-- **WHEN** Plan40 の必須 rolling/LOO evidence を生成する、**THEN** Plan40 input validation を通過した
-  同一の nominal B/A input snapshotから計算し、canonical evidence schemaとsnapshotのinput fingerprintを
-  evidenceへ記録して既存の共有publication gateに渡す。別snapshot、旧real/Plan39 evidence、または
-  fingerprint不一致のevidenceを代用しない。
-- **WHEN** Plan40 rolling/LOO evidenceが欠落・不正・canonical schema不一致・input fingerprint不一致である、
-  または別の必須Plan40 input、anchor、月次検証に失敗がある、**THEN** 共有publication gateを通過扱いにせず、
-  対象値を既存の fail-closed `unavailable` / `value=null` 契約で扱う。
-- **WHEN** Plan40 の全必須入力、anchor、月次検証およびrolling/LOO evidenceが有効で、共有publication gateが
-  `accepted=true` を返す、**THEN** 2005–2016の歴史的費目値を `estimated_adjusted` として公開可能にし、
-  公開範囲内の他の有効なPlan40費目値も欠損扱いにしない。
-- **WHEN** nominal B/A の `adoptedRange` が Plan40対象年を包含しない、実データ行を包含しない、
-  または `rawRange` の外側にある、**THEN** 同じ fail-closed reason体系で年次アンカー契約を
-  invalid とし、対象measurementを `value=null`、`status=unavailable` とする。
-- **WHEN** 実質のみのLの実データ行が欠損する、**THEN** 名目推計値と公式名目A年を
-  unavailable にせず、Lの状態を名目計算から独立した監査情報として扱う。
-- **WHEN** nominal A の metadata が `baseYear=2025` を宣言し、2025年の公式名目A総合アンカーが
-  有限かつ正である、**THEN** Plan40 は 2025年基準化契約を満たすものとして扱い、
-  四半期値を2025年四半期平均で再正規化しない。**WHEN** この不変条件を検証できない、
-  **THEN** 契約は fail-closed となり、理由 `A:base_year_not_2025` または
-  `A:missing_or_non_positive_2025_anchor` を返す。
-- **WHEN** 2005–2016の年次アンカー検証に成功する、**THEN** 名目B/A接続推計から得る
-  四半期値を `estimated_adjusted`／`annualAnchorType=estimated`／`quarterlyDerived=true` とする。
-- **WHEN** 2017Q1以降の公式四半期原数値を公開する、**THEN** Excel sheet `総・四(原)` の
-  9費目名目列をそのまま使用し、`official_adjusted`／`official=true`／`quarterlyDerived=false` とする。
-  Otherは公式総合−主要9費目から計算し、`derived_quarterly_residual_from_official_nominal_total_minus_nine_categories`／
-  `estimated_adjusted`／`official=false`／`quarterlyDerived=true` とする。年次Aアンカー、Tの月次平均、
-  またはその他の系列から公式四半期値を再計算しない。
-- **WHEN** 実 runtime の月次検証または Plan40 年次入力契約が失敗する、**THEN** 対象四半期の
-  10費目すべてを同じ reason の `value=null`、`status=unavailable` とし、正常経路と同じ
-  measurement 契約（source、unit、frequency、aggregation、seriesType、official、
-  annualAnchorType、quarterlyDerived、model、estimateVersion、note）を保持する。
-- **WHEN** unavailable measurement が公開 projection に渡される、**THEN** chart、tooltip、
-  table、CSV は同じ registry/measurement の値と metadata を参照し、表示側で値や metadataを
-  再計算しない。Plan40 の `baseYear`、`rawRange`、`adoptedRange` は対象年と整合する provenance
-  として追跡可能である。
-- **WHEN** 欠損、重複、非有限値、3か月未満、または anchor 不備を runtime 入力へ与える、
-  **THEN** それぞれを fail-closed failure matrix として固定し、別系列、0補完、補間を行わない。
-- **WHEN** Plan40 の `2017Q4` v2 行を公開する、**THEN** 10費目すべてを既存の名目四半期
-  グラフへ同じ measurement 契約で渡し、専用年次セクションへ分岐しない。
-- **WHEN** 公開期間が `2017Q1` に進む、**THEN** v2歴史推計から公式四半期Excel経路へ
-  切り替え、公式sheetの名目原数値を使う。
-- **WHEN** `projectQuarterlyPublicView()` が `legacy-cti` 行を受け取る、**THEN**
-  年に関係なく既存22キーだけを投影し、v2 10キーを出力しない。
-- **WHEN** `projectQuarterlyPublicView()` が `plan40-v2-cost-stack` 行を受け取る、
-  **THEN** 年を推測せず、既存名目キーとregistry由来v2 10キーを投影する。
-- **WHEN** `projectQuarterlyPublicView()` が `quarter` が1〜4の整数ではない行、または
-  `label` が `${row.年}Q${row.quarter}` と一致しない行を受け取る、**THEN** その行を公開projection
-  の結果から除外し、他の有効な四半期行は返す。正規データ生成と有効行の投影結果は変更しない。
-- **WHEN** 2016Q4から2017Q1へ行を差し替える、**THEN** aggregationは歴史推計側へ
-  `plan40-v2-cost-stack`、公式データ側へ専用の公式quarterly source kindを設定し、projectionは
-  年だけから入力経路を再推定しない。
-- **WHEN** 2017Q1以降の公式四半期measurementを公開する、**THEN** 9公式費目は `official=true`、
-  `quarterlyDerived=false` とし、Other residualは `official=false`、`quarterlyDerived=true` とする。
-  両者で元のsource mappingとderived formulaをmeasurement provenanceに保持する。
-- **WHEN** Plan40 の同一行を chart、tooltip、data table、CSV に投影する、**THEN**
-  数値と全 measurement metadata の状態を同一 registry から参照し、全 surface で parity を保つ。
-- **WHEN** 同一の Plan40 公式四半期fixtureを各 surface adapter へ渡す、
-  **THEN** registry の全10 v2カテゴリで key 集合、value、status、reason、source、unit、frequency、
-  aggregation、seriesType、official、quarterlyDerived、note、model（9公式費目のofficial metadataとOtherの
-  derived residual metadataの違いを含む）、
-  estimateVersion、baseYear、rawRange、adoptedRange が measurement 基準と一致し、table の状態・理由・注記、
-  tooltip payload/metadata、CSV の `key__status`、`key__reason`、
-  `key__quarterlyDerived` 等も同じ値を示す。Recharts の実 DOM 描画はこの adapter-contract parity の対象外とする。
-- **WHEN** 同じ fixture を unavailable にした場合、**THEN** 全10カテゴリを `value=null`、
-  `status=unavailable`、同一の非空 reason とし、全 surface の数値セル／CSV 数値セルを空欄にする。
-- **WHEN** legacy `2018Q1` fixture を同じ公開投影へ渡す、**THEN** v2 10キーとその metadata は
-  chart、table、CSV のいずれにも出力しない。
-- **WHEN** Plan40 の通常表示経路を描画する、**THEN** `CtiAdjustedSeriesSection` は
-  表示せず、Plan39 の年次 measurement 契約、loader、projection、旧契約テストは存続させる。
+The current WHEN/THEN requirements are consolidated under [Requirements](#current-requirements), in the subsection [Plan40 integrated quarterly CTI requirements](#plan40-quarterly-contract-requirements).
 
 ## SharedPlan 41: 正式調整済みCTIへの名目四半期接続
 
@@ -4182,50 +4999,7 @@ Plan39 H と費目対応の検証 → `2005–2016 s_i`／四半期推計 builde
 
 ### Requirements
 
-- **WHEN** nominal B/Aから作るH、選択済みnominal Tの2017年12か月、nominal Mの対象年12か月、および10費目の対応が検証済みである、
-  **THEN** 費目ごとに固定 `s_i` を一度だけ計算し、2005–2016の既存歴史推計へ適用する。
-- **WHEN** 2005–2016を四半期化する、**THEN** nominal Mの同年12か月平均を季節比分母に用い、年次平均は
-  `s_i H_i,y` と一致させる。Hはnominal B/A接続値で、real-only L由来の長期世帯構成補正を含まない。
-- Mの名目月次プロファイルは四半期内の形状に使い、Mを2017年の水準または季節性に使わない。
-- **WHEN** `s_i` を計算する、**THEN** `mean(T_i,2017) / H_i,2017` を使い、Hの2017値は
-  公式分布調整済み名目A/B接続アンカーである。この係数は2005–2016歴史推計の維持にのみ使う。
-- **WHEN** 2017Q1以降を表示する、**THEN** Excel `総・四(原)` の公式調整済み名目四半期原数値を
-  直接使い、T月次平均や `s_i` で再計算しない。
-- **WHEN** 歴史推計の10費目と公式四半期系列を構築する、**THEN** 2005–2016年HのOtherは既存
-  `result.other` 推計値、過去の接続計算で必要な2017年HのOtherは公式分布調整済み名目A総合−主要9費目、
-  T/M月次のOtherは各々の総合−主要9費目とする。2017Q1以降の公開Otherは公式四半期総合から
-  主要9費目を差し引いたderived residualとし、10費目の合計を公式総合に一致させる。
-  歴史推計の総合は10費目の合算とし、残差には丸めやゼロ下限を
-  適用せず恒等式を保つ。ただし負または非正の季節性入力は`invalid_seasonal_input`でfail-closedにし、
-  負のquarter outputを表示しない。独立した総合係数やseries 11を生成・使用しない。
-- **WHEN** 2005–2016の補正値を投影する、**THEN** 元source、先source、seasonal source、係数、基準年、単位、
-  世帯範囲、適用期間をprovenanceへ記録し、四半期measurementは `official=false` とする。
-- **WHEN** 2017Q1以降の公式measurementを投影する、**THEN** Excel filename, sheet, statInfId,
-  workbook relative path, period, nominal source column, original-value type, household scope, base year,
-  source/artifact hashes, and source-column-to-canonical mapping are recorded in measurement provenance.
-  The 9 official expenses have `official=true`, `annualAnchorType=official`, `quarterlyDerived=false`;
-  Other has aggregation `derived_quarterly_residual_from_official_nominal_total_minus_nine_categories`,
-  `seriesType=estimated_adjusted`, `official=false`, `quarterlyDerived=true`. The row kind is
-  `plan40-official-quarterly`.
-- **WHEN** official quarterly source CSV, sidecar, manifest entry, or source/artifact hash pair is missing or invalid,
-  **THEN** historical estimates for 2005–2016 remain intact and a 2017Q1 marker is emitted with
-  `value=null`, `status=unavailable`, and reason `official_quarterly_source_unavailable_latest_period_unknown`.
-  The chart, tooltip, table, and CSV explain that 2017Q1 onward is unavailable and the latest target period is unknown;
-  no monthly, estimated, or legacy fallback is allowed.
-- **WHEN** T/M/Hまたは公式四半期sheetのmetadata、費目対応、単位、基準年、頻度、期間の完全性、値の有限性・正値を
-  検証できない、**THEN** 対象費目または対象期間を `value=null`、`status=unavailable` とし、機械可読な
-  reasonを全projectionへ伝播する。0補完、補間、重複マージ、別loader選択、月次値や旧supportへのfallbackをしない。
-- **WHEN** 歴史推計用runtime Tの検証に失敗する、**THEN** 欠損月は `runtime_t_insufficient_months`、重複月は
-  `duplicate_month`、値の不正は `runtime_t_invalid`、metadata不一致は
-  `runtime_t_metadata_mismatch` として対象期間をfail-closedにする。Hの年次アンカー不正は
-  `v2_annual_anchor_unavailable` とする。
-- **WHEN** 選択済みTへ付与された `ctiMetadata` を伝播する、**THEN** 同じTのsourceId、statInfId、
-  householdScope、seasonalitySourceId、targetSourceId、targetHouseholdScope、bridgeAppliedRange、
-  bridgeCoefficientをchart、tooltip、data table、CSVへ保持し、loaderで別sourceを再選択しない。
-- **WHEN** 2016Q4と2017Q1を比較する、**THEN** 2017Q1の公式sourceへの切替をprovenanceで明示し、
-  Mから公式四半期sourceへの境界で値連続性は要求しない。
-- **WHEN** chart、tooltip、data table、CSVへ同じ行を投影する、**THEN** 数値、状態、理由、出所、
-  `official`、季節source、係数、注記が同一measurementと一致する。
+The current WHEN/THEN requirements are consolidated under [Requirements](#current-requirements), in the subsection [Plan41 official quarterly connection requirements](#plan41-official-quarterly-requirements).
 
 ### Non-goals
 
@@ -4468,6 +5242,8 @@ JEVは、全体lint 0 error/0 warning、React console warning解消、およびP
 - **WHEN** モバイル利用者が棒を短くタップして停止する、**THEN** tooltipを表示したままにし、縦方向のスワイプとして判定された操作ではtooltipを閉じる。
 - **WHEN** 範囲変更E2EがChartDataContractの系列セルを数える、**THEN** Plan40 v2系列が存在しない行を待機失敗にせず、その行に実在する数値セルだけを描画本数との比較対象にする。
 
+<a id="current-ten-category-registry"></a>
+
 ## SharedPlan 47: 名目消費10費目のcanonical系列統合（現行優先仕様）
 
 本節は名目消費の10費目公開契約について、Plan38/40/41および旧続編にある相反する記述に優先する。旧節の実装チェックポイントや検証記録は当時の履歴として保持するが、そこにある「Plan40を現行採用する」「世帯構成補正を適用しない」「旧名目キーとv2キーを同時に公開する」という記述は現行要件ではない。計画書に記載された実装前の観測・制約を実装済みの事実として扱わず、公開契約は以下のWHEN/THENによって定める。
@@ -4494,17 +5270,7 @@ Plan39 nominal B/A・Pi loaderとmanifest/evidence validation → `ctiAdjustedCo
 
 ### Requirements
 
-- **WHEN** 2005Q1–2016Q4の年次アンカーを公開候補として計算する、**THEN** nominal B/A接続値に既存Plan39のPi世帯構成補正を適用し、Plan40の無補正baseを採用値として使わない。
-- **WHEN** 有効な歴史年次アンカーと対象年の12か月季節入力が揃う、**THEN** 各四半期値を「補正済み年次アンカー × 当該四半期3か月平均 ÷ 同年12か月平均」で算出し、同年の四半期平均が年次アンカーと一致する。
-- **WHEN** 2017Q1以降の公式四半期行が有効である、**THEN** 9費目はe-Stat公式四半期値をそのまま採り、月次平均・Plan39推定値・旧名目値を加算またはfallbackしない。
-- **WHEN** 公式四半期のOtherを構成する、**THEN** 公式総合から公式9費目を引いた残差とし、measurementにderived provenanceを付けて `official=false` と識別する。10費目合計は丸め許容内で公式総合に一致し、総合自体をstack費目に含めない。
-- **WHEN** 名目公開row、projection、chart stack、tableまたはCSVを生成する、**THEN** 期間ごとにcanonical 10費目だけを一度ずつ含め、旧名目aliasとv2/互換名キーの二重投影を行わない。aliasへpoison値を設定してもcanonical 10値とstack合計は変わらず、追加stack keyが公開されない。
-- **WHEN** Plan39モデルと現在のB/A/L/Pi・manifest fingerprintが保存analysisに一致しない、またはinput-integrity/publication gateの必須条件を確認できない、**THEN** 対象推定値を`null`/`unavailable`と機械可読reasonで公開し、無補正Plan40値やlegacy aliasで穴埋めしない。必要な分析を対応するモデル・入力で再評価する。
-- **WHEN** 公式artifact、sidecar、manifest、hash、必要期間、category mappingまたは公式行が欠損・不正である、**THEN** 公式期間を推定値・月次値・legacy aliasで埋めず、既存のunavailable marker、`null`、status/reasonを保持する。
-- **WHEN** chart、tooltip、data table、CSVで同一期間・費目を表示する、**THEN** 値、canonical category、status/reason、source、model、official/derived区分、単位、frequency、aggregationおよびprovenanceが同じmeasurementに基づき一致する。
-- **WHEN** `CpiChart` が2018Q1以降の正式系列を描画する、**THEN** 棒の表示順と凡例の表示順を、canonical key「住居、家具・家事用品、被服及び履物、保健医療、教育、光熱・水道、教養娯楽、交通・通信、食料、その他の消費支出」に対応する可視ラベル「住居、家具・家事用品、被服履物、保健医療、教育、光熱水道、教養娯楽、交通通信、食料、諸雑費・CPI外」の順にする。変更対象はレンダリング時の系列・棒の表示順と凡例のラベル・表示順に限り、canonical data keys、row/objectのキー順、およびinput projectionの順序は変更しない。
-- **WHEN** `CpiChart` の名目または実質消費tooltipとチャート情報を表示する、**THEN** tooltip項目は凡例と同じ「住居、家具・家事用品、被服履物、保健医療、教育、光熱水道、教養娯楽、交通通信、食料、諸雑費・CPI外」の順・ラベルで表示し、各費目に繰り返す歴史系列の非公式注記は省く。チャート情報には「2016Q4以前の接続推定値は非公式」であることを明記する（2016年を含む）。
-- **WHEN** 2016Q4から2017Q1へ移る、**THEN** 2016Q4まではPlan39補正済み歴史推定、2017Q1からは公式四半期sourceと明示し、接続点の再基準化・平滑化や公式値への補正式適用を暗黙に行わない。
+The current WHEN/THEN requirements are consolidated under [Requirements](#current-requirements), in the subsection [Plan47 canonical ten-category requirements](#plan47-canonical-series-requirements).
 
 ## SharedPlan 48: 表示中の名目消費から導く実質CTI（現行優先仕様、実装・検証済み）
 
@@ -4542,18 +5308,7 @@ Plan39/公式名目rowのcanonical 10費目および総合 → 同じ四半期�
 
 ### Requirements
 
-- **WHEN** 2005Q1–2016Q4の実質系列を生成する、**THEN** Plan39の補正済み名目canonical値を同じ四半期の9対応CPIで変換し、名目10費目・総合の対象期間と対応を維持する。
-- **WHEN** 2017Q1以降の実質系列を生成する、**THEN** SharedPlan 47の公式調整名目canonical値に同じCPI変換規則を適用し、公式CTI実質列、GDP値または別のCTI系列へ入力を切り替えない。
-- **WHEN** 各実質canonical費目を計算する、**THEN** 当該四半期の3か月CPI平均を用いて `nominal × 100 / CPI` とし、9費目は同名CPIに対応させ、住居は `持家の帰属家賃を除く住居` を使う。
-- **WHEN** Otherの実質値を計算する、**THEN** 名目側のsigned residualを変更せず、`持家の帰属家賃を除く総合` を広義のproxyとして使い、CPI「諸雑費」との分類同等性を主張しない。
-- **WHEN** 実質総合を計算する、**THEN** 同じ四半期の内部総合名目key `CTIミクロ調整系列（総合・名目）` を `持家の帰属家賃を除く総合` で独立変換し、新key `CTIミクロ調整系列（総合・実質）` へ格納する。総合を費目合計から再構成せず、実質総合と費目和の一致を前提にしない。
-- **WHEN** 四半期内CPIの3か月の一つ以上が欠落・重複・非有限・非正値または無効である、**THEN** 対応する実質値を `null` / `unavailable` と理由付きで出し、補間、0補完、前値、別CPIへのfallbackをしない。少なくとも欠月は `cpi_month_missing`、重複月は `duplicate_cpi_month`、非正値・非有限値は `cpi_value_invalid` として識別する。
-- **WHEN** CPI実質値を公開する、**THEN** 2025年基準100を使い出力を再基準化せず、名目値とCPIをともに指数として扱い円建て額とは説明しない。
-- **WHEN** real projection、chart、tooltip、data tableまたはCSVを生成する、**THEN** 旧 `民間最終消費支出（実質）` keyを公開CTI系列から外し、旧GDP実質比較値を実質CTI入力に使わず、新しい実質総合と10費目の値・status/reason・provenanceをchart data、table、CSVの契約に保持する。
-- **WHEN** 実質消費チャートを描画する、**THEN** 10費目だけを棒および凡例に表示し、独立変換した総合key `CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY`（`CTIミクロ調整系列（総合・実質）`）は凡例に含めず、点マーカーも描かず、stackの棒や10費目合計にも加算しない。総合keyの値とstatus/reason/provenanceはchart data、table、CSVの契約に保持する。
-- **WHEN** 実質消費のツールチップを表示する、**THEN** 名目と同じ簡潔な費目行と、表示対象の費目値を足し上げた `合計` を表示する。独立した実質総合の行およびCPIの計測・出典に関するmeasurement note/provenanceは表示せず、ツールチップの合計と独立実質総合の一致を前提にしない。
-- **WHEN** 実質CTI経路を切り替える、**THEN** retired GDP比較のraw source、loader、内部型は再導入しない。
-- **WHEN** 本節の仕様同期を完了扱いにする、**THEN** Data Sources / Data Flow / Data Model / Component Tree / Requirementsが実装と一致し、実装・関連検証が未完了ならその状態を完了済みと記録しない。
+The current WHEN/THEN requirements are consolidated under [Requirements](#current-requirements), in the subsection [Plan48 real quarterly CTI requirements](#plan48-real-cti-requirements).
 
 ## SharedPlan 52: e-Statデータの一括再取得・再生成CLI
 
@@ -4599,35 +5354,8 @@ CLI/core、CPI/CTI/earnings/population adapters、registry/output contract、sta
 
 ### Requirements
 
-- **WHEN** `pnpm data:refresh --check` のstaged runtime検証を実行する、**THEN** runtime cloneをcanonical projectから分離した一時rootで起動し、hash-pinned runtime/test underlaysを区分して含め、canonical fallbackをdenyしたまま所定quality suitesをすべて実行する。成功・失敗を問わずcloneをcleanupし、check-onlyではcanonical publishを行わない。
-- **WHEN** Plan52 G1〜G6の受入結果を記録する、**THEN** reportのsource metrics、staged quality、canonical publish/no-op evidence、journal recovery fixtureと通常run/startup recoveryを分けて記録し、check-only成功をpublish/recoveryの証明として扱わない。KP1〜KP8の照合結果もプランに個別記録する。
-- **WHEN** `pnpm data:refresh --check` が全宣言outputのcandidateをstageする、**THEN** cleanup前にcanonical/candidateの`exists`・SHA-256・byte lengthと`unchanged` / `changed` / `added` / `removed` / `missing` statusをoutputごとにsafe `outputDiffs`へ記録し、file contentsを含めずcanonical filesを変更しない。preflightで比較されなかったoutputは`not-evaluated`とする。テストで各statusとcanonical immutabilityを確認する。実装・test・CLI検証とfresh reportでの受入確認が完了するまではG6達成としない。
+The current WHEN/THEN requirements are consolidated under [Requirements](#current-requirements), in the subsection [Plan52 data refresh requirements](#plan52-refresh-requirements).
 
-- **WHEN** CPI・CTI・賃金・人口のsource identityをregistryに記録する、**THEN** API `statsDataId` と配布 `statInfId` を別variantとして保持し、未照合の分類・単位・基準年・期間・revisionを確定値として扱わない。
-- **WHEN** refresh対象を確定する、**THEN** 現行画面・計算および必須data-quality検査から到達するsourceと全下流成果だけを対象とし、未使用GDPや動的proxyの任意検索可能表を含めない。人口をearnings parserなどから到達するruntime dependencyとして含める。
-- **WHEN** required sourceに `blockedReason` がある、adapterが未登録、mappingが曖昧、候補が複数、またはschema/分類/基準が変化している、**THEN** `--check` を含めsource取得より前にfail closedとし、canonical成果物を変更しない。現在earnings adapterは登録済みで、source契約を満たす場合にmapping済み6系列を処理する。人口sourceはsource/table/dimension/frequency/unit/baseline identityとschemaを固定する。prior SHA-256とverified observationsはbaseline証拠として保持し、hash一致だけを受入根拠にせず、変更hashや値も無条件受理しない。identity/schema不一致、series mixing、coverage後退はfail closedとする。
-- **WHEN** CPI adapterを単独実行できる条件が成立する、**THEN** 78系列の2025基準分類、API filter、unit、月次coverage、paging/件数、canonical CSV metadata hash、履歴overlapとrevisionを検査し、5成果物をallowlistどおりstagingへ出力する。
-- **WHEN** CTI adapterを単独実行できる条件が成立する、**THEN** file IDsと各表分類・期間・派生lineageを検査し、raw/normalized、snapshot/map、canonical monthly/distribution-adjusted、Plan39 A/B/L、quarterly、pinned 2004 inputs等の31成果物を契約どおりstagingへ出力する。pinned non-e-Stat bytesを取得・改変しない。
-- **WHEN** earnings sourceをparseして6系列を生成する、**THEN** 21列Windows-31J、`種別=指数`、TL/T/0を検査し、36件の `CY` 年次行と439件の月次行を正しく扱う。`CY` の年キーを `YYYYMM` として拒否せず、公式の年/半期/四半期値を月次平均から再計算して置き換えない。1990-01〜2026-06のcanonical 438か月値照合はその重複期間内での移行証拠として保持し、重複外期間や過去の分類コード遷移をまたぐ意味的同等性の証明には使わない。source全体coverageと6 mapped fieldsの開始時期は同一視せず、最新G1 check-onlyで選択行identity、coverage、mapped valuesと最新月をadapter validationで確認し、8 quality suites successを得た。employment indexへの移行後も旧パート比率438値を `part_time_worker_ratio.csv` に保つ。mapping/coverage/value検査に失敗したら6系列とmetadata 2件をpublishせず、他adapterのpartial resultsもpublishしない。人口workbookのidentity/schema不一致またはcoverage後退ならadapterが停止しcanonical成果物を保持する。identityを保つ公式revisionはprior verified observationsとの差分auditを作り、追加月と合わせて全履歴へ反映する。
-- **WHEN** adapter outputsが揃いstaged runtime quality validationを開始する、**THEN** runtime project/dependency/pinned input inventoryをhash検証し、canonical runtime data fallbackをdenyした隔離rootで所定のdata-quality suitesを全実行する。suite未実行・失敗・coverage不一致を品質合格と扱わない。
-- **WHEN** API sourceを取得する、**THEN** paginationを最終ページまで処理し、HTTP/API業務status、応答形式、件数・継続性を検査する。file sourceではHTTPS配布を検査し、API用app IDを一律要求しない。
-- **WHEN** `--check` を実行する、**THEN** source取得・normalize・派生生成・staging検証と差分reportを行うがcanonicalファイルをpublishしない。未完了journalがあればcanonical recoveryを行わず `recovery-required` で停止する。 Check/publish `outputsChanged`はlegacy listとして全staged pathsを列挙し、変更判定は`outputDiffs`を使う。no-opでは`outputsChanged=[]`、46 output diffsはunchanged。
-- **WHEN** 人口adapterが履歴revisionを比較する、**THEN** 既存canonical CSVの値をprior baselineとして優先し、metadataの `verifiedObservations` はCSVにない月だけを補う。受理した改訂後のCSVが次回比較でstale metadataより優先される。
-- **WHEN** 人口source fetchが完了するがXLSXがregistry outputに含まれない、**THEN** metadataの `file` / `sha256` / `fileSizeBytes` は保持local workbookとの対応を保ち、今回取得rawのSHA-256/size/media type/timeを `lastFetchedSource` とrun reportに記録してXLSXを更新済みと主張しない。
-- **WHEN** 人口adapterがfetch前に保持中のXLSXを確認する、**THEN** metadataのpath/size/SHA-256と実fileが一致しない場合はsource取得前に停止する。
-- **WHEN** 人口workbookのhashが前回と同じ、**THEN** hash一致だけで受理せず、registry identity・workbook schema・連続coverageを検査する。
-- **WHEN** 人口workbookが同じstatInfId/table/dimension/frequency/unit/baseline identityを保ち、公式revisionで既知月の値が変わる、**THEN** prior hashとverified observationsをbaseline証拠として残し、差分をrevision auditに記録して全履歴を生成する。
-- **WHEN** 人口workbookが既存identityのまま連続した新しい月を追加する、**THEN** coverageを拡張してconverter互換成果物を生成する。既存末尾よりcoverageが後退する、または月が欠ける場合は停止する。
-- **WHEN** 人口workbookでtable/dimension/frequency/unit/baseline identityが変わる、**THEN** 新hashや値にかかわらずfail closedとしcanonical成果物を保持する。
-- **WHEN** sourceや派生の処理中に失敗する、**THEN** publish前は既存canonical一式を保持し、publish中の失敗はjournalとbackupからrollbackまたはrecovery-requiredとして停止する。 SIGKILL recovery testでは子プロセスを最初のdurable rename後に停止し、隔離temp root上の通常`runRefresh`を起動する。stub adapterは最初のadapter実行時に全canonical bytesがoriginal contentsへ復元済みであることをassertし、新しいstaged outputsを返す。testはpublish完了とjournal/backups cleanupを確認する。このfixtureは電源断/OS crash試験ではない。
-- **WHEN** 複数canonical fileのpublishを開始する、**THEN** exclusive CLI lockを保持し、Next.js等のreaderが停止している開発運用条件を適用する。lockだけでreader停止を保証したとみなさない。
-- **WHEN** source内容に意味的差分がなく取得時刻だけが変わる、**THEN** semantic fingerprintでunchanged/no-opとし、追跡canonical raw・metadataを更新しない。今回取得raw hashとvolatile実行証跡はgitignore対象reportへ記録する。
-- **WHEN** report、log、metadata、manifest、raw artifactを生成する、**THEN** API key、認証付きURL、秘密を含み得るresponse bodyを出力しない。エラーは安全な分類・statusに限定する。
-- **WHEN** staged runtime quality suiteの起動に失敗し、Vitest JSON reportが生成されない、**THEN** refresh reportは固定status・byte/count boundsとallowlistに従い、安全なcategory/operation/targetなどの短いdiagnosticだけを記録する。raw stdout/stderr、response body、stack、任意のfailure messageは保存しない。過去runでは`target=canonical-project, operation=readFileSync`を記録してassertion前に停止したが、最新G1 reportではstatus=validatedで8 quality suitesすべて成功した。
-- **WHEN** staged runtime quality suiteがVitest assertion failuresを返す、**THEN** refresh reportは固定allowlistのfile/titleを件数・byte上限内（title sample最大12件）で記録し、failure messageやstackを含めない。sample上限を超えた未掲載failureも合格扱いにせずG1を失敗とする。最新G1では8 suitesがsuccessとなった。Plan49の要件別KP達成度は最終KP1〜KP8監査で確認する。
-- **WHEN** staged runtime cloneでhousehold compositionを読む、**THEN** production manifest closureに属する正確な15ファイルをhash pinしてruntime inputsとして複製し、output artifactsに追加せず、canonical fallbackなしで必要データを読む。focused suite 12 files/297 passed/4 skipped (301 total)に含まれるclosure/tamper testで確認した。
-- **WHEN** 公式file downloadがHTTP errorで失敗する、**THEN** structured refresh reportはHTTP status、1始まりのattempt、maxAttempts、retryable、retriesExhaustedだけを安全なfile failure diagnosticsとして記録し、URL/query、headers、response body、secret値を含めない。既存の `file-http-error` codeとsafe messageを維持する。
-- **WHEN** データrefreshを運用する、**THEN** 開発者が明示実行するローカルCLIのみとし、自動schedule、アプリ内fetch、Git commit/pushを行わない。refresh後のcommit/push判断は通常の開発者手順に委ねる。
-- **WHEN** 旧 `scripts/run_all_conversions.sh` が起動され、6つのrequired dist executableのいずれかが存在しない・実行不可、またはいずれかが失敗する、**THEN** 成功を表示せず非ゼロ終了を返す。全required adapterと検証ゲートが完了するまではこのbundled入口を新CLIで置換しない。上記の個別converter、CTI pure parser/builders、Plan39 `--quarterly-only`、固定列earnings updater、およびobsolete Python build pathsは、consumer移行を確認するまで互換・手動経路として識別し、削除済み・廃止済みと主張しない。
-- **WHEN** e-Stat由来の変更が検証済みcanonical成果へ反映される、**THEN** 影響する全下流系列・metadata・manifest・snapshotを依存順に再生成し、未使用または由来未確定のsourceを推測で混合しない。
-- **WHEN** SharedPlan 52の実装を完了扱いにする、**THEN** CPI/CTI/賃金/人口のrequired mapping/provenance、fixture・source検証、staged runtime quality suites、必要なlint/type-check/test/build gate、運用境界、canonical publish/no-op/recoveryとKP1〜KP8の照合証拠を確認する。G1 report `.data-refresh/2026-10-16T17-32-16.322Z-f64fb8ac-c230-453c-9cf0-ab495fe0da6d.json`は4 source、8 suites、46 staged outputs、32 pinned inputs、49 project filesを記録。G6 check `.data-refresh/2026-10-16T18-23-09.209Z-40c10784-107a-495d-819e-3403d48cfd0a.json`、publish `.data-refresh/2026-10-16T18-24-04.865Z-6543eb6a-c82a-4f77-8b47-29d8a2c5bbd3.json`、no-op `.data-refresh/2026-10-16T18-43-06.992Z-42ac1d88-ec2c-419b-be9f-c2baa2505534.json`はcheck/publish/no-opを記録する。no-opでは46 output diffsがunchanged、`outputsChanged=[]`。check→publishで変わったCTI A/B JSON bytesは`retrievedAt`由来で、semantic fingerprint/source bytes/auditは一致。focused suiteは12 files/297 passed/4 skipped、lint、type-check、API proxy suite 1 file/15 passed、buildは成功。recoveryはdurable rename後SIGKILLの子プロセスfixtureで検証し、電源断/OS crashは試験していない。広域`pnpm test -- ...`の修正前failureは履歴として区別し、`test:all`をPlan52の恒常gateとしない。
+### R-CTI-Domain-Identifiers: Canonical names and artifact compatibility
+
+The current contract is consolidated under [Requirements](#current-requirements), in the subsection [Canonical CTI identifiers and artifact compatibility](#current-cti-domain-identifiers-requirement).

@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "adjusted-cti-annual-v1",
+  "revision": "2026-10-16",
+  "statisticalCode": "00200567",
+  "source": "総務省統計局 e-Stat CTI",
+  "artifact": "B.json",
+  "artifactIdentifier": "000040499069",
+  "officialPageUrl": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499069",
+  "downloadUrl": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499069",
+  "downloadUrlHash": "ae00c2a3be3a408aa3febd4a5dbcd7d769c4b2bdfd28faf6a939b859dcc6bb8f",
+  "statInfId": "000040499069",
+  "legacyStatInfId": "000040499069",
+  "logicalSourceStatInfId": "000040499069",
+  "sourceIdentity": {
+    "kind": "estat-catalog-resource",
+    "catalogResourceId": "000010962956",
+    "legacyStatInfId": "000040499069",
+    "downloadUrlHash": "ae00c2a3be3a408aa3febd4a5dbcd7d769c4b2bdfd28faf6a939b859dcc6bb8f",
+    "title": "2025年基準消費動向指数_最新結果_2026年",
+    "format": "XLSX",
+    "releaseDate": "2026-10-09",
+    "lastModifiedDate": "2026-10-09"
+  },
+  "retrievedAt": "2026-10-16T18:24:44.540Z",
+  "baseYear": 2025,
+  "unit": "指数",
+  "valueType": "原数値（名目指数）",
+  "householdScope": "総世帯",
+  "frequency": "annual",
+  "rawRange": {
+    "startYear": 2002,
+    "endYear": 2025
+  },
+  "adoptedRange": {
+    "startYear": 2002,
+    "endYear": 2025
+  },
+  "yearization": null,
+  "missingRepresentation": "- は null。補完・補間なし。",
+  "sha256": "7df9ce47c4b7545bd7366f0e6e2527509adfbe4ff381cc8e6d0ef50c63a44f67",
+  "sourceSha256": "7df9ce47c4b7545bd7366f0e6e2527509adfbe4ff381cc8e6d0ef50c63a44f67",
+  "sourceFormat": "xlsx",
+  "sourceRevisionAudit": {
+    "sourceId": "000040499069",
+    "overlapCount": 2530,
+    "changedObservationCount": 0,
+    "changedValueCount": 0,
+    "changedSample": [],
+    "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "previousSha256": "5e99cf3c61e26ba90bcde12b3311eb553458f97e5624258712d7414bed53197b",
+    "sourceSha256": "7df9ce47c4b7545bd7366f0e6e2527509adfbe4ff381cc8e6d0ef50c63a44f67"
+  }
+}

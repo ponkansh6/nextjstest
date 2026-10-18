@@ -1,4 +1,4 @@
-/** Plan39-v2 diagnostic rolling and leave-one-year-out backtests. */
+/** Composition-adjusted-v2 rolling and leave-one-year-out diagnostic backtests. */
 import {
   CTI_ADJUSTED_MAJOR_CATEGORIES,
   CTI_ADJUSTED_TOTAL_CATEGORY,

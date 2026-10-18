@@ -1,28 +1,28 @@
 {
-  "schemaVersion": "plan39-annual-v1",
+  "schemaVersion": "adjusted-cti-annual-v1",
   "revision": "2026-10-16",
   "statisticalCode": "00200567",
   "artifacts": {
     "B": {
       "path": "B.json",
-      "sha256": "2636e78afb492fa988b40e3009fec07027ec648ed55802f5bf4c1ed0e8de8903",
+      "sha256": "97d576cd69dfef4c88a36b82dd26bbfacd4c52e43ca4a53a9986e04de358d2b6",
       "revision": "2026-10-16",
       "statInfId": "000040499069",
       "logicalSourceStatInfId": "000040499069",
       "catalogResourceId": "000010962956",
       "legacyStatInfId": "000040499069",
-      "downloadUrlHash": "ffeb37eb3693fbe998a4ade14b59b6d76380c87ac51b66d6b2bb7a794a7b8d6d",
+      "downloadUrlHash": "ae00c2a3be3a408aa3febd4a5dbcd7d769c4b2bdfd28faf6a939b859dcc6bb8f",
       "status": "ready"
     },
     "A": {
       "path": "A.json",
-      "sha256": "b657cf04591e9cb56fc1bd934a930d0c21ea31ccf81b128b221d6a6805e4524f",
+      "sha256": "26bb734c3fb27dd67fd39fa1a300ae3ca8ea0334278790694a4a8721c02b6ea9",
       "revision": "2026-10-16",
       "statInfId": "000040499087",
       "logicalSourceStatInfId": "000040499087",
       "catalogResourceId": "000010962974",
       "legacyStatInfId": "000040499087",
-      "downloadUrlHash": "a6f3b269245a45ae8dbe3677a985cd49ca44c52b45644aad80252443d06ad2ef",
+      "downloadUrlHash": "5f9c22be4118f8dfb953afd58380d3b231562808a68d146e6e5cf810083d83de",
       "status": "ready"
     },
     "L": {
@@ -37,13 +37,13 @@
       "path": "../cti_data2025_distribution_adjusted_quarterly.csv",
       "metadataPath": "../cti_data2025_distribution_adjusted_quarterly.metadata.json",
       "sha256": "e32f7e3627718874cd85cae386216b370563b6ef7dba3ff686a5b456cba4dd78",
-      "metadataSha256": "d335d566fe2dfea05aa3369bc7c858c5310bbcddb9ce9de55540faa7d68cd98f",
+      "metadataSha256": "c4a38eae1fccf8195c52b9e93db7ae6fec7b071923cee7c9ff80ef60c572bbea",
       "revision": "2026-10-16",
       "statInfId": "000040499087",
       "logicalSourceStatInfId": "000040499087",
       "catalogResourceId": "000010962974",
       "legacyStatInfId": "000040499087",
-      "downloadUrlHash": "a6f3b269245a45ae8dbe3677a985cd49ca44c52b45644aad80252443d06ad2ef",
+      "downloadUrlHash": "5f9c22be4118f8dfb953afd58380d3b231562808a68d146e6e5cf810083d83de",
       "sourceSha256": "5089bece9c815944df57d3f5552e5d7ae9f5ee1c2f091ae5246dbd0ac8be1c67",
       "status": "ready"
     }

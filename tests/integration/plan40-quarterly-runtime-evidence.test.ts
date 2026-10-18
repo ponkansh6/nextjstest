@@ -27,7 +27,7 @@ import {
   CTI_ADJUSTED_INPUT_CATEGORIES,
   type CtiAdjustedAnnualInput,
 } from "@server/lib/ctiAdjustedConnectionEstimate";
-import { buildPlan39V2CtiNominalRows } from "@server/lib/view-models/quarterlyAggregation";
+import { buildCompositionAdjustedQuarterlyRows } from "@server/lib/view-models/quarterlyAggregation";
 import type { CtiBasicRecord } from "@server/lib/ctiBasicSeries2025LongTerm";
 
 function defined<T>(value: T | null | undefined): T {
@@ -40,7 +40,7 @@ function isCtiAdjustedV2PublicCategory(value: string): value is CtiAdjustedV2Pub
 }
 
 function measurementFor(
-  row: ReturnType<typeof buildPlan39V2CtiNominalRows>[number],
+  row: ReturnType<typeof buildCompositionAdjustedQuarterlyRows>[number],
   categoryOrKey: string,
 ) {
   const key = isCtiAdjustedV2PublicCategory(categoryOrKey)
@@ -50,8 +50,8 @@ function measurementFor(
   return defined(defined(row.measurements)[registryEntry.key]);
 }
 
-function plan40Validation(result: ReturnType<typeof buildCtiAdjustedV2Estimate>) {
-  return defined(result.plan40InputValidation);
+function annualAnchorValidation(result: ReturnType<typeof buildCtiAdjustedV2Estimate>) {
+  return defined(result.annualAnchorInputValidation);
 }
 
 const categories = CTI_ADJUSTED_V2_PUBLIC_CATEGORIES.filter((category) => category !== "総合");
@@ -170,7 +170,7 @@ function runtimeRows(
   if (publicationAccepted) result.publicationGate.accepted = true;
   return {
     result,
-    rows: buildPlan39V2CtiNominalRows({
+    rows: buildCompositionAdjustedQuarterlyRows({
       records: records(year, monthlyMutator),
       result,
       officialQuarterly: officialQuarters(quarterlyMutator),
@@ -178,20 +178,24 @@ function runtimeRows(
   };
 }
 
-function targetRow(rows: ReturnType<typeof buildPlan39V2CtiNominalRows>) {
+function targetRow(rows: ReturnType<typeof buildCompositionAdjustedQuarterlyRows>) {
   const row = defined(rows.find((candidate) => candidate.label === "2017Q1"));
-  if (row.kind !== "plan40-official-quarterly")
+  if (row.kind !== "official-quarterly-adjusted")
     throw new Error("expected official quarterly row kind");
   return row;
 }
 
 function rowForYear(
-  rows: ReturnType<typeof buildPlan39V2CtiNominalRows>,
+  rows: ReturnType<typeof buildCompositionAdjustedQuarterlyRows>,
   year: number,
   quarter = 1,
 ) {
   const row = defined(rows.find((candidate) => candidate.label === `${year}Q${quarter}`));
-  if (year < 2017 ? row.kind !== "plan40-v2-cost-stack" : row.kind !== "plan40-official-quarterly")
+  if (
+    year < 2017
+      ? row.kind !== "estimated-cost-stack-v2"
+      : row.kind !== "official-quarterly-adjusted"
+  )
     throw new Error("unexpected Plan40 quarterly row kind");
   return row;
 }
@@ -621,7 +625,7 @@ describe("Plan40 phase-1 runtime evidence", () => {
       const { result, rows } = runtimeRows(mutate);
       const row = targetRow(rows);
       const measurements = keys.map((key) => measurementFor(row, key));
-      const validation = plan40Validation(result);
+      const validation = annualAnchorValidation(result);
       expect(validation.valid).toBe(false);
       expect(validation.reasonCodes).toContain(expectedReason);
       expect(measurements).toHaveLength(10);
@@ -657,7 +661,7 @@ describe("Plan40 phase-1 runtime evidence", () => {
     const row = rowForYear(rows, 2005);
     const measurements = keys.map((key) => measurementFor(row, key));
 
-    expect(result.plan40InputValidation?.valid).toBe(true);
+    expect(result.annualAnchorInputValidation?.valid).toBe(true);
     expect(result.publicationGate.accepted).toBe(false);
     expect(measurements.every((measurement) => measurement.status === "unavailable")).toBe(true);
     expect(measurements.every((measurement) => measurement.seriesType === "unavailable")).toBe(
@@ -724,7 +728,7 @@ describe("Plan40 phase-1 runtime evidence", () => {
     });
     const row = rowForYear(rows, 2017, 4);
     const measurements = keys.map((key) => measurementFor(row, key));
-    expect(result.plan40InputValidation?.valid).toBe(false);
+    expect(result.annualAnchorInputValidation?.valid).toBe(false);
     expect(measurements.every((measurement) => measurement.value !== null)).toBe(true);
     expect(measurements.every((measurement) => measurement.status === "available")).toBe(true);
     expect(measurements.every((measurement) => measurement.sourceId === "000040499087")).toBe(true);
@@ -833,7 +837,7 @@ describe("Plan40 phase-1 runtime evidence", () => {
   it("projects one official quarterly measurement unchanged through the chart contract, tooltip, table, and CSV", () => {
     const { rows } = runtimeRows();
     const source = targetRow(rows);
-    expect(source.kind).toBe("plan40-official-quarterly");
+    expect(source.kind).toBe("official-quarterly-adjusted");
     const key = defined(keys[0]);
     const measurement = measurementFor(source, key);
     const publicRows = projectQuarterlyPublicView(rows);

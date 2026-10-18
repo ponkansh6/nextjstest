@@ -6,7 +6,7 @@
 
 ## Design
 
-`chartConstants.ts`が系列・色・チャート関連設定、`chartUtils.ts`/`clientCalculations.ts`がfilter・merge・scale・CAGR・表示派生、`chartAdapters.ts`がview-modelから`CpiData`へ変換する。`yearMonth.ts`と`math/quarter.ts`は年月/四半期の純粋処理、`quarterlyPublicProjection.ts`はPlan40の現行四半期CTI公開キーを明示的に投影する。Plan37月次CTIは専用consumerで扱い、Plan38四半期APIやGDP内部列は現行公開projectionに含めない。`urlState.ts`は副作用のないquery変換、`csvExport.ts`はCSV生成を担う。
+`chartConstants.ts`が系列・色・チャート関連設定、`chartUtils.ts`/`clientCalculations.ts`がfilter・merge・scale・CAGR・表示派生、`chartAdapters.ts`がview-modelから`CpiData`へ変換する。`yearMonth.ts`と`math/quarter.ts`は年月/四半期の純粋処理、`quarterlyPublicProjection.ts`は四半期CTIの公開キーをregistry順で明示的に投影する。月次CTIは専用consumerで扱い、retired四半期APIやGDP内部列は現行公開projectionに含めない。`urlState.ts`は副作用のないquery変換、`csvExport.ts`はCSV生成を担う。
 
 ## Flow
 

@@ -4,12 +4,12 @@ import Papa from "papaparse";
 import { loadCtiAdjustedV2Estimate } from "./data-loader/ctiAdjusted";
 
 /**
- * Plan49 Lane C Core Consumption Total 12MA Calculation Layer
+ * Composition-adjusted monthly total-consumption strict 12MA layer
  *
- * Implements strict rules from shared_plan/49-newgraph-consumption-total-12ma-plan.md:
+ * Implements the strict NewGraph consumption rules recorded in shared_plan/49:
  * 1. Historical monthly reconstruction (2004-2016):
  *    - m[y, m] = A[y] * r[y, m] / meanRaw[y]
- *    - 2005-2016 anchors are shared with the Plan39 V2 corrected annual rows.
+ *    - 2005-2016 anchors are shared with the composition-adjusted-v2 annual rows.
  *    - 2004 is a private one-year extension using the same V2 category gamma and official pi2plus.
  *    - r loaded from 000040499070.normalized.csv (series_index === 1,二人以上世帯).
  *    - Strict check: all 12 months finite and meanRaw[y] > 0. If incomplete, whole year is invalid.
@@ -135,7 +135,7 @@ function load2004Pi2Plus(sourceRoot: string): number | undefined {
 export function computeConsumptionTotal12Ma(sourceRoot?: string): ConsumptionTotal12MaResult {
   const root = resolveRoot(sourceRoot);
 
-  // Plan49 and the quarterly nominal graph share the same composition-corrected Plan39 V2 anchors.
+  // Monthly and quarterly projections share the same composition-adjusted-v2 annual anchors.
   // The 2004 extension is computed inside V2 with the same baseCategoryValue/gamma implementation,
   // but remains outside V2's public rows and years.
   const annualMap = new Map<number, number>();
@@ -143,8 +143,8 @@ export function computeConsumptionTotal12Ma(sourceRoot?: string): ConsumptionTot
   try {
     const estimate = loadCtiAdjustedV2Estimate({
       artifactRoot: path.join(root, "cti-adjusted"),
-      contract: "plan39",
-      validatePlan40Inputs: true,
+      inputContract: "annual-public",
+      requireAnnualAnchorValidation: true,
       ...(pi2Plus2004 !== undefined
         ? { prehistoryComposition: { year: 2004, pi2Plus: pi2Plus2004 } }
         : {}),
@@ -165,7 +165,10 @@ export function computeConsumptionTotal12Ma(sourceRoot?: string): ConsumptionTot
       annualMap.set(2004, anchor2004);
     }
   } catch (err) {
-    console.error("Failed to load Plan39 V2 annual anchors for consumption series:", err);
+    console.error(
+      "Failed to load composition-adjusted annual anchors for monthly consumption:",
+      err,
+    );
   }
 
   // 2. Load 000040499070 normalized CSV (historical raw monthly index,二人以上世帯)
@@ -270,7 +273,7 @@ export function computeConsumptionTotal12Ma(sourceRoot?: string): ConsumptionTot
             sourceId: "000040499070",
             householdScope: "二人以上の世帯",
             seriesType: "historical_estimate",
-            description: "Missing composition-corrected Plan39 V2 annual anchor A[y]",
+            description: "Missing composition-adjusted annual anchor A[y]",
           },
         });
       }
@@ -335,7 +338,7 @@ export function computeConsumptionTotal12Ma(sourceRoot?: string): ConsumptionTot
           description:
             y === 2004
               ? "Private 2004 V2 composition-corrected anchor extension + official two-plus raw monthly seasonal weights"
-              : "Plan39 V2 composition-corrected annual anchor +二人以上世帯 raw monthly seasonal weights",
+              : "Composition-adjusted annual anchor +二人以上世帯 raw monthly seasonal weights",
         },
       });
     }
@@ -517,7 +520,7 @@ export function computeConsumptionTotal12Ma(sourceRoot?: string): ConsumptionTot
       frequency: "monthly",
       baseYear: 2025,
       calculation:
-        "Strict 12-month moving average of normalized monthly nominal consumption (2004-2016 private historical reconstruction using composition-corrected Plan39 V2 anchors and official two-plus raw seasonal weights; 2005-2016 anchors match the quarterly V2 series; 2017+ official total-household monthly observation)",
+        "Strict 12-month moving average of normalized monthly nominal consumption (2004-2016 private historical reconstruction using composition-adjusted annual anchors and official two-plus raw seasonal weights; 2005-2016 anchors match the quarterly estimate; 2017+ official total-household monthly observation)",
       sources: ["000040499070", "000040499028", "B.json", "A.json", "LFS IV-4 2004"],
     },
   };

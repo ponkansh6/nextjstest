@@ -4,6 +4,7 @@ import path from "node:path";
 import Papa from "papaparse";
 import { buildCtiFilePaths } from "../dataIo";
 import { parseYearMonth } from "@/lib/yearMonth";
+import { resolveQuarterlyNominalArtifactSchema } from "../ctiDomainContract";
 
 export type CtiLoadOptions = { source?: "auto" };
 export type CtiPair = {
@@ -217,22 +218,22 @@ export function validateCtiPair(
   }
   const quarterlyCsv = fs.readFileSync(paths.candidateDistributionAdjustedQuarterly, "utf8");
   let quarterlyMetadata: Record<string, unknown>;
-  let plan39Manifest: Record<string, unknown>;
+  let annualManifest: Record<string, unknown>;
   try {
     quarterlyMetadata = JSON.parse(
       fs.readFileSync(paths.candidateDistributionAdjustedQuarterlyMetadata, "utf8"),
     ) as Record<string, unknown>;
-    plan39Manifest = JSON.parse(
+    annualManifest = JSON.parse(
       fs.readFileSync(path.join(process.cwd(), "data/source/cti-adjusted/manifest.json"), "utf8"),
     ) as Record<string, unknown>;
   } catch {
-    return "invalid official quarterly metadata or Plan39 manifest";
+    return "invalid official quarterly metadata or composition-adjusted annual manifest";
   }
   const quarterlyEntry = (
-    plan39Manifest.artifacts as Record<string, Record<string, unknown>> | undefined
+    annualManifest.artifacts as Record<string, Record<string, unknown>> | undefined
   )?.quarterlyNominal;
   const annualEntry = (
-    plan39Manifest.artifacts as Record<string, Record<string, unknown>> | undefined
+    annualManifest.artifacts as Record<string, Record<string, unknown>> | undefined
   )?.A;
   const annualA = JSON.parse(
     fs.readFileSync(path.join(process.cwd(), "data/source/cti-adjusted/A.json"), "utf8"),
@@ -254,7 +255,7 @@ export function validateCtiPair(
     | { path?: unknown; fileName?: unknown }
     | undefined;
   if (
-    quarterlyMetadata.schemaVersion !== "plan39-quarterly-nominal-v1" ||
+    resolveQuarterlyNominalArtifactSchema(quarterlyMetadata.schemaVersion) === null ||
     quarterlyMetadata.artifact !== path.basename(paths.candidateDistributionAdjustedQuarterly) ||
     quarterlyMetadata.statisticalCode !== "00200567" ||
     quarterlyMetadata.statInfId !== "000040499087" ||
@@ -268,7 +269,7 @@ export function validateCtiPair(
       JSON.stringify(OFFICIAL_QUARTERLY_COLUMN_MAPPING) ||
     createHash("sha256").update(sourceWorkbookBytes).digest("hex") !==
       quarterlyMetadata.sourceSha256 ||
-    quarterlyMetadata.revision !== plan39Manifest.revision ||
+    quarterlyMetadata.revision !== annualManifest.revision ||
     quarterlyMetadata.revision !== annualA.metadata?.revision ||
     quarterlyMetadata.sourceSha256 !== annualA.metadata?.sourceSha256 ||
     annualEntry?.path !== "A.json" ||

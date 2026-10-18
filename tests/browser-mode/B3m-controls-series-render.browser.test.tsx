@@ -20,7 +20,7 @@ import {
   stackedKeys,
 } from "../../src/lib/chartConstants";
 import {
-  QUARTERLY_PLAN40_V2_NOMINAL_KEYS,
+  QUARTERLY_PUBLIC_NOMINAL_KEYS,
   QUARTERLY_PUBLIC_REAL_KEYS,
 } from "../../src/lib/quarterlyPublicProjection";
 import { useCagrState } from "../../src/hooks/useCagrState";
@@ -99,7 +99,7 @@ function CpiSectionsFixture() {
 }
 
 function createQuarterlyData(periods: { year: number; quarter: number }[]): QuarterlyView[] {
-  const keys = [...QUARTERLY_PLAN40_V2_NOMINAL_KEYS, ...QUARTERLY_PUBLIC_REAL_KEYS];
+  const keys = [...QUARTERLY_PUBLIC_NOMINAL_KEYS, ...QUARTERLY_PUBLIC_REAL_KEYS];
   const supportKey = TEST_SUPPORT_NOMINAL_KEY;
   return periods.map(({ year, quarter }, rowIndex) => {
     const label = `${year}Q${quarter}`;
@@ -115,7 +115,7 @@ function createQuarterlyData(periods: { year: number; quarter: number }[]): Quar
 }
 
 function Plan24RenderingFixture({ data }: { data: QuarterlyView[] }) {
-  const keys = [...QUARTERLY_PLAN40_V2_NOMINAL_KEYS];
+  const keys = [...QUARTERLY_PUBLIC_NOMINAL_KEYS];
   const { bind } = useChartTooltipController({ suppressed: false, isTouch: false });
   const tooltip = bind("b3m-plan24-rendering", {
     dataLength: data.length,
@@ -255,7 +255,7 @@ describe("B3m Chromium slices", () => {
     expect(tooltip).not.toBeNull();
     expect(tooltip).toBeVisible();
     expect(tooltip).toHaveTextContent("2025Q1");
-    const expectedFirstKey = QUARTERLY_PLAN40_V2_NOMINAL_KEYS[0];
+    const expectedFirstKey = QUARTERLY_PUBLIC_NOMINAL_KEYS[0];
     const expectedRow = tooltip!.querySelector(
       `[data-tooltip-row="true"][data-tooltip-key="${expectedFirstKey}"]`,
     );

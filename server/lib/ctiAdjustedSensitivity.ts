@@ -366,7 +366,7 @@ function scenarioResult(
   };
 }
 
-/** Compares explicit Plan39 calibration, holdout, and L yearization scenarios. */
+/** Compares explicit calibration, holdout, and L yearization scenarios. */
 export function buildCtiAdjustedSensitivityAnalysis(
   B: CtiAdjustedAnnualInput | null | undefined,
   A: CtiAdjustedAnnualInput | null | undefined,

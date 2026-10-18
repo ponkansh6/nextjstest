@@ -409,7 +409,7 @@ describe("core aggregation edge contracts", () => {
         months: 12,
         value: 100,
         description:
-          "Plan39 V2 composition-corrected annual anchor +二人以上世帯 raw monthly seasonal weights",
+          "Composition-adjusted annual anchor +二人以上世帯 raw monthly seasonal weights",
       },
     ] as const;
     vi.doMock("../../server/lib/data-loader/ctiAdjusted", () => ({

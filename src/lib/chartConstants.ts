@@ -1,3 +1,5 @@
+import type { CompositionAdjustedV2EstimateVersion } from "../../shared/cti-estimate-contract";
+
 // Milestone years for chart reference lines
 export const MILESTONE_YEARS = [2010, 2015, 2020, 2025] as const;
 
@@ -74,7 +76,7 @@ const NOMINAL_COLOR_OVERRIDES: Record<string, string> = {
   "食料（実質）": "var(--nominal-food)",
 };
 
-const PLAN40_CATEGORY_COLOR: Record<string, string> = {
+const CTI_ADJUSTED_CATEGORY_COLOR: Record<string, string> = {
   食料: "外食以外食料",
   住居: "住居",
   "光熱・水道": "光熱・水道",
@@ -87,17 +89,17 @@ const PLAN40_CATEGORY_COLOR: Record<string, string> = {
   その他の消費支出: "諸雑費",
 };
 
-function getPlan40Color(key: string): string | undefined {
+function getQuarterlyExpenseColor(key: string): string | undefined {
   const category = key.match(/^CTIミクロ調整系列（(.+)）$/)?.[1];
   if (category === "食料") return NOMINAL_COLOR_OVERRIDES["食料（名目）"];
-  const target = category ? PLAN40_CATEGORY_COLOR[category] : undefined;
+  const target = category ? CTI_ADJUSTED_CATEGORY_COLOR[category] : undefined;
   const index = target ? CPI_CATEGORIES.indexOf(target) : -1;
   return index >= 0 ? stackedColors[index] : undefined;
 }
 
 export const getColorForNominalKey = (key: string): string => {
-  const plan40Color = getPlan40Color(key);
-  if (plan40Color) return plan40Color;
+  const quarterlyExpenseColor = getQuarterlyExpenseColor(key);
+  if (quarterlyExpenseColor) return quarterlyExpenseColor;
   if (NOMINAL_COLOR_OVERRIDES[key]) {
     return NOMINAL_COLOR_OVERRIDES[key];
   }
@@ -110,7 +112,7 @@ export const getSpendingSeriesColor = (
   key: string,
   keys: readonly string[],
   colors: readonly string[],
-): string => getPlan40Color(key) ?? colors[keys.indexOf(key)] ?? "var(--series-1)";
+): string => getQuarterlyExpenseColor(key) ?? colors[keys.indexOf(key)] ?? "var(--series-1)";
 
 // --- 以下、既存の定数とユーティリティ ---
 
@@ -171,7 +173,7 @@ export const CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY = "CTIミクロ調整系列（�
 export const CTI_BASIC_RAW_KEY = "CTIミクロ基本系列（名目・原数値）";
 export const CTI_BASIC_COMPARISON_KEY = "CTIミクロ基本系列（名目・参考）";
 export const CTI_BASIC_EXTENSION_KEY = "CTIミクロ基本系列（名目・参考・延長）";
-/** Plan39 public annual adjusted-connection series. */
+/** Public annual composition-adjusted series. */
 export const CTI_ADJUSTED_PUBLIC_KEY = "CTIミクロ調整系列（総合）";
 export const CTI_ADJUSTED_PUBLIC_CATEGORIES = [
   "総合",
@@ -206,7 +208,7 @@ export const CTI_ADJUSTED_PUBLIC_KEYS = CTI_ADJUSTED_PUBLIC_CATEGORIES.map(
 export type CtiAdjustedPublicKey =
   (typeof CTI_ADJUSTED_PUBLIC_KEY_BY_CATEGORY)[CtiAdjustedPublicCategory];
 
-/** Plan39-v2 public categories. This registry is intentionally separate from v1. */
+/** Composition-adjusted v2 public categories, kept separate from v1. */
 export const CTI_ADJUSTED_V2_PUBLIC_CATEGORIES = [
   "総合",
   "食料",
@@ -406,7 +408,7 @@ export interface SeriesMetadata {
   annualAnchorType?: "estimated" | "official";
   quarterlyDerived?: boolean;
   model?: "v2-bottom-up";
-  estimateVersion?: "plan39-v2";
+  estimateVersion?: CompositionAdjustedV2EstimateVersion;
   inputFingerprint?: string;
   /** Normalization anchor year, surfaced in tooltips and exports. */
   baseYear?: number | null;
@@ -448,7 +450,7 @@ export interface TooltipSeriesProjection {
   annualAnchorType?: "estimated" | "official";
   quarterlyDerived?: boolean;
   model?: "v2-bottom-up";
-  estimateVersion?: "plan39-v2";
+  estimateVersion?: CompositionAdjustedV2EstimateVersion;
   inputFingerprint?: string;
   baseYear?: number | null;
 }

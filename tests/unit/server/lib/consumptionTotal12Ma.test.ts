@@ -44,7 +44,7 @@ describe("consumptionTotal12Ma (Plan49 Lane C)", () => {
     const quarterly = loadCtiAdjustedV2Estimate({
       artifactRoot: path.resolve("data/source/cti-adjusted"),
       contract: "plan39",
-      validatePlan40Inputs: true,
+      requireAnnualAnchorValidation: true,
     });
     const shareRows = fs
       .readFileSync("data/source/cti-size-composition/lfs-iv4-2004-pi2plus.csv", "utf8")
@@ -64,7 +64,7 @@ describe("consumptionTotal12Ma (Plan49 Lane C)", () => {
     const privatePrehistory = loadCtiAdjustedV2Estimate({
       artifactRoot: path.resolve("data/source/cti-adjusted"),
       contract: "plan39",
-      validatePlan40Inputs: true,
+      requireAnnualAnchorValidation: true,
       prehistoryComposition: { year: 2004, pi2Plus: pi2Plus2004 },
     });
     const historicalRows = new Map(

@@ -1183,7 +1183,7 @@ describe("2025 CTI candidate pair validation", () => {
 
   it.each([
     ["malformed quarterly metadata", "quarterly-metadata"],
-    ["malformed Plan39 manifest", "manifest"],
+    ["malformed annual manifest", "manifest"],
   ] as const)(
     "fails closed for %s after validating the complete CTI source set",
     async (_label, kind) => {
@@ -1203,7 +1203,9 @@ describe("2025 CTI candidate pair validation", () => {
         validateCtiPair(pair, paths),
       );
 
-      expect(result).toBe("invalid official quarterly metadata or Plan39 manifest");
+      expect(result).toBe(
+        "invalid official quarterly metadata or composition-adjusted annual manifest",
+      );
     },
   );
 });

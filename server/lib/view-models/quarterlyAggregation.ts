@@ -9,7 +9,7 @@ import {
 } from "@/lib/chartConstants";
 import { normalizeYearMonth } from "@/lib/yearMonth";
 import { calculateQuarter } from "@/lib/math/quarter";
-import type { QuarterlyRow } from "@/types/chart";
+import { normalizeQuarterlyRowKind, type QuarterlyRow } from "@/types/chart";
 import { isCompleteCtiQuarter } from "@/lib/math/quarterlyCompleteness";
 import { loadCtiBasicSeries2025, type CtiBasicRecord } from "../ctiBasicSeries2025LongTerm";
 import {
@@ -20,12 +20,14 @@ import type { CtiAdjustedV2Result } from "../ctiAdjustedConnectionEstimateV2";
 import { loadCtiAdjustedV2Estimate } from "../data-loader/ctiAdjusted";
 import type { SeriesMeasurement } from "@/types/chart";
 import { buildCtiFilePaths } from "../dataIo";
+import { resolveQuarterlyNominalArtifactSchema } from "../ctiDomainContract";
+import { COMPOSITION_ADJUSTED_V2_ESTIMATE_VERSION } from "../../../shared/cti-estimate-contract";
 
 export type { QuarterlyRow } from "@/types/chart";
 
-const PLAN39_START_YEAR = 2005;
-const PLAN39_END_YEAR = 2016;
-const PLAN39_CATEGORY_SERIES: Record<string, number> = {
+const BASIC_CTI_START_YEAR = 2005;
+const BASIC_CTI_END_YEAR = 2016;
+const BASIC_CTI_CATEGORY_SERIES: Record<string, number> = {
   総合: 1,
   食料: 2,
   住居: 3,
@@ -39,22 +41,22 @@ const PLAN39_CATEGORY_SERIES: Record<string, number> = {
   その他の消費支出: 11,
 };
 
-const PLAN40_PUBLIC_EXPENSE_CATEGORIES = CTI_ADJUSTED_V2_PUBLIC_CATEGORIES.filter(
+const QUARTERLY_PUBLIC_EXPENSE_CATEGORIES = CTI_ADJUSTED_V2_PUBLIC_CATEGORIES.filter(
   (category) => category !== "総合",
 );
 
-// Plan39's source seriesIndex is an artifact contract, so it remains separate.
-// Public key ownership is intentionally derived from the shared Plan40 registry.
-const PLAN40_PUBLIC_KEY_BY_CATEGORY = Object.fromEntries(
+// The basic monthly source's seriesIndex is an artifact contract, so it remains separate.
+// Public key ownership is derived from the shared quarterly public registry.
+const QUARTERLY_PUBLIC_KEY_BY_CATEGORY = Object.fromEntries(
   CTI_ADJUSTED_V2_PUBLIC_REGISTRY.map((entry) => [entry.category, entry.key]),
 ) as Record<(typeof CTI_ADJUSTED_V2_PUBLIC_CATEGORIES)[number], string>;
 
-const plan39InvalidMeasurement = (
+const unavailableEstimatedQuarterlyMeasurement = (
   key: string,
   reason: string,
   annualAnchorType: "estimated",
   inputFingerprint?: string,
-  plan40Metadata?: {
+  annualAnchorMetadata?: {
     baseYear: number;
     rawRange: { startYear: number; endYear: number };
     adoptedRange: { startYear: number; endYear: number };
@@ -75,12 +77,12 @@ const plan39InvalidMeasurement = (
   annualAnchorType,
   quarterlyDerived: true,
   model: "v2-bottom-up",
-  estimateVersion: "plan39-v2",
+  estimateVersion: COMPOSITION_ADJUSTED_V2_ESTIMATE_VERSION,
   inputFingerprint,
-  ...plan40Metadata,
+  ...annualAnchorMetadata,
 });
 
-type Plan39QuarterlyOptions = {
+type CompositionAdjustedQuarterlyOptions = {
   records: readonly CtiBasicRecord[];
   result: CtiAdjustedV2Result;
   officialQuarterly?: readonly OfficialNominalQuarter[] | null;
@@ -124,7 +126,7 @@ type OfficialQuarterMetadata = {
 
 const OFFICIAL_QUARTERLY_CATEGORY_KEYS = [
   "総合",
-  ...PLAN40_PUBLIC_EXPENSE_CATEGORIES.filter((category) => category !== "その他の消費支出"),
+  ...QUARTERLY_PUBLIC_EXPENSE_CATEGORIES.filter((category) => category !== "その他の消費支出"),
 ];
 const OFFICIAL_QUARTERLY_SOURCE_WORKBOOK =
   "data/source/official-cti-2025/cti-distribution-adjusted-000040499087.xlsx";
@@ -178,7 +180,7 @@ function loadOfficialNominalQuarterly(): OfficialNominalQuarter[] | null {
     const expectedUrl =
       "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499087";
     if (
-      metadata.schemaVersion !== "plan39-quarterly-nominal-v1" ||
+      resolveQuarterlyNominalArtifactSchema(metadata.schemaVersion) === null ||
       typeof metadata.revision !== "string" ||
       metadata.revision.trim() === "" ||
       metadata.source !== "総務省統計局 e-Stat CTI" ||
@@ -276,11 +278,11 @@ function loadOfficialNominalQuarterly(): OfficialNominalQuarter[] | null {
 }
 
 /** Builds historical nominal estimates through 2016 and direct official quarters from 2017. */
-export function buildPlan39V2CtiNominalRows({
+export function buildCompositionAdjustedQuarterlyRows({
   records,
   result,
   officialQuarterly,
-}: Plan39QuarterlyOptions): QuarterlyRow[] {
+}: CompositionAdjustedQuarterlyOptions): QuarterlyRow[] {
   const rowsByYear = new Map(result.rows.map((row) => [row.year, row]));
   const bySeriesMonth = new Map<number, Map<string, number>>();
   const duplicateYears = new Set<number>();
@@ -303,14 +305,14 @@ export function buildPlan39V2CtiNominalRows({
   }
 
   const byCategoryMonth = new Map<string, Map<string, number>>();
-  for (const category of PLAN40_PUBLIC_EXPENSE_CATEGORIES) {
-    const seriesIndex = PLAN39_CATEGORY_SERIES[category];
+  for (const category of QUARTERLY_PUBLIC_EXPENSE_CATEGORIES) {
+    const seriesIndex = BASIC_CTI_CATEGORY_SERIES[category];
     if (seriesIndex !== 11)
       // seriesIndex 2–10 were populated in the loop above; the residual series (11) is derived below.
       byCategoryMonth.set(category, bySeriesMonth.get(seriesIndex)!);
   }
   const residualValues = new Map<string, number>();
-  for (let year = PLAN39_START_YEAR; year <= PLAN39_END_YEAR; year += 1) {
+  for (let year = BASIC_CTI_START_YEAR; year <= BASIC_CTI_END_YEAR; year += 1) {
     for (let month = 1; month <= 12; month += 1) {
       const monthKey = `${year}-${String(month).padStart(2, "0")}`;
       const total = bySeriesMonth.get(1)?.get(monthKey);
@@ -335,11 +337,14 @@ export function buildPlan39V2CtiNominalRows({
   byCategoryMonth.set("その他の消費支出", residualValues);
 
   const output: QuarterlyRow[] = [];
-  for (let year = PLAN39_START_YEAR; year <= PLAN39_END_YEAR; year += 1) {
+  const annualAnchorInputValidation =
+    result.annualAnchorInputValidation ?? result.plan40InputValidation;
+  const annualAnchorInputMetadata = result.annualAnchorInputMetadata ?? result.plan40InputMetadata;
+  for (let year = BASIC_CTI_START_YEAR; year <= BASIC_CTI_END_YEAR; year += 1) {
     const annual = rowsByYear.get(year);
     for (let quarter = 1; quarter <= 4; quarter += 1) {
       const label = `${year}Q${quarter}`;
-      const candidates = PLAN40_PUBLIC_EXPENSE_CATEGORIES.map((category) => {
+      const candidates = QUARTERLY_PUBLIC_EXPENSE_CATEGORIES.map((category) => {
         const values = byCategoryMonth.get(category);
         const monthKeys = Array.from(
           { length: 12 },
@@ -365,7 +370,7 @@ export function buildPlan39V2CtiNominalRows({
             : category !== "その他の消費支出" &&
                 [...finiteYearValues, ...finiteQuarterValues].some((value) => value <= 0)
               ? "invalid_seasonal_input"
-              : result.plan40InputValidation && !result.plan40InputValidation.valid
+              : annualAnchorInputValidation && !annualAnchorInputValidation.valid
                 ? "v2_annual_anchor_unavailable"
                 : !result.publicationGate.accepted ||
                     annual?.status !== "available" ||
@@ -377,7 +382,7 @@ export function buildPlan39V2CtiNominalRows({
         if (invalid)
           return {
             category,
-            key: PLAN40_PUBLIC_KEY_BY_CATEGORY[category],
+            key: QUARTERLY_PUBLIC_KEY_BY_CATEGORY[category],
             value: null,
             reason: invalid,
           };
@@ -391,7 +396,7 @@ export function buildPlan39V2CtiNominalRows({
             : null;
         return {
           category,
-          key: PLAN40_PUBLIC_KEY_BY_CATEGORY[category],
+          key: QUARTERLY_PUBLIC_KEY_BY_CATEGORY[category],
           value: projected !== null && Number.isFinite(projected) ? projected : null,
           reason:
             projected !== null && Number.isFinite(projected)
@@ -405,12 +410,12 @@ export function buildPlan39V2CtiNominalRows({
       for (const candidate of candidates) {
         values[candidate.key] = commonReason ? null : candidate.value;
         measurements[candidate.key] = commonReason
-          ? plan39InvalidMeasurement(
+          ? unavailableEstimatedQuarterlyMeasurement(
               candidate.key,
               commonReason,
               "estimated",
               result.inputFingerprint,
-              result.plan40InputMetadata?.A,
+              annualAnchorInputMetadata?.A,
             )
           : {
               key: candidate.key,
@@ -428,9 +433,9 @@ export function buildPlan39V2CtiNominalRows({
               annualAnchorType: "estimated",
               quarterlyDerived: true,
               model: "v2-bottom-up",
-              estimateVersion: "plan39-v2",
+              estimateVersion: COMPOSITION_ADJUSTED_V2_ESTIMATE_VERSION,
               inputFingerprint: result.inputFingerprint,
-              ...result.plan40InputMetadata?.A,
+              ...annualAnchorInputMetadata?.A,
             };
       }
       const totalMonths = Array.from(
@@ -459,7 +464,7 @@ export function buildPlan39V2CtiNominalRows({
             )
           ? "insufficient_months"
           : !result.publicationGate.accepted ||
-              (result.plan40InputValidation && !result.plan40InputValidation.valid) ||
+              (annualAnchorInputValidation && !annualAnchorInputValidation.valid) ||
               annual?.status !== "available" ||
               typeof totalAnchor !== "number" ||
               !Number.isFinite(totalAnchor) ||
@@ -491,16 +496,16 @@ export function buildPlan39V2CtiNominalRows({
         annualAnchorType: "estimated",
         quarterlyDerived: true,
         model: "v2-bottom-up",
-        estimateVersion: "plan39-v2",
+        estimateVersion: COMPOSITION_ADJUSTED_V2_ESTIMATE_VERSION,
         inputFingerprint: result.inputFingerprint,
-        ...result.plan40InputMetadata?.A,
+        ...annualAnchorInputMetadata?.A,
       };
       output.push({
         label,
         quarter,
         年: year,
         年月: `${year}年${(quarter - 1) * 3 + 1}月`,
-        kind: "plan40-v2-cost-stack",
+        kind: "estimated-cost-stack-v2",
         ...values,
         measurements,
       });
@@ -512,7 +517,7 @@ export function buildPlan39V2CtiNominalRows({
     "e-Stat 公式Excel cti-distribution-adjusted-000040499087.xlsx / 総・四(原) / 000040499087";
   for (const official of officialRows) {
     const total = official.values.総合;
-    const componentCategories = PLAN40_PUBLIC_EXPENSE_CATEGORIES.filter(
+    const componentCategories = QUARTERLY_PUBLIC_EXPENSE_CATEGORIES.filter(
       (category) => category !== "その他の消費支出",
     );
     const componentValues = componentCategories.map((category) => official.values[category]);
@@ -554,8 +559,8 @@ export function buildPlan39V2CtiNominalRows({
       quarterlyDerived: false,
       baseYear: 2025,
     };
-    for (const category of PLAN40_PUBLIC_EXPENSE_CATEGORIES) {
-      const key = PLAN40_PUBLIC_KEY_BY_CATEGORY[category];
+    for (const category of QUARTERLY_PUBLIC_EXPENSE_CATEGORIES) {
+      const key = QUARTERLY_PUBLIC_KEY_BY_CATEGORY[category];
       const value = category === "その他の消費支出" ? residual : official.values[category];
       const valid =
         typeof value === "number" &&
@@ -599,7 +604,7 @@ export function buildPlan39V2CtiNominalRows({
       quarter: official.quarter,
       年: official.year,
       年月: `${official.year}年${(official.quarter - 1) * 3 + 1}月`,
-      kind: "plan40-official-quarterly",
+      kind: "official-quarterly-adjusted",
       ...values,
       measurements,
     });
@@ -609,8 +614,8 @@ export function buildPlan39V2CtiNominalRows({
     const label = "2017Q1";
     const values: Record<string, number | null> = {};
     const measurements: Record<string, SeriesMeasurement> = {};
-    for (const category of PLAN40_PUBLIC_EXPENSE_CATEGORIES) {
-      const key = PLAN40_PUBLIC_KEY_BY_CATEGORY[category];
+    for (const category of QUARTERLY_PUBLIC_EXPENSE_CATEGORIES) {
+      const key = QUARTERLY_PUBLIC_KEY_BY_CATEGORY[category];
       values[key] = null;
       measurements[key] = {
         key,
@@ -645,7 +650,7 @@ export function buildPlan39V2CtiNominalRows({
       quarter: 1,
       年: 2017,
       年月: "2017年1月",
-      kind: "plan40-official-quarterly",
+      kind: "official-quarterly-adjusted",
       ...values,
       measurements,
     });
@@ -653,7 +658,7 @@ export function buildPlan39V2CtiNominalRows({
   return output;
 }
 
-export function loadPlan39V2CtiNominalRows(
+export function loadCompositionAdjustedQuarterlyRows(
   result: CtiAdjustedV2Result,
   _runtimeCtiData?: readonly CpiData[],
   _runtimeMetadata?: unknown,
@@ -664,14 +669,14 @@ export function loadPlan39V2CtiNominalRows(
   } catch {
     // Official 2017+ quarters remain usable when the historical seasonal input fails.
   }
-  return buildPlan39V2CtiNominalRows({
+  return buildCompositionAdjustedQuarterlyRows({
     records,
     result,
     officialQuarterly: loadOfficialNominalQuarterly(),
   });
 }
 
-/** Merge quarterly rows for the same period, preferring direct official Plan40 observations by key. */
+/** Merge quarterly rows for the same period, preferring direct official adjusted observations by key. */
 export function coalesceQuarterlyRowsByPeriod(rows: readonly QuarterlyRow[]): QuarterlyRow[] {
   const byPeriod = new Map<string, QuarterlyRow>();
   for (const row of rows) {
@@ -682,8 +687,10 @@ export function coalesceQuarterlyRowsByPeriod(rows: readonly QuarterlyRow[]): Qu
       continue;
     }
 
-    const existingIsOfficial = existing.kind === "plan40-official-quarterly";
-    const incomingIsOfficial = row.kind === "plan40-official-quarterly";
+    const existingIsOfficial =
+      normalizeQuarterlyRowKind(existing.kind) === "official-quarterly-adjusted";
+    const incomingIsOfficial =
+      normalizeQuarterlyRowKind(row.kind) === "official-quarterly-adjusted";
     const preferred =
       incomingIsOfficial && !existingIsOfficial ? row : existingIsOfficial ? existing : row;
     const fallback = preferred === row ? existing : row;
@@ -814,8 +821,11 @@ export function computeQuarterlyAggregates(
   const realRows = getQuarterlyData(realKeys);
 
   nominalRows.push(
-    ...loadPlan39V2CtiNominalRows(
-      loadCtiAdjustedV2Estimate({ contract: "plan39", validatePlan40Inputs: true }),
+    ...loadCompositionAdjustedQuarterlyRows(
+      loadCtiAdjustedV2Estimate({
+        inputContract: "annual-public",
+        requireAnnualAnchorValidation: true,
+      }),
     ),
   );
   const coalescedNominalRows = coalesceQuarterlyRowsByPeriod(nominalRows);

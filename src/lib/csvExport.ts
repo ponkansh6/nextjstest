@@ -6,6 +6,8 @@
  */
 
 import { createMissingSeriesMeasurement } from "../types/chart";
+import { COMPOSITION_ADJUSTED_V2_ESTIMATE_VERSION } from "../../shared/cti-estimate-contract";
+import type { CompositionAdjustedV2EstimateVersion } from "../../shared/cti-estimate-contract";
 
 /** CSV の 1 セルをエスケープする。カンマ・引用符・改行を含む場合のみ引用符で囲む。 */
 export const escapeCsvCell = (value: unknown): string => {
@@ -21,7 +23,7 @@ export interface BuildCsvOptions {
   labelHeader?: string;
   /** 数値の小数桁数 */
   digits?: number;
-  /** Include Plan39 provenance columns even when metadata descriptors omit them. */
+  /** Include estimate provenance columns even when metadata descriptors omit them. */
   includeProvenanceMetadata?: boolean;
   /** Optional machine-readable metadata columns for measurement-aware exports. */
   metadata?: ReadonlyArray<{
@@ -40,7 +42,7 @@ export interface BuildCsvOptions {
     annualAnchorType?: "estimated" | "official";
     quarterlyDerived?: boolean;
     model?: "v2-bottom-up";
-    estimateVersion?: "plan39-v2";
+    estimateVersion?: CompositionAdjustedV2EstimateVersion;
     inputFingerprint?: string;
     sourceId?: string;
     statInfId?: string;
@@ -152,7 +154,8 @@ export const buildCsv = (
         const measurement = rowMeasurementValue(row, key);
         return (
           measurement?.inputFingerprint !== undefined ||
-          (measurement?.model === "v2-bottom-up" && measurement.estimateVersion === "plan39-v2")
+          (measurement?.model === "v2-bottom-up" &&
+            measurement.estimateVersion === COMPOSITION_ADJUSTED_V2_ESTIMATE_VERSION)
         );
       }),
     );

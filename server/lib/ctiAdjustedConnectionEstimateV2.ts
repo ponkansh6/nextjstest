@@ -1,4 +1,4 @@
-/** Plan39-v2 bottom-up connection estimate. */
+/** Composition-adjusted-v2 bottom-up connection estimate. */
 import {
   CTI_ADJUSTED_INPUT_CATEGORIES,
   CTI_ADJUSTED_MAJOR_CATEGORIES,
@@ -7,6 +7,12 @@ import {
   type CtiAdjustedAnnualRow,
   type CtiAdjustedMajorCategory,
 } from "./ctiAdjustedConnectionEstimate";
+import {
+  COMPOSITION_ADJUSTED_V2,
+  resolveAnnualInputContractOptions,
+  type AnnualInputContract,
+  type LegacyAnnualInputContract,
+} from "./ctiDomainContract";
 
 export const CTI_ADJUSTED_V2_OTHER_CATEGORY = "その他の消費支出" as const;
 export const CTI_ADJUSTED_V2_ESTIMATE_YEARS = Array.from({ length: 12 }, (_, i) => 2005 + i);
@@ -121,9 +127,13 @@ export type CtiAdjustedV2GammaCase = {
   reasons: readonly string[];
 };
 export type CtiAdjustedV2Options = {
-  /** Selects the input contract owned by the caller. Runtime Plan39 artifacts do not satisfy Plan40's wider annual-anchor contract. */
-  contract?: "plan39" | "plan40";
-  /** Run Plan40's strict artifact integrity checks without selecting its base-only model. */
+  /** Selects the data input boundary independently from schema/model versions. */
+  inputContract?: AnnualInputContract;
+  /** @deprecated Use inputContract during migration. */
+  contract?: LegacyAnnualInputContract;
+  /** Strict annual-anchor checks are independent from the selected input boundary. */
+  requireAnnualAnchorValidation?: boolean;
+  /** @deprecated Use requireAnnualAnchorValidation during migration. */
   validatePlan40Inputs?: boolean;
   calibrationYears?: readonly number[];
   estimateStartYear?: number;
@@ -165,7 +175,7 @@ export type CtiAdjustedV2PublicationGate = {
   warningReasonCodes: readonly string[];
   diagnostics: readonly string[];
 };
-export type CtiAdjustedV2Plan40InputValidation = {
+export type AnnualAnchorInputValidation = {
   valid: boolean;
   status: "available" | "invalid";
   reasonCodes: readonly string[];
@@ -174,14 +184,18 @@ export type CtiAdjustedV2Plan40InputValidation = {
   inputCategories: readonly string[];
   normalizedBaseYear: 2025 | null;
 };
-export type CtiAdjustedV2Plan40InputMetadata = {
+/** @deprecated Use AnnualAnchorInputValidation. */
+export type CtiAdjustedV2Plan40InputValidation = AnnualAnchorInputValidation;
+export type AnnualAnchorInputMetadata = {
   baseYear: number;
   rawRange: { startYear: number; endYear: number };
   adoptedRange: { startYear: number; endYear: number };
 };
+/** @deprecated Use AnnualAnchorInputMetadata. */
+export type CtiAdjustedV2Plan40InputMetadata = AnnualAnchorInputMetadata;
 export type CtiAdjustedV2Result = {
-  model: "v2-bottom-up";
-  estimateVersion: "plan39-v2";
+  model: typeof COMPOSITION_ADJUSTED_V2.model;
+  estimateVersion: typeof COMPOSITION_ADJUSTED_V2.estimateVersion;
   years: readonly number[];
   rows: readonly CtiAdjustedV2Row[];
   /** Private prehistory calculation requested by a consumer; not part of public estimate rows. */
@@ -242,9 +256,11 @@ export type CtiAdjustedV2Result = {
   >;
   /** Fingerprint for the exact annual input snapshot used by the loader. */
   inputFingerprint?: string;
-  /** Present for results produced by the Plan40-aware builder; optional for legacy fixtures. */
+  /** Compatibility result fields retained while consumers move to annualAnchor* names. */
   plan40InputValidation?: CtiAdjustedV2Plan40InputValidation;
   plan40InputMetadata?: Partial<Record<"B" | "A", CtiAdjustedV2Plan40InputMetadata>>;
+  annualAnchorInputValidation?: AnnualAnchorInputValidation;
+  annualAnchorInputMetadata?: Partial<Record<"B" | "A", AnnualAnchorInputMetadata>>;
   publicationGate: CtiAdjustedV2PublicationGate;
 };
 
@@ -267,7 +283,7 @@ const same = (a: readonly unknown[] | undefined, b: readonly unknown[]) =>
 const validateArtifact = (
   name: "B" | "A",
   input: CtiAdjustedAnnualInput | null | undefined,
-  strictPlan40 = false,
+  strictAnnualAnchor = false,
 ) => {
   const reasons: string[] = [],
     diagnostics: string[] = [],
@@ -310,7 +326,7 @@ const validateArtifact = (
   if (duplicateYears.length) reasons.push(`${name}:duplicate_year:${duplicateYears.join(",")}`);
   const raw = input.metadata?.rawRange,
     adopted = input.metadata?.adoptedRange;
-  const strictPlan40RangeYears = name === "A" ? [2017, 2025] : [2005, 2017, 2025];
+  const strictAnnualAnchorRangeYears = name === "A" ? [2017, 2025] : [2005, 2017, 2025];
   if (!raw) reasons.push(`${name}:missing_raw_range`);
   else if (!finite(raw.startYear) || !finite(raw.endYear))
     reasons.push(`${name}:non_finite_raw_range`);
@@ -319,8 +335,8 @@ const validateArtifact = (
     for (const year of observedYears)
       if (year < raw.startYear || year > raw.endYear)
         reasons.push(`${name}:raw_range_data_mismatch:${year}`);
-    if (strictPlan40)
-      for (const year of strictPlan40RangeYears)
+    if (strictAnnualAnchor)
+      for (const year of strictAnnualAnchorRangeYears)
         if (year < raw.startYear || year > raw.endYear)
           reasons.push(`${name}:raw_range_excludes_target:${year}`);
   }
@@ -332,8 +348,8 @@ const validateArtifact = (
     for (const year of observedYears)
       if (year < adopted.startYear || year > adopted.endYear)
         reasons.push(`${name}:adopted_range_data_mismatch:${year}`);
-    if (strictPlan40)
-      for (const year of strictPlan40RangeYears)
+    if (strictAnnualAnchor)
+      for (const year of strictAnnualAnchorRangeYears)
         if (year < adopted.startYear || year > adopted.endYear)
           reasons.push(`${name}:adopted_range_excludes_target:${year}`);
     if (raw && finite(raw.startYear) && finite(raw.endYear) && raw.startYear <= raw.endYear) {
@@ -351,7 +367,7 @@ const validateArtifact = (
     observedYears,
   };
 };
-const requiredPlan40Metadata = [
+const requiredAnnualAnchorMetadata = [
   "source",
   "artifact",
   "retrievedAt",
@@ -363,15 +379,15 @@ const requiredPlan40Metadata = [
 ] as const;
 
 /**
- * Plan40's annual-anchor contract.  This is intentionally fail-closed: the
+ * Quarterly input's annual-anchor contract. This is intentionally fail-closed: the
  * quarterly layer must not manufacture a category when provenance or an
  * annual anchor is incomplete.
  */
-export const validateCtiAdjustedV2Plan40Inputs = (
+export const validateAnnualAnchorInputs = (
   B: CtiAdjustedAnnualInput | null | undefined,
   A: CtiAdjustedAnnualInput | null | undefined,
   _L: CtiAdjustedAnnualInput | null | undefined = undefined,
-): CtiAdjustedV2Plan40InputValidation => {
+): AnnualAnchorInputValidation => {
   const targetYears = Array.from({ length: 13 }, (_, index) => 2005 + index);
   const inputCategories = [...CTI_ADJUSTED_INPUT_CATEGORIES];
   const validation = { B: validateArtifact("B", B, true), A: validateArtifact("A", A, true) };
@@ -383,7 +399,7 @@ export const validateCtiAdjustedV2Plan40Inputs = (
   ][]) {
     for (const reason of validation[name].reasons) reasons.add(reason);
     if (!input) continue;
-    for (const field of requiredPlan40Metadata) {
+    for (const field of requiredAnnualAnchorMetadata) {
       const value = input.metadata?.[field];
       if (typeof value !== "string" || value.trim() === "")
         reasons.add(`${name}:missing_metadata:${field}`);
@@ -426,6 +442,9 @@ export const validateCtiAdjustedV2Plan40Inputs = (
     normalizedBaseYear,
   };
 };
+
+/** @deprecated Use validateAnnualAnchorInputs. */
+export const validateCtiAdjustedV2Plan40Inputs = validateAnnualAnchorInputs;
 const deriveOther = (row: CtiAdjustedAnnualRow | undefined) => {
   const total = row?.values[CTI_ADJUSTED_TOTAL_CATEGORY];
   if (!positive(total)) return null;
@@ -523,8 +542,16 @@ export function buildCtiAdjustedV2Estimate(
   _L: CtiAdjustedAnnualInput | null | undefined = undefined,
   options: CtiAdjustedV2Options = {},
 ): CtiAdjustedV2Result {
-  const contract = options.contract ?? "plan39";
+  const inputContractResolution = resolveAnnualInputContractOptions(
+    options.inputContract,
+    options.contract,
+  );
+  const inputContract = inputContractResolution.contract;
+  const requireAnnualAnchorValidation =
+    options.requireAnnualAnchorValidation ?? options.validatePlan40Inputs;
+  const usesAnnualAnchorContract = inputContract === "quarterly-annual-anchor";
   const fixed: string[] = [];
+  if (inputContractResolution.reason) fixed.push(inputContractResolution.reason);
   if (options.connectionYear !== undefined && options.connectionYear !== 2017)
     fixed.push("plan39_connection_year_override_rejected");
   if (options.officialStartYear !== undefined && options.officialStartYear !== 2017)
@@ -539,20 +566,30 @@ export function buildCtiAdjustedV2Estimate(
   )
     fixed.push("plan39_calibration_years_override_rejected");
   const validation = {
-      B: validateArtifact("B", B, contract === "plan40" || options.validatePlan40Inputs === true),
-      A: validateArtifact("A", A, contract === "plan40" || options.validatePlan40Inputs === true),
+      B: validateArtifact(
+        "B",
+        B,
+        usesAnnualAnchorContract || requireAnnualAnchorValidation === true,
+      ),
+      A: validateArtifact(
+        "A",
+        A,
+        usesAnnualAnchorContract || requireAnnualAnchorValidation === true,
+      ),
     },
-    plan40InputValidation =
-      contract === "plan40" || options.validatePlan40Inputs === true
-        ? validateCtiAdjustedV2Plan40Inputs(B, A, _L)
+    annualAnchorInputValidation =
+      usesAnnualAnchorContract || requireAnnualAnchorValidation === true
+        ? validateAnnualAnchorInputs(B, A, _L)
         : undefined,
     diagnostics = [
       ...fixed,
       ...Object.values(validation).flatMap((v) => [...v.reasons, ...v.diagnostics]),
-      ...(plan40InputValidation?.reasonCodes ?? []),
-      ...(plan40InputValidation?.diagnostics ?? []),
+      ...(annualAnchorInputValidation?.reasonCodes ?? []),
+      ...(annualAnchorInputValidation?.diagnostics ?? []),
     ],
-    plan40EstimateInputsUsable = !plan40InputValidation || plan40InputValidation.valid,
+    annualAnchorInputsUsable =
+      inputContractResolution.valid &&
+      (!annualAnchorInputValidation || annualAnchorInputValidation.valid),
     bRows = rowMap(B),
     aRows = rowMap(A),
     otherDerived: Record<number, number | null> = {},
@@ -641,7 +678,7 @@ export function buildCtiAdjustedV2Estimate(
   };
   let endpointGammaReconciliationError: number | null = null;
   let compositionAvailable =
-    contract === "plan40" ||
+    usesAnnualAnchorContract ||
     (composition !== undefined &&
       positive(pi17Calibration) &&
       positive(pi25Calibration) &&
@@ -690,7 +727,7 @@ export function buildCtiAdjustedV2Estimate(
     const values = emptyValues();
     let valid = false;
     let reason: string | null = null;
-    if (plan40EstimateInputsUsable && y >= 2017) {
+    if (annualAnchorInputsUsable && y >= 2017) {
       for (const c of CTI_ADJUSTED_INPUT_CATEGORIES)
         values[c] = finite(aRows.get(y)?.values[c]) ? aRows.get(y)!.values[c]! : null;
       values[CTI_ADJUSTED_V2_OTHER_CATEGORY] = officialOther[y];
@@ -700,9 +737,9 @@ export function buildCtiAdjustedV2Estimate(
         positive(values[CTI_ADJUSTED_V2_OTHER_CATEGORY]);
       reason = valid ? null : "official_a_or_official_other_unavailable";
     } else if (
-      plan40EstimateInputsUsable &&
+      annualAnchorInputsUsable &&
       ratio2017 !== null &&
-      (contract === "plan40" || compositionAvailable) &&
+      (usesAnnualAnchorContract || compositionAvailable) &&
       otherBeta.status === "available" &&
       !fixed.length &&
       validation.B.valid &&
@@ -713,12 +750,11 @@ export function buildCtiAdjustedV2Estimate(
           pi = historicalPi[y],
           deltaPi = positive(pi) && positive(historicalPi[2017]) ? pi! - historicalPi[2017]! : null,
           gamma = compositionGamma[c];
-        const corrected =
-          contract === "plan40"
-            ? base
-            : positive(base) && finite(deltaPi) && finite(gamma)
-              ? base + gamma * deltaPi
-              : null;
+        const corrected = usesAnnualAnchorContract
+          ? base
+          : positive(base) && finite(deltaPi) && finite(gamma)
+            ? base + gamma * deltaPi
+            : null;
         values[c] = positive(corrected) ? corrected : null;
       }
       values[CTI_ADJUSTED_TOTAL_CATEGORY] =
@@ -739,7 +775,7 @@ export function buildCtiAdjustedV2Estimate(
         positive(values[CTI_ADJUSTED_V2_OTHER_CATEGORY]);
       reason = valid ? null : "insufficient_data_for_bottom_up_estimate";
     } else
-      reason = plan40EstimateInputsUsable
+      reason = annualAnchorInputsUsable
         ? "insufficient_data_for_bottom_up_estimate"
         : "plan40_input_contract_invalid";
     const row = {
@@ -974,7 +1010,7 @@ export function buildCtiAdjustedV2Estimate(
   if (!finiteG) diagnostics.push("benchmark_g_invalid");
   const invalidInput = Object.values(validation).some((v) => !v.valid),
     status =
-      fixed.length || invalidInput || plan40InputValidation?.valid === false
+      fixed.length || invalidInput || annualAnchorInputValidation?.valid === false
         ? "invalid"
         : diagnostics.some((item) => item === "benchmark_g_invalid")
           ? "invalid"
@@ -1014,17 +1050,17 @@ export function buildCtiAdjustedV2Estimate(
   }
   if (!validMinObs) blockingReasonCodes.add("invalid_min_beta_observations");
   if (invalidInput) blockingReasonCodes.add("invalid_observed_artifact");
-  if (plan40InputValidation?.valid === false)
+  if (annualAnchorInputValidation?.valid === false)
     blockingReasonCodes.add("plan40_input_contract_invalid");
-  if (contract === "plan39" && !compositionAvailable)
+  if (!usesAnnualAnchorContract && !compositionAvailable)
     blockingReasonCodes.add("household_composition_correction_unavailable");
   // The value above can only be zero under the same ordered-sum invariant;
   // this remains a future regression gate rather than a user-input outcome.
   /* v8 ignore if -- @preserve */
-  if (contract === "plan39" && totalReconciliationMaximumAbsoluteError > 1e-9)
+  if (!usesAnnualAnchorContract && totalReconciliationMaximumAbsoluteError > 1e-9)
     blockingReasonCodes.add("household_composition_total_reconciliation_failed");
   if (
-    contract === "plan39" &&
+    !usesAnnualAnchorContract &&
     (!finite(endpointGammaReconciliationError) || endpointGammaReconciliationError > 1e-8)
   )
     blockingReasonCodes.add("household_composition_endpoint_gamma_reconciliation_failed");
@@ -1066,8 +1102,8 @@ export function buildCtiAdjustedV2Estimate(
   const gateDiagnostics = [
     ...fixed,
     ...Object.values(validation).flatMap((v) => [...v.reasons, ...v.diagnostics]),
-    ...(plan40InputValidation?.reasonCodes ?? []),
-    ...(plan40InputValidation?.diagnostics ?? []),
+    ...(annualAnchorInputValidation?.reasonCodes ?? []),
+    ...(annualAnchorInputValidation?.diagnostics ?? []),
     ...warningDiagnostics,
     ...(gStatus === "invalid" ? ["benchmark_g_invalid"] : []),
     // rolling_loo_backtest_incomplete is inserted before this list and never
@@ -1085,7 +1121,7 @@ export function buildCtiAdjustedV2Estimate(
     const canEstimate =
       isValidRequest &&
       compositionAvailable &&
-      contract === "plan39" &&
+      !usesAnnualAnchorContract &&
       ratio2017 !== null &&
       otherBeta.status === "available" &&
       !fixed.length &&
@@ -1109,34 +1145,44 @@ export function buildCtiAdjustedV2Estimate(
         : null;
     prehistoryAnchors = { [prehistory.year]: anchor };
   }
+  const annualAnchorInputMetadata =
+    usesAnnualAnchorContract || requireAnnualAnchorValidation === true
+      ? (Object.fromEntries(
+          (["B", "A"] as const).flatMap((name) => {
+            const metadata = { B, A }[name]?.metadata;
+            return metadata
+              ? [
+                  [
+                    name,
+                    {
+                      baseYear: metadata.baseYear,
+                      rawRange: metadata.rawRange,
+                      adoptedRange: metadata.adoptedRange,
+                    },
+                  ],
+                ]
+              : [];
+          }),
+        ) as CtiAdjustedV2Result["annualAnchorInputMetadata"])
+      : undefined;
   return {
-    model: "v2-bottom-up",
-    estimateVersion: "plan39-v2",
+    model: COMPOSITION_ADJUSTED_V2.model,
+    estimateVersion: COMPOSITION_ADJUSTED_V2.estimateVersion,
     years: CTI_ADJUSTED_V2_YEARS,
     rows,
     ...(prehistoryAnchors ? { prehistoryAnchors } : {}),
     categories: series,
     artifactValidation: validation,
-    ...(plan40InputValidation ? { plan40InputValidation } : {}),
-    ...(contract === "plan40" || options.validatePlan40Inputs === true
+    ...(annualAnchorInputValidation
       ? {
-          plan40InputMetadata: Object.fromEntries(
-            (["B", "A"] as const).flatMap((name) => {
-              const metadata = { B, A }[name]?.metadata;
-              return metadata
-                ? [
-                    [
-                      name,
-                      {
-                        baseYear: metadata.baseYear,
-                        rawRange: metadata.rawRange,
-                        adoptedRange: metadata.adoptedRange,
-                      },
-                    ],
-                  ]
-                : [];
-            }),
-          ) as CtiAdjustedV2Result["plan40InputMetadata"],
+          plan40InputValidation: annualAnchorInputValidation,
+          annualAnchorInputValidation,
+        }
+      : {}),
+    ...(annualAnchorInputMetadata
+      ? {
+          plan40InputMetadata: annualAnchorInputMetadata,
+          annualAnchorInputMetadata,
         }
       : {}),
     other: {
@@ -1177,7 +1223,7 @@ export function buildCtiAdjustedV2Estimate(
       generationSource: "diagnostic-only",
     },
     householdComposition: {
-      status: compositionAvailable && contract === "plan39" ? "available" : "unavailable",
+      status: compositionAvailable && !usesAnnualAnchorContract ? "available" : "unavailable",
       method: "endpoint-calibrated-provisional",
       calibrationYears: [2017, 2025],
       calibrationPiDelta,

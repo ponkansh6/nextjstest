@@ -8,7 +8,7 @@
 
 shared pureのscaleSupportSeriesは入力行を非破壊に扱い、欠損/NaN/±Infinity/対象外を有限0へ捏造せず保持する。serverのvoid applySupportSeriesScalingとclient compatibility adapterは旧公開挙動の0埋め/value||0を保持し、年次normalizerはpositive finite single value以外をfail-closedとする。共有QuarterlyRowはsrc/types/chart.tsに定義する。
 
-`app/page.tsx`がRSCの入口、`app/components/CpiChart.tsx`がClient側composition root。libはadapter・定数・URL変換・計算、hooksはReact stateとブラウザ副作用の境界を担当する。`lib/math/supportSeries.ts`はserver/client共通のpure support-series計算を提供し、server配下へ依存しない。共有の`QuarterlyRow`は`src/types/chart.ts`に定義し、`quarterlyPublicProjection.ts`はこの型を使うclient-safeなPlan40公開projectionとしてserver配下を参照しない。GDP loaderおよびPlan38専用四半期projectionは退役済みで、現在のClient計算や公開projectionの依存ではない。公開JSONのキー、丸め、期間ラベル、欠損値、SSR時の不変条件はprojection境界で維持する。主要な分割点は`cpiChartConfig.ts`、`useCpiChartDisplayData.ts`、`useCagrState.ts`、`useSectionNavigation.ts`、`urlState.ts`、`math/supportSeries.ts`。
+`app/page.tsx`がRSCの入口、`app/components/CpiChart.tsx`がClient側composition root。libはadapter・定数・URL変換・計算、hooksはReact stateとブラウザ副作用の境界を担当する。`lib/math/supportSeries.ts`はserver/client共通のpure support-series計算を提供し、server配下へ依存しない。共有の`QuarterlyRow`は`src/types/chart.ts`に定義し、`quarterlyPublicProjection.ts`はこの型を使うclient-safeな四半期公開projectionとしてserver配下を参照しない。年次・四半期CTIの内部識別子は計算/入力境界の名前を使い、過去schema・row-kindの文字列はreader境界でのみ解決する。GDP loaderおよび専用四半期projectionは退役済みで、現在のClient計算や公開projectionの依存ではない。公開JSONのキー、丸め、期間ラベル、欠損値、SSR時の不変条件はprojection境界で維持する。主要な分割点は`cpiChartConfig.ts`、`useCpiChartDisplayData.ts`、`useCagrState.ts`、`useSectionNavigation.ts`、`urlState.ts`、`math/supportSeries.ts`。
 
 ## Flow
 

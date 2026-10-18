@@ -25,6 +25,7 @@ import {
   CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY,
   CONSUMPTION_TOTAL_12MA_KEY,
 } from "../../lib/chartConstants";
+import { QUARTERLY_PUBLIC_NOMINAL_KEYS } from "../../lib/quarterlyPublicProjection";
 import { formatCpiTooltipTotal, formatCpiTooltipValue } from "./CustomTooltip";
 import { useChartTooltipController } from "./charts/useChartTooltipProps";
 import { LazyMount } from "./LazyMount";
@@ -176,6 +177,10 @@ export function CpiChartSections({
       const sourceIndex = keys.indexOf(key);
       return {
         ...measurementMetadata,
+        ...(QUARTERLY_PUBLIC_NOMINAL_KEYS.some((quarterlyKey) => quarterlyKey === key) &&
+        measurementMetadata?.aggregation === undefined
+          ? { aggregation: "composition_adjusted_quarterly_projection" }
+          : {}),
         key,
         label: getSpendingPresentationLabel(key) ?? getLegendLabel(key),
         color:

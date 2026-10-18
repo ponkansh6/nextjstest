@@ -17,10 +17,10 @@ import {
   toQuarterlyView,
 } from "../../server/lib/view-models/dashboard";
 import {
-  buildPlan39V2CtiNominalRows,
+  buildCompositionAdjustedQuarterlyRows,
   coalesceQuarterlyRowsByPeriod,
   computeQuarterlyAggregates,
-  loadPlan39V2CtiNominalRows,
+  loadCompositionAdjustedQuarterlyRows,
 } from "../../server/lib/view-models/quarterlyAggregation";
 import { buildCtiFilePaths } from "../../server/lib/dataIo";
 import { deriveQuarterlyRealRows } from "../../server/lib/view-models/quarterlyProjection";
@@ -103,7 +103,7 @@ function makePlan39Result(): CtiAdjustedV2Result {
     benchmarkG: {},
     benchmarkGDiagnostics: {} as CtiAdjustedV2Result["benchmarkGDiagnostics"],
     artifactValidation: {} as CtiAdjustedV2Result["artifactValidation"],
-    plan40InputValidation: {
+    annualAnchorInputValidation: {
       valid: true,
       status: "available",
       reasonCodes: [],
@@ -270,7 +270,7 @@ describe("server view-model boundary coverage", () => {
     const result = makePlan39Result();
     const records = makePlan39Records();
     const duplicated = [...records, { ...records[0]! }];
-    const duplicateRows = buildPlan39V2CtiNominalRows({ records: duplicated, result });
+    const duplicateRows = buildCompositionAdjustedQuarterlyRows({ records: duplicated, result });
     expect(
       duplicateRows.find((row) => row.label === "2005Q1")?.measurements?.[
         CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY.食料
@@ -281,7 +281,10 @@ describe("server view-model boundary coverage", () => {
     invalidSeasonality.find(
       (record) => record.seriesIndex === 2 && record.month === "2005-01",
     )!.rawValue = 0;
-    const invalidRows = buildPlan39V2CtiNominalRows({ records: invalidSeasonality, result });
+    const invalidRows = buildCompositionAdjustedQuarterlyRows({
+      records: invalidSeasonality,
+      result,
+    });
     expect(
       invalidRows.find((row) => row.label === "2005Q1")?.measurements?.[
         CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY.食料
@@ -289,8 +292,11 @@ describe("server view-model boundary coverage", () => {
     ).toMatchObject({ status: "unavailable", reason: "invalid_seasonal_input" });
 
     const rejectedInputResult = makePlan39Result();
-    rejectedInputResult.plan40InputValidation!.valid = false;
-    const rejectedInputRows = buildPlan39V2CtiNominalRows({ records, result: rejectedInputResult });
+    rejectedInputResult.annualAnchorInputValidation!.valid = false;
+    const rejectedInputRows = buildCompositionAdjustedQuarterlyRows({
+      records,
+      result: rejectedInputResult,
+    });
     expect(
       rejectedInputRows.find((row) => row.label === "2005Q1")?.measurements?.[
         CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY.食料
@@ -299,14 +305,14 @@ describe("server view-model boundary coverage", () => {
 
     const rejectedResult = makePlan39Result();
     rejectedResult.publicationGate.accepted = false;
-    const rejectedRows = buildPlan39V2CtiNominalRows({ records, result: rejectedResult });
+    const rejectedRows = buildCompositionAdjustedQuarterlyRows({ records, result: rejectedResult });
     expect(
       rejectedRows.find((row) => row.label === "2005Q1")?.measurements?.[
         CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY.食料
       ],
     ).toMatchObject({ status: "unavailable", reason: "v2_annual_anchor_unavailable" });
 
-    const unavailableOfficial = buildPlan39V2CtiNominalRows({
+    const unavailableOfficial = buildCompositionAdjustedQuarterlyRows({
       records,
       result,
       officialQuarterly: null,
@@ -331,7 +337,11 @@ describe("server view-model boundary coverage", () => {
         ]),
       },
     ];
-    const officialRows = buildPlan39V2CtiNominalRows({ records, result, officialQuarterly });
+    const officialRows = buildCompositionAdjustedQuarterlyRows({
+      records,
+      result,
+      officialQuarterly,
+    });
     const official = officialRows.find((row) => row.label === "2017Q1")!;
     expect(official[CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY.食料]).toBeNull();
     expect(official[CTI_NOMINAL_DERIVED_TOTAL_KEY]).toBe(0);
@@ -347,7 +357,7 @@ describe("server view-model boundary coverage", () => {
         ]),
       },
     ];
-    const missingOfficial = buildPlan39V2CtiNominalRows({
+    const missingOfficial = buildCompositionAdjustedQuarterlyRows({
       records,
       result,
       officialQuarterly: missingOfficialValues,
@@ -366,7 +376,7 @@ describe("server view-model boundary coverage", () => {
       )!;
       if (mutation === "is-missing") foodMonth.isMissing = true;
       else foodMonth.rawValue = Number.NaN;
-      const unavailable = buildPlan39V2CtiNominalRows({ records: brokenRecords, result });
+      const unavailable = buildCompositionAdjustedQuarterlyRows({ records: brokenRecords, result });
       expect(
         unavailable.find((row) => row.label === "2005Q1")?.measurements?.[
           CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY.食料
@@ -385,7 +395,7 @@ describe("server view-model boundary coverage", () => {
       return originalReadFileSync(path, options as never);
     });
     try {
-      const fallback = loadPlan39V2CtiNominalRows(makePlan39Result());
+      const fallback = loadCompositionAdjustedQuarterlyRows(makePlan39Result());
       expect(
         fallback.find((row) => row.label === "2017Q1")?.measurements?.[
           CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY.食料
@@ -409,7 +419,7 @@ describe("server view-model boundary coverage", () => {
       return originalReadFileSync(path, options as never);
     });
     try {
-      const fallback = loadPlan39V2CtiNominalRows(makePlan39Result());
+      const fallback = loadCompositionAdjustedQuarterlyRows(makePlan39Result());
       expect(
         fallback.find((row) => row.label === "2017Q1")?.measurements?.[
           CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY.食料
@@ -508,7 +518,7 @@ describe("server view-model boundary coverage", () => {
     for (const parsed of cases) {
       const parseSpy = vi.spyOn(Papa, "parse").mockReturnValue(parsed as never);
       try {
-        const fallback = loadPlan39V2CtiNominalRows(makePlan39Result());
+        const fallback = loadCompositionAdjustedQuarterlyRows(makePlan39Result());
         expect(
           fallback.find((row) => row.label === "2017Q1")?.measurements?.[
             CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY.食料
@@ -566,7 +576,7 @@ describe("server view-model boundary coverage", () => {
         ? { ...record, rawValue: Number.MAX_VALUE }
         : record,
     );
-    const overflowTotal = buildPlan39V2CtiNominalRows({
+    const overflowTotal = buildCompositionAdjustedQuarterlyRows({
       records: overflowRecords,
       result: overflowResult,
     }).find((row) => row.label === "2005Q1")!;
@@ -586,7 +596,7 @@ describe("server view-model boundary coverage", () => {
         ]),
       },
     ];
-    const officialResidual = buildPlan39V2CtiNominalRows({
+    const officialResidual = buildCompositionAdjustedQuarterlyRows({
       records: makePlan39Records(),
       result: makePlan39Result(),
       officialQuarterly: officialWithMissingComponent,

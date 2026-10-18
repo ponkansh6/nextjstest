@@ -6,6 +6,7 @@ import { type SeriesMetadata } from "../../lib/chartConstants";
 import {
   createMissingSeriesMeasurement,
   getMeasurementNote,
+  isCompositionAdjustedMeasurement,
   type SeriesMeasurement,
 } from "../../types/chart";
 
@@ -44,9 +45,7 @@ export function DataTablesSection({ tables }: DataTablesSectionProps) {
       };
     }
     return descriptor &&
-      (descriptor.frequency === "quarterly" ||
-        descriptor.estimateVersion === "plan39-v2" ||
-        key.startsWith("CTIミクロ調整系列（"))
+      (descriptor.frequency === "quarterly" || isCompositionAdjustedMeasurement(descriptor))
       ? createMissingSeriesMeasurement(key, descriptor)
       : undefined;
   };

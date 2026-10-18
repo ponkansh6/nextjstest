@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import Papa from "papaparse";
+import { COMPOSITION_ADJUSTED_V2_ESTIMATE_VERSION } from "../../../shared/cti-estimate-contract";
 import {
   buildCtiAdjustedConnectionEstimate,
   CTI_ADJUSTED_INPUT_CATEGORIES,
@@ -20,16 +21,27 @@ import {
   type CtiAdjustedRollingLooEvidence,
 } from "../ctiAdjustedPublicationGate";
 import { buildCtiAdjustedRollingLooBacktest } from "../ctiAdjustedRollingBacktest";
+import {
+  haveMatchingAnnualArtifactSchemas,
+  resolveAnnualInputContractOptions,
+  resolveAnnualArtifactSchema,
+  type AnnualInputContract,
+  type LegacyAnnualInputContract,
+} from "../ctiDomainContract";
 
 export type CtiAdjustedArtifactPaths = Partial<Record<"B" | "A" | "L", string>>;
 export type CtiAdjustedLoaderOptions = {
   artifactRoot?: string;
   paths?: CtiAdjustedArtifactPaths;
-  /** Select the annual estimate contract used by the caller. */
-  contract?: "plan39" | "plan40";
-  /** Preserve strict annual source integrity checks independently of the estimate contract. */
+  /** Select the input boundary, independently from schema and model versions. */
+  inputContract?: AnnualInputContract;
+  /** @deprecated Use inputContract during the migration period. */
+  contract?: LegacyAnnualInputContract;
+  /** Strict annual-anchor validation is independent from the input boundary. */
+  requireAnnualAnchorValidation?: boolean;
+  /** @deprecated Use requireAnnualAnchorValidation during the migration period. */
   validatePlan40Inputs?: boolean;
-  /** Private prehistory extension for Plan49; it is excluded from public rows/years. */
+  /** Private monthly prehistory extension; it is excluded from public rows/years. */
   prehistoryComposition?: { year: number; pi2Plus: number };
 };
 
@@ -292,12 +304,17 @@ function validateMetadata(
   )
     return false;
   if (extended.statisticalCode !== STATISTICAL_CODE) return false;
+  if (resolveAnnualArtifactSchema(extended.schemaVersion) === null) return false;
   if ((kind === "B" || kind === "A") && extended.valueType !== NOMINAL_ANNUAL_VALUE_TYPE)
     return false;
   const hash = extended.sha256 ?? extended.csvSha256 ?? extended.hash;
   if (!hash || !HASH_PATTERN.test(hash)) return false;
   const manifestArtifact = manifest?.artifacts[kind];
-  if (manifest && extended.schemaVersion !== manifest.schemaVersion) return false;
+  if (
+    manifest &&
+    !haveMatchingAnnualArtifactSchemas(extended.schemaVersion, manifest.schemaVersion)
+  )
+    return false;
   const expectedRevision = manifestArtifact?.revision ?? manifest?.revision;
   if (expectedRevision && extended.revision !== expectedRevision) return false;
   if (manifestArtifact?.statInfId && extended.statInfId !== manifestArtifact.statInfId)
@@ -308,7 +325,7 @@ function validateMetadata(
   if (manifestArtifact?.sourceUrl && metadataSourceUrl !== manifestArtifact.sourceUrl) return false;
   if (
     manifestArtifact?.schemaVersion !== undefined &&
-    extended.schemaVersion !== manifestArtifact.schemaVersion
+    !haveMatchingAnnualArtifactSchemas(extended.schemaVersion, manifestArtifact.schemaVersion)
   )
     return false;
   // expectedRevision above already uses the artifact revision when present.
@@ -454,30 +471,46 @@ export function loadCtiAdjustedConnectionEstimate(
   };
 }
 
-/** Load the validated annual inputs and build the Plan39-v2 public candidate. */
+/** Load validated annual inputs and build the composition-adjusted-v2 candidate. */
 export function loadCtiAdjustedV2Estimate(
   options: CtiAdjustedLoaderOptions = {},
 ): CtiAdjustedV2Result {
+  const inputContractResolution = resolveAnnualInputContractOptions(
+    options.inputContract,
+    options.contract,
+  );
+  const requireAnnualAnchorValidation =
+    options.requireAnnualAnchorValidation ?? options.validatePlan40Inputs;
+  if (!inputContractResolution.valid) {
+    return buildCtiAdjustedV2Estimate(null, null, undefined, {
+      inputContract: options.inputContract,
+      contract: options.contract,
+      requireAnnualAnchorValidation,
+      prehistoryComposition: options.prehistoryComposition,
+    });
+  }
+  const inputContract = inputContractResolution.contract;
   const inputs = loadCtiAdjustedInputs(options);
-  const plan40ExpectedInputFingerprint =
-    options.contract === "plan40" ? fingerprintLoadedCtiAdjustedInputs(inputs) : null;
-  const plan39ExpectedInputFingerprint =
-    options.contract === "plan40" ? null : inputs.inputFingerprint;
+  const quarterlyAnchorInputFingerprint =
+    inputContract === "quarterly-annual-anchor" ? fingerprintLoadedCtiAdjustedInputs(inputs) : null;
+  const annualPublicInputFingerprint =
+    inputContract === "quarterly-annual-anchor" ? null : inputs.inputFingerprint;
   const result = {
     ...buildCtiAdjustedV2Estimate(inputs.B, inputs.A, inputs.L, {
-      contract: options.contract ?? "plan39",
-      validatePlan40Inputs: options.validatePlan40Inputs,
+      inputContract,
+      contract: options.contract,
+      requireAnnualAnchorValidation,
       householdComposition: inputs.householdComposition ?? undefined,
       prehistoryComposition: options.prehistoryComposition,
     }),
-    ...(plan40ExpectedInputFingerprint || plan39ExpectedInputFingerprint
-      ? { inputFingerprint: plan40ExpectedInputFingerprint ?? plan39ExpectedInputFingerprint! }
+    ...(quarterlyAnchorInputFingerprint || annualPublicInputFingerprint
+      ? { inputFingerprint: quarterlyAnchorInputFingerprint ?? annualPublicInputFingerprint! }
       : {}),
   };
-  if (options.contract === "plan40") {
-    // Plan40 has its own publication blockers, but rolling/LOO evidence is
-    // shared. Recompute it from the exact loaded B/A inputs; never reuse a
-    // stored Plan39 analysis report as Plan40 evidence.
+  if (inputContract === "quarterly-annual-anchor") {
+    // The quarterly input boundary has its own publication blockers, but
+    // rolling/LOO evidence is shared. Recompute it from the exact loaded B/A
+    // inputs; do not use an analysis report with a different contract.
     const canBuildEvidence =
       !inputs.manifestInvalid &&
       inputs.missingKinds.length === 0 &&
@@ -501,8 +534,8 @@ export function loadCtiAdjustedV2Estimate(
       rollingLoo,
       evidenceSchema: CTI_ADJUSTED_PUBLICATION_GATE_SCHEMA,
       evidenceInputFingerprint,
-      // This branch is entered only for Plan40, which computed a fingerprint above.
-      expectedInputFingerprint: plan40ExpectedInputFingerprint!,
+      // This branch is entered only after computing the quarterly-input fingerprint.
+      expectedInputFingerprint: quarterlyAnchorInputFingerprint!,
     });
     return {
       ...result,
@@ -519,7 +552,7 @@ export function loadCtiAdjustedV2Estimate(
       },
     };
   }
-  const analysis = loadMatchingPlan39Analysis(inputs.artifactRoot, plan39ExpectedInputFingerprint);
+  const analysis = loadMatchingAnnualAnalysis(inputs.artifactRoot, annualPublicInputFingerprint);
   let rollingLoo = analysis?.rollingLoo;
   let evidenceSchema = analysis?.v2?.publicationGate?.rollingLooEvidence?.schema;
   let evidenceInputFingerprint = analysis?.inputFingerprint;
@@ -539,8 +572,8 @@ export function loadCtiAdjustedV2Estimate(
           inputs.artifactRoot,
         );
         evidenceInputFingerprint =
-          fingerprintAfterEvidenceBuild === plan39ExpectedInputFingerprint
-            ? (plan39ExpectedInputFingerprint ?? undefined)
+          fingerprintAfterEvidenceBuild === annualPublicInputFingerprint
+            ? (annualPublicInputFingerprint ?? undefined)
             : undefined;
       } catch {
         // Missing or invalid evidence remains a publication blocker.
@@ -585,8 +618,8 @@ type LoadedCtiAdjustedInputs = {
   inputFingerprint: string | null;
 };
 
-type Plan39AnalysisArtifact = { path?: string; sha256?: string };
-type Plan39Analysis = {
+type AnnualAnalysisArtifact = { path?: string; sha256?: string };
+type AnnualAnalysis = {
   schemaVersion?: string;
   inputFingerprint?: string;
   rollingLoo?: CtiAdjustedRollingLooEvidence;
@@ -595,13 +628,13 @@ type Plan39Analysis = {
     version?: string;
     publicationGate?: { rollingLooEvidence?: { schema?: unknown } };
   };
-  inputs?: { artifacts?: Partial<Record<"B" | "A" | "L", Plan39AnalysisArtifact>> };
+  inputs?: { artifacts?: Partial<Record<"B" | "A" | "L", AnnualAnalysisArtifact>> };
 };
 
-function loadMatchingPlan39Analysis(
+function loadMatchingAnnualAnalysis(
   artifactRoot: string,
   expectedFingerprint: string | null = deriveCtiAdjustedInputFingerprint(artifactRoot),
-): Plan39Analysis | null {
+): AnnualAnalysis | null {
   const explicit = process.env.CTI_ADJUSTED_ANALYSIS_FILE?.trim();
   const resultsRoot =
     process.env.CTI_ADJUSTED_ANALYSIS_ROOT?.trim() ||
@@ -619,13 +652,13 @@ function loadMatchingPlan39Analysis(
   if (!expectedFingerprint) return null;
   for (const file of files) {
     try {
-      const value = readJson(file) as Plan39Analysis;
+      const value = readJson(file) as AnnualAnalysis;
       if (
         value?.schemaVersion !== "plan39-analysis-v1" ||
         value.inputFingerprint !== expectedFingerprint ||
         !value.rollingLoo ||
         value.v2?.model !== "v2-bottom-up" ||
-        value.v2?.version !== "plan39-v2" ||
+        value.v2?.version !== COMPOSITION_ADJUSTED_V2_ESTIMATE_VERSION ||
         !value.v2?.publicationGate
       )
         continue;
@@ -650,7 +683,7 @@ function loadMatchingPlan39Analysis(
   return null;
 }
 
-/** Hash the same serialized snapshot parts used by saved Plan39 analysis artifacts. */
+/** Hash the serialized snapshot parts used by saved annual analysis artifacts. */
 function fingerprintCtiAdjustedSnapshot(
   manifestBytes: Buffer,
   auditBytes: Buffer,
@@ -674,7 +707,7 @@ function fingerprintCtiAdjustedSnapshot(
     .digest("hex")}`;
 }
 
-/** Canonical current-file fingerprint used to guard the loaded Plan39 snapshot. */
+/** Canonical current-file fingerprint used to guard the loaded annual snapshot. */
 function deriveCtiAdjustedInputFingerprint(artifactRoot: string): string | null {
   try {
     const root = path.resolve(artifactRoot);
@@ -706,7 +739,7 @@ function deriveCtiAdjustedInputFingerprint(artifactRoot: string): string | null 
   }
 }
 
-/** Fingerprint the exact validated in-memory inputs consumed by both Plan40 builders. */
+/** Fingerprint the exact validated in-memory inputs consumed by annual and quarterly builders. */
 function fingerprintLoadedCtiAdjustedInputs(inputs: LoadedCtiAdjustedInputs): string {
   // These values are freshly built from parsed CSV/JSON data and cannot contain
   // cycles or BigInt; this object literal therefore always serializes to text.
@@ -736,7 +769,7 @@ export function loadCtiAdjustedInputs(
   try {
     auditBytes = fs.readFileSync(path.join(root, "audit.json"));
   } catch {
-    // The Plan39 snapshot fingerprint remains unavailable without its audit input.
+    // The saved annual-analysis fingerprint remains unavailable without its audit input.
   }
   const missingKinds =
     manifestInvalid || !manifest

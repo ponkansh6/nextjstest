@@ -875,7 +875,7 @@ describe("Earnings Data Integrity", () => {
 
       const estimate = loadCtiAdjustedV2Estimate({
         contract: "plan39",
-        validatePlan40Inputs: true,
+        requireAnnualAnchorValidation: true,
       });
       sharedGateEstimate = estimate;
       annualAnchors = new Map(
@@ -939,7 +939,7 @@ describe("Earnings Data Integrity", () => {
     });
 
     it("Plan49 diagnostic: Plan40 input validation is valid", () => {
-      expect(sharedGateEstimate.plan40InputValidation?.valid).toBe(true);
+      expect(sharedGateEstimate.annualAnchorInputValidation?.valid).toBe(true);
     });
 
     it("Plan49 diagnostic: 2017 ratio and other beta are available", () => {

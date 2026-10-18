@@ -11,7 +11,7 @@ const CTI_ADJUSTED_V2_QUARTERLY_EXPENSE_KEYS = CTI_ADJUSTED_V2_PUBLIC_CATEGORIES
   (category) => category !== "総合",
 ).map((category) => CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY[category]);
 
-// The registry is the public ordering contract for the ten Plan40 expenses.
+// The registry is the public ordering contract for the ten quarterly expense keys.
 // Keep the assertion close to the projection so a registry/key drift cannot silently
 // expose the total or a v1/internal key on the quarterly route.
 /** Keep the module-level registry tripwire independently checkable. */
@@ -20,7 +20,7 @@ export function assertQuarterlyPublicRegistryOrder(
   registeredKeys: readonly string[],
 ): void {
   if (expectedKeys.join("\u0000") !== registeredKeys.join("\u0000")) {
-    throw new Error("Plan40 quarterly public registry/key order mismatch");
+    throw new Error("Quarterly public registry/key order mismatch");
   }
 }
 
@@ -45,11 +45,10 @@ export const QUARTERLY_PUBLIC_KEYS = [
 export type QuarterlyPublicKey = (typeof QUARTERLY_PUBLIC_KEYS)[number];
 export type QuarterlyPublicMode = "nominal" | "real";
 
-export const QUARTERLY_PLAN40_V2_EXPENSE_KEYS = [
-  ...CTI_ADJUSTED_V2_QUARTERLY_EXPENSE_KEYS,
-] as const;
-/** Compatibility export; Plan40 is a row-key legacy label, not the selected model. */
-export const QUARTERLY_PLAN40_V2_NOMINAL_KEYS = [...QUARTERLY_PLAN40_V2_EXPENSE_KEYS] as const;
+/** @deprecated Use QUARTERLY_PUBLIC_NOMINAL_KEYS; retained as the same registry reference. */
+export const QUARTERLY_PLAN40_V2_EXPENSE_KEYS = QUARTERLY_PUBLIC_NOMINAL_KEYS;
+/** @deprecated Use QUARTERLY_PUBLIC_NOMINAL_KEYS; retained as the same registry reference. */
+export const QUARTERLY_PLAN40_V2_NOMINAL_KEYS = QUARTERLY_PUBLIC_NOMINAL_KEYS;
 
 function publicKeysForRow(mode: QuarterlyPublicMode, _kind: QuarterlyRowKind): readonly string[] {
   if (mode === "nominal") return QUARTERLY_PUBLIC_NOMINAL_KEYS;

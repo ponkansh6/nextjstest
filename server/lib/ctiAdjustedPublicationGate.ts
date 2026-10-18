@@ -1,4 +1,4 @@
-/** Shared, fail-closed publication gate for Plan39-v2. */
+/** Shared, fail-closed publication gate for composition-adjusted-v2. */
 
 export const CTI_ADJUSTED_PUBLICATION_GATE_SCHEMA = "plan39-publication-gate-v1" as const;
 

@@ -35,7 +35,7 @@ export const CTI_ADJUSTED_STANDARD_CALIBRATION_YEARS = Array.from(
   { length: 8 },
   (_, index) => 2018 + index,
 );
-/** Explicit absolute residual jump limit used by the Plan39 estimate gate. */
+/** Explicit absolute residual jump limit used by the composition-adjusted estimate gate. */
 export const CTI_ADJUSTED_DEFAULT_RESIDUAL_JUMP_THRESHOLD = 1.4;
 
 export type CtiAdjustedMajorCategory = (typeof CTI_ADJUSTED_MAJOR_CATEGORIES)[number];

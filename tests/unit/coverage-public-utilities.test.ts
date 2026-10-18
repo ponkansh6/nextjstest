@@ -285,7 +285,7 @@ describe("public chart utility contracts", () => {
   it("retains the quarterly registry drift tripwire on either side of the contract", () => {
     expect(() => assertQuarterlyPublicRegistryOrder(["a", "b"], ["a", "b"])).not.toThrow();
     expect(() => assertQuarterlyPublicRegistryOrder(["a", "b"], ["b", "a"])).toThrow(
-      "Plan40 quarterly public registry/key order mismatch",
+      "Quarterly public registry/key order mismatch",
     );
   });
 

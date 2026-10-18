@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "schemaVersion": "plan39-annual-v1",
+    "schemaVersion": "adjusted-cti-annual-v1",
     "revision": "2026-10-16",
     "statisticalCode": "00200567",
     "source": "総務省統計局 e-Stat CTI",
@@ -8,7 +8,7 @@
     "artifactIdentifier": "000040499069",
     "officialPageUrl": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499069",
     "downloadUrl": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499069",
-    "downloadUrlHash": "ffeb37eb3693fbe998a4ade14b59b6d76380c87ac51b66d6b2bb7a794a7b8d6d",
+    "downloadUrlHash": "ae00c2a3be3a408aa3febd4a5dbcd7d769c4b2bdfd28faf6a939b859dcc6bb8f",
     "statInfId": "000040499069",
     "legacyStatInfId": "000040499069",
     "logicalSourceStatInfId": "000040499069",
@@ -16,7 +16,7 @@
       "kind": "estat-catalog-resource",
       "catalogResourceId": "000010962956",
       "legacyStatInfId": "000040499069",
-      "downloadUrlHash": "ffeb37eb3693fbe998a4ade14b59b6d76380c87ac51b66d6b2bb7a794a7b8d6d",
+      "downloadUrlHash": "ae00c2a3be3a408aa3febd4a5dbcd7d769c4b2bdfd28faf6a939b859dcc6bb8f",
       "title": "2025年基準消費動向指数_最新結果_2026年",
       "format": "XLSX",
       "releaseDate": "2026-10-09",

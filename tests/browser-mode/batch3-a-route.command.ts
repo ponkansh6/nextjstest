@@ -3,7 +3,7 @@ import type {} from "@vitest/browser-playwright";
 import { devices } from "@playwright/test";
 import { CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY } from "../../src/lib/chartConstants";
 import {
-  QUARTERLY_PLAN40_V2_NOMINAL_KEYS,
+  QUARTERLY_PUBLIC_NOMINAL_KEYS,
   QUARTERLY_PUBLIC_REAL_KEYS,
 } from "../../src/lib/quarterlyPublicProjection";
 import { NEXT_ROUTE_POC_BASE_URL } from "./next-route-poc.constants";
@@ -177,7 +177,7 @@ export const inspectBatch3AProductionCase: BrowserCommand<
       }));
     } else if (scenario.startsWith("tooltip-scroll-")) {
       const expectedKeys = {
-        "spending-chart-nominal": [...QUARTERLY_PLAN40_V2_NOMINAL_KEYS],
+        "spending-chart-nominal": [...QUARTERLY_PUBLIC_NOMINAL_KEYS],
         "spending-chart-real": QUARTERLY_PUBLIC_REAL_KEYS.filter(
           (key) => key !== CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY,
         ),

@@ -3,6 +3,11 @@
 import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
+import {
+  ADJUSTED_CTI_ANNUAL_SCHEMA,
+  ADJUSTED_CTI_QUARTERLY_NOMINAL_SCHEMA,
+} from "../../shared/cti-contract-schemas.mjs";
 
 const KINDS = ["B", "A", "L"];
 const QUARTERLY_FILES = {
@@ -84,6 +89,13 @@ function assertNominalInputs(root) {
   }
 }
 
+function resolveAnnualSchemaFamily(value) {
+  return value === ADJUSTED_CTI_ANNUAL_SCHEMA.canonical ||
+    value === ADJUSTED_CTI_ANNUAL_SCHEMA.legacy
+    ? ADJUSTED_CTI_ANNUAL_SCHEMA.canonical
+    : null;
+}
+
 function snapshotPath(root, snapshotId) {
   if (!HASH_PATTERN.test(snapshotId)) throw new Error("snapshot id must be a SHA-256 hex digest");
   return path.join(root, "snapshots", `plan39-${snapshotId}`);
@@ -129,10 +141,13 @@ function readSnapshot(root, snapshotId) {
   return { directory, hashes };
 }
 
-function verifyLoaderHashes(root) {
+export function verifyLoaderHashes(root) {
   const manifestFile = path.join(root, "manifest.json");
   const manifest = readJson(manifestFile);
-  if (manifest.schemaVersion !== "plan39-annual-v1" || manifest.statisticalCode !== "00200567")
+  if (
+    resolveAnnualSchemaFamily(manifest.schemaVersion) === null ||
+    manifest.statisticalCode !== "00200567"
+  )
     throw new Error("invalid Plan39 manifest");
   for (const kind of KINDS) {
     const entry = manifest.artifacts?.[kind];
@@ -144,7 +159,8 @@ function verifyLoaderHashes(root) {
     const metadata = readJson(file).metadata;
     if (
       !metadata ||
-      metadata.schemaVersion !== manifest.schemaVersion ||
+      resolveAnnualSchemaFamily(metadata.schemaVersion) !==
+        resolveAnnualSchemaFamily(manifest.schemaVersion) ||
       metadata.revision !== (manifest.artifacts[kind].revision ?? manifest.revision) ||
       metadata.statisticalCode !== manifest.statisticalCode
     ) {
@@ -173,7 +189,10 @@ function verifyLoaderHashes(root) {
   const metadata = readJson(quarterMetadataFile);
   const annualA = readJson(path.join(root, "A.json")).metadata;
   if (
-    metadata.schemaVersion !== "plan39-quarterly-nominal-v1" ||
+    ![
+      ADJUSTED_CTI_QUARTERLY_NOMINAL_SCHEMA.legacy,
+      ADJUSTED_CTI_QUARTERLY_NOMINAL_SCHEMA.canonical,
+    ].includes(metadata.schemaVersion) ||
     metadata.valueType !== NOMINAL_ANNUAL_VALUE_TYPE ||
     metadata.revision !== (quarterly.revision ?? manifest.revision) ||
     metadata.revision !== annualA.revision ||
@@ -270,22 +289,28 @@ function restoreSnapshot(root, snapshotId, force) {
   console.log(`restored and loader-hash-verified snapshot: ${snapshotId}`);
 }
 
-const args = parseArgs(process.argv.slice(2));
-const root = path.resolve(args.get("--artifact-root") ?? DEFAULT_ARTIFACT_ROOT);
-if (
-  [args.has("--create"), args.has("--verify"), args.has("--restore")].filter(Boolean).length !== 1
-) {
-  throw new Error("choose exactly one of --create, --verify, or --restore");
+function runCli() {
+  const args = parseArgs(process.argv.slice(2));
+  const root = path.resolve(args.get("--artifact-root") ?? DEFAULT_ARTIFACT_ROOT);
+  if (
+    [args.has("--create"), args.has("--verify"), args.has("--restore")].filter(Boolean).length !== 1
+  ) {
+    throw new Error("choose exactly one of --create, --verify, or --restore");
+  }
+  if (args.has("--create")) createSnapshot(root);
+  if (args.has("--verify")) {
+    const { snapshotId } = artifactHashes(root);
+    readSnapshot(root, snapshotId);
+    verifyLoaderHashes(root);
+    console.log(`current artifacts and loader hashes verified: ${snapshotId}`);
+  }
+  if (args.has("--restore")) {
+    const snapshotId = args.get("--restore");
+    if (typeof snapshotId !== "string") throw new Error("--restore requires a snapshot id");
+    restoreSnapshot(root, snapshotId, args.has("--force"));
+  }
 }
-if (args.has("--create")) createSnapshot(root);
-if (args.has("--verify")) {
-  const { snapshotId } = artifactHashes(root);
-  readSnapshot(root, snapshotId);
-  verifyLoaderHashes(root);
-  console.log(`current artifacts and loader hashes verified: ${snapshotId}`);
-}
-if (args.has("--restore")) {
-  const snapshotId = args.get("--restore");
-  if (typeof snapshotId !== "string") throw new Error("--restore requires a snapshot id");
-  restoreSnapshot(root, snapshotId, args.has("--force"));
+
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
+  runCli();
 }

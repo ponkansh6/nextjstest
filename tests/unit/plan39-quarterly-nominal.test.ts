@@ -5,7 +5,7 @@ import {
   CTI_ADJUSTED_V2_PUBLIC_KEYS,
   CTI_NOMINAL_DERIVED_TOTAL_KEY,
 } from "../../src/lib/chartConstants";
-import { buildPlan39V2CtiNominalRows } from "../../server/lib/view-models/quarterlyAggregation";
+import { buildCompositionAdjustedQuarterlyRows } from "../../server/lib/view-models/quarterlyAggregation";
 import type { CtiBasicRecord } from "../../server/lib/ctiBasicSeries2025LongTerm";
 import type {
   CtiAdjustedV2Result,
@@ -129,7 +129,7 @@ function makeOfficialQuarterly(): Array<{
 
 describe("Plan39-v2 quarterly nominal projection", () => {
   it("preserves monthly seasonality while anchoring each category to v2 annual values", () => {
-    const rows = buildPlan39V2CtiNominalRows({
+    const rows = buildCompositionAdjustedQuarterlyRows({
       records: makeRecords(),
       result: makeResult(),
       officialQuarterly: makeOfficialQuarterly(),
@@ -137,7 +137,7 @@ describe("Plan39-v2 quarterly nominal projection", () => {
     expect(rows).toHaveLength(52);
     const q1 = rows.find((row) => row.label === "2005Q1")!;
     const q2 = rows.find((row) => row.label === "2005Q2")!;
-    expect(q1.kind).toBe("plan40-v2-cost-stack");
+    expect(q1.kind).toBe("estimated-cost-stack-v2");
     const internalKeys = [...expenseKeys, CTI_NOMINAL_DERIVED_TOTAL_KEY];
     expect(Object.keys(q1.measurements ?? {})).toEqual(internalKeys);
     expect(
@@ -183,7 +183,7 @@ describe("Plan39-v2 quarterly nominal projection", () => {
   });
 
   it("uses the official 2017 quarterly nominal values directly", () => {
-    const rows = buildPlan39V2CtiNominalRows({
+    const rows = buildCompositionAdjustedQuarterlyRows({
       records: makeRecords(),
       result: makeResult(),
       officialQuarterly: makeOfficialQuarterly(),
@@ -204,7 +204,7 @@ describe("Plan39-v2 quarterly nominal projection", () => {
   });
 
   it("matches all ten 2017 expense categories to official quarters and derives Other as a residual", () => {
-    const rows = buildPlan39V2CtiNominalRows({
+    const rows = buildCompositionAdjustedQuarterlyRows({
       records: makeRecords(),
       result: makeResult(),
       officialQuarterly: makeOfficialQuarterly(),
@@ -263,7 +263,7 @@ describe("Plan39-v2 quarterly nominal projection", () => {
     for (const row of result.rows) {
       row.values.食料 = row.year - 2000;
     }
-    const rows = buildPlan39V2CtiNominalRows({
+    const rows = buildCompositionAdjustedQuarterlyRows({
       records: makeRecords(),
       result,
     });
@@ -297,7 +297,7 @@ describe("Plan39-v2 quarterly nominal projection", () => {
         record.rawValue = 179;
       }
     }
-    const rows = buildPlan39V2CtiNominalRows({
+    const rows = buildCompositionAdjustedQuarterlyRows({
       records,
       result: makeResult(),
     });
@@ -327,12 +327,12 @@ describe("Plan39-v2 quarterly nominal projection", () => {
   });
 
   it("keeps poisoned legacy nominal aliases out of the canonical ten-series publication", () => {
-    const baselineRows = buildPlan39V2CtiNominalRows({
+    const baselineRows = buildCompositionAdjustedQuarterlyRows({
       records: makeRecords(),
       result: makeResult(),
       officialQuarterly: makeOfficialQuarterly(),
     });
-    const poisonedRows = buildPlan39V2CtiNominalRows({
+    const poisonedRows = buildCompositionAdjustedQuarterlyRows({
       records: [
         ...makeRecords(),
         ...Array.from({ length: 12 }, (_, index) => ({
@@ -382,7 +382,7 @@ describe("Plan39-v2 quarterly nominal projection", () => {
     records.push({
       ...records.find((record) => record.month === "2017-01" && record.seriesIndex === 1)!,
     });
-    const rows = buildPlan39V2CtiNominalRows({
+    const rows = buildCompositionAdjustedQuarterlyRows({
       records,
       result: makeResult(),
       officialQuarterly: makeOfficialQuarterly(),
@@ -393,7 +393,7 @@ describe("Plan39-v2 quarterly nominal projection", () => {
   it("does not mutate the Plan39 annual result while adding official quarters", () => {
     const result = makeResult();
     const before = result.rows.map((row) => ({ year: row.year, food: row.values.食料 }));
-    buildPlan39V2CtiNominalRows({
+    buildCompositionAdjustedQuarterlyRows({
       records: makeRecords(),
       result,
       officialQuarterly: makeOfficialQuarterly(),
@@ -402,7 +402,7 @@ describe("Plan39-v2 quarterly nominal projection", () => {
   });
 
   it("fails closed for a missing month and keeps graph/table/CSV measurement metadata identical", () => {
-    const rows = buildPlan39V2CtiNominalRows({
+    const rows = buildCompositionAdjustedQuarterlyRows({
       records: makeRecords("2005-02"),
       result: makeResult(),
     });

@@ -26,7 +26,7 @@ describe("2018年以降のCTI四半期完全性", () => {
     expect(new Set(nominal.map((row) => row.label))).toEqual(new Set(["2018Q1"]));
     expect(result.real.filter((row) => row.年 >= 2018).map((row) => row.label)).toEqual(["2018Q1"]);
     const mergedNominal = nominal[0]!;
-    expect(mergedNominal.kind).toBe("plan40-official-quarterly");
+    expect(mergedNominal.kind).toBe("official-quarterly-adjusted");
     // The monthly consumption value remains available alongside Plan40 official measurements.
     expect(mergedNominal[CONSUMPTION_NOMINAL_KEYS[0]]).toBe(0);
     expect(
@@ -57,7 +57,7 @@ describe("2018年以降のCTI四半期完全性", () => {
 
     const nominal = result.nominal.filter((row) => row.label === "2018Q1");
     expect(nominal.map((row) => row.label)).toEqual(["2018Q1"]);
-    expect(nominal[0]?.kind).toBe("plan40-official-quarterly");
+    expect(nominal[0]?.kind).toBe("official-quarterly-adjusted");
     expect(nominal[0]).not.toHaveProperty(CONSUMPTION_NOMINAL_KEYS[0]);
     expect(result.real.filter((row) => row.年 >= 2018)).toEqual([]);
   });
@@ -67,7 +67,7 @@ describe("2018年以降のCTI四半期完全性", () => {
     const serverResult = computeQuarterlyAggregates(data, { year: 2018, month: 3 });
     const combined2018Rows = serverResult.nominal.filter((row) => row.label === "2018Q1");
     expect(combined2018Rows).toHaveLength(1);
-    expect(combined2018Rows[0]?.kind).toBe("plan40-official-quarterly");
+    expect(combined2018Rows[0]?.kind).toBe("official-quarterly-adjusted");
 
     const projected = buildQuarterlyPublicViews(serverResult.nominal);
     const public2018 = projected.nominal.find((row) => row.label === "2018Q1");

@@ -825,6 +825,7 @@ async function check(args) {
     result.sensitivity.gammaScenarios,
     expectedStandard,
     expectedRollingLoo,
+    `sha256:${expectedFingerprint}`,
   );
   if (!deepEqual(result.v2, expectedV2) || !deepEqual(result.auditSummary.v2, expectedV2))
     throw new Error("v2 audit mismatch");

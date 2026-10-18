@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { loadCtiAdjustedV2Estimate } from "@server/lib/data-loader/ctiAdjusted";
 import { loadCtiDataInternal } from "@server/lib/data-loader/cpi";
-import { loadPlan39V2CtiNominalRows } from "@server/lib/view-models/quarterlyAggregation";
+import { loadCompositionAdjustedQuarterlyRows } from "@server/lib/view-models/quarterlyAggregation";
 import { CTI_ADJUSTED_V2_PUBLIC_REGISTRY } from "@/lib/chartConstants";
 
 describe("Plan40 repository artifact runtime", () => {
@@ -11,9 +11,9 @@ describe("Plan40 repository artifact runtime", () => {
       contract: "plan40",
     });
     const runtime = await loadCtiDataInternal();
-    const rows = loadPlan39V2CtiNominalRows(result, runtime, runtime.ctiMetadata);
+    const rows = loadCompositionAdjustedQuarterlyRows(result, runtime, runtime.ctiMetadata);
 
-    expect(result.plan40InputValidation?.valid).toBe(true);
+    expect(result.annualAnchorInputValidation?.valid).toBe(true);
     expect(result.publicationGate.accepted).toBe(true);
     expect(result.publicationGate.status).toBe("pass");
     expect(result.publicationGate.reasonCodes).not.toContain("rolling_loo_backtest_incomplete");
@@ -56,7 +56,7 @@ describe("Plan40 repository artifact runtime", () => {
       }
     }
     const official2018 = rows.find((row) => row.label === "2018Q1");
-    expect(official2018?.kind).toBe("plan40-official-quarterly");
+    expect(official2018?.kind).toBe("official-quarterly-adjusted");
     const foodKey = CTI_ADJUSTED_V2_PUBLIC_REGISTRY.find((entry) => entry.category === "食料")?.key;
     expect(foodKey).toBeDefined();
     expect(official2018?.measurements?.[foodKey!]?.sourceId).toBe("000040499087");

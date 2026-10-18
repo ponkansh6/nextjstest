@@ -260,6 +260,10 @@ describe("core utility boundary contracts", () => {
       frequency: "quarterly",
       seriesType: "unavailable",
     });
+    expect(createMissingSeriesMeasurement("CTIミクロ調整系列（住居）")).toMatchObject({
+      status: "invalid",
+      reason: "unavailable",
+    });
     expect(
       createMissingSeriesMeasurement("CTIミクロ調整系列（住居）", { estimateVersion: "plan39-v2" }),
     ).toMatchObject({ unit: "" });

@@ -5,7 +5,7 @@ import { SpendingBarChart } from "../../src/app/components/SpendingBarChart";
 import { useChartTooltipController } from "../../src/app/components/charts/useChartTooltipProps";
 
 import {
-  QUARTERLY_PLAN40_V2_NOMINAL_KEYS,
+  QUARTERLY_PUBLIC_NOMINAL_KEYS,
   QUARTERLY_PUBLIC_REAL_KEYS,
 } from "../../src/lib/quarterlyPublicProjection";
 import { renderBrowserComponent } from "./renderBrowserComponent";
@@ -14,7 +14,7 @@ const TEST_SUPPORT_NOMINAL_KEY = "民間最終消費支出（名目）";
 const TEST_SUPPORT_REAL_KEY = "民間最終消費支出（実質）";
 type ChartKind = "nominal" | "real";
 const CHART_KEYS: Record<ChartKind, string[]> = {
-  nominal: [...QUARTERLY_PLAN40_V2_NOMINAL_KEYS],
+  nominal: [...QUARTERLY_PUBLIC_NOMINAL_KEYS],
   real: [...QUARTERLY_PUBLIC_REAL_KEYS],
 };
 const CHART_TITLE: Record<ChartKind, string> = {

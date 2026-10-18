@@ -8,7 +8,7 @@ import { useChartTooltipController } from "../../src/app/components/charts/useCh
 import { CPI_CHART_SECTIONS } from "../../src/app/components/cpiChartConfig";
 import { getColorForNominalKey } from "../../src/lib/chartConstants";
 import {
-  QUARTERLY_PLAN40_V2_NOMINAL_KEYS,
+  QUARTERLY_PUBLIC_NOMINAL_KEYS,
   QUARTERLY_PUBLIC_REAL_KEYS,
 } from "../../src/lib/quarterlyPublicProjection";
 import { renderBrowserComponent } from "./renderBrowserComponent";
@@ -30,7 +30,7 @@ const CHART_COLORS = {
 };
 
 function createSpendingData(): ComponentProps<typeof SpendingBarChart>["data"] {
-  const keys = [...QUARTERLY_PLAN40_V2_NOMINAL_KEYS, ...QUARTERLY_PUBLIC_REAL_KEYS];
+  const keys = [...QUARTERLY_PUBLIC_NOMINAL_KEYS, ...QUARTERLY_PUBLIC_REAL_KEYS];
   return Array.from({ length: 12 }, (_, index) => {
     const year = 2020 + Math.floor(index / 4);
     const quarter = (index % 4) + 1;
@@ -50,7 +50,7 @@ function createSpendingData(): ComponentProps<typeof SpendingBarChart>["data"] {
 }
 
 function SpendingBoundaryFixture() {
-  const keys = [...QUARTERLY_PLAN40_V2_NOMINAL_KEYS];
+  const keys = [...QUARTERLY_PUBLIC_NOMINAL_KEYS];
   const data = createSpendingData();
   const { bind } = useChartTooltipController({ suppressed: false, isTouch: false });
   const tooltip = bind("b3m-boundary", { dataLength: data.length });
@@ -75,7 +75,7 @@ function SpendingBoundaryFixture() {
 }
 
 function SpendingMobileTooltipFixture() {
-  const keys = [...QUARTERLY_PLAN40_V2_NOMINAL_KEYS];
+  const keys = [...QUARTERLY_PUBLIC_NOMINAL_KEYS];
   const data = createSpendingData().slice(0, 1);
   const { bind } = useChartTooltipController({ suppressed: false, isTouch: true });
   const tooltip = bind("b3m-mobile-acceptance", {

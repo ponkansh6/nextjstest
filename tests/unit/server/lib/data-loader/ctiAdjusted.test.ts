@@ -5,10 +5,36 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import {
   loadCtiAdjustedConnectionEstimate,
+  loadCtiAdjustedInputs,
   loadCtiAdjustedV2Estimate,
 } from "../../../../../server/lib/data-loader/ctiAdjusted";
 
 describe("Plan39 adjusted artifact loader", () => {
+  it("fails closed on an unknown input contract before loading artifact fingerprints or evidence", () => {
+    const result = loadCtiAdjustedV2Estimate({
+      artifactRoot: path.join(tmpdir(), "cti-adjusted-input-contract-must-not-be-read"),
+      inputContract: "future-contract" as never,
+    });
+
+    expect(result.inputFingerprint).toBeUndefined();
+    expect(result.publicationGate.accepted).toBe(false);
+    expect(result.publicationGate.diagnostics).toContain("unknown_input_contract");
+    expect(result.other.reasons).toContain("unknown_input_contract");
+  });
+
+  it("rejects conflicting canonical and legacy input contracts before loading artifacts", () => {
+    const result = loadCtiAdjustedV2Estimate({
+      artifactRoot: path.join(tmpdir(), "cti-adjusted-conflicting-input-contract-must-not-be-read"),
+      inputContract: "annual-public",
+      contract: "plan40",
+    });
+
+    expect(result.inputFingerprint).toBeUndefined();
+    expect(result.publicationGate.accepted).toBe(false);
+    expect(result.publicationGate.diagnostics).toContain("input_contract_conflict");
+    expect(result.other.reasons).toContain("input_contract_conflict");
+  });
+
   it("uses artifacts under process.cwd when no loader root is supplied", () => {
     const originalCwd = process.cwd();
     const cwd = mkdtempSync(path.join(tmpdir(), "plan39-loader-cwd-"));
@@ -33,6 +59,72 @@ describe("Plan39 adjusted artifact loader", () => {
     } finally {
       process.chdir(originalCwd);
     }
+  });
+
+  it("loads legacy and canonical schema families with equal values but distinct exact fingerprints", () => {
+    const loadFixture = (schemaVersion: string) => {
+      const root = mkdtempSync(path.join(tmpdir(), "cti-schema-family-parity-"));
+      const manifestArtifacts: Record<string, unknown> = {};
+      for (const kind of ["B", "A", "L"] as const) {
+        const bytes = Buffer.from(
+          JSON.stringify({
+            metadata: {
+              schemaVersion,
+              revision: "fixture-r1",
+              statisticalCode: "00200567",
+              source: "test",
+              artifact: `${kind}.json`,
+              retrievedAt: "2026-01-01",
+              baseYear: 2025,
+              unit: "指数",
+              valueType: "原数値（名目指数）",
+              householdScope: "総世帯",
+              frequency: "annual",
+              rawRange: { startYear: 2020, endYear: 2020 },
+              adoptedRange: { startYear: 2020, endYear: 2020 },
+              missingRepresentation: "null",
+              sha256: "a".repeat(64),
+            },
+            categoryOrder: ["総合"],
+            rows: [{ year: 2020, values: { 総合: 100 } }],
+          }),
+        );
+        writeFileSync(path.join(root, `${kind}.json`), bytes);
+        manifestArtifacts[kind] = {
+          path: `${kind}.json`,
+          sha256: createHash("sha256").update(bytes).digest("hex"),
+        };
+      }
+      writeFileSync(
+        path.join(root, "manifest.json"),
+        JSON.stringify({
+          schemaVersion,
+          revision: "fixture-r1",
+          statisticalCode: "00200567",
+          artifacts: manifestArtifacts,
+        }),
+      );
+      writeFileSync(path.join(root, "audit.json"), JSON.stringify({ reviewed: true }));
+      return loadCtiAdjustedInputs({ artifactRoot: root });
+    };
+
+    const legacy = loadFixture("plan39-annual-v1");
+    const canonical = loadFixture("adjusted-cti-annual-v1");
+
+    expect(legacy.manifestInvalid).toBe(false);
+    expect(canonical.manifestInvalid).toBe(false);
+    expect(legacy.missingKinds).toEqual([]);
+    expect(canonical.missingKinds).toEqual([]);
+    expect(legacy.loadReasons).toEqual([]);
+    expect(canonical.loadReasons).toEqual([]);
+    expect(legacy.B?.rows).toEqual(canonical.B?.rows);
+    expect(legacy.A?.rows).toEqual(canonical.A?.rows);
+    expect(legacy.L?.rows).toEqual(canonical.L?.rows);
+    expect(legacy.inputFingerprint).toBeTruthy();
+    expect(canonical.inputFingerprint).toBeTruthy();
+    // Schema bytes are part of the exact snapshot identity. This prevents old
+    // analysis/evidence from being reused after canonical writer migration.
+    expect(canonical.inputFingerprint).not.toBe(legacy.inputFingerprint);
   });
 
   it("ignores a saved analysis when its input artifact digest is stale", () => {
@@ -177,7 +269,7 @@ describe("Plan39 adjusted artifact loader", () => {
     const root = mkdtempSync(path.join(tmpdir(), "plan39-loader-"));
     const sourceUrl = "https://example.test/source.json";
     const metadata = {
-      schemaVersion: "test-v1",
+      schemaVersion: "adjusted-cti-annual-v1",
       revision: "test",
       statisticalCode: "00200567",
       sha256: "a".repeat(64),
@@ -204,7 +296,7 @@ describe("Plan39 adjusted artifact loader", () => {
     writeFileSync(
       path.join(root, "manifest.json"),
       JSON.stringify({
-        schemaVersion: "test-v1",
+        schemaVersion: "adjusted-cti-annual-v1",
         revision: "test",
         statisticalCode: "00200567",
         artifacts: {

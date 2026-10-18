@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { COMPOSITION_ADJUSTED_V2_ESTIMATE_VERSION } from "../../../shared/cti-estimate-contract";
 import styles from "./CpiChart.module.css";
 import { buildCsv, toFileName, withBom } from "../../lib/csvExport";
 import type { BuildCsvOptions } from "../../lib/csvExport";
@@ -87,7 +88,10 @@ export const ChartExportButton: React.FC<ChartExportButtonProps> = ({
           quarterlyDerived:
             typeof current.quarterlyDerived === "boolean" ? current.quarterlyDerived : undefined,
           model: current.model === "v2-bottom-up" ? "v2-bottom-up" : undefined,
-          estimateVersion: current.estimateVersion === "plan39-v2" ? "plan39-v2" : undefined,
+          estimateVersion:
+            current.estimateVersion === COMPOSITION_ADJUSTED_V2_ESTIMATE_VERSION
+              ? COMPOSITION_ADJUSTED_V2_ESTIMATE_VERSION
+              : undefined,
           inputFingerprint:
             typeof current.inputFingerprint === "string" ? current.inputFingerprint : undefined,
           sourceId: typeof current.sourceId === "string" ? current.sourceId : undefined,

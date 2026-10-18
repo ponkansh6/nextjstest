@@ -575,7 +575,7 @@ export function buildCtiBasicConsumptionOutput(records: CtiBasicRecord[]): CtiCo
   }
 }
 
-/** Load only the fixed nominal basic series used by Plan37's comparison line. */
+/** Load the fixed nominal basic CTI monthly series. */
 export function loadCtiBasicConsumptionOutput(root = CTI_BASIC_2025_ROOT): CtiConsumptionOutput {
   const artifact = artifactMetadata(root);
   try {

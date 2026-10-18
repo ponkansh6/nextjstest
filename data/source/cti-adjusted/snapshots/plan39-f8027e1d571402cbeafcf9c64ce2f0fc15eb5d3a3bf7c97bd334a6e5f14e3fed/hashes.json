@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "plan39-rollback-v1",
+  "hashAlgorithm": "SHA-256",
+  "snapshotId": "f8027e1d571402cbeafcf9c64ce2f0fc15eb5d3a3bf7c97bd334a6e5f14e3fed",
+  "canonicalInput": "B:97d576cd69dfef4c88a36b82dd26bbfacd4c52e43ca4a53a9986e04de358d2b6\nA:26bb734c3fb27dd67fd39fa1a300ae3ca8ea0334278790694a4a8721c02b6ea9\nL:26902849c7d835a1dcf3db130384600d0f853907fac927e7942fb806e2eec076\nquarterlyNominal:e32f7e3627718874cd85cae386216b370563b6ef7dba3ff686a5b456cba4dd78\nquarterlyNominalMetadata:c4a38eae1fccf8195c52b9e93db7ae6fec7b071923cee7c9ff80ef60c572bbea",
+  "artifacts": {
+    "B": "97d576cd69dfef4c88a36b82dd26bbfacd4c52e43ca4a53a9986e04de358d2b6",
+    "A": "26bb734c3fb27dd67fd39fa1a300ae3ca8ea0334278790694a4a8721c02b6ea9",
+    "L": "26902849c7d835a1dcf3db130384600d0f853907fac927e7942fb806e2eec076",
+    "quarterlyNominal": "e32f7e3627718874cd85cae386216b370563b6ef7dba3ff686a5b456cba4dd78"
+  },
+  "metadata": {
+    "B": "a80ab20920d74b9a56477f2f73a7364db5723e3da80dbcc1a043fad676319d0d",
+    "A": "4a65bf107eafdfc508823f636f0feae5142f2c701d141d6f63cb36bdb73296e9",
+    "L": "bf6c61650207ca283ab333a19d3eb1ba30cedd38557eea17ef2c49f26a59b063",
+    "quarterlyNominal": "c4a38eae1fccf8195c52b9e93db7ae6fec7b071923cee7c9ff80ef60c572bbea"
+  },
+  "manifest": "989e65704ecf98604d8f098a1f679227b1ddfc09ec49213839bab8a02fee8fef",
+  "audit": "82511adcd30fdb1c3abc1ee7e862f4ab5eba285e1a9e5e9d601672fc87d7fed1"
+}

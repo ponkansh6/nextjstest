@@ -1,0 +1,204 @@
+{
+  "metadata": {
+    "schemaVersion": "adjusted-cti-annual-v1",
+    "revision": "2026-10-16",
+    "statisticalCode": "00200567",
+    "source": "総務省統計局 e-Stat CTI",
+    "artifact": "A.json",
+    "artifactIdentifier": "000040499087",
+    "officialPageUrl": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499087",
+    "downloadUrl": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499087",
+    "downloadUrlHash": "5f9c22be4118f8dfb953afd58380d3b231562808a68d146e6e5cf810083d83de",
+    "statInfId": "000040499087",
+    "legacyStatInfId": "000040499087",
+    "logicalSourceStatInfId": "000040499087",
+    "sourceIdentity": {
+      "kind": "estat-catalog-resource",
+      "catalogResourceId": "000010962974",
+      "legacyStatInfId": "000040499087",
+      "downloadUrlHash": "5f9c22be4118f8dfb953afd58380d3b231562808a68d146e6e5cf810083d83de",
+      "title": "2025年基準消費動向指数_最新結果_2026年",
+      "format": "XLSX",
+      "releaseDate": "2026-10-09",
+      "lastModifiedDate": "2026-10-09"
+    },
+    "retrievedAt": "2026-10-16T18:24:44.540Z",
+    "baseYear": 2025,
+    "unit": "指数",
+    "valueType": "原数値（名目指数）",
+    "householdScope": "総世帯",
+    "frequency": "annual",
+    "rawRange": {
+      "startYear": 2017,
+      "endYear": 2025
+    },
+    "adoptedRange": {
+      "startYear": 2017,
+      "endYear": 2025
+    },
+    "yearization": null,
+    "missingRepresentation": "- は null。補完・補間なし。",
+    "sha256": "5089bece9c815944df57d3f5552e5d7ae9f5ee1c2f091ae5246dbd0ac8be1c67",
+    "sourceSha256": "5089bece9c815944df57d3f5552e5d7ae9f5ee1c2f091ae5246dbd0ac8be1c67",
+    "sourceFormat": "xlsx",
+    "sourceRevisionAudit": {
+      "sourceId": "000040499087",
+      "overlapCount": 2530,
+      "changedObservationCount": 0,
+      "changedValueCount": 0,
+      "changedSample": [],
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "previousSha256": "7224e5eb424c94d90402502f665a4953cfe16377f65f1040a939696ac948ef41",
+      "sourceSha256": "5089bece9c815944df57d3f5552e5d7ae9f5ee1c2f091ae5246dbd0ac8be1c67"
+    }
+  },
+  "categoryOrder": [
+    "総合",
+    "食料",
+    "住居",
+    "光熱・水道",
+    "家具・家事用品",
+    "被服及び履物",
+    "保健医療",
+    "交通・通信",
+    "教育",
+    "教養娯楽"
+  ],
+  "rows": [
+    {
+      "year": 2017,
+      "values": {
+        "総合": 91.5,
+        "食料": 24,
+        "住居": 6.7,
+        "光熱・水道": 6.5,
+        "家具・家事用品": 3.5,
+        "被服及び履物": 3.6,
+        "保健医療": 4.1,
+        "交通・通信": 15,
+        "教育": 3.2,
+        "教養娯楽": 9.5
+      }
+    },
+    {
+      "year": 2018,
+      "values": {
+        "総合": 92.5,
+        "食料": 24.1,
+        "住居": 7,
+        "光熱・水道": 6.7,
+        "家具・家事用品": 3.6,
+        "被服及び履物": 3.5,
+        "保健医療": 4.2,
+        "交通・通信": 15.5,
+        "教育": 3.3,
+        "教養娯楽": 9.6
+      }
+    },
+    {
+      "year": 2019,
+      "values": {
+        "総合": 93.6,
+        "食料": 24.3,
+        "住居": 6.9,
+        "光熱・水道": 6.6,
+        "家具・家事用品": 3.8,
+        "被服及び履物": 3.5,
+        "保健医療": 4.4,
+        "交通・通信": 15.7,
+        "教育": 3.2,
+        "教養娯楽": 9.9
+      }
+    },
+    {
+      "year": 2020,
+      "values": {
+        "総合": 88.9,
+        "食料": 23.9,
+        "住居": 7.2,
+        "光熱・水道": 6.6,
+        "家具・家事用品": 4,
+        "被服及び履物": 2.9,
+        "保健医療": 4.4,
+        "交通・通信": 14.5,
+        "教育": 3.1,
+        "教養娯楽": 8.3
+      }
+    },
+    {
+      "year": 2021,
+      "values": {
+        "総合": 89.6,
+        "食料": 23.8,
+        "住居": 7.6,
+        "光熱・水道": 6.5,
+        "家具・家事用品": 3.9,
+        "被服及び履物": 2.8,
+        "保健医療": 4.5,
+        "交通・通信": 14.7,
+        "教育": 3.3,
+        "教養娯楽": 8.4
+      }
+    },
+    {
+      "year": 2022,
+      "values": {
+        "総合": 92.4,
+        "食料": 24.7,
+        "住居": 7.6,
+        "光熱・水道": 7.4,
+        "家具・家事用品": 4,
+        "被服及び履物": 3,
+        "保健医療": 4.5,
+        "交通・通信": 14.8,
+        "教育": 3.2,
+        "教養娯楽": 9.1
+      }
+    },
+    {
+      "year": 2023,
+      "values": {
+        "総合": 95.2,
+        "食料": 26.2,
+        "住居": 7.5,
+        "光熱・水道": 7.2,
+        "家具・家事用品": 4,
+        "被服及び履物": 3.1,
+        "保健医療": 4.6,
+        "交通・通信": 15.7,
+        "教育": 3.2,
+        "教養娯楽": 9.9
+      }
+    },
+    {
+      "year": 2024,
+      "values": {
+        "総合": 97.5,
+        "食料": 27.3,
+        "住居": 7.7,
+        "光熱・水道": 7.1,
+        "家具・家事用品": 4.1,
+        "被服及び履物": 3.2,
+        "保健医療": 4.8,
+        "交通・通信": 15.6,
+        "教育": 3.4,
+        "教養娯楽": 10.2
+      }
+    },
+    {
+      "year": 2025,
+      "values": {
+        "総合": 100,
+        "食料": 28.7,
+        "住居": 7.7,
+        "光熱・水道": 7.5,
+        "家具・家事用品": 4.1,
+        "被服及び履物": 3.2,
+        "保健医療": 5,
+        "交通・通信": 15.6,
+        "教育": 3.2,
+        "教養娯楽": 10.7
+      }
+    }
+  ]
+}

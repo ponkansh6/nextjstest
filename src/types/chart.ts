@@ -1,3 +1,8 @@
+import {
+  COMPOSITION_ADJUSTED_V2_ESTIMATE_VERSION,
+  type CompositionAdjustedV2EstimateVersion,
+} from "../../shared/cti-estimate-contract";
+
 export interface CustomTooltipProps {
   active?: boolean;
   payload?: {
@@ -72,7 +77,7 @@ export interface TooltipSeriesMetadata {
   annualAnchorType?: "estimated" | "official";
   quarterlyDerived?: boolean;
   model?: "v2-bottom-up";
-  estimateVersion?: "plan39-v2";
+  estimateVersion?: CompositionAdjustedV2EstimateVersion;
   inputFingerprint?: string;
   baseYear?: number | null;
   /** CPI source used to deflate a nominal CTI quarterly measurement. */
@@ -89,6 +94,19 @@ export type SeriesType =
   | "derived_adjusted"
   | "unavailable";
 export type MeasurementStatus = "valid" | "invalid" | "unavailable" | "available";
+
+/** Identifies an adjusted CTI measurement from its explicit domain metadata. */
+export function isCompositionAdjustedMeasurement(
+  descriptor?: Pick<TooltipSeriesMetadata, "estimateVersion" | "aggregation">,
+): boolean {
+  return (
+    descriptor?.estimateVersion === COMPOSITION_ADJUSTED_V2_ESTIMATE_VERSION ||
+    descriptor?.aggregation === "cti_adjusted_connection_estimate" ||
+    descriptor?.aggregation === "composition_adjusted_quarterly_projection" ||
+    descriptor?.aggregation ===
+      "derived_quarterly_mean_seasonal_pattern_anchored_to_plan39_v2_annual"
+  );
+}
 
 /** Public measurement metadata shared by chart, table, tooltip and CSV. */
 export interface SeriesMeasurement {
@@ -118,25 +136,25 @@ export interface SeriesMeasurement {
   reason: string | null;
   frequency: "monthly" | "quarterly" | "annual";
   aggregation: string;
-  /** Plan39 annual adjusted-series provenance. Optional for legacy series. */
+  /** Annual composition-adjusted-series provenance. Optional for legacy series. */
   seriesType?: SeriesType;
   /** Whether the value is an official adjusted observation. */
   official?: boolean;
-  /** Annual anchor provenance for derived quarterly Plan39 observations. */
+  /** Annual anchor provenance for derived quarterly composition-adjusted observations. */
   annualAnchorType?: "estimated" | "official";
   /** True when this measurement is derived from monthly seasonality. */
   quarterlyDerived?: boolean;
-  /** Plan39-v2 provenance, retained across all public surfaces. */
+  /** Composition-adjusted-v2 provenance; its public literal is retained for compatibility. */
   model?: "v2-bottom-up";
-  estimateVersion?: "plan39-v2";
-  /** Fingerprint of the exact B/A/L/Pi input snapshot used for Plan39. */
+  estimateVersion?: CompositionAdjustedV2EstimateVersion;
+  /** Fingerprint of the exact B/A/L/Pi input snapshot used by the estimator. */
   inputFingerprint?: string;
   cpiSeries?: string;
   cpiPeriod?: string;
   cpiAggregation?: string;
   nominalSource?: string;
   measurementNote?: string;
-  /** Plan40 annual-anchor contract provenance for derived quarterly rows. */
+  /** Annual-anchor input provenance for derived quarterly rows. */
   baseYear?: number | null;
   rawRange?: { startYear: number; endYear: number };
   adoptedRange?: { startYear: number; endYear: number };
@@ -161,21 +179,20 @@ export function createMissingSeriesMeasurement(
   key: string,
   descriptor?: Partial<SeriesMeasurement>,
 ): SeriesMeasurement {
-  const isPlan39V2 =
-    descriptor?.estimateVersion === "plan39-v2" || key.startsWith("CTIミクロ調整系列（");
+  const isCompositionAdjustedV2 = isCompositionAdjustedMeasurement(descriptor);
   return {
     key,
     label: descriptor?.label ?? key,
     // Legacy missing rows retain the established blank unit/source metadata;
-    // only the Plan39-v2 descriptor carries its explicit provenance fields.
-    unit: isPlan39V2 ? (descriptor?.unit ?? "") : "",
+    // only the composition-adjusted descriptor carries its explicit provenance fields.
+    unit: isCompositionAdjustedV2 ? (descriptor?.unit ?? "") : "",
     source: "",
     valueType: descriptor?.valueType ?? "raw",
     value: null,
-    status: isPlan39V2 ? "unavailable" : "invalid",
-    reason: isPlan39V2 ? "outside_period" : "unavailable",
+    status: isCompositionAdjustedV2 ? "unavailable" : "invalid",
+    reason: isCompositionAdjustedV2 ? "outside_period" : "unavailable",
     frequency: descriptor?.frequency ?? "quarterly",
-    aggregation: isPlan39V2 ? (descriptor?.aggregation ?? "") : "",
+    aggregation: isCompositionAdjustedV2 ? (descriptor?.aggregation ?? "") : "",
     seriesType: "unavailable",
     baseYear: descriptor?.baseYear,
   };
@@ -242,7 +259,25 @@ export interface CpiView extends Record<string, string | number | null> {
   年月: string;
 }
 
-export type QuarterlyRowKind = "legacy-cti" | "plan40-v2-cost-stack" | "plan40-official-quarterly";
+export type CanonicalQuarterlyRowKind =
+  | "legacy-cti"
+  | "estimated-cost-stack-v2"
+  | "official-quarterly-adjusted";
+export type LegacyQuarterlyRowKind = "plan40-v2-cost-stack" | "plan40-official-quarterly";
+export type QuarterlyRowKind = CanonicalQuarterlyRowKind | LegacyQuarterlyRowKind;
+
+/** Resolve legacy internal row markers; unknown runtime values are rejected. */
+export function normalizeQuarterlyRowKind(value: unknown): CanonicalQuarterlyRowKind | null {
+  if (
+    value === "legacy-cti" ||
+    value === "estimated-cost-stack-v2" ||
+    value === "official-quarterly-adjusted"
+  )
+    return value;
+  if (value === "plan40-v2-cost-stack") return "estimated-cost-stack-v2";
+  if (value === "plan40-official-quarterly") return "official-quarterly-adjusted";
+  return null;
+}
 
 export interface QuarterlyRow {
   年: number;

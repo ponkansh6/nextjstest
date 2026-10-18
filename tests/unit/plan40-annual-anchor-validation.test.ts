@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildCtiAdjustedV2Estimate,
-  validateCtiAdjustedV2Plan40Inputs,
+  validateAnnualAnchorInputs,
 } from "@server/lib/ctiAdjustedConnectionEstimateV2";
 import {
   CTI_ADJUSTED_INPUT_CATEGORIES,
@@ -14,7 +14,7 @@ function defined<T>(value: T | null | undefined): T {
   return value;
 }
 const metadata = (artifact: string) => ({
-  source: "Plan40 test source",
+  source: "Annual-anchor test source",
   artifact,
   retrievedAt: "2026-09-22T00:00:00.000Z",
   baseYear: 2025,
@@ -43,10 +43,10 @@ const input = (artifact: string): CtiAdjustedAnnualInput => ({
 
 const fixture = () => ({ B: input("B.json"), A: input("A.json") });
 
-describe("Plan40 annual-anchor input contract", () => {
+describe("quarterly annual-anchor input contract", () => {
   it("accepts complete positive 2005-2017 anchors with an explicit 2025 base invariant", () => {
     const { B, A } = fixture();
-    const result = validateCtiAdjustedV2Plan40Inputs(B, A);
+    const result = validateAnnualAnchorInputs(B, A);
     expect(result.valid).toBe(true);
     expect(result.targetYears).toEqual(Array.from({ length: 13 }, (_, index) => 2005 + index));
     expect(result.inputCategories).toHaveLength(10);
@@ -85,10 +85,10 @@ describe("Plan40 annual-anchor input contract", () => {
         data.B.metadata = { ...data.B.metadata, source: "", artifact: "" };
       },
     ],
-  ])("rejects Plan40 %s input", (_label, mutate) => {
+  ])("rejects %s annual-anchor input", (_label, mutate) => {
     const data = fixture();
     mutate(data);
-    const result = validateCtiAdjustedV2Plan40Inputs(data.B, data.A);
+    const result = validateAnnualAnchorInputs(data.B, data.A);
     expect(result.valid).toBe(false);
     expect(result.status).toBe("invalid");
     expect(result.reasonCodes.length).toBeGreaterThan(0);
@@ -97,7 +97,7 @@ describe("Plan40 annual-anchor input contract", () => {
   it("fails closed when the 2025 normalization invariant is not declared", () => {
     const data = fixture();
     data.A.metadata = { ...data.A.metadata, baseYear: 2024 };
-    const result = validateCtiAdjustedV2Plan40Inputs(data.B, data.A);
+    const result = validateAnnualAnchorInputs(data.B, data.A);
     expect(result.reasonCodes).toContain("A:base_year_not_2025");
     expect(result.normalizedBaseYear).toBeNull();
   });
@@ -106,16 +106,18 @@ describe("Plan40 annual-anchor input contract", () => {
     const data = fixture();
     const row = defined(data.A.rows.find((item) => item.year === 2025));
     row.values.総合 = 0;
-    const result = validateCtiAdjustedV2Plan40Inputs(data.B, data.A);
+    const result = validateAnnualAnchorInputs(data.B, data.A);
     expect(result.reasonCodes).toContain("A:missing_or_non_positive_2025_anchor");
     expect(result.normalizedBaseYear).toBeNull();
   });
 
-  it("makes every Plan40 anchor row unavailable when the contract fails", () => {
+  it("makes every anchor row unavailable when annual-anchor validation fails", () => {
     const data = fixture();
     data.A.rows = data.A.rows.filter((row) => row.year !== 2025);
-    const result = buildCtiAdjustedV2Estimate(data.B, data.A, undefined, { contract: "plan40" });
-    expect(result.plan40InputValidation?.valid).toBe(false);
+    const result = buildCtiAdjustedV2Estimate(data.B, data.A, undefined, {
+      inputContract: "quarterly-annual-anchor",
+    });
+    expect(result.annualAnchorInputValidation?.valid).toBe(false);
     expect(result.rows.filter((row) => row.year >= 2005 && row.year <= 2017)).toHaveLength(13);
     expect(
       result.rows
@@ -127,5 +129,26 @@ describe("Plan40 annual-anchor input contract", () => {
             row.reason === "plan40_input_contract_invalid",
         ),
     ).toBe(true);
+  });
+
+  it("fails closed when old and canonical input-contract names disagree", () => {
+    const data = fixture();
+    const result = buildCtiAdjustedV2Estimate(data.B, data.A, undefined, {
+      inputContract: "annual-public",
+      contract: "plan40",
+    });
+
+    expect(result.other.reasons).toContain("input_contract_conflict");
+    expect(result.rows.every((row) => row.seriesType === "unavailable")).toBe(true);
+  });
+
+  it("fails closed in the builder for an unknown input-contract name", () => {
+    const data = fixture();
+    const result = buildCtiAdjustedV2Estimate(data.B, data.A, undefined, {
+      inputContract: "future-contract" as never,
+    });
+
+    expect(result.other.reasons).toContain("unknown_input_contract");
+    expect(result.rows.every((row) => row.seriesType === "unavailable")).toBe(true);
   });
 });

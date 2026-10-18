@@ -3,6 +3,10 @@ import { createHash } from "node:crypto";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import XLSX from "xlsx";
+import {
+  ADJUSTED_CTI_ANNUAL_SCHEMA,
+  ADJUSTED_CTI_QUARTERLY_NOMINAL_SCHEMA,
+} from "../../shared/cti-contract-schemas.mjs";
 
 const SOURCES = {
   B: {
@@ -242,7 +246,7 @@ const metadata = (
   retrievedAt = new Date().toISOString(),
   sourceIdentity = null,
 ) => ({
-  schemaVersion: "plan39-annual-v1",
+  schemaVersion: ADJUSTED_CTI_ANNUAL_SCHEMA.canonical,
   revision: revisionValue,
   statisticalCode: "00200567",
   source: kind === "L" ? "総務省統計局 家計調査 長期時系列" : "総務省統計局 e-Stat CTI",
@@ -285,7 +289,17 @@ const metadata = (
   sourceFormat: kind === "L" ? "xls" : "xlsx",
 });
 
-/** Pure Plan39 CTI artifact builder for callers that own a staging root. */
+/**
+ * @typedef {{ title?: string | null, format?: string | null, releaseDate?: string | null, lastModifiedDate?: string | null }} Plan39SourceSemantics
+ * @typedef {{ url?: string, catalogResourceId?: string | null, legacyStatInfId?: string | null, semantic?: Plan39SourceSemantics }} Plan39SourceIdentity
+ * @typedef {{ stageRoot: string, sources: { B: Buffer | Uint8Array, A: Buffer | Uint8Array }, pinnedLegacyArtifactBytes: Buffer | Uint8Array, revision: string, retrievedAt?: string, sourceRevisionAudit?: Record<string, unknown>, sourceIdentities?: Record<string, Plan39SourceIdentity> }} Plan39CtiBuildOptions
+ * @typedef {{ path: string, bytes: Buffer }} Plan39BuiltArtifact
+ * @typedef {{ schemaVersion: string, revision: string, statisticalCode: string, artifacts: Record<string, { sha256: string }> }} Plan39CtiBuildManifest
+ *
+ * Pure Plan39 CTI artifact builder for callers that own a staging root.
+ * @param {Plan39CtiBuildOptions} options
+ * @returns {{ artifacts: Plan39BuiltArtifact[], manifest: Plan39CtiBuildManifest, audit: Record<string, unknown>, semanticValue: Record<string, unknown> }}
+ */
 export function buildPlan39CtiArtifacts({
   stageRoot,
   sources,
@@ -301,7 +315,7 @@ export function buildPlan39CtiArtifacts({
     throw new Error("Plan39 revision must be YYYY-MM-DD");
   const artifacts = [];
   const manifest = {
-    schemaVersion: "plan39-annual-v1",
+    schemaVersion: ADJUSTED_CTI_ANNUAL_SCHEMA.canonical,
     revision: revisionValue,
     statisticalCode: "00200567",
     artifacts: {},
@@ -406,7 +420,7 @@ export function buildPlan39CtiArtifacts({
     ].join("\n") + "\n",
   );
   const quarterlyMetadata = {
-    schemaVersion: "plan39-quarterly-nominal-v1",
+    schemaVersion: ADJUSTED_CTI_QUARTERLY_NOMINAL_SCHEMA.canonical,
     revision: revisionValue,
     statisticalCode: "00200567",
     source: "総務省統計局 e-Stat CTI",
@@ -523,7 +537,7 @@ export function buildPlan39CtiArtifacts({
 const main = async () => {
   await mkdir(outputDir, { recursive: true });
   const manifest = {
-    schemaVersion: "plan39-annual-v1",
+    schemaVersion: ADJUSTED_CTI_ANNUAL_SCHEMA.canonical,
     revision,
     statisticalCode: "00200567",
     artifacts: {},
@@ -604,7 +618,7 @@ const main = async () => {
   }
   await writeFile(path.join(outputDir, quarterlyArtifact), quarterlyCsv);
   const quarterlyMetadata = {
-    schemaVersion: "plan39-quarterly-nominal-v1",
+    schemaVersion: ADJUSTED_CTI_QUARTERLY_NOMINAL_SCHEMA.canonical,
     revision,
     statisticalCode: "00200567",
     source: "総務省統計局 e-Stat CTI",

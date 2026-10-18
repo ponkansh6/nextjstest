@@ -1,8 +1,13 @@
 "use client";
 
 import React from "react";
+import type { CompositionAdjustedV2EstimateVersion } from "../../../shared/cti-estimate-contract";
 import type { CustomTooltipProps } from "@/types/chart";
-import { createMissingSeriesMeasurement, getMeasurementNote } from "@/types/chart";
+import {
+  createMissingSeriesMeasurement,
+  getMeasurementNote,
+  isCompositionAdjustedMeasurement,
+} from "@/types/chart";
 import type { SeriesMeasurement } from "@/types/chart";
 import styles from "./CpiChart.module.css";
 
@@ -34,7 +39,7 @@ type TooltipDisplayPayload = NonNullable<CustomTooltipProps["payload"]>[number] 
   annualAnchorType?: "estimated" | "official";
   quarterlyDerived?: boolean;
   model?: "v2-bottom-up";
-  estimateVersion?: "plan39-v2";
+  estimateVersion?: CompositionAdjustedV2EstimateVersion;
   inputFingerprint?: string;
   baseYear?: number | null;
   cpiSeries?: string;
@@ -164,11 +169,10 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
               const period = row?.["年月"] ?? row?.["label"] ?? label;
               const periodYear =
                 typeof period === "string" ? Number(period.match(/^(\d{4})/)?.[1]) : NaN;
-              const isPlan40Key =
-                meta.estimateVersion === "plan39-v2" || meta.key.startsWith("CTIミクロ調整系列（");
-              const isPlan40BoundaryMissing =
-                isPlan40Key && periodYear >= 2018 && entry?.value == null;
-              const measurement: TooltipMeasurement = isPlan40BoundaryMissing
+              const isCompositionAdjustedKey = isCompositionAdjustedMeasurement(meta);
+              const isCompositionAdjustedBoundaryMissing =
+                isCompositionAdjustedKey && periodYear >= 2018 && entry?.value == null;
+              const measurement: TooltipMeasurement = isCompositionAdjustedBoundaryMissing
                 ? fallbackMeasurement
                 : row &&
                     typeof row === "object" &&

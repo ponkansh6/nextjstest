@@ -48,7 +48,7 @@ const measurementTypeLabel = (measurement?: SeriesMeasurement): string => {
   return "利用不可";
 };
 
-/** Public Plan39 annual series: one measurement contract for every surface. */
+/** Public composition-adjusted annual series: one measurement contract for every surface. */
 export function CtiAdjustedSeriesSection({ data }: CtiAdjustedSeriesSectionProps) {
   const { isMobile, isTouch, chartColors } = useChartTheme();
   const chartTooltip = useChartTooltipController({ suppressed: false, isTouch });
