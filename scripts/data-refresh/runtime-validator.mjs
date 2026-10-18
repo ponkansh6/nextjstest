@@ -437,7 +437,7 @@ export const PINNED_PROJECT_FILES = Object.freeze({
   "server/lib/view-models/dashboard.ts":
     "3fa933e666789b9bfd8f21054ff005f09077c001ec996176daf5db86c45241ed",
   "server/lib/view-models/quarterlyAggregation.ts":
-    "781aa4c2e971795ee69e3ba1d58e0a6fa0294ff1ddc6698f9d39aac7e4fa6da9",
+    "bf5b79fb05ade3610d61f4346bd13832853318645de36027fe4a015080952379",
   "src/lib/chartConstants.ts": "93c51e597337c7538c4d4f116f73d5e35ab0bf495a3392993989cf42defd2fa4",
   "src/lib/clientCalculations.ts":
     "ae4d02d14284fd10fc202de7bf95ec3885ec16a1ed2f621f4aca7d8ed9b213e0",
