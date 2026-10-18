@@ -121,7 +121,7 @@ The deterministic ledger is `docs/history/plan54-vocabulary-ledger.tsv`; every
 matched occurrence has a path, line number, category, and reason. The generator
 reported 403 files and 2,366 matching lines, with 0 safe rename candidate paths. `shared_plan/` is excluded because those files are dated plans and
 audit records; their role is historical by directory and they are not runtime
-identifiers. Plan54 itself is separately reported as 1 file and 53 matching
+identifiers. Plan54 itself is separately reported as 1 file and 52 matching
 lines. The generator and output ledger are outside the scanned scope. An earlier inventory reported 419 files with ripgrep's default hidden-file
 behavior and 428 files in a hidden-inclusive scan that included `shared_plan/`.
 Those are prior-scope snapshots, not the current ledger totals. The current

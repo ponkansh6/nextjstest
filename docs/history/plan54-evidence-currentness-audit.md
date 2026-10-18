@@ -56,7 +56,7 @@ before artifact regeneration, and the post-canonical snapshot
 pre-existing snapshots and result files remain preserved. The analysis run and `--check`,
 rollback verifier, focused suite (22 files, 296 passed, 1 skipped), lint, and
 type-check passed. The final numbered vocabulary generator produced 403 files /
-2,366 matching lines, with Plan54 tallied separately as 1 file / 53 lines and
+2,366 matching lines, with Plan54 tallied separately as 1 file / 52 lines and
 0 safe rename candidates. The bare-plan validator passed with 1,281
 occurrences, 1,039 distinct lines, and 190 files (356 historical, 827 generic,
 98 literal, 0 ambiguous/unclassified). `git diff --check` also passed. These
