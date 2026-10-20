@@ -54,6 +54,38 @@ export default function ChartInfoContentRenderer({
           </ul>
         </React.Fragment>
       ))}
+      {content.disclosures?.map((disclosure, i) => (
+        <details key={i} className={styles.disclosure}>
+          <summary className={styles.disclosureSummary}>{disclosure.summary}</summary>
+          {disclosure.sections.map((section, j) => {
+            const List = section.ordered ? "ol" : "ul";
+            return (
+              <React.Fragment key={j}>
+                <ChartInfoSectionHeading>{section.heading}</ChartInfoSectionHeading>
+                <List className={section.ordered ? styles.orderedList : styles.list}>
+                  {section.items.map((item, k) => (
+                    <li
+                      key={k}
+                      className={section.ordered ? styles.orderedListItem : styles.listItem}
+                    >
+                      {item.text}
+                      {item.subItems && item.subItems.length > 0 && (
+                        <ul className={styles.subList}>
+                          {item.subItems.map((sub, n) => (
+                            <li key={n} className={styles.subListItem}>
+                              {sub}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </li>
+                  ))}
+                </List>
+              </React.Fragment>
+            );
+          })}
+        </details>
+      ))}
       {footer}
     </ChartInfoButton>
   );

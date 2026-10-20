@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 import { ChartDataContract, normalizePublicChartData } from "@/app/components/ChartDataContract";
 import { CustomTooltip } from "@/app/components/CustomTooltip";
 import { DataTablesSection } from "@/app/components/DataTablesSection";
+import { getChartInfoContent } from "@/lib/chartInfoContent";
 import {
   CTI_ADJUSTED_V2_PUBLIC_CATEGORIES,
   CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY,
@@ -619,6 +620,42 @@ const annualFailureCases: ReadonlyArray<[string, AnnualMutation, string]> = [
 ];
 
 describe("Plan40 phase-1 runtime evidence", () => {
+  it("checks runtime boundary metadata and consumption disclosure copy", () => {
+    const { rows } = runtimeRows(undefined, undefined, 2017, undefined, true);
+    const estimatedRow = rowForYear(rows, 2016, 4);
+    const officialRow = rowForYear(rows, 2017, 1);
+    const categoryKey = CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY.食料;
+
+    expect(estimatedRow.label).toBe("2016Q4");
+    expect(estimatedRow.kind).toBe("estimated-cost-stack-v2");
+    expect(measurementFor(estimatedRow, categoryKey)).toMatchObject({
+      annualAnchorType: "estimated",
+      seriesType: "unavailable",
+      status: "unavailable",
+      official: false,
+      quarterlyDerived: true,
+    });
+    expect(measurementFor(officialRow, categoryKey)).toMatchObject({
+      annualAnchorType: "official",
+      seriesType: "official_adjusted",
+      official: true,
+      quarterlyDerived: false,
+    });
+
+    const info = getChartInfoContent("consumption-expenditure");
+    const overview = info.sections.flatMap((section) => section.items.map((item) => item.text));
+    const disclosure = info.disclosures?.find((item) => item.summary === "2016年以前の推計方法");
+    const overviewText = overview.join("\n");
+    expect(overviewText).toContain("2016Q4まで推計値");
+    expect(overviewText).toContain("2017Q1以降は公式の四半期値");
+    expect(disclosure?.summary).toBe("2016年以前の推計方法");
+    const disclosureText =
+      disclosure?.sections
+        .flatMap((section) => section.items.map((item) => item.text))
+        .join("\n") ?? "";
+    expect(disclosureText).toContain("2017年以降の年次値には公式の調整系列を使います。");
+  });
+
   it.each(annualFailureCases)(
     "keeps official quarterly observations independent of annual %s input",
     (_label, mutate, expectedReason) => {

@@ -54,26 +54,41 @@ describe("new-graph chart info data-source state", () => {
 });
 
 describe("consumption-expenditure chart info", () => {
-  it("presents the quarterly expenditure series, estimate boundary, and user-facing meaning", () => {
+  it("keeps the quarterly summary concise and discloses the historical estimate method separately", () => {
     const info = CHART_INFO["consumption-expenditure"];
-    const text = [
-      info.source,
-      ...info.sections.flatMap((section) => section.items.map((item) => item.text)),
-    ].join("\n");
+    const overview = info.sections
+      .flatMap((section) => section.items.map((item) => item.text))
+      .join("\n");
+    const disclosure = info.disclosures?.find((item) => item.summary === "2016年以前の推計方法");
+    const detail =
+      disclosure?.sections
+        .flatMap((section) => section.items.map((item) => item.text))
+        .join("\n") ?? "";
+    const text = [info.source, overview, detail].join("\n");
 
-    expect(text).toContain("二人以上の世帯の消費支出");
-    expect(text).toContain("四半期");
-    expect(text).toContain("2016年第4四半期までは推計値");
-    expect(text).toContain("2017年第1四半期以降はe-Statの公式四半期値");
-    expect(text).toContain("名目データは");
-    expect(text).toContain("名目はその時点の金額");
-    expect(text).toContain("実質は消費者物価指数（CPI）で物価変動を調整した額");
-    expect(text).toContain("2025年基準");
-    expect(text).toContain("総額から他の9費目を差し引いて算出");
-    expect(text).toContain("対応する物価指数がないため");
-    expect(text).toContain("総合CPI（持家の帰属家賃を除く）を代用した概算");
-    expect(text).toContain("実質総額は内訳とは別に計算");
-    expect(text).toContain("実質値を足しても総額とは一致しません");
+    expect(overview).toContain("二人以上の世帯の消費支出を四半期ごとに表示します。");
+    expect(overview).toContain(
+      "名目値は2016Q4まで推計値、2017Q1以降は公式の四半期値です。実質値は消費者物価指数で調整しています。",
+    );
+    expect(overview).toContain("2025年平均を100とする指数で、金額ではありません。");
+    expect(overview).not.toMatch(
+      /2005Q1|2005年|年次推計|月次CTI|帰属家賃|CPI平均|Other|計算に必要|表示しません|欠損/,
+    );
+    expect(disclosure?.sections.some((section) => section.ordered)).toBe(true);
+    expect(detail).toContain("2016年以前の年次名目指数");
+    expect(detail).toContain("2017年以降の年次値には公式の調整系列");
+    expect(detail).toContain("公式の過去値ではありません");
+    expect(detail).toContain("2025年基準の名目指数");
+    expect(detail).toContain("二人以上世帯の構成割合の2017年比の変化");
+    expect(detail).toContain("総合は、推計した9費目と「その他の消費支出」を合算します。");
+    expect(detail).toContain("四半期3か月の月次名目CTI平均");
+    expect(detail).toContain("同年12か月の月次名目CTI平均");
+    expect(detail).toContain("総合から9費目を差し引いて配分用の動き");
+    expect(detail).toContain("実質値は各四半期の名目値×100÷当該3か月のCPI平均");
+    expect(detail).toContain("持家の帰属家賃を除く総合CPIを近似指標");
+    expect(detail).toContain("実質費目の合計とは一致しない場合があります");
+    expect(detail).toContain("計算に必要な値がそろわない場合、その値は表示しません。");
+    expect(detail).not.toMatch(/Pi|分子|分母|金額推計/);
     expect(info.source).toContain("e-Stat");
     expect(info.url).toBe(
       "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499087",

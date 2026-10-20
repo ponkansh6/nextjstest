@@ -9,6 +9,7 @@ import ChartInfoButton, {
   ChartInfoUrl,
 } from "../../src/app/components/ChartInfoButton";
 import ChartInfoContentRenderer from "../../src/app/components/ChartInfoContentRenderer";
+import chartInfoStyles from "../../src/app/components/ChartInfoButton.module.css";
 import { EarningsBreakdownChart } from "../../src/app/components/EarningsBreakdownChart";
 import { setupUiMocks } from "../utils/ui-mocks";
 
@@ -251,6 +252,54 @@ describe("ChartInfoButton", () => {
     expect(link.href).toBe("https://example.com/data");
     expect(link.target).toBe("_blank");
     expect(link.rel).toContain("noopener");
+  });
+
+  it("closes with Escape, restores trigger focus, and resets the consumption disclosure on reopen", async () => {
+    const user = userEvent.setup();
+    render(<ChartInfoContentRenderer chartKey="consumption-expenditure" />);
+
+    const trigger = screen.getByRole("button", { name: "データソースの説明を表示" });
+    await user.click(trigger);
+    const dialog = screen.getByRole("dialog");
+    const summary = screen.getByText("2016年以前の推計方法");
+    const details = summary.closest("details");
+    expect(details).not.toBeNull();
+    expect((details as HTMLDetailsElement).open).toBe(false);
+
+    summary.focus();
+    expect(document.activeElement).toBe(summary);
+    expect(summary.classList.contains(chartInfoStyles.disclosureSummary)).toBe(true);
+    let spaceKeyReachedFocusedSummary = false;
+    summary.addEventListener(
+      "keydown",
+      (event) => {
+        spaceKeyReachedFocusedSummary = event.key === " " || event.code === "Space";
+      },
+      { once: true },
+    );
+    fireEvent.keyDown(summary, { key: " ", code: "Space" });
+    expect(spaceKeyReachedFocusedSummary).toBe(true);
+    // happy-dom does not emulate the browser's native summary Space activation.
+    if (!(details as HTMLDetailsElement).open) fireEvent.click(summary);
+    expect((details as HTMLDetailsElement).open).toBe(true);
+    expect(dialog.textContent).toContain("四半期3か月の月次名目CTI平均");
+
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(document.activeElement).toBe(trigger);
+
+    await user.click(trigger);
+    const reopenedDetails = screen.getByText("2016年以前の推計方法").closest("details");
+    expect(reopenedDetails).not.toBeNull();
+    expect((reopenedDetails as HTMLDetailsElement).open).toBe(false);
+  });
+
+  it("keeps disclosure-free chart info without a details control", async () => {
+    const user = userEvent.setup();
+    render(<ChartInfoContentRenderer chartKey="earnings" />);
+    await user.click(screen.getByRole("button", { name: "データソースの説明を表示" }));
+    expect(screen.getByRole("dialog").querySelector("details")).toBeNull();
+    expect(screen.getByText("データの内訳")).toBeDefined();
   });
 
   // ── Accessibility ──

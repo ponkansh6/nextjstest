@@ -19,19 +19,24 @@ For NewGraph's monthly comparison projection, the old 3 comparison entries
 The `consumption-expenditure` information panel describes the quarterly
 nominal/real spending charts from the Plan40 integrated CTI projection. Its
 content and availability are independent of the monthly CTI compatibility
-state. It identifies the two-or-more-person-household scope, explains nominal
-values as current-price spending and real values as price-adjusted spending,
-and summarizes that nominal values through 2016Q4 are estimates and nominal
-values from 2017Q1 are official quarterly data; real values are calculated by
-the application. It explains that `その他の消費支出` is derived from the total
-after the nine main categories, and that real Other is an approximation using
-the overall CPI excluding imputed rent for owner-occupied housing; the
-independently adjusted real total need not equal the sum of real categories.
-The nominal series source is identified as e-Stat's
+state. It identifies the two-or-more-person-household scope and keeps the
+always-visible overview concise: `名目値は2016Q4まで推計値、2017Q1以降は公式の四半期値です。実質値は消費者物価指数で調整しています。`
+It identifies nominal values as 2025 annual-average = 100 indices, not monetary
+amounts. The nominal series source is e-Stat's
 "消費動向指数（CTIミクロ基本系列・調整系列）", and the real series as adjusted
-using the Consumer Price Index (CPI). This
-panel does not expose monthly CTI state, raw/12MA details, formulas, detailed
-CPI category mappings, or missing-data handling.
+using the Consumer Price Index (CPI). A native, initially closed disclosure
+labelled `2016年以前の推計方法` explains the pre-2017 annual nominal index
+connection and household-composition correction, official adjusted annual
+series from 2017 onward, quarterly allocation by monthly CTI ratios, Other
+derivation, and CPI adjustment. The detail clarifies that pre-2017 values are
+estimates rather than official historical values, real Other uses the overall
+CPI excluding imputed rent for owner-occupied housing as a proxy, and the
+independently adjusted real total may differ from its category sum. The
+collapsed overview keeps those calculation details out and does not expose
+monthly CTI selection state, raw/12MA details, Pi numerator or denominator
+definitions, missing-data handling, or internal status terminology. The
+expanded disclosure says values are not displayed when required data is
+unavailable.
 
 ### Data Flow
 
@@ -81,8 +86,10 @@ their metadata, while the comparison consumption row suppresses measurement
 notes and keeps its period/value. This suppression does not apply to generic
 consumption tooltips. `CpiChart` supplies quarterly consumption info through
 `getChartInfoContent("consumption-expenditure", ...)` and
-`ChartInfoContentRenderer`; NewGraph retains its separate monthly comparison
-info content.
+`ChartInfoContentRenderer`. The renderer displays optional `ChartInfoContent`
+disclosures as native `details`/`summary` controls and uses ordered lists for
+sections marked as ordered; disclosure-free chart content keeps its existing
+rendering. NewGraph retains its separate monthly comparison info content.
 
 The nominal consumption graph uses the current Plan40 published contract: ten
 adjusted nominal CTI categories, using the existing historical
@@ -656,6 +663,16 @@ retired Plan38 2005Q1–2017Q4 nominal artifact projection or load/join GDP
 support. Plan37's monthly CTI source remains a separate monthly contract.
 Client calculations do not aggregate quarterly CTI values or reconstruct
 either retired projection.
+
+Quarterly info text is presentation-only: `CpiChart` obtains the independent
+quarterly `ChartInfoContent` via `getChartInfoContent`, and
+`ChartInfoContentRenderer` renders its sections and optional disclosures.
+Disclosures use native `<details>/<summary>` toggling, so no additional React
+state or client boundary is introduced. The dialog content is conditionally
+rendered only while open, so closing unmounts it and reopening starts with the
+disclosure closed. Expanded content says values are not displayed when required
+inputs are unavailable; internal missing-data statuses and reason codes are
+not exposed.
 
 The public estimate-version contract flows from
 `shared/cti-estimate-contract.ts` to server CTI domain metadata and public JSON,
@@ -2048,12 +2065,22 @@ The system SHALL provide explanatory info for each chart/metric.
 #### Canonical scenario — Scenario R6c: Quarterly Consumption Explanation
 
 - **WHEN** a user opens the `consumption-expenditure` information panel
-- **THEN** it explains the quarterly household spending series for households with two or more persons, with nominal values representing current-price spending and real values adjusted for price changes
-- **AND** it summarizes that nominal values through 2016Q4 are estimates and nominal values from 2017Q1 are official quarterly data, while real values are calculated by the application
-- **AND** it explains in concise terms that `その他の消費支出` is derived from the total after the nine main categories, and that real Other is an approximation using the overall CPI excluding imputed rent for owner-occupied housing
-- **AND** it explains that the real total is adjusted independently and may not equal the sum of real categories
+- **THEN** it explains the quarterly household spending series for households with two or more persons
+- **AND** the always-visible overview includes `名目値は2016Q4まで推計値、2017Q1以降は公式の四半期値です。実質値は消費者物価指数で調整しています。` and identifies nominal values as 2025 annual-average = 100 indices, not monetary amounts
+- **AND** the detail disclosure is initially closed and does not lengthen the overview with historical calculation details
 - **AND** it identifies e-Stat's 「消費動向指数（CTIミクロ基本系列・調整系列）」 as the nominal-series source and the Consumer Price Index (CPI) as the real-series adjustment source
-- **AND** the information content is based on the quarterly CTI projection independently of monthly CTI state, and does not expose formulas, detailed CPI category mappings, missing-data handling, raw/12MA details, or internal status terminology
+- **AND** the collapsed overview is based on the quarterly CTI projection independently of monthly CTI state, and does not expose monthly state, raw/12MA details, Pi numerator/denominator definitions, missing-data handling, or internal status terminology
+- **AND** the expanded disclosure says values are not displayed when the data required to calculate them is unavailable
+
+#### Canonical scenario — Scenario R6c1: Quarterly Consumption Estimate Disclosure
+
+- **WHEN** a user opens the `2016年以前の推計方法` disclosure in the `consumption-expenditure` information panel
+- **THEN** it explains the 2017 connection and household-composition correction for pre-2017 annual nominal indices, and identifies post-2017 annual values as the official adjusted series
+- **AND** it explains quarterly nominal allocation by the three-month monthly CTI average relative to that year's 12-month average, without describing indices as monetary amounts
+- **AND** it explains annual aggregation and quarterly derivation of Other, plus real adjustment as quarterly nominal index × 100 ÷ the three-month CPI average
+- **AND** it identifies real Other's CPI excluding imputed rent proxy and explains why the independently adjusted real total may differ from the sum of real categories
+- **AND** the explanation states that pre-2017 values are estimates, not official historical values
+- **AND** it says a value is not displayed when required calculation data is unavailable
 
 #### Canonical scenario — Scenario R6e: Three-Series Monthly Comparison Explanation
 
@@ -3295,7 +3322,7 @@ Page (RSC)
     │   ├── EarningsBreakdownChart → CustomTooltip — salary comparison uses a common factor derived from the 2025 average of the composite of monthly regular/overtime wages and special-wage 12MA; apply that factor to each component's 12MA before summing; complete registry labels with natural wrapping and stable value column; six rows plus `給与区分合計（所定内＋所定外＋特別）` from visible `EARNINGS_TOTAL_KEYS`; hidden included rows are removed and the total is recalculated from the remaining visible included rows; salary-only separator is placed on the first visible auxiliary row
     │   ├── ResidualAreaChart → CustomTooltip
     │   └── NewGraph → ChartInfoContentRenderer → CustomTooltip — salary 12MAs use a common factor derived from the 2025 average of the composite made from monthly regular/overtime wages and special-wage 12MA; CPI 12MA uses a factor that makes raw monthly CPI's 2025 calendar-year average 100, not a factor derived from the 12MA; Plan49 `消費(総合)` is normalized to its 2025 monthly average before strict 12MA; legacy CTI monthly keys and Plan40 quarterly CTI are not comparison registry entries
-    ├── ChartInfoButton → ChartInfoContentRenderer — Indicator explanations (uses `chartKey` plus loader-resolved state in `src/lib/chartInfoContent.ts`)
+    ├── ChartInfoButton → ChartInfoContentRenderer — Indicator explanations (uses `chartKey` plus loader-resolved state in `src/lib/chartInfoContent.ts`); optional disclosures render as native `<details>/<summary>` controls
     ├── ChartDataContract — stable normalized chart data attributes for each of the seven targets
     ├── ChartExportButton — CSV download of the displayed rows (inside each chart's <details>)
     ├── ChartLegend — defined visible-series legend contract; retains values whose current data is null

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 
-const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+const FOCUSABLE =
+  'button, [href], input, select, textarea, summary, [tabindex]:not([tabindex="-1"])';
 
 /**
  * Trap focus inside a container when open and restore it on close.

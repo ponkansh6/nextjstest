@@ -64,6 +64,9 @@
   font-size: 0.85rem;
   line-height: 1.6;
   text-align: left;
+  max-block-size: calc(100vh - 2rem);
+  max-block-size: calc(100dvh - 2rem);
+  overflow-y: auto;
 
   /* Animation */
   animation: popupIn 150ms ease-out forwards;
@@ -210,6 +213,36 @@
   opacity: 0.8;
 }
 
+.disclosure {
+  margin-top: 12px;
+  border-top: 1px solid var(--card-border);
+  padding-top: 8px;
+}
+
+.disclosureSummary {
+  cursor: pointer;
+  font-weight: 600;
+  line-height: 1.6;
+}
+
+.disclosureSummary:focus-visible {
+  outline: 2px solid var(--blue-500, #2563eb);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.orderedList {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.orderedListItem {
+  margin-bottom: 6px;
+  padding-left: 0.15rem;
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
 /* ── Mobile overlay (below 768px) - 同期: MOBILE_BREAKPOINT_PX = 768 ── */
 @media (max-width: 768px) {
   .wrapper {
@@ -224,7 +257,8 @@
     right: auto;
     width: calc(100% - 2rem);
     max-width: 360px;
-    max-height: calc(100dvh - 4rem);
+    max-block-size: calc(100vh - 4rem);
+    max-block-size: calc(100dvh - 4rem);
     overflow-y: auto;
     animation: popupInMobile 150ms ease-out forwards;
     transform-origin: center center;
