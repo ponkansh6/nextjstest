@@ -412,7 +412,7 @@ export const PINNED_PROJECT_FILES = Object.freeze({
   "server/lib/data-loader/cache.ts":
     "cf438d8340004453b68b5d25c3f23b41e8556f7f2951fb622f6ebe845386e112",
   "server/lib/data-loader/cpi.ts":
-    "671ff69b2b286f86342ba0b74d56313be285552b85475750354a4483579d9510",
+    "d6d022f0ebf2f75d3476bfc99344fc2c4d8bc06d78bc46ea79be01c343c0bf0e",
   "server/lib/data-loader/cpiLoader.ts":
     "11219c314ed787a8f6f0fd9ac68a2018cc468208289c643cb27d8c8ff0ee3948",
   "server/lib/data-loader/cpiSource.ts":
@@ -422,7 +422,7 @@ export const PINNED_PROJECT_FILES = Object.freeze({
   "server/lib/data-loader/ctiAdjusted.ts":
     "afe725dfd5db19c6533817802e83fdd6e2d43f5312ed24a265ee630d88bd9a35",
   "server/lib/data-loader/ctiValidation.ts":
-    "91ea069093940bc4128fbd61543975010abf8514f96b6c5cec84926fb8a0e924",
+    "89859a586fd0473a0e881f21cdc3e0e4534066307de04be0ee26e4b775d13ce7",
   "server/lib/data-loader/earnings.ts":
     "dc813aa80d299241a57c8906c3d68172732d5d200d0b36565e8350d73cb5f96d",
   "server/lib/data-loader/population.ts":

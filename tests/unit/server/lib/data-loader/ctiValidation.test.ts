@@ -1,8 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { createHash } from "node:crypto";
 import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import Papa from "papaparse";
 import { buildCtiFilePaths } from "../../../../../server/lib/dataIo";
 import {
   isContinuousMonths,
@@ -88,6 +89,106 @@ describe("CTI validation boundary", () => {
     expect(() =>
       validateCtiPair({ baseYear: 2025, pair: "2025", mainPath: directory }, paths),
     ).toThrow();
+  });
+
+  it("maps an exception while validating loaded metadata to invalid metadata", () => {
+    const root = mkdtempSync(path.join(tmpdir(), "cti-metadata-validation-error-"));
+    const metadataPath = path.join(root, "metadata.json");
+    writeFileSync(metadataPath, "{}");
+    const parse = vi.spyOn(JSON, "parse").mockImplementation(
+      () =>
+        new Proxy(
+          {},
+          {
+            get: () => {
+              throw new Error("metadata access failed");
+            },
+          },
+        ),
+    );
+
+    try {
+      expect(validateCtiMetadata(metadataPath, "candidate.csv")).toBe("invalid metadata");
+    } finally {
+      parse.mockRestore();
+    }
+  });
+
+  it("rejects null metadata returned by the JSON parser", () => {
+    const root = mkdtempSync(path.join(tmpdir(), "cti-null-metadata-"));
+    const metadataPath = path.join(root, "metadata.json");
+    writeFileSync(metadataPath, "{}");
+    const parse = vi.spyOn(JSON, "parse").mockReturnValue(null);
+
+    try {
+      expect(validateCtiMetadata(metadataPath, "candidate.csv")).toBe("invalid metadata");
+    } finally {
+      parse.mockRestore();
+    }
+  });
+
+  it("validates the main CSV when its month column is labeled 年月", () => {
+    const paths = buildCtiFilePaths();
+    const mainCsv = readFileSync(paths.candidateMain, "utf8");
+    const quarterlyCsv = readFileSync(paths.candidateDistributionAdjustedQuarterly, "utf8");
+    const originalParse = Papa.parse.bind(Papa);
+    let changedMainHeader = false;
+    let parsedQuarterlyWithoutErrors = false;
+    const parse = vi.spyOn(Papa, "parse").mockImplementation(((input: unknown, config: unknown) => {
+      const result = originalParse(input as string, config as never) as unknown as {
+        data: unknown[];
+        errors: unknown[];
+      };
+      if (input === mainCsv) {
+        const rows = result.data as string[][];
+        const header = rows.find((row) =>
+          row.some((cell) => cell?.trim() === "年月" || cell?.trim() === "月"),
+        );
+        if (header) {
+          for (let index = 0; index < header.length; index += 1) {
+            if (header[index]?.trim() === "月") header[index] = "年月";
+          }
+          expect(header.some((cell) => cell?.trim() === "年月")).toBe(true);
+          expect(header.every((cell) => cell?.trim() !== "月")).toBe(true);
+          changedMainHeader = true;
+        }
+      }
+      if (input === quarterlyCsv) parsedQuarterlyWithoutErrors = result.errors.length === 0;
+      return result as never;
+    }) as never);
+
+    try {
+      expect(
+        validateCtiPair({ baseYear: 2025, pair: "2025", mainPath: paths.candidateMain }, paths),
+      ).toEqual({ baseYear: 2025, pair: "2025", mainPath: paths.candidateMain });
+      expect(changedMainHeader).toBe(true);
+      expect(parsedQuarterlyWithoutErrors).toBe(true);
+    } finally {
+      parse.mockRestore();
+    }
+  });
+
+  it("rejects quarterly CSV parse errors as an invalid quarterly period range", () => {
+    const paths = buildCtiFilePaths();
+    const quarterlyCsv = readFileSync(paths.candidateDistributionAdjustedQuarterly, "utf8");
+    const originalParse = Papa.parse.bind(Papa);
+    const parse = vi.spyOn(Papa, "parse").mockImplementation(((input: unknown, config: unknown) => {
+      const result = originalParse(input as string, config as never) as unknown as {
+        data: unknown[];
+        errors: unknown[];
+      };
+      return input === quarterlyCsv
+        ? { ...result, errors: [...result.errors, { message: "injected parse error" }] }
+        : result;
+    }) as never);
+
+    try {
+      expect(
+        validateCtiPair({ baseYear: 2025, pair: "2025", mainPath: paths.candidateMain }, paths),
+      ).toBe("invalid official quarterly CTI period range");
+    } finally {
+      parse.mockRestore();
+    }
   });
 
   it("preserves the distribution CSV read before the main CSV digest check", () => {
@@ -178,6 +279,7 @@ describe("CTI validation boundary", () => {
 
   it.each([
     ["missing series map digest", { officialSeriesMapSha256: undefined }],
+    ["missing snapshot digest", { officialSeriesSnapshotSha256: undefined }],
     ["mismatched series map digest", { officialSeriesMapSha256: "f".repeat(64) }],
     ["mismatched snapshot digest", { officialSeriesSnapshotSha256: "f".repeat(64) }],
     ["mismatched snapshot source identity", { officialSeriesSnapshotSourceStatInfId: "wrong" }],

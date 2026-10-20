@@ -58,7 +58,8 @@ other messages default to `cti_fail_closed`.
   catch; distribution CSV read before main digest mismatch; map header before metadata parse; basis before
   derived hash; derived hash before metadata period; quarterly artifact identity
   before quarterly period; quarterly metadata read failure mapped to its combined
-  JSON reason).
+  JSON reason. Added branch cases cover null metadata, the `年月` header selection
+  branch, and quarterly PapaParse errors.
 - `tests/unit/cti-loader-validation-coverage.test.ts`: main CSV headers, required
   totals, empty/duplicate/discontinuous months, numeric values, and reason mapping.
 - `tests/unit/server/lib/data-fixture-comparison.test.ts`: loader/status fixture
@@ -69,10 +70,14 @@ other messages default to `cti_fail_closed`.
 - `tests/unit/cpi-loading-coverage.test.ts` and
   `tests/unit/server/lib/dataLoader-facade.test.ts`: status conversion, failure
   empty-array behavior, and facade forwarding contracts.
+- `PINNED_PROJECT_FILES` fingerprints were refreshed for
+  `server/lib/data-loader/cpi.ts` and
+  `server/lib/data-loader/ctiValidation.ts` to reflect the reviewed implementation.
 
 ## Orchestrator verification results
 
-- `pnpm exec vitest run tests/unit/server/lib/data-loader/ctiValidation.test.ts tests/unit/cti-loader-validation-coverage.test.ts tests/unit/cpi-loading-coverage.test.ts tests/unit/server/lib/dataLoader-facade.test.ts tests/unit/server/lib/data-fixture-comparison.test.ts tests/data-quality/cti-source-integrity.test.ts tests/data-quality/cti-source-artifacts.test.ts` — 7 files, 121 tests passed.
+- CTI focused validation — 42/42 passed.
+- `pnpm run test:coverage` — 122 files, 1410 passed, 1 skipped; statements, branches, functions, and lines all at 100%.
 - `pnpm run type-check` — passed.
 - `pnpm run lint:fast` — passed.
 - `git diff --check` — passed.
