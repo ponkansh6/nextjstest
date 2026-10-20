@@ -516,6 +516,48 @@ describe("chart control coverage contracts", () => {
     expect(missing.container.firstChild).toBeNull();
   });
 
+  it("renders disclosure subitems only when present and keeps ordered/default disclosure lists", () => {
+    const content: ChartInfoContent = {
+      source: "Disclosure source",
+      sections: [],
+      disclosures: [
+        {
+          summary: "Disclosure details",
+          sections: [
+            {
+              heading: "Ordered steps",
+              ordered: true,
+              items: [
+                { text: "No subitems" },
+                { text: "Empty subitems", subItems: [] },
+                { text: "Has subitems", subItems: ["Disclosure child"] },
+              ],
+            },
+            {
+              heading: "Default list",
+              items: [{ text: "Default item" }],
+            },
+          ],
+        },
+      ],
+    };
+
+    render(<ChartInfoContentRenderer chartKey="cpi" content={content} />);
+    fireEvent.click(screen.getByRole("button", { name: "データソースの説明を表示" }));
+
+    const dialog = screen.getByRole("dialog");
+    const details = within(dialog).getByText("Disclosure details").closest("details");
+    expect(details).not.toBeNull();
+    (details as HTMLDetailsElement).open = true;
+
+    expect(within(dialog).getByText("No subitems")).toBeTruthy();
+    expect(within(dialog).getByText("Empty subitems")).toBeTruthy();
+    expect(within(dialog).getByText("Has subitems")).toBeTruthy();
+    expect(within(dialog).getByText("Disclosure child")).toBeTruthy();
+    expect(details?.querySelector("ol")).not.toBeNull();
+    expect(details?.querySelectorAll("ul")).toHaveLength(2);
+  });
+
   it("keeps popup clicks open and closes on an outside pointer event and non-Escape key", async () => {
     render(
       <div>
