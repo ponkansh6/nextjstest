@@ -125,40 +125,31 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
     ],
   },
   "consumption-expenditure": {
-    source: "e-Stat「消費動向指数（CTIミクロ基本系列・調整系列）」公式長期artifact/四半期表",
+    source: "e-Stat「消費動向指数（CTIミクロ基本系列・調整系列）」",
     url: "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499087",
     sections: [
       {
-        heading: "データの内訳",
+        heading: "対象と見方",
         items: [
           {
-            text: "2016Q4以前は非公式推計です。各費目のCTI基本系列の年次値に、2017年の「調整系列の年次値÷基本系列の年次値」の比率を掛けて接続し、世帯構成別の月次季節パターンで四半期値に配分しています。2017Q1以降は、調整系列・分布調整値（原数値）の公式名目四半期値（統計表ID 000040499087）を最新公表期まで表示します。",
+            text: "二人以上の世帯の消費支出を四半期ごとに表示します。名目はその時点の金額、実質は消費者物価指数（CPI）で物価変動を調整した額（2025年基準）です。",
           },
           {
-            text: "公式の『その他の消費支出』は未公表のため、公式総合から他9費目を引いた残差を表示",
+            text: "名目データは、2016年第4四半期までは推計値、2017年第1四半期以降はe-Statの公式四半期値です。",
           },
           {
-            text: "内訳は9大費目と諸雑費・CPI外支出に分類して表示",
+            text: "「その他」は総額から他の9費目を差し引いて算出しています。",
           },
         ],
       },
       {
-        heading: "データ加工",
+        heading: "実質値の見方",
         items: [
           {
-            text: "公開CTI名目四半期値を固定し、各四半期3か月の2025年基準CPI算術平均で割って実質化（名目値 × 100 ÷ CPI平均）。CPI値・実質値の再基準化や欠月補間は行いません。",
+            text: "「その他」には対応する物価指数がないため、総合CPI（持家の帰属家賃を除く）を代用した概算です。",
           },
           {
-            text: "9費目は同名のCPI大分類を使い、住居は「持家の帰属家賃を除く住居」を使います。CTI「その他の消費支出」には直接対応するCPI大分類がないため、「持家の帰属家賃を除く総合」を一般proxyとして使います。費目固有の物価変動を表すものではありません。",
-          },
-          {
-            text: "実質総合はCTI名目総合に「持家の帰属家賃を除く総合」を独立適用します。9費目とその他の実質値の和に一致する定義ではありません。",
-          },
-          {
-            text: "3か月のCPI欠損・重複・非有限または0以下の値は補間せず、該当する実質系列をnullとして理由と使用CPIの情報を公開します。",
-          },
-          {
-            text: "表・CSV・ツールチップには使用CPI系列、四半期内の期間集計、名目系列の出典、利用可否と理由を表示します。",
+            text: "実質総額は内訳とは別に計算するため、9費目と「その他」の実質値を足しても総額とは一致しません。",
           },
         ],
       },
@@ -213,33 +204,30 @@ export const CHART_INFO: Record<string, ChartInfoContent> = {
     url: "https://www.e-stat.go.jp/stat-search/files?page=1&toukei=00200573&tstat=000001150147",
     sections: [
       {
-        heading: "表示している系列",
+        heading: "3つの動き",
         items: [
           {
-            text: "給与：所定内給与・所定外給与・特別給与の各12か月移動平均に共通の係数を適用し、合計した系列",
+            text: "給与：定期給与・残業代・賞与などを含む給与の動き",
           },
           {
-            text: "消費：家計調査・e-Stat公式系列を用いた月次消費合計「消費(総合)」を2025年の月次平均=100に基準化した系列の、連続12暦月の厳密な移動平均",
+            text: "消費：家計の名目消費支出の動き",
           },
           {
-            text: "物価：全国CPI総合の12か月移動平均に、CPI生値の2025年平均=100となる係数を適用した系列",
+            text: "物価：全国の消費者物価指数（総合）の動き",
           },
         ],
       },
       {
-        heading: "データ加工",
+        heading: "読み方と注意",
         items: [
           {
-            text: "給与：所定内給与・所定外給与の月次値と特別給与の12か月移動平均を合計した総合の2025年平均から共通係数を算出し、各給与系列の12か月移動平均に適用して合計",
+            text: "2025年を基準に指数化し、3系列の変化を比較します。季節変動をならすため、各月の値はその月を含む直近12か月の平均です。",
           },
           {
-            text: "物価：CPI総合の月次生値から12か月移動平均を計算し、CPI生値の2025暦年平均が100となる係数を適用（基準係数は移動平均から算出しない）",
+            text: "給与と消費支出は、物価変動を差し引いていない名目値です。",
           },
           {
-            text: "消費：家計調査・e-Stat公式系列を用いた月次消費合計を先に2025年の12か月平均=100へ基準化し、その後、欠損のない連続12暦月だけを平均",
-          },
-          {
-            text: "消費の2016年以前は年次基準値と世帯別の月次季節パターンに基づく推計、2017年以降はe-Stat公式月次系列を使用",
+            text: "消費の元データは、2016年以前が推計値、2017年以降がe-Statの公式月次値です。",
           },
         ],
       },
@@ -295,11 +283,13 @@ export function getCpiUnavailableLabel(reason?: string | null): string {
 export function getChartInfoContent(
   chartKey: keyof typeof CHART_INFO,
   cpiState?: CpiChartInfoState,
-  ctiState?: CtiChartInfoState,
+  _ctiState?: CtiChartInfoState,
 ): ChartInfoContent {
   const content = CHART_INFO[chartKey];
   if (chartKey === "consumption-expenditure") {
-    return resolveCtiChartInfo(content, ctiState);
+    // This chart always shows quarterly household expenditure. Monthly CTI
+    // selection/status details do not describe the series shown here.
+    return content;
   }
   if (!cpiState || (chartKey !== "cpi-major" && chartKey !== "stacked-area")) return content;
 
@@ -323,58 +313,5 @@ export function getChartInfoContent(
     source: `${content.source}（${label}）`,
     url: content.url,
     sections: [{ heading: "データ状態", items: [{ text: label }] }, ...sections],
-  };
-}
-
-function resolveCtiChartInfo(
-  content: ChartInfoContent,
-  ctiState: CtiChartInfoState | undefined,
-): ChartInfoContent {
-  if (!ctiState || ctiState.sourceMode === "unavailable" || ctiState.baseYear === null) {
-    const state = ctiState?.series;
-    return {
-      ...content,
-      sections: [
-        {
-          heading: "データ状態",
-          items: [
-            {
-              text: ctiState?.unavailableReason
-                ? `消費データを表示できません：${ctiState.unavailableReason}`
-                : "消費データは現在利用できません。",
-            },
-            ...(state
-              ? [
-                  {
-                    text: `CTI基本系列の状態：${state.raw.status}、理由：${state.raw.reason ?? ""}、単位：${state.raw.unit}、出典：${state.raw.source}`,
-                  },
-                ]
-              : []),
-          ],
-        },
-      ],
-    };
-  }
-
-  const isOfficial = ctiState.sourceMode === "official-connected";
-  const series = ctiState.seriesLabel ?? "選択済みの公式系列";
-  const stateItems: ChartInfoItem[] = [
-    {
-      text: isOfficial
-        ? `二人以上の世帯の公式CTI名目原数値を、${series}として2005Q1〜2017Q4の四半期平均で使用しています。`
-        : "CTIミクロ名目四半期系列は現在利用できません。",
-    },
-  ];
-  if (ctiState.status === "invalid" || ctiState.reason) {
-    stateItems.push({
-      text: `CTI名目四半期系列の状態：${ctiState.status === "invalid" ? "invalid" : "valid"}、理由：${ctiState.reason ?? ""}、単位：${ctiState.unit ?? "指数"}、出典：${ctiState.source ?? "e-Stat 公式CTI長期artifact 000040499070"}`,
-    });
-  }
-  if (ctiState.supportLabel) stateItems.push({ text: ctiState.supportLabel });
-
-  return {
-    ...content,
-    source: `${content.source}（${isOfficial ? "2025年基準・名目原数値／12MA、2025年raw平均=100" : "利用不可"}）`,
-    sections: [{ heading: "データ状態", items: stateItems }, ...content.sections],
   };
 }

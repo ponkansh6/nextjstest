@@ -16,6 +16,23 @@ NewGraph comparison series.
 For NewGraph's monthly comparison projection, the old 3 comparison entries
 (`CTI消費支出（参考）`, `CTIミクロ基本系列（名目・参考）`, `CTIミクロ基本系列（名目・参考・延長）`) have been replaced by a single entry `消費(総合)` using the dedicated monthly key `CONSUMPTION_TOTAL_12MA_KEY`, frequency `"monthly"`, and aggregation `strict_12_month_moving_average_rebased_to_2025_monthly_average`. Old CTI monthly fields may remain in merged loader data for internal compatibility, but are not registered or projected by NewGraph. The Plan40 integrated quarterly CTI output remains the nominal-spending contract; the dedicated Plan38 key is retired.
 
+The `consumption-expenditure` information panel describes the quarterly
+nominal/real spending charts from the Plan40 integrated CTI projection. Its
+content and availability are independent of the monthly CTI compatibility
+state. It identifies the two-or-more-person-household scope, explains nominal
+values as current-price spending and real values as price-adjusted spending,
+and summarizes that nominal values through 2016Q4 are estimates and nominal
+values from 2017Q1 are official quarterly data; real values are calculated by
+the application. It explains that `その他の消費支出` is derived from the total
+after the nine main categories, and that real Other is an approximation using
+the overall CPI excluding imputed rent for owner-occupied housing; the
+independently adjusted real total need not equal the sum of real categories.
+The nominal series source is identified as e-Stat's
+"消費動向指数（CTIミクロ基本系列・調整系列）", and the real series as adjusted
+using the Consumer Price Index (CPI). This
+panel does not expose monthly CTI state, raw/12MA details, formulas, detailed
+CPI category mappings, or missing-data handling.
+
 ### Data Flow
 
 The legacy adjustment map computes a trailing 12-month average from the old CTI
@@ -33,7 +50,11 @@ include this monthly key.
 
 For NewGraph comparison, `server/lib/consumptionTotal12Ma.ts` uses the composition-corrected Plan39 V2 annual anchors shared with the quarterly nominal projection for 2005–2016, two-or-more-person-household raw seasonal weights, and official all-household monthly observations (`000040499028`) from 2017 onward. The private 2004 prehistory applies the same V2 category base/gamma correction using the calendar-year 2004 two-plus household share `3459/4915`; it exists only to calculate the first public strict 12MA at 2005-01 and is never emitted as a public point.
 
-NewGraph info describes the actual comparison values: salary sums each component’s 12-month average after applying a shared factor calculated from the 2025 average of the composite made from monthly scheduled wages, monthly overtime wages, and special-wage 12MA; CPI uses the national headline CPI 12-month average scaled by a factor that makes raw monthly CPI’s 2025 calendar-year average 100 (the factor is not calculated from the moving average); consumption uses the Plan49 monthly total, first rebased to the 2025 monthly average of 100 and then averaged over a complete trailing 12-calendar-month window. Its 2005–2016 monthly values are reconstructed from Plan39 V2 annual anchors and household monthly seasonality; from 2017 onward it uses official monthly series `000040499028`. NewGraph info is independent of the quarterly CTI info resolver.
+NewGraph info is a reader-facing summary of the comparison: 給与 covers nominal regular pay, overtime pay, and bonuses from the Monthly Labour Survey; 消費 covers nominal household spending, with estimates through 2016 and official monthly series `000040499028` from 2017 onward; 物価 covers the nationwide all-items Consumer Price Index (CPI). It identifies the Monthly Labour Survey, the Family Income and Expenditure Survey/Consumption Trend Index (CTI), and the CPI as sources, explains that the series use a 2025-based index, and says each monthly point is the average over the latest 12 months including that month. The consumption history and source boundary are described without calculation formulas. NewGraph info is independent of the quarterly CTI info resolver.
+
+The comparison data-processing contract remains: salary sums each component’s 12-month average after applying a shared factor calculated from the 2025 average of the composite made from monthly scheduled wages, monthly overtime wages, and special-wage 12MA; CPI uses the national headline CPI 12-month average scaled by a factor that makes raw monthly CPI’s 2025 calendar-year average 100 (the factor is not calculated from the moving average); consumption uses the Plan49 monthly total, first rebased to the 2025 monthly average of 100 and then averaged over a complete trailing 12-calendar-month window. Its 2005–2016 monthly values are reconstructed from Plan39 V2 annual anchors and household monthly seasonality; from 2017 onward it uses official monthly series `000040499028`.
+The quarterly consumption info content describes the Plan40 nominal/real
+series and is resolved independently of monthly CTI selection or availability.
 When no source root is supplied, the loader resolves `data/source` relative to the repository root derived from its module location; an existing explicit source root remains supported, with the current-working-directory fallback retained if module-relative discovery cannot find a package root.
 
 The 3種比較 display registry uses concise labels `物価`, `給与`, and `消費` for both legend and tooltip rows, with orange, blue, and red series colors respectively. Its consumption tooltip row keeps the period and value but suppresses measurement notes such as base year, source, aggregation, and the 12-month-average explanation. This suppression is scoped to the comparison tooltip; generic consumption tooltips retain their existing notes. Detailed source and window provenance remains available to table/CSV consumers.
@@ -58,7 +79,10 @@ The comparison registry owns the legend and tooltip row labels and colors
 (`物価` / orange, `給与` / blue, `消費` / red). Tooltip data contracts retain
 their metadata, while the comparison consumption row suppresses measurement
 notes and keeps its period/value. This suppression does not apply to generic
-consumption tooltips.
+consumption tooltips. `CpiChart` supplies quarterly consumption info through
+`getChartInfoContent("consumption-expenditure", ...)` and
+`ChartInfoContentRenderer`; NewGraph retains its separate monthly comparison
+info content.
 
 The nominal consumption graph uses the current Plan40 published contract: ten
 adjusted nominal CTI categories, using the existing historical
@@ -1121,7 +1145,11 @@ Scenario body is consolidated under [the canonical requirement group](#current-r
 
 Scenario body is consolidated under [the canonical requirement group](#current-r6).
 
-#### Scenario R6c: CTI Data-State Explanation
+#### Scenario R6c: Quarterly Consumption Explanation
+
+Scenario body is consolidated under [the canonical requirement group](#current-r6).
+
+#### Scenario R6e: Three-Series Monthly Comparison Explanation
 
 Scenario body is consolidated under [the canonical requirement group](#current-r6).
 
@@ -2017,16 +2045,23 @@ The system SHALL provide explanatory info for each chart/metric.
 - **AND** it explains that category values use the selected pair's fixed-base weights rather than official contribution measures
 - **AND** the stacked-area explanation identifies `外食以外食料` as a weighted difference and describes the major-category normalization (10002 for the 2025 pair)
 
-#### Canonical scenario — Scenario R6c: CTI Data-State Explanation
+#### Canonical scenario — Scenario R6c: Quarterly Consumption Explanation
 
-- **WHEN** a user opens the consumption-expenditure or 3種比較 information panel
-- **THEN** it identifies the CTI compatibility set selected by the loader without inferring a series variant from a filename
-  - **AND** a validated 2025 set explains the two-or-more-person-household nominal CTI basic series, its 2005-01〜latest range, raw/12MA distinction, and 2025 raw monthly average = 100 basis
-  - **AND** it explains the CTI total and miscellaneous/CPI-external difference in concise user-facing language without mentioning GDP support
-  - **AND** for the 3種比較 panel, it briefly describes the three monthly 12-month moving-average series as: 給与 from salary, 消費 from the monthly consumption total rebased to its 2025 monthly average, and 物価 from CPI
-- **AND** it explains in the lower part of the info panel that the Plan40 quarterly CTI expense series is separate from the Plan37 monthly source
-- **AND WHEN** the 2025 set is unavailable, invalid, or no complete compatible set exists
-- **THEN** the panel shows user-facing unavailable wording derived from the reason code, without exposing internal file or validation terminology and without mentioning any 2020 rollback.
+- **WHEN** a user opens the `consumption-expenditure` information panel
+- **THEN** it explains the quarterly household spending series for households with two or more persons, with nominal values representing current-price spending and real values adjusted for price changes
+- **AND** it summarizes that nominal values through 2016Q4 are estimates and nominal values from 2017Q1 are official quarterly data, while real values are calculated by the application
+- **AND** it explains in concise terms that `その他の消費支出` is derived from the total after the nine main categories, and that real Other is an approximation using the overall CPI excluding imputed rent for owner-occupied housing
+- **AND** it explains that the real total is adjusted independently and may not equal the sum of real categories
+- **AND** it identifies e-Stat's 「消費動向指数（CTIミクロ基本系列・調整系列）」 as the nominal-series source and the Consumer Price Index (CPI) as the real-series adjustment source
+- **AND** the information content is based on the quarterly CTI projection independently of monthly CTI state, and does not expose formulas, detailed CPI category mappings, missing-data handling, raw/12MA details, or internal status terminology
+
+#### Canonical scenario — Scenario R6e: Three-Series Monthly Comparison Explanation
+
+- **WHEN** a user opens the `new-graph` (3種比較) information panel
+- **THEN** it explains that 給与 compares nominal regular pay, overtime pay, and bonuses; 消費 compares nominal household spending; and 物価 is the nationwide all-items Consumer Price Index (CPI)
+- **AND** it identifies the Monthly Labour Survey, Family Income and Expenditure Survey/CTI, and CPI sources, says the indices use a 2025 base, and explains that each monthly value averages the latest 12 months including that month
+- **AND** it says monthly consumption values through 2016 are estimates and values from 2017 onward use official monthly data, without exposing formulas, processing order, missing-data rules, or internal terminology
+- **AND** the explanation uses the monthly comparison contract independently of the quarterly CTI information panel
 
 #### Canonical scenario — Scenario R6d: Retired GDP explanation
 

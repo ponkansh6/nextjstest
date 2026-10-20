@@ -11,141 +11,136 @@ describe("new-graph chart info (3種比較)", () => {
     expect(info.source).toContain("毎月勤労統計調査");
     expect(info.source).toContain("消費者物価指数 長期時系列データ");
     expect(info.source).toContain("消費系列の月次データ（家計調査およびe-Stat公式系列）");
+    expect(info.url).toBe(
+      "https://www.e-stat.go.jp/stat-search/files?page=1&toukei=00200573&tstat=000001150147",
+    );
   });
 
-  it("3種比較の生成元と基準化の実態を説明する", () => {
+  it("3系列の意味、比較方法、名目値と消費データの境界を説明する", () => {
     const items = info.sections.flatMap((s) => s.items);
     const text = items.map((item) => item.text).join("\n");
-    expect(text).toContain("家計調査・e-Stat公式系列を用いた月次消費合計「消費(総合)」");
-    expect(text).toContain("2025年の月次平均=100");
-    expect(text).toContain("連続12暦月の厳密な移動平均");
-    expect(text).toContain("所定内給与・所定外給与・特別給与");
-    expect(text).toContain("各12か月移動平均に共通の係数を適用");
-    expect(text).toContain("全国CPI総合の12か月移動平均");
-    expect(text).toContain("CPI生値の2025暦年平均が100となる係数");
-    expect(text).toContain("基準係数は移動平均から算出しない");
+    expect(text).toContain("定期給与・残業代・賞与などを含む給与の動き");
+    expect(text).toContain("家計の名目消費支出の動き");
+    expect(text).toContain("全国の消費者物価指数（総合）の動き");
+    expect(text).toContain("2025年を基準に指数化");
+    expect(text).toContain("季節変動をならすため");
+    expect(text).toContain("その月を含む直近12か月の平均");
+    expect(text).toContain("給与と消費支出は、物価変動を差し引いていない名目値です。");
+    expect(text).toContain("2016年以前が推計値、2017年以降がe-Statの公式月次値です。");
     expect(text).not.toContain("消費動向指数");
+    expect(text).not.toMatch(/係数|生値|12暦月|加工順序/);
   });
 });
 
 describe("new-graph chart info data-source state", () => {
-  it("検証済み2025セットでは採用系列と三調査合成を説明する", async () => {
+  it("月次比較の説明にCTI選択状態を混ぜない", async () => {
     const { getChartInfoContent } = await import("@/lib/chartInfoContent");
     const info = getChartInfoContent("new-graph", undefined, {
       baseYear: 2025,
       sourceMode: "official-connected",
       seriesLabel: "基本系列（原数値）",
+      reason: "monthly CTI state detail",
     });
     const text = [info.source, ...info.sections.flatMap((s) => s.items.map((i) => i.text))].join(
       "\n",
     );
 
-    expect(text).toContain("消費(総合)");
+    expect(text).toContain("家計の名目消費支出の動き");
+    expect(text).toContain("季節変動をならすため");
     expect(text).not.toContain("公式CTI名目原数値");
     expect(text).not.toContain("2005Q1〜2017Q4");
+    expect(text).not.toContain("monthly CTI state detail");
   });
-
-  it("データなしでは利用者向けの状態だけを表示し、基準年を推測しない", async () => {
-    const { getChartInfoContent } = await import("@/lib/chartInfoContent");
-    const info = getChartInfoContent("consumption-expenditure", undefined, {
-      baseYear: null,
-      sourceMode: "unavailable",
-      unavailableReason: "必要な消費データを確認中です。",
-    });
-    const text = info.sections.flatMap((s) => s.items.map((i) => i.text)).join("\n");
-
-    expect(text).toContain("消費データを表示できません");
-    expect(text).not.toContain("2020年基準");
-    expect(text).not.toMatch(/metadata|CSV|fallback/i);
-  });
-
-  it("reports missing CTI state and supports omitted official labels and optional support details", async () => {
-    const { getChartInfoContent } = await import("@/lib/chartInfoContent");
-    const missing = getChartInfoContent("consumption-expenditure");
-    expect(missing.sections[0]?.items[0]?.text).toBe("消費データは現在利用できません。");
-
-    const official = getChartInfoContent("consumption-expenditure", undefined, {
-      baseYear: 2025,
-      sourceMode: "official-connected",
-      status: "invalid",
-    });
-    const officialState = official.sections[0]?.items.map((item) => item.text).join("\n");
-    expect(official.source).toContain("2025年基準・名目原数値／12MA、2025年raw平均=100");
-    expect(officialState).toContain("選択済みの公式系列");
-    expect(officialState).toContain("CTI名目四半期系列の状態：invalid、理由：、単位：指数");
-    expect(officialState).not.toContain("CTI基本系列の状態");
-
-    const rollback = getChartInfoContent("consumption-expenditure", undefined, {
-      baseYear: 2020,
-      sourceMode: "rollback",
-      reason: "fixture reason",
-      supportLabel: "Plan39接続系列",
-    });
-    const rollbackState = rollback.sections[0]?.items.map((item) => item.text).join("\n");
-    expect(rollback.source).toContain("利用不可");
-    expect(rollbackState).toContain("fixture reason");
-    expect(rollbackState).toContain("単位：指数、出典：e-Stat 公式CTI長期artifact 000040499070");
-    expect(rollbackState).toContain("Plan39接続系列");
-  });
-
-  it.each([
-    ["理由あり", "feed unavailable", "理由：feed unavailable"],
-    ["理由なし", null, "理由："],
-  ])(
-    "unavailable CTI state includes raw series details (%s)",
-    async (_label, reason, expectedReason) => {
-      const { getChartInfoContent } = await import("@/lib/chartInfoContent");
-      const info = getChartInfoContent("consumption-expenditure", undefined, {
-        baseYear: null,
-        sourceMode: "unavailable",
-        series: {
-          raw: {
-            key: "cti_nominal_raw",
-            valueType: "raw",
-            unit: "指数",
-            source: "e-Stat CTI",
-            status: "invalid",
-            reason,
-          },
-          comparison: {
-            key: "cti_nominal_comparison",
-            valueType: "comparison",
-            unit: "指数",
-            source: "e-Stat CTI",
-            status: "invalid",
-            reason: null,
-          },
-        },
-      });
-      const stateItems = info.sections[0]?.items.map((item) => item.text);
-
-      expect(stateItems).toContain("消費データは現在利用できません。");
-      expect(stateItems).toContain(
-        `CTI基本系列の状態：invalid、${expectedReason}、単位：指数、出典：e-Stat CTI`,
-      );
-    },
-  );
 });
 
-describe("new-graph and residual chart info wording", () => {
-  it("explains the pre-2017 connection estimate and post-2017 official series in clear terms", () => {
+describe("consumption-expenditure chart info", () => {
+  it("presents the quarterly expenditure series, estimate boundary, and user-facing meaning", () => {
     const info = CHART_INFO["consumption-expenditure"];
     const text = [
       info.source,
       ...info.sections.flatMap((section) => section.items.map((item) => item.text)),
     ].join("\n");
 
-    expect(text).toContain("2016Q4以前");
-    expect(text).toContain("各費目のCTI基本系列の年次値");
-    expect(text).toContain("2017年の「調整系列の年次値÷基本系列の年次値」の比率");
-    expect(text).toContain("世帯構成別の月次季節パターン");
-    expect(text).toContain("非公式");
-    expect(text).toContain("2017Q1以降");
-    expect(text).toContain("調整系列・分布調整値（原数値）の公式名目四半期値");
-    expect(text).not.toContain("A/B");
-    expect(text).not.toContain("名目B");
+    expect(text).toContain("二人以上の世帯の消費支出");
+    expect(text).toContain("四半期");
+    expect(text).toContain("2016年第4四半期までは推計値");
+    expect(text).toContain("2017年第1四半期以降はe-Statの公式四半期値");
+    expect(text).toContain("名目データは");
+    expect(text).toContain("名目はその時点の金額");
+    expect(text).toContain("実質は消費者物価指数（CPI）で物価変動を調整した額");
+    expect(text).toContain("2025年基準");
+    expect(text).toContain("総額から他の9費目を差し引いて算出");
+    expect(text).toContain("対応する物価指数がないため");
+    expect(text).toContain("総合CPI（持家の帰属家賃を除く）を代用した概算");
+    expect(text).toContain("実質総額は内訳とは別に計算");
+    expect(text).toContain("実質値を足しても総額とは一致しません");
+    expect(info.source).toContain("e-Stat");
+    expect(info.url).toBe(
+      "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499087",
+    );
+    expect(text).not.toMatch(/2005Q1|2017Q4|raw|12MA|metadata|CSV|fallback/i);
   });
 
+  it("keeps this quarterly explanation fixed across monthly CTI states and omits loader metadata", async () => {
+    const { getChartInfoContent } = await import("@/lib/chartInfoContent");
+    const defaultInfo = getChartInfoContent("consumption-expenditure");
+    const states = [
+      {
+        baseYear: 2025 as const,
+        sourceMode: "official-connected" as const,
+        seriesLabel: "CTI名目raw 12MA 2005Q1〜2017Q4",
+        status: "invalid" as const,
+        reason: "official fixture detail",
+        source: "internal artifact source",
+        unit: "指数",
+      },
+      {
+        baseYear: null,
+        sourceMode: "unavailable" as const,
+        unavailableReason: "monthly feed unavailable",
+        series: {
+          raw: {
+            key: "cti_nominal_raw",
+            valueType: "raw" as const,
+            unit: "指数",
+            source: "internal monthly source",
+            status: "invalid" as const,
+            reason: "raw state detail",
+          },
+          comparison: {
+            key: "cti_nominal_comparison",
+            valueType: "comparison" as const,
+            unit: "指数",
+            source: "internal monthly source",
+            status: "invalid" as const,
+            reason: "comparison state detail",
+          },
+        },
+      },
+      {
+        baseYear: 2020 as const,
+        sourceMode: "rollback" as const,
+        reason: "rollback fixture detail",
+        supportLabel: "internal support label",
+        artifactRoot: "internal artifact root",
+      },
+    ];
+
+    for (const state of states) {
+      expect(getChartInfoContent("consumption-expenditure", undefined, state)).toEqual(defaultInfo);
+    }
+
+    const visibleText = [
+      defaultInfo.source,
+      ...defaultInfo.sections.flatMap((section) => section.items.map((item) => item.text)),
+    ].join("\n");
+    expect(visibleText).not.toMatch(
+      /CTI名目raw|12MA|2005Q1|2017Q4|metadata|internal|fixture detail/i,
+    );
+  });
+});
+
+describe("new-graph and residual chart info wording", () => {
   it("describes the actual comparison series and does not substitute quarterly CTI wording", () => {
     const text = [
       ...CHART_INFO["new-graph"].sections.flatMap((section) =>
@@ -153,13 +148,12 @@ describe("new-graph and residual chart info wording", () => {
       ),
     ].join("\n");
 
-    expect(text).toContain("家計調査・e-Stat公式系列を用いた月次消費合計「消費(総合)」");
-    expect(text).toContain("2025年の月次平均=100");
-    expect(text).toContain("全国CPI総合");
-    expect(text).toContain("所定内給与・所定外給与・特別給与");
-    expect(text).toContain("各12か月移動平均に共通の係数を適用");
-    expect(text).toContain("CPI生値の2025暦年平均が100となる係数");
-    expect(text).toContain("基準係数は移動平均から算出しない");
+    expect(text).toContain("定期給与・残業代・賞与などを含む給与の動き");
+    expect(text).toContain("家計の名目消費支出の動き");
+    expect(text).toContain("全国の消費者物価指数（総合）の動き");
+    expect(text).toContain("その月を含む直近12か月の平均");
+    expect(text).toContain("給与と消費支出は、物価変動を差し引いていない名目値です。");
+    expect(text).toContain("2016年以前が推計値、2017年以降がe-Statの公式月次値です。");
     expect(text).not.toMatch(/Plan22|raw値|内部保持|月次原系列|9大費目（/);
   });
 
