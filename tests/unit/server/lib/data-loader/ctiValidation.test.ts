@@ -63,6 +63,119 @@ describe("CTI validation boundary", () => {
     expect(validateCtiPair(pair, paths)).toEqual(pair);
   });
 
+  it("keeps required-file and main-CSV failures ahead of later metadata failures", () => {
+    const paths = buildCtiFilePaths();
+    const root = mkdtempSync(path.join(tmpdir(), "cti-validation-order-"));
+    const mainPath = path.join(root, "main.csv");
+    const metadataPath = path.join(root, "metadata.json");
+    writeFileSync(mainPath, "title,other\n2025,1\n");
+    writeFileSync(metadataPath, "{");
+    const pair = { baseYear: 2025 as const, pair: "2025" as const, mainPath };
+
+    expect(validateCtiPair(pair, { ...paths, seriesMap: path.join(root, "missing-map.csv") })).toBe(
+      "missing required CTI set file",
+    );
+    expect(validateCtiPair(pair, { ...paths, metadata: metadataPath })).toBe(
+      "missing CTI 年月 header",
+    );
+  });
+
+  it("preserves the main CSV read exception and metadata read catch boundaries", () => {
+    const paths = buildCtiFilePaths();
+    const directory = mkdtempSync(path.join(tmpdir(), "cti-read-boundary-"));
+    expect(validateCtiMetadata(directory, "candidate.csv")).toBe("invalid metadata");
+
+    expect(() =>
+      validateCtiPair({ baseYear: 2025, pair: "2025", mainPath: directory }, paths),
+    ).toThrow();
+  });
+
+  it("preserves the distribution CSV read before the main CSV digest check", () => {
+    const paths = buildCtiFilePaths();
+    const root = mkdtempSync(path.join(tmpdir(), "cti-digest-snapshot-order-"));
+    const metadataPath = path.join(root, "metadata.json");
+    const metadata = JSON.parse(readFileSync(paths.metadata, "utf8")) as Record<string, unknown>;
+    metadata.csvSha256 = "f".repeat(64);
+    writeFileSync(metadataPath, JSON.stringify(metadata));
+    const distributionDirectory = mkdtempSync(path.join(tmpdir(), "cti-distribution-read-error-"));
+
+    expect(() =>
+      validateCtiPair(
+        { baseYear: 2025, pair: "2025", mainPath: paths.candidateMain },
+        {
+          ...paths,
+          metadata: metadataPath,
+          candidateDistributionAdjusted: distributionDirectory,
+        },
+      ),
+    ).toThrow();
+  });
+
+  it("maps a quarterly metadata read failure to the existing combined JSON reason", () => {
+    const paths = buildCtiFilePaths();
+    const quarterlyMetadataDirectory = mkdtempSync(
+      path.join(tmpdir(), "cti-quarterly-metadata-read-error-"),
+    );
+
+    expect(
+      validateCtiPair(
+        { baseYear: 2025, pair: "2025", mainPath: paths.candidateMain },
+        {
+          ...paths,
+          candidateDistributionAdjustedQuarterlyMetadata: quarterlyMetadataDirectory,
+        },
+      ),
+    ).toBe("invalid official quarterly metadata or composition-adjusted annual manifest");
+  });
+
+  it("keeps map headers and metadata basis ahead of later metadata and digest failures", () => {
+    const paths = buildCtiFilePaths();
+    const root = mkdtempSync(path.join(tmpdir(), "cti-validation-stage-order-"));
+    const mapPath = path.join(root, "map.csv");
+    const metadataPath = path.join(root, "metadata.json");
+    writeFileSync(mapPath, "wrong,headers\n");
+    writeFileSync(metadataPath, "{");
+    expect(
+      validateCtiPair(
+        { baseYear: 2025, pair: "2025", mainPath: paths.candidateMain },
+        { ...paths, seriesMap: mapPath, metadata: metadataPath },
+      ),
+    ).toBe("invalid 2025 series map headers");
+
+    expect(
+      validateWithDerivedFiles({
+        sourceBasis: undefined,
+        officialSeriesMapSha256: "f".repeat(64),
+      }),
+    ).toBe("2025 CTI metadata basis fields are missing");
+    expect(
+      validateWithDerivedFiles({
+        officialSeriesMapSha256: "f".repeat(64),
+        period: { start: "wrong", end: "wrong", monthlyRows: 1 },
+      }),
+    ).toBe("2025 CTI derived map/snapshot identity or SHA-256 mismatch");
+  });
+
+  it("keeps quarterly artifact identity failure ahead of quarterly period failure", () => {
+    const paths = buildCtiFilePaths();
+    const root = mkdtempSync(path.join(tmpdir(), "cti-quarterly-validation-order-"));
+    const quarterlyPath = path.join(root, "quarterly.csv");
+    const quarterlyMetadataPath = path.join(root, "quarterly.metadata.json");
+    writeFileSync(quarterlyPath, "invalid quarterly input\n");
+    writeFileSync(quarterlyMetadataPath, JSON.stringify({ schemaVersion: "unknown" }));
+
+    expect(
+      validateCtiPair(
+        { baseYear: 2025, pair: "2025", mainPath: paths.candidateMain },
+        {
+          ...paths,
+          candidateDistributionAdjustedQuarterly: quarterlyPath,
+          candidateDistributionAdjustedQuarterlyMetadata: quarterlyMetadataPath,
+        },
+      ),
+    ).toBe("official quarterly CTI artifact/metadata/manifest mismatch");
+  });
+
   it.each([
     ["missing series map digest", { officialSeriesMapSha256: undefined }],
     ["mismatched series map digest", { officialSeriesMapSha256: "f".repeat(64) }],

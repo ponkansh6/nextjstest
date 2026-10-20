@@ -33,10 +33,13 @@ export async function getCpiDataStatus(): Promise<CpiDataStatus> {
 
 export { getCpiMajorWeightTotal } from "./cpiLoader";
 
-export async function getCtiDataStatus(options: CtiLoadOptions = {}): Promise<CtiDataStatus> {
-  const selected = selectCtiPair(options);
+function toCtiDataStatus(selected: ReturnType<typeof selectCtiPair>): CtiDataStatus {
   if ("baseYear" in selected) return selected;
   return { baseYear: selected.pair.baseYear, pair: selected.pair.pair, valid: true };
+}
+
+export async function getCtiDataStatus(options: CtiLoadOptions = {}): Promise<CtiDataStatus> {
+  return toCtiDataStatus(selectCtiPair(options));
 }
 
 const isFiniteNumber = (value: unknown): value is number =>

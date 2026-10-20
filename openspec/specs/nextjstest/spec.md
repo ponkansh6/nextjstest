@@ -562,6 +562,7 @@ Static CSV files (not publicly served) stored in `data/source/`:
 - Plan37の公開対象はこの長期成果物の公表済み最新月を動的に採用する。2026-07は計算対象、2026-08は成果物にないため行・値を生成せず、将来の更新月を実装やテストに固定しない。
 - `data/source/cti_data2025.metadata.json` / `cti_data2025_distribution_adjusted.metadata.json` — Candidate provenance and integrity metadata; they do not by themselves make a 2025 CTI set selectable.
 - `data/source/cti-2025-series-map.csv` / `cti-2025-official-series.csv` — Official-code map and independent snapshot required to verify the adopted CTI candidate; every mapped official row is matched against the snapshot by code, name, and representative values.
+- CTI 2025 pair validation also requires the eight selected artifacts: the main candidate CSV, series map, official snapshot, main metadata, distribution-adjusted CSV and metadata, and quarterly CSV and metadata. The quarterly checks additionally read `data/source/official-cti-2025/cti-distribution-adjusted-000040499087.xlsx` and `data/source/cti-adjusted/manifest.json` plus `A.json` to verify their declared identities and hashes.
 - `data/source/official-cti-2025-long-term/000040499070.normalized.csv` and `series-map.csv` — Plan37's official 2025-base monthly CTI basic-series input. The output line selects only nominal `series_index=1`, `official_series_code=1`, `消費支出（名目）`, for 二人以上の世帯 from 2005-01 through the published latest month. The seasonally adjusted artifact and nominal file's real series are not selected.
 - The annual GDP and Plan21 quarterly GDP CSVs, metadata, snapshots, and normalization files formerly listed here were retired: their values had no downstream consumer after the internal loader. They are not runtime inputs or refresh dependencies. Historical hash/audit records are not current source contracts.
 - `tests/fixtures/loader-comparison/golden.json` now contains only CPI and CTI loader observations; annual/quarterly GDP observations and artifact hashes were removed with their unused consumers.
@@ -748,6 +749,24 @@ mapping. `server/lib/data-loader/cpi.ts` is the internal CPI/CTI adapter;
 the internal loader modules. These responsibilities do not change the public
 loader/API contracts or SSR boundary.
 
+For the selected 2025 CTI pair, `server/lib/data-loader/ctiValidation.ts` checks
+the required artifact paths first, then reads and parses inputs in the established
+early-return order through narrow stage snapshots: main CSV content and parsed
+rows, one header file at a time, metadata read/parse outcomes, derived identity
+bytes, digest inputs, quarterly artifact inputs, then official map/snapshot rows.
+Monthly CSV structure, map/snapshot headers, metadata fields,
+hash/identity comparisons, quarterly artifact bindings and range, official rows,
+and 2025 completeness use narrow pure helpers over loaded or parsed values. File
+reads, PapaParse calls, working-directory resolution, and SHA-256 calculation
+remain in the sequential acquisition/orchestration path; each stage only reads
+later inputs after earlier rules pass, except that the existing CSV digest
+snapshot reads the distribution-adjusted CSV before the CSV digest loop rechecks
+main metadata and its digest.
+This narrow read-ahead is retained because changing it would change which failure
+is observed when that CSV read throws. `server/lib/data-loader/cpi.ts` maps the
+selected pair to the existing status shape and keeps invalid CTI data fail-closed
+with an empty array.
+
 The fixture-comparison gate is a test-only source contract. It compares loader
 observations and status/error observations independently; it does not add a
 runtime cache layer. Its cache result is explicitly `not-applicable: no runtime
@@ -808,6 +827,7 @@ override them.
 | Public chart data and export parity                              | [R4-4](#current-r4-4)                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | Monthly basic CTI loader compatibility                           | [R-Plan37](#current-r-plan37); [Plan49 monthly contract](#legacy-monthly-compatibility-requirements)                                                                                                                                                                                                                                                                                                                                                      |
 | Canonical CTI names and artifact compatibility                   | [R-CTI-Domain-Identifiers](#current-cti-domain-identifiers-requirement)                                                                                                                                                                                                                                                                                                                                                                                   |
+| CTI pair validation boundaries                                   | [CTI pair validation boundary requirements](#cti-pair-validation-boundary-requirements)                                                                                                                                                                                                                                                                                                                                                                   |
 | Hook execution requirements                                      | [R-Hooks](#current-r-hooks)                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | Annual composition-adjusted publication                          | [Plan39 annual](#plan39-annual-contract-requirements); [Plan39-v2 public route](#plan39-v2-publication-requirements); [audit requirements](#plan39-current-analysis-requirements)                                                                                                                                                                                                                                                                         |
 | Integrated quarterly nominal publication and official connection | [Plan40](#plan40-quarterly-contract-requirements); [Plan41](#plan41-official-quarterly-requirements)                                                                                                                                                                                                                                                                                                                                                      |
@@ -2502,6 +2522,16 @@ The system SHALL provide SEO-friendly metadata and descriptive headers.
 - **WHEN** an artifact writer creates current annual or quarterly CTI data, **THEN** it writes the canonical schema identifier, recomputes manifest/hash bindings, and preserves the established values, series order, input fingerprint semantics, and public JSON shape.
 - **WHEN** a consumer uses an existing public measurement or export, **THEN** the established `model`, `estimateVersion`, numeric values, fingerprint field, and JSON layout remain stable until an explicit public schema migration is specified.
 - **WHEN** server metadata, public JSON, or quarterly row metadata emits the public `estimateVersion`, **THEN** its literal and type come from the client-safe `shared/cti-estimate-contract.ts`, and client chart and CSV recognizers use that same shared contract.
+
+<a id="cti-pair-validation-boundary-requirements"></a>
+
+### CTI pair validation boundary requirements
+
+- **WHEN** the selected CTI pair has multiple invalid inputs, **THEN** validation preserves the existing order: required artifact existence, main CSV structure/months/values, map and snapshot headers, metadata and identity/hash checks, quarterly metadata/manifest/workbook checks, quarterly range, official map/snapshot row checks, and 2025 calendar completeness; it returns only the first existing reason.
+- **WHEN** CTI validation reaches a pure rule, **THEN** the rule uses only loaded or parsed values and does not read files, resolve `process.cwd()`, invoke PapaParse, or calculate hashes.
+- **WHEN** CTI validation forms its existing two-entry CSV digest snapshot, **THEN** it reads the distribution-adjusted CSV before the loop rechecks main metadata and its digest so an I/O exception keeps its established precedence; it does not prefetch other later-stage inputs.
+- **WHEN** CTI input acquisition encounters an error, **THEN** main metadata read/parse failures retain `invalid metadata`, quarterly metadata/manifest read/parse failures retain their combined reason, workbook read failures retain the support-unavailable reason, and reads outside those catches continue to propagate.
+- **WHEN** CTI selection is invalid, **THEN** `getCtiDataStatus` retains the nullable 2025 status and typed reason, and CTI data loading returns an empty array.
 
 <a id="legacy-monthly-compatibility-requirements"></a>
 

@@ -97,51 +97,81 @@ export function validateCtiMetadata(
   metadataPath: string,
   expectedFile: string,
 ): string | Record<string, unknown> {
-  if (!fs.existsSync(metadataPath)) return "missing metadata";
+  const snapshot = acquireCtiMetadataSnapshot(metadataPath);
+  if (snapshot.kind === "missing") return "missing metadata";
+  if (snapshot.kind === "invalid") return "invalid metadata";
   try {
-    const metadata = JSON.parse(fs.readFileSync(metadataPath, "utf8")) as Record<string, unknown>;
-    const declaredFile = metadata.indexFile ?? metadata.outputFile ?? metadata.file;
-    if (metadata.status !== "ready" || metadata.baseYear !== 2025)
-      return "metadata is not ready for 2025";
-    if (declaredFile !== expectedFile) return "metadata file pairing mismatch";
-    if (typeof metadata.csvSha256 !== "string" || !/^[a-f0-9]{64}$/.test(metadata.csvSha256))
-      return "metadata SHA-256 is missing or invalid";
-    return metadata;
+    return validateCtiMetadataValue(snapshot.metadata, expectedFile);
   } catch {
     return "invalid metadata";
   }
 }
 
-export function validateCtiPair(
-  pair: CtiPair,
-  paths: ReturnType<typeof buildCtiFilePaths>,
-): string | CtiPair {
-  const required = [
-    pair.mainPath,
-    paths.seriesMap,
-    paths.officialSnapshot,
-    paths.metadata,
-    paths.candidateDistributionAdjusted,
-    paths.candidateDistributionAdjustedMetadata,
-    paths.candidateDistributionAdjustedQuarterly,
-    paths.candidateDistributionAdjustedQuarterlyMetadata,
-  ];
-  if (required.some((filePath) => !fs.existsSync(filePath))) return "missing required CTI set file";
-  const content = fs.readFileSync(pair.mainPath, "utf8");
-  const parsed = Papa.parse<string[]>(content, { header: false, skipEmptyLines: true }).data;
+type CtiMetadataSnapshot =
+  | { kind: "missing" }
+  | { kind: "invalid" }
+  | { kind: "loaded"; metadata: Record<string, unknown> };
+
+function acquireCtiMetadataSnapshot(metadataPath: string): CtiMetadataSnapshot {
+  if (!fs.existsSync(metadataPath)) return { kind: "missing" };
+  try {
+    return {
+      kind: "loaded",
+      metadata: JSON.parse(fs.readFileSync(metadataPath, "utf8")) as Record<string, unknown>,
+    };
+  } catch {
+    return { kind: "invalid" };
+  }
+}
+
+function validateCtiMetadataValue(
+  metadata: Record<string, unknown>,
+  expectedFile: string,
+): string | Record<string, unknown> {
+  if (metadata === null) return "invalid metadata";
+  const declaredFile = metadata.indexFile ?? metadata.outputFile ?? metadata.file;
+  if (metadata.status !== "ready" || metadata.baseYear !== 2025)
+    return "metadata is not ready for 2025";
+  if (declaredFile !== expectedFile) return "metadata file pairing mismatch";
+  if (typeof metadata.csvSha256 !== "string" || !/^[a-f0-9]{64}$/.test(metadata.csvSha256))
+    return "metadata SHA-256 is missing or invalid";
+  return metadata;
+}
+
+type CtiMainCsvValidation =
+  | { reason: string }
+  | {
+      header: string[];
+      monthIndex: number;
+      dataRows: string[][];
+      months: string[];
+    };
+
+type CtiMainCsvSnapshot = { content: string; parsedRows: string[][] };
+
+function acquireCtiMainCsvSnapshot(mainPath: string): CtiMainCsvSnapshot {
+  const content = fs.readFileSync(mainPath, "utf8");
+  return {
+    content,
+    parsedRows: Papa.parse<string[]>(content, { header: false, skipEmptyLines: true }).data,
+  };
+}
+
+/** Validate already-parsed main CSV rows without performing I/O or parsing. */
+function validateCtiMainCsvRows(parsed: string[][]): CtiMainCsvValidation {
   const headerIndex = parsed.findIndex((row) =>
     row.some((cell) => cell?.trim() === "年月" || cell?.trim() === "月"),
   );
-  if (headerIndex < 0) return "missing CTI 年月 header";
+  if (headerIndex < 0) return { reason: "missing CTI 年月 header" };
   const header = parsed[headerIndex].map((cell) => cell.trim());
   if (!header.includes("消費支出（名目）") || !header.includes("消費支出（実質）"))
-    return "missing required CTI total headers";
+    return { reason: "missing required CTI total headers" };
   const monthIndex = header.indexOf(header.includes("年月") ? "年月" : "月");
   const dataRows = parsed.slice(headerIndex + 1);
   const months = dataRows.map((row) => row[monthIndex]?.trim() ?? "");
-  if (months.length === 0) return "invalid or discontinuous CTI 年月";
-  if (new Set(months).size !== months.length) return "invalid or duplicate CTI 年月";
-  if (!isContinuousMonths(months)) return "invalid or discontinuous CTI 年月";
+  if (months.length === 0) return { reason: "invalid or discontinuous CTI 年月" };
+  if (new Set(months).size !== months.length) return { reason: "invalid or duplicate CTI 年月" };
+  if (!isContinuousMonths(months)) return { reason: "invalid or discontinuous CTI 年月" };
   const requiredValueIndexes = [
     header.indexOf("消費支出（名目）"),
     header.indexOf("消費支出（実質）"),
@@ -157,65 +187,99 @@ export function validateCtiPair(
       }),
     )
   )
-    return "invalid CTI required numeric value";
-  // CtiPair only permits 2020 or 2025; the 2020 contract returns above.
-  const readHeaders = (filePath: string) =>
-    Papa.parse<string[]>(fs.readFileSync(filePath, "utf8"), {
-      header: false,
-      skipEmptyLines: true,
-    }).data[0]?.map((cell) => cell.trim()) ?? [];
+    return { reason: "invalid CTI required numeric value" };
+  return { header, monthIndex, dataRows, months };
+}
+
+/** Validate a parsed quarterly period and adopted range without reading files. */
+function validateCtiQuarterlyPeriod(
+  rows: Record<string, string>[],
+  adoptedRange: Record<string, unknown> | undefined,
+): string | null {
+  const periods = rows.map((row) => row.period?.trim() ?? "");
   if (
-    !["official_code", "official_name", "dashboard_key", "value_type"].every((key) =>
-      readHeaders(paths.seriesMap).includes(key),
-    )
+    periods[0] !== "2017Q1" ||
+    !isContinuousQuarterLabels(periods) ||
+    periods.at(-1) !== adoptedRange?.end ||
+    adoptedRange?.start !== "2017Q1" ||
+    adoptedRange.rows !== periods.length
   )
-    return "invalid 2025 series map headers";
-  if (
-    !["official_code", "official_name"].every((key) =>
-      readHeaders(paths.officialSnapshot).includes(key),
-    )
-  )
-    return "invalid 2025 official snapshot headers";
-  const metadata = validateCtiMetadata(paths.metadata, path.basename(pair.mainPath));
-  if (typeof metadata === "string") return metadata;
-  if (
-    typeof metadata.sourceBasis !== "string" ||
-    typeof metadata.comparisonNormalization !== "string"
-  )
-    return "2025 CTI metadata basis fields are missing";
-  const mapBytes = fs.readFileSync(paths.seriesMap);
-  const snapshotBytes = fs.readFileSync(paths.officialSnapshot);
-  if (
-    typeof metadata.officialSeriesMapSha256 !== "string" ||
-    createHash("sha256").update(mapBytes).digest("hex") !== metadata.officialSeriesMapSha256 ||
-    typeof metadata.officialSeriesSnapshotSha256 !== "string" ||
-    createHash("sha256").update(snapshotBytes).digest("hex") !==
-      metadata.officialSeriesSnapshotSha256 ||
-    metadata.officialSeriesSnapshotSourceStatInfId !== metadata.statInfId ||
-    metadata.officialSeriesSnapshotSourceSha256 !== metadata.sourceFileSha256
-  )
-    return "2025 CTI derived map/snapshot identity or SHA-256 mismatch";
-  const period = metadata.period as Record<string, unknown> | undefined;
-  if (
-    !period ||
-    period.start !== months[0] ||
-    period.end !== months.at(-1) ||
-    period.monthlyRows !== months.length
-  )
-    return "2025 CTI metadata period mismatch";
-  for (const [metadataPath, expected, csv] of [
-    [paths.metadata, path.basename(pair.mainPath), content],
-    [
-      paths.candidateDistributionAdjustedMetadata,
-      path.basename(paths.candidateDistributionAdjusted),
-      fs.readFileSync(paths.candidateDistributionAdjusted, "utf8"),
-    ],
-  ] as const) {
-    const checked = validateCtiMetadata(metadataPath, expected);
-    if (typeof checked === "string") return checked;
-    if (createHash("sha256").update(csv).digest("hex") !== checked.csvSha256)
-      return "metadata SHA-256 mismatch";
-  }
+    return "invalid official quarterly CTI period range";
+  return null;
+}
+
+type CtiHeaderSnapshot = { headers: string[] };
+
+function acquireCtiHeaderSnapshot(filePath: string): CtiHeaderSnapshot {
+  return {
+    headers:
+      Papa.parse<string[]>(fs.readFileSync(filePath, "utf8"), {
+        header: false,
+        skipEmptyLines: true,
+      }).data[0]?.map((cell) => cell.trim()) ?? [],
+  };
+}
+
+function validateCtiHeaders(
+  kind: "series map" | "official snapshot",
+  snapshot: CtiHeaderSnapshot,
+): string | null {
+  const required =
+    kind === "series map"
+      ? ["official_code", "official_name", "dashboard_key", "value_type"]
+      : ["official_code", "official_name"];
+  return required.every((key) => snapshot.headers.includes(key))
+    ? null
+    : kind === "series map"
+      ? "invalid 2025 series map headers"
+      : "invalid 2025 official snapshot headers";
+}
+
+function validateCtiMetadataBasis(metadata: Record<string, unknown>): string | null {
+  return typeof metadata.sourceBasis === "string" &&
+    typeof metadata.comparisonNormalization === "string"
+    ? null
+    : "2025 CTI metadata basis fields are missing";
+}
+
+function validateCtiDerivedMapHash(expected: unknown, actual: string): string | null {
+  return typeof expected === "string" && expected === actual
+    ? null
+    : "2025 CTI derived map/snapshot identity or SHA-256 mismatch";
+}
+
+function validateCtiDerivedSnapshotIdentity(
+  metadata: Record<string, unknown>,
+  actualSnapshotHash: string,
+): string | null {
+  return typeof metadata.officialSeriesSnapshotSha256 === "string" &&
+    actualSnapshotHash === metadata.officialSeriesSnapshotSha256 &&
+    metadata.officialSeriesSnapshotSourceStatInfId === metadata.statInfId &&
+    metadata.officialSeriesSnapshotSourceSha256 === metadata.sourceFileSha256
+    ? null
+    : "2025 CTI derived map/snapshot identity or SHA-256 mismatch";
+}
+
+type CtiQuarterlyArtifactSnapshot = {
+  quarterlyCsv: string;
+  quarterlyMetadata: Record<string, unknown>;
+  annualManifest: Record<string, unknown>;
+  quarterlyEntry: Record<string, unknown> | undefined;
+  annualEntry: Record<string, unknown> | undefined;
+  annualA: { metadata?: Record<string, unknown> };
+  annualABytes: Buffer;
+  quarterlyHash: string;
+  quarterlyMetadataHash: string;
+  sourceWorkbookBytes: Buffer;
+};
+
+type CtiQuarterlyArtifactAcquisition =
+  | { kind: "reason"; reason: string }
+  | { kind: "loaded"; snapshot: CtiQuarterlyArtifactSnapshot };
+
+function acquireCtiQuarterlyArtifactSnapshot(
+  paths: ReturnType<typeof buildCtiFilePaths>,
+): CtiQuarterlyArtifactAcquisition {
   const quarterlyCsv = fs.readFileSync(paths.candidateDistributionAdjustedQuarterly, "utf8");
   let quarterlyMetadata: Record<string, unknown>;
   let annualManifest: Record<string, unknown>;
@@ -227,7 +291,10 @@ export function validateCtiPair(
       fs.readFileSync(path.join(process.cwd(), "data/source/cti-adjusted/manifest.json"), "utf8"),
     ) as Record<string, unknown>;
   } catch {
-    return "invalid official quarterly metadata or composition-adjusted annual manifest";
+    return {
+      kind: "reason",
+      reason: "invalid official quarterly metadata or composition-adjusted annual manifest",
+    };
   }
   const quarterlyEntry = (
     annualManifest.artifacts as Record<string, Record<string, unknown>> | undefined
@@ -249,14 +316,95 @@ export function validateCtiPair(
   try {
     sourceWorkbookBytes = fs.readFileSync(OFFICIAL_QUARTERLY_WORKBOOK_PATH);
   } catch {
-    return "missing official quarterly source workbook";
+    return { kind: "reason", reason: "missing official quarterly source workbook" };
   }
+  return {
+    kind: "loaded",
+    snapshot: {
+      quarterlyCsv,
+      quarterlyMetadata,
+      annualManifest,
+      quarterlyEntry,
+      annualEntry,
+      annualA,
+      annualABytes,
+      quarterlyHash,
+      quarterlyMetadataHash,
+      sourceWorkbookBytes,
+    },
+  };
+}
+
+function validateCtiMetadataPeriod(
+  metadata: Record<string, unknown>,
+  months: string[],
+): string | null {
+  const period = metadata.period as Record<string, unknown> | undefined;
+  return period &&
+    period.start === months[0] &&
+    period.end === months.at(-1) &&
+    period.monthlyRows === months.length
+    ? null
+    : "2025 CTI metadata period mismatch";
+}
+
+type CtiCsvDigestSnapshot = {
+  metadataPath: string;
+  expectedFile: string;
+  content: string;
+};
+
+function acquireCtiCsvDigestSnapshots(
+  mainSnapshot: CtiMainCsvSnapshot,
+  mainPath: string,
+  paths: ReturnType<typeof buildCtiFilePaths>,
+): CtiCsvDigestSnapshot[] {
+  return [
+    {
+      metadataPath: paths.metadata,
+      expectedFile: path.basename(mainPath),
+      content: mainSnapshot.content,
+    },
+    {
+      metadataPath: paths.candidateDistributionAdjustedMetadata,
+      expectedFile: path.basename(paths.candidateDistributionAdjusted),
+      content: fs.readFileSync(paths.candidateDistributionAdjusted, "utf8"),
+    },
+  ];
+}
+
+type CtiDerivedIdentitySnapshot = { mapBytes: Buffer; snapshotBytes: Buffer };
+
+function acquireCtiDerivedIdentitySnapshot(
+  paths: ReturnType<typeof buildCtiFilePaths>,
+): CtiDerivedIdentitySnapshot {
+  const mapBytes = fs.readFileSync(paths.seriesMap);
+  const snapshotBytes = fs.readFileSync(paths.officialSnapshot);
+  return { mapBytes, snapshotBytes };
+}
+
+function validateCtiCsvDigest(metadata: Record<string, unknown>, csvSha256: string): string | null {
+  return csvSha256 === metadata.csvSha256 ? null : "metadata SHA-256 mismatch";
+}
+
+function validateCtiQuarterlyArtifact(
+  quarterlyMetadata: Record<string, unknown>,
+  quarterlyPath: string,
+  quarterlyHash: string,
+  quarterlyMetadataHash: string,
+  quarterlyEntry: Record<string, unknown> | undefined,
+  annualEntry: Record<string, unknown> | undefined,
+  annualA: unknown,
+  manifestRevision: unknown,
+  annualAHash: string,
+  sourceWorkbookSha256: string,
+): string | null {
   const sourceWorkbook = quarterlyMetadata.sourceWorkbook as
     | { path?: unknown; fileName?: unknown }
     | undefined;
   if (
     resolveQuarterlyNominalArtifactSchema(quarterlyMetadata.schemaVersion) === null ||
-    quarterlyMetadata.artifact !== path.basename(paths.candidateDistributionAdjustedQuarterly) ||
+    quarterlyMetadata.artifact !== path.basename(quarterlyPath) ||
     quarterlyMetadata.statisticalCode !== "00200567" ||
     quarterlyMetadata.statInfId !== "000040499087" ||
     quarterlyMetadata.valueType !== "原数値（名目指数）" ||
@@ -267,13 +415,14 @@ export function validateCtiPair(
     sourceWorkbook?.fileName !== "cti-distribution-adjusted-000040499087.xlsx" ||
     JSON.stringify(quarterlyMetadata.columnMapping) !==
       JSON.stringify(OFFICIAL_QUARTERLY_COLUMN_MAPPING) ||
-    createHash("sha256").update(sourceWorkbookBytes).digest("hex") !==
-      quarterlyMetadata.sourceSha256 ||
-    quarterlyMetadata.revision !== annualManifest.revision ||
-    quarterlyMetadata.revision !== annualA.metadata?.revision ||
-    quarterlyMetadata.sourceSha256 !== annualA.metadata?.sourceSha256 ||
+    sourceWorkbookSha256 !== quarterlyMetadata.sourceSha256 ||
+    quarterlyMetadata.revision !== manifestRevision ||
+    quarterlyMetadata.revision !==
+      (annualA as { metadata?: Record<string, unknown> }).metadata?.revision ||
+    quarterlyMetadata.sourceSha256 !==
+      (annualA as { metadata?: Record<string, unknown> }).metadata?.sourceSha256 ||
     annualEntry?.path !== "A.json" ||
-    annualEntry?.sha256 !== createHash("sha256").update(annualABytes).digest("hex") ||
+    annualEntry?.sha256 !== annualAHash ||
     quarterlyMetadata.csvSha256 !== quarterlyHash ||
     quarterlyEntry?.path !== "../cti_data2025_distribution_adjusted_quarterly.csv" ||
     quarterlyEntry?.metadataPath !==
@@ -284,32 +433,18 @@ export function validateCtiPair(
     quarterlyEntry?.sourceSha256 !== quarterlyMetadata.sourceSha256
   )
     return "official quarterly CTI artifact/metadata/manifest mismatch";
-  const quarterlyRows = Papa.parse<Record<string, string>>(quarterlyCsv, {
-    header: true,
-    skipEmptyLines: true,
-  });
-  const quarterlyPeriod = quarterlyRows.data.map((row) => row.period?.trim() ?? "");
-  const quarterlyStart = quarterlyMetadata.adoptedRange as Record<string, unknown> | undefined;
-  if (
-    quarterlyRows.errors.length ||
-    quarterlyPeriod[0] !== "2017Q1" ||
-    !isContinuousQuarterLabels(quarterlyPeriod) ||
-    quarterlyPeriod.at(-1) !== quarterlyStart?.end ||
-    quarterlyStart?.start !== "2017Q1" ||
-    quarterlyStart.rows !== quarterlyPeriod.length
-  )
-    return "invalid official quarterly CTI period range";
-  const records = (filePath: string) =>
-    Papa.parse<Record<string, string>>(fs.readFileSync(filePath, "utf8"), {
-      header: true,
-      skipEmptyLines: true,
-    }).data.map((row) =>
-      Object.fromEntries(Object.entries(row).map(([key, value]) => [key.trim(), value?.trim()])),
-    );
-  const map = records(paths.seriesMap),
-    snapshot = records(paths.officialSnapshot);
-  const mapByCode = new Map<string, Record<string, string>>(),
-    officialByCode = new Map<string, Record<string, string>>();
+  return null;
+}
+
+function validateCtiOfficialRows(
+  map: Record<string, string>[],
+  snapshot: Record<string, string>[],
+  header: string[],
+  dataRows: string[][],
+  metadata: Record<string, unknown>,
+): string | null {
+  const mapByCode = new Map<string, Record<string, string>>();
+  const officialByCode = new Map<string, Record<string, string>>();
   for (const row of map) {
     const code = row.official_code;
     if (!code || mapByCode.has(code) || !row.official_name || !row.dashboard_key)
@@ -332,16 +467,15 @@ export function validateCtiPair(
     [...mapByCode.keys()].some((code) => !officialByCode.has(code))
   )
     return "2025 series map and official snapshot code set mismatch";
+  const monthIndex = header.indexOf(header.includes("年月") ? "年月" : "月");
   for (const [code, mapped] of mapByCode) {
     const official = officialByCode.get(code)!;
     if (mapped.official_name !== official.official_name)
       return `2025 official name mismatch: ${code}`;
-    const month = official.representative_month,
-      expected = official.representative_value;
+    const month = official.representative_month;
+    const expected = official.representative_value;
     if (!month || !expected) return `2025 official representative value missing: ${code}`;
-    const row = parsed
-      .slice(headerIndex + 1)
-      .find((candidate) => candidate[monthIndex]?.trim() === month);
+    const row = dataRows.find((candidate) => candidate[monthIndex]?.trim() === month);
     if (!row) return `2025 official representative month missing: ${month}`;
     if (
       !row[header.indexOf(mapped.dashboard_key)]?.trim() ||
@@ -349,13 +483,146 @@ export function validateCtiPair(
     )
       return `2025 official representative value mismatch: ${code}`;
   }
-  const values2025 = parsed
-    .slice(headerIndex + 1)
+  return null;
+}
+
+type CtiOfficialRowsSnapshot = {
+  map: Record<string, string>[];
+  snapshot: Record<string, string>[];
+};
+
+function acquireCtiOfficialRowsSnapshot(
+  paths: ReturnType<typeof buildCtiFilePaths>,
+): CtiOfficialRowsSnapshot {
+  const records = (filePath: string) =>
+    Papa.parse<Record<string, string>>(fs.readFileSync(filePath, "utf8"), {
+      header: true,
+      skipEmptyLines: true,
+    }).data.map((row) =>
+      Object.fromEntries(Object.entries(row).map(([key, value]) => [key.trim(), value?.trim()])),
+    );
+  const map = records(paths.seriesMap);
+  const snapshot = records(paths.officialSnapshot);
+  return { map, snapshot };
+}
+
+function validateCti2025Completeness(
+  dataRows: string[][],
+  monthIndex: number,
+  nominalIndex: number,
+): string | null {
+  const values2025 = dataRows
     // The earlier continuous-month validation rejects every unparseable month.
     .filter((row) => parseYearMonth(row[monthIndex]!.trim())!.year === 2025)
-    .map((row) => Number(row[header.indexOf("消費支出（名目）")]?.replace(/,/g, "")))
+    .map((row) => Number(row[nominalIndex]?.replace(/,/g, "")))
     .filter(Number.isFinite);
-  return values2025.length === 12 ? pair : "incomplete 2025 CTI calendar year";
+  return values2025.length === 12 ? null : "incomplete 2025 CTI calendar year";
+}
+
+export function validateCtiPair(
+  pair: CtiPair,
+  paths: ReturnType<typeof buildCtiFilePaths>,
+): string | CtiPair {
+  const required = [
+    pair.mainPath,
+    paths.seriesMap,
+    paths.officialSnapshot,
+    paths.metadata,
+    paths.candidateDistributionAdjusted,
+    paths.candidateDistributionAdjustedMetadata,
+    paths.candidateDistributionAdjustedQuarterly,
+    paths.candidateDistributionAdjustedQuarterlyMetadata,
+  ];
+  if (required.some((filePath) => !fs.existsSync(filePath))) return "missing required CTI set file";
+  const mainSnapshot = acquireCtiMainCsvSnapshot(pair.mainPath);
+  const mainCsv = validateCtiMainCsvRows(mainSnapshot.parsedRows);
+  if ("reason" in mainCsv) return mainCsv.reason;
+  const { header, monthIndex, dataRows, months } = mainCsv;
+  const mapHeaderSnapshot = acquireCtiHeaderSnapshot(paths.seriesMap);
+  const mapHeaderReason = validateCtiHeaders("series map", mapHeaderSnapshot);
+  if (mapHeaderReason) return mapHeaderReason;
+  const officialSnapshotHeader = acquireCtiHeaderSnapshot(paths.officialSnapshot);
+  const snapshotHeaderReason = validateCtiHeaders("official snapshot", officialSnapshotHeader);
+  if (snapshotHeaderReason) return snapshotHeaderReason;
+  const metadata = validateCtiMetadata(paths.metadata, path.basename(pair.mainPath));
+  if (typeof metadata === "string") return metadata;
+  const metadataBasisReason = validateCtiMetadataBasis(metadata);
+  if (metadataBasisReason) return metadataBasisReason;
+  const derivedIdentitySnapshot = acquireCtiDerivedIdentitySnapshot(paths);
+  if (typeof metadata.officialSeriesMapSha256 !== "string")
+    return "2025 CTI derived map/snapshot identity or SHA-256 mismatch";
+  const mapDigest = createHash("sha256").update(derivedIdentitySnapshot.mapBytes).digest("hex");
+  if (validateCtiDerivedMapHash(metadata.officialSeriesMapSha256, mapDigest))
+    return "2025 CTI derived map/snapshot identity or SHA-256 mismatch";
+  if (typeof metadata.officialSeriesSnapshotSha256 !== "string")
+    return "2025 CTI derived map/snapshot identity or SHA-256 mismatch";
+  const snapshotDigest = createHash("sha256")
+    .update(derivedIdentitySnapshot.snapshotBytes)
+    .digest("hex");
+  if (validateCtiDerivedSnapshotIdentity(metadata, snapshotDigest))
+    return "2025 CTI derived map/snapshot identity or SHA-256 mismatch";
+  const metadataPeriodReason = validateCtiMetadataPeriod(metadata, months);
+  if (metadataPeriodReason) return metadataPeriodReason;
+  const csvDigestSnapshots = acquireCtiCsvDigestSnapshots(mainSnapshot, pair.mainPath, paths);
+  for (const csvSnapshot of csvDigestSnapshots) {
+    const checked = validateCtiMetadata(csvSnapshot.metadataPath, csvSnapshot.expectedFile);
+    if (typeof checked === "string") return checked;
+    const digestReason = validateCtiCsvDigest(
+      checked,
+      createHash("sha256").update(csvSnapshot.content).digest("hex"),
+    );
+    if (digestReason) return digestReason;
+  }
+  const quarterlyAcquisition = acquireCtiQuarterlyArtifactSnapshot(paths);
+  if (quarterlyAcquisition.kind === "reason") return quarterlyAcquisition.reason;
+  const {
+    quarterlyCsv,
+    quarterlyMetadata,
+    annualManifest,
+    quarterlyEntry,
+    annualEntry,
+    annualA,
+    annualABytes,
+    quarterlyHash,
+    quarterlyMetadataHash,
+    sourceWorkbookBytes,
+  } = quarterlyAcquisition.snapshot;
+  const quarterlyArtifactReason = validateCtiQuarterlyArtifact(
+    quarterlyMetadata,
+    paths.candidateDistributionAdjustedQuarterly,
+    quarterlyHash,
+    quarterlyMetadataHash,
+    quarterlyEntry,
+    annualEntry,
+    annualA,
+    annualManifest.revision,
+    createHash("sha256").update(annualABytes).digest("hex"),
+    createHash("sha256").update(sourceWorkbookBytes).digest("hex"),
+  );
+  if (quarterlyArtifactReason) return quarterlyArtifactReason;
+  const quarterlyRows = Papa.parse<Record<string, string>>(quarterlyCsv, {
+    header: true,
+    skipEmptyLines: true,
+  });
+  const quarterlyStart = quarterlyMetadata.adoptedRange as Record<string, unknown> | undefined;
+  if (quarterlyRows.errors.length) return "invalid official quarterly CTI period range";
+  const quarterlyPeriodReason = validateCtiQuarterlyPeriod(quarterlyRows.data, quarterlyStart);
+  if (quarterlyPeriodReason) return quarterlyPeriodReason;
+  const officialRowsSnapshot = acquireCtiOfficialRowsSnapshot(paths);
+  const officialRowsReason = validateCtiOfficialRows(
+    officialRowsSnapshot.map,
+    officialRowsSnapshot.snapshot,
+    header,
+    dataRows,
+    metadata,
+  );
+  if (officialRowsReason) return officialRowsReason;
+  const complete2025Reason = validateCti2025Completeness(
+    dataRows,
+    monthIndex,
+    header.indexOf("消費支出（名目）"),
+  );
+  return complete2025Reason ?? pair;
 }
 
 export function mapCtiReasonToCode(validationMsg: string): CtiReasonCode {
