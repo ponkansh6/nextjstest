@@ -96,7 +96,7 @@ describe("CPI Data Integrity", () => {
         cdArea: "00000",
         cdTab: "1",
         startTime: "197001",
-        endTime: "202607",
+        endTime: "202608",
       });
       expect(metadata.sourceFileUrl).toContain(`statInfId=${metadata.statInfId}`);
       expect(metadata.artifactUpdatedAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);

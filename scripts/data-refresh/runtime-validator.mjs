@@ -88,8 +88,29 @@ export const RUNTIME_FAILURE_REPORT_STATUSES = Object.freeze([
   "report-no-allowlisted-failures",
   "report-failures-found",
 ]);
+export const RUNTIME_FILE_ERROR_CATEGORIES = Object.freeze([
+  "import-resolution",
+  "suite-setup",
+  "unhandled-rejection",
+  "assertion-file-error",
+  "unknown",
+]);
+const RUNTIME_VALIDATOR_ERROR_CODES = Object.freeze([
+  "quality-validator-contract-mismatch",
+  "quality-validator-incomplete",
+  "quality-validator-output-collision",
+  "quality-validator-output-invalid",
+  "quality-validator-path-invalid",
+  "runtime-quality-project-hash-mismatch",
+  "runtime-quality-project-invalid",
+  "runtime-quality-root-invalid",
+  "runtime-quality-suite-failed",
+  "runtime-quality-suite-unavailable",
+  "runtime-quality-underlay-hash-mismatch",
+  "runtime-quality-underlay-invalid",
+]);
 
-/** Extract only allowlisted file names and sanitized assertion titles from Vitest JSON. */
+/** Extract allowlisted file names, safe assertion titles, and fixed file-error categories. */
 export function extractRuntimeFailureDiagnostics({
   exitCode,
   report,
@@ -182,8 +203,11 @@ export function extractRuntimeFailureDiagnostics({
   let failedAssertionCount = 0;
   for (const { result, file } of safeResults) {
     if (result.status !== "failed") continue;
+    const suiteErrorCategory = classifyRuntimeFileError(result);
     if (!Array.isArray(result.assertionResults)) {
-      if (samples.length < RUNTIME_FAILURE_SAMPLE_LIMIT) samples.push({ file });
+      if (samples.length < RUNTIME_FAILURE_SAMPLE_LIMIT) {
+        samples.push({ file, fileErrorCategory: suiteErrorCategory });
+      }
       continue;
     }
     let resultFailedAssertionCount = 0;
@@ -200,7 +224,7 @@ export function extractRuntimeFailureDiagnostics({
       }
     }
     if (resultFailedAssertionCount === 0 && samples.length < RUNTIME_FAILURE_SAMPLE_LIMIT) {
-      samples.push({ file });
+      samples.push({ file, fileErrorCategory: suiteErrorCategory });
     }
   }
   const status = samples.length > 0 ? "report-failures-found" : "report-no-allowlisted-failures";
@@ -216,6 +240,84 @@ export function extractRuntimeFailureDiagnostics({
     },
     startupError,
   );
+}
+
+function classifyRuntimeFileError(result) {
+  const messages = [
+    typeof result.message === "string" ? result.message : "",
+    ...(Array.isArray(result.failureMessages)
+      ? result.failureMessages.filter((message) => typeof message === "string")
+      : []),
+  ]
+    .join("\n")
+    .slice(0, 8_000);
+  if (
+    /failed to resolve import|could not resolve|cannot find (?:module|package)|module not found|err_module_not_found/i.test(
+      messages,
+    )
+  ) {
+    return "import-resolution";
+  }
+  if (
+    /unhandled(?:\s+promise)?\s+rejection|unhandledpromiserejection|uncaught exception|unhandled error/i.test(
+      messages,
+    )
+  ) {
+    return "unhandled-rejection";
+  }
+  if (
+    /beforeAll|beforeEach|afterAll|afterEach|hook failure|suite setup|setup file|failed to load config/i.test(
+      messages,
+    )
+  ) {
+    return "suite-setup";
+  }
+  if (/assertionerror|assertion failed|expect(?:ation)? failed|failed assertion/i.test(messages)) {
+    return "assertion-file-error";
+  }
+  return "unknown";
+}
+
+/** Keep test-only summaries to known codes, categories, and bounded allowlisted suite samples. */
+export function summarizeRuntimeQualityDiagnostics(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const samples = Array.isArray(value.failedTestSamples)
+    ? value.failedTestSamples.slice(0, 8).map((sample) => {
+        const file = RUNTIME_QUALITY_TESTS.includes(sample?.file) ? sample.file : "unknown-suite";
+        const title =
+          typeof sample?.title === "string" &&
+          sample.title.length <= 180 &&
+          !containsControlCodePoint(sample.title) &&
+          !/https?:\/\/\S+|(?:password|passwd|secret|token|authorization|api[_-]?key)\s*[:=]\s*[^\s,;]+|(?:[A-Za-z]:\\|\\\\|\/)(?:[^\s"'<>|,;]+[\\/]?)+/i.test(
+            sample.title,
+          )
+            ? sample.title
+            : undefined;
+        return {
+          file,
+          ...(title ? { title } : {}),
+          ...(RUNTIME_FILE_ERROR_CATEGORIES.includes(sample?.fileErrorCategory)
+            ? { fileErrorCategory: sample.fileErrorCategory }
+            : {}),
+        };
+      })
+    : [];
+  return {
+    exitCode: Number.isSafeInteger(value.exitCode) ? value.exitCode : undefined,
+    reportStatus: RUNTIME_FAILURE_REPORT_STATUSES.includes(value.reportStatus)
+      ? value.reportStatus
+      : "unknown-report-status",
+    code: RUNTIME_VALIDATOR_ERROR_CODES.includes(value.code)
+      ? value.code
+      : "unknown-validator-error",
+    testResultCount: Number.isSafeInteger(value.testResultCount)
+      ? value.testResultCount
+      : undefined,
+    failedAssertionCount: Number.isSafeInteger(value.failedAssertionCount)
+      ? value.failedAssertionCount
+      : undefined,
+    failedTestSamples: samples,
+  };
 }
 
 function withStartupError(diagnostics, value) {
@@ -262,7 +364,7 @@ function sanitizeRuntimeStartupError(value) {
   if (typeof value !== "string") return undefined;
   let line = stripAnsiAndControls(value).trim();
   const stageOnly = line.match(
-    /^Error: canonical project and runtime data fallback is forbidden \(target=(canonical-data|canonical-server|canonical-tests|canonical-scripts|canonical-package-manifest|canonical-tsconfig|canonical-vitest-config|canonical-dependency|canonical-other), operation=(readFileSync|readFile|openSync|open|createReadStream|statSync|lstatSync|accessSync|readdirSync|readdir|realpath|copyFileSync|copyFile|realpathSync|realpathSync\.native|promises\.(?:readFile|open|stat|lstat|access|readdir|realpath|copyFile))\)$/,
+    /^Error: canonical project and runtime data fallback is forbidden \(target=(canonical-data|canonical-server|canonical-src|canonical-tests|canonical-scripts|canonical-shared|canonical-package-manifest|canonical-tsconfig|canonical-vitest-config|canonical-dependency|canonical-other), operation=(readFileSync|readFile|openSync|open|createReadStream|statSync|lstatSync|accessSync|readdirSync|readdir|realpath|copyFileSync|copyFile|realpathSync|realpathSync\.native|promises\.(?:readFile|open|stat|lstat|access|readdir|realpath|copyFile))\)$/,
   );
   if (stageOnly)
     return `Error: canonical project and runtime data fallback is forbidden (target=${stageOnly[1]}, operation=${stageOnly[2]})`;
@@ -327,6 +429,13 @@ function isControlCodePoint(codePoint) {
   return (codePoint >= 0x00 && codePoint <= 0x1f) || (codePoint >= 0x7f && codePoint <= 0x9f);
 }
 
+function containsControlCodePoint(value) {
+  for (const character of value) {
+    if (isControlCodePoint(character.codePointAt(0))) return true;
+  }
+  return false;
+}
+
 // Quoted paths can contain spaces; unquoted matching stays token based so prose
 // containing a slash does not consume the rest of the diagnostic line.
 const QUOTED_ABSOLUTE_PATH = /(["'])(?:(?:[A-Za-z]:[\\/]|\\\\|\/)[^"']*)\1/g;
@@ -389,10 +498,12 @@ export const PINNED_RUNTIME_INPUTS = Object.freeze({
 
 // The project clone is intentionally limited to the dependency closure of the quality suites.
 // Each source/config/test file is individually hashed so an unreviewed code change cannot alter
-// what the staged suites execute.
+// what the staged suites execute. From the repository root, run
+// `node scripts/data-refresh/print-runtime-project-hashes.mjs` to display both the pinned value
+// and candidate SHA-256 for this exact list. Review candidates and update this map manually.
 export const PINNED_PROJECT_FILES = Object.freeze({
-  "package.json": "fa7aa0a7ff191d0e76145ced4efc8bbd12c7bae87652f7d37a093e1d118f5931",
-  "pnpm-lock.yaml": "286565a22c116351e1fb0623accdba27b213bdd6e5495ac53ce224da1bd97a42",
+  "package.json": "cc5dab128b8099a1fe10f40e609ae1356517905c33d8c24dd9da4da70cb801f9",
+  "pnpm-lock.yaml": "b32a1388b998fa9b5f1998bb47f13e120b3fb8c69d5094db95503546a05627af",
   "tsconfig.json": "9f3692ef19cf5112726f18e7b095c4b6e53eac251d73687c79135e67f35889c7",
   "vitest.config.ts": "face3801831e94e12e5b6b2ab619df49dbf59333cd0a501b1e5b7cc61c635317",
   "scripts/fetch-cti-basic-series-2025.mjs":
@@ -409,6 +520,8 @@ export const PINNED_PROJECT_FILES = Object.freeze({
     "d3834d184b375649bc258a7e40f0033b143f4cd0c88b203bd2f2b494ec23a20e",
   "server/lib/ctiBasicSeries2025LongTerm.ts":
     "fbed1a59460db451c287673510d2f08e557ed68cdac71f18352cac309589bf59",
+  "server/lib/ctiDomainContract.ts":
+    "e39da8ae955b7504179352b0d9c0618c4391073c5c54f22227787229700c7b85",
   "server/lib/data-loader/cache.ts":
     "cf438d8340004453b68b5d25c3f23b41e8556f7f2951fb622f6ebe845386e112",
   "server/lib/data-loader/cpi.ts":
@@ -416,7 +529,7 @@ export const PINNED_PROJECT_FILES = Object.freeze({
   "server/lib/data-loader/cpiLoader.ts":
     "11219c314ed787a8f6f0fd9ac68a2018cc468208289c643cb27d8c8ff0ee3948",
   "server/lib/data-loader/cpiSource.ts":
-    "4f0112d0a22e62c5feb8f9633a509b4edafe96c8bebca1a7fb079361587487e0",
+    "860ff4ed2454706478a494bd778f26c54dfc3f0ed9407a96a9adaeaa3ada9a06",
   "server/lib/data-loader/cpiValidation.ts":
     "d5810e1f9c608c8f81f33164e9d86b113746c9e3905bfaed9447106374debf3a",
   "server/lib/data-loader/ctiAdjusted.ts":
@@ -438,6 +551,10 @@ export const PINNED_PROJECT_FILES = Object.freeze({
     "3fa933e666789b9bfd8f21054ff005f09077c001ec996176daf5db86c45241ed",
   "server/lib/view-models/quarterlyAggregation.ts":
     "bf5b79fb05ade3610d61f4346bd13832853318645de36027fe4a015080952379",
+  "shared/cti-contract-schemas.mjs":
+    "5116c1f25547ed9cb52a074f8dc4e39d3ab3a67d7075d1f1eee99df292df8a05",
+  "shared/cti-estimate-contract.ts":
+    "2be23259c1a48cd2fcc42f1f851779666b2a642b1f58be64720c3fd52ac303fc",
   "src/lib/chartConstants.ts": "93c51e597337c7538c4d4f116f73d5e35ab0bf495a3392993989cf42defd2fa4",
   "src/lib/clientCalculations.ts":
     "ae4d02d14284fd10fc202de7bf95ec3885ec16a1ed2f621f4aca7d8ed9b213e0",
@@ -455,7 +572,7 @@ export const PINNED_PROJECT_FILES = Object.freeze({
   "src/types/data.ts": "6994b0f7bd5efee76c75900ce64da3def963f3ef0a50814c45f311356613e2b1",
   "src/types/index.ts": "5e28c21699001dc63aa8a38fd8868164823d4fb7e49d27e71e6684d9a28509a6",
   "tests/data-quality/cpi-data-integrity.test.ts":
-    "710da37e1256c08ca2ad897d8a256c34d655b780f2bec7d2a6683c6b84d33005",
+    "e288df4ed462a6d58f03629a9491eb8ba945e5766f7d7fd9b75ff04d960ad1ca",
   "tests/data-quality/cti-basic-series-2025.test.ts":
     "9d0fe65f2b9816d3bd37cb601666043ed09d5a1f6fc486a87fd946019352edc3",
   "tests/data-quality/cti-data-integrity.test.ts":
@@ -483,7 +600,16 @@ function isCanonicalForbiddenPath(value) {
   let filename = value;
   if (value instanceof URL) filename = fileURLToPath(value);
   const resolved = path.resolve(String(filename));
-  return ['data', 'results', 'public', 'server', 'src', 'tests', 'scripts'].some((segment) => {
+  return [
+    'data',
+    'results',
+    'public',
+    'server',
+    'src',
+    'tests',
+    'scripts',
+    'shared',
+  ].some((segment) => {
     const blockedRoot = path.join(canonicalRoot, segment);
     return resolved === blockedRoot || resolved.startsWith(blockedRoot + path.sep);
   }) || ['package.json', 'pnpm-lock.yaml', 'tsconfig.json', 'vitest.config.ts'].some((file) => resolved === path.join(canonicalRoot, file));
@@ -502,7 +628,7 @@ function canonicalArea(file) {
   const relative = path.relative(canonicalRoot, resolved);
   if (!relative || relative.startsWith('..' + path.sep) || path.isAbsolute(relative)) return 'canonical-other';
   const [area] = relative.split(path.sep);
-  if (['data', 'server', 'tests', 'scripts'].includes(area)) return 'canonical-' + area;
+  if (['data', 'server', 'src', 'tests', 'scripts', 'shared'].includes(area)) return 'canonical-' + area;
   if (area === 'pnpm-lock.yaml' || area === 'node_modules') return 'canonical-dependency';
   if (relative === 'package.json') return 'canonical-package-manifest';
   if (relative === 'tsconfig.json') return 'canonical-tsconfig';

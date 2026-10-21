@@ -176,6 +176,21 @@ it("p45-a-legend-dark-all12 — production dark theme exposes all 12 source-colo
   );
 });
 
+it("p58-theme-bootstrap — production route restores, hydrates, and recovers the saved theme", async () => {
+  const values = await inspect("theme-storage-recovery");
+  expect(values.bootstrapTheme).toBe("dark");
+  expect(values.initialTheme).toBe("dark");
+  expect(values.initialLabel).toBe("テーマ: ダークモード（タップでシステム設定に従うに切替）");
+  expect(values.afterToggleTheme).toBeNull();
+  expect(values.afterToggleLabel).toBe("テーマ: システム設定に従う（タップでライトモードに切替）");
+  expect(values.invalidBootstrapTheme).toBeNull();
+  expect(values.invalidTheme).toBeNull();
+  expect(values.invalidLabel).toBe("テーマ: システム設定に従う（タップでライトモードに切替）");
+  expect(values.recoveredTheme).toBe("light");
+  expect(values.recoveredLabel).toBe("テーマ: ライトモード（タップでダークモードに切替）");
+  expect(values.errors).toEqual([]);
+});
+
 it("p45-b-monthly-boundary-axis-21-cpi-2017-12-2018-1-svg — production CPI axis omits both boundary labels", async () => {
   const values = await inspect("monthly-boundary-cpi");
   const labels = values.axisLabels as string[];

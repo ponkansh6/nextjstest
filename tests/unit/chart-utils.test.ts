@@ -47,6 +47,14 @@ describe("chartUtils", () => {
     expect(filtered).toHaveLength(0);
   });
 
+  it("returns no rows for a malformed or reversed year range", () => {
+    const data = createCpiDataList([{ 年月: "2020年1月" }]);
+    expect(filterDataByYear(data, Number.NaN, 2021)).toEqual([]);
+    expect(filterDataByYear(data, 2021, 2020)).toEqual([]);
+    expect(mergeChartData(data, data, Number.NaN, 2021)).toEqual([]);
+    expect(mergeChartData(data, data, 2021, 2020)).toEqual([]);
+  });
+
   it("should handle invalid date formats gracefully", () => {
     const data = [
       { 年月: "invalid-date" },

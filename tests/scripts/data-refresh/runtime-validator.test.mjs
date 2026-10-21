@@ -23,7 +23,9 @@ import {
   PINNED_RUNTIME_INPUTS,
   REQUIRED_RUNTIME_REFRESH_OUTPUTS,
   RUNTIME_QUALITY_TESTS,
+  RUNTIME_FILE_ERROR_CATEGORIES,
   runRuntimeQualitySuites,
+  summarizeRuntimeQualityDiagnostics,
   validateStagedRuntimeData,
 } from "../../../scripts/data-refresh/runtime-validator.mjs";
 import { registry } from "../../../scripts/data-refresh/registry/index.mjs";
@@ -142,6 +144,84 @@ describe("staged runtime quality validator", () => {
       },
     ]);
     expect(JSON.stringify(redacted)).not.toMatch(/example\.test|hidden|API_KEY/);
+  });
+
+  it("classifies failed suite files using a fixed enum and never exposes suite error text", () => {
+    const runtimeRoot = "/runtime-root";
+    const cases = [
+      ["Failed to resolve import /home/private/missing.mjs API_KEY=hidden", "import-resolution"],
+      ["beforeAll hook failed at /tmp/private.test.ts token=hidden", "suite-setup"],
+      ["UnhandledPromiseRejection: secret payload", "unhandled-rejection"],
+      ["AssertionError: expected private value to equal secret", "assertion-file-error"],
+      ["private runtime failure at /tmp/private.log secret=hidden", "unknown"],
+    ];
+    for (const [message, category] of cases) {
+      const report = Buffer.from(
+        JSON.stringify({
+          testResults: [
+            {
+              name: path.join(runtimeRoot, RUNTIME_QUALITY_TESTS[0]),
+              status: "failed",
+              assertionResults: [],
+              failureMessages: [message],
+            },
+          ],
+        }),
+      );
+      const diagnostics = extractRuntimeFailureDiagnostics({
+        exitCode: 1,
+        report,
+        runtimeRoot,
+      });
+      expect(diagnostics.failedTestSamples).toEqual([
+        { file: RUNTIME_QUALITY_TESTS[0], fileErrorCategory: category },
+      ]);
+      expect(RUNTIME_FILE_ERROR_CATEGORIES).toContain(category);
+      expect(JSON.stringify(diagnostics)).not.toMatch(/private|hidden|secret|API_KEY|token/);
+    }
+  });
+
+  it("maps unknown summary codes and statuses to fixed values and redacts arbitrary fields", () => {
+    const summary = summarizeRuntimeQualityDiagnostics({
+      exitCode: 1,
+      reportStatus: "secret status /private/path",
+      code: "API_KEY=hidden /private/error",
+      failedTestSamples: [
+        {
+          file: "/private/suite.test.ts",
+          title: "raw secret=hidden error at /private/path",
+          fileErrorCategory: "unknown",
+        },
+        {
+          file: RUNTIME_QUALITY_TESTS[0],
+          title: "safe title\nwith control character",
+          fileErrorCategory: "unknown",
+        },
+      ],
+      env: "private environment",
+      stack: "private stack",
+    });
+    expect(summary).toEqual({
+      exitCode: 1,
+      reportStatus: "unknown-report-status",
+      code: "unknown-validator-error",
+      testResultCount: undefined,
+      failedAssertionCount: undefined,
+      failedTestSamples: [
+        { file: "unknown-suite", fileErrorCategory: "unknown" },
+        { file: RUNTIME_QUALITY_TESTS[0], fileErrorCategory: "unknown" },
+      ],
+    });
+    expect(JSON.stringify(summary)).not.toMatch(/secret|private|hidden|API_KEY|env|stack/);
+    expect(
+      summarizeRuntimeQualityDiagnostics({
+        reportStatus: "report-failures-found",
+        code: "runtime-quality-suite-failed",
+      }),
+    ).toMatchObject({
+      reportStatus: "report-failures-found",
+      code: "runtime-quality-suite-failed",
+    });
   });
 
   it("rejects unknown and outside files and invalid reports", () => {
@@ -290,8 +370,10 @@ describe("staged runtime quality validator", () => {
     );
     for (const target of [
       "canonical-server",
+      "canonical-src",
       "canonical-tests",
       "canonical-scripts",
+      "canonical-shared",
       "canonical-package-manifest",
       "canonical-tsconfig",
       "canonical-vitest-config",
@@ -432,6 +514,41 @@ describe("staged runtime quality validator", () => {
 
   it("audits exact refresh-output coverage and the pinned suite inventory", async () => {
     expect(REQUIRED_RUNTIME_REFRESH_OUTPUTS).toHaveLength(46);
+    expect(PINNED_PROJECT_FILES["shared/cti-estimate-contract.ts"]).toBe(
+      "2be23259c1a48cd2fcc42f1f851779666b2a642b1f58be64720c3fd52ac303fc",
+    );
+    expect(PINNED_PROJECT_FILES["shared/cti-contract-schemas.mjs"]).toBe(
+      "5116c1f25547ed9cb52a074f8dc4e39d3ab3a67d7075d1f1eee99df292df8a05",
+    );
+    expect(PINNED_PROJECT_FILES).toMatchObject({
+      "server/lib/data-loader/population.ts":
+        "19f6fa5ce0d1d1ee73e0500cece46bd7910d51071075b5f70034652bb34b873b",
+      "server/lib/dataProcessor.ts":
+        "94b89883dc2db4b6e6c8a98845d12158d6fba241bc81be6179f249e29bb13f10",
+      "server/lib/math/movingAverage.ts":
+        "dd98ae00c94ac1c55e4f734271a46009565330e4a17ab31493739bc46799340e",
+      "server/lib/data-loader/ctiAdjusted.ts":
+        "afe725dfd5db19c6533817802e83fdd6e2d43f5312ed24a265ee630d88bd9a35",
+      "server/lib/ctiAdjustedConnectionEstimate.ts":
+        "55552d8278649623cab51444f5338d69c1e4ccdaf4ebaf8b9ebe973044372564",
+      "server/lib/ctiAdjustedPublicationGate.ts":
+        "1da399c15e1d35f23d129cea8c2646ae153a1d126e0bee92e0d3cf347d0599b1",
+      "server/lib/ctiAdjustedConnectionEstimateV2.ts":
+        "6235893097cd261c3d56698dcc5bb8dce37874feb3a6f32fa3f103a9fd613b31",
+      "server/lib/ctiAdjustedRollingBacktest.ts":
+        "d3834d184b375649bc258a7e40f0033b143f4cd0c88b203bd2f2b494ec23a20e",
+      "server/lib/ctiDomainContract.ts":
+        "e39da8ae955b7504179352b0d9c0618c4391073c5c54f22227787229700c7b85",
+      "server/lib/view-models/quarterlyAggregation.ts":
+        "bf5b79fb05ade3610d61f4346bd13832853318645de36027fe4a015080952379",
+      "src/lib/math/clientCalculations.ts":
+        "68d40ebeeec1f7c6dc2595abccf9888e0db381e2e992d10b7824aec064247a20",
+      "src/lib/math/quarter.ts": "f866bbf0a3b4ea295b11ec02ca4b7cf71e612d0d6dd01a66193d73100401db46",
+      "src/lib/math/quarterlyCompleteness.ts":
+        "756050907a879fb5f5715ae04ae044893c7b0e8c2fae574c0f6818b974e54943",
+      "server/lib/data-loader/earnings.ts":
+        "dc813aa80d299241a57c8906c3d68172732d5d200d0b36565e8350d73cb5f96d",
+    });
     expect(auditRuntimeQualityCoverage(registry)).toMatchObject({
       missingRefreshOutputs: [],
       unexpectedRefreshOutputs: [],
@@ -506,6 +623,9 @@ describe("staged runtime quality validator", () => {
         expect(await readFile(path.join(input.runtimeRoot, "server/lib/dataIo.ts"))).toEqual(
           await readFile(path.join(f.root, "server/lib/dataIo.ts")),
         );
+        expect(
+          await readFile(path.join(input.runtimeRoot, "server/lib/ctiDomainContract.ts")),
+        ).toEqual(await readFile(path.join(f.root, "server/lib/ctiDomainContract.ts")));
         const allowedStagePath = path.join(input.runtimeRoot, REQUIRED_RUNTIME_REFRESH_OUTPUTS[0]);
         const canonicalDataSymlink = path.join(input.runtimeRoot, "canonical-data-link.csv");
         await symlink(unlistedData, canonicalDataSymlink, "file");
@@ -514,7 +634,7 @@ describe("staged runtime quality validator", () => {
         execFileSync(process.execPath, ["-r", input.preloadPath, "-e", script], {
           env: { PATH: process.env.PATH, DATA_REFRESH_CANONICAL_ROOT: f.root },
         });
-        const cjsDiagnosticsScript = `const fs=require('node:fs'); const expected=(target,operation)=>'canonical project and runtime data fallback is forbidden (target='+target+', operation='+operation+')'; const denied=(fn,target,operation)=>{try{fn();return false}catch(e){return e.code==='ESTAGEONLY'&&e.message===expected(target,operation)}}; (async()=>{ const areas=[['canonical-data',${JSON.stringify(unlistedData)}],['canonical-server',${JSON.stringify(path.join(f.root, "server/lib/dataIo.ts"))}],['canonical-tests',${JSON.stringify(path.join(f.root, "tests/does-not-need-to-exist.ts"))}],['canonical-scripts',${JSON.stringify(path.join(f.root, "scripts/does-not-need-to-exist.mjs"))}],['canonical-package-manifest',${JSON.stringify(path.join(f.root, "package.json"))}],['canonical-tsconfig',${JSON.stringify(path.join(f.root, "tsconfig.json"))}],['canonical-vitest-config',${JSON.stringify(path.join(f.root, "vitest.config.ts"))}],['canonical-dependency',${JSON.stringify(path.join(f.root, "pnpm-lock.yaml"))}],['canonical-other',${JSON.stringify(path.join(f.root, "public/does-not-need-to-exist.txt"))}]]; for(const [target,file] of areas) if(!denied(()=>fs.readFileSync(file),target,'readFileSync')) process.exit(31); if(!denied(()=>fs.statSync(${JSON.stringify(path.join(f.root, "server/lib/dataIo.ts"))}),'canonical-server','statSync')) process.exit(32); if(!denied(()=>fs.realpathSync(${JSON.stringify(canonicalDataSymlink)}),'canonical-data','realpathSync')) process.exit(33); if(!denied(()=>fs.realpathSync.native(${JSON.stringify(canonicalDataSymlink)}),'canonical-data','realpathSync.native')) process.exit(34); try { await fs.promises.stat(${JSON.stringify(path.join(f.root, "server/lib/dataIo.ts"))}); process.exit(35); } catch(e) { if(e.code!=='ESTAGEONLY'||e.message!==expected('canonical-server','promises.stat')) process.exit(36); } })().catch(()=>process.exit(37));`;
+        const cjsDiagnosticsScript = `const fs=require('node:fs'); const expected=(target,operation)=>'canonical project and runtime data fallback is forbidden (target='+target+', operation='+operation+')'; const denied=(fn,target,operation)=>{try{fn();return false}catch(e){return e.code==='ESTAGEONLY'&&e.message===expected(target,operation)}}; (async()=>{ const areas=[['canonical-data',${JSON.stringify(unlistedData)}],['canonical-server',${JSON.stringify(path.join(f.root, "server/lib/dataIo.ts"))}],['canonical-src',${JSON.stringify(path.join(f.root, "src/lib/math/clientCalculations.ts"))}],['canonical-tests',${JSON.stringify(path.join(f.root, "tests/does-not-need-to-exist.ts"))}],['canonical-scripts',${JSON.stringify(path.join(f.root, "scripts/does-not-need-to-exist.mjs"))}],['canonical-shared',${JSON.stringify(path.join(f.root, "shared/cti-estimate-contract.ts"))}],['canonical-package-manifest',${JSON.stringify(path.join(f.root, "package.json"))}],['canonical-tsconfig',${JSON.stringify(path.join(f.root, "tsconfig.json"))}],['canonical-vitest-config',${JSON.stringify(path.join(f.root, "vitest.config.ts"))}],['canonical-dependency',${JSON.stringify(path.join(f.root, "pnpm-lock.yaml"))}],['canonical-other',${JSON.stringify(path.join(f.root, "public/does-not-need-to-exist.txt"))}]]; for(const [target,file] of areas) if(!denied(()=>fs.readFileSync(file),target,'readFileSync')) process.exit(31); if(!denied(()=>fs.statSync(${JSON.stringify(path.join(f.root, "server/lib/dataIo.ts"))}),'canonical-server','statSync')) process.exit(32); if(!denied(()=>fs.realpathSync(${JSON.stringify(canonicalDataSymlink)}),'canonical-data','realpathSync')) process.exit(33); if(!denied(()=>fs.realpathSync.native(${JSON.stringify(canonicalDataSymlink)}),'canonical-data','realpathSync.native')) process.exit(34); try { await fs.promises.stat(${JSON.stringify(path.join(f.root, "server/lib/dataIo.ts"))}); process.exit(35); } catch(e) { if(e.code!=='ESTAGEONLY'||e.message!==expected('canonical-server','promises.stat')) process.exit(36); } })().catch(()=>process.exit(37));`;
         execFileSync(process.execPath, ["-r", input.preloadPath, "-e", cjsDiagnosticsScript], {
           env: { PATH: process.env.PATH, DATA_REFRESH_CANONICAL_ROOT: f.root },
         });
@@ -603,6 +723,24 @@ describe("staged runtime quality validator", () => {
         },
       }),
     ).rejects.toMatchObject({ code: "runtime-quality-underlay-hash-mismatch" });
+  });
+
+  it("fails closed when a pinned shared runtime project module changes", async () => {
+    const f = await fixture();
+    const sharedModule = "shared/cti-estimate-contract.ts";
+    await writeFile(path.join(f.root, sharedModule), "export const changed = true;\n");
+    let ranSuites = false;
+
+    await expect(
+      validateStagedRuntimeData({
+        ...f,
+        runSuites: async () => {
+          ranSuites = true;
+          throw new Error("must not run");
+        },
+      }),
+    ).rejects.toMatchObject({ code: "runtime-quality-project-hash-mismatch" });
+    expect(ranSuites).toBe(false);
   });
 
   it("keeps dynamic refresh outputs separate from fixed hash-pinned underlays", () => {

@@ -18,7 +18,11 @@ import {
 import { readJournal, recoverJournal, publishArtifacts } from "./lib/journal.mjs";
 import { validateRegistry, topologicallyOrderSources } from "./registry/schema.mjs";
 import { loadRefreshEnv } from "./transport/env.mjs";
-import { RUNTIME_FAILURE_REPORT_STATUSES, RUNTIME_QUALITY_TESTS } from "./runtime-validator.mjs";
+import {
+  RUNTIME_FAILURE_REPORT_STATUSES,
+  RUNTIME_FILE_ERROR_CATEGORIES,
+  RUNTIME_QUALITY_TESTS,
+} from "./runtime-validator.mjs";
 
 const SAFE_ROOT_FILES = [".data-refresh/semantic-state.json"];
 const EARNINGS_OUTPUT_SERIES_IDS = new Set([
@@ -109,6 +113,7 @@ export async function runRefresh({
   let rebaselineOldStateHash;
   const stagedCandidates = new Map();
   try {
+    const cpiVintageApproval = cpiVintageApprovalForRegistry(registry);
     await ensureSameFilesystem(absoluteRoot, stageRoot);
     const pendingJournal = await readJournal(journalPath);
     if (rebaselineSemanticStateHash !== undefined) {
@@ -208,6 +213,7 @@ export async function runRefresh({
       version: rebaselineSemanticStateHash !== undefined || storedState.version === 2 ? 2 : 1,
       fingerprints: { ...oldState.fingerprints },
       outputs: { ...oldState.outputs },
+      ...(cpiVintageApproval ? { cpiVintageApproval } : {}),
     };
     const stagedArtifacts = [];
     const seenOutputs = new Set();
@@ -624,6 +630,7 @@ function absentOutputState() {
 }
 
 function validatePublishedState(state, registry) {
+  const expectedCpiApproval = cpiVintageApprovalForRegistry(registry);
   invariant(
     state &&
       (state.version === 1 || state.version === 2) &&
@@ -645,6 +652,17 @@ function validatePublishedState(state, registry) {
     "verify-noop-state-invalid",
     "Last-publish semantic state is incomplete.",
   );
+  if (expectedCpiApproval) {
+    invariant(
+      state.cpiVintageApproval?.discoveryPeriod === expectedCpiApproval.discoveryPeriod &&
+        state.cpiVintageApproval?.approvedPeriod?.from ===
+          expectedCpiApproval.approvedPeriod.from &&
+        state.cpiVintageApproval?.approvedPeriod?.through ===
+          expectedCpiApproval.approvedPeriod.through,
+      "verify-noop-state-invalid",
+      "Last-publish CPI vintage approval manifest does not match the registry.",
+    );
+  }
   for (const source of requiredSources) {
     const fingerprint = state.fingerprints[source.id];
     const sourceHashes = state.outputs[source.id];
@@ -665,6 +683,25 @@ function validatePublishedState(state, registry) {
     for (const output of source.outputs) hashes[output] = sourceHashes[output];
   }
   return hashes;
+}
+
+function cpiVintageApprovalForRegistry(registry) {
+  const source = registry.sources.find(({ id }) => id === "cpi-long");
+  if (!source) return undefined;
+  invariant(
+    source.period?.through === "latest-published" &&
+      source.approvedPeriod?.from === "202607" &&
+      source.approvedPeriod?.through === "202608",
+    "cpi-approval-contract-invalid",
+    "CPI registry must keep latest-published discovery separate from the reviewed July–August 2026 period.",
+  );
+  return {
+    discoveryPeriod: source.period.through,
+    approvedPeriod: {
+      from: source.approvedPeriod.from,
+      through: source.approvedPeriod.through,
+    },
+  };
 }
 
 async function writeBlockedReport({ absoluteRoot, sources, timestamp, reportId }) {
@@ -887,7 +924,9 @@ function safeRuntimeQualityDiagnostics(value) {
       typeof sample !== "object" ||
       Array.isArray(sample) ||
       !RUNTIME_QUALITY_TESTS.includes(sample.file) ||
-      Object.keys(sample).some((key) => !["file", "title"].includes(key))
+      Object.keys(sample).some((key) => !["file", "title", "fileErrorCategory"].includes(key)) ||
+      (Object.hasOwn(sample, "fileErrorCategory") &&
+        !RUNTIME_FILE_ERROR_CATEGORIES.includes(sample.fileErrorCategory))
     )
       return undefined;
     if (Object.hasOwn(sample, "title")) {
@@ -901,9 +940,16 @@ function safeRuntimeQualityDiagnostics(value) {
         )
       )
         return undefined;
-      samples.push({ file: sample.file, title: sample.title });
+      samples.push({
+        file: sample.file,
+        title: sample.title,
+        ...(sample.fileErrorCategory ? { fileErrorCategory: sample.fileErrorCategory } : {}),
+      });
     } else {
-      samples.push({ file: sample.file });
+      samples.push({
+        file: sample.file,
+        ...(sample.fileErrorCategory ? { fileErrorCategory: sample.fileErrorCategory } : {}),
+      });
     }
   }
   return {
@@ -1218,6 +1264,14 @@ function safeSourceCandidate(value) {
     coverageCount:
       Number.isSafeInteger(value.coverageCount) && value.coverageCount >= 0
         ? value.coverageCount
+        : undefined,
+    discoveryPeriod:
+      value.discoveryPeriod === "latest-published" ? value.discoveryPeriod : undefined,
+    approvedPeriod:
+      value.discoveryPeriod === "latest-published" &&
+      value.approvedPeriod?.from === "202607" &&
+      value.approvedPeriod?.through === "202608"
+        ? { from: value.approvedPeriod.from, through: value.approvedPeriod.through }
         : undefined,
     revisionCount:
       Number.isSafeInteger(value.revisionCount) && value.revisionCount >= 0

@@ -4,6 +4,32 @@ import { useSearchParams } from "next/navigation";
 import React from "react";
 import { serializeUrlState } from "../lib/urlState";
 
+function parseYearParam(value: string | null, fallback: number): number | null {
+  if (value === null) return fallback;
+  // parseInt accepts prefixes such as "2024tail" and silently produces a
+  // misleading year. URL years are decimal integer values in their entirety.
+  if (!/^-?\d+$/.test(value)) return null;
+  const parsed = Number(value);
+  return Number.isSafeInteger(parsed) ? parsed : null;
+}
+
+function normalizeRange(
+  fromParam: string | null,
+  toParam: string | null,
+  defaultStart: number,
+  defaultEnd: number,
+): [number, number] {
+  const parsedFrom = parseYearParam(fromParam, defaultStart);
+  const parsedTo = parseYearParam(toParam, defaultEnd);
+  if (parsedFrom === null || parsedTo === null) return [defaultStart, defaultEnd];
+
+  const minYear = Math.min(defaultStart, defaultEnd);
+  const maxYear = Math.max(defaultStart, defaultEnd);
+  const from = Math.min(maxYear, Math.max(minYear, parsedFrom));
+  const to = Math.min(maxYear, Math.max(minYear, parsedTo));
+  return from <= to ? [from, to] : [defaultStart, defaultEnd];
+}
+
 /**
  * URL is the source of the initial shared-state snapshot. CpiChart owns the
  * live React mirrors and sends changes back through updateUrl. This hook does
@@ -16,8 +42,7 @@ export function useUrlState(defaultStart: number, defaultEnd: number) {
   const toParam = searchParams.get("to");
   const hiddenParam = searchParams.get("hidden");
 
-  const from = fromParam ? parseInt(fromParam, 10) : defaultStart;
-  const to = toParam ? parseInt(toParam, 10) : defaultEnd;
+  const [from, to] = normalizeRange(fromParam, toParam, defaultStart, defaultEnd);
   const hiddenKeys = React.useMemo(
     () => (hiddenParam ? hiddenParam.split(",").filter(Boolean) : []),
     [hiddenParam],

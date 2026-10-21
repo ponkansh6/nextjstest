@@ -402,6 +402,46 @@ describe("refresh core", () => {
     expect(publishCalls).toBe(0);
   });
 
+  it("records and validates the CPI-specific approval range in semantic state", async () => {
+    const fixture = await makePublishedGitFixture();
+    fixture.git("add", ...fixture.outputs);
+    fixture.git("commit", "-qm", "record fixture outputs before CPI manifest check");
+    const registry = {
+      ...fixture.common.registry,
+      sources: fixture.common.registry.sources.map((source) => ({
+        ...source,
+        id: "cpi-long",
+        approvedPeriod: { from: "202607", through: "202608" },
+      })),
+    };
+    const common = { ...fixture.common, registry };
+    await runRefresh(common);
+
+    const statePath = path.join(fixture.root, ".data-refresh/semantic-state.json");
+    const state = JSON.parse(await readFile(statePath, "utf8"));
+    expect(state.cpiVintageApproval).toEqual({
+      discoveryPeriod: "latest-published",
+      approvedPeriod: { from: "202607", through: "202608" },
+    });
+
+    const unapprovedRegistry = {
+      ...registry,
+      sources: registry.sources.map((source) => ({
+        ...source,
+        approvedPeriod: { from: "202607", through: "202609" },
+      })),
+    };
+    await expect(
+      runRefresh({ ...common, registry: unapprovedRegistry, check: true }),
+    ).rejects.toMatchObject({ code: "cpi-approval-contract-invalid" });
+
+    state.cpiVintageApproval.approvedPeriod.through = "202609";
+    await writeFile(statePath, JSON.stringify(state));
+    await expect(
+      runRefresh({ ...common, check: true, verifyLastPublishNoop: true }),
+    ).rejects.toMatchObject({ code: "verify-noop-state-invalid" });
+  });
+
   it("accepts a clean tracked managed output after verifying its published hash", async () => {
     const fixture = await makePublishedGitFixture();
     const cleanOutput = fixture.outputs[0];
@@ -1809,7 +1849,11 @@ describe("refresh core", () => {
             testResultCount: 2,
             failedAssertionCount: 1,
             failedTestSamples: [
-              { file: "tests/data-quality/cpi-data-integrity.test.ts", title: "safe title" },
+              {
+                file: "tests/data-quality/cpi-data-integrity.test.ts",
+                title: "safe title",
+                fileErrorCategory: "unknown",
+              },
             ],
             reportPath: "/private/vitest.json",
             stdout: "PRIVATE-STDOUT",
@@ -1829,10 +1873,46 @@ describe("refresh core", () => {
       testResultCount: 2,
       failedAssertionCount: 1,
       failedTestSamples: [
-        { file: "tests/data-quality/cpi-data-integrity.test.ts", title: "safe title" },
+        {
+          file: "tests/data-quality/cpi-data-integrity.test.ts",
+          title: "safe title",
+          fileErrorCategory: "unknown",
+        },
       ],
     });
     expect(JSON.stringify(report)).not.toMatch(/PRIVATE|reportPath|stdout|arbitraryValue/);
+  });
+
+  it("drops runtime failure diagnostics with an unrecognized suite error category", async () => {
+    const root = await temporaryRoot();
+    const failure = await runRefresh({
+      root,
+      registry: makeRegistry(),
+      adapters: new Map([["fixture", makeAdapter({ values: [9] }, "staged-after")]]),
+      validate: async () => {
+        throw Object.assign(new Error("suite failed"), {
+          code: "runtime-quality-suite-failed",
+          runtimeQualityDiagnostics: {
+            exitCode: 1,
+            reportStatus: "report-failures-found",
+            reportBytes: 100,
+            testResultCount: 1,
+            failedAssertionCount: 0,
+            failedTestSamples: [
+              {
+                file: "tests/data-quality/cpi-data-integrity.test.ts",
+                fileErrorCategory: "raw error text must not pass",
+              },
+            ],
+          },
+        });
+      },
+      preflightChanges: async () => false,
+    }).catch((error) => error);
+    const report = JSON.parse(await readFile(path.join(root, failure.reportPath), "utf8"));
+    const blockedSource = report.sources.find((source) => source.result === "blocked");
+    expect(blockedSource.sourceCandidate.runtimeQualityDiagnostics).toBeUndefined();
+    expect(JSON.stringify(report)).not.toContain("raw error text must not pass");
   });
 
   it("serializes only a bounded startup diagnostic for a missing report", async () => {

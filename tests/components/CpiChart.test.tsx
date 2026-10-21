@@ -473,6 +473,9 @@ describe("CpiChart maximum range integration", () => {
     );
     expect(new URL(window.location.href).searchParams.get("from")).toBe("2015");
     expect(new URL(window.location.href).searchParams.get("to")).toBe("2020");
+    expect(screen.getByRole("button", { name: "表示期間を変更" }).textContent).toContain(
+      "2015–2020",
+    );
     const cpiChart = screen.getByTestId("cpi-area-chart");
     const customPeriods = Array.from(cpiChart.querySelectorAll("[data-cpi-period]"), (row) =>
       row.getAttribute("data-cpi-period"),
@@ -615,5 +618,35 @@ describe("CpiChart maximum range integration", () => {
     expect(
       nominalChart.querySelectorAll(`.recharts-bar-rectangle[data-series="${canonicalFoodKey}"]`),
     ).toHaveLength(0);
+  });
+
+  it("renders an empty dataset with a valid URL range and usable year filters", () => {
+    window.history.replaceState(null, "", `${window.location.pathname}?from=1900&to=9999`);
+    render(
+      <CpiChart
+        data={[]}
+        quarterlyNominalData={[]}
+        quarterlyRealData={[]}
+        totalEarningData={[]}
+        maxCpiDate={{ year: 2025, month: 12 }}
+      />,
+    );
+
+    const rangeButton = screen.getByRole("button", { name: "表示期間を変更" });
+    expect(rangeButton.textContent).toContain("2025–2025");
+    expect(screen.getByTestId("cpi-area-chart").querySelectorAll("[data-cpi-period]")).toHaveLength(
+      0,
+    );
+
+    fireEvent.click(rangeButton);
+    const sheet = screen.getByRole("dialog", { name: "表示期間の選択" });
+    const startYear = within(sheet).getByLabelText("開始年:") as HTMLSelectElement;
+    const endYear = within(sheet).getByLabelText("終了年:") as HTMLSelectElement;
+    expect(startYear.value).toBe("2025");
+    expect(endYear.value).toBe("2025");
+    expect(Array.from(startYear.options, (option) => option.value)).toEqual(["2005", "2025"]);
+    expect(Array.from(endYear.options, (option) => option.value)).toEqual(["2005", "2025"]);
+    expect(new URL(window.location.href).searchParams.has("from")).toBe(false);
+    expect(new URL(window.location.href).searchParams.has("to")).toBe(false);
   });
 });

@@ -41,6 +41,7 @@ function build2025Fixture(monthlyRows = 679) {
         end: monthlyRows === 680 ? "2026年8月" : "2026年7月",
         monthlyRows,
       },
+      approvedPeriod: { from: "202607", through: "202608" },
       seriesCount: 78,
     }),
   };
@@ -140,6 +141,11 @@ describe("cpiSource boundary", () => {
       { period: { start: "1970年1月", end: "2026年9月", monthlyRows: 681 } },
       "2025 metadata period mismatch",
     ],
+    [
+      "unapproved vintage range",
+      { approvedPeriod: { from: "202607", through: "202609" } },
+      "2025 metadata period mismatch",
+    ],
   ])("rejects metadata with %s", (_label, override, expectedError) => {
     const fixture = build2025Fixture();
     const metadata = { ...JSON.parse(fixture.metadata), ...override };
@@ -167,6 +173,19 @@ describe("cpiSource boundary", () => {
     });
 
     expect(selectCpiPair()).toMatchObject({ valid: false, reason: "cpi_period_invalid" });
+  });
+
+  it("fails closed when the canonical CPI bytes do not match the reviewed SHA-256", () => {
+    const fixture = build2025Fixture();
+    const csv = `${fixture.csv}\n`;
+    (fs.existsSync as ReturnType<typeof vi.fn>).mockReturnValue(true);
+    (fs.readFileSync as ReturnType<typeof vi.fn>).mockImplementation((filePath: string) => {
+      if (filePath.includes("cpi_data2025_long.csv")) return csv;
+      if (filePath.includes("contribution2025.csv")) return fixture.contribution;
+      return fixture.metadata;
+    });
+
+    expect(selectCpiPair()).toMatchObject({ valid: false, reason: "cpi_hash_mismatch" });
   });
 
   it("fails closed when the 2025 pair is invalid", () => {

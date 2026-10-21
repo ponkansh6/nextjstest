@@ -8,6 +8,11 @@ import {
   cpiAdapter as runCpiAdapter,
   resolveCpiCandidate,
 } from "../../../scripts/data-refresh/adapters/cpi.mjs";
+import { registry as refreshRegistry } from "../../../scripts/data-refresh/registry/index.mjs";
+import {
+  summarizeRuntimeQualityDiagnostics,
+  validateStagedRuntimeData,
+} from "../../../scripts/data-refresh/runtime-validator.mjs";
 import { runRefresh } from "../../../scripts/data-refresh/runner.mjs";
 
 const roots = [];
@@ -97,6 +102,12 @@ async function makeDistributionFixture(root, metadata, observations, options = {
   const periods = [...new Set([...periodByCode.values()])]
     .filter((period) => period <= latestMonth)
     .sort();
+  const observationValueByPeriodAndCode = new Map(
+    (observations ?? []).map((record) => {
+      const period = periodByCode.get(String(record["@time"] ?? record.time));
+      return [`${period}\0${String(record["@cat01"] ?? record.cat01)}`, record.$ ?? record.value];
+    }),
+  );
   const rows = [
     ["e-Stat CPI distribution fixture"],
     ["2025 base CPI"],
@@ -111,7 +122,8 @@ async function makeDistributionFixture(root, metadata, observations, options = {
         const offset = Number(period.slice(0, 4)) * 12 + Number(period.slice(4)) - (1970 * 12 + 1);
         if (offset < leadingBlankCount) return "";
         const override = options.valueOverrides?.get(`${period}\0${code}`);
-        return override ?? (period.startsWith("2025") ? "100.0" : "27.0");
+        const apiValue = observationValueByPeriodAndCode.get(`${period}\0${code}`);
+        return override ?? apiValue ?? (period.startsWith("2025") ? "100.0" : "27.0");
       }),
     ]),
   ];
@@ -137,7 +149,7 @@ async function rejectionCode(promise) {
   }
 }
 
-async function makeRoot() {
+async function makeRoot({ qualityCompatible = false } = {}) {
   const root = await mkdtemp(path.join(os.tmpdir(), "data-refresh-cpi-"));
   roots.push(root);
   await mkdir(path.join(root, "data/source"), { recursive: true });
@@ -161,12 +173,19 @@ async function makeRoot() {
     for (let month = 1; month <= lastMonth; month += 1)
       months.push(`${year}${String(month).padStart(2, "0")}`);
   }
-  const canonicalCsv = `${["年月", ...keys].join(",")}\n${months.map((code) => [`${code.slice(0, 4)}年${Number(code.slice(4))}月`, ...keys.map(() => (code.startsWith("2025") ? "100" : "27.0"))].join(",")).join("\n")}\n`;
+  // In qualityCompatible mode, keep full history in-band for the first 2005 rolling 12-month window.
+  const canonicalRows = months.map((code) => {
+    const year = Number(code.slice(0, 4));
+    const fixtureValue = qualityCompatible || year === 2025 ? "100" : "27.0";
+    return [`${year}年${Number(code.slice(4))}月`, ...keys.map(() => fixtureValue)].join(",");
+  });
+  const canonicalCsv = `${["年月", ...keys].join(",")}\n${canonicalRows.join("\n")}\n`;
   await writeFile(path.join(root, "data/source/cpi_data2025_long.csv"), canonicalCsv);
   const metadataPath = path.join(root, "data/source/cpi_data2025_long.metadata.json");
   const metadata = JSON.parse(await readFile(metadataPath, "utf8"));
   metadata.csvSha256 = createHash("sha256").update(canonicalCsv).digest("hex");
   metadata.period = { start: "1970年1月", end: "2026年7月", monthlyRows: 679 };
+  metadata.approvedPeriod = { from: "202607", through: "202608" };
   await writeFile(metadataPath, JSON.stringify(metadata));
   return root;
 }
@@ -204,6 +223,8 @@ const source = {
     surveyYear: "2025",
     fileStatInfId: "000040482945",
   },
+  period: { from: "197001", through: "latest-published" },
+  approvedPeriod: { from: "202607", through: "202608" },
 };
 
 const cpiCandidate = (overrides = {}) => ({
@@ -237,7 +258,7 @@ const cpiCatalog = () => ({
   ],
 });
 
-async function apiFixtures(root, endCode = "202607") {
+async function apiFixtures(root, endCode = "202607", options = {}) {
   const lines = (await readFile(path.join(root, "data/source/cpi-2025-series-map.csv"), "utf8"))
     .trim()
     .split("\n")
@@ -290,6 +311,7 @@ async function apiFixtures(root, endCode = "202607") {
       },
     },
     records: [
+      // In qualityCompatible mode, match canonical history for overlap and rolling checks.
       ...categories.flatMap(({ "@code": code }) =>
         times.map((time) => ({
           "@area": "00000",
@@ -297,7 +319,7 @@ async function apiFixtures(root, endCode = "202607") {
           "@cat01": code,
           "@time": officialTimeCode(time),
           "@unit": "２０２５年 ＝ １００",
-          $: time.startsWith("2025") ? "100" : "27.0",
+          $: options.qualityCompatible || time.startsWith("2025") ? "100" : "27.0",
         })),
       ),
       {
@@ -313,6 +335,17 @@ async function apiFixtures(root, endCode = "202607") {
 }
 
 describe("CPI refresh adapter", () => {
+  it("keeps discovery separate from the reviewed CPI vintage in registry and metadata", async () => {
+    const registrySource = refreshRegistry.sources.find(({ id }) => id === "cpi-long");
+    const metadata = JSON.parse(
+      await readFile(path.join(repo, "data/source/cpi_data2025_long.metadata.json"), "utf8"),
+    );
+
+    expect(registrySource.period).toEqual({ from: "197001", through: "latest-published" });
+    expect(registrySource.approvedPeriod).toEqual({ from: "202607", through: "202608" });
+    expect(metadata.approvedPeriod).toMatchObject({ from: "202607", through: "202608" });
+  });
+
   it("validates table dimensions and builds the canonical CSV from injected fixtures", async () => {
     const root = await makeRoot();
     const { metadataPayload, records } = await apiFixtures(root);
@@ -426,6 +459,7 @@ describe("CPI refresh adapter", () => {
           unit: "index",
           baseline: "2025=100",
           period: { from: "197001", through: "latest-published" },
+          approvedPeriod: { from: "202607", through: "202608" },
           revision: "overlap-audit",
           outputs: result.artifacts.map(({ path: output }) => output),
           dependencies: [],
@@ -465,6 +499,8 @@ describe("CPI refresh adapter", () => {
     expect(JSON.stringify(report)).not.toContain("page2");
     expect(report.sources[0].sourceCandidate).toMatchObject({
       candidateCount: 1,
+      discoveryPeriod: "latest-published",
+      approvedPeriod: { from: "202607", through: "202608" },
       selectedSourceId: "0004052037",
       apiStatsDataId: "0004052037",
       fileStatInfId: "000040482945",
@@ -1307,6 +1343,7 @@ describe("CPI refresh adapter", () => {
           unit: "index",
           baseline: "2025=100",
           period: { from: "197001", through: "latest-published" },
+          approvedPeriod: { from: "202607", through: "202608" },
           revision: "overlap-audit",
           outputs: result.artifacts.map(({ path: output }) => output),
           dependencies: [],
@@ -1595,8 +1632,10 @@ describe("CPI refresh adapter", () => {
   });
 
   it("accepts a newer published month and rejects generic index units", async () => {
-    const root = await makeRoot();
-    const { metadataPayload, records } = await apiFixtures(root, "202608");
+    const root = await makeRoot({ qualityCompatible: true });
+    const { metadataPayload, records } = await apiFixtures(root, "202608", {
+      qualityCompatible: true,
+    });
     const listCandidate = cpiCandidate({ CYCLE: "-", SURVEY_DATE: undefined });
     const result = await cpiAdapter({
       source,
@@ -1624,6 +1663,142 @@ describe("CPI refresh adapter", () => {
       endMonth: "202607",
       mismatchCount: 0,
     });
+
+    for (const otherSource of refreshRegistry.sources.filter(({ id }) => id !== "cpi-long")) {
+      for (const outputPath of otherSource.outputs) {
+        const target = path.join(root, outputPath);
+        await mkdir(path.dirname(target), { recursive: true });
+        await copyFile(path.join(repo, outputPath), target);
+      }
+    }
+    const adapters = new Map([["cpi", async () => result]]);
+    for (const otherSource of refreshRegistry.sources.filter(({ id }) => id !== "cpi-long")) {
+      adapters.set(otherSource.adapterId, async () => ({
+        semanticValue: { fixtureSource: otherSource.id },
+        artifacts: await Promise.all(
+          otherSource.outputs.map(async (outputPath) => ({
+            path: outputPath,
+            bytes: await readFile(path.join(root, outputPath)),
+          })),
+        ),
+        rawFetches: [],
+      }));
+    }
+    let validationOutcome;
+    let refreshReport;
+    try {
+      refreshReport = await runRefresh({
+        root,
+        registry: refreshRegistry,
+        adapters,
+        check: true,
+        validate: async ({ stageRoot, registry, sourceResults }) => {
+          try {
+            const result = await validateStagedRuntimeData({
+              root: repo,
+              stageRoot,
+              registry,
+              sourceResults,
+            });
+            validationOutcome = { status: "passed", result };
+            return result;
+          } catch (error) {
+            const diagnostics = summarizeRuntimeQualityDiagnostics({
+              ...error?.runtimeQualityDiagnostics,
+              code: error?.code,
+            });
+            validationOutcome = {
+              status: "failed",
+              code: diagnostics?.code ?? "unknown-validator-error",
+              diagnostics,
+            };
+            throw error;
+          }
+        },
+        preflightChanges: async () => false,
+      });
+    } catch (error) {
+      let reportDiagnostics;
+      let reportPathRejected = typeof error?.reportPath === "string";
+      if (typeof error?.reportPath === "string") {
+        try {
+          const reportSegments = error.reportPath.split(/[\\/]+/);
+          const resolvedReportPath = path.resolve(root, error.reportPath);
+          const reportsRoot = path.resolve(root, ".data-refresh/reports");
+          if (
+            !path.isAbsolute(error.reportPath) &&
+            !reportSegments.includes("..") &&
+            resolvedReportPath.startsWith(`${reportsRoot}${path.sep}`)
+          ) {
+            reportPathRejected = false;
+            const report = JSON.parse(await readFile(resolvedReportPath, "utf8"));
+            reportDiagnostics = report.sources?.find(
+              (item) => item.sourceCandidate?.runtimeQualityDiagnostics,
+            )?.sourceCandidate?.runtimeQualityDiagnostics;
+          } else {
+            reportPathRejected = true;
+          }
+        } catch {
+          // Preserve the original validator failure if its persisted report is unavailable.
+        }
+      }
+      if (reportPathRejected) throw error;
+      const diagnosticSummary = {
+        status: validationOutcome?.status ?? "failed",
+        code:
+          validationOutcome?.code ??
+          summarizeRuntimeQualityDiagnostics({
+            ...reportDiagnostics,
+            code: error?.code,
+          })?.code ??
+          "unknown-validator-error",
+        diagnostics:
+          validationOutcome?.diagnostics ??
+          summarizeRuntimeQualityDiagnostics({ ...reportDiagnostics, code: error?.code }),
+      };
+      throw new Error(
+        `August staged CPI quality validation failed: ${JSON.stringify(diagnosticSummary)}`,
+        { cause: error },
+      );
+    }
+    expect(refreshReport.quality).toMatchObject({
+      cpi: true,
+      qualitySuiteCount: 7,
+    });
+    expect(validationOutcome).toMatchObject({
+      status: "passed",
+      result: { validator: "runtime-data-quality-suites-v1" },
+    });
+
+    const { metadataPayload: septemberMetadata, records: septemberRecords } = await apiFixtures(
+      root,
+      "202609",
+    );
+    await expect(
+      cpiAdapter({
+        source,
+        root,
+        getStatsList: async () => ({ candidates: [cpiCandidate()] }),
+        getDataCatalog: async () => cpiCatalog(),
+        getMetaInfo: async () => septemberMetadata,
+        fetchApi: async () => septemberRecords,
+      }),
+    ).rejects.toMatchObject({ code: "cpi-period-unapproved" });
+
+    const { metadataPayload: juneMetadata, records: juneRecords } = await apiFixtures(
+      root,
+      "202606",
+    );
+    await expect(
+      cpiAdapter({
+        source,
+        root,
+        getStatsList: async () => ({ candidates: [cpiCandidate()] }),
+        getDataCatalog: async () => cpiCatalog(),
+        getMetaInfo: async () => juneMetadata,
+        fetchApi: async () => juneRecords,
+      }),
+    ).rejects.toMatchObject({ code: "cpi-period-regression" });
 
     const makeAdapter = (apiRecords) =>
       cpiAdapter({
@@ -1724,7 +1899,7 @@ describe("CPI refresh adapter", () => {
       index === 1 ? { ...record, "@unit": "2020年=100" } : record,
     );
     await expect(makeAdapter(mixedUnit)).rejects.toMatchObject({ code: "cpi-api-unit-mismatch" });
-  });
+  }, 30_000);
 
   it("refuses a source period that drops the pinned latest month", async () => {
     const root = await makeRoot();

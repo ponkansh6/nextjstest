@@ -13,6 +13,10 @@ const THEME_LABEL: Record<Theme, string> = {
   system: "システム設定に従う",
 };
 
+function isTheme(value: string | null): value is Theme {
+  return value === "light" || value === "dark" || value === "system";
+}
+
 function applyTheme(theme: Theme) {
   if (theme === "dark") {
     try {
@@ -41,8 +45,12 @@ function applyTheme(theme: Theme) {
 export function ThemeToggle() {
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof window === "undefined") return "system";
-    const saved = localStorage.getItem("theme") as Theme | null;
-    return saved || "system";
+    try {
+      const saved = window.localStorage.getItem("theme");
+      return isTheme(saved) ? saved : "system";
+    } catch {
+      return "system";
+    }
   });
 
   const nextTheme = THEME_ORDER[(THEME_ORDER.indexOf(theme) + 1) % THEME_ORDER.length];

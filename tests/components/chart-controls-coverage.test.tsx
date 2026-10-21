@@ -162,6 +162,8 @@ describe("chart control coverage contracts", () => {
         setEndYear={setEndYear}
       />,
     );
+    expect(Array.from(start.options, (option) => option.value)).toEqual(["2005", "2010", "2020"]);
+    expect(Array.from(end.options, (option) => option.value)).toEqual(["2005", "2010", "2020"]);
     fireEvent.click(screen.getByRole("button", { name: "最大期間" }));
     expect(setStartYear).toHaveBeenLastCalledWith(2005);
     expect(setEndYear).toHaveBeenLastCalledWith(2005);

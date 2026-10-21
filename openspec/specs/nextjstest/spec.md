@@ -5451,3 +5451,54 @@ The current WHEN/THEN requirements are consolidated under [Requirements](#curren
 ### R-CTI-Domain-Identifiers: Canonical names and artifact compatibility
 
 The current contract is consolidated under [Requirements](#current-requirements), in the subsection [Canonical CTI identifiers and artifact compatibility](#current-cti-domain-identifiers-requirement).
+
+## SharedPlan 58: project readiness and user-facing contracts (current)
+
+This section records the current contracts introduced by SharedPlan 58 and takes precedence over earlier statements that all dashboard series use one 2025-base index. CPI uses the official 2025-base connected series; salary, consumption, and other indicators retain their own source or comparison-normalization contracts.
+
+### Data Sources
+
+- CPI runtime data is the bundled, validated 2025-base official connected monthly series and its matching contribution data under `data/source/`. Its source identity covers the nationwide monthly CPI long series. Registry discovery may request `latest-published`, but this only discovers an available release; the currently approved CPI vintage is bounded to 202607–202608. An API candidate outside that window, a replay outside the approved range, or a failed staged quality check is rejected before canonical publish. Extending the window requires an explicit synchronized change to the registry, metadata, and runtime contract.
+- The dashboard runs from its repository-bundled `data/source/` artifacts and does not need an API credential at runtime. `data:refresh` uses e-Stat API transport and reads the credential from `ESTAT_APP_ID` in the environment or `.env.local`; the credential value is never part of project documentation or reports.
+- CPI's 2025 base does not imply a shared base for all chart series. Salary and consumption comparisons follow the applicable source series and their explicitly defined comparison transformations.
+
+### Data Flow
+
+`ESTAT_APP_ID` + e-Stat API transport → registry source discovery (`latest-published` where configured) → adapter identity, schema, coverage, approved-vintage and revision checks → isolated staging → staged runtime quality validation → `--check` report without canonical writes, or journaled publish after all required checks pass. For CPI, the discovered latest month must fall within the explicitly approved 202607–202608 window; failure at any validation stage prevents publish and preserves current canonical data. The web application loads the validated bundled artifacts from `data/source/` and does not call the refresh API during normal page rendering.
+
+URL period state is initialized from complete decimal `from` / `to` year values. Malformed, unsafe, or reversed ranges fall back to the chart's default range; valid out-of-range years are clamped to the available boundary. With no chart data, the default range is the safe 2025–2025 interval and filtering returns an empty list without producing `NaN` state or a malformed range label. The URL is the initial snapshot and subsequent chart state is written with `history.replaceState`.
+
+Theme initialization reads only `light`, `dark`, and `system` from storage. Missing, corrupt, or unreadable values fall back to `system`. The early layout script applies only explicit `light` or `dark`; system mode and storage exceptions remove `data-theme` so CSS system preference applies. A failed storage write or removal does not prevent the selected theme from being applied in the current document.
+
+### Component Tree
+
+Bundled `data/source/` artifacts → server data loaders and view models → `src/app/page.tsx` → `CpiChart` and chart sections. The page's visible explanation identifies CPI as a 2025-base official connected index and describes salary/consumption as following their own published or comparison-normalization contracts. `src/app/layout.tsx` emits matching metadata, Open Graph, and Twitter descriptions. `useUrlState` normalizes the initial URL period for `CpiChart`; `ThemeToggle` owns interactive theme cycling, while the layout's early script prevents an incorrect explicit theme before hydration. The separate `scripts/data-refresh/cli.mjs` pipeline validates staged updates before publishing.
+
+### Requirements
+
+#### Project readiness, source bases, and metadata
+
+- **WHEN** a user opens the dashboard with valid bundled data, **THEN** the page renders without an e-Stat API credential and explains that CPI is the official 2025-base connected series while salary and consumption follow their own source or comparison-normalization contracts.
+- **WHEN** the document is shared or indexed, **THEN** the page description, Open Graph description, and Twitter description describe the same per-series basis contract and do not claim that every displayed series uses the 2025 annual-average base.
+
+#### URL period normalization
+
+- **WHEN** `from` or `to` is malformed, unsafe, or the normalized start is after the end, **THEN** `useUrlState` returns the chart's default range without exposing `NaN` or a reversed range.
+- **WHEN** a URL contains valid integer years outside the available range, **THEN** each endpoint is clamped to the available boundary and the resulting range is ordered.
+- **WHEN** the chart data is empty, **THEN** the default period remains the safe 2025–2025 interval and filtering produces no rows without throwing or rendering a malformed year range.
+
+#### Theme recovery
+
+- **WHEN** the stored theme is missing, corrupt, or storage reading throws, **THEN** the control initializes to `system` and the early layout script leaves the document to the system color preference.
+- **WHEN** a stored theme is `light` or `dark`, **THEN** the early layout script applies only that allowlisted explicit theme before hydration.
+- **WHEN** storage writing or removal throws during a theme change, **THEN** the control remains usable and applies the selected theme to the current document.
+
+#### CPI approved-vintage refresh gate
+
+- **WHEN** refresh discovers a CPI release whose reported end period is within the approved 202607–202608 range, **THEN** it may proceed through identity, schema, revision, staging, and runtime quality checks before publish.
+- **WHEN** the discovered CPI period ends outside 202607–202608, its revision audit fails, or staged quality validation fails, **THEN** refresh fails closed and preserves canonical data until the approved range and evidence are explicitly updated.
+- **WHEN** refresh runs with `--check`, **THEN** it records candidate/output differences without writing canonical outputs; **WHEN** refresh runs without `--check`, **THEN** canonical outputs are published only after all required staged checks pass.
+
+#### Operator documentation
+
+- **WHEN** an operator follows the repository README, **THEN** it identifies Node.js 24.x and pnpm 11.9.x, distinguishes bundled-data startup from API-backed refresh, names `ESTAT_APP_ID` without a secret value, and provides existing commands for check, publish, and project validation.
