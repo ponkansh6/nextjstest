@@ -5507,4 +5507,4 @@ Bundled `data/source/` artifacts → server data loaders and view models → `sr
 
 #### Operator documentation
 
-- **WHEN** an operator follows the repository README, **THEN** it identifies Node.js 24.x and pnpm 11.9.x, distinguishes bundled-data startup from API-backed refresh, names `ESTAT_APP_ID` without a secret value, and provides existing commands for check, publish, and project validation.
+- **WHEN** an operator follows the repository README, **THEN** it identifies Node.js 24.22.1 LTS or a later 24.x patch release and pnpm 11.9.x, distinguishes bundled-data startup from API-backed refresh, names `ESTAT_APP_ID` without a secret value, and provides existing commands for check, publish, and project validation.

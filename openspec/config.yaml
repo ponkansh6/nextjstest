@@ -5,7 +5,7 @@ context: |
   ## 技術スタック
   - Framework: Next.js 16.3.8 (App Router; Turbopack development, webpack production build)
   - Language: TypeScript 5.9.3 (strict mode)
-  - Runtime: Node.js 24.x (package manager: pnpm 11.9.x)
+  - Runtime: Node.js 24.22.1 LTS or later 24.x patch (package manager: pnpm 11.9.x)
   - UI: React 19.2, CSS Modules, Recharts 3
   - State: React state and URL search parameters; Redux is not used
   - Data処理: Arquero, PapaParse, xlsx, and project-specific Node.js loaders/adapters

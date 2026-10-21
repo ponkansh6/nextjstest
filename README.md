@@ -4,7 +4,7 @@ CPI（消費者物価指数）、賃金、消費動向をチャートで確認�
 
 ## 必要環境
 
-- Node.js 24.x
+- Node.js 24.22.1 LTS or a later 24.x patch release
 - pnpm 11.9.x
 
 依存関係をインストールして開発サーバーを起動します。
