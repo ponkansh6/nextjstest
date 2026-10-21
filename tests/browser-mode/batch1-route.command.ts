@@ -29,7 +29,8 @@ export type Batch1RouteCase =
   | "monthly-boundary-cpi"
   | "monthly-boundary-earnings"
   | "range-sanity"
-  | "range-single-year";
+  | "range-single-year"
+  | "theme-storage-recovery";
 
 export interface Batch1RouteObservation {
   url: string;
@@ -65,18 +66,73 @@ export const inspectBatch1ProductionCase: BrowserCommand<
       await page.addInitScript(() => {
         window.__MOUNT_ALL__ = true;
       });
+      if (scenario === "theme-storage-recovery") {
+        // Session storage prevents this setup from overwriting the deliberately
+        // corrupted value used on the second navigation in the same context.
+        await page.addInitScript(() => {
+          if (sessionStorage.getItem("__themeScenarioInitialized") !== "yes") {
+            localStorage.setItem("theme", "dark");
+            sessionStorage.setItem("__themeScenarioInitialized", "yes");
+          }
+        });
+      }
       if (scenario === "legend-dark-all12") {
         await page.addInitScript(() => localStorage.setItem("theme", "dark"));
       }
+      const runtimeErrors: string[] = [];
+      page.on("pageerror", (error) => runtimeErrors.push(error.message));
+      page.on("console", (message) => {
+        if (
+          message.type() === "error" &&
+          /hydration|server rendered html|did not match|hydrating/i.test(message.text())
+        ) {
+          runtimeErrors.push(message.text());
+        }
+      });
       const response = await page.goto(`${NEXT_ROUTE_POC_BASE_URL}/`, {
         waitUntil: "domcontentloaded",
       });
       if (!response) throw new Error("Production route navigation returned no response.");
+      const themeAtDomContentLoaded =
+        scenario === "theme-storage-recovery"
+          ? await page.locator("html").getAttribute("data-theme")
+          : undefined;
       await page
         .getByRole("heading", { level: 1, name: "物価・賃金・消費の推移" })
         .waitFor({ state: "visible", timeout: 30_000 });
 
       const values: Batch1RouteObservation["values"] = {};
+      if (scenario === "theme-storage-recovery") {
+        // The layout bootstrap runs in <head> before React. Capture that state
+        // at DOMContentLoaded, then compare it with the hydrated toggle state.
+        values.bootstrapTheme = themeAtDomContentLoaded ?? null;
+        const toggle = page.getByRole("button", { name: /テーマ:/ });
+        await toggle.waitFor({ state: "visible", timeout: 15_000 });
+        values.initialTheme = await page.locator("html").getAttribute("data-theme");
+        values.initialLabel = await toggle.getAttribute("aria-label");
+        await toggle.click();
+        await page
+          .getByRole("button", { name: /システム設定に従う/ })
+          .waitFor({ state: "visible" });
+        values.afterToggleTheme = await page.locator("html").getAttribute("data-theme");
+        values.afterToggleLabel = await page
+          .getByRole("button", { name: /システム設定に従う/ })
+          .getAttribute("aria-label");
+
+        await page.evaluate(() => localStorage.setItem("theme", "legacy"));
+        await page.reload({ waitUntil: "domcontentloaded" });
+        values.invalidBootstrapTheme = await page.locator("html").getAttribute("data-theme");
+        const recoveredToggle = page.getByRole("button", { name: /テーマ:/ });
+        await recoveredToggle.waitFor({ state: "visible", timeout: 15_000 });
+        values.invalidTheme = await page.locator("html").getAttribute("data-theme");
+        values.invalidLabel = await recoveredToggle.getAttribute("aria-label");
+        await recoveredToggle.click();
+        values.recoveredTheme = await page.locator("html").getAttribute("data-theme");
+        values.recoveredLabel = await page
+          .getByRole("button", { name: /ライトモード/ })
+          .getAttribute("aria-label");
+        values.errors = runtimeErrors;
+      }
       const openCagr = async () => {
         const section = page.locator("#section-stacked");
         await section.scrollIntoViewIfNeeded();
