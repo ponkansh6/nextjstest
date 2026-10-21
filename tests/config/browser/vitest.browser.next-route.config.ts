@@ -2,24 +2,27 @@ import path from "node:path";
 import { defineConfig, configDefaults } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import { playwright } from "@vitest/browser-playwright";
-import { inspectProductionDashboard } from "./tests/browser-mode/next-route-poc.command";
-import { inspectBatch1ProductionCase } from "./tests/browser-mode/batch1-route.command";
-import { inspectBatch3AProductionCase } from "./tests/browser-mode/batch3-a-route.command";
-import { inspectBatch3BProductionCase } from "./tests/browser-mode/batch3-b-route.command";
-import { inspectBatch4AProductionCase } from "./tests/browser-mode/batch4-a-route.command";
-import { inspectBatch4BProductionCase } from "./tests/browser-mode/batch4-b-route.command";
-import { inspectBatch5StandardProductionCase } from "./tests/browser-mode/batch5-standard-route.command";
-import { inspectBatch5LazyTab } from "./tests/browser-mode/batch5-lazy-tabs-route.command";
+import { inspectProductionDashboard } from "../../../tests/browser-mode/next-route-poc.command";
+import { inspectBatch1ProductionCase } from "../../../tests/browser-mode/batch1-route.command";
+import { inspectBatch3AProductionCase } from "../../../tests/browser-mode/batch3-a-route.command";
+import { inspectBatch3BProductionCase } from "../../../tests/browser-mode/batch3-b-route.command";
+import { inspectBatch4AProductionCase } from "../../../tests/browser-mode/batch4-a-route.command";
+import { inspectBatch4BProductionCase } from "../../../tests/browser-mode/batch4-b-route.command";
+import { inspectBatch5StandardProductionCase } from "../../../tests/browser-mode/batch5-standard-route.command";
+import { inspectBatch5LazyTab } from "../../../tests/browser-mode/batch5-lazy-tabs-route.command";
+
+const projectRoot = path.resolve(__dirname, "../../..");
 
 export default defineConfig({
+  root: projectRoot,
   plugins: [react()],
   optimizeDeps: {
     include: ["recharts"],
   },
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "src"),
-      "@server": path.resolve(__dirname, "server"),
+      "@": path.resolve(projectRoot, "src"),
+      "@server": path.resolve(projectRoot, "server"),
     },
   },
   test: {

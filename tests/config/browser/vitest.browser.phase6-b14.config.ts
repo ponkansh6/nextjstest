@@ -2,29 +2,33 @@ import path from "node:path";
 import { defineConfig, configDefaults } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import { playwright } from "@vitest/browser-playwright";
+import { inspectPhase6B14 } from "../../../tests/browser-mode/phase6-b14.route.command";
+
+const projectRoot = path.resolve(__dirname, "../../..");
 
 export default defineConfig({
+  root: projectRoot,
   plugins: [react()],
-  optimizeDeps: {
-    include: ["recharts"],
-  },
+  optimizeDeps: { include: ["recharts"] },
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "src"),
-      "@server": path.resolve(__dirname, "server"),
+      "@": path.resolve(projectRoot, "src"),
+      "@server": path.resolve(projectRoot, "server"),
     },
   },
   test: {
-    include: ["tests/browser-mode/**/*.browser.test.tsx"],
+    include: ["tests/browser-mode/phase6-b14-residual-accessibility.browser.test.ts"],
     exclude: [...configDefaults.exclude, "tests/e2e/**"],
-    testNamePattern: /^(?!.*-webkit)/,
     setupFiles: ["tests/browser-mode/setup.ts"],
-    fileParallelism: true,
-    maxWorkers: 2,
+    fileParallelism: false,
+    maxWorkers: 1,
+    testTimeout: 45_000,
+    hookTimeout: 90_000,
     browser: {
       enabled: true,
-      provider: playwright({ actionTimeout: 5_000 }),
+      provider: playwright({ actionTimeout: 10_000 }),
       instances: [{ browser: "chromium", headless: true, viewport: { width: 1280, height: 800 } }],
+      commands: { inspectPhase6B14 },
       trace: { mode: "retain-on-failure", screenshots: true, snapshots: true },
       screenshotFailures: true,
     },

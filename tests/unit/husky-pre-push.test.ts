@@ -392,14 +392,16 @@ printf 'reasons=%s\\n' "\${PUSH_IMPACT_REASONS[*]-}"`,
     expect(packageScripts["test:browser:prepush:component"]).toBe(
       "node scripts/run-prepush-component-browser.mjs",
     );
-    expect(routeSelection["vitest.browser.aggregate-chromium.config.ts"]).toHaveLength(6);
+    expect(
+      routeSelection["tests/config/browser/vitest.browser.aggregate-chromium.config.ts"],
+    ).toHaveLength(6);
     expect(
       Object.values(routeSelection)
         .flat()
         .every((entry) => entry.names.length === 1),
     ).toBe(true);
     expect(packageScripts["test:browser:component:all"]).toBe(
-      "vitest run --config vitest.browser.config.ts",
+      "vitest run --config tests/config/browser/vitest.browser.config.ts",
     );
     expect(packageScripts["test:browser:next-route-poc:built:all"]).toBe(
       "node scripts/run-next-route-poc.mjs",

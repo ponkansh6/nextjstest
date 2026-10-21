@@ -19,21 +19,24 @@ const BROWSER_API_PORT_END = 63_999;
 const BUILD_ID = path.join(PROJECT_ROOT, ".next", "BUILD_ID");
 const CTI_ARTIFACT_ROOT = path.join(PROJECT_ROOT, "data", "source", "official-cti-2025-long-term");
 const VITEST_CONFIGS = {
-  all: ["vitest.browser.aggregate-chromium.config.ts", "vitest.browser.webkit.config.ts"],
-  "phase6-b01": ["vitest.browser.phase6-b01.config.ts"],
-  "phase6-b02": ["vitest.browser.phase6-b02.config.ts"],
-  "phase6-b03": ["vitest.browser.phase6-b03.config.ts"],
-  "phase6-b04": ["vitest.browser.phase6-b04.config.ts"],
-  "phase6-b05": ["vitest.browser.phase6-b05.config.ts"],
-  "phase6-b06": ["vitest.browser.phase6-b06.config.ts"],
-  "phase6-b07": ["vitest.browser.phase6-b07.config.ts"],
-  "phase6-b08": ["vitest.browser.phase6-b08.config.ts"],
-  "phase6-b09": ["vitest.browser.phase6-b09.config.ts"],
-  "phase6-b10": ["vitest.browser.phase6-b10.config.ts"],
-  "phase6-b11": ["vitest.browser.phase6-b11.config.ts"],
-  "phase6-b12": ["vitest.browser.phase6-b12.config.ts"],
-  "phase6-b13": ["vitest.browser.phase6-b13.config.ts"],
-  "phase6-b14": ["vitest.browser.phase6-b14.config.ts"],
+  all: [
+    "tests/config/browser/vitest.browser.aggregate-chromium.config.ts",
+    "tests/config/browser/vitest.browser.webkit.config.ts",
+  ],
+  "phase6-b01": ["tests/config/browser/vitest.browser.phase6-b01.config.ts"],
+  "phase6-b02": ["tests/config/browser/vitest.browser.phase6-b02.config.ts"],
+  "phase6-b03": ["tests/config/browser/vitest.browser.phase6-b03.config.ts"],
+  "phase6-b04": ["tests/config/browser/vitest.browser.phase6-b04.config.ts"],
+  "phase6-b05": ["tests/config/browser/vitest.browser.phase6-b05.config.ts"],
+  "phase6-b06": ["tests/config/browser/vitest.browser.phase6-b06.config.ts"],
+  "phase6-b07": ["tests/config/browser/vitest.browser.phase6-b07.config.ts"],
+  "phase6-b08": ["tests/config/browser/vitest.browser.phase6-b08.config.ts"],
+  "phase6-b09": ["tests/config/browser/vitest.browser.phase6-b09.config.ts"],
+  "phase6-b10": ["tests/config/browser/vitest.browser.phase6-b10.config.ts"],
+  "phase6-b11": ["tests/config/browser/vitest.browser.phase6-b11.config.ts"],
+  "phase6-b12": ["tests/config/browser/vitest.browser.phase6-b12.config.ts"],
+  "phase6-b13": ["tests/config/browser/vitest.browser.phase6-b13.config.ts"],
+  "phase6-b14": ["tests/config/browser/vitest.browser.phase6-b14.config.ts"],
 };
 
 function parseRunnerArgs(args) {
@@ -396,9 +399,9 @@ function runVitestConfig(port, config, timeoutMs, browserApiPort, profileJsonPat
       // Preserve each config's built-in browser-specific title filter. Vitest's
       // CLI testNamePattern replaces the configured pattern instead of composing it.
       const constrainedPattern =
-        config === "vitest.browser.webkit.config.ts"
+        config === "tests/config/browser/vitest.browser.webkit.config.ts"
           ? `(?=.*webkit)${pattern}`
-          : config === "vitest.browser.aggregate-chromium.config.ts"
+          : config === "tests/config/browser/vitest.browser.aggregate-chromium.config.ts"
             ? pattern
             : `^(?!.*-webkit)(?:${selectedFile.names.map(escapeRegexLiteral).join("|")})$`;
       vitestArgs.push("--testNamePattern", constrainedPattern, selectedFile.file);

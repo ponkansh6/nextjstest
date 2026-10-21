@@ -11,8 +11,8 @@ describe("production Browser Mode aggregate runner", () => {
 
     expect(allConfigs).toBeDefined();
     expect([...allConfigs!.matchAll(/"([^"]+\.config\.ts)"/g)].map((match) => match[1])).toEqual([
-      "vitest.browser.aggregate-chromium.config.ts",
-      "vitest.browser.webkit.config.ts",
+      "tests/config/browser/vitest.browser.aggregate-chromium.config.ts",
+      "tests/config/browser/vitest.browser.webkit.config.ts",
     ]);
   });
 
@@ -52,7 +52,7 @@ describe("production Browser Mode aggregate runner", () => {
 
   it("keeps all Chromium files in Phase6 then production-route order", () => {
     const config = fs.readFileSync(
-      path.join(root, "vitest.browser.aggregate-chromium.config.ts"),
+      path.join(root, "tests/config/browser/vitest.browser.aggregate-chromium.config.ts"),
       "utf8",
     );
     const includedFiles = config.match(/include:\s*\[([\s\S]*?)\],\s*exclude:/)?.[1];
@@ -122,8 +122,8 @@ describe("production Browser Mode aggregate runner", () => {
     expect(runner).toContain("childEnv.NEXT_ROUTE_POC_BROWSER_API_PORT = String(browserApiPort)");
 
     for (const file of [
-      "vitest.browser.aggregate-chromium.config.ts",
-      "vitest.browser.webkit.config.ts",
+      "tests/config/browser/vitest.browser.aggregate-chromium.config.ts",
+      "tests/config/browser/vitest.browser.webkit.config.ts",
     ]) {
       const config = fs.readFileSync(path.join(root, file), "utf8");
       expect(config).toContain("process.env.NEXT_ROUTE_POC_BROWSER_API_PORT ?? 63315");
@@ -131,7 +131,7 @@ describe("production Browser Mode aggregate runner", () => {
     }
 
     const focusedConfig = fs.readFileSync(
-      path.join(root, "vitest.browser.next-route.config.ts"),
+      path.join(root, "tests/config/browser/vitest.browser.next-route.config.ts"),
       "utf8",
     );
     expect(focusedConfig).not.toContain("63422");

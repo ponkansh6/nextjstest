@@ -479,7 +479,11 @@ async function run(args) {
     inputFingerprint: `sha256:${inputFingerprint}`,
     analysisFingerprint: null,
     generatedAt,
-    generation: { generatedAt, node: process.version, script: "scripts/plan39/run-analysis.mjs" },
+    generation: {
+      generatedAt,
+      node: process.version,
+      script: "scripts/cti-adjusted/run-analysis.mjs",
+    },
     inputs: {
       root: path.relative(REPO_ROOT, artifactRoot),
       manifest: snapshot.manifest,

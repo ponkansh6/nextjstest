@@ -184,6 +184,12 @@ At runtime, the Plan39 artifact root is resolved from the absolute
 set, the production page loader resolves `cwd/data/source/cti-adjusted` before
 any bundle-relative path, including `.next/package.json`; the selected root
 must contain the manifest that passes the normal artifact validation contract.
+The canonical CTI-adjusted analysis and research scripts live in
+`scripts/cti-adjusted/`; package commands use the `cti-adjusted:*` namespace.
+There are no external callers for the former `scripts/plan39/*.mjs` paths, so
+the compatibility wrappers and `plan39:*` package aliases have been removed.
+This source organization does not rename `results/plan39/`, snapshot
+identifiers, artifact schemas, or loader fallback behavior.
 
 ### Superseded/旧状態: initial Plan39 diagnostic history
 
@@ -562,9 +568,9 @@ JEV's response may select only catalog IDs. Playwright E2E specs are a separate
 test path and are outside this JEV Browser Mode selector unless a future change
 adds them explicitly.
 The component-only `test:browser` catalog is limited to
-`vitest.browser.config.ts`. The route-scoped selector catalog includes
-`vitest.browser.aggregate-chromium.config.ts` and every case in
-`vitest.browser.webkit.config.ts`; all four files in the WebKit config are in
+`tests/config/browser/vitest.browser.config.ts`. The route-scoped selector catalog includes
+`tests/config/browser/vitest.browser.aggregate-chromium.config.ts` and every case in
+`tests/config/browser/vitest.browser.webkit.config.ts`; all four files in the WebKit config are in
 scope, including `SectionTabsB3m` under its WebKit title filter.
 
 Hook execution inputs are derived from the Git state being validated, not from
@@ -2889,7 +2895,7 @@ CTI XLSX cells. The candidate is
 `pHat_Aedu_t = pBedu_t * pi2plus_t * K`; the anchor baseline is
 `pHat_Aedu_t = pBedu_t * (pAedu_2017/pBedu_2017)`. Validation excludes 2017
 and compares per-year residuals and aggregate MAE/RMSE/bias over 2018–2025.
-The reproducible script is `scripts/plan39/two-plus-share-backtest.mjs`;
+The reproducible script is `scripts/cti-adjusted/two-plus-share-backtest.mjs`;
 trace and results are stored under `data/source/cti-size-composition/two-plus-share-backtest/`
 and `results/plan39/two-plus-share-backtest/`.
 
@@ -2938,7 +2944,7 @@ For each category, `pB[t,c]=B[t,c]/B[t,total]`,
 does not replace the raw formula. Validation uses only 2018–2025. Per-category
 MAE, RMSE, and bias are reported in percentage points, along with unweighted
 macro metrics, annual actual/predicted/errors, and annual sums of raw predicted
-shares. The script is `scripts/plan39/anchor-only-category-backtest.mjs`; its
+shares. The script is `scripts/cti-adjusted/anchor-only-category-backtest.mjs`; its
 summary and annual rows are saved under
 `results/plan39/anchor-only-category-backtest/`.
 
@@ -3897,7 +3903,7 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, and 
 #### Scenario Browser Mode test scope
 
 - **WHEN** `pnpm test:browser` runs the browser profile
-- **THEN** it uses `vitest.browser.config.ts` to discover component cases,
+- **THEN** it uses `tests/config/browser/vitest.browser.config.ts` to discover component cases,
   asks JEV to select from that component-only catalog, and executes only the
   selected cases in headless Chromium
 - **AND** this command does not require a production build or start the
@@ -4083,9 +4089,9 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, and 
   route-scoped invocation from the active Vitest Browser Mode
   configurations and builds selectable IDs from config, repository-relative
   spec file, and complete `fullName`
-- **AND** component scope uses only `vitest.browser.config.ts`
-- **AND** route scope includes `vitest.browser.aggregate-chromium.config.ts`
-  and every case in `vitest.browser.webkit.config.ts`, including
+- **AND** component scope uses only `tests/config/browser/vitest.browser.config.ts`
+- **AND** route scope includes `tests/config/browser/vitest.browser.aggregate-chromium.config.ts`
+  and every case in `tests/config/browser/vitest.browser.webkit.config.ts`, including
   `SectionTabsB3m` and all other files matched by that config's WebKit title
   filter
 - **AND** cases sharing a `fullName` in the same config and file are selected
@@ -4524,7 +4530,7 @@ The previously implemented v2 audit included Other derivation and `β_other`,
 2005–2016 estimation, official A retention from 2017 onward, residual
 diagnostics, G and boundary diagnostics, the five fixed γ comparison cases,
 and input validation. The v2 sensitivity path is connected to
-`scripts/plan39/run-analysis.mjs`, and the latest analysis artifact contains a
+`scripts/cti-adjusted/run-analysis.mjs`, and the latest analysis artifact contains a
 v2 section. In that artifact, Other/bottom-up coverage is 12/12 for
 2005–2016, `β_other=1.3004657346511044`, γ has five evaluated cases, G
 coverage is 2/3 for 2005–2018, and the 2016→2017 boundary is available with
@@ -4552,7 +4558,7 @@ connection, including estimated 2016→official 2017. Audit output records each
 pair's Other, total, share, share change, source type, threshold, unit, and
 pass/violation/unavailable state. Estimated values never contribute to
 threshold derivation. The `residualBoundary` sweep in
-`scripts/plan39/run-analysis.mjs` remains a separate legacy diagnostic and
+`scripts/cti-adjusted/run-analysis.mjs` remains a separate legacy diagnostic and
 does not control the V2 publication gate.
 
 - **WHEN** the Plan39-v2 residual-jump gate is evaluated, **THEN** it compares
@@ -4581,7 +4587,7 @@ diagnostic, not independent or causal validation.
 
 The production input is
 `data/source/cti-size-composition/production-pi2plus.json`, generated by
-`scripts/plan39/build-production-pi2plus.mjs`. The loader accepts it only when
+`scripts/cti-adjusted/build-production-pi2plus.mjs`. The loader accepts it only when
 `production-pi2plus-manifest.json` validates its artifact hash, normalized
 source hashes and retained January source-file hashes. Historical annual IV-4
 shares in `weights.csv` and January `setai-n` shares have distinct source and
@@ -4598,7 +4604,7 @@ or hashes fail closed. Result diagnostics include coefficients, caveats,
 
 #### 世帯人数構成候補（分析専用）
 
-`scripts/plan39/prepare-size-composition-panel.mjs` は家計調査の年次詳細結果表
+`scripts/cti-adjusted/prepare-size-composition-panel.mjs` は家計調査の年次詳細結果表
 3-1（二人以上世帯）と単身世帯表1から、2005–2017の名目支出プロフィールを作る。
 `household-survey-panel-manifest.json` は年別のe-Stat file ID/URL、元ファイルSHA-256、
 対象sheetと正規化CSV hashを記録する。抽出器は実行前にmanifestと元ファイルhashを照合し、
@@ -5420,7 +5426,7 @@ G1 check-only report `.data-refresh/2026-10-16T17-32-16.322Z-f64fb8ac-c230-453c-
 | 人口                              | `population_statistics.csv` と `population_statistics.metadata.json` はearnings parserを含むruntimeから参照される。e-Stat file `statInfId=000031831366` と converter入力 `data/source/economics_source/lt01-b10.xlsx` は対応する。保持中metadata/workbookでは2026年5月=10976、6月=10969を確認している。最新G1 check-onlyでは2026年5月を10976から10960へ改訂し、272 rows/271 overlapとAugust coverage expansionを記録した。これはadapter auditであり、canonical publishの証拠ではない。 | 人口はrequired output 2件を生成するadapterとして登録済み。adapterは公式hostから取得したworkbookについて、statInfId/table/dimension/frequency/unit/baseline、表題・sheet・列、2004-01開始の連続した月次coverage、converter互換CSVを検査する。SHA-256と既知観測値はbaseline証拠として保持し、hash一致だけでは受理せず、hash変更だけでも拒否しない。registryの2 outputsはCSVとmetadataで、XLSXは既存tracked local inputのまま更新しない。metadataの `file` / `sha256` / `fileSizeBytes` は保持workbookを指し続け、取得bytesのSHA-256/size/media type/timeは `lastFetchedSource` とvolatile run reportで区別する。adapterのrevision auditではcanonical CSV overlapをauthoritative prior valuesとし、metadata `verifiedObservations` はCSVにない期間だけ補完する。identity/schema不一致またはcoverage後退はfail closedとし、identityを保つ公式改訂・追加月は差分auditを記録して全履歴を再生成する。空欄・記号は補完しない。最新runでadapter validationは成功したが、最新G1はvalidatedとなりG1全体を受入済み。 |
 | Historical対象外候補 (superseded) | 旧監査ではannual GDP filesをruntime underlay、quarterly GDP snapshots/testsをtest underlayに分類していた。これは2026-10-18の消費者監査前の記録である。                                                                                                                                                                                                                                                                                                                                 | 現行分類では未使用GDP入力・専用fixtureはrefresh/runtime依存ではない。Plan40 quarterly CTIとPlan37 monthly CTIは保持し、動的proxyの任意検索可能表は対象にしない。                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 
-既存の更新・変換入口は用途を区別して維持する。`scripts/run_all_conversions.sh` は従来のbundled update入口であり、required adapterが揃いSharedPlan 52の全検証が通るまでは `data:refresh` に置き換えない。このwrapperは必要な6 executableを事前確認し、存在しない・非実行可能または失敗した場合に非zero終了し、全件成功後のみ成功を表示する。`scripts/build_*_executable.sh` と `scripts/*.spec` はobsolete Python converter用のbuild pathsとして記録し、削除・廃止済みとは扱わない。個別の `scripts/ts_converters/convert_{contractual,employment,population,scheduled,total,worked}.ts` と、`scripts/ts_converters/convert_cpi.ts` のtimestampで最大5ファイルを選ぶ処理は、consumer移行を確認するまで互換・手動経路として残す。`scripts/fetch-cti-basic-series-2025.mjs` のpure parser/builder exportsはruntime/testからimportされるため保持する。`scripts/plan39/fetch-and-build.mjs` のREADME記載済み `--quarterly-only` と `scripts/update_earnings_from_estat.ts` の `/tmp/estat-earnings-index.utf8.csv` 固定列入力も、対応consumerとmappingを検証するまではmanual/compatibility pathとして扱う。これらのpathをSharedPlan 52が削除・retireしたとは記述しない。
+既存の更新・変換入口は用途を区別して維持する。`scripts/run_all_conversions.sh` は従来のbundled update入口であり、required adapterが揃いSharedPlan 52の全検証が通るまでは `data:refresh` に置き換えない。このwrapperは必要な6 executableを事前確認し、存在しない・非実行可能または失敗した場合に非zero終了し、全件成功後のみ成功を表示する。`scripts/build_*_executable.sh` と `scripts/*.spec` はobsolete Python converter用のbuild pathsとして記録し、削除・廃止済みとは扱わない。個別の `scripts/ts_converters/convert_{contractual,employment,population,scheduled,total,worked}.ts` と、`scripts/ts_converters/convert_cpi.ts` のtimestampで最大5ファイルを選ぶ処理は、consumer移行を確認するまで互換・手動経路として残す。`scripts/fetch-cti-basic-series-2025.mjs` のpure parser/builder exportsはruntime/testからimportされるため保持する。`scripts/cti-adjusted/fetch-and-build.mjs` のREADME記載済み `--quarterly-only` と `scripts/update_earnings_from_estat.ts` の `/tmp/estat-earnings-index.utf8.csv` 固定列入力も、対応consumerとmappingを検証するまではmanual/compatibility pathとして扱う。これらのpathをSharedPlan 52が削除・retireしたとは記述しない。
 
 ### Data Flow
 

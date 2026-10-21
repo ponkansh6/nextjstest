@@ -2,22 +2,25 @@ import path from "node:path";
 import { defineConfig, configDefaults } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import { playwright } from "@vitest/browser-playwright";
-import { inspectBatch4BProductionCase } from "./tests/browser-mode/batch4-b-route.command";
-import { inspectBatch5StandardProductionCase } from "./tests/browser-mode/batch5-standard-route.command";
-import { inspectBatch5LazyTab } from "./tests/browser-mode/batch5-lazy-tabs-route.command";
+import { inspectBatch4BProductionCase } from "../../../tests/browser-mode/batch4-b-route.command";
+import { inspectBatch5StandardProductionCase } from "../../../tests/browser-mode/batch5-standard-route.command";
+import { inspectBatch5LazyTab } from "../../../tests/browser-mode/batch5-lazy-tabs-route.command";
+
+const projectRoot = path.resolve(__dirname, "../../..");
 
 const browserApiPort = Number(process.env.NEXT_ROUTE_POC_BROWSER_API_PORT ?? 63315);
 const hasRunLocalBrowserApiPort = process.env.NEXT_ROUTE_POC_BROWSER_API_PORT !== undefined;
 
 export default defineConfig({
+  root: projectRoot,
   plugins: [react()],
   optimizeDeps: {
     include: ["recharts"],
   },
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "src"),
-      "@server": path.resolve(__dirname, "server"),
+      "@": path.resolve(projectRoot, "src"),
+      "@server": path.resolve(projectRoot, "server"),
     },
   },
   test: {

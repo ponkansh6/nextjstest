@@ -11,8 +11,8 @@ import {
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { buildPlan39CtiArtifacts } from "../../../../../scripts/plan39/fetch-and-build.mjs";
-import { verifyLoaderHashes } from "../../../../../scripts/plan39/rollback.mjs";
+import { buildPlan39CtiArtifacts } from "../../../../../scripts/cti-adjusted/fetch-and-build.mjs";
+import { verifyLoaderHashes } from "../../../../../scripts/cti-adjusted/rollback.mjs";
 import {
   loadCtiAdjustedInputs,
   loadCtiAdjustedV2Estimate,

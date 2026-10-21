@@ -45,7 +45,7 @@ source identity, value type, household scope, base year, CSV hash, and continuou
 quarter range before using the observations. The published `その他の消費支出`
 field is `-`; the chart derives this category as the quarterly total minus the
 other nine nominal categories. Regenerate only these quarterly files from the
-downloaded A workbook with `node scripts/plan39/fetch-and-build.mjs --quarterly-only`.
+downloaded A workbook with `node scripts/cti-adjusted/fetch-and-build.mjs --quarterly-only`.
 
 ## Rollback snapshot
 
@@ -61,13 +61,13 @@ snapshotには実artifact B/A/L、各artifactから抽出したmetadata、採用
 読み取り専用でsnapshot完全性と現行artifactのloader契約を検証する。B/Aの`valueType`が名目指数でないsnapshotやartifactは拒否する。実質B/Aを含んでいた旧snapshot ID `9b899d39bae3dd832fdc9ac2806a44cd678ea700f09ec5f7f5b58e0ed5c87fa3` は削除した。
 
 ```sh
-node scripts/plan39/rollback.mjs --verify
+node scripts/cti-adjusted/rollback.mjs --verify
 ```
 
 復元は対象IDと`--force`を明示した場合だけ実行する。スクリプトは復元前にsnapshot内のB/A/L・metadata・manifest・audit・hashesを検証し、復元後にmanifestの各SHA-256とmetadata契約を再検証する。`--force`なしでは何も変更しない。
 
 ```sh
-node scripts/plan39/rollback.mjs \
+node scripts/cti-adjusted/rollback.mjs \
   --restore 084d07f12d428cfcb58687f8d62f3b3db26d5ca7ca97e922022fe3cc3a874220 \
   --force
 ```
@@ -75,7 +75,7 @@ node scripts/plan39/rollback.mjs \
 新しい採用時点を固定する場合は、既存snapshotを変更せずに実行する。同一B/A/L入力なら同一IDになる。
 
 ```sh
-node scripts/plan39/rollback.mjs --create
+node scripts/cti-adjusted/rollback.mjs --create
 ```
 
 この成果物は公開系列を切り替えず、既存loader/API/UIにも接続しない。復元後のloader hash検証が失敗した場合は復元結果を公開入力として扱わず停止する。
