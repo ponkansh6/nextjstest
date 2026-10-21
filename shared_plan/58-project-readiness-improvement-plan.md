@@ -4,7 +4,7 @@
 
 ## 完了時の検証記録
 
-最終監査と検証ゲート（`test:hook-smoke`を含む）で完了を確認した。`spec-refs`専用scriptは存在しない。build後route browserは、直近の完了済み結果がChromium 22 files / 96 passed、WebKit 4 files / 14 passed / 5 skipped。ChartFiltersの動作に影響しないfallback簡素化後に行った最新2回の再実行は最終summaryがなく、成功結果としては扱っていない。
+最終監査では、Plan58の6項目すべての達成を確認した。ChartFiltersのfallback簡素化後に行ったroute-browser再実行2回は最終summaryがなく、当時は成功扱いにしていなかった。その後、`e8bb93c`のhash fixを含む最新の通常pre-pushでbuild後route browser gateが成功した。最新の通常pre-pushでは`lint:fast`、`type-check`、`test:coverage`（1424 passed / 1 skipped、statements / branches / functions / lines各100%）、component browser、build、build後route browser、build parity、`security-check`も成功した。`test:hook-smoke`は独立に成功済み。production-validation hook gateは未実行であり、`spec-refs`専用scriptも存在しない。
 
 ## 目的
 
