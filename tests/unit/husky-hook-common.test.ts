@@ -57,7 +57,6 @@ describe("hook-common staged typecheck contract", () => {
     "pnpm-workspace.yaml",
     "next.config.mjs",
     "vitest.config.ts",
-    "playwright.config.ts",
     "src/shared/value.js",
     "src/generated/value.js",
     "src/value.d.ts",

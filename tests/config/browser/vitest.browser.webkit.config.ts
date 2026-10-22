@@ -30,7 +30,6 @@ export default defineConfig({
       "tests/browser-mode/batch5-standard-webkit-production-route.browser.test.ts",
       "tests/browser-mode/batch5-lazy-tabs-webkit-production-route.browser.test.ts",
     ],
-    exclude: [...configDefaults.exclude, "tests/e2e/**"],
     testNamePattern: /webkit/,
     setupFiles: ["tests/browser-mode/setup.ts"],
     fileParallelism: false,

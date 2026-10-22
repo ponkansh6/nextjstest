@@ -32,8 +32,6 @@ vi.mock("@/app/components/charts/xAxisTicks", () => ({
 }));
 vi.mock("@/app/components/ChartInfoContentRenderer", () => ({ default: () => <div /> }));
 
-const nominalFactor = 0.0011398911460950036;
-const realFactor = 0.001298186239096047;
 const chartProps = {
   title: "消費支出",
   colors: ["#ff0000"],

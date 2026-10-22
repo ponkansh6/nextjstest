@@ -774,9 +774,12 @@ function collectCatalog(configs, diagnosticsDirectory) {
   for (const config of configs) {
     const args = [VITEST, "list", "--config", config, "--json"];
     const result = run(process.execPath, args);
-    const stdoutFile = path.join(diagnosticsDirectory, `${config}.stdout.txt`);
-    const stderrFile = path.join(diagnosticsDirectory, `${config}.stderr.txt`);
-    const metadataFile = path.join(diagnosticsDirectory, `${config}.metadata.json`);
+    const configLabel = path.basename(config).replace(/[^A-Za-z0-9._-]/g, "_");
+    const configId = createHash("sha256").update(config).digest("hex");
+    const artifactPrefix = `${configLabel}-${configId}`;
+    const stdoutFile = path.join(diagnosticsDirectory, `${artifactPrefix}.stdout.txt`);
+    const stderrFile = path.join(diagnosticsDirectory, `${artifactPrefix}.stderr.txt`);
+    const metadataFile = path.join(diagnosticsDirectory, `${artifactPrefix}.metadata.json`);
     writeFileSync(stdoutFile, result.stdout ?? "", { flag: "wx", mode: 0o600 });
     writeFileSync(stderrFile, result.stderr ?? "", { flag: "wx", mode: 0o600 });
     writeFileSync(

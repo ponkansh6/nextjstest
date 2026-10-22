@@ -49,7 +49,7 @@ export const NewGraph: React.FC<NewGraphProps> = ({
   const renderedLineConfigs = visibleLineConfigs;
   return (
     <div id={sectionId} className={styles.chartSection} style={{ scrollMarginTop: "5rem" }}>
-      <div className={styles.chartTitleRow}>
+      <div>
         <h2 className={styles.chartTitle}>給与・消費・物価の推移比較(12MA)</h2>
         {chartKey && (
           <ChartInfoContentRenderer

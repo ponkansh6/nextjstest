@@ -65,7 +65,6 @@ export default defineConfig({
       "tests/browser-mode/batch5-standard-chromium-production-route.browser.test.ts",
       "tests/browser-mode/batch5-lazy-tabs-chromium-production-route.browser.test.ts",
     ],
-    exclude: [...configDefaults.exclude, "tests/e2e/**"],
     setupFiles: ["tests/browser-mode/setup.ts"],
     isolate: true,
     fileParallelism: false,

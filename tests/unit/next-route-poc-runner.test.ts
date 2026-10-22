@@ -55,7 +55,7 @@ describe("production Browser Mode aggregate runner", () => {
       path.join(root, "tests/config/browser/vitest.browser.aggregate-chromium.config.ts"),
       "utf8",
     );
-    const includedFiles = config.match(/include:\s*\[([\s\S]*?)\],\s*exclude:/)?.[1];
+    const includedFiles = config.match(/test:\s*\{[\s\S]*?\binclude:\s*\[([\s\S]*?)\]/)?.[1];
 
     expect(includedFiles).toBeDefined();
     expect(

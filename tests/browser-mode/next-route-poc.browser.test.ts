@@ -100,7 +100,6 @@ test("rendered nominal stacked bars total 50–150 from 2005Q1 through official 
     expect(quarterIndices[index]).toBe(quarterIndices[index - 1]! + 1);
   }
   for (const row of targetRows) {
-    const rowDiagnostic = `period=${row.period}, key=all-ten-expenses-dom-data, rowTotal=${row.total}, values=${JSON.stringify(row.values)}`;
     expect(row.period).toBeTruthy();
     expect(row.values).toHaveLength(result.categories.length);
     for (const value of row.values) {

@@ -29,7 +29,6 @@ import type { CpiView, QuarterlyView } from "../../src/types/chart";
 import { renderBrowserComponent } from "./renderBrowserComponent";
 
 const TEST_SUPPORT_NOMINAL_KEY = "民間最終消費支出（名目）";
-const TEST_SUPPORT_REAL_KEY = "民間最終消費支出（実質）";
 vi.mock("next/navigation", () => ({
   default: {},
   useSearchParams: () => new URLSearchParams("from=2020&to=2021"),

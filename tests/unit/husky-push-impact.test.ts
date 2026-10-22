@@ -203,10 +203,6 @@ describe("pre-push isolated gate harness", () => {
     const wrapper = fs.readFileSync(hookWrapper, "utf8");
     expect(wrapper).toContain("#!/bin/sh");
     expect(wrapper).toContain('exec bash -e "$(dirname "$0")/pre-push.bash" "$@"');
-    const scripts = JSON.parse(
-      fs.readFileSync(path.resolve(process.cwd(), "package.json"), "utf8"),
-    ).scripts;
-    expect(scripts["test:e2e"]).toBe("playwright test");
   });
 
   function setupHookFixture(): { repo: string; input: string; bin: string; log: string } {

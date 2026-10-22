@@ -502,10 +502,10 @@ export const PINNED_RUNTIME_INPUTS = Object.freeze({
 // `node scripts/data-refresh/print-runtime-project-hashes.mjs` to display both the pinned value
 // and candidate SHA-256 for this exact list. Review candidates and update this map manually.
 export const PINNED_PROJECT_FILES = Object.freeze({
-  "package.json": "2b341786c927cdcfad48ed3e3ff16c4c6331875fede883588c4409a2de940896",
+  "package.json": "c5b14784cb5da0e6731134fbd3ef327a9d1f044bc2b20cc2813e59af7273ed06",
   "pnpm-lock.yaml": "b32a1388b998fa9b5f1998bb47f13e120b3fb8c69d5094db95503546a05627af",
   "tsconfig.json": "9f3692ef19cf5112726f18e7b095c4b6e53eac251d73687c79135e67f35889c7",
-  "vitest.config.ts": "face3801831e94e12e5b6b2ab619df49dbf59333cd0a501b1e5b7cc61c635317",
+  "vitest.config.ts": "a58b5bc2a77e925468b1383499c92b65b16b677b0440585b55bb831c23b582ca",
   "scripts/fetch-cti-basic-series-2025.mjs":
     "5330a7b1ec343d4cf7ada3a8f568ad9a1f2189d2112621f99ee6010424471df0",
   "server/lib/consumptionTotal12Ma.ts":
@@ -569,8 +569,8 @@ export const PINNED_PROJECT_FILES = Object.freeze({
     "224ed0fbf1ff036d5cdc7c41e40d94defaa5703e59696d0154e7cfa553dfa874",
   "src/lib/yearMonth.ts": "c1bf9750552d656186d0cbfd32f73a647e9ea16b65feb6128b5b2cc6a496a515",
   "src/types/chart.ts": "5ebf88072173e893ad28e06ef4103e6aa116e0468ba6e5bba9e8c9cde93bcb08",
-  "src/types/data.ts": "6994b0f7bd5efee76c75900ce64da3def963f3ef0a50814c45f311356613e2b1",
-  "src/types/index.ts": "5e28c21699001dc63aa8a38fd8868164823d4fb7e49d27e71e6684d9a28509a6",
+  "src/types/data.ts": "877a8bf4193672663b1de06fb82cff6995fc097911fa9cdf7859652af4232009",
+  "src/types/index.ts": "2ef6482f4a19da1f6950524164a0cc522b2463507d0e87be8f7eadd4cdf88928",
   "tests/data-quality/cpi-data-integrity.test.ts":
     "e288df4ed462a6d58f03629a9491eb8ba945e5766f7d7fd9b75ff04d960ad1ca",
   "tests/data-quality/cti-basic-series-2025.test.ts":

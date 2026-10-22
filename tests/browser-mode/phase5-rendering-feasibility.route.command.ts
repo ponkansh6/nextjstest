@@ -364,8 +364,8 @@ function result(
         mechanism: "window.__MOUNT_ALL__ = true via addInitScript before navigation",
         sourcePrecedent: [
           "src/app/components/LazyMount.tsx:6-16",
-          "tests/e2e/fixtures.ts:5-17",
-          "tests/e2e/accessibility.e2e.spec.ts:19-24",
+          "inline page.addInitScript setup in this route command",
+          "tests/browser-mode/phase6-b14-residual-accessibility.browser.test.ts",
         ],
         sectionMountAction: "scrollIntoViewIfNeeded before chart contract read",
       },
@@ -395,7 +395,9 @@ async function execute(
       computedContrastRatio?: number;
     };
     const expected = {
-      source: isCagr ? "accessibility.e2e.spec.ts:81" : "accessibility.e2e.spec.ts:103",
+      source: isCagr
+        ? "phase5-rendering-feasibility.route.command.ts:accessibility-cagr-trigger"
+        : "phase5-rendering-feasibility.route.command.ts:accessibility-real-legend-header",
       targetSelector: isCagr
         ? "#section-stacked button[name~='年率上昇率（CAGR）を計算']"
         : "#section-consumption-real summary:first",
@@ -632,7 +634,10 @@ export const inspectPhase5Rendering: BrowserCommand<
         outcome: "probe-error-unclassified",
         expected: {},
         observations: {
-          probeSetup: { lazyMountOverride: true, sourcePrecedent: "tests/e2e/fixtures.ts" },
+          probeSetup: {
+            lazyMountOverride: true,
+            sourcePrecedent: "inline page.addInitScript window.__MOUNT_ALL__ setup above",
+          },
         },
         error: error instanceof Error ? `${error.name}: ${error.message}` : String(error),
       };

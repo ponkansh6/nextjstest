@@ -44,15 +44,6 @@ const createMockDataPoint = (year: number, month: number) => {
   return data;
 };
 
-const mockCtiData = [
-  createMockDataPoint(2005, 1),
-  createMockDataPoint(2005, 2),
-  createMockDataPoint(2005, 3),
-  createMockDataPoint(2017, 1),
-  createMockDataPoint(2017, 2),
-  createMockDataPoint(2017, 3),
-];
-
 const mockQuarterlyData = [
   {
     label: "2023年Q1",

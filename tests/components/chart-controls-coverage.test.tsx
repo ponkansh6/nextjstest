@@ -11,7 +11,6 @@ import { type SeriesMetadata } from "@/lib/chartConstants";
 import type { ChartInfoContent } from "@/lib/chartInfoContent";
 
 const TEST_SUPPORT_NOMINAL_KEY = "民間最終消費支出（名目）";
-const TEST_SUPPORT_REAL_KEY = "民間最終消費支出（実質）";
 vi.mock("@/app/components/CpiChart.module.css", () => ({
   default: new Proxy({}, { get: (_target, key) => key }),
 }));

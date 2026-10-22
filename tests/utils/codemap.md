@@ -6,7 +6,7 @@ Vitest/Testing Libraryの実行環境、ブラウザ・Recharts・filesystem・A
 
 ## Design
 
-`setup.ts`、`logic-setup.tsx`、`logic-setup-minimal.ts`、`happy-dom-setup.ts`が環境を初期化し、`ui-mocks.ts`と`recharts-mock.tsx`がUI依存を制御する。`mock-fs.ts`はCSV有無を、`api-setup.ts`はAPI境界を模擬する。`flight-payload.ts`はRSC HTML中の四半期propsを抽出する。
+`setup.ts`、`logic-setup.tsx`、`logic-setup-minimal.ts`、`happy-dom-setup.ts`が環境を初期化し、`ui-mocks.ts`と`recharts-mock.tsx`がUI依存を制御する。`api-setup.ts`はAPI境界を模擬する。`flight-payload.ts`はRSC HTML中の四半期propsを抽出する。
 
 ## Flow
 

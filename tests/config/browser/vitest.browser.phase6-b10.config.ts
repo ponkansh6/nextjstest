@@ -18,7 +18,6 @@ export default defineConfig({
   },
   test: {
     include: ["tests/browser-mode/phase6-b10-tooltip-dismiss.browser.test.ts"],
-    exclude: [...configDefaults.exclude, "tests/e2e/**"],
     setupFiles: ["tests/browser-mode/setup.ts"],
     fileParallelism: false,
     maxWorkers: 1,

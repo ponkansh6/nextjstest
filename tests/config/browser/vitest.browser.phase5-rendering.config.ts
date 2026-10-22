@@ -20,7 +20,6 @@ export default defineConfig({
   },
   test: {
     include: ["tests/browser-mode/phase5-rendering-feasibility.browser.test.ts"],
-    exclude: [...configDefaults.exclude, "tests/e2e/**"],
     setupFiles: ["tests/browser-mode/setup.ts"],
     fileParallelism: false,
     maxWorkers: 1,

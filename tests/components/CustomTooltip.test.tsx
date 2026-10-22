@@ -14,7 +14,6 @@ import {
 } from "../../src/lib/chartConstants";
 
 const TEST_SUPPORT_NOMINAL_KEY = "Synthetic nominal support";
-const TEST_SUPPORT_REAL_KEY = "Synthetic real support";
 const payload = [{ name: "総合", value: 112.5, color: "#1d4ed8" }];
 
 describe("CustomTooltip", () => {

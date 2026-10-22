@@ -16,12 +16,10 @@ export default defineConfig({
     // 外部依存/ビルド成果物を要求するテストは既定の `pnpm test` から除外する。
     // - tests/production: 商用URL(PROD_URL)へのネットワークアクセスが必要 → `pnpm test:prod`
     // - tests/build:      先に `pnpm build` が必要             → `pnpm test:build-parity`
-    // - tests/e2e:        Playwright E2E（playwright test で実行） → `pnpm test:e2e`
     exclude: [
       ...configDefaults.exclude,
       "tests/production/**",
       "tests/build/**",
-      "tests/e2e/**",
       "tests/browser-mode/**",
       "results/plan46/phase4/vitest-selector-route-probe.browser.test.ts",
       "**/.plan42*",
@@ -39,9 +37,6 @@ export default defineConfig({
         // Next owns font loading and metadata integration; production build and
         // browser route checks exercise this framework entry point.
         "src/app/layout.tsx",
-        // Legacy Plan40-only section is no longer imported by the active app.
-        // Its loader, calculation, and projection modules remain included.
-        "src/app/components/CtiAdjustedSeriesSection.tsx",
         // Analysis-only sensitivity entry point; imported by Plan39 scripts
         // and unit tests, with no production app import path.
         "server/lib/ctiAdjustedSensitivity.ts",

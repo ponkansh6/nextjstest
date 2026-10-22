@@ -6,7 +6,7 @@
 
 ## Design
 
-変換系は`convert_*.ts`（給与・労働・CPI）と`build_*_executable.sh`、一括実行は`run_all_conversions.sh`。確認系は`checkLogic.ts`、`inspectData.ts`、`verify_2025_01.ts`、`verify_keys.ts`、`dump200412.ts`、`traceSmoothing.ts`、`debugHiddenKeys.ts`、`measure-import.ts`。比較/計測は`measure_logic_tests.sh`、`measure_logic_tests_fast.sh`、`measure_test_times.sh`、`lighthouse-mobile.js`、配色は`validate-palette.mjs`/`validate-palette-cli.mjs`、E2Eポート整理は`kill-e2e-port.mjs`が担う。`python_backup/`は旧変換・比較・検証スクリプトを保存する領域である。
+変換系は`convert_*.ts`（給与・労働・CPI）と`build_*_executable.sh`、一括実行は`run_all_conversions.sh`。確認系は`checkLogic.ts`、`inspectData.ts`、`verify_2025_01.ts`、`verify_keys.ts`、`dump200412.ts`、`traceSmoothing.ts`、`debugHiddenKeys.ts`、`measure-import.ts`。比較/計測は`measure_logic_tests.sh`、`measure_logic_tests_fast.sh`、`measure_test_times.sh`、`lighthouse-mobile.js`、配色は`validate-palette.mjs`/`validate-palette-cli.mjs`が担う。`python_backup/`は旧変換・比較・検証スクリプトを保存する領域である。
 
 ## Flow
 

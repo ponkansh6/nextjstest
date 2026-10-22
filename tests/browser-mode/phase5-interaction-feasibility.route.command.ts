@@ -79,8 +79,6 @@ const NOMINAL = "spending-chart-nominal";
 const REAL = "spending-chart-real";
 
 type Point = { x: number; y: number };
-type Box = { x: number; y: number; width: number; height: number };
-
 async function findBar(
   page: import("@playwright/test").Page,
   testId: string,
