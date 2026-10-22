@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
+import DialogOptionsDemo from "./DialogOptionsDemo";
 import MotionDemo from "./MotionDemo";
 import styles from "./page.module.css";
 
@@ -220,6 +221,8 @@ export default function UIExperimentsPage() {
             ネイティブdialogのモーダル動作とフォーカス管理を使用します。
           </p>
         </section>
+
+        <DialogOptionsDemo />
 
         <section className={styles.panel} aria-labelledby="motion-title">
           <div className={styles.panelHeading}>

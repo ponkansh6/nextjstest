@@ -1,5 +1,6 @@
 import React from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const motionPreference = vi.hoisted(() => ({ reduced: false as boolean | null }));
@@ -32,8 +33,15 @@ vi.mock("motion/react", async () => {
 vi.mock("../../src/app/ui-experiments/page.module.css", () => ({
   default: new Proxy({}, { get: (_target, key) => String(key) }),
 }));
+vi.mock("../../src/app/ui-experiments/dialog-options.module.css", () => ({
+  default: new Proxy({}, { get: (_target, key) => String(key) }),
+}));
+vi.mock("../../src/app/ui-experiments/base-drawer.module.css", () => ({
+  default: new Proxy({}, { get: (_target, key) => String(key) }),
+}));
 
 import UIExperimentsPage from "../../src/app/ui-experiments/page";
+import DialogOptionsDemo from "../../src/app/ui-experiments/DialogOptionsDemo";
 import MotionDemo from "../../src/app/ui-experiments/MotionDemo";
 
 function setReducedMotion(reduced: boolean) {
@@ -212,5 +220,92 @@ describe("Motion demo interactions", () => {
       screen.getByText("Motionのデモを表示しました。").getAttribute("data-motion-duration"),
     ).toBe("0");
     expect(onFinishedChange).toHaveBeenLastCalledWith(true);
+  });
+});
+
+describe("dialog implementation comparison interactions", () => {
+  it("Radix Dialogはaccessible name付きで開き、閉じるボタンで閉じる", () => {
+    render(<DialogOptionsDemo />);
+    fireEvent.click(screen.getByRole("button", { name: "Radixを開く" }));
+
+    const dialog = screen.getByRole("dialog", { name: "汎用ダイアログ" });
+    expect(dialog).toBeTruthy();
+    const closeButtons = screen.getAllByRole("button", { name: "閉じる" });
+    fireEvent.click(closeButtons[closeButtons.length - 1]);
+
+    expect(screen.queryByRole("dialog", { name: "汎用ダイアログ" })).toBeNull();
+  });
+
+  it("Radix DialogはEscapeで閉じ、起動ボタンへfocusを戻す", async () => {
+    render(<DialogOptionsDemo />);
+    const trigger = screen.getByRole("button", { name: "Radixを開く" });
+    fireEvent.click(trigger);
+    expect(screen.getByRole("dialog", { name: "汎用ダイアログ" })).toBeTruthy();
+
+    fireEvent.keyDown(document, { key: "Escape", code: "Escape" });
+
+    await waitFor(() => expect(document.activeElement).toBe(trigger));
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "汎用ダイアログ" })).toBeNull(),
+    );
+  });
+
+  it("Radix Dialogはoverlay上のoutside pointerdownで閉じ、起動ボタンへfocusを戻す", async () => {
+    const user = userEvent.setup();
+    render(<DialogOptionsDemo />);
+    const trigger = screen.getByRole("button", { name: "Radixを開く" });
+    await user.click(trigger);
+    expect(screen.getByRole("dialog", { name: "汎用ダイアログ" })).toBeTruthy();
+
+    await user.click(document.querySelector(".dialogOverlay")!);
+
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "汎用ダイアログ" })).toBeNull(),
+    );
+    await waitFor(() => expect(document.activeElement).toBe(trigger));
+  });
+
+  it("Base UI Drawerはaccessible name付きで開き、閉じるとtriggerへfocusを戻す", async () => {
+    render(<DialogOptionsDemo />);
+    const trigger = screen.getByRole("button", { name: "Drawerを開く" });
+    fireEvent.click(trigger);
+
+    const dialog = screen.getByRole("dialog", { name: "シート型のドロワー" });
+    expect(dialog).toBeTruthy();
+    await waitFor(() => expect(dialog.contains(document.activeElement)).toBe(true));
+    fireEvent.click(within(dialog).getByRole("button", { name: "閉じる" }));
+
+    await waitFor(() => expect(document.activeElement).toBe(trigger));
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "シート型のドロワー" })).toBeNull(),
+    );
+  });
+
+  it("Base UI DrawerはEscapeで閉じ、triggerへfocusを戻す", async () => {
+    render(<DialogOptionsDemo />);
+    const trigger = screen.getByRole("button", { name: "Drawerを開く" });
+    fireEvent.click(trigger);
+    expect(screen.getByRole("dialog", { name: "シート型のドロワー" })).toBeTruthy();
+
+    fireEvent.keyDown(document, { key: "Escape", code: "Escape" });
+
+    await waitFor(() => expect(document.activeElement).toBe(trigger));
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "シート型のドロワー" })).toBeNull(),
+    );
+  });
+
+  it("Base UI Drawerはbackdropへのoutside pointerdownで閉じる", async () => {
+    const user = userEvent.setup();
+    render(<DialogOptionsDemo />);
+    const trigger = screen.getByRole("button", { name: "Drawerを開く" });
+    await user.click(trigger);
+    expect(screen.getByRole("dialog", { name: "シート型のドロワー" })).toBeTruthy();
+
+    await user.click(document.querySelector('[data-slot="drawer-overlay"]')!);
+
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "シート型のドロワー" })).toBeNull(),
+    );
   });
 });

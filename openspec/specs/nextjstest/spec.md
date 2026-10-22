@@ -506,7 +506,10 @@ does not load dashboard data or change production chart state. Its controls
 use local React state and browser capabilities/preferences only: container
 width selection, native dialog state, Motion completion state, same-page view
 selection, `prefers-reduced-motion`, CSS container-query support, and the
-`document.startViewTransition` feature. Its spacing, card-radius, and minimum
+`document.startViewTransition` feature. `DialogOptionsDemo` uses the
+`radix-ui` Dialog and a local shadcn-style Drawer wrapper around
+`@base-ui/react/drawer`; these primitives use their own local open state and
+introduce no application data source. Its spacing, card-radius, and minimum
 target-size custom properties are scoped to the route root.
 
 Production-route Browser Mode commands use the configured Vitest provider's
@@ -757,14 +760,17 @@ route navigation, page creation, assertions, and result handling; the shared
 helper only creates and closes the independent `BrowserContext`.
 
 The `/ui-experiments` page flow is local and independent of dashboard data:
-route-local custom properties style the six demonstration panels; the
+route-local custom properties style the demonstration panels; the
 container-width control resizes a container-query card (with a viewport media
 query fallback); the horizontal card track applies proximity scroll snapping;
-a native modal `<dialog>` opens as a bottom drawer; `MotionDemo` reports
-animation completion and honors reduced-motion preference; and a two-state
-same-route content switch uses the View Transition API when available and
-motion is allowed, otherwise updating immediately. All state is discarded
-when leaving the route.
+a native modal `<dialog>` opens as a bottom drawer; `DialogOptionsDemo` renders
+Radix Dialog and a local shadcn-style wrapper around Base UI Drawer as
+alternative modal primitives alongside that native dialog. The Base UI Drawer
+uses modal mode and downward swipe dismissal. Both primitives manage their own
+open state and focus behavior. `MotionDemo` reports animation completion and
+honors reduced-motion preference; a two-state same-route content switch uses
+the View Transition API when available and motion is allowed, otherwise
+updating immediately. All state is discarded when leaving the route.
 
 <a id="current-component-tree"></a>
 
@@ -791,12 +797,16 @@ Plan40 public projection. The table and CSV consume that same filtered row
 collection. GDP support values are retired and are not part of the quarterly
 boundary behavior.
 
-The separate `/ui-experiments` route renders a six-section evaluation lab and
+The separate `/ui-experiments` route renders a UI technology evaluation lab and
 does not add to or replace the production `Page → CpiChart` tree:
 `UIExperimentsPage` → container-query card / scoped token examples / horizontal
-scroll-snap cards / native dialog drawer / `MotionDemo` / same-route View
-Transition switch. `MotionDemo` emits completion state through
-`onFinishedChange`; the route owns dialog and view-selection state.
+scroll-snap cards / native dialog drawer / `DialogOptionsDemo` (Radix Dialog /
+shadcn-style Base UI Drawer comparison, implemented in `BaseDrawer.tsx`) /
+`MotionDemo` / same-route View Transition switch.
+`MotionDemo` emits completion state through `onFinishedChange`; the route owns
+the native dialog and view-selection state, while Radix and Base UI Drawer own
+their respective primitive state through `DialogOptionsDemo` and its local
+wrapper.
 
 - `data/source/population_statistics.metadata.json` — 総務省統計局「労働力調査（基本集計）」長期時系列 表1-b-1（e-Stat `statInfId=000031831366`）の取得URL、表ID、取得日時、公式Excelサイズ/SHA-256、欠測ポリシーを記録する。
 - `data/source/employment_indices.csv` — canonical regular employment index, sourced from the official e-Stat `種別=指数`, TL/T/0 mapping. The runtime consumer now uses this actual employment-index series.
@@ -2392,7 +2402,8 @@ The system SHALL be navigable and interpretable by assistive technologies.
 ### Canonical requirement group — UI technology evaluation lab
 
 The `/ui-experiments` route SHALL provide isolated, interactive demonstrations
-of six candidate UI technologies without changing the normal dashboard route.
+of six candidate UI technologies and a comparison of dialog primitives without
+changing the normal dashboard route.
 Existing dashboard CSS tokens, `BottomSheet`, and requirements R8d/R8e remain
 the production behavior contracts; this lab does not claim they have been
 replaced or adopted globally.
@@ -2423,6 +2434,18 @@ replaced or adopted globally.
 - **THEN** a native modal `<dialog>` is displayed in a bottom-drawer presentation,
   with Escape and backdrop dismissal and browser-managed modal focus behavior
 
+#### Scenario UI-Lab-4a: Radix Dialog and shadcn Base UI Drawer comparison
+
+- **WHEN** the user opens either comparison demo
+- **THEN** Radix Dialog presents a centered modal and the local shadcn-style
+  Base UI Drawer presents a modal bottom sheet; focus moves inside and remains
+  trapped in the open modal
+- **AND WHEN** either primitive is dismissed with Escape, backdrop, or its
+  close button, or the Base UI Drawer is dismissed by swiping downward
+- **THEN** focus returns to the corresponding trigger
+- **AND WHEN** reduced motion is requested
+- **THEN** the comparison demos suppress their entrance and exit animations
+
 #### Scenario UI-Lab-5: Motion completion feedback
 
 - **WHEN** the user starts or replays the Motion demo
@@ -2444,6 +2467,11 @@ replaced or adopted globally.
 - All lab actions remain available by keyboard, and visible focus indication
   is provided for interactive controls.
 - Lab animations and transitions respect `prefers-reduced-motion`.
+- The Base UI Drawer is a local CSS Modules adaptation of the current shadcn/ui
+  Base UI composition, not shadcn CLI-generated code. It uses modal behavior,
+  Escape/backdrop dismissal, and downward swipe dismissal. On iOS Safari, when
+  the page has been scrolled before opening the drawer, the overlay may need
+  `body { position: relative; }` to cover the full screen.
 
 <a id="current-r10"></a>
 

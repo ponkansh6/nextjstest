@@ -61,10 +61,12 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@base-ui/react": "1.9.0",
     "@vercel/config": "^0.6.1",
     "motion": "^14.5.0",
     "next": "16.4.2",
     "papaparse": "^5.6.0",
+    "radix-ui": "1.8.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "recharts": "^3.10.1"
