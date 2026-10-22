@@ -341,6 +341,19 @@ describe("Base UI Drawer wrapper contract", () => {
     expect(popup?.hasAttribute("data-snap-points")).toBe(false);
   });
 
+  it("passes snap point state to the modal backdrop", () => {
+    render(
+      <DrawerRoot defaultOpen snapPoints={[0.5]}>
+        <DrawerContent>
+          <DrawerTitle>Snap point付きDrawer</DrawerTitle>
+        </DrawerContent>
+      </DrawerRoot>,
+    );
+
+    const backdrop = document.querySelector('[data-slot="drawer-overlay"]');
+    expect(backdrop?.getAttribute("data-snap-points")).toBe("");
+  });
+
   it("uses the vertical swipe axis for an upward drawer", () => {
     render(
       <DrawerRoot defaultOpen swipeDirection="up">
