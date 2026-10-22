@@ -2,7 +2,7 @@
 
 > **監査日:** 2026-10-22
 > **対象計画:** [`59-unused-code-cleanup-plan.md`](./59-unused-code-cleanup-plan.md)
-> **結論:** 月次CTI info state の未消費経路だけを削除し、計画に挙げた他の候補と保全対象は判断を記録して維持した。限定したコード監査と直接gateは完了したが、計画が対象とする全領域・全入口の網羅監査およびbrowser確認は完了していない。
+> **結論:** 月次CTI info state の未消費経路だけを削除し、計画に挙げた他の候補と保全対象は判断を記録して維持した。限定したコード監査と直接gateは完了したが、計画が対象とする全領域・全入口の網羅監査および専用の手動browser確認は完了していない。
 
 この文書は実施結果の記録であり、計画原文の状態欄や本文は変更しない。Plan本文の初期状態文（実装未着手・削除未実施）は実装後の現状を反映しないが、依頼に従い原文を保存している。現在の実施状態は本監査記録を参照する。ここでの「完了」は候補ごとの判断と適用gateの結果を指し、リポジトリ全体の未使用要素を網羅したという意味ではない。
 
@@ -15,7 +15,7 @@
 | 入口・対象範囲       | 部分達成                     | 対象機能では `page.tsx` → `CpiChart` → `getChartInfoContent` の本番経路を追跡。探索手順と例は「探索範囲と再現性」に記載。追加の限定監査として `server/`・`shared/`・`src/` を調べ、追加削除候補なしとの報告を得た。                                                                                   | 計画記載の全route、CLI、CI、hook、cron/手動運用、public/data、root設定等の入口を網羅列挙したものではない。 |
 | 静的参照・外部参照   | 部分達成                     | `ctiInfoState`、`CtiChartInfoState`、`CtiPublicSeriesState` を `src/`・`tests/`・対象specで再検索し残存なし。`getCtiBasicConsumptionStatus` の他利用も検索し、server側の利用は保持。hook helperはrepo内のcaller未確認だけで削除せず、外部source契約を排除できないため保留。                           | 全dynamic import、reflection、外部script、利用者/運用契約の網羅確認はしていない。                          |
 | Data flow・出口      | 候補経路について達成         | 削除したinfo-state objectのfieldはresolverへ渡る以外に消費されていなかった。page生成からresolverまでを確認し、resolverが第3引数を読まず四半期静的説明を返すことを確認。元のCTI data/loaderは別用途で保持し、月次seriesの取得・比較計算・`consumptionSeriesState` と四半期rowの `ctiMetadata` も維持。 | 他の機能・data flowについて計画所定のproducer-to-exit台帳は作成していない。                                |
-| Browser到達性        | 未実施                       | browser表示・操作の観察結果はない。削除根拠はresolverの実装と参照経路の静的追跡、および独立性を定める仕様記述。                                                                                                                                                                                       | 実browserでのviewport/state別の表示確認は未確認。                                                          |
+| Browser到達性        | 自動化gateは部分達成         | push時のpre-pushでcomponent browser gateと選択されたNext-route browser gateが成功したとのOrchestrator報告がある。削除根拠自体はresolver実装・参照経路の静的追跡と仕様記述による。                                                                                                                     | 独立した手動browser sessionやviewport/state別の専用確認は未実施。全route網羅でもない。                     |
 | 候補判断             | 対象候補は判定、他候補は保留 | 候補台帳の要約は下表。hiddenな `ChartDataContract` は意図的なproduction契約として保持。backupやfixture等は見た目・古さ・参照検索だけで消していない。                                                                                                                                                  | 依存・設定・asset・fixtureを含む全候補台帳の作成には至っていない。                                         |
 | Technical key points | 対象範囲内で達成             | 参照有無と最終消費先の有無を分けて判定。非視覚契約・外部契約の疑いがあるものを検索不在だけで削除せず、Next/React構造や既存データ契約を維持した。                                                                                                                                                      | CSS/a11y/全分岐/非視覚用途を対象tree全体で監査したわけではない。                                           |
 | 段階計画             | 部分達成                     | 下記「段階計画の進捗」に各段階を照合。                                                                                                                                                                                                                                                                |
@@ -56,18 +56,18 @@
 
 ## 段階計画の進捗
 
-| 段階                        | 状態             | 記録                                                                                                               |
-| --------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------ |
-| 1. 初期調査と計画保存       | 完了（先行作業） | Plan 59を保存。                                                                                                    |
-| 2. 実装時baselineと範囲確定 | 部分達成         | 対象差分を確認。baseline PNPMは `node_modules` 削除確認で中断。全入口一覧は未作成。                                |
-| 3. 静的候補と経路台帳       | 部分達成         | CTI dead pathの完全な参照経路と専用契約を照合。限定 `src/server/shared` 監査では追加候補なし。全tree台帳ではない。 |
-| 4. 証拠と仕様による判定     | 部分達成         | CTI経路の実装とOpenSpec独立契約を照合。browser確認は未実施。hook外部sourceと保全物は保留。                         |
-| 5. 小分けの削除             | 対象分完了       | CTI state専用経路を削除し、専用prop/APIテスト契約を更新。ほかの保留候補は削除していない。                          |
-| 6. 仕様差分と検証           | 対象分完了       | OpenSpec更新不要と判定し、直接gate結果を下記に記録。全体監査の完了条件は未達。                                     |
+| 段階                        | 状態             | 記録                                                                                                                                                |
+| --------------------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. 初期調査と計画保存       | 完了（先行作業） | Plan 59を保存。                                                                                                                                     |
+| 2. 実装時baselineと範囲確定 | 部分達成         | 対象差分を確認。baseline PNPMは `node_modules` 削除確認で中断。全入口一覧は未作成。                                                                 |
+| 3. 静的候補と経路台帳       | 部分達成         | CTI dead pathの完全な参照経路と専用契約を照合。限定 `src/server/shared` 監査では追加候補なし。全tree台帳ではない。                                  |
+| 4. 証拠と仕様による判定     | 部分達成         | CTI経路の実装とOpenSpec独立契約を照合。自動化browser gateはpush時に通過したとの報告があるが、専用の手動確認は未実施。hook外部sourceと保全物は保留。 |
+| 5. 小分けの削除             | 対象分完了       | CTI state専用経路を削除し、専用prop/APIテスト契約を更新。ほかの保留候補は削除していない。                                                           |
+| 6. 仕様差分と検証           | 対象分完了       | OpenSpec更新不要と判定し、直接gate結果を下記に記録。全体監査の完了条件は未達。                                                                      |
 
 ## Baselineと検証記録
 
-- **Baseline PNPM:** 初回の `pnpm lint:fast` / `pnpm type-check` 呼出しは、PNPMによる `node_modules` purge確認でno-TTY中断し、task実行前に終了した。baseline passとは数えない。
+- **Pre-install baseline PNPM:** 初回の `pnpm lint:fast` / `pnpm type-check` 呼出しは、PNPMによる `node_modules` purge確認でno-TTY中断し、task実行前に終了した。pre-install baseline passとは数えない。
 - **実装中の初回Vitest:** `home-page-coverage` に4 failures。全件が実装途中の古い `ctiInfoState` prop期待に起因し、baseline失敗ではない。実装とテスト契約更新後の最終結果で判断する。
 - **最終直接gate（Orchestrator実行報告、全件exit 0）:** 次のコマンドが報告された。独立監査者による再実行ではない。
 
@@ -80,10 +80,21 @@
   ```
 
 - **最終結果（Orchestrator報告）:** Oxlint、TypeScript、Vitest、hook smokeがexit 0。Vitestは対象4ファイルで59 tests pass。差分形式確認もpass。
-- **Browser:** 未実施。
+- **Browser:** 実装者による個別の手動browser inspectionは未実施。後述するpush時のpre-push自動化browser gateは通過したとの報告がある。
 - **仕様照合:** OpenSpec line 88の四半期説明と月次CTIの独立契約を維持。仕様変更なし。
 
-上記の成功結果はOrchestrator実行報告の記録であり、独立監査者はこれらのgateを再実行していない。今回変更と対象gateに限る結果であり、baseline PNPM中断、browser未実施、および限定探索の範囲を埋める証拠としては扱わない。
+上記の成功結果はOrchestrator実行報告の記録であり、独立監査者はこれらのgateを再実行していない。今回変更と対象gateに限る結果であり、baseline PNPM中断、browserの手動確認未実施、および限定探索の範囲を埋める証拠としては扱わない。
+
+## Commit後のpush gate記録
+
+push時に通常のpre-push hookが実行され、以下のgateが成功したとのexecutor/Orchestrator報告を受けた。監査者は独立再実行していない。
+
+- clean worktree、lint、typecheck
+- coverage: 122 files、1423 tests passed、1 skipped。coverage 100%と報告
+- browser component gate、選択されたNext-route browser gate
+- production build、build parity、security-check
+
+この結果はpush時の自動化gateの証拠であり、個別の手動browser sessionや全browser routeの観察を意味しない。Plan全体の監査は依然として部分達成であり、全入口一覧、全領域の候補台帳、外部契約の解決、manual browser確認は未完了である。
 
 ## 作業差分
 
