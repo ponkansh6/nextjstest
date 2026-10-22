@@ -11,13 +11,3 @@ export interface CpiData {
   "CPI総合(参考)": number | null;
   [key: string]: string | number | null | undefined;
 }
-
-export interface PopulationData {
-  total: number;
-  index: number;
-  ma: number;
-}
-
-export interface ParsedCsvRow {
-  [key: string]: string | number;
-}

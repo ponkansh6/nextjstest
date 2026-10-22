@@ -76,27 +76,37 @@ describe("ThemeToggle theme storage contract", () => {
     }
   });
 
-  it("shows the current undefined result for an invalid legacy value after the type assertion", () => {
-    // The saved value is asserted to Theme, so this legacy value intentionally
-    // renders with an undefined label/icon; no fallback is applied.
+  it("falls back to system for an invalid legacy value and remains operable", () => {
     window.localStorage.setItem("theme", "legacy");
 
     render(<ThemeToggle />);
 
     const button = screen.getByRole("button");
-    expect(button.textContent).toBe("");
+    expect(button.textContent).toContain("💻");
     expect(button.getAttribute("aria-label")).toBe(
-      "テーマ: undefined（タップでライトモードに切替）",
+      "テーマ: システム設定に従う（タップでライトモードに切替）",
+    );
+    fireEvent.click(button);
+    expect(button.textContent).toContain("☀️");
+    expect(button.getAttribute("aria-label")).toBe(
+      "テーマ: ライトモード（タップでダークモードに切替）",
     );
   });
 
-  it("throws storage read exceptions during initial theme evaluation", () => {
+  it("falls back to system when storage reads throw", () => {
     vi.restoreAllMocks();
     vi.spyOn(window.localStorage, "getItem").mockImplementation(() => {
       throw new Error("storage unavailable");
     });
 
-    expect(() => render(<ThemeToggle />)).toThrow("storage unavailable");
+    render(<ThemeToggle />);
+    const button = screen.getByRole("button");
+    expect(button.textContent).toContain("💻");
+    expect(button.getAttribute("aria-label")).toBe(
+      "テーマ: システム設定に従う（タップでライトモードに切替）",
+    );
+    expect(() => fireEvent.click(button)).not.toThrow();
+    expect(button.textContent).toContain("☀️");
   });
 
   it("absorbs storage write exceptions when changing theme", () => {

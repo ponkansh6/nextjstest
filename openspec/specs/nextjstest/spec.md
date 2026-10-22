@@ -184,6 +184,12 @@ At runtime, the Plan39 artifact root is resolved from the absolute
 set, the production page loader resolves `cwd/data/source/cti-adjusted` before
 any bundle-relative path, including `.next/package.json`; the selected root
 must contain the manifest that passes the normal artifact validation contract.
+The canonical CTI-adjusted analysis and research scripts live in
+`scripts/cti-adjusted/`; package commands use the `cti-adjusted:*` namespace.
+There are no external callers for the former `scripts/plan39/*.mjs` paths, so
+the compatibility wrappers and `plan39:*` package aliases have been removed.
+This source organization does not rename `results/plan39/`, snapshot
+identifiers, artifact schemas, or loader fallback behavior.
 
 ### Superseded/旧状態: initial Plan39 diagnostic history
 
@@ -362,7 +368,7 @@ The Plan39 section displayed by `src/app/page.tsx` uses the server-only
 nominal loader consumes manifest-validated nominal B/A inputs and builds the v2 result;
 the legacy loader and `projectCtiAdjustedPublicView` remain available for v1
 consumers. The v2 result is adapted to the existing
-`CtiAdjustedDisplayRow`/measurement keys before it reaches the client chart.
+`CtiAdjustedPublicRow`/measurement keys before it reaches the client chart.
 
 Runtime publication and analysis use the same publication gate. The runtime
 may adopt rolling/leave-one-out evidence only when the analysis artifact has
@@ -436,13 +442,16 @@ the 2025 display basis; it MUST NOT be treated as the display base year. The
 給与物価差 uses the same-basis salary index minus CPI index, applies a 2-month
 moving average, and then sets the 2025 calendar-year average to 0.
 
-### PopulationData (src/types/index.ts)
+### Shared TypeScript data types
 
-| Field | Type   | Description      |
-| ----- | ------ | ---------------- |
-| total | number | Total population |
-| index | number | Indexed value    |
-| ma    | number | Moving average   |
+`src/types/index.ts` re-exports `CpiData` from `src/types/data.ts` for the dashboard's CPI-shaped rows. Population observations remain a server-side earnings input loaded and validated by the population data loader; they do not use a shared `PopulationData` interface. The removed `PopulationData` and `ParsedCsvRow` declarations were unused type-only models and are not part of the current application contract.
+
+#### Canonical scenario — Shared types retain only the live CPI row model
+
+- **WHEN** application code imports data-row types from `src/types`
+- **THEN** `CpiData` remains available for CPI-shaped rows
+- **AND** population statistics continue through the server-side loader and earnings derivation contracts without a shared `PopulationData` model
+- **AND** no `ParsedCsvRow` export is provided as an application data contract
 
 ## Current dashboard contract
 
@@ -491,6 +500,17 @@ Theme storage reads throw through the current initial evaluation path, while
 only the `setItem`/`removeItem` write operations are absorbed during interaction;
 DOM theme application and React state updates continue after a write failure. No browser-state source changes
 the server-loaded data model.
+
+The `/ui-experiments` route is an isolated UI technology evaluation page and
+does not load dashboard data or change production chart state. Its controls
+use local React state and browser capabilities/preferences only: container
+width selection, native dialog state, Motion completion state, same-page view
+selection, `prefers-reduced-motion`, CSS container-query support, and the
+`document.startViewTransition` feature. `DialogOptionsDemo` uses the
+`radix-ui` Dialog and a local shadcn-style Drawer wrapper around
+`@base-ui/react/drawer`; these primitives use their own local open state and
+introduce no application data source. Its spacing, card-radius, and minimum
+target-size custom properties are scoped to the route root.
 
 Production-route Browser Mode commands use the configured Vitest provider's
 `Browser` and the command's device descriptor plus scenario overrides as test
@@ -558,13 +578,13 @@ if needed, file entries are removed and truncation counters updated. If fixed
 metadata still does not fit, a smaller metadata-only fallback is emitted.
 JEV is instructed to treat it as incomplete structural context. The diff and
 summary are untrusted code data, not instructions for JEV to follow.
-JEV's response may select only catalog IDs. Playwright E2E specs are a separate
-test path and are outside this JEV Browser Mode selector unless a future change
-adds them explicitly.
+JEV's response may select only catalog IDs. The standalone Playwright E2E
+suite was removed; this selector covers the repository's active Browser Mode
+cases, which use Playwright as their provider.
 The component-only `test:browser` catalog is limited to
-`vitest.browser.config.ts`. The route-scoped selector catalog includes
-`vitest.browser.aggregate-chromium.config.ts` and every case in
-`vitest.browser.webkit.config.ts`; all four files in the WebKit config are in
+`tests/config/browser/vitest.browser.config.ts`. The route-scoped selector catalog includes
+`tests/config/browser/vitest.browser.aggregate-chromium.config.ts` and every case in
+`tests/config/browser/vitest.browser.webkit.config.ts`; all four files in the WebKit config are in
 scope, including `SectionTabsB3m` under its WebKit title filter.
 
 Hook execution inputs are derived from the Git state being validated, not from
@@ -596,7 +616,7 @@ Static CSV files (not publicly served) stored in `data/source/`:
 - CTI 2025 pair validation also requires the eight selected artifacts: the main candidate CSV, series map, official snapshot, main metadata, distribution-adjusted CSV and metadata, and quarterly CSV and metadata. The quarterly checks additionally read `data/source/official-cti-2025/cti-distribution-adjusted-000040499087.xlsx` and `data/source/cti-adjusted/manifest.json` plus `A.json` to verify their declared identities and hashes.
 - `data/source/official-cti-2025-long-term/000040499070.normalized.csv` and `series-map.csv` — Plan37's official 2025-base monthly CTI basic-series input. The output line selects only nominal `series_index=1`, `official_series_code=1`, `消費支出（名目）`, for 二人以上の世帯 from 2005-01 through the published latest month. The seasonally adjusted artifact and nominal file's real series are not selected.
 - The annual GDP and Plan21 quarterly GDP CSVs, metadata, snapshots, and normalization files formerly listed here were retired: their values had no downstream consumer after the internal loader. They are not runtime inputs or refresh dependencies. Historical hash/audit records are not current source contracts.
-- `tests/fixtures/loader-comparison/golden.json` now contains only CPI and CTI loader observations; annual/quarterly GDP observations and artifact hashes were removed with their unused consumers.
+- `tests/fixtures/loader-comparison/golden.json` contains independent CPI and CTI observations for 2025年1月: CPI 総合 99.3 and CTI 名目 97.9965 / 実質 98.7868. Both statuses are valid for base year/pair 2025; their observation digests are `bf6f55d1e3613a8ac91359b73f2e8588f6749cd056c4f6800f8f2b3c1dd65ad0` and `bcacab9382f3d312cbfdb3ca2bd87b3cd4f170a6d14818dc34f6db60838c75a2` respectively.
 - `data/source/cti_data.csv` / `cti_support_nominal.csv` / `cti_support_real.csv` — Historical 2020-base set removed from the repository; the runtime never resolves them. When a required 2025 CTI artifact is unavailable or invalid the loader returns unavailable with a machine-readable reason code instead of any 2020 selection.
 - CTI monthly observations are the source of truth for quarterly consumption completeness: from 2018Q1, all three normalized `YYYY年M月` records and every nominal/real consumption key must contain finite numeric values. A valid zero is retained; a missing or non-finite observation is not converted to zero.
 - `data/source/total_earning.csv` — Total earnings
@@ -739,6 +759,19 @@ calls `withIsolatedContext(browser, options, callback)`. The command retains
 route navigation, page creation, assertions, and result handling; the shared
 helper only creates and closes the independent `BrowserContext`.
 
+The `/ui-experiments` page flow is local and independent of dashboard data:
+route-local custom properties style the demonstration panels; the
+container-width control resizes a container-query card (with a viewport media
+query fallback); the horizontal card track applies proximity scroll snapping;
+a native modal `<dialog>` opens as a bottom drawer; `DialogOptionsDemo` renders
+Radix Dialog and a local shadcn-style wrapper around Base UI Drawer as
+alternative modal primitives alongside that native dialog. The Base UI Drawer
+uses modal mode and downward swipe dismissal. Both primitives manage their own
+open state and focus behavior. `MotionDemo` reports animation completion and
+honors reduced-motion preference; a two-state same-route content switch uses
+the View Transition API when available and motion is allowed, otherwise
+updating immediately. All state is discarded when leaving the route.
+
 <a id="current-component-tree"></a>
 
 ### Component Tree
@@ -763,6 +796,17 @@ chart、legend、tooltip、table、CSVへ伝える。legacy `消費支出（参�
 Plan40 public projection. The table and CSV consume that same filtered row
 collection. GDP support values are retired and are not part of the quarterly
 boundary behavior.
+
+The separate `/ui-experiments` route renders a UI technology evaluation lab and
+does not add to or replace the production `Page → CpiChart` tree:
+`UIExperimentsPage` → container-query card / scoped token examples / horizontal
+scroll-snap cards / native dialog drawer / `DialogOptionsDemo` (Radix Dialog /
+shadcn-style Base UI Drawer comparison, implemented in `BaseDrawer.tsx`) /
+`MotionDemo` / same-route View Transition switch.
+`MotionDemo` emits completion state through `onFinishedChange`; the route owns
+the native dialog and view-selection state, while Radix and Base UI Drawer own
+their respective primitive state through `DialogOptionsDemo` and its local
+wrapper.
 
 - `data/source/population_statistics.metadata.json` — 総務省統計局「労働力調査（基本集計）」長期時系列 表1-b-1（e-Stat `statInfId=000031831366`）の取得URL、表ID、取得日時、公式Excelサイズ/SHA-256、欠測ポリシーを記録する。
 - `data/source/employment_indices.csv` — canonical regular employment index, sourced from the official e-Stat `種別=指数`, TL/T/0 mapping. The runtime consumer now uses this actual employment-index series.
@@ -865,6 +909,7 @@ override them.
 | Current contract                                                 | Canonical requirement group                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Dashboard behavior and component contracts                       | [R1](#current-r1) · [R2](#current-r2) · [R3](#current-r3) · [R4](#current-r4) · [R5](#current-r5) · [R6](#current-r6) · [R7](#current-r7) · [R8](#current-r8) · [R9](#current-r9) · [R10](#current-r10) · [R11](#current-r11) · [R12](#current-r12) · [R13](#current-r13) · [R14](#current-r14) · [R15](#current-r15) · [R16](#current-r16) · [R17](#current-r17) · [R18](#current-r18) · [R19](#current-r19) · [R20](#current-r20) · [R21](#current-r21) |
+| UI technology evaluation lab                                     | [UI-Lab](#ui-experiments-poc-requirements)                                                                                                                                                                                                                                                                                                                                                                                                                |
 | Public chart data and export parity                              | [R4-4](#current-r4-4)                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | Monthly basic CTI loader compatibility                           | [R-Plan37](#current-r-plan37); [Plan49 monthly contract](#legacy-monthly-compatibility-requirements)                                                                                                                                                                                                                                                                                                                                                      |
 | Canonical CTI names and artifact compatibility                   | [R-CTI-Domain-Identifiers](#current-cti-domain-identifiers-requirement)                                                                                                                                                                                                                                                                                                                                                                                   |
@@ -1570,11 +1615,11 @@ chart, table, tooltip, and CSV contract.
 #### Canonical scenario — Scenario R-Hooks-4: Full and changed gate order
 
 - **WHEN** the changed profile succeeds
-- **THEN** `build` runs before `test:e2e:clean` and `test:e2e`
+- **THEN** `build` runs before the built Browser Mode production-route validation
 - **WHEN** the full profile runs
 - **THEN** gates execute in order: `lint:fast`, `type-check`, `test:coverage`,
-  `build`, `test:build-parity`, `security-check`, `test:e2e:clean`, and
-  `test:e2e`
+  `build`, `test:build-parity`, and `security-check`; the built Browser Mode
+  production-route validation runs where configured
 - **AND WHEN** any gate fails
 - **THEN** later gates do not run
 - **AND** production validation is a separate gate and is not substituted for
@@ -1653,7 +1698,7 @@ chart, table, tooltip, and CSV contract.
 - **WHEN** CSV is serialized
 - **THEN** every RFC4180 record SHALL be terminated by CRLF, including the final record, while comma, quote, CR, and LF escaping and quote round-trip remain valid
 - **WHEN** parity tests run
-- **THEN** the production Playwright E2E layer SHALL compare all rows and columns for all seven targets and cover hidden state, legacy `adv` removal with comparison parity, nominal/real, and GDP boundary labels `2017Q4` / `2018Q1`
+- **THEN** the integration fixture contract SHALL compare chart/table/CSV values at the real component boundary, and active Browser Mode cases SHALL cover browser-visible hidden state, legacy `adv` removal with comparison parity, nominal/real, and GDP boundary labels `2017Q4` / `2018Q1`
 - **AND** integration tests SHALL use the independent hand-written fixture `tests/fixtures/chart-parity-independent.json` at the real component boundary, while unit tests own CSV serializer edge cases; fixture expectations SHALL not be generated from app constants or the DOM
 - **AND** integration Plan40 source-boundary checks SHALL read the public quarterly CTI rows (`2017Q4` and `2018Q1`) from that fixture
 - **AND** integration contract collection SHALL resolve each contract within its owning section id, so lazy/dynamic wrappers cannot change the seven-target mapping
@@ -2228,17 +2273,9 @@ The system SHALL resolve tooltip display rows from chart-side series metadata wh
   `scrollWidth <= clientWidth`, mocked root `getBoundingClientRect().width`,
   overflow handling, and label presence; painted browser rectangles remain an
   E2E responsibility.
-- **AND** real-browser E2E evidence is maintained by
-  `tests/e2e/consumption-mobile-readability.e2e.spec.ts` (375px and 430px salary
-  tooltip viewports: six complete labels, all `data-tooltip-row` elements,
-  root/row viewport bounding boxes, label `scrollWidth`/`clientWidth`, and value
-  columns), `tests/e2e/cpi-chart-categories.e2e.spec.ts` (all 12 CPI rows,
-  `合計`, missing-value `—` contract when present, and hidden-row behavior using
-  the shared `data-tooltip-root`/`data-tooltip-row`/`data-tooltip-total` DOM),
-  `tests/e2e/earnings-tooltip-total.e2e.spec.ts` (desktop Chromium hover of a
-  real salary plot, six rows, explicit salary total, auxiliary-series exclusion,
-  and fresh re-hover after hiding an included legend series with recalculated
-  total), and `tests/browser-mode/phase6-b03-advanced-series.browser.test.ts` (legacy `adv=1` removal and identical comparison/table/CSV projection).
+- **AND** active Browser Mode suites own browser regressions; the former
+  standalone Playwright specs were removed after their suite had zero registered
+  cases. No standalone Playwright coverage is claimed by the current inventory.
 - **AND** `tests/unit/series-registry.test.ts` covers every salary/comparison registry entry, key-based projection, labels, colors, order, fixed three-entry comparison membership, and tooltip/legend equality; `tests/components/chart-tooltip-legend-contract.test.tsx` verifies legend/tooltip DOM equality, hidden keys, all-null legend retention, and unregistered-payload exclusion.
 - **AND** that same component contract records the unchanged hover/click trigger,
   touch outside-dismiss, chart switching, Escape dismissal, and scroll
@@ -2321,7 +2358,7 @@ The system SHALL ensure that chart tooltips on touch devices open only on explic
 
 - **WHEN** the user presses Escape while a tooltip is visible, without moving the mouse or finger beforehand
 - **THEN** the tooltip is dismissed immediately, and the next valid pointerdown or pointermove can show it again
-- **WHEN** the user interacts through the desktop `chromium` project or the touch-enabled `mobile-pixel` project
+- **WHEN** the user interacts with the chart through desktop pointer input or a touch device
 - **THEN** the existing outside-tap, close, desktop-hover, and mobile-tap tooltip behaviors remain unchanged
 
 <a id="current-r8"></a>
@@ -2359,6 +2396,82 @@ The system SHALL be navigable and interpretable by assistive technologies.
 - **THEN** focus moves to the first focusable element inside it and `Tab` / `Shift+Tab` cycle within it (`useFocusTrap`)
 - **AND WHEN** it closes
 - **THEN** focus returns to the trigger via `focus({ preventScroll: true })` so the scroll position is preserved
+
+<a id="ui-experiments-poc-requirements"></a>
+
+### Canonical requirement group — UI technology evaluation lab
+
+The `/ui-experiments` route SHALL provide isolated, interactive demonstrations
+of six candidate UI technologies and a comparison of dialog primitives without
+changing the normal dashboard route.
+Existing dashboard CSS tokens, `BottomSheet`, and requirements R8d/R8e remain
+the production behavior contracts; this lab does not claim they have been
+replaced or adopted globally.
+
+#### Scenario UI-Lab-1: Container query with fallback
+
+- **WHEN** the user switches the demo container between wide and narrow
+- **THEN** the card layout responds to its containing block through a CSS
+  container query, while browsers without container-query support use the
+  viewport media-query fallback
+
+#### Scenario UI-Lab-2: Route-scoped custom properties
+
+- **WHEN** the lab renders its spacing, card, and target-size examples
+- **THEN** the route root provides `--space-4`, `--radius-card`, and
+  `--target-min` values for the lab's components, without changing global
+  dashboard tokens
+
+#### Scenario UI-Lab-3: Horizontal scroll snap
+
+- **WHEN** the user scrolls the horizontal card track
+- **THEN** cards use `scroll-snap-align: start` with proximity snapping and
+  the track remains keyboard-focusable for horizontal key navigation
+
+#### Scenario UI-Lab-4: Native dialog drawer
+
+- **WHEN** the user opens the drawer demo
+- **THEN** a native modal `<dialog>` is displayed in a bottom-drawer presentation,
+  with Escape and backdrop dismissal and browser-managed modal focus behavior
+
+#### Scenario UI-Lab-4a: Radix Dialog and shadcn Base UI Drawer comparison
+
+- **WHEN** the user opens either comparison demo
+- **THEN** Radix Dialog presents a centered modal and the local shadcn-style
+  Base UI Drawer presents a modal bottom sheet; focus moves inside and remains
+  trapped in the open modal
+- **AND WHEN** either primitive is dismissed with Escape, backdrop, or its
+  close button, or the Base UI Drawer is dismissed by swiping downward
+- **THEN** focus returns to the corresponding trigger
+- **AND WHEN** reduced motion is requested
+- **THEN** the comparison demos suppress their entrance and exit animations
+
+#### Scenario UI-Lab-5: Motion completion feedback
+
+- **WHEN** the user starts or replays the Motion demo
+- **THEN** a short reveal animation reports completion to the lab status, and
+  reduced-motion preference removes its movement and duration
+
+#### Scenario UI-Lab-6: Same-route View Transition
+
+- **WHEN** the user switches between the two demo views
+- **THEN** the page uses `document.startViewTransition` when supported and
+  reduced motion is not requested, and otherwise changes the content immediately
+
+#### Non-functional requirements
+
+- Lab visual rules and custom properties are scoped to `/ui-experiments`;
+  its named View Transition pseudo-element rules use the unique
+  `demo-content` name so they affect only that lab demo. The normal dashboard's
+  layout, navigation, and modal behavior are unchanged.
+- All lab actions remain available by keyboard, and visible focus indication
+  is provided for interactive controls.
+- Lab animations and transitions respect `prefers-reduced-motion`.
+- The Base UI Drawer is a local CSS Modules adaptation of the current shadcn/ui
+  Base UI composition, not shadcn CLI-generated code. It uses modal behavior,
+  Escape/backdrop dismissal, and downward swipe dismissal. On iOS Safari, when
+  the page has been scrolled before opening the drawer, the overlay may need
+  `body { position: relative; }` to cover the full screen.
 
 <a id="current-r10"></a>
 
@@ -2889,7 +3002,7 @@ CTI XLSX cells. The candidate is
 `pHat_Aedu_t = pBedu_t * pi2plus_t * K`; the anchor baseline is
 `pHat_Aedu_t = pBedu_t * (pAedu_2017/pBedu_2017)`. Validation excludes 2017
 and compares per-year residuals and aggregate MAE/RMSE/bias over 2018–2025.
-The reproducible script is `scripts/plan39/two-plus-share-backtest.mjs`;
+The reproducible script is `scripts/cti-adjusted/two-plus-share-backtest.mjs`;
 trace and results are stored under `data/source/cti-size-composition/two-plus-share-backtest/`
 and `results/plan39/two-plus-share-backtest/`.
 
@@ -2938,7 +3051,7 @@ For each category, `pB[t,c]=B[t,c]/B[t,total]`,
 does not replace the raw formula. Validation uses only 2018–2025. Per-category
 MAE, RMSE, and bias are reported in percentage points, along with unweighted
 macro metrics, annual actual/predicted/errors, and annual sums of raw predicted
-shares. The script is `scripts/plan39/anchor-only-category-backtest.mjs`; its
+shares. The script is `scripts/cti-adjusted/anchor-only-category-backtest.mjs`; its
 summary and annual rows are saved under
 `results/plan39/anchor-only-category-backtest/`.
 
@@ -3171,8 +3284,9 @@ summary and annual rows are saved under
   `status=unavailable`、同一の非空 reason とし、全 surface の数値セル／CSV 数値セルを空欄にする。
 - **WHEN** legacy `2018Q1` fixture を同じ公開投影へ渡す、**THEN** v2 10キーとその metadata は
   chart、table、CSV のいずれにも出力しない。
-- **WHEN** Plan40 の通常表示経路を描画する、**THEN** `CtiAdjustedSeriesSection` は
-  表示せず、Plan39 の年次 measurement 契約、loader、projection、旧契約テストは存続させる。
+- **WHEN** Plan40 の通常表示経路を描画する、**THEN** 退役した旧年次表示用
+  `CtiAdjustedSeriesSection` を表示経路に含めず、Plan39 の年次 measurement 契約、loader、projection、
+  既存の旧契約テストは存続させる。
 
 <a id="current-official-quarterly-connection"></a>
 
@@ -3335,8 +3449,8 @@ component or production-route runner. The catalog is keyed by config, file,
 and full test name; the selector does not execute model-supplied commands or
 paths. Pre-push does not invoke the selector: it runs the fixed pre-push
 Browser Mode selections (`test:browser:prepush:component` and
-`test:browser:next-route-poc:prepush:built`). Playwright E2E remains on its
-separate runner.
+`test:browser:next-route-poc:prepush:built`). The standalone Playwright E2E
+runner has been removed; Playwright remains the Browser Mode provider.
 The normal `test:browser:next-route-poc` and `test:browser:next-route-poc:built`
 commands use the route selector. Raw unfiltered route execution is reserved
 for the explicit `test:browser:next-route-poc:all` and
@@ -3517,7 +3631,7 @@ The quarterly server-side branch is `page.tsx` → `quarterlyProjection.ts`'s `l
   Selected route-scoped cases run through the route runner, which
   retains its provider checks and managed production-server lifecycle. Existing
   Chromium/WebKit title filters remain in force and selection cannot widen
-  them. Playwright E2E is a separate profile and is outside this catalog.
+  them. No standalone Playwright E2E profile exists outside this catalog.
 - In the changed profile, safe related candidates are passed to
   `vitest related --run --passWithNoTests --reporter=json`; a non-empty valid
   JSON result allows the changed integration gate to pass, followed by
@@ -3538,8 +3652,8 @@ The quarterly server-side branch is `page.tsx` → `quarterlyProjection.ts`'s `l
   same fixed Browser Mode selections. The fixed selection comprises one
   BottomSheet focus case and six production-route cases; all-suite commands
   remain available for explicit full Browser Mode runs.
-  Playwright E2E remains a separate command and is not part of the local
-  pre-push profile. Production validation remains a separate gate and is
+  no standalone Playwright E2E command exists in the local pre-push profile.
+  Production validation remains a separate gate and is
   reported as not run by local pre-push when its URL/network availability is
   not established.
 - The pre-commit Secretlint gate rejects detected secrets in staged content,
@@ -3649,8 +3763,8 @@ Retired annual/quarterly GDP CSVs, metadata, snapshots, normalization records, l
   → NewGraph Plan49 comparison registry → graph/legend/tooltip/table/CSV
   (independent from Plan38's quarterly public CTI artifact and `CTIミクロ四半期系列（名目）` key)
 Loader fixture comparison gate
-  → tests/fixtures/loader-comparison/golden.json (fixed CPI/CTI/annual-GDP/quarterly-GDP observation digests and GDP artifact SHA-256 values)
-    → tests/unit/server/lib/data-fixture-comparison.test.ts (independent value/status/error comparison, 2025-only fail-closed checks, GDP-key omission, annual and quarterly fail-closed checks)
+  → tests/fixtures/loader-comparison/golden.json (CPI/CTI observation digests, status, and representative 2025年1月 values)
+    → tests/unit/server/lib/data-fixture-comparison.test.ts (independent value/status/error comparison and fail-closed checks for invalid CPI/CTI source pairs)
 data/source/{total_earning,contractual_earnings,scheduled_earnings,total_worked_hours,population_statistics,employment_indices,part_time_worker_ratio}.csv
   → server/lib/dataIo.ts
     → server/lib/data-loader/{earnings,population}.ts (domain-specific loading + caching)
@@ -3897,7 +4011,7 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, and 
 #### Scenario Browser Mode test scope
 
 - **WHEN** `pnpm test:browser` runs the browser profile
-- **THEN** it uses `vitest.browser.config.ts` to discover component cases,
+- **THEN** it uses `tests/config/browser/vitest.browser.config.ts` to discover component cases,
   asks JEV to select from that component-only catalog, and executes only the
   selected cases in headless Chromium
 - **AND** this command does not require a production build or start the
@@ -3934,8 +4048,8 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, and 
 - **AND** native ESM namespace exports are not passed to `vi.spyOn`; use
   dependency injection or `vi.mock(..., { spy: true })` when module spying is
   needed
-- **AND** blocking `alert`, `confirm`, or `print` behavior remains in
-  Playwright E2E or is explicitly mocked
+- **AND** blocking `alert`, `confirm`, or `print` behavior is explicitly mocked
+  in Browser Mode or unit tests
 
 #### Scenario Batch2 Vitest component fixture scope
 
@@ -4083,9 +4197,9 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, and 
   route-scoped invocation from the active Vitest Browser Mode
   configurations and builds selectable IDs from config, repository-relative
   spec file, and complete `fullName`
-- **AND** component scope uses only `vitest.browser.config.ts`
-- **AND** route scope includes `vitest.browser.aggregate-chromium.config.ts`
-  and every case in `vitest.browser.webkit.config.ts`, including
+- **AND** component scope uses only `tests/config/browser/vitest.browser.config.ts`
+- **AND** route scope includes `tests/config/browser/vitest.browser.aggregate-chromium.config.ts`
+  and every case in `tests/config/browser/vitest.browser.webkit.config.ts`, including
   `SectionTabsB3m` and all other files matched by that config's WebKit title
   filter
 - **AND** cases sharing a `fullName` in the same config and file are selected
@@ -4216,11 +4330,16 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, and 
 - **THEN** it executes the raw unfiltered route-scoped suite explicitly,
   without JEV selection
 
-#### Scenario Playwright E2E remains separate
+#### Scenario Browser Mode owns repository browser regressions
 
 - **WHEN** the JEV Browser Mode selector creates its catalog
 - **THEN** it includes only active Vitest Browser Mode cases and does not include
-  Playwright E2E specs or replace the separate E2E gate
+  standalone Playwright E2E specs
+- **WHEN** repository browser regressions are run
+- **THEN** component and production-route cases run through Vitest Browser Mode,
+  and no standalone Playwright E2E config, `tests/e2e` suite, or E2E cleanup
+  command is required
+- **AND** `@playwright/test` remains available as the Browser Mode provider
 
 #### Scenario PRE-PUSH Browser install prerequisite
 
@@ -4312,9 +4431,6 @@ documented boundaries:
 - `src/app/layout.tsx` is a Next framework entry that composes `next/font`,
   metadata, and global CSS; production build and browser-route checks exercise
   the framework integration.
-- `src/app/components/CtiAdjustedSeriesSection.tsx` is the unimported legacy
-  Plan40 section. Its active calculation, loader, and projection modules remain
-  in coverage.
 - `server/lib/ctiAdjustedSensitivity.ts` is a Plan39 analysis entry point
   imported by its analysis script and unit tests, but not by the application
   runtime.
@@ -4413,7 +4529,7 @@ These regression requirements do not add requirements for a new `popstate` liste
 - Component tests for chart rendering and interaction (`tests/components/`)
 - Chart component tests MUST verify that MajorIndicesChart, StackedAreaChart, SpendingBarChart, EarningsBreakdownChart, ResidualAreaChart, and NewGraph use displayed-value maximum + 3 for the Y-axis upper bound; stacked tests MUST use per-time visible-series totals, hidden-series tests MUST exclude hidden values, and ResidualAreaChart tests MUST retain its lower-bound behavior.
 - Integration tests for data mapping and computation accuracy (`tests/data-mapping/`, `tests/computation-contract/`)
-- Constant/fixture tests for expected data quality (`tests/constants/`, `tests/fixtures/`)
+- Data-quality tests and directly consumed fixtures for expected data quality (`tests/data-quality/`, `tests/fixtures/`)
 - Performance checkpoint tests (`tests/perf-checkpoint.test.ts`)
   - **Husky pre-push hook verification** (`tests/unit/husky-pre-push.test.ts`):
     - T1–T3: `check-detached-leftover.sh` detects and blocks detached HEAD commits not reachable from origin/main
@@ -4421,24 +4537,15 @@ These regression requirements do not add requirements for a new `popstate` liste
     - T6–T8: `check-clean-worktree.sh` blocks tracked differences and untracked `src/`/`server/`/`tests/` files, while allowing a clean tree with unrelated local artifacts
     - launcher contract: both hook wrappers remain POSIX-compatible and point to their `.bash` implementations
   - component selection wrapper: `tests/unit/prepush-component-browser-runner.test.ts` pins `scripts/run-prepush-component-browser.mjs` fail-closed wiring (JSON result assertion, nonzero exit on verification failure, anchored `--testNamePattern`, `--reporter=json`) and asserts the selected case's file exists and its `describe` + `it` titles assemble to the pinned full test name
-- E2E against a real build/server (`tests/e2e/`, Playwright) across three projects:
-  `chromium` (Desktop Chrome), `chromium-dark` (dark mode), `mobile-pixel` (Pixel 7 / Chromium)
-  - `range-change.e2e.spec.ts` — year-range filtering changes the rendered bars
-  - `spending-filter.e2e.spec.ts` — quarter and category filters change the rendered bars; the quarter case covers hiding and restoring all Q1–Q4 buttons and their `aria-pressed` state
-  - `real-consumption.e2e.spec.ts` — Flight payload integrity for the real-consumption series
-  - `mobile-ux.e2e.spec.ts` — 44px tap targets (R8b), 375px horizontal overflow (R7d),
-    horizontal layout for start year, end year, and max-range button on mobile viewports,
-    and `LazyMount` deferral (R12)
-  - `accessibility.e2e.spec.ts` — dark-mode legend contrast (P0-3 / P1-2 regression),
-    `:focus-visible` rings (P4-1), keyboard-only operation (P4-1), `prefers-reduced-motion` (P4-2),
-    and modal focus management — scroll preservation on dismiss & `Tab` containment (R8e)
-- `cagr-sheet.e2e.spec.ts` — CAGR コンパクトシートの開閉・計算導線・グラフ可視性（R18）
+- The standalone Playwright E2E config, empty `tests/e2e/` harness, port cleanup script, and `test:e2e*` package commands are removed because the checkout had no registered E2E cases. Repository component and production-route browser regressions run through Vitest Browser Mode; `@playwright/test` remains as its browser provider dependency.
+  - Prior `spending-filter.e2e.spec.ts`, `mobile-ux.e2e.spec.ts`, and `accessibility.e2e.spec.ts` files contained no registered behavior cases and were removed. Current viewport, touch-target, route, and accessibility checks are covered by Browser Mode/component tests such as `tests/browser-mode/SectionTabsTargets.browser.test.tsx`, `tests/browser-mode/batch3-a-production-route.browser.test.ts`, `tests/browser-mode/batch4-a-production-route.browser.test.ts`, and `tests/browser-mode/phase6-b14-residual-accessibility.browser.test.ts`.
+- `range-change`, spending-filter, and CAGR standalone Playwright coverage is not claimed by this inventory.
 - Plan37 monthly loader/data-quality coverage is in `tests/data-quality/cti-basic-series-2025.test.ts` and `tests/data-quality/earning-data-integrity.test.ts`: it verifies official nominal series selection, raw and complete-window 12MA/index calculations, the 2017-12/2018-01 and 2025 anchors, raw fixture values, and loader measurement metadata. These are loader/data-quality checks, not NewGraph SVG path assertions.
 - Plan40/Plan24 quarterly spending coverage remains a separate contract: `tests/components/SpendingBarChart.test.tsx` covers quarterly chart boundary behavior, and the quarterly browser-mode tests cover the current integrated output. The retired Plan38 key, 52-quarter projection, and dedicated metadata contract no longer have tests. These checks do not use NewGraph's `adv` query behavior.
 - NewGraph's current browser regression is `tests/browser-mode/phase6-b03-advanced-series.browser.test.ts`, driven by `tests/browser-mode/phase6-b03.route.command.ts`. It verifies the three-series registry and chart/table/CSV parity, absence of the “参考・延長系列” checkbox, and that legacy `?adv=1` does not change comparison output and is removed after URL synchronization.
 - `tests/integration/chart-table-csv-parity.test.ts` separately verifies that `adv=1` does not expose an unsupported extension in nominal/real quarterly Spending output.
-- `fixtures.ts` — shared `test` that sets `window.__MOUNT_ALL__` (R12b); specs verifying
-  deferral itself must use the plain `@playwright/test` `test`
+- Browser Mode route commands that inspect lazy-mounted charts set
+  `window.__MOUNT_ALL__` inline with `page.addInitScript` before navigation.
 
 - **Performance baseline & regression detection** (`scripts/lighthouse-mobile.js`):
   - Lighthouse CLI with mobile preset (Pixel 5 throttling, 4G)
@@ -4447,9 +4554,7 @@ These regression requirements do not add requirements for a new `popstate` liste
   - Stores JSON report in `lighthouse-reports/{date}-{timestamp}.json` and prints summary
   - Supports diff against previous run if available
 
-- **Dark mode E2E regression** via `pnpm test:e2e:dark`:
-  - Validates that `colorScheme: "dark"` fixture in chromium-dark project
-  - Ensures legend `:hover` background doesn't degenerate to white-on-white contrast
+- **Dark-mode browser regression** remains in Browser Mode: the production-route accessibility and contrast cases assert readable legend contrast under the dark theme. The former `chromium-dark` Playwright selector and `test:e2e:dark` script were removed because the project registered no active test.
 
 - **Private-consumption series identification**:
   - NewGraph uses the fixed CPI, salary, and Plan49 `消費(総合)` comparison registry; Plan37 normal/extension monthly fields are internal loader compatibility data, and the Plan40 integrated quarterly CTI output belongs to the nominal Spending contract.
@@ -4524,7 +4629,7 @@ The previously implemented v2 audit included Other derivation and `β_other`,
 2005–2016 estimation, official A retention from 2017 onward, residual
 diagnostics, G and boundary diagnostics, the five fixed γ comparison cases,
 and input validation. The v2 sensitivity path is connected to
-`scripts/plan39/run-analysis.mjs`, and the latest analysis artifact contains a
+`scripts/cti-adjusted/run-analysis.mjs`, and the latest analysis artifact contains a
 v2 section. In that artifact, Other/bottom-up coverage is 12/12 for
 2005–2016, `β_other=1.3004657346511044`, γ has five evaluated cases, G
 coverage is 2/3 for 2005–2018, and the 2016→2017 boundary is available with
@@ -4552,7 +4657,7 @@ connection, including estimated 2016→official 2017. Audit output records each
 pair's Other, total, share, share change, source type, threshold, unit, and
 pass/violation/unavailable state. Estimated values never contribute to
 threshold derivation. The `residualBoundary` sweep in
-`scripts/plan39/run-analysis.mjs` remains a separate legacy diagnostic and
+`scripts/cti-adjusted/run-analysis.mjs` remains a separate legacy diagnostic and
 does not control the V2 publication gate.
 
 - **WHEN** the Plan39-v2 residual-jump gate is evaluated, **THEN** it compares
@@ -4581,7 +4686,7 @@ diagnostic, not independent or causal validation.
 
 The production input is
 `data/source/cti-size-composition/production-pi2plus.json`, generated by
-`scripts/plan39/build-production-pi2plus.mjs`. The loader accepts it only when
+`scripts/cti-adjusted/build-production-pi2plus.mjs`. The loader accepts it only when
 `production-pi2plus-manifest.json` validates its artifact hash, normalized
 source hashes and retained January source-file hashes. Historical annual IV-4
 shares in `weights.csv` and January `setai-n` shares have distinct source and
@@ -4598,7 +4703,7 @@ or hashes fail closed. Result diagnostics include coefficients, caveats,
 
 #### 世帯人数構成候補（分析専用）
 
-`scripts/plan39/prepare-size-composition-panel.mjs` は家計調査の年次詳細結果表
+`scripts/cti-adjusted/prepare-size-composition-panel.mjs` は家計調査の年次詳細結果表
 3-1（二人以上世帯）と単身世帯表1から、2005–2017の名目支出プロフィールを作る。
 `household-survey-panel-manifest.json` は年別のe-Stat file ID/URL、元ファイルSHA-256、
 対象sheetと正規化CSV hashを記録する。抽出器は実行前にmanifestと元ファイルhashを照合し、
@@ -5358,7 +5463,7 @@ nominal B/A、Piおよび関連artifact/manifest → 入力metadata・範囲・h
 
 ### Component Tree
 
-Plan39 nominal B/A・Pi loaderとmanifest/evidence validation → `ctiAdjustedConnectionEstimateV2.ts` のPlan39年次アンカー → `server/lib/view-models/quarterlyAggregation.ts` の歴史季節配分および公式四半期loader・期間別選択 → `src/lib/quarterlyPublicProjection.ts` のcanonical名目投影 → `CpiChart` → `SpendingBarChart` / tooltip / data table / CSV。
+Plan39 nominal B/A・Pi loaderとmanifest/evidence validation → `ctiAdjustedConnectionEstimateV2.ts` のPlan39年次アンカー → `server/lib/view-models/quarterlyAggregation.ts` の歴史季節配分および公式四半期loader・期間別選択 → `src/lib/quarterlyPublicProjection.ts` のcanonical名目投影 → `CpiChart` → `SpendingBarChart` / tooltip / data table / CSV。旧Plan40年次表示用 `CtiAdjustedSeriesSection` はこのcomponent treeに含めず、Plan39年次measurement/loader/projection/data contractsはその削除から独立して維持する。
 
 ### Requirements
 
@@ -5420,7 +5525,7 @@ G1 check-only report `.data-refresh/2026-10-16T17-32-16.322Z-f64fb8ac-c230-453c-
 | 人口                              | `population_statistics.csv` と `population_statistics.metadata.json` はearnings parserを含むruntimeから参照される。e-Stat file `statInfId=000031831366` と converter入力 `data/source/economics_source/lt01-b10.xlsx` は対応する。保持中metadata/workbookでは2026年5月=10976、6月=10969を確認している。最新G1 check-onlyでは2026年5月を10976から10960へ改訂し、272 rows/271 overlapとAugust coverage expansionを記録した。これはadapter auditであり、canonical publishの証拠ではない。 | 人口はrequired output 2件を生成するadapterとして登録済み。adapterは公式hostから取得したworkbookについて、statInfId/table/dimension/frequency/unit/baseline、表題・sheet・列、2004-01開始の連続した月次coverage、converter互換CSVを検査する。SHA-256と既知観測値はbaseline証拠として保持し、hash一致だけでは受理せず、hash変更だけでも拒否しない。registryの2 outputsはCSVとmetadataで、XLSXは既存tracked local inputのまま更新しない。metadataの `file` / `sha256` / `fileSizeBytes` は保持workbookを指し続け、取得bytesのSHA-256/size/media type/timeは `lastFetchedSource` とvolatile run reportで区別する。adapterのrevision auditではcanonical CSV overlapをauthoritative prior valuesとし、metadata `verifiedObservations` はCSVにない期間だけ補完する。identity/schema不一致またはcoverage後退はfail closedとし、identityを保つ公式改訂・追加月は差分auditを記録して全履歴を再生成する。空欄・記号は補完しない。最新runでadapter validationは成功したが、最新G1はvalidatedとなりG1全体を受入済み。 |
 | Historical対象外候補 (superseded) | 旧監査ではannual GDP filesをruntime underlay、quarterly GDP snapshots/testsをtest underlayに分類していた。これは2026-10-18の消費者監査前の記録である。                                                                                                                                                                                                                                                                                                                                 | 現行分類では未使用GDP入力・専用fixtureはrefresh/runtime依存ではない。Plan40 quarterly CTIとPlan37 monthly CTIは保持し、動的proxyの任意検索可能表は対象にしない。                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 
-既存の更新・変換入口は用途を区別して維持する。`scripts/run_all_conversions.sh` は従来のbundled update入口であり、required adapterが揃いSharedPlan 52の全検証が通るまでは `data:refresh` に置き換えない。このwrapperは必要な6 executableを事前確認し、存在しない・非実行可能または失敗した場合に非zero終了し、全件成功後のみ成功を表示する。`scripts/build_*_executable.sh` と `scripts/*.spec` はobsolete Python converter用のbuild pathsとして記録し、削除・廃止済みとは扱わない。個別の `scripts/ts_converters/convert_{contractual,employment,population,scheduled,total,worked}.ts` と、`scripts/ts_converters/convert_cpi.ts` のtimestampで最大5ファイルを選ぶ処理は、consumer移行を確認するまで互換・手動経路として残す。`scripts/fetch-cti-basic-series-2025.mjs` のpure parser/builder exportsはruntime/testからimportされるため保持する。`scripts/plan39/fetch-and-build.mjs` のREADME記載済み `--quarterly-only` と `scripts/update_earnings_from_estat.ts` の `/tmp/estat-earnings-index.utf8.csv` 固定列入力も、対応consumerとmappingを検証するまではmanual/compatibility pathとして扱う。これらのpathをSharedPlan 52が削除・retireしたとは記述しない。
+既存の更新・変換入口は用途を区別して維持する。`scripts/run_all_conversions.sh` は従来のbundled update入口であり、required adapterが揃いSharedPlan 52の全検証が通るまでは `data:refresh` に置き換えない。このwrapperは必要な6 executableを事前確認し、存在しない・非実行可能または失敗した場合に非zero終了し、全件成功後のみ成功を表示する。`scripts/build_*_executable.sh` と `scripts/*.spec` はobsolete Python converter用のbuild pathsとして記録し、削除・廃止済みとは扱わない。個別の `scripts/ts_converters/convert_{contractual,employment,population,scheduled,total,worked}.ts` と、`scripts/ts_converters/convert_cpi.ts` のtimestampで最大5ファイルを選ぶ処理は、consumer移行を確認するまで互換・手動経路として残す。`scripts/fetch-cti-basic-series-2025.mjs` のpure parser/builder exportsはruntime/testからimportされるため保持する。`scripts/cti-adjusted/fetch-and-build.mjs` のREADME記載済み `--quarterly-only` と `scripts/update_earnings_from_estat.ts` の `/tmp/estat-earnings-index.utf8.csv` 固定列入力も、対応consumerとmappingを検証するまではmanual/compatibility pathとして扱う。これらのpathをSharedPlan 52が削除・retireしたとは記述しない。
 
 ### Data Flow
 
@@ -5451,3 +5556,54 @@ The current WHEN/THEN requirements are consolidated under [Requirements](#curren
 ### R-CTI-Domain-Identifiers: Canonical names and artifact compatibility
 
 The current contract is consolidated under [Requirements](#current-requirements), in the subsection [Canonical CTI identifiers and artifact compatibility](#current-cti-domain-identifiers-requirement).
+
+## SharedPlan 58: project readiness and user-facing contracts (current)
+
+This section records the current contracts introduced by SharedPlan 58 and takes precedence over earlier statements that all dashboard series use one 2025-base index. CPI uses the official 2025-base connected series; salary, consumption, and other indicators retain their own source or comparison-normalization contracts.
+
+### Data Sources
+
+- CPI runtime data is the bundled, validated 2025-base official connected monthly series and its matching contribution data under `data/source/`. Its source identity covers the nationwide monthly CPI long series. Registry discovery may request `latest-published`, but this only discovers an available release; the currently approved CPI vintage is bounded to 202607–202608. An API candidate outside that window, a replay outside the approved range, or a failed staged quality check is rejected before canonical publish. Extending the window requires an explicit synchronized change to the registry, metadata, and runtime contract.
+- The dashboard runs from its repository-bundled `data/source/` artifacts and does not need an API credential at runtime. `data:refresh` uses e-Stat API transport and reads the credential from `ESTAT_APP_ID` in the environment or `.env.local`; the credential value is never part of project documentation or reports.
+- CPI's 2025 base does not imply a shared base for all chart series. Salary and consumption comparisons follow the applicable source series and their explicitly defined comparison transformations.
+
+### Data Flow
+
+`ESTAT_APP_ID` + e-Stat API transport → registry source discovery (`latest-published` where configured) → adapter identity, schema, coverage, approved-vintage and revision checks → isolated staging → staged runtime quality validation → `--check` report without canonical writes, or journaled publish after all required checks pass. For CPI, the discovered latest month must fall within the explicitly approved 202607–202608 window; failure at any validation stage prevents publish and preserves current canonical data. The web application loads the validated bundled artifacts from `data/source/` and does not call the refresh API during normal page rendering.
+
+URL period state is initialized from complete decimal `from` / `to` year values. Malformed, unsafe, or reversed ranges fall back to the chart's default range; valid out-of-range years are clamped to the available boundary. With no chart data, the default range is the safe 2025–2025 interval and filtering returns an empty list without producing `NaN` state or a malformed range label. The URL is the initial snapshot and subsequent chart state is written with `history.replaceState`.
+
+Theme initialization reads only `light`, `dark`, and `system` from storage. Missing, corrupt, or unreadable values fall back to `system`. The early layout script applies only explicit `light` or `dark`; system mode and storage exceptions remove `data-theme` so CSS system preference applies. A failed storage write or removal does not prevent the selected theme from being applied in the current document.
+
+### Component Tree
+
+Bundled `data/source/` artifacts → server data loaders and view models → `src/app/page.tsx` → `CpiChart` and chart sections. The page's visible explanation identifies CPI as a 2025-base official connected index and describes salary/consumption as following their own published or comparison-normalization contracts. `src/app/layout.tsx` emits matching metadata, Open Graph, and Twitter descriptions. `useUrlState` normalizes the initial URL period for `CpiChart`; `ThemeToggle` owns interactive theme cycling, while the layout's early script prevents an incorrect explicit theme before hydration. The separate `scripts/data-refresh/cli.mjs` pipeline validates staged updates before publishing.
+
+### Requirements
+
+#### Project readiness, source bases, and metadata
+
+- **WHEN** a user opens the dashboard with valid bundled data, **THEN** the page renders without an e-Stat API credential and explains that CPI is the official 2025-base connected series while salary and consumption follow their own source or comparison-normalization contracts.
+- **WHEN** the document is shared or indexed, **THEN** the page description, Open Graph description, and Twitter description describe the same per-series basis contract and do not claim that every displayed series uses the 2025 annual-average base.
+
+#### URL period normalization
+
+- **WHEN** `from` or `to` is malformed, unsafe, or the normalized start is after the end, **THEN** `useUrlState` returns the chart's default range without exposing `NaN` or a reversed range.
+- **WHEN** a URL contains valid integer years outside the available range, **THEN** each endpoint is clamped to the available boundary and the resulting range is ordered.
+- **WHEN** the chart data is empty, **THEN** the default period remains the safe 2025–2025 interval and filtering produces no rows without throwing or rendering a malformed year range.
+
+#### Theme recovery
+
+- **WHEN** the stored theme is missing, corrupt, or storage reading throws, **THEN** the control initializes to `system` and the early layout script leaves the document to the system color preference.
+- **WHEN** a stored theme is `light` or `dark`, **THEN** the early layout script applies only that allowlisted explicit theme before hydration.
+- **WHEN** storage writing or removal throws during a theme change, **THEN** the control remains usable and applies the selected theme to the current document.
+
+#### CPI approved-vintage refresh gate
+
+- **WHEN** refresh discovers a CPI release whose reported end period is within the approved 202607–202608 range, **THEN** it may proceed through identity, schema, revision, staging, and runtime quality checks before publish.
+- **WHEN** the discovered CPI period ends outside 202607–202608, its revision audit fails, or staged quality validation fails, **THEN** refresh fails closed and preserves canonical data until the approved range and evidence are explicitly updated.
+- **WHEN** refresh runs with `--check`, **THEN** it records candidate/output differences without writing canonical outputs; **WHEN** refresh runs without `--check`, **THEN** canonical outputs are published only after all required staged checks pass.
+
+#### Operator documentation
+
+- **WHEN** an operator follows the repository README, **THEN** it identifies Node.js 24.22.1 LTS or a later 24.x patch release and pnpm 11.9.x, distinguishes bundled-data startup from API-backed refresh, names `ESTAT_APP_ID` without a secret value, and provides existing commands for check, publish, and project validation.

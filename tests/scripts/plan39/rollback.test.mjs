@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { verifyLoaderHashes } from "../../../scripts/plan39/rollback.mjs";
+import { verifyLoaderHashes } from "../../../scripts/cti-adjusted/rollback.mjs";
 
 const roots = [];
 const hash = (bytes) => createHash("sha256").update(bytes).digest("hex");

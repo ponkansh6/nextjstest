@@ -12,8 +12,6 @@
 
 export type QuarterlyRow = Record<string, string | number>;
 
-/** RSC ペイロード中で四半期配列を指し示すプロパティ名。`page.tsx:90-91` に対応。 */
-export const NOMINAL_PROP = "quarterlyNominalData";
 export const REAL_PROP = "quarterlyRealData";
 
 /**

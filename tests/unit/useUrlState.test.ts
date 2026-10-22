@@ -44,7 +44,7 @@ describe("useUrlState current URL state contract", () => {
     });
   });
 
-  it("keeps the current parse behavior for invalid and out-of-range values", () => {
+  it("defaults malformed ranges and rejects numeric prefixes", () => {
     window.history.replaceState(
       {},
       "",
@@ -53,15 +53,44 @@ describe("useUrlState current URL state contract", () => {
 
     const { result } = renderHook(() => useUrlState(2005, 2026));
 
-    expect(result.current.from).toBeNaN();
-    expect(result.current.to).toBe(2024);
+    expect(result.current.from).toBe(2005);
+    expect(result.current.to).toBe(2026);
     expect(result.current.hiddenKeys).toEqual(["食料"]);
 
     window.history.replaceState({}, "", "/?from=1900&to=9999");
     const outOfRange = renderHook(() => useUrlState(2005, 2026));
 
-    expect(outOfRange.result.current.from).toBe(1900);
-    expect(outOfRange.result.current.to).toBe(9999);
+    expect(outOfRange.result.current.from).toBe(2005);
+    expect(outOfRange.result.current.to).toBe(2026);
+  });
+
+  it("defaults the full range for digit-only years outside the safe integer range", () => {
+    window.history.replaceState({}, "", "/?from=9007199254740992&to=2024");
+
+    const { result } = renderHook(() => useUrlState(2005, 2026));
+
+    expect(result.current.from).toBe(2005);
+    expect(result.current.to).toBe(2026);
+  });
+
+  it("clamps valid out-of-range years and defaults reversed ranges", () => {
+    window.history.replaceState({}, "", "/?from=1900&to=2024");
+    const clampedStart = renderHook(() => useUrlState(2005, 2026));
+    expect(clampedStart.result.current).toMatchObject({ from: 2005, to: 2024 });
+
+    window.history.replaceState({}, "", "/?from=2024&to=9999");
+    const clampedEnd = renderHook(() => useUrlState(2005, 2026));
+    expect(clampedEnd.result.current).toMatchObject({ from: 2024, to: 2026 });
+
+    window.history.replaceState({}, "", "/?from=2025&to=2010");
+    const reversed = renderHook(() => useUrlState(2005, 2026));
+    expect(reversed.result.current).toMatchObject({ from: 2005, to: 2026 });
+  });
+
+  it("uses the finite defaults when the available data range is empty", () => {
+    window.history.replaceState({}, "", "/?from=1900&to=9999");
+    const { result } = renderHook(() => useUrlState(2025, 2025));
+    expect(result.current).toMatchObject({ from: 2025, to: 2025 });
   });
 
   it("writes from/to/hidden and removes deprecated adv while preserving other params", () => {

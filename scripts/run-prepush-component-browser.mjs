@@ -29,7 +29,7 @@ try {
       vitestCli,
       "run",
       "--config",
-      "vitest.browser.config.ts",
+      "tests/config/browser/vitest.browser.config.ts",
       "--testNamePattern",
       `^${escapeRegexLiteral(selectedName)}$`,
       "--reporter=default",

@@ -10,7 +10,7 @@ describe("Plan39 analysis audit checker", () => {
   it("recomputes v2 with the rolling-LOO input fingerprint from generated analysis", () => {
     const output = execFileSync(
       "pnpm",
-      ["exec", "tsx", path.join(repoRoot, "scripts/plan39/run-analysis.mjs"), "--check"],
+      ["exec", "tsx", path.join(repoRoot, "scripts/cti-adjusted/run-analysis.mjs"), "--check"],
       { cwd: repoRoot, encoding: "utf8" },
     );
     const verifiedFile = output.match(/^verified: (.+)$/m)?.[1];

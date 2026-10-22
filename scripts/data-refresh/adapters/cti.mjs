@@ -12,7 +12,7 @@ import {
   parseOfficialFile,
   SERIES,
 } from "../../fetch-cti-basic-series-2025.mjs";
-import { buildPlan39CtiArtifacts } from "../../plan39/fetch-and-build.mjs";
+import { buildPlan39CtiArtifacts } from "../../cti-adjusted/fetch-and-build.mjs";
 import {
   CTI_INPUT_IDENTITIES,
   CTI_OUTPUTS,

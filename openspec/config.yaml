@@ -3,15 +3,15 @@ schema: spec-driven
 # Project context — shown to AI when creating artifacts
 context: |
   ## 技術スタック
-  - Framework: Next.js 16 (App Router, Turbopack)
-  - Language: TypeScript 6 (strict mode)
-  - Runtime: Bun (package manager: pnpm)
-  - UI: React 19, CSS Modules, Recharts (v3)
-  - State: Redux Toolkit (@reduxjs/toolkit)
-  - Data処理: Arquero (table transform), PapaParse (CSV), xlsx (Excel)
-  - Testing: Vitest, @testing-library/react, happy-dom
-  - Lint/Format: ESLint, Oxlint, Oxfmt, Prettier
-  - Pre-commit: Husky + lint-staged
+  - Framework: Next.js 16.3.8 (App Router; Turbopack development, webpack production build)
+  - Language: TypeScript 5.9.3 (strict mode)
+  - Runtime: Node.js 24.22.1 LTS or later 24.x patch (package manager: pnpm 11.9.x)
+  - UI: React 19.2, CSS Modules, Recharts 3
+  - State: React state and URL search parameters; Redux is not used
+  - Data処理: Arquero, PapaParse, xlsx, and project-specific Node.js loaders/adapters
+  - Testing: Vitest 4, @testing-library/react, happy-dom, and Playwright
+  - Lint/Format: Oxlint and Oxfmt
+  - Pre-commit: Husky
 
   ## プロジェクト構造
   - src/app/ — App Router pages/layouts (RSC)
@@ -21,14 +21,14 @@ context: |
   - src/lib/ — Client utility modules
   - src/types/ — TypeScript type definitions
   - server/lib/ — Server-only logic (data loading, processing)
-  - scripts/ — Data conversion scripts (Python→TS migration済)
-  - public/ — Static CSV data files
+  - scripts/ — Data refresh, source adapters, and conversion/analysis scripts
+  - data/source/ — Bundled official and derived runtime data plus provenance metadata
   - tests/ — Test suites (unit, integration, component)
 
   ## ドメイン知識
   - 日本の経済指標ダッシュボード：CPI（消費者物価指数）、CTI（景気動向指数）、賃金統計（所定内・所定外・総実労働時間）、人口統計
-  - データソース：政府統計CSV（e-Stat等）をスクリプトで加工 → public/ 配下に配置
-  - 指標は2025年基準でスケール統一、長期推移を可視化
+  - データソース：e-Stat等の政府統計を検証・変換し、同梱データとして data/source/ に保持
+  - CPIは2025年基準の公式接続指数。賃金・消費などは各系列の公式基準または明示された比較用正規化契約に従う
   - 各種グラフは凡例クリックで系列の表示/非表示を切り替え可能
 
   ## コーディング規約

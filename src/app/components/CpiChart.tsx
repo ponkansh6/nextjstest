@@ -15,11 +15,7 @@ import { useToggleSet } from "../../hooks/useToggleSet";
 import { useUrlState } from "../../hooks/useUrlState";
 import { CpiChartSections } from "./CpiChartSections";
 import { BottomSheet } from "./BottomSheet";
-import {
-  getChartInfoContent,
-  type CpiChartInfoState,
-  type CtiChartInfoState,
-} from "@/lib/chartInfoContent";
+import { getChartInfoContent, type CpiChartInfoState } from "@/lib/chartInfoContent";
 
 import {
   keyPairs,
@@ -51,7 +47,6 @@ interface CpiChartProps {
   totalEarningData: EarningsView[];
   maxCpiDate: { year: number; month: number };
   cpiInfoState?: CpiChartInfoState;
-  ctiInfoState?: CtiChartInfoState;
   consumptionSeriesState?: { status: "valid" | "invalid"; reason: string | null };
 }
 
@@ -61,13 +56,12 @@ export default function CpiChart({
   quarterlyRealData,
   totalEarningData,
   cpiInfoState,
-  ctiInfoState,
   consumptionSeriesState = { status: "invalid", reason: null },
 }: CpiChartProps) {
   const { isMobile, chartColors } = useChartTheme();
   const cpiMajorInfo = getChartInfoContent("cpi-major", cpiInfoState);
   const stackedAreaInfo = getChartInfoContent("stacked-area", cpiInfoState);
-  const consumptionInfo = getChartInfoContent("consumption-expenditure", undefined, ctiInfoState);
+  const consumptionInfo = getChartInfoContent("consumption-expenditure");
   const newGraphInfo = getChartInfoContent("new-graph");
 
   // 全ての年を抽出

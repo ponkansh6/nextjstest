@@ -2,13 +2,11 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { CpiData } from "@/types";
 import type { CpiDataStatus } from "../../server/lib/data-loader/cpiSource";
-import type { CtiBasicConsumptionStatus } from "../../server/lib/ctiBasicSeries2025LongTerm";
 
 const mocks = vi.hoisted(() => ({
   loadCpiData: vi.fn(),
   loadTotalEarningData: vi.fn(),
   getCpiDataStatus: vi.fn(),
-  getCtiBasicConsumptionStatus: vi.fn(),
   getCpiUnavailableLabel: vi.fn(),
   toCpiView: vi.fn(),
   toEarningsView: vi.fn(),
@@ -21,7 +19,6 @@ vi.mock("../../server/lib/dataLoader", () => ({
   loadCpiData: mocks.loadCpiData,
   loadTotalEarningData: mocks.loadTotalEarningData,
   getCpiDataStatus: mocks.getCpiDataStatus,
-  getCtiBasicConsumptionStatus: mocks.getCtiBasicConsumptionStatus,
 }));
 
 vi.mock("../../server/lib/view-models/dashboard", () => ({
@@ -58,17 +55,6 @@ const cpiRows = [
   },
 ] satisfies CpiData[];
 
-const ctiStatus = (overrides: Partial<CtiBasicConsumptionStatus> = {}) =>
-  ({
-    valid: true,
-    baseline: 100,
-    reason: null,
-    artifactRoot: "data/source/official-cti-2025-long-term",
-    artifactStatus: "ready",
-    artifactReason: null,
-    ...overrides,
-  }) satisfies CtiBasicConsumptionStatus;
-
 const quarterlyData = {
   nominal: [{ 年月: "2025Q1", 年: 2025, quarter: 1, label: "2025Q1" }],
   real: [{ 年月: "2025Q1", 年: 2025, quarter: 1, label: "2025Q1" }],
@@ -79,12 +65,10 @@ const chartProps = () => mocks.chartProps.at(-1) as Record<string, unknown>;
 
 function setLoaderState({
   cpiStatus = { baseYear: 2025, pair: "2025", valid: true },
-  cti = ctiStatus(),
   consumptionRows = cpiRows,
   cpiView = [{ 年月: "2025年1月", 総合: 100 }],
 }: {
   cpiStatus?: CpiDataStatus;
-  cti?: CtiBasicConsumptionStatus;
   // The runtime loader adds a measurement sidecar to the public numeric row;
   // the page intentionally reads that additive metadata without exposing it
   // through the CpiData index signature.
@@ -94,7 +78,6 @@ function setLoaderState({
   mocks.loadCpiData.mockResolvedValue(cpiRows);
   mocks.loadTotalEarningData.mockResolvedValue(consumptionRows);
   mocks.getCpiDataStatus.mockResolvedValue(cpiStatus);
-  mocks.getCtiBasicConsumptionStatus.mockResolvedValue(cti);
   mocks.toCpiView.mockReturnValue(cpiView);
   mocks.toEarningsView.mockReturnValue([{ 年月: "2025年1月", 総合: 100 }]);
   mocks.loadQuarterlyPublicData.mockResolvedValue(quarterlyData);
@@ -135,7 +118,7 @@ describe("home page public status and rendering branches", () => {
     expect(screen.getByRole("heading", { name: "物価・賃金・消費の推移" })).toBeTruthy();
     expect(
       screen.getByText(
-        "各指標は2025年平均=100の指数で表示しています。凡例クリックで系列を切替可能。",
+        "CPIは2025年基準の公式接続指数です。賃金・消費などは各系列の公表基準または比較用の正規化契約に基づいています。凡例から表示系列を切り替えられます。",
       ),
     ).toBeTruthy();
     expect(screen.getByTestId("cpi-chart")).toBeTruthy();
@@ -158,24 +141,14 @@ describe("home page public status and rendering branches", () => {
           sourceMode: "official-long",
           label: "2025年基準の公式接続指数",
         },
-        ctiInfoState: expect.objectContaining({
-          baseYear: 2025,
-          sourceMode: "official-connected",
-          status: "valid",
-          series: expect.objectContaining({
-            raw: expect.objectContaining({ status: "valid", reason: null }),
-            comparison: expect.objectContaining({ status: "valid", reason: null }),
-          }),
-        }),
         consumptionSeriesState: { status: "valid", reason: null },
       }),
     );
   });
 
-  it("uses the 2025 official CPI label and exposes invalid CTI plus missing comparison state", async () => {
+  it("uses the 2025 official CPI label and missing comparison state", async () => {
     setLoaderState({
       cpiStatus: { baseYear: 2025, pair: "2025", valid: true },
-      cti: ctiStatus({ valid: false, reason: null, artifactStatus: "unavailable" }),
       consumptionRows: [{ ...cpiRows[0] }],
     });
 
@@ -187,18 +160,6 @@ describe("home page public status and rendering branches", () => {
       sourceMode: "official-long",
       label: "2025年基準の公式接続指数",
     });
-    expect(chartProps().ctiInfoState).toEqual(
-      expect.objectContaining({
-        baseYear: null,
-        sourceMode: "unavailable",
-        unavailableReason: "CTI長期系列を利用できません。",
-        status: "invalid",
-        series: expect.objectContaining({
-          raw: expect.objectContaining({ status: "invalid", reason: null }),
-          comparison: expect.objectContaining({ status: "invalid", reason: null }),
-        }),
-      }),
-    );
     expect(chartProps().consumptionSeriesState).toEqual({ status: "invalid", reason: null });
   });
 
@@ -234,9 +195,8 @@ describe("home page public status and rendering branches", () => {
     expect(screen.getAllByText("CPIデータは現在利用できません。")).toHaveLength(2);
   });
 
-  it("preserves explicit CTI and comparison validation reasons", async () => {
+  it("preserves explicit comparison validation reasons", async () => {
     setLoaderState({
-      cti: ctiStatus({ valid: false, reason: "official CTI checksum mismatch" }),
       consumptionRows: [
         {
           ...cpiRows[0],
@@ -253,20 +213,6 @@ describe("home page public status and rendering branches", () => {
 
     render(await Page());
 
-    expect(chartProps().ctiInfoState).toEqual(
-      expect.objectContaining({
-        unavailableReason: "official CTI checksum mismatch",
-        reason: "official CTI checksum mismatch",
-        series: expect.objectContaining({
-          raw: expect.objectContaining({ reason: "official CTI checksum mismatch" }),
-          comparison: expect.objectContaining({
-            source: "comparison validation source",
-            status: "invalid",
-            reason: "comparison series failed validation",
-          }),
-        }),
-      }),
-    );
     expect(chartProps().consumptionSeriesState).toEqual({
       status: "invalid",
       reason: "comparison series failed validation",
@@ -286,16 +232,6 @@ describe("home page public status and rendering branches", () => {
     });
 
     render(await Page());
-
-    expect(chartProps().ctiInfoState).toEqual(
-      expect.objectContaining({
-        series: expect.objectContaining({
-          comparison: expect.objectContaining({
-            source: "e-Stat CTI長期系列と公式月次消費支出から算出",
-          }),
-        }),
-      }),
-    );
   });
 
   it("renders the CPI unavailable empty-data message in production", async () => {

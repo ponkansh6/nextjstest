@@ -1,5 +1,5 @@
 {
-  "vitest.browser.aggregate-chromium.config.ts": [
+  "tests/config/browser/vitest.browser.aggregate-chromium.config.ts": [
     {
       "file": "tests/browser-mode/next-route-poc.browser.test.ts",
       "names": [

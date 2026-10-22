@@ -126,7 +126,7 @@ export function projectCtiAdjustedV2PublicView(
 }
 
 /**
- * Adapts the v2 category set to the existing CtiAdjustedDisplayRow contract.
+ * Adapts the v2 category set to the existing CtiAdjustedPublicRow contract.
  * The display slot named 残差 is retained for compatibility; its measurement
  * remains the v2 その他の消費支出 measurement and carries v2 provenance.
  */

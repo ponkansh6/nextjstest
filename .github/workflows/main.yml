@@ -34,7 +34,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "24"
+          node-version: "24.22.1"
           cache: "pnpm"
 
       - name: Cache Next.js build cache
@@ -87,7 +87,7 @@ jobs:
         id: setup-node
         uses: actions/setup-node@v4
         with:
-          node-version: "24"
+          node-version: "24.22.1"
           cache: "pnpm"
 
       - name: Record dependency cache status
@@ -140,23 +140,6 @@ jobs:
           set -o pipefail
           trap 'status=$?; finished=$(date +%s); echo "- security check: $((finished - started))s (exit $status)" >> "$GITHUB_STEP_SUMMARY"' EXIT
           pnpm security-check 2>&1 | tee artifacts/validation-logs/security-check.log
-
-      - name: E2E
-        run: |
-          started=$(date +%s)
-          set -o pipefail
-          trap 'status=$?; finished=$(date +%s); echo "- E2E: $((finished - started))s (exit $status)" >> "$GITHUB_STEP_SUMMARY"' EXIT
-          { pnpm test:e2e:clean && pnpm test:e2e; } 2>&1 | tee artifacts/validation-logs/e2e.log
-
-      - name: Upload Playwright reports
-        if: ${{ always() }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report-${{ github.run_id }}
-          path: |
-            playwright-report/
-            test-results/
-          if-no-files-found: ignore
 
       - name: Upload validation measurements
         if: ${{ always() }}

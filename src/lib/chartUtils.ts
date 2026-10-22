@@ -46,10 +46,12 @@ export const filterDataByYear = <T extends { 年月: string }>(
   startYear: number,
   endYear: number,
 ): T[] =>
-  data.filter((item) => {
-    const year = extractYear(item.年月);
-    return year !== null && year >= startYear && year <= endYear;
-  });
+  Number.isSafeInteger(startYear) && Number.isSafeInteger(endYear) && startYear <= endYear
+    ? data.filter((item) => {
+        const year = extractYear(item.年月);
+        return year !== null && year >= startYear && year <= endYear;
+      })
+    : [];
 
 /**
  * 賃金データとCPIデータをマージする
@@ -60,6 +62,10 @@ export const mergeChartData = (
   startYear: number,
   endYear: number,
 ): MergedData[] => {
+  if (!Number.isSafeInteger(startYear) || !Number.isSafeInteger(endYear) || startYear > endYear) {
+    return [];
+  }
+
   const map = new Map<string, MergedData>();
 
   // 賃金データの追加（範囲フィルタ済み）

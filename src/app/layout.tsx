@@ -14,19 +14,21 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   description:
-    "物価指数・現金給与総額・消費支出の2020年基準指数を一画面で比較。費目別寄与度・年率上昇率・給与と物価の乖離を可視化。凡例クリックで系列の表示/非表示を切替可能。",
+    "2025年基準の消費者物価指数と、各系列の公表基準または比較用正規化契約に基づく賃金・消費動向を可視化。凡例から系列を切り替えられる日本の経済指標ダッシュボード。",
   title: "日本の経済指標ダッシュボード | 物価・賃金・消費の長期推移",
   metadataBase: new URL("https://example.com"),
   openGraph: {
     title: "日本の経済指標ダッシュボード | 物価・賃金・消費の長期推移",
-    description: "物価指数・現金給与総額・消費支出の2020年基準指数を一画面で比較。",
+    description:
+      "2025年基準の消費者物価指数と、各系列の公表基準または比較用正規化契約に基づく賃金・消費動向を可視化。",
     type: "website",
     locale: "ja_JP",
   },
   twitter: {
     card: "summary_large_image",
     title: "日本の経済指標ダッシュボード | 物価・賃金・消費の長期推移",
-    description: "物価指数・現金給与総額・消費支出の2020年基準指数を一画面で比較。",
+    description:
+      "2025年基準の消費者物価指数と、各系列の公表基準または比較用正規化契約に基づく賃金・消費動向を可視化。",
   },
 };
 
@@ -47,7 +49,7 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem("theme");if(t==="dark"){document.documentElement.setAttribute("data-theme","dark");}else if(t==="light"){document.documentElement.setAttribute("data-theme","light");}}catch(e){}})();`,
+            __html: `(function(){var root=document.documentElement;try{var t=localStorage.getItem("theme");if(t==="dark"||t==="light"){root.setAttribute("data-theme",t);}else{root.removeAttribute("data-theme");}}catch(e){root.removeAttribute("data-theme");}})();`,
           }}
         />
       </head>

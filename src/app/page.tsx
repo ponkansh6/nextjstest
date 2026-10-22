@@ -1,10 +1,5 @@
 import { Suspense } from "react";
-import {
-  getCpiDataStatus,
-  getCtiBasicConsumptionStatus,
-  loadCpiData,
-  loadTotalEarningData,
-} from "../../server/lib/dataLoader";
+import { getCpiDataStatus, loadCpiData, loadTotalEarningData } from "../../server/lib/dataLoader";
 import { toCpiView, toEarningsView } from "../../server/lib/view-models/dashboard";
 import { loadQuarterlyPublicData } from "../../server/lib/view-models/quarterlyProjection";
 import CpiChart from "./components/CpiChart";
@@ -20,11 +15,10 @@ import {
 export const revalidate = false;
 
 export default async function Page() {
-  const [cleanData, totalEarningData, cpiDataStatus, ctiBasicStatus] = await Promise.all([
+  const [cleanData, totalEarningData, cpiDataStatus] = await Promise.all([
     loadCpiData(),
     loadTotalEarningData(),
     getCpiDataStatus(),
-    getCtiBasicConsumptionStatus(),
   ]);
   const consumptionMeasurement = totalEarningData
     .map(
@@ -63,73 +57,7 @@ export default async function Page() {
   const cpiSummary =
     cpiInfoState.baseYear === null
       ? (cpiInfoState.label ?? "CPIデータは現在利用できません。")
-      : "各指標は2025年平均=100の指数で表示しています。凡例クリックで系列を切替可能。";
-  const ctiInfoState = ctiBasicStatus.valid
-    ? {
-        baseYear: 2025 as const,
-        sourceMode: "official-connected" as const,
-        seriesLabel: "二人以上の世帯「消費支出（名目）」原数値",
-        comparisonNormalization: "2025-annual-average" as const,
-        status: "valid" as const,
-        reason: null,
-        baseline: ctiBasicStatus.baseline,
-        artifactRoot: ctiBasicStatus.artifactRoot,
-        artifactStatus: ctiBasicStatus.artifactStatus,
-        artifactReason: ctiBasicStatus.artifactReason,
-        source: "e-Stat 公式CTI長期artifact 000040499070" as const,
-        unit: "指数" as const,
-        series: {
-          raw: {
-            key: CTI_BASIC_RAW_KEY,
-            valueType: "raw" as const,
-            unit: "指数",
-            source: "e-Stat 公式CTI長期artifact 000040499070",
-            status: "valid" as const,
-            reason: null,
-          },
-          comparison: {
-            key: CONSUMPTION_TOTAL_12MA_KEY,
-            valueType: "comparison" as const,
-            unit: "指数",
-            source:
-              consumptionMeasurement?.source ?? "e-Stat CTI長期系列と公式月次消費支出から算出",
-            status: consumptionSeriesState.status,
-            reason: consumptionSeriesState.reason,
-          },
-        },
-      }
-    : {
-        baseYear: null,
-        sourceMode: "unavailable" as const,
-        unavailableReason: ctiBasicStatus.reason ?? "CTI長期系列を利用できません。",
-        status: "invalid" as const,
-        reason: ctiBasicStatus.reason,
-        baseline: ctiBasicStatus.baseline,
-        artifactRoot: ctiBasicStatus.artifactRoot,
-        artifactStatus: ctiBasicStatus.artifactStatus,
-        artifactReason: ctiBasicStatus.artifactReason,
-        source: "e-Stat 公式CTI長期artifact 000040499070" as const,
-        unit: "指数" as const,
-        series: {
-          raw: {
-            key: CTI_BASIC_RAW_KEY,
-            valueType: "raw" as const,
-            unit: "指数",
-            source: "e-Stat 公式CTI長期artifact 000040499070",
-            status: "invalid" as const,
-            reason: ctiBasicStatus.reason,
-          },
-          comparison: {
-            key: CONSUMPTION_TOTAL_12MA_KEY,
-            valueType: "comparison" as const,
-            unit: "指数",
-            source:
-              consumptionMeasurement?.source ?? "e-Stat CTI長期系列と公式月次消費支出から算出",
-            status: consumptionSeriesState.status,
-            reason: consumptionSeriesState.reason,
-          },
-        },
-      };
+      : "CPIは2025年基準の公式接続指数です。賃金・消費などは各系列の公表基準または比較用の正規化契約に基づいています。凡例から表示系列を切り替えられます。";
   const {
     nominal: projectedQuarterlyNominal,
     real: projectedQuarterlyReal,
@@ -175,7 +103,6 @@ export default async function Page() {
             totalEarningData={projectedEarningsData}
             maxCpiDate={maxCpiDate}
             cpiInfoState={cpiInfoState}
-            ctiInfoState={ctiInfoState}
             consumptionSeriesState={consumptionSeriesState}
           />
         </Suspense>

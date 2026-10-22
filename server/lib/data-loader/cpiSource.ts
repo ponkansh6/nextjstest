@@ -31,6 +31,7 @@ type Cpi2025Metadata = {
   contributionFile: string;
   csvSha256: string;
   period: { start: string; end: string; monthlyRows: number };
+  approvedPeriod: { from: string; through: string; discovery?: string };
   seriesCount: number;
 };
 
@@ -75,13 +76,18 @@ export function validate2025Metadata(metadataPath: string): Cpi2025Metadata | st
     ) {
       return "2025 metadata monthlyRows mismatch";
     }
-    // This runtime supports the checked-in July baseline and the current August refresh.
-    // Keep the lower bound to reject replayed older metadata and the upper bound to
-    // prevent a syntactically valid but unsupported future period from being selected.
+    // This is the runtime side of the explicitly reviewed CPI vintage contract.
+    // A new vintage requires a reviewed update to the registry, source metadata,
+    // this bound, and the CPI stage/quality fixtures. latest-published is not authorization.
     const supportedMinimum = 2026 * 12 + 7;
     const supportedMaximum = 2026 * 12 + 8;
     const endOrdinal = end.year * 12 + end.month;
-    if (endOrdinal < supportedMinimum || endOrdinal > supportedMaximum) {
+    if (
+      endOrdinal < supportedMinimum ||
+      endOrdinal > supportedMaximum ||
+      metadata.approvedPeriod?.from !== "202607" ||
+      metadata.approvedPeriod?.through !== "202608"
+    ) {
       return "2025 metadata period mismatch";
     }
     if (metadata.seriesCount !== 78) return "2025 metadata seriesCount mismatch";

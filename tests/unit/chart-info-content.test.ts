@@ -35,12 +35,7 @@ describe("new-graph chart info (3種比較)", () => {
 describe("new-graph chart info data-source state", () => {
   it("月次比較の説明にCTI選択状態を混ぜない", async () => {
     const { getChartInfoContent } = await import("@/lib/chartInfoContent");
-    const info = getChartInfoContent("new-graph", undefined, {
-      baseYear: 2025,
-      sourceMode: "official-connected",
-      seriesLabel: "基本系列（原数値）",
-      reason: "monthly CTI state detail",
-    });
+    const info = getChartInfoContent("new-graph");
     const text = [info.source, ...info.sections.flatMap((s) => s.items.map((i) => i.text))].join(
       "\n",
     );
@@ -94,64 +89,6 @@ describe("consumption-expenditure chart info", () => {
       "https://www.e-stat.go.jp/stat-search/file-download?fileKind=0&statInfId=000040499087",
     );
     expect(text).not.toMatch(/2005Q1|2017Q4|raw|12MA|metadata|CSV|fallback/i);
-  });
-
-  it("keeps this quarterly explanation fixed across monthly CTI states and omits loader metadata", async () => {
-    const { getChartInfoContent } = await import("@/lib/chartInfoContent");
-    const defaultInfo = getChartInfoContent("consumption-expenditure");
-    const states = [
-      {
-        baseYear: 2025 as const,
-        sourceMode: "official-connected" as const,
-        seriesLabel: "CTI名目raw 12MA 2005Q1〜2017Q4",
-        status: "invalid" as const,
-        reason: "official fixture detail",
-        source: "internal artifact source",
-        unit: "指数",
-      },
-      {
-        baseYear: null,
-        sourceMode: "unavailable" as const,
-        unavailableReason: "monthly feed unavailable",
-        series: {
-          raw: {
-            key: "cti_nominal_raw",
-            valueType: "raw" as const,
-            unit: "指数",
-            source: "internal monthly source",
-            status: "invalid" as const,
-            reason: "raw state detail",
-          },
-          comparison: {
-            key: "cti_nominal_comparison",
-            valueType: "comparison" as const,
-            unit: "指数",
-            source: "internal monthly source",
-            status: "invalid" as const,
-            reason: "comparison state detail",
-          },
-        },
-      },
-      {
-        baseYear: 2020 as const,
-        sourceMode: "rollback" as const,
-        reason: "rollback fixture detail",
-        supportLabel: "internal support label",
-        artifactRoot: "internal artifact root",
-      },
-    ];
-
-    for (const state of states) {
-      expect(getChartInfoContent("consumption-expenditure", undefined, state)).toEqual(defaultInfo);
-    }
-
-    const visibleText = [
-      defaultInfo.source,
-      ...defaultInfo.sections.flatMap((section) => section.items.map((item) => item.text)),
-    ].join("\n");
-    expect(visibleText).not.toMatch(
-      /CTI名目raw|12MA|2005Q1|2017Q4|metadata|internal|fixture detail/i,
-    );
   });
 });
 

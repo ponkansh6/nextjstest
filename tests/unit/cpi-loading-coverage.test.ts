@@ -48,6 +48,7 @@ function build2025PairFixture(
     contributionFile: "contribution2025.csv",
     csvSha256: createHash("sha256").update(csv).digest("hex"),
     period: { start: "1970年1月", end: "2026年7月", monthlyRows: 679 },
+    approvedPeriod: { from: "202607", through: "202608" },
     seriesCount: 78,
     ...overrides.metadata,
   };
@@ -314,6 +315,7 @@ describe("CPI loading public contract edge coverage", () => {
       contributionFile: "contribution2025.csv",
       csvSha256: "a".repeat(64),
       period: { start: "1970年1月", end: "2026年7月", monthlyRows: 679 },
+      approvedPeriod: { from: "202607", through: "202608" },
       seriesCount: 78,
       ...override,
     };

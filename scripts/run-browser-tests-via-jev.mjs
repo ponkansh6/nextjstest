@@ -14,9 +14,9 @@ const VITEST = path.join(ROOT, "node_modules/vitest/vitest.mjs");
 const JEV_CLIENT = path.join(ROOT, "skills/jev-review/scripts/jev-request.mjs");
 const ROUTE_RUNNER = path.join(ROOT, "scripts/run-next-route-poc.mjs");
 const CONFIGS = [
-  "vitest.browser.config.ts",
-  "vitest.browser.aggregate-chromium.config.ts",
-  "vitest.browser.webkit.config.ts",
+  "tests/config/browser/vitest.browser.config.ts",
+  "tests/config/browser/vitest.browser.aggregate-chromium.config.ts",
+  "tests/config/browser/vitest.browser.webkit.config.ts",
 ];
 const ROUTE_CONFIGS = new Set(CONFIGS.slice(1));
 const QUESTIONS_PER_REQUEST = 24;
@@ -774,9 +774,12 @@ function collectCatalog(configs, diagnosticsDirectory) {
   for (const config of configs) {
     const args = [VITEST, "list", "--config", config, "--json"];
     const result = run(process.execPath, args);
-    const stdoutFile = path.join(diagnosticsDirectory, `${config}.stdout.txt`);
-    const stderrFile = path.join(diagnosticsDirectory, `${config}.stderr.txt`);
-    const metadataFile = path.join(diagnosticsDirectory, `${config}.metadata.json`);
+    const configLabel = path.basename(config).replace(/[^A-Za-z0-9._-]/g, "_");
+    const configId = createHash("sha256").update(config).digest("hex");
+    const artifactPrefix = `${configLabel}-${configId}`;
+    const stdoutFile = path.join(diagnosticsDirectory, `${artifactPrefix}.stdout.txt`);
+    const stderrFile = path.join(diagnosticsDirectory, `${artifactPrefix}.stderr.txt`);
+    const metadataFile = path.join(diagnosticsDirectory, `${artifactPrefix}.metadata.json`);
     writeFileSync(stdoutFile, result.stdout ?? "", { flag: "wx", mode: 0o600 });
     writeFileSync(stderrFile, result.stderr ?? "", { flag: "wx", mode: 0o600 });
     writeFileSync(
@@ -979,7 +982,7 @@ function makeSelection(catalog, selected) {
 function runSelectedTests(selection, directory) {
   for (const entry of selection.direct) {
     const filter = makeTestNamePattern(entry.names, {
-      webkit: entry.config === "vitest.browser.webkit.config.ts",
+      webkit: entry.config === "tests/config/browser/vitest.browser.webkit.config.ts",
     });
     const result = run(
       process.execPath,

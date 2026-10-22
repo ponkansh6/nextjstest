@@ -16,6 +16,13 @@ export const ChartFilters = ({
   setStartYear,
   setEndYear,
 }: ChartFiltersProps) => {
+  // When the source has no parseable years (including an empty dataset), keep
+  // the controlled selects usable by exposing the current normalized range.
+  const hasAvailableYears = allYears.length > 0;
+  const selectableYears = hasAvailableYears
+    ? allYears
+    : [...new Set([MIN_DISPLAY_YEAR, startYear, endYear])].sort((a, b) => a - b);
+
   return (
     <div className={styles.filterContainer}>
       <div className={styles.filterRow}>
@@ -27,7 +34,7 @@ export const ChartFilters = ({
             onChange={(e) => setStartYear(parseInt(e.target.value, 10))}
             className={styles.select}
           >
-            {allYears.map((year) => (
+            {selectableYears.map((year) => (
               <option key={year} value={year} disabled={year > endYear}>
                 {year}年
               </option>
@@ -42,7 +49,7 @@ export const ChartFilters = ({
             onChange={(e) => setEndYear(parseInt(e.target.value, 10))}
             className={styles.select}
           >
-            {allYears.map((year) => (
+            {selectableYears.map((year) => (
               <option key={year} value={year} disabled={year < startYear}>
                 {year}年
               </option>
@@ -52,8 +59,10 @@ export const ChartFilters = ({
             type="button"
             className={styles.maxRangeButton}
             onClick={() => {
-              const maxYear = allYears[allYears.length - 1] ?? MIN_DISPLAY_YEAR;
-              setStartYear(MIN_DISPLAY_YEAR);
+              // Available-year endpoints exist when present; the fallback list always contains MIN_DISPLAY_YEAR.
+              const minYear = hasAvailableYears ? selectableYears[0]! : MIN_DISPLAY_YEAR;
+              const maxYear = hasAvailableYears ? selectableYears.at(-1)! : MIN_DISPLAY_YEAR;
+              setStartYear(minYear);
               setEndYear(maxYear);
             }}
           >

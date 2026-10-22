@@ -1,36 +1,52 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 日本の経済指標ダッシュボード
 
-## Getting Started
+CPI（消費者物価指数）、賃金、消費動向をチャートで確認する Next.js アプリです。実行時データはリポジトリ内の `data/source/` に同梱しており、通常のローカル起動に e-Stat API の認証情報は必要ありません。データを更新するときは e-Stat API を利用するため、`ESTAT_APP_ID` を設定してください。
 
-First, run the development server:
+## 必要環境
+
+- Node.js 24.22.1 LTS or a later 24.x patch release
+- pnpm 11.9.x
+
+依存関係をインストールして開発サーバーを起動します。
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+ブラウザーで <http://localhost:3000> を開きます。本番相当で確認する場合は次を実行します。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+pnpm build
+pnpm start
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## データ更新
 
-## Learn More
+ローカル同梱データでアプリを使うだけなら、この節の設定は不要です。refresh CLI は必要な e-Stat API 情報を取得するため `ESTAT_APP_ID` を読み込みます。`.env.example` を参考に `.env.local` を作成して変数名を設定してください。認証値をREADME、コミット対象ファイル、ログへ記載しないでください。
 
-To learn more about Next.js, take a look at the following resources:
+まず `--check` で取得候補を検証します。このモードはcanonicalデータを更新しません。
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+pnpm data:refresh --check
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+検査結果を確認し、更新を反映するときに引数なしで実行します。全sourceの取得・staging・runtime品質検証が成功した後に publish します。失敗した場合は既存データを保持します。
 
-## Deploy on Vercel
+```bash
+pnpm data:refresh
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 検証コマンド
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+pnpm run lint:fast
+pnpm run type-check
+pnpm run test:coverage
+pnpm run build
+pnpm run test:browser:next-route-poc:built:all
+pnpm run test:build-parity
+pnpm run security-check
+```
+
+ブラウザーコンポーネント検証は `pnpm run test:browser:component:all` で実行できます。browser route コマンドは production build 済みのアプリを対象とするため、先に `pnpm build` を実行してください。

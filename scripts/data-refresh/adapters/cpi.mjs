@@ -268,6 +268,16 @@ export async function cpiAdapter({
     "cpi-period-regression",
     "The current CPI API period regresses behind the validated canonical history.",
   );
+  const approvedPeriod = source?.approvedPeriod;
+  invariant(
+    source?.period?.through === "latest-published" &&
+      approvedPeriod?.from === "202607" &&
+      approvedPeriod?.through === "202608" &&
+      coverage.endCode >= approvedPeriod.from &&
+      coverage.endCode <= approvedPeriod.through,
+    "cpi-period-unapproved",
+    "The discovered CPI vintage is outside the explicitly reviewed CPI period.",
+  );
   const distributionResponse = await fetchFile({
     url: fileCandidate.url,
     allowedHosts: OFFICIAL_ESTAT_FILE_HOSTS,
@@ -371,6 +381,11 @@ export async function cpiAdapter({
       end: japaneseMonth(coverage.endCode),
       monthlyRows: rows.length - 1,
     },
+    approvedPeriod: {
+      from: approvedPeriod.from,
+      through: approvedPeriod.through,
+      discovery: "latest-published is discovery only; extend this reviewed window explicitly",
+    },
     seriesCount: series.length,
     revisionSummary,
     valueIdentityEvidence: {
@@ -473,6 +488,8 @@ export async function cpiAdapter({
     },
     reportSummary: {
       candidateCount: selected.candidateCount,
+      discoveryPeriod: source.period.through,
+      approvedPeriod: { from: approvedPeriod.from, through: approvedPeriod.through },
       selectedSourceId: selectedStatsDataId,
       selectedTitle: selected.title,
       updatedDate: selected.updatedDate,
@@ -706,7 +723,9 @@ function validateLocalMetadata(metadata) {
     metadata.seriesCount === 78 &&
       metadata.period?.start === "1970年1月" &&
       /^\d{4}年\d{1,2}月$/.test(metadata.period?.end || "") &&
-      Number.isInteger(metadata.period?.monthlyRows),
+      Number.isInteger(metadata.period?.monthlyRows) &&
+      metadata.approvedPeriod?.from === "202607" &&
+      metadata.approvedPeriod?.through === "202608",
     "cpi-metadata-contract-mismatch",
     "CPI local coverage metadata is invalid.",
   );
