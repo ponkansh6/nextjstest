@@ -212,3 +212,33 @@ a {
     scroll-behavior: auto !important;
   }
 }
+
+/* Isolated View Transition animation for the /ui-experiments named demo. */
+::view-transition-old(demo-content) {
+  animation: 220ms ease-out both demo-content-fade-out;
+}
+
+::view-transition-new(demo-content) {
+  animation: 220ms ease-out both demo-content-fade-in;
+}
+
+@keyframes demo-content-fade-out {
+  to {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes demo-content-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(demo-content),
+  ::view-transition-new(demo-content) {
+    animation-duration: 0s !important;
+  }
+}

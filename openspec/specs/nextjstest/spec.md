@@ -501,6 +501,14 @@ only the `setItem`/`removeItem` write operations are absorbed during interaction
 DOM theme application and React state updates continue after a write failure. No browser-state source changes
 the server-loaded data model.
 
+The `/ui-experiments` route is an isolated UI technology evaluation page and
+does not load dashboard data or change production chart state. Its controls
+use local React state and browser capabilities/preferences only: container
+width selection, native dialog state, Motion completion state, same-page view
+selection, `prefers-reduced-motion`, CSS container-query support, and the
+`document.startViewTransition` feature. Its spacing, card-radius, and minimum
+target-size custom properties are scoped to the route root.
+
 Production-route Browser Mode commands use the configured Vitest provider's
 `Browser` and the command's device descriptor plus scenario overrides as test
 configuration. This adds no external application-data source.
@@ -748,6 +756,16 @@ calls `withIsolatedContext(browser, options, callback)`. The command retains
 route navigation, page creation, assertions, and result handling; the shared
 helper only creates and closes the independent `BrowserContext`.
 
+The `/ui-experiments` page flow is local and independent of dashboard data:
+route-local custom properties style the six demonstration panels; the
+container-width control resizes a container-query card (with a viewport media
+query fallback); the horizontal card track applies proximity scroll snapping;
+a native modal `<dialog>` opens as a bottom drawer; `MotionDemo` reports
+animation completion and honors reduced-motion preference; and a two-state
+same-route content switch uses the View Transition API when available and
+motion is allowed, otherwise updating immediately. All state is discarded
+when leaving the route.
+
 <a id="current-component-tree"></a>
 
 ### Component Tree
@@ -772,6 +790,13 @@ chart、legend、tooltip、table、CSVへ伝える。legacy `消費支出（参�
 Plan40 public projection. The table and CSV consume that same filtered row
 collection. GDP support values are retired and are not part of the quarterly
 boundary behavior.
+
+The separate `/ui-experiments` route renders a six-section evaluation lab and
+does not add to or replace the production `Page → CpiChart` tree:
+`UIExperimentsPage` → container-query card / scoped token examples / horizontal
+scroll-snap cards / native dialog drawer / `MotionDemo` / same-route View
+Transition switch. `MotionDemo` emits completion state through
+`onFinishedChange`; the route owns dialog and view-selection state.
 
 - `data/source/population_statistics.metadata.json` — 総務省統計局「労働力調査（基本集計）」長期時系列 表1-b-1（e-Stat `statInfId=000031831366`）の取得URL、表ID、取得日時、公式Excelサイズ/SHA-256、欠測ポリシーを記録する。
 - `data/source/employment_indices.csv` — canonical regular employment index, sourced from the official e-Stat `種別=指数`, TL/T/0 mapping. The runtime consumer now uses this actual employment-index series.
@@ -874,6 +899,7 @@ override them.
 | Current contract                                                 | Canonical requirement group                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Dashboard behavior and component contracts                       | [R1](#current-r1) · [R2](#current-r2) · [R3](#current-r3) · [R4](#current-r4) · [R5](#current-r5) · [R6](#current-r6) · [R7](#current-r7) · [R8](#current-r8) · [R9](#current-r9) · [R10](#current-r10) · [R11](#current-r11) · [R12](#current-r12) · [R13](#current-r13) · [R14](#current-r14) · [R15](#current-r15) · [R16](#current-r16) · [R17](#current-r17) · [R18](#current-r18) · [R19](#current-r19) · [R20](#current-r20) · [R21](#current-r21) |
+| UI technology evaluation lab                                     | [UI-Lab](#ui-experiments-poc-requirements)                                                                                                                                                                                                                                                                                                                                                                                                                |
 | Public chart data and export parity                              | [R4-4](#current-r4-4)                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | Monthly basic CTI loader compatibility                           | [R-Plan37](#current-r-plan37); [Plan49 monthly contract](#legacy-monthly-compatibility-requirements)                                                                                                                                                                                                                                                                                                                                                      |
 | Canonical CTI names and artifact compatibility                   | [R-CTI-Domain-Identifiers](#current-cti-domain-identifiers-requirement)                                                                                                                                                                                                                                                                                                                                                                                   |
@@ -2360,6 +2386,64 @@ The system SHALL be navigable and interpretable by assistive technologies.
 - **THEN** focus moves to the first focusable element inside it and `Tab` / `Shift+Tab` cycle within it (`useFocusTrap`)
 - **AND WHEN** it closes
 - **THEN** focus returns to the trigger via `focus({ preventScroll: true })` so the scroll position is preserved
+
+<a id="ui-experiments-poc-requirements"></a>
+
+### Canonical requirement group — UI technology evaluation lab
+
+The `/ui-experiments` route SHALL provide isolated, interactive demonstrations
+of six candidate UI technologies without changing the normal dashboard route.
+Existing dashboard CSS tokens, `BottomSheet`, and requirements R8d/R8e remain
+the production behavior contracts; this lab does not claim they have been
+replaced or adopted globally.
+
+#### Scenario UI-Lab-1: Container query with fallback
+
+- **WHEN** the user switches the demo container between wide and narrow
+- **THEN** the card layout responds to its containing block through a CSS
+  container query, while browsers without container-query support use the
+  viewport media-query fallback
+
+#### Scenario UI-Lab-2: Route-scoped custom properties
+
+- **WHEN** the lab renders its spacing, card, and target-size examples
+- **THEN** the route root provides `--space-4`, `--radius-card`, and
+  `--target-min` values for the lab's components, without changing global
+  dashboard tokens
+
+#### Scenario UI-Lab-3: Horizontal scroll snap
+
+- **WHEN** the user scrolls the horizontal card track
+- **THEN** cards use `scroll-snap-align: start` with proximity snapping and
+  the track remains keyboard-focusable for horizontal key navigation
+
+#### Scenario UI-Lab-4: Native dialog drawer
+
+- **WHEN** the user opens the drawer demo
+- **THEN** a native modal `<dialog>` is displayed in a bottom-drawer presentation,
+  with Escape and backdrop dismissal and browser-managed modal focus behavior
+
+#### Scenario UI-Lab-5: Motion completion feedback
+
+- **WHEN** the user starts or replays the Motion demo
+- **THEN** a short reveal animation reports completion to the lab status, and
+  reduced-motion preference removes its movement and duration
+
+#### Scenario UI-Lab-6: Same-route View Transition
+
+- **WHEN** the user switches between the two demo views
+- **THEN** the page uses `document.startViewTransition` when supported and
+  reduced motion is not requested, and otherwise changes the content immediately
+
+#### Non-functional requirements
+
+- Lab visual rules and custom properties are scoped to `/ui-experiments`;
+  its named View Transition pseudo-element rules use the unique
+  `demo-content` name so they affect only that lab demo. The normal dashboard's
+  layout, navigation, and modal behavior are unchanged.
+- All lab actions remain available by keyboard, and visible focus indication
+  is provided for interactive controls.
+- Lab animations and transitions respect `prefers-reduced-motion`.
 
 <a id="current-r10"></a>
 

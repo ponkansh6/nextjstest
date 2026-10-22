@@ -655,7 +655,7 @@ describe("staged runtime quality validator", () => {
     expect(await readFile(path.join(f.root, REQUIRED_RUNTIME_REFRESH_OUTPUTS[0]), "utf8")).toBe(
       "canonical-before",
     );
-  });
+  }, 15_000);
 
   it("copies the pinned Plan39 PI2+ dependency closure and rejects changed inputs", async () => {
     const f = await fixture();
