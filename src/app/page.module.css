@@ -30,19 +30,6 @@
   }
 }
 
-.badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  background-color: var(--blue-50);
-  color: var(--blue-500);
-  margin-bottom: 1rem;
-  border: 1px solid rgba(59, 130, 246, 0.1);
-}
-
 .title {
   /* モバイルで大きすぎた見出しを縮小(375pxで約32px→約26px)。
      デスクトップ側(~1280px超)は旧clampとほぼ同じ描画結果になるよう係数を調整。 */
@@ -90,10 +77,6 @@
 
   .header {
     margin-bottom: 4rem;
-  }
-
-  .badge {
-    font-size: 1.125rem;
   }
 
   .description {
