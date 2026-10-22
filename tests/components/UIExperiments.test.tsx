@@ -41,6 +41,15 @@ vi.mock("../../src/app/ui-experiments/base-drawer.module.css", () => ({
 }));
 
 import UIExperimentsPage from "../../src/app/ui-experiments/page";
+import {
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHandle,
+  DrawerRoot,
+  DrawerTitle,
+  DrawerTrigger,
+} from "../../src/app/ui-experiments/BaseDrawer";
 import DialogOptionsDemo from "../../src/app/ui-experiments/DialogOptionsDemo";
 import MotionDemo from "../../src/app/ui-experiments/MotionDemo";
 
@@ -307,5 +316,81 @@ describe("dialog implementation comparison interactions", () => {
     await waitFor(() =>
       expect(screen.queryByRole("dialog", { name: "シート型のドロワー" })).toBeNull(),
     );
+  });
+});
+
+describe("Base UI Drawer wrapper contract", () => {
+  it("defaults to a modal bottom drawer without snap points", () => {
+    render(
+      <DrawerRoot defaultOpen>
+        <DrawerContent>
+          <DrawerTitle>既定のDrawer</DrawerTitle>
+          <DrawerDescription>既定値を確認</DrawerDescription>
+        </DrawerContent>
+      </DrawerRoot>,
+    );
+
+    expect(screen.getByRole("dialog", { name: "既定のDrawer" })).toBeTruthy();
+    expect(document.querySelector('[data-slot="drawer-overlay"]')).toBeTruthy();
+    expect(
+      document.querySelector('[data-slot="drawer-viewport"]')?.getAttribute("data-modal"),
+    ).toBe("true");
+    const popup = document.querySelector('[data-slot="drawer-popup"]');
+    expect(popup?.getAttribute("data-swipe-direction")).toBe("down");
+    expect(popup?.getAttribute("data-swipe-axis")).toBe("y");
+    expect(popup?.hasAttribute("data-snap-points")).toBe(false);
+  });
+
+  it("uses the vertical swipe axis for an upward drawer", () => {
+    render(
+      <DrawerRoot defaultOpen swipeDirection="up">
+        <DrawerContent>
+          <DrawerTitle>上向きDrawer</DrawerTitle>
+        </DrawerContent>
+      </DrawerRoot>,
+    );
+
+    const popup = document.querySelector('[data-slot="drawer-popup"]');
+    expect(popup?.getAttribute("data-swipe-direction")).toBe("up");
+    expect(popup?.getAttribute("data-swipe-axis")).toBe("y");
+  });
+
+  it("supports nonmodal horizontal drawers with snap points and wrapper parts", () => {
+    render(
+      <DrawerRoot modal={false} defaultOpen snapPoints={[0.5]} swipeDirection="right">
+        <DrawerTrigger render={<button type="button" />}>カスタムDrawerを開く</DrawerTrigger>
+        <DrawerContent className="custom-popup">
+          <DrawerHandle />
+          <DrawerTitle>カスタムDrawer</DrawerTitle>
+          <DrawerDescription>水平スワイプ設定の確認</DrawerDescription>
+          <DrawerClose render={<button type="button" />}>閉じる</DrawerClose>
+        </DrawerContent>
+      </DrawerRoot>,
+    );
+
+    expect(screen.getByRole("button", { name: "カスタムDrawerを開く" })).toBeTruthy();
+    expect(screen.getByRole("dialog", { name: "カスタムDrawer" })).toBeTruthy();
+    expect(document.querySelector('[data-slot="drawer-overlay"]')).toBeNull();
+    expect(
+      document.querySelector('[data-slot="drawer-viewport"]')?.getAttribute("data-modal"),
+    ).toBe("false");
+
+    const popup = document.querySelector('[data-slot="drawer-popup"]');
+    expect(popup?.getAttribute("data-swipe-direction")).toBe("right");
+    expect(popup?.getAttribute("data-swipe-axis")).toBe("x");
+    expect(popup?.hasAttribute("data-snap-points")).toBe(true);
+    expect(popup?.className).toContain("custom-popup");
+    expect(document.querySelector('[aria-hidden="true"].handle')).toBeTruthy();
+  });
+
+  it("throws when DrawerContent is used outside DrawerRoot", () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      expect(() => render(<DrawerContent>orphan content</DrawerContent>)).toThrow(
+        "DrawerContent must be used inside DrawerRoot.",
+      );
+    } finally {
+      consoleError.mockRestore();
+    }
   });
 });
