@@ -30,41 +30,6 @@ export interface CpiChartInfoState {
   reason?: string | null;
 }
 
-/**
- * Selected CTI compatibility-set state passed from the server.  The loader is
- * the source of truth: the UI must not infer a series variant from a filename
- * or describe an unverified 2025 input as selected.
- */
-export interface CtiChartInfoState {
-  baseYear: 2020 | 2025 | null;
-  sourceMode: "official-connected" | "rollback" | "unavailable";
-  seriesLabel?: string;
-  supportLabel?: string;
-  comparisonNormalization?: "2025-annual-average" | "unavailable";
-  unavailableReason?: string;
-  status?: "valid" | "invalid";
-  reason?: string | null;
-  baseline?: number | null;
-  artifactRoot?: string | null;
-  artifactStatus?: "ready" | "unavailable";
-  artifactReason?: string | null;
-  source?: string;
-  unit?: string;
-  series?: {
-    raw: CtiPublicSeriesState;
-    comparison: CtiPublicSeriesState;
-  };
-}
-
-export interface CtiPublicSeriesState {
-  key: string;
-  valueType: "raw" | "comparison";
-  unit: string;
-  source: string;
-  status: "valid" | "invalid";
-  reason: string | null;
-}
-
 export const CHART_INFO: Record<string, ChartInfoContent> = {
   "cpi-major": {
     source: "e-Stat「消費者物価指数 長期時系列データ（2025年基準）」",
@@ -316,7 +281,6 @@ export function getCpiUnavailableLabel(reason?: string | null): string {
 export function getChartInfoContent(
   chartKey: keyof typeof CHART_INFO,
   cpiState?: CpiChartInfoState,
-  _ctiState?: CtiChartInfoState,
 ): ChartInfoContent {
   const content = CHART_INFO[chartKey];
   if (chartKey === "consumption-expenditure") {

@@ -122,7 +122,7 @@ const nominalRows = [
   },
 ];
 
-function renderCpiChart(options: { data?: any[]; ctiInfoState?: any } = {}) {
+function renderCpiChart(options: { data?: any[] } = {}) {
   mocks.displayData = {
     chartData: [],
     filteredData: [],
@@ -139,7 +139,6 @@ function renderCpiChart(options: { data?: any[]; ctiInfoState?: any } = {}) {
       quarterlyRealData={[]}
       totalEarningData={[]}
       maxCpiDate={{ year: 2021, month: 12 }}
-      ctiInfoState={options.ctiInfoState}
     />,
   );
 }
@@ -177,31 +176,7 @@ describe("CPI chart component callback contracts", () => {
 
   it("uses safe default ranges and prefers quarterly row measurement metadata", () => {
     const publicCtiKey = QUARTERLY_PUBLIC_NOMINAL_KEYS[0];
-    const ctiInfoState = {
-      baseYear: 2025,
-      sourceMode: "official-connected",
-      status: "invalid",
-      reason: "fixture invalid",
-      series: {
-        raw: {
-          key: publicCtiKey,
-          valueType: "raw",
-          unit: "万円",
-          source: "source",
-          status: "invalid",
-          reason: "fixture invalid",
-        },
-        comparison: {
-          key: "comparison",
-          valueType: "comparison",
-          unit: "index",
-          source: "source",
-          status: "valid",
-          reason: null,
-        },
-      },
-    };
-    renderCpiChart({ data: [], ctiInfoState });
+    renderCpiChart({ data: [] });
     expect(mocks.sectionsProps?.ctiMetadata).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -212,18 +187,11 @@ describe("CPI chart component callback contracts", () => {
         }),
       ]),
     );
-    renderCpiChart({ data: [{ 年月: "not a date", 総合: 100 }], ctiInfoState });
+    renderCpiChart({ data: [{ 年月: "not a date", 総合: 100 }] });
     expect(
       mocks.sectionsProps?.ctiMetadata.find((item: { key: string }) => item.key === publicCtiKey)
         .status,
     ).toBe("valid");
-    renderCpiChart({
-      data: [],
-      ctiInfoState: {
-        ...ctiInfoState,
-        series: { ...ctiInfoState.series, raw: { ...ctiInfoState.series.raw, reason: null } },
-      },
-    });
     expect(
       mocks.sectionsProps?.ctiMetadata.find((item: { key: string }) => item.key === publicCtiKey)
         .status,
