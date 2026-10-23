@@ -537,7 +537,7 @@ export const PINNED_PROJECT_FILES = Object.freeze({
   "server/lib/data-loader/ctiValidation.ts":
     "89859a586fd0473a0e881f21cdc3e0e4534066307de04be0ee26e4b775d13ce7",
   "server/lib/data-loader/earnings.ts":
-    "dc813aa80d299241a57c8906c3d68172732d5d200d0b36565e8350d73cb5f96d",
+    "a61784667da6a91acdfce9d306e03d3fc2362da351c080c9ca1010b45379cd8b",
   "server/lib/data-loader/population.ts":
     "19f6fa5ce0d1d1ee73e0500cece46bd7910d51071075b5f70034652bb34b873b",
   "server/lib/dataIo.ts": "8639c37d61f6b6d15aa270fb51810ff6d4bd614aeedce6bdcf681eea867dd51c",
@@ -546,7 +546,7 @@ export const PINNED_PROJECT_FILES = Object.freeze({
   "server/lib/math/movingAverage.ts":
     "dd98ae00c94ac1c55e4f734271a46009565330e4a17ab31493739bc46799340e",
   "server/lib/serverCalculations.ts":
-    "c123fb31b739e0ca3be82a3a569784a782e581e18890e2c131ea3dd2d7856a4d",
+    "1c120d16bcb7dbe478e1f375c556955869736b230991b155e1fa1cb7f4439da3",
   "server/lib/view-models/dashboard.ts":
     "3fa933e666789b9bfd8f21054ff005f09077c001ec996176daf5db86c45241ed",
   "server/lib/view-models/quarterlyAggregation.ts":
