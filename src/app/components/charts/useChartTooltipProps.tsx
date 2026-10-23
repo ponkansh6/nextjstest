@@ -390,7 +390,7 @@ export const useChartTooltipController = ({
         payload: NonNullable<CustomTooltipProps["payload"]>,
         label?: string,
         selectedIndex?: number,
-      ) => boolean = () => false;
+      ) => void;
       const selectIndex = (
         event: ChartTooltipInteractionEvent,
         keyboardSelection = false,
@@ -530,7 +530,7 @@ export const useChartTooltipController = ({
         } else {
           touchGestureRef.current = null;
         }
-        if (!isDrawerPointer(event.pointerType)) selectIndex(event);
+        selectIndex(event);
         return "fine-pointer" as const;
       };
       const handlePointerMove = (event: ReactPointerEvent<HTMLElement>) => {
@@ -589,13 +589,9 @@ export const useChartTooltipController = ({
           };
           const selection = options?.selectionPayloadAtIndex?.(selectedIndex);
           if (selection) {
-            const committed = commitSelectionSnapshot(
-              selection.payload,
-              selection.label,
-              selectedIndex,
-            );
-            if (committed) ignoreTouchDismissRef.current = true;
-            return committed ? "selected" : "rejected-no-selection";
+            commitSelectionSnapshot(selection.payload, selection.label, selectedIndex);
+            ignoreTouchDismissRef.current = true;
+            return "selected";
           }
           pendingDrawerSelectionRef.current = {
             chartId,
@@ -652,14 +648,14 @@ export const useChartTooltipController = ({
           return false;
         }
         pendingDrawerSelectionRef.current = null;
-        return commitSelectionSnapshot(payload, label, selectedIndex);
+        commitSelectionSnapshot(payload, label, selectedIndex);
+        return true;
       };
       commitSelectionSnapshot = (
         payload: NonNullable<CustomTooltipProps["payload"]>,
         label?: string,
         selectedIndex?: number,
       ) => {
-        if (options?.drawerEnabled === false) return false;
         drawerSnapshotEpochRef.current += 1;
         activeChartIdRef.current = chartId;
         setActiveChartId(chartId);
@@ -800,12 +796,8 @@ export const useChartTooltipController = ({
               const selection = options?.selectionPayloadAtIndex?.(chartIndex);
               if (selection) {
                 pendingDrawerSelectionRef.current = null;
-                const committed = commitSelectionSnapshot(
-                  selection.payload,
-                  selection.label,
-                  chartIndex,
-                );
-                if (committed) ignoreTouchDismissRef.current = true;
+                commitSelectionSnapshot(selection.payload, selection.label, chartIndex);
+                ignoreTouchDismissRef.current = true;
                 return;
               }
             }

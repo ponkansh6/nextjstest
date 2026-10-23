@@ -17,6 +17,215 @@ const TEST_SUPPORT_NOMINAL_KEY = "Synthetic nominal support";
 const payload = [{ name: "総合", value: 112.5, color: "#1d4ed8" }];
 
 describe("CustomTooltip", () => {
+  it("reports active payload snapshots and ignores inactive or suppressed tooltips", () => {
+    const onPayloadSnapshot = vi.fn();
+    const firstPayload = [{ name: "初回", value: 10 }];
+    const nextPayload = [{ name: "更新", value: 20 }];
+    const renderTooltip = (
+      active: boolean,
+      currentPayload: typeof firstPayload,
+      suppressInline = false,
+    ) => (
+      <CustomTooltip
+        active={active}
+        isMobile={false}
+        isTouch={false}
+        label="2025年1月"
+        payload={currentPayload}
+        onPayloadSnapshot={onPayloadSnapshot}
+        suppressInline={suppressInline}
+        tooltipBg="#000"
+        tooltipText="#fff"
+      />
+    );
+
+    const view = render(renderTooltip(true, firstPayload));
+    expect(onPayloadSnapshot).toHaveBeenCalledTimes(1);
+    expect(onPayloadSnapshot).toHaveBeenLastCalledWith(firstPayload, "2025年1月");
+
+    view.rerender(renderTooltip(true, nextPayload));
+    expect(onPayloadSnapshot).toHaveBeenCalledTimes(2);
+    expect(onPayloadSnapshot).toHaveBeenLastCalledWith(nextPayload, "2025年1月");
+
+    view.rerender(renderTooltip(false, nextPayload));
+    expect(onPayloadSnapshot).toHaveBeenCalledTimes(2);
+    expect(document.querySelector('[data-tooltip-root="true"]')).toBeNull();
+
+    view.rerender(renderTooltip(true, nextPayload, true));
+    expect(onPayloadSnapshot).toHaveBeenCalledTimes(3);
+    expect(document.querySelector('[data-tooltip-root="true"]')).toBeNull();
+  });
+
+  it("stops pointer and mouse movement events at the tooltip root", () => {
+    const onParentEvent = vi.fn();
+    const { container } = render(
+      <div
+        onPointerDown={onParentEvent}
+        onPointerUp={onParentEvent}
+        onPointerMove={onParentEvent}
+        onMouseMove={onParentEvent}
+      >
+        <CustomTooltip
+          active
+          isMobile={false}
+          isTouch={false}
+          label="2025年1月"
+          payload={payload}
+          tooltipBg="#000"
+          tooltipText="#fff"
+        />
+      </div>,
+    );
+    const tooltipRoot = container.querySelector('[data-tooltip-root="true"]') as HTMLElement;
+
+    fireEvent.pointerDown(tooltipRoot);
+    fireEvent.pointerUp(tooltipRoot);
+    fireEvent.pointerMove(tooltipRoot);
+    fireEvent.mouseMove(tooltipRoot);
+
+    expect(onParentEvent).not.toHaveBeenCalled();
+  });
+
+  it("applies both included and excluded key rules when calculating totals", () => {
+    const entries = [
+      { name: "所定内", dataKey: "included", value: 10 },
+      { name: "所定外", dataKey: "excluded", value: 20 },
+      { name: "参考", dataKey: "other", value: 100 },
+    ];
+    const { rerender } = render(
+      <CustomTooltip
+        active
+        isMobile={false}
+        isTouch={false}
+        label="2025年1月"
+        payload={entries}
+        showTotal
+        totalIncludedKeys={["included", "excluded"]}
+        tooltipBg="#000"
+        tooltipText="#fff"
+      />,
+    );
+    expect(
+      within(screen.getByText("合計").parentElement as HTMLElement).getByText("30.00"),
+    ).toBeDefined();
+
+    rerender(
+      <CustomTooltip
+        active
+        isMobile={false}
+        isTouch={false}
+        label="2025年1月"
+        payload={entries}
+        showTotal
+        totalExcludedKeys={["excluded"]}
+        tooltipBg="#000"
+        tooltipText="#fff"
+      />,
+    );
+    expect(
+      within(screen.getByText("合計").parentElement as HTMLElement).getByText("110.00"),
+    ).toBeDefined();
+  });
+
+  it("uses empty fallbacks for null excluded keys and measurement-note suppression keys", () => {
+    render(
+      <CustomTooltip
+        active
+        isMobile={false}
+        isTouch={false}
+        label="2025Q1"
+        payload={[
+          { dataKey: "estimated", name: "推計系列", value: 10 },
+          { dataKey: "other", name: "その他", value: 20 },
+        ]}
+        seriesMeta={[
+          {
+            key: "estimated",
+            label: "推計系列",
+            order: 0,
+            seriesType: "estimated_adjusted",
+            measurementNote: "接続推計の注記",
+          },
+          { key: "other", label: "その他", order: 1 },
+        ]}
+        showTotal
+        totalExcludedKeys={null as unknown as string[]}
+        suppressMeasurementNotesForKeys={null as unknown as string[]}
+        tooltipBg="#000"
+        tooltipText="#fff"
+      />,
+    );
+
+    expect(
+      within(screen.getByText("合計").parentElement as HTMLElement).getByText("30.00"),
+    ).toBeDefined();
+    expect(screen.getByText("接続推計の注記")).toBeDefined();
+    expect(document.querySelectorAll('[data-tooltip-measurement-note="true"]')).toHaveLength(1);
+  });
+
+  it("renders and suppresses measurement notes according to tooltip metadata", () => {
+    const view = render(
+      <CustomTooltip
+        active
+        isMobile={false}
+        isTouch={false}
+        label="2025Q1"
+        payload={[
+          { dataKey: "estimated", name: "推計系列", value: 10 },
+          { dataKey: "unavailable", name: "欠測系列", value: null },
+          { dataKey: "plain", name: "通常系列", value: 5 },
+        ]}
+        seriesMeta={[
+          { key: "estimated", label: "推計系列", order: 0, seriesType: "estimated_adjusted" },
+          {
+            key: "unavailable",
+            label: "欠測系列",
+            order: 1,
+            seriesType: "unavailable",
+            reason: "outside_period",
+          },
+          { key: "plain", label: "通常系列", order: 2 },
+        ]}
+        showAllPayload
+        tooltipBg="#000"
+        tooltipText="#fff"
+      />,
+    );
+    expect(screen.getByText("2016年以前は接続推計。公式遡及値ではない")).toBeDefined();
+    expect(screen.getByText("対象期間外")).toBeDefined();
+    expect(document.querySelectorAll('[data-tooltip-measurement-note="true"]')).toHaveLength(2);
+
+    view.rerender(
+      <CustomTooltip
+        active
+        isMobile={false}
+        isTouch={false}
+        label="2025Q1"
+        payload={[
+          { dataKey: "estimated", name: "推計系列", value: 10 },
+          { dataKey: "unavailable", name: "欠測系列", value: null },
+          { dataKey: "plain", name: "通常系列", value: 5 },
+        ]}
+        seriesMeta={[
+          { key: "estimated", label: "推計系列", order: 0, seriesType: "estimated_adjusted" },
+          {
+            key: "unavailable",
+            label: "欠測系列",
+            order: 1,
+            seriesType: "unavailable",
+            reason: "outside_period",
+          },
+          { key: "plain", label: "通常系列", order: 2 },
+        ]}
+        showAllPayload
+        showMeasurementNotes={false}
+        tooltipBg="#000"
+        tooltipText="#fff"
+      />,
+    );
+    expect(document.querySelectorAll('[data-tooltip-measurement-note="true"]')).toHaveLength(0);
+  });
+
   it("renders all six registered earnings series without an omitted-payload summary", () => {
     const expectedLabels = [
       "所定内給与",

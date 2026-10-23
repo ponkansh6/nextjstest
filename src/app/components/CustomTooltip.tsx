@@ -260,7 +260,7 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
     const total = showTotal
       ? resolvedPayload.reduce((acc, e) => {
           const isIncluded = totalIncludedKeys
-            ? (totalIncludedKeys ?? []).includes(e.dataKey as string)
+            ? totalIncludedKeys.includes(e.dataKey as string)
             : !(totalExcludedKeys ?? []).includes(e.dataKey as string);
           return isIncluded && typeof e.value === "number" && Number.isFinite(e.value)
             ? acc + e.value

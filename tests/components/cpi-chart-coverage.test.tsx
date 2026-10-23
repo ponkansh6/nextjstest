@@ -10,6 +10,8 @@ const mocks = vi.hoisted(() => ({
   sectionsProps: null as Record<string, any> | null,
   displayData: null as Record<string, any> | null,
   invalidateChartTooltip: vi.fn(),
+  urlHiddenKeys: [] as string[],
+  hiddenQuarters: [] as number[],
 }));
 
 vi.mock("../../src/app/components/CpiChart.module.css", () => ({
@@ -19,10 +21,15 @@ vi.mock("../../src/hooks/useChartTheme", () => ({
   useChartTheme: () => ({ isMobile: false, isTouch: false, chartColors: { barFill: "#789" } }),
 }));
 vi.mock("../../src/hooks/useUrlState", () => ({
-  useUrlState: () => ({ from: 2020, to: 2021, hiddenKeys: [], updateUrl: vi.fn() }),
+  useUrlState: () => ({
+    from: 2020,
+    to: 2021,
+    hiddenKeys: mocks.urlHiddenKeys,
+    updateUrl: vi.fn(),
+  }),
 }));
 vi.mock("../../src/hooks/useCpiChartData", () => ({
-  useCpiChartData: () => ({ hiddenQuarters: [], toggleQuarter: vi.fn() }),
+  useCpiChartData: () => ({ hiddenQuarters: mocks.hiddenQuarters, toggleQuarter: vi.fn() }),
 }));
 vi.mock("../../src/hooks/useCpiChartDisplayData", () => ({
   useCpiChartDisplayData: () => mocks.displayData,
@@ -150,6 +157,43 @@ function renderCpiChart(options: { data?: any[] } = {}) {
 }
 
 describe("CPI chart component callback contracts", () => {
+  it("skips tooltip invalidation when all chart inputs keep the same identity", () => {
+    const data = [{ 年月: "2020年1月", 総合: 100 } as any];
+    const quarterlyNominalData: any[] = [];
+    const quarterlyRealData: any[] = [];
+    const totalEarningData: any[] = [];
+    const maxCpiDate = { year: 2021, month: 12 };
+    mocks.displayData = {
+      chartData: [],
+      filteredData: [],
+      filteredQuarterlyNominalData: nominalRows,
+      filteredQuarterlyRealData: [],
+      mergedData: [],
+      earningsData: [],
+    };
+    const props = {
+      data,
+      quarterlyNominalData,
+      quarterlyRealData,
+      totalEarningData,
+      maxCpiDate,
+    };
+
+    mocks.invalidateChartTooltip.mockClear();
+    const view = render(
+      <React.StrictMode>
+        <CpiChart {...props} />
+      </React.StrictMode>,
+    );
+    view.rerender(
+      <React.StrictMode>
+        <CpiChart {...props} />
+      </React.StrictMode>,
+    );
+
+    expect(mocks.invalidateChartTooltip).not.toHaveBeenCalled();
+  });
+
   it("pairs nominal/real expense and adjusted legends, ignoring unknown keys", () => {
     renderCpiChart();
     const props = () => mocks.sectionsProps!;
