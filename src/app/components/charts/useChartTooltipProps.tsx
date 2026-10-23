@@ -210,6 +210,7 @@ export const useChartTooltipController = ({
   const activeTooltipIndicesRef = useRef<Record<string, number | undefined>>({});
   const [drawerSnapshot, setDrawerSnapshot] = useState<{
     chartId: string;
+    title: string;
     content: ReactElement;
   } | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -667,8 +668,18 @@ export const useChartTooltipController = ({
           ...entry,
           payload: entry.payload ? { ...entry.payload } : undefined,
         }));
+        const selectionTitle =
+          typeof label === "string" && label.trim().length > 0 ? label : undefined;
+        const payloadPeriod = stablePayload
+          .map((entry) => entry.payload?.["年月"] ?? entry.payload?.["label"])
+          .find((period) => period != null);
+        const payloadTitle =
+          typeof payloadPeriod === "string" && payloadPeriod.trim().length > 0
+            ? payloadPeriod
+            : undefined;
         setDrawerSnapshot({
           chartId,
+          title: selectionTitle ?? payloadTitle ?? "詳細",
           content: cloneElement(optionsContent, {
             active: true,
             payload: stablePayload,
@@ -890,8 +901,10 @@ export const useChartTooltipController = ({
       >
         <DrawerHandle />
         <div className={drawerStyles.header}>
-          <DrawerTitle id="chart-point-drawer-title">選択したデータ</DrawerTitle>
-          <DrawerClose aria-label="閉じる">閉じる</DrawerClose>
+          <DrawerTitle id="chart-point-drawer-title">{drawerSnapshot?.title ?? "詳細"}</DrawerTitle>
+          <DrawerClose className={drawerStyles.closeButton} aria-label="閉じる">
+            閉じる
+          </DrawerClose>
         </div>
         <div className={drawerStyles.body}>{drawerSnapshot?.content}</div>
       </DrawerContent>

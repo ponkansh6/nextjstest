@@ -12,13 +12,62 @@
 }
 
 .header h2 {
+  min-width: 0;
+  flex: 1 1 auto;
   margin: 0;
   font-size: 1rem;
+  overflow-wrap: anywhere;
 }
 
-.header button {
+.closeButton {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
   min-width: 44px;
   min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--card-border, var(--line, #dfe3df));
+  border-radius: 8px;
+  background: color-mix(
+    in srgb,
+    var(--card-text, var(--ink, #171717)) 5%,
+    var(--card-bg, var(--surface, #fcfcfb))
+  );
+  color: var(--card-text, var(--ink, #171717));
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .closeButton:hover {
+    background: var(
+      --cta-tonal-bg-hover,
+      color-mix(in srgb, var(--card-text, #171717) 9%, var(--card-bg, #fcfcfb))
+    );
+    border-color: var(--card-border, var(--line, #dfe3df));
+  }
+}
+
+.closeButton:active {
+  background: var(
+    --cta-tonal-bg,
+    color-mix(in srgb, var(--card-text, #171717) 12%, var(--card-bg, #fcfcfb))
+  );
+}
+
+.closeButton:focus-visible {
+  outline: 2px solid var(--blue-500, #3b82f6);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .closeButton {
+    transition: none;
+  }
 }
 
 .body {

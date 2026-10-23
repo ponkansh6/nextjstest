@@ -172,7 +172,7 @@ describe("B3m responsive", () => {
     hitTarget.dispatchEvent(new PointerEvent("pointerup", { ...pointer, buttons: 0 }));
     const dialog = page.getByRole("dialog");
     await expect.element(dialog).toBeVisible();
-    expect((await dialog.element()).textContent).toContain("選択したデータ");
+    expect((await dialog.element()).textContent).toContain("2020Q1");
     const close = page.getByRole("button", { name: "閉じる" });
     await expect.element(close).toBeVisible();
     await close.click();

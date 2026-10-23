@@ -758,10 +758,17 @@ synthetic mousemove. Once a tap completes without a qualifying vertical scroll
 gesture, the controller calls the binding's `selectionPayloadAtIndex` resolver. The
 resolver reads the selected row from that chart's current filtered/range data
 and constructs Recharts-compatible entries from the currently visible series;
-the controller commits this payload as the `CustomTooltip` snapshot in the same
-selection action. Enter/Space on a chart uses the same resolver at the chart
-wrapper's center index. This selection path does not wait for the Recharts Tooltip
-effect to supply a tap payload. The modal Drawer holds one selected point,
+the controller commits this payload and its display label as one Drawer
+snapshot in the same selection action. The Drawer heading reads that snapshot
+label, keeping it tied to the same selected point as the body. A nonblank
+selection label is preferred; if it is absent or whitespace-only, the heading
+uses a safely type-checked period from the existing payload, following the
+body's `年月`/`label` period precedence. If neither provides a usable period,
+the heading is `詳細`. It does not use a series name or total as a period. The
+selected label is preserved as supplied, including monthly or quarterly
+notation; it is not normalized by a new formatter. Enter/Space on a chart uses
+the same resolver at the chart wrapper's center index. This selection path does
+not wait for the Recharts Tooltip effect to supply a tap payload. The modal Drawer holds one selected point,
 blocks background interaction, and closes through its close control, Escape,
 backdrop, or downward swipe. Closing clears the active chart/index immediately;
 the snapshot is retained until Base UI reports the Drawer close transition is
@@ -850,6 +857,11 @@ production modal Drawer host, rendered beside `CpiChartSections` by
 `chart-point-drawer.module.css`. The primitive wrapper is shared, but the
 production host and snapshot state are not the `/ui-experiments` demo's
 `DialogOptionsDemo` or native-dialog drawer state.
+The production Drawer host reads its `DrawerTitle` from the display label
+stored in the selected content snapshot (with a safe existing-payload period
+fallback and final `詳細` fallback). `DrawerClose` retains its semantic name and
+primitive behavior and uses the explicit close-button style in
+`chart-point-drawer.module.css`; this changes no component or data model.
 
 Browser Mode test architecture: 19 Chromium configurations use the shared
 `tests/config/browser/chromium-provider.ts` helper, while the WebKit
@@ -1437,6 +1449,13 @@ Scenario body is consolidated under [the canonical requirement group](#current-r
 #### Scenario R15l: Existing Tooltip Interaction Preservation
 
 Scenario body is consolidated under [the canonical requirement group](#current-r15).
+
+#### Scenario R15m: Drawer Period Title and Close Control
+
+- **WHEN** a selected-point Drawer opens for a chart selection
+  **THEN** its heading uses the nonblank selection label stored with the same content snapshot; if that label is absent or whitespace-only, it uses a safely type-checked existing payload period, and if no period is available it displays `詳細`.
+- **WHEN** the selected-point Drawer is open
+  **THEN** its close control remains a semantic button named `閉じる`, keeps the existing Drawer dismissal and focus behavior, and has a visible button treatment with a minimum 44×44px target.
 
 ### R8: Accessibility
 
@@ -2464,6 +2483,13 @@ contracts remain shared with `CustomTooltip`.
 - **WHEN** the chart is used with touch/coarse and fine pointer input on a hybrid device
 - **THEN** real `PointerEvent.pointerType` drives the last-input mode: touch selection uses the modal Drawer and mouse/pen movement uses the existing hover tooltip. The coarse-pointer media query supplies only the initial fallback until a pointer event identifies the active input, and a mode change synchronously invalidates the old snapshot before the next selection. Fine mouse hover remains available on a hybrid device.
 - **AND** a `pointerleave` or compatibility mouse event after touch does not by itself switch input mode or clear the just-selected Drawer snapshot; mode tracking uses actual pointer events. Physical hybrid-device input switching remains a manual validation item.
+
+#### Canonical scenario — Scenario R15m: Drawer Period Title and Close Control
+
+- **WHEN** a selected-point Drawer opens for a chart selection
+- **THEN** the content and display label are saved in the same snapshot, and `DrawerTitle` uses that snapshot's nonblank label. If the label is absent or whitespace-only, it uses a safely type-checked period from the existing payload, following the body's `年月`/`label` precedence; if no usable period exists, the title is `詳細`. The title does not use a series name or total and preserves the supplied monthly or quarterly notation without applying a new formatter.
+- **WHEN** the selected-point Drawer is open
+- **THEN** its `閉じる` control remains a semantic button with the existing Drawer close, Escape, backdrop, swipe-dismiss, and focus restoration behavior, and receives a visible button style with a minimum 44×44px target.
 
 <a id="current-r8"></a>
 

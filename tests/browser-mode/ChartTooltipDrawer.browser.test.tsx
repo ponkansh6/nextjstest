@@ -8,7 +8,7 @@ import {
 } from "react";
 import { act, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { page, userEvent } from "vitest/browser";
+import { cdp, page, userEvent } from "vitest/browser";
 import { NewGraph } from "../../src/app/components/NewGraph";
 import { SpendingBarChart } from "../../src/app/components/SpendingBarChart";
 import { StackedAreaChart } from "../../src/app/components/StackedAreaChart";
@@ -169,30 +169,53 @@ function DrawerPayloadFixture({
   isTouch = true,
   drawerEnabled = true,
   onClosedDrawerCompletion,
+  data = chartData,
+  getSelectionLabel = (row: ComponentProps<typeof SpendingBarChart>["data"][number]) => row.label,
+  omitPeriodFromPayload = false,
 }: {
   isTouch?: boolean;
   drawerEnabled?: boolean;
   onClosedDrawerCompletion?: (complete: (open: boolean) => void) => void;
+  data?: ComponentProps<typeof SpendingBarChart>["data"];
+  getSelectionLabel?: (
+    row: ComponentProps<typeof SpendingBarChart>["data"][number],
+  ) => string | undefined;
+  omitPeriodFromPayload?: boolean;
 }) {
   const tooltip = useChartTooltipController({ suppressed: false, isTouch });
   const resolveSelection = createChartTooltipSelectionResolver(
-    chartData,
+    data,
     () =>
       orderedVisibleKeys.map((key) => ({
         key,
         name: getSpendingPresentationLabel(key) ?? getLegendLabel(key),
         color: chartColorsByKey[key],
       })),
-    (row) => row.label,
+    getSelectionLabel,
   );
+  const selectionPayloadAtIndex = (index: number) => {
+    const selection = resolveSelection(index);
+    if (!selection || !omitPeriodFromPayload) return selection;
+    return {
+      ...selection,
+      label: undefined,
+      payload: selection.payload.map((entry) => {
+        if (!entry.payload || typeof entry.payload !== "object") return entry;
+        const row = { ...(entry.payload as Record<string, unknown>) };
+        delete row["年月"];
+        delete row.label;
+        return { ...entry, payload: row };
+      }),
+    };
+  };
   const selected = tooltip.bind("drawer-payload-contract", {
-    dataLength: chartData.length,
+    dataLength: data.length,
     drawerEnabled,
     showTotal: true,
     showAllPayload: true,
     showMeasurementNotes: false,
     allowedKeys: visibleKeys,
-    selectionPayloadAtIndex: resolveSelection,
+    selectionPayloadAtIndex,
     seriesMeta: orderedVisibleKeys.map((key, order) => ({
       key,
       label: getSpendingPresentationLabel(key) ?? getLegendLabel(key),
@@ -235,7 +258,7 @@ function DrawerPayloadFixture({
           title="支出"
           sectionId="drawer-payload-contract"
           testId="drawer-payload-chart"
-          data={chartData}
+          data={data}
           keys={chartKeys}
           colors={chartKeys.map((key) => chartColorsByKey[key])}
           hiddenKeys={[hiddenKey]}
@@ -460,6 +483,21 @@ async function expectDrawerAbsent() {
   await waitFor(() => expect(document.querySelector('[data-slot="drawer-popup"]')).toBeNull());
 }
 
+function rowsForDrawerPeriod(period: string): ComponentProps<typeof SpendingBarChart>["data"] {
+  const firstRow = chartData[0];
+  if (!firstRow) throw new Error("Production CTI fixture is empty");
+  return [{ ...firstRow, label: period, 年月: period }];
+}
+
+function expectDrawerPeriod(dialog: Element, period: string) {
+  expect(dialog.querySelector("#chart-point-drawer-title")?.textContent).toBe(period);
+  expect(dialog.querySelector("[data-custom-tooltip]")?.textContent).toContain(period);
+}
+
+function expectDrawerTitle(dialog: Element, title: string) {
+  expect(dialog.querySelector("#chart-point-drawer-title")?.textContent).toBe(title);
+}
+
 async function tapChartFamilyAtPeriod(family: "area" | "line", selectedPeriod: string) {
   await page.viewport(375, 667);
   renderBrowserComponent(<ChartFamilyTouchFixture family={family} />);
@@ -548,6 +586,7 @@ describe("chart tooltip Drawer datum selection", () => {
     if (!tooltip) throw new Error("Drawer CustomTooltip is missing");
     expect(tooltip.textContent).toContain("2018Q1");
     const firstRows = [...tooltip.querySelectorAll<HTMLElement>("[data-tooltip-row]")];
+    expectDrawerPeriod(dialogElement, "2018Q1");
     expect(firstRows.map((row) => row.dataset.tooltipKey)).toEqual(orderedVisibleKeys);
     expect(tooltip.querySelector(`[data-tooltip-row][data-tooltip-key="${hiddenKey}"]`)).toBeNull();
     expect(
@@ -582,6 +621,7 @@ describe("chart tooltip Drawer datum selection", () => {
     dialogElement = await dialog.element();
     tooltip = dialogElement.querySelector<HTMLElement>("[data-custom-tooltip]");
     if (!tooltip) throw new Error("Drawer CustomTooltip is missing after reselection");
+    expectDrawerPeriod(dialogElement, "2018Q2");
     expect(tooltip.textContent).toContain("2018Q2");
     expect(tooltip.querySelectorAll("[data-tooltip-row]")).toHaveLength(visibleKeys.length);
     expect(tooltip.querySelector("[data-tooltip-total]")?.textContent).toContain(
@@ -601,6 +641,7 @@ describe("chart tooltip Drawer datum selection", () => {
     tooltip = dialogElement.querySelector<HTMLElement>("[data-custom-tooltip]");
     if (!tooltip)
       throw new Error("Drawer CustomTooltip is missing on the repeated first selection");
+    expectDrawerPeriod(dialogElement, "2018Q1");
     expect(tooltip.textContent).toContain("2018Q1");
     expect(
       tooltip.querySelector('[data-tooltip-row][data-tooltip-key="CTIミクロ調整系列（食料）"]')
@@ -646,6 +687,7 @@ describe("chart tooltip Drawer datum selection", () => {
     await expect.element(dialog).toBeVisible();
     const tooltip = (await dialog.element()).querySelector<HTMLElement>("[data-custom-tooltip]");
     if (!tooltip) throw new Error("Drawer CustomTooltip is missing after reselection");
+    expectDrawerPeriod(await dialog.element(), "2018Q2");
     expect(tooltip.textContent).toContain("2018Q2");
 
     // Deliver the callback captured from the closed render after row B has reopened the Drawer.
@@ -654,7 +696,127 @@ describe("chart tooltip Drawer datum selection", () => {
     const currentTooltip = document.querySelector<HTMLElement>(
       '[data-slot="drawer-popup"] [data-custom-tooltip]',
     );
+    expect(
+      document.querySelector<HTMLElement>('[data-slot="drawer-popup"] #chart-point-drawer-title')
+        ?.textContent,
+    ).toBe("2018Q2");
     expect(currentTooltip?.textContent).toContain("2018Q2");
+  });
+
+  it("uses a monthly selection label for the Drawer heading and body", async () => {
+    await page.viewport(375, 667);
+    const month = "2022年11月";
+    renderBrowserComponent(<DrawerPayloadFixture data={rowsForDrawerPeriod(month)} />);
+
+    const { dialog } = await openFirstDrawer();
+    expectDrawerPeriod(await dialog.element(), month);
+  });
+
+  it("keeps a very long period title clear of the close button at 375px", async () => {
+    await page.viewport(375, 667);
+    const longTitle = `2022年11月${"・選択期間の詳細表示".repeat(12)}`;
+    renderBrowserComponent(<DrawerPayloadFixture data={rowsForDrawerPeriod(longTitle)} />);
+
+    const { dialog } = await openFirstDrawer();
+    const dialogElement = await dialog.element();
+    const title = dialogElement.querySelector<HTMLElement>("#chart-point-drawer-title");
+    const close = dialogElement.querySelector<HTMLButtonElement>('button[aria-label="閉じる"]');
+    if (!title || !close) throw new Error("Drawer title or close control is missing");
+    const titleBounds = title.getBoundingClientRect();
+    const closeBounds = close.getBoundingClientRect();
+
+    expect(title.textContent).toBe(longTitle);
+    expect(titleBounds.width).toBeGreaterThan(0);
+    expect(titleBounds.right).toBeLessThanOrEqual(closeBounds.left);
+    expect(closeBounds.width).toBeGreaterThanOrEqual(44);
+    expect(closeBounds.height).toBeGreaterThanOrEqual(44);
+    expect(closeBounds.left).toBeGreaterThanOrEqual(0);
+    expect(closeBounds.right).toBeLessThanOrEqual(window.innerWidth);
+    expect(closeBounds.top).toBeGreaterThanOrEqual(0);
+    expect(closeBounds.bottom).toBeLessThanOrEqual(window.innerHeight);
+  });
+
+  it("shows the close button focus-visible outline after keyboard navigation", async () => {
+    await page.viewport(375, 667);
+    renderBrowserComponent(<DrawerPayloadFixture />);
+
+    const { dialog } = await openFirstDrawer();
+    const closeElement = (await dialog.element()).querySelector<HTMLButtonElement>(
+      'button[aria-label="閉じる"]',
+    );
+    if (!closeElement) throw new Error("Drawer close control is missing");
+    await userEvent.tab();
+    expect(document.activeElement).toBe(closeElement);
+    expect(closeElement.matches(":focus-visible")).toBe(true);
+    const style = window.getComputedStyle(closeElement);
+    expect(style.outlineStyle).not.toBe("none");
+    expect(Number.parseFloat(style.outlineWidth)).toBeGreaterThanOrEqual(2);
+  });
+
+  it("applies the close button background and border in dark theme", async () => {
+    await page.viewport(375, 667);
+    document.documentElement.setAttribute("data-theme", "dark");
+    renderBrowserComponent(<DrawerPayloadFixture />);
+
+    const { dialog } = await openFirstDrawer();
+    const close = (await dialog.element()).querySelector<HTMLButtonElement>(
+      'button[aria-label="閉じる"]',
+    );
+    if (!close) throw new Error("Drawer close control is missing");
+    const style = window.getComputedStyle(close);
+    expect(document.documentElement.getAttribute("data-theme")).toBe("dark");
+    expect(style.backgroundColor).not.toBe("rgba(0, 0, 0, 0)");
+    expect(style.borderTopStyle).toBe("solid");
+    expect(style.borderTopWidth).toBe("1px");
+    expect(style.borderTopColor).not.toBe("rgba(0, 0, 0, 0)");
+  });
+
+  it("removes the close button transition when reduced motion is preferred", async () => {
+    const devtools = cdp();
+    await devtools.send("Emulation.setEmulatedMedia", {
+      features: [{ name: "prefers-reduced-motion", value: "reduce" }],
+    });
+    try {
+      await page.viewport(375, 667);
+      renderBrowserComponent(<DrawerPayloadFixture />);
+
+      const { dialog } = await openFirstDrawer();
+      const close = (await dialog.element()).querySelector<HTMLButtonElement>(
+        'button[aria-label="閉じる"]',
+      );
+      if (!close) throw new Error("Drawer close control is missing");
+      expect(window.matchMedia("(prefers-reduced-motion: reduce)").matches).toBe(true);
+      expect(window.getComputedStyle(close).transitionDuration).toBe("0s");
+    } finally {
+      await devtools.send("Emulation.setEmulatedMedia", { features: [] });
+    }
+  });
+
+  it.each([
+    { caseName: "blank selection label", label: "   " },
+    { caseName: "absent selection label", label: undefined },
+  ])("falls back to the payload period for a $caseName", async ({ label }) => {
+    await page.viewport(375, 667);
+    renderBrowserComponent(<DrawerPayloadFixture getSelectionLabel={() => label} />);
+
+    const { dialog } = await openFirstDrawer();
+    expectDrawerTitle(await dialog.element(), "2018Q1");
+  });
+
+  it("uses 詳細 when neither selection label nor payload has a period", async () => {
+    await page.viewport(375, 667);
+    renderBrowserComponent(
+      <DrawerPayloadFixture
+        data={chartData.slice(0, 1)}
+        getSelectionLabel={() => undefined}
+        omitPeriodFromPayload
+      />,
+    );
+
+    const { dialog } = await openFirstDrawer();
+    const dialogElement = await dialog.element();
+    expectDrawerTitle(dialogElement, "詳細");
+    expect(dialogElement.querySelector("[data-custom-tooltip]")).not.toBeNull();
   });
 
   it("does not open from pointerdown alone", async () => {
