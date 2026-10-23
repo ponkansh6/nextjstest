@@ -147,9 +147,16 @@ export const inspectPhase6B13: BrowserCommand<[id: Phase6B13Id], unknown> = asyn
           5_000,
           () => page.locator(".recharts-tooltip-cursor").count(),
         );
-        const heading = page.getByRole("heading", { name: /費目別寄与度/ }).first();
+        const heading = page.locator("#section-stacked h2").first();
+        const headingBox = await stage(id, "read stacked chart heading bounding box", 5_000, () =>
+          heading.boundingBox(),
+        );
+        if (!headingBox) throw new Error("Stacked chart heading is unavailable for outside touch");
         await stage(id, "touch stacked chart heading outside wrapper", 10_000, () =>
-          heading.tap({ timeout: 5_000 }),
+          page.touchscreen.tap(
+            headingBox.x + headingBox.width / 2,
+            headingBox.y + headingBox.height / 2,
+          ),
         );
         await stage(id, "wait for close button hidden after heading touch", 7_000, () =>
           closeButton.waitFor({ state: "hidden", timeout: 5_000 }),
