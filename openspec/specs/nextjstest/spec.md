@@ -439,8 +439,8 @@ baseline contracts (including the Plan37 basic line's 2025 raw monthly average).
 A 2020-base source or compatibility set
 describes acquisition/compatibility provenance only and MUST be normalized to
 the 2025 display basis; it MUST NOT be treated as the display base year. The
-給与物価差 uses the same-basis salary index minus CPI index, applies a 2-month
-moving average, and then sets the 2025 calendar-year average to 0.
+給与物価差 uses the same-basis salary index minus CPI index and applies a
+2-month moving average. It is not rebased after calculating the difference.
 
 ### Shared TypeScript data types
 
@@ -1748,7 +1748,7 @@ The system SHALL display economic indicators as interactive Recharts-based chart
   - ResidualAreaChart (給与と物価の差(実質賃金相当)):
     - Displays the difference between "給与指数（総合）" and "物価指数（総合）".
     - Uses the difference between the 2025 calendar-year average = 100 salary index and the same-basis CPI index; it is a comparison-only field and does not rewrite CPI, CTI, earnings, or GDP source values.
-    - The index difference is smoothed with a 2-month moving average (2MA), then rebased so that its 2025 calendar-year average is 0 when every required series has 12 valid months.
+    - The index difference is smoothed with a 2-month moving average (2MA); no annual-average rebasing is applied to the difference.
   - NewGraph (supplementary view, 3種比較):
     - Displays the CPI and wage comparison lines; the CTI micro monthly wage lines are not part of this registry.
 - The nominal spending chart uses one dedicated CTI quarterly key: existing nominal estimates for 2005Q1〜2016Q4 and official adjusted nominal quarterly original values for 2017Q1 through the latest complete quarter. The value and row measurement metadata are public together.

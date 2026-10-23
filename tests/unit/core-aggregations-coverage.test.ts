@@ -29,7 +29,6 @@ import {
   calculateRawResidual,
   calculateSmoothedTotal,
   applyResidualMovingAverage,
-  rebaseResidualToYearAverage,
 } from "../../server/lib/serverCalculations";
 import type { CpiData } from "../../src/types";
 
@@ -913,7 +912,7 @@ describe("core aggregation edge contracts", () => {
     ).toBe(5);
   });
 
-  it("propagates unavailable residual windows and refuses incomplete or duplicate base years", () => {
+  it("propagates unavailable residual windows", () => {
     const data: CpiData[] = [
       cpiDataRow("2005年1月", { 残差: 10 }),
       cpiDataRow("2005年2月", { 残差: Number.POSITIVE_INFINITY }),
@@ -924,40 +923,11 @@ describe("core aggregation edge contracts", () => {
     applyResidualMovingAverage(data);
     expect(data[1].残差).toBeNull();
     expect(data[2].残差).toBeNull();
-
-    const incomplete = Array.from({ length: 12 }, (_, index) =>
-      cpiDataRow(`2025年${index === 11 ? 11 : index + 1}月`, { 残差: index + 1 }),
-    );
-    rebaseResidualToYearAverage(incomplete, 2025);
-    expect(incomplete[0].残差).toBe(1);
-    const nonFinite = Array.from({ length: 12 }, (_, index) =>
-      cpiDataRow(`2025年${index + 1}月`, { 残差: index === 7 ? Number.NaN : index + 1 }),
-    );
-    rebaseResidualToYearAverage(nonFinite, 2025);
-    expect(nonFinite[0].残差).toBe(1);
-    const valid = [
-      ...Array.from({ length: 12 }, (_, index) =>
-        cpiDataRow(`2025年${index + 1}月`, { 残差: index + 1 }),
-      ),
-      cpiDataRow("2026年1月", { 残差: 99 }),
-    ];
-    rebaseResidualToYearAverage(valid, 2025);
-    expect(valid[0].残差).toBe(-5.5);
-    expect(valid[12].残差).toBe(92.5);
   });
 
-  it("keeps the first eligible residual and leaves non-numeric values untouched when rebasing", () => {
+  it("keeps the first eligible residual unchanged", () => {
     const first = [cpiDataRow("2005年2月", { 残差: 5 })];
     applyResidualMovingAverage(first);
     expect(first[0].残差).toBe(5);
-
-    const values = [
-      ...Array.from({ length: 12 }, (_, index) =>
-        cpiDataRow(`2025年${index + 1}月`, { 残差: index + 1 }),
-      ),
-      cpiDataRow("2026年1月", { 残差: null }),
-    ];
-    rebaseResidualToYearAverage(values, 2025);
-    expect(values[12].残差).toBeNull();
   });
 });

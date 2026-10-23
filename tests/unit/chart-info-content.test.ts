@@ -109,12 +109,12 @@ describe("new-graph and residual chart info wording", () => {
     expect(text).not.toMatch(/Plan22|raw値|内部保持|月次原系列|9大費目（/);
   });
 
-  it("describes residual rebasing to a 2025 annual average of zero", () => {
+  it("describes the 2-month moving average applied to the wage-price difference", () => {
     const text = CHART_INFO.residual.sections
       .flatMap((section) => section.items.map((item) => item.text))
       .join("\n");
 
-    expect(text).toContain("2か月移動平均後の差分を2025年平均 = 0に再基準化");
+    expect(text).toContain("その差に2か月移動平均を適用");
   });
 });
 

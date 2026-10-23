@@ -57,29 +57,3 @@ export function applyResidualMovingAverage(data: CpiData[]): void {
     }
   }
 }
-
-/**
- * Rebases the already-smoothed residual to the selected calendar year's
- * display average. A complete, finite year is required so unavailable data
- * never becomes a fabricated zero.
- */
-export function rebaseResidualToYearAverage(data: CpiData[], year: number): void {
-  const yearPrefix = `${year}年`;
-  const yearItems = data.filter((item) => item.年月.startsWith(yearPrefix));
-  const values = yearItems.map((item) => item["残差"]);
-  if (
-    yearItems.length !== 12 ||
-    new Set(yearItems.map((item) => item.年月)).size !== 12 ||
-    !values.every((value) => typeof value === "number" && Number.isFinite(value))
-  ) {
-    return;
-  }
-
-  const average = (values as number[]).reduce((sum, value) => sum + value, 0) / values.length;
-  data.forEach((item) => {
-    const value = item["残差"];
-    if (typeof value === "number" && Number.isFinite(value)) {
-      item["残差"] = value - average;
-    }
-  });
-}

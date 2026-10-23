@@ -7,7 +7,6 @@ import {
   calculateAdjustedMetric,
   calculateRawResidual,
   applyResidualMovingAverage,
-  rebaseResidualToYearAverage,
 } from "../serverCalculations";
 import { loadPopulationDataInternal } from "./population";
 import { loadCpiDataInternal, loadCtiDataInternal, type CtiLoadOptions } from "./cpi";
@@ -506,7 +505,5 @@ export async function loadTotalEarningDataInternal(
         : null;
   });
   applyResidualMovingAverage(result);
-  // Rebase after 2MA so the values actually shown for 2025 average to zero.
-  rebaseResidualToYearAverage(result, salaryComparisonYear);
   return result;
 }
