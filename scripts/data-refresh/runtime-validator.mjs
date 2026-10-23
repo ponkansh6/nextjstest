@@ -568,7 +568,7 @@ export const PINNED_PROJECT_FILES = Object.freeze({
   "src/lib/quarterlyPublicProjection.ts":
     "224ed0fbf1ff036d5cdc7c41e40d94defaa5703e59696d0154e7cfa553dfa874",
   "src/lib/yearMonth.ts": "c1bf9750552d656186d0cbfd32f73a647e9ea16b65feb6128b5b2cc6a496a515",
-  "src/types/chart.ts": "5ebf88072173e893ad28e06ef4103e6aa116e0468ba6e5bba9e8c9cde93bcb08",
+  "src/types/chart.ts": "352bb645888d9bd58a7ce3bc5dbe37d0fb7204170f2a57e89fe32651698815b6",
   "src/types/data.ts": "877a8bf4193672663b1de06fb82cff6995fc097911fa9cdf7859652af4232009",
   "src/types/index.ts": "2ef6482f4a19da1f6950524164a0cc522b2463507d0e87be8f7eadd4cdf88928",
   "tests/data-quality/cpi-data-integrity.test.ts":

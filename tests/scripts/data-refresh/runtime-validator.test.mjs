@@ -547,7 +547,7 @@ describe("staged runtime quality validator", () => {
       "src/lib/math/quarterlyCompleteness.ts":
         "756050907a879fb5f5715ae04ae044893c7b0e8c2fae574c0f6818b974e54943",
       "server/lib/data-loader/earnings.ts":
-        "dc813aa80d299241a57c8906c3d68172732d5d200d0b36565e8350d73cb5f96d",
+        "a61784667da6a91acdfce9d306e03d3fc2362da351c080c9ca1010b45379cd8b",
     });
     expect(auditRuntimeQualityCoverage(registry)).toMatchObject({
       missingRefreshOutputs: [],
