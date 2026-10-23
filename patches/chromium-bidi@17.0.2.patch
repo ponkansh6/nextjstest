@@ -1,0 +1,26 @@
+diff --git a/out/Default/gen/src/mapperTab.js b/out/Default/gen/src/mapperTab.js
+index e5d46e8e23b20ea7dd38e48acfcbd7961a72db48..61a958748ae6dfad412805a9a75e683832373e72 100644
+--- a/out/Default/gen/src/mapperTab.js
++++ b/out/Default/gen/src/mapperTab.js
+@@ -19390,7 +19390,7 @@
+         if (parseResult.success) {
+             return parseResult.data;
+         }
+-        const errorMessage = parseResult.error.errors
++        const errorMessage = parseResult.error.issues
+             .map((e) => `${e.message} in ` +
+             `${e.path.map((p) => JSON.stringify(p)).join('/')}.`)
+             .join(' ');
+diff --git a/out/Default/gen/src/protocol-parser/protocol-parser.js b/out/Default/gen/src/protocol-parser/protocol-parser.js
+index 44f04b44f28b792e356e0fafbf9f58efcba408dc..9535f2893fee669d3a9a05981f0d979da27259de 100644
+--- a/out/Default/gen/src/protocol-parser/protocol-parser.js
++++ b/out/Default/gen/src/protocol-parser/protocol-parser.js
+@@ -30,7 +30,7 @@ export function parseObject(obj, schema) {
+     if (parseResult.success) {
+         return parseResult.data;
+     }
+-    const errorMessage = parseResult.error.errors
++    const errorMessage = parseResult.error.issues
+         .map((e) => `${e.message} in ` +
+         `${e.path.map((p) => JSON.stringify(p)).join('/')}.`)
+         .join(' ');

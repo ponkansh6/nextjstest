@@ -20,6 +20,7 @@ minimumReleaseAgeExclude:
   - vite@8.3.5
 
 overrides:
+  zod: 4.6.7
   postcss@<8.5.10: ^8.5.10
   path-to-regexp@6.1.0: 6.3.0
   fast-uri@3.1.5: 3.1.8
@@ -32,3 +33,6 @@ overrides:
   tinypool: 2.1.2
   source-map-js: 1.2.2
   sharp: 0.35.5
+
+patchedDependencies:
+  chromium-bidi@17.0.2: patches/chromium-bidi@17.0.2.patch
