@@ -118,7 +118,7 @@ describe("home page public status and rendering branches", () => {
     expect(screen.getByRole("heading", { name: "物価・賃金・消費の推移" })).toBeTruthy();
     expect(
       screen.getByText(
-        "CPIは2025年基準の公式接続指数です。賃金・消費などは各系列の公表基準または比較用の正規化契約に基づいています。凡例から表示系列を切り替えられます。",
+        "2025年を100とした指数として表示しています。凡例で表示系列を切り替え可能です。",
       ),
     ).toBeTruthy();
     expect(screen.getByTestId("cpi-chart")).toBeTruthy();
