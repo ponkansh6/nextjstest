@@ -9,6 +9,7 @@ import { QUARTERLY_PUBLIC_NOMINAL_KEYS } from "../../src/lib/quarterlyPublicProj
 const mocks = vi.hoisted(() => ({
   sectionsProps: null as Record<string, any> | null,
   displayData: null as Record<string, any> | null,
+  invalidateChartTooltip: vi.fn(),
 }));
 
 vi.mock("../../src/app/components/CpiChart.module.css", () => ({
@@ -34,7 +35,12 @@ vi.mock("../../src/hooks/useSectionNavigation", () => ({
   }),
 }));
 vi.mock("../../src/app/components/charts/useChartTooltipProps", () => ({
-  useChartTooltipController: () => ({ bind: () => ({}) }),
+  createChartTooltipSelectionResolver: () => () => null,
+  useChartTooltipController: () => ({
+    bind: () => ({}),
+    invalidate: mocks.invalidateChartTooltip,
+    drawer: null,
+  }),
 }));
 vi.mock("../../src/app/components/SpendingBarChart", () => ({
   normalizeSpendingChartData: (rows: unknown[]) => rows,

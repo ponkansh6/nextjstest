@@ -1,7 +1,7 @@
 import path from "node:path";
 import { defineConfig, configDefaults } from "vitest/config";
 import react from "@vitejs/plugin-react";
-import { playwright } from "@vitest/browser-playwright";
+import { chromiumPlaywrightProvider } from "./chromium-provider";
 import { inspectProductionDashboard } from "../../../tests/browser-mode/next-route-poc.command";
 import { inspectBatch1ProductionCase } from "../../../tests/browser-mode/batch1-route.command";
 import { inspectBatch3AProductionCase } from "../../../tests/browser-mode/batch3-a-route.command";
@@ -43,7 +43,7 @@ export default defineConfig({
     hookTimeout: 90_000,
     browser: {
       enabled: true,
-      provider: playwright({ actionTimeout: 10_000 }),
+      provider: chromiumPlaywrightProvider({ actionTimeout: 10_000 }),
       instances: [{ browser: "chromium", headless: true, viewport: { width: 1280, height: 800 } }],
       commands: {
         inspectProductionDashboard,

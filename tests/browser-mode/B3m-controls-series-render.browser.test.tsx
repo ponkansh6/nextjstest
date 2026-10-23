@@ -219,6 +219,7 @@ describe("B3m Chromium slices", () => {
   });
 
   it("p45-b-plan24-rendering-71", async () => {
+    await page.viewport(1280, 800);
     renderBrowserComponent(
       <Plan24RenderingFixture
         data={createQuarterlyData([
@@ -229,13 +230,18 @@ describe("B3m Chromium slices", () => {
     );
     const chart = page.getByTestId("b3m-plan24-rendering");
     const chartElement = await chart.element();
-    const firstBar = chartElement.querySelector<HTMLElement>(".recharts-bar-rectangle");
-    expect(firstBar).not.toBeNull();
-    expect(firstBar).toBeVisible();
+    const firstBarShape = Array.from(
+      chartElement.querySelectorAll<SVGElement>(".recharts-bar-rectangle"),
+    )
+      .map((group) => group.querySelector<SVGElement>("path, rect"))
+      .find((shape): shape is SVGElement => shape !== null);
+    expect(firstBarShape).not.toBeNull();
+    expect(firstBarShape).toBeVisible();
     expect(chartElement.querySelectorAll(".recharts-line-curve")).toHaveLength(0);
   });
 
   it("p45-b-plan24-rendering-88", async () => {
+    await page.viewport(1280, 800);
     renderBrowserComponent(
       <Plan24RenderingFixture
         data={createQuarterlyData([
@@ -246,10 +252,14 @@ describe("B3m Chromium slices", () => {
     );
     const chart = page.getByTestId("b3m-plan24-rendering");
     const chartElement = await chart.element();
-    const firstBar = chartElement.querySelector<HTMLElement>(".recharts-bar-rectangle");
-    expect(firstBar).not.toBeNull();
-    expect(firstBar).toBeVisible();
-    await userEvent.hover(firstBar!);
+    const firstBarShape = Array.from(
+      chartElement.querySelectorAll<SVGElement>(".recharts-bar-rectangle"),
+    )
+      .map((group) => group.querySelector<SVGElement>("path, rect"))
+      .find((shape): shape is SVGElement => shape !== null);
+    expect(firstBarShape).not.toBeNull();
+    expect(firstBarShape).toBeVisible();
+    await userEvent.hover(firstBarShape!);
     const tooltip = chartElement.querySelector<HTMLElement>('[data-custom-tooltip="true"]');
     expect(tooltip).not.toBeNull();
     expect(tooltip).toBeVisible();

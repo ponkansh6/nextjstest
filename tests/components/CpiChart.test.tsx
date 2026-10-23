@@ -6,13 +6,16 @@ import { CustomTooltip } from "../../src/app/components/CustomTooltip";
 import { SectionTabs } from "../../src/app/components/SectionTabs";
 import { CPI_CHART_SECTIONS } from "../../src/app/components/cpiChartConfig";
 import CpiChart from "../../src/app/components/CpiChart";
+import type { CpiData } from "../../src/types";
 import type { CpiView, QuarterlyView } from "../../src/types/chart";
 import {
   CONSUMPTION_REAL_KEYS,
   CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY,
   CTI_ADJUSTED_V2_PUBLIC_CATEGORIES,
   CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY,
+  EARNINGS_SERIES_REGISTRY,
   stackedKeys,
+  targetKeys,
 } from "../../src/lib/chartConstants";
 import { QUARTERLY_PUBLIC_NOMINAL_KEYS } from "../../src/lib/quarterlyPublicProjection";
 import type { SeriesMetadata } from "../../src/lib/chartConstants";
@@ -182,6 +185,9 @@ const sectionProps: React.ComponentProps<typeof CpiChartSections> = {
   setCagrMonth: vi.fn(),
   calculateCAGR: vi.fn(),
   chartTooltip: {
+    drawer: <div />,
+    dismiss: vi.fn(),
+    invalidate: vi.fn(),
     bind: () => ({
       tooltipProps: {
         cursor: { stroke: "#000", strokeWidth: 1, strokeOpacity: 0.2 },
@@ -190,7 +196,11 @@ const sectionProps: React.ComponentProps<typeof CpiChartSections> = {
       },
       onClick: vi.fn(),
       onPointerDown: vi.fn(),
+      onPointerUp: vi.fn(),
+      onPointerCancel: vi.fn(),
+      onKeyDown: vi.fn(),
       onPointerMove: vi.fn(),
+      onChartMouseMove: vi.fn(),
       onMouseMove: vi.fn(),
       onPointerLeave: vi.fn(),
       onMouseLeave: vi.fn(),
@@ -292,6 +302,7 @@ describe("CpiChartSections composition", () => {
     }));
     const capturedBindings = new Map<string, Record<string, unknown>>();
     const chartTooltip = {
+      ...sectionProps.chartTooltip,
       bind: ((id: string, options?: Record<string, unknown>) => {
         if (options) capturedBindings.set(id, options);
         return sectionProps.chartTooltip.bind(id);
@@ -366,6 +377,109 @@ describe("CpiChartSections composition", () => {
     ).toHaveLength(0);
     expect(screen.queryByText("実質総合は名目総合を総合CPIで独立調整")).toBeNull();
     expect(screen.queryByText(/CPI: 持家の帰属家賃を除く総合.*2025年基準/)).toBeNull();
+  });
+
+  it("resolves row-zero payloads from all seven chart section bindings", () => {
+    const monthlyPeriod = "2099年1月";
+    const quarterlyPeriod = "2099Q1";
+    const monthlyRow = {
+      年月: monthlyPeriod,
+      総合: 101,
+      生鮮食品を除く総合: 102,
+      持家の帰属家賃を除く総合: 103,
+      "消費支出（参考）": null,
+      "CPI総合(参考)": 104,
+      ...Object.fromEntries(targetKeys.map((key, index) => [key, 110 + index])),
+      ...Object.fromEntries(stackedKeys.map((key, index) => [key, 210 + index])),
+      ...Object.fromEntries(EARNINGS_SERIES_REGISTRY.map(({ key }, index) => [key, 310 + index])),
+      残差: 707,
+      "総合(12MA)": 808,
+    } as CpiData;
+    const nominalRow = quarterlyFixture(canonicalNominalKeys).find((row) => row.label === "2005Q1");
+    const realRow = quarterlyFixture(CONSUMPTION_REAL_KEYS).find((row) => row.label === "2005Q1");
+    if (!nominalRow || !realRow) throw new Error("Spending row fixtures are missing");
+
+    const capturedBindings = new Map<string, Record<string, unknown>>();
+    const chartTooltip = {
+      ...sectionProps.chartTooltip,
+      bind: ((id: string, options?: Record<string, unknown>) => {
+        if (options) capturedBindings.set(id, options);
+        return sectionProps.chartTooltip.bind(id);
+      }) as unknown as typeof sectionProps.chartTooltip.bind,
+    };
+    const comparisonKey = "総合(12MA)";
+    const comparisonSeries: SeriesMetadata[] = [
+      { key: comparisonKey, label: "CPI total (12MA)", color: "#334155", value: 808 },
+    ];
+    render(
+      <CpiChartSections
+        {...sectionProps}
+        filteredData={[monthlyRow]}
+        nominalPublicData={[nominalRow]}
+        realPublicData={[realRow]}
+        earningsData={[monthlyRow]}
+        mergedData={[monthlyRow]}
+        nominalKeysWithSupport={canonicalNominalKeys}
+        nominalColorsWithSupport={canonicalNominalKeys.map(() => "#0f766e")}
+        realKeysWithSupport={CONSUMPTION_REAL_KEYS}
+        realColors={CONSUMPTION_REAL_KEYS.map(() => "#0f766e")}
+        comparisonSeriesRegistry={comparisonSeries}
+        chartTooltip={chartTooltip}
+      />,
+    );
+
+    const resolvedCases: Array<{
+      id: string;
+      period: string;
+      keys: string[];
+      row: Record<string, unknown>;
+    }> = [
+      { id: "section-cpi-major", period: monthlyPeriod, keys: targetKeys, row: monthlyRow },
+      { id: "section-stacked", period: monthlyPeriod, keys: stackedKeys, row: monthlyRow },
+      {
+        id: "section-consumption-nominal",
+        period: "2005Q1",
+        keys: canonicalNominalKeys,
+        row: nominalRow,
+      },
+      {
+        id: "section-consumption-real",
+        period: "2005Q1",
+        keys: CONSUMPTION_REAL_KEYS,
+        row: realRow,
+      },
+      {
+        id: "section-earnings",
+        period: monthlyPeriod,
+        keys: EARNINGS_SERIES_REGISTRY.map(({ key }) => key),
+        row: monthlyRow,
+      },
+      { id: "section-residual", period: monthlyPeriod, keys: ["残差"], row: monthlyRow },
+      { id: "section-new-graph", period: monthlyPeriod, keys: [comparisonKey], row: monthlyRow },
+    ];
+
+    for (const { id, period, keys, row } of resolvedCases) {
+      const resolver = capturedBindings.get(id)?.selectionPayloadAtIndex as
+        | ((index: number) => {
+            label?: string;
+            payload: Array<{
+              dataKey: string;
+              value: unknown;
+              payload: Record<string, unknown>;
+            }>;
+          } | null)
+        | undefined;
+      expect(resolver, `${id} resolver`).toBeTypeOf("function");
+      const result = resolver?.(0);
+      expect(result?.label, `${id} period`).toBe(period);
+      expect(result?.payload.map(({ dataKey }) => dataKey).sort(), `${id} series`).toEqual(
+        [...keys].sort(),
+      );
+      for (const entry of result?.payload ?? []) {
+        expect(entry.value, `${id} ${entry.dataKey} value`).toBe(row[entry.dataKey]);
+        expect(entry.payload, `${id} ${entry.dataKey} source row`).toEqual(row);
+      }
+    }
   });
 });
 

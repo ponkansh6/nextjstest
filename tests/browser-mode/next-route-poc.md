@@ -7,3 +7,47 @@ Run `pnpm run test:browser:next-route-poc`. The script runs the existing product
 The command navigates to `/`, reads the actual route heading and first production chart data row, clicks the CPI major chart's `総合` legend, and returns the route/data/DOM observations to Vitest assertions. This demonstrates one production route, one server-rendered data surface, and one chart interaction. It does not prove every Next route, async Server Component composition, data freshness contract, deployment environment, other browser engine, or parity for any migration candidate.
 
 The local Next.js 16.3.5 Vitest guide says async Server Components are unsupported by the standard Next/Vitest integration. That documented integration limitation is separate from Vitest Browser Mode's browser APIs. This PoC controls a running production `next start` server through Playwright; it does not make the standard integration support async Server Components.
+
+## Optional persistent Chromium server
+
+Chromium Browser Mode can reuse a detached Playwright browser server across
+commands. Start it, run a browser suite through the manager, inspect its status,
+then stop it:
+
+```sh
+pnpm test:browser:server:start
+pnpm test:browser:server:run -- pnpm test:browser:component:all
+pnpm test:browser:server:status
+pnpm test:browser:server:stop
+```
+
+`run` checks that the server is reachable and its Playwright version matches
+the installed `@playwright/test`; it sets `PLAYWRIGHT_BROWSER_SERVER=1` for the
+child command and returns that command's exit status. The Chromium provider
+helper then reads `.cache/playwright-browser-server/state.json` and connects
+to its loopback WebSocket endpoint with a 10-second timeout. To isolate server
+state, set `PLAYWRIGHT_BROWSER_SERVER_STATE_DIR` to a directory for both the
+manager commands and the test process. Starting the browser server does not
+start or retain the Next.js production server: route commands still own their
+existing build/readiness and Next.js lifecycle. Browser Mode test contexts
+remain isolated and are closed according to their current lifecycle.
+
+To reproduce the integration checks, run the manager lifecycle checks (start,
+stop, concurrent connections, and state-directory isolation) and then the
+provider checks (the full component suite and consecutive focused runs):
+
+```sh
+node --test tests/scripts/playwright-browser-server.integration.mjs
+node --test tests/scripts/playwright-provider-vitest.integration.mjs
+```
+
+To include production-route cases, build first and enable route verification:
+
+```sh
+pnpm run build
+PLAYWRIGHT_SERVER_VERIFY_ROUTES=1 node --test tests/scripts/playwright-provider-vitest.integration.mjs
+```
+
+These checks use a temporary isolated state directory and stop the persistent
+browser in a `finally` cleanup, so they can be rerun without reusing prior
+server state.

@@ -58,29 +58,33 @@ it("B12 #307: deliberately engineered actual link overlap is hit-tested by toolt
   expect(result.tooltipVisibleAfterTouch).toBe(true);
 });
 
-it("B12 #430: a real touch on the actual chartNote link outside tooltip navigates and dismisses tooltip", async () => {
+it("B12 #430: close the touch Drawer, then tap the actual chartNote link to navigate", async () => {
   const result = (await commands.inspectPhase6B12(NORMAL_LINK_TAP)) as {
     contextEvidence: Pixel7Evidence;
+    drawerVisibleAfterBarTap: boolean;
     tooltipVisibleAfterBarTap: boolean;
     linkVisibleAfterTap: boolean;
-    tooltipBox: { x: number; y: number; width: number; height: number } | null;
-    linkBox: { x: number; y: number; width: number; height: number } | null;
-    outsidePoint: { x: number; y: number } | null;
+    drawerHiddenAfterCloseTap: boolean;
+    tooltipHiddenAfterCloseTap: boolean;
+    linkBox: { x: number; y: number; width: number; height: number };
+    linkTapPoint: { x: number; y: number };
     pointHitByLink: boolean;
-    pointOutsideTooltip: boolean;
     touchPerformed: boolean;
     hashAfterTap: string;
-    tooltipVisibleAfterNavigation: boolean;
+    drawerHiddenAfterNavigation: boolean;
+    tooltipHiddenAfterNavigation: boolean;
   };
   expectPixel7FixedViewport(result.contextEvidence);
+  expect(result.drawerVisibleAfterBarTap).toBe(true);
   expect(result.tooltipVisibleAfterBarTap).toBe(true);
   expect(result.linkVisibleAfterTap).toBe(true);
-  expect(result.tooltipBox).not.toBeNull();
-  expect(result.linkBox).not.toBeNull();
-  expect(result.outsidePoint).not.toBeNull();
+  expect(result.drawerHiddenAfterCloseTap).toBe(true);
+  expect(result.tooltipHiddenAfterCloseTap).toBe(true);
+  expect(result.linkBox.width).toBeGreaterThan(0);
+  expect(result.linkBox.height).toBeGreaterThan(0);
   expect(result.pointHitByLink).toBe(true);
-  expect(result.pointOutsideTooltip).toBe(true);
   expect(result.touchPerformed).toBe(true);
   expect(result.hashAfterTap).toBe("#section-consumption-nominal");
-  expect(result.tooltipVisibleAfterNavigation).toBe(false);
+  expect(result.drawerHiddenAfterNavigation).toBe(true);
+  expect(result.tooltipHiddenAfterNavigation).toBe(true);
 });

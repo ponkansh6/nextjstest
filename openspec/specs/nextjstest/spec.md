@@ -516,6 +516,15 @@ Production-route Browser Mode commands use the configured Vitest provider's
 `Browser` and the command's device descriptor plus scenario overrides as test
 configuration. This adds no external application-data source.
 
+Chromium Browser Mode can optionally connect to a repository-managed persistent
+Playwright browser server. Its state file is operational test configuration,
+not dashboard data: `.cache/playwright-browser-server/state.json` by default,
+or the directory selected by `PLAYWRIGHT_BROWSER_SERVER_STATE_DIR`. It records
+the server PID, instance ID, loopback WebSocket endpoint, Playwright version,
+Chromium name, control port, and control token. The connection is accepted only
+when the state matches the installed `@playwright/test` version and names a
+`127.0.0.1` WebSocket endpoint. WebKit remains independently launched.
+
 Browser-test selection uses the active Vitest Browser Mode configurations and
 their discovered test cases as its authoritative catalog. Each selectable ID is
 derived from the configuration, spec-file path, and complete test name
@@ -648,6 +657,14 @@ emitting `NaN`/`Infinity`. The applicable expense list is the keys passed to
 and CTI expense items from 2018Q1 onward; the real section retains its
 existing real support path.
 
+Chart tooltip interaction adds no domain data source. Fine-pointer hover uses
+the live Recharts payload rendered by `CustomTooltip`; coarse/touch selection
+uses the selected chart-data row and that chart binding's visible series list
+to construct a Recharts-compatible payload and a short-lived
+`CustomTooltip` content snapshot for the production modal Drawer. Keyboard
+selection uses the same chart-specific resolver. `/ui-experiments`'s standalone
+Drawer demonstration is separate from this production chart path.
+
 給与ツールチップの合計対象は `EARNINGS_SERIES_REGISTRY` から投影した
 `EARNINGS_TOTAL_KEYS`（`所定内給与`、`所定外給与`、`特別給与`）である。
 合計はloaderの生値ではなく、給与独自の2025年平均=100基準化および特別給与の
@@ -730,6 +747,39 @@ synchronization, while unrelated query parameters are preserved. Measurement
 unit, source, status, and reason remain in the applicable projection and CSV
 metadata.
 
+`useChartTooltipController` keeps fine-pointer hover in the live
+`CustomTooltip`. For coarse/touch input it obtains the selected chart-data
+index from the same tap interaction: a rendered bar shape's `data-index` is
+authoritative when available; for area/line charts without a bar shape, the
+controller retains tap intent through pointerup and consumes the subsequent
+Recharts chart click's `activeTooltipIndex`, computed from that click's
+coordinates. It does not borrow an index from an earlier hover or inject a
+synthetic mousemove. Once a tap completes without a qualifying vertical scroll
+gesture, the controller calls the binding's `selectionPayloadAtIndex` resolver. The
+resolver reads the selected row from that chart's current filtered/range data
+and constructs Recharts-compatible entries from the currently visible series;
+the controller commits this payload as the `CustomTooltip` snapshot in the same
+selection action. Enter/Space on a chart uses the same resolver at the chart
+wrapper's center index. This selection path does not wait for the Recharts Tooltip
+effect to supply a tap payload. The modal Drawer holds one selected point,
+blocks background interaction, and closes through its close control, Escape,
+backdrop, or downward swipe. Closing clears the active chart/index immediately;
+the snapshot is retained until Base UI reports the Drawer close transition is
+complete, then released. A section-navigation programmatic-scroll suppression
+prevents a point selection from opening late after the scroll finishes.
+Data/projection changes and viewport resize invalidate an open snapshot. Real
+`PointerEvent.pointerType` sets the last observed input mode (touch uses the
+Drawer; mouse/pen uses hover), while `pointer: coarse` is only the initial
+fallback before a pointer event. If a pointer handler observes an effective
+mode change while a Drawer snapshot is open, it synchronously invalidates that
+snapshot before processing a new touch selection and updates the input-mode
+ref. The later React mode effect consumes that transition instead of issuing a
+second dismiss that could clear the newly committed snapshot. Fine mouse hover
+remains available on hybrid devices. The Drawer restores focus to the selected chart's `[role="img"]`
+element when closed. This production host reuses the primitive wrapper in
+`src/app/ui-experiments/BaseDrawer.tsx`, but is distinct from the
+`/ui-experiments` demonstration and its local demo state.
+
 `allowedKeys` is applied before totals and registered metadata rows. Spending,
 CPI, salary, and comparison paths retain strict filtering: when `allowedKeys` is
 present, every payload key (including unknown keys) must be in that set, so
@@ -786,6 +836,28 @@ Drawing, legend, tooltip, table, and CSV bind to the same metadata keys while re
 each chart's existing renderer.
 `shared/cti-estimate-contract.ts` is a client-safe shared type/value module and
 adds no UI component; this component tree is unchanged.
+
+Production tooltip interaction is owned by `CpiChart`'s
+`useChartTooltipController`, shared by `CpiChartSections` and the chart
+components. Fine-pointer input renders the live `CustomTooltip`; coarse/touch
+input and Enter/Space keyboard selection resolve the selected row and visible
+series from each `CpiChartSections` binding's chart data, build a
+Recharts-compatible payload, and send that snapshot to the controller's
+production modal Drawer host, rendered beside `CpiChartSections` by
+`CpiChart`. The host composes
+`DrawerRoot`, `DrawerContent`, `DrawerTitle`, and `DrawerClose` from
+`src/app/ui-experiments/BaseDrawer.tsx` and production styles from
+`chart-point-drawer.module.css`. The primitive wrapper is shared, but the
+production host and snapshot state are not the `/ui-experiments` demo's
+`DialogOptionsDemo` or native-dialog drawer state.
+
+Browser Mode test architecture: 19 Chromium configurations use the shared
+`tests/config/browser/chromium-provider.ts` helper, while the WebKit
+configuration retains its own provider. When explicitly enabled, that helper
+connects to the managed Chromium server from the state file; Vitest continues
+to own its existing test page/context lifecycle. The manager owns the browser
+server lifecycle, separately from test contexts and from the Next.js route
+server.
 Plan37の専用loaderはraw/normal/extension CTI basic fieldsとtyped
 `SeriesDescriptor`/`SeriesMeasurement`を内部互換用に保持する。これらのnormal/extension
 keysはNewGraphのcomparison registryへは投影しない。NewGraphはPlan49の
@@ -862,6 +934,20 @@ Production-route Browser Mode test → route command →
 work. The production-route runner invokes these commands with its configured
 Vitest provider; it does not share a context between command invocations.
 
+Persistent Chromium lifecycle: `pnpm test:browser:server:start` launches a
+detached `chromium.launchServer()` process bound to localhost and writes its
+state file; `status` checks the state, version, and authenticated control
+endpoint; `run -- <command>` verifies the server and Playwright version, then
+sets `PLAYWRIGHT_BROWSER_SERVER=1` for that child and returns its exit status;
+`stop` requests shutdown through the instance-bound control token rather than
+killing a PID. With that environment flag set, the shared Chromium provider
+helper reads the state file and connects with a 10-second timeout. Without the
+flag, Chromium follows its normal provider launch path. Missing or invalid
+state fails with start/stop instructions. Component Browser Mode keeps its
+existing per-file page/context and cleanup contract, and production-route
+commands continue creating an isolated context for each invocation. The
+Next.js production server lifecycle is unchanged and remains separate.
+
 The e-Stat API route files under `src/app/api/estat/*` remain an independent
 same-origin source boundary and are outside the Phase 2-5 facade refactoring
 path. They are not changed by that phase; this is confirmed by static inspection.
@@ -911,6 +997,7 @@ override them.
 | Dashboard behavior and component contracts                       | [R1](#current-r1) · [R2](#current-r2) · [R3](#current-r3) · [R4](#current-r4) · [R5](#current-r5) · [R6](#current-r6) · [R7](#current-r7) · [R8](#current-r8) · [R9](#current-r9) · [R10](#current-r10) · [R11](#current-r11) · [R12](#current-r12) · [R13](#current-r13) · [R14](#current-r14) · [R15](#current-r15) · [R16](#current-r16) · [R17](#current-r17) · [R18](#current-r18) · [R19](#current-r19) · [R20](#current-r20) · [R21](#current-r21) |
 | UI technology evaluation lab                                     | [UI-Lab](#ui-experiments-poc-requirements)                                                                                                                                                                                                                                                                                                                                                                                                                |
 | Public chart data and export parity                              | [R4-4](#current-r4-4)                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| Optional persistent Chromium Browser Mode                        | [Browser Mode persistent Chromium lifecycle](#browser-mode-persistent-chromium-lifecycle)                                                                                                                                                                                                                                                                                                                                                                 |
 | Monthly basic CTI loader compatibility                           | [R-Plan37](#current-r-plan37); [Plan49 monthly contract](#legacy-monthly-compatibility-requirements)                                                                                                                                                                                                                                                                                                                                                      |
 | Canonical CTI names and artifact compatibility                   | [R-CTI-Domain-Identifiers](#current-cti-domain-identifiers-requirement)                                                                                                                                                                                                                                                                                                                                                                                   |
 | CTI pair validation boundaries                                   | [CTI pair validation boundary requirements](#cti-pair-validation-boundary-requirements)                                                                                                                                                                                                                                                                                                                                                                   |
@@ -2259,8 +2346,14 @@ The system SHALL resolve tooltip display rows from chart-side series metadata wh
 
 #### Canonical scenario — Scenario R21d: Interaction compatibility
 
-- **WHEN** users use hover, click, touch, close/Escape dismissal, or page/programmatic scrolling
-  **THEN** the existing trigger, active dot, guide line, dismissal, and scroll-suppression behavior remains unchanged while only display metadata and row formatting differ.
+- **WHEN** a fine-pointer user moves over a chart
+  **THEN** the live `CustomTooltip` continues to use the existing hover interaction and the selected point's registered rows, labels, colors, order, formatting, visibility, and totals remain unchanged.
+- **WHEN** a coarse/touch user completes a tap on a chart point without a qualifying vertical-scroll gesture
+  **THEN** the chart binding's `selectionPayloadAtIndex` resolver reads that point's current chart-data row and visible-series list, constructs its Recharts-compatible payload, and the production modal Drawer displays the matching `CustomTooltip` projection with the same period, rows, metadata-derived labels/colors/order, formatting, hidden-series filtering, and total contract; the snapshot remains fixed while open.
+- **WHEN** a chart receives Enter or Space while focused
+  **THEN** it resolves a selection from the chart wrapper's center using the same chart-data row and visible-series resolver and opens the same modal Drawer content.
+- **WHEN** a touch gesture moves vertically beyond the selection threshold, or a chart point is tapped while programmatic section scrolling is suppressed
+  **THEN** the Drawer does not open from that gesture/tap, and no delayed Drawer appears when suppression ends.
 - **AND** `tests/components/CustomTooltip.test.tsx` covers the independent
   `CPI_CATEGORIES.length === stackedColors.length` contract, all 12 CPI rows,
   positional colors/order, zero/null/undefined/missing payload, hidden metadata,
@@ -2277,26 +2370,29 @@ The system SHALL resolve tooltip display rows from chart-side series metadata wh
   standalone Playwright specs were removed after their suite had zero registered
   cases. No standalone Playwright coverage is claimed by the current inventory.
 - **AND** `tests/unit/series-registry.test.ts` covers every salary/comparison registry entry, key-based projection, labels, colors, order, fixed three-entry comparison membership, and tooltip/legend equality; `tests/components/chart-tooltip-legend-contract.test.tsx` verifies legend/tooltip DOM equality, hidden keys, all-null legend retention, and unregistered-payload exclusion.
-- **AND** that same component contract records the unchanged hover/click trigger,
-  touch outside-dismiss, chart switching, Escape dismissal, and scroll
-  suppression/re-tap path; `tests/hooks/useChartTooltipController.test.tsx`
-  remains the focused controller regression contract.
+- **AND** `tests/components/useChartTooltipController.test.tsx` remains the focused
+  controller regression contract.
 
 <a id="current-r15"></a>
 
 ### Canonical requirement group: R15: Touch Tooltip Interaction & Scroll Suppression
 
-The system SHALL ensure that chart tooltips on touch devices open only on explicit taps and do not trigger during vertical scrolling or programmatic scroll animations.
+The system SHALL preserve hover tooltip behavior for fine pointers and use a
+modal selected-point Drawer for coarse/touch chart interaction. Tooltip data
+contracts remain shared with `CustomTooltip`.
 
-#### Canonical scenario — Scenario R15a: Touch Pointer Trigger
+#### Canonical scenario — Scenario R15a: Touch and Keyboard Point Selection
 
-- **WHEN** the device has coarse pointer (`pointer: coarse`)
-- **THEN** chart tooltip trigger is set to `"click"` and tooltips never open during touchmove / vertical scrolling.
+- **WHEN** a coarse/touch user completes a tap on a chart point
+- **THEN** the chart binding resolves the selected index against its current chart-data rows and visible series, builds the matching `CustomTooltip` payload, and opens the production modal Drawer with that snapshot. A bar uses the hit shape's `data-index`; an area/line chart retains the tap through pointerup and uses the `activeTooltipIndex` from the same interaction's Recharts chart click, computed from click coordinates, including for a zero-movement tap. It never borrows an earlier hover index or injects a synthetic mousemove.
+- **AND** pointerdown alone does not open the Drawer.
+- **WHEN** a user presses Enter or Space while a chart is focused
+- **THEN** the same resolver selects using the center of the chart wrapper and opens the production modal Drawer with the corresponding `CustomTooltip` content.
 
 #### Canonical scenario — Scenario R15b: Fine Pointer Hover
 
-- **WHEN** the device has fine pointer (`pointer: fine`)
-- **THEN** chart tooltip trigger remains `"hover"`.
+- **WHEN** a fine-pointer user moves over a chart
+- **THEN** the existing live hover `CustomTooltip` remains the display path.
 - **AND** desktop mouse movement within a spending chart wrapper selects the
   corresponding tooltip index through the same controller path as pointer
   movement, including after Escape dismissal only when the pointer has first
@@ -2308,58 +2404,66 @@ The system SHALL ensure that chart tooltips on touch devices open only on explic
   leaving the chart records the exit so the next chart move can clear that
   dismissal state.
 
-#### Canonical scenario — Scenario R15c: Re-taping Dismissed Tooltip
+#### Canonical scenario — Scenario R15c: Re-selecting After Drawer Close
 
-- **WHEN** a tooltip is closed via the close button on a touch device
-- **THEN** tapping the same point again re-opens the tooltip.
+- **WHEN** a touch user closes the selected-point Drawer and taps a chart point again
+- **THEN** a new snapshot is captured and the Drawer opens for that selection, including when it is the same point.
 
 #### Canonical scenario — Scenario R15d: Programmatic Scroll Suppression
 
 - **WHEN** a section tab is pressed triggering programmatic scroll
-- **THEN** tooltips are suppressed during the scroll animation.
+- **THEN** chart point selection is suppressed during the scroll animation.
 
 #### Canonical scenario — Scenario R15e: No Late Tooltip After Suppression Release
 
-- **WHEN** a tap occurs during programmatic scroll suppression and the suppression is then released
-- **THEN** the tooltip does not appear afterwards without a new legitimate tap, because taps during suppression do not update the `activeChartId` display state.
-- **AND** a legitimate tap after the suppression is released still opens the tooltip.
+- **WHEN** a touch tap or fine-pointer hover occurs during programmatic scroll suppression and suppression is released
+- **THEN** no Drawer or hover tooltip appears from the suppressed interaction; a new eligible pointer interaction after release may show the corresponding display.
 
-#### Canonical scenario — Scenario R15f: Outside Tap Dismissal
+#### Canonical scenario — Scenario R15f: Modal Dismissal and Background
 
-- **WHEN** the user taps outside the chart (outside `.recharts-wrapper`) on a touch device while a tooltip is shown
-- **THEN** both the tooltip and the guide line (`.recharts-tooltip-cursor`) disappear.
+- **WHEN** the selected-point Drawer is open and the user activates its close control, presses Escape, activates the backdrop, or swipes downward to dismiss
+- **THEN** the modal closes once, clears the active chart/index and guide line, blocks further background chart/link interaction while open, and returns focus to the selected chart's `[role="img"]` element.
+- **WHEN** the selected-point Drawer is open and the user navigates with Tab or Shift+Tab
+- **THEN** focus remains within the modal until it closes, after which focus returns to the selected chart's `[role="img"]` element.
 
-#### Canonical scenario — Scenario R15g: Single Guide Line Across Charts
+#### Canonical scenario — Scenario R15g: Single Selected Point
 
-- **WHEN** the user taps a second chart while the first chart's tooltip is shown
-- **THEN** the first chart's guide line disappears and at most one guide line is visible at a time.
+- **WHEN** the selected-point Drawer is open
+- **THEN** it presents one fixed chart point and prevents selection of another point or chart until it closes; at most one chart has an active guide line.
 
-#### Canonical scenario — Scenario R15h: Guide Line Dismissal with Close / Scroll
+#### Canonical scenario — Scenario R15h: Gesture Scroll and Drawer Lifecycle
 
-- **WHEN** the user closes the tooltip via the close button or scrolls 40px or more on a touch device
-- **THEN** the guide line disappears together with the tooltip.
+- **WHEN** a touch gesture moves vertically beyond the controller's selection threshold before tap completion
+- **THEN** it does not select a point or open the Drawer, and the active point/guide is dismissed.
+- **WHEN** the Drawer begins closing
+- **THEN** its selected-point snapshot remains available for the exit transition and is released when Base UI reports the close transition complete.
 
-#### Canonical scenario — Scenario R15i: Active Dot Dismissal
+#### Canonical scenario — Scenario R15i: Active Dot and Guide Dismissal
 
-- **WHEN** the user dismisses a tooltip on a touch device (close button, outside tap, or scroll) on an area or line chart
-- **THEN** the active data point dots (`.recharts-active-dot`) disappear together with the guide line and tooltip.
+- **WHEN** the touch Drawer is dismissed or invalidated on an area or line chart
+- **THEN** the active data point dot and guide line clear with the active selection.
 
-#### Canonical scenario — Scenario R15j: Tooltip Overlay Input Interception
+#### Canonical scenario — Scenario R15j: Modal Overlay Input Handling
 
-- **WHEN** the user performs a real touch at coordinates that are inside both the visible tooltip body and the chart note link identified by the dedicated `data-chart-note-link` attribute
-- **THEN** the tooltip receives the input, remains visible, and the link does not navigate to the nominal consumption section
+- **WHEN** the production modal Drawer is open and touch input lands on its content or backdrop
+- **THEN** input is handled by the modal Drawer and does not activate links or controls behind the modal.
 
-#### Canonical scenario — Scenario R15k: Touch Scroll Dismissal Threshold
+#### Canonical scenario — Scenario R15k: Snapshot Invalidation
 
-- **WHEN** the user has a visible tooltip on a touch device and the page scroll position changes by 40px or more
-- **THEN** the tooltip, guide line, and active data point dots are dismissed
+- **WHEN** chart data/projection or touch mode changes, the viewport resizes, or the selected chart is removed while its Drawer snapshot is open
+- **THEN** the snapshot, active chart/index, guide, and Drawer are invalidated so stale content is not left visible.
+- **WHEN** `CpiChart` receives a replacement `data` prop while the selected-point Drawer is open
+- **THEN** the old snapshot and Drawer are invalidated; a later point selection resolves against the new chart data and displays the new row rather than the prior snapshot.
+- **WHEN** a real pointer event changes the effective input mode and a new touch selection is then committed
+- **THEN** the pointer handler invalidates the old-mode snapshot synchronously before selection and records the new mode; the following React effect consumes that transition and skips a duplicate dismiss, preserving the new selection snapshot.
 
 #### Canonical scenario — Scenario R15l: Existing Tooltip Interaction Preservation
 
-- **WHEN** the user presses Escape while a tooltip is visible, without moving the mouse or finger beforehand
-- **THEN** the tooltip is dismissed immediately, and the next valid pointerdown or pointermove can show it again
-- **WHEN** the user interacts with the chart through desktop pointer input or a touch device
-- **THEN** the existing outside-tap, close, desktop-hover, and mobile-tap tooltip behaviors remain unchanged
+- **WHEN** the user presses Escape while a fine-pointer hover tooltip is visible
+- **THEN** that tooltip is dismissed, and the existing Escape re-entry behavior is preserved.
+- **WHEN** the chart is used with touch/coarse and fine pointer input on a hybrid device
+- **THEN** real `PointerEvent.pointerType` drives the last-input mode: touch selection uses the modal Drawer and mouse/pen movement uses the existing hover tooltip. The coarse-pointer media query supplies only the initial fallback until a pointer event identifies the active input, and a mode change synchronously invalidates the old snapshot before the next selection. Fine mouse hover remains available on a hybrid device.
+- **AND** a `pointerleave` or compatibility mouse event after touch does not by itself switch input mode or clear the just-selected Drawer snapshot; mode tracking uses actual pointer events. Physical hybrid-device input switching remains a manual validation item.
 
 <a id="current-r8"></a>
 
@@ -4021,6 +4125,19 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, and 
 - **AND** route-scoped cases are selected only by the separate route-scoped
   commands and use the managed route runner
 
+#### Scenario Browser Mode API port override
+
+- **WHEN** the component Browser Mode configuration is loaded with
+  `VITEST_BROWSER_API_PORT` set to an integer from `1` through `65535`
+- **THEN** Vitest uses that value for the Browser API port and enables strict
+  port binding on the shared browser Vite server
+- **AND** when `VITEST_BROWSER_API_PORT` is absent, the configuration uses
+  port `63315`
+- **AND** a present value that is not an integer from `1` through `65535`
+  fails configuration validation
+- **AND** a port collision fails startup instead of silently selecting a
+  different port
+
 #### Scenario Browser Mode per-file cleanup and sequential isolation
 
 - **WHEN** tests run sequentially in one Browser Mode spec file
@@ -4340,6 +4457,37 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, and 
   and no standalone Playwright E2E config, `tests/e2e` suite, or E2E cleanup
   command is required
 - **AND** `@playwright/test` remains available as the Browser Mode provider
+
+<a id="browser-mode-persistent-chromium-lifecycle"></a>
+
+#### Scenario Persistent Chromium Browser Mode lifecycle
+
+- **WHEN** a developer runs `pnpm test:browser:server:start`,
+  `pnpm test:browser:server:status`, or
+  `pnpm test:browser:server:stop`
+- **THEN** the manager starts, inspects, or stops a detached Chromium server
+  bound to `127.0.0.1`, using the state file under
+  `.cache/playwright-browser-server/` by default
+- **AND** `PLAYWRIGHT_BROWSER_SERVER_STATE_DIR` selects an isolated state
+  directory for the manager and provider helper
+- **AND** stop uses the state instance and control token for authenticated
+  shutdown, and does not signal a process based only on its PID
+- **WHEN** the manager runs `pnpm test:browser:server:run -- <command>`
+- **THEN** it requires a running server whose Playwright version matches the
+  installed `@playwright/test`, sets `PLAYWRIGHT_BROWSER_SERVER=1` for the
+  child, and propagates the child's exit code
+- **WHEN** a Chromium Browser Mode configuration is loaded with
+  `PLAYWRIGHT_BROWSER_SERVER=1`
+- **THEN** the shared Chromium provider helper reads the state, validates the
+  matching Playwright version and `127.0.0.1` WebSocket endpoint, and connects
+  with a 10-second timeout
+- **AND** missing or invalid state fails with start/stop instructions
+- **WHEN** the flag is absent or a WebKit Browser Mode configuration is used
+- **THEN** Chromium uses its normal provider launch path and WebKit behavior
+  remains unchanged
+- **AND** existing Browser Mode test context/page isolation and cleanup remain
+  in effect; stopping the persistent browser is a separate manager action
+- **AND** this lifecycle does not manage the Next.js production server
 
 #### Scenario PRE-PUSH Browser install prerequisite
 

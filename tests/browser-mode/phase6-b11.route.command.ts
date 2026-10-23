@@ -142,6 +142,18 @@ export const inspectPhase6B11: BrowserCommand<[id: Phase6B11Id], unknown> = asyn
       );
       const cursorAfterNominal = await countCursor(page, id, "count cursor after nominal tap");
 
+      await stage(id, "touch tap close button after nominal tap", 10_000, () =>
+        closeButton.tap({ timeout: 5_000 }),
+      );
+      await stage(id, "wait for close button hidden after nominal close", 7_000, () =>
+        closeButton.waitFor({ state: "hidden", timeout: 5_000 }),
+      );
+      const cursorAfterNominalClose = await countCursor(
+        page,
+        id,
+        "count cursor after nominal drawer close",
+      );
+
       const realPoint = await stage(
         id,
         "find fresh hit-tested real bar point (up to 4 retries)",
@@ -160,6 +172,8 @@ export const inspectPhase6B11: BrowserCommand<[id: Phase6B11Id], unknown> = asyn
         contextEvidence,
         cursorAfterNominal,
         closeVisibleAfterNominal: true,
+        closeHiddenAfterNominal: true,
+        cursorAfterNominalClose,
         cursorAfterReal,
         closeVisibleAfterReal: true,
       };

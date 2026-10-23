@@ -1,0 +1,37 @@
+.popup {
+  --drawer-content-max-height: calc(100dvh - env(safe-area-inset-top, 0px) - 8px);
+}
+
+.header {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 16px 8px;
+}
+
+.header h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.header button {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.body {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 16px calc(16px + env(safe-area-inset-bottom, 0px));
+}
+
+.body [data-custom-tooltip] {
+  width: 100%;
+  max-height: none;
+  overflow: visible;
+  padding: 0;
+  box-shadow: none;
+}

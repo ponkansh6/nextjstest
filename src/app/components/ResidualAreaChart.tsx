@@ -2,7 +2,10 @@ import React from "react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, YAxis } from "recharts";
 import styles from "./CpiChart.module.css";
 import type { CpiData } from "@/types";
-import type { ChartTooltipProps } from "./charts/useChartTooltipProps";
+import type {
+  ChartTooltipChartMouseMoveHandler,
+  ChartTooltipProps,
+} from "./charts/useChartTooltipProps";
 import { YearReferenceLines } from "./charts/YearReferenceLines";
 import { TimeSeriesXAxis } from "./charts/TimeSeriesXAxis";
 import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
@@ -14,6 +17,15 @@ interface ResidualAreaChartProps {
   chartColors: Record<string, string>;
   tooltipProps: ChartTooltipProps;
   onClick?: () => void;
+  onPointerDown?: React.PointerEventHandler<HTMLDivElement>;
+  onPointerUp?: React.PointerEventHandler<HTMLDivElement>;
+  onPointerCancel?: React.PointerEventHandler<HTMLDivElement>;
+  onKeyDown?: React.KeyboardEventHandler<HTMLDivElement>;
+  onPointerMove?: React.PointerEventHandler<HTMLDivElement>;
+  onPointerLeave?: React.PointerEventHandler<HTMLDivElement>;
+  onMouseMove?: React.MouseEventHandler<HTMLDivElement>;
+  onChartMouseMove?: ChartTooltipChartMouseMoveHandler;
+  onMouseLeave?: React.MouseEventHandler<HTMLDivElement>;
   activeDot?: boolean;
 }
 
@@ -23,6 +35,15 @@ export const ResidualAreaChart: React.FC<ResidualAreaChartProps> = ({
   chartColors,
   tooltipProps,
   onClick,
+  onPointerDown,
+  onPointerUp,
+  onPointerCancel,
+  onKeyDown,
+  onPointerMove,
+  onPointerLeave,
+  onMouseMove,
+  onChartMouseMove,
+  onMouseLeave,
   activeDot,
 }) => {
   return (
@@ -38,13 +59,23 @@ export const ResidualAreaChart: React.FC<ResidualAreaChartProps> = ({
       <div
         className={styles.chartWrapper}
         role="img"
+        tabIndex={0}
         aria-label="給与と物価の差（実質賃金相当）の推移グラフ"
+        onPointerDown={onPointerDown}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerCancel}
+        onKeyDown={onKeyDown}
+        onPointerMove={onPointerMove}
+        onPointerLeave={onPointerLeave}
+        onMouseMove={onMouseMove}
+        onMouseLeave={onMouseLeave}
       >
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             data={data}
             margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
             onClick={onClick}
+            onMouseMove={onChartMouseMove}
           >
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.gridStroke} />
             <YearReferenceLines data={data} stroke={chartColors.gridStroke} />

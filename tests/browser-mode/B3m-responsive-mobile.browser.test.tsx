@@ -4,7 +4,10 @@ import { page, userEvent } from "vitest/browser";
 import { SectionTabs } from "../../src/app/components/SectionTabs";
 import { SpendingBarChart } from "../../src/app/components/SpendingBarChart";
 import pageLayout from "../../src/app/page.module.css";
-import { useChartTooltipController } from "../../src/app/components/charts/useChartTooltipProps";
+import {
+  createChartTooltipSelectionResolver,
+  useChartTooltipController,
+} from "../../src/app/components/charts/useChartTooltipProps";
 import { CPI_CHART_SECTIONS } from "../../src/app/components/cpiChartConfig";
 import { getColorForNominalKey } from "../../src/lib/chartConstants";
 import {
@@ -77,11 +80,14 @@ function SpendingBoundaryFixture() {
 function SpendingMobileTooltipFixture() {
   const keys = [...QUARTERLY_PUBLIC_NOMINAL_KEYS];
   const data = createSpendingData().slice(0, 1);
-  const { bind } = useChartTooltipController({ suppressed: false, isTouch: true });
-  const tooltip = bind("b3m-mobile-acceptance", {
+  const controller = useChartTooltipController({ suppressed: false, isTouch: true });
+  const tooltip = controller.bind("b3m-mobile-acceptance", {
     dataLength: data.length,
     showAllPayload: true,
     includeUnmappedPayload: true,
+    selectionPayloadAtIndex: createChartTooltipSelectionResolver(data, () =>
+      keys.map((key, index) => ({ key, color: getColorForNominalKey(key) ?? `#${index}` })),
+    ),
   });
   return (
     <div style={{ width: 375 }}>
@@ -97,6 +103,9 @@ function SpendingMobileTooltipFixture() {
         tooltipProps={tooltip.tooltipProps}
         onClick={tooltip.onClick}
         onPointerDown={tooltip.onPointerDown}
+        onPointerUp={tooltip.onPointerUp}
+        onPointerCancel={tooltip.onPointerCancel}
+        onKeyDown={tooltip.onKeyDown}
         onPointerMove={tooltip.onPointerMove}
         onMouseMove={tooltip.onMouseMove}
         onPointerLeave={tooltip.onPointerLeave}
@@ -106,6 +115,7 @@ function SpendingMobileTooltipFixture() {
         onReset={() => {}}
         isMobile
       />
+      {controller.drawer}
     </div>
   );
 }
@@ -140,14 +150,33 @@ describe("B3m responsive", () => {
     const bar = chartElement.querySelector<HTMLElement>(".recharts-bar-rectangle");
     expect(bar).not.toBeNull();
     expect(bar).toBeVisible();
-    await userEvent.click(bar!);
-    const tooltip = chartElement.querySelector<HTMLElement>('[data-custom-tooltip="true"]');
-    expect(tooltip).not.toBeNull();
-    expect(tooltip).toBeVisible();
+    const currentBar = chartElement.querySelector<SVGElement>(".recharts-bar-rectangle");
+    if (!currentBar) throw new Error("B3m mobile bar disappeared");
+    const indexedShape = currentBar.querySelector<SVGElement>("[data-index]");
+    if (!indexedShape) throw new Error("B3m mobile bar has no source-row index");
+    const hitTarget = indexedShape.querySelector<SVGElement>("path, rect") ?? indexedShape;
+    expect(hitTarget.isConnected).toBe(true);
+    const bounds = hitTarget.getBoundingClientRect();
+    const pointer = {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+      pointerId: 3,
+      pointerType: "touch",
+      isPrimary: true,
+      button: 0,
+      clientX: bounds.left + bounds.width / 2,
+      clientY: bounds.top + bounds.height / 2,
+    };
+    hitTarget.dispatchEvent(new PointerEvent("pointerdown", { ...pointer, buttons: 1 }));
+    hitTarget.dispatchEvent(new PointerEvent("pointerup", { ...pointer, buttons: 0 }));
+    const dialog = page.getByRole("dialog");
+    await expect.element(dialog).toBeVisible();
+    expect((await dialog.element()).textContent).toContain("選択したデータ");
     const close = page.getByRole("button", { name: "閉じる" });
     await expect.element(close).toBeVisible();
     await close.click();
-    expect(tooltip).not.toBeInTheDocument();
+    await expect.element(dialog).not.toBeInTheDocument();
   });
 
   it("p45-b-mobile-ux-243", async () => {

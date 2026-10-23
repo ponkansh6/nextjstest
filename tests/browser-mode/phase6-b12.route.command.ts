@@ -88,24 +88,6 @@ function intersectionPoint(a: Rect, b: Rect): Point | null {
   return left < right && top < bottom ? { x: (left + right) / 2, y: (top + bottom) / 2 } : null;
 }
 
-function pointOutsideBox(link: Rect, covered: Rect): Point | null {
-  const insetX = Math.min(2, link.width / 4);
-  const insetY = Math.min(2, link.height / 4);
-  const candidates: Point[] = [
-    { x: link.x + link.width / 2, y: link.y + link.height / 2 },
-    { x: link.x + insetX, y: link.y + insetY },
-    { x: link.x + link.width - insetX, y: link.y + insetY },
-    { x: link.x + insetX, y: link.y + link.height - insetY },
-    { x: link.x + link.width - insetX, y: link.y + link.height - insetY },
-  ];
-  const isInside = (box: Rect, point: Point) =>
-    point.x > box.x &&
-    point.x < box.x + box.width &&
-    point.y > box.y &&
-    point.y < box.y + box.height;
-  return candidates.find((point) => isInside(link, point) && !isInside(covered, point)) ?? null;
-}
-
 async function getRect(locator: Locator): Promise<Rect | null> {
   if ((await locator.count()) === 0) return null;
   return locator.evaluate((element) => {
@@ -344,13 +326,27 @@ export const inspectPhase6B12: BrowserCommand<[id: Phase6B12Id], unknown> = asyn
     await stage(id, "real touchscreen tap on actual bar", 10_000, () =>
       page.touchscreen.tap(point.x, point.y),
     );
-    await stage(id, "wait for tooltip visible after bar tap", 7_000, () =>
+    const drawer = page.locator('[data-slot="drawer-popup"]');
+    const closeButton = page.getByRole("button", { name: "閉じる" });
+    await stage(id, "wait for Drawer visible after bar tap", 7_000, () =>
+      drawer.waitFor({ state: "visible", timeout: 5_000 }),
+    );
+    await stage(id, "wait for tooltip visible inside Drawer", 7_000, () =>
       tooltip.waitFor({ state: "visible", timeout: 5_000 }),
+    );
+    await stage(id, "wait for Drawer close button visible", 7_000, () =>
+      closeButton.waitFor({ state: "visible", timeout: 5_000 }),
     );
     await stage(id, "wait for actual chartNote link visible", 7_000, () =>
       chartNoteLink.waitFor({ state: "visible", timeout: 5_000 }),
     );
-    const tooltipVisibleAfterTap = await stage(
+    const drawerVisibleAfterBarTap = await stage(
+      id,
+      "read Drawer visibility after bar tap",
+      5_000,
+      () => drawer.isVisible(),
+    );
+    const tooltipVisibleAfterBarTap = await stage(
       id,
       "read tooltip visibility after bar tap",
       5_000,
@@ -359,48 +355,54 @@ export const inspectPhase6B12: BrowserCommand<[id: Phase6B12Id], unknown> = asyn
     const linkVisibleAfterTap = await stage(id, "read link visibility after bar tap", 5_000, () =>
       chartNoteLink.isVisible(),
     );
-    const tooltipBox = await stage(id, "read tooltip bounding box", 5_000, () =>
-      tooltip.boundingBox(),
+
+    await stage(id, "touch tap Drawer close button", 10_000, () =>
+      closeButton.tap({ timeout: 5_000 }),
     );
-    const linkBox = await stage(id, "read link bounding box", 5_000, () =>
-      chartNoteLink.boundingBox(),
+    await stage(id, "wait for Drawer close button hidden", 7_000, () =>
+      closeButton.waitFor({ state: "hidden", timeout: 5_000 }),
     );
-    if (!tooltipBox || !linkBox) {
-      return {
-        id,
-        contextEvidence,
-        tooltipVisibleAfterBarTap: tooltipVisibleAfterTap,
-        linkVisibleAfterTap,
-        tooltipBox,
-        linkBox,
-        outsidePoint: null,
-        pointHitByLink: false,
-        pointOutsideTooltip: false,
-        touchPerformed: false,
-        hashAfterTap: new URL(page.url()).hash,
-        tooltipVisibleAfterNavigation: tooltipVisibleAfterTap,
-      };
-    }
-    const outsidePoint = pointOutsideBox(linkBox, tooltipBox);
-    if (!outsidePoint) {
-      return {
-        id,
-        contextEvidence,
-        tooltipVisibleAfterBarTap: tooltipVisibleAfterTap,
-        linkVisibleAfterTap,
-        tooltipBox,
-        linkBox,
-        outsidePoint: null,
-        pointHitByLink: false,
-        pointOutsideTooltip: false,
-        touchPerformed: false,
-        hashAfterTap: new URL(page.url()).hash,
-        tooltipVisibleAfterNavigation: tooltipVisibleAfterTap,
-      };
-    }
+    await stage(id, "wait for Drawer hidden after close tap", 7_000, () =>
+      drawer.waitFor({ state: "hidden", timeout: 5_000 }),
+    );
+    await stage(id, "wait for tooltip hidden after Drawer close tap", 7_000, () =>
+      tooltip.waitFor({ state: "hidden", timeout: 5_000 }),
+    );
+    const drawerHiddenAfterCloseTap = await stage(
+      id,
+      "read Drawer visibility after close tap",
+      5_000,
+      async () => !(await drawer.isVisible()),
+    );
+    const tooltipHiddenAfterCloseTap = await stage(
+      id,
+      "read tooltip visibility after Drawer close tap",
+      5_000,
+      async () => !(await tooltip.isVisible()),
+    );
+    if (!drawerHiddenAfterCloseTap || !tooltipHiddenAfterCloseTap)
+      throw new Error("Drawer and tooltip must be hidden before tapping the chartNote link");
+
+    await stage(id, "wait for actual chartNote link visible after Drawer close", 7_000, () =>
+      chartNoteLink.waitFor({ state: "visible", timeout: 5_000 }),
+    );
+    const linkBox = await stage(
+      id,
+      "read fresh chartNote rectangle after Drawer close",
+      5_000,
+      () => getRect(chartNoteLink),
+    );
+    if (!linkBox || linkBox.width <= 0 || linkBox.height <= 0)
+      throw new Error(
+        `Actual chartNote link has no visible rectangle after Drawer close: ${JSON.stringify(linkBox)}`,
+      );
+    const linkTapPoint = {
+      x: linkBox.x + linkBox.width / 2,
+      y: linkBox.y + linkBox.height / 2,
+    };
     const pointHitByLink = await stage(
       id,
-      "hit-test outside point against actual link href",
+      "hit-test fresh chartNote center against actual link href",
       5_000,
       async () => {
         const href = await chartNoteLink.getAttribute("href");
@@ -411,66 +413,58 @@ export const inspectPhase6B12: BrowserCommand<[id: Phase6B12Id], unknown> = asyn
               expectedHref != null && target?.closest("a")?.getAttribute("href") === expectedHref
             );
           },
-          { ...outsidePoint, expectedHref: href },
+          { ...linkTapPoint, expectedHref: href },
         );
       },
     );
-    const pointOutsideTooltip = await stage(
+    if (!pointHitByLink)
+      throw new Error(
+        `Fresh link center does not hit the actual chartNote link: ${JSON.stringify(linkTapPoint)}`,
+      );
+    await stage(
       id,
-      "hit-test outside point against tooltip",
-      5_000,
-      () =>
-        page.evaluate(
-          ({ x, y }) => document.elementFromPoint(x, y)?.closest("[data-custom-tooltip]") == null,
-          outsidePoint,
-        ),
-    );
-    if (!pointHitByLink || !pointOutsideTooltip) {
-      return {
-        id,
-        contextEvidence,
-        tooltipVisibleAfterBarTap: tooltipVisibleAfterTap,
-        linkVisibleAfterTap,
-        tooltipBox,
-        linkBox,
-        outsidePoint,
-        pointHitByLink,
-        pointOutsideTooltip,
-        touchPerformed: false,
-        hashAfterTap: new URL(page.url()).hash,
-        tooltipVisibleAfterNavigation: tooltipVisibleAfterTap,
-      };
-    }
-    await stage(id, "real touchscreen tap on actual link outside tooltip", 10_000, () =>
-      page.touchscreen.tap(outsidePoint.x, outsidePoint.y),
+      "real touchscreen tap on actual chartNote link after Drawer close",
+      10_000,
+      () => page.touchscreen.tap(linkTapPoint.x, linkTapPoint.y),
     );
     const touchPerformed = true;
     await stage(id, "wait for nominal section hash navigation", 7_000, () =>
       page.waitForURL(/#section-consumption-nominal$/, { timeout: 5_000 }),
     );
     const hashAfterTap = new URL(page.url()).hash;
+    await stage(id, "wait for Drawer hidden after link navigation", 7_000, () =>
+      drawer.waitFor({ state: "hidden", timeout: 5_000 }),
+    );
     await stage(id, "wait for tooltip hidden after link navigation", 7_000, () =>
       tooltip.waitFor({ state: "hidden", timeout: 5_000 }),
     );
-    const tooltipVisibleAfterNavigation = await stage(
+    const drawerHiddenAfterNavigation = await stage(
+      id,
+      "read Drawer visibility after link navigation",
+      5_000,
+      async () => !(await drawer.isVisible()),
+    );
+    const tooltipHiddenAfterNavigation = await stage(
       id,
       "read tooltip visibility after link navigation",
       5_000,
-      () => tooltip.isVisible(),
+      async () => !(await tooltip.isVisible()),
     );
     return {
       id,
       contextEvidence,
-      tooltipVisibleAfterBarTap: tooltipVisibleAfterTap,
+      drawerVisibleAfterBarTap,
+      tooltipVisibleAfterBarTap,
       linkVisibleAfterTap,
-      tooltipBox,
+      drawerHiddenAfterCloseTap,
+      tooltipHiddenAfterCloseTap,
       linkBox,
-      outsidePoint,
+      linkTapPoint,
       pointHitByLink,
-      pointOutsideTooltip,
       touchPerformed,
       hashAfterTap,
-      tooltipVisibleAfterNavigation,
+      drawerHiddenAfterNavigation,
+      tooltipHiddenAfterNavigation,
     };
   });
 };

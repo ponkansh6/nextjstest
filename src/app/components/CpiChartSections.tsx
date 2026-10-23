@@ -27,7 +27,10 @@ import {
 } from "../../lib/chartConstants";
 import { QUARTERLY_PUBLIC_NOMINAL_KEYS } from "../../lib/quarterlyPublicProjection";
 import { formatCpiTooltipTotal, formatCpiTooltipValue } from "./CustomTooltip";
-import { useChartTooltipController } from "./charts/useChartTooltipProps";
+import {
+  createChartTooltipSelectionResolver,
+  useChartTooltipController,
+} from "./charts/useChartTooltipProps";
 import { LazyMount } from "./LazyMount";
 import { MajorIndicesChart } from "./MajorIndicesChart";
 import { StackedAreaChart } from "./StackedAreaChart";
@@ -218,7 +221,15 @@ export function CpiChartSections({
           hiddenKeys={hiddenKeys}
           onToggle={handleLegendClick}
           chartColors={chartColors}
-          {...chartTooltip.bind("section-cpi-major")}
+          {...chartTooltip.bind("section-cpi-major", {
+            dataLength: filteredData.length,
+            drawerEnabled: true,
+            selectionPayloadAtIndex: createChartTooltipSelectionResolver(filteredData, () =>
+              targetKeys
+                .map((key, index) => ({ key, color: colors[index] }))
+                .filter(({ key }) => !hiddenKeys.includes(key)),
+            ),
+          })}
         />
         <p className={styles.chartNote}>
           <a href="#data-table-section-cpi-major">データテーブルを表示 ▾</a>
@@ -236,9 +247,15 @@ export function CpiChartSections({
         chartColors={chartColors}
         chartInfoContent={stackedAreaInfo}
         {...chartTooltip.bind("section-stacked", {
+          dataLength: filteredData.length,
+          drawerEnabled: true,
           showTotal: true,
           showAllPayload: true,
           seriesMeta: stackedTooltipMeta,
+          selectionPayloadAtIndex: createChartTooltipSelectionResolver(
+            filteredData,
+            () => stackedTooltipMeta,
+          ),
           valueFormatter: formatCpiTooltipValue,
           totalFormatter: formatCpiTooltipTotal,
         })}
@@ -277,11 +294,23 @@ export function CpiChartSections({
           chartColors={chartColors}
           {...chartTooltip.bind("section-consumption-nominal", {
             dataLength: nominalPublicData.length,
+            drawerEnabled: true,
             showTotal: true,
             showAllPayload: true,
             seriesMeta: spendingTooltipMeta(nominalKeysWithSupport, nominalColorsWithSupport),
             showMeasurementNotes: false,
             allowedKeys: spendingAllowedKeys(nominalKeysWithSupport, nominalHiddenKeys),
+            selectionPayloadAtIndex: createChartTooltipSelectionResolver(
+              nominalPublicData,
+              (_row, label) => {
+                const allowed = new Set(
+                  spendingAllowedKeys(nominalKeysWithSupport, nominalHiddenKeys)(label),
+                );
+                return spendingTooltipMeta(nominalKeysWithSupport, nominalColorsWithSupport).filter(
+                  ({ key }) => key !== CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY && allowed.has(key),
+                );
+              },
+            ),
           })}
           isMobile={isMobile}
           hiddenQuarters={hiddenQuarters}
@@ -318,11 +347,23 @@ export function CpiChartSections({
           chartColors={chartColors}
           {...chartTooltip.bind("section-consumption-real", {
             dataLength: realPublicData.length,
+            drawerEnabled: true,
             showTotal: true,
             showAllPayload: true,
             seriesMeta: spendingTooltipMeta(realTooltipKeys, realColors),
             showMeasurementNotes: false,
             allowedKeys: spendingAllowedKeys(realTooltipKeys, realHiddenKeys),
+            selectionPayloadAtIndex: createChartTooltipSelectionResolver(
+              realPublicData,
+              (_row, label) => {
+                const allowed = new Set(
+                  spendingAllowedKeys(realTooltipKeys, realHiddenKeys)(label),
+                );
+                return spendingTooltipMeta(realTooltipKeys, realColors).filter(({ key }) =>
+                  allowed.has(key),
+                );
+              },
+            ),
           })}
           isMobile={isMobile}
           hiddenQuarters={hiddenQuarters}
@@ -352,6 +393,8 @@ export function CpiChartSections({
           chartColors={chartColors}
           isMobile={isMobile}
           {...chartTooltip.bind("section-earnings", {
+            dataLength: earningsData.length,
+            drawerEnabled: true,
             showTotal: true,
             totalLabel: "給与区分合計（所定内＋所定外＋特別）",
             totalIncludedKeys: EARNINGS_TOTAL_KEYS,
@@ -361,6 +404,10 @@ export function CpiChartSections({
             },
             showAllPayload: true,
             seriesMeta: earningsTooltipMeta,
+            selectionPayloadAtIndex: createChartTooltipSelectionResolver(
+              earningsData,
+              () => earningsTooltipMeta,
+            ),
           })}
         />
       </LazyMount>
@@ -369,7 +416,13 @@ export function CpiChartSections({
           sectionId="section-residual"
           data={mergedData}
           chartColors={chartColors}
-          {...chartTooltip.bind("section-residual")}
+          {...chartTooltip.bind("section-residual", {
+            dataLength: mergedData.length,
+            drawerEnabled: true,
+            selectionPayloadAtIndex: createChartTooltipSelectionResolver(mergedData, () => [
+              { key: "残差", color: chartColors.barFill },
+            ]),
+          })}
         />
       </LazyMount>
       <LazyMount sectionId="section-new-graph">
@@ -385,10 +438,18 @@ export function CpiChartSections({
           chartInfoContent={newGraphInfo}
           {...chartTooltip.bind("section-new-graph", {
             dataLength: mergedData.length,
+            drawerEnabled: true,
             seriesMeta: comparisonProjectedTooltipMeta,
             allowedKeys: comparisonTooltipAllowedKeys,
             showMeasurementNotes: true,
             suppressMeasurementNotesForKeys: [CONSUMPTION_TOTAL_12MA_KEY],
+            selectionPayloadAtIndex: createChartTooltipSelectionResolver(
+              mergedData,
+              (_row, label) => {
+                const allowed = new Set(comparisonTooltipAllowedKeys(label));
+                return comparisonProjectedTooltipMeta.filter(({ key }) => allowed.has(key));
+              },
+            ),
           })}
         />
       </LazyMount>

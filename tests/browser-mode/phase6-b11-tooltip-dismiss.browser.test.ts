@@ -33,12 +33,16 @@ it("B11 #207: tapping a real chart replaces the single active guide line", async
     contextEvidence: ContextEvidence;
     cursorAfterNominal: number;
     closeVisibleAfterNominal: boolean;
+    closeHiddenAfterNominal: boolean;
+    cursorAfterNominalClose: number;
     cursorAfterReal: number;
     closeVisibleAfterReal: boolean;
   };
   expectPixel7TouchContext(result.contextEvidence);
   expect(result.cursorAfterNominal).toBe(1);
   expect(result.closeVisibleAfterNominal).toBe(true);
+  expect(result.closeHiddenAfterNominal).toBe(true);
+  expect(result.cursorAfterNominalClose).toBe(0);
   expect(result.cursorAfterReal).toBe(1);
   expect(result.closeVisibleAfterReal).toBe(true);
 });

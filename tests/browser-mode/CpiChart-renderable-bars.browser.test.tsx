@@ -102,13 +102,28 @@ describe("CpiChart bars", () => {
       const chart = document.querySelector<HTMLElement>(`#${sectionId}`);
       expect(chart).not.toBeNull();
       if (!chart) throw new Error(`Rendered CpiChart section is unavailable: ${sectionId}`);
-      const renderedBars = chart.querySelectorAll(".recharts-bar-rectangle").length;
+      const indexedPathSelector = ".recharts-bar-rectangle [data-index] path";
+      const renderedBars = chart.querySelectorAll(indexedPathSelector).length;
       const realTotalValues =
         sectionId === "section-consumption-real" ? contractRealTotalCount(chart) : 0;
       const totalMarkers = chart.querySelectorAll(
         `[data-testid="spending-series-marker-${CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY}"]`,
       ).length;
-      expect(renderedBars).toBe(contractRenderableCount(chart) - realTotalValues);
+      const firstBar = chart.querySelector<SVGElement>(".recharts-bar-rectangle");
+      const firstIndexedNode = chart.querySelector<SVGElement>(
+        ".recharts-bar-rectangle [data-index]",
+      );
+      const firstPath = chart.querySelector<SVGPathElement>(indexedPathSelector);
+      const barDetails = [
+        `outerBars=${chart.querySelectorAll(".recharts-bar-rectangle").length}`,
+        `indexedNodes=${chart.querySelectorAll(".recharts-bar-rectangle [data-index]").length}`,
+        `paths=${chart.querySelectorAll(".recharts-bar-rectangle path").length}`,
+        `indexedPaths=${renderedBars}`,
+        `firstBar=${firstBar?.outerHTML.slice(0, 500) ?? "<none>"}`,
+        `firstIndexed=${firstIndexedNode?.outerHTML.slice(0, 500) ?? "<none>"}`,
+        `firstPath=${firstPath?.outerHTML.slice(0, 300) ?? "<none>"}`,
+      ].join("; ");
+      expect(renderedBars, barDetails).toBe(contractRenderableCount(chart) - realTotalValues);
       expect(totalMarkers).toBe(0);
     }
   });

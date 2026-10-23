@@ -1,7 +1,16 @@
 "use client";
 
 import React from "react";
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Rectangle,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import type { CpiData } from "@/types";
 import type { SeriesMeasurement } from "@/types/chart";
 import type { SeriesMetadata } from "../../lib/chartConstants";
@@ -16,7 +25,10 @@ import {
   orderSpendingPresentationKeys,
 } from "../../lib/spendingSeriesPresentation";
 import { QUARTERLY_PUBLIC_NOMINAL_KEYS } from "../../lib/quarterlyPublicProjection";
-import type { ChartTooltipProps } from "./charts/useChartTooltipProps";
+import type {
+  ChartTooltipChartMouseMoveHandler,
+  ChartTooltipProps,
+} from "./charts/useChartTooltipProps";
 import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
 import { CHART_INFO, type ChartInfoContent } from "../../lib/chartInfoContent";
 import { YearReferenceLines } from "./charts/YearReferenceLines";
@@ -64,8 +76,12 @@ interface SpendingBarChartProps {
   tooltipProps: ChartTooltipProps;
   onClick?: () => void;
   onPointerDown?: React.PointerEventHandler<HTMLDivElement>;
+  onPointerUp?: React.PointerEventHandler<HTMLDivElement>;
+  onPointerCancel?: React.PointerEventHandler<HTMLDivElement>;
+  onKeyDown?: React.KeyboardEventHandler<HTMLDivElement>;
   onPointerMove?: React.PointerEventHandler<HTMLDivElement>;
   onMouseMove?: React.MouseEventHandler<HTMLDivElement>;
+  onChartMouseMove?: ChartTooltipChartMouseMoveHandler;
   onPointerLeave?: React.PointerEventHandler<HTMLDivElement>;
   onMouseLeave?: React.MouseEventHandler<HTMLDivElement>;
   hiddenQuarters: number[];
@@ -136,8 +152,12 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
     tooltipProps,
     onClick,
     onPointerDown,
+    onPointerUp,
+    onPointerCancel,
+    onKeyDown,
     onPointerMove,
     onMouseMove,
+    onChartMouseMove,
     onPointerLeave,
     onMouseLeave,
     hiddenQuarters,
@@ -298,9 +318,13 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
         className={`${styles.chartWrapper} ${styles.spendingChartWrapper}`}
         style={{ position: "relative" }}
         role="img"
+        tabIndex={0}
         aria-label={`${title}の推移グラフ`}
         onClick={onClick}
         onPointerDown={onPointerDown}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerCancel}
+        onKeyDown={onKeyDown}
         onPointerMove={onPointerMove}
         onMouseMove={onMouseMove}
         onPointerLeave={onPointerLeave}
@@ -313,6 +337,7 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
             barCategoryGap={isMobile ? "22%" : "10%"}
             barSize={isMobile ? 11 : undefined}
             onClick={onClick}
+            onMouseMove={onChartMouseMove}
           >
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.gridStroke} />
             <YearReferenceLines
@@ -356,6 +381,21 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
                   fill={getSpendingSeriesColor(key, keys, colors)}
                   fillOpacity={0.8}
                   isAnimationActive={false}
+                  shape={(shapeProps) => {
+                    if (
+                      !Number.isFinite(shapeProps.width) ||
+                      !Number.isFinite(shapeProps.height) ||
+                      shapeProps.width <= 0 ||
+                      shapeProps.height <= 0
+                    ) {
+                      return null;
+                    }
+                    return (
+                      <g data-index={shapeProps.originalDataIndex}>
+                        <Rectangle {...shapeProps} />
+                      </g>
+                    );
+                  }}
                 />
               ) : null,
             )}

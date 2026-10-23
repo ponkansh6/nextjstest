@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import { SpendingBarChart } from "../../src/app/components/SpendingBarChart";
-import { useChartTooltipController } from "../../src/app/components/charts/useChartTooltipProps";
+import {
+  createChartTooltipSelectionResolver,
+  useChartTooltipController,
+} from "../../src/app/components/charts/useChartTooltipProps";
 import { renderBrowserComponent } from "./renderBrowserComponent";
 
 const CHART_COLORS = {
@@ -59,8 +62,14 @@ function NominalSpendingFixture() {
 }
 
 function NominalTouchScrollDismissFixture() {
-  const { bind } = useChartTooltipController({ suppressed: false, isTouch: true });
-  const tooltip = bind("browser-nominal-scroll-dismiss", { dataLength: 1 });
+  const controller = useChartTooltipController({ suppressed: false, isTouch: true });
+  const data = [{ label: "2025Q1", 年: 2025, quarter: 1, 年月: "2025Q1", "食料（名目）": 123 }];
+  const tooltip = controller.bind("browser-nominal-scroll-dismiss", {
+    dataLength: data.length,
+    selectionPayloadAtIndex: createChartTooltipSelectionResolver(data, () => [
+      { key: "食料（名目）", color: "#be123c" },
+    ]),
+  });
 
   return (
     <>
@@ -69,7 +78,7 @@ function NominalTouchScrollDismissFixture() {
         <SpendingBarChart
           title="消費支出（名目）"
           testId="spending-chart-scroll-dismiss"
-          data={[{ label: "2025Q1", 年: 2025, quarter: 1, 年月: "2025Q1", "食料（名目）": 123 }]}
+          data={data}
           keys={["食料（名目）"]}
           colors={["#be123c"]}
           hiddenKeys={[]}
@@ -78,6 +87,9 @@ function NominalTouchScrollDismissFixture() {
           tooltipProps={tooltip.tooltipProps}
           onClick={tooltip.onClick}
           onPointerDown={tooltip.onPointerDown}
+          onPointerUp={tooltip.onPointerUp}
+          onPointerCancel={tooltip.onPointerCancel}
+          onKeyDown={tooltip.onKeyDown}
           onPointerMove={tooltip.onPointerMove}
           onMouseMove={tooltip.onMouseMove}
           onPointerLeave={tooltip.onPointerLeave}
@@ -89,6 +101,7 @@ function NominalTouchScrollDismissFixture() {
           isMobile
         />
       </div>
+      {controller.drawer}
       <div aria-hidden="true" style={{ height: 1200 }} />
     </>
   );
@@ -161,25 +174,52 @@ describe("Spending tooltip dismissal", () => {
   });
 });
 
-describe("tooltip scroll", () => {
-  it("231 P42-538/-539 scroll dismissal", async () => {
+describe("touch Drawer dismissal", () => {
+  it("keeps the selected data open while the modal Drawer owns scrolling", async () => {
     await page.viewport(412, 915);
     renderBrowserComponent(<NominalTouchScrollDismissFixture />);
 
     const chart = await page.getByTestId("spending-chart-scroll-dismiss").element();
-    const barElement = chart.querySelector<SVGElement>(".recharts-bar-rectangle");
-    if (!barElement) throw new Error("Scroll dismissal spending bar is missing");
-    const bar = page.elementLocator(barElement);
+    const initialBar = chart.querySelector<SVGElement>(".recharts-bar-rectangle");
+    if (!initialBar) throw new Error("Scroll dismissal spending bar is missing");
+    const initialIndexedShape = initialBar.querySelector<SVGElement>("[data-index]");
+    if (!initialIndexedShape) throw new Error("Scroll dismissal bar has no source-row index");
+    const initialHitTarget =
+      initialIndexedShape.querySelector<SVGElement>("path, rect") ?? initialIndexedShape;
+    const bar = page.elementLocator(initialHitTarget);
     await expect.element(bar).toBeVisible();
-    await userEvent.click(await bar.element());
 
-    const closeButton = page.getByRole("button", { name: "閉じる" });
+    const currentBar = chart.querySelector<SVGElement>(".recharts-bar-rectangle");
+    if (!currentBar) throw new Error("Scroll dismissal spending bar disappeared");
+    const currentIndexedShape = currentBar.querySelector<SVGElement>("[data-index]");
+    if (!currentIndexedShape) throw new Error("Scroll dismissal bar lost its source-row index");
+    const hitTarget =
+      currentIndexedShape.querySelector<SVGElement>("path, rect") ?? currentIndexedShape;
+    expect(hitTarget.isConnected).toBe(true);
+    const bounds = hitTarget.getBoundingClientRect();
+    const pointer = {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+      pointerId: 7,
+      pointerType: "touch",
+      isPrimary: true,
+      button: 0,
+      clientX: bounds.left + bounds.width / 2,
+      clientY: bounds.top + bounds.height / 2,
+    };
+    hitTarget.dispatchEvent(new PointerEvent("pointerdown", { ...pointer, buttons: 1 }));
+    hitTarget.dispatchEvent(new PointerEvent("pointerup", { ...pointer, buttons: 0 }));
+
+    const dialog = page.getByRole("dialog");
+    await expect.element(dialog).toBeVisible();
+    const closeButton = dialog.getByRole("button", { name: "閉じる" });
     await expect.element(closeButton).toBeVisible();
-    expect(document.querySelectorAll(".recharts-tooltip-cursor").length).toBe(1);
 
     window.scrollTo(0, window.scrollY + 60);
 
-    await expect.element(closeButton).not.toBeInTheDocument();
-    expect(document.querySelectorAll(".recharts-tooltip-cursor").length).toBe(0);
+    await expect.element(dialog).toBeVisible();
+    await closeButton.click();
+    await expect.element(dialog).not.toBeInTheDocument();
   });
 });

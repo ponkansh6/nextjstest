@@ -141,8 +141,28 @@ function isVisible(element: Element) {
   );
 }
 
+function relativeLuminance(color: string) {
+  const channels = color
+    .match(/[\d.]+/g)
+    ?.slice(0, 3)
+    .map(Number);
+  if (!channels || channels.length !== 3) throw new Error(`Unsupported computed color: ${color}`);
+  const linear = channels.map((channel) => {
+    const normalized = channel / 255;
+    return normalized <= 0.04045 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * linear[0]! + 0.7152 * linear[1]! + 0.0722 * linear[2]!;
+}
+
+function contrastRatio(firstColor: string, secondColor: string) {
+  const [lighter, darker] = [relativeLuminance(firstColor), relativeLuminance(secondColor)].sort(
+    (first, second) => second - first,
+  );
+  return (lighter! + 0.05) / (darker! + 0.05);
+}
+
 function DarkModeNominalTooltipFixture() {
-  const { bind } = useChartTooltipController({ suppressed: false, isTouch: true });
+  const { bind } = useChartTooltipController({ suppressed: false, isTouch: false });
   const tooltip = bind("browser-dark-nominal-tap", {
     dataLength: 1,
     showTotal: true,
@@ -189,39 +209,85 @@ function DarkModeNominalTooltipFixture() {
 }
 
 describe("SpendingBarChart mobile legend and tooltip in Chromium", () => {
-  it("dark tooltip shows a visible value and closes from its control", async () => {
+  it("dark fine-pointer hover tooltip shows a visible value without touch controls", async () => {
     await useMobileViewport();
     const originalTheme = document.documentElement.getAttribute("data-theme");
     document.documentElement.setAttribute("data-theme", "dark");
     renderBrowserComponent(<DarkModeNominalTooltipFixture />);
 
     const chart = page.getByTestId("chart-dark-nominal");
+    await expect.element(chart).toBeVisible();
+    // ResponsiveContainer can replace SVG descendants during its first layout.
+    // Resolve the hover target only after the visibility wait so we dispatch to
+    // the live Recharts shape rather than a detached node.
     const chartElement = await chart.element();
     const bar = requireChartElement<SVGElement>(chartElement, ".recharts-bar-rectangle");
-    await expect.element(chart).toBeVisible();
-    await userEvent.click(bar);
+    expect(bar.isConnected).toBe(true);
+    expect(bar.getBoundingClientRect().width).toBeGreaterThan(0);
+    const runtimeErrors: string[] = [];
+    const onWindowError = (event: ErrorEvent) => {
+      runtimeErrors.push(
+        event.error instanceof Error ? (event.error.stack ?? event.message) : event.message,
+      );
+    };
+    const onUnhandledRejection = (event: PromiseRejectionEvent) => {
+      runtimeErrors.push(
+        event.reason instanceof Error
+          ? (event.reason.stack ?? event.reason.message)
+          : String(event.reason),
+      );
+    };
+    window.addEventListener("error", onWindowError);
+    window.addEventListener("unhandledrejection", onUnhandledRejection);
+    try {
+      await userEvent.hover(bar);
 
-    const tooltipElement = requireChartElement<HTMLElement>(
-      chartElement,
-      '[data-custom-tooltip="true"]',
-    );
-    expect(isVisible(tooltipElement)).toBe(true);
-    const firstCategoryRow = requireChartElement<HTMLElement>(
-      tooltipElement,
-      '[data-tooltip-row="true"]',
-    );
-    expect(firstCategoryRow.textContent).toMatch(/\S/);
-    const valueCell = requireChartElement<HTMLElement>(
-      tooltipElement.querySelector('[data-tooltip-row="true"]')!,
-      ":scope > span:last-child",
-    );
-    expect(valueCell.textContent).toMatch(/\d/);
-    expect(valueCell.getBoundingClientRect().width).toBeGreaterThan(0);
-    expect(getComputedStyle(valueCell).color).toBe("rgb(249, 250, 251)");
-    const closeButton = page.getByRole("button", { name: "閉じる" });
-    await expect.element(closeButton).toBeVisible();
-    await userEvent.click(await closeButton.element());
-    expect(isVisible(tooltipElement)).toBe(false);
+      await expect
+        .poll(() => {
+          const tooltip = chartElement.querySelector<HTMLElement>('[data-custom-tooltip="true"]');
+          return tooltip !== null && isVisible(tooltip);
+        })
+        .toBe(true);
+      const tooltipElement = requireChartElement<HTMLElement>(
+        chartElement,
+        '[data-custom-tooltip="true"]',
+      );
+      expect(isVisible(tooltipElement)).toBe(true);
+      const firstCategoryRow = requireChartElement<HTMLElement>(
+        tooltipElement,
+        '[data-tooltip-row="true"]',
+      );
+      const categoryText = firstCategoryRow.textContent;
+      expect(categoryText, "tooltip row should contain a series label").not.toBeNull();
+      expect(categoryText ?? "").toMatch(/\S/);
+      const valueCell = requireChartElement<HTMLElement>(
+        firstCategoryRow,
+        ":scope > span:last-child",
+      );
+      const formattedValue = valueCell.textContent;
+      expect(formattedValue, "tooltip row should contain a formatted value").not.toBeNull();
+      expect(formattedValue ?? "").toMatch(/\d/);
+      expect(valueCell.getBoundingClientRect().width).toBeGreaterThan(0);
+      const tooltipBackground = getComputedStyle(tooltipElement).backgroundColor;
+      const valueColor = getComputedStyle(valueCell).color;
+      expect(tooltipBackground).toBe("rgb(17, 24, 39)");
+      expect(contrastRatio(valueColor, tooltipBackground)).toBeGreaterThanOrEqual(4.5);
+      await expect.element(page.getByRole("button", { name: "閉じる" })).not.toBeInTheDocument();
+    } catch (error) {
+      const tooltip = chartElement.querySelector<HTMLElement>('[data-custom-tooltip="true"]');
+      const rows = tooltip
+        ? Array.from(tooltip.querySelectorAll<HTMLElement>("[data-tooltip-row='true']"))
+            .map((row) => row.textContent ?? "<no text>")
+            .join(" | ")
+        : "<tooltip absent>";
+      throw new Error(
+        `Fine-pointer hover failed; barConnected=${bar.isConnected}; tooltipVisible=${tooltip ? isVisible(tooltip) : false}; rows=${rows}; runtimeErrors=${runtimeErrors.join("\n") || "<none>"}`,
+        { cause: error },
+      );
+    } finally {
+      window.removeEventListener("error", onWindowError);
+      window.removeEventListener("unhandledrejection", onUnhandledRejection);
+    }
     if (originalTheme === null) document.documentElement.removeAttribute("data-theme");
     else document.documentElement.setAttribute("data-theme", originalTheme);
   });

@@ -2,7 +2,10 @@ import React from "react";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, YAxis } from "recharts";
 import styles from "./CpiChart.module.css";
 import type { CpiData } from "@/types";
-import type { ChartTooltipProps } from "./charts/useChartTooltipProps";
+import type {
+  ChartTooltipChartMouseMoveHandler,
+  ChartTooltipProps,
+} from "./charts/useChartTooltipProps";
 import { YearReferenceLines } from "./charts/YearReferenceLines";
 import { TimeSeriesXAxis } from "./charts/TimeSeriesXAxis";
 import ChartInfoContentRenderer from "./ChartInfoContentRenderer";
@@ -21,7 +24,14 @@ interface NewGraphProps {
   tooltipProps: ChartTooltipProps;
   onClick?: () => void;
   onPointerDown?: React.PointerEventHandler<HTMLDivElement>;
+  onPointerUp?: React.PointerEventHandler<HTMLDivElement>;
+  onPointerCancel?: React.PointerEventHandler<HTMLDivElement>;
+  onKeyDown?: React.KeyboardEventHandler<HTMLDivElement>;
   onPointerMove?: React.PointerEventHandler<HTMLDivElement>;
+  onPointerLeave?: React.PointerEventHandler<HTMLDivElement>;
+  onMouseMove?: React.MouseEventHandler<HTMLDivElement>;
+  onChartMouseMove?: ChartTooltipChartMouseMoveHandler;
+  onMouseLeave?: React.MouseEventHandler<HTMLDivElement>;
   activeDot?: boolean;
   chartInfoContent?: ChartInfoContent;
   comparisonSeriesRegistry?: readonly SeriesMetadata[];
@@ -38,7 +48,14 @@ export const NewGraph: React.FC<NewGraphProps> = ({
   tooltipProps,
   onClick,
   onPointerDown,
+  onPointerUp,
+  onPointerCancel,
+  onKeyDown,
   onPointerMove,
+  onPointerLeave,
+  onMouseMove,
+  onChartMouseMove,
+  onMouseLeave,
   activeDot,
   chartInfoContent,
   comparisonSeriesRegistry = createComparisonSeriesRegistry(),
@@ -87,9 +104,16 @@ export const NewGraph: React.FC<NewGraphProps> = ({
         className={styles.chartWrapper}
         onClick={onClick}
         onPointerDown={onPointerDown}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerCancel}
+        onKeyDown={onKeyDown}
         onPointerMove={onPointerMove}
+        onPointerLeave={onPointerLeave}
+        onMouseMove={onMouseMove}
+        onMouseLeave={onMouseLeave}
         style={{ touchAction: "pan-y" }}
         role="img"
+        tabIndex={0}
         aria-label="給与・消費・物価の推移比較（12MA）グラフ"
       >
         <ResponsiveContainer width="100%" height="100%">
@@ -97,6 +121,7 @@ export const NewGraph: React.FC<NewGraphProps> = ({
             data={data}
             margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
             onClick={onClick}
+            onMouseMove={onChartMouseMove}
           >
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartColors.gridStroke} />
             <YearReferenceLines data={data} stroke={chartColors.gridStroke} />

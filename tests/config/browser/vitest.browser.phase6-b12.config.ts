@@ -1,7 +1,7 @@
 import path from "node:path";
 import { defineConfig, configDefaults } from "vitest/config";
 import react from "@vitejs/plugin-react";
-import { playwright } from "@vitest/browser-playwright";
+import { chromiumPlaywrightProvider } from "./chromium-provider";
 import { inspectPhase6B12 } from "../../../tests/browser-mode/phase6-b12.route.command";
 
 const projectRoot = path.resolve(__dirname, "../../..");
@@ -25,7 +25,7 @@ export default defineConfig({
     hookTimeout: 90_000,
     browser: {
       enabled: true,
-      provider: playwright({ actionTimeout: 10_000 }),
+      provider: chromiumPlaywrightProvider({ actionTimeout: 10_000 }),
       instances: [{ browser: "chromium", headless: true, viewport: { width: 1280, height: 720 } }],
       commands: { inspectPhase6B12 },
       trace: { mode: "retain-on-failure", screenshots: true, snapshots: true },

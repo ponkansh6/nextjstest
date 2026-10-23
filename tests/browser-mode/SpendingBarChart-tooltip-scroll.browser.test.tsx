@@ -2,7 +2,10 @@ import type { ComponentProps } from "react";
 import { describe, expect, it } from "vitest";
 import { page } from "vitest/browser";
 import { SpendingBarChart } from "../../src/app/components/SpendingBarChart";
-import { useChartTooltipController } from "../../src/app/components/charts/useChartTooltipProps";
+import {
+  createChartTooltipSelectionResolver,
+  useChartTooltipController,
+} from "../../src/app/components/charts/useChartTooltipProps";
 import { getLegendLabel } from "../../src/lib/chartConstants";
 import {
   QUARTERLY_PUBLIC_NOMINAL_KEYS,
@@ -70,8 +73,8 @@ function SpendingTooltipFixture({ kind }: { kind: ChartKind }) {
   const colors = keys.map((key, index) =>
     key === SUPPORT_KEYS[kind] ? CHART_COLORS.barFill : index % 2 ? "#1d4ed8" : "#be123c",
   );
-  const { bind } = useChartTooltipController({ suppressed: false, isTouch: true });
-  const tooltip = bind(`scroll-${kind}`, {
+  const controller = useChartTooltipController({ suppressed: false, isTouch: true });
+  const tooltip = controller.bind(`scroll-${kind}`, {
     dataLength: data.length,
     includeUnmappedPayload: true,
     showAllPayload: true,
@@ -83,6 +86,9 @@ function SpendingTooltipFixture({ kind }: { kind: ChartKind }) {
       color: colors[order],
       order,
     })),
+    selectionPayloadAtIndex: createChartTooltipSelectionResolver(data, () =>
+      keys.map((key, index) => ({ key, name: getLegendLabel(key), color: colors[index] })),
+    ),
   });
 
   return (
@@ -93,6 +99,8 @@ function SpendingTooltipFixture({ kind }: { kind: ChartKind }) {
         <div
           style={{
             width: "100%",
+            height: 420,
+            minHeight: 420,
             padding: "1rem",
             border: "1px solid transparent",
             borderRadius: "0.75rem",
@@ -110,6 +118,9 @@ function SpendingTooltipFixture({ kind }: { kind: ChartKind }) {
             tooltipProps={tooltip.tooltipProps}
             onClick={tooltip.onClick}
             onPointerDown={tooltip.onPointerDown}
+            onPointerUp={tooltip.onPointerUp}
+            onPointerCancel={tooltip.onPointerCancel}
+            onKeyDown={tooltip.onKeyDown}
             onPointerMove={tooltip.onPointerMove}
             onMouseMove={tooltip.onMouseMove}
             onPointerLeave={tooltip.onPointerLeave}
@@ -122,6 +133,7 @@ function SpendingTooltipFixture({ kind }: { kind: ChartKind }) {
           />
         </div>
       </main>
+      {controller.drawer}
     </>
   );
 }
@@ -133,58 +145,84 @@ async function assertTooltipScrollBehavior(kind: ChartKind, viewport: Viewport) 
   renderBrowserComponent(<SpendingTooltipFixture kind={kind} />);
 
   const chart = await page.getByTestId(`scroll-${kind}`).element();
-  const barElement = chart.querySelector<SVGElement>(".recharts-bar-rectangle");
-  if (!barElement) throw new Error(`Spending bar is missing for ${kind}`);
-  const bar = page.elementLocator(barElement);
-  await expect.element(bar).toBeVisible();
-  await bar.hover();
-  const chartWrapper = chart.querySelector<HTMLElement>('[role="img"]');
-  if (!chartWrapper) throw new Error(`Spending chart wrapper is missing for ${kind}`);
-  // Dispatch on the chart wrapper after hover so an open tooltip overlay cannot intercept it.
-  chartWrapper.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-
-  const tooltipElement = chart.querySelector<HTMLElement>('[data-custom-tooltip="true"]');
-  if (!tooltipElement) throw new Error(`Spending tooltip is missing for ${kind}`);
-  const tooltip = page.elementLocator(tooltipElement);
-  await expect.element(tooltip).toBeVisible();
-  const renderedTooltip = await tooltip.element();
-  const computedStyle = window.getComputedStyle(renderedTooltip);
-  const scrollHeight = renderedTooltip.scrollHeight;
-  const clientHeight = renderedTooltip.clientHeight;
-
-  expect(computedStyle.overflowY).toBe("auto");
-  expect(Number.parseFloat(computedStyle.maxHeight)).toBeGreaterThan(0);
-  expect(Number.parseFloat(computedStyle.paddingBottom)).toBeGreaterThanOrEqual(10);
-  const closeButton = tooltip.getByRole("button", { name: "閉じる" });
-  if (scrollHeight > clientHeight) {
-    renderedTooltip.scrollTop = scrollHeight;
-    expect(renderedTooltip.scrollTop + clientHeight).toBeGreaterThanOrEqual(scrollHeight - 1);
+  const chartSurface = chart.querySelector<HTMLElement>('[role="img"]');
+  if (!chartSurface) throw new Error(`Chart surface is missing for ${kind}`);
+  chartSurface.style.width = "100%";
+  chartSurface.style.height = "420px";
+  chartSurface.style.minHeight = "420px";
+  await expect
+    .poll(() =>
+      [...chart.querySelectorAll<SVGPathElement>("[data-index] path")].some((shape) => {
+        const bounds = shape.getBoundingClientRect();
+        return shape.isConnected && bounds.width > 0 && bounds.height > 0;
+      }),
+    )
+    .toBe(true);
+  const currentHitTarget = chart.querySelector<SVGPathElement>(
+    ".recharts-bar-rectangle [data-index] path",
+  );
+  if (!currentHitTarget) {
+    throw new Error(
+      `Spending bar lost its source-row index for ${kind}; bars=${chart.querySelectorAll(".recharts-bar-rectangle").length}; indexed=${chart.querySelectorAll(".recharts-bar-rectangle [data-index]").length}; paths=${chart.querySelectorAll(".recharts-bar-rectangle path").length}; firstBar=${chart.querySelector(".recharts-bar-rectangle")?.outerHTML.slice(0, 600) ?? "<none>"}; firstIndexed=${chart.querySelector(".recharts-bar-rectangle [data-index]")?.outerHTML.slice(0, 400) ?? "<none>"}`,
+    );
   }
+  expect(currentHitTarget.isConnected).toBe(true);
+  const currentBounds = currentHitTarget.getBoundingClientRect();
+  const pointer = {
+    bubbles: true,
+    cancelable: true,
+    composed: true,
+    pointerId: 12,
+    pointerType: "touch",
+    isPrimary: true,
+    button: 0,
+    clientX: currentBounds.left + currentBounds.width / 2,
+    clientY: currentBounds.top + currentBounds.height / 2,
+  };
+  currentHitTarget.dispatchEvent(new PointerEvent("pointerdown", { ...pointer, buttons: 1 }));
+  currentHitTarget.dispatchEvent(new PointerEvent("pointerup", { ...pointer, buttons: 0 }));
+
+  const dialog = page.getByRole("dialog");
+  await expect.element(dialog).toBeVisible();
+  const popup = await dialog.element();
+  const tooltipElement = popup.querySelector<HTMLElement>('[data-custom-tooltip="true"]');
+  if (!tooltipElement) throw new Error(`Drawer tooltip is missing for ${kind}`);
+  const scrollArea = tooltipElement.parentElement;
+  if (!scrollArea) throw new Error(`Drawer scroll area is missing for ${kind}`);
+  const computedStyle = window.getComputedStyle(scrollArea);
+  expect(computedStyle.overflowY).toBe("auto");
+  const scrollHeight = scrollArea.scrollHeight;
+  const clientHeight = scrollArea.clientHeight;
+  if (scrollHeight > clientHeight) {
+    scrollArea.scrollTop = scrollHeight;
+    expect(scrollArea.scrollTop + clientHeight).toBeGreaterThanOrEqual(scrollHeight - 1);
+  }
+  const closeButton = dialog.getByRole("button", { name: "閉じる" });
   await expect.element(closeButton).toBeVisible();
 }
 
 describe("SpendingBarChart mobile tooltip scroll in Chromium", () => {
-  it("375x667 nominal tooltip scrolls to the close control", async () => {
+  it("375x667 nominal Drawer content scrolls to the close control", async () => {
     await assertTooltipScrollBehavior("nominal", { width: 375, height: 667 });
   });
 
-  it("375x667 real tooltip scrolls to the close control", async () => {
+  it("375x667 real Drawer content scrolls to the close control", async () => {
     await assertTooltipScrollBehavior("real", { width: 375, height: 667 });
   });
 
-  it("320x480 nominal tooltip scrolls to the close control", async () => {
+  it("320x480 nominal Drawer content scrolls to the close control", async () => {
     await assertTooltipScrollBehavior("nominal", { width: 320, height: 480 });
   });
 
-  it("320x480 real tooltip scrolls to the close control", async () => {
+  it("320x480 real Drawer content scrolls to the close control", async () => {
     await assertTooltipScrollBehavior("real", { width: 320, height: 480 });
   });
 
-  it("667x375 landscape nominal tooltip scrolls to the close control", async () => {
+  it("667x375 landscape nominal Drawer content scrolls to the close control", async () => {
     await assertTooltipScrollBehavior("nominal", { width: 667, height: 375 });
   });
 
-  it("667x375 landscape real tooltip scrolls to the close control", async () => {
+  it("667x375 landscape real Drawer content scrolls to the close control", async () => {
     await assertTooltipScrollBehavior("real", { width: 667, height: 375 });
   });
 });

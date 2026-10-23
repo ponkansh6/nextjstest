@@ -104,6 +104,106 @@ async function findViewportBar(page: Page, chart: Locator): Promise<ViewportPoin
   );
 }
 
+async function findDrawerOverlayTapPoint(page: Page): Promise<ViewportPoint> {
+  const result = await page.evaluate(() => {
+    const overlay = document.querySelector<HTMLElement>('[data-slot="drawer-overlay"]');
+    const popup = document.querySelector<HTMLElement>('[data-slot="drawer-popup"]');
+    if (!overlay || !popup) {
+      return { point: null, reason: `missing ${!overlay ? "Drawer overlay" : "Drawer popup"}` };
+    }
+
+    const overlayStyle = getComputedStyle(overlay);
+    const overlayRect = overlay.getBoundingClientRect();
+    const popupRect = popup.getBoundingClientRect();
+    const visible =
+      overlayStyle.display !== "none" &&
+      overlayStyle.visibility !== "hidden" &&
+      overlayStyle.pointerEvents !== "none" &&
+      Number(overlayStyle.opacity) > 0 &&
+      overlayRect.width > 0 &&
+      overlayRect.height > 0;
+    if (!visible) {
+      return {
+        point: null,
+        reason: "Drawer overlay is not visible and hit-testable",
+        overlayRect: {
+          x: overlayRect.x,
+          y: overlayRect.y,
+          width: overlayRect.width,
+          height: overlayRect.height,
+        },
+        overlayStyle: {
+          display: overlayStyle.display,
+          visibility: overlayStyle.visibility,
+          pointerEvents: overlayStyle.pointerEvents,
+          opacity: overlayStyle.opacity,
+        },
+      };
+    }
+
+    const left = Math.max(0, overlayRect.left);
+    const right = Math.min(innerWidth, overlayRect.right);
+    const top = Math.max(0, overlayRect.top);
+    const bottom = Math.min(innerHeight, overlayRect.bottom);
+    const centerX = (left + right) / 2;
+    const centerY = (top + bottom) / 2;
+    const inset = 8;
+    const candidates = [
+      { x: centerX, y: top + inset },
+      { x: centerX, y: bottom - inset },
+      { x: left + inset, y: centerY },
+      { x: right - inset, y: centerY },
+      ...[0.2, 0.5, 0.8].flatMap((xRatio) =>
+        [0.2, 0.5, 0.8].map((yRatio) => ({
+          x: left + (right - left) * xRatio,
+          y: top + (bottom - top) * yRatio,
+        })),
+      ),
+    ];
+
+    for (const point of candidates) {
+      if (
+        point.x < left ||
+        point.x > right ||
+        point.y < top ||
+        point.y > bottom ||
+        (point.x >= popupRect.left &&
+          point.x <= popupRect.right &&
+          point.y >= popupRect.top &&
+          point.y <= popupRect.bottom)
+      ) {
+        continue;
+      }
+      const hit = document.elementFromPoint(point.x, point.y);
+      if (hit && (hit === overlay || overlay.contains(hit))) return { point };
+    }
+
+    return {
+      point: null,
+      reason: "No in-viewport point outside the Drawer popup hit-tests to the Drawer overlay",
+      overlayRect: {
+        x: overlayRect.x,
+        y: overlayRect.y,
+        width: overlayRect.width,
+        height: overlayRect.height,
+      },
+      popupRect: {
+        x: popupRect.x,
+        y: popupRect.y,
+        width: popupRect.width,
+        height: popupRect.height,
+      },
+      viewport: { width: innerWidth, height: innerHeight },
+      candidates,
+    };
+  });
+
+  if (!result.point) {
+    throw new Error(`Cannot find a safe Drawer overlay tap point: ${JSON.stringify(result)}`);
+  }
+  return result.point;
+}
+
 async function openProductionPage(page: Page, id: Phase6B10Id): Promise<void> {
   await stage(id, "install shared fixture mount behavior", 5_000, () =>
     page.addInitScript(() => {
@@ -255,9 +355,14 @@ export const inspectPhase6B10: BrowserCommand<[id: Phase6B10Id], B10Observation>
     const cursorBefore = await stage(id, "count tooltip cursor before outside tap", 5_000, () =>
       cursor.count(),
     );
-    const heading = page.getByRole("heading", { name: /消費支出（名目）/ }).first();
-    await stage(id, "touch tap nominal chart heading outside chart", 10_000, () =>
-      heading.tap({ timeout: 5_000 }),
+    const outsideTapPoint = await stage(
+      id,
+      "find visible Drawer overlay point outside popup",
+      5_000,
+      () => findDrawerOverlayTapPoint(page),
+    );
+    await stage(id, "touch tap hit-tested Drawer overlay outside popup", 10_000, () =>
+      page.touchscreen.tap(outsideTapPoint.x, outsideTapPoint.y),
     );
     await stage(id, "wait for close button hidden after outside tap", 7_000, () =>
       closeButton.waitFor({ state: "hidden", timeout: 5_000 }),

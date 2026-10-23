@@ -323,13 +323,48 @@ function mouseMove(clientX: number, rect = new DOMRect(0, 0, 200, 100)) {
   } as unknown as ReactPointerEvent<HTMLElement>;
 }
 
+type TooltipBindingForPointerSelection = {
+  onPointerDown: (event: ReactPointerEvent<HTMLElement>) => unknown;
+  onPointerUp?: (event: ReactPointerEvent<HTMLElement>) => unknown;
+  onClick: (event?: unknown) => void;
+};
+
+function touchSelect(bound: TooltipBindingForPointerSelection, index = 0, chartClick = true) {
+  const target = document.createElement("div");
+  target.dataset.index = String(index);
+  document.body.append(target);
+  const event = {
+    ...mouseMove(20),
+    pointerType: "touch",
+    pointerId: 7,
+    isPrimary: true,
+    button: 0,
+    target,
+    currentTarget: target,
+    nativeEvent: { target },
+  } as unknown as ReactPointerEvent<HTMLElement>;
+  act(() => bound.onPointerDown(event));
+  act(() => bound.onPointerUp?.(event));
+  if (chartClick) {
+    act(() =>
+      bound.onClick({
+        activeTooltipIndex: index,
+        activePayload: [{ dataKey: "series", name: "series", value: index + 1 }],
+        activeLabel: `row-${index}`,
+      }),
+    );
+  }
+  target.remove();
+}
+
 describe("chart tooltip controller selection and options", () => {
-  it("clamps pointer coordinates, uses SVG viewBox scale, and keeps per-chart indices", () => {
+  it("uses Recharts active indices and keeps selections isolated per chart", () => {
     const { result } = renderHook(() =>
       useChartTooltipController({ isTouch: false, suppressed: false }),
     );
     const first = result.current.bind("first", { dataLength: 5 });
     const second = result.current.bind("second", { dataLength: 2 });
+    act(() => first.onChartMouseMove({ activeTooltipIndex: 0 }));
     act(() => first.onMouseMove(mouseMove(-20)));
     expect(result.current.bind("first", { dataLength: 5 }).tooltipProps.defaultIndex).toBe(0);
 
@@ -344,12 +379,13 @@ describe("chart tooltip controller selection and options", () => {
         getBoundingClientRect: () => new DOMRect(10, 0, 200, 100),
       },
     } as unknown as ReactPointerEvent<HTMLElement>;
+    act(() => second.onChartMouseMove({ activeTooltipIndex: 1 }));
     act(() => second.onMouseMove(scaledEvent));
     expect(result.current.bind("second", { dataLength: 2 }).tooltipProps.defaultIndex).toBe(1);
     expect(result.current.bind("first", { dataLength: 5 }).tooltipProps.active).toBeUndefined();
   });
 
-  it("does not select when suppressed or given an empty data set, and handles a zero-width SVG", () => {
+  it("does not select when suppressed or given an empty data set, and accepts chart indices without geometry", () => {
     const { result, rerender } = renderHook(
       ({ suppressed }) => useChartTooltipController({ isTouch: false, suppressed }),
       { initialProps: { suppressed: true } },
@@ -370,28 +406,31 @@ describe("chart tooltip controller selection and options", () => {
         getBoundingClientRect: () => new DOMRect(0, 0, 0, 10),
       },
     } as unknown as ReactPointerEvent<HTMLElement>;
+    act(() =>
+      result.current.bind("chart", { dataLength: 3 }).onChartMouseMove({ activeTooltipIndex: 2 }),
+    );
     act(() => result.current.bind("chart", { dataLength: 3 }).onMouseMove(event));
     expect(result.current.bind("chart", { dataLength: 3 }).tooltipProps.defaultIndex).toBe(2);
   });
 
-  it("keeps a tooltip open for tooltip-covered pointer targets and closes on chart links/outside targets", () => {
+  it("keeps fine-pointer Tooltip activation uncontrolled for chart and outside events", () => {
     const { result } = renderHook(() =>
       useChartTooltipController({ isTouch: false, suppressed: false }),
     );
-    act(() => result.current.bind("chart", { dataLength: 4 }).onClick());
+    act(() => result.current.bind("chart", { dataLength: 4 }).onPointerDown(mouseMove(30)));
 
     const visibleTooltip = document.createElement("div");
     visibleTooltip.dataset.customTooltip = "true";
     document.body.append(visibleTooltip);
     vi.spyOn(visibleTooltip, "getBoundingClientRect").mockReturnValue(new DOMRect(0, 0, 100, 80));
     fireEvent.pointerDown(document.body, { clientX: 30, clientY: 30 });
-    expect(result.current.bind("chart", { dataLength: 4 }).tooltipProps.active).toBe(true);
+    expect(result.current.bind("chart", { dataLength: 4 }).tooltipProps.active).toBeUndefined();
     act(() => result.current.bind("chart", { dataLength: 4 }).onMouseLeave(mouseMove(30)));
-    expect(result.current.bind("chart", { dataLength: 4 }).tooltipProps.active).toBe(true);
+    expect(result.current.bind("chart", { dataLength: 4 }).tooltipProps.active).toBeUndefined();
 
     vi.spyOn(visibleTooltip, "getBoundingClientRect").mockReturnValue(new DOMRect(0, 0, 0, 0));
     fireEvent.pointerDown(visibleTooltip);
-    expect(result.current.bind("chart", { dataLength: 4 }).tooltipProps.active).toBe(true);
+    expect(result.current.bind("chart", { dataLength: 4 }).tooltipProps.active).toBeUndefined();
 
     const wrapper = document.createElement("div");
     wrapper.className = "recharts-wrapper";
@@ -403,10 +442,10 @@ describe("chart tooltip controller selection and options", () => {
     document.body.append(wrapper);
 
     fireEvent.pointerDown(wrapper);
-    expect(result.current.bind("chart", { dataLength: 4 }).tooltipProps.active).toBe(true);
+    expect(result.current.bind("chart", { dataLength: 4 }).tooltipProps.active).toBeUndefined();
     fireEvent.pointerDown(tableLink);
     expect(result.current.bind("chart", { dataLength: 4 }).tooltipProps.active).toBeUndefined();
-    act(() => result.current.bind("chart", { dataLength: 4 }).onClick());
+    act(() => result.current.bind("chart", { dataLength: 4 }).onPointerDown(mouseMove(30)));
     fireEvent.pointerDown(noteLink);
     expect(result.current.bind("chart", { dataLength: 4 }).tooltipProps.active).toBeUndefined();
     visibleTooltip.remove();
@@ -420,14 +459,16 @@ describe("chart tooltip controller selection and options", () => {
     const { result } = renderHook(() =>
       useChartTooltipController({ isTouch: true, suppressed: false }),
     );
-    act(() => result.current.bind("touch", { dataLength: 3 }).onClick());
-    expect(result.current.bind("touch", { dataLength: 3 }).tooltipProps.position).toEqual({
-      x: 0,
-      y: 0,
-    });
+    const bound = result.current.bind("touch", { dataLength: 3, drawerEnabled: false });
+    touchSelect(bound, 0, false);
+    expect(
+      result.current.bind("touch", { dataLength: 3, drawerEnabled: false }).tooltipProps.active,
+    ).toBe(true);
     Object.defineProperty(window, "scrollY", { configurable: true, value: 40 });
     act(() => fireEvent.scroll(window));
-    expect(result.current.bind("touch", { dataLength: 3 }).tooltipProps.active).toBe(false);
+    expect(
+      result.current.bind("touch", { dataLength: 3, drawerEnabled: false }).tooltipProps.active,
+    ).toBe(false);
     Object.defineProperty(window, "scrollY", { configurable: true, value: 0 });
   });
 
@@ -436,7 +477,7 @@ describe("chart tooltip controller selection and options", () => {
     const { result } = renderHook(() =>
       useChartTooltipController({ isTouch: true, suppressed: false }),
     );
-    const bound = result.current.bind("touch", { dataLength: 5 });
+    const bound = result.current.bind("touch", { dataLength: 5, drawerEnabled: false });
     const pointer = (pointerType: string, clientX: number, clientY: number) =>
       ({
         ...mouseMove(clientX),
@@ -452,7 +493,8 @@ describe("chart tooltip controller selection and options", () => {
     act(() =>
       result.current.bind("touch", { dataLength: 5 }).onPointerMove(pointer("touch", 20, 20)),
     );
-    expect(result.current.bind("touch", { dataLength: 5 }).tooltipProps.defaultIndex).toBeDefined();
+    expect(result.current.bind("touch", { dataLength: 5 }).tooltipProps.active).toBeUndefined();
+    expect(ReactElementProp(result.current.drawer, "open")).toBe(false);
 
     act(() =>
       result.current.bind("touch", { dataLength: 5 }).onPointerDown(pointer("touch", 10, 10)),
@@ -460,32 +502,33 @@ describe("chart tooltip controller selection and options", () => {
     act(() =>
       result.current.bind("touch", { dataLength: 5 }).onPointerMove(pointer("touch", 14, 13)),
     );
-    expect(result.current.bind("touch", { dataLength: 5 }).tooltipProps.defaultIndex).toBeDefined();
+    expect(result.current.bind("touch", { dataLength: 5 }).tooltipProps.active).toBeUndefined();
+    expect(ReactElementProp(result.current.drawer, "open")).toBe(false);
 
-    act(() => result.current.bind("touch", { dataLength: 5 }).onClick());
+    touchSelect(result.current.bind("touch", { dataLength: 5, drawerEnabled: false }), 0, false);
     Object.defineProperty(window, "scrollY", { configurable: true, value: 39 });
     act(() => fireEvent.scroll(window));
-    expect(result.current.bind("touch", { dataLength: 5 }).tooltipProps.active).toBeUndefined();
+    expect(
+      result.current.bind("touch", { dataLength: 5, drawerEnabled: false }).tooltipProps.active,
+    ).toBe(true);
     Object.defineProperty(window, "scrollY", { configurable: true, value: 0 });
   });
 
-  it("ignores a synthetic mouse leave shortly after an unmoved touch gesture", () => {
+  it("keeps a touch Drawer selection through compatibility mouseleave events", () => {
     const now = vi.spyOn(Date, "now").mockReturnValue(10_000);
     const { result } = renderHook(() =>
       useChartTooltipController({ isTouch: true, suppressed: false }),
     );
-    const pointerDown = {
-      ...mouseMove(20),
-      clientY: 20,
-      pointerType: "touch",
-    } as unknown as ReactPointerEvent<HTMLElement>;
-    act(() => result.current.bind("touch", { dataLength: 3 }).onPointerDown(pointerDown));
+    const bound = result.current.bind("touch", { dataLength: 3 });
+    touchSelect(bound, 1);
+    expect(ReactElementProp(result.current.drawer, "open")).toBe(true);
+    expect(result.current.bind("touch", { dataLength: 3 }).tooltipProps.defaultIndex).toBe(1);
     const mouseLeave = mouseMove(20);
     act(() => result.current.bind("touch", { dataLength: 3 }).onMouseLeave(mouseLeave));
-    expect(result.current.bind("touch", { dataLength: 3 }).tooltipProps.defaultIndex).toBeDefined();
+    expect(ReactElementProp(result.current.drawer, "open")).toBe(true);
     now.mockReturnValue(13_000);
     act(() => result.current.bind("touch", { dataLength: 3 }).onMouseLeave(mouseLeave));
-    expect(result.current.bind("touch", { dataLength: 3 }).tooltipProps.active).toBe(false);
+    expect(ReactElementProp(result.current.drawer, "open")).toBe(true);
     now.mockRestore();
   });
 
@@ -494,9 +537,15 @@ describe("chart tooltip controller selection and options", () => {
       useChartTooltipController({ isTouch: false, suppressed: false }),
     );
     const length = 4;
-    act(() => result.current.bind("chart", { dataLength: length }).onClick());
-    fireEvent.keyDown(document, { key: "Enter" });
-    expect(result.current.bind("chart", { dataLength: length }).tooltipProps.active).toBe(true);
+    act(() =>
+      result.current
+        .bind("chart", { dataLength: length })
+        .onChartMouseMove({ activeTooltipIndex: 2 }),
+    );
+    act(() => result.current.bind("chart", { dataLength: length }).onPointerMove(mouseMove(80)));
+    expect(
+      result.current.bind("chart", { dataLength: length }).tooltipProps.active,
+    ).toBeUndefined();
     fireEvent.keyDown(document, { key: "Escape" });
     expect(result.current.bind("chart", { dataLength: length }).tooltipProps.active).toBe(false);
     act(() => result.current.bind("chart", { dataLength: length }).onMouseMove(mouseMove(80)));
@@ -508,7 +557,9 @@ describe("chart tooltip controller selection and options", () => {
     expect(
       result.current.bind("chart", { dataLength: length }).tooltipProps.defaultIndex,
     ).toBeDefined();
-    expect(result.current.bind("chart", { dataLength: length }).tooltipProps.active).toBe(true);
+    expect(
+      result.current.bind("chart", { dataLength: length }).tooltipProps.active,
+    ).toBeUndefined();
   });
 
   it("passes tooltip options through and uses fixed touch placement while active", () => {
@@ -523,7 +574,7 @@ describe("chart tooltip controller selection and options", () => {
       valueFormatter: (value: number | null | undefined) => String(value ?? "欠損"),
       dataLength: 4,
     };
-    act(() => result.current.bind("touch", options).onClick());
+    touchSelect(result.current.bind("touch", options));
     const props = result.current.bind("touch", options).tooltipProps;
     expect(props.trigger).toBe("click");
     expect(props.position).toEqual({ x: 0, y: 0 });
@@ -537,8 +588,9 @@ describe("chart tooltip controller selection and options", () => {
     expect(ReactElementProp(props.content, "allowedKeys")).toEqual(["a", "b"]);
     expect(ReactElementProp(props.content, "includeUnmappedPayload")).toBe(true);
     expect(ReactElementProp(props.content, "valueFormatter")).toBe(options.valueFormatter);
-    act(() => result.current.bind("touch", options).onClick());
-    expect(result.current.bind("touch", options).tooltipProps.active).toBeUndefined();
+    render(result.current.drawer);
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(result.current.bind("touch", options).tooltipProps.active).toBe(false);
   });
 
   it("dismisses on a vertical touch gesture but preserves horizontal scrubbing", () => {
@@ -558,10 +610,15 @@ describe("chart tooltip controller selection and options", () => {
 
     act(() => bound.onPointerDown(pointer("touch", 30, 30)));
     act(() => bound.onPointerMove(pointer("touch", 60, 32)));
-    expect(
-      result.current.bind("touch", { dataLength: 5 }).tooltipProps.defaultIndex,
-    ).toBeGreaterThan(0);
-    expect(result.current.bind("touch").tooltipProps.active).toBeUndefined();
+    act(() =>
+      result.current.bind("touch", { dataLength: 5 }).onChartMouseMove({ activeTooltipIndex: 2 }),
+    );
+    let pointerUpResult: unknown;
+    act(() => {
+      pointerUpResult = bound.onPointerUp?.(pointer("touch", 60, 32));
+    });
+    expect(pointerUpResult).toBe("rejected-moved");
+    expect(ReactElementProp(result.current.drawer, "open")).toBe(false);
   });
 
   it("handles touch leave only after a gesture and preserves a tooltip-related leave target", () => {
@@ -583,14 +640,14 @@ describe("chart tooltip controller selection and options", () => {
       }) as unknown as ReactPointerEvent<HTMLElement>;
     act(() => bound.onPointerDown(pointer("touch", 10, 10)));
     act(() => bound.onPointerLeave(pointer("touch", 10, 10)));
-    expect(result.current.bind("touch").tooltipProps.active).toBeUndefined();
+    expect(result.current.bind("touch").tooltipProps.active).toBe(false);
 
     act(() => bound.onPointerMove(pointer("touch", 30, 10)));
     const tooltip = document.createElement("div");
     tooltip.dataset.customTooltip = "true";
     document.body.append(tooltip);
     act(() => bound.onPointerLeave(pointer("touch", 30, 10, tooltip)));
-    expect(result.current.bind("touch").tooltipProps.active).toBeUndefined();
+    expect(result.current.bind("touch").tooltipProps.active).toBe(false);
     tooltip.remove();
     act(() => bound.onPointerLeave(pointer("touch", 30, 10)));
     expect(result.current.bind("touch").tooltipProps.active).toBe(false);

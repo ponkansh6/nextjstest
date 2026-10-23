@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
 import type { CpiView, QuarterlyView, EarningsView } from "@/types/chart";
 import { parseYearMonth } from "../../lib/yearMonth";
 import styles from "./CpiChart.module.css";
@@ -249,6 +249,74 @@ export default function CpiChart({
 
   const { isTouch } = useChartTheme();
   const chartTooltip = useChartTooltipController({ suppressed: isProgrammaticScroll, isTouch });
+  const invalidateChartTooltip = chartTooltip.invalidate;
+  const tooltipInvalidationInputsRef = useRef<{
+    data: CpiView[];
+    quarterlyNominalData: QuarterlyView[];
+    quarterlyRealData: QuarterlyView[];
+    totalEarningData: EarningsView[];
+    startYear: number;
+    endYear: number;
+    hiddenQuarters: number[];
+    hiddenKeys: string[];
+    stackedHiddenKeys: string[];
+    nominalHiddenKeys: string[];
+    realHiddenKeys: string[];
+    maHiddenKeys: string[];
+  } | null>(null);
+  useEffect(() => {
+    const previous = tooltipInvalidationInputsRef.current;
+    const current = {
+      data,
+      quarterlyNominalData,
+      quarterlyRealData,
+      totalEarningData,
+      startYear,
+      endYear,
+      hiddenQuarters,
+      hiddenKeys,
+      stackedHiddenKeys,
+      nominalHiddenKeys,
+      realHiddenKeys,
+      maHiddenKeys,
+    };
+    tooltipInvalidationInputsRef.current = current;
+    // A snapshot cannot exist before this component's first committed render.
+    // Skipping the initial pass also makes the effect safe under Strict Mode's
+    // repeated setup with unchanged inputs.
+    if (!previous) return;
+    if (
+      previous.data === current.data &&
+      previous.quarterlyNominalData === current.quarterlyNominalData &&
+      previous.quarterlyRealData === current.quarterlyRealData &&
+      previous.totalEarningData === current.totalEarningData &&
+      previous.startYear === current.startYear &&
+      previous.endYear === current.endYear &&
+      previous.hiddenQuarters === current.hiddenQuarters &&
+      previous.hiddenKeys === current.hiddenKeys &&
+      previous.stackedHiddenKeys === current.stackedHiddenKeys &&
+      previous.nominalHiddenKeys === current.nominalHiddenKeys &&
+      previous.realHiddenKeys === current.realHiddenKeys &&
+      previous.maHiddenKeys === current.maHiddenKeys
+    ) {
+      return;
+    }
+    invalidateChartTooltip();
+  }, [
+    invalidateChartTooltip,
+    data,
+    quarterlyNominalData,
+    quarterlyRealData,
+    totalEarningData,
+    startYear,
+    endYear,
+    hiddenQuarters,
+    hiddenKeys,
+    stackedHiddenKeys,
+    nominalHiddenKeys,
+    realHiddenKeys,
+    maHiddenKeys,
+  ]);
 
   const comparisonSeriesRegistry = useMemo(
     () =>
@@ -411,6 +479,7 @@ export default function CpiChart({
         comparisonSeriesRegistry={comparisonSeriesRegistry}
         ctiMetadata={ctiMetadata}
       />
+      {chartTooltip.drawer}
       <DataTablesSection tables={dataTables} />
     </div>
   );

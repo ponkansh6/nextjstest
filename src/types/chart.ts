@@ -16,9 +16,13 @@ export interface CustomTooltipProps {
   label?: string;
   isMobile: boolean;
   isTouch: boolean;
+  isDrawer?: boolean;
+  /** Hide the Recharts-hosted source tooltip while its payload is copied to the Drawer host. */
+  suppressInline?: boolean;
   tooltipBg: string;
   tooltipText: string;
   onDismiss?: () => void;
+  onPayloadSnapshot?: (payload: NonNullable<CustomTooltipProps["payload"]>, label?: string) => void;
   /** 積み上げチャート向け: 描画中系列の合計を先頭に表示する */
   showTotal?: boolean;
   /** 合計から除外する独立比較系列 */

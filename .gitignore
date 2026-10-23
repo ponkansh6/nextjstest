@@ -4,6 +4,7 @@ package-lock.json
 
 # Next/Vite/TS
 .next/
+.cache/playwright-browser-server/
 .vitest/
 coverage/
 dist/

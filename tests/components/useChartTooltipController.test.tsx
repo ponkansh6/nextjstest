@@ -11,7 +11,42 @@ vi.mock("@/hooks/useChartTheme", () => ({
   }),
 }));
 
-import { useChartTooltipController } from "../../src/app/components/charts/useChartTooltipProps";
+import {
+  createChartTooltipSelectionResolver,
+  useChartTooltipController,
+} from "../../src/app/components/charts/useChartTooltipProps";
+
+function selectTouchPoint(
+  controller: ReturnType<typeof useChartTooltipController>,
+  chartId: string,
+  drawerEnabled = false,
+) {
+  const bound = controller.bind(chartId, {
+    dataLength: 1,
+    drawerEnabled,
+    selectionPayloadAtIndex: () => ({
+      label: "row-0",
+      payload: [{ dataKey: "value", name: "value", value: 1, payload: { label: "row-0" } }],
+    }),
+  });
+  const wrapper = document.createElement("div");
+  wrapper.className = "recharts-wrapper";
+  const pointer = {
+    pointerId: 1,
+    pointerType: "touch",
+    isPrimary: true,
+    button: 0,
+    clientX: 10,
+    clientY: 10,
+    target: wrapper,
+    currentTarget: wrapper,
+  } as unknown as ReactPointerEvent<HTMLElement>;
+  act(() => {
+    bound.onPointerDown(pointer);
+    bound.onChartMouseMove({ activeTooltipIndex: 0 });
+    bound.onPointerUp?.(pointer);
+  });
+}
 
 describe("useChartTooltipController", () => {
   let scrollYValue = 0;
@@ -39,9 +74,176 @@ describe("useChartTooltipController", () => {
     expect(typeof bindA.onClick).toBe("function");
   });
 
-  it("activates chart A and keeps chart B inactive when onClick is called on A", () => {
+  it("uses the hit Recharts bar index for the selected source row", () => {
+    const selectionPayloadAtIndex = vi.fn((index: number) => ({
+      label: `row-${index}`,
+      payload: [
+        { dataKey: "value", name: "value", value: index, payload: { label: `row-${index}` } },
+      ],
+    }));
     const { result } = renderHook(() =>
       useChartTooltipController({ isTouch: true, suppressed: false }),
+    );
+    const bound = result.current.bind("source-row", {
+      dataLength: 3,
+      selectionPayloadAtIndex,
+    });
+    const barGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    barGroup.setAttribute("class", "recharts-bar-rectangle");
+    const bar = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    bar.setAttribute("data-index", "2");
+    vi.spyOn(bar, "getBoundingClientRect").mockReturnValue(new DOMRect(5, 5, 20, 20));
+    barGroup.append(bar);
+    const currentTarget = {
+      querySelector: () => null,
+      querySelectorAll: () => [bar],
+      getBoundingClientRect: () => new DOMRect(0, 0, 300, 100),
+    };
+    const pointer = {
+      pointerId: 1,
+      pointerType: "touch",
+      isPrimary: true,
+      button: 0,
+      clientX: 10,
+      clientY: 10,
+      // Pointer handlers receive the wrapper as currentTarget, while the
+      // event target is the actual SVG hit shape; handlers must
+      // resolve its indexed ancestor rather than infer a row from coordinates.
+      target: bar,
+      currentTarget,
+    } as unknown as ReactPointerEvent<HTMLElement>;
+
+    act(() => {
+      bound.onPointerDown(pointer);
+      bound.onPointerUp?.(pointer);
+    });
+
+    expect(selectionPayloadAtIndex).toHaveBeenCalledWith(2);
+    expect(result.current.bind("source-row", { dataLength: 3 }).tooltipProps.defaultIndex).toBe(2);
+    expect((result.current.drawer.props as { open: boolean }).open).toBe(true);
+  });
+
+  it.each([
+    {
+      chartId: "major-indices",
+      rows: [
+        { label: "before", headline: 1 },
+        { label: "visible-major-Q2", headline: 20 },
+        { label: "after", headline: 3 },
+      ],
+      series: [{ key: "headline", color: "#a00" }],
+    },
+    {
+      chartId: "stacked-area",
+      rows: [
+        { label: "before", food: 1, shelter: 2 },
+        { label: "visible-stack-Q2", food: 20, shelter: 21 },
+        { label: "after", food: 3, shelter: 4 },
+      ],
+      series: [
+        { key: "food", name: "食料", color: "#f00" },
+        { key: "shelter", name: "住居", color: "#00f" },
+      ],
+    },
+    {
+      chartId: "earnings",
+      rows: [
+        { label: "before", ordinary: 1, special: 2 },
+        { label: "visible-earnings-Q2", ordinary: 20, special: 21 },
+        { label: "after", ordinary: 3, special: 4 },
+      ],
+      series: [
+        { key: "ordinary", name: "所定内給与", color: "#0a0" },
+        { key: "special", name: "特別給与", color: "#a0a" },
+      ],
+    },
+    {
+      chartId: "residual-area",
+      rows: [
+        { label: "before", residual: 1 },
+        { label: "visible-residual-Q2", residual: 20 },
+        { label: "after", residual: 3 },
+      ],
+      series: [{ key: "residual", name: "残差", color: "#777" }],
+    },
+    {
+      chartId: "new-graph-range",
+      // This is already range-filtered; activeTooltipIndex is relative to this
+      // exact NewGraph data array, not to the unfiltered quarterly source.
+      rows: [
+        { label: "range-Q1", salary: 10, cpi: 11 },
+        { label: "range-Q2", salary: 20, cpi: 21 },
+      ],
+      series: [
+        { key: "salary", name: "給与", color: "#00f" },
+        { key: "cpi", name: "物価", color: "#f80" },
+      ],
+    },
+  ])(
+    "uses the same-interaction activeTooltipIndex for $chartId selection",
+    ({ chartId, rows, series }) => {
+      const resolverRows = rows as Array<Record<string, unknown>>;
+      const resolve = vi.fn(
+        createChartTooltipSelectionResolver(
+          resolverRows.map((row, index) => ({ ...row, value: index + 10 })),
+          () => series,
+        ),
+      );
+      const { result } = renderHook(() =>
+        useChartTooltipController({ isTouch: true, suppressed: false }),
+      );
+      const bound = result.current.bind(chartId, {
+        dataLength: rows.length,
+        drawerEnabled: true,
+        selectionPayloadAtIndex: resolve,
+      });
+      const wrapper = document.createElement("div");
+      wrapper.className = "recharts-wrapper";
+      const pointer = {
+        pointerId: 7,
+        pointerType: "touch",
+        isPrimary: true,
+        button: 0,
+        clientX: 250,
+        clientY: 60,
+        target: wrapper,
+        currentTarget: wrapper,
+      } as unknown as ReactPointerEvent<HTMLElement>;
+
+      act(() => {
+        // A previous hover pointed at row zero; a zero-move tap must wait for
+        // Recharts' click state instead of reusing that stale index.
+        bound.onChartMouseMove({ activeTooltipIndex: 0 });
+        bound.onPointerDown(pointer);
+        bound.onPointerUp?.(pointer);
+        expect((result.current.drawer.props as { open: boolean }).open).toBe(false);
+        bound.onClick({ activeTooltipIndex: 1 });
+      });
+
+      expect(resolve).toHaveBeenCalledWith(1);
+      expect(
+        result.current.bind(chartId, { dataLength: rows.length }).tooltipProps.defaultIndex,
+      ).toBe(1);
+      expect(resolve(1)?.label).toBe(rows[1]?.label);
+      expect(
+        resolve(1)?.payload.map(({ dataKey, name, color }) => ({ dataKey, name, color })),
+      ).toEqual(
+        series.map((item) => ({
+          dataKey: item.key,
+          name: ("name" in item ? item.name : undefined) ?? item.key,
+          color: item.color,
+        })),
+      );
+      expect(resolve(1)?.payload.map(({ value }) => value)).toEqual(
+        series.map(({ key }) => (rows[1] as Record<string, unknown> | undefined)?.[key]),
+      );
+      expect((result.current.drawer.props as { open: boolean }).open).toBe(true);
+    },
+  );
+
+  it("leaves Recharts active control unset across charts for fine-pointer input", () => {
+    const { result } = renderHook(() =>
+      useChartTooltipController({ isTouch: false, suppressed: false }),
     );
 
     act(() => {
@@ -49,12 +251,12 @@ describe("useChartTooltipController", () => {
     });
 
     expect(result.current.bind("A").tooltipProps.active).toBeUndefined();
-    expect(result.current.bind("B").tooltipProps.active).toBeFalsy();
+    expect(result.current.bind("B").tooltipProps.active).toBeUndefined();
   });
 
-  it("deactivates chart A when chart B is clicked subsequently", () => {
+  it("leaves Recharts active control unset when fine-pointer focus changes charts", () => {
     const { result } = renderHook(() =>
-      useChartTooltipController({ isTouch: true, suppressed: false }),
+      useChartTooltipController({ isTouch: false, suppressed: false }),
     );
 
     act(() => {
@@ -65,7 +267,7 @@ describe("useChartTooltipController", () => {
     act(() => {
       result.current.bind("B").onClick();
     });
-    expect(result.current.bind("A").tooltipProps.active).toBeFalsy();
+    expect(result.current.bind("A").tooltipProps.active).toBeUndefined();
     expect(result.current.bind("B").tooltipProps.active).toBeUndefined();
   });
 
@@ -74,10 +276,8 @@ describe("useChartTooltipController", () => {
       useChartTooltipController({ isTouch: true, suppressed: false }),
     );
 
-    act(() => {
-      result.current.bind("A").onClick();
-    });
-    expect(result.current.bind("A").tooltipProps.active).toBeUndefined();
+    selectTouchPoint(result.current, "A");
+    expect(result.current.bind("A").tooltipProps.active).toBe(true);
 
     // Dispatch pointerdown outside
     act(() => {
@@ -95,10 +295,8 @@ describe("useChartTooltipController", () => {
       useChartTooltipController({ isTouch: true, suppressed: false }),
     );
 
-    act(() => {
-      result.current.bind("A").onClick();
-    });
-    expect(result.current.bind("A").tooltipProps.active).toBeUndefined();
+    selectTouchPoint(result.current, "A");
+    expect(result.current.bind("A").tooltipProps.active).toBe(true);
 
     const otherKey = new KeyboardEvent("keydown", {
       key: "Enter",
@@ -109,7 +307,7 @@ describe("useChartTooltipController", () => {
       document.dispatchEvent(otherKey);
     });
     expect(otherKey.defaultPrevented).toBe(false);
-    expect(result.current.bind("A").tooltipProps.active).toBeUndefined();
+    expect(result.current.bind("A").tooltipProps.active).toBe(true);
 
     const escape = new KeyboardEvent("keydown", {
       key: "Escape",
@@ -150,9 +348,10 @@ describe("useChartTooltipController", () => {
       relatedTarget: null,
     } as unknown as ReactPointerEvent<HTMLElement>;
     act(() => {
+      bound.onChartMouseMove({ activeTooltipIndex: "1" });
       bound.onMouseMove(interaction);
     });
-    expect(result.current.bind("A").tooltipProps.active).toBe(true);
+    expect(result.current.bind("A").tooltipProps.active).toBeUndefined();
 
     act(() => {
       document.dispatchEvent(
@@ -172,9 +371,7 @@ describe("useChartTooltipController", () => {
       useChartTooltipController({ isTouch: true, suppressed: false }),
     );
 
-    act(() => {
-      result.current.bind("A").onClick();
-    });
+    selectTouchPoint(result.current, "A");
 
     act(() => {
       const wrapperEl = document.createElement("div");
@@ -193,7 +390,7 @@ describe("useChartTooltipController", () => {
       document.dispatchEvent(event);
     });
 
-    expect(result.current.bind("A").tooltipProps.active).toBeUndefined();
+    expect(result.current.bind("A").tooltipProps.active).toBe(true);
   });
 
   it("keeps the tooltip open when a chartNote link overlaps the visible tooltip among multiple tooltips", () => {
@@ -223,9 +420,7 @@ describe("useChartTooltipController", () => {
         useChartTooltipController({ isTouch: true, suppressed: false }),
       );
 
-      act(() => {
-        result.current.bind("A").onClick();
-      });
+      selectTouchPoint(result.current, "A");
 
       act(() => {
         const event = new PointerEvent("pointerdown", {
@@ -240,7 +435,7 @@ describe("useChartTooltipController", () => {
         expect(event.defaultPrevented).toBe(true);
       });
 
-      expect(result.current.bind("A").tooltipProps.active).toBeUndefined();
+      expect(result.current.bind("A").tooltipProps.active).toBe(true);
     } finally {
       staleTooltip.remove();
       hiddenTooltip.remove();
@@ -260,9 +455,7 @@ describe("useChartTooltipController", () => {
         useChartTooltipController({ isTouch: true, suppressed: false }),
       );
 
-      act(() => {
-        result.current.bind("A").onClick();
-      });
+      selectTouchPoint(result.current, "A");
 
       act(() => {
         result.current.bind("A").onPointerLeave(
@@ -273,7 +466,7 @@ describe("useChartTooltipController", () => {
         );
       });
 
-      expect(result.current.bind("A").tooltipProps.active).toBeUndefined();
+      expect(result.current.bind("A").tooltipProps.active).toBe(true);
     } finally {
       tooltip.remove();
     }
@@ -290,9 +483,7 @@ describe("useChartTooltipController", () => {
         useChartTooltipController({ isTouch: true, suppressed: false }),
       );
 
-      act(() => {
-        result.current.bind("A").onClick();
-      });
+      selectTouchPoint(result.current, "A");
 
       act(() => {
         result.current.bind("A").onPointerLeave(
@@ -314,10 +505,8 @@ describe("useChartTooltipController", () => {
       useChartTooltipController({ isTouch: true, suppressed: false }),
     );
 
-    act(() => {
-      result.current.bind("A").onClick();
-    });
-    expect(result.current.bind("A").tooltipProps.active).toBeUndefined();
+    selectTouchPoint(result.current, "A");
+    expect(result.current.bind("A").tooltipProps.active).toBe(true);
 
     scrollYValue = 50;
     act(() => {
@@ -333,9 +522,7 @@ describe("useChartTooltipController", () => {
       { initialProps: { suppressed: true } },
     );
 
-    act(() => {
-      result.current.bind("A").onClick();
-    });
+    selectTouchPoint(result.current, "A");
     expect(result.current.bind("A").tooltipProps.active).toBeFalsy();
 
     rerender({ suppressed: false });
@@ -359,10 +546,8 @@ describe("useChartTooltipController", () => {
     );
 
     // ツールチップを開く
-    act(() => {
-      result.current.bind("A").onClick();
-    });
-    expect(result.current.bind("A").tooltipProps.active).toBeUndefined();
+    selectTouchPoint(result.current, "A");
+    expect(result.current.bind("A").tooltipProps.active).toBe(true);
 
     // プログラム的スクロール開始（suppressed=true）→ 非表示になる
     act(() => {
@@ -390,9 +575,7 @@ describe("useChartTooltipController", () => {
       useChartTooltipController({ isTouch: true, suppressed: false }),
     );
 
-    act(() => {
-      result.current.bind("A").onClick();
-    });
+    selectTouchPoint(result.current, "A", true);
 
     expect(result.current.bind("A").activeDot).toBeUndefined();
     expect(result.current.bind("B").activeDot).toBe(false);

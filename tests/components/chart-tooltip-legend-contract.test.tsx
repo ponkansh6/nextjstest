@@ -1,4 +1,5 @@
 import React from "react";
+import type { PointerEvent as ReactPointerEvent } from "react";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 
@@ -38,6 +39,32 @@ import {
 import { useChartTooltipController } from "../../src/app/components/charts/useChartTooltipProps";
 import { renderHook, act } from "@testing-library/react";
 
+function selectLegacyTouchPoint(
+  controller: ReturnType<typeof useChartTooltipController>,
+  chartId: string,
+) {
+  const bound = controller.bind(chartId, { dataLength: 1, drawerEnabled: false });
+  const wrapper = document.createElement("div");
+  wrapper.className = "recharts-wrapper";
+  const pointer = {
+    pointerId: 1,
+    pointerType: "touch",
+    isPrimary: true,
+    button: 0,
+    clientX: 10,
+    clientY: 10,
+    target: wrapper,
+    currentTarget: wrapper,
+  } as unknown as ReactPointerEvent<HTMLElement>;
+  act(() => {
+    bound.onPointerDown(pointer);
+    // Recharts publishes the active row on the chart-level mouse handler;
+    // provide that same-gesture index before the wrapper pointerup commit.
+    bound.onChartMouseMove({ activeTooltipIndex: "0" });
+    bound.onPointerUp?.(pointer);
+  });
+}
+
 describe("chart tooltip and legend shared contract", () => {
   let scrollY = 0;
   beforeEach(() => vi.spyOn(window, "scrollY", "get").mockImplementation(() => scrollY));
@@ -62,23 +89,23 @@ describe("chart tooltip and legend shared contract", () => {
     const { result } = renderHook(() =>
       useChartTooltipController({ isTouch: true, suppressed: false }),
     );
-    act(() => result.current.bind("one").onClick());
-    expect(result.current.bind("one").tooltipProps.active).toBeUndefined();
-    act(() => result.current.bind("two").onClick());
+    selectLegacyTouchPoint(result.current, "one");
+    expect(result.current.bind("one").tooltipProps.active).toBe(true);
+    selectLegacyTouchPoint(result.current, "two");
     expect(result.current.bind("one").tooltipProps.active).toBeFalsy();
-    act(() => result.current.bind("one").onClick());
+    selectLegacyTouchPoint(result.current, "one");
     const outside = document.createElement("div");
     document.body.appendChild(outside);
     act(() => fireEvent.pointerDown(outside));
     outside.remove();
     expect(result.current.bind("one").tooltipProps.active).toBeFalsy();
-    act(() => result.current.bind("one").onClick());
+    selectLegacyTouchPoint(result.current, "one");
     scrollY = 50;
     act(() => window.dispatchEvent(new Event("scroll")));
     expect(result.current.bind("one").tooltipProps.active).toBeFalsy();
 
     // The metadata bind path must retain the existing Escape dismissal contract.
-    act(() => result.current.bind("one").onClick());
+    selectLegacyTouchPoint(result.current, "one");
     act(() => fireEvent.keyDown(document, { key: "Escape" }));
     expect(result.current.bind("one").tooltipProps.active).toBeFalsy();
   });

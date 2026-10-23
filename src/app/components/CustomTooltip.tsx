@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useEffect } from "react";
 import type { CompositionAdjustedV2EstimateVersion } from "../../../shared/cti-estimate-contract";
 import type { CustomTooltipProps } from "@/types/chart";
 import {
@@ -107,6 +108,8 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
     label,
     isMobile,
     isTouch,
+    isDrawer = false,
+    suppressInline = false,
     tooltipBg,
     tooltipText,
     onDismiss,
@@ -123,10 +126,19 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
     includeUnmappedPayload = false,
     valueFormatter,
     totalFormatter,
+    onPayloadSnapshot,
   }) => {
+    useEffect(() => {
+      if (active && payload && onPayloadSnapshot) {
+        onPayloadSnapshot(payload, label);
+      }
+    }, [active, label, onPayloadSnapshot, payload]);
     if (!active || !payload) {
       return null;
     }
+    // Coarse-pointer selections are presented by the independent Drawer host;
+    // keep Recharts' inline layer mounted only long enough to provide payload.
+    if (suppressInline) return null;
 
     const fontSize = "14px";
     const totalFontSize = "16px";
@@ -248,8 +260,8 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
     const total = showTotal
       ? resolvedPayload.reduce((acc, e) => {
           const isIncluded = totalIncludedKeys
-            ? totalIncludedKeys.includes(e.dataKey as string)
-            : !totalExcludedKeys.includes(e.dataKey as string);
+            ? (totalIncludedKeys ?? []).includes(e.dataKey as string)
+            : !(totalExcludedKeys ?? []).includes(e.dataKey as string);
           return isIncluded && typeof e.value === "number" && Number.isFinite(e.value)
             ? acc + e.value
             : acc;
@@ -289,15 +301,20 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
         className={styles.customTooltip}
         data-custom-tooltip="true"
         data-tooltip-root="true"
+        onPointerDown={(event) => event.stopPropagation()}
+        onPointerUp={(event) => event.stopPropagation()}
+        onPointerMove={(event) => event.stopPropagation()}
+        onMouseMove={(event) => event.stopPropagation()}
         style={{
           backgroundColor: tooltipBg,
-          border: isMobile ? "1px solid var(--card-border)" : "none",
-          borderRadius: isMobile ? "12px 12px 0 0" : "8px",
+          border: isMobile && !isDrawer ? "1px solid var(--card-border)" : "none",
+          borderRadius: isMobile && !isDrawer ? "12px 12px 0 0" : isDrawer ? "0" : "8px",
           boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
           color: tooltipText,
-          padding: padding,
-          paddingBottom: isMobile ? "calc(10px + env(safe-area-inset-bottom, 0px))" : undefined,
-          ...(isMobile
+          padding: isDrawer ? 0 : padding,
+          paddingBottom:
+            isMobile && !isDrawer ? "calc(10px + env(safe-area-inset-bottom, 0px))" : undefined,
+          ...(isMobile && !isDrawer
             ? {
                 position: "fixed",
                 bottom: "env(safe-area-inset-bottom, 0px)",
@@ -410,7 +427,8 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
           // identifies the series. Keep its measurement/provenance details
           // available in regular consumption tooltips, but omit them here.
           const showEntryMeasurementNotes =
-            showMeasurementNotes && !suppressMeasurementNotesForKeys.includes(entry.dataKey ?? "");
+            showMeasurementNotes &&
+            !(suppressMeasurementNotesForKeys ?? []).includes(entry.dataKey ?? "");
           const hasProvenance =
             entry.seriesType !== undefined ||
             entry.official !== undefined ||
