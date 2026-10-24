@@ -292,15 +292,30 @@ describe("useChartTooltipProps controller branch coverage", () => {
     expect((result.current.drawer.props as { open: boolean }).open).toBe(false);
     Object.defineProperty(window, "innerWidth", { configurable: true, value: previousWidth });
 
+    act(() => document.dispatchEvent(new Event("pointerdown")));
     openDrawer(result);
     const drawer = result.current.drawer;
     const openChange = (
       drawer.props as { onOpenChange: (open: boolean, details: { reason: string }) => void }
     ).onOpenChange;
-    act(() => openChange(false, { reason: "escape-key" }));
-    expect((result.current.drawer.props as { open: boolean }).open).toBe(false);
     const completion = (drawer.props as { onOpenChangeComplete: (open: boolean) => void })
       .onOpenChangeComplete;
+    const getDrawerTitle = () => {
+      const drawerContent = (
+        result.current.drawer.props as {
+          children: ReactElement<{ children: ReactElement[] }>;
+        }
+      ).children;
+      const header = drawerContent.props.children[1] as ReactElement<{
+        children: ReactElement[];
+      }>;
+      return (header.props.children[0] as ReactElement<{ children: string }>).props.children;
+    };
+    expect(getDrawerTitle()).toBe("label-1");
+    act(() => completion(true));
+    expect(getDrawerTitle()).toBe("label-1");
+    act(() => openChange(false, { reason: "escape-key" }));
+    expect((result.current.drawer.props as { open: boolean }).open).toBe(false);
     act(() => completion(false));
 
     const bound = result.current.bind("chart", {
