@@ -17,6 +17,37 @@ const TEST_SUPPORT_NOMINAL_KEY = "Synthetic nominal support";
 const payload = [{ name: "総合", value: 112.5, color: "#1d4ed8" }];
 
 describe("CustomTooltip", () => {
+  it("shows the period in hover tooltips and hides the duplicate period in the Drawer", () => {
+    const view = render(
+      <CustomTooltip
+        active
+        isMobile={false}
+        isTouch={false}
+        label="2025年1月"
+        payload={payload}
+        tooltipBg="#000"
+        tooltipText="#fff"
+      />,
+    );
+
+    expect(screen.getByText("2025年1月")).toBeDefined();
+
+    view.rerender(
+      <CustomTooltip
+        active
+        isMobile={false}
+        isTouch
+        isDrawer
+        label="2025年1月"
+        payload={payload}
+        tooltipBg="#000"
+        tooltipText="#fff"
+      />,
+    );
+
+    expect(screen.queryByText("2025年1月")).toBeNull();
+  });
+
   it("reports active payload snapshots and ignores inactive or suppressed tooltips", () => {
     const onPayloadSnapshot = vi.fn();
     const firstPayload = [{ name: "初回", value: 10 }];

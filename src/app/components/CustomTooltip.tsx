@@ -348,20 +348,22 @@ export const CustomTooltip = React.memo<CustomTooltipProps>(
             backgroundColor: tooltipBg,
           }}
         >
-          <p
-            style={{
-              flex: "1 1 auto",
-              minWidth: 0,
-              overflowWrap: "anywhere",
-              wordBreak: "normal",
-              color: tooltipText,
-              fontSize: labelFontSize,
-              fontWeight: "bold",
-              margin: 0,
-            }}
-          >
-            {label}
-          </p>
+          {!isDrawer && (
+            <p
+              style={{
+                flex: "1 1 auto",
+                minWidth: 0,
+                overflowWrap: "anywhere",
+                wordBreak: "normal",
+                color: tooltipText,
+                fontSize: labelFontSize,
+                fontWeight: "bold",
+                margin: 0,
+              }}
+            >
+              {label}
+            </p>
+          )}
           {isTouch && (
             <button
               type="button"

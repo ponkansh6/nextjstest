@@ -862,6 +862,9 @@ stored in the selected content snapshot (with a safe existing-payload period
 fallback and final `詳細` fallback). `DrawerClose` retains its semantic name and
 primitive behavior and uses the explicit close-button style in
 `chart-point-drawer.module.css`; this changes no component or data model.
+The Drawer body reuses `CustomTooltip` with `isDrawer`; it omits the tooltip's
+period heading because `DrawerTitle` already displays that period. Fine-pointer
+hover tooltips continue to show the period heading.
 
 Browser Mode test architecture: 19 Chromium configurations use the shared
 `tests/config/browser/chromium-provider.ts` helper, while the WebKit
@@ -2488,6 +2491,7 @@ contracts remain shared with `CustomTooltip`.
 
 - **WHEN** a selected-point Drawer opens for a chart selection
 - **THEN** the content and display label are saved in the same snapshot, and `DrawerTitle` uses that snapshot's nonblank label. If the label is absent or whitespace-only, it uses a safely type-checked period from the existing payload, following the body's `年月`/`label` precedence; if no usable period exists, the title is `詳細`. The title does not use a series name or total and preserves the supplied monthly or quarterly notation without applying a new formatter.
+- **AND** the Drawer body does not repeat the period heading already shown by `DrawerTitle`, while fine-pointer hover tooltips retain their period heading.
 - **WHEN** the selected-point Drawer is open
 - **THEN** its `閉じる` control remains a semantic button with the existing Drawer close, Escape, backdrop, swipe-dismiss, and focus restoration behavior, and receives a visible button style with a minimum 44×44px target.
 
