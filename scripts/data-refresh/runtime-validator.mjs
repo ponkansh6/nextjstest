@@ -529,7 +529,7 @@ export const PINNED_PROJECT_FILES = Object.freeze({
   "server/lib/data-loader/cpiLoader.ts":
     "11219c314ed787a8f6f0fd9ac68a2018cc468208289c643cb27d8c8ff0ee3948",
   "server/lib/data-loader/cpiSource.ts":
-    "860ff4ed2454706478a494bd778f26c54dfc3f0ed9407a96a9adaeaa3ada9a06",
+    "45b68b8117557cc2fb8127dac255d8011d5a1dafd47c778e2b8ee60e2f00f379",
   "server/lib/data-loader/cpiValidation.ts":
     "d5810e1f9c608c8f81f33164e9d86b113746c9e3905bfaed9447106374debf3a",
   "server/lib/data-loader/ctiAdjusted.ts":
@@ -572,7 +572,7 @@ export const PINNED_PROJECT_FILES = Object.freeze({
   "src/types/data.ts": "877a8bf4193672663b1de06fb82cff6995fc097911fa9cdf7859652af4232009",
   "src/types/index.ts": "2ef6482f4a19da1f6950524164a0cc522b2463507d0e87be8f7eadd4cdf88928",
   "tests/data-quality/cpi-data-integrity.test.ts":
-    "e288df4ed462a6d58f03629a9491eb8ba945e5766f7d7fd9b75ff04d960ad1ca",
+    "85f97f306a4823bceae67c9e20af191006a57703f7ade8e299145254f9b4afe5",
   "tests/data-quality/cti-basic-series-2025.test.ts":
     "9d0fe65f2b9816d3bd37cb601666043ed09d5a1f6fc486a87fd946019352edc3",
   "tests/data-quality/cti-data-integrity.test.ts":
@@ -582,7 +582,7 @@ export const PINNED_PROJECT_FILES = Object.freeze({
   "tests/data-quality/cti-source-artifacts.test.ts":
     "ec743a0e30c47f19e573246f111b60f620e017566ec2ba6fc18ce1667cf836f8",
   "tests/data-quality/earning-data-integrity.test.ts":
-    "f6b84e3e77fb92ac5415d27e6c60a940320f1ad56b9bdd8f1c88b64c8deceda9",
+    "e3a07283c808e357a758987796e3318ab56ecbb4bba24b5f55d2352e47ecef7b",
   "tests/data-quality/population-data-integrity.test.ts":
     "6441a64043461a8b8fa6388dfebc1aeecd47a2668c9ad3ce305ab5527f25e1ad",
   "tests/fixtures/minkan-extension-anchors.json":

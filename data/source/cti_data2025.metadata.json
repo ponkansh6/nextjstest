@@ -27,7 +27,7 @@
       ]
     }
   },
-  "retrievedAt": "2026-10-16",
+  "retrievedAt": "2026-10-25",
   "sourceFile": "official-cti-2025/cti-basic-000040499069.xlsx",
   "sourceFileSha256": "7df9ce47c4b7545bd7366f0e6e2527509adfbe4ff381cc8e6d0ef50c63a44f67",
   "csvSha256": "b04672898460e7dc3c3033f2c921d3da1d3bbdbaf5e90db2ff2abd24e8edcfce",
@@ -39,12 +39,12 @@
   "officialSeriesSnapshotSourceSha256": "7df9ce47c4b7545bd7366f0e6e2527509adfbe4ff381cc8e6d0ef50c63a44f67",
   "revisionAudit": {
     "sourceId": "000040499069",
-    "overlapCount": 2530,
+    "overlapCount": 2552,
     "changedObservationCount": 0,
     "changedValueCount": 0,
     "changedSample": [],
     "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
-    "previousSha256": "5e99cf3c61e26ba90bcde12b3311eb553458f97e5624258712d7414bed53197b",
+    "previousSha256": "7df9ce47c4b7545bd7366f0e6e2527509adfbe4ff381cc8e6d0ef50c63a44f67",
     "sourceSha256": "7df9ce47c4b7545bd7366f0e6e2527509adfbe4ff381cc8e6d0ef50c63a44f67"
   },
   "sourceBasis": "2025年消費支出平均月額=100の公式基本系列（原数値・総世帯）",

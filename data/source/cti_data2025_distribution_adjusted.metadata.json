@@ -27,18 +27,18 @@
       ]
     }
   },
-  "retrievedAt": "2026-10-16",
+  "retrievedAt": "2026-10-25",
   "sourceFile": "official-cti-2025/cti-distribution-adjusted-000040499087.xlsx",
   "sourceFileSha256": "5089bece9c815944df57d3f5552e5d7ae9f5ee1c2f091ae5246dbd0ac8be1c67",
   "csvSha256": "e577694a4070de453dc56b6040acbb2816bf411445803e370f0b1f650111d173",
   "revisionAudit": {
     "sourceId": "000040499087",
-    "overlapCount": 2530,
+    "overlapCount": 2552,
     "changedObservationCount": 0,
     "changedValueCount": 0,
     "changedSample": [],
     "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
-    "previousSha256": "7224e5eb424c94d90402502f665a4953cfe16377f65f1040a939696ac948ef41",
+    "previousSha256": "5089bece9c815944df57d3f5552e5d7ae9f5ee1c2f091ae5246dbd0ac8be1c67",
     "sourceSha256": "5089bece9c815944df57d3f5552e5d7ae9f5ee1c2f091ae5246dbd0ac8be1c67"
   },
   "seriesClassification": "調整系列・分布調整値（原数値）",

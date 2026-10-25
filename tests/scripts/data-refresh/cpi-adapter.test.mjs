@@ -185,7 +185,7 @@ async function makeRoot({ qualityCompatible = false } = {}) {
   const metadata = JSON.parse(await readFile(metadataPath, "utf8"));
   metadata.csvSha256 = createHash("sha256").update(canonicalCsv).digest("hex");
   metadata.period = { start: "1970年1月", end: "2026年7月", monthlyRows: 679 };
-  metadata.approvedPeriod = { from: "202607", through: "202608" };
+  metadata.approvedPeriod = { from: "202607", through: "202609" };
   await writeFile(metadataPath, JSON.stringify(metadata));
   return root;
 }
@@ -224,7 +224,7 @@ const source = {
     fileStatInfId: "000040482945",
   },
   period: { from: "197001", through: "latest-published" },
-  approvedPeriod: { from: "202607", through: "202608" },
+  approvedPeriod: { from: "202607", through: "202609" },
 };
 
 const cpiCandidate = (overrides = {}) => ({
@@ -342,8 +342,8 @@ describe("CPI refresh adapter", () => {
     );
 
     expect(registrySource.period).toEqual({ from: "197001", through: "latest-published" });
-    expect(registrySource.approvedPeriod).toEqual({ from: "202607", through: "202608" });
-    expect(metadata.approvedPeriod).toMatchObject({ from: "202607", through: "202608" });
+    expect(registrySource.approvedPeriod).toEqual({ from: "202607", through: "202609" });
+    expect(metadata.approvedPeriod).toMatchObject({ from: "202607", through: "202609" });
   });
 
   it("validates table dimensions and builds the canonical CSV from injected fixtures", async () => {
@@ -459,7 +459,7 @@ describe("CPI refresh adapter", () => {
           unit: "index",
           baseline: "2025=100",
           period: { from: "197001", through: "latest-published" },
-          approvedPeriod: { from: "202607", through: "202608" },
+          approvedPeriod: { from: "202607", through: "202609" },
           revision: "overlap-audit",
           outputs: result.artifacts.map(({ path: output }) => output),
           dependencies: [],
@@ -500,7 +500,7 @@ describe("CPI refresh adapter", () => {
     expect(report.sources[0].sourceCandidate).toMatchObject({
       candidateCount: 1,
       discoveryPeriod: "latest-published",
-      approvedPeriod: { from: "202607", through: "202608" },
+      approvedPeriod: { from: "202607", through: "202609" },
       selectedSourceId: "0004052037",
       apiStatsDataId: "0004052037",
       fileStatInfId: "000040482945",
@@ -653,7 +653,7 @@ describe("CPI refresh adapter", () => {
 
   it("uses the official start code and preserves category-specific leading gaps", async () => {
     const root = await makeRoot();
-    const { metadataPayload, records } = await apiFixtures(root, "202608");
+    const { metadataPayload, records } = await apiFixtures(root, "202609");
     const mapLines = (
       await readFile(path.join(root, "data/source/cpi-2025-series-map.csv"), "utf8")
     )
@@ -687,7 +687,7 @@ describe("CPI refresh adapter", () => {
     const timeClasses = metadataPayload.GET_META_INFO.METADATA_INF.CLASS_INF.CLASS_OBJ.find(
       (item) => item["@id"] === "time",
     ).CLASS;
-    timeClasses.push({ "@code": "opaque-future-202609", "@name": "2026年9月" });
+    timeClasses.push({ "@code": "opaque-future-202610", "@name": "2026年10月" });
     const periodCode = new Map(
       timeClasses
         .filter((row) => /^\d{4}年\d{1,2}月$/.test(row["@name"]))
@@ -722,13 +722,13 @@ describe("CPI refresh adapter", () => {
     });
     expect(requestedFilters.cdTimeFrom).toBe("1970000101");
     const outputRows = result.artifacts[0].bytes.toString("utf8").trimEnd().split("\n");
-    expect(outputRows).toHaveLength(681);
-    expect(outputRows.at(-1).startsWith("2026年8月,")).toBe(true);
-    expect(outputRows.some((row) => row.startsWith("2026年9月,"))).toBe(false);
+    expect(outputRows).toHaveLength(682);
+    expect(outputRows.at(-1).startsWith("2026年9月,")).toBe(true);
+    expect(outputRows.some((row) => row.startsWith("2026年10月,"))).toBe(false);
     expect(outputRows[1].split(",").slice(1, 3)).toEqual(["", ""]);
-    expect(result.coverage.endMonth).toBe("202608");
+    expect(result.coverage.endMonth).toBe("202609");
     const outputMetadata = JSON.parse(result.artifacts[1].bytes.toString("utf8"));
-    expect(outputMetadata.extraction.monthlyObservationCount).toBe(52_188);
+    expect(outputMetadata.extraction.monthlyObservationCount).toBe(52_266);
     expect(
       outputRows.slice(1).reduce(
         (count, row) =>
@@ -760,7 +760,7 @@ describe("CPI refresh adapter", () => {
     ).rejects.toMatchObject({ code: "cpi-api-time-coverage" });
 
     const missingLatest = allRecords.filter(
-      (record) => !(record["@cat01"] === series[0].officialCode && record["@time"] === "202608"),
+      (record) => !(record["@cat01"] === series[0].officialCode && record["@time"] === "202609"),
     );
     await expect(
       cpiAdapter({
@@ -1343,7 +1343,7 @@ describe("CPI refresh adapter", () => {
           unit: "index",
           baseline: "2025=100",
           period: { from: "197001", through: "latest-published" },
-          approvedPeriod: { from: "202607", through: "202608" },
+          approvedPeriod: { from: "202607", through: "202609" },
           revision: "overlap-audit",
           outputs: result.artifacts.map(({ path: output }) => output),
           dependencies: [],

@@ -41,7 +41,7 @@
   "requestedStart": "2005-01",
   "availabilityStart": "2002-01",
   "retrieval": {
-    "retrievedAt": "2026-10-16T18:24:44.540Z",
+    "retrievedAt": "2026-10-25T01:02:58.492Z",
     "updatedAt": null
   },
   "downloadUrlHash": "951913ce3fa7b746aa1b091565ee13e66d1a280daaf4473175b05a5714aa4101",
@@ -194,12 +194,12 @@
   },
   "revisionAudit": {
     "sourceId": "000040499082",
-    "overlapCount": 5698,
+    "overlapCount": 5720,
     "changedObservationCount": 0,
     "changedValueCount": 0,
     "changedSample": [],
     "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
-    "previousSha256": "97b54de7905460abc2099a3ac804c17e8c7b61e82d7d1fa02a9e723f7056d53e",
+    "previousSha256": "0d98b71f8b3192331f822d907eb15327879d8ec52a5e9a450fc923c0f81ff2b9",
     "sourceSha256": "0d98b71f8b3192331f822d907eb15327879d8ec52a5e9a450fc923c0f81ff2b9"
   }
 }

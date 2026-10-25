@@ -111,6 +111,7 @@ export async function runRefresh({
   let canonicalOutputStates = null;
   let candidateEvaluationStarted = false;
   let rebaselineOldStateHash;
+  let rebaselineCandidateTransactionId;
   const stagedCandidates = new Map();
   try {
     const cpiVintageApproval = cpiVintageApprovalForRegistry(registry);
@@ -179,6 +180,9 @@ export async function runRefresh({
 
     const transportConfig = await loadRefreshEnv({ cwd: absoluteRoot });
     const storedState = await readJsonIfExists(statePath, { fingerprints: {} });
+    if (rebaselineSemanticStateHash === undefined && storedState?.version === 2) {
+      validatePublishedState(storedState, registry);
+    }
     let oldState = storedState;
     if (rebaselineSemanticStateHash !== undefined) {
       let stateBytes;
@@ -198,10 +202,15 @@ export async function runRefresh({
         "rebaseline-state-hash-mismatch",
         "Semantic state does not match the expected rebaseline hash.",
       );
-      validatePublishedState(storedState, registry);
+      const migrationRequired =
+        storedState?.version === 2 && !Object.hasOwn(storedState, "cpiVintageApproval");
+      validatePublishedState(storedState, registry, {
+        allowMissingCpiVintageApproval: migrationRequired,
+      });
       rebaselineOldStateHash = oldStateHash;
       report.semanticStateRebaseline = {
         reason: "explicit-hash-pinned-state-transition",
+        ...(migrationRequired ? { migrationRequired: true } : {}),
         oldStateSha256: oldStateHash,
         oldStateVersion: storedState.version,
         candidateFingerprints: {},
@@ -384,6 +393,12 @@ export async function runRefresh({
       );
     }
 
+    if (rebaselineSemanticStateHash !== undefined) {
+      rebaselineCandidateTransactionId = randomUUID();
+      nextState.publishTransactionId = rebaselineCandidateTransactionId;
+      validatePublishedState(nextState, registry);
+    }
+
     report.finishedAt = now().toISOString();
     report.status = "validated";
     report.outputsChanged = stagedArtifacts.map(({ path: output }) => output);
@@ -418,7 +433,7 @@ export async function runRefresh({
           "A pending publish journal prevents semantic-state rebaseline.",
         );
       }
-      const transactionId = randomUUID();
+      const transactionId = rebaselineCandidateTransactionId ?? randomUUID();
       nextState.publishTransactionId = transactionId;
       const stateStage = `${stageRelative}/semantic-state.json`;
       const stateAbsolute = await resolveContainedPath(absoluteRoot, stateStage);
@@ -629,7 +644,7 @@ function absentOutputState() {
   return { exists: false, sha256: null, byteLength: null };
 }
 
-function validatePublishedState(state, registry) {
+function validatePublishedState(state, registry, { allowMissingCpiVintageApproval = false } = {}) {
   const expectedCpiApproval = cpiVintageApprovalForRegistry(registry);
   invariant(
     state &&
@@ -653,12 +668,14 @@ function validatePublishedState(state, registry) {
     "Last-publish semantic state is incomplete.",
   );
   if (expectedCpiApproval) {
+    const approvalMissing = !Object.hasOwn(state, "cpiVintageApproval");
     invariant(
-      state.cpiVintageApproval?.discoveryPeriod === expectedCpiApproval.discoveryPeriod &&
-        state.cpiVintageApproval?.approvedPeriod?.from ===
-          expectedCpiApproval.approvedPeriod.from &&
-        state.cpiVintageApproval?.approvedPeriod?.through ===
-          expectedCpiApproval.approvedPeriod.through,
+      (allowMissingCpiVintageApproval && state.version === 2 && approvalMissing) ||
+        (state.cpiVintageApproval?.discoveryPeriod === expectedCpiApproval.discoveryPeriod &&
+          state.cpiVintageApproval?.approvedPeriod?.from ===
+            expectedCpiApproval.approvedPeriod.from &&
+          state.cpiVintageApproval?.approvedPeriod?.through ===
+            expectedCpiApproval.approvedPeriod.through),
       "verify-noop-state-invalid",
       "Last-publish CPI vintage approval manifest does not match the registry.",
     );

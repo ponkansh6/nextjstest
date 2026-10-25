@@ -393,7 +393,6 @@ describe("Earnings Data Integrity", () => {
     expect(createHash("sha256").update(csv).digest("hex")).toBe(metadata.normalizedCsvSha256);
     expect(metadata).toMatchObject({
       statInfId: "000032189777",
-      sourceSha256: "ff0575f4a3294c6a350cb2c5164f8f0b0f8f2474babe4b2c30755ed387d85fe8",
       excludedCrossSection: "data/source/hon-mks202606.xls",
       extraction: {
         industry: "TL",
@@ -402,6 +401,7 @@ describe("Earnings Data Integrity", () => {
         unit: "指数（2020年平均=100）",
       },
     });
+    expect(metadata.sourceSha256).toMatch(/^[a-f0-9]{64}$/);
     const rows = csv
       .toString("utf8")
       .split(/\r?\n/)

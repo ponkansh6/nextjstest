@@ -37,6 +37,14 @@ pnpm data:refresh --check
 pnpm data:refresh
 ```
 
+古いv2 semantic stateにCPI approval manifestが欠落している場合に限り、state移行は明示的なSHA-256 pin付きで行います。現在のstate hashを取得し、まずcheckを実行してください。checkはcanonical outputs/stateをpublishしません。成功した場合に同じhashを指定してpublishします。manifestが存在して不正なstateや、clean/HEAD一致などのrebaseline前提を満たさない状態は拒否されます。
+
+```bash
+state_sha256="$(sha256sum .data-refresh/semantic-state.json | cut -d ' ' -f 1)"
+pnpm data:refresh --check --rebaseline-semantic-state="$state_sha256"
+pnpm data:refresh --rebaseline-semantic-state="$state_sha256"
+```
+
 ## 検証コマンド
 
 ```bash

@@ -2,7 +2,7 @@
   "source": "e-Stat 毎月勤労統計調査 長期時系列（実数・指数累積データ）",
   "sourceUrl": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=1&statInfId=000032189777",
   "statInfId": "000032189777",
-  "sourceSha256": "ff0575f4a3294c6a350cb2c5164f8f0b0f8f2474babe4b2c30755ed387d85fe8",
+  "sourceSha256": "c74ac8db3f05a3cb0849beda27da17fb0d2b153ef2deb20dc122e5044be1bc65",
   "extraction": {
     "industry": "TL",
     "establishmentSize": "T",
@@ -12,21 +12,21 @@
     "series": "常用雇用",
     "sourceColumn": "常用雇用",
     "sourceEncoding": "CP932",
-    "period": "1990-01 through 2026-07",
-    "monthlyCoverage": "1990-01 through 2026-07",
+    "period": "1990-01 through 2026-08",
+    "monthlyCoverage": "1990-01 through 2026-08",
     "preMonthlyCoverage": "1952-01 through 1989-12 is not available in the source and is represented by -",
     "aggregation": "calendar-year average copied from official CY rows; half-year, quarter, and fiscal-year averages emitted only when every constituent month is present",
     "missingDataPolicy": "official missing values remain missing; no zero or inferred values are introduced"
   },
   "normalizedCsv": "data/source/employment_indices.csv",
-  "normalizedCsvSha256": "1dfeb53e410cb1069fb37786402415b30816b2b3a4d420eacf56d5f3bb97b225",
+  "normalizedCsvSha256": "8743e01a445b2f89106c2f48db1008683b316641544d7e3eeff66d417159fd69",
   "excludedCrossSection": "data/source/hon-mks202606.xls",
   "period": {
     "start": "1990-01",
-    "end": "2026-07",
-    "monthlyRows": 439
+    "end": "2026-08",
+    "monthlyRows": 440
   },
-  "retrievedAt": "2026-10-16T18:24:49.618Z",
+  "retrievedAt": "2026-10-25T01:03:03.492Z",
   "revisionAudit": {
     "overlapCount": 439,
     "annualOverlapCount": 36,

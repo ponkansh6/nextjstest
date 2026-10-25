@@ -411,7 +411,7 @@ describe("refresh core", () => {
       sources: fixture.common.registry.sources.map((source) => ({
         ...source,
         id: "cpi-long",
-        approvedPeriod: { from: "202607", through: "202608" },
+        approvedPeriod: { from: "202607", through: "202609" },
       })),
     };
     const common = { ...fixture.common, registry };
@@ -421,14 +421,14 @@ describe("refresh core", () => {
     const state = JSON.parse(await readFile(statePath, "utf8"));
     expect(state.cpiVintageApproval).toEqual({
       discoveryPeriod: "latest-published",
-      approvedPeriod: { from: "202607", through: "202608" },
+      approvedPeriod: { from: "202607", through: "202609" },
     });
 
     const unapprovedRegistry = {
       ...registry,
       sources: registry.sources.map((source) => ({
         ...source,
-        approvedPeriod: { from: "202607", through: "202609" },
+        approvedPeriod: { from: "202607", through: "202610" },
       })),
     };
     await expect(

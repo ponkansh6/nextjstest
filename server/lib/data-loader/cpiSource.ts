@@ -80,13 +80,13 @@ export function validate2025Metadata(metadataPath: string): Cpi2025Metadata | st
     // A new vintage requires a reviewed update to the registry, source metadata,
     // this bound, and the CPI stage/quality fixtures. latest-published is not authorization.
     const supportedMinimum = 2026 * 12 + 7;
-    const supportedMaximum = 2026 * 12 + 8;
+    const supportedMaximum = 2026 * 12 + 9;
     const endOrdinal = end.year * 12 + end.month;
     if (
       endOrdinal < supportedMinimum ||
       endOrdinal > supportedMaximum ||
       metadata.approvedPeriod?.from !== "202607" ||
-      metadata.approvedPeriod?.through !== "202608"
+      metadata.approvedPeriod?.through !== "202609"
     ) {
       return "2025 metadata period mismatch";
     }

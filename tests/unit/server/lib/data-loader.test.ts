@@ -35,7 +35,7 @@ const build2025Fixture = () => {
     contributionFile: "contribution2025.csv",
     csvSha256: createHash("sha256").update(cpi).digest("hex"),
     period: { start: "1970年1月", end: "2026年7月", monthlyRows: 679 },
-    approvedPeriod: { from: "202607", through: "202608" },
+    approvedPeriod: { from: "202607", through: "202609" },
     seriesCount: 78,
   });
   return { cpi, contribution, metadata };

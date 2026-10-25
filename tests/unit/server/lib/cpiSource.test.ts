@@ -41,7 +41,7 @@ function build2025Fixture(monthlyRows = 679) {
         end: monthlyRows === 680 ? "2026年8月" : "2026年7月",
         monthlyRows,
       },
-      approvedPeriod: { from: "202607", through: "202608" },
+      approvedPeriod: { from: "202607", through: "202609" },
       seriesCount: 78,
     }),
   };
@@ -138,12 +138,12 @@ describe("cpiSource boundary", () => {
     ],
     [
       "unsupported future coverage",
-      { period: { start: "1970年1月", end: "2026年9月", monthlyRows: 681 } },
+      { period: { start: "1970年1月", end: "2026年10月", monthlyRows: 682 } },
       "2025 metadata period mismatch",
     ],
     [
       "unapproved vintage range",
-      { approvedPeriod: { from: "202607", through: "202609" } },
+      { approvedPeriod: { from: "202607", through: "202610" } },
       "2025 metadata period mismatch",
     ],
   ])("rejects metadata with %s", (_label, override, expectedError) => {

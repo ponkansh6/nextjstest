@@ -15,7 +15,27 @@ type CpiMetadata = {
   statsDataId: string;
   statInfId: string;
   apiEndpoint: string;
-  apiRetrievalConditions: Record<string, unknown>;
+  apiRetrievalConditions: {
+    statsDataId: string;
+    format: "CSV";
+    cdArea: string;
+    cdTab: string;
+    startTime: string;
+    endTime: string;
+    limit: number;
+    startPosition: number[];
+  };
+  refreshApiEndpoint: string;
+  refreshApiRetrievalConditions: {
+    statsDataId: string;
+    format: "JSON";
+    cdArea: string;
+    cdTab: string;
+    cdTimeFrom: string;
+    cdCat01: string;
+    latestReturnedTime: string;
+    limit: number;
+  };
   sourceFileUrl: string;
   artifactUpdatedAt: string;
   csvSha256: string;
@@ -97,6 +117,9 @@ describe("CPI Data Integrity", () => {
         cdTab: "1",
         startTime: "197001",
         endTime: "202608",
+      });
+      expect(metadata.refreshApiRetrievalConditions).toMatchObject({
+        latestReturnedTime: "202609",
       });
       expect(metadata.sourceFileUrl).toContain(`statInfId=${metadata.statInfId}`);
       expect(metadata.artifactUpdatedAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);
