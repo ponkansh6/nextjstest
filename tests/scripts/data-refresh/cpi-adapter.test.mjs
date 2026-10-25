@@ -1633,7 +1633,7 @@ describe("CPI refresh adapter", () => {
 
   it("accepts a newer published month and rejects generic index units", async () => {
     const root = await makeRoot({ qualityCompatible: true });
-    const { metadataPayload, records } = await apiFixtures(root, "202608", {
+    const { metadataPayload, records } = await apiFixtures(root, "202609", {
       qualityCompatible: true,
     });
     const listCandidate = cpiCandidate({ CYCLE: "-", SURVEY_DATE: undefined });
@@ -1646,8 +1646,8 @@ describe("CPI refresh adapter", () => {
       fetchApi: async () => records,
     });
     const output = result.artifacts[0].bytes.toString("utf8").trimEnd().split("\n");
-    expect(output.at(-1).startsWith("2026年8月,")).toBe(true);
-    expect(JSON.parse(result.artifacts[1].bytes.toString("utf8")).period.monthlyRows).toBe(680);
+    expect(output.at(-1).startsWith("2026年9月,")).toBe(true);
+    expect(JSON.parse(result.artifacts[1].bytes.toString("utf8")).period.monthlyRows).toBe(681);
     expect(result.validationSummary.unitEvidence).toBe("official-value-rows");
     expect(result.validationSummary).toMatchObject({
       overlapComparedValueCount: 679 * 78,
@@ -1757,7 +1757,7 @@ describe("CPI refresh adapter", () => {
           summarizeRuntimeQualityDiagnostics({ ...reportDiagnostics, code: error?.code }),
       };
       throw new Error(
-        `August staged CPI quality validation failed: ${JSON.stringify(diagnosticSummary)}`,
+        `September staged CPI quality validation failed: ${JSON.stringify(diagnosticSummary)}`,
         { cause: error },
       );
     }
@@ -1770,9 +1770,9 @@ describe("CPI refresh adapter", () => {
       result: { validator: "runtime-data-quality-suites-v1" },
     });
 
-    const { metadataPayload: septemberMetadata, records: septemberRecords } = await apiFixtures(
+    const { metadataPayload: octoberMetadata, records: octoberRecords } = await apiFixtures(
       root,
-      "202609",
+      "202610",
     );
     await expect(
       cpiAdapter({
@@ -1780,8 +1780,8 @@ describe("CPI refresh adapter", () => {
         root,
         getStatsList: async () => ({ candidates: [cpiCandidate()] }),
         getDataCatalog: async () => cpiCatalog(),
-        getMetaInfo: async () => septemberMetadata,
-        fetchApi: async () => septemberRecords,
+        getMetaInfo: async () => octoberMetadata,
+        fetchApi: async () => octoberRecords,
       }),
     ).rejects.toMatchObject({ code: "cpi-period-unapproved" });
 
