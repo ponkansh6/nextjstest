@@ -2157,6 +2157,8 @@ The system SHALL allow users to toggle chart series visibility.
 - **THEN** its `legendMode` is collapsible and its native `<details>` accordion is initially closed
 - **AND** the generic `SpendingBarChart` accordion defaults to closed unless its caller opts in to an initially open state
 - **AND** the summary shows the selected expense-item and quarter counts and whether filtering is active, with the counts and status presented as secondary information
+- **AND** long secondary count/status information wraps onto additional lines at narrow widths without overlapping the title or chevron
+- **AND** the summary's chevron remains visible and its disclosure target is at least 44×44px
 - **AND** the summary does not display a separate 四半期 heading
 - **AND** the real chart displays a link note to the nominal consumption section, while the nominal chart does not display that note
 - **WHEN** the user opens a closed accordion
@@ -2172,7 +2174,9 @@ The system SHALL allow users to toggle chart series visibility.
 
 - **WHEN** the nominal legend is rendered as an accordion at 768px or less, or the real legend is rendered as an accordion at any viewport width
 - **THEN** the `<summary>` element uses a card-style header with a clear primary title, secondary count/status information, a restrained boundary, and spacing that connects it to the legend content
-- **AND** the header and CAGR trigger use the existing `--cta-tonal-*` and `--card-*` tokens and remain readable in supported themes
+- **AND** long secondary information wraps at narrow widths while the chevron stays aligned and does not shrink
+- **AND** the header and CAGR trigger use the existing `--cta-tonal-*` and `--card-*` tokens, with coordinated radius, surface, spacing, and icon balance, and remain readable in supported themes at WCAG AA contrast (4.5:1)
+- **AND** the summary disclosure target is at least 44×44px
 - **AND** the native `<summary>` interaction remains the sole accordion control, with no nested button or manually duplicated `aria-expanded` state
 - **AND** this visual treatment does not change the initial open/closed behavior specified by R4c
 - **AND** the native marker is hidden (`::-webkit-details-marker: display: none`, `::marker: content: ""`)
@@ -2756,6 +2760,8 @@ so that part of the chart stays visible while the user adjusts and reads the CAG
 - **WHEN** the user views the 費目別寄与度 chart
 - **THEN** a card-style button appears between the chart and the "データテーブルを表示" link,
   visually stronger than that plain text link and weaker than the filled 計算する button
+- **AND** its radius, surface, spacing, and icon balance coordinate with the legend accordion while preserving that visual priority
+- **AND** the trigger has a minimum 44×44px target
 - **AND** the visual change is limited to this trigger; the existing BottomSheet content, layout, and shared component remain unchanged
 - **AND** its label and text contrast meet WCAG AA (4.5:1) in both light and dark themes
 - **AND** no standalone CAGR section or `CPI年率` tab exists

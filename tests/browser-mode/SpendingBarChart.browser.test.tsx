@@ -4,7 +4,11 @@ import { page, userEvent } from "vitest/browser";
 import { SpendingBarChart } from "../../src/app/components/SpendingBarChart";
 import { renderBrowserComponent } from "./renderBrowserComponent";
 
-function NominalCategoryFilterFixture() {
+const FIXTURE_GLOBAL_CSS = `
+  *, *::before, *::after { box-sizing: border-box; }
+`;
+
+function NominalCategoryFilterFixture({ collapsible = false }: { collapsible?: boolean }) {
   const keys = ["食料（名目）", "住居（名目）"];
   const [hiddenKeys, setHiddenKeys] = useState<string[]>([]);
   const data = [1, 2].flatMap((quarter) =>
@@ -40,8 +44,19 @@ function NominalCategoryFilterFixture() {
       hiddenQuarters={[]}
       onToggleQuarter={() => {}}
       onReset={() => {}}
+      legendMode={collapsible ? "collapsible" : "expanded"}
+      defaultLegendOpen={collapsible ? false : undefined}
       isMobile={false}
     />
+  );
+}
+
+function NominalCategoryFilterFixtureWithGlobalSizing() {
+  return (
+    <>
+      <style>{FIXTURE_GLOBAL_CSS}</style>
+      <NominalCategoryFilterFixture collapsible />
+    </>
   );
 }
 
@@ -117,5 +132,49 @@ describe("SpendingBarChart all-series visibility in Chromium", () => {
     expect(
       (await chart.element()).querySelectorAll(".recharts-bar-rectangle").length,
     ).toBeGreaterThan(0);
+  });
+});
+
+describe("SpendingBarChart narrow summary layout in Chromium", () => {
+  it("keeps the disclosure target and chevron inside the 320px viewport", async () => {
+    await page.viewport(320, 720);
+    renderBrowserComponent(<NominalCategoryFilterFixtureWithGlobalSizing />);
+
+    const title = await page.getByText("費目・四半期を変更", { exact: true }).element();
+    const summaryElement = title.closest("summary");
+    expect(summaryElement).not.toBeNull();
+    if (!summaryElement) throw new Error("The native summary is unavailable");
+
+    await userEvent.click(summaryElement);
+    await userEvent.click(await page.getByRole("button", { name: "食料", exact: true }).element());
+    await expect.element(page.getByText("絞り込み中", { exact: true })).toBeVisible();
+
+    const detailsElement = summaryElement.parentElement;
+    expect(detailsElement?.tagName).toBe("DETAILS");
+    if (!detailsElement) throw new Error("The native details element is unavailable");
+    const summaryRect = summaryElement.getBoundingClientRect();
+    const detailsRect = detailsElement.getBoundingClientRect();
+    const status = await page.getByText("絞り込み中", { exact: true }).element();
+    const meta = status.parentElement;
+    const chevron = summaryElement.querySelector<SVGElement>("svg[aria-hidden='true']");
+
+    expect(summaryElement.tagName).toBe("SUMMARY");
+    expect(summaryRect.height).toBeGreaterThanOrEqual(44);
+    expect(summaryRect.width).toBeGreaterThanOrEqual(44);
+    expect(summaryRect.left).toBeGreaterThanOrEqual(0);
+    expect(summaryRect.right).toBeLessThanOrEqual(window.innerWidth);
+    expect(detailsElement.scrollWidth).toBeLessThanOrEqual(detailsElement.clientWidth);
+    expect(detailsRect.right).toBeLessThanOrEqual(window.innerWidth);
+    expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
+    expect(meta).not.toBeNull();
+    expect(chevron).not.toBeNull();
+    if (!meta) throw new Error("The summary metadata is unavailable");
+    if (!chevron) throw new Error("The disclosure chevron is unavailable");
+
+    const metaRect = meta.getBoundingClientRect();
+    const chevronRect = chevron.getBoundingClientRect();
+    expect(chevronRect.left).toBeGreaterThanOrEqual(summaryRect.left);
+    expect(chevronRect.right).toBeLessThanOrEqual(summaryRect.right);
+    expect(metaRect.right).toBeLessThanOrEqual(chevronRect.left);
   });
 });

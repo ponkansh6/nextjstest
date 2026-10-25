@@ -91,6 +91,9 @@ describe("CagrPanel in Chromium", () => {
 
     const trigger = page.getByRole("button", { name: /年率上昇率（CAGR）を計算/ });
     const triggerElement = await trigger.element();
+    const triggerRect = triggerElement.getBoundingClientRect();
+    expect(triggerRect.height).toBeGreaterThanOrEqual(44);
+    expect(triggerRect.width).toBeGreaterThanOrEqual(44);
     await userEvent.keyboard("{Tab}");
     expect(document.activeElement).toBe(triggerElement);
     await userEvent.keyboard("{Enter}");

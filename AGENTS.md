@@ -4,7 +4,7 @@
 - **`HUSKY=0` の使用禁止**: husky hook runner 無効化。`~/.local/bin/git` によりブロック。
 - **`git -c core.hooksPath=...` の使用禁止**: `~/.local/bin/git` によりブロック。
 - **`GIT_CONFIG_PARAMETERS` / `GIT_CONFIG_KEY_N` 経由の hooksPath 注入禁止**: `~/.local/bin/git` によりブロック。
-- **Playwright 用 loopback listen**: このリポジトリ（`/home/shunki/working/nextjstest`）の作業全般で、Playwright やローカル検証用サーバーが `127.0.0.1:3001` に TCP listen することを許可済み（pre-push に限定しない）。必要な場合は対象コマンドだけを最初から `sandbox_permissions=require_escalated` で実行する。この許可は `0.0.0.0` listen、任意の外部通信、永続的な sandbox / 承認設定の変更を含まない。
+- **Playwright 用 loopback listen**: このリポジトリ（`/home/shunki/working/nextjstest`）の作業全般で、Playwright やローカル検証用サーバーが `127.0.0.1:3001` に TCP listen することを許可済み（pre-push に限定しない）。加えて、`scripts/run-next-route-poc.mjs` を使う pre-push built route gate の実行時に限り、Next server が使用する動的 loopback port と Browser Mode API が割り当てる `63000–63999` の loopback port への listen を許可する。これらはすべて `127.0.0.1` に bind し、必要な場合は対象コマンドだけを最初から `sandbox_permissions=require_escalated` で実行する。この許可は固定の `3002` を含む任意の追加 port/listener、`0.0.0.0` listen、任意の外部通信、永続的な sandbox / 承認設定の変更を含まない。
 - **pre-push 検証と通常 push の昇格実行**: ユーザーは、このリポジトリ（`/home/shunki/working/nextjstest`）の pre-push 検証に必要な次の操作と、依頼に含まれる通常の `git push` に必要な昇格権限を明示許可済み。
   - pre-push のための `.git` metadata 更新（`git worktree add` / `remove` / `prune` など）。
   - `pnpm audit` と、必要な場合の read-only Turso schema drift 確認に必要な外向き通信。
