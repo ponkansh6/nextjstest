@@ -272,7 +272,7 @@ export async function cpiAdapter({
   invariant(
     source?.period?.through === "latest-published" &&
       approvedPeriod?.from === "202607" &&
-      approvedPeriod?.through === "202608" &&
+      approvedPeriod?.through === "202609" &&
       coverage.endCode >= approvedPeriod.from &&
       coverage.endCode <= approvedPeriod.through,
     "cpi-period-unapproved",
@@ -725,7 +725,7 @@ function validateLocalMetadata(metadata) {
       /^\d{4}年\d{1,2}月$/.test(metadata.period?.end || "") &&
       Number.isInteger(metadata.period?.monthlyRows) &&
       metadata.approvedPeriod?.from === "202607" &&
-      metadata.approvedPeriod?.through === "202608",
+      metadata.approvedPeriod?.through === "202609",
     "cpi-metadata-contract-mismatch",
     "CPI local coverage metadata is invalid.",
   );

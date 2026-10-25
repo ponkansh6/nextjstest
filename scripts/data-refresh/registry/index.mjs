@@ -69,7 +69,7 @@ export const registry = validateRegistry({
       period: { from: "197001", through: "latest-published" },
       // latest-published is used only to discover the current e-Stat release.
       // Extending this reviewed window requires updating the CPI metadata and runtime contract.
-      approvedPeriod: { from: "202607", through: "202608" },
+      approvedPeriod: { from: "202607", through: "202609" },
       revision: "full-overlap-history-revision-audit-required",
       outputs: CPI_OUTPUTS,
       dependencies: [],

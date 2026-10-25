@@ -43,7 +43,7 @@
   },
   "approvedPeriod": {
     "from": "202607",
-    "through": "202608",
+    "through": "202609",
     "discovery": "latest-published is discovery only; extend this reviewed window explicitly"
   },
   "seriesCount": 78,

@@ -691,9 +691,9 @@ function cpiVintageApprovalForRegistry(registry) {
   invariant(
     source.period?.through === "latest-published" &&
       source.approvedPeriod?.from === "202607" &&
-      source.approvedPeriod?.through === "202608",
+      source.approvedPeriod?.through === "202609",
     "cpi-approval-contract-invalid",
-    "CPI registry must keep latest-published discovery separate from the reviewed July–August 2026 period.",
+    "CPI registry must keep latest-published discovery separate from the reviewed July–September 2026 period.",
   );
   return {
     discoveryPeriod: source.period.through,
@@ -1270,7 +1270,7 @@ function safeSourceCandidate(value) {
     approvedPeriod:
       value.discoveryPeriod === "latest-published" &&
       value.approvedPeriod?.from === "202607" &&
-      value.approvedPeriod?.through === "202608"
+      value.approvedPeriod?.through === "202609"
         ? { from: value.approvedPeriod.from, through: value.approvedPeriod.through }
         : undefined,
     revisionCount:
