@@ -1277,7 +1277,7 @@ Scenario body is consolidated under [the canonical requirement group](#current-r
 
 Scenario body is consolidated under [the canonical requirement group](#current-r4).
 
-#### Scenario R4f: Modernized Accordion Summary Header (Tonal Pill)
+#### Scenario R4f: Card-Style Accordion Summary Header
 
 Scenario body is consolidated under [the canonical requirement group](#current-r4).
 
@@ -2151,27 +2151,36 @@ The system SHALL allow users to toggle chart series visibility.
 
 #### Canonical scenario — Scenario R4c: Collapsed Legend Accordion (Mobile Consumption)
 
-- **WHEN** either 消費支出（名目） or 消費支出（実質） section renders on a mobile viewport (≤768px)
-- **THEN** its legend is placed in a native `<details>` accordion that is **closed by default**
-- **AND** the closed summary is a single line and shows the selected expense-item and quarter counts, and whether filtering is active
+- **WHEN** the 消費支出（名目） section renders at a viewport width of 768px or less
+- **THEN** its `legendMode` is collapsible and its native `<details>` accordion is initially open
+- **WHEN** the 消費支出（実質） section renders at any viewport width
+- **THEN** its `legendMode` is collapsible and its native `<details>` accordion is initially closed
+- **AND** the generic `SpendingBarChart` accordion defaults to closed unless its caller opts in to an initially open state
+- **AND** the summary shows the selected expense-item and quarter counts and whether filtering is active, with the counts and status presented as secondary information
 - **AND** the summary does not display a separate 四半期 heading
 - **AND** the real chart displays a link note to the nominal consumption section, while the nominal chart does not display that note
-- **AND WHEN** the user opens the accordion
+- **WHEN** the user opens a closed accordion
 - **THEN** the same quarter and category controls as the nominal chart become operable
+- **AND** the user-selected open or closed state persists across parent rerenders and viewport changes while that chart component remains mounted, including nominal collapsible/expanded breakpoint transitions
 
 #### Canonical scenario — Scenario R4e: Desktop Legend Preservation
 
 - **WHEN** either consumption section renders on a viewport wider than 768px
 - **THEN** the existing desktop legend behavior remains available without the mobile collapsed-summary contract
 
-#### Canonical scenario — Scenario R4f: Modernized Accordion Summary Header (Tonal Pill)
+#### Canonical scenario — Scenario R4f: Card-Style Accordion Summary Header
 
-- **WHEN** either 消費支出（名目） or 消費支出（実質） legend accordion renders
-- **THEN** the `<summary>` element uses the `.legendAccordionSummary` tonal pill class with `--cta-tonal-bg` / `--cta-tonal-text` tokens
+- **WHEN** the nominal legend is rendered as an accordion at 768px or less, or the real legend is rendered as an accordion at any viewport width
+- **THEN** the `<summary>` element uses a card-style header with a clear primary title, secondary count/status information, a restrained boundary, and spacing that connects it to the legend content
+- **AND** the header and CAGR trigger use the existing `--cta-tonal-*` and `--card-*` tokens and remain readable in supported themes
+- **AND** the native `<summary>` interaction remains the sole accordion control, with no nested button or manually duplicated `aria-expanded` state
+- **AND** this visual treatment does not change the initial open/closed behavior specified by R4c
 - **AND** the native marker is hidden (`::-webkit-details-marker: display: none`, `::marker: content: ""`)
 - **AND** a chevron SVG (`aria-hidden="true"`) is rendered inside the summary
 - **AND WHEN** the accordion is open (`details[open]`)
-- **THEN** the chevron rotates 180° via CSS transition
+- **THEN** the legend content remains within the card and the chevron rotates 180° via CSS transition
+- **AND WHEN** the user requests reduced motion
+- **THEN** summary, chevron, and CAGR-trigger transitions are disabled
 
 <a id="current-r5"></a>
 
@@ -2745,8 +2754,9 @@ so that part of the chart stays visible while the user adjusts and reads the CAG
 #### Canonical scenario — Scenario R18a: Entry Point
 
 - **WHEN** the user views the 費目別寄与度 chart
-- **THEN** a tonal pill button appears between the chart and the "データテーブルを表示" link,
+- **THEN** a card-style button appears between the chart and the "データテーブルを表示" link,
   visually stronger than that plain text link and weaker than the filled 計算する button
+- **AND** the visual change is limited to this trigger; the existing BottomSheet content, layout, and shared component remain unchanged
 - **AND** its label and text contrast meet WCAG AA (4.5:1) in both light and dark themes
 - **AND** no standalone CAGR section or `CPI年率` tab exists
 
@@ -3566,8 +3576,8 @@ Page (RSC)
     │   ├── MajorIndicesChart → CustomTooltip
     │   ├── StackedAreaChart → CustomTooltip — registry-resolved all-applicable CPI rows, colors, values, and total (12 rows + 合計; hidden rows excluded)
     │   │   └── belowChartSlot: CagrPanel — popup link + compact BottomSheet (R18)
-    │   ├── SpendingBarChart (nominal) — mobile-specific spacing/ticks, bar width, and all-value tooltip/details; closed-by-default legend; fixed CTI artifact rows before 2018Q1 and CTI expense fields from 2018Q1, with no GDP key
-    │   ├── SpendingBarChart (real) — mobile-specific spacing/ticks, bar width, and all-value tooltip/details; closed-by-default legend; existing real support path and CTI expense fields from 2018Q1
+    │   ├── SpendingBarChart (nominal) — mobile-specific spacing/ticks, bar width, and all-value tooltip/details; mobile legend initially open and desktop legend expanded; fixed CTI artifact rows before 2018Q1 and CTI expense fields from 2018Q1, with no GDP key
+    │   ├── SpendingBarChart (real) — mobile-specific spacing/ticks, bar width, and all-value tooltip/details; legend initially closed at every width; existing real support path and CTI expense fields from 2018Q1
     │   ├── EarningsBreakdownChart → CustomTooltip — salary comparison uses a common factor derived from the 2025 average of the composite of monthly regular/overtime wages and special-wage 12MA; apply that factor to each component's 12MA before summing; complete registry labels with natural wrapping and stable value column; six rows plus `給与区分合計（所定内＋所定外＋特別）` from visible `EARNINGS_TOTAL_KEYS`; hidden included rows are removed and the total is recalculated from the remaining visible included rows; salary-only separator is placed on the first visible auxiliary row
     │   ├── ResidualAreaChart → CustomTooltip
     │   └── NewGraph → ChartInfoContentRenderer → CustomTooltip — salary 12MAs use a common factor derived from the 2025 average of the composite made from monthly regular/overtime wages and special-wage 12MA; CPI 12MA uses a factor that makes raw monthly CPI's 2025 calendar-year average 100, not a factor derived from the 12MA; Plan49 `消費(総合)` is normalized to its 2025 monthly average before strict 12MA; legacy CTI monthly keys and Plan40 quarterly CTI are not comparison registry entries
@@ -3846,7 +3856,7 @@ The quarterly server-side branch is `page.tsx` → `quarterlyProjection.ts`'s `l
 - The fixture comparison gate independently observes CPI and CTI loader data, status, and errors against the fixed golden digests. Its fixture contains no GDP observations or GDP source-artifact hashes.
 - The gate's active source-validation paths fail closed for missing or malformed CPI/CTI 2025 inputs with mapped machine-readable reason codes and never select a 2020 pair. GDP input validation and projections are retired.
 - Consumption presentation state is client-side: hidden quarters, selected categories, and detail expansion control each chart without changing source-basis values, table values, or CSV values.
-- On mobile (≤768px), `SpendingBarChart` uses consumption-only layout options for margins, CPI-style axis ticks, typography, bar width/spacing, all-value tooltip/details, and safe-area-aware internal scrolling; both nominal and real legends are closed-by-default collapsible controls whose single-line summaries report selected expense-item/quarter counts and filtering state, without a separate 四半期 heading. The real chart may additionally show the linked nominal-section note when `linkedSectionId` is provided; the nominal chart omits it. Selected-quarter emphasis is not added. Shared tooltip/axis behavior is not changed for other charts.
+- On mobile (≤768px), `SpendingBarChart` uses consumption-only layout options for margins, CPI-style axis ticks, typography, bar width/spacing, all-value tooltip/details, and safe-area-aware internal scrolling; the nominal legend is initially open and the real legend initially closed, and both remain user-toggleable native disclosures whose summaries report selected expense-item/quarter counts and filtering state without a separate 四半期 heading. The generic chart prop defaults to closed; callers may opt into an initially open state, which is captured once and not reapplied on rerender or viewport changes while mounted. The real chart may additionally show the linked nominal-section note when `linkedSectionId` is provided; the nominal chart omits it. Selected-quarter emphasis is not added. Shared tooltip/axis behavior is not changed for other charts.
 
 Data Sources are unchanged by the mobile-readability plan. Plan49's reconstructed/official monthly CTI total feeds NewGraph as `消費(総合)`;
 Plan37 monthly source fields remain internal to their monthly consumer. Plan40's

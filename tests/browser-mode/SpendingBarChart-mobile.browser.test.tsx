@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { page, userEvent } from "vitest/browser";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SpendingBarChart } from "../../src/app/components/SpendingBarChart";
 import { useChartTooltipController } from "../../src/app/components/charts/useChartTooltipProps";
 import { renderBrowserComponent } from "./renderBrowserComponent";
@@ -38,7 +38,15 @@ const CHART_COLORS = {
   axisTextEmphasis: "#0f172a",
 };
 
-function SpendingFixture({ kind, isMobile = true }: { kind: ConsumptionKind; isMobile?: boolean }) {
+function SpendingFixture({
+  kind,
+  isMobile = true,
+  responsiveMode = false,
+}: {
+  kind: ConsumptionKind;
+  isMobile?: boolean;
+  responsiveMode?: boolean;
+}) {
   const series = SERIES[kind];
   const keys = series.entries.map(({ key }) => key);
   const [hiddenKeys, setHiddenKeys] = useState<string[]>([]);
@@ -81,9 +89,26 @@ function SpendingFixture({ kind, isMobile = true }: { kind: ConsumptionKind; isM
       hiddenQuarters={[]}
       onToggleQuarter={() => {}}
       onReset={() => setHiddenKeys(keys)}
-      legendMode="collapsible"
+      legendMode={responsiveMode && !isMobile ? "expanded" : "collapsible"}
+      defaultLegendOpen={kind === "nominal"}
       isMobile={isMobile}
     />
+  );
+}
+
+function ResponsiveNominalSpendingFixture() {
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
+
+  useEffect(() => {
+    const updateViewportMode = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener("resize", updateViewportMode);
+    return () => window.removeEventListener("resize", updateViewportMode);
+  }, []);
+
+  return (
+    <div data-testid="viewport-mode" data-mode={isMobile ? "collapsible" : "expanded"}>
+      <SpendingFixture kind="nominal" isMobile={isMobile} responsiveMode />
+    </div>
   );
 }
 
@@ -298,7 +323,10 @@ describe("SpendingBarChart mobile legend and tooltip in Chromium", () => {
 
     const chart = page.getByTestId("chart-nominal");
     const chartElement = await chart.element();
-    await userEvent.click(requireChartElement<HTMLElement>(chartElement, "details summary"));
+    const details = requireChartElement<HTMLDetailsElement>(chartElement, "details");
+    if (!details.open) {
+      await userEvent.click(requireChartElement<HTMLElement>(chartElement, "details summary"));
+    }
     await expect.element(chart.getByRole("button", { name: "Q1" })).toBeVisible();
     for (const { key } of SERIES.nominal.entries) {
       await expect.element(chart.getByTestId(`legend-${key}`)).toBeVisible();
@@ -321,7 +349,10 @@ describe("SpendingBarChart mobile legend and tooltip in Chromium", () => {
 
     const chart = page.getByTestId("chart-real");
     const chartElement = await chart.element();
-    await userEvent.click(requireChartElement<HTMLElement>(chartElement, "details summary"));
+    const details = requireChartElement<HTMLDetailsElement>(chartElement, "details");
+    if (!details.open) {
+      await userEvent.click(requireChartElement<HTMLElement>(chartElement, "details summary"));
+    }
     await expect.element(chart.getByRole("button", { name: "Q1" })).toBeVisible();
     for (const { key } of SERIES.real.entries) {
       await expect.element(chart.getByTestId(`legend-${key}`)).toBeVisible();
@@ -384,7 +415,7 @@ describe("SpendingBarChart mobile legend and tooltip in Chromium", () => {
     expect(payload.textContent).toContain(`${firstSeries.value.toFixed(2)}`);
   });
 
-  it("nominal and real mobile summaries use computed nowrap", async () => {
+  it("nominal opens by default while real starts closed with a wrapping card summary", async () => {
     await useMobileViewport();
     renderBrowserComponent(
       <div style={{ width: 412, display: "grid", gap: 16 }}>
@@ -401,18 +432,54 @@ describe("SpendingBarChart mobile legend and tooltip in Chromium", () => {
       await page.getByTestId("chart-real").element(),
       "details summary",
     );
-    for (const summary of [nominalSummary, realSummary]) {
+    for (const [kind, summary] of [
+      ["nominal", nominalSummary],
+      ["real", realSummary],
+    ] as const) {
       const chartId = summary.closest<HTMLElement>("[data-testid^='chart-']")?.dataset.testid;
       if (!chartId) throw new Error("Summary is not inside a chart fixture");
       const chart = page.getByTestId(chartId);
       const details = summary.closest("details") as HTMLDetailsElement;
       await expect.element(chart).toBeVisible();
       await expect.element(chart.getByText("費目・四半期を変更")).toBeVisible();
-      expect(details.open).toBe(false);
+      expect(details.open).toBe(kind === "nominal");
       expect(summary.getBoundingClientRect().width).toBeGreaterThan(0);
       expect(summary.textContent?.trim()).toMatch(/\S/);
-      expect(window.getComputedStyle(summary).whiteSpace).toBe("nowrap");
+      expect(window.getComputedStyle(summary).whiteSpace).not.toBe("nowrap");
     }
+  });
+
+  it("preserves user-opened and user-closed state across the mobile/desktop mode switch", async () => {
+    await useMobileViewport();
+    renderBrowserComponent(<ResponsiveNominalSpendingFixture />);
+
+    const chart = page.getByTestId("chart-nominal");
+    const mode = page.getByTestId("viewport-mode");
+    let chartElement = await chart.element();
+    let details = requireChartElement<HTMLDetailsElement>(chartElement, "details");
+    expect(details.open).toBe(true);
+
+    await userEvent.click(requireChartElement<HTMLElement>(chartElement, "details summary"));
+    expect(details.open).toBe(false);
+    await page.viewport(1024, 768);
+    await expect.element(mode).toHaveAttribute("data-mode", "expanded");
+    await expect.element(chart.getByRole("button", { name: "Q1" })).toBeVisible();
+    await page.viewport(412, 915);
+    await expect.element(mode).toHaveAttribute("data-mode", "collapsible");
+    chartElement = await chart.element();
+    details = requireChartElement<HTMLDetailsElement>(chartElement, "details");
+    expect(details.open).toBe(false);
+
+    await userEvent.click(requireChartElement<HTMLElement>(chartElement, "details summary"));
+    expect(details.open).toBe(true);
+    await page.viewport(1024, 768);
+    await expect.element(mode).toHaveAttribute("data-mode", "expanded");
+    await expect.element(chart.getByRole("button", { name: "Q1" })).toBeVisible();
+    await page.viewport(412, 915);
+    await expect.element(mode).toHaveAttribute("data-mode", "collapsible");
+    chartElement = await chart.element();
+    details = requireChartElement<HTMLDetailsElement>(chartElement, "details");
+    expect(details.open).toBe(true);
   });
 
   it("nominal and real mobile tooltips stay readable inside a 320px viewport", async () => {
@@ -453,7 +520,8 @@ describe("SpendingBarChart mobile legend and tooltip in Chromium", () => {
     const chart = page.getByTestId("chart-nominal");
     const chartElement = await chart.element();
     const summary = requireChartElement<HTMLElement>(chartElement, "details summary");
-    await userEvent.click(summary);
+    const details = requireChartElement<HTMLDetailsElement>(chartElement, "details");
+    if (!details.open) await userEvent.click(summary);
     const release = chart.getByRole("button", { name: "全選択解除" });
     await userEvent.click(await release.element());
 

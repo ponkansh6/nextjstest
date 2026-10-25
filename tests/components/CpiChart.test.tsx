@@ -210,6 +210,15 @@ const sectionProps: React.ComponentProps<typeof CpiChartSections> = {
 };
 
 describe("CpiChartSections composition", () => {
+  it("sets nominal and real accordion defaults explicitly on mobile", async () => {
+    render(<CpiChartSections {...sectionProps} isMobile />);
+
+    const nominalChart = await screen.findByTestId("spending-chart-nominal");
+    const realChart = await screen.findByTestId("spending-chart-real");
+    expect(nominalChart.querySelector("details")?.open).toBe(true);
+    expect(realChart.querySelector("details")?.open).toBe(false);
+  });
+
   it("shows the CAGR trigger while omitting its section and tab", () => {
     render(
       <>

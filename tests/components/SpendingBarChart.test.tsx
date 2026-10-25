@@ -276,6 +276,37 @@ describe("SpendingBarChart component legendMode tests", () => {
     expect(details?.hasAttribute("open")).toBe(false);
   });
 
+  it("initializes a collapsible legend from defaultLegendOpen once", () => {
+    const { container, rerender } = renderChart({
+      title: "名目消費",
+      legendMode: "collapsible",
+      defaultLegendOpen: true,
+    });
+    const details = container.querySelector("details") as HTMLDetailsElement;
+    expect(details.open).toBe(true);
+
+    details.open = false;
+    fireEvent(details, new Event("toggle"));
+    rerender(
+      <SpendingBarChart
+        title="名目消費"
+        data={mockData}
+        keys={mockKeys}
+        colors={mockColors}
+        hiddenKeys={[]}
+        onToggle={vi.fn()}
+        chartColors={mockChartColors}
+        tooltipProps={mockTooltipProps}
+        hiddenQuarters={[]}
+        onToggleQuarter={vi.fn()}
+        onReset={vi.fn()}
+        legendMode="collapsible"
+        defaultLegendOpen
+      />,
+    );
+    expect(container.querySelector("details")?.hasAttribute("open")).toBe(false);
+  });
+
   // U3: <details> を開くと四半期ボタン（Q1〜Q4）と費目ボタンが操作可能になり、onToggle が呼ばれる
   it("U3: opening details reveals interactive legend items and triggers onToggle", () => {
     const onToggle = vi.fn();
@@ -468,9 +499,10 @@ describe("SpendingBarChart component legendMode tests", () => {
       />,
     );
 
-    const summary = container.querySelector("summary");
+    const summary = container.querySelector("details > summary");
     expect(summary).not.toBeNull();
-    expect(summary?.textContent).toBe("費目・四半期を変更（費目 2/2・四半期 4/4）・全選択");
+    const summaryText = summary?.textContent?.replace(/\s+/g, " ").trim() ?? "";
+    expect(summaryText).toMatch(/費目・四半期を変更.*費目 2\/2 ・ 四半期 4\/4.*全選択/);
   });
 
   it("P42-490: summary describes filtered category and quarter selection state", () => {
@@ -481,8 +513,10 @@ describe("SpendingBarChart component legendMode tests", () => {
       legendMode: "collapsible",
     });
 
-    const summary = container.querySelector("summary");
-    expect(summary?.textContent).toBe("費目・四半期を変更（費目 1/2・四半期 3/4）・絞り込み中");
+    const summary = container.querySelector("details > summary");
+    expect(summary).not.toBeNull();
+    const summaryText = summary?.textContent?.replace(/\s+/g, " ").trim() ?? "";
+    expect(summaryText).toMatch(/費目・四半期を変更.*費目 1\/2 ・ 四半期 3\/4.*絞り込み中/);
   });
 
   // U5: <summary> にトナルピルヘッダー用の className が適用され、矢印SVGが含まれる

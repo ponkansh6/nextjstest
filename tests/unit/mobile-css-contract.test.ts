@@ -214,10 +214,15 @@ describe("source CSS layout contracts", () => {
     ).toBe("calc(2rem + env(safe-area-inset-bottom, 0px))");
   });
 
-  it("keeps sticky tab compositing and non-wrapping legend summary declarations", () => {
+  it("keeps sticky tab compositing and allows card summary content to wrap", () => {
     expect(declaration(cpiChartRules, ".sectionTabs", "position")).toBe("sticky");
     expect(declaration(cpiChartRules, ".sectionTabs", "transform")).toBe("translateZ(0)");
-    expect(declaration(cpiChartRules, ".legendAccordionSummary", "white-space")).toBe("nowrap");
+    expect(declaration(cpiChartRules, ".legendAccordionSummary", "display")).toBe("flex");
+    expect(declaration(cpiChartRules, ".legendAccordionSummary", "white-space")).not.toBe("nowrap");
+    expect(declaration(cpiChartRules, ".legendAccordionMeta", "flex-wrap")).toBe("wrap");
+    expect(
+      declaration(cpiChartRules, ".legendAccordionLabel", "overflow-wrap", "(max-width: 768px)"),
+    ).toBe("anywhere");
   });
 
   it("keeps the base bottom sheet height budget at 60dvh", () => {

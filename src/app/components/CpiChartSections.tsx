@@ -328,6 +328,7 @@ export function CpiChartSections({
             },
           )}
           legendMode={isMobile ? "collapsible" : "expanded"}
+          defaultLegendOpen
           testId="spending-chart-nominal"
           descriptors={ctiMetadata}
         />
@@ -381,6 +382,7 @@ export function CpiChartSections({
             },
           )}
           legendMode="collapsible"
+          defaultLegendOpen={false}
           testId="spending-chart-real"
         />
       </LazyMount>

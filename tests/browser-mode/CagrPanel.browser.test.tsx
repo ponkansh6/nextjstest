@@ -85,6 +85,22 @@ async function calculateFixtureResult(width: number, height: number) {
 }
 
 describe("CagrPanel in Chromium", () => {
+  it("keeps the card trigger keyboard reachable and restores focus after Escape", async () => {
+    await page.viewport(375, 667);
+    renderBrowserComponent(<CagrFixtureWithGlobalBaseline />);
+
+    const trigger = page.getByRole("button", { name: /年率上昇率（CAGR）を計算/ });
+    const triggerElement = await trigger.element();
+    await userEvent.keyboard("{Tab}");
+    expect(document.activeElement).toBe(triggerElement);
+    await userEvent.keyboard("{Enter}");
+    const dialog = page.getByRole("dialog", { name: "年率上昇率（CAGR）" });
+    await expect.element(dialog).toBeVisible();
+    await userEvent.keyboard("{Escape}");
+    await expect.element(dialog).not.toBeInTheDocument();
+    await expect.poll(() => document.activeElement).toBe(triggerElement);
+  });
+
   it("closes the actual sheet after clicking its backdrop", async () => {
     await page.viewport(375, 667);
     expect(window.innerWidth).toBe(375);

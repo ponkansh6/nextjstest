@@ -88,6 +88,7 @@ interface SpendingBarChartProps {
   onToggleQuarter: (q: number) => void;
   onReset: () => void;
   legendMode?: "expanded" | "collapsible";
+  defaultLegendOpen?: boolean;
   linkedSectionId?: string;
   testId?: string;
   isMobile?: boolean;
@@ -164,11 +165,13 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
     onToggleQuarter,
     onReset,
     legendMode = "expanded",
+    defaultLegendOpen = false,
     linkedSectionId,
     testId,
     isMobile = false,
     descriptors = [],
   } = props;
+  const [legendOpen, setLegendOpen] = React.useState(defaultLegendOpen);
   const supportKey = keys.includes(CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY)
     ? CTI_NOMINAL_DERIVED_REAL_TOTAL_KEY
     : undefined;
@@ -285,15 +288,22 @@ export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {
               」と連動しています。
             </p>
           )}
-          <details className={styles.legendAccordion}>
+          <details
+            className={styles.legendAccordion}
+            open={legendOpen}
+            onToggle={(event) => setLegendOpen(event.currentTarget.open)}
+          >
             <summary className={styles.legendAccordionSummary}>
               <span className={styles.legendAccordionLabel}>
-                <span>費目・四半期を変更</span>
-                <span>
-                  （費目 {selectedLegendCount}/{legendKeys.length}・四半期 {selectedQuarterCount}
-                  /4）
+                <span className={styles.legendAccordionTitle}>費目・四半期を変更</span>
+                <span className={styles.legendAccordionMeta}>
+                  <span className={styles.legendAccordionCount}>
+                    {`費目 ${selectedLegendCount}/${legendKeys.length} ・ 四半期 ${selectedQuarterCount}/4`}
+                  </span>
+                  <span className={styles.legendAccordionStatus}>
+                    {hasActiveLegendFilter ? "絞り込み中" : "全選択"}
+                  </span>
                 </span>
-                <span>・{hasActiveLegendFilter ? "絞り込み中" : "全選択"}</span>
               </span>
               <svg
                 className={styles.legendAccordionChevron}
