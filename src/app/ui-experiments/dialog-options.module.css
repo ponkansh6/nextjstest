@@ -181,6 +181,23 @@
 .closeButton:active {
   transform: translateY(1px);
 }
+.drawerBody .closeButton {
+  color: white;
+}
+:global(html[data-theme="dark"]) .drawerBody .closeButton {
+  color: var(--card-bg, #1a1a1a);
+}
+:global(html[data-theme="dark"]) .drawerBody .closeButton:hover {
+  background: color-mix(in srgb, var(--accent) 86%, var(--card-bg, #1a1a1a));
+}
+@media (prefers-color-scheme: dark) {
+  :global(html:not([data-theme])) .drawerBody .closeButton {
+    color: var(--card-bg, #1a1a1a);
+  }
+  :global(html:not([data-theme])) .drawerBody .closeButton:hover {
+    background: color-mix(in srgb, var(--accent) 86%, var(--card-bg, #1a1a1a));
+  }
+}
 .section :is(button):focus-visible,
 .dialogContent :is(button):focus-visible {
   outline: 3px solid #67a98a;

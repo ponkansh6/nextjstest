@@ -34,9 +34,9 @@
 .popup {
   --line: #dfe3df;
   --accent: #315e52;
-  --muted: #6b7280;
-  --surface: #fcfcfb;
-  --ink: #171717;
+  --muted: var(--gray-500, #6b7280);
+  --surface: var(--card-bg, #fcfcfb);
+  --ink: var(--card-text, #171717);
   --drawer-content-height: var(--drawer-height, auto);
   --drawer-content-max-height: calc(100dvh - 6rem);
   --closed-transform: translate3d(0, calc(100% + var(--drawer-inset, 0px) + 2px), 0);
@@ -74,6 +74,16 @@
   user-select: none;
   will-change: transform;
 }
+:global(html[data-theme="dark"]) .popup {
+  --line: color-mix(in srgb, var(--card-border, #262626) 75%, var(--card-text, #e5e5e5));
+  --accent: #8dc6a7;
+}
+@media (prefers-color-scheme: dark) {
+  :global(html:not([data-theme])) .popup {
+    --line: color-mix(in srgb, var(--card-border, #262626) 75%, var(--card-text, #e5e5e5));
+    --accent: #8dc6a7;
+  }
+}
 .popup[data-starting-style],
 .popup[data-ending-style] {
   transform: var(--closed-transform);
@@ -99,7 +109,7 @@
   flex: 0 0 auto;
   margin: 10px auto 20px;
   border-radius: 99px;
-  background: #d4d8d4;
+  background: var(--gray-300, #d4d8d4);
   cursor: grab;
 }
 .popup button:focus-visible {

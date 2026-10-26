@@ -9,6 +9,7 @@ import {
 import { act, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { cdp, page, userEvent } from "vitest/browser";
+import { CustomTooltip } from "../../src/app/components/CustomTooltip";
 import { NewGraph } from "../../src/app/components/NewGraph";
 import { SpendingBarChart } from "../../src/app/components/SpendingBarChart";
 import { StackedAreaChart } from "../../src/app/components/StackedAreaChart";
@@ -22,10 +23,13 @@ import {
   orderSpendingPresentationKeys,
 } from "../../src/lib/spendingSeriesPresentation";
 import { QUARTERLY_PUBLIC_NOMINAL_KEYS } from "../../src/lib/quarterlyPublicProjection";
+import DialogOptionsDemo from "../../src/app/ui-experiments/DialogOptionsDemo";
 import type { CpiData } from "../../src/types";
 import { renderBrowserComponent } from "./renderBrowserComponent";
 import quarterlyNominalCsv from "../../data/source/cti_data2025_distribution_adjusted_quarterly.csv?raw";
 import type { CustomTooltipProps } from "../../src/types/chart";
+// @ts-expect-error Vitest's Vite transform resolves this raw CSS import at runtime.
+import globalsCss from "../../src/app/globals.css?raw";
 
 const chartData = quarterlyNominalCsv
   .trim()
@@ -68,9 +72,210 @@ const chartColors = {
   barFill: "#94a3b8",
   gridStroke: "#e2e8f0",
   axisText: "#64748b",
-  tooltipBg: "#ffffff",
-  tooltipText: "#1f2937",
+  tooltipBg: "var(--tooltip-bg)",
+  tooltipText: "var(--tooltip-text)",
 };
+
+const themeStyleId = "chart-tooltip-drawer-theme-css";
+const cdpOperationTimeoutMs = 5_000;
+
+function installThemeCss() {
+  const existing = document.getElementById(themeStyleId);
+  if (existing) return () => existing.remove();
+  const style = document.createElement("style");
+  style.id = themeStyleId;
+  style.textContent = globalsCss;
+  document.head.append(style);
+  return () => style.remove();
+}
+
+function resolvedToken(name: string): string {
+  return getComputedStyle(document.documentElement).getPropertyValue(`--${name}`).trim();
+}
+
+function resolvedTokenColor(name: string): string {
+  const probe = document.createElement("span");
+  probe.style.color = resolvedToken(name);
+  document.body.append(probe);
+  const color = getComputedStyle(probe).color;
+  probe.remove();
+  return color;
+}
+
+function resolvedPopupBorderColor(): string {
+  const isDark =
+    document.documentElement.dataset.theme === "dark" ||
+    (!document.documentElement.hasAttribute("data-theme") &&
+      matchMedia("(prefers-color-scheme: dark)").matches);
+  const probe = document.createElement("span");
+  probe.style.borderTopStyle = "solid";
+  probe.style.borderTopColor = isDark
+    ? "color-mix(in srgb, var(--card-border, #262626) 75%, var(--card-text, #e5e5e5))"
+    : "#dfe3df";
+  document.body.append(probe);
+  const color = getComputedStyle(probe).borderTopColor;
+  probe.remove();
+  return color;
+}
+
+function resolvedChartDrawerCloseBackground(): string {
+  const probe = document.createElement("span");
+  probe.style.backgroundColor = "color-mix(in srgb, var(--card-text) 5%, var(--card-bg))";
+  document.body.append(probe);
+  const color = getComputedStyle(probe).backgroundColor;
+  probe.remove();
+  return color;
+}
+
+function resolvedDemoDrawerCloseBackground(popup: HTMLElement): string {
+  const probe = document.createElement("span");
+  probe.style.backgroundColor = getComputedStyle(popup).getPropertyValue("--accent").trim();
+  document.body.append(probe);
+  const color = getComputedStyle(probe).backgroundColor;
+  probe.remove();
+  return color;
+}
+
+function relativeLuminance(color: string): number {
+  const srgb = color.match(/^color\(srgb\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*[\d.]+)?\)$/i);
+  const rgb = color.match(/^rgba?\(([^)]+)\)$/i);
+  let channels: number[];
+  if (srgb) {
+    channels = [Number(srgb[1]), Number(srgb[2]), Number(srgb[3])];
+  } else if (rgb) {
+    const values = rgb[1]
+      ?.split(/[\s,/]+/)
+      .filter(Boolean)
+      .slice(0, 3)
+      .map(Number);
+    if (!values || values.length !== 3) throw new Error(`Unsupported computed color: ${color}`);
+    channels = values.map((channel) => channel / 255);
+  } else {
+    throw new Error(`Unsupported computed color: ${color}`);
+  }
+
+  const [red = 0, green = 0, blue = 0] = channels.map((normalized) =>
+    normalized <= 0.04045 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4,
+  );
+  return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+}
+
+function contrastRatio(first: string, second: string): number {
+  const luminance = [relativeLuminance(first), relativeLuminance(second)].sort((a, b) => b - a);
+  return ((luminance[0] ?? 0) + 0.05) / ((luminance[1] ?? 0) + 0.05);
+}
+
+async function withStageTimeout<T>(
+  stage: string,
+  promise: Promise<T>,
+  timeoutMs = cdpOperationTimeoutMs,
+): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_resolve, reject) => {
+    timeoutId = setTimeout(
+      () => reject(new Error(`Browser Mode stage "${stage}" timed out after ${timeoutMs}ms`)),
+      timeoutMs,
+    );
+  });
+
+  try {
+    return await Promise.race([promise, timeout]);
+  } catch (error) {
+    throw new Error(`Browser Mode stage "${stage}" failed`, { cause: error });
+  } finally {
+    if (timeoutId !== undefined) clearTimeout(timeoutId);
+  }
+}
+
+function withBoundedCdp<T>(stage: string, operation: () => Promise<T>): Promise<T> {
+  return withStageTimeout(`CDP: ${stage}`, Promise.resolve().then(operation));
+}
+
+function cssTimeToMilliseconds(value: string): number {
+  const trimmed = value.trim();
+  const parsed = Number.parseFloat(trimmed);
+  if (!Number.isFinite(parsed)) return 0;
+  if (trimmed.endsWith("ms")) return parsed;
+  if (trimmed.endsWith("s")) return parsed * 1000;
+  return 0;
+}
+
+function transitionWaitTimeMs(element: HTMLElement): number {
+  const style = getComputedStyle(element);
+  const durations = style.transitionDuration.split(",").map(cssTimeToMilliseconds);
+  const delays = style.transitionDelay.split(",").map(cssTimeToMilliseconds);
+  return Math.max(
+    0,
+    ...durations.map((duration, index) => duration + (delays[index % delays.length] ?? 0)),
+  );
+}
+
+async function waitForDrawerColorTransitions(popup: HTMLElement, stage: string): Promise<void> {
+  const close = popup.querySelector<HTMLButtonElement>('button[aria-label="閉じる"]');
+  if (!close) throw new Error(`${stage}: Drawer close control is missing`);
+  const transitionTimeMs = transitionWaitTimeMs(close);
+  if (transitionTimeMs <= 0) return;
+
+  let transitionTimer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    await withStageTimeout(
+      stage,
+      new Promise<void>((resolve) => {
+        transitionTimer = setTimeout(resolve, transitionTimeMs + 30);
+      }),
+    );
+  } finally {
+    if (transitionTimer !== undefined) clearTimeout(transitionTimer);
+  }
+}
+
+function expectPopupTheme(popup: HTMLElement) {
+  expect(getComputedStyle(popup).backgroundColor).toBe(resolvedTokenColor("card-bg"));
+  expect(getComputedStyle(popup).color).toBe(resolvedTokenColor("card-text"));
+  expect(getComputedStyle(popup).borderTopColor).toBe(resolvedPopupBorderColor());
+}
+
+function expectTooltipTheme(tooltip: HTMLElement) {
+  expect(getComputedStyle(tooltip).backgroundColor).toBe(resolvedTokenColor("tooltip-bg"));
+  expect(getComputedStyle(tooltip).color).toBe(resolvedTokenColor("tooltip-text"));
+}
+
+function expectChartDrawerControls(popup: HTMLElement) {
+  const handle = popup.querySelector<HTMLElement>(
+    '[data-slot="drawer-content"] > [aria-hidden="true"]',
+  );
+  const close = popup.querySelector<HTMLButtonElement>('button[aria-label="閉じる"]');
+  if (!handle || !close) throw new Error("Drawer handle or close control is missing");
+
+  const popupStyle = getComputedStyle(popup);
+  const handleStyle = getComputedStyle(handle);
+  const closeStyle = getComputedStyle(close);
+  expect(handleStyle.backgroundColor).toBe(resolvedTokenColor("gray-300"));
+  expect(closeStyle.backgroundColor).toBe(resolvedChartDrawerCloseBackground());
+  expect(closeStyle.color).toBe(resolvedTokenColor("card-text"));
+  expect(closeStyle.borderTopColor).toBe(resolvedTokenColor("card-border"));
+  expect(contrastRatio(closeStyle.color, closeStyle.backgroundColor)).toBeGreaterThanOrEqual(4.5);
+  expect(closeStyle.backgroundColor).not.toBe(popupStyle.backgroundColor);
+}
+
+function expectDemoDrawerControls(popup: HTMLElement) {
+  const handle = popup.querySelector<HTMLElement>(
+    '[data-slot="drawer-content"] > [aria-hidden="true"]',
+  );
+  const close = popup.querySelector<HTMLButtonElement>("button");
+  if (!handle || !close) throw new Error("Demo Drawer handle or close control is missing");
+
+  const closeStyle = getComputedStyle(close);
+  expect(getComputedStyle(handle).backgroundColor).toBe(resolvedTokenColor("gray-300"));
+  expect(closeStyle.backgroundColor).toBe(resolvedDemoDrawerCloseBackground(popup));
+  const expectedCloseText =
+    document.documentElement.dataset.theme === "dark"
+      ? resolvedTokenColor("card-bg")
+      : "rgb(255, 255, 255)";
+  expect(closeStyle.color).toBe(expectedCloseText);
+  expect(contrastRatio(closeStyle.color, closeStyle.backgroundColor)).toBeGreaterThanOrEqual(4.5);
+  expect(closeStyle.backgroundColor).not.toBe(getComputedStyle(popup).backgroundColor);
+}
 
 const familySeries = {
   area: { key: "fixture-area", label: "Area value", color: "#be123c" },
@@ -469,6 +674,60 @@ async function openFirstDrawer() {
   return { chart, wrapper, dialog };
 }
 
+function themeElementsForDrawer(dialog: Element) {
+  const popup = document.querySelector<HTMLElement>('[data-slot="drawer-popup"]');
+  const tooltip = dialog.querySelector<HTMLElement>("[data-custom-tooltip]");
+  if (!popup || !tooltip) throw new Error("Drawer popup or tooltip is missing");
+  return { popup, tooltip };
+}
+
+async function openThemeDrawer(theme: "light" | "dark" | null, stagePrefix: string) {
+  await withStageTimeout(`${stagePrefix}: set viewport`, page.viewport(375, 667));
+  await withStageTimeout(
+    `${stagePrefix}: set initial theme attribute`,
+    Promise.resolve().then(() => {
+      if (theme === null) document.documentElement.removeAttribute("data-theme");
+      else document.documentElement.setAttribute("data-theme", theme);
+    }),
+  );
+  renderBrowserComponent(<DrawerPayloadFixture />);
+  const { dialog } = await withStageTimeout(
+    `${stagePrefix}: initial openFirstDrawer`,
+    openFirstDrawer(),
+  );
+  return withStageTimeout(
+    `${stagePrefix}: resolve initial popup and tooltip`,
+    Promise.resolve().then(() => themeElementsForDrawer(dialog.element())),
+  );
+}
+
+async function expectDrawerTheme(
+  popup: HTMLElement,
+  tooltip: HTMLElement,
+  stage: string,
+): Promise<void> {
+  const close = popup.querySelector<HTMLButtonElement>('button[aria-label="閉じる"]');
+  if (!close) throw new Error(`${stage}: Drawer close control is missing`);
+  if (document.activeElement === close) close.blur();
+  await withStageTimeout(`${stage}: move pointer off close control`, userEvent.unhover(close));
+  await waitForDrawerColorTransitions(popup, `${stage}: settle close control colors`);
+
+  expectPopupTheme(popup);
+  expectTooltipTheme(tooltip);
+  expectChartDrawerControls(popup);
+}
+
+function expectDrawerThemeAtStage(
+  stage: string,
+  popup: HTMLElement,
+  tooltip: HTMLElement,
+): Promise<void> {
+  return withStageTimeout(
+    stage,
+    Promise.resolve().then(() => expectDrawerTheme(popup, tooltip, stage)),
+  );
+}
+
 async function expectPointerSnapshotCommit() {
   const state = await page.getByTestId("tooltip-controller-state").element();
   await waitFor(() =>
@@ -771,12 +1030,217 @@ describe("chart tooltip Drawer datum selection", () => {
     expect(style.borderTopColor).not.toBe("rgba(0, 0, 0, 0)");
   });
 
+  it("keeps explicit light and dark colors current while the Drawer stays open", async () => {
+    const removeThemeCss = installThemeCss();
+    try {
+      const { popup, tooltip } = await openThemeDrawer("dark", "explicit theme case");
+      await expectDrawerThemeAtStage("explicit dark initial colors", popup, tooltip);
+      const darkPopupColor = getComputedStyle(popup).backgroundColor;
+
+      await withStageTimeout(
+        "set explicit light theme while Drawer is open",
+        Promise.resolve().then(() => document.documentElement.setAttribute("data-theme", "light")),
+      );
+      await waitForDrawerColorTransitions(
+        popup,
+        "wait for explicit dark-to-light close color transition",
+      );
+      await expectDrawerThemeAtStage("explicit dark-to-light live colors", popup, tooltip);
+      await withStageTimeout(
+        "assert explicit light differs from dark",
+        Promise.resolve().then(() =>
+          expect(getComputedStyle(popup).backgroundColor).not.toBe(darkPopupColor),
+        ),
+      );
+    } finally {
+      removeThemeCss();
+    }
+  });
+
+  it("tracks system light to dark and lets explicit themes override the system", async () => {
+    const removeThemeCss = installThemeCss();
+    const devtools = cdp();
+    try {
+      await withBoundedCdp("set system light color scheme", () =>
+        devtools.send("Emulation.setEmulatedMedia", {
+          features: [{ name: "prefers-color-scheme", value: "light" }],
+        }),
+      );
+      const { popup, tooltip } = await openThemeDrawer(null, "system theme case");
+      await expectDrawerThemeAtStage("assert system-light Drawer colors", popup, tooltip);
+      const systemLightPopupColor = await withStageTimeout(
+        "read system-light popup color",
+        Promise.resolve().then(() => {
+          const color = getComputedStyle(popup).backgroundColor;
+          expect(color).toBe("rgb(252, 252, 251)");
+          return color;
+        }),
+      );
+
+      await withStageTimeout(
+        "set explicit dark theme over system light",
+        Promise.resolve().then(() => document.documentElement.setAttribute("data-theme", "dark")),
+      );
+      await waitForDrawerColorTransitions(
+        popup,
+        "wait for system-light to explicit-dark close color transition",
+      );
+      await expectDrawerThemeAtStage("assert explicit-dark override colors", popup, tooltip);
+      const explicitDarkPopupColor = await withStageTimeout(
+        "read explicit-dark popup color",
+        Promise.resolve().then(() => {
+          const color = getComputedStyle(popup).backgroundColor;
+          expect(color).not.toBe(systemLightPopupColor);
+          return color;
+        }),
+      );
+
+      await withBoundedCdp("set system dark color scheme", () =>
+        devtools.send("Emulation.setEmulatedMedia", {
+          features: [{ name: "prefers-color-scheme", value: "dark" }],
+        }),
+      );
+      await waitForDrawerColorTransitions(popup, "wait after setting system dark color scheme");
+      await withStageTimeout(
+        "remove explicit theme for system dark",
+        Promise.resolve().then(() => document.documentElement.removeAttribute("data-theme")),
+      );
+      await waitForDrawerColorTransitions(
+        popup,
+        "wait for explicit-dark to system-dark close color transition",
+      );
+      await withStageTimeout(
+        "assert system-dark Drawer colors",
+        Promise.resolve().then(async () => {
+          await expectDrawerThemeAtStage("assert system-dark Drawer colors", popup, tooltip);
+          expect(getComputedStyle(popup).backgroundColor).toBe(explicitDarkPopupColor);
+        }),
+      );
+
+      await withStageTimeout(
+        "set explicit light theme over system dark",
+        Promise.resolve().then(() => document.documentElement.setAttribute("data-theme", "light")),
+      );
+      await waitForDrawerColorTransitions(
+        popup,
+        "wait for system-dark to explicit-light close color transition",
+      );
+      await withStageTimeout(
+        "assert explicit-light override colors",
+        Promise.resolve().then(async () => {
+          await expectDrawerThemeAtStage("assert explicit-light override colors", popup, tooltip);
+          expect(getComputedStyle(popup).backgroundColor).toBe(systemLightPopupColor);
+        }),
+      );
+    } finally {
+      try {
+        await withBoundedCdp("restore default media emulation", () =>
+          devtools.send("Emulation.setEmulatedMedia", { features: [] }),
+        );
+      } finally {
+        removeThemeCss();
+      }
+    }
+  });
+
+  it("reopens the Drawer with the theme selected after closing", async () => {
+    const removeThemeCss = installThemeCss();
+    try {
+      const { popup, tooltip } = await openThemeDrawer("light", "close/reopen case");
+      await expectDrawerThemeAtStage("close/reopen initial light colors", popup, tooltip);
+      const lightPopupColor = getComputedStyle(popup).backgroundColor;
+
+      const close = popup.querySelector<HTMLButtonElement>('button[aria-label="閉じる"]');
+      if (!close) throw new Error("Drawer close control is missing");
+      await withStageTimeout("activate Drawer close control", userEvent.click(close));
+      await withStageTimeout("wait for Drawer popup to close", expectDrawerAbsent());
+
+      await withStageTimeout(
+        "set explicit dark theme before reopening",
+        Promise.resolve().then(() => document.documentElement.setAttribute("data-theme", "dark")),
+      );
+      const { dialog } = await withStageTimeout("reopen Drawer after closing", openFirstDrawer());
+      const reopened = await withStageTimeout(
+        "resolve reopened popup and tooltip",
+        Promise.resolve().then(() => themeElementsForDrawer(dialog.element())),
+      );
+      await expectDrawerThemeAtStage(
+        "assert reopened Drawer dark colors",
+        reopened.popup,
+        reopened.tooltip,
+      );
+      await withStageTimeout(
+        "assert reopened popup differs from light",
+        Promise.resolve().then(() => {
+          expect(getComputedStyle(reopened.popup).backgroundColor).not.toBe(lightPopupColor);
+        }),
+      );
+    } finally {
+      removeThemeCss();
+    }
+  });
+
+  it("keeps the shared DialogOptionsDemo Drawer readable in both themes", async () => {
+    const removeThemeCss = installThemeCss();
+    try {
+      await page.viewport(375, 667);
+      renderBrowserComponent(<DialogOptionsDemo />);
+
+      for (const theme of ["light", "dark"] as const) {
+        document.documentElement.setAttribute("data-theme", theme);
+        await userEvent.click(page.getByRole("button", { name: "Drawerを開く" }));
+        const popup = document.querySelector<HTMLElement>('[data-slot="drawer-popup"]');
+        if (!popup) throw new Error("DialogOptionsDemo Drawer popup is missing");
+        expectPopupTheme(popup);
+        expectDemoDrawerControls(popup);
+        expect(popup.textContent).toContain("シート型のドロワー");
+        const close = popup.querySelector<HTMLButtonElement>("button");
+        if (!close) throw new Error("DialogOptionsDemo close control is missing");
+        await userEvent.click(close);
+        await expectDrawerAbsent();
+      }
+    } finally {
+      removeThemeCss();
+    }
+  });
+
+  it("keeps desktop CustomTooltip on the active theme tokens", async () => {
+    const removeThemeCss = installThemeCss();
+    try {
+      document.documentElement.setAttribute("data-theme", "light");
+      renderBrowserComponent(
+        <CustomTooltip
+          active
+          isMobile={false}
+          isTouch={false}
+          label="2025年1月"
+          payload={[{ name: "総合", value: 112.5, color: "#1d4ed8" }]}
+          tooltipBg="var(--tooltip-bg)"
+          tooltipText="var(--tooltip-text)"
+        />,
+      );
+
+      const tooltip = document.querySelector<HTMLElement>("[data-custom-tooltip]");
+      if (!tooltip) throw new Error("Desktop CustomTooltip is missing");
+      expectTooltipTheme(tooltip);
+      const lightBackground = getComputedStyle(tooltip).backgroundColor;
+
+      document.documentElement.setAttribute("data-theme", "dark");
+      expectTooltipTheme(tooltip);
+      expect(getComputedStyle(tooltip).backgroundColor).not.toBe(lightBackground);
+    } finally {
+      removeThemeCss();
+    }
+  });
+
   it("removes the close button transition when reduced motion is preferred", async () => {
     const devtools = cdp();
-    await devtools.send("Emulation.setEmulatedMedia", {
-      features: [{ name: "prefers-reduced-motion", value: "reduce" }],
-    });
     try {
+      await withBoundedCdp("emulate reduced motion", () =>
+        devtools.send("Emulation.setEmulatedMedia", {
+          features: [{ name: "prefers-reduced-motion", value: "reduce" }],
+        }),
+      );
       await page.viewport(375, 667);
       renderBrowserComponent(<DrawerPayloadFixture />);
 
@@ -788,7 +1252,9 @@ describe("chart tooltip Drawer datum selection", () => {
       expect(window.matchMedia("(prefers-reduced-motion: reduce)").matches).toBe(true);
       expect(window.getComputedStyle(close).transitionDuration).toBe("0s");
     } finally {
-      await devtools.send("Emulation.setEmulatedMedia", { features: [] });
+      await withBoundedCdp("restore default media emulation after reduced-motion check", () =>
+        devtools.send("Emulation.setEmulatedMedia", { features: [] }),
+      );
     }
   });
 

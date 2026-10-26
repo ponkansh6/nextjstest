@@ -2408,6 +2408,15 @@ The system SHALL resolve tooltip display rows from chart-side series metadata wh
 - **AND** `tests/components/useChartTooltipController.test.tsx` remains the focused
   controller regression contract.
 
+#### Canonical scenario — Scenario R21g: Theme-aware tooltip surfaces
+
+- **WHEN** a chart point is selected on a touch device and the selected-point Drawer is displayed
+  **THEN** its Portal-rendered Popup resolves its surface and text from the active `--card-bg` and `--card-text` theme tokens, keeps the established light border color `#dfe3df`, and in dark mode resolves the border from `color-mix(in srgb, var(--card-border) 75%, var(--card-text))`; the nested `CustomTooltip` resolves its background and text from `--tooltip-bg` and `--tooltip-text`.
+- **WHEN** the active theme changes while the Drawer is open, or the Drawer is closed and opened again under another theme
+  **THEN** the Popup and nested tooltip both reflect the current CSS tokens without stale color state, and the existing selection, dismissal, focus, and scroll behavior remains unchanged.
+- **WHEN** a desktop hover `CustomTooltip` is displayed
+  **THEN** its surface and text continue to resolve through the active tooltip theme tokens.
+
 <a id="current-r15"></a>
 
 ### Canonical requirement group: R15: Touch Tooltip Interaction & Scroll Suppression
@@ -2809,6 +2818,15 @@ so that part of the chart stays visible while the user adjusts and reads the CAG
 - **AND** fill opacity is set to 1.0, and stacking separator gaps use `var(--card-bg)` for clear layer distinction
 - **AND** hidden legend items (`.legendItem.hidden`) display enhanced borders and swatches with rings
 - **AND** each `globals.css` theme scope (`:root` / `@media (prefers-color-scheme: dark)` / `:root[data-theme="dark"]`) applies the validated palette values (`PALETTES.light` / `PALETTES.dark` in `scripts/validate-palette.mjs`) to `--series-1` through `--series-12`, and the two dark scopes remain identical
+
+#### Canonical scenario — Scenario R14c: Theme-aware shared Drawer
+
+- **WHEN** the shared `BaseDrawer` is displayed under light or dark mode, whether selected explicitly through `data-theme` or inherited from `prefers-color-scheme`
+  **THEN** its Popup surface and text resolve from the corresponding `--card-bg` and `--card-text` tokens; the light border retains `#dfe3df`, while the dark border uses `color-mix(in srgb, var(--card-border) 75%, var(--card-text))`; its handle and close control remain visible and readable.
+- **WHEN** the theme changes while a shared `BaseDrawer` is open
+  **THEN** its resolved colors follow the current theme without requiring the Drawer to be recreated.
+- **WHEN** `DialogOptionsDemo` renders the shared `BaseDrawer` in either theme
+  **THEN** the same surface and control readability contract applies without changing the Radix Dialog demo or the Drawer interaction behavior.
 
 <a id="current-r9"></a>
 
