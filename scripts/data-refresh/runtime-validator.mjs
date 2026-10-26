@@ -502,8 +502,8 @@ export const PINNED_RUNTIME_INPUTS = Object.freeze({
 // `node scripts/data-refresh/print-runtime-project-hashes.mjs` to display both the pinned value
 // and candidate SHA-256 for this exact list. Review candidates and update this map manually.
 export const PINNED_PROJECT_FILES = Object.freeze({
-  "package.json": "6d186ab34925a9d27e912f1fd9580d315acb50bf2042c40481eff8931c5340ce",
-  "pnpm-lock.yaml": "2109542fe2abb538bdf77b4af21b7445c209584a0244edeee3273b8d97aba2b2",
+  "package.json": "29d885ffb23b3bcfde6348e171a2e880e2725b699ca94df07720486efa4e7d90",
+  "pnpm-lock.yaml": "b5961f2f3a27b6a89530ef658b333a19f3eeffea7fa8df4b738b7bb988932b13",
   "tsconfig.json": "9f3692ef19cf5112726f18e7b095c4b6e53eac251d73687c79135e67f35889c7",
   "vitest.config.ts": "a58b5bc2a77e925468b1383499c92b65b16b677b0440585b55bb831c23b582ca",
   "scripts/fetch-cti-basic-series-2025.mjs":
