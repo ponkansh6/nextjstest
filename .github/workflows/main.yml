@@ -63,11 +63,8 @@ jobs:
       - name: Test
         run: pnpm test:all
 
-      - name: Build with Next.js
-        run: pnpm build
-
-      - name: Browser Mode production route validation
-        run: pnpm test:browser:next-route-poc:built
+      - name: Browser Mode standard and Pixel 7 validation
+        run: pnpm run test:browser:all
 
   full-validation:
     if: ${{ github.event_name == 'workflow_dispatch' }}
@@ -113,19 +110,12 @@ jobs:
           trap 'status=$?; finished=$(date +%s); echo "- test coverage: $((finished - started))s (exit $status)" >> "$GITHUB_STEP_SUMMARY"' EXIT
           pnpm run test:coverage 2>&1 | tee artifacts/validation-logs/test-coverage.log
 
-      - name: Build with Next.js
+      - name: Browser Mode standard and Pixel 7 validation
         run: |
           started=$(date +%s)
           set -o pipefail
-          trap 'status=$?; finished=$(date +%s); echo "- build: $((finished - started))s (exit $status)" >> "$GITHUB_STEP_SUMMARY"' EXIT
-          pnpm build 2>&1 | tee artifacts/validation-logs/build.log
-
-      - name: Browser Mode production route validation
-        run: |
-          started=$(date +%s)
-          set -o pipefail
-          trap 'status=$?; finished=$(date +%s); echo "- Browser Mode production route validation: $((finished - started))s (exit $status)" >> "$GITHUB_STEP_SUMMARY"' EXIT
-          pnpm test:browser:next-route-poc:built 2>&1 | tee artifacts/validation-logs/browser-route.log
+          trap 'status=$?; finished=$(date +%s); echo "- Browser Mode standard and Pixel 7 validation: $((finished - started))s (exit $status)" >> "$GITHUB_STEP_SUMMARY"' EXIT
+          pnpm run test:browser:all 2>&1 | tee artifacts/validation-logs/browser-mode.log
 
       - name: Build parity
         run: |

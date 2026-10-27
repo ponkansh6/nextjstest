@@ -67,16 +67,17 @@ describe("pre-push benchmark resource metrics", () => {
 });
 
 describe("pre-push benchmark Browser Mode failure artifacts", () => {
-  it("retains only failures from the two configured pre-push Browser Mode gates", () => {
+  it("retains only failures from the aggregate pre-push Browser Mode gate", () => {
     expect(
       failedRetainableBrowserGates([
-        { gate: "test:browser:prepush:component", exitCode: 1 },
-        { gate: "test:browser:next-route-poc:prepush:built", exitCode: 0 },
-        { gate: "test:browser:component:all", exitCode: 1 },
+        { gate: "test:browser:all", exitCode: 1 },
+        { gate: "test:browser:all", exitCode: 1 },
+        { gate: "test:browser:standard", exitCode: 1 },
+        { gate: "Next server startup check", exitCode: 1 },
         { gate: "test:browser:unconfigured", exitCode: 1 },
         { gate: "build", exitCode: 1 },
       ]),
-    ).toEqual(["test:browser:prepush:component"]);
+    ).toEqual(["test:browser:all"]);
   });
 
   it("allows only PNG screenshots with safe path components", () => {
@@ -93,7 +94,7 @@ describe("pre-push benchmark Browser Mode failure artifacts", () => {
     );
   });
 
-  it("reduces Vitest output to a fixed summary without raw error or request data", () => {
+  it("reduces full-project Vitest output to a fixed summary without raw error or request data", () => {
     expect(
       sanitizeVitestBrowserReport(
         {
@@ -113,16 +114,16 @@ describe("pre-push benchmark Browser Mode failure artifacts", () => {
           ],
           stdout: "Cookie: private-value",
         },
-        "selected case",
+        "standard",
       ),
     ).toEqual({
-      schemaVersion: "prepush-browser-report-v1",
-      selectedTest: "selected case",
+      schemaVersion: "prepush-browser-report-v2",
+      project: "standard",
       status: "failed",
-      selectedTestCount: 1,
       totalTestResults: 1,
       passedTestResults: 0,
       failedTestResults: 1,
+      skippedTestResults: 0,
     });
   });
 });

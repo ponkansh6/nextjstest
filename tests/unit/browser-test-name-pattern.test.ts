@@ -9,14 +9,10 @@ describe("browser test name patterns", () => {
     expect(pattern.test("other test")).toBe(false);
   });
 
-  it("escapes regex characters and keeps WebKit filtering", () => {
+  it("escapes regex characters in selected titles", () => {
     const chromium = new RegExp(makeTestNamePattern(["suite > test [A+B]"]));
-    const webkit = new RegExp(makeTestNamePattern(["suite > test [A+B]-webkit"], { webkit: true }));
 
     expect(chromium.test("outer suite > test [A+B] in browser")).toBe(true);
     expect(chromium.test("outer suite > test A+B in browser")).toBe(false);
-    expect(chromium.test("outer suite > test [A+B]-webkit")).toBe(false);
-    expect(webkit.test("outer suite > test [A+B]-webkit")).toBe(true);
-    expect(webkit.test("test [A+B]")).toBe(false);
   });
 });

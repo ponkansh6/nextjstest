@@ -2,9 +2,9 @@ import type { Browser, BrowserContext } from "@playwright/test";
 import { describe, expect, it, vi } from "vitest";
 import {
   buildContextOptions,
-  desktop1280x720ContextOptions,
   desktop1280x800ContextOptions,
   getIsolatedContextCloseErrors,
+  pixel7ContextOptions,
   withIsolatedContext,
 } from "../browser-mode/isolated-route-context";
 
@@ -146,6 +146,20 @@ describe("withIsolatedContext", () => {
 });
 
 describe("isolated context option builders", () => {
+  it("applies the Pixel 7 descriptor and its explicit 412x915 viewport override", () => {
+    const first = pixel7ContextOptions();
+    const second = pixel7ContextOptions();
+
+    expect(first.viewport).toEqual({ width: 412, height: 915 });
+    expect(first.screen).toEqual({ width: 412, height: 915 });
+    expect(first.deviceScaleFactor).toBe(2.625);
+    expect(first.isMobile).toBe(true);
+    expect(first.hasTouch).toBe(true);
+    expect(first.userAgent).toContain("Pixel 7");
+    expect(first).not.toBe(second);
+    expect(first.viewport).not.toBe(second.viewport);
+  });
+
   it("merges descriptor options before scenario overrides and returns isolated dimensions", () => {
     const deviceViewport = { width: 390, height: 844 };
     const deviceScreen = { width: 390, height: 844 };
@@ -184,13 +198,15 @@ describe("isolated context option builders", () => {
   });
 
   it("returns fresh desktop preset options with the requested viewport", () => {
-    const options720A = desktop1280x720ContextOptions();
-    const options720B = desktop1280x720ContextOptions();
     const options800 = desktop1280x800ContextOptions();
+    const optionsCopy = desktop1280x800ContextOptions();
 
-    expect(options720A.viewport).toEqual({ width: 1280, height: 720 });
     expect(options800.viewport).toEqual({ width: 1280, height: 800 });
-    expect(options720A).not.toBe(options720B);
-    expect(options720A.viewport).not.toBe(options720B.viewport);
+    expect(options800.screen).toEqual({ width: 1280, height: 800 });
+    expect(options800.deviceScaleFactor).toBe(1);
+    expect(options800.isMobile).toBe(false);
+    expect(options800.hasTouch).toBe(false);
+    expect(options800).not.toBe(optionsCopy);
+    expect(options800.viewport).not.toBe(optionsCopy.viewport);
   });
 });

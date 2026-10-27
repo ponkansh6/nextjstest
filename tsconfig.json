@@ -44,6 +44,10 @@
   "exclude": [
     "node_modules",
     ".next",
+    // Historical/ignored probe artifacts are not part of the active type-check graph.
+    "results/**",
+    // Ignored local Phase 6 aggregate config; no active script or CI entrypoint uses it.
+    "vitest.browser.phase6-aggregate-chromium.config.ts",
     "test_arquero*.ts",
     "tests/test_arquero*.ts",
     "compare.ts",

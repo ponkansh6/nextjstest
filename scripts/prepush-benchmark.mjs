@@ -35,18 +35,19 @@ const hookSmokeFiles = [
 
 const preflightGates = ["clean worktree check", "detached HEAD leftover check"];
 
-const retainableBrowserGates = new Set([
-  "test:browser:prepush:component",
-  "test:browser:next-route-poc:prepush:built",
-]);
+const retainableBrowserGates = new Set(["test:browser:all"]);
 
 const sensitiveArtifactName =
   /(?:auth|credential|secret|token|password|passwd|cookie|session|private|key|cert|\.env|\.npmrc)/i;
 
 export function failedRetainableBrowserGates(gateRecords) {
-  return gateRecords
-    .filter((record) => record.exitCode !== 0 && retainableBrowserGates.has(record.gate))
-    .map((record) => record.gate);
+  return [
+    ...new Set(
+      gateRecords
+        .filter((record) => record.exitCode !== 0 && retainableBrowserGates.has(record.gate))
+        .map((record) => record.gate),
+    ),
+  ];
 }
 
 export function isSafeBrowserScreenshotPath(relativePath) {
@@ -59,49 +60,53 @@ export function isSafeBrowserScreenshotPath(relativePath) {
   );
 }
 
-export function sanitizeVitestBrowserReport(report, selectedName) {
+export function sanitizeVitestBrowserReport(report, project) {
   const assertions = Array.isArray(report?.testResults)
     ? report.testResults.flatMap((file) =>
         Array.isArray(file?.assertionResults) ? file.assertionResults : [],
       )
     : [];
-  const selected = assertions.filter((assertion) => assertion?.fullName === selectedName);
+  const total = Number.isInteger(report?.numTotalTests) ? report.numTotalTests : assertions.length;
+  const passed = Number.isInteger(report?.numPassedTests)
+    ? report.numPassedTests
+    : assertions.filter((item) => item.status === "passed").length;
+  const failed = Number.isInteger(report?.numFailedTests)
+    ? report.numFailedTests
+    : assertions.filter((item) => item.status === "failed").length;
+  const skipped = assertions.filter((item) =>
+    ["pending", "skipped", "todo", "disabled"].includes(item.status),
+  ).length;
   const status =
-    selected.length === 1 && ["passed", "failed", "pending", "skipped"].includes(selected[0].status)
-      ? selected[0].status
-      : "unavailable";
+    total === 0
+      ? "unavailable"
+      : failed > 0
+        ? "failed"
+        : skipped > 0
+          ? "skipped"
+          : passed === total
+            ? "passed"
+            : "unavailable";
   return {
-    schemaVersion: "prepush-browser-report-v1",
-    selectedTest: selectedName,
+    schemaVersion: "prepush-browser-report-v2",
+    project,
     status,
-    selectedTestCount: selected.length,
-    totalTestResults: Number.isInteger(report?.numTotalTests)
-      ? report.numTotalTests
-      : assertions.length,
-    passedTestResults: Number.isInteger(report?.numPassedTests)
-      ? report.numPassedTests
-      : assertions.filter((item) => item.status === "passed").length,
-    failedTestResults: Number.isInteger(report?.numFailedTests)
-      ? report.numFailedTests
-      : assertions.filter((item) => item.status === "failed").length,
+    totalTestResults: total,
+    passedTestResults: passed,
+    failedTestResults: failed,
+    skippedTestResults: skipped,
   };
 }
 
 const gateSequences = {
-  changed: [
-    "changed integration tests",
-    "test:browser:prepush:component",
-    "build",
-    "test:browser:next-route-poc:prepush:built",
-  ],
-  docs: ["test:browser:prepush:component", "build", "test:browser:next-route-poc:prepush:built"],
+  changed: ["changed integration tests", "test:browser:all", "build", "Next server startup check"],
+  docs: ["test:browser:all", "build", "Next server startup check"],
   full: [
     "lint:fast",
     "type-check",
     "test:coverage",
-    "test:browser:component:all",
+    "test:browser:all",
     "build",
-    "test:browser:next-route-poc:built:all",
+    "Next server startup check",
     "test:build-parity",
     "security-check",
   ],
@@ -109,9 +114,9 @@ const gateSequences = {
     "lint:fast",
     "type-check",
     "test:coverage",
-    "test:browser:prepush:component",
+    "test:browser:all",
     "build",
-    "test:browser:next-route-poc:prepush:built",
+    "Next server startup check",
     "test:build-parity",
     "security-check",
   ],

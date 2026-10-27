@@ -512,9 +512,10 @@ selection, `prefers-reduced-motion`, CSS container-query support, and the
 introduce no application data source. Its spacing, card-radius, and minimum
 target-size custom properties are scoped to the route root.
 
-Production-route Browser Mode commands use the configured Vitest provider's
-`Browser` and the command's device descriptor plus scenario overrides as test
-configuration. This adds no external application-data source.
+The inactive legacy production-route helper used the configured Vitest
+provider's `Browser` and the command's device descriptor plus scenario
+overrides as test configuration. It adds no external application-data source
+and is not part of the current Browser Mode path.
 
 Chromium Browser Mode can optionally connect to a repository-managed persistent
 Playwright browser server. Its state file is operational test configuration,
@@ -523,90 +524,61 @@ or the directory selected by `PLAYWRIGHT_BROWSER_SERVER_STATE_DIR`. It records
 the server PID, instance ID, loopback WebSocket endpoint, Playwright version,
 Chromium name, control port, and control token. The connection is accepted only
 when the state matches the installed `@playwright/test` version and names a
-`127.0.0.1` WebSocket endpoint. WebKit remains independently launched.
+`127.0.0.1` WebSocket endpoint. The repository's Browser Mode profiles use
+Chromium; WebKit is outside the supported test scope.
 
-Browser-test selection uses the active Vitest Browser Mode configurations and
-their discovered test cases as its authoritative catalog. Each selectable ID is
-derived from the configuration, spec-file path, and complete test name
-(`fullName`); cases with the same complete name within one configuration/file
-are one indivisible selection group. The selector sends this finite catalog,
-the discovered test names, the union of automatically detected and explicit
-paths, and bounded sanitized diff context to JEV. Manual invocation derives
-tracked changes from `HEAD` through the index and worktree, and adds non-ignored
-untracked paths, including paths outside the diff-source extension allowlist;
-positional paths are unioned with those detected paths. Only allowlisted text
-files receive diff excerpts. Unsupported tracked, explicit, and untracked paths
-remain selection inputs and are recorded with `unsupported_file_type` omission
-metadata.
-When the manual selector is invoked with validated push-range input, it derives
-paths and diff context from each supplied `remote_oid`/`local_oid` update pair.
-The pre-push hook does not invoke this selector. Explicit absolute paths inside
-the repository are normalized to repository-relative paths. Outside paths and
-explicit paths containing raw `..` segments, backslashes, control characters,
-or over 512 UTF-8 bytes are omitted without exposing their values and
-contribute only a pathless reason/count. Diff context is limited to
-20 files, 512 UTF-8 bytes per diff-file path, 4 KiB per file, and 16 KiB total.
-Every transmitted path is repository-relative, uses `/` separators, and rejects
-absolute paths, `.`/`..` segments, control characters, backslashes, and
-credential-looking markers. Unsafe or oversized paths are omitted from every
-path-bearing field and represented only by pathless reason/count metadata,
-marking the context incomplete. Credential-looking paths are
-excluded from both `changedPaths` and per-file omission entries; only a generic
-reason and count are reported. Binary content is omitted. A non-UTF-8 tracked
-or untracked file's diff body is omitted in full and marks the context
-incomplete; its non-sensitive path may remain in `changedPaths` and
-`omittedFiles`. Diff lines
-containing secret, token, password, authorization, private-key, API-key, or
-access-key markers are redacted. Symlink untracked files are omitted. The
-`changedPaths` list is capped at 256 entries, 512 UTF-8 bytes per path, and
-16 KiB total path bytes; paths excluded by these caps are counted in the
-summary and add the `changed_path_limit` reason. `omittedFiles` is capped at 64
-entries, 512 UTF-8 bytes per path, and 8 KiB aggregate path bytes; overflow is
-represented by a pathless reason/count aggregate. Explicit paths without a
-detected diff have
-unknown status and null line counts in the summary with reason
-`explicit_path_no_detected_diff`.
-The context reports its source, completeness, limits, included files,
-redactions, omitted files, and omission reasons; redaction or omission marks
-the context incomplete. `state.diffContext.summary` is always present and
-contains structural statistics, never changed text lines. It reports per-file
-entries only for omitted, truncated, redacted, or capped files; safe
-non-sensitive paths are
-included only when at most 512 UTF-8 bytes. Each entry reports status
-(`added`, `modified`, `deleted`, or `unknown`), added/deleted line counts
-(integer or null), and non-empty reasons. Its fields are `files`, `fileCount`,
-`omittedFileCount`, `sensitiveOmittedFileCount`, `addedLines`, `deletedLines`,
-`unknownLineCountFileCount`, `reasons`, `truncated`, and
-`truncatedFileCount`; it also includes `changedPathCount` and
-`omittedChangedPathCount`. Sensitive paths have no per-file entry or path and
-contribute only to pathless aggregate counts and reasons. Binary, unsupported,
-non-UTF-8, symlink, and redacted inputs contribute only safely available
-statistics and reasons. The summary is capped at 40 entries and 4 KiB
-serialized as UTF-8. Final counters are set before measuring serialized size;
-if needed, file entries are removed and truncation counters updated. If fixed
-metadata still does not fit, a smaller metadata-only fallback is emitted.
-JEV is instructed to treat it as incomplete structural context. The diff and
-summary are untrusted code data, not instructions for JEV to follow.
-JEV's response may select only catalog IDs. The standalone Playwright E2E
-suite was removed; this selector covers the repository's active Browser Mode
-cases, which use Playwright as their provider.
-The component-only `test:browser` catalog is limited to
-`tests/config/browser/vitest.browser.config.ts`. The route-scoped selector catalog includes
-`tests/config/browser/vitest.browser.aggregate-chromium.config.ts` and every case in
-`tests/config/browser/vitest.browser.webkit.config.ts`; all four files in the WebKit config are in
-scope, including `SectionTabsB3m` under its WebKit title filter.
+The current browser regression contract has two active Browser Mode files:
+`tests/browser-mode/standard.browser.test.tsx` and
+`tests/browser-mode/pixel7.browser.test.tsx`. The configured `standard` and
+`pixel7` inline projects each include exactly their corresponding file, so a
+case is run once in its intended viewport. Standard uses Chromium at 1280×800
+CSS pixels. Pixel 7 uses the device descriptor with an intentional viewport
+override to 412×915 CSS pixels, screen 412×915, DPR 2.625, the Pixel 7 UA, and
+mobile/touch context configured. The four active B12/B13 cases render local
+component/page fixtures and use synthetic pointer interactions. B12 #430's
+route-navigation case was removed. The remaining cases do not verify
+production route composition or trusted physical-touch delivery. Both project runners require
+a JSON report with at least one test,
+all tests passing, and no skipped/pending tests.
+They also compare every reported Vitest `fullName` against the checked-in
+manifest in `scripts/browser-mode-case-manifest.mjs`: exactly 14 standard cases
+and 22 Pixel 7 cases must be present once each, with no missing or unexpected
+case. A mismatch reports expected/observed counts, missing and unexpected
+names, duplicates, and all observed names. Set `BROWSER_MODE_REPORT_PATH` to
+retain the complete JSON report under the repository or OS temporary directory;
+the default temporary report is removed after the runner exits.
+
+`pnpm run test:browser:standard` runs only the standard project.
+`pnpm run test:browser:pixel7` runs the complete Pixel 7 project against local
+component/page fixtures, without a Next build or production server.
+`pnpm run test:browser:all` runs standard, then Pixel 7. Both project runners
+reject an invalid project, empty report, omitted file, failure, or skip and
+compare the full report to the checked-in case manifest.
+
+The four active B12/B13 cases use synthetic pointer interactions on local
+fixtures. B12 #430's route-navigation case was removed. The Pixel 7 spending
+legend, hover, and filter checks are consolidated into one composite case.
+Geometry 112/140/79 and overflow 120/127/142 each share one render. The two
+CagrPanel pairs each share one render, and standard checks nominal and real
+tooltip totals in one case.
+These fixtures do not verify production route composition or trusted
+physical-touch delivery. Pre-push runs Browser Mode before build, then uses the
+existing `measure:cache-e2e -- --skip-cache --port 3001` command only to start
+Next on `127.0.0.1:3001` and confirm readiness. That gate performs no route or
+browser interaction.
 
 Hook execution inputs are derived from the Git state being validated, not from
 the working-tree default branch: pre-commit reads the staged path list, while
 pre-push consumes every ref line supplied by Git and classifies the actual
-remote-oid to local-oid diff. `PREPUSH_PROFILE` accepts `full` or `changed`;
-an unset value defaults to `changed`, and any other value is treated as the
-safe `full` profile. Pre-push retains only safe repository-relative source,
-server, and test paths as related-test candidates; unsafe, empty, malformed,
-unresolvable, or otherwise indeterminate input selects the full profile.
-Browser Mode selection receives the complete validated push-impact path set,
-including configuration and cross-cutting paths, rather than only the
-related-test subset.
+remote-oid to local-oid diff. `PREPUSH_PROFILE` accepts `full` or `changed` for
+profile selection. A changed-code push runs related tests followed by the
+aggregate `test:browser:all` gate, build, and startup readiness; when related-test
+selection is empty, failed, or indeterminate it falls back to full validation.
+Docs/assets pushes run the aggregate `test:browser:all` gate, build, and startup
+readiness.
+Full or uncertain-impact pushes also run lint, type-check, coverage,
+build-parity, and security. Push paths are used for diagnostics and staleness
+checks, not to select individual Browser Mode cases.
 
 Static CSV files (not publicly served) stored in `data/source/`:
 
@@ -811,10 +783,26 @@ metadata順で維持し、`EARNINGS_TOTAL_KEYS` に含まれる可視行の有�
 グループが空なら境界を生成しない。CPI・消費支出・比較tooltipはこの指定を受け取らず、行順・
 表示値・読み上げ内容は変わらない。
 
-After provider validation and Browser acquisition, a production-route command
-calls `withIsolatedContext(browser, options, callback)`. The command retains
-route navigation, page creation, assertions, and result handling; the shared
-helper only creates and closes the independent `BrowserContext`.
+The inactive legacy route helper retains `withIsolatedContext` for its own
+historical route commands. Active Browser Mode projects instead render local
+component/page fixtures. The four active B12/B13 cases use synthetic pointer
+interactions; B12 #430's route-navigation case was removed. They do not verify
+production route composition or trusted physical-touch delivery.
+
+Browser regression execution flows from the `standard` or `pixel7` Vitest
+inline project to its single matching test file. The full entry runs standard
+then Pixel 7 without building Next. Pre-push runs both projects before build,
+then performs only server startup/readiness on `127.0.0.1:3001`. The per-case
+source-title crosswalk and baseline evidence are maintained in the [Browser
+Mode migration ledger](browser-test-migration-ledger.md). The 15/15 standard and 28/28 Pixel 7 results, along with the earlier 43/43
+Pixel 7 result, predate the current consolidation and remain historical. The
+current manifest contains 14 standard and 22 Pixel 7 cases (36 total). On
+2026-10-27, post-merge `pnpm run test:browser:all` passed: standard=14 and
+Pixel 7=22, with exact manifest/count validation. The three dependent unit
+files passed 17/17, and `pnpm run type-check` plus `pnpm run lint:fast` passed.
+The required active B12/B13 interactions remain B12 #307 and B13 #473/#508/#535.
+No build ID or route fingerprint applies to Browser All. This evidence does not
+claim a production build or full pre-push success.
 
 The `/ui-experiments` page flow is local and independent of dashboard data:
 route-local custom properties style the demonstration panels; the
@@ -844,6 +832,17 @@ each chart's existing renderer.
 `shared/cti-estimate-contract.ts` is a client-safe shared type/value module and
 adds no UI component; this component tree is unchanged.
 
+Browser test tree: `vitest.browser.config.ts` → `standard` project →
+`standard.browser.test.tsx`, or `pixel7` project → `pixel7.browser.test.tsx`.
+Both projects use the Chromium provider and shared setup. The standard file
+has 14 cases and the Pixel 7 file has 22. The Pixel 7 file owns four B12/B13
+local-fixture cases and their full names. They use synthetic
+pointer interactions. B12 #430's route-navigation case was removed. No active
+B12/B13 test verifies production route composition or trusted physical-touch
+delivery. Pixel 7 spending legend, hover, and filter behavior is covered by one
+composite case. Geometry 112/140/79, overflow 120/127/142, each CagrPanel pair,
+and standard nominal/real tooltip totals are each combined into one render.
+
 Production tooltip interaction is owned by `CpiChart`'s
 `useChartTooltipController`, shared by `CpiChartSections` and the chart
 components. Fine-pointer input renders the live `CustomTooltip`; coarse/touch
@@ -866,9 +865,8 @@ The Drawer body reuses `CustomTooltip` with `isDrawer`; it omits the tooltip's
 period heading because `DrawerTitle` already displays that period. Fine-pointer
 hover tooltips continue to show the period heading.
 
-Browser Mode test architecture: 19 Chromium configurations use the shared
-`tests/config/browser/chromium-provider.ts` helper, while the WebKit
-configuration retains its own provider. When explicitly enabled, that helper
+Browser Mode test architecture: Chromium configurations use the shared
+`tests/config/browser/chromium-provider.ts` helper. When explicitly enabled, that helper
 connects to the managed Chromium server from the state file; Vitest continues
 to own its existing test page/context lifecycle. The manager owns the browser
 server lifecycle, separately from test contexts and from the Next.js route
@@ -944,10 +942,9 @@ observations and status/error observations independently; it does not add a
 runtime cache layer. Its cache result is explicitly `not-applicable: no runtime
 cache wrapper`.
 
-Production-route Browser Mode test → route command →
-`withIsolatedContext` → isolated `BrowserContext` → command-owned page/route
-work. The production-route runner invokes these commands with its configured
-Vitest provider; it does not share a context between command invocations.
+Historical inactive route-helper flow: route command → `withIsolatedContext`
+→ isolated `BrowserContext` → command-owned route work. It is not used by the
+active Browser Mode projects.
 
 Persistent Chromium lifecycle: `pnpm test:browser:server:start` launches a
 detached `chromium.launchServer()` process bound to localhost and writes its
@@ -958,10 +955,9 @@ sets `PLAYWRIGHT_BROWSER_SERVER=1` for that child and returns its exit status;
 killing a PID. With that environment flag set, the shared Chromium provider
 helper reads the state file and connects with a 10-second timeout. Without the
 flag, Chromium follows its normal provider launch path. Missing or invalid
-state fails with start/stop instructions. Component Browser Mode keeps its
-existing per-file page/context and cleanup contract, and production-route
-commands continue creating an isolated context for each invocation. The
-Next.js production server lifecycle is unchanged and remains separate.
+state fails with start/stop instructions. Active component Browser Mode keeps
+its per-file page/context and cleanup contract. The Next.js production server
+is not part of the active Browser Mode flow.
 
 The e-Stat API route files under `src/app/api/estat/*` remain an independent
 same-origin source boundary and are outside the Phase 2-5 facade refactoring
@@ -1724,11 +1720,11 @@ chart, table, tooltip, and CSV contract.
 #### Canonical scenario — Scenario R-Hooks-4: Full and changed gate order
 
 - **WHEN** the changed profile succeeds
-- **THEN** `build` runs before the built Browser Mode production-route validation
+- **THEN** related tests run first, followed by one `test:browser:all` gate, build, then startup/readiness on `127.0.0.1:3001`
 - **WHEN** the full profile runs
 - **THEN** gates execute in order: `lint:fast`, `type-check`, `test:coverage`,
-  `build`, `test:build-parity`, and `security-check`; the built Browser Mode
-  production-route validation runs where configured
+  `test:browser:all`, build, startup/readiness, `test:build-parity`, and
+  `security-check`
 - **AND WHEN** any gate fails
 - **THEN** later gates do not run
 - **AND** production validation is a separate gate and is not substituted for
@@ -3612,18 +3608,24 @@ Page (RSC)
     └── CustomTooltip (React.memo, module-level component for charts, managed via `useChartTooltipController`; key-based metadata supplies label/color/order and the total row follows the Spending tooltip hierarchy)
 ```
 
-Manual Browser Mode selection uses active Vitest Browser Mode catalog
-discovery → JEV case selection → strict selected-ID validation → configured
-component or production-route runner. The catalog is keyed by config, file,
-and full test name; the selector does not execute model-supplied commands or
-paths. Pre-push does not invoke the selector: it runs the fixed pre-push
-Browser Mode selections (`test:browser:prepush:component` and
-`test:browser:next-route-poc:prepush:built`). The standalone Playwright E2E
-runner has been removed; Playwright remains the Browser Mode provider.
-The normal `test:browser:next-route-poc` and `test:browser:next-route-poc:built`
-commands use the route selector. Raw unfiltered route execution is reserved
-for the explicit `test:browser:next-route-poc:all` and
-`test:browser:next-route-poc:built:all` commands.
+The active Browser Mode contract uses two inline Vitest projects: `standard`
+selects only `standard.browser.test.tsx`, and `pixel7` selects only
+`pixel7.browser.test.tsx`. The standard project uses a 1280×800 CSS-pixel
+Chromium viewport. Pixel 7 uses a 412×915 CSS-pixel viewport and screen, DPR
+2.625, Pixel 7 UA, and mobile/touch context. Both projects render local
+component/page fixtures. The four active B12/B13 cases use synthetic pointer
+interactions; B12 #430's route-navigation case has been removed. These tests do
+not verify production route composition or trusted physical-touch delivery. The
+standalone Playwright E2E suite has been removed; Playwright remains the Browser
+Mode provider.
+
+`test:browser:standard` runs the standard project and `test:browser:pixel7` runs
+Pixel 7 without a Next build. `test:browser:all` runs standard, then Pixel 7.
+The runners check the complete Vitest JSON report against each case manifest;
+empty selection, missing files, failures, and skips return nonzero.
+Browser-specific JEV catalog/dispatch and case-selection scripts remain as
+inactive legacy assets and are not reachable from package scripts, CI, or
+Husky pre-push. Non-browser JEV workflows remain independent.
 
 The repository validation boundary is the Husky hook tree rather than a UI
 component: the POSIX `.husky/pre-commit` and `.husky/pre-push` launchers exec
@@ -3631,11 +3633,11 @@ the Bash implementations in `.husky/pre-commit.bash` and
 `.husky/pre-push.bash`, because Husky's generated `sh -e` launcher cannot
 interpret Bash-only syntax. The Bash implementations run `lint:fast`, staged
 typecheck, commit-scoped `lint-staged`, detached-HEAD validation,
-clean-worktree validation, actual-push-ref impact classification, related-test
-selection, the fixed pre-push component Browser Mode selection, `build`, the
-fixed built production-route Browser Mode selection, and the remaining
-full-profile gates. Production validation is a
-separate gate and is not implied by the local pre-push hook.
+clean-worktree validation, and actual-push-ref impact classification. Every
+pre-push profile runs static/unit gates, then all standard cases, build, all
+Pixel 7 cases, build parity, and security in fail-fast order. Push paths are
+used for diagnostics and staleness checks, not for browser case selection.
+Production validation is separate and is not implied by local pre-push success.
 The isolated pre-push timing harness runs the existing hook route in a
 temporary Git fixture using fixture stdin/ref/path data, without `git push`.
 It captures per-run gate/total wall times and exit codes, with environment
@@ -3703,14 +3705,12 @@ The quarterly server-side branch is `page.tsx` → `quarterlyProjection.ts`'s `l
   masked findings are retained.
 - Pre-push flow is `clean worktree guard` → `Git pre-push ref protocol` → actual
   ref diff collection and path/category classification → `PREPUSH_PROFILE`
-  normalization. Configuration,
-  dependency, build, Playwright, E2E, OpenSpec, generated, unknown, initial,
-  deletion, rename, shallow, malformed, unresolved, or failed-diff cases are
-  conservative full-profile inputs. Ordinary source/server/test changes retain
-  safe related candidates and use the changed profile. The classifier unions
-  all pushed refs before selecting a profile.
-  Browser Mode gates run the fixed pre-push component and production-route
-  selections and do not pass push paths or ref ranges to the JEV selector.
+  normalization → branch-specific gates. Changed-code pushes run related tests,
+  then the `test:browser:all` gate, build, and startup readiness. Docs/assets
+  pushes run the `test:browser:all` gate, build, and startup readiness. Full or
+  uncertain-impact pushes add lint, type-check, coverage, build-parity, and
+  security. Each gate is fail-fast; Browser Mode never receives push paths for
+  per-case selection.
 - The isolated timing harness flow is `parent-state invariant snapshot` →
   temporary Git fixture and environment/secret/symlink isolation → scenario,
   expected profile, and cold/warm setup → fixture pre-push stdin/ref/path →
@@ -3733,105 +3733,29 @@ The quarterly server-side branch is `page.tsx` → `quarterlyProjection.ts`'s `l
   It does not copy environment variables, credentials, parent repository
   state, or symlink inputs, and does not change profile selection, gate order,
   fallback behavior, or failure propagation.
-- Browser selection sends its per-case catalog request through the dedicated
-  catalog-selection mode in `skills/jev-review/scripts/jev-request.mjs`:
-  active Vitest catalog + automatically detected and explicit paths + bounded,
-  redacted diff context → existing JEV auth/key resolution and HTTP transport
-  → shared response-envelope validation plus selector-specific run/skip and
-  catalog-ID validation → allowlisted selected IDs → scoped Browser Mode
-  runner. Manual invocation collects tracked `HEAD`-to-worktree/index changes
-  and non-ignored untracked source files. Diff context is capped at 20 files,
-  512 UTF-8 bytes per diff-file path,
-  4 KiB per file, and 16 KiB total. Every transmitted path is repository-relative,
-  uses `/` separators, and rejects absolute paths, `.`/`..` segments, control
-  characters, backslashes, and credential-looking markers. Unsafe or oversized
-  paths are omitted from all path-bearing fields and represented only by
-  pathless reason/count metadata, marking the context incomplete.
-  Explicit absolute paths inside the repository are normalized to relative
-  paths; outside paths, raw `..` segments, backslashes, control characters,
-  and overlong explicit paths are omitted without exposing their values.
-  Credential-looking paths are omitted from `changedPaths` and per-file
-  omission entries, with only a generic reason/count exposed. Non-UTF-8 diff
-  bodies are omitted in full and mark the context incomplete; non-sensitive
-  paths may remain in `changedPaths` and `omittedFiles`. Binary and symlink
-  untracked files are also omitted. Paths outside the diff-source extension
-  allowlist remain selection inputs and receive `unsupported_file_type`
-  omission metadata. `changedPaths` is bounded to 256 entries, 512 UTF-8 bytes
-  per path, and 16 KiB aggregate path bytes; omitted paths are counted in the
-  summary and add `changed_path_limit`. `omittedFiles` is bounded to 64 entries,
-  512 UTF-8 bytes per path, and 8 KiB aggregate path bytes; overflow becomes a
-  pathless reason/count aggregate. Secret-like lines are redacted. Redaction and other
-  omissions mark the context incomplete; completeness and omission metadata
-  accompany the excerpts. `state.diffContext.summary` is always sent alongside
-  the excerpts and has no changed text lines. It includes aggregate statistics and
-  reasons, plus per-file entries only for omitted, truncated, redacted, or
-  capped files. Each safe path is limited to 512 UTF-8 bytes and includes
-  status, added/deleted line counts (or null when unknown), and non-empty
-  reasons; sensitive paths have no entry or path and affect only pathless
-  aggregates. The summary has at most 40 entries and 4 KiB serialized UTF-8;
-  entries that do not fit are omitted and reflected by omitted/truncated counts
-  and `truncated`. Its fields also include `changedPathCount` and
-  `omittedChangedPathCount`. Final counters are calculated before serialized
-  UTF-8 size is measured; if it exceeds 4 KiB, file entries are removed and
-  truncation counters updated with `summary_size_limit`, then a smaller
-  metadata-only fallback is used if required. Its bounded fields include
-  file/omitted/sensitive-omitted
-  counts, added/deleted totals, unknown-line-count file count, reasons, and
-  truncated-file count. The `limits` object reports `maxDiffFilePathBytes=512`,
-  `maxSummaryFiles=40`, `maxSummaryBytes=4096`, `maxChangedPaths=256`,
-  `maxChangedPathBytes=512`, `maxChangedPathTotalBytes=16384`,
-  `maxOmittedFiles=64`, `maxOmittedPathBytes=512`, and
-  `maxOmittedPathTotalBytes=8192`. Binary, unsupported, non-UTF-8, symlink,
-  and redacted
-  inputs expose only safely available statistics and reasons. The prompt tells
-  JEV to treat the summary as incomplete structural evidence.
-  The diff is untrusted data and the selector instructs JEV not to treat it as
-  instructions. The same context is sent with each catalog chunk of at most 24
-  candidates. It does not route the per-case request through normal `--request`,
-  whose review contract accepts one review question or the fixed
-  three-question diagnostic.
-- Before any Browser Mode execution, the selector discovers current cases from
-  the active Vitest Browser Mode configurations and forms catalog IDs from
-  config + file path + complete `fullName`; same-`fullName` cases in one
-  config/file form one indivisible group. JEV selects IDs from this finite
-  catalog for the push paths, and only validated IDs reach the runner. Model
-  text is never interpreted as a shell command, path, config, or test filter.
-- Selected component cases run under their configured Browser Mode profile.
-  Selected route-scoped cases run through the route runner, which
-  retains its provider checks and managed production-server lifecycle. Existing
-  Chromium/WebKit title filters remain in force and selection cannot widen
-  them. No standalone Playwright E2E profile exists outside this catalog.
-- In the changed profile, safe related candidates are passed to
-  `vitest related --run --passWithNoTests --reporter=json`; a non-empty valid
-  JSON result allows the changed integration gate to pass, followed by
-  `test:browser:prepush:component`, `build`, and
-  `test:browser:next-route-poc:prepush:built`. Documentation/assets-only
-  changes skip related tests but still run the component pre-push selection,
-  `build`, and the built production-route pre-push selection. Empty candidates,
-  zero JSON `testResults`, missing/invalid/incompatible JSON, or a related-test
-  failure invoke full non-browser validation exactly once while retaining the
-  fixed Browser Mode selections.
-- The full pre-push profile is ordered `lint:fast` → `type-check` → `test:coverage`
-  → `test:browser:prepush:component` → `build` →
-  `test:browser:next-route-poc:prepush:built` → `test:build-parity` →
-  `security-check`; each gate stops later gates on failure. The changed profile
-  runs selected related tests and fixed Browser Mode pre-push selections when
-  applicable, then `build` and the fixed built production-route selection.
-  Related-test fallback runs the full non-browser validation profile with the
-  same fixed Browser Mode selections. The fixed selection comprises one
-  BottomSheet focus case and six production-route cases; all-suite commands
-  remain available for explicit full Browser Mode runs.
-  no standalone Playwright E2E command exists in the local pre-push profile.
-  Production validation remains a separate gate and is
-  reported as not run by local pre-push when its URL/network availability is
-  not established.
+- Browser Mode execution uses the exact complete project/file membership above.
+  Vitest JSON reports must contain a non-empty set of tests, every registered
+  assertion must pass, and no test may be skipped or pending. Standard and
+  Pixel 7 each run their complete file; project includes prevent duplicate
+  execution.
+- Pixel 7 cases render local component/page fixtures and use synthetic pointer
+  interactions. B12 #430's route-navigation case has been removed. No active
+  B12/B13 case performs Next route navigation. These cases do not verify production route composition
+  or trusted physical-touch delivery.
+- `test:browser:all` runs standard then Pixel 7 without building Next. Pre-push
+  runs both projects before build. After build, the existing
+  `measure:cache-e2e -- --skip-cache --port 3001` gate only starts the server on
+  `127.0.0.1:3001` and confirms readiness; it performs no route or browser
+  interaction. All Browser Mode cases run without JEV or per-case selection.
 - The pre-commit Secretlint gate rejects detected secrets in staged content,
   including paths force-added despite `.gitignore`; normal Git-ignored files
   outside the index are not scanned. Findings use Secretlint's masked output.
 - The normal GitHub build job grants only `contents: read` and runs the full
   dependency `pnpm audit --audit-level=high` plus secretlint on every push and
-  pull request; the dispatch-only full validation repeats its all-dependency
-  `security-check`. Neither security gate uses `continue-on-error`.
+  pull request, then type-check, lint, unit suite, and `test:browser:all`;
+  `test:browser:all` runs standard → Pixel 7 and does not build. The dispatch-only full
+  validation repeats its all-dependency `security-check`. Neither security
+  gate uses `continue-on-error`.
   `PROD_URL` is scoped only to the conditional production-validation step.
 - The cache/E2E measurement writes its artifact after managed-process cleanup;
   a failed server startup, port conflict, or readiness timeout records a failed
@@ -4149,10 +4073,10 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, and 
 
 ## Operational validation contracts
 
-#### Scenario Production-route command context lifecycle
+#### Scenario Inactive legacy production-route helper context lifecycle
 
-- **WHEN** a production-route Browser Mode command has validated its provider
-  and acquired a `Browser`
+- **WHEN** the inactive legacy production-route helper is explicitly invoked
+  after validating its provider and acquiring a `Browser`
 - **THEN** each invocation creates a fresh independent context through
   `withIsolatedContext(browser, options, callback)` and does not reuse a context
 - **AND** the context is closed exactly once after callback success or failure
@@ -4161,12 +4085,12 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, and 
   value remains primary and the close error is retained as supplemental
   information
 - **AND** if only close fails, the close error propagates
-- **AND** the production-route command retains provider checks, route work,
-  assertions, and result handling
+- **AND** this helper is not used by the active Browser Mode projects or
+  pre-push gates
 
-#### Scenario Production-route context options
+#### Scenario Inactive legacy production-route context options
 
-- **WHEN** a command builds context options from a device descriptor and
+- **WHEN** the inactive legacy route helper builds context options from a device descriptor and
   scenario-specific settings
 - **THEN** it applies the complete device descriptor before scenario overrides
 - **AND** each call receives a fresh top-level options object and fresh mutable
@@ -4177,18 +4101,21 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, and 
 - **WHEN** `pnpm test` runs the default Vitest profile
 - **THEN** it runs the existing happy-dom suite without collecting Browser Mode specs
 
-#### Scenario Browser Mode test scope
+#### Scenario Viewport-specific Browser Mode projects
 
-- **WHEN** `pnpm test:browser` runs the browser profile
-- **THEN** it uses `tests/config/browser/vitest.browser.config.ts` to discover component cases,
-  asks JEV to select from that component-only catalog, and executes only the
-  selected cases in headless Chromium
-- **AND** this command does not require a production build or start the
-  production-route runner
-- **AND** component cases verify real client components in a browser; they do
-  not verify Next.js production routing, SSR, Flight, or hydration
-- **AND** route-scoped cases are selected only by the separate route-scoped
-  commands and use the managed route runner
+- **WHEN** `pnpm run test:browser:standard` runs
+- **THEN** only the `standard` project and `standard.browser.test.tsx` are selected at 1280×800 CSS pixels
+- **AND** the standard manifest contains exactly 14 cases, including one combined nominal/real tooltip-total case
+- **WHEN** `pnpm run test:browser:pixel7` runs
+- **THEN** it runs only the `pixel7` project and `pixel7.browser.test.tsx` with local component/page fixtures at viewport/screen 412×915, DPR 2.625, Pixel 7 UA, mobile, and touch context settings
+- **AND** the Pixel 7 manifest contains exactly 22 cases
+- **AND** the four active B12/B13 cases use synthetic pointer interactions; B12 #430's route-navigation case is absent
+- **AND** these fixture checks do not verify production route composition or trusted physical-touch delivery
+- **AND** geometry 112/140/79 and overflow 120/127/142 each share one render, as do both CagrPanel pairs
+- **WHEN** `pnpm run test:browser:all` runs
+- **THEN** it completes standard before Pixel 7 without building Next
+- **AND** it selects 14 standard plus 22 Pixel 7 cases, 36 in total
+- **AND** every runner fails on zero tests, a missing file, a failure, or a skipped/pending test
 
 #### Scenario Browser Mode API port override
 
@@ -4202,6 +4129,7 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, and 
   fails configuration validation
 - **AND** a port collision fails startup instead of silently selecting a
   different port
+- **AND** the Browser Mode API server explicitly binds to `127.0.0.1`
 
 #### Scenario Browser Mode per-file cleanup and sequential isolation
 
@@ -4334,194 +4262,58 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, and 
   removed; the separate P42-018 outside-click / scroll integration case
   remains in Playwright
 
-#### Scenario PRE-PUSH Browser Mode full execution
+#### Scenario Standard Browser Mode project
 
-- **WHEN** `pnpm run test:full` reaches its Browser Mode gates
-- **THEN** its component and production-route selector invocations each ask
-  JEV to select from that gate's current eligible Vitest Browser Mode catalog
-  and run only the selected catalog IDs
-- **WHEN** the full pre-push profile reaches its Browser Mode gates
-  - **THEN** it runs `pnpm run test:browser:prepush:component` after `test:coverage`, then
-    `pnpm run test:browser:next-route-poc:prepush:built` after `build`
-- **WHEN** the changed pre-push profile selects a non-empty related code/test
-  set
-- **THEN** it runs those related tests, the fixed pre-push component Browser
-  Mode selection, `pnpm run build`, and the fixed built production-route
-  Browser Mode selection in that order
-- **AND** the component selection runs only
-  `BottomSheet focus containment in Chromium keeps real browser Tab navigation inside the open sheet`
-- **AND** the production-route selection runs only
-  `Playwright Browser Mode custom command observes a production Next chart interaction`,
-  `p45-b-section-tabs-scroll-82-case01-chromium`,
-  `p45-b-range-change-119-e2e — production spending-chart-nominal data narrows and a visible bar remains after changing the range`,
-  `p45-a-parity-hidden-series preserves chart, table, and CSV data when a legend series is hidden`,
-  `B13 #473: outside-heading touch clears stacked chart cursor and active dots`,
-  and `B14: keyboard Tab reaches the named legend with a visible focus outline`
-- **WHEN** a related-test selection falls back to full validation
-- **THEN** it runs the full non-browser validation gates with the fixed
-  pre-push Browser Mode selection
-- **WHEN** `PREPUSH_PROFILE=full` is selected explicitly or the push-impact
-  classifier selects full
-  - **THEN** the full pre-push profile continues to run
-    `pnpm run test:browser:prepush:component` after `test:coverage`, then
-    `pnpm run test:browser:next-route-poc:prepush:built` after `build`
-- **WHEN** a changed-profile push contains only documentation and/or asset
-  paths
-- **THEN** it skips related code-test selection and `pnpm run test:all`, while
-  it still runs the fixed pre-push component Browser Mode selection,
-  `pnpm run build`, and the fixed built production-route Browser Mode
-  selection in that order
+- **WHEN** `pnpm run test:browser:standard` runs
+- **THEN** it runs only the `standard` inline project and its sole file `tests/browser-mode/standard.browser.test.tsx`
+- **AND** Chromium uses a 1280×800 CSS-pixel viewport
+- **AND** the complete report `fullName` set must exactly equal the checked-in 14-case standard manifest
+- **AND** the runner rejects a missing report, zero tests, an omitted file, a failed test, or any skipped/pending test
 
-#### Scenario Browser Mode catalog and stable case identity
+#### Scenario Pixel 7 Browser Mode project
 
-- **WHEN** a scoped Browser Mode selector starts
-- **THEN** it discovers the cases eligible for that existing component or
-  route-scoped invocation from the active Vitest Browser Mode
-  configurations and builds selectable IDs from config, repository-relative
-  spec file, and complete `fullName`
-- **AND** component scope uses only `tests/config/browser/vitest.browser.config.ts`
-- **AND** route scope includes `tests/config/browser/vitest.browser.aggregate-chromium.config.ts`
-  and every case in `tests/config/browser/vitest.browser.webkit.config.ts`, including
-  `SectionTabsB3m` and all other files matched by that config's WebKit title
-  filter
-- **AND** cases sharing a `fullName` in the same config and file are selected
-  and executed as one group
-- **AND** the discovery and execution preserve each config's existing browser
-  provider, include/exclude rules, and Chromium/WebKit title constraints
+- **WHEN** `pnpm run test:browser:pixel7` runs
+- **THEN** it starts the complete `pixel7` inline project without a Next build or production server
+- **AND** the project includes only `tests/browser-mode/pixel7.browser.test.tsx`
+- **AND** its viewport and screen are 412×915 CSS pixels, DPR is 2.625, and the Pixel 7 user agent, mobile, and touch context are configured
+- **AND** its complete report `fullName` set must exactly equal the checked-in 22-case Pixel 7 manifest
+- **AND** its four active B12/B13 cases render local component/page fixtures and use synthetic pointer interactions
+- **AND** B12 #430's route-navigation case is absent from the current suite; the remaining cases do not verify production route composition or trusted physical-touch delivery
+- **AND** the required interaction manifest includes B12 #307, B13 #473, B13 #508, and B13 #535, each exactly once and passing
+- **AND** spending legend, hover, and filter acceptance is represented by one composite Pixel 7 case
+- **AND** geometry 112/140/79, overflow 120/127/142, each CagrPanel pair, and standard nominal/real tooltip totals each share one rendered fixture
+- **AND** the runner rejects zero tests, an omitted file, a failed test, or any skipped/pending test
 
-#### Scenario JEV Browser Mode case selection
+#### Scenario All Browser Mode projects
 
-- **WHEN** the selector submits the current case catalog and complete
-  push-impact paths and diff context to JEV
-- **THEN** it uses the dedicated catalog-selection mode in
-  `skills/jev-review/scripts/jev-request.mjs`, reusing the client's existing
-  API-key resolution, authenticated transport, and shared response validation
-- **AND** the mode validates the per-case selection response against its
-  submitted catalog IDs, without sending that payload through normal
-  `--request`, whose review request contract accepts one review question or
-  the fixed three-question diagnostic
-- **AND** it accepts only a valid structured answer that accounts for every
-  catalog ID and selects only allowed IDs; an explicit `skip` for every ID is
-  a valid empty selection
-- **AND** it executes only the selected catalog IDs; arbitrary response text is
-  never interpreted as a command, path, Vitest config, or test-name pattern
-- **AND** every catalog chunk receives the same bounded diff context and
-  omission metadata, and the prompt identifies all diff excerpts as untrusted
-  code data that must not be followed as instructions
-- **WHEN** discovery fails, the JEV request fails, the response is malformed,
-  or an ID is missing/duplicated/unknown
-- **THEN** the selector exits nonzero before starting a browser test and does
-  not fall back to running the full Browser Mode catalog
-- **WHEN** JEV explicitly skips every catalog ID
-- **THEN** the selector succeeds without starting a browser for that invocation
-- **WHEN** the selector runs manually
-  **THEN** it detects tracked changes from `HEAD` through the index/worktree,
-  adds non-ignored untracked paths regardless of extension, and unions those
-  paths with supplied positional paths; unsupported file types remain path
-  inputs but receive `unsupported_file_type` omission metadata rather than
-  diff excerpts
-- **WHEN** changed paths exceed the configured path count, per-path byte, or
-  aggregate byte limit
-  **THEN** `changedPaths` contains at most 256 entries, each at most 512 UTF-8
-  bytes, and at most 16 KiB of aggregate path bytes; it records the excluded
-  path count as `omittedChangedPathCount` and adds `changed_path_limit` to the
-  summary reasons
-- **WHEN** a detected or explicit path is not repository-relative and safe, or
-  exceeds the 512 UTF-8 byte per-path limit
-  **THEN** it is excluded from `changedPaths`, `diffContext.files[].path`,
-  `summary.files[].path`, and `omittedFiles[].path`; the selector reports only
-  a pathless reason/count omission and marks the context incomplete
-- **WHEN** an explicit absolute path resolves inside the repository
-  **THEN** it is normalized to a repository-relative path before selection; an
-  outside path or raw `..` segment, backslash, control character, or overlong
-  path is omitted without exposing its value and contributes only a pathless
-  reason/count
-- **WHEN** omitted file metadata exceeds its configured entry, per-path, or
-  aggregate path-byte limit
-  **THEN** `omittedFiles` contains at most 64 entries, each path is at most
-  512 UTF-8 bytes, and aggregate path bytes are at most 8 KiB; excess omissions
-  are represented by a pathless reason/count aggregate
-- **WHEN** an explicit path has no detected diff in the collected range or
-  worktree/index state
-  **THEN** its summary entry uses `status: unknown`, null added/deleted line
-  counts, and reason `explicit_path_no_detected_diff`
-- **WHEN** a changed file is considered for diff context
-  **THEN** the context includes at most 20 files, 4 KiB per file, and 16 KiB
-  total, limits each `diffContext.files[].path` to 512 UTF-8 bytes, omits binary
-  content, and redacts lines containing secret-like markers
-- **WHEN** a changed path looks like a credential or private-key path
-  **THEN** it is excluded from `changedPaths` and per-file omission entries,
-  its actual path is not sent to JEV, and a pathless aggregated omission
-  reports the reason and number of excluded paths while marking the context
-  incomplete
-- **WHEN** a tracked or untracked diff is not valid UTF-8
-  **THEN** its diff body is omitted in full, its non-sensitive path may remain
-  in `changedPaths` and `omittedFiles`, and the context is marked incomplete
-- **WHEN** a non-ignored untracked path is a symlink or binary file
-  **THEN** its content is omitted and the context is marked incomplete
-- **WHEN** a context entry is truncated, redacted, unsupported, or omitted
-  **THEN** completeness and omission metadata report the limitation to JEV
-- **WHEN** the selector creates the change context for a JEV catalog request
-  **THEN** it always includes `state.diffContext.summary` with fields
-  `files`, `fileCount`, `omittedFileCount`, `sensitiveOmittedFileCount`,
-  `addedLines`, `deletedLines`, `unknownLineCountFileCount`, `reasons`,
-  `truncated`, `truncatedFileCount`, `changedPathCount`, and
-  `omittedChangedPathCount`, plus aggregate counts,
-  line totals where available, omission/trigger reasons, and truncation fields,
-  without including changed text lines
-- **AND** it includes per-file summary entries only for omitted, truncated,
-  redacted, or capped files; entries for safe non-sensitive paths report a
-  path of at most 512 UTF-8 bytes, status, added/deleted line counts or null,
-  and non-empty reasons
-- **AND** sensitive paths have no per-file entry or path and contribute only
-  pathless aggregate counts/reasons; binary, unsupported, non-UTF-8, symlink,
-  and redacted inputs expose only safely available statistics and reasons
-- **AND** final counters are set before the serialized UTF-8 summary is measured
-  against 4 KiB; if needed, file entries are removed and truncation counters
-  updated, and a smaller metadata-only fallback is used if fixed metadata still
-  exceeds the limit
-- **AND** the summary has at most 40 entries, reports changed-path and omitted
-  file limits in `limits`, and JEV is instructed to treat it as incomplete
-  structural context
-- **WHEN** a new standard JEV checkpoint review starts
-- **THEN** it supplies at least two complete, mutually exclusive, case-specific clarification candidates with `--clarification-candidates PATH` alongside `--request`, and candidate validation completes before any API request
-- **AND** JEV is asked only for the listed choice, confidence, and probability distribution
-- **WHEN** a new standard review receives a valid initial choice other than `valid_as_defined`
-- **THEN** exactly one clarification request asks JEV to select a supplied candidate, and the client maps the selected ID to its locally supplied finding, affected location/requirement, evidence or needed evidence, next action or proposed fix, and remaining uncertainty
-- **AND** the clarification is recorded with `resolution=selected`, `diagnosisSource=provided_candidate`, `diagnosisStatus=complete`, and `effectiveVerdict=requires_revalidation`, while preserving the initial decision and distribution
-- **WHEN** a clarification response is invalid, unavailable, or selects an ID outside the candidate list
-- **THEN** it is unresolved and no clarification is chained
-- **WHEN** `--clarify` or `--follow-up` is used as a compatibility utility
-- **THEN** its existing mode and validation behavior remain unchanged
+- **WHEN** `pnpm run test:browser:all` runs
+- **THEN** it runs the complete standard project, then the complete Pixel 7 project, without a Next build
+- **AND** both projects run against their local fixtures through Browser Mode
+- **AND** the manifests contain 14 standard and 22 Pixel 7 cases (36 total)
 
-#### Scenario Selected route-scoped Browser Mode lifecycle
+#### Scenario Pre-push Browser Mode execution by impact profile
 
-- **WHEN** JEV selects one or more route-scoped Browser Mode cases
-- **THEN** the configured route runner executes only those cases
-- **AND** it retains its existing provider validation, build/readiness checks,
-  server startup and cleanup, and per-command isolated BrowserContext lifecycle
+- **WHEN** a changed-code push has a nonempty successful related-test selection
+- **THEN** pre-push runs related tests → `test:browser:all` → build → startup/readiness check on `127.0.0.1:3001`
+- **WHEN** a docs/assets-only push is classified as changed
+- **THEN** pre-push runs `test:browser:all` → build → startup/readiness check on `127.0.0.1:3001`
+- **WHEN** push impact is full or related-test selection is empty, failed, or indeterminate
+- **THEN** pre-push runs `lint:fast` → `type-check` → `test:coverage` → `test:browser:all` → build → startup/readiness check → `test:build-parity` → `security-check`
+- **AND** the aggregate gate runs both complete Browser Mode projects without JEV or per-case selection
+- **AND** the startup/readiness check performs no route or browser interaction
+- **AND** a failed gate stops every later gate
 
-#### Scenario Route-scoped command selection boundary
+#### Scenario Browser Mode failure and cleanup
 
-- **WHEN** `pnpm run test:browser:next-route-poc` or
-  `pnpm run test:browser:next-route-poc:built` runs
-- **THEN** it asks JEV to select from the current route-scoped catalog and
-  executes only the selected cases through the managed route runner
-- **WHEN** `pnpm run test:browser:next-route-poc:all` or
-  `pnpm run test:browser:next-route-poc:built:all` runs
-- **THEN** it executes the raw unfiltered route-scoped suite explicitly,
-  without JEV selection
+- **WHEN** Browser Mode fails, times out, or is interrupted
+- **THEN** the runner exits nonzero and closes its BrowserContext, temporary report, and managed Vitest child process group
+- **AND** cleanup failure is reported without replacing the original test, startup, timeout, or interruption error
 
-#### Scenario Browser Mode owns repository browser regressions
+#### Scenario Pre-push Browser install prerequisite
 
-- **WHEN** the JEV Browser Mode selector creates its catalog
-- **THEN** it includes only active Vitest Browser Mode cases and does not include
-  standalone Playwright E2E specs
-- **WHEN** repository browser regressions are run
-- **THEN** component and production-route cases run through Vitest Browser Mode,
-  and no standalone Playwright E2E config, `tests/e2e` suite, or E2E cleanup
-  command is required
-- **AND** `@playwright/test` remains available as the Browser Mode provider
+- **WHEN** a pre-push profile invokes Browser Mode
+- **THEN** Chromium is installed beforehand with `pnpm exec playwright install chromium`; the hook does not download browsers automatically
+- **AND** Linux operating-system dependencies are installed separately when required
 
 <a id="browser-mode-persistent-chromium-lifecycle"></a>
 
@@ -4547,9 +4339,8 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, and 
   matching Playwright version and `127.0.0.1` WebSocket endpoint, and connects
   with a 10-second timeout
 - **AND** missing or invalid state fails with start/stop instructions
-- **WHEN** the flag is absent or a WebKit Browser Mode configuration is used
-- **THEN** Chromium uses its normal provider launch path and WebKit behavior
-  remains unchanged
+- **WHEN** the flag is absent
+- **THEN** Chromium uses its normal provider launch path
 - **AND** existing Browser Mode test context/page isolation and cleanup remain
   in effect; stopping the persistent browser is a separate manager action
 - **AND** this lifecycle does not manage the Next.js production server
@@ -4563,21 +4354,12 @@ The state ownership contract is explicit: `useUrlState` reads `from`, `to`, and 
 - **AND** Linux operating-system dependencies are installed separately when
   required
 
-#### Scenario PRE-PUSH related-test fallback
-
-- **WHEN** related-test selection in the changed profile is empty, invalid, or
-  indeterminate
-- **THEN** it falls back to the full profile, running `pnpm run test:coverage`
-  followed by the full component and production-route Browser Mode suites
-  exactly once, with `build` between them
-
 #### Scenario PRE-PUSH Browser Mode failure stop
 
-- **WHEN** the Browser Mode gate fails in either full or changed pre-push
-  profile
+- **WHEN** `test:browser:all` fails during pre-push
 - **THEN** the hook exits nonzero and rejects the push without updating the
   remote ref
-- **AND** it skips every later gate in that profile
+- **AND** it skips every later gate
 
 #### Scenario Hook smoke validation
 
@@ -4648,9 +4430,9 @@ documented boundaries:
   imported by its analysis script and unit tests, but not by the application
   runtime.
 - `src/app/components/SectionTabs.tsx` owns scroll and effect behavior covered
-  by the SectionTabsTargets, SectionTabsB3m, and B3m Browser Mode assertions.
+  by the active standard and Pixel 7 Browser Mode projects.
 - `src/app/components/LazyMount.tsx` owns IntersectionObserver mounting
-  behavior covered by the dedicated LazyMount and B3m Browser Mode assertions.
+  behavior covered by the active standard and Pixel 7 Browser Mode projects.
 
 Scripts, generated output, and static assets are outside the source include
 patterns because they are not application runtime modules. Adding runtime
@@ -4673,30 +4455,13 @@ next to the ignore; broad file or line exclusions do not qualify.
 
 #### Hook execution architecture
 
-- **WHEN** staged-path classification is tested
-  **THEN** TypeScript, shared/type-boundary, generated, and configuration
-  changes require typecheck; documentation/assets may skip it; staged
-  deletion, rename, or an unavailable decision requires typecheck.
-- **WHEN** the pre-push classifier is tested with multiple ref lines
-  **THEN** it uses the actual pushed ref ranges, unions their paths, retains
-  only safe repository-relative source/server/test candidates for related
-  testing, and selects full for initial/deleted, malformed, unresolved,
-  shallow, empty, or failed-diff cases and all full-impact categories.
-- **WHEN** `PREPUSH_PROFILE` normalization is tested
-  **THEN** unset and `changed` select changed, `full` selects full, and any
-  other value selects full.
-- **WHEN** the changed pre-push related runner is tested
-  **THEN** a valid non-empty Vitest JSON result proceeds to the fixed
-  component Browser Mode selection, build, and fixed built-route Browser Mode
-  selection, while empty candidates, zero `testResults`, missing/invalid/
-  incompatible JSON, or a related-test failure invokes full non-browser
-  validation with the same two fixed browser selections exactly once.
-- **WHEN** full pre-push execution is tested
-  - **THEN** the gate order is `lint:fast` → `type-check` → `test:coverage` →
-    `test:browser:prepush:component` → `build` →
-    `test:browser:next-route-poc:prepush:built` → `test:build-parity` →
-    `security-check`, and a failed gate prevents later gates; production
-    validation remains a separately reported gate.
+- **WHEN** the pre-push hook receives one or more pushed refs
+- **THEN** it classifies the actual remote-oid to local-oid ranges for diagnostics and staleness checks
+- **AND** changed-code pushes run related tests followed by `test:browser:all`, build, and startup/readiness; docs/assets pushes run `test:browser:all`, build, and startup/readiness
+- **AND** full or uncertain-impact pushes run lint, type-check, coverage, `test:browser:all`, build, startup/readiness, build-parity, and security
+- **AND** the startup/readiness check uses only `127.0.0.1:3001` and performs no route or browser interaction
+- **AND** no per-case browser selection or browser JEV dispatch changes the selected cases
+- **AND** a failed gate prevents all later gates
 
 #### Phase 1 regression requirements
 
@@ -4749,16 +4514,15 @@ These regression requirements do not add requirements for a new `popstate` liste
     - T4–T5: Pre-push wrapper (using subprocess call, not source) correctly propagates exit codes and allows full validation sequence to run when safe
     - T6–T8: `check-clean-worktree.sh` blocks tracked differences and untracked `src/`/`server/`/`tests/` files, while allowing a clean tree with unrelated local artifacts
     - launcher contract: both hook wrappers remain POSIX-compatible and point to their `.bash` implementations
-  - component selection wrapper: `tests/unit/prepush-component-browser-runner.test.ts` pins `scripts/run-prepush-component-browser.mjs` fail-closed wiring (JSON result assertion, nonzero exit on verification failure, anchored `--testNamePattern`, `--reporter=json`) and asserts the selected case's file exists and its `describe` + `it` titles assemble to the pinned full test name
-- The standalone Playwright E2E config, empty `tests/e2e/` harness, port cleanup script, and `test:e2e*` package commands are removed because the checkout had no registered E2E cases. Repository component and production-route browser regressions run through Vitest Browser Mode; `@playwright/test` remains as its browser provider dependency.
-  - Prior `spending-filter.e2e.spec.ts`, `mobile-ux.e2e.spec.ts`, and `accessibility.e2e.spec.ts` files contained no registered behavior cases and were removed. Current viewport, touch-target, route, and accessibility checks are covered by Browser Mode/component tests such as `tests/browser-mode/SectionTabsTargets.browser.test.tsx`, `tests/browser-mode/batch3-a-production-route.browser.test.ts`, `tests/browser-mode/batch4-a-production-route.browser.test.ts`, and `tests/browser-mode/phase6-b14-residual-accessibility.browser.test.ts`.
+- Browser Mode runners: `tests/unit/browser-mode-report-validation.test.ts` pins exact full-file manifests, all-pass status, skip rejection, and all required Pixel 7 interactions.
+- The standalone Playwright E2E config, empty `tests/e2e/` harness, port cleanup script, and `test:e2e*` package commands are removed because the checkout had no registered E2E cases. Repository component and local-fixture browser regressions run through Vitest Browser Mode; `@playwright/test` remains as its browser provider dependency.
+- Prior `spending-filter.e2e.spec.ts`, `mobile-ux.e2e.spec.ts`, and `accessibility.e2e.spec.ts` files contained no registered behavior cases and were removed. Current viewport and touch-target checks are in the standard and Pixel 7 Browser Mode files. B12/B13 use local component/page fixtures with synthetic pointer interactions; they do not validate production route composition or trusted physical-touch delivery. Production-route keyboard accessibility coverage is not currently registered.
 - `range-change`, spending-filter, and CAGR standalone Playwright coverage is not claimed by this inventory.
 - Plan37 monthly loader/data-quality coverage is in `tests/data-quality/cti-basic-series-2025.test.ts` and `tests/data-quality/earning-data-integrity.test.ts`: it verifies official nominal series selection, raw and complete-window 12MA/index calculations, the 2017-12/2018-01 and 2025 anchors, raw fixture values, and loader measurement metadata. These are loader/data-quality checks, not NewGraph SVG path assertions.
-- Plan40/Plan24 quarterly spending coverage remains a separate contract: `tests/components/SpendingBarChart.test.tsx` covers quarterly chart boundary behavior, and the quarterly browser-mode tests cover the current integrated output. The retired Plan38 key, 52-quarter projection, and dedicated metadata contract no longer have tests. These checks do not use NewGraph's `adv` query behavior.
-- NewGraph's current browser regression is `tests/browser-mode/phase6-b03-advanced-series.browser.test.ts`, driven by `tests/browser-mode/phase6-b03.route.command.ts`. It verifies the three-series registry and chart/table/CSV parity, absence of the “参考・延長系列” checkbox, and that legacy `?adv=1` does not change comparison output and is removed after URL synchronization.
+- Plan40/Plan24 quarterly spending behavior remains a product contract, and `tests/components/SpendingBarChart.test.tsx` covers component-level quarterly chart boundaries. No dedicated production-route Browser Mode regression currently covers the integrated quarterly chart/table/CSV/hover output. The retired Plan38 key, 52-quarter projection, and dedicated metadata contract no longer have tests. These product contracts do not depend on NewGraph's `adv` query behavior.
+- No dedicated NewGraph browser regression is currently registered. The former B03 suite, B04 parity suite, and their route commands were removed; registry projection, legacy `?adv=1` behavior, and NewGraph chart/table/CSV parity are not currently covered by a browser-mode regression. The integration test below covers `adv=1` only for the quarterly Spending output.
 - `tests/integration/chart-table-csv-parity.test.ts` separately verifies that `adv=1` does not expose an unsupported extension in nominal/real quarterly Spending output.
-- Browser Mode route commands that inspect lazy-mounted charts set
-  `window.__MOUNT_ALL__` inline with `page.addInitScript` before navigation.
+- The B12/B13 local fixture setup sets `window.__MOUNT_ALL__` before rendering.
 
 - **Performance baseline & regression detection** (`scripts/lighthouse-mobile.js`):
   - Lighthouse CLI with mobile preset (Pixel 5 throttling, 4G)
@@ -4767,12 +4531,12 @@ These regression requirements do not add requirements for a new `popstate` liste
   - Stores JSON report in `lighthouse-reports/{date}-{timestamp}.json` and prints summary
   - Supports diff against previous run if available
 
-- **Dark-mode browser regression** remains in Browser Mode: the production-route accessibility and contrast cases assert readable legend contrast under the dark theme. The former `chromium-dark` Playwright selector and `test:e2e:dark` script were removed because the project registered no active test.
+- **Dark-mode contrast requirement** remains a product requirement, but no dedicated production-route Browser Mode contrast regression is currently registered. The former `chromium-dark` Playwright selector and `test:e2e:dark` script were removed because the project registered no active test.
 
 - **Private-consumption series identification**:
   - NewGraph uses the fixed CPI, salary, and Plan49 `消費(総合)` comparison registry; Plan37 normal/extension monthly fields are internal loader compatibility data, and the Plan40 integrated quarterly CTI output belongs to the nominal Spending contract.
-- NewGraph's browser regression MUST verify the fixed three comparison keys in the chart and their table/CSV projection, and MUST verify that no “参考・延長系列” checkbox is rendered.
-- When the browser opens NewGraph with legacy `?adv=1`, the comparison projection MUST match the normal route and URL synchronization MUST remove `adv`. Plan37 monthly raw/normal/extension values and fixture anchors MUST be tested at the loader/data-quality boundary, including their 2018 and 2025 values and measurement metadata; they MUST NOT be asserted as separate NewGraph SVG lines or X-axis coverage ranges.
+- NewGraph MUST render the fixed three comparison keys in the chart and their table/CSV projection, and MUST NOT render a “参考・延長系列” checkbox.
+- When NewGraph opens with legacy `?adv=1`, its comparison projection MUST match the normal route and URL synchronization MUST remove `adv`. Plan37 monthly raw/normal/extension values and fixture anchors MUST be tested at the loader/data-quality boundary, including their 2018 and 2025 values and measurement metadata; they MUST NOT be asserted as separate NewGraph SVG lines or X-axis coverage ranges.
 - The independent quarterly regression MUST keep the Plan40/Plan24 CTI display boundary in `SpendingBarChart` and the quarterly browser-mode test, without routing that contract through NewGraph.
 
 #### Scenario R11c-a: NewGraph fixed comparison projection
@@ -4782,7 +4546,7 @@ These regression requirements do not add requirements for a new `popstate` liste
 
 #### Scenario R11c-b: Legacy comparison query is ignored
 
-- **WHEN** the NewGraph browser regression opens a route with legacy `?adv=1`
+- **WHEN** NewGraph opens a route with legacy `?adv=1`
 - **THEN** the fixed comparison projection is unchanged, the “参考・延長系列” checkbox is absent, and the synchronized URL no longer contains `adv`.
 - **AND** unrelated query parameters are preserved during that URL synchronization.
 
@@ -4798,8 +4562,8 @@ These regression requirements do not add requirements for a new `popstate` liste
 - **AND** its internal 12MA fields are emitted only for a complete finite 12-calendar-month window; 2005-01 through 2005-11 are null, and the average of the 2025-01 through 2025-12 raw values is the sole positive baseline for `100*M/B`. These fields are not NewGraph comparison entries.
 - **AND** duplicate, missing, non-finite, incomplete-baseline, or non-positive-baseline input fails closed with a reason and never interpolates, zero-fills, mixes seasonal/real values, or falls back to GDP/2020 rollback.
 - **AND** the Plan37 monthly raw and normal/extension 12MA compatibility fields remain internal and are not emitted by the NewGraph comparison registry or the Plan40 quarterly public projection.
-- **AND** NewGraph Plan49 E2E waits for the target section, `LazyMount` chart wrapper, Recharts surface, and visible SVG geometry by count/visibility after navigation; tooltip interaction obtains the rendered surface bounding box before hovering. It does not rely on `__MOUNT_ALL__` as the readiness contract.
-- **AND** NewGraph table/CSV parity covers CPI, salary, and Plan49 `消費(総合)`. Plan40 owns the integrated nominal quarterly CTI output and its graph/table/CSV parity; internal Plan37 monthly compatibility fields do not enter the comparison registry.
+- **AND** any future NewGraph browser regression waits for the target section, `LazyMount` chart wrapper, Recharts surface, and visible SVG geometry by count/visibility after navigation; tooltip interaction obtains the rendered surface bounding box before hovering. It does not rely on `__MOUNT_ALL__` as the readiness contract.
+- **AND** NewGraph table/CSV parity is part of the public projection contract, but is not currently covered by a browser-mode regression. Plan40 owns the integrated nominal quarterly CTI output and its graph/table/CSV parity; internal Plan37 monthly compatibility fields do not enter the comparison registry.
 - **AND** the NewGraph monthly comparison contract uses the dedicated Plan49 key `消費(総合)` and excludes the retired Plan37 normal/extension keys; the retired `CTIミクロ四半期系列（名目）` is not substituted for the monthly comparison series.
 
 #### Scenario Plan49: NewGraph comparison registry parity

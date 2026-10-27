@@ -1,12 +1,18 @@
 import { spawn } from "node:child_process";
 import { createServer } from "node:net";
 import { setTimeout as delay } from "node:timers/promises";
-import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { randomUUID } from "node:crypto";
-import { assertSelectedBrowserCasesPassed } from "./browser-selection-validation.mjs";
+import {
+  PIXEL7_BROWSER_MODE_FULL_NAMES,
+  PIXEL7_REQUIRED_INTERACTION_FULL_NAMES,
+} from "./browser-mode-case-manifest.mjs";
+import { preserveBrowserModeReport } from "./browser-mode-report-output.mjs";
+import { assertBrowserModeProjectPassed } from "./browser-mode-report-validation.mjs";
+import { assertBrowserRouteBuildCurrent } from "./browser-route-build-fingerprint.mjs";
 
 const PROJECT_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const NEXT_CLI = path.join(PROJECT_ROOT, "node_modules", "next", "dist", "bin", "next");
@@ -18,96 +24,17 @@ const BROWSER_API_PORT_START = 63_000;
 const BROWSER_API_PORT_END = 63_999;
 const BUILD_ID = path.join(PROJECT_ROOT, ".next", "BUILD_ID");
 const CTI_ARTIFACT_ROOT = path.join(PROJECT_ROOT, "data", "source", "official-cti-2025-long-term");
-const VITEST_CONFIGS = {
-  all: [
-    "tests/config/browser/vitest.browser.aggregate-chromium.config.ts",
-    "tests/config/browser/vitest.browser.webkit.config.ts",
-  ],
-  "phase6-b01": ["tests/config/browser/vitest.browser.phase6-b01.config.ts"],
-  "phase6-b02": ["tests/config/browser/vitest.browser.phase6-b02.config.ts"],
-  "phase6-b03": ["tests/config/browser/vitest.browser.phase6-b03.config.ts"],
-  "phase6-b04": ["tests/config/browser/vitest.browser.phase6-b04.config.ts"],
-  "phase6-b05": ["tests/config/browser/vitest.browser.phase6-b05.config.ts"],
-  "phase6-b06": ["tests/config/browser/vitest.browser.phase6-b06.config.ts"],
-  "phase6-b07": ["tests/config/browser/vitest.browser.phase6-b07.config.ts"],
-  "phase6-b08": ["tests/config/browser/vitest.browser.phase6-b08.config.ts"],
-  "phase6-b09": ["tests/config/browser/vitest.browser.phase6-b09.config.ts"],
-  "phase6-b10": ["tests/config/browser/vitest.browser.phase6-b10.config.ts"],
-  "phase6-b11": ["tests/config/browser/vitest.browser.phase6-b11.config.ts"],
-  "phase6-b12": ["tests/config/browser/vitest.browser.phase6-b12.config.ts"],
-  "phase6-b13": ["tests/config/browser/vitest.browser.phase6-b13.config.ts"],
-  "phase6-b14": ["tests/config/browser/vitest.browser.phase6-b14.config.ts"],
-};
-
+const VITEST_CONFIG = "tests/config/browser/vitest.browser.config.ts";
 function parseRunnerArgs(args) {
   const profileJson = args.includes("--profile-json");
-  const selectionArg = args.find((arg) => arg.startsWith("--selection-file="));
-  const selectors = args.filter((arg) => arg !== "--profile-json" && arg !== selectionArg);
-  if (selectionArg && selectors.length)
-    throw new Error("--selection-file cannot be combined with --only");
-  if (selectionArg) {
-    const selectionFile = path.resolve(selectionArg.slice("--selection-file=".length));
-    const selection = JSON.parse(readFileSync(selectionFile, "utf8"));
-    if (!selection || typeof selection !== "object" || Array.isArray(selection))
-      throw new Error("Browser selection must be a config-to-files object.");
-    if (Object.keys(selection).length === 0)
-      throw new Error("Browser selection must contain at least one config and test.");
-    const allowedConfigs = new Set(VITEST_CONFIGS.all);
-    for (const [config, files] of Object.entries(selection)) {
-      if (!allowedConfigs.has(config) || !Array.isArray(files) || files.length === 0)
-        throw new Error(`Invalid browser selection for ${config}.`);
-      for (const entry of files) {
-        if (
-          !entry ||
-          typeof entry.file !== "string" ||
-          !Array.isArray(entry.names) ||
-          !entry.names.length
-        )
-          throw new Error(`Invalid browser selection entry for ${config}.`);
-        if (!VITEST_CONFIGS.all.includes(config))
-          throw new Error(`Unknown browser config: ${config}`);
-        if (!entry.file.startsWith("tests/browser-mode/") || entry.file.includes(".."))
-          throw new Error(`Unsafe browser test path: ${entry.file}`);
-        if (entry.names.some((name) => typeof name !== "string" || !name.length))
-          throw new Error(`Invalid test name for ${entry.file}.`);
-        if (new Set(entry.names).size !== entry.names.length)
-          throw new Error(`Duplicate test name for ${entry.file}.`);
-      }
-    }
-    return { configs: Object.keys(selection), profileJson, selection };
-  }
-  if (selectors.length === 0) return { configs: VITEST_CONFIGS.all, profileJson };
-  if (selectors.length === 1 && selectors[0] === "--only=phase6-b01")
-    return { configs: VITEST_CONFIGS["phase6-b01"], profileJson };
-  if (selectors.length === 1 && selectors[0] === "--only=phase6-b02")
-    return { configs: VITEST_CONFIGS["phase6-b02"], profileJson };
-  if (selectors.length === 1 && selectors[0] === "--only=phase6-b03")
-    return { configs: VITEST_CONFIGS["phase6-b03"], profileJson };
-  if (selectors.length === 1 && selectors[0] === "--only=phase6-b04")
-    return { configs: VITEST_CONFIGS["phase6-b04"], profileJson };
-  if (selectors.length === 1 && selectors[0] === "--only=phase6-b05")
-    return { configs: VITEST_CONFIGS["phase6-b05"], profileJson };
-  if (selectors.length === 1 && selectors[0] === "--only=phase6-b06")
-    return { configs: VITEST_CONFIGS["phase6-b06"], profileJson };
-  if (selectors.length === 1 && selectors[0] === "--only=phase6-b07")
-    return { configs: VITEST_CONFIGS["phase6-b07"], profileJson };
-  if (selectors.length === 1 && selectors[0] === "--only=phase6-b08")
-    return { configs: VITEST_CONFIGS["phase6-b08"], profileJson };
-  if (selectors.length === 1 && selectors[0] === "--only=phase6-b09")
-    return { configs: VITEST_CONFIGS["phase6-b09"], profileJson };
-  if (selectors.length === 1 && selectors[0] === "--only=phase6-b10")
-    return { configs: VITEST_CONFIGS["phase6-b10"], profileJson };
-  if (selectors.length === 1 && selectors[0] === "--only=phase6-b11")
-    return { configs: VITEST_CONFIGS["phase6-b11"], profileJson };
-  if (selectors.length === 1 && selectors[0] === "--only=phase6-b12")
-    return { configs: VITEST_CONFIGS["phase6-b12"], profileJson };
-  if (selectors.length === 1 && selectors[0] === "--only=phase6-b13")
-    return { configs: VITEST_CONFIGS["phase6-b13"], profileJson };
-  if (selectors.length === 1 && selectors[0] === "--only=phase6-b14")
-    return { configs: VITEST_CONFIGS["phase6-b14"], profileJson };
-  throw new Error(
-    "Usage: node scripts/run-next-route-poc.mjs [--profile-json] [--only=phase6-b01|phase6-b02|phase6-b03|phase6-b04|phase6-b05|phase6-b06|phase6-b07|phase6-b08|phase6-b09|phase6-b10|phase6-b11|phase6-b12|phase6-b13|phase6-b14]",
-  );
+  const projects = args.filter((arg) => arg.startsWith("--project="));
+  const unknown = args.filter((arg) => arg !== "--profile-json" && !arg.startsWith("--project="));
+  if (unknown.length || projects.length > 1)
+    throw new Error("Usage: node scripts/run-next-route-poc.mjs --project=pixel7 [--profile-json]");
+  const project = projects[0]?.slice("--project=".length) ?? "pixel7";
+  if (project !== "pixel7")
+    throw new Error("The production route runner accepts only the pixel7 project.");
+  return { config: VITEST_CONFIG, project, profileJson };
 }
 
 function createProfileJsonOutputs(configs) {
@@ -128,6 +55,8 @@ function parsePort(rawPort) {
   if (port !== undefined && (!Number.isInteger(port) || port < 1024 || port > 65535)) {
     throw new Error("NEXT_ROUTE_POC_PORT must be an integer between 1024 and 65535.");
   }
+  if (port !== undefined && port !== 3001)
+    throw new Error("NEXT_ROUTE_POC_PORT may only be set to the approved 127.0.0.1 port 3001.");
   return port;
 }
 
@@ -275,7 +204,11 @@ function handleSignal(signal) {
   receivedSignal = signal;
   shutdownController.abort(signal);
   const exitCode = signal === "SIGINT" ? 130 : 143;
-  void Promise.all([...activeChildren].map(stopChild)).finally(() => {
+  void Promise.allSettled([...activeChildren].map(stopChild)).then((results) => {
+    for (const result of results) {
+      if (result.status === "rejected")
+        console.error(`[browser-mode] cleanup failed after ${signal}: ${result.reason}`);
+    }
     process.exitCode = exitCode;
   });
 }
@@ -349,7 +282,13 @@ async function startNextServer(port) {
     }
     throw new Error(`next start did not serve the expected dashboard before timeout. ${output}`);
   } catch (error) {
-    await stopChild(child);
+    try {
+      await stopChild(child);
+    } catch (cleanupError) {
+      console.error(
+        `[browser-mode] Next cleanup failed after startup error: ${cleanupError instanceof Error ? cleanupError.message : cleanupError}`,
+      );
+    }
     throw error;
   }
 }
@@ -371,11 +310,7 @@ async function startWithAvailablePort(explicitPort) {
   throw new Error("Could not start the Next route PoC after allocating fresh loopback ports.");
 }
 
-function escapeRegexLiteral(value) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-function runVitestConfig(port, config, timeoutMs, browserApiPort, profileJsonPath, selectedFile) {
+function runVitestConfig(port, config, project, timeoutMs, browserApiPort, profileJsonPath) {
   return new Promise((resolve, reject) => {
     try {
       throwIfInterrupted();
@@ -384,41 +319,24 @@ function runVitestConfig(port, config, timeoutMs, browserApiPort, profileJsonPat
       return;
     }
     const startedAt = Date.now();
-    const selectionResultPath = selectedFile
-      ? path.join(os.tmpdir(), `next-route-selection-${process.pid}-${randomUUID()}.json`)
-      : undefined;
+    const reportPath = path.join(
+      os.tmpdir(),
+      `next-route-report-${process.pid}-${randomUUID()}.json`,
+    );
     console.log(`[browser-mode] start ${config}`);
     const childEnv = { ...process.env, NEXT_ROUTE_POC_PORT: String(port) };
-    delete childEnv.NEXT_ROUTE_POC_BROWSER_API_PORT;
-    if (browserApiPort !== undefined) {
-      childEnv.NEXT_ROUTE_POC_BROWSER_API_PORT = String(browserApiPort);
-    }
-    const vitestArgs = [VITEST_CLI, "run", "--config", config];
-    if (selectedFile) {
-      const pattern = `^(?:${selectedFile.names.map(escapeRegexLiteral).join("|")})$`;
-      // Preserve each config's built-in browser-specific title filter. Vitest's
-      // CLI testNamePattern replaces the configured pattern instead of composing it.
-      const constrainedPattern =
-        config === "tests/config/browser/vitest.browser.webkit.config.ts"
-          ? `(?=.*webkit)${pattern}`
-          : config === "tests/config/browser/vitest.browser.aggregate-chromium.config.ts"
-            ? pattern
-            : `^(?!.*-webkit)(?:${selectedFile.names.map(escapeRegexLiteral).join("|")})$`;
-      vitestArgs.push("--testNamePattern", constrainedPattern, selectedFile.file);
-      vitestArgs.push(
-        "--reporter=default",
-        "--reporter=json",
-        `--outputFile.json=${selectionResultPath}`,
-      );
-    }
-    if (profileJsonPath) {
-      console.log(`[browser-mode] JSON profile ${config} -> ${profileJsonPath}`);
-      vitestArgs.push(
-        "--reporter=default",
-        "--reporter=json",
-        `--outputFile.json=${profileJsonPath}`,
-      );
-    }
+    childEnv.VITEST_BROWSER_API_PORT = String(browserApiPort);
+    const vitestArgs = [
+      VITEST_CLI,
+      "run",
+      "--config",
+      config,
+      `--project=${project}`,
+      "--reporter=default",
+      "--reporter=json",
+      `--outputFile.json=${reportPath}`,
+    ];
+    if (profileJsonPath) console.log(`[browser-mode] JSON profile ${config} -> ${profileJsonPath}`);
     const child = spawnManaged(process.execPath, vitestArgs, {
       cwd: PROJECT_ROOT,
       env: childEnv,
@@ -426,23 +344,49 @@ function runVitestConfig(port, config, timeoutMs, browserApiPort, profileJsonPat
     });
     let settled = false;
     let timedOut = false;
-    const finish = (code) => {
+    const finish = async (code) => {
       if (settled) return;
       settled = true;
       clearTimeout(timeout);
       let finalCode = code;
-      if (code === 0 && selectedFile && selectionResultPath) {
+      if (existsSync(reportPath) && process.env.BROWSER_MODE_REPORT_PATH) {
         try {
-          const report = JSON.parse(readFileSync(selectionResultPath, "utf8"));
-          assertSelectedBrowserCasesPassed(report, selectedFile.names);
+          await preserveBrowserModeReport(reportPath, process.env.BROWSER_MODE_REPORT_PATH);
         } catch (error) {
           console.error(
-            `[browser-mode] could not verify selected test results for ${selectedFile.file}: ${error instanceof Error ? error.message : error}`,
+            `[browser-mode] could not preserve requested Vitest JSON report: ${error instanceof Error ? error.message : error}`,
           );
           finalCode = 1;
         }
       }
-      if (selectionResultPath) rmSync(selectionResultPath, { force: true });
+      if (code === 0) {
+        try {
+          const report = JSON.parse(readFileSync(reportPath, "utf8"));
+          const fullNames = assertBrowserModeProjectPassed(
+            report,
+            "tests/browser-mode/pixel7.browser.test.tsx",
+            PIXEL7_BROWSER_MODE_FULL_NAMES,
+            PIXEL7_REQUIRED_INTERACTION_FULL_NAMES,
+          );
+          console.log(
+            `[browser-mode] validated ${fullNames.length} pixel7 cases: ${JSON.stringify(fullNames)}`,
+          );
+          if (profileJsonPath)
+            writeFileSync(profileJsonPath, `${JSON.stringify(report, null, 2)}\n`);
+        } catch (error) {
+          console.error(
+            `[browser-mode] could not verify the full ${project} project: ${error instanceof Error ? error.message : error}`,
+          );
+          finalCode = 1;
+        }
+      }
+      try {
+        rmSync(reportPath, { force: true });
+      } catch (error) {
+        console.error(
+          `[browser-mode] could not remove temporary Vitest report: ${error instanceof Error ? error.message : error}`,
+        );
+      }
       console.log(
         `[browser-mode] finish ${config} elapsed=${((Date.now() - startedAt) / 1_000).toFixed(2)}s exit=${finalCode}`,
       );
@@ -453,7 +397,13 @@ function runVitestConfig(port, config, timeoutMs, browserApiPort, profileJsonPat
       console.error(
         `[browser-mode] timeout ${config} after ${timeoutMs}ms; terminating process group`,
       );
-      void stopChild(child).then(() => finish(124));
+      void stopChild(child).then(
+        () => finish(124),
+        (error) => {
+          console.error(`[browser-mode] cleanup failed after timeout: ${error}`);
+          finish(124);
+        },
+      );
     }, timeoutMs);
     child.once("error", (error) => {
       clearTimeout(timeout);
@@ -462,56 +412,48 @@ function runVitestConfig(port, config, timeoutMs, browserApiPort, profileJsonPat
         reject(error);
       }
     });
-    child.once("close", (code, signal) => finish(timedOut ? 124 : vitestExitCode(code, signal)));
+    child.once("close", (code, signal) => {
+      void finish(timedOut ? 124 : vitestExitCode(code, signal));
+    });
   });
 }
 
-async function runVitest(port, configs, timeoutMs, profileJson, selection) {
+async function runVitest(port, config, project, timeoutMs, profileJson) {
   throwIfInterrupted();
-  const browserApiPorts = configs.length > 1 ? await allocateRunLocalBrowserApiPorts(configs) : [];
+  const configs = [config];
+  const browserApiPorts = await allocateRunLocalBrowserApiPorts(configs);
   const profileOutputs = profileJson ? createProfileJsonOutputs(configs) : [];
   throwIfInterrupted();
-  for (const [index, config] of configs.entries()) {
-    throwIfInterrupted();
-    const profileJsonPath = profileOutputs.find((output) => output.config === config)?.file;
-    const selectedFiles = selection?.[config];
-    for (const selectedFile of selectedFiles ?? [undefined]) {
-      const code = await runVitestConfig(
-        port,
-        config,
-        timeoutMs,
-        browserApiPorts[index],
-        profileJsonPath,
-        selectedFile,
-      );
-      if (code !== 0) return code;
-    }
-  }
-  return 0;
+  const profileJsonPath = profileOutputs.find((output) => output.config === config)?.file;
+  return runVitestConfig(port, config, project, timeoutMs, browserApiPorts[0], profileJsonPath);
 }
 
 async function main() {
   throwIfInterrupted();
-  const { configs, profileJson, selection } = parseRunnerArgs(process.argv.slice(2));
-  if (!existsSync(BUILD_ID)) {
-    throw new Error("Next route PoC requires a production build. Run `pnpm run build` first.");
-  }
+  const { config, project, profileJson } = parseRunnerArgs(process.argv.slice(2));
+  if (!existsSync(BUILD_ID))
+    throw new Error("Next route tests require a production build. Run `pnpm run build` first.");
+  await assertBrowserRouteBuildCurrent();
 
   const explicitPort = parsePort(process.env.NEXT_ROUTE_POC_PORT);
   const vitestTimeoutMs = parseVitestTimeout(process.env.NEXT_ROUTE_POC_VITEST_TIMEOUT_MS);
   throwIfInterrupted();
   const server = await startWithAvailablePort(explicitPort);
+  let primaryError;
   try {
-    process.exitCode = await runVitest(
-      server.port,
-      configs,
-      vitestTimeoutMs,
-      profileJson,
-      selection,
-    );
-  } finally {
-    await stopChild(server.child);
+    process.exitCode = await runVitest(server.port, config, project, vitestTimeoutMs, profileJson);
+  } catch (error) {
+    primaryError = error;
   }
+  try {
+    await stopChild(server.child);
+  } catch (cleanupError) {
+    console.error(
+      `[browser-mode] Next server cleanup failed: ${cleanupError instanceof Error ? cleanupError.message : cleanupError}`,
+    );
+    if (!primaryError) primaryError = cleanupError;
+  }
+  if (primaryError) throw primaryError;
 }
 
 main().catch((error) => {

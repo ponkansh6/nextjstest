@@ -173,7 +173,7 @@ fi
     PREPUSH_PROFILE: "changed",
   });
   const docsOnlyLog = readFileSync(log, "utf8").slice(docsOnlyLogStart);
-  for (const codeGate of ["exec vitest related", "run test:all", "run test:coverage"]) {
+  for (const codeGate of ["exec vitest related", "run test:all"]) {
     expect(
       codeGate === "exec vitest related"
         ? !docsOnlyLog.split(/\r?\n/).some((line) => line.startsWith(`${codeGate} `))
@@ -181,22 +181,30 @@ fi
       `docs/assets-only push ran ${codeGate}`,
     );
   }
+  expect(
+    !hasExactCommand(docsOnlyLog, "run test:coverage"),
+    "docs/assets-only push ran full test coverage",
+  );
   const docsOnlyGates = docsOnlyLog.split(/\r?\n/);
   expect(
-    hasExactCommand(docsOnlyLog, "run test:browser:prepush:component"),
-    "docs/assets-only push skipped the pre-push component smoke case",
+    hasExactCommand(docsOnlyLog, "run test:browser:all"),
+    "docs/assets-only push skipped the complete Browser Mode suite",
   );
   expect(hasExactCommand(docsOnlyLog, "run build"), "docs/assets-only push skipped build");
   expect(
-    hasExactCommand(docsOnlyLog, "run test:browser:next-route-poc:prepush:built"),
-    "docs/assets-only push skipped the pre-push production-route cases",
+    !hasExactCommand(docsOnlyLog, "run test:browser:standard") &&
+      !hasExactCommand(docsOnlyLog, "run test:browser:pixel7"),
+    "docs/assets-only push invoked a standalone Browser Mode project",
   );
   expect(
-    docsOnlyGates.indexOf("run test:browser:prepush:component") <
-      docsOnlyGates.indexOf("run build") &&
+    hasExactCommand(docsOnlyLog, "run measure:cache-e2e -- --skip-cache --port 3001"),
+    "docs/assets-only push skipped the startup-only Next server check",
+  );
+  expect(
+    docsOnlyGates.indexOf("run test:browser:all") < docsOnlyGates.indexOf("run build") &&
       docsOnlyGates.indexOf("run build") <
-        docsOnlyGates.indexOf("run test:browser:next-route-poc:prepush:built"),
-    "docs/assets-only push did not run the selected Browser Mode cases and build in order",
+        docsOnlyGates.indexOf("run measure:cache-e2e -- --skip-cache --port 3001"),
+    "docs/assets-only push did not run Browser All, build, and startup check in order",
   );
   git(["switch", "main"]);
   git(["merge", "--ff-only", "docs-assets"]);
@@ -254,9 +262,9 @@ fi
     "run lint:fast",
     "run type-check",
     "run test:coverage",
-    "run test:browser:prepush:component",
+    "run test:browser:all",
     "run build",
-    "run test:browser:next-route-poc:prepush:built",
+    "run measure:cache-e2e -- --skip-cache --port 3001",
     "run test:build-parity",
     "run security-check",
   ]) {
@@ -274,10 +282,10 @@ fi
   const fullBrowserFailureLogStart = readFileSync(log, "utf8").length;
   expectRejectedPush(
     ["origin", "full-browser-failure:main"],
-    "full-profile production-route Browser Mode failure did not block push",
+    "full-profile Browser Mode failure did not block push",
     {
       PREPUSH_PROFILE: "full",
-      HOOK_SMOKE_FAIL_GATE: "test:browser:next-route-poc:prepush:built",
+      HOOK_SMOKE_FAIL_GATE: "test:browser:all",
     },
   );
   expect(
@@ -286,14 +294,20 @@ fi
   );
   const fullBrowserFailureLog = readFileSync(log, "utf8").slice(fullBrowserFailureLogStart);
   expect(
-    hasExactCommand(fullBrowserFailureLog, "run test:browser:prepush:component"),
-    "full profile skipped component Browser Mode",
+    hasExactCommand(fullBrowserFailureLog, "run test:browser:all"),
+    "full profile skipped Browser Mode",
   );
   expect(
-    hasExactCommand(fullBrowserFailureLog, "run test:browser:next-route-poc:prepush:built"),
-    "full profile skipped production-route Browser Mode",
+    !hasExactCommand(fullBrowserFailureLog, "run test:browser:standard") &&
+      !hasExactCommand(fullBrowserFailureLog, "run test:browser:pixel7"),
+    "full profile invoked a standalone Browser Mode project",
   );
-  for (const laterGate of ["run test:build-parity", "run security-check"]) {
+  for (const laterGate of [
+    "run build",
+    "run measure:cache-e2e -- --skip-cache --port 3001",
+    "run test:build-parity",
+    "run security-check",
+  ]) {
     expect(
       !hasExactCommand(fullBrowserFailureLog, laterGate),
       `full profile continued to ${laterGate} after Browser Mode failed`,
@@ -321,7 +335,7 @@ fi
   expectRejectedPush(
     ["origin", "changed:main"],
     "changed-profile Browser Mode failure did not block push",
-    { PREPUSH_PROFILE: "changed", HOOK_SMOKE_FAIL_GATE: "test:browser:prepush:component" },
+    { PREPUSH_PROFILE: "changed", HOOK_SMOKE_FAIL_GATE: "test:browser:all" },
     ({ stdout, stderr }) => {
       changedPushOutput = `stdout:\n${stdout}\nstderr:\n${stderr}`;
     },
@@ -341,21 +355,28 @@ fi
   );
   expect(
     changedBrowserFailureLog.includes("exec vitest related"),
-    `changed profile did not run a related test selection (PREPUSH_PROFILE=changed)\n` +
+    `changed profile did not run related-test selection (PREPUSH_PROFILE=changed)\n` +
       `HOOK_SMOKE_LOG:\n${changedBrowserFailureLog}\npush classifier/hook output:\n${changedPushOutput}`,
   );
+  const changedBrowserGates = changedBrowserFailureLog
+    .split(/\r?\n/)
+    .filter((line) => line === "run test:browser:all");
   expect(
-    hasExactCommand(changedBrowserFailureLog, "run test:browser:prepush:component"),
-    "changed profile skipped the pre-push component smoke case",
+    changedBrowserGates.length === 1 && changedBrowserGates[0] === "run test:browser:all",
+    "changed profile did not run the complete Browser Mode suite exactly once",
+  );
+  expect(
+    !hasExactCommand(changedBrowserFailureLog, "run test:browser:standard") &&
+      !hasExactCommand(changedBrowserFailureLog, "run test:browser:pixel7"),
+    "changed profile invoked a standalone Browser Mode project",
   );
   expect(
     !hasExactCommand(changedBrowserFailureLog, "run test:coverage"),
-    "changed profile ran full test coverage",
+    "changed profile ran full test coverage after the related-test selection",
   );
   for (const laterGate of [
-    "run test:coverage",
     "run build",
-    "run test:browser:next-route-poc:prepush:built",
+    "run measure:cache-e2e -- --skip-cache --port 3001",
     "run test:build-parity",
     "run security-check",
   ]) {
@@ -393,44 +414,40 @@ fi
     const fallbackLog = readFileSync(log, "utf8").slice(fallbackLogStart);
     expect(
       fallbackLog.includes("exec vitest related"),
-      `${relatedMode} selection did not run related tests`,
+      `${relatedMode} mode did not attempt related-test selection before fallback`,
     );
     expect(
       hasExactCommand(fallbackLog, "run test:coverage"),
-      `${relatedMode} selection did not fall back to the full profile`,
+      `${relatedMode} mode skipped static/unit validation`,
     );
     const browserRuns = fallbackLog
       .split(/\r?\n/)
-      .filter(
-        (line) =>
-          line === "run test:browser:prepush:component" ||
-          line === "run test:browser:next-route-poc:prepush:built",
-      ).length;
+      .filter((line) => line === "run test:browser:all").length;
     expect(
-      browserRuns === 2,
-      `${relatedMode} full fallback ran ${browserRuns} browser selection gates instead of two`,
+      browserRuns === 1,
+      `${relatedMode} profile ran ${browserRuns} aggregate Browser Mode gates instead of one`,
     );
     const fallbackGates = fallbackLog.split(/\r?\n/);
     let previousFallbackGateIndex = -1;
     for (const gate of [
       "run test:coverage",
-      "run test:browser:prepush:component",
+      "run test:browser:all",
       "run build",
-      "run test:browser:next-route-poc:prepush:built",
+      "run measure:cache-e2e -- --skip-cache --port 3001",
       "run test:build-parity",
       "run security-check",
     ]) {
       const gateIndex = fallbackGates.indexOf(gate);
-      expect(gateIndex >= 0, `${relatedMode} full fallback did not execute ${gate}`);
+      expect(gateIndex >= 0, `${relatedMode} profile did not execute ${gate}`);
       expect(
         gateIndex > previousFallbackGateIndex,
-        `${relatedMode} full fallback ran ${gate} out of order`,
+        `${relatedMode} profile ran ${gate} out of order`,
       );
       previousFallbackGateIndex = gateIndex;
     }
     expect(
       remoteRef("main") === git(["rev-parse", branch]),
-      `${relatedMode} full fallback did not update remote main`,
+      `${relatedMode} profile did not update remote main`,
     );
     git(["switch", "main"]);
     git(["merge", "--ff-only", branch]);

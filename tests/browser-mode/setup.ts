@@ -1,5 +1,25 @@
 import { cleanup } from "@testing-library/react";
+import { page } from "vitest/browser";
 import { afterEach, beforeEach, vi } from "vitest";
+import { setBrowserTestSearchParams } from "./browser-search-params";
+
+const DEFAULT_VIEWPORT = "__vitestBrowserDefaultViewport__" as const;
+type ViewportWindow = Window & {
+  [DEFAULT_VIEWPORT]?: { width: number; height: number };
+};
+const defaultViewport = ((window as ViewportWindow)[DEFAULT_VIEWPORT] ??= {
+  width: window.innerWidth,
+  height: window.innerHeight,
+});
+
+vi.mock("next/navigation", () => ({
+  default: {},
+  useSearchParams: () =>
+    new URLSearchParams(
+      (globalThis as typeof globalThis & { __VITEST_BROWSER_SEARCH_PARAMS__?: string })
+        .__VITEST_BROWSER_SEARCH_PARAMS__ ?? "from=2020&to=2022",
+    ),
+}));
 
 function clearScriptVisibleCookies() {
   const cookieNames = document.cookie
@@ -32,11 +52,18 @@ function resetBrowserState() {
 beforeEach(() => {
   vi.clearAllMocks();
   resetBrowserState();
+  setBrowserTestSearchParams("from=2020&to=2022");
 });
 
-afterEach(() => {
+afterEach(async () => {
   cleanup();
   vi.restoreAllMocks();
   vi.clearAllMocks();
   resetBrowserState();
+  if (
+    window.innerWidth !== defaultViewport.width ||
+    window.innerHeight !== defaultViewport.height
+  ) {
+    await page.viewport(defaultViewport.width, defaultViewport.height);
+  }
 });

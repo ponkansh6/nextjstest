@@ -502,9 +502,10 @@ export const PINNED_RUNTIME_INPUTS = Object.freeze({
 // `node scripts/data-refresh/print-runtime-project-hashes.mjs` to display both the pinned value
 // and candidate SHA-256 for this exact list. Review candidates and update this map manually.
 export const PINNED_PROJECT_FILES = Object.freeze({
-  "package.json": "29d885ffb23b3bcfde6348e171a2e880e2725b699ca94df07720486efa4e7d90",
+  // Plan 66 updates Browser Mode package commands and excludes archived probe configs from type-check.
+  "package.json": "1e5125a992ec54a76651ae09c5d775076ef2fae1dff581883c8bca50f15e8015",
   "pnpm-lock.yaml": "b5961f2f3a27b6a89530ef658b333a19f3eeffea7fa8df4b738b7bb988932b13",
-  "tsconfig.json": "9f3692ef19cf5112726f18e7b095c4b6e53eac251d73687c79135e67f35889c7",
+  "tsconfig.json": "d4ed4f4b9419be9bf30b5c782a833736d8dcf3ec28af6c9a3dda63540e13bfed",
   "vitest.config.ts": "a58b5bc2a77e925468b1383499c92b65b16b677b0440585b55bb831c23b582ca",
   "scripts/fetch-cti-basic-series-2025.mjs":
     "5330a7b1ec343d4cf7ada3a8f568ad9a1f2189d2112621f99ee6010424471df0",

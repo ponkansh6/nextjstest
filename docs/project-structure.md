@@ -43,10 +43,10 @@
 ## root 設定・コマンドの参照台帳
 
 - `package.json` は `dev`/`build`/`start`、`test:all`/`test:coverage`、`lint:fast`、`type-check` 等を定義します。データ・分析の入口として `data:refresh`、`cti-adjusted:analysis`、`cti-adjusted:evaluate-residual-naturalness` を登録します。外部利用がないことを確認したため、旧 `plan39:*` command aliasesは削除しました。
-- 標準 Vitest 設定は `vitest.config.ts`。Tracked browser設定20本は `tests/config/browser/` に配置し、`test:browser:component:all` とbrowser runnerから参照されます。各設定は `root: path.resolve(__dirname, "../../..")` でrepository rootを固定し、alias・include・setup・route command importを同じroot基準に保ちます。ignoredの `vitest.browser.phase6-aggregate-chromium.config.ts` はrootに保持し、変更していません。
+- 標準 Vitest 設定は `vitest.config.ts`。active Browser Mode設定は `tests/config/browser/vitest.browser.config.ts` の2 inline projectsで、standardとpixel7が各1 test fileを選択します。pre-pushは `test:browser:all` を一つのaggregate gateとして実行し、このscriptが `test:browser:standard` → `test:browser:pixel7` を順に呼びます。旧phase設定はactive Browser Mode入口では使いません。
 - `vitest.config.ts` のcoverage契約は include `src/**/*.{ts,tsx}` と `server/**/*.ts`、`perFile: true`、statements/branches/functions/lines 各100%です。明示除外は `**/*.d.ts`、`src/types/data.ts`、`src/types/index.ts`、`src/app/layout.tsx`、`server/lib/ctiAdjustedSensitivity.ts`、`src/app/components/SectionTabs.tsx`、`src/app/components/LazyMount.tsx` です。Plan40の旧年次表示用 `CtiAdjustedSeriesSection.tsx` は未使用コンポーネントとして削除し、coverage対象からも除外を外しました。設定移動・統合時も対象、閾値、除外を維持し、漏れがないことを照合します。
 - `tests/vitest.ui.config.ts` と `tests/vitest.integration.config.ts` は `tests/` 内にあります。package script は `test:ui`、`test:prod`、`test:build-parity` でこれらを指定します。
-- `.github/workflows/main.yml` は `pnpm type-check`、`pnpm lint:fast`、`pnpm test:all`、`pnpm build`、built route test等を実行し、後段でcoverage/build/browser/build-parity/E2E/productionを記録します。設定・scriptを動かす際はworkflowとHuskyを含む全呼出元を確認します。
+- `.github/workflows/main.yml` は `pnpm type-check`、`pnpm lint:fast`、`pnpm test:all`、`pnpm run test:browser:all` を実行します。Browser Mode all entryはstandard suiteの後にPixel 7 suiteを実行し、Next buildは含みません。設定・script変更時はworkflowとHuskyを含む全呼出元を確認します。
 
 ## 移動候補の判定と手順
 
@@ -79,11 +79,11 @@
 
 ### Stage 2/3 の判断
 
-**Stage 2 — browser config群:** tracked 20本を `tests/config/browser/` に移動し、`package.json`、3 runner、selection JSON、unit test、active OpenSpec/specとroute POC文書の参照を更新しました。各configは `root: path.resolve(__dirname, "../../..")` を指定し、`@`/`@server` aliasとroot相対のinclude/setup/excludeを維持します。configからのroute command importは新しいconfig位置に合わせて更新しました。ignoredの `vitest.browser.phase6-aggregate-chromium.config.ts` はrootに残し、読み書き・移動していません。ignoredの `results/plan46/phase4/vitest-selector-route-probe.config.ts` はimportだけを新しいaggregate config pathへ更新し、`results/` 内に保持しています。更新前copyは `/tmp/vitest-selector-route-probe.config.ts.before-browser-config-move` に保存しました。`vitest.config.ts` はunit baseとしてrootに維持しています。`.github/workflows/main.yml` とHusky hookは間接runner名を通じた呼出しのため変更不要です。検証結果: focused unit 26 passed; `pnpm test:browser:component:all` は23 files、76 passed、6 skipped; `pnpm test:browser:next-route-poc:prepush:built` と `pnpm test:browser:prepush:component` はexit 0; WebKitおよびnext-route configの `vitest list` はexit 0; `pnpm lint:fast` はexit 0。初回 `pnpm type-check` はignored Plan46 probeの旧importを検出し、probe pathを更新した後の `pnpm type-check` はexit 0でした。
+**Stage 2 — browser config群 (historical record):** 2026-10-27以前にtracked Browser Mode設定を `tests/config/browser/` へ移した記録です。ここに記載される当時のconfig数、選択JSON、選択runner、検証件数は現在の契約ではありません。現在は `vitest.browser.config.ts` のstandard/pixel7 inline projects、`test:browser:standard` / `test:browser:pixel7` / `test:browser:all`、全件report検証を使い、JEV browser selectionは実行経路から外しました。`results/` の過去証跡とdated logsは履歴として保持します。
 
 **Stage 3 — `scripts/data-refresh/`:** 19 trackedのこの群を対象候補として選び、静的根拠として `package.json` の `data:refresh` entry、7 test modulesの直接import、runnerの `process.cwd()` default、`.data-refresh` staging/report/transaction、registryで固定された `data/source`、OpenSpec/Plan52の契約を記録しました。**現在の用途別境界を維持する判断でStage 3完了**です。CI/docs全経路と、I/Oや生成結果の実行比較を行ったとは主張しません。移動しないため移動後の同一性テスト・生成出力比較はN/Aです。将来移動する場合のcheck・focused tests・隔離入力による出力比較とrollback条件は候補台帳に残します。他のscript群は独立した保全・保留候補であり、Stage 3で移動したとは扱いません。
 
-Stage 1の優先候補だったbrowser config 21本（tracked 20 + ignored 1）のうち、tracked内訳 `aggregate-chromium`、`config`、`next-route`、`phase5-interactions`、`phase5-rendering`、`phase6-b01`〜`phase6-b14`、`webkit` は `tests/config/browser/` へ移動済みです。ignored `phase6-aggregate-chromium` はrootに維持しています。`vitest.config.ts` はbase configで別枠です。`scripts/ts_converters/` は20 tracked、standalone cwd jobsと固定 `data/source` I/O、設定除外・codemap、consumer migrationまでのmanual compatibility routeを確認し、現位置維持としました。callerと変換実行契約は未確認です。
+Stage 1の優先候補だったbrowser config 21本（tracked 20 + ignored 1）についての当時の記録です。tracked内訳 `aggregate-chromium`、`config`、`next-route`、`phase5-interactions`、`phase5-rendering`、`phase6-b01`〜`phase6-b14`、`webkit` は当時 `tests/config/browser/` へ移動済みでした。ignored `phase6-aggregate-chromium` は当時rootに維持していました。現在のactive入口・構成は上記Stage 2を参照してください。`vitest.config.ts` はbase configで別枠です。`scripts/ts_converters/` は20 tracked、standalone cwd jobsと固定 `data/source` I/O、設定除外・codemap、consumer migrationまでのmanual compatibility routeを確認し、現位置維持としました。callerと変換実行契約は未確認です。
 
 ## Plan 57 の実績と完了状況
 

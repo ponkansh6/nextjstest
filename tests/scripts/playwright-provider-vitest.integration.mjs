@@ -98,12 +98,12 @@ test(
       assertCommandSucceeded("persistent browser start", started);
       initialState = await readState(statePath);
 
-      const component = await run(
-        ["test:browser:server:run", "--", "pnpm", "test:browser:component:all"],
+      const standard = await run(
+        ["test:browser:server:run", "--", "pnpm", "test:browser:standard"],
         componentTimeoutMs,
       );
-      assertCommandSucceeded("full Chromium component Browser Mode suite", component, initialState);
-      await checkRunningSameInstance("component Browser Mode suite");
+      assertCommandSucceeded("standard Chromium Browser Mode suite", standard, initialState);
+      await checkRunningSameInstance("standard Browser Mode suite");
 
       const focused = await run(
         [

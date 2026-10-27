@@ -373,41 +373,75 @@ printf 'reasons=%s\\n' "\${PUSH_IMPACT_REASONS[*]-}"`,
     fs.rmSync(repo, { recursive: true, force: true });
   });
 
-  it("connects the hook to the filtered candidates and keeps unsafe diff classes conservative", () => {
+  it("preserves push profile selection and runs the aggregate Browser Mode gate", () => {
     const hook = fs.readFileSync(path.resolve(process.cwd(), ".husky/pre-push.bash"), "utf8");
     const packageScripts = JSON.parse(
       fs.readFileSync(path.resolve(process.cwd(), "package.json"), "utf8"),
     ).scripts as Record<string, string>;
-    const routeSelection = JSON.parse(
-      fs.readFileSync(
-        path.resolve(process.cwd(), "scripts/prepush-browser-route-selection.json"),
-        "utf8",
-      ),
-    ) as Record<string, Array<{ file: string; names: string[] }>>;
-    expect(hook).toContain('"${PUSH_IMPACT_RELATED_PATHS[@]}"');
-    expect(hook).toContain("pnpm run test:browser:prepush:component");
-    expect(hook).toContain("pnpm run test:browser:next-route-poc:prepush:built");
-    expect(hook).toContain("pnpm run test:browser:component:all");
-    expect(hook).toContain("pnpm run test:browser:next-route-poc:built:all");
-    expect(packageScripts["test:browser:prepush:component"]).toBe(
-      "node scripts/run-prepush-component-browser.mjs",
+    expect(hook).toContain('hook_gate "test:browser:all" pnpm run test:browser:all');
+    expect(hook).not.toContain("pnpm run test:browser:standard");
+    expect(hook).not.toContain("pnpm run test:browser:pixel7");
+    expect(hook).toContain("pnpm run measure:cache-e2e -- --skip-cache --port 3001");
+    expect(hook).not.toContain("test:browser:pixel7:built");
+    expect(hook).not.toContain("pnpm run test:browser:prepush:component");
+    expect(hook).not.toContain("test:browser:next-route-poc:prepush:built");
+    expect(hook).toContain("run_changed_tests() {");
+    expect(hook).toContain("PUSH_IMPACT_HAS_RELATED_INPUT");
+    expect(hook).toContain(
+      'if [[ "$PREPUSH_PROFILE_NORMALIZED" == full || "${PUSH_IMPACT_FULL}" == 1 ]]',
     );
-    expect(
-      routeSelection["tests/config/browser/vitest.browser.aggregate-chromium.config.ts"],
-    ).toHaveLength(6);
-    expect(
-      Object.values(routeSelection)
-        .flat()
-        .every((entry) => entry.names.length === 1),
-    ).toBe(true);
-    expect(packageScripts["test:browser:component:all"]).toBe(
-      "vitest run --config tests/config/browser/vitest.browser.config.ts",
+    expect(packageScripts["test:browser:standard"]).toBe(
+      "node scripts/run-browser-mode-project.mjs --project=standard",
     );
-    expect(packageScripts["test:browser:next-route-poc:built:all"]).toBe(
-      "node scripts/run-next-route-poc.mjs",
+    expect(packageScripts["test:browser:pixel7"]).toBe(
+      "node scripts/run-browser-mode-project.mjs --project=pixel7",
+    );
+    expect(packageScripts["test:browser:all"]).toBe(
+      "pnpm run test:browser:standard && pnpm run test:browser:pixel7",
     );
     expect(hook).not.toContain("jev");
+    const fullProfileStart = hook.indexOf("run_full_profile() {");
+    const fullProfileEnd = hook.indexOf(
+      '\nif [[ "$PREPUSH_PROFILE_NORMALIZED" == full || "${PUSH_IMPACT_FULL}" == 1 ]]; then',
+      fullProfileStart,
+    );
+    const fullProfile = hook.slice(fullProfileStart, fullProfileEnd);
+    const sequence = [
+      "test:coverage",
+      "test:browser:all",
+      'hook_gate "build"',
+      'hook_gate "Next server startup check" pnpm run measure:cache-e2e -- --skip-cache --port 3001',
+      "test:build-parity",
+      "security-check",
+    ].map((token) => fullProfile.indexOf(token));
+    expect(sequence.every((index) => index >= 0)).toBe(true);
+    expect(sequence).toEqual([...sequence].sort((a, b) => a - b));
     expect(hook).toContain("run_full_profile");
+    const changedProfile = hook.slice(
+      hook.indexOf("run_changed_tests() {"),
+      hook.indexOf("run_full_profile() {"),
+    );
+    expect(changedProfile.indexOf("exec vitest related")).toBeGreaterThanOrEqual(0);
+    expect(changedProfile).toContain('hook_gate "test:browser:all" pnpm run test:browser:all');
+    expect(changedProfile).not.toContain("test:browser:standard");
+    expect(changedProfile).not.toContain("test:browser:pixel7");
+    expect(changedProfile).toContain("run_full_profile || return $");
+    expect(changedProfile).not.toContain('hook_gate "test:build-parity"');
+    expect(changedProfile).not.toContain('hook_gate "security-check"');
+
+    const selectiveProfile = hook.slice(
+      hook.indexOf("else\n  if ((PUSH_IMPACT_HAS_RELATED_INPUT))"),
+    );
+    const selectiveSequence = [
+      "run_changed_tests || exit $?",
+      'hook_gate "test:browser:all" pnpm run test:browser:all',
+      'hook_gate "build" pnpm run build',
+      'hook_gate "Next server startup check" pnpm run measure:cache-e2e -- --skip-cache --port 3001',
+    ].map((token) => selectiveProfile.indexOf(token));
+    expect(selectiveSequence.every((index) => index >= 0)).toBe(true);
+    expect(selectiveSequence).toEqual([...selectiveSequence].sort((a, b) => a - b));
+    expect(selectiveProfile).not.toContain('hook_gate "test:build-parity"');
+    expect(selectiveProfile).not.toContain('hook_gate "security-check"');
 
     const repo = setupImpactRepo();
     const base = execSync("git rev-parse HEAD", { cwd: repo, encoding: "utf8" }).trim();

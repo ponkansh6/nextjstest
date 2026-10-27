@@ -265,27 +265,28 @@ exit 0
     return calls.filter((call) => call === gate || call.startsWith(`${gate} -- `));
   }
 
-  it("runs related with the actual candidate array, then the seven representative pre-push browser checks", () => {
+  it("runs related tests and the aggregate Browser Mode gate for a changed source/test push", () => {
     const fixture = setupHookFixture();
     try {
       const result = runHook(fixture);
       const calls = fs.readFileSync(fixture.log, "utf8").trim().split("\n");
       expect(result.status).toBe(0);
-      expect(
-        calls.some(
-          (call) => call.startsWith("exec vitest related") && call.includes("src/hook.ts"),
-        ),
-      ).toBe(true);
-      const componentCalls = callsForGate(calls, "run test:browser:prepush:component");
-      const routeCalls = callsForGate(calls, "run test:browser:next-route-poc:prepush:built");
-      expect(componentCalls).toEqual(["run test:browser:prepush:component"]);
+      expect(calls.some((call) => call.startsWith("exec vitest related"))).toBe(true);
+      const browserCalls = callsForGate(calls, "run test:browser:all");
+      expect(browserCalls).toEqual(["run test:browser:all"]);
       expect(calls).toContain("run build");
-      expect(routeCalls).toEqual(["run test:browser:next-route-poc:prepush:built"]);
+      expect(calls).not.toContain("run test:browser:standard");
+      expect(calls).not.toContain("run test:browser:pixel7");
       expect(calls).not.toContain("run test:e2e");
       expect(calls).not.toContain("run test:e2e:clean");
-      expect(calls.indexOf(componentCalls[0])).toBeLessThan(calls.indexOf("run build"));
-      expect(calls.indexOf("run build")).toBeLessThan(calls.indexOf(routeCalls[0]));
+      expect(calls.indexOf(browserCalls[0])).toBeLessThan(calls.indexOf("run build"));
+      expect(calls).toContain("run measure:cache-e2e -- --skip-cache --port 3001");
+      expect(calls.indexOf("run build")).toBeLessThan(
+        calls.indexOf("run measure:cache-e2e -- --skip-cache --port 3001"),
+      );
+      expect(calls).not.toContain("run test:coverage");
       expect(calls).not.toContain("run lint:fast");
+      expect(calls).not.toContain("run test:build-parity");
     } finally {
       fs.rmSync(fixture.repo, { recursive: true, force: true });
       fs.rmSync(fixture.bin, { recursive: true, force: true });
@@ -293,20 +294,19 @@ exit 0
   });
 
   it.each(["zero", "invalid", "missing", "fail"])(
-    "runs the seven representative pre-push browser checks exactly once for related %s",
+    "falls back to the full Browser Mode profile when related mode is %s",
     (mode) => {
       const fixture = setupHookFixture();
       try {
         const result = runHook(fixture, { MOCK_RELATED_MODE: mode });
         const calls = fs.readFileSync(fixture.log, "utf8").trim().split("\n");
         expect(result.status).toBe(0);
-        expect(result.output).toContain("fallback profile: full");
+        expect(result.output).toContain("fallback profile");
         expect(calls.filter((call) => call === "run lint:fast")).toHaveLength(1);
-        const componentCalls = callsForGate(calls, "run test:browser:prepush:component");
-        const routeCalls = callsForGate(calls, "run test:browser:next-route-poc:prepush:built");
-        expect(componentCalls).toEqual(["run test:browser:prepush:component"]);
+        const browserCalls = callsForGate(calls, "run test:browser:all");
+        expect(browserCalls).toEqual(["run test:browser:all"]);
         expect(calls.filter((call) => call === "run build")).toHaveLength(1);
-        expect(routeCalls).toEqual(["run test:browser:next-route-poc:prepush:built"]);
+        expect(calls).toContain("run measure:cache-e2e -- --skip-cache --port 3001");
       } finally {
         fs.rmSync(fixture.repo, { recursive: true, force: true });
         fs.rmSync(fixture.bin, { recursive: true, force: true });
@@ -324,30 +324,31 @@ exit 0
       expect(fullCalls).not.toContain("exec vitest related");
       expect(fullCalls).not.toContain("run test:e2e");
       expect(fullCalls).not.toContain("run test:e2e:clean");
-      const fullComponentCalls = callsForGate(fullCalls, "run test:browser:prepush:component");
-      const fullRouteCalls = callsForGate(
-        fullCalls,
-        "run test:browser:next-route-poc:prepush:built",
+      const fullBrowserCalls = callsForGate(fullCalls, "run test:browser:all");
+      expect(fullBrowserCalls).toEqual(["run test:browser:all"]);
+      expect(fullCalls.indexOf(fullBrowserCalls[0])).toBeGreaterThan(
+        fullCalls.indexOf("run test:coverage"),
       );
-      expect(fullComponentCalls).toEqual(["run test:browser:prepush:component"]);
-      expect(fullRouteCalls).toEqual(["run test:browser:next-route-poc:prepush:built"]);
-      expect(fullCalls.indexOf(fullComponentCalls[0])).toBeGreaterThan(
-        fullCalls.indexOf("run test:all"),
+      expect(fullCalls.indexOf(fullBrowserCalls[0])).toBeLessThan(fullCalls.indexOf("run build"));
+      expect(fullCalls.indexOf("run build")).toBeGreaterThan(
+        fullCalls.indexOf("run test:coverage"),
       );
-      expect(fullCalls.indexOf(fullComponentCalls[0])).toBeLessThan(fullCalls.indexOf("run build"));
-      expect(fullCalls.indexOf("run build")).toBeGreaterThan(fullCalls.indexOf("run test:all"));
-      expect(fullCalls.indexOf(fullRouteCalls[0])).toBeGreaterThan(fullCalls.indexOf("run build"));
+      expect(fullCalls.indexOf("run build")).toBeLessThan(
+        fullCalls.indexOf("run measure:cache-e2e -- --skip-cache --port 3001"),
+      );
 
       fs.writeFileSync(fixture.log, "");
       const failed = runHook(fixture, {
         PREPUSH_PROFILE: "full",
-        MOCK_FAIL_GATE: "test:browser:next-route-poc:prepush:built",
+        MOCK_FAIL_GATE: "test:browser:all",
       });
       expect(failed.status).toBe(23);
-      expect(failed.output).toContain("gate failed: test:browser:next-route-poc:prepush:built");
+      expect(failed.output).toContain("gate failed: test:browser:all");
       const failedCalls = fs.readFileSync(fixture.log, "utf8");
-      expect(failedCalls).toContain("run test:browser:prepush:component");
-      expect(failedCalls).toContain("run build");
+      expect(failedCalls).toContain("run test:browser:all");
+      expect(failedCalls).not.toContain("run test:browser:standard");
+      expect(failedCalls).not.toContain("run test:browser:pixel7");
+      expect(failedCalls).not.toContain("run build");
       expect(failedCalls).not.toContain("run test:build-parity");
       expect(failedCalls).not.toContain("run security-check");
     } finally {

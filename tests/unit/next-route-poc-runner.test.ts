@@ -4,146 +4,99 @@ import * as path from "node:path";
 
 const root = process.cwd();
 
-describe("production Browser Mode aggregate runner", () => {
-  it("uses two browser launches: combined Chromium, then WebKit", () => {
-    const runner = fs.readFileSync(path.join(root, "scripts/run-next-route-poc.mjs"), "utf8");
-    const allConfigs = runner.match(/all:\s*\[([\s\S]*?)\]/)?.[1];
+describe("Pixel 7 production-route Browser Mode runner", () => {
+  const runner = fs.readFileSync(path.join(root, "scripts/run-next-route-poc.mjs"), "utf8");
 
-    expect(allConfigs).toBeDefined();
-    expect([...allConfigs!.matchAll(/"([^"]+\.config\.ts)"/g)].map((match) => match[1])).toEqual([
-      "tests/config/browser/vitest.browser.aggregate-chromium.config.ts",
-      "tests/config/browser/vitest.browser.webkit.config.ts",
-    ]);
+  it("runs only the Pixel 7 inline project from the canonical Browser Mode config", () => {
+    expect(runner).toContain(
+      'const VITEST_CONFIG = "tests/config/browser/vitest.browser.config.ts"',
+    );
+    expect(runner).toContain('project !== "pixel7"');
+    expect(runner).toContain("`--project=${project}`");
+    expect(runner).toContain(
+      'assertBrowserModeProjectPassed(\n            report,\n            "tests/browser-mode/pixel7.browser.test.tsx"',
+    );
+    expect(runner).toContain("PIXEL7_BROWSER_MODE_FULL_NAMES");
   });
 
-  it("adds unique per-config Vitest JSON profiles only when requested", () => {
-    const runner = fs.readFileSync(path.join(root, "scripts/run-next-route-poc.mjs"), "utf8");
-
-    expect(runner).toContain('args.includes("--profile-json")');
-    expect(runner).toContain('"results", "plan45", "phase6", `profile-${runId}`');
-    expect(runner).toContain('`${path.basename(config, ".config.ts")}.json`');
-    const profileArgsStart = runner.indexOf("if (profileJsonPath)");
-    const childSpawnStart = runner.indexOf("const child = spawnManaged", profileArgsStart);
-    const profileArgsBlock = runner.slice(profileArgsStart, childSpawnStart);
-    expect(profileArgsStart).toBeGreaterThanOrEqual(0);
-    expect(childSpawnStart).toBeGreaterThan(profileArgsStart);
-    expect(profileArgsBlock).toContain('"--reporter=default"');
-    expect(profileArgsBlock).toContain('"--reporter=json"');
-    expect(profileArgsBlock).toContain("`--outputFile.json=${profileJsonPath}`");
-    expect(runner).toContain("randomUUID()");
-    expect(runner).toContain("JSON profile ${config} -> ${profileJsonPath}");
-  });
-
-  it("fails closed when a fixed selection runs zero, missing, or duplicate test results", () => {
-    const runner = fs.readFileSync(path.join(root, "scripts/run-next-route-poc.mjs"), "utf8");
+  it("validates the complete JSON report instead of selecting individual cases", () => {
     const validator = fs.readFileSync(
-      path.join(root, "scripts/browser-selection-validation.mjs"),
+      path.join(root, "scripts/browser-mode-report-validation.mjs"),
       "utf8",
     );
-
-    expect(runner).toContain("Object.keys(selection).length === 0");
-    expect(runner).toContain("assertSelectedBrowserCasesPassed(report, selectedFile.names)");
-    expect(runner).toContain('"--reporter=default"');
     expect(runner).toContain('"--reporter=json"');
-    expect(runner).toContain("if (code === 0 && selectedFile && selectionResultPath)");
-    expect(validator).toContain("Expected exactly one result for");
-    expect(validator).toContain("Selected browser test did not pass");
+    expect(runner).toContain("`--outputFile.json=${reportPath}`");
+    expect(runner).toContain("if (code === 0)");
+    expect(validator).toContain("Expected exactly one Browser Mode test file");
+    expect(validator).toContain("ran zero tests");
+    expect(validator).toContain('assertion.status !== "passed"');
+    expect(validator).toContain("manifest mismatch");
+    expect(validator).toContain("Observed fullNames:");
+    expect(runner).not.toContain("--selection-file");
+    expect(runner).not.toContain("--testNamePattern");
+    expect(runner).not.toContain("--only=phase6");
   });
 
-  it("keeps all Chromium files in Phase6 then production-route order", () => {
-    const config = fs.readFileSync(
-      path.join(root, "tests/config/browser/vitest.browser.aggregate-chromium.config.ts"),
+  it("requires every migrated B12/B13 route test in the Pixel 7 report", () => {
+    const source = fs.readFileSync(
+      path.join(root, "tests/browser-mode/pixel7.browser.test.tsx"),
       "utf8",
     );
-    const includedFiles = config.match(/test:\s*\{[\s\S]*?\binclude:\s*\[([\s\S]*?)\]/)?.[1];
-
-    expect(includedFiles).toBeDefined();
-    expect(
-      [...includedFiles!.matchAll(/"(tests\/browser-mode\/[^"]+\.test\.ts)"/g)].map(
-        (match) => match[1],
-      ),
-    ).toEqual([
-      "tests/browser-mode/phase6-b01-cagr-contrast.browser.test.ts",
-      "tests/browser-mode/phase6-b02-real-legend-contrast.browser.test.ts",
-      "tests/browser-mode/phase6-b03-advanced-series.browser.test.ts",
-      "tests/browser-mode/phase6-b04-parity.browser.test.ts",
-      "tests/browser-mode/phase6-b05-parity.browser.test.ts",
-      "tests/browser-mode/phase6-b06-quarterly.browser.test.ts",
-      "tests/browser-mode/phase6-b07-real-consumption.browser.test.ts",
-      "tests/browser-mode/phase6-b08-real-consumption.browser.test.ts",
-      "tests/browser-mode/phase6-b09-real-consumption.browser.test.ts",
-      "tests/browser-mode/phase6-b10-tooltip-dismiss.browser.test.ts",
-      "tests/browser-mode/phase6-b11-tooltip-dismiss.browser.test.ts",
-      "tests/browser-mode/phase6-b12-chartnote-tooltip.browser.test.ts",
-      "tests/browser-mode/phase6-b13-tooltip-dismiss.browser.test.ts",
-      "tests/browser-mode/phase6-b14-residual-accessibility.browser.test.ts",
-      "tests/browser-mode/next-route-poc.browser.test.ts",
-      "tests/browser-mode/batch1-production-route.browser.test.ts",
-      "tests/browser-mode/batch3-a-production-route.browser.test.ts",
-      "tests/browser-mode/batch3-b-production-route.browser.test.ts",
-      "tests/browser-mode/batch4-a-production-route.browser.test.ts",
-      "tests/browser-mode/batch4-b-production-route.browser.test.ts",
-      "tests/browser-mode/batch5-standard-chromium-production-route.browser.test.ts",
-      "tests/browser-mode/batch5-lazy-tabs-chromium-production-route.browser.test.ts",
-    ]);
-    expect(config).toContain('setupFiles: ["tests/browser-mode/setup.ts"]');
-    expect(config).toContain("fileParallelism: false");
-    expect(config).toContain("maxWorkers: 1");
-    expect(config).toContain("isolate: true");
-    expect(config).toContain("testTimeout: 90_000");
-    expect(config).toContain("hookTimeout: 90_000");
-    expect(config).toContain('browser: "chromium"');
-    expect(config).toContain("width: 1280, height: 800");
-    expect(config).toContain("sequence: { sequencer: AggregateChromiumSequencer }");
-    expect(config.match(/\binspectPhase5Rendering,/g)).toHaveLength(1);
-    expect(config).not.toMatch(/\binspectBatch2ProductionCase,/);
+    const manifest = fs.readFileSync(
+      path.join(root, "scripts/browser-mode-case-manifest.mjs"),
+      "utf8",
+    );
+    const requiredCases = [
+      "B12 #307: deliberately engineered actual link overlap is hit-tested by tooltip and blocks navigation",
+      "B13 #473: outside-heading touch clears stacked chart cursor and active dots",
+      "B13 #508: close touch clears stacked chart active dots",
+      "B13 #535: close button is hidden after salary-tab touch and scroll settle",
+    ];
+    for (const title of requiredCases) {
+      expect(manifest).toContain(title);
+      expect(source).toContain(title);
+    }
   });
 
-  it("uses run-local strict Browser API ports only for the full aggregate configs", () => {
-    const runner = fs.readFileSync(path.join(root, "scripts/run-next-route-poc.mjs"), "utf8");
+  it("requires a source/config-matched production build before starting Next", () => {
+    const fingerprint = fs.readFileSync(
+      path.join(root, "scripts/browser-route-build-fingerprint.mjs"),
+      "utf8",
+    );
+    expect(runner).toContain("await assertBrowserRouteBuildCurrent()");
+    expect(fingerprint).toContain("browser-route-build-fingerprint.json");
+    expect(fingerprint).toContain("sourceSha256");
+    expect(fingerprint).toContain('"tsconfig.json"');
+    expect(fingerprint).toContain('"public"');
+    expect(fingerprint).toContain("browser-mode-case-manifest.mjs");
+    expect(fingerprint).toContain("The production build does not match the current source");
+  });
+
+  it("preserves explicit JSON reports for orchestrator inspection", () => {
+    expect(runner).toContain("BROWSER_MODE_REPORT_PATH");
+    expect(runner).toContain("preserveBrowserModeReport");
+  });
+
+  it("keeps Next and Browser Mode API listeners on approved loopback ports", () => {
+    expect(runner).toContain('const HOST = "127.0.0.1"');
     expect(runner).toContain("BROWSER_API_PORT_START = 63_000");
     expect(runner).toContain("BROWSER_API_PORT_END = 63_999");
-    expect(runner).toContain("allocateRunLocalBrowserApiPorts(configs)");
-    const runVitestStart = runner.indexOf("async function runVitest(");
-    const profileOutputsStart = runner.indexOf("const profileOutputs", runVitestStart);
-    const browserApiPortSetup = runner.slice(runVitestStart, profileOutputsStart);
-    expect(runVitestStart).toBeGreaterThanOrEqual(0);
-    expect(profileOutputsStart).toBeGreaterThan(runVitestStart);
-    expect(browserApiPortSetup).toContain("configs.length > 1");
-    expect(browserApiPortSetup).toContain("allocateRunLocalBrowserApiPorts(configs)");
-    expect(runner).toMatch(
-      /runVitestConfig\(\s*port,\s*config,\s*timeoutMs,\s*browserApiPorts\[index\],\s*profileJsonPath,\s*selectedFile\s*,?\s*\)/,
+    expect(runner).toContain(
+      "NEXT_ROUTE_POC_PORT may only be set to the approved 127.0.0.1 port 3001.",
     );
-    expect(runner).toContain("const shutdownController = new AbortController()");
-    expect(runner).toContain("shutdownController.abort(signal)");
-    expect(runner).toContain("throwIfInterrupted()");
-    expect(runner).toContain("delete childEnv.NEXT_ROUTE_POC_BROWSER_API_PORT");
-    expect(runner).toContain("if (browserApiPort !== undefined)");
-    expect(runner).toContain("childEnv.NEXT_ROUTE_POC_BROWSER_API_PORT = String(browserApiPort)");
-
-    for (const file of [
-      "tests/config/browser/vitest.browser.aggregate-chromium.config.ts",
-      "tests/config/browser/vitest.browser.webkit.config.ts",
-    ]) {
-      const config = fs.readFileSync(path.join(root, file), "utf8");
-      expect(config).toContain("process.env.NEXT_ROUTE_POC_BROWSER_API_PORT ?? 63315");
-      expect(config).toContain("strictPort: hasRunLocalBrowserApiPort");
-    }
-
-    const focusedConfig = fs.readFileSync(
-      path.join(root, "tests/config/browser/vitest.browser.next-route.config.ts"),
-      "utf8",
-    );
-    expect(focusedConfig).not.toContain("63422");
+    expect(runner).toContain("childEnv.VITEST_BROWSER_API_PORT = String(browserApiPort)");
   });
 
-  it("bounds each Vitest run and escalates process-group cleanup on timeout or signals", () => {
-    const runner = fs.readFileSync(path.join(root, "scripts/run-next-route-poc.mjs"), "utf8");
+  it("bounds each Vitest run and preserves managed-server cleanup on every result", () => {
     expect(runner).toContain("DEFAULT_VITEST_TIMEOUT_MS = 15 * 60 * 1_000");
     expect(runner).toContain("NEXT_ROUTE_POC_VITEST_TIMEOUT_MS");
     expect(runner).toContain('signalChildGroup(child, "SIGTERM")');
     expect(runner).toContain('signalChildGroup(child, "SIGKILL")');
     expect(runner).toContain('process.on("SIGINT"');
     expect(runner).toContain('process.on("SIGTERM"');
+    expect(runner).toContain("const finish = async (code) => {");
+    expect(runner).toContain("await stopChild(server.child);");
+    expect(runner).toContain("[browser-mode] Next server cleanup failed:");
+    expect(runner).toContain("if (!primaryError) primaryError = cleanupError;");
   });
 });

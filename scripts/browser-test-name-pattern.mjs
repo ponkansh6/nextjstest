@@ -8,8 +8,8 @@ function escapeRegex(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-export function makeTestNamePattern(names, { webkit = false } = {}) {
+export function makeTestNamePattern(names) {
   const escapedNames = names.map((name) => escapeRegex(leafTestName(name)));
   const alternatives = `(?:${escapedNames.join("|")})`;
-  return webkit ? `(?=.*webkit)${alternatives}` : `^(?!.*-webkit).*?${alternatives}`;
+  return `^.*?${alternatives}`;
 }

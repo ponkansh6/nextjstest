@@ -51,10 +51,30 @@ pnpm data:refresh --rebaseline-semantic-state="$state_sha256"
 pnpm run lint:fast
 pnpm run type-check
 pnpm run test:coverage
+pnpm run test:browser:all
 pnpm run build
-pnpm run test:browser:next-route-poc:built:all
 pnpm run test:build-parity
 pnpm run security-check
 ```
 
-ブラウザーコンポーネント検証は `pnpm run test:browser:component:all` で実行できます。browser route コマンドは production build 済みのアプリを対象とするため、先に `pnpm build` を実行してください。
+ブラウザーテストは `pnpm run test:browser:standard`（1280×800）と
+`pnpm run test:browser:pixel7`（Pixel 7相当の412×915）で実行できます。
+`pnpm run test:browser:all` はstandardの後にPixel 7を実行し、Next buildや
+production serverは起動しません。現行manifestはstandard 14件、Pixel 7 22件の
+計36件です。Pixel 7のgeometry checks 112/140/79とoverflow checks 120/127/142は
+それぞれ1回のrenderでまとめて検証し、CagrPanelも各2ケースへまとめています。
+B12 #307と
+B13 #473/#508/#535をローカルcomponent/page fixture上のsynthetic pointer interaction
+で確認します。B12 #430のroute navigation caseは削除しました。fixtureはproduction
+route compositionやtrusted physical-touch deliveryを検証しません。複数のspending
+legend・hover・filter acceptanceは1つのcomposite caseにまとめています。standardの
+nominal/real tooltip totalも1 caseで確認します。各projectはstandard 14件・Pixel 7
+22件のchecked-in `fullName` manifestとreportを照合し、
+`BROWSER_MODE_REPORT_PATH` を設定すると完全なJSON reportを保持できます。
+2026-10-27のpost-merge実行では `pnpm run test:browser:all` が成功し、standard 14件と
+Pixel 7 22件がmanifest/count validationを通過しました。関連unit 3 files/17 tests、
+`type-check`、`lint:fast`も成功しました。この結果にbuild/full pre-pushは含みません。
+
+pre-pushはpush impactに応じて関連テストまたはfull static/unit gatesを選び、
+standardとPixel 7を実行してbuild後に `127.0.0.1:3001` でNext serverの起動と
+readinessだけを確認します。この確認ではrouteやbrowser interactionを実行しません。

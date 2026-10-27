@@ -1,4 +1,5 @@
 import type { Browser, BrowserContext, BrowserContextOptions } from "@playwright/test";
+import { devices } from "@playwright/test";
 
 type NewContextBrowser = Pick<Browser, "newContext">;
 
@@ -64,16 +65,29 @@ export function buildContextOptions(
   };
 }
 
-export function desktop1280x720ContextOptions(
-  scenarioOverrides: BrowserContextOptions = {},
-): BrowserContextOptions {
-  return buildContextOptions({ viewport: { width: 1280, height: 720 } }, scenarioOverrides);
-}
-
 export function desktop1280x800ContextOptions(
   scenarioOverrides: BrowserContextOptions = {},
 ): BrowserContextOptions {
-  return buildContextOptions({ viewport: { width: 1280, height: 800 } }, scenarioOverrides);
+  return buildContextOptions(
+    {
+      viewport: { width: 1280, height: 800 },
+      screen: { width: 1280, height: 800 },
+      deviceScaleFactor: 1,
+      isMobile: false,
+      hasTouch: false,
+    },
+    scenarioOverrides,
+  );
+}
+
+/** Shared Pixel 7 descriptor with the plan's explicit viewport override. */
+export function pixel7ContextOptions(
+  scenarioOverrides: BrowserContextOptions = {},
+): BrowserContextOptions {
+  return buildContextOptions(devices["Pixel 7"], {
+    viewport: { width: 412, height: 915 },
+    ...scenarioOverrides,
+  });
 }
 
 function isObjectKey(value: unknown): value is object {

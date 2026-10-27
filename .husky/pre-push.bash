@@ -81,7 +81,7 @@ push_impact_collect
 push_impact_print
 PUSH_FILES=$(printf '%s\n' "${PUSH_IMPACT_PATHS[@]:-}")
 FULL_PROFILE_RAN=0
-COMPONENT_BROWSER_RAN=0
+BROWSER_MODE_RAN=0
 PREPUSH_PROFILE_NORMALIZED=$(push_profile_normalize_env)
 if [[ "$PREPUSH_PROFILE_NORMALIZED" == full || "$PUSH_IMPACT_FULL" == 1 ]]; then
   PREPUSH_TIMING_PROFILE=full
@@ -150,7 +150,7 @@ run_changed_tests() {
   if ((${#PUSH_IMPACT_RELATED_PATHS[@]} == 0)); then
     echo "[hook] fallback reason: related test candidates were empty or unsafe"
     echo "[hook] fallback profile: full validation with pre-push Browser Mode selection"
-    run_full_profile prepush-browser || return $?
+    run_full_profile || return $?
     return
   fi
   prepush_timing_gate_begin
@@ -170,17 +170,17 @@ NODE
       if [[ "$related_files" == 0 ]]; then
         echo "[hook] fallback reason: related test set was empty (Vitest JSON testResults=0)"
         echo "[hook] fallback profile: full validation with pre-push Browser Mode selection"
-        run_full_profile prepush-browser || return $?
+        run_full_profile || return $?
       else
         echo "[hook] related test files: $related_files"
         echo "[hook] gate passed: changed integration tests"
-        hook_gate "test:browser:prepush:component" pnpm run test:browser:prepush:component || return $?
-        COMPONENT_BROWSER_RAN=1
+        hook_gate "test:browser:all" pnpm run test:browser:all || return $?
+        BROWSER_MODE_RAN=1
       fi
     else
       echo "[hook] fallback reason: related test result was indeterminate (missing, invalid, or incompatible Vitest JSON)"
       echo "[hook] fallback profile: full validation with pre-push Browser Mode selection"
-      run_full_profile prepush-browser || return $?
+      run_full_profile || return $?
     fi
   else
     status=$?
@@ -193,10 +193,10 @@ NODE
 }
 
 run_full_profile() {
-  local browser_profile=${1:-all}
   FULL_PROFILE_RAN=1
   PREPUSH_TIMING_PROFILE=full
-  # Keep this order in sync with test:full. Every gate must stop the hook.
+  # Keep static/unit checks before the complete Browser Mode suite, then
+  # verify the built Next server starts without browser route interactions.
   hook_gate "lint:fast" pnpm run lint:fast || return $?
   hook_gate "type-check" pnpm run type-check || return $?
   hook_gate "test:coverage" env \
@@ -208,18 +208,10 @@ run_full_profile() {
     -u GIT_OBJECT_DIRECTORY \
     -u GIT_ALTERNATE_OBJECT_DIRECTORIES \
     VITEST_MAX_WORKERS=2 pnpm run test:coverage || return $?
-  if [[ "$browser_profile" == prepush-browser ]]; then
-    hook_gate "test:browser:prepush:component" pnpm run test:browser:prepush:component || return $?
-  else
-    hook_gate "test:browser:component:all" pnpm run test:browser:component:all || return $?
-  fi
-  COMPONENT_BROWSER_RAN=1
+  hook_gate "test:browser:all" pnpm run test:browser:all || return $?
+  BROWSER_MODE_RAN=1
   hook_gate "build" pnpm run build || return $?
-  if [[ "$browser_profile" == prepush-browser ]]; then
-    hook_gate "test:browser:next-route-poc:prepush:built" pnpm run test:browser:next-route-poc:prepush:built || return $?
-  else
-    hook_gate "test:browser:next-route-poc:built:all" pnpm run test:browser:next-route-poc:built:all || return $?
-  fi
+  hook_gate "Next server startup check" pnpm run measure:cache-e2e -- --skip-cache --port 3001 || return $?
   hook_gate "test:build-parity" pnpm run test:build-parity || return $?
   hook_gate "security-check" pnpm run security-check || return $?
   echo "[hook] production validation: not run (separate gate; PROD_URL/network availability is not established)"
@@ -229,7 +221,7 @@ if [[ "$PREPUSH_PROFILE_NORMALIZED" == full || "${PUSH_IMPACT_FULL}" == 1 ]]; th
   if [[ -v PREPUSH_PROFILE ]] && [[ "$PREPUSH_PROFILE" == full ]]; then
     echo "[hook] explicit full profile requested"
   fi
-  run_full_profile prepush-browser || exit $?
+    run_full_profile || exit $?
 else
   if ((PUSH_IMPACT_HAS_RELATED_INPUT)); then
     run_changed_tests || exit $?
@@ -237,12 +229,12 @@ else
     echo "[hook] changed integration tests: not applicable for docs/assets-only change"
   fi
   if ((FULL_PROFILE_RAN == 0)); then
-    if ((COMPONENT_BROWSER_RAN == 0)); then
-      hook_gate "test:browser:prepush:component" pnpm run test:browser:prepush:component || exit $?
-      COMPONENT_BROWSER_RAN=1
+    if ((BROWSER_MODE_RAN == 0)); then
+      hook_gate "test:browser:all" pnpm run test:browser:all || exit $?
+      BROWSER_MODE_RAN=1
     fi
     hook_gate "build" pnpm run build || exit $?
-    hook_gate "test:browser:next-route-poc:prepush:built" pnpm run test:browser:next-route-poc:prepush:built || exit $?
+    hook_gate "Next server startup check" pnpm run measure:cache-e2e -- --skip-cache --port 3001 || exit $?
     echo "[hook] production validation: not run (separate gate; PROD_URL/network availability is not established)"
   fi
 fi

@@ -32,8 +32,8 @@ production/build-parityは通常Vitestから除外され、`tests/vitest.integra
 ### 選択条件と重複しない契約
 
 - `fast`: pre-commitのOxfmt/Oxlintと、staged TS/TSXからVitest relatedを選ぶ局所フィードバック。pre-commitのtsgoは、staged type boundary変更時だけ実行する `pnpm exec tsgo --noEmit` であり、package scriptの `type-check:fast` と混同しない。relatedが0件でも、commit用の `--passWithNoTests` 契約では成功とする。全量保証ではない。
-- `changed`: pre-pushはpush差分を分類する。related入力がある場合はVitest relatedを実行し、成功してテストファイルが選ばれたら1件のcomponent Browser Mode、build、selected routeのbuilt Chromium suite（6 cases）を実行する。docs/assets-onlyではrelated integrationだけをskipし、component Browser Mode、build、route suiteは実行する。related結果が空、JSON不在・不正・判定不能、またはrelated実行失敗ならfull/fallback列へ切り替える。各gateの非0終了でpushを停止する。
-- `full` / fallback: pre-pushでは `lint:fast` → `type-check` → `test:coverage` → 1 selected component prepush Browser Mode → `build` → selected route prepush built Chromium suite（6 cases）→ `test:build-parity` → `security-check` の順で実行する。`PREPUSH_PROFILE=full git push` はこのfull列を明示的に選択する。fallback時も同じ2つのselected Browser Modeを一度だけ実行する。full pre-pushはPlaywright/E2E全matrixを実行しない。`pnpm test:full` は別のpackage profileであり、pre-pushのgate列とは区別する。productionは別枠で、full pre-pushの成功はproduction検証済みを意味しない。
+- `changed`: pre-pushは関連テストを選択し、成功後に `test:browser:all` → `build` → 起動確認をfail-fastで実行する。related選択が空・失敗・不確定の場合はfull validationへ移る。docs/assetsのみのpushはrelatedテストとstatic/unit gatesを省き、同aggregate gate、build、起動確認を実行する。
+- `full`: `PREPUSH_PROFILE=full` またはpush impactが不確定な場合は `lint:fast` → `type-check` → `test:coverage` → `test:browser:all` → build → 起動確認 → build-parity → securityをfail-fastで実行する。aggregate gateはstandardとPixel 7の両projectを全件実行し、個別ケース選択やJEV dispatchを使わない。productionは別枠で、pre-push成功はproduction検証済みを意味しない。
 - production: `PROD_URL` とネットワークが用意された場合だけ明示実行する。通常Vitest、changed、fullの成功条件に混ぜない。
 - build-parity: `build`成功後に専用実行する。通常Vitestで同じbuild payload検証を重複実行しない。
 
@@ -41,18 +41,29 @@ production/build-parityは通常Vitestから除外され、`tests/vitest.integra
 
 ## Browser Mode
 
-独立したPlaywright E2E config、`tests/e2e` specs、port cleanup scriptは削除しました。以前の4-project計測値（133件）は履歴値で、現在のtest coverageを示しません。現在のdark accessibility、viewport/layout、touch、route interaction checksはVitest Browser Mode/component testsが担います。Browser Modeは `@vitest/browser-playwright` providerを使用し、Playwright依存はそのブラウザ実行用に保持します。
+activeなBrowser Mode test fileは `tests/browser-mode/standard.browser.test.tsx` と
+`tests/browser-mode/pixel7.browser.test.tsx` の2つです。Vitest configのinline
+projectsはそれぞれ1ファイルだけを選びます。標準条件はChromium 1280×800、
+Pixel 7条件はviewport/screen 412×915、DPR 2.625、Pixel 7 UA、mobile/touchです。
+両projectはローカルcomponent/page fixtureを描画します。現行manifestはstandard
+14件・Pixel 7 22件の計36件です。Pixel 7のgeometry 112/140/79とoverflow
+120/127/142は各1回のrenderで検証し、CagrPanelはfocus/Escape/backdrop pairと
+result/detail pairの2ケースにまとめています。spending legend、hover、filterも
+1つのcomposite caseです。B12 #307とB13 #473/#508/#535の4ケースはsynthetic
+pointer interactionを使います。B12 #430のroute navigation caseは削除しました。現行ケースはproduction
+route compositionやtrusted physical-touch deliveryを検証しません。standardではnominal
+とreal tooltip totalを1 caseで確認します。Browser Modeは `@vitest/browser-playwright`
+providerを使います。
 
 ## scriptsとプロファイル
 
 命名は `fast`＝局所、`changed`＝差分影響、`full`＝明示的全量とする。既存scriptの互換性を維持し、未知のscript名はpnpmの「script not found」で失敗するため成功扱いしない。
 
-| profile        | script/入口                                      | 実行範囲                                                                                                                                                                                                        | 失敗時挙動                                                     |
-| -------------- | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| fast           | `lint:fast`、条件付きpre-commit tsgo、pre-commit | Oxlint、条件を満たすときの `pnpm exec tsgo --noEmit`、staged formatter/related。packageの `type-check:fast` は別名のscriptとして混同しない。CIの全量型検査とは異なる                                            | 呼び出し元へ非0を返しcommitを停止                              |
-| changed        | pre-push既定（`PREPUSH_PROFILE`未指定）          | related入力があればVitest related、1 selected component Browser Mode、build、selected route built Chromium suite（6 cases）。docs/assets-onlyはrelated integrationだけをskipし、Browser Mode 2種とbuildは実行。 | relatedの判定不能/失敗/0件はfull fallback。各gate非0でpush停止 |
-| full           | `PREPUSH_PROFILE=full git push`                  | `lint:fast`、`type-check`、coverage、1 selected component Browser Mode、build、selected route built Chromium suite（6 cases）、build-parity、security。Playwright/E2E full matrixは含まない                     | `hook_gate`が非0を伝播してpushを停止                           |
-| production別枠 | `PROD_URL=... pnpm test:prod`                    | 実商用URLのpayloadだけ                                                                                                                                                                                          | URL/ネットワーク不備を明示的失敗。full成功へ読み替えない       |
+| profile        | script/入口                                      | 実行範囲                                                                                                                                                                                          | 失敗時挙動                                               |
+| -------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| fast           | `lint:fast`、条件付きpre-commit tsgo、pre-commit | Oxlint、条件を満たすときの `pnpm exec tsgo --noEmit`、staged formatter/related。packageの `type-check:fast` は別名のscriptとして混同しない。CIの全量型検査とは異なる                              | 呼び出し元へ非0を返しcommitを停止                        |
+| changed / full | pre-push既定、または `PREPUSH_PROFILE=full`      | changedは関連テスト後に`test:browser:all`、build、readiness確認。docs/assetsは同gate、build、readiness確認。fullはstatic/unit gates、同gate、build/readiness、build-parity、security。fail-fast。 | 非0終了でpushを停止                                      |
+| production別枠 | `PROD_URL=... pnpm test:prod`                    | 実商用URLのpayloadだけ                                                                                                                                                                            | URL/ネットワーク不備を明示的失敗。full成功へ読み替えない |
 
 `test` と `test:all`、`test:build-parity`、`test:prod` は維持している。`test:full`の列にproductionは含まれない。
 
@@ -60,7 +71,24 @@ production/build-parityは通常Vitestから除外され、`tests/vitest.integra
 
 `pnpm run measure:cache-e2e` は、既存の `maybeCache` と `clearTestCache` をテスト用fixtureから呼び、cold → warm → clear後の再実行について、loader呼び出し回数、各wall time、hit/miss状態をJSON artifactへ保存する。本番runtime cacheは変更しない。既定の出力先は `artifacts/cache-and-e2e-measurement.json` で、`--output <file>` はリポジトリroot配下またはOSの一時ディレクトリ配下だけを受け付ける。全オプションは `pnpm run measure:cache-e2e -- --help`（または `node scripts/measure-cache-and-e2e.mjs --help`）で確認できる。
 
-`.next` が存在する場合は、隔離した一時ポートで `pnpm start` を管理対象のプロセスグループとして起動し、server起動時間、server/test process とその子孫のPID・port残留、SIGTERMから必要時のSIGKILLまでのcleanup時間を記録する。通常終了、例外、SIGINT/SIGTERMのいずれでも両グループと一時領域をcleanupし、signal終了時もcleanup後にartifactを保存して非0終了する。`.next` の存在、mtime、24時間超の stale 判定も記録するが、削除はしない。任意の検証コマンドを実行する場合はargvをJSON配列で `--e2e-command '["pnpm","run","test:browser:component:jev"]'` のように指定できる（shell実行はしない）。standalone E2E suiteは削除済みで、この例は現行Browser Mode component gateを実行する。全処理は `/tmp` の一時領域と終了時cleanupを使い、無関係なPIDを探索・終了しない。
+`.next` が存在する場合の隔離server計測は既存の `measure:cache-e2e` 契約を維持する。
+Browser Mode正式入口は `test:browser:standard`、`test:browser:pixel7`、
+`test:browser:all` であり、JEVを介したbrowser selectionは行わない。
+suite runnerはVitest JSON reportで実行件数、全件成功、skipなしを検証する。
+さらに `scripts/browser-mode-case-manifest.mjs` のstandard 14件 / Pixel 7
+22件の `fullName` とreportの全caseを完全一致させる。Pixel 7のspending
+legend・hover・filter acceptanceは単一のcomposite caseに統合しています。
+必要なら
+`BROWSER_MODE_REPORT_PATH` でJSON reportをrepositoryまたはOS temporary
+directory内に保持できる。
+Pixel 7 Browser Modeはローカルfixtureを使い、Next serverを起動しません。
+pre-pushはBrowser Modeの後にbuildし、`127.0.0.1:3001` でNext serverの起動と
+readinessだけを確認します。startup checkではrouteやbrowser interactionを実行しません。
+Pixel 7のB12 #307とB13 #473/#508/#535はローカルfixture上のsynthetic pointer
+interactionです。B12 #430のroute navigation caseは削除され、現行suiteはproduction
+route compositionやtrusted physical-touch deliveryを検証しません。
+旧browser JEV selector/runnerとroute selection JSONはinactive legacy資産として
+保持され、package scripts、CI、Husky pre-pushからは呼び出されない。
 
 ## CIとの差分、再実行、未保証範囲
 
@@ -70,13 +98,13 @@ production/build-parityは通常Vitestから除外され、`tests/vitest.integra
 
 ### pre-push hook smoke-test
 
-`pnpm run test:hook-smoke` は、`/tmp` 配下に一時bare remoteとwork repoを作り、fixtureの`.git/hooks/pre-push`へ既存hookを正規配置したうえで、実際の`git push`を行う。fixture内の`pnpm`だけをstub化するため、hookのstdin/ref解析、通常push、複数ref、初回push、remote削除、hook失敗時のremote未更新、`PREPUSH_PROFILE=full`のgate列を検証し、アプリ本体のlint/build/Browser Modeは実行しない。full列で確認するブラウザ選択は1 componentと1 routeの6 Chromium casesである。終了時は`trap`相当の`finally`で一時領域を削除し、fixtureまたはhookが失敗した場合は非0で終了する。これはhook経路とGitの更新原子性のsmoke-testであり、実アプリの各gateの内容、CI、production、選択外のBrowser Modeケースの成功を保証しない。
+`pnpm run test:hook-smoke` は、`/tmp` の隔離fixtureでGit hookのstdin/ref解析、通常push、複数ref、初回push、remote削除、失敗時のremote未更新、`PREPUSH_PROFILE=full`のgate順を確認する。fixture内の`pnpm`はstub化するため、アプリ本体のlint/build/Browser Modeは実行しない。これはhook経路のsmoke-testであり、実アプリのgate、CI、productionの成功は保証しない。
 
-`.github/workflows/main.yml` の通常CIは install後に全依存の `pnpm audit --audit-level=high` → `pnpm exec secretlint "**/*"` → `pnpm type-check` → `pnpm lint:fast` → `pnpm test:all` → `pnpm build` を順に実行する。このジョブはpush/pull_requestで維持される。各stepの非0でjobが失敗し、後続stepは実行されない。auditとsecretlintはrequired stepとして可視化され、`continue-on-error`で隠さない。
+`.github/workflows/main.yml` の通常CIはinstall後に全依存の `pnpm audit --audit-level=high` → `pnpm exec secretlint "**/*"` → `pnpm type-check` → `pnpm lint:fast` → `pnpm test:all` → `pnpm run test:browser:all` を順に実行する。browser allはstandardの後にPixel 7を実行し、Next buildは含まない。このジョブはpush/pull_requestで維持される。各stepの非0でjobが失敗し、後続stepは実行されない。auditとsecretlintはrequired stepとして可視化され、`continue-on-error`で隠さない。
 
 ### workflow_dispatch の full-validation
 
-重い検証は通常のpush/pull_requestでは発火せず、Actionsから `workflow_dispatch` を手動実行した場合だけ `full-validation` jobで実行する。jobには `contents: read` のみを与え、ビルド後に `test:build-parity` と `security-check` を実行する。build parityは先行する `pnpm build` の成果物を使う。各コマンドstepのwall timeは `GITHUB_STEP_SUMMARY` に追記し、pnpmキャッシュのhit/missもsummaryへ記録する。
+重い検証は通常のpush/pull_requestでは発火せず、Actionsから `workflow_dispatch` を手動実行した場合だけ `full-validation` jobで実行する。jobには `contents: read` のみを与え、coverage後に `test:browser:all`、続けてbuild、その成果物を使う `test:build-parity` と `security-check` を実行する。各コマンドstepのwall timeは `GITHUB_STEP_SUMMARY` に追記し、pnpmキャッシュのhit/missもsummaryへ記録する。
 
 `run_production` inputをtrueにした時だけproduction検証を追加する。production検証は前段のbuild、build-parity、securityの成否にかかわらず、`always()` で独立stepとして試行される。inputをfalseにしている間はsecretがあってもproductionへ接続しない。この場合はリポジトリsecret `PROD_URL` と外部ネットワークが必須で、secretが未設定なら明示的に失敗する。`PROD_URL` はproduction stepのenvにだけ渡す。存在する `artifacts/` の計測ファイルはworkflow artifactとして保存する。
 
@@ -88,13 +116,13 @@ production/build-parityは通常Vitestから除外され、`tests/vitest.integra
 
 ## 未実施計測
 
-未取得の項目は、CPU、テスト件数の層別内訳、CI実環境値である。隔離契約監査の分類・gate停止検出は実測済みだが、これは実アプリの故障検出率を示さない。pre-pushで実行するBrowser Modeはselected component 1件とselected routeのChromium 6 casesに限られる。cache hit/missとserver起動時間は `measure:cache-e2e` のartifactで個別実行時に取得する。なお、「Phase 3は監査前の文書化」「この変更ではテスト、lint、type-check、build、E2E、production、build-parity、security、hook smoke-testを実行していない」は過去の文書化時点の記録である。現行最終監査の結果はPlanの証跡（通常テスト59 files・546 tests）を参照し、この過去記録を現行未実施判定として扱わない。production/network/CI待ちは別枠の未確認条件として残る。
+未取得の項目はCPU、実測された新Browser Mode件数、CI実環境値である。実装時の検証で実行した範囲と未実行範囲はそのrunの証跡で記録する。production/network/CI待ちは別枠の未確認条件として残る。
 
 ## 隔離監査ハーネス
 
 `pnpm run audit:validation-detection` は、`.husky/lib/push-impact.sh` を OS temporary 配下の一時 Git repositoryへ通し、代表パスの分類、full gateの停止・終了コード、changed実行列とpush marker契約を監査する。過去の監査記録にある `related → build → e2e` は当時のharness契約であり、現行pre-pushで全E2Eが実行される証拠ではない。`--output` は repository root または OS temporary 配下だけを受け付け、既定 artifact も OS temporary 配下に作成する。fixture は `mkdtemp` で作成し、終了時に削除するため、共有 worktree、Git index、`.next`、既存 PID、共有 remote は変更・削除しない。
 
-出力 JSON には schema/version、全ケース数、分類 precision/recall/accuracy、gate failure detection rate、各ケースの実行 gate、fixture cleanup status を含める。これは隔離した停止・終了コード契約の監査であり、実アプリの lint/type-check/build/browser 故障そのものの検出率やPlaywright全matrixの実行を証明しない。実行証跡は共有repoへ配置せず、指定した `/tmp/plan31-validation-detection.json` に保存する。2026-09-15の監査では schema `nextjstest.validation-detection v1.0.0`、12 cases、classification precision/recall/accuracy=1、full gate failure detection rate=1、当時定義されたchanged marker契約のdetection rate=1、fixture cleanup=`completed` だった。この過去の監査値を現行pre-pushのブラウザsuite全体に対する検出率として扱わない。現行hookの選択範囲はselected component 1件とselected routeのChromium 6 casesであり、Playwright/E2E full matrixはpre-pushの保証範囲外である。実lint/type/build/browser故障検出率、実push、CI、productionの確認は別途必要である。
+出力 JSON には schema/version、全ケース数、分類 precision/recall/accuracy、gate failure detection rate、各ケースの実行 gate、fixture cleanup status を含める。これは隔離した停止・終了コード契約の監査であり、実アプリの lint/type-check/build/browser 故障そのものの検出率やPlaywright全matrixの実行を証明しない。実行証跡は共有repoへ配置せず、指定した `/tmp/plan31-validation-detection.json` に保存する。2026-09-15の監査では schema `nextjstest.validation-detection v1.0.0`、12 cases、classification precision/recall/accuracy=1、full gate failure detection rate=1、当時定義されたchanged marker契約のdetection rate=1、fixture cleanup=`completed` だった。この過去値は現行pre-pushのBrowser Mode全体に対する検出率を示さない。実lint/type/build/browser故障検出率、実push、CI、productionの確認は別途必要である。
 
 | 実施日時   | artifact                                                        | 分類 precision/recall/accuracy |                               gate failure detection rate |                         当時のchanged marker検出率 | fixture cleanup | 実環境検証                                                                                    |
 | ---------- | --------------------------------------------------------------- | -----------------------------: | --------------------------------------------------------: | -------------------------------------------------: | --------------- | --------------------------------------------------------------------------------------------- |

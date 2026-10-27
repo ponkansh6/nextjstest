@@ -11,12 +11,12 @@ import { makeTestNamePattern } from "./browser-test-name-pattern.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const VITEST = path.join(ROOT, "node_modules/vitest/vitest.mjs");
+const BROWSER_BATCH_RUNNER = path.join(ROOT, "scripts/run-browser-test-batch.mjs");
 const JEV_CLIENT = path.join(ROOT, "skills/jev-review/scripts/jev-request.mjs");
 const ROUTE_RUNNER = path.join(ROOT, "scripts/run-next-route-poc.mjs");
 const CONFIGS = [
   "tests/config/browser/vitest.browser.config.ts",
   "tests/config/browser/vitest.browser.aggregate-chromium.config.ts",
-  "tests/config/browser/vitest.browser.webkit.config.ts",
 ];
 const ROUTE_CONFIGS = new Set(CONFIGS.slice(1));
 const QUESTIONS_PER_REQUEST = 24;
@@ -980,17 +980,35 @@ function makeSelection(catalog, selected) {
 }
 
 function runSelectedTests(selection, directory) {
-  for (const entry of selection.direct) {
-    const filter = makeTestNamePattern(entry.names, {
-      webkit: entry.config === "tests/config/browser/vitest.browser.webkit.config.ts",
-    });
-    const result = run(
-      process.execPath,
-      [VITEST, "run", "--config", entry.config, "--testNamePattern", filter, entry.file],
-      { stdio: "inherit" },
-    );
+  for (let index = 0; index < selection.direct.length;) {
+    const first = selection.direct[index];
+    let end = index + 1;
+    while (end < selection.direct.length && selection.direct[end].config === first.config) end += 1;
+    const entries = selection.direct.slice(index, end);
+
+    let result;
+    if (entries.length === 1) {
+      const [entry] = entries;
+      const filter = makeTestNamePattern(entry.names);
+      result = run(
+        process.execPath,
+        [VITEST, "run", "--config", entry.config, "--testNamePattern", filter, entry.file],
+        { stdio: "inherit" },
+      );
+    } else {
+      const batchFile = path.join(directory, `browser-test-batch-${index}.json`);
+      writeFileSync(batchFile, `${JSON.stringify({ config: first.config, entries }, null, 2)}\n`, {
+        flag: "wx",
+      });
+      result = run(process.execPath, [BROWSER_BATCH_RUNNER, batchFile], {
+        stdio: "inherit",
+        env: { ...process.env, VITE_BROWSER_BATCH_RESTORE_VIEWPORT: "1" },
+      });
+    }
     if (result.error || result.status !== 0) return result.status ?? 1;
+    index = end;
   }
+
   if (Object.keys(selection.routes).length) {
     const file = path.join(directory, "route-selection.json");
     writeFileSync(file, `${JSON.stringify(selection.routes, null, 2)}\n`, { flag: "wx" });
