@@ -8,12 +8,24 @@ import { describe, expect, it } from "vitest";
 const commonScriptPath = path.resolve(process.cwd(), ".husky/lib/hook-common.sh");
 
 describe("Husky POSIX launcher contract", () => {
-  it.each([
-    ["pre-commit", "pre-commit.bash"],
-    ["pre-push", "pre-push.bash"],
-  ])("launches %s through its bash implementation", (hook, implementation) => {
-    const wrapper = fs.readFileSync(path.resolve(process.cwd(), `.husky/${hook}`), "utf8");
-    expect(wrapper).toBe(`#!/bin/sh\nexec bash -e "$(dirname "$0")/${implementation}" "$@"\n`);
+  it("launches pre-commit through its exact bash wrapper", () => {
+    const wrapper = fs.readFileSync(path.resolve(process.cwd(), ".husky/pre-commit"), "utf8");
+    expect(wrapper).toBe('#!/bin/sh\nexec bash -e "$(dirname "$0")/pre-commit.bash" "$@"\n');
+  });
+
+  it("launches pre-push with default timing, argument forwarding, and exact status preservation", () => {
+    const wrapper = fs.readFileSync(path.resolve(process.cwd(), ".husky/pre-push"), "utf8");
+    expect(wrapper.startsWith("#!/bin/sh\n")).toBe(true);
+    expect(wrapper).toContain('if [ -z "${PREPUSH_TIMING_FILE:-}" ]; then');
+    expect(wrapper).toContain(
+      'PREPUSH_TIMING_FILE=$(mktemp "${TMPDIR:-/tmp}/nextjstest-pre-push-timing.XXXXXX.tsv")',
+    );
+    expect(wrapper).toContain("export PREPUSH_TIMING_FILE");
+    expect(wrapper).toContain('bash -e "$(dirname "$0")/pre-push.bash" "$@"');
+    expect(wrapper).toContain("hook_status=$?");
+    expect(wrapper).toContain('exit "$hook_status"');
+    expect(wrapper).toContain("[hook] timing report:");
+    expect(wrapper).toContain('"TOTAL", $8, $9');
   });
 });
 
