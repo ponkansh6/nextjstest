@@ -106,6 +106,9 @@ retained as historical evidence and does not validate the consolidated Pixel
 - `pnpm test:coverage` passed with 127 files, 1,502 passed, 1 skipped, and 100%
   statements, branches, functions, and lines. `pnpm test:build-parity` passed
   3/3.
+- This was the pre-exclusion coverage run at migration commit `11e4760`. It is a
+  distinct run from the later 127-file / 1,503-passed run at `3e63315`, after
+  `f27c285` added one launcher-timing unit assertion; the counts do not conflict.
 - `pnpm security-check` passed: `pnpm audit --audit-level=high` reported no
   known vulnerabilities and Secretlint completed successfully.
 

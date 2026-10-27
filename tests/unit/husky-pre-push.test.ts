@@ -246,6 +246,42 @@ describe("husky pre-push timing entrypoint", () => {
   });
 });
 
+describe("coverage-only test selection", () => {
+  it("keeps normal test discovery unchanged and scopes exclusions to coverage", () => {
+    const scripts = JSON.parse(fs.readFileSync(path.resolve(process.cwd(), "package.json"), "utf8"))
+      .scripts as Record<string, string>;
+    const auditedCoverageExcludes = [
+      "tests/components/minimal.test.tsx",
+      "tests/data-quality/cti-source-artifacts.test.ts",
+      "tests/scripts/data-refresh/**",
+      "tests/scripts/plan39/**",
+      "tests/unit/browser-mode-report-*.test.ts",
+      "tests/unit/browser-selection-validation.test.ts",
+      "tests/unit/browser-test-*.test.ts",
+      "tests/unit/chromium-provider-persistent-server.test.ts",
+      "tests/unit/csv-parser.test.ts",
+      "tests/unit/husky-*.test.ts",
+      "tests/unit/isolated-route-context.test.ts",
+      "tests/unit/jev-*.test.ts",
+      "tests/unit/legend-toggle-logic.test.ts",
+      "tests/unit/math/dependency-boundary.test.ts",
+      "tests/unit/mobile-css-contract.test.ts",
+      "tests/unit/next-route-poc-runner.test.ts",
+      "tests/unit/palette.test.ts",
+      "tests/unit/prepush-*.test.ts",
+    ];
+
+    expect(scripts.test).toBe("vitest run");
+    expect(scripts["test:all"]).toBe("vitest run");
+    expect(scripts["test:coverage"]).toBe(
+      [
+        "VITEST_MAX_WORKERS=2 vitest run --maxWorkers=2 --coverage",
+        ...auditedCoverageExcludes.map((pattern) => `--exclude='${pattern}'`),
+      ].join(" "),
+    );
+  });
+});
+
 describe("husky pre-push full test gate environment", () => {
   it("clears inherited outer-repository Git variables for test:coverage only", () => {
     const hook = fs.readFileSync(path.resolve(process.cwd(), ".husky/pre-push.bash"), "utf8");

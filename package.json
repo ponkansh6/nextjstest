@@ -33,7 +33,7 @@
     "cti-adjusted:analysis": "tsx scripts/cti-adjusted/run-analysis.mjs",
     "cti-adjusted:evaluate-residual-naturalness": "node scripts/cti-adjusted/evaluate-residual-naturalness.mjs",
     "test:all": "vitest run",
-    "test:coverage": "VITEST_MAX_WORKERS=2 vitest run --maxWorkers=2 --coverage",
+    "test:coverage": "VITEST_MAX_WORKERS=2 vitest run --maxWorkers=2 --coverage --exclude='tests/components/minimal.test.tsx' --exclude='tests/data-quality/cti-source-artifacts.test.ts' --exclude='tests/scripts/data-refresh/**' --exclude='tests/scripts/plan39/**' --exclude='tests/unit/browser-mode-report-*.test.ts' --exclude='tests/unit/browser-selection-validation.test.ts' --exclude='tests/unit/browser-test-*.test.ts' --exclude='tests/unit/chromium-provider-persistent-server.test.ts' --exclude='tests/unit/csv-parser.test.ts' --exclude='tests/unit/husky-*.test.ts' --exclude='tests/unit/isolated-route-context.test.ts' --exclude='tests/unit/jev-*.test.ts' --exclude='tests/unit/legend-toggle-logic.test.ts' --exclude='tests/unit/math/dependency-boundary.test.ts' --exclude='tests/unit/mobile-css-contract.test.ts' --exclude='tests/unit/next-route-poc-runner.test.ts' --exclude='tests/unit/palette.test.ts' --exclude='tests/unit/prepush-*.test.ts'",
     "lighthouse:mobile": "node scripts/lighthouse-mobile.js",
     "lint": "pnpm run lint:fast",
     "lint:fast": "oxlint --ignore-pattern 'tests/**' --ignore-pattern 'scripts/ts_converters/**' --ignore-pattern '**/.plan42*' --ignore-pattern '**/.plan42*/**' --nextjs-plugin --react-plugin --react-perf-plugin",

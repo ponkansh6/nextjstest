@@ -4442,11 +4442,50 @@ ignored only when a code invariant makes that branch unreachable through the
 public contract and the invariant is documented next to the narrow ignore;
 low coverage or an inconvenient test setup is not sufficient justification.
 
+The `test:coverage` package command alone applies repeated Vitest CLI
+`--exclude` test-collection patterns for audited suites that cannot reach the
+measured application source in-process:
+`tests/components/minimal.test.tsx`,
+`tests/data-quality/cti-source-artifacts.test.ts`,
+`tests/scripts/data-refresh/**`, `tests/scripts/plan39/**`,
+`tests/unit/browser-mode-report-*.test.ts`,
+`tests/unit/browser-selection-validation.test.ts`,
+`tests/unit/browser-test-*.test.ts`,
+`tests/unit/chromium-provider-persistent-server.test.ts`,
+`tests/unit/csv-parser.test.ts`, `tests/unit/husky-*.test.ts`,
+`tests/unit/isolated-route-context.test.ts`, `tests/unit/jev-*.test.ts`,
+`tests/unit/legend-toggle-logic.test.ts`,
+`tests/unit/math/dependency-boundary.test.ts`,
+`tests/unit/mobile-css-contract.test.ts`,
+`tests/unit/next-route-poc-runner.test.ts`, `tests/unit/palette.test.ts`, and
+`tests/unit/prepush-*.test.ts`. These are test-collection exclusions, not source
+coverage exclusions; they do not change `vitest.config.ts` includes or coverage
+thresholds. Ordinary `pnpm test` and `pnpm test:all` retain their full discovery
+behavior.
+
+After the 33 no-covered-source suites were excluded from coverage test
+collection, the measured run completed 94 files with 1,167 passed and 1
+skipped; statements, branches, functions, and lines were each 100%. Vitest
+Duration was 49.40s and command wall time was 50.41s. The later pre-exclusion
+run at commit `3e63315` recorded 127 files, 1,503 passed / 1 skipped, and
+approximately 140s; it is historical evidence, not the current baseline. The
+earlier migration run at `11e4760` recorded 127 files and 1,502 passed / 1
+skipped. These are distinct runs: `f27c285` added one launcher-timing unit
+assertion between them. The exclusions affect only
+`test:coverage` collection; normal `pnpm test` and `pnpm test:all` retain full
+discovery, and the source coverage roots and 100% thresholds are unchanged.
+
 **WHEN** the explicit source coverage task runs, **THEN** the complete source
 set is measured against 100% in all four metrics, apart from the explicitly
 listed boundaries; missing tests or coverage fail the task. **WHEN**
 application runtime code is added, **THEN** it enters the coverage denominator
 unless its exclusion is explicitly justified here.
+
+**WHEN** `pnpm run test:coverage` runs, **THEN** it applies only the audited
+test-collection exclusion patterns listed above while retaining the complete
+`src/**/*.{ts,tsx}` and `server/**/*.ts` source denominator and all four 100%
+thresholds. **AND** `pnpm test` and `pnpm test:all` do not receive those CLI
+exclusions and keep normal full test discovery.
 
 **WHEN** a branch inside an in-scope source file is excluded from the coverage
 result, **THEN** the exclusion is limited to a narrow branch made unreachable

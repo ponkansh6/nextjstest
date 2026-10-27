@@ -29,6 +29,14 @@ POSIX wrapperからBash実体を確実に起動し、既存の検証gateと終�
 
 production/build-parityは通常Vitestから除外され、`tests/vitest.integration.config.ts` の専用includeと `environment: "node"` で実行される。これは同じloader契約を常時二重実行するためではなく、外部デプロイまたは生成済みbuildという追加前提を持つ別契約として選択実行するためである。テストファイルの削除・移動は行わない。
 
+### Coverage-only test collection
+
+`pnpm run test:coverage` だけは、カバレッジ対象ソースへin-processで到達できないと監査されたtest harness/tooling suiteを、Vitest CLIの反復可能な `--exclude` optionでtest collectionから外します。対象は `tests/components/minimal.test.tsx`、`tests/data-quality/cti-source-artifacts.test.ts`、`tests/scripts/data-refresh/**`、`tests/scripts/plan39/**`、`tests/unit/browser-mode-report-*.test.ts`、`tests/unit/browser-selection-validation.test.ts`、`tests/unit/browser-test-*.test.ts`、`tests/unit/chromium-provider-persistent-server.test.ts`、`tests/unit/csv-parser.test.ts`、`tests/unit/husky-*.test.ts`、`tests/unit/isolated-route-context.test.ts`、`tests/unit/jev-*.test.ts`、`tests/unit/legend-toggle-logic.test.ts`、`tests/unit/math/dependency-boundary.test.ts`、`tests/unit/mobile-css-contract.test.ts`、`tests/unit/next-route-poc-runner.test.ts`、`tests/unit/palette.test.ts`、`tests/unit/prepush-*.test.ts` です。
+
+この一覧はtest collectionだけを狭めます。`vitest.config.ts` のsource include、source coverage denominator、100% thresholdsは変えません。通常の `pnpm test` と `pnpm test:all` は従来どおり全test discoveryを使います。
+
+除外反映後の計測では、`test:coverage` は94 files、1,167 passed / 1 skippedで、statements・branches・functions・linesの全指標が100%でした。Vitest Durationは49.40s、コマンドwall timeは50.41sです。除外前の127 files / 1,503 passed / 1 skipped / 約140sはcommit `3e63315`時点の歴史的結果です。migration commit `11e4760`の127 files / 1,502 passed / 1 skippedとは別runで、その間にcommit `f27c285`がlauncher-timing unit assertionを1件追加しています。33 suites除外前の両結果は現行runの件数・時間として扱いません。
+
 ### 選択条件と重複しない契約
 
 - `fast`: pre-commitのOxfmt/Oxlintと、staged TS/TSXからVitest relatedを選ぶ局所フィードバック。pre-commitのtsgoは、staged type boundary変更時だけ実行する `pnpm exec tsgo --noEmit` であり、package scriptの `type-check:fast` と混同しない。relatedが0件でも、commit用の `--passWithNoTests` 契約では成功とする。全量保証ではない。
