@@ -1,2 +1,38 @@
 #!/bin/sh
-exec bash -e "$(dirname "$0")/pre-push.bash" "$@"
+
+if [ -z "${PREPUSH_TIMING_FILE:-}" ]; then
+  PREPUSH_TIMING_FILE=$(mktemp "${TMPDIR:-/tmp}/nextjstest-pre-push-timing.XXXXXX.tsv") || {
+    echo "[hook] could not create the default pre-push timing report" >&2
+    exit 1
+  }
+  export PREPUSH_TIMING_FILE
+fi
+
+if bash -e "$(dirname "$0")/pre-push.bash" "$@"; then
+  hook_status=0
+else
+  hook_status=$?
+fi
+
+if [ -n "${PREPUSH_TIMING_FILE:-}" ]; then
+  printf '[hook] timing report: %s\n' "$PREPUSH_TIMING_FILE"
+  if [ -r "$PREPUSH_TIMING_FILE" ]; then
+    awk -F '\t' '
+      NR == 1 { next }
+      $1 == "gate" {
+        printf "  %-34s %8s ms  exit=%s\n", $5, $8, $9
+      }
+      $1 == "total" {
+        printf "  %-34s %8s ms  exit=%s\n", "TOTAL", $8, $9
+        found_total = 1
+      }
+      END {
+        if (!found_total) print "  (no timing rows available)"
+      }
+    ' "$PREPUSH_TIMING_FILE"
+  else
+    echo "  (timing report is unavailable)"
+  fi
+fi
+
+exit "$hook_status"

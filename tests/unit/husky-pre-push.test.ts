@@ -229,6 +229,23 @@ describe("husky pre-push profile normalization", () => {
   );
 });
 
+describe("husky pre-push timing entrypoint", () => {
+  it("defaults the real launcher to a unique temporary TSV and preserves caller paths", () => {
+    const launcher = fs.readFileSync(path.resolve(process.cwd(), ".husky/pre-push"), "utf8");
+    const implementation = fs.readFileSync(
+      path.resolve(process.cwd(), ".husky/pre-push.bash"),
+      "utf8",
+    );
+
+    expect(launcher).toContain('if [ -z "${PREPUSH_TIMING_FILE:-}" ]; then');
+    expect(launcher).toContain('mktemp "${TMPDIR:-/tmp}/nextjstest-pre-push-timing.XXXXXX.tsv"');
+    expect(launcher).toContain("printf '[hook] timing report: %s\\n' \"$PREPUSH_TIMING_FILE\"");
+    expect(launcher).toContain('printf "  %-34s %8s ms  exit=%s\\n"');
+    expect(implementation).toContain('if [[ -n "${PREPUSH_TIMING_FILE:-}" ]]; then');
+    expect(implementation).not.toContain("nextjstest-pre-push-timing.");
+  });
+});
+
 describe("husky pre-push full test gate environment", () => {
   it("clears inherited outer-repository Git variables for test:coverage only", () => {
     const hook = fs.readFileSync(path.resolve(process.cwd(), ".husky/pre-push.bash"), "utf8");

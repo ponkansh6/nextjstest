@@ -4463,6 +4463,15 @@ next to the ignore; broad file or line exclusions do not qualify.
 - **AND** no per-case browser selection or browser JEV dispatch changes the selected cases
 - **AND** a failed gate prevents all later gates
 
+#### Pre-push timing report
+
+- **WHEN** Git invokes the `.husky/pre-push` launcher without `PREPUSH_TIMING_FILE`
+- **THEN** the launcher creates a unique TSV timing report under `${TMPDIR:-/tmp}` and prints its path after the hook completes
+- **AND** the summary includes each recorded gate, total duration, and exit code
+- **WHEN** the caller supplies `PREPUSH_TIMING_FILE`
+- **THEN** the launcher preserves that report path and prints its gate and total summary
+- **AND** directly invoking `.husky/pre-push.bash` does not create a default timing artifact
+
 #### Phase 1 regression requirements
 
 - **WHEN** `CpiChart` is displayed

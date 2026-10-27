@@ -84,6 +84,11 @@ directory内に保持できる。
 Pixel 7 Browser Modeはローカルfixtureを使い、Next serverを起動しません。
 pre-pushはBrowser Modeの後にbuildし、`127.0.0.1:3001` でNext serverの起動と
 readinessだけを確認します。startup checkではrouteやbrowser interactionを実行しません。
+Gitが実際の `.husky/pre-push` launcherを呼ぶ際、呼び出し元が
+`PREPUSH_TIMING_FILE` を指定していなければ、launcherは `${TMPDIR:-/tmp}` に
+uniqueなTSV timing reportを作成します。完了後にreport pathとgate別/total duration・
+exit codeを表示します。`PREPUSH_TIMING_FILE=/path/to/report.tsv` で保存先を上書き
+できます。Bash実装を直接呼び出すbenchmark runnerは明示したpathを使用します。
 Pixel 7のB12 #307とB13 #473/#508/#535はローカルfixture上のsynthetic pointer
 interactionです。B12 #430のroute navigation caseは削除され、現行suiteはproduction
 route compositionやtrusted physical-touch deliveryを検証しません。

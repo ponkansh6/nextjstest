@@ -202,7 +202,10 @@ describe("pre-push isolated gate harness", () => {
   it("keeps a POSIX wrapper that forwards arguments to the bash implementation", () => {
     const wrapper = fs.readFileSync(hookWrapper, "utf8");
     expect(wrapper).toContain("#!/bin/sh");
-    expect(wrapper).toContain('exec bash -e "$(dirname "$0")/pre-push.bash" "$@"');
+    expect(wrapper).toContain('bash -e "$(dirname "$0")/pre-push.bash" "$@"');
+    expect(wrapper).toContain("hook_status=$?");
+    expect(wrapper).toContain('exit "$hook_status"');
+    expect(wrapper).toContain("[hook] timing report:");
   });
 
   function setupHookFixture(): { repo: string; input: string; bin: string; log: string } {

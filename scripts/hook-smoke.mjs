@@ -52,7 +52,7 @@ function hasExactCommand(log, command) {
 
 function expectPush(args, message, extraEnv = {}) {
   try {
-    run(["push", ...args], work, extraEnv);
+    return run(["push", ...args], work, extraEnv);
   } catch (error) {
     throw new Error(`${message}: ${error.stderr?.toString() ?? error.message}`);
   }
@@ -152,12 +152,46 @@ fi
   writeFileSync(join(work, "README.md"), "hook smoke initial\n");
   git(["add", "README.md"]);
   git(["commit", "-m", "initial"]);
-  expectPush(["origin", "main"], "initial push failed");
+  const initialOutput = expectPush(["origin", "main"], "initial push failed");
+  expect(
+    initialOutput.includes(`[hook] timing report: ${timingFile}`),
+    "pre-push did not preserve the caller-supplied timing report path",
+  );
+  expect(
+    initialOutput.includes("TOTAL") && initialOutput.includes("exit=0"),
+    "pre-push did not print the explicit timing summary",
+  );
   const initial = remoteRef("main");
   expect(
     hasExactCommand(readFileSync(log, "utf8"), "run lint:fast"),
     "initial push did not execute the hook profile",
   );
+
+  git(["switch", "-c", "default-timing"]);
+  writeFileSync(join(work, "README.md"), "default timing report\n");
+  git(["add", "README.md"]);
+  git(["commit", "-m", "default timing report"]);
+  const defaultTimingOutput = run(["push", "origin", "default-timing:main"], work, {
+    PREPUSH_PROFILE: "changed",
+    PREPUSH_TIMING_FILE: "",
+  });
+  const defaultTimingPath = defaultTimingOutput.match(/^\[hook\] timing report: (.+)$/m)?.[1];
+  expect(defaultTimingPath, "pre-push did not print its default timing report path");
+  expect(
+    defaultTimingPath.startsWith(
+      join(process.env.TMPDIR || tmpdir(), "nextjstest-pre-push-timing."),
+    ) && !defaultTimingPath.startsWith(work),
+    "default timing report was not created under temporary storage",
+  );
+  expect(
+    defaultTimingOutput.includes("test:browser:all") &&
+      defaultTimingOutput.includes("TOTAL") &&
+      defaultTimingOutput.includes("exit=0"),
+    "pre-push default timing summary missed gate details or total exit status",
+  );
+  rmSync(defaultTimingPath, { force: true });
+  git(["switch", "main"]);
+  git(["merge", "--ff-only", "default-timing"]);
 
   git(["switch", "-c", "docs-assets"]);
   writeFileSync(join(work, "README.md"), "hook smoke normal\n");
