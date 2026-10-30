@@ -47,9 +47,9 @@
 
 /* ── Popup panel (desktop) ── */
 .popup {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
+  position: fixed;
+  top: var(--chart-info-popup-top, 0px);
+  left: var(--chart-info-popup-left, 16px);
   width: 320px;
   max-width: calc(100vw - 2rem);
   background-color: var(--card-bg);
@@ -68,26 +68,8 @@
   max-block-size: calc(100dvh - 2rem);
   overflow-y: auto;
 
-  /* Animation */
-  animation: popupIn 150ms ease-out forwards;
+  /* React's ViewTransition boundary owns popup entry and exit motion. */
   transform-origin: top right;
-}
-
-/* The View Transition PoC is deliberately limited to this explanation panel. */
-.popup.viewTransitionPopup {
-  view-transition-name: chart-info-popup;
-  animation: none;
-}
-
-@keyframes popupIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95) translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
 }
 
 /* ── Close button ── */
@@ -266,19 +248,7 @@
     max-block-size: calc(100vh - 4rem);
     max-block-size: calc(100dvh - 4rem);
     overflow-y: auto;
-    animation: popupInMobile 150ms ease-out forwards;
     transform-origin: center center;
-  }
-}
-
-@keyframes popupInMobile {
-  from {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.92);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
   }
 }
 
@@ -342,8 +312,13 @@
   display: none;
 }
 
-.backdrop.viewTransitionBackdrop {
-  animation: none;
+@keyframes backdropFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* 同期: MOBILE_BREAKPOINT_PX = 768 */
@@ -358,11 +333,11 @@
   }
 }
 
-@keyframes backdropFadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
+@media (prefers-reduced-motion: reduce) {
+  .trigger,
+  .closeButton,
+  .backdrop {
+    transition: none;
+    animation: none;
   }
 }

@@ -213,50 +213,7 @@ a {
   }
 }
 
-/* Isolated View Transition animation for the /ui-experiments named demo. */
-::view-transition-old(demo-content) {
-  animation: 220ms ease-out both demo-content-fade-out;
-}
-
-::view-transition-new(demo-content) {
-  animation: 220ms ease-out both demo-content-fade-in;
-}
-
-@keyframes demo-content-fade-out {
-  to {
-    opacity: 0;
-    transform: translateY(-3px);
-  }
-}
-
-@keyframes demo-content-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(3px);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  ::view-transition-old(demo-content),
-  ::view-transition-new(demo-content) {
-    animation-duration: 0s !important;
-  }
-}
-
-/* Keep the dashboard View Transition PoC scoped to its named explanation panel. */
-html.chart-info-view-transition-active {
+/* Keep the page root out of local React-owned View Transitions. */
+html {
   view-transition-name: none;
-}
-
-::view-transition-group(chart-info-popup) {
-  animation-duration: 180ms;
-  animation-timing-function: ease-out;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  ::view-transition-group(chart-info-popup),
-  ::view-transition-old(chart-info-popup),
-  ::view-transition-new(chart-info-popup) {
-    animation-duration: 0.01ms !important;
-  }
 }

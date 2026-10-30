@@ -499,7 +499,10 @@ renders the existing `undefined` label/icon result; no fallback is added.
 Theme storage reads throw through the current initial evaluation path, while
 only the `setItem`/`removeItem` write operations are absorbed during interaction;
 DOM theme application and React state updates continue after a write failure. No browser-state source changes
-the server-loaded data model.
+the server-loaded data model. The ChartInfoButton transition gate reads browser
+capability, document visibility, and `prefers-reduced-motion`; these are runtime
+capability/preferences and add no application data source. This Data Sources
+check found no change to server or browser state sources.
 
 The dashboard page loads CPI, earnings, CPI status, and quarterly public views
 on the server before rendering chart props. Route-segment loading uses
@@ -523,7 +526,9 @@ does not load dashboard data or change production chart state. Its controls
 use local React state and browser capabilities/preferences only: container
 width selection, native dialog state, Motion completion state, same-page view
 selection, `prefers-reduced-motion`, CSS container-query support, and the
-`document.startViewTransition` feature. `DialogOptionsDemo` uses the
+View Transition API availability. Its same-route view switch uses React 19.3
+`<ViewTransition>` and `startTransition` with an immediate reduced-motion or
+unsupported-browser fallback. `DialogOptionsDemo` uses the
 `radix-ui` Dialog and a local shadcn-style Drawer wrapper around
 `@base-ui/react/drawer`; these primitives use their own local open state and
 introduce no application data source. Its spacing, card-radius, and minimum
@@ -698,7 +703,18 @@ state or client boundary is introduced. The dialog content is conditionally
 rendered only while open, so closing unmounts it and reopening starts with the
 disclosure closed. Expanded content says values are not displayed when required
 inputs are unavailable; internal missing-data statuses and reason codes are
-not exposed.
+not exposed. `ChartInfoButton` owns popup visibility and conditionally mounts
+its popup inside React 19.3's `<ViewTransition>` boundary. When the browser
+supports the View Transition API, the document is visible, and reduced motion
+is not requested, trigger/Escape/close-button changes use `startTransition` so
+React owns the local transition lifecycle; otherwise they update immediately.
+Backdrop and outside-pointer dismissal also update immediately. Focus moves
+after the committed popup DOM and close restores focus according to the existing
+trigger/outside-target contract. The dashboard root is excluded with
+`html { view-transition-name: none; }`; no manual native transition owner or
+custom promise lifecycle is layered onto this React boundary. App Router
+navigation remains Next-owned and has no production ViewTransition boundary;
+route commit synchronization is not inferred from the local popup transition.
 
 The public estimate-version contract flows from
 `shared/cti-estimate-contract.ts` to server CTI domain metadata and public JSON,
@@ -830,9 +846,14 @@ Radix Dialog and a local shadcn-style wrapper around Base UI Drawer as
 alternative modal primitives alongside that native dialog. The Base UI Drawer
 uses modal mode and downward swipe dismissal. Both primitives manage their own
 open state and focus behavior. `MotionDemo` reports animation completion and
-honors reduced-motion preference; a two-state same-route content switch uses
-the View Transition API when available and motion is allowed, otherwise
-updating immediately. All state is discarded when leaving the route.
+honors reduced-motion preference. The same-route view switch renders keyed
+`TransitionContent` inside React 19.3 `<ViewTransition default="auto">` and
+uses React `startTransition` only when the View Transition API is available
+and reduced motion is not requested; otherwise it updates immediately. The
+switch button remains outside the transition boundary and retains focus. This
+isolated transition remains separate from the production popup transition.
+Neither React-owned transition has a manual native promise lifecycle. All state
+is discarded when leaving the route.
 
 <a id="current-component-tree"></a>
 
@@ -904,11 +925,14 @@ does not add to or replace the production `Page → CpiChart` tree:
 `UIExperimentsPage` → container-query card / scoped token examples / horizontal
 scroll-snap cards / native dialog drawer / `DialogOptionsDemo` (Radix Dialog /
 shadcn-style Base UI Drawer comparison, implemented in `BaseDrawer.tsx`) /
-`MotionDemo` / same-route View Transition switch.
+`MotionDemo` / same-route switch button → keyed `TransitionContent` in React
+`<ViewTransition default="auto">`.
 `MotionDemo` emits completion state through `onFinishedChange`; the route owns
-the native dialog and view-selection state, while Radix and Base UI Drawer own
-their respective primitive state through `DialogOptionsDemo` and its local
-wrapper.
+the native dialog and view-selection state, and `startTransition` wraps eligible
+view changes with an immediate fallback for reduced motion or unsupported
+browsers. The switch button stays mounted outside the boundary. Radix and Base
+UI Drawer own their respective primitive state through `DialogOptionsDemo` and
+its local wrapper.
 
 - `data/source/population_statistics.metadata.json` — 総務省統計局「労働力調査（基本集計）」長期時系列 表1-b-1（e-Stat `statInfId=000031831366`）の取得URL、表ID、取得日時、公式Excelサイズ/SHA-256、欠測ポリシーを記録する。
 - `data/source/employment_indices.csv` — canonical regular employment index, sourced from the official e-Stat `種別=指数`, TL/T/0 mapping. The runtime consumer now uses this actual employment-index series.
@@ -2459,6 +2483,7 @@ The system SHALL make control state, short transitions, and mobile sheet boundar
   **THEN** the control exposes a visible pressed or focus-visible state without changing its action contract
 - **WHEN** a section navigation button represents the current viewport section
   **THEN** its selected state is conveyed by `aria-current="location"` and a non-color visual cue in addition to its color treatment
+- **AND** `SectionTabs` presents the selected button with a theme-token tonal surface, matching label color, and a short underline indicator; the pill shape remains flat without an inset shadow, scale, or whole-button opacity effect
 
 #### Canonical scenario — Scenario R22b: Theme and section feedback
 
@@ -2482,17 +2507,31 @@ The system SHALL make control state, short transitions, and mobile sheet boundar
 
 - **WHEN** the operating system requests reduced motion
   **THEN** nonessential sheet/theme/control animations are disabled or shortened, programmatic section scrolling uses non-smooth behavior, and all controls remain usable
+- **AND** `CpiChart.module.css` makes section selection and its underline indicator immediate while preserving selection, focus, and horizontal-scroll behavior
 
-#### Canonical scenario — Scenario R22e: Explanatory popup View Transition PoC
+#### Canonical scenario — Scenario R22g: Section navigation visual states and contrast
 
-- **WHEN** the explanatory popup is opened by its trigger or closed with Escape, its trigger toggle, or its close button while the document is visible, the browser supports `document.startViewTransition()`, and reduced motion is not requested
-  **THEN** the optional View Transition is limited to the popup, its state and focus update synchronously, and the chart and page remain stationary; closing returns focus to the trigger
+- **WHEN** `SectionTabs` is rendered in light or dark theme
+  **THEN** default, selected, fine-pointer hover, pressed, and `:focus-visible` states remain distinguishable; selected state uses the active tonal tokens and short underline, and keyboard focus has a visible outline distinct from selection
+- **AND** section label text meets a 4.5:1 contrast ratio and the selected underline/focus indicator meets a 3:1 contrast ratio against adjacent colors
+- **WHEN** forced-colors mode is active
+  **THEN** system button, highlight, and outline colors keep the selected indicator and keyboard focus visible
+- **WHEN** the section navigation is horizontally scrolled or displayed at a narrow viewport
+  **THEN** sticky positioning, horizontal scrolling, the minimum 44px target height, and visible focus outline remain usable
+
+#### Canonical scenario — Scenario R22e: React-owned explanatory popup transition
+
+- **WHEN** the explanatory popup is opened by its trigger or closed with Escape, its trigger toggle, or its close button while the document is visible, the browser supports the View Transition API, and reduced motion is not requested
+  **THEN** the open state is updated with `startTransition` inside the popup's React 19.3 `<ViewTransition enter="auto" exit="auto" default="none">` boundary; React owns the lifecycle, the chart/page root stays outside the transition, focus follows the committed DOM, and closing returns focus to the trigger
+- **AND** no manual `document.startViewTransition()`, `flushSync`, or custom native transition-promise lifecycle runs for the same popup
 - **WHEN** the popup is dismissed by its backdrop
   **THEN** it closes immediately and focus returns to the trigger
 - **WHEN** the popup is dismissed by a pointer outside its wrapper
   **THEN** it closes immediately so the original target remains actionable, and focus moves to that clicked focusable target if it is still connected, otherwise to the trigger
 - **WHEN** the API is unavailable, the document is hidden, or reduced motion is requested
   **THEN** the popup retains the existing immediate open/close behavior and the same content, dismissal, and focus behavior
+- **WHEN** an App Router route transition is considered without a verified React boundary that follows the route commit
+  **THEN** Next's ordinary navigation remains in place, direct URLs and Back/Forward are not routed through a native update callback, and the route is not counted as an adopted transition or as evidence of full rollout
 
 #### Canonical scenario — Scenario R22f: BottomSheet and chart Drawer swipe behavior
 
@@ -2699,14 +2738,19 @@ replaced or adopted globally.
 #### Scenario UI-Lab-6: Same-route View Transition
 
 - **WHEN** the user switches between the two demo views
-- **THEN** the page uses `document.startViewTransition` when supported and
-  reduced motion is not requested, and otherwise changes the content immediately
+- **THEN** the lab renders the keyed view inside React's `<ViewTransition
+default="auto">` and uses `startTransition` when the API is available and
+  reduced motion is not requested; otherwise the view changes immediately
+- **AND** the switch button remains mounted outside the boundary and retains
+  keyboard focus
+- **AND** React owns the transition lifecycle; the application does not manage
+  `ready`, `updateCallbackDone`, or `finished` promises or retry the state update
 
 #### Non-functional requirements
 
-- Lab visual rules and custom properties are scoped to `/ui-experiments`;
-  its named View Transition pseudo-element rules use the unique
-  `demo-content` name so they affect only that lab demo. The normal dashboard's
+- Lab visual rules and custom properties are scoped to `/ui-experiments`.
+  React's `<ViewTransition>` owns same-route view presentation; the lab has no
+  named native View Transition pseudo-element rules. The normal dashboard's
   layout, navigation, and modal behavior are unchanged.
 - All lab actions remain available by keyboard, and visible focus indication
   is provided for interactive controls.
@@ -3693,7 +3737,7 @@ Page (RSC)
     │   ├── EarningsBreakdownChart → CustomTooltip — salary comparison uses a common factor derived from the 2025 average of the composite of monthly regular/overtime wages and special-wage 12MA; apply that factor to each component's 12MA before summing; complete registry labels with natural wrapping and stable value column; six rows plus `給与区分合計（所定内＋所定外＋特別）` from visible `EARNINGS_TOTAL_KEYS`; hidden included rows are removed and the total is recalculated from the remaining visible included rows; salary-only separator is placed on the first visible auxiliary row
     │   ├── ResidualAreaChart → CustomTooltip
     │   └── NewGraph → ChartInfoContentRenderer → CustomTooltip — salary 12MAs use a common factor derived from the 2025 average of the composite made from monthly regular/overtime wages and special-wage 12MA; CPI 12MA uses a factor that makes raw monthly CPI's 2025 calendar-year average 100, not a factor derived from the 12MA; Plan49 `消費(総合)` is normalized to its 2025 monthly average before strict 12MA; legacy CTI monthly keys and Plan40 quarterly CTI are not comparison registry entries
-    ├── ChartInfoButton → ChartInfoContentRenderer — Indicator explanations (uses `chartKey` plus loader-resolved state in `src/lib/chartInfoContent.ts`); optional disclosures render as native `<details>/<summary>` controls
+    ├── ChartInfoButton → React 19.3 `<ViewTransition>` boundary → ChartInfoContentRenderer — Indicator explanations (uses `chartKey` plus loader-resolved state in `src/lib/chartInfoContent.ts`); optional disclosures render as native `<details>/<summary>` controls; eligible open/close updates use `startTransition`, while fallback and outside dismissals update immediately with focus synchronized to the DOM commit
     ├── ChartDataContract — stable normalized chart data attributes for each of the seven targets
     ├── ChartExportButton — CSV download of the displayed rows (inside each chart's <details>)
     ├── ChartLegend — defined visible-series legend contract; retains values whose current data is null

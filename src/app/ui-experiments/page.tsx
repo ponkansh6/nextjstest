@@ -1,12 +1,31 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { flushSync } from "react-dom";
+import { startTransition, useEffect, useRef, useState, ViewTransition } from "react";
 import DialogOptionsDemo from "./DialogOptionsDemo";
 import MotionDemo from "./MotionDemo";
 import styles from "./page.module.css";
 
 type DemoView = "overview" | "details";
+
+function TransitionContent({ view }: { view: DemoView }) {
+  return (
+    <ViewTransition key={view} default="auto">
+      <div className={styles.transitionContent}>
+        <span className={styles.transitionIcon} aria-hidden="true">
+          {view === "overview" ? "◌" : "✳"}
+        </span>
+        <div>
+          <strong>{view === "overview" ? "概要" : "詳細"}</strong>
+          <span>
+            {view === "overview"
+              ? "同じ領域の内容を切り替えるデモ"
+              : "画面遷移せずに内容だけが変わります"}
+          </span>
+        </div>
+      </div>
+    </ViewTransition>
+  );
+}
 
 export default function UIExperimentsPage() {
   const [containerWidth, setContainerWidth] = useState<"wide" | "narrow">("wide");
@@ -28,14 +47,13 @@ export default function UIExperimentsPage() {
   function switchView() {
     const nextView = view === "overview" ? "details" : "overview";
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const startTransition = document.startViewTransition;
 
-    if (reducedMotion || typeof startTransition !== "function") {
+    if (reducedMotion || typeof document.startViewTransition !== "function") {
       setView(nextView);
       return;
     }
 
-    startTransition.call(document, () => flushSync(() => setView(nextView)));
+    startTransition(() => setView(nextView));
   }
 
   return (
@@ -253,22 +271,7 @@ export default function UIExperimentsPage() {
             機能対応時は表示の切替をつなぎます。非対応環境や「視差効果を減らす」設定では即時に切り替わります。
           </p>
           <div className={styles.transitionDemo}>
-            <div
-              className={`${styles.transitionContent} ${styles.viewTransitionTarget}`}
-              key={view}
-            >
-              <span className={styles.transitionIcon} aria-hidden="true">
-                {view === "overview" ? "◌" : "✳"}
-              </span>
-              <div>
-                <strong>{view === "overview" ? "概要" : "詳細"}</strong>
-                <span>
-                  {view === "overview"
-                    ? "同じ領域の内容を切り替えるデモ"
-                    : "画面遷移せずに内容だけが変わります"}
-                </span>
-              </div>
-            </div>
+            <TransitionContent view={view} />
             <button type="button" className={styles.secondaryButton} onClick={switchView}>
               表示を切り替える
             </button>

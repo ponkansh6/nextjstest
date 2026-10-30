@@ -2,6 +2,7 @@ import { render, screen, fireEvent, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeAll, describe, it, expect, vi } from "vitest";
 import ChartInfoButton, {
+  getChartInfoPopupPosition,
   ChartInfoSectionHeading,
   ChartInfoList,
   ChartInfoListItem,
@@ -13,10 +14,13 @@ import chartInfoStyles from "../../src/app/components/ChartInfoButton.module.css
 import { EarningsBreakdownChart } from "../../src/app/components/EarningsBreakdownChart";
 import { setupUiMocks } from "../utils/ui-mocks";
 
+const originalGetBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
 let baseMatchMedia: typeof window.matchMedia;
+let baseInnerWidth: number;
 beforeAll(() => {
   setupUiMocks();
   baseMatchMedia = window.matchMedia;
+  baseInnerWidth = window.innerWidth;
 });
 
 // ── Helper: mock data for EarningsBreakdownChart ──
@@ -70,7 +74,7 @@ describe("ChartInfoButton", () => {
     window.matchMedia = baseMatchMedia;
     Reflect.deleteProperty(document, "startViewTransition");
     Object.defineProperty(document, "visibilityState", { configurable: true, value: "visible" });
-    document.documentElement.classList.remove("chart-info-view-transition-active");
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: baseInnerWidth });
   });
 
   function setMotion(matches: boolean) {
@@ -97,99 +101,39 @@ describe("ChartInfoButton", () => {
     });
   }
 
-  it("commits a view transition once, focuses the panel, and clears the root class when finished", async () => {
-    setMotion(false);
-    setVisibility("visible");
-    let commit!: () => void;
-    let resolveFinished!: () => void;
-    const finished = new Promise<void>((resolve) => (resolveFinished = resolve));
+  function mockReactViewTransition() {
     const start = vi.fn((callback: () => void) => {
-      commit = callback;
-      return { finished };
+      callback();
+      return {
+        ready: Promise.resolve(),
+        updateCallbackDone: Promise.resolve(),
+        finished: Promise.resolve(),
+        skipTransition: vi.fn(),
+      };
     });
     setTransition(start);
-    render(<ChartInfoButton>{SampleContent}</ChartInfoButton>);
+    return start;
+  }
+
+  function getBackdrop(container: ParentNode) {
+    const backdrop = container.querySelector<HTMLDivElement>('div[aria-hidden="true"]');
+    expect(backdrop).not.toBeNull();
+    return backdrop as HTMLDivElement;
+  }
+
+  it("uses React ViewTransition for an animated open and focuses the committed panel", () => {
+    setMotion(false);
+    setVisibility("visible");
+    const start = mockReactViewTransition();
+    const { container } = render(<ChartInfoButton>{SampleContent}</ChartInfoButton>);
     const trigger = screen.getByRole("button", { name: "データソースの説明を表示" });
     fireEvent.click(trigger);
     expect(start).toHaveBeenCalledTimes(1);
-    act(() => commit());
     expect(screen.getByRole("dialog")).toBeDefined();
-    expect(screen.getByRole("dialog").className).toContain(chartInfoStyles.viewTransitionPopup);
-    expect(
-      document.querySelector(`[class*="${chartInfoStyles.viewTransitionBackdrop}"]`)?.className,
-    ).toContain(chartInfoStyles.viewTransitionBackdrop);
+    expect(getBackdrop(container)).toBeDefined();
     expect(document.activeElement).toBe(screen.getByRole("button", { name: "閉じる" }));
-    expect(document.documentElement.classList.contains("chart-info-view-transition-active")).toBe(
-      true,
-    );
     expect(start).toHaveBeenCalledTimes(1);
-    const closeButton = screen.getByRole("button", { name: "閉じる" });
-    const focusSpy = vi.spyOn(closeButton, "focus");
-    act(() => commit());
-    expect(focusSpy).not.toHaveBeenCalled();
-    expect(screen.getByRole("dialog")).toBeDefined();
-    expect(document.activeElement).toBe(closeButton);
-    await act(async () => resolveFinished());
-    expect(document.documentElement.classList.contains("chart-info-view-transition-active")).toBe(
-      false,
-    );
     setTransition(undefined);
-  });
-
-  it("clears the transition class when finished rejects", async () => {
-    setMotion(false);
-    setVisibility("visible");
-    setTransition(
-      vi.fn((commit) => {
-        commit();
-        return { finished: Promise.reject(new Error("cancelled")) };
-      }),
-    );
-    render(<ChartInfoButton>{SampleContent}</ChartInfoButton>);
-    fireEvent.click(screen.getByRole("button", { name: "データソースの説明を表示" }));
-    await act(async () => {
-      await Promise.resolve();
-    });
-    expect(document.documentElement.classList.contains("chart-info-view-transition-active")).toBe(
-      false,
-    );
-    setTransition(undefined);
-  });
-
-  it("uses the frame fallback when transition has no finished promise", async () => {
-    setMotion(false);
-    setVisibility("visible");
-    const rafCallbacks: FrameRequestCallback[] = [];
-    const raf = vi.spyOn(window, "requestAnimationFrame").mockImplementation((callback) => {
-      rafCallbacks.push(callback);
-      return rafCallbacks.length;
-    });
-    const start = vi.fn((commit: () => void) => {
-      commit();
-      return {};
-    });
-    setTransition(start);
-    render(<ChartInfoButton>{SampleContent}</ChartInfoButton>);
-    fireEvent.click(screen.getByRole("button", { name: "データソースの説明を表示" }));
-    expect(document.documentElement.classList.contains("chart-info-view-transition-active")).toBe(
-      true,
-    );
-    let framesRun = 0;
-    while (
-      document.documentElement.classList.contains("chart-info-view-transition-active") &&
-      rafCallbacks.length > 0 &&
-      framesRun < 6
-    ) {
-      const callback = rafCallbacks.shift()!;
-      act(() => callback(0));
-      framesRun += 1;
-    }
-    expect(framesRun).toBeGreaterThanOrEqual(2);
-    expect(document.documentElement.classList.contains("chart-info-view-transition-active")).toBe(
-      false,
-    );
-    setTransition(undefined);
-    raf.mockRestore();
   });
 
   it.each([
@@ -210,27 +154,108 @@ describe("ChartInfoButton", () => {
     expect(screen.getByRole("dialog")).toBeDefined();
     expect(document.activeElement).toBe(screen.getByRole("button", { name: "閉じる" }));
     expect(start).not.toHaveBeenCalled();
-    expect(document.documentElement.classList.contains("chart-info-view-transition-active")).toBe(
-      false,
-    );
   });
 
-  it("falls back to an immediate commit if starting a transition throws", () => {
+  it("keeps the latest state and focus after rapid toggle requests", () => {
     setMotion(false);
     setVisibility("visible");
-    setTransition(
-      vi.fn(() => {
-        throw new Error("transition unavailable");
-      }),
-    );
+    mockReactViewTransition();
     render(<ChartInfoButton>{SampleContent}</ChartInfoButton>);
-    fireEvent.click(screen.getByRole("button", { name: "データソースの説明を表示" }));
+    const trigger = screen.getByRole("button", { name: "データソースの説明を表示" });
+
+    act(() => {
+      fireEvent.click(trigger);
+      fireEvent.click(trigger);
+      fireEvent.click(trigger);
+    });
+
     expect(screen.getByRole("dialog")).toBeDefined();
+    expect(trigger.getAttribute("aria-expanded")).toBe("true");
     expect(document.activeElement).toBe(screen.getByRole("button", { name: "閉じる" }));
-    expect(document.documentElement.classList.contains("chart-info-view-transition-active")).toBe(
-      false,
-    );
-    setTransition(undefined);
+  });
+
+  it("returns no position when either reference is missing and clamps popup geometry to the viewport", () => {
+    const triggerRect = { right: -80, bottom: 120 } as DOMRect;
+    const popupRect = { width: 1280 } as DOMRect;
+    const getTriggerRect = vi.fn(() => triggerRect);
+    const getPopupRect = vi.fn(() => popupRect);
+    const trigger = { getBoundingClientRect: getTriggerRect };
+    const popup = { getBoundingClientRect: getPopupRect };
+
+    expect(getChartInfoPopupPosition(null, popup, 1440)).toBeNull();
+    expect(getChartInfoPopupPosition(trigger, null, 1440)).toBeNull();
+    expect(getTriggerRect).not.toHaveBeenCalled();
+    expect(getPopupRect).not.toHaveBeenCalled();
+
+    expect(getChartInfoPopupPosition(trigger, popup, 1440)).toEqual({ left: 16, top: 126 });
+    expect(getTriggerRect).toHaveBeenCalledTimes(1);
+    expect(getPopupRect).toHaveBeenCalledTimes(1);
+  });
+
+  it("positions the popup on open and resynchronizes it on resize and scroll", () => {
+    setMotion(true);
+    setVisibility("visible");
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: 1440 });
+
+    let triggerRect = { right: 480, bottom: 120 } as DOMRect;
+    const popupRect = { width: 320 } as DOMRect;
+    let resizeListener: EventListenerOrEventListenerObject | undefined;
+    const addWindowListener = window.addEventListener.bind(window);
+    const addWindowListenerSpy = vi
+      .spyOn(window, "addEventListener")
+      .mockImplementation((type, listener, options) => {
+        if (type === "resize") resizeListener = listener;
+        addWindowListener(type, listener, options);
+      });
+    const boundingClientRectSpy = vi
+      .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+      .mockImplementation(function (this: HTMLElement) {
+        if (this.getAttribute("role") === "dialog") return popupRect;
+        if (
+          this.tagName === "BUTTON" &&
+          this.getAttribute("aria-label") === "データソースの説明を表示"
+        ) {
+          return triggerRect;
+        }
+        return originalGetBoundingClientRect.call(this);
+      });
+
+    try {
+      const { container } = render(<ChartInfoButton>{SampleContent}</ChartInfoButton>);
+      const trigger = screen.getByRole("button", { name: "データソースの説明を表示" });
+      fireEvent.click(trigger);
+      const popup = screen.getByRole("dialog");
+
+      window.dispatchEvent(new Event("resize"));
+      expect(popup.style.getPropertyValue("--chart-info-popup-top")).toBe("126px");
+      expect(popup.style.getPropertyValue("--chart-info-popup-left")).toBe("160px");
+
+      triggerRect = { right: 900, bottom: 200 } as DOMRect;
+      window.dispatchEvent(new Event("resize"));
+      expect(popup.style.getPropertyValue("--chart-info-popup-top")).toBe("206px");
+      expect(popup.style.getPropertyValue("--chart-info-popup-left")).toBe("580px");
+
+      triggerRect = { right: 2000, bottom: 300 } as DOMRect;
+      window.dispatchEvent(new Event("scroll"));
+      expect(popup.style.getPropertyValue("--chart-info-popup-top")).toBe("306px");
+      expect(popup.style.getPropertyValue("--chart-info-popup-left")).toBe("1104px");
+      expect(document.activeElement).toBe(screen.getByRole("button", { name: "閉じる" }));
+
+      fireEvent.keyDown(document, { key: "Escape" });
+      expect(container.querySelector('[role="dialog"]')).toBeNull();
+      const previousTop = popup.style.getPropertyValue("--chart-info-popup-top");
+      const previousLeft = popup.style.getPropertyValue("--chart-info-popup-left");
+      if (typeof resizeListener === "function") {
+        resizeListener.call(window, new Event("resize"));
+      } else {
+        resizeListener?.handleEvent(new Event("resize"));
+      }
+      expect(popup.style.getPropertyValue("--chart-info-popup-top")).toBe(previousTop);
+      expect(popup.style.getPropertyValue("--chart-info-popup-left")).toBe(previousLeft);
+    } finally {
+      boundingClientRectSpy.mockRestore();
+      addWindowListenerSpy.mockRestore();
+    }
   });
 
   it("closes the backdrop immediately and restores focus to the trigger", () => {
@@ -238,16 +263,19 @@ describe("ChartInfoButton", () => {
     setVisibility("visible");
     const start = vi.fn((commit: () => void) => {
       commit();
-      return { finished: Promise.resolve() };
+      return {
+        ready: Promise.resolve(),
+        updateCallbackDone: Promise.resolve(),
+        finished: Promise.resolve(),
+        skipTransition: vi.fn(),
+      };
     });
     setTransition(start);
-    render(<ChartInfoButton>{SampleContent}</ChartInfoButton>);
+    const { container } = render(<ChartInfoButton>{SampleContent}</ChartInfoButton>);
     const trigger = screen.getByRole("button", { name: "データソースの説明を表示" });
     fireEvent.click(trigger);
     const transitionsAfterOpen = start.mock.calls.length;
-    fireEvent.click(
-      document.querySelector(`[class*="${chartInfoStyles.viewTransitionBackdrop}"]`) as HTMLElement,
-    );
+    fireEvent.click(getBackdrop(container));
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(document.activeElement).toBe(trigger);
     expect(start).toHaveBeenCalledTimes(transitionsAfterOpen);

@@ -398,9 +398,6 @@
   gap: 12px;
   min-width: 0;
 }
-.viewTransitionTarget {
-  view-transition-name: demo-content;
-}
 .transitionIcon {
   display: grid;
   width: 45px;

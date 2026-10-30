@@ -1,12 +1,41 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback, type ReactNode } from "react";
-import { flushSync } from "react-dom";
+import {
+  startTransition,
+  useState,
+  useRef,
+  useEffect,
+  useLayoutEffect,
+  useCallback,
+  type ReactNode,
+  ViewTransition,
+} from "react";
 import { useFocusTrap } from "../../hooks/useFocusTrap";
 import styles from "./ChartInfoButton.module.css";
 
 const FOCUSABLE_SELECTOR =
   'button, [href], input, select, textarea, summary, [tabindex]:not([tabindex="-1"])';
+
+type PopupPositionElement = Pick<HTMLElement, "getBoundingClientRect">;
+
+export function getChartInfoPopupPosition(
+  trigger: PopupPositionElement | null,
+  popup: PopupPositionElement | null,
+  viewportWidth: number,
+  viewportMargin = 16,
+): { left: number; top: number } | null {
+  if (!trigger || !popup) return null;
+
+  const triggerRect = trigger.getBoundingClientRect();
+  const popupWidth = popup.getBoundingClientRect().width;
+  const desiredLeft = triggerRect.right - popupWidth;
+  const maxLeft = Math.max(viewportMargin, viewportWidth - popupWidth - viewportMargin);
+
+  return {
+    left: Math.min(Math.max(desiredLeft, viewportMargin), maxLeft),
+    top: triggerRect.bottom + 6,
+  };
+}
 
 interface ChartInfoButtonProps {
   /** Label for the trigger button's aria-label */
@@ -23,7 +52,7 @@ export default function ChartInfoButton({
   children,
 }: ChartInfoButtonProps) {
   const [open, setOpen] = useState(false);
-  const [viewTransitionEnabled, setViewTransitionEnabled] = useState(false);
+  const openRef = useRef(open);
   const wrapperRef = useRef<HTMLSpanElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
@@ -40,77 +69,81 @@ export default function ChartInfoButton({
 
   const updateOpen = useCallback(
     (nextOpen: boolean, restoreTriggerFocus: boolean, allowTransition = true) => {
+      // Keep event handlers based on the latest requested target while React is
+      // still rendering an earlier transition.
+      openRef.current = nextOpen;
       if (nextOpen) {
         closeReasonRef.current = "trigger";
         outsideFocusTargetRef.current = null;
       } else {
         closeReasonRef.current = restoreTriggerFocus ? "trigger" : "outside";
+        if (restoreTriggerFocus) {
+          triggerRef.current?.focus({ preventScroll: true });
+        }
       }
 
-      const startViewTransition = document.startViewTransition;
       const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       const canTransition =
         allowTransition &&
         !reducedMotion &&
         document.visibilityState === "visible" &&
-        typeof startViewTransition === "function";
+        typeof document.startViewTransition === "function";
 
-      let didCommit = false;
-      const commit = () => {
-        if (didCommit) return;
-        didCommit = true;
-        flushSync(() => {
-          setViewTransitionEnabled(canTransition);
-          setOpen(nextOpen);
-        });
-
-        // Move focus with the DOM update so the transition never delays dialog
-        // access. useFocusTrap keeps its normal focus trap and close restoration.
-        if (nextOpen) {
-          popupRef.current
-            ?.querySelector<HTMLElement>("button, [href], [tabindex]:not([tabindex='-1'])")
-            ?.focus({ preventScroll: true });
-        } else if (restoreTriggerFocus) {
-          triggerRef.current?.focus({ preventScroll: true });
-        }
-      };
-
-      if (canTransition && startViewTransition) {
-        const rootClass = "chart-info-view-transition-active";
-        const clearRootClass = () => document.documentElement.classList.remove(rootClass);
-        document.documentElement.classList.add(rootClass);
-        try {
-          const transition = startViewTransition.call(document, commit) as {
-            finished?: Promise<unknown>;
-          };
-          if (transition.finished) {
-            void transition.finished.then(clearRootClass, clearRootClass);
-          } else {
-            requestAnimationFrame(() => requestAnimationFrame(clearRootClass));
-          }
-          return;
-        } catch {
-          clearRootClass();
-          // A transition can be rejected by a browser while another transition
-          // is active. Keep the interaction available with the normal update.
-        }
+      if (canTransition) {
+        startTransition(() => setOpen(nextOpen));
+      } else {
+        // Reduced motion, hidden documents, non-supporting browsers, and
+        // pointer dismissals retain a direct, focus-safe state update.
+        setOpen(nextOpen);
       }
-
-      commit();
     },
     [],
   );
 
   useFocusTrap(popupRef, open, triggerRef, getFocusRestoreTarget);
 
+  // Focus the newly committed popup before paint. React owns the transition
+  // lifecycle, while focus remains synchronized with the actual DOM commit.
+  useLayoutEffect(() => {
+    if (!open) return;
+    const popup = popupRef.current;
+
+    const syncPopupPosition = () => {
+      const currentPopup = popupRef.current;
+      const position = getChartInfoPopupPosition(
+        triggerRef.current,
+        currentPopup,
+        window.innerWidth,
+      );
+      if (!position) return;
+      currentPopup!.style.setProperty("--chart-info-popup-top", `${position.top}px`);
+      currentPopup!.style.setProperty("--chart-info-popup-left", `${position.left}px`);
+    };
+
+    syncPopupPosition();
+    popup
+      ?.querySelector<HTMLElement>("button, [href], [tabindex]:not([tabindex='-1'])")
+      ?.focus({ preventScroll: true });
+
+    window.addEventListener("resize", syncPopupPosition);
+    window.addEventListener("scroll", syncPopupPosition, true);
+    return () => {
+      window.removeEventListener("resize", syncPopupPosition);
+      window.removeEventListener("scroll", syncPopupPosition, true);
+    };
+  }, [open]);
+
   // ── Close on click outside ──
   useEffect(() => {
     if (!open) return;
 
     const handlePointerDown = (e: PointerEvent) => {
-      // The backdrop and popup are descendants of the wrapper span returned below,
-      // so this contains check already covers every internal pointer target.
-      if (wrapperRef.current?.contains(e.target as Node)) {
+      // The backdrop is inside the wrapper; the popup is the component's first
+      // returned node so it can participate in React enter/exit transitions.
+      if (
+        wrapperRef.current?.contains(e.target as Node) ||
+        popupRef.current?.contains(e.target as Node)
+      ) {
         return;
       }
       outsideFocusTargetRef.current =
@@ -145,7 +178,8 @@ export default function ChartInfoButton({
   }, [open, updateOpen]);
 
   const handleToggle = () => {
-    updateOpen(!open, open);
+    const nextOpen = !openRef.current;
+    updateOpen(nextOpen, !nextOpen);
   };
 
   const handleClose = () => {
@@ -157,88 +191,88 @@ export default function ChartInfoButton({
   };
 
   return (
-    <span ref={wrapperRef} className={`${styles.wrapper}${className ? ` ${className}` : ""}`}>
-      {/* ── Trigger button ── */}
-      <button
-        ref={triggerRef}
-        type="button"
-        className={styles.trigger}
-        aria-label={ariaLabel}
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        onClick={handleToggle}
-      >
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 16 16"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          aria-hidden="true"
-        >
-          <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
-          <text
-            x="8"
-            y="11.5"
-            textAnchor="middle"
-            fill="currentColor"
-            fontSize="11"
-            fontWeight="700"
-            fontFamily="inherit"
-          >
-            i
-          </text>
-        </svg>
-      </button>
-
-      {/* ── Mobile backdrop ── */}
-      {open && (
-        <div
-          className={`${styles.backdrop}${viewTransitionEnabled ? ` ${styles.viewTransitionBackdrop}` : ""}`}
-          aria-hidden="true"
-          onClick={handleBackdropClose}
-        />
-      )}
-
+    <>
       {/* ── Popup panel ── */}
       {open && (
-        <div
-          ref={popupRef}
-          className={`${styles.popup}${viewTransitionEnabled ? ` ${styles.viewTransitionPopup}` : ""}`}
-          role="dialog"
-          aria-modal="true"
-          aria-label={ariaLabel}
-          tabIndex={-1}
-        >
-          {/* Close button */}
-          <button
-            type="button"
-            className={styles.closeButton}
-            aria-label="閉じる"
-            onClick={handleClose}
+        <ViewTransition enter="auto" exit="auto" default="none">
+          <div
+            ref={popupRef}
+            className={styles.popup}
+            role="dialog"
+            aria-modal="true"
+            aria-label={ariaLabel}
+            tabIndex={-1}
           >
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 12 12"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              aria-hidden="true"
+            {/* Close button */}
+            <button
+              type="button"
+              className={styles.closeButton}
+              aria-label="閉じる"
+              onClick={handleClose}
             >
-              <path
-                d="M1 1l10 10M11 1L1 11"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-            </svg>
-          </button>
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 12 12"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <path
+                  d="M1 1l10 10M11 1L1 11"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </button>
 
-          {/* Content */}
-          {children}
-        </div>
+            {/* Content */}
+            {children}
+          </div>
+        </ViewTransition>
       )}
-    </span>
+
+      <span ref={wrapperRef} className={`${styles.wrapper}${className ? ` ${className}` : ""}`}>
+        {/* ── Trigger button ── */}
+        <button
+          ref={triggerRef}
+          type="button"
+          className={styles.trigger}
+          aria-label={ariaLabel}
+          aria-haspopup="dialog"
+          aria-expanded={open}
+          onClick={handleToggle}
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+          >
+            <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
+            <text
+              x="8"
+              y="11.5"
+              textAnchor="middle"
+              fill="currentColor"
+              fontSize="11"
+              fontWeight="700"
+              fontFamily="inherit"
+            >
+              i
+            </text>
+          </svg>
+        </button>
+
+        {/* ── Mobile backdrop ── */}
+        {open && (
+          <div className={styles.backdrop} aria-hidden="true" onClick={handleBackdropClose} />
+        )}
+      </span>
+    </>
   );
 }
 
