@@ -208,15 +208,15 @@ import { page, userEvent } from "vitest/browser";
       window.history.replaceState(null, "", `${window.location.pathname}?from=2020&to=2021`);
       renderBrowserComponent(<CpiSectionsFixture />);
       await expect.element(page.getByText("CPI費目別", { exact: true })).toBeInTheDocument();
-      const salaryButtons = await page.getByRole("button", { name: "給与", exact: true }).all();
-      let hasSalarySectionTab = false;
-      for (const button of salaryButtons) {
-        if ((await button.element()).hasAttribute("aria-current")) {
-          hasSalarySectionTab = true;
-          break;
-        }
-      }
-      expect(hasSalarySectionTab).toBe(true);
+      const sectionNavigation = page.getByRole("navigation", { name: "グラフセクション" });
+      await expect
+        .element(sectionNavigation.getByRole("button", { name: "給与", exact: true }))
+        .toBeInTheDocument();
+      const defaultSectionButton = sectionNavigation.getByRole("button", {
+        name: "CPI主要",
+        exact: true,
+      });
+      expect((await defaultSectionButton.element()).hasAttribute("aria-current")).toBe(true);
       const chart = page.getByRole("img", { name: "物価指数 費目別寄与度の積み上げグラフ" });
       await expect.element(chart).toBeVisible();
       const chartElement = await chart.element();
