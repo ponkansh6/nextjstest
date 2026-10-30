@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from "vitest";
-import { renderHook } from "@testing-library/react";
+import { afterEach, describe, it, expect, vi } from "vitest";
+import { act, cleanup, renderHook } from "@testing-library/react";
 import { useUrlState } from "../../src/hooks/useUrlState";
 
 const mockSearchParams = vi.hoisted(() => vi.fn());
@@ -20,6 +20,13 @@ vi.mock("next/navigation", () => ({
 }));
 
 describe("useUrlState current URL state contract", () => {
+  afterEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+    mockSearchParams.mockReset();
+    window.history.replaceState({}, "", "/");
+  });
+
   it("reads from/to/hidden while ignoring legacy adv links", () => {
     window.history.replaceState({}, "", "/?from=2012&to=2024&hidden=食料,,住居&adv=1");
 
@@ -94,41 +101,125 @@ describe("useUrlState current URL state contract", () => {
   });
 
   it("writes from/to/hidden and removes deprecated adv while preserving other params", () => {
-    window.history.replaceState({}, "", "/?keep=1");
-    const { result } = renderHook(() => useUrlState(2005, 2026));
+    window.history.replaceState({}, "", "/?keep=1&section=prices");
+    const { result } = renderHook(() => useUrlState(2005, 2026, ["prices", "wages"]));
 
     result.current.updateUrl(2012, 2024, ["食料", "住居"]);
 
     expect(window.location.search).toBe(
-      "?keep=1&from=2012&to=2024&hidden=%E9%A3%9F%E6%96%99%2C%E4%BD%8F%E5%B1%85",
+      "?keep=1&section=prices&from=2012&to=2024&hidden=%E9%A3%9F%E6%96%99%2C%E4%BD%8F%E5%B1%85",
     );
   });
 
   it("retains existing query parameters while synchronizing with replaceState", () => {
-    window.history.replaceState({}, "", "/dashboard?keep=1&adv=1");
-    const { result } = renderHook(() => useUrlState(2005, 2026));
+    window.history.replaceState({}, "", "/dashboard?keep=1&section=prices&adv=1");
+    const { result } = renderHook(() => useUrlState(2005, 2026, ["prices", "wages"]));
     const replaceState = vi.spyOn(window.history, "replaceState");
 
     result.current.updateUrl(2012, 2024, []);
 
     expect(window.location.pathname).toBe("/dashboard");
-    expect(window.location.search).toBe("?keep=1&from=2012&to=2024");
+    expect(window.location.search).toBe("?keep=1&section=prices&from=2012&to=2024");
     expect(replaceState).toHaveBeenCalledTimes(1);
-    expect(replaceState.mock.calls[0]?.[2]).toBe("?keep=1&from=2012&to=2024");
+    expect(replaceState.mock.calls[0]?.[2]).toBe(
+      "/dashboard?keep=1&section=prices&from=2012&to=2024",
+    );
     replaceState.mockRestore();
   });
 
-  it("keeps the initial URL snapshot after a popstate event", () => {
-    window.history.replaceState({}, "", "/?from=2012&to=2024&adv=1");
-    const { result } = renderHook(() => useUrlState(2005, 2026));
-
-    window.history.pushState({}, "", "/?from=1990&to=9999&adv=0");
-    window.dispatchEvent(new PopStateEvent("popstate"));
-
+  it("restores filters and section from the URL snapshot on popstate without writing history", () => {
+    window.history.replaceState(
+      {},
+      "",
+      "/dashboard?from=2012&to=2024&hidden=%E9%A3%9F%E6%96%99&keep=1&section=prices",
+    );
+    const { result } = renderHook(() => useUrlState(2005, 2026, ["prices", "wages"]));
     expect(result.current).toMatchObject({
       from: 2012,
       to: 2024,
+      hiddenKeys: ["食料"],
+      section: "prices",
     });
+
+    const replaceState = vi.spyOn(window.history, "replaceState");
+    window.history.pushState(
+      {},
+      "",
+      "/dashboard?from=2010&to=2021&hidden=%E4%BD%8F%E5%B1%85&keep=2&section=wages",
+    );
+    act(() => window.dispatchEvent(new PopStateEvent("popstate")));
+
+    expect(result.current).toMatchObject({
+      from: 2010,
+      to: 2021,
+      hiddenKeys: ["住居"],
+      section: "wages",
+    });
+    expect(window.location.pathname).toBe("/dashboard");
+    expect(window.location.search).toBe(
+      "?from=2010&to=2021&hidden=%E4%BD%8F%E5%B1%85&keep=2&section=wages",
+    );
+    expect(replaceState).not.toHaveBeenCalled();
+  });
+
+  it("canonicalizes an invalid section on initial load and preserves the rest of the URL", () => {
+    window.history.replaceState(
+      { marker: "keep" },
+      "",
+      "/dashboard?from=2012&keep=1&section=unknown#chart",
+    );
+    const replaceState = vi.spyOn(window.history, "replaceState");
+    const { result } = renderHook(() => useUrlState(2005, 2026, ["prices", "wages"]));
+
+    expect(result.current.section).toBe("prices");
+    expect(window.location.pathname).toBe("/dashboard");
+    expect(window.location.search).toBe("?from=2012&keep=1");
+    expect(window.location.hash).toBe("#chart");
+    expect(window.history.state).toEqual({ marker: "keep" });
+    expect(replaceState).toHaveBeenCalledTimes(1);
+    expect(replaceState.mock.calls[0]?.[2]).toBe("/dashboard?from=2012&keep=1#chart");
+  });
+
+  it("falls back on-screen for an invalid section restored by popstate without rewriting the URL", () => {
+    window.history.replaceState({}, "", "/dashboard?keep=1&section=prices");
+    const { result } = renderHook(() => useUrlState(2005, 2026, ["prices", "wages"]));
+    const replaceState = vi.spyOn(window.history, "replaceState");
+
+    window.history.pushState({}, "", "/dashboard?keep=2&section=unknown#chart");
+    act(() => window.dispatchEvent(new PopStateEvent("popstate")));
+
+    expect(result.current.section).toBe("prices");
+    expect(window.location.pathname).toBe("/dashboard");
+    expect(window.location.search).toBe("?keep=2&section=unknown");
+    expect(window.location.hash).toBe("#chart");
+    expect(replaceState).not.toHaveBeenCalled();
+  });
+
+  it("does not canonicalize the initial section when popstate arrives before initial effects finish", () => {
+    const sectionIds = ["prices", "wages"] as const;
+    window.history.replaceState({}, "", "/dashboard?keep=1&section=unknown#chart");
+
+    const nativeAddEventListener = window.addEventListener.bind(window);
+    let dispatchedPopState = false;
+    const addEventListener = vi.spyOn(window, "addEventListener");
+    addEventListener.mockImplementation((type, listener, options) => {
+      nativeAddEventListener(type, listener, options);
+      if (type !== "popstate" || dispatchedPopState) return;
+
+      dispatchedPopState = true;
+      window.history.pushState({}, "", "/dashboard?keep=2&section=wages#chart");
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    });
+    const replaceState = vi.spyOn(window.history, "replaceState");
+
+    const { result } = renderHook(() => useUrlState(2005, 2026, sectionIds));
+
+    expect(dispatchedPopState).toBe(true);
+    expect(result.current.section).toBe("wages");
+    expect(window.location.pathname).toBe("/dashboard");
+    expect(window.location.search).toBe("?keep=2&section=wages");
+    expect(window.location.hash).toBe("#chart");
+    expect(replaceState).not.toHaveBeenCalled();
   });
 
   it("removes a legacy adv param on URL synchronization", () => {

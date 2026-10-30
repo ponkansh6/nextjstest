@@ -41,18 +41,40 @@ import type { ChartInfoContent } from "@/lib/chartInfoContent";
 
 const SpendingBarChart = dynamic(
   () => import("./SpendingBarChart").then((m) => m.SpendingBarChart),
-  { loading: () => <div className={styles.chartSkeleton}>グラフを読み込み中…</div> },
+  {
+    loading: () => (
+      <div className={styles.chartSkeleton} role="status" aria-live="polite" aria-busy="true">
+        グラフを読み込み中…
+      </div>
+    ),
+  },
 );
 const EarningsBreakdownChart = dynamic(
   () => import("./EarningsBreakdownChart").then((m) => m.EarningsBreakdownChart),
-  { loading: () => <div className={styles.chartSkeleton}>グラフを読み込み中…</div> },
+  {
+    loading: () => (
+      <div className={styles.chartSkeleton} role="status" aria-live="polite" aria-busy="true">
+        グラフを読み込み中…
+      </div>
+    ),
+  },
 );
 const ResidualAreaChart = dynamic(
   () => import("./ResidualAreaChart").then((m) => m.ResidualAreaChart),
-  { loading: () => <div className={styles.chartSkeleton}>グラフを読み込み中…</div> },
+  {
+    loading: () => (
+      <div className={styles.chartSkeleton} role="status" aria-live="polite" aria-busy="true">
+        グラフを読み込み中…
+      </div>
+    ),
+  },
 );
 const NewGraph = dynamic(() => import("./NewGraph").then((m) => m.NewGraph), {
-  loading: () => <div className={styles.chartSkeleton}>グラフを読み込み中…</div>,
+  loading: () => (
+    <div className={styles.chartSkeleton} role="status" aria-live="polite" aria-busy="true">
+      グラフを読み込み中…
+    </div>
+  ),
 });
 
 type ChartTooltipController = ReturnType<typeof useChartTooltipController>;

@@ -67,7 +67,9 @@ export function ThemeToggle() {
       onClick={handleClick}
       aria-label={`テーマ: ${THEME_LABEL[theme]}（タップで${THEME_LABEL[nextTheme]}に切替）`}
     >
-      {THEME_ICON[theme]}
+      <span key={theme} className={styles.themeToggleIcon} aria-hidden="true">
+        {THEME_ICON[theme]}
+      </span>
     </button>
   );
 }

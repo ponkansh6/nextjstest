@@ -19,7 +19,7 @@ export function SectionTabs({
   rangeLabel,
   onRangeClick,
 }: SectionTabsProps) {
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLElement>(null);
   // タブクリックで発生した activeId 変更かどうかを追跡する。WebKit(Safari)では、
   // このタブ行の横方向 scrollIntoView と、CpiChart 側のセクション本体への縦方向
   // scrollIntoView(smooth)が近接して発火すると、後から呼ばれた方が先の smooth
@@ -35,9 +35,14 @@ export function SectionTabs({
       skipNextAutoScrollRef.current = false;
       return;
     }
-    const activeEl = scrollRef.current.querySelector(`[aria-current="true"]`);
+    const activeEl = scrollRef.current.querySelector(`[aria-current="location"]`);
     if (activeEl) {
-      activeEl.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+      const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+      activeEl.scrollIntoView({
+        behavior: prefersReducedMotion ? "auto" : "smooth",
+        inline: "center",
+        block: "nearest",
+      });
     }
   }, [activeId]);
 
@@ -45,6 +50,18 @@ export function SectionTabs({
     event.currentTarget.scrollIntoView({ behavior: "auto", inline: "center", block: "nearest" });
     skipNextAutoScrollRef.current = true;
     onSelect(id);
+  };
+
+  const handleTabKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
+    const buttons = Array.from(
+      scrollRef.current?.querySelectorAll<HTMLButtonElement>(`.${styles.sectionTab}`) ?? [],
+    );
+    const currentIndex = buttons.indexOf(event.currentTarget);
+    if (currentIndex < 0 || buttons.length === 0) return;
+    event.preventDefault();
+    const direction = event.key === "ArrowRight" ? 1 : -1;
+    buttons[(currentIndex + direction + buttons.length) % buttons.length]?.focus();
   };
 
   return (
@@ -57,7 +74,7 @@ export function SectionTabs({
       >
         {rangeLabel} ▾
       </button>
-      <div className={styles.sectionTabsScroll} ref={scrollRef}>
+      <nav className={styles.sectionTabsScroll} ref={scrollRef} aria-label="グラフセクション">
         {sections.map((sec) => {
           const isActive = sec.id === activeId;
           return (
@@ -65,15 +82,16 @@ export function SectionTabs({
               key={sec.id}
               type="button"
               className={styles.sectionTab}
-              aria-current={isActive ? "true" : "false"}
+              aria-current={isActive ? "location" : undefined}
               onClick={(e) => handleTabClick(sec.id, e)}
+              onKeyDown={handleTabKeyDown}
             >
               {sec.label}
             </button>
           );
         })}
-        <ThemeToggle />
-      </div>
+      </nav>
+      <ThemeToggle />
     </div>
   );
 }

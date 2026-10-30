@@ -1,5 +1,17 @@
 .popup {
+  --drawer-content-max-height: calc(100vh - env(safe-area-inset-top, 0px) - 8px);
   --drawer-content-max-height: calc(100dvh - env(safe-area-inset-top, 0px) - 8px);
+}
+
+/* Keep Base UI's swipe-driven translate variables, with a shorter idle open/close transition. */
+.popup.popup:not([data-swiping]) {
+  transition-duration: 180ms;
+  transition-timing-function: ease-out;
+}
+
+.popup.popup[data-starting-style],
+.popup.popup[data-ending-style] {
+  opacity: 0;
 }
 
 .header {
@@ -65,8 +77,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .closeButton {
-    transition: none;
+  .closeButton,
+  .popup.popup {
+    transition-duration: 0.01ms !important;
   }
 }
 

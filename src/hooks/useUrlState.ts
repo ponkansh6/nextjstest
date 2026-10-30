@@ -2,7 +2,10 @@
 
 import { useSearchParams } from "next/navigation";
 import React from "react";
-import { serializeUrlState } from "../lib/urlState";
+import { parseSectionId, serializeSectionUrlState, serializeUrlState } from "../lib/urlState";
+
+const useIsomorphicLayoutEffect =
+  typeof window === "undefined" ? React.useEffect : React.useLayoutEffect;
 
 function parseYearParam(value: string | null, fallback: number): number | null {
   if (value === null) return fallback;
@@ -31,16 +34,93 @@ function normalizeRange(
 }
 
 /**
- * URL is the source of the initial shared-state snapshot. CpiChart owns the
- * live React mirrors and sends changes back through updateUrl. This hook does
- * not subscribe to popstate or read localStorage.
+ * URL is the source of the shared-state snapshot. CpiChart owns the live React
+ * mirrors; this hook exposes popstate changes so those mirrors can be restored.
  */
-export function useUrlState(defaultStart: number, defaultEnd: number) {
+export function useUrlState(
+  defaultStart: number,
+  defaultEnd: number,
+  sectionIds: readonly string[] = [],
+) {
   const searchParams = useSearchParams();
+  const frameworkSearchParamsString = searchParams.toString();
+  const searchParamsString =
+    frameworkSearchParamsString === "[object Object]"
+      ? typeof window === "undefined"
+        ? ""
+        : window.location.search.replace(/^\?/, "")
+      : frameworkSearchParamsString;
+  const [popStateSnapshot, setPopStateSnapshot] = React.useState<{
+    version: number;
+    pathname: string;
+    search: string;
+  } | null>(null);
+  const popStateVersionRef = React.useRef(0);
+  const didNormalizeInitialSectionRef = React.useRef(false);
+  const currentPathname = typeof window === "undefined" ? "" : window.location.pathname;
+  const currentSearch = typeof window === "undefined" ? "" : window.location.search;
 
-  const fromParam = searchParams.get("from");
-  const toParam = searchParams.get("to");
-  const hiddenParam = searchParams.get("hidden");
+  useIsomorphicLayoutEffect(() => {
+    const handlePopState = () => {
+      popStateVersionRef.current += 1;
+      setPopStateSnapshot({
+        version: popStateVersionRef.current,
+        pathname: window.location.pathname,
+        search: window.location.search,
+      });
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  useIsomorphicLayoutEffect(() => {
+    if (didNormalizeInitialSectionRef.current) return;
+    didNormalizeInitialSectionRef.current = true;
+    if (popStateVersionRef.current > 0) return;
+
+    const url = new URL(window.location.href);
+    const params = new URLSearchParams(url.search);
+    const sectionParam = params.get("section");
+    if (sectionParam === null || sectionIds.includes(sectionParam)) return;
+
+    const defaultSectionId = sectionIds[0] ?? "";
+    const normalizedParams = serializeSectionUrlState(params, defaultSectionId, defaultSectionId);
+    const query = normalizedParams.toString();
+    url.search = query ? `?${query}` : "";
+    window.history.replaceState(
+      window.history.state,
+      "",
+      `${url.pathname}${url.search}${url.hash}`,
+    );
+  }, [sectionIds]);
+
+  React.useEffect(() => {
+    if (!popStateSnapshot) return;
+    const snapshotSearch = popStateSnapshot.search.replace(/^\?/, "");
+    if (
+      currentPathname !== popStateSnapshot.pathname ||
+      currentSearch !== popStateSnapshot.search ||
+      searchParamsString === snapshotSearch
+    ) {
+      setPopStateSnapshot(null);
+    }
+  }, [currentPathname, currentSearch, popStateSnapshot, searchParamsString]);
+
+  const currentParams = React.useMemo(() => {
+    if (
+      popStateSnapshot &&
+      popStateSnapshot.pathname === currentPathname &&
+      popStateSnapshot.search === currentSearch
+    ) {
+      return new URLSearchParams(popStateSnapshot.search);
+    }
+    return new URLSearchParams(searchParamsString);
+  }, [currentPathname, currentSearch, popStateSnapshot, searchParamsString]);
+
+  const fromParam = currentParams.get("from");
+  const toParam = currentParams.get("to");
+  const hiddenParam = currentParams.get("hidden");
+  const section = parseSectionId(currentParams.get("section"), sectionIds, sectionIds[0] ?? "");
 
   const [from, to] = normalizeRange(fromParam, toParam, defaultStart, defaultEnd);
   const hiddenKeys = React.useMemo(
@@ -52,14 +132,14 @@ export function useUrlState(defaultStart: number, defaultEnd: number) {
     // Retire legacy links on the current history entry as soon as the client
     // reads their URL snapshot. The guard keeps this from rewriting the URL
     // again after Next observes the replaceState update.
-    if (!searchParams.has("adv")) return;
-
-    const currentUrl = new URL(window.location.href);
-    const currentParams = new URLSearchParams(currentUrl.search);
     if (!currentParams.has("adv")) return;
 
+    const currentUrl = new URL(window.location.href);
+    const urlParams = new URLSearchParams(currentUrl.search);
+    if (!urlParams.has("adv")) return;
+
     const params = serializeUrlState(
-      currentParams,
+      urlParams,
       { from, to, hidden: hiddenKeys },
       defaultStart,
       defaultEnd,
@@ -71,7 +151,7 @@ export function useUrlState(defaultStart: number, defaultEnd: number) {
       "",
       `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`,
     );
-  }, [defaultEnd, defaultStart, from, hiddenKeys, searchParams, to]);
+  }, [currentParams, defaultEnd, defaultStart, from, hiddenKeys, to]);
 
   const updateUrl = React.useCallback(
     (newFrom: number, newTo: number, newHidden: string[]) => {
@@ -86,7 +166,7 @@ export function useUrlState(defaultStart: number, defaultEnd: number) {
       );
 
       const query = params.toString();
-      const url = query ? `?${query}` : window.location.pathname;
+      const url = `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`;
       window.history.replaceState(window.history.state, "", url);
     },
     [defaultStart, defaultEnd],
@@ -96,6 +176,8 @@ export function useUrlState(defaultStart: number, defaultEnd: number) {
     from,
     to,
     hiddenKeys,
+    section,
+    popStateVersion: popStateSnapshot?.version ?? popStateVersionRef.current,
     updateUrl,
   };
 }

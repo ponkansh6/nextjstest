@@ -501,6 +501,23 @@ only the `setItem`/`removeItem` write operations are absorbed during interaction
 DOM theme application and React state updates continue after a write failure. No browser-state source changes
 the server-loaded data model.
 
+The dashboard page loads CPI, earnings, CPI status, and quarterly public views
+on the server before rendering chart props. Route-segment loading uses
+`src/app/loading.tsx` while those inputs are pending; lazy chart chunks keep
+their chart-specific loading placeholders. A rejected server load reaches
+`src/app/error.tsx`, whose retry action re-renders the segment. An unavailable
+CPI source is reported from its status reason; a valid source with no display
+rows is reported as an empty dataset. `toCpiView()` retains unavailable CPI
+observations as `null`, so missing measurements are not converted to numeric
+zeroes. `CpiChartSections` owns the loading placeholders for lazy chart
+components. `CpiChart` remains inside a local Suspense boundary because
+`useUrlState()` calls `useSearchParams()`; the prerender-eligible page requires
+that nearby boundary, and its fallback uses the same chart-card placeholder as
+route loading. The placeholder graph uses the same `chartWrapper` sizing rules
+as the rendered major-index chart. The spending chart's pure normalization
+helper is in `spendingChartData.ts`, separate from `SpendingBarChart.tsx`, so
+importing that helper does not eagerly load the chart component.
+
 The `/ui-experiments` route is an isolated UI technology evaluation page and
 does not load dashboard data or change production chart state. Its controls
 use local React state and browser capabilities/preferences only: container
@@ -1006,6 +1023,7 @@ override them.
 | Current contract                                                 | Canonical requirement group                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Dashboard behavior and component contracts                       | [R1](#current-r1) · [R2](#current-r2) · [R3](#current-r3) · [R4](#current-r4) · [R5](#current-r5) · [R6](#current-r6) · [R7](#current-r7) · [R8](#current-r8) · [R9](#current-r9) · [R10](#current-r10) · [R11](#current-r11) · [R12](#current-r12) · [R13](#current-r13) · [R14](#current-r14) · [R15](#current-r15) · [R16](#current-r16) · [R17](#current-r17) · [R18](#current-r18) · [R19](#current-r19) · [R20](#current-r20) · [R21](#current-r21) |
+| UI interaction feedback and mobile sheet behavior                | [R22](#current-r22)                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | UI technology evaluation lab                                     | [UI-Lab](#ui-experiments-poc-requirements)                                                                                                                                                                                                                                                                                                                                                                                                                |
 | Public chart data and export parity                              | [R4-4](#current-r4-4)                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | Optional persistent Chromium Browser Mode                        | [Browser Mode persistent Chromium lifecycle](#browser-mode-persistent-chromium-lifecycle)                                                                                                                                                                                                                                                                                                                                                                 |
@@ -1828,9 +1846,25 @@ The system SHALL render the main dashboard as a server-rendered page at `/`.
 
 #### Canonical scenario — Scenario R1b: Data Loading Error
 
-- **WHEN** CSV data fails to load or is empty
+- **WHEN** required CSV data fails to load or validate
 - **THEN** the system displays a descriptive error message with guidance to the current `data/source/` CPI input paths
 - **AND** it does not direct operators to the obsolete `public/cpi_data.csv` path
+
+#### Canonical scenario — Scenario R1c: Dashboard Pending and Empty Data States
+
+- **WHEN** the dashboard server inputs are pending
+- **THEN** the route displays a stable, accessible loading placeholder that identifies indicator data as pending
+- **AND** lazy chart chunks retain their chart-specific loading state
+- **WHEN** the selected CPI source is unavailable or valid but has no display rows
+- **THEN** the page distinguishes the unavailable source from a valid empty dataset and does not describe them as the same failure
+- **AND** missing CPI measurements remain unavailable rather than being rendered as zero
+- **AND** unavailable bundled CPI data directs the operator to update the source and rebuild/redeploy instead of offering an ineffective page reload
+
+#### Canonical scenario — Scenario R1d: Recover from a Render Failure
+
+- **WHEN** a server render or lazy chart chunk throws an error
+- **THEN** the route displays a descriptive error state with an action that retries the segment render
+- **AND** this segment reset does not claim to re-fetch bundled static data; unavailable bundled CPI data follows the source-update and rebuild/redeploy recovery path in Scenario R1c
 
 <a id="current-r2"></a>
 
@@ -2412,6 +2446,64 @@ The system SHALL resolve tooltip display rows from chart-side series metadata wh
   **THEN** the Popup and nested tooltip both reflect the current CSS tokens without stale color state, and the existing selection, dismissal, focus, and scroll behavior remains unchanged.
 - **WHEN** a desktop hover `CustomTooltip` is displayed
   **THEN** its surface and text continue to resolve through the active tooltip theme tokens.
+
+<a id="current-r22"></a>
+
+### Canonical requirement group: R22: UI Interaction Feedback and Mobile Sheet Behavior
+
+The system SHALL make control state, short transitions, and mobile sheet boundaries perceivable while preserving reduced-motion behavior and the existing chart data presentation.
+
+#### Canonical scenario — Scenario R22a: Pressed, selected, and focus-visible states
+
+- **WHEN** a user presses or focuses a section, period, theme, filter, or sheet-close control
+  **THEN** the control exposes a visible pressed or focus-visible state without changing its action contract
+- **WHEN** a section navigation button represents the current viewport section
+  **THEN** its selected state is conveyed by `aria-current="location"` and a non-color visual cue in addition to its color treatment
+
+#### Canonical scenario — Scenario R22b: Theme and section feedback
+
+- **WHEN** the user changes the theme
+  **THEN** the theme control and token-based chart surface provide a short opacity/transform or color transition without delaying chart labels or values
+- **WHEN** the user selects a section
+  **THEN** the target section is reached through the existing scroll navigation and the control provides immediate pressed feedback; the whole chart SVG is not animated as one surface
+- **WHEN** a control or surface is animated
+  **THEN** CSS and Motion do not animate the same target concurrently
+
+#### Canonical scenario — Scenario R22c: Mobile sheet viewport and safe area
+
+- **WHEN** the period BottomSheet or selected-point Drawer is open on a mobile viewport
+  **THEN** bottom content respects the safe-area inset, the sheet can scroll internally, and a `vh` fallback precedes dynamic viewport sizing where used
+- **WHEN** the viewport is short or in landscape orientation
+  **THEN** the sheet remains within its configured viewport height and its close and apply controls remain reachable
+- **WHEN** the sheet is opened or closed
+  **THEN** its short transition preserves the existing focus management and dismissal behavior
+
+#### Canonical scenario — Scenario R22d: Reduced motion
+
+- **WHEN** the operating system requests reduced motion
+  **THEN** nonessential sheet/theme/control animations are disabled or shortened, programmatic section scrolling uses non-smooth behavior, and all controls remain usable
+
+#### Canonical scenario — Scenario R22e: Explanatory popup View Transition PoC
+
+- **WHEN** the explanatory popup is opened by its trigger or closed with Escape, its trigger toggle, or its close button while the document is visible, the browser supports `document.startViewTransition()`, and reduced motion is not requested
+  **THEN** the optional View Transition is limited to the popup, its state and focus update synchronously, and the chart and page remain stationary; closing returns focus to the trigger
+- **WHEN** the popup is dismissed by its backdrop
+  **THEN** it closes immediately and focus returns to the trigger
+- **WHEN** the popup is dismissed by a pointer outside its wrapper
+  **THEN** it closes immediately so the original target remains actionable, and focus moves to that clicked focusable target if it is still connected, otherwise to the trigger
+- **WHEN** the API is unavailable, the document is hidden, or reduced motion is requested
+  **THEN** the popup retains the existing immediate open/close behavior and the same content, dismissal, and focus behavior
+
+#### Canonical scenario — Scenario R22f: BottomSheet and chart Drawer swipe behavior
+
+- **WHEN** a touch or pen user vertically swipes at least 48px upward on the period BottomSheet drag handle
+  **THEN** a compact sheet expands and its handle remains a 128×44px target with a centered grip
+- **WHEN** a touch or pen user vertically swipes at least 48px downward on the drag handle
+  **THEN** an expanded sheet becomes compact and a compact sheet closes
+- **WHEN** a touch or pen user scrolls the BottomSheet content outside its drag handle
+  **THEN** content keeps native vertical scrolling and the sheet drag listener does not intercept it
+- **WHEN** the selected-point chart Drawer is swiped downward
+  **THEN** its existing Base UI `DrawerHandle`/`swipeDirection="down"` behavior remains available and the popup keeps its short opacity transition
 
 <a id="current-r15"></a>
 
@@ -5598,13 +5690,13 @@ This section records the current contracts introduced by SharedPlan 58 and takes
 
 `ESTAT_APP_ID` + e-Stat API transport → registry source discovery (`latest-published` where configured) → adapter identity, schema, coverage, approved-vintage and revision checks → isolated staging → staged runtime quality validation → `--check` report without canonical writes, or journaled publish after all required checks pass. For CPI, the discovered latest month must fall within the explicitly approved 202607–202609 window; failure at any validation stage prevents publish and preserves current canonical data. The web application loads the validated bundled artifacts from `data/source/` and does not call the refresh API during normal page rendering.
 
-URL period state is initialized from complete decimal `from` / `to` year values. Malformed, unsafe, or reversed ranges fall back to the chart's default range; valid out-of-range years are clamped to the available boundary. With no chart data, the default range is the safe 2025–2025 interval and filtering returns an empty list without producing `NaN` state or a malformed range label. The URL is the initial snapshot and subsequent chart state is written with `history.replaceState`.
+URL period state is initialized from complete decimal `from` / `to` year values. Malformed, unsafe, or reversed ranges fall back to the chart's default range; valid out-of-range years are clamped to the available boundary. With no chart data, the default period is the safe 2025–2025 interval and filtering returns an empty list without producing `NaN` state or a malformed range label. Continuous period and series changes use `history.replaceState`; explicit section navigation adds a shareable section state with `history.pushState`, while passive scroll-based active-section changes replace the current entry. A direct/initial URL with an unknown section falls back to the first configured section and removes the invalid `section` query with `replaceState`, preserving other query parameters and the hash. In browsers, the single `useUrlState` popstate listener is installed in an isomorphic layout effect before initial-section canonicalization; server rendering uses a passive effect to avoid layout-effect warnings. The listener captures a `window.location.search` snapshot consumed by both filter and section restoration, independent of Next hook update ordering; unknown popstate section ids only fall back on-screen and do not trigger a history write. The section hook uses manual browser scroll restoration while mounted and restores the prior setting on unmount, so section state is the single restoration target. On `popstate`, URL period/series/section state is restored without writing a competing history entry.
 
 Theme initialization reads only `light`, `dark`, and `system` from storage. Missing, corrupt, or unreadable values fall back to `system`. The early layout script applies only explicit `light` or `dark`; system mode and storage exceptions remove `data-theme` so CSS system preference applies. A failed storage write or removal does not prevent the selected theme from being applied in the current document.
 
 ### Component Tree
 
-Bundled `data/source/` artifacts → server data loaders and view models → `src/app/page.tsx` → `CpiChart` and chart sections. The page's visible explanation identifies CPI as a 2025-base official connected index and describes salary/consumption as following their own published or comparison-normalization contracts. `src/app/layout.tsx` emits matching metadata, Open Graph, and Twitter descriptions. `useUrlState` normalizes the initial URL period for `CpiChart`; `ThemeToggle` owns interactive theme cycling, while the layout's early script prevents an incorrect explicit theme before hydration. The separate `scripts/data-refresh/cli.mjs` pipeline validates staged updates before publishing.
+Bundled `data/source/` artifacts → server data loaders and view models → `src/app/page.tsx` → `CpiChart` and chart sections. The page's visible explanation identifies CPI as a 2025-base official connected index and describes salary/consumption as following their own published or comparison-normalization contracts. `src/app/layout.tsx` emits matching metadata, Open Graph, and Twitter descriptions. `useUrlState` parses and normalizes `from`, `to`, `hidden`, and the stable `section` id for `CpiChart`; its single popstate listener captures an exact location snapshot consumed by both filter and section restoration. Filter changes replace the current history entry, explicit section selections push an entry, and passive active-section changes replace it. `useSectionNavigation` owns visible-section tracking, URL section history, deep-link restoration, and suppresses URL writes while restoring from the shared popstate snapshot; `SectionTabs` is a labeled navigation landmark with buttons and `aria-current="location"`, not an ARIA tablist. `ThemeToggle` owns interactive theme cycling, while the layout's early script prevents an incorrect explicit theme before hydration. The separate `scripts/data-refresh/cli.mjs` pipeline validates staged updates before publishing.
 
 ### Requirements
 
@@ -5618,6 +5710,16 @@ Bundled `data/source/` artifacts → server data loaders and view models → `sr
 - **WHEN** `from` or `to` is malformed, unsafe, or the normalized start is after the end, **THEN** `useUrlState` returns the chart's default range without exposing `NaN` or a reversed range.
 - **WHEN** a URL contains valid integer years outside the available range, **THEN** each endpoint is clamped to the available boundary and the resulting range is ordered.
 - **WHEN** the chart data is empty, **THEN** the default period remains the safe 2025–2025 interval and filtering produces no rows without throwing or rendering a malformed year range.
+
+#### URL section and browser history
+
+- **WHEN** a user directly opens a URL with a valid `section` id, **THEN** the matching section becomes current and is restored after the chart client mounts; an unknown id falls back to the first configured section and is removed from the URL with `replaceState` while preserving other parameters and the hash.
+- **WHEN** browser Back/Forward restores an entry with an unknown `section` id, **THEN** the screen falls back to the first configured section without writing a history entry during restoration.
+- **WHEN** a direct/initial URL contains an unknown `section` together with `from`, `to`, `hidden`, unrelated query parameters, or a hash, **THEN** the screen uses the first configured section and canonicalizes only the invalid `section` with `replaceState`, preserving the other query values and hash.
+- **WHEN** `popstate` fires after the browser listener is registered but before initial-section canonicalization can run, **THEN** the captured destination URL snapshot wins over the stale initial section and no initial `replaceState` overwrites that history entry; `tests/unit/useUrlState.test.ts` covers this ordering regression.
+- **WHEN** a user explicitly selects a section, **THEN** a shareable `section` query is added while existing `from`, `to`, `hidden`, and unrelated query parameters are preserved, and Back/Forward restores the matching visible section without writing a new history entry or competing with native scroll restoration.
+- **WHEN** a user changes the period or scrolls across sections, **THEN** the current history entry is replaced rather than adding an entry for each intermediate adjustment.
+- **WHEN** keyboard or touch users navigate sections, **THEN** the visible section and the navigation button marked `aria-current="location"` remain synchronized; the section controls remain ordinary navigation buttons rather than claiming tabs/panels semantics.
 
 #### Theme recovery
 

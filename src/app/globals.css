@@ -242,3 +242,21 @@ a {
     animation-duration: 0s !important;
   }
 }
+
+/* Keep the dashboard View Transition PoC scoped to its named explanation panel. */
+html.chart-info-view-transition-active {
+  view-transition-name: none;
+}
+
+::view-transition-group(chart-info-popup) {
+  animation-duration: 180ms;
+  animation-timing-function: ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(chart-info-popup),
+  ::view-transition-old(chart-info-popup),
+  ::view-transition-new(chart-info-popup) {
+    animation-duration: 0.01ms !important;
+  }
+}

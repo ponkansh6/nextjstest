@@ -73,6 +73,12 @@
   transform-origin: top right;
 }
 
+/* The View Transition PoC is deliberately limited to this explanation panel. */
+.popup.viewTransitionPopup {
+  view-transition-name: chart-info-popup;
+  animation: none;
+}
+
 @keyframes popupIn {
   from {
     opacity: 0;
@@ -334,6 +340,10 @@
 /* ── Mobile backdrop ── */
 .backdrop {
   display: none;
+}
+
+.backdrop.viewTransitionBackdrop {
+  animation: none;
 }
 
 /* 同期: MOBILE_BREAKPOINT_PX = 768 */

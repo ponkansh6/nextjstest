@@ -192,7 +192,8 @@ describe("home page public status and rendering branches", () => {
 
     render(await Page());
 
-    expect(screen.getAllByText("CPIデータは現在利用できません。")).toHaveLength(2);
+    expect(screen.getByRole("alert")).toBeTruthy();
+    expect(screen.getAllByText("CPIデータは現在利用できません。")).toHaveLength(1);
   });
 
   it("preserves explicit comparison validation reasons", async () => {
@@ -242,10 +243,14 @@ describe("home page public status and rendering branches", () => {
 
     render(await Page());
 
-    expect(screen.getAllByText("CPIデータは現在利用できません。")).toHaveLength(2);
+    expect(screen.getByRole("alert")).toBeTruthy();
+    expect(screen.getAllByText("CPIデータは現在利用できません。")).toHaveLength(1);
     expect(
-      screen.getByText("CPIデータを確認中です。時間をおいて再度お試しください。"),
+      screen.getByText(
+        "CPIデータが配布版に含まれていません。担当者にデータ更新と再ビルド・再デプロイを依頼してください。",
+      ),
     ).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "再読み込み" })).toBeNull();
     expect(screen.queryByText(/data\/source\/cpi_data2025_long\.csv/)).toBeNull();
     expect(screen.queryByTestId("cpi-chart")).toBeNull();
   });
@@ -258,10 +263,14 @@ describe("home page public status and rendering branches", () => {
 
     render(await Page());
 
-    expect(screen.getAllByText("CPIデータは現在利用できません。")).toHaveLength(2);
+    expect(screen.getByRole("alert")).toBeTruthy();
+    expect(screen.getAllByText("CPIデータは現在利用できません。")).toHaveLength(1);
     expect(
-      screen.getByText("CPIデータを確認中です。時間をおいて再度お試しください。"),
+      screen.getByText(
+        "CPIデータが配布版に含まれていません。担当者にデータ更新と再ビルド・再デプロイを依頼してください。",
+      ),
     ).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "再読み込み" })).toBeNull();
   });
 
   it("shows the development diagnostic when CPI is unavailable", async () => {
@@ -284,10 +293,11 @@ describe("home page public status and rendering branches", () => {
 
     render(await Page());
 
-    expect(screen.getByText("データの読み込みに失敗したか、データが空です。")).toBeTruthy();
+    expect(screen.getByRole("alert")).toBeTruthy();
     expect(
-      screen.getByText("データを読み込めませんでした。時間をおいて再度お試しください。"),
+      screen.getByText("CPIデータは利用できますが、表示できるデータがありません。"),
     ).toBeTruthy();
+    expect(screen.getByText("データソースに表示対象の値があるか確認してください。")).toBeTruthy();
   });
 
   it("propagates a loader failure instead of presenting a misleading empty-data state", async () => {

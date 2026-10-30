@@ -3,6 +3,7 @@ import { getCpiDataStatus, loadCpiData, loadTotalEarningData } from "../../serve
 import { toCpiView, toEarningsView } from "../../server/lib/view-models/dashboard";
 import { loadQuarterlyPublicData } from "../../server/lib/view-models/quarterlyProjection";
 import CpiChart from "./components/CpiChart";
+import { DashboardChartLoading } from "./components/DashboardChartLoading";
 import styles from "./page.module.css";
 import { getCpiUnavailableLabel } from "@/lib/chartInfoContent";
 import {
@@ -95,7 +96,16 @@ export default async function Page() {
       </header>
 
       {projectedCpiData.length > 0 ? (
-        <Suspense fallback={null}>
+        <Suspense
+          fallback={
+            <div aria-busy="true">
+              <span className={styles.loadingLabel} role="status">
+                URLの表示状態を読み込み中です
+              </span>
+              <DashboardChartLoading />
+            </div>
+          }
+        >
           <CpiChart
             data={projectedCpiData}
             quarterlyNominalData={projectedQuarterlyNominal}
@@ -107,16 +117,16 @@ export default async function Page() {
           />
         </Suspense>
       ) : (
-        <div className={styles.errorContainer}>
+        <div className={styles.errorContainer} role="alert">
           <p className={styles.errorMessage}>
             {cpiInfoState.baseYear === null
-              ? (cpiInfoState.label ?? "CPIデータは現在利用できません。")
-              : "データの読み込みに失敗したか、データが空です。"}
+              ? (cpiInfoState.label ?? "CPIデータを読み込めませんでした。")
+              : "CPIデータは利用できますが、表示できるデータがありません。"}
           </p>
           <p className={styles.errorSubMessage}>
             {cpiInfoState.baseYear === null
-              ? "CPIデータを確認中です。時間をおいて再度お試しください。"
-              : "データを読み込めませんでした。時間をおいて再度お試しください。"}
+              ? "CPIデータが配布版に含まれていません。担当者にデータ更新と再ビルド・再デプロイを依頼してください。"
+              : "データソースに表示対象の値があるか確認してください。"}
           </p>
           {process.env.NODE_ENV === "development" && (
             <p className={styles.errorSubMessage}>

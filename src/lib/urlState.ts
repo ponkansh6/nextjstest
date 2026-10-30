@@ -4,6 +4,28 @@ export interface UrlStateValues {
   hidden: string[];
 }
 
+export function parseSectionId(
+  value: string | null,
+  validSectionIds: readonly string[],
+  defaultSectionId: string,
+): string {
+  return value && validSectionIds.includes(value) ? value : defaultSectionId;
+}
+
+export function serializeSectionUrlState(
+  currentParams: URLSearchParams,
+  sectionId: string,
+  defaultSectionId: string,
+): URLSearchParams {
+  const params = new URLSearchParams(currentParams);
+  if (sectionId === defaultSectionId) {
+    params.delete("section");
+  } else {
+    params.set("section", sectionId);
+  }
+  return params;
+}
+
 /**
  * Applies the existing URL state contract to a copy of the current query.
  * This intentionally does not read from or write to browser globals.

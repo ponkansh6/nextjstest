@@ -35,7 +35,7 @@ import {
   QUARTERLY_PUBLIC_REAL_KEYS,
 } from "../../lib/quarterlyPublicProjection";
 import { DataTablesSection, type DataTableSpec } from "./DataTablesSection";
-import { normalizeSpendingChartData } from "./SpendingBarChart";
+import { normalizeSpendingChartData } from "./spendingChartData";
 import { getPublicSpendingKeys, normalizePublicChartData } from "./ChartDataContract";
 import { CPI_CHART_SECTIONS } from "./cpiChartConfig";
 import { useSectionNavigation } from "../../hooks/useSectionNavigation";
@@ -76,10 +76,9 @@ export default function CpiChart({
     return [...years].toSorted((a, b) => a - b);
   }, [data]);
 
-  // 共有状態の所有者: useUrlState は URL の初期スナップショットを読み、
-  // CpiChart はその値を live React state として所有する。同期方向は
-  // URL -> 初期化時のReact state、React state -> URL (replaceState) のみ。
-  // popstate による再読込や localStorage との競合解決は行わない。
+  // useUrlState parses the URL snapshot and popstate version. CpiChart owns the
+  // live filter state; history restoration updates that mirror without writing
+  // a competing entry back into the URL.
   // 初期値がNaNやundefinedにならないよう、確実に数値(0含む)を返すように修正
   const initialStartYear = allYears.find((y) => y >= MIN_DISPLAY_YEAR) ?? allYears[0] ?? 2025;
   // The empty case is literal 2025 and the non-empty case indexes the final
@@ -90,8 +89,14 @@ export default function CpiChart({
     from,
     to,
     hiddenKeys: urlHiddenKeys,
+    section: urlSectionId,
+    popStateVersion,
     updateUrl,
-  } = useUrlState(initialStartYear, initialEndYear);
+  } = useUrlState(
+    initialStartYear,
+    initialEndYear,
+    CPI_CHART_SECTIONS.map(({ id }) => id),
+  );
 
   const [startYear, setStartYear] = useState(from);
   const [endYear, setEndYear] = useState(to);
@@ -103,8 +108,25 @@ export default function CpiChart({
     useToggleSet<string>(urlHiddenKeys);
   const [maHiddenKeys, handleMaLegendClick] = useToggleSet<string>();
 
+  const lastPopStateVersionRef = useRef(popStateVersion);
+  const suppressUrlSyncForRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (lastPopStateVersionRef.current === popStateVersion) return;
+    lastPopStateVersionRef.current = popStateVersion;
+    suppressUrlSyncForRef.current = `${from}:${to}:${[...urlHiddenKeys].sort().join(",")}`;
+    setStartYear(from);
+    setEndYear(to);
+    setStackedHiddenKeys(urlHiddenKeys);
+  }, [from, popStateVersion, setStackedHiddenKeys, to, urlHiddenKeys]);
+
   // URL sync when state changes
   useEffect(() => {
+    const currentStateKey = `${startYear}:${endYear}:${[...stackedHiddenKeys].sort().join(",")}`;
+    if (suppressUrlSyncForRef.current === currentStateKey) {
+      suppressUrlSyncForRef.current = null;
+      return;
+    }
+    suppressUrlSyncForRef.current = null;
     updateUrl(startYear, endYear, stackedHiddenKeys);
   }, [startYear, endYear, stackedHiddenKeys, updateUrl]);
 
@@ -245,6 +267,8 @@ export default function CpiChart({
   };
   const { activeId, handleSelectSection, isProgrammaticScroll } = useSectionNavigation({
     sections,
+    initialActiveId: urlSectionId,
+    popStateVersion,
   });
 
   const { isTouch } = useChartTheme();

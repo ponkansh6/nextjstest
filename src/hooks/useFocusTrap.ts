@@ -10,11 +10,14 @@ const FOCUSABLE =
  * @param open         - whether the container is currently visible
  * @param restoreRef   - optional ref to the element that should receive focus on close.
  *                       When provided, this element is focused instead of the saved activeElement.
+ * @param getRestoreTarget - optional close-time resolver for interactions that choose a focus
+ *                            destination after opening, such as dismissing on an outside click.
  */
 export function useFocusTrap(
   containerRef: React.RefObject<HTMLElement | null>,
   open: boolean,
   restoreRef?: React.RefObject<HTMLElement | null>,
+  getRestoreTarget?: () => HTMLElement | null,
 ) {
   const previousFocusRef = useRef<HTMLElement | null>(null);
 
@@ -41,11 +44,12 @@ export function useFocusTrap(
     const restoreTarget = restoreRef?.current ?? previousFocusRef.current;
 
     return () => {
-      if (restoreTarget) {
-        restoreTarget.focus({ preventScroll: true });
+      const target = getRestoreTarget ? getRestoreTarget() : restoreTarget;
+      if (target) {
+        target.focus({ preventScroll: true });
       }
     };
-  }, [open, containerRef, restoreRef]);
+  }, [open, containerRef, restoreRef, getRestoreTarget]);
 
   // Trap Tab / Shift+Tab inside the container
   useEffect(() => {

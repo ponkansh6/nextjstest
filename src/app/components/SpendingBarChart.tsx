@@ -12,7 +12,6 @@ import {
   YAxis,
 } from "recharts";
 import type { CpiData } from "@/types";
-import type { SeriesMeasurement } from "@/types/chart";
 import type { SeriesMetadata } from "../../lib/chartConstants";
 import styles from "./CpiChart.module.css";
 import {
@@ -24,7 +23,6 @@ import {
   getSpendingPresentationLabel,
   orderSpendingPresentationKeys,
 } from "../../lib/spendingSeriesPresentation";
-import { QUARTERLY_PUBLIC_NOMINAL_KEYS } from "../../lib/quarterlyPublicProjection";
 import type {
   ChartTooltipChartMouseMoveHandler,
   ChartTooltipProps,
@@ -35,6 +33,9 @@ import { YearReferenceLines } from "./charts/YearReferenceLines";
 import { XAxisEdgeTick } from "./charts/XAxisEdgeTick";
 import { ChartDataContract, getPublicSpendingKeys } from "./ChartDataContract";
 import { computePeriodXAxisTicks } from "./charts/xAxisTicks";
+import { normalizeSpendingChartData, type QuarterlyDataPoint } from "./spendingChartData";
+
+export { normalizeSpendingChartData };
 
 const FIXED_SPENDING_MILESTONE_YEARS = new Set([2010, 2015, 2020, 2025]);
 
@@ -51,15 +52,6 @@ function computeSpendingXAxisTicks(data: QuarterlyDataPoint[]): string[] {
     milestonePredicate: (row) =>
       row.quarter === 1 && FIXED_SPENDING_MILESTONE_YEARS.has(Number(row.年)),
   });
-}
-
-interface QuarterlyDataPoint {
-  label: string;
-  年: number;
-  quarter: number;
-  年月: string;
-  measurements?: Record<string, SeriesMeasurement>;
-  [key: string]: string | number | null | Record<string, SeriesMeasurement> | undefined;
 }
 
 interface SpendingBarChartProps {
@@ -112,30 +104,6 @@ export function computeSpendingYAxisMax(
     return Math.max(max, height);
   }, 0);
   return Math.round(maxHeight + 3);
-}
-
-export function normalizeSpendingChartData(
-  data: QuarterlyDataPoint[],
-  keys: string[],
-): QuarterlyDataPoint[] {
-  const quarterlyExpenseKeys = keys.filter((key) =>
-    (QUARTERLY_PUBLIC_NOMINAL_KEYS as readonly string[]).includes(key),
-  );
-  return data.map((row) => {
-    const next = { ...row };
-    const hasCompositionAdjustedExpense = quarterlyExpenseKeys.some(
-      (key) =>
-        typeof row[key] === "number" &&
-        Number.isFinite(row[key]) &&
-        row.measurements?.[key] !== undefined,
-    );
-    if (row.年 < 2018) {
-      // Composition-adjusted measurements supply the pre-2018 expense stack;
-      // otherwise hide the unavailable expense values.
-      if (!hasCompositionAdjustedExpense) quarterlyExpenseKeys.forEach((key) => (next[key] = null));
-    }
-    return next;
-  });
 }
 
 export const SpendingBarChart: React.FC<SpendingBarChartProps> = (props) => {

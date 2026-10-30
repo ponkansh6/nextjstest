@@ -6,6 +6,10 @@
   border-radius: 0.75rem;
   box-shadow: var(--shadow-lg);
   border: 1px solid var(--card-border);
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease;
 }
 
 .filterContainer {
@@ -69,13 +73,18 @@
   cursor: pointer;
   transition:
     border-color 0.2s,
-    background-color 0.2s;
+    background-color 0.2s,
+    transform 120ms ease;
   flex-shrink: 0;
 }
 
 .maxRangeButton:hover {
   border-color: var(--blue-500);
   background-color: rgba(59, 130, 246, 0.05);
+}
+.maxRangeButton:active {
+  background-color: var(--blue-50);
+  transform: scale(0.98);
 }
 
 .legendContainer {
@@ -101,7 +110,10 @@
 .calculateButton:focus-visible,
 .select:focus-visible,
 .maxRangeButton:focus-visible,
-.sectionTab:focus-visible {
+.sectionTab:focus-visible,
+.sectionRange:focus-visible,
+.themeToggleButton:focus-visible,
+.bottomSheetClose:focus-visible {
   outline: 2px solid var(--blue-500);
   outline-offset: 2px;
 }
@@ -666,6 +678,21 @@
   opacity: 0.6;
 }
 
+@media (min-width: 769px) {
+  .chartSkeleton {
+    height: auto;
+    aspect-ratio: 4 / 3;
+    max-height: 650px;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .chartSkeleton {
+    height: 85svh;
+    aspect-ratio: auto;
+  }
+}
+
 @keyframes shimmer {
   0% {
     background-position: 200% 0;
@@ -694,12 +721,8 @@
   transform: translateZ(0);
 }
 .sectionTabsScroll {
-  /* 期間指定ボタン(.sectionRange)をこの横スクロール領域の外側(固定位置)に
-     置くための入れ子構造。以前は .sectionRange を position:sticky; left:0 で
-     タブ行内に重ねて固定していたが、その方式だと横スクロール時にタブが
-     ボタンの不透明な背景の裏へ滑り込んで隠れてしまっていた。ボタンとタブを
-     別領域に分離することで、両者が画面上で重なること自体が起こらないように
-     している。 */
+  /* Keep section navigation in its own horizontal scroll container; period
+     and theme controls remain sibling controls outside this navigation landmark. */
   flex: 1;
   min-width: 0;
   display: flex;
@@ -728,14 +751,29 @@
   cursor: pointer;
   scroll-snap-align: start;
   white-space: nowrap;
+  font-weight: 500;
+  transition:
+    transform 120ms ease,
+    opacity 120ms ease,
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease,
+    box-shadow 150ms ease;
 }
-.sectionTab[aria-current="true"] {
+.sectionTab[aria-current="location"] {
   background-color: var(--blue-500);
   border-color: var(--blue-500);
   color: #ffffff;
+  font-weight: 700;
+  box-shadow: inset 0 -2px 0 rgb(255 255 255 / 0.78);
 }
 .sectionTab:active {
   background-color: var(--blue-50);
+  transform: scale(0.98);
+  opacity: 0.84;
+}
+.sectionTab[aria-current="location"]:active {
+  background-color: var(--blue-500);
 }
 @media (hover: hover) and (pointer: fine) {
   .sectionTab:hover {
@@ -758,9 +796,15 @@
   border: 1px solid var(--card-border);
   border-radius: 9999px;
   cursor: pointer;
+  transition:
+    transform 120ms ease,
+    background-color 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease;
 }
 .sectionRange:active {
   background-color: var(--blue-50);
+  transform: scale(0.98);
 }
 .themeToggleButton {
   margin-left: auto;
@@ -776,9 +820,22 @@
   border: 1px solid var(--card-border);
   border-radius: 9999px;
   cursor: pointer;
+  transition:
+    transform 120ms ease,
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 180ms ease,
+    box-shadow 150ms ease;
+}
+.themeToggleIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  animation: themeToggleIconIn 150ms ease-out both;
 }
 .themeToggleButton:active {
   background-color: var(--blue-50);
+  transform: scale(0.96);
 }
 @media (hover: hover) and (pointer: fine) {
   .themeToggleButton:hover {
@@ -791,6 +848,10 @@
   inset: 0;
   background-color: rgba(0, 0, 0, 0.5);
   z-index: 100;
+  animation: bottomSheetBackdropIn 160ms ease-out both;
+}
+.bottomSheetBackdropClosing {
+  animation: bottomSheetBackdropOut 160ms ease-in both;
 }
 .bottomSheet {
   position: fixed;
@@ -798,20 +859,53 @@
   left: 0;
   right: 0;
   z-index: 101;
+  max-height: 60vh;
   max-height: 60dvh;
+  box-sizing: border-box;
   overflow-y: auto;
+  overscroll-behavior: contain;
   background-color: var(--card-bg);
   border-top-left-radius: 1rem;
   border-top-right-radius: 1rem;
   border-top: 1px solid var(--card-border);
   padding: 1.5rem;
+  padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
   box-shadow: 0 -10px 25px -5px rgba(0, 0, 0, 0.1);
+  animation: bottomSheetIn 180ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  transition: max-height 180ms ease;
+}
+.bottomSheetClosing {
+  animation: bottomSheetOut 160ms ease-in both;
+  pointer-events: none;
 }
 .bottomSheetHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
+}
+.bottomSheetDragHandle {
+  position: relative;
+  width: min(100%, 8rem);
+  height: 44px;
+  margin: -0.5rem auto 0.25rem;
+  cursor: grab;
+  touch-action: pan-x;
+  user-select: none;
+}
+.bottomSheetDragHandle::before {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2.5rem;
+  height: 0.25rem;
+  border-radius: 9999px;
+  background-color: color-mix(in srgb, var(--card-text) 28%, transparent);
+  content: "";
+  transform: translate(-50%, -50%);
+}
+.bottomSheetDragHandle:active {
+  cursor: grabbing;
 }
 .bottomSheetTitle {
   font-size: 1rem;
@@ -830,12 +924,27 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  border-radius: 0.5rem;
+  transition:
+    transform 120ms ease,
+    background-color 150ms ease,
+    color 150ms ease;
+}
+.bottomSheetClose:active {
+  background-color: var(--blue-50);
+  transform: scale(0.96);
 }
 
 /* コンパクト版ボトムシート: 上部のグラフを見せるため高さと余白を詰める */
 .bottomSheetCompact {
+  max-height: 45vh;
   max-height: 45dvh;
   padding: 0.75rem 1rem 0.625rem;
+  padding-bottom: calc(0.625rem + env(safe-area-inset-bottom, 0px));
+}
+.bottomSheetCompact .bottomSheetDragHandle {
+  margin-top: -0.25rem;
+  margin-bottom: 0.25rem;
 }
 .bottomSheetCompact .bottomSheetHeader {
   margin-bottom: 0.375rem;
@@ -845,7 +954,63 @@
    メディアクエリは詳細度を上げないため、先に書くと 45dvh に負ける） */
 @media (orientation: landscape) and (max-height: 500px) {
   .bottomSheetCompact {
+    max-height: 70vh;
     max-height: 70dvh;
+  }
+}
+.bottomSheetCompact.bottomSheetExpanded {
+  max-height: 85vh;
+  max-height: 85dvh;
+}
+
+@keyframes bottomSheetBackdropIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes themeToggleIconIn {
+  from {
+    opacity: 0.65;
+    transform: translateY(2px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes bottomSheetBackdropOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes bottomSheetIn {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bottomSheetOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(1rem);
   }
 }
 
@@ -901,8 +1066,38 @@
 @media (prefers-reduced-motion: reduce) {
   .legendAccordionSummary,
   .legendAccordionChevron,
-  .cagrLink {
+  .cagrLink,
+  .maxRangeButton,
+  .sectionTab,
+  .sectionRange,
+  .themeToggleButton,
+  .themeToggleIcon,
+  .bottomSheetClose,
+  .chartContainer {
     transition: none;
+  }
+
+  .bottomSheet,
+  .bottomSheetBackdrop,
+  .themeToggleIcon {
+    animation: none;
+  }
+
+  .bottomSheet {
+    transition: none;
+  }
+
+  .bottomSheetClosing,
+  .bottomSheetBackdropClosing {
+    visibility: hidden;
+  }
+
+  .maxRangeButton:active,
+  .sectionTab:active,
+  .sectionRange:active,
+  .themeToggleButton:active,
+  .bottomSheetClose:active {
+    transform: none;
   }
 }
 
