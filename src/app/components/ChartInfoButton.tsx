@@ -169,7 +169,9 @@ export default function ChartInfoButton({
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        updateOpen(false, true);
+        // A dismissal is urgent so keyboard users do not wait for an exit
+        // snapshot before the dialog is removed and focus is restored.
+        updateOpen(false, true, false);
       }
     };
 
@@ -183,7 +185,7 @@ export default function ChartInfoButton({
   };
 
   const handleClose = () => {
-    updateOpen(false, true);
+    updateOpen(false, true, false);
   };
 
   const handleBackdropClose = () => {
