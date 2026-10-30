@@ -2491,6 +2491,8 @@ The system SHALL make control state, short transitions, and mobile sheet boundar
   **THEN** the theme control and token-based chart surface provide a short opacity/transform or color transition without delaying chart labels or values
 - **WHEN** the user selects a section
   **THEN** the target section is reached through the existing scroll navigation and the control provides immediate pressed feedback; the whole chart SVG is not animated as one surface
+- **WHEN** the user selects the final chart section in `NewGraph`
+  **THEN** enough scrollable space remains below its top edge for it to align at the existing 5rem scroll offset, even when the browser would otherwise clamp scrolling at the document end
 - **WHEN** a control or surface is animated
   **THEN** CSS and Motion do not animate the same target concurrently
 

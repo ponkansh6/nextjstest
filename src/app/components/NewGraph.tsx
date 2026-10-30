@@ -65,7 +65,11 @@ export const NewGraph: React.FC<NewGraphProps> = ({
   // entirely null. Recharts simply has no path to paint for that series.
   const renderedLineConfigs = visibleLineConfigs;
   return (
-    <div id={sectionId} className={styles.chartSection} style={{ scrollMarginTop: "5rem" }}>
+    <div
+      id={sectionId}
+      className={`${styles.chartSection} ${sectionId === "section-new-graph" ? styles.lastSectionScrollRunway : ""}`}
+      style={{ scrollMarginTop: "5rem" }}
+    >
       <div>
         <h2 className={styles.chartTitle}>給与・消費・物価の推移比較(12MA)</h2>
         {chartKey && (

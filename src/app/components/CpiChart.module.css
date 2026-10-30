@@ -528,6 +528,10 @@
   border-bottom: 1px solid var(--card-border);
 }
 
+.lastSectionScrollRunway {
+  min-height: calc(100svh - 5rem);
+}
+
 .chartSection:last-of-type {
   margin-bottom: 0;
   padding-bottom: 0;
