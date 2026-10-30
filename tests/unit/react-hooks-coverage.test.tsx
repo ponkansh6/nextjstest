@@ -405,4 +405,153 @@ describe("React hook coverage", () => {
     expect(result.current.isProgrammaticScroll).toBe(false);
     unmount();
   });
+
+  it("useSectionNavigation restores a non-default section without URL writes and honors reduced motion", () => {
+    const frames: Array<{ callback: FrameRequestCallback; id: number }> = [];
+    const cancelled: number[] = [];
+    let nextFrameId = 20;
+    vi.spyOn(window, "requestAnimationFrame").mockImplementation((callback) => {
+      const id = nextFrameId++;
+      frames.push({ callback, id });
+      return id;
+    });
+    vi.spyOn(window, "cancelAnimationFrame").mockImplementation((id) => cancelled.push(id));
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn(() => ({ matches: true }) as MediaQueryList),
+    );
+    const target = document.createElement("section");
+    target.id = "restored";
+    const scrollIntoView = vi.spyOn(target, "scrollIntoView").mockImplementation(() => undefined);
+    vi.spyOn(target, "getBoundingClientRect").mockReturnValue({ top: 0 } as DOMRect);
+    const popTarget = document.createElement("section");
+    popTarget.id = "after-popstate";
+    const popScrollIntoView = vi
+      .spyOn(popTarget, "scrollIntoView")
+      .mockImplementation(() => undefined);
+    vi.spyOn(popTarget, "getBoundingClientRect").mockReturnValue({ top: 0 } as DOMRect);
+    document.body.append(target, popTarget);
+    window.history.replaceState({ marker: "keep" }, "", "/?section=default");
+    const pushState = vi.spyOn(window.history, "pushState");
+    const replaceState = vi.spyOn(window.history, "replaceState");
+
+    const { result, rerender, unmount } = renderHook(
+      ({ popStateVersion, initialActiveId }) =>
+        useSectionNavigation({
+          sections: [{ id: "default" }, { id: "restored" }, { id: "after-popstate" }],
+          initialActiveId,
+          popStateVersion,
+        }),
+      { initialProps: { popStateVersion: 0, initialActiveId: "restored" } },
+    );
+    expect(result.current.activeId).toBe("restored");
+    expect(frames).toHaveLength(1);
+    const initialRestore = frames.shift();
+    if (initialRestore) act(() => initialRestore.callback(0));
+    expect(scrollIntoView).toHaveBeenCalledWith({ behavior: "auto", block: "start" });
+    // Finish the initial target's chase before scheduling the popstate restore.
+    for (let frame = 0; frame < 30; frame++) {
+      const chase = frames.shift();
+      if (chase) act(() => chase.callback(16 * (frame + 1)));
+    }
+    expect(frames).toHaveLength(0);
+    expect(pushState).not.toHaveBeenCalled();
+    expect(replaceState).not.toHaveBeenCalled();
+
+    rerender({ popStateVersion: 1, initialActiveId: "after-popstate" });
+    expect(frames).toHaveLength(1);
+    const popRestore = frames.shift();
+    if (popRestore) act(() => popRestore.callback(16));
+    expect(result.current.activeId).toBe("after-popstate");
+    expect(popScrollIntoView).toHaveBeenCalledWith({ behavior: "auto", block: "start" });
+    expect(pushState).not.toHaveBeenCalled();
+    expect(replaceState).not.toHaveBeenCalled();
+
+    act(() => result.current.handleSelectSection("after-popstate"));
+    expect(popScrollIntoView).toHaveBeenLastCalledWith({ behavior: "auto", block: "start" });
+    expect(pushState).not.toHaveBeenCalled();
+    const pendingFrameIds = frames.map(({ id }) => id);
+    unmount();
+    expect(pendingFrameIds.length).toBeGreaterThan(0);
+    expect(cancelled).toEqual(expect.arrayContaining(pendingFrameIds));
+    target.remove();
+    popTarget.remove();
+  });
+
+  it("useSectionNavigation tolerates unavailable history and matchMedia APIs", () => {
+    const history = window.history;
+    const originalDescriptor = Object.getOwnPropertyDescriptor(history, "scrollRestoration");
+    Object.defineProperty(history, "scrollRestoration", {
+      configurable: true,
+      get: () => {
+        throw new Error("history access revoked");
+      },
+    });
+    vi.stubGlobal("matchMedia", undefined);
+    const target = document.createElement("section");
+    target.id = "same-section";
+    const scrollIntoView = vi.spyOn(target, "scrollIntoView").mockImplementation(() => undefined);
+    vi.spyOn(target, "getBoundingClientRect").mockReturnValue({ top: 0 } as DOMRect);
+    document.body.append(target);
+
+    try {
+      const { result, unmount } = renderHook(() =>
+        useSectionNavigation({ sections: [{ id: "same-section" }] }),
+      );
+      act(() => result.current.handleSelectSection("same-section"));
+      expect(result.current.activeId).toBe("same-section");
+      expect(scrollIntoView).toHaveBeenCalledWith({ behavior: "smooth", block: "start" });
+      unmount();
+    } finally {
+      if (originalDescriptor) {
+        Object.defineProperty(history, "scrollRestoration", originalDescriptor);
+      } else {
+        Reflect.deleteProperty(history, "scrollRestoration");
+      }
+      target.remove();
+    }
+  });
+
+  it("useSectionNavigation omits the default section from an otherwise empty query", () => {
+    window.history.replaceState({ marker: "keep" }, "", "/plain#chart");
+    const pushState = vi.spyOn(window.history, "pushState");
+    const { result, unmount } = renderHook(() =>
+      useSectionNavigation({
+        sections: [{ id: "default" }, { id: "other" }],
+        initialActiveId: "other",
+      }),
+    );
+
+    act(() => result.current.handleSelectSection("default"));
+
+    expect(window.location.search).toBe("");
+    expect(window.location.hash).toBe("#chart");
+    expect(pushState).toHaveBeenCalledWith({ marker: "keep" }, "", "/plain#chart");
+    unmount();
+  });
+
+  it("useSectionNavigation does not rewrite history when scrolling within the active section", () => {
+    const section = document.createElement("section");
+    section.id = "active-section";
+    Object.defineProperties(section, {
+      offsetTop: { value: 0 },
+      offsetHeight: { value: 500 },
+    });
+    document.body.append(section);
+    vi.stubGlobal("scrollY", 0);
+    vi.stubGlobal("innerHeight", 100);
+    const { result, unmount } = renderHook(() =>
+      useSectionNavigation({ sections: [{ id: "active-section" }] }),
+    );
+    const pushState = vi.spyOn(window.history, "pushState");
+    const replaceState = vi.spyOn(window.history, "replaceState");
+
+    act(() => window.dispatchEvent(new Event("scroll")));
+
+    expect(result.current.activeId).toBe("active-section");
+    expect(pushState).not.toHaveBeenCalled();
+    expect(replaceState).not.toHaveBeenCalled();
+    unmount();
+    section.remove();
+  });
 });

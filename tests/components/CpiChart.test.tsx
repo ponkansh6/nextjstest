@@ -1,5 +1,5 @@
 import React from "react";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { CpiChartSections } from "../../src/app/components/CpiChartSections";
 import { CustomTooltip } from "../../src/app/components/CustomTooltip";
@@ -31,11 +31,13 @@ vi.mock("../../src/app/components/StackedAreaChart", async () => {
     StackedAreaChart: ({
       data,
       belowChartSlot,
+      hiddenKeys = [],
     }: {
       data: Array<Record<string, unknown>>;
       belowChartSlot?: React.ReactNode;
+      hiddenKeys?: string[];
     }) => (
-      <div data-testid="stacked-composition">
+      <div data-testid="stacked-composition" data-hidden-keys={hiddenKeys.join(",")}>
         <AreaChart data={data}>
           <Area dataKey="住居" />
         </AreaChart>
@@ -579,6 +581,42 @@ const canonicalNominalKeys = canonicalNominalCategories.map(
 const canonicalFoodKey = CTI_ADJUSTED_V2_PUBLIC_KEY_BY_CATEGORY.食料;
 
 describe("CpiChart maximum range integration", () => {
+  it("restores range and hidden series from popstate without writing the URL back", async () => {
+    window.history.replaceState(
+      null,
+      "",
+      `${window.location.pathname}?from=2015&to=2020&hidden=${encodeURIComponent("住居")}`,
+    );
+    render(
+      <CpiChart
+        data={cpiFixture}
+        quarterlyNominalData={quarterlyFixture(canonicalNominalKeys)}
+        quarterlyRealData={quarterlyFixture(CONSUMPTION_REAL_KEYS)}
+        totalEarningData={[]}
+        maxCpiDate={{ year: 2025, month: 12 }}
+      />,
+    );
+    const replaceState = vi.spyOn(window.history, "replaceState");
+
+    window.history.pushState(
+      null,
+      "",
+      `${window.location.pathname}?from=2010&to=2012&hidden=${encodeURIComponent("食料")}`,
+    );
+    fireEvent.popState(window);
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "表示期間を変更" }).textContent).toContain(
+        "2010–2012",
+      );
+      expect(screen.getByTestId("stacked-composition").getAttribute("data-hidden-keys")).toBe(
+        "食料",
+      );
+    });
+    expect(window.location.search).toBe(`?from=2010&to=2012&hidden=${encodeURIComponent("食料")}`);
+    expect(replaceState).not.toHaveBeenCalled();
+  });
+
   it("synchronizes URL, periods, Q1 state, and data-derived nominal/real bars", async () => {
     expect(canonicalNominalKeys).toEqual(QUARTERLY_PUBLIC_NOMINAL_KEYS);
     window.history.replaceState(null, "", `${window.location.pathname}?from=2015&to=2020`);

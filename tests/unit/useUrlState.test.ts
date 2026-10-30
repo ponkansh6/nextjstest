@@ -22,6 +22,7 @@ vi.mock("next/navigation", () => ({
 describe("useUrlState current URL state contract", () => {
   afterEach(() => {
     cleanup();
+    vi.unstubAllGlobals();
     vi.restoreAllMocks();
     mockSearchParams.mockReset();
     window.history.replaceState({}, "", "/");
@@ -162,6 +163,38 @@ describe("useUrlState current URL state contract", () => {
     expect(replaceState).not.toHaveBeenCalled();
   });
 
+  it("keeps the popstate snapshot while Next still exposes a stale query", () => {
+    window.history.replaceState({}, "", "/dashboard?from=2012&to=2024");
+    const { result } = renderHook(() => useUrlState(2005, 2026));
+    mockSearchParams.mockReturnValue({
+      toString: () => "from=2000&to=2001",
+      get: (key: string) => (key === "from" ? "2000" : key === "to" ? "2001" : null),
+      has: () => false,
+    });
+
+    act(() => {
+      window.history.pushState({}, "", "/dashboard?from=2010&to=2021");
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    });
+
+    expect(result.current).toMatchObject({ from: 2010, to: 2021 });
+    expect(window.location.search).toBe("?from=2010&to=2021");
+  });
+
+  it("retires a popstate snapshot after the pathname changes before React reads it", () => {
+    window.history.replaceState({}, "", "/before?from=2012&to=2024");
+    const { result } = renderHook(() => useUrlState(2005, 2026));
+
+    act(() => {
+      window.history.pushState({}, "", "/restored?from=2010&to=2021");
+      window.dispatchEvent(new PopStateEvent("popstate"));
+      window.history.replaceState({}, "", "/after?from=2015&to=2020");
+    });
+
+    expect(result.current).toMatchObject({ from: 2015, to: 2020 });
+    expect(window.location.pathname).toBe("/after");
+  });
+
   it("canonicalizes an invalid section on initial load and preserves the rest of the URL", () => {
     window.history.replaceState(
       { marker: "keep" },
@@ -178,6 +211,48 @@ describe("useUrlState current URL state contract", () => {
     expect(window.history.state).toEqual({ marker: "keep" });
     expect(replaceState).toHaveBeenCalledTimes(1);
     expect(replaceState.mock.calls[0]?.[2]).toBe("/dashboard?from=2012&keep=1#chart");
+  });
+
+  it("removes an invalid section when no section ids are configured", () => {
+    window.history.replaceState({ marker: "keep" }, "", "/empty?section=unknown#chart");
+    const replaceState = vi.spyOn(window.history, "replaceState");
+    const { result } = renderHook(() => useUrlState(2005, 2026));
+
+    expect(result.current.section).toBe("");
+    expect(window.location.pathname).toBe("/empty");
+    expect(window.location.search).toBe("");
+    expect(window.location.hash).toBe("#chart");
+    expect(window.history.state).toEqual({ marker: "keep" });
+    expect(replaceState).toHaveBeenCalledTimes(1);
+  });
+
+  it("uses empty browser snapshots during server rendering when search params are opaque", async () => {
+    mockSearchParams.mockReturnValue({
+      toString: () => "[object Object]",
+      get: () => null,
+      has: () => false,
+    });
+    vi.resetModules();
+    vi.stubGlobal("window", undefined);
+    try {
+      const [{ createElement: createSsrElement }, { renderToString: renderSsrToString }, module] =
+        await Promise.all([
+          import("react"),
+          import("react-dom/server"),
+          import("../../src/hooks/useUrlState"),
+        ]);
+      const markup = renderSsrToString(
+        createSsrElement(() => {
+          const state = module.useUrlState(2005, 2026, ["prices"]);
+          return createSsrElement("output", null, `${state.from}/${state.to}/${state.section}`);
+        }),
+      );
+
+      expect(markup).toContain("2005/2026/prices");
+    } finally {
+      vi.unstubAllGlobals();
+      mockSearchParams.mockReset();
+    }
   });
 
   it("falls back on-screen for an invalid section restored by popstate without rewriting the URL", () => {
@@ -268,6 +343,7 @@ describe("useUrlState current URL state contract", () => {
   it("does not rewrite when Next still reports legacy adv but the current URL no longer has it", () => {
     window.history.replaceState({ marker: "keep" }, "", "/dashboard?from=2012&keep=1#chart");
     mockSearchParams.mockReturnValue({
+      toString: () => "adv=1",
       get: (key: string) => (key === "from" ? "2012" : null),
       has: (key: string) => key === "adv",
     });
