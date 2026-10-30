@@ -164,20 +164,23 @@ export default function ChartInfoButton({
   }, [open, updateOpen]);
 
   // ── Close on Escape ──
+  const handleEscape = useCallback(() => {
+    // Dismissals are urgent so keyboard users do not wait for an exit snapshot.
+    updateOpen(false, true, false);
+  }, [updateOpen]);
+
   useEffect(() => {
     if (!open) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        // A dismissal is urgent so keyboard users do not wait for an exit
-        // snapshot before the dialog is removed and focus is restored.
-        updateOpen(false, true, false);
+        handleEscape();
       }
     };
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [open, updateOpen]);
+  }, [handleEscape, open]);
 
   const handleToggle = () => {
     const nextOpen = !openRef.current;
@@ -204,6 +207,12 @@ export default function ChartInfoButton({
             aria-modal="true"
             aria-label={ariaLabel}
             tabIndex={-1}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") {
+                event.stopPropagation();
+                handleEscape();
+              }
+            }}
           >
             {/* Close button */}
             <button
