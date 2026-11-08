@@ -3,24 +3,42 @@ import { adapters } from "./adapters/index.mjs";
 import { registry } from "./registry/index.mjs";
 import { runRefresh } from "./runner.mjs";
 import { RefreshError } from "./lib/errors.mjs";
-import { validateStagedRuntimeData } from "./runtime-validator.mjs";
+import {
+  safeRuntimeProjectFileDiagnostics,
+  validateStagedRuntimeData,
+} from "./runtime-validator.mjs";
 
 const args = process.argv.slice(2);
 const verifyFlag = "--verify-last-publish-noop";
 const rebaselineArg = args.find((arg) => arg.startsWith("--rebaseline-semantic-state="));
 const rebaselineHash = rebaselineArg?.slice("--rebaseline-semantic-state=".length);
+const actualsApprovalArg = args.find((arg) => arg.startsWith("--approve-actuals-revision="));
+const actualsApprovalValue = actualsApprovalArg?.slice("--approve-actuals-revision=".length);
+const actualsApprovalMatch = actualsApprovalValue?.match(
+  /^(20\d{2}-(?:0[1-9]|1[0-2]))@([a-f0-9]{64})$/,
+);
+const approveActualsRevision = actualsApprovalMatch
+  ? { period: actualsApprovalMatch[1], sourceSha256: actualsApprovalMatch[2] }
+  : undefined;
 const supportedArgs = new Set(["--check", verifyFlag]);
 const validArgs =
-  args.length <= 2 &&
-  args.every((arg) => arg === rebaselineArg || supportedArgs.has(arg)) &&
+  args.length <= 3 &&
+  args.every(
+    (arg) => arg === rebaselineArg || arg === actualsApprovalArg || supportedArgs.has(arg),
+  ) &&
   new Set(args).size === args.length &&
   (!rebaselineArg || /^[a-f0-9]{64}$/.test(rebaselineHash)) &&
+  (!actualsApprovalArg || approveActualsRevision !== undefined) &&
+  !(
+    actualsApprovalArg &&
+    (args.includes("--check") || args.includes(verifyFlag) || rebaselineArg)
+  ) &&
   !(args.includes(verifyFlag) && rebaselineArg) &&
   (!args.includes(verifyFlag) || args.length === 1) &&
   (!args.includes("--check") || args.length <= 2);
 if (!validArgs) {
   process.stderr.write(
-    "Usage: pnpm data:refresh [--check | --verify-last-publish-noop] [--rebaseline-semantic-state=<sha256>]\n",
+    "Usage: pnpm data:refresh [--check | --verify-last-publish-noop] [--rebaseline-semantic-state=<sha256>] [--approve-actuals-revision=YYYY-MM@<workbook-sha256>]\n",
   );
   process.exitCode = 2;
 } else {
@@ -31,6 +49,7 @@ if (!validArgs) {
       check: args.includes("--check") || args.includes(verifyFlag),
       verifyLastPublishNoop: args.includes(verifyFlag),
       rebaselineSemanticStateHash: rebaselineHash,
+      approveActualsRevision,
       validate: validateStagedRuntimeData,
     });
     process.stdout.write(
@@ -42,6 +61,7 @@ if (!validArgs) {
     );
   } catch (error) {
     const code = error instanceof RefreshError ? error.code : "failed";
+    const projectFileDiagnostics = safeRuntimeProjectFileDiagnostics(error?.projectFileDiagnostics);
     const sources = Array.isArray(error.sources)
       ? error.sources
           .filter(
@@ -52,11 +72,19 @@ if (!validArgs) {
       : undefined;
     const report =
       typeof error.reportPath === "string" &&
-      /^\.data-refresh\/reports\/[A-Za-z0-9._-]+\.json$/.test(error.reportPath)
+      /^\.data-refresh\/(?:reports\/)?[A-Za-z0-9._-]+\.json$/.test(error.reportPath)
         ? error.reportPath
         : undefined;
+    const pinHelp =
+      code === "runtime-quality-project-hash-mismatch"
+        ? ` Project pin diagnostics: ${JSON.stringify(projectFileDiagnostics ?? {})}. Review all pins with pnpm check:data-refresh-pins before updating them.`
+        : "";
+    const actualsRevisionHelp =
+      code === "actuals-same-period-revision-approval-required"
+        ? " Review the --check report, then publish only the same-period workbook with --approve-actuals-revision=YYYY-MM@<workbook-sha256>."
+        : "";
     process.stderr.write(
-      `data:refresh failed (${code}).${sources?.length ? ` ${JSON.stringify({ sources })}` : ""}${report ? ` report=${report}` : ""}\n`,
+      `data:refresh failed (${code}).${sources?.length ? ` ${JSON.stringify({ sources })}` : ""}${pinHelp}${actualsRevisionHelp}${report ? ` report=${report}` : ""}\n`,
     );
     process.exitCode = 1;
   }

@@ -6,7 +6,7 @@ e-Stat/公的統計のExcel・CSVを、`data/source/`に置く正規化CSVへ変
 
 ## Design
 
-固定変換器はそれぞれ実装内で入力ファイル名と出力ファイル名を固定している。現リポジトリで`data/source/economics_source/`に存在する具体的な入力は`lt01-b10.xlsx`で、`convert_population.ts`がこれを読み`data/source/population_statistics.csv`へ出力する。給与系などの固定変換器は、対応する入力が同ディレクトリに供給された場合に、各自の定数で指定した給与CSVを`data/source/`へ出力する。`data/source/`直下の`hon-mks202512.csv`は`server/lib/dataIo.ts`のdashboard loaderが読む追跡済み入力であり、`hon-mks202606.xls`は別の実在するExcel入力である。これらは`economics_source`配下の入力ではない。`convert_cpi.ts`は`data/source/economics_source/`内の拡張子が`.xls`、`.xlsx`、`.csv`、`.xlsb`のファイルから更新日時順に最大5件を読み、`data/source/cpi_data/`へ`*.converted.csv`を生成する。`template.ts`は変換器の雛形である。
+固定変換器はそれぞれ実装内で入力ファイル名と出力ファイル名を固定している。現リポジトリで`data/source/economics_source/`に存在する具体的な入力は`lt01-b10.xlsx`で、`convert_population.ts`がこれを読み`data/source/population_statistics.csv`へ出力する。給与系などの固定変換器は、対応する入力が同ディレクトリに供給された場合に、各自の定数で指定した給与CSVを`data/source/`へ出力する。`data/source/`直下の`hon-mks202512.csv`は`server/lib/dataIo.ts`のdashboard loaderが読む追跡済み入力であり、毎月勤労統計の実数原表XLSは `data-refresh` adapterが取得するmanaged outputとして扱う。これらは`economics_source`配下の入力ではない。`convert_cpi.ts`は`data/source/economics_source/`内の拡張子が`.xls`、`.xlsx`、`.csv`、`.xlsb`のファイルから更新日時順に最大5件を読み、`data/source/cpi_data/`へ`*.converted.csv`を生成する。`template.ts`は変換器の雛形である。
 
 ## Flow
 

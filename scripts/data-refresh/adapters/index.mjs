@@ -1,6 +1,7 @@
 import { cpiAdapter } from "./cpi.mjs";
 import { ctiAdapter } from "./cti.mjs";
 import { earningsAdapter } from "./earnings.mjs";
+import { monthlyLaborActualsAdapter } from "./monthly-labor-actuals.mjs";
 import { populationAdapter } from "./population.mjs";
 
 // Only adapters with verified source mappings are executable. Required but unresolved
@@ -9,5 +10,6 @@ export const adapters = new Map([
   ["cpi", cpiAdapter],
   ["cti", ctiAdapter],
   ["earnings", earningsAdapter],
+  ["monthly-labor-actuals", monthlyLaborActualsAdapter],
   ["population", populationAdapter],
 ]);

@@ -30,6 +30,7 @@
     "test:hook-smoke": "node scripts/hook-smoke.mjs",
     "audit:validation-detection": "node scripts/audit-validation-detection.mjs",
     "data:refresh": "node scripts/data-refresh/cli.mjs",
+    "check:data-refresh-pins": "node scripts/data-refresh/print-runtime-project-hashes.mjs",
     "cti-adjusted:analysis": "tsx scripts/cti-adjusted/run-analysis.mjs",
     "cti-adjusted:evaluate-residual-naturalness": "node scripts/cti-adjusted/evaluate-residual-naturalness.mjs",
     "test:all": "vitest run",

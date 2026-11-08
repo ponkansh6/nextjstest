@@ -5,6 +5,10 @@ import {
 } from "../../../scripts/data-refresh/registry/index.mjs";
 import { CTI_OUTPUTS } from "../../../scripts/data-refresh/registry/cti-contract.mjs";
 import { adapters } from "../../../scripts/data-refresh/adapters/index.mjs";
+import {
+  auditRuntimeQualityCoverage,
+  REQUIRED_RUNTIME_REFRESH_OUTPUTS,
+} from "../../../scripts/data-refresh/runtime-validator.mjs";
 
 const byId = new Map(registry.sources.map((source) => [source.id, source]));
 
@@ -19,6 +23,12 @@ describe("registry contract", () => {
 
     const everyOutput = registry.sources.flatMap(({ outputs }) => outputs);
     expect(new Set(everyOutput).size).toBe(everyOutput.length);
+    expect([...everyOutput].sort()).toEqual([...REQUIRED_RUNTIME_REFRESH_OUTPUTS].sort());
+    expect(auditRuntimeQualityCoverage(registry)).toMatchObject({
+      missingRefreshOutputs: [],
+      unexpectedRefreshOutputs: [],
+      duplicateRefreshOutputs: [],
+    });
   });
 
   it("declares candidate-search identities without conflating API and file IDs", () => {
@@ -112,14 +122,22 @@ describe("registry contract", () => {
 
     expect(adapters.has("cpi")).toBe(true);
     expect(adapters.has("cti")).toBe(true);
+    const actuals = byId.get("monthly-labor-actuals");
+    expect(actuals).toMatchObject({
+      required: true,
+      sourceKind: "catalog-file",
+      statisticsCode: "00450071",
+      catalogTitleIncludes: "実数原表（2012年1月～）",
+      period: { through: "latest-confirmed" },
+      revision: "latest-confirmed-only",
+    });
+    expect(adapters.has(actuals.adapterId)).toBe(true);
+    expect(actuals.outputs).toEqual(registryOutputInventory.monthlyLaborActuals);
   });
 
   it("keeps pinned wage runtime input outside refresh outputs", () => {
     const earnings = byId.get("earnings-family");
-    expect(earnings.pinnedRuntimeInputs).toEqual([
-      "data/source/hon-mks202512.csv",
-      "data/source/hon-mks202606.xls",
-    ]);
+    expect(earnings.pinnedRuntimeInputs).toEqual(["data/source/hon-mks202512.csv"]);
     expect(earnings.pinnedRuntimeInputs.some((input) => earnings.outputs.includes(input))).toBe(
       false,
     );

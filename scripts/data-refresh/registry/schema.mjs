@@ -28,6 +28,20 @@ export function validateSource(source) {
     `Source ${source.id} has no identity.`,
   );
   validateIdentity(source.identity, source.id);
+  if (source.sourceKind !== undefined) {
+    invariant(
+      source.sourceKind === "catalog-file" &&
+        source.identity.kind === "file" &&
+        typeof source.statisticsCode === "string" &&
+        idPattern.test(source.statisticsCode) &&
+        source.catalogQuery &&
+        typeof source.catalogQuery === "object" &&
+        typeof source.catalogQuery.statsCode === "string" &&
+        source.catalogQuery.statsCode === source.statisticsCode,
+      "invalid-registry",
+      `Catalog-file source ${source.id} has an invalid statistics-code or query contract.`,
+    );
+  }
   if (source.inputIdentities !== undefined) {
     invariant(
       Array.isArray(source.inputIdentities) && source.inputIdentities.length > 0,

@@ -20,15 +20,15 @@
   },
   "normalizedCsv": "data/source/employment_indices.csv",
   "normalizedCsvSha256": "8743e01a445b2f89106c2f48db1008683b316641544d7e3eeff66d417159fd69",
-  "excludedCrossSection": "data/source/hon-mks202606.xls",
+  "excludedCrossSection": "data/source/monthly_labor_statistics_actual_snapshot.csv",
   "period": {
     "start": "1990-01",
     "end": "2026-08",
     "monthlyRows": 440
   },
-  "retrievedAt": "2026-10-25T01:03:03.492Z",
+  "retrievedAt": "2026-11-08T15:26:57.076Z",
   "revisionAudit": {
-    "overlapCount": 439,
+    "overlapCount": 440,
     "annualOverlapCount": 36,
     "changedValueCount": 0,
     "changedSample": [],
@@ -48,7 +48,7 @@
     },
     "correctedOutput": "employment_indices.csv",
     "preservedPreMigrationMonthlyRows": 438,
-    "verifiedPartTimeOverlapRows": 439,
-    "verifiedEmploymentOverlapRows": 439
+    "verifiedPartTimeOverlapRows": 440,
+    "verifiedEmploymentOverlapRows": 440
   }
 }

@@ -1,5 +1,10 @@
 import { validateRegistry } from "./schema.mjs";
 import { CTI_INPUT_IDENTITIES, CTI_OUTPUTS, CTI_SOURCE_CONTRACT } from "./cti-contract.mjs";
+import {
+  MONTHLY_LABOR_ACTUALS_CATALOG_QUERY,
+  MONTHLY_LABOR_ACTUALS_IDENTITY,
+  MONTHLY_LABOR_ACTUALS_PATHS,
+} from "../adapters/monthly-labor-actuals.mjs";
 
 const CPI_OUTPUTS = Object.freeze([
   "data/source/cpi_data2025_long.csv",
@@ -25,10 +30,12 @@ const POPULATION_OUTPUTS = Object.freeze([
   "data/source/population_statistics.metadata.json",
 ]);
 
-// All four adapters are required by the runtime graph. A blocked source remains required,
+const MONTHLY_LABOR_ACTUALS_OUTPUTS = Object.freeze(Object.values(MONTHLY_LABOR_ACTUALS_PATHS));
+
+// All five adapters are required by the runtime graph. A blocked source remains required,
 // but has no registered adapter until its provenance/mapping can be proven.
 export const registry = validateRegistry({
-  requiredAdapters: ["cti", "cpi", "earnings", "population"],
+  requiredAdapters: ["cti", "cpi", "earnings", "monthly-labor-actuals", "population"],
   sources: [
     {
       id: "cpi-long",
@@ -189,7 +196,7 @@ export const registry = validateRegistry({
       outputs: EARNINGS_OUTPUTS,
       dependencies: [],
       adapterId: "earnings",
-      pinnedRuntimeInputs: ["data/source/hon-mks202512.csv", "data/source/hon-mks202606.xls"],
+      pinnedRuntimeInputs: ["data/source/hon-mks202512.csv"],
     },
     {
       id: "population-statistics",
@@ -206,6 +213,34 @@ export const registry = validateRegistry({
       dependencies: [],
       adapterId: "population",
     },
+    {
+      id: "monthly-labor-actuals",
+      required: true,
+      sourceKind: "catalog-file",
+      // This initial e-Stat file id anchors the logical table identity; the adapter resolves
+      // each current month from the catalog and records its own statInfId in metadata.
+      identity: MONTHLY_LABOR_ACTUALS_IDENTITY,
+      statisticsCode: "00450071",
+      catalogTitleIncludes: "実数原表（2012年1月～）",
+      title: "Monthly Labour Survey nationwide actual-value source table",
+      classifications: [
+        "全国調査",
+        "実数原表（2012年1月～）",
+        "調査産業計",
+        "就業形態計",
+        "5人以上",
+        "確報",
+      ],
+      frequency: "monthly",
+      unit: "series-specific actual values",
+      baseline: "not-applicable",
+      period: { from: "2012-01", through: "latest-confirmed" },
+      revision: "latest-confirmed-only",
+      catalogQuery: MONTHLY_LABOR_ACTUALS_CATALOG_QUERY,
+      outputs: MONTHLY_LABOR_ACTUALS_OUTPUTS,
+      dependencies: [],
+      adapterId: "monthly-labor-actuals",
+    },
   ],
 });
 
@@ -213,5 +248,6 @@ export const registryOutputInventory = Object.freeze({
   cpi: CPI_OUTPUTS,
   cti: CTI_OUTPUTS,
   earnings: EARNINGS_OUTPUTS,
+  monthlyLaborActuals: MONTHLY_LABOR_ACTUALS_OUTPUTS,
   population: POPULATION_OUTPUTS,
 });

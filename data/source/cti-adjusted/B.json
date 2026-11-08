@@ -1,7 +1,7 @@
 {
   "metadata": {
     "schemaVersion": "adjusted-cti-annual-v1",
-    "revision": "2026-10-25",
+    "revision": "2026-11-08",
     "statisticalCode": "00200567",
     "source": "総務省統計局 e-Stat CTI",
     "artifact": "B.json",
@@ -22,7 +22,7 @@
       "releaseDate": "2026-10-09",
       "lastModifiedDate": "2026-10-09"
     },
-    "retrievedAt": "2026-10-25T01:02:58.492Z",
+    "retrievedAt": "2026-11-08T15:26:51.996Z",
     "baseYear": 2025,
     "unit": "指数",
     "valueType": "原数値（名目指数）",

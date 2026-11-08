@@ -393,7 +393,7 @@ describe("Earnings Data Integrity", () => {
     expect(createHash("sha256").update(csv).digest("hex")).toBe(metadata.normalizedCsvSha256);
     expect(metadata).toMatchObject({
       statInfId: "000032189777",
-      excludedCrossSection: "data/source/hon-mks202606.xls",
+      excludedCrossSection: "data/source/monthly_labor_statistics_actual_snapshot.csv",
       extraction: {
         industry: "TL",
         establishmentSize: "T",
@@ -424,6 +424,60 @@ describe("Earnings Data Integrity", () => {
       .filter((line) => /^202[56],/.test(line));
     expect(partTimeRows).toHaveLength(2);
     expect(partTimeRows[1].split(",").slice(12, 14)).toEqual(["31.3", "31.35"]);
+  });
+
+  it("tracks the latest confirmed actual-value snapshot separately from index history", () => {
+    const root = resolve(process.cwd());
+    const metadata = JSON.parse(
+      readFileSync(
+        resolve(root, "data/source/monthly_labor_statistics_actual_snapshot.metadata.json"),
+        "utf8",
+      ),
+    ) as {
+      sourceUrl: string;
+      sourceCatalogTitle: string;
+      statInfId: string;
+      statisticsCode: string;
+      sourceSha256: string;
+      normalizedCsvSha256: string;
+      period: string;
+      revision: string;
+      target: string;
+      mapping: Array<{ series: string; unit: string }>;
+    };
+    const source = readFileSync(
+      resolve(root, "data/source/monthly_labor_statistics_actual_snapshot.xls"),
+    );
+    const csv = readFileSync(
+      resolve(root, "data/source/monthly_labor_statistics_actual_snapshot.csv"),
+    );
+    expect(createHash("sha256").update(source).digest("hex")).toBe(metadata.sourceSha256);
+    expect(createHash("sha256").update(csv).digest("hex")).toBe(metadata.normalizedCsvSha256);
+    expect(metadata).toMatchObject({
+      statisticsCode: "00450071",
+      revision: "確報",
+      target: "調査産業計 / 就業形態計 / 5人以上",
+    });
+    expect(metadata.statInfId).toMatch(/^\d{8,16}$/);
+    expect(metadata.sourceCatalogTitle).toContain("確報");
+    expect(metadata.sourceUrl).toMatch(/^https:\/\/www\.e-stat\.go\.jp\//);
+    expect(metadata.period).toMatch(/^20\d{2}-(0[1-9]|1[0-2])$/);
+    expect(metadata.mapping.map(({ series }) => series)).toEqual([
+      "total_earning",
+      "contractual_earnings",
+      "scheduled_earnings",
+      "total_worked_hours",
+      "employment_indices",
+    ]);
+    const rows = csv.toString("utf8").trim().split(/\r?\n/);
+    expect(rows).toHaveLength(6);
+    expect(rows[0]).toBe("series,年月,value,unit,target,revision");
+    for (const row of rows.slice(1)) {
+      const [, period, value, , , revision] = row.split(",");
+      expect(period).toBe(metadata.period);
+      expect(Number.isFinite(Number(value))).toBe(true);
+      expect(revision).toBe("確報");
+    }
   });
 
   describe("Basic Integrity", () => {

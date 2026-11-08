@@ -27,8 +27,8 @@
     ]
   },
   "sourceFileUrl": "https://www.e-stat.go.jp/stat-search/file-download?fileKind=1&statInfId=000040482945",
-  "artifactUpdatedAt": "2026-10-25",
-  "retrievedAt": "2026-10-25T01:02:28.521Z",
+  "artifactUpdatedAt": "2026-11-08",
+  "retrievedAt": "2026-11-08T15:26:30.765Z",
   "csvSha256": "c829d33c5f6511f1887ea4f939cb8b42ececd14087e8e1cd12a9e74d63b0cbdd",
   "officialSeriesMapFile": "cpi-2025-series-map.csv",
   "officialSeriesMapSha256": "d60244de9f459fc9561cbbf91bc224a590fdddc5898ee7de3e73229aaf21b76e",
@@ -70,8 +70,8 @@
     "statistics": "消費者物価指数",
     "cycle": "-",
     "surveyDate": "0",
-    "updatedDate": "2026-10-23",
-    "openDate": "2026-10-23",
+    "updatedDate": "2026-10-30",
+    "openDate": "2026-10-30",
     "unit": "2025年=100",
     "unitEvidence": "historical-overlap-plus-2025-base-year",
     "classification": "nationwide index; tab 1; 78 cat01 series",
@@ -129,22 +129,22 @@
     "count": 0,
     "samples": [],
     "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "comparedValueCount": 53040,
+    "comparedValueCount": 53118,
     "startMonth": "197001",
-    "endMonth": "202608"
+    "endMonth": "202609"
   },
   "valueIdentityEvidence": {
-    "comparedValueCount": 53040,
+    "comparedValueCount": 53118,
     "startMonth": "197001",
-    "endMonth": "202608",
+    "endMonth": "202609",
     "mismatchCount": 0
   },
   "sourceCandidate": {
     "candidateCount": 1,
     "statsDataId": "0004052037",
     "title": "消費者物価指数（2025年基準）",
-    "updatedDate": "2026-10-23",
-    "openDate": "2026-10-23",
+    "updatedDate": "2026-10-30",
+    "openDate": "2026-10-30",
     "fileCandidate": {
       "identityStatInfId": "000040482945",
       "catalogResourceId": "000010976829",

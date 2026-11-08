@@ -24,7 +24,10 @@ import { validateRegistry } from "../../../scripts/data-refresh/registry/schema.
 import { runRefresh } from "../../../scripts/data-refresh/runner.mjs";
 import { acquireExclusiveLock } from "../../../scripts/data-refresh/lib/lock.mjs";
 import { publishArtifacts, recoverJournal } from "../../../scripts/data-refresh/lib/journal.mjs";
-import { resolveContainedPath } from "../../../scripts/data-refresh/lib/fs-safety.mjs";
+import {
+  resolveContainedPath,
+  verifyCleanTrackedOutputsAtHead,
+} from "../../../scripts/data-refresh/lib/fs-safety.mjs";
 
 const roots = [];
 async function temporaryRoot() {
@@ -376,6 +379,63 @@ describe("refresh core", () => {
     return { root, outputs, common, git };
   }
 
+  async function makeAdditiveRebaselineFixture() {
+    const fixture = await makePublishedGitFixture();
+    fixture.git("add", ...fixture.outputs);
+    fixture.git("commit", "-qm", "record published source outputs");
+
+    const statePath = path.join(fixture.root, ".data-refresh/semantic-state.json");
+    const oldState = JSON.parse(await readFile(statePath, "utf8"));
+    oldState.version = 2;
+    await writeFile(statePath, JSON.stringify(oldState));
+
+    const addedOutput = "canonical/actuals.csv";
+    await writeFile(path.join(fixture.root, addedOutput), "baseline-added-source");
+    fixture.git("add", addedOutput);
+    fixture.git("commit", "-qm", "track newly required source output");
+
+    const addedSource = {
+      id: "fixture-added-source",
+      required: true,
+      adapterId: "fixture-added",
+      identity: { kind: "file", statInfId: "00000002", format: "csv" },
+      title: "fixture additional source",
+      classifications: ["all"],
+      frequency: "monthly",
+      unit: "index",
+      baseline: "2020",
+      period: { from: "2020-01", through: "latest-published" },
+      revision: "full-history",
+      outputs: [addedOutput],
+      dependencies: [],
+    };
+    const registry = validateRegistry({
+      requiredAdapters: ["fixture", "fixture-added"],
+      sources: [...fixture.common.registry.sources, addedSource],
+    });
+    const addedAdapter = async () => ({
+      semanticValue: { values: [3] },
+      artifacts: [{ path: addedOutput, bytes: Buffer.from("added-source-v1") }],
+      rawFetches: [{ name: "fixture-added-raw", bytes: Buffer.from("added-source-raw-v1") }],
+      coverage: { periods: 1 },
+      validationSummary: { passed: true },
+    });
+    const common = {
+      ...fixture.common,
+      registry,
+      adapters: new Map([...fixture.common.adapters, ["fixture-added", addedAdapter]]),
+    };
+    const stateBytes = await readFile(statePath);
+    return {
+      ...fixture,
+      addedOutput,
+      common,
+      statePath,
+      stateBytes,
+      stateHash: sha256(stateBytes),
+    };
+  }
+
   it("verifies exact last-published outputs as a check-only semantic no-op", async () => {
     const { common } = await makePublishedGitFixture();
     let publishCalls = 0;
@@ -641,6 +701,148 @@ describe("refresh core", () => {
     }
   });
 
+  it("allows only an explicitly hash-pinned additive source migration in check mode", async () => {
+    const fixture = await makeAdditiveRebaselineFixture();
+    const outputs = [...fixture.outputs, fixture.addedOutput];
+    const outputsBefore = await Promise.all(
+      outputs.map((output) => readFile(path.join(fixture.root, output))),
+    );
+    let adapterCalls = 0;
+    const adapters = new Map(
+      [...fixture.common.adapters].map(([id, adapter]) => [
+        id,
+        async (options) => {
+          adapterCalls += 1;
+          return adapter(options);
+        },
+      ]),
+    );
+
+    await expect(runRefresh({ ...fixture.common, check: true, adapters })).rejects.toMatchObject({
+      code: "verify-noop-state-invalid",
+    });
+    expect(adapterCalls).toBe(0);
+
+    const report = await runRefresh({
+      ...fixture.common,
+      adapters,
+      check: true,
+      rebaselineSemanticStateHash: fixture.stateHash,
+      publish: async () => {
+        throw new Error("check-only additive rebaseline must not publish");
+      },
+    });
+
+    expect(report.status).toBe("validated");
+    expect(report.semanticStateRebaseline).toMatchObject({
+      oldStateSha256: fixture.stateHash,
+      candidateFingerprints: {
+        "fixture-source": expect.stringMatching(/^[a-f0-9]{64}$/),
+        "fixture-added-source": expect.stringMatching(/^[a-f0-9]{64}$/),
+      },
+    });
+    expect(adapterCalls).toBe(2);
+    expect(await readFile(fixture.statePath)).toEqual(fixture.stateBytes);
+    for (const [index, output] of outputs.entries()) {
+      expect(await readFile(path.join(fixture.root, output))).toEqual(outputsBefore[index]);
+    }
+  });
+
+  it("allows an old output manifest to be a subset when a source gains outputs", async () => {
+    const fixture = await makePublishedGitFixture();
+    fixture.git("add", ...fixture.outputs);
+    fixture.git("commit", "-qm", "record published source outputs");
+    const statePath = path.join(fixture.root, ".data-refresh/semantic-state.json");
+    const state = JSON.parse(await readFile(statePath, "utf8"));
+    state.version = 2;
+    await writeFile(statePath, JSON.stringify(state));
+    const stateBytes = await readFile(statePath);
+    const addedOutput = "canonical/new-series.csv";
+    await writeFile(path.join(fixture.root, addedOutput), "baseline-new-output");
+    fixture.git("add", addedOutput);
+    fixture.git("commit", "-qm", "track additive source output");
+
+    const source = fixture.common.registry.sources[0];
+    const registry = validateRegistry({
+      requiredAdapters: ["fixture"],
+      sources: [{ ...source, outputs: [...source.outputs, addedOutput] }],
+    });
+    const baselineAdapter = fixture.common.adapters.get("fixture");
+    const adapter = async (options) => {
+      const result = await baselineAdapter(options);
+      return {
+        ...result,
+        artifacts: [
+          ...result.artifacts,
+          { path: addedOutput, bytes: Buffer.from("new-series-v1") },
+        ],
+      };
+    };
+    const common = {
+      ...fixture.common,
+      registry,
+      adapters: new Map([["fixture", adapter]]),
+    };
+    const stateHash = sha256(stateBytes);
+
+    await expect(runRefresh({ ...common, check: true })).rejects.toMatchObject({
+      code: "verify-noop-state-invalid",
+    });
+    const report = await runRefresh({
+      ...common,
+      check: true,
+      rebaselineSemanticStateHash: stateHash,
+    });
+    expect(report.status).toBe("validated");
+    expect(report.semanticStateRebaseline.oldStateSha256).toBe(stateHash);
+    expect(await readFile(statePath)).toEqual(stateBytes);
+  });
+
+  it.each(["removed-source", "unknown-source", "malformed-fingerprint", "malformed-output-path"])(
+    "rejects additive rebaseline with %s in the old semantic state",
+    async (mutation) => {
+      const fixture = await makeAdditiveRebaselineFixture();
+      const state = JSON.parse(fixture.stateBytes.toString("utf8"));
+      let registry = fixture.common.registry;
+      if (mutation === "removed-source") {
+        registry = validateRegistry({
+          requiredAdapters: ["fixture-added"],
+          sources: [fixture.common.registry.sources[1]],
+        });
+      } else if (mutation === "unknown-source") {
+        state.fingerprints["unknown-source"] = "a".repeat(64);
+        state.outputs["unknown-source"] = { "canonical/unknown.csv": "b".repeat(64) };
+      } else if (mutation === "malformed-fingerprint") {
+        state.fingerprints["fixture-source"] = "invalid";
+      } else {
+        state.outputs["fixture-source"] = { "canonical/unknown.csv": "b".repeat(64) };
+      }
+      await writeFile(fixture.statePath, JSON.stringify(state));
+      const changedStateBytes = await readFile(fixture.statePath);
+      let adapterCalls = 0;
+      const adapters = new Map(
+        [...fixture.common.adapters].map(([id, adapter]) => [
+          id,
+          async (options) => {
+            adapterCalls += 1;
+            return adapter(options);
+          },
+        ]),
+      );
+
+      await expect(
+        runRefresh({
+          ...fixture.common,
+          registry,
+          adapters,
+          check: true,
+          rebaselineSemanticStateHash: sha256(changedStateBytes),
+        }),
+      ).rejects.toMatchObject({ code: "verify-noop-state-invalid" });
+      expect(adapterCalls).toBe(0);
+    },
+  );
+
   it("rejects dirty, staged, untracked, and recovery-residue outputs before rebaseline fetch", async () => {
     const makeCleanFixture = async () => {
       const fixture = await makePublishedGitFixture();
@@ -713,6 +915,23 @@ describe("refresh core", () => {
     await expect(invoke(rollbackTemp)).rejects.toMatchObject({
       code: "rebaseline-recovery-residue",
     });
+  });
+
+  it("verifies large tracked outputs against HEAD without buffering the blob", async () => {
+    const root = await temporaryRoot();
+    const output = "canonical/large-workbook.xls";
+    const target = path.join(root, output);
+    await mkdir(path.dirname(target), { recursive: true });
+    await writeFile(target, Buffer.alloc(2 * 1024 * 1024, 0x61));
+
+    const git = (...args) => execFileSync("git", args, { cwd: root, stdio: "ignore" });
+    git("init", "-q");
+    git("config", "user.email", "fixture@example.invalid");
+    git("config", "user.name", "Data refresh fixture");
+    git("add", output);
+    git("commit", "-qm", "record large output");
+
+    expect(() => verifyCleanTrackedOutputsAtHead(root, [output])).not.toThrow();
   });
 
   it("rechecks the state hash and clean HEAD outputs immediately before rebaseline publish", async () => {
@@ -1077,6 +1296,76 @@ describe("refresh core", () => {
     expect(reportText).not.toContain("PRIVATE TITLE");
     expect(reportText).not.toContain("PRIVATE ID");
     expect(reportText).not.toContain("PRIVATE NESTED TITLE");
+  });
+
+  it("serializes only fixed numeric Monthly Labor catalog diagnostics", async () => {
+    const root = await temporaryRoot();
+    const failure = Object.assign(new Error("catalog candidate missing"), {
+      code: "actuals-catalog-candidate-missing",
+      apiPhase: "catalog",
+      candidateDiagnostics: {
+        datasetRows: 3,
+        resourceRows: 7,
+        statisticsCodeMatches: 2,
+        statisticsNameMatches: 2,
+        nationwideMatches: 2,
+        actualTableMatches: 1,
+        monthlyMatches: 1,
+        resourceTitleMatches: 1,
+        confirmedMatches: 1,
+        regularSampleMatches: 1,
+        parseablePeriodMatches: 1,
+        xlsMatches: 1,
+        officialHostMatches: 1,
+        candidateMatches: 1,
+        latestTieCount: 0,
+        rawTitle: "PRIVATE RESOURCE TITLE",
+        sourceUrl: "https://private.example/file?appId=SECRET",
+      },
+    });
+    const thrown = await runRefresh({
+      root,
+      registry: makeRegistry(),
+      adapters: new Map([
+        [
+          "fixture",
+          async () => {
+            throw failure;
+          },
+        ],
+      ]),
+      validate: fixtureQualityValidator,
+    }).catch((error) => error);
+    const reportText = await readFile(path.join(root, thrown.reportPath), "utf8");
+    expect(JSON.parse(reportText).sources[0]).toMatchObject({
+      sourceCandidate: {
+        status: "pending",
+        reasonCode: "actuals-catalog-candidate-missing",
+      },
+      apiFailure: {
+        phase: "catalog",
+        candidateCounts: {
+          datasetRows: 3,
+          resourceRows: 7,
+          statisticsCodeMatches: 2,
+          statisticsNameMatches: 2,
+          nationwideMatches: 2,
+          actualTableMatches: 1,
+          monthlyMatches: 1,
+          resourceTitleMatches: 1,
+          confirmedMatches: 1,
+          regularSampleMatches: 1,
+          parseablePeriodMatches: 1,
+          xlsMatches: 1,
+          officialHostMatches: 1,
+          candidateMatches: 1,
+          latestTieCount: 0,
+        },
+      },
+    });
+    expect(reportText).not.toContain("PRIVATE RESOURCE TITLE");
+    expect(reportText).not.toContain("private.example");
+    expect(reportText).not.toContain("SECRET");
   });
 
   it("serializes only allowlisted CPI metadata predicate results", async () => {

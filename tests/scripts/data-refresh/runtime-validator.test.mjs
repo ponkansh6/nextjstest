@@ -513,7 +513,7 @@ describe("staged runtime quality validator", () => {
   });
 
   it("audits exact refresh-output coverage and the pinned suite inventory", async () => {
-    expect(REQUIRED_RUNTIME_REFRESH_OUTPUTS).toHaveLength(46);
+    expect(REQUIRED_RUNTIME_REFRESH_OUTPUTS).toHaveLength(49);
     expect(PINNED_PROJECT_FILES["shared/cti-estimate-contract.ts"]).toBe(
       "2be23259c1a48cd2fcc42f1f851779666b2a642b1f58be64720c3fd52ac303fc",
     );
@@ -760,6 +760,23 @@ describe("staged runtime quality validator", () => {
     expect(REQUIRED_RUNTIME_REFRESH_OUTPUTS).toContain("data/source/part_time_worker_ratio.csv");
     expect(REQUIRED_RUNTIME_REFRESH_OUTPUTS).toContain(
       "data/source/part_time_worker_ratio.metadata.json",
+    );
+    expect(auditRuntimeQualityCoverage(registry)).toMatchObject({
+      missingRefreshOutputs: [],
+      unexpectedRefreshOutputs: [],
+      duplicateRefreshOutputs: [],
+    });
+  });
+
+  it("requires the monthly labor actual snapshot bundle in the exact output contract", () => {
+    expect(REQUIRED_RUNTIME_REFRESH_OUTPUTS).toContain(
+      "data/source/monthly_labor_statistics_actual_snapshot.csv",
+    );
+    expect(REQUIRED_RUNTIME_REFRESH_OUTPUTS).toContain(
+      "data/source/monthly_labor_statistics_actual_snapshot.metadata.json",
+    );
+    expect(REQUIRED_RUNTIME_REFRESH_OUTPUTS).toContain(
+      "data/source/monthly_labor_statistics_actual_snapshot.xls",
     );
     expect(auditRuntimeQualityCoverage(registry)).toMatchObject({
       missingRefreshOutputs: [],

@@ -63,6 +63,9 @@ export const REQUIRED_RUNTIME_REFRESH_OUTPUTS = Object.freeze([
   "data/source/employment_indices.metadata.json",
   "data/source/part_time_worker_ratio.csv",
   "data/source/part_time_worker_ratio.metadata.json",
+  "data/source/monthly_labor_statistics_actual_snapshot.csv",
+  "data/source/monthly_labor_statistics_actual_snapshot.metadata.json",
+  "data/source/monthly_labor_statistics_actual_snapshot.xls",
   "data/source/population_statistics.csv",
   "data/source/population_statistics.metadata.json",
 ]);
@@ -460,8 +463,6 @@ function sanitizeRuntimeFailureTitle(value) {
 export const PINNED_RUNTIME_INPUTS = Object.freeze({
   "data/source/hon-mks202512.csv":
     "6fdb57885ccea31f78d51c6f090df5ad6e6dc8fd80ab95bc32081cf024f403ad",
-  "data/source/hon-mks202606.xls":
-    "bdb5b5ad4f79030728c89502d1f27c2d3234c30b09a8f287900016eb89ab61c8",
   "data/source/cti-size-composition/production-pi2plus-manifest.json":
     "e002ecec397c07691ccdfe8e69817debb5fc0c9e2a054ca276eaa8eb837a5e00",
   "data/source/cti-size-composition/production-pi2plus.json":
@@ -503,8 +504,25 @@ export const PINNED_RUNTIME_INPUTS = Object.freeze({
 // and candidate SHA-256 for this exact list. Review candidates and update this map manually.
 export const PINNED_PROJECT_FILES = Object.freeze({
   // Plan 66 updates Browser Mode package commands and excludes archived probe configs from type-check.
-  "package.json": "1e5125a992ec54a76651ae09c5d775076ef2fae1dff581883c8bca50f15e8015",
-  "pnpm-lock.yaml": "b5961f2f3a27b6a89530ef658b333a19f3eeffea7fa8df4b738b7bb988932b13",
+  "package.json": "ca8b653d6d713367d31b08943b61c96eca8e377b0491567c5e3674d92c594f5e",
+  "pnpm-lock.yaml": "952881535308974ac62534f079667dc0ddf731cb15b93b3c7690590bf8c43151",
+  // Catalog-driven actual-table refresh implementation and its registry/execution contract.
+  "scripts/data-refresh/adapters/monthly-labor-actuals.mjs":
+    "c1eecdce96bd5cbf9a4243a166ca5bf3e0a3175214a5fdbe1ec828ef1a528379",
+  "scripts/data-refresh/adapters/index.mjs":
+    "97f200df822b8c89425df422b2f50751654d0c01e577015fb6d8d5b4c9780b52",
+  "scripts/data-refresh/adapters/earnings.mjs":
+    "c80ff9cd1b9494d85a2363c09f36d0e2bfe48f8f13273da307d44482c017e493",
+  "scripts/data-refresh/registry/index.mjs":
+    "9406c73751d0626fc4f66d095846e100357de43db9170e5879d75e023b2dd36b",
+  "scripts/data-refresh/registry/schema.mjs":
+    "bf9e0160a62fd416cdebf8721c398233094846316ac89db45882bbe066786d86",
+  "scripts/data-refresh/runner.mjs":
+    "44b837dcca90b5be1f834d17b519f47e74fabd9a878f42487896e57b99b79e6a",
+  "scripts/data-refresh/lib/fs-safety.mjs":
+    "cba224add605c97f437ec74ea4bffe191ac7997c9dc3545db8e540a3816e9cf3",
+  "scripts/data-refresh/cli.mjs":
+    "7e2dd26658b9fb04188718f424ed18b31014c8b1601aa9c2618bcec7bd0f4026",
   "tsconfig.json": "d4ed4f4b9419be9bf30b5c782a833736d8dcf3ec28af6c9a3dda63540e13bfed",
   "vitest.config.ts": "a58b5bc2a77e925468b1383499c92b65b16b677b0440585b55bb831c23b582ca",
   "scripts/fetch-cti-basic-series-2025.mjs":
@@ -583,12 +601,34 @@ export const PINNED_PROJECT_FILES = Object.freeze({
   "tests/data-quality/cti-source-artifacts.test.ts":
     "ec743a0e30c47f19e573246f111b60f620e017566ec2ba6fc18ce1667cf836f8",
   "tests/data-quality/earning-data-integrity.test.ts":
-    "e3a07283c808e357a758987796e3318ab56ecbb4bba24b5f55d2352e47ecef7b",
+    "48fbd23c25c23ff010287c3a1db6407417895c83eefe321f64736e6a271496e2",
   "tests/data-quality/population-data-integrity.test.ts":
     "6441a64043461a8b8fa6388dfebc1aeecd47a2668c9ad3ce305ab5527f25e1ad",
   "tests/fixtures/minkan-extension-anchors.json":
     "68809b55b1ed6e98ce0e9a8c87238641135fcb85a56d9d88f1b2cef4e20fa357",
 });
+
+export function safeRuntimeProjectFileDiagnostics(value) {
+  if (
+    !value ||
+    typeof value !== "object" ||
+    Array.isArray(value) ||
+    typeof value.path !== "string" ||
+    !Object.hasOwn(PINNED_PROJECT_FILES, value.path) ||
+    typeof value.expectedSha256 !== "string" ||
+    !/^[a-f0-9]{64}$/.test(value.expectedSha256) ||
+    typeof value.candidateSha256 !== "string" ||
+    !/^[a-f0-9]{64}$/.test(value.candidateSha256) ||
+    value.expectedSha256 !== PINNED_PROJECT_FILES[value.path] ||
+    value.candidateSha256 === value.expectedSha256
+  )
+    return undefined;
+  return {
+    path: value.path,
+    expectedSha256: value.expectedSha256,
+    candidateSha256: value.candidateSha256,
+  };
+}
 
 const denyCanonicalPreload = String.raw`
 const fs = require('node:fs');
@@ -776,11 +816,18 @@ export async function validateStagedRuntimeData({
         );
       }
       const bytes = await readFile(canonical);
-      if (sha256(bytes) !== expectedHash) {
-        throw new RefreshError(
+      const candidateHash = sha256(bytes);
+      if (candidateHash !== expectedHash) {
+        const error = new RefreshError(
           "runtime-quality-project-hash-mismatch",
           `Pinned runtime project file changed: ${relative}.`,
         );
+        error.projectFileDiagnostics = {
+          path: relative,
+          expectedSha256: expectedHash,
+          candidateSha256: candidateHash,
+        };
+        throw error;
       }
       const target = assertContainedRuntimePath(runtimeRoot, relative);
       await mkdir(path.dirname(target), { recursive: true, mode: 0o700 });

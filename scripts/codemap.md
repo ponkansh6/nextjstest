@@ -10,7 +10,7 @@
 
 ## Flow
 
-XLS/CSV（`public/economics_source`、`data/source`、引数指定ファイル）→変換/loader検証→CSV、ログ、比較レポート、標準出力。`update_earnings_from_estat.ts`は引数または`/tmp/estat-earnings-index.utf8.csv`を読み、給与CSVとmetadataを更新し、`extract_salary_method_b.ts`はXLSから給与method B CSV/metadataを生成する。
+XLS/CSV（`public/economics_source`、`data/source`、引数指定ファイル）→変換/loader検証→CSV、ログ、比較レポート、標準出力。`update_earnings_from_estat.ts`は引数または`/tmp/estat-earnings-index.utf8.csv`を読み、給与CSVとmetadataを更新する。毎月勤労統計の実数原表は `pnpm data:refresh` の `monthly-labor-actuals` adapterがe-Stat catalogから最新確報を発見し、安定したCSV/metadata/workbook outputsへ生成する。
 
 ## Integration
 

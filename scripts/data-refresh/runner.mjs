@@ -22,6 +22,7 @@ import {
   RUNTIME_FAILURE_REPORT_STATUSES,
   RUNTIME_FILE_ERROR_CATEGORIES,
   RUNTIME_QUALITY_TESTS,
+  safeRuntimeProjectFileDiagnostics,
 } from "./runtime-validator.mjs";
 
 const SAFE_ROOT_FILES = [".data-refresh/semantic-state.json"];
@@ -43,6 +44,7 @@ export async function runRefresh({
   check = false,
   verifyLastPublishNoop = false,
   rebaselineSemanticStateHash,
+  approveActualsRevision,
   validate,
   now = () => new Date(),
   preflightChanges,
@@ -60,6 +62,18 @@ export async function runRefresh({
         /^[a-f0-9]{64}$/.test(rebaselineSemanticStateHash)),
     "rebaseline-hash-invalid",
     "Semantic-state rebaseline requires an expected SHA-256 hash.",
+  );
+  invariant(
+    approveActualsRevision === undefined ||
+      (approveActualsRevision &&
+        typeof approveActualsRevision === "object" &&
+        /^20\d{2}-(0[1-9]|1[0-2])$/.test(approveActualsRevision.period) &&
+        /^[a-f0-9]{64}$/.test(approveActualsRevision.sourceSha256) &&
+        !check &&
+        !verifyLastPublishNoop &&
+        rebaselineSemanticStateHash === undefined),
+    "actuals-revision-approval-invalid",
+    "Same-period actual-value revision approval requires a YYYY-MM normal publish.",
   );
   invariant(
     !verifyLastPublishNoop || rebaselineSemanticStateHash === undefined,
@@ -206,6 +220,7 @@ export async function runRefresh({
         storedState?.version === 2 && !Object.hasOwn(storedState, "cpiVintageApproval");
       validatePublishedState(storedState, registry, {
         allowMissingCpiVintageApproval: migrationRequired,
+        allowAdditiveSources: true,
       });
       rebaselineOldStateHash = oldStateHash;
       report.semanticStateRebaseline = {
@@ -238,6 +253,7 @@ export async function runRefresh({
         check,
         now,
         transportConfig,
+        approveActualsRevision,
       });
       invariant(
         result && Array.isArray(result.artifacts),
@@ -485,6 +501,11 @@ export async function runRefresh({
         : activeSourceId;
     report.status = reasonCode;
     report.errorCode = reasonCode;
+    if (reasonCode === "runtime-quality-project-hash-mismatch") {
+      report.runtimeProjectFileDiagnostics = safeRuntimeProjectFileDiagnostics(
+        error?.projectFileDiagnostics,
+      );
+    }
     report.sources.push({
       sourceId,
       result: "blocked",
@@ -644,7 +665,11 @@ function absentOutputState() {
   return { exists: false, sha256: null, byteLength: null };
 }
 
-function validatePublishedState(state, registry, { allowMissingCpiVintageApproval = false } = {}) {
+function validatePublishedState(
+  state,
+  registry,
+  { allowMissingCpiVintageApproval = false, allowAdditiveSources = false } = {},
+) {
   const expectedCpiApproval = cpiVintageApprovalForRegistry(registry);
   invariant(
     state &&
@@ -661,11 +686,25 @@ function validatePublishedState(state, registry, { allowMissingCpiVintageApprova
   );
   const hashes = {};
   const requiredSources = registry.sources.filter((source) => source.required);
+  const requiredById = new Map(requiredSources.map((source) => [source.id, source]));
+  const fingerprintSourceIds = Object.keys(state.fingerprints);
+  const outputSourceIds = Object.keys(state.outputs);
   invariant(
-    Object.keys(state.fingerprints).length === requiredSources.length &&
-      Object.keys(state.outputs).length === requiredSources.length,
+    fingerprintSourceIds.length === outputSourceIds.length &&
+      fingerprintSourceIds.every((sourceId) => Object.hasOwn(state.outputs, sourceId)),
     "verify-noop-state-invalid",
-    "Last-publish semantic state is incomplete.",
+    "Last-publish semantic state source manifests do not match.",
+  );
+  invariant(
+    allowAdditiveSources
+      ? fingerprintSourceIds.length > 0 &&
+          fingerprintSourceIds.every((sourceId) => requiredById.has(sourceId))
+      : fingerprintSourceIds.length === requiredSources.length &&
+          requiredSources.every((source) => Object.hasOwn(state.fingerprints, source.id)),
+    "verify-noop-state-invalid",
+    allowAdditiveSources
+      ? "Semantic-state rebaseline may add sources but cannot remove or introduce unknown sources."
+      : "Last-publish semantic state is incomplete.",
   );
   if (expectedCpiApproval) {
     const approvalMissing = !Object.hasOwn(state, "cpiVintageApproval");
@@ -681,23 +720,32 @@ function validatePublishedState(state, registry, { allowMissingCpiVintageApprova
     );
   }
   for (const source of requiredSources) {
+    if (allowAdditiveSources && !Object.hasOwn(state.fingerprints, source.id)) continue;
     const fingerprint = state.fingerprints[source.id];
     const sourceHashes = state.outputs[source.id];
+    const sourceOutputPaths =
+      sourceHashes && typeof sourceHashes === "object" && !Array.isArray(sourceHashes)
+        ? Object.keys(sourceHashes)
+        : [];
     invariant(
       typeof fingerprint === "string" &&
         /^[a-f0-9]{64}$/.test(fingerprint) &&
         sourceHashes &&
         typeof sourceHashes === "object" &&
         !Array.isArray(sourceHashes) &&
-        Object.keys(sourceHashes).length === source.outputs.length &&
-        source.outputs.every(
+        sourceOutputPaths.length > 0 &&
+        (allowAdditiveSources
+          ? sourceOutputPaths.every((output) => source.outputs.includes(output))
+          : sourceOutputPaths.length === source.outputs.length &&
+            source.outputs.every((output) => Object.hasOwn(sourceHashes, output))) &&
+        sourceOutputPaths.every(
           (output) =>
             typeof sourceHashes[output] === "string" && /^[a-f0-9]{64}$/.test(sourceHashes[output]),
         ),
       "verify-noop-state-invalid",
       `Last-publish output hash manifest is incomplete for ${source.id}.`,
     );
-    for (const output of source.outputs) hashes[output] = sourceHashes[output];
+    for (const output of sourceOutputPaths) hashes[output] = sourceHashes[output];
   }
   return hashes;
 }
@@ -815,6 +863,11 @@ function safeApiFailure(error) {
   const phases = new Set(["table-list", "catalog", "metadata", "stats-data"]);
   if (!phases.has(error?.apiPhase)) return undefined;
   const failure = { phase: error.apiPhase };
+  if (error?.code === "actuals-catalog-candidate-missing" && error.apiPhase === "catalog") {
+    const diagnostics = safeActualsCatalogDiagnostics(error.candidateDiagnostics);
+    if (diagnostics) failure.candidateCounts = diagnostics;
+    return failure;
+  }
   if (error?.code === "candidate-resolution-pending" && error.apiPhase === "catalog") {
     const candidateCountKeys = [
       "catalogRows",
@@ -865,6 +918,34 @@ function safeApiFailure(error) {
     return undefined;
   }
   return failure;
+}
+
+function safeActualsCatalogDiagnostics(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const keys = [
+    "datasetRows",
+    "resourceRows",
+    "statisticsCodeMatches",
+    "statisticsNameMatches",
+    "nationwideMatches",
+    "actualTableMatches",
+    "monthlyMatches",
+    "resourceTitleMatches",
+    "confirmedMatches",
+    "regularSampleMatches",
+    "parseablePeriodMatches",
+    "xlsMatches",
+    "officialHostMatches",
+    "candidateMatches",
+    "latestTieCount",
+  ];
+  const result = {};
+  for (const key of keys) {
+    const count = value[key];
+    if (!Number.isSafeInteger(count) || count < 0 || count > 1_000_000) return undefined;
+    result[key] = count;
+  }
+  return result;
 }
 
 function safeFileFailure(error) {
@@ -1219,7 +1300,9 @@ function safeSourceCandidate(value) {
     typeof entry === "string" &&
     entry.length <= max &&
     !/(?:https?:\/\/|appId\s*=|api.?key|token\s*=)/i.test(entry) &&
-    (entry.includes("消費者物価指数") || entry.includes("世帯消費動向指数"))
+    (entry.includes("消費者物価指数") ||
+      entry.includes("世帯消費動向指数") ||
+      entry.includes("毎勤原表"))
       ? entry
       : undefined;
   const title =
@@ -1250,7 +1333,7 @@ function safeSourceCandidate(value) {
         ? value.selectedCatalogResourceId
         : undefined,
     selectedCatalogTitle: fileTitle(value.selectedCatalogTitle),
-    selectedCatalogFormat: ["CSV", "XLS", "XLSX"].includes(value.selectedCatalogFormat)
+    selectedCatalogFormat: ["CSV", "XLS", "XLSX", "XLS_REP"].includes(value.selectedCatalogFormat)
       ? value.selectedCatalogFormat
       : undefined,
     selectedCatalogReleaseDate: fileDate(value.selectedCatalogReleaseDate),
@@ -1549,6 +1632,36 @@ function safeRevisionAudit(value) {
           };
           populationSamples.push(safeSample);
           return [safeSample];
+        }
+        if (sourceId === "actualsSnapshot") {
+          const actualSeries = new Set([
+            "total_earning",
+            "contractual_earnings",
+            "scheduled_earnings",
+            "total_worked_hours",
+            "employment_indices",
+          ]);
+          if (
+            !actualSeries.has(sample.series) ||
+            typeof sample.month !== "string" ||
+            !/^\d{4}-(0[1-9]|1[0-2])$/.test(sample.month) ||
+            !Number.isFinite(sample.oldValue) ||
+            sample.oldValue < 0 ||
+            sample.oldValue > 100_000_000 ||
+            !Number.isFinite(sample.newValue) ||
+            sample.newValue < 0 ||
+            sample.newValue > 100_000_000
+          ) {
+            return [];
+          }
+          return [
+            {
+              series: sample.series,
+              month: sample.month,
+              oldValue: sample.oldValue,
+              newValue: sample.newValue,
+            },
+          ];
         }
         if (
           Number.isSafeInteger(sample.seriesIndex) &&

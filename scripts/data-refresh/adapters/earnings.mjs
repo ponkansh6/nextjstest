@@ -58,6 +58,7 @@ const METADATA_PATHS = Object.freeze({
   employment_indices: "data/source/employment_indices.metadata.json",
   part_time_worker_ratio: "data/source/part_time_worker_ratio.metadata.json",
 });
+const ACTUAL_SNAPSHOT_PATH = "data/source/monthly_labor_statistics_actual_snapshot.csv";
 const VERIFIED_PRE_MIGRATION_MONTHS = 438;
 const VERIFIED_ANNUAL_ROUNDING_CASES = Object.freeze({ total_earning: new Set(["1991", "2010"]) });
 const ANNUAL_ROUNDING_RULE = "official-cy-upper-rounding-at-monthly-midpoint";
@@ -310,7 +311,7 @@ export async function earningsAdapter({
       },
       normalizedCsv: csvPath,
       normalizedCsvSha256: digest(csvBySeries[series]),
-      excludedCrossSection: "data/source/hon-mks202606.xls",
+      excludedCrossSection: ACTUAL_SNAPSHOT_PATH,
       period: { start: monthlyStart, end: monthlyEnd, monthlyRows: parsed.coverage.monthlyRows },
       retrievedAt: stamp,
       revisionAudit: revisionAudit[series],
@@ -335,6 +336,7 @@ export async function earningsAdapter({
       },
       statInfId: EARNINGS_SOURCE_ID,
       sourceSha256: parsed.sourceSha256,
+      actualSnapshotPath: ACTUAL_SNAPSHOT_PATH,
       coverage: parsed.coverage,
       normalizedOutputSha256: Object.fromEntries(
         Object.entries(csvBySeries).map(([series, bytes]) => [series, digest(bytes)]),

@@ -1,7 +1,7 @@
 import { access, lstat, mkdir, readFile, readdir, realpath, stat } from "node:fs/promises";
 import path from "node:path";
 import { createHash } from "node:crypto";
-import { readFileSync } from "node:fs";
+import { lstatSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { RefreshError, invariant } from "./errors.mjs";
 
@@ -203,14 +203,24 @@ export function verifyCleanTrackedOutputsAtHead(root, outputs) {
       "Managed outputs must be clean in Git before semantic-state rebaseline.",
     );
     for (const output of expectedOutputs) {
-      const target = readFileSync(path.resolve(root, output));
-      const head = execFileSync("git", ["show", `HEAD:${output}`], {
+      const targetPath = path.resolve(root, output);
+      invariant(
+        lstatSync(targetPath).isFile(),
+        "rebaseline-output-type",
+        "Managed output must be a regular file before semantic-state rebaseline.",
+      );
+      const head = execFileSync("git", ["rev-parse", "--verify", `HEAD:${output}`], {
         cwd: root,
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "ignore"],
+      });
+      const targetHash = execFileSync("git", ["hash-object", "--", targetPath], {
+        cwd: root,
+        encoding: "utf8",
         stdio: ["ignore", "pipe", "ignore"],
       });
       invariant(
-        createHash("sha256").update(target).digest("hex") ===
-          createHash("sha256").update(head).digest("hex"),
+        targetHash.trim() === head.trim(),
         "rebaseline-output-not-at-head",
         "Managed output bytes must match HEAD before semantic-state rebaseline.",
       );

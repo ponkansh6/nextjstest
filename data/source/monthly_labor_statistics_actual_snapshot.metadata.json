@@ -1,0 +1,51 @@
+{
+  "source": "厚生労働省 毎月勤労統計調査 全国調査 実数原表",
+  "sourceUrl": "https://www.e-stat.go.jp/stat-search/file-download?&statInfId=000040516257&fileKind=4",
+  "sourceCatalogTitle": "毎勤原表（令和８年８月確報）",
+  "sourceDatasetTitle": "毎月勤労統計調査　全国調査_実数原表・実数推計等_実数原表（2012年1月～）_月次_2026年8月",
+  "catalogResourceId": "000010971343",
+  "statInfId": "000040516257",
+  "statisticsCode": "00450071",
+  "format": "XLS_REP",
+  "sourceFile": "000040516257.xls",
+  "sourcePath": "data/source/monthly_labor_statistics_actual_snapshot.xls",
+  "sourceSha256": "308d07d4e642ad0acd7c21a37ea1fd9f3deb00aedfdacee79945ce5c9ad5bf04",
+  "normalizedCsvSha256": "b7e6db7e7e616aa34785ce62947af487e9909fcccf27eab842a7234e892867d0",
+  "bytes": 1119232,
+  "contentType": "application/octet-stream",
+  "retrievedAt": "2026-11-08T15:27:08.084Z",
+  "sheet": "実数原表",
+  "period": "2026-08",
+  "releaseDate": "2026-10-23",
+  "lastModifiedDate": "2026-10-23",
+  "revision": "確報",
+  "target": "調査産業計 / 就業形態計 / 5人以上",
+  "mapping": [
+    {
+      "series": "total_earning",
+      "unit": "円",
+      "target": "現金給与額/総額"
+    },
+    {
+      "series": "contractual_earnings",
+      "unit": "円",
+      "target": "現金給与額/きまって支給する給与"
+    },
+    {
+      "series": "scheduled_earnings",
+      "unit": "円",
+      "target": "現金給与額/所定内給与"
+    },
+    {
+      "series": "total_worked_hours",
+      "unit": "時間",
+      "target": "実労働時間数/総数"
+    },
+    {
+      "series": "employment_indices",
+      "unit": "人",
+      "target": "常用労働者数/本調査期間末"
+    }
+  ],
+  "note": "Actual-value cross-section; kept separate from the monthly index and rate series."
+}
