@@ -1,67 +1,109 @@
 .pageWrapper {
-  max-width: 86rem;
+  padding-top: 1.5rem;
+  padding-bottom: 6rem;
+  max-width: 80rem;
+  margin-left: auto;
+  margin-right: auto;
   min-height: 100dvh;
-  margin-inline: auto;
-  padding-block: 2rem 6rem;
+  background:
+    radial-gradient(circle at top right, rgba(59, 130, 246, 0.03), transparent 40%),
+    radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.03), transparent 40%);
 }
 
 .header {
-  position: relative;
-  display: grid;
-  justify-items: start;
-  max-width: 70rem;
-  margin: 0 auto 2.5rem;
-  padding: 1.25rem 0 1.5rem 1.5rem;
-  border-left: 3px solid var(--accent);
+  margin-bottom: 1.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: fadeIn 0.8s ease-out;
 }
 
-.eyebrow {
-  margin-bottom: 0.8rem;
-  color: var(--accent);
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .title {
-  max-width: 16ch;
-  margin-bottom: 0.8rem;
+  /* モバイルで大きすぎた見出しを縮小(375pxで約32px→約26px)。
+     デスクトップ側(~1280px超)は旧clampとほぼ同じ描画結果になるよう係数を調整。 */
+  font-size: clamp(1.5rem, 0.64rem + 4.2vw, 4.5rem);
+  line-height: 1.1;
+  font-weight: 800;
   color: var(--card-text);
-  font-size: clamp(2rem, 1.15rem + 2.8vw, 3.7rem);
-  font-weight: 650;
-  letter-spacing: -0.055em;
-  line-height: 1.18;
+  letter-spacing: -0.02em;
+  margin-bottom: 1rem;
   word-break: keep-all;
   overflow-wrap: break-word;
 }
 
 .description {
-  max-width: 48rem;
-  color: var(--gray-600);
-  font-size: 1rem;
-  line-height: 1.8;
+  font-size: 1.125rem;
+  color: var(--gray-500);
+  max-width: 42rem;
+  line-height: 1.6;
 }
 
 .errorContainer {
-  max-width: 70rem;
-  margin-inline: auto;
-  padding: 2rem;
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  border-left: 3px solid var(--red-500);
+  padding: 3rem;
+  text-align: center;
+  background-color: var(--gray-50);
+  border-radius: 1rem;
+  border: 1px dashed var(--card-border);
 }
 
 .errorMessage {
   color: var(--red-500);
-  font-weight: 650;
-  line-height: 1.5;
+  font-weight: 500;
 }
 
 .errorSubMessage {
-  margin-top: 0.5rem;
-  color: var(--gray-600);
   font-size: 0.875rem;
-  line-height: 1.65;
+  color: var(--gray-500);
+  margin-top: 0.25rem;
+}
+
+.pageLoading {
+  min-height: 100dvh;
+}
+
+.loadingTabs,
+.loadingTabItem,
+.loadingLegend span,
+.loadingChart {
+  background: linear-gradient(90deg, var(--gray-100) 25%, var(--gray-300) 50%, var(--gray-100) 75%);
+  background-size: 200% 100%;
+  animation: pageLoadingShimmer 1.5s ease-in-out infinite;
+  border-radius: 0.5rem;
+}
+
+.loadingTabs {
+  background: none;
+}
+
+.loadingTabItem {
+  display: inline-block;
+  width: 4.5rem;
+  min-width: 4.5rem;
+  height: 2.75rem;
+}
+
+.loadingChart {
+  border-radius: 0.5rem;
+  opacity: 0.6;
+}
+
+.loadingLegend span {
+  display: inline-block;
+  width: clamp(4rem, 8vw, 7rem);
+  min-height: 2rem;
+  border-radius: 0.375rem;
 }
 
 .loadingLabel {
@@ -73,53 +115,9 @@
   white-space: nowrap;
 }
 
-.loadingTabs,
-.loadingTabItem,
-.loadingLegend span,
-.loadingChart {
-  background: linear-gradient(90deg, var(--gray-100) 25%, var(--gray-300) 50%, var(--gray-100) 75%);
-  background-size: 200% 100%;
-  animation: pageLoadingShimmer 1.5s ease-in-out infinite;
-}
-
-.loadingTabs {
-  background: none;
-}
-.loadingTabItem {
-  display: inline-block;
-  width: 4.5rem;
-  min-width: 4.5rem;
-  height: 2.75rem;
-}
-.loadingChart {
-  border-radius: 0.25rem;
-  opacity: 0.6;
-}
-.loadingLegend span {
-  display: inline-block;
-  width: clamp(4rem, 8vw, 7rem);
-  min-height: 2rem;
-}
-
 @keyframes pageLoadingShimmer {
   to {
     background-position: -200% 0;
-  }
-}
-
-@media (max-width: 768px) {
-  .pageWrapper {
-    padding-top: 1.25rem;
-  }
-  .header {
-    margin-bottom: 1.5rem;
-    padding: 0.75rem 0 0.75rem 1rem;
-  }
-  .title {
-    font-size: clamp(1.75rem, 7vw, 2.5rem);
-  }
-  .description {
-    font-size: 0.9rem;
   }
 }
 
@@ -129,5 +127,20 @@
   .loadingLegend span,
   .loadingChart {
     animation: none;
+  }
+}
+
+/* ── PC enlargement (≥769px) - 同期: MOBILE_BREAKPOINT_PX = 768 ── */
+@media (min-width: 769px) {
+  .pageWrapper {
+    padding-top: 4rem;
+  }
+
+  .header {
+    margin-bottom: 4rem;
+  }
+
+  .description {
+    font-size: 1.688rem;
   }
 }

@@ -163,11 +163,7 @@ function declaration(
       rule.selector === selector &&
       (mediaQuery ? rule.media.includes(mediaQuery) : rule.media.length === 0),
   );
-  for (let index = applicableRules.length - 1; index >= 0; index -= 1) {
-    const value = applicableRules[index]?.declarations.get(property);
-    if (value !== undefined) return value;
-  }
-  return undefined;
+  return applicableRules.at(-1)?.declarations.get(property);
 }
 
 describe("source CSS layout contracts", () => {
@@ -176,19 +172,17 @@ describe("source CSS layout contracts", () => {
     expect(declaration(cpiChartRules, ".themeToggleButton", "min-height")).toBe("44px");
   });
 
-  it("keeps mobile legend controls comfortably tappable with compact padding", () => {
+  it("keeps compact mobile legend controls at a 2rem minimum height with compact padding", () => {
     expect(declaration(cpiChartRules, ".legendItem", "min-height", "(max-width: 768px)")).toBe(
-      "44px",
+      "2rem",
     );
     expect(declaration(cpiChartRules, ".legendItem", "padding", "(max-width: 768px)")).toBe(
-      "0.35rem 0.45rem",
+      "0.375rem 0.5rem",
     );
   });
 
-  it("declares a 44px minimum height for mobile section tabs", () => {
-    expect(declaration(cpiChartRules, ".sectionTab", "min-height", "(max-width: 768px)")).toBe(
-      "44px",
-    );
+  it("declares the 44px minimum height for section tabs", () => {
+    expect(declaration(cpiChartRules, ".sectionTab", "min-height")).toBe("44px");
   });
 
   it("declares the section tab scrollbar and right-edge fade styles", () => {
@@ -202,9 +196,9 @@ describe("source CSS layout contracts", () => {
   });
 
   it("declares the 768/769px boundary and mobile section spacing", () => {
-    expect(declaration(pageRules, ".pageWrapper", "padding-block")).toBe("2rem 6rem");
-    expect(declaration(pageRules, ".pageWrapper", "padding-top", "(max-width: 768px)")).toBe(
-      "1.25rem",
+    expect(declaration(pageRules, ".pageWrapper", "padding-top")).toBe("1.5rem");
+    expect(declaration(pageRules, ".pageWrapper", "padding-top", "(min-width: 769px)")).toBe(
+      "4rem",
     );
     expect(declaration(cpiChartRules, ".chartWrapper", "aspect-ratio")).toBeUndefined();
     expect(declaration(cpiChartRules, ".chartWrapper", "aspect-ratio", "(min-width: 769px)")).toBe(

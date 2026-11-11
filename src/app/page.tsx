@@ -91,7 +91,6 @@ export default async function Page() {
   return (
     <div className={`container ${styles.pageWrapper}`}>
       <header className={styles.header}>
-        <p className={styles.eyebrow}>JAPAN · ECONOMIC INDICATORS</p>
         <h1 className={styles.title}>物価・賃金・消費の推移</h1>
         <p className={styles.description}>{cpiSummary}</p>
       </header>
