@@ -276,8 +276,12 @@ import { page, userEvent } from "vitest/browser";
       if (!details) throw new Error("Consumption disclosure details element is missing");
       expect(details.open).toBe(false);
 
-      // The close button and source link precede summary in the dialog's tab order.
+      const closeButton = await dialog.getByRole("button", { name: "閉じる" }).element();
+      const sourceLink = await dialog.getByRole("link", { name: "データ詳細へ" }).element();
+      // Wait for the renderer's initial focus before advancing through actual controls.
+      await expect.poll(() => document.activeElement === closeButton).toBe(true);
       await userEvent.keyboard("{Tab}");
+      expect(document.activeElement).toBe(sourceLink);
       await userEvent.keyboard("{Tab}");
       expect(document.activeElement).toBe(summary);
       expect(summary.matches(":focus-visible")).toBe(true);
@@ -1225,7 +1229,8 @@ import { page, userEvent } from "vitest/browser";
       expect(window.scrollY).toBeGreaterThan(before);
       const bounds = target!.getBoundingClientRect();
       expect(bounds.top).toBeGreaterThanOrEqual(0);
-      expect(bounds.bottom).toBeLessThanOrEqual(window.innerHeight);
+      // Allow subpixel rounding at the document's maximum scroll position.
+      expect(bounds.bottom).toBeLessThanOrEqual(window.innerHeight + 1);
     });
   });
 

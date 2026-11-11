@@ -1,11 +1,12 @@
 .chartContainer {
+  max-width: 70rem;
   width: 100%;
   margin: 0 auto;
-  background-color: var(--card-bg);
-  padding: 1.5rem;
-  border-radius: 0.75rem;
-  box-shadow: var(--shadow-lg);
-  border: 1px solid var(--card-border);
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  box-shadow: none;
+  border: 0;
   transition:
     background-color 180ms ease,
     border-color 180ms ease,
@@ -14,9 +15,9 @@
 
 .filterContainer {
   display: flex;
-  gap: 2rem;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 0.9rem 0;
   border-bottom: 1px solid var(--card-border);
   align-items: center;
   flex-wrap: wrap;
@@ -24,7 +25,7 @@
 
 .filterRow {
   display: flex;
-  gap: 2rem;
+  gap: 1rem;
   width: 100%;
   flex-wrap: wrap;
   align-items: center;
@@ -33,43 +34,44 @@
 .filterItem {
   display: flex;
   align-items: center;
-  gap: clamp(0.75rem, 0.25rem + 1.04vw, 2rem);
-  font-size: clamp(0.875rem, 0.12rem + 1.56vw, 2rem);
+  gap: 0.55rem;
+  font-size: 0.85rem;
   font-weight: 500;
-  color: var(--card-text);
+  color: var(--gray-600);
 }
 
 .select {
-  padding: clamp(0.5rem, 1.39vw - 0.17rem, 1.5rem) clamp(2rem, 4.17vw, 5rem)
-    clamp(0.5rem, 1.39vw - 0.17rem, 1.5rem) clamp(0.75rem, 1.74vw - 0.09rem, 2rem);
-  border-radius: 0.375rem;
+  min-height: 42px;
+  padding: 0.5rem 2.25rem 0.5rem 0.75rem;
+  border-radius: 0.25rem;
   border: 1px solid var(--card-border);
   background-color: var(--card-bg);
   color: var(--card-text);
-  font-size: clamp(0.875rem, 0.12rem + 1.56vw, 2rem);
+  font-size: 0.85rem;
   cursor: pointer;
   appearance: none;
   background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
   background-repeat: no-repeat;
-  background-position: right clamp(0.5rem, 1.39vw - 0.17rem, 1.5rem) center;
-  background-size: clamp(1rem, 2.09vw, 2.5rem);
+  background-position: right 0.65rem center;
+  background-size: 1rem;
   transition: border-color 0.2s;
 }
 
 .select:focus {
   outline: none;
-  border-color: var(--blue-500);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 .maxRangeButton {
-  padding: clamp(0.5rem, 1.39vw - 0.17rem, 1.5rem) clamp(1rem, 2vw, 2rem);
-  border-radius: 0.375rem;
+  min-height: 42px;
+  padding: 0.5rem 0.8rem;
+  border-radius: 0.25rem;
   border: 1px solid var(--card-border);
   background-color: var(--card-bg);
   color: var(--card-text);
-  font-size: clamp(0.875rem, 0.12rem + 1.56vw, 2rem);
-  font-weight: 500;
+  font-size: 0.85rem;
+  font-weight: 600;
   cursor: pointer;
   transition:
     border-color 0.2s,
@@ -79,16 +81,16 @@
 }
 
 .maxRangeButton:hover {
-  border-color: var(--blue-500);
-  background-color: rgba(59, 130, 246, 0.05);
+  border-color: var(--accent);
+  background-color: color-mix(in srgb, var(--accent) 5%, var(--card-bg));
 }
 .maxRangeButton:active {
-  background-color: var(--blue-50);
+  background-color: var(--accent-soft);
   transform: scale(0.98);
 }
 
 .legendContainer {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.1rem;
   padding-bottom: 1rem;
   border-bottom: 1px solid var(--card-border);
 }
@@ -98,11 +100,11 @@
 }
 
 .legendTitle {
-  font-size: clamp(0.95rem, 0.43rem + 1.08vw, 1.725rem);
-  font-weight: 600;
-  color: var(--card-text);
-  margin-bottom: 0.75rem;
-  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 650;
+  color: var(--gray-600);
+  margin-bottom: 0.55rem;
+  text-align: left;
 }
 
 .legendItem:focus-visible,
@@ -114,8 +116,9 @@
 .sectionRange:focus-visible,
 .themeToggleButton:focus-visible,
 .bottomSheetClose:focus-visible {
-  outline: 2px solid var(--blue-500);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
 }
 
 .chartDataTable {
@@ -138,13 +141,13 @@
 
 /* 実質消費の凡例アコーディオン */
 .legendAccordion {
-  max-width: 52rem;
+  max-width: none;
   margin-inline: auto;
   margin-bottom: 1.5rem;
   border: 1px solid var(--card-border);
-  border-radius: 0.875rem;
-  background-color: var(--card-bg);
-  box-shadow: 0 2px 10px rgb(15 23 42 / 0.06);
+  border-radius: 0.3rem;
+  background: transparent;
+  box-shadow: none;
 }
 
 /* カード調の見出しと、開いた凡例を同じ面の中につなげる */
@@ -154,12 +157,12 @@
   justify-content: space-between;
   gap: 0.75rem;
   width: 100%;
-  min-height: 4.25rem;
-  padding: 0.875rem 1rem;
-  background-color: var(--cta-tonal-bg);
-  color: var(--cta-tonal-text);
+  min-height: 3.25rem;
+  padding: 0.7rem 0.85rem;
+  background-color: var(--gray-50);
+  color: var(--card-text);
   border: none;
-  border-radius: 0.8125rem;
+  border-radius: 0.25rem;
   font-size: 0.875rem;
   line-height: 1.35;
   cursor: pointer;
@@ -169,7 +172,7 @@
     box-shadow 0.2s ease;
 }
 .legendAccordion[open] .legendAccordionSummary {
-  border-radius: 0.8125rem 0.8125rem 0 0;
+  border-radius: 0.25rem 0.25rem 0 0;
   border-bottom: 1px solid var(--card-border);
 }
 /* Chrome/Safari で <summary> の三角マーカーを非表示 */
@@ -193,7 +196,7 @@
 }
 
 .legendAccordionSummary:focus-visible {
-  outline: 2px solid var(--blue-500);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -285,50 +288,50 @@
 .actionButton {
   min-height: 44px;
   padding: 0.625rem 1rem;
-  font-size: clamp(0.875rem, 0.19rem + 1.42vw, 1.9rem);
+  font-size: 0.875rem;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .actionButton:hover {
-    border-color: var(--blue-500);
-    background-color: var(--blue-50);
+    border-color: var(--accent);
+    background-color: var(--accent-soft);
     color: var(--card-text);
   }
 }
 
 .actionButton:active {
-  background-color: var(--blue-50);
+  background-color: var(--accent-soft);
 }
 
 .legendItems,
 .stackedLegendItems {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  justify-content: center;
+  gap: 0.35rem;
+  justify-content: flex-start;
 }
 
 .legendItem {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: clamp(0.5rem, 0.21rem + 0.61vw, 0.9375rem) clamp(0.75rem, 0.25rem + 1.04vw, 1.5rem);
-  border: 1px solid var(--card-border);
-  border-radius: 0.375rem;
-  background-color: var(--card-bg);
+  min-height: 36px;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid transparent;
+  border-radius: 0.2rem;
+  background: transparent;
   cursor: pointer;
-  font-size: clamp(0.875rem, 0.46rem + 0.87vw, 1.5rem);
-  color: var(--card-text);
+  font-size: 0.78rem;
+  color: var(--gray-700);
   transition: all 0.2s ease;
   user-select: none;
-  min-height: 2rem;
   min-width: fit-content;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .legendItem:hover {
-    border-color: var(--blue-500);
-    background-color: var(--blue-50);
+    border-color: var(--accent);
+    background-color: var(--accent-soft);
     color: var(--card-text);
     transform: translateY(-1px);
   }
@@ -336,13 +339,13 @@
 
 .legendItem:active {
   transform: translateY(0);
-  background-color: var(--blue-50);
+  background-color: var(--accent-soft);
 }
 
 .legendItem.hidden {
   opacity: 0.5;
   background-color: var(--card-border);
-  border: 1px solid var(--chart-text);
+  border: 1px solid transparent;
 }
 
 .legendItem.hidden .legendLabel {
@@ -351,11 +354,11 @@
 
 .legendIcon {
   display: inline-block;
-  width: clamp(0.75rem, 0.37rem + 0.78vw, 1.3125rem);
-  height: clamp(0.75rem, 0.37rem + 0.78vw, 1.3125rem);
-  border-radius: 0.125rem;
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 1px;
   flex-shrink: 0;
-  box-shadow: 0 0 0 1px var(--card-bg);
+  box-shadow: none;
 }
 
 .legendLabel {
@@ -366,7 +369,7 @@
 /* 同期: MOBILE_BREAKPOINT_PX = 768 */
 @media (max-width: 768px) {
   .chartContainer {
-    padding: 1rem;
+    padding: 0;
   }
 
   .filterContainer {
@@ -416,7 +419,7 @@
     flex: 1 1 70px;
     min-width: 0;
     font-size: 0.8rem;
-    padding: 0.375rem 0.4rem;
+    padding: 0.5rem 2.25rem 0.5rem 0.75rem;
     height: 44px;
   }
 
@@ -428,19 +431,17 @@
     flex-shrink: 0;
   }
 
-  /* 多系列(最大16チップ)の折り返し行数を減らすため、意図的に44pxのタップ
-     ターゲット基準(P1-1)を下回る。WCAG 2.5.8 AA相当の絶対最小(24px)には
-     余裕を残す32pxとし、著しいユーザビリティ低下がない範囲で圧縮する。 */
+  /* Keep the many-series legend compact while retaining a comfortable tap target. */
   .legendItems,
   .stackedLegendItems {
-    gap: 0.5rem;
+    gap: 0.35rem;
   }
 
   .legendItem {
-    padding: 0.375rem 0.5rem;
-    min-height: 2rem;
-    min-width: 0;
-    font-size: 0.75rem;
+    padding: 0.35rem 0.45rem;
+    min-height: 44px;
+    min-width: 32px;
+    font-size: 0.72rem;
     gap: 0.375rem;
   }
 
@@ -523,9 +524,10 @@
 }
 
 .chartSection {
-  margin-bottom: 3rem;
-  padding-bottom: 2rem;
+  margin-bottom: 3.5rem;
+  padding-bottom: 2.5rem;
   border-bottom: 1px solid var(--card-border);
+  scroll-margin-top: 5rem;
 }
 
 .lastSectionScrollRunway {
@@ -539,6 +541,11 @@
 }
 
 @media (max-width: 768px) {
+  .chartSection {
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.75rem;
+  }
+
   /* Keep dedicated space on each spending section, including the last section. */
   div.chartSection.spendingChartSection {
     padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
@@ -546,19 +553,42 @@
 }
 
 .chartTitle {
-  font-size: clamp(1.25rem, 2.95vw - 0.17rem, 3.375rem);
-  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.6rem;
+  font-size: clamp(1.25rem, 1rem + 1.1vw, 1.85rem);
+  font-weight: 650;
+  letter-spacing: -0.035em;
   color: var(--card-text);
-  margin-bottom: 0.5rem;
-  text-align: center;
+  margin-bottom: 0.45rem;
+  text-align: left;
+}
+
+.chartTitle::before {
+  width: 3px;
+  height: 1.15em;
+  flex: 0 0 3px;
+  background: var(--accent);
+  content: "";
 }
 
 .chartNote {
-  font-size: clamp(0.85rem, 0.08rem + 1.6vw, 2rem);
-  color: var(--card-text);
-  margin-bottom: 1.5rem;
-  text-align: center;
-  opacity: 0.8;
+  max-width: 56rem;
+  font-size: 0.9rem;
+  color: var(--gray-600);
+  margin-bottom: 1.25rem;
+  line-height: 1.7;
+  text-align: left;
+}
+
+@media (max-width: 768px) {
+  .chartTitle {
+    font-size: 1.2rem;
+  }
+  .chartNote {
+    font-size: 0.82rem;
+  }
 }
 
 .cagrItem {
@@ -580,8 +610,8 @@
   padding: 0.625rem 1rem;
   border-radius: 0.375rem;
   border: none;
-  background-color: var(--blue-500);
-  color: white;
+  background-color: var(--accent);
+  color: var(--accent-on);
   font-size: 0.9375rem;
   font-weight: 600;
   cursor: pointer;
@@ -592,9 +622,9 @@
 
 @media (hover: hover) and (pointer: fine) {
   .calculateButton:hover:not(:disabled) {
-    background-color: var(--blue-600);
+    background-color: var(--accent-hover);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 28%, transparent);
   }
 }
 
@@ -628,7 +658,7 @@
 
 .cagrResult {
   background-color: var(--card-bg);
-  border: 2px solid var(--blue-500);
+  border: 1px solid var(--accent);
   border-radius: 0.5rem;
   padding: 0.5rem 0.625rem;
   display: flex;
@@ -642,7 +672,7 @@
 .cagrResultValue {
   font-size: 1.25rem;
   font-weight: 700;
-  color: var(--blue-500);
+  color: var(--accent);
   margin: 0;
   line-height: 1;
 }
@@ -708,15 +738,18 @@
 
 .sectionTabs {
   position: sticky;
-  top: 0;
+  top: 0.5rem;
   z-index: 50;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  background-color: var(--card-bg);
-  border-bottom: 1px solid var(--card-border);
-  padding: 0.5rem;
-  margin-bottom: 1.5rem;
+  gap: 0.35rem;
+  background: color-mix(in srgb, var(--card-bg) 96%, transparent);
+  border: 1px solid var(--card-border);
+  border-radius: 0.35rem;
+  box-shadow: 0 5px 18px rgb(25 24 20 / 0.05);
+  backdrop-filter: blur(12px);
+  padding: 0.25rem 0.5rem;
+  margin-bottom: 2.25rem;
   /* Android Chrome はスクロール中にアドレスバーを表示/非表示アニメーションさせるが、
      この間 position: sticky 要素がメインスレッドのレイアウト再計算に同期して
      再描画されず、タブバーがアドレスバーの高さ分だけ一時的にクリップされて見える
@@ -731,7 +764,7 @@
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.25rem;
   overflow-x: auto;
   scroll-snap-type: x proximity;
   -webkit-overflow-scrolling: touch;
@@ -747,12 +780,12 @@
   position: relative;
   flex-shrink: 0;
   min-height: 44px;
-  padding: 0.5rem 1rem 0.625rem;
-  border-radius: 9999px;
-  border: 1px solid var(--card-border);
-  background-color: var(--card-bg);
-  color: var(--card-text);
-  font-size: 0.875rem;
+  padding: 0.5rem 0.8rem 0.625rem;
+  border-radius: 0.25rem;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--gray-600);
+  font-size: 0.8rem;
   cursor: pointer;
   scroll-snap-align: start;
   white-space: nowrap;
@@ -764,39 +797,54 @@
 }
 .sectionTab::after {
   position: absolute;
-  right: 50%;
+  right: 0.8rem;
+  left: 0.8rem;
   bottom: 0.25rem;
-  width: 1rem;
+  width: auto;
   height: 2px;
-  border-radius: 9999px;
+  border-radius: 0;
   background-color: transparent;
   content: "";
-  transform: translateX(50%);
+  transform: none;
   transition: background-color 150ms ease;
 }
 .sectionTab[aria-current="location"] {
-  background-color: var(--cta-tonal-bg);
-  border-color: var(--cta-tonal-bg-hover);
-  color: var(--cta-tonal-text);
+  background: transparent;
+  border-color: transparent;
+  color: var(--accent);
   font-weight: 700;
 }
 .sectionTab[aria-current="location"]::after {
-  background-color: var(--cta-tonal-text);
+  background-color: var(--accent);
 }
 .sectionTab:focus-visible {
-  outline: 2px solid var(--blue-500);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 .sectionTab:active {
-  background-color: var(--cta-tonal-bg-hover);
+  background-color: var(--accent-soft);
 }
 .sectionTab[aria-current="location"]:active {
-  background-color: var(--cta-tonal-bg-hover);
+  background-color: var(--accent-soft);
 }
+
+@media (max-width: 768px) {
+  .sectionTabs {
+    top: 0.25rem;
+    margin-bottom: 1.5rem;
+    padding: 0.2rem;
+  }
+
+  .sectionTab {
+    min-height: 44px;
+    padding-inline: 0.65rem;
+  }
+}
+
 @media (hover: hover) and (pointer: fine) {
   .sectionTab:hover {
-    border-color: var(--cta-tonal-text);
-    background-color: var(--cta-tonal-bg);
+    border-color: var(--accent);
+    background-color: var(--accent-soft);
   }
 }
 @media (forced-colors: active) {
@@ -831,7 +879,8 @@
   white-space: nowrap;
   background-color: var(--card-bg);
   border: 1px solid var(--card-border);
-  border-radius: 9999px;
+  border-radius: 0.25rem;
+  font-size: 0.8rem;
   cursor: pointer;
   transition:
     transform 120ms ease,
@@ -840,7 +889,7 @@
     box-shadow 150ms ease;
 }
 .sectionRange:active {
-  background-color: var(--blue-50);
+  background-color: var(--accent-soft);
   transform: scale(0.98);
 }
 .themeToggleButton {
@@ -855,7 +904,7 @@
   color: var(--card-text);
   background-color: var(--card-bg);
   border: 1px solid var(--card-border);
-  border-radius: 9999px;
+  border-radius: 0.25rem;
   cursor: pointer;
   transition:
     transform 120ms ease,
@@ -871,12 +920,12 @@
   animation: themeToggleIconIn 150ms ease-out both;
 }
 .themeToggleButton:active {
-  background-color: var(--blue-50);
+  background-color: var(--accent-soft);
   transform: scale(0.96);
 }
 @media (hover: hover) and (pointer: fine) {
   .themeToggleButton:hover {
-    border-color: var(--blue-500);
+    border-color: var(--accent);
   }
 }
 
@@ -968,7 +1017,7 @@
     color 150ms ease;
 }
 .bottomSheetClose:active {
-  background-color: var(--blue-50);
+  background-color: var(--accent-soft);
   transform: scale(0.96);
 }
 
@@ -1066,8 +1115,8 @@
   min-height: 44px;
   padding: 0.75rem 1rem;
   border: 1px solid var(--card-border);
-  border-radius: 0.8125rem;
-  background-color: var(--cta-tonal-bg);
+  border-radius: 0.25rem;
+  background-color: var(--accent-soft);
   color: var(--cta-tonal-text);
   font-size: 0.875rem;
   font-weight: 600;
@@ -1090,7 +1139,7 @@
 }
 
 .cagrLink:focus-visible {
-  outline: 2px solid var(--blue-500);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
