@@ -92,6 +92,21 @@ describe("CagrPanel", () => {
     expect(screen.getByRole("button", { name: "計算する" })).not.toBeNull();
   });
 
+  it("CAGRトリガーが dialog popup とシートの開閉状態を公開する", () => {
+    render(<CagrPanel {...defaultProps} />);
+    const trigger = screen.getByRole("button", { name: /年率上昇率（CAGR）を計算/ });
+
+    expect(trigger.getAttribute("aria-haspopup")).toBe("dialog");
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+
+    fireEvent.click(trigger);
+    expect(screen.getByRole("dialog", { name: "年率上昇率（CAGR）" })).not.toBeNull();
+    expect(trigger.getAttribute("aria-expanded")).toBe("true");
+
+    fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+  });
+
   it("開始年変更後も dialog を開いたまま、符号付き小数2桁の結果を表示する", () => {
     render(<CagrCalculationFixture />);
     fireEvent.click(screen.getByRole("button", { name: /年率上昇率（CAGR）を計算/ }));
@@ -166,18 +181,20 @@ describe("CagrPanel", () => {
     expect(container.firstChild).not.toBeNull();
   });
 
-  it("T19: トリガーの可視テキストが「年率上昇率（CAGR）を計算」のままであること", () => {
+  it("T19: トリガーに操作内容と現在の対象期間が表示されること", () => {
     render(<CagrPanel {...defaultProps} />);
     const trigger = screen.getByRole("button", { name: /年率上昇率（CAGR）を計算/ });
-    // textContent に SVG の invisible テキストが含まれないことを確認
-    expect(trigger.textContent?.trim()).toBe("年率上昇率（CAGR）を計算");
+    expect(trigger.textContent).toContain("年率上昇率（CAGR）を計算");
+    expect(trigger.textContent).toContain("2000年01月 → 2025年01月");
   });
 
-  it('T20: アイコン <svg> が aria-hidden="true" を持ち、アクセシブル名に混入しないこと', () => {
+  it('T20: 開示アイコンのラッパーが aria-hidden="true" でアクセシブル名に混入しないこと', () => {
     render(<CagrPanel {...defaultProps} />);
-    const trigger = screen.getByRole("button", { name: /年率上昇率（CAGR）を計算/ });
+    const trigger = screen.getByRole("button", {
+      name: /年率上昇率（CAGR）を計算。対象期間: 2000年01月から2025年01月/,
+    });
     const svg = trigger.querySelector("svg");
     expect(svg).not.toBeNull();
-    expect(svg!.getAttribute("aria-hidden")).toBe("true");
+    expect(svg!.parentElement?.getAttribute("aria-hidden")).toBe("true");
   });
 });

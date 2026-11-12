@@ -45,18 +45,27 @@ export const CagrPanel = React.memo<CagrPanelProps>(
             type="button"
             className={styles.cagrLink}
             onClick={() => setSheetOpen(true)}
-            aria-label={`年率上昇率（CAGR）を計算（現在: ${cagrStartYear}年${mm}月から${cagrEndYear}年${mm}月）`}
+            aria-haspopup="dialog"
+            aria-expanded={sheetOpen}
+            aria-label={`年率上昇率（CAGR）を計算。対象期間: ${cagrStartYear}年${mm}月から${cagrEndYear}年${mm}月`}
           >
-            年率上昇率（CAGR）を計算
-            <svg className={styles.cagrLinkIcon} viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path
-                d="M4 6l4 4 4-4"
-                stroke="currentColor"
-                strokeWidth="1.75"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            <span className={styles.cagrLinkCopy}>
+              <span className={styles.cagrLinkTitle}>年率上昇率（CAGR）を計算</span>
+              <span className={styles.cagrLinkRange}>
+                {formatCagrRange(cagrStartYear, cagrEndYear, cagrMonth)}
+              </span>
+            </span>
+            <span className={styles.cagrLinkAffordance} aria-hidden="true">
+              <svg className={styles.cagrLinkIcon} viewBox="0 0 16 16" fill="none">
+                <path
+                  d="M4 6l4 4 4-4"
+                  stroke="currentColor"
+                  strokeWidth="1.75"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </span>
           </button>
         </p>
 

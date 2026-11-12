@@ -2240,6 +2240,17 @@ The system SHALL allow users to toggle chart series visibility.
 - **AND WHEN** the user requests reduced motion
 - **THEN** summary, chevron, and CAGR-trigger transitions are disabled
 
+#### Canonical scenario — Scenario R4g: CAGR Entry Control
+
+- **WHEN** the chart and CAGR control render
+- **THEN** the trigger shows the calculation action and the currently selected start year, end year, and evaluation month
+- **AND** the period is available in the trigger's accessible name
+- **AND** the trigger uses the existing CTA and card tokens, has a tap target at least 44px high, and remains within a 24rem maximum width
+- **WHEN** the user activates the CAGR trigger
+- **THEN** the calculation sheet opens and the trigger exposes its dialog popup and expanded state to assistive technology
+- **AND WHEN** the sheet closes
+- **THEN** the trigger exposes its collapsed state
+
 <a id="current-r5"></a>
 
 ### Canonical requirement group: R5: Chart Filters
